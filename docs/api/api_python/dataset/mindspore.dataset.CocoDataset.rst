@@ -67,7 +67,7 @@
         - **ValueError** - `task` 参数取值不为 `Detection` 、 `Stuff` 、`Panoptic` 或 `Keypoint` 。
         - **ValueError** - `annotation_file` 参数对应的文件不存在。
         - **ValueError** - `dataset_dir` 参数路径不存在。
-        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note::
         - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列'_meta-filename'的前缀'_meta-'，

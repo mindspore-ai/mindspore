@@ -43,7 +43,7 @@ mindspore.dataset.VOCDataset
         - **ValueError** - 指定的任务不为'Segmentation'或'Detection'。
         - **ValueError** - 指定任务为'Segmentation'时， `class_indexing` 参数不为None。
         - **ValueError** - 与 `usage` 参数相关的txt文件不存在。
-        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note::
         - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列'_meta-filename'的前缀'_meta-'，

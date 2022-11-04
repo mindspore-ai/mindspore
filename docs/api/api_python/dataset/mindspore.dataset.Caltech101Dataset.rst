@@ -29,13 +29,13 @@ mindspore.dataset.Caltech101Dataset
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
-        - **ValueError** - `target_type` 参数取值不为'category'、'annotation'或'all'。
-        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - `target_type` 参数取值不为'category'、'annotation'或'all'。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

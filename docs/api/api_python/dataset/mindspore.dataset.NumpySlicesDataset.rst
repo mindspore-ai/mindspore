@@ -54,7 +54,7 @@ mindspore.dataset.NumpySlicesDataset
         - **ValueError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **ValueError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **ValueError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
 
 .. include:: mindspore.dataset.api_list_nlp.rst

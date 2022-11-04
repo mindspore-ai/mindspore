@@ -5,7 +5,7 @@ mindspore.dataset.SBDataset
 
     读取和解析Semantic Boundaries数据集的源文件构建数据集。
 
-    根据给定的 `task` 配置，生成数据集具有不同的输出列：
+    通过配置 `task` 参数，生成的数据集具有不同的输出列：
 
     - `task` = 'Boundaries'，有两个输出列： `image` 列的数据类型为uint8，`label` 列包含1个的数据类型为uint8的图像。
     - `task` = 'Segmentation'，有两个输出列： `image` 列的数据类型为uint8。 `label` 列包含20个的数据类型为uint8的图像。
@@ -15,7 +15,7 @@ mindspore.dataset.SBDataset
         - **task** (str, 可选) - 指定读取SB数据集的任务类型，支持'Boundaries'和'Segmentation'。默认值：'Boundaries'。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'、'val'、'train_noval'和'all'。默认值：'train'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，所有图像样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：1，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
@@ -24,15 +24,15 @@ mindspore.dataset.SBDataset
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
-        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `dataset_dir` 不存在。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **ValueError** - `task` 不是['Boundaries', 'Segmentation']中的任何一个。
         - **ValueError** - `usage` 不是['train', 'val', 'train_noval', 'all']中的任何一个。
-        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

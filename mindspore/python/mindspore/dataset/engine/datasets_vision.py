@@ -132,10 +132,10 @@ class Caltech101Dataset(GeneratorDataset):
             Default: None, all images.
         num_parallel_workers (int, optional): Number of workers to read the data. Default: 1.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         decode (bool, optional): Whether or not to decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
@@ -144,13 +144,13 @@ class Caltech101Dataset(GeneratorDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `target_type` is not set correctly.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `target_type` is not set correctly.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -293,10 +293,10 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         decode (bool, optional): Whether or not to decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
@@ -308,13 +308,13 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `target_type` is not 'category', 'annotation' or 'all'.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `target_type` is not 'category', 'annotation' or 'all'.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -440,13 +440,13 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `usage` is not 'train', 'valid', 'test' or 'all'.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `usage` is not 'train', 'valid', 'test' or 'all'.
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -595,9 +595,9 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
@@ -609,13 +609,13 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `usage` is not 'train', 'test' or 'all'.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `usage` is not 'train', 'test' or 'all'.
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -727,9 +727,9 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the maximum sample number of per shard.
@@ -741,13 +741,13 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `usage` is not 'train', 'test' or 'all'.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `usage` is not 'train', 'test' or 'all'.
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -856,10 +856,10 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
@@ -871,11 +871,11 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` is invalid or does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `dataset_dir` is not exist.
         ValueError: If `task` is invalid.
         ValueError: If `quality_mode` is invalid.
@@ -1024,10 +1024,10 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the configuration file.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
@@ -1273,10 +1273,10 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
@@ -1803,10 +1803,10 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: None.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
@@ -2208,9 +2208,9 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         extensions (list[str], optional): List of file extensions to be
             included in the dataset. Default: None.
         class_indexing (dict, optional): A str-to-int mapping from folder name to index
@@ -2354,10 +2354,10 @@ class KITTIDataset(MappableDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
@@ -2621,10 +2621,10 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
@@ -2771,10 +2771,10 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
@@ -2899,9 +2899,9 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         class_indexing (dict, optional): A str-to-int mapping from label name to index.
             Default: None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0.
@@ -3021,9 +3021,9 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
@@ -3142,10 +3142,10 @@ class OmniglotDataset(MappableDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
@@ -3414,22 +3414,22 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
+    The tensor of column :py:obj:`label` is of the uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train-standard', 'train-challenge' or 'val'.
             Default: None, will be set to 'train-standard'.
         small (bool, optional): Use 256 * 256 images (True) or high resolution images (False). Default: False.
-        decode (bool, optional): Decode the images after reading. Default: True.
+        decode (bool, optional): Decode the images after reading. Default: False.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all images.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
@@ -3440,11 +3440,11 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
         ValueError: If `usage` is not in ["train-standard", "train-challenge", "val"].
 
@@ -3556,7 +3556,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`label` is a scalar when `compat` is True else a tensor both of the uint32 type.
+    The tensor of column :py:obj:`label` is of the uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -3569,9 +3569,9 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
@@ -3582,12 +3582,12 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -3683,8 +3683,9 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
     Args:
         total_rows (int, optional): Number of samples for the dataset to generate.
             Default: None, number of samples is random.
-        schema (Union[str, Schema], optional): Path to the JSON schema file or schema object. Default: None.
-            If the schema is not provided, the random dataset generates a random schema.
+        schema (Union[str, Schema], optional): Data format policy, which specifies the data types and shapes of the data
+            column to be read. Both JSON file path and objects constructed by mindspore.dataset.Schema are acceptable.
+            Default: None.
         columns_list (list[str], optional): List of column names of the dataset.
             Default: None, the columns will be named like this "c0", "c1", "c2" etc.
         num_samples (int, optional): The number of samples to be included in the dataset.
@@ -3695,12 +3696,33 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
             argument can only be specified when `num_shards` is also specified.
+
+    Raises:
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        TypeError: If `total_rows` is not of type int.
+        TypeError: If `num_shards` is not of type int.
+        TypeError: If `num_parallel_workers` is not of type int.
+        TypeError: If `shuffle` is not of type bool.
+        TypeError: If `columns_list` is not of type list.
+
+    Examples:
+        >>> from mindspore import dtype as mstype
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> schema = ds.Schema()
+        >>> schema.add_column('image', de_type=mstype.uint8, shape=[2])
+        >>> schema.add_column('label', de_type=mstype.uint8, shape=[1])
+        >>># apply dataset operations
+        >>> ds1 = ds.RandomDataset(schema=schema, total_rows=50, num_parallel_workers=4)
     """
 
     @check_random_dataset
@@ -3788,11 +3810,12 @@ class SBDataset(GeneratorDataset):
     """
     A source dataset that reads and parses Semantic Boundaries Dataset.
 
-    The generated dataset has two columns: :py:obj:`[image, task]`.
+    By configuring the 'Task' parameter, the generated dataset has different output columns.
 
-    - The tensor of column :py:obj:`image` is of the uint8 type.
-    - The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is 'Boundaries' otherwise
-      contains 1 image of the uint8 type.
+    - 'task' = 'Boundaries' , there are two output columns: the 'image' column has the data type uint8 and
+      the 'label' column contains one image of the data type uint8.
+    - 'task' = 'Segmentation' , there are two output columns: the 'image' column has the data type uint8 and
+      the 'label' column contains 20 images of the data type uint8.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -3800,13 +3823,12 @@ class SBDataset(GeneratorDataset):
         usage (str, optional): Acceptable usages include 'train', 'val', 'train_noval' and 'all'. Default: 'all'.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, all images.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the config.
+        num_parallel_workers (int, optional): Number of workers to read the data. Default: 1, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: None.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
@@ -3815,12 +3837,12 @@ class SBDataset(GeneratorDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` is not valid or does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `dataset_dir` is not exist.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `task` is not in ['Boundaries', 'Segmentation'].
         ValueError: If `usage` is not in ['train', 'val', 'train_noval', 'all'].
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
@@ -3928,15 +3950,15 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        decode (bool, optional): Decode the images after reading. Default: False.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all images.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
+        decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
@@ -3947,11 +3969,11 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
@@ -4048,9 +4070,9 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
@@ -4062,11 +4084,11 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
@@ -4176,9 +4198,9 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
@@ -4190,12 +4212,12 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` is not valid or does not exist or does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `usage` is invalid.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
@@ -4341,24 +4363,23 @@ class SVHNDataset(GeneratorDataset):
             Default: None, will read all samples.
         num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all images.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
-            Default: None, expected order behavior shown in the table.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset. Random accessible
-            input is required. Default: None, expected order behavior shown in the table.
+            input is required. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
-            Random accessible input is required. When this argument is specified, 'num_samples' reflects the max
-            sample number of per shard.
+            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument must be specified only
-            when num_shards is also specified. Random accessible input is required.
+            when num_shards is also specified.
 
     Raises:
         RuntimeError: If `dataset_dir` is not valid or does not exist or does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `usage` is invalid.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
@@ -4443,7 +4464,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
 
     The generated dataset has two columns: :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
+    The tensor of column :py:obj:`label` is of the uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -4455,10 +4476,10 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
@@ -4474,10 +4495,10 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` is not valid or does not exist or does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `usage` is invalid.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
@@ -4560,10 +4581,10 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
@@ -4759,10 +4780,10 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         decode (bool, optional): Decode the images after reading. Default: False.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument can only be specified
@@ -4773,13 +4794,13 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
         ValueError: If `usage` is not in ['train', 'test', 'valid', 'all'].
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `annotation_file` is not exist.
         ValueError: If `dataset_dir` is not exist.
 

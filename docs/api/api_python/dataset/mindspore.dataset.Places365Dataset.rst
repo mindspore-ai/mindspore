@@ -3,7 +3,7 @@ mindspore.dataset.Places365Dataset
 
 .. py:class:: mindspore.dataset.Places365Dataset(dataset_dir, usage=None, small=True, decode=False, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析PhotoTour数据集的源数据集。
+    读取和解析Places365数据集的源数据集。
 
     生成的数据集有两列: `[image, label]`。 
     `image` 列的数据类型为uint8。 `label` 列的数据类型为uint32。
@@ -23,12 +23,12 @@ mindspore.dataset.Places365Dataset
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
-        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
+        - **ValueError** - `shard_id` 参数错误，参数小于0或者大于等于 `num_shards` 。
         - **ValueError** - `usage` 不是['train-standard', 'train-challenge', 'val']中的任何一个。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
