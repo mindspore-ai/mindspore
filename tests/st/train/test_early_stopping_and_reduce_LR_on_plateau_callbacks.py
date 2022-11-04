@@ -19,6 +19,7 @@ import copy
 import pytest
 import numpy as np
 
+import mindspore as ms
 from mindspore import nn, Model
 from mindspore import dataset as ds
 from mindspore.nn.optim import Momentum
@@ -51,43 +52,21 @@ def define_model(metrics):
     return model
 
 
-def test_reduce_lr_on_plateau_moniter_and_factor():
-    """
-    Feature: `monitor` and `factor`.
-    Description: check invalid params.
-    Expectation: raise value error.
-    """
-
-    ReduceLROnPlateau(monitor="unknown_str", patience=0, verbose=True)
-    with pytest.raises(ValueError):
-        ReduceLROnPlateau(factor=1.2, patience=0, verbose=True)
-
-
-def test_reduce_lr_on_plateau_min_delta():
-    """
-    Feature: `min_delta`.
-    Description: test whether the learning rate reduces correct.
-    Expectation: The second one should reduce the LR after the first epoch due to high epsilon.
-    """
-    ds_train = create_dataset(1024, 512)
-    ds_eval = create_dataset(512, 256)
-    model = define_model({"acc", "mae"})
-    callbacks = [ReduceLROnPlateau(monitor='eval_loss', factor=0.1, min_delta=0, patience=1, cooldown=5)]
-    model.fit(2, ds_train, ds_eval, callbacks=callbacks)
-
-    ds_train = create_dataset(4096, 1024)
-    ds_eval = create_dataset(1024, 512)
-    model = define_model({"acc", "mae"})
-    callbacks = [ReduceLROnPlateau(monitor='eval_loss', factor=0.1, min_delta=10, patience=1, cooldown=5)]
-    model.fit(2, ds_train, ds_eval, callbacks=callbacks)
-
-
-def test_reduce_lr_on_plateau_patience_and_cooldown():
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_reduce_lr_on_plateau_patience_and_cooldown(mode):
     """
     Feature: `patience` and `cooldown`.
     Description: test whether the learning rate reduces correct.
     Expectation: output learning rates match the expectation lrs.
     """
+    ms.set_context(mode=mode)
     net = nn.Dense(1, 1, Normal(0.02), Normal(0.02))
     cb_params = _InternalCallbackParam()
     run_context = RunContext(cb_params)
@@ -119,38 +98,24 @@ def test_reduce_lr_on_plateau_patience_and_cooldown():
                 callbacklist.on_train_epoch_end(run_context)
                 cur_lr = cb_params.optimizer.learning_rate.asnumpy()
                 lrs.append(copy.deepcopy(cur_lr))
-        np.allclose(lrs, lrs_results[case_i], atol=1e-7)
+        assert np.allclose(lrs, lrs_results[case_i], atol=1e-7)
 
 
-def test_earlystopping_monitor_set():
-    """
-    Feature: `patience` and `cooldown`.
-    Description: test whether the learning rate reduces correct.
-    Expectation: output learning rates match the expectation lrs.
-    """
-    cases = [
-        ('max', 'accuracy'),
-        ('min', 'eval_loss'),
-        ('auto', 'accuracy'),
-        ('auto', 'loss'),
-    ]
-    for mode, monitor in cases:
-        ds_train = create_dataset(1024, 512)
-        ds_eval = create_dataset(512, 256)
-        model = define_model({"acc", "mae"})
-        callbacks = [EarlyStopping(patience=0, monitor=monitor, mode=mode, verbose=True)]
-        model.fit(2, ds_train, ds_eval, callbacks=callbacks)
-
-    with pytest.raises(ValueError):
-        EarlyStopping(patience=0, monitor="Unknown", mode="Unknown", verbose=True)
-
-
-def test_earlystopping_with_baseline():
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_earlystopping_with_baseline(mode):
     """
     Feature: `baseline` in EarlyStopping.
     Description: test whether the stopped epoch correct.
     Expectation: the stopped epoch match the expectation stop_epoch.
     """
+    ms.set_context(mode=mode)
     cases = [
         {"baseline": 0.3, "accuracy": [0.6, 0.5, 0.7, 0.5, 0.6], "patience": 2, "stop_epoch": 5},
         {"baseline": 0.55, "accuracy": [0.6, 0.3, 0.5, 0.5], "patience": 2, "stop_epoch": 3},
@@ -179,13 +144,22 @@ def test_earlystopping_with_baseline():
             assert cur_epoch == stop_epoch
 
 
-def test_earlystopping_final_weights_when_restoring_model_weights():
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_earlystopping_final_weights_when_restoring_model_weights(mode):
     """
     Feature: `restore_best_weights` in EarlyStopping.
     Description: test whether the model weights saved is correct.
     Expectation: Giving monitor varies as `losses`, the training process is
     expected to be stopped at 3rd epoch, restores the weights of the 2nd epoch.
     """
+    ms.set_context(mode=mode)
     callbacks = EarlyStopping(patience=1, monitor="eval_loss", verbose=True, restore_best_weights=True)
     ds_train = create_dataset(1024, 512)
     model_train = define_model(metrics={"acc"})
