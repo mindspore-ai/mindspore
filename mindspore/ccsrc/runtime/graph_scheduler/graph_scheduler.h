@@ -168,8 +168,12 @@ class BACKEND_EXPORT GraphScheduler {
                                  const KernelWithIndex &to_kernel_with_input_idx);
 
   // 2. The processing of linking control arrows.
+  // The parameter cnode_to_u_inputs contains all the update states that each cnode in the graph depends on. When
+  // processing the first input of update state, the map is used to check whether it is necessary to link control
+  // arrow for the first input of update state.
   void LinkControlArrowByAutoMonad(AbstractActor *to_actor, const AnfNodePtr &from_node, const KernelGraphPtr &graph,
-                                   const ControlNodeParserPtr &parser = nullptr);
+                                   const ControlNodeParserPtr &parser = nullptr,
+                                   const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_u_inputs = {});
   // The skipped node doesn't run, so need link the control arrow between the inputs and user of skipped node.
   void LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node,
                                      const KernelGraphPtr &graph) const;
