@@ -52,9 +52,13 @@ int RandomNormalCPUKernel::Run() {
     auto output = static_cast<float16_t *>(out_data);
     std::generate_n(output, all_data_nums, [&]() { return nums(engine); });
 #endif
-  } else {
+  } else if (out_tensors_[kOutputIndex]->data_type() == kNumberTypeFloat32) {
     auto output = static_cast<float *>(out_data);
     std::generate_n(output, all_data_nums, [&]() { return nums(engine); });
+  } else {
+    MS_LOG(ERROR) << "RandomNormal op can not support out_tensors datatype is "
+                  << out_tensors_[kOutputIndex]->data_type();
+    return RET_ERROR;
   }
   return RET_OK;
 }

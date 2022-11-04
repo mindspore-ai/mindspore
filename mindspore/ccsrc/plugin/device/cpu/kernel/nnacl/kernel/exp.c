@@ -79,10 +79,10 @@ int exp_compute(struct KernelBase *self) {
 
 KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
                       FormatC format) {
-  ExpStru *exp = (ExpStru *)malloc(sizeof(ExpStru));
-  NNACL_CHECK_NULL_RETURN_NULL(exp);
   MS_CHECK_TRUE_RET(insize == 1, NULL);
   MS_CHECK_TRUE_RET(outsize == 1, NULL);
+  ExpStru *exp = (ExpStru *)malloc(sizeof(ExpStru));
+  NNACL_CHECK_NULL_RETURN_NULL(exp);
   exp->base.param = param;
   exp->base.in = in;
   exp->base.insize = insize;
