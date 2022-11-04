@@ -37,6 +37,7 @@ class Net(nn.Cell):
         return self.concat((out1_shape, out2_shape))
 
 @pytest.mark.level1
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_concat_cpu():
     x1 = Tensor(np.array([1, 2, 3, 1, 4, 2]), mstype.int32)
