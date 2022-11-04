@@ -194,6 +194,25 @@ const Seq &GetSeq(const std::string &pattern_name, const std::string &node_name,
   MS_LOG(EXCEPTION) << "The value of SeqVar Key: " << pattern_name << " is not a seq, node name: " << node_name;
 }
 
+bool SrcPattern::CheckEmptySeqVar(const std::string &name, const EquivPtr &equiv,
+                                  const std::vector<PatternNode> &inputs, size_t *now_pattern) {
+  if (inputs.size() - (*now_pattern) == 1 && inputs.at(*now_pattern).type_ == "name") {
+    auto &pattern_node = inputs.at(*now_pattern);
+    auto &ref = GetRef(pattern_node.name_);
+    if (utils::isa<VarPtr>(ref) && utils::cast<VarPtr>(ref)->isa<SeqVar>()) {
+      const Seq &seq = GetSeq(pattern_node.name_, name, utils::cast<VarPtr>(ref), equiv);
+      MS_EXCEPTION_IF_CHECK_FAIL(seq.size() == IntToSize(0), "Match Failed, need zero seq, but get seq length: " +
+                                                               std::to_string(seq.size()) + ", node name: " + name);
+      std::vector<AnfNodePtr> v;
+      if (!m_->Emplace(pattern_node.name_, v)) {
+        return false;
+      }
+      (*now_pattern)++;
+    }
+  }
+  return true;
+}
+
 bool SrcPattern::match(const std::string &name, const AnfNodePtr &node, const EquivPtr &equiv) {
   auto input_iter = inputs_map_.find(name);
   if (input_iter == inputs_map_.end()) {
@@ -251,16 +270,9 @@ bool SrcPattern::match(const std::string &name, const AnfNodePtr &node, const Eq
     }
   }
   // has a SeqVar at the end
-  if (inputs.size() - now_pattern == 1 && now_match == cnode_inputs.size() && inputs[now_pattern].type_ == "name") {
-    auto &pattern_node = inputs[now_pattern];
-    auto &ref = GetRef(pattern_node.name_);
-    if (utils::isa<VarPtr>(ref) && utils::cast<VarPtr>(ref)->isa<SeqVar>()) {
-      const Seq &seq = GetSeq(pattern_node.name_, name, utils::cast<VarPtr>(ref), equiv);
-      MS_EXCEPTION_IF_CHECK_FAIL(seq.size() == IntToSize(0), "Match Failed, need zero seq, but get seq length: " +
-                                                               std::to_string(seq.size()) + ", node name: " + name);
-      std::vector<AnfNodePtr> v;
-      m_->Emplace(pattern_node.name_, v);
-      now_pattern++;
+  if (now_match == cnode_inputs.size()) {
+    if (!CheckEmptySeqVar(name, equiv, inputs, &now_pattern)) {
+      return false;
     }
   }
 
@@ -340,7 +352,9 @@ DstPattern &DstPattern::AddCNode(const string &name, const std::initializer_list
     }
   }
 
-  m_->Emplace(name, new_node);
+  if (!m_->Emplace(name, new_node)) {
+    MS_LOG(EXCEPTION) << "CNode: " + name + " is already in DstPattern";
+  }
   root_ = new_node;
   return *this;
 }

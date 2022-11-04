@@ -118,7 +118,7 @@ AnfNodePtr BuildAxis(const PatternMap &m) {
   return new_axis_node;
 }
 
-AnfNodePtr BuildReduce(const PatternMap &m, const AnfNodePtr &default_cnode) {
+AnfNodePtr BuildReduce(const PatternMap &m, const AnfNodePtr &) {
   auto anf = m.Get(m_reduce);
   MS_EXCEPTION_IF_NULL(anf);
   auto cnode = anf->cast<CNodePtr>();
@@ -128,13 +128,13 @@ AnfNodePtr BuildReduce(const PatternMap &m, const AnfNodePtr &default_cnode) {
 }
 
 void ReduceAxisUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(V, IsReduce).AddSeqVar(Xs).AddCNode(m_reduce, {V, Xs});
+  (void)(*src_pattern).AddVar(V, IsReduce).AddSeqVar(Xs).AddCNode(m_reduce, {V, Xs});
 }
 
 void ReduceAxisUpdate::DefineDstPattern(DstPattern *dst_pattern) {
   auto reduce_input = Unpacking(Xs);
   reduce_input[kAxisInputIndex - 1] = v_axis;
-  (*dst_pattern).AddValueNode(v_axis, BuildAxis).AddCNode(r_reduce, {V, reduce_input}, BuildReduce);
+  (void)(*dst_pattern).AddValueNode(v_axis, BuildAxis).AddCNode(r_reduce, {V, reduce_input}, BuildReduce);
 }
 }  // namespace opt
 }  // namespace mindspore

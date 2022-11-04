@@ -22,15 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "utils/hash_map.h"
-#include "ir/anf.h"
-#include "ir/func_graph.h"
-#include "ir/primitive.h"
-#include "backend/common/optimizer/pass_manager.h"
-#include "backend/common/optimizer/pattern_engine.h"
-#include "ir/graph_utils.h"
-#include "utils/ms_utils.h"
-#include "backend/common/optimizer/helper.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "include/backend/visible.h"
 #include "base/base.h"
@@ -117,6 +108,7 @@ class BACKEND_EXPORT PatternNode {
   PatternNode(const char *name) : type_("name"), name_(name) {}        // NOLINT
   PatternNode(std::vector<UnpackNode> &v) : type_("unpack"), v_(v) {}  // NOLINT
   PatternNode(const PatternNode &) = default;
+  PatternNode &operator=(const PatternNode &) = default;
 
  private:
   std::string type_;
@@ -137,6 +129,8 @@ class BACKEND_EXPORT SrcPattern {
 
  private:
   explicit SrcPattern(PatternMapPtr m) : m_(std::move(m)), has_root_(false) {}
+  bool CheckEmptySeqVar(const std::string &name, const EquivPtr &equiv, const std::vector<PatternNode> &inputs,
+                        size_t *now_pattern);
   bool match(const std::string &name, const AnfNodePtr &node, const EquivPtr &equiv);
   bool build_pattern_map(const AnfNodePtr &node, const EquivPtr &equiv);
   PatternMapPtr m_;

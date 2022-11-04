@@ -45,10 +45,10 @@ AnfNodePtr AddAttr(const PatternMap &m, const AnfNodePtr & /* default_cnode */) 
   return node;
 }
 void AddIoFormatAttrFor3DGraph::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(V, UnVisited).AddSeqVar(Xs).AddCNode(m_3d, {V, Xs});
+  (void)(*src_pattern).AddVar(V, UnVisited).AddSeqVar(Xs).AddCNode(m_3d, {V, Xs});
 }
 void AddIoFormatAttrFor3DGraph::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(r_3d, {V, Xs}, AddAttr);
+  (void)(*dst_pattern).AddCNode(r_3d, {V, Xs}, AddAttr);
 }
 }  // namespace opt
 }  // namespace mindspore
