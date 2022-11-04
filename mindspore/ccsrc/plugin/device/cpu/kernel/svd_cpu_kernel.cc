@@ -82,6 +82,7 @@ int SvdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 
   num_of_rows_ = input_shape[dim - kDim2];
   num_of_cols_ = input_shape[dim - kDim1];
+  batch_size_ = 1;
   for (size_t i = 0; i < dim - kDim2; i++) {
     batch_size_ = batch_size_ * input_shape[i];
   }
