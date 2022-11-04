@@ -18,6 +18,7 @@ import ast
 from ..parser import Parser
 from ..parser_register import reg_parser
 from ..symbol_tree import SymbolTree
+from ..common import error_str
 
 
 class ArgumentsParser(Parser):
@@ -43,7 +44,8 @@ class ArgumentsParser(Parser):
 
         for arg in node.args:
             if not isinstance(arg, ast.arg):
-                raise RuntimeError("Unsupported ast type in arguments arg: ", arg)
+                raise RuntimeError(error_str(f"only support ast.arg in arguments arg, but got '{type(arg).__name__}'",
+                                             child_node=arg, father_node=node))
             stree.append_input_node(arg, arg.arg)
 
         if hasattr(node, "vararg"):

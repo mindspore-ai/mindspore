@@ -19,6 +19,7 @@ from ..symbol_tree import SymbolTree
 from ..node import Node
 from ..parser import Parser
 from ..parser_register import reg_parser
+from ..common import error_str
 
 
 class ReturnParser(Parser):
@@ -32,7 +33,8 @@ class ReturnParser(Parser):
         """Parse ast.Return to output-node of SymbolTree."""
         return_value = node.value
         if not isinstance(return_value, ast.Name):
-            raise RuntimeError("Only ast.Name as return value")
+            raise RuntimeError(error_str(f"only support ast.Name as return value, but got ast type "
+                                         f"'{type(return_value).__name__}'", father_node=node, child_node=return_value))
         node_return = Node.create_output_node(node, [return_value.id])
         stree.append_origin_field(node_return)
 

@@ -20,6 +20,7 @@ from mindspore.rewrite.symbol_tree import SymbolTree
 from mindspore.rewrite.parser_register import ParserRegister
 
 from mindspore.rewrite.parser_register import reg_parser
+from ..common import error_str
 
 
 class AttributeParser(Parser):
@@ -44,10 +45,12 @@ class AttributeParser(Parser):
             TypeError: Attribute parser only supports parsing ast.Attribute type nodes.
         """
         if not isinstance(node, ast.Attribute):
-            raise TypeError("Attribute parser only supports parsing ast.Attribute type nodes.")
+            raise TypeError(error_str(f"Attribute parser only supports parsing ast.Attribute type nodes, but got "
+                                      f"'{type(node).__name__}'", father_node=node))
         parser = ParserRegister.instance().get_parser(type(node.value))
         value = parser.process(stree, node.value)
 
         return ".".join([value, node.attr])
+
 
 g_attribute_parser = reg_parser(AttributeParser())

@@ -23,6 +23,7 @@ from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
 from ..api.scoped_value import ScopedValue
 from ..ast_helpers import AstReplacer, AstModifier
+from ..common import error_str
 
 
 class AstScopeChecker:
@@ -60,7 +61,9 @@ class AstScopeChecker:
             return self._check_call(node)
         if isinstance(node, (ast.Constant, ast.NameConstant, ast.Bytes, ast.Str, ast.Num)):
             return True
-        raise RuntimeError("Unsupported test check:", astunparse.unparse(node))
+        raise RuntimeError(error_str(f"only support (ast.Compare, ast.Attribute, ast.Name, ast.BoolOp, ast.UnaryOp"
+                                     f"ast.Call, ast.Constant, ast.NameConstant, ast.Bytes, ast.Str, ast.Num"
+                                     f") as test check, but got ast type '{type(node).__name__}'", father_node=node))
 
     def _check_attribute(self, node: ast.Attribute):
         """Check an ast.Attribute meets the constraints recursively."""
@@ -217,7 +220,7 @@ class ClassDefParser(Parser):
                 body_index_to_be_deleted.append(body_index)
                 continue
             if len(body.targets) != 1:
-                raise RuntimeError("Not support multi-targets in assign now!")
+                raise RuntimeError("not support multi-targets in assign now!", father_node=body)
             target = body.targets[0]
             if not isinstance(target, ast.Attribute):  # only keep class member
                 body_index_to_be_deleted.append(body_index)
