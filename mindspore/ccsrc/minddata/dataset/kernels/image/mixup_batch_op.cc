@@ -39,9 +39,9 @@ constexpr int64_t value_three = 3;
 
 MixUpBatchOp::MixUpBatchOp(float alpha) : alpha_(alpha) { rnd_.seed(GetSeed()); }
 
-Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tensor> *out_labels,
-                                   std::vector<int64_t> *rand_indx, const std::vector<int64_t> &label_shape,
-                                   const float lam, const size_t images_size) {
+Status MixUpBatchOp::ComputeLabels(const std::shared_ptr<Tensor> &label, std::shared_ptr<Tensor> *out_labels,
+                                   std::vector<int64_t> *rand_indx, const std::vector<int64_t> &label_shape, float lam,
+                                   size_t images_size) {
   CHECK_FAIL_RETURN_UNEXPECTED(
     images_size <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
     "The \'images_size\' must not be more than \'INT64_MAX\', but got: " + std::to_string(images_size));
@@ -50,7 +50,9 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
   }
   std::shuffle(rand_indx->begin(), rand_indx->end(), rnd_);
 
-  RETURN_IF_NOT_OK(TypeCast(input.at(1), out_labels, DataType(DataType::DE_FLOAT32)));
+  std::shared_ptr<Tensor> float_label;
+  RETURN_IF_NOT_OK(TypeCast(label, &float_label, DataType(DataType::DE_FLOAT32)));
+  RETURN_IF_NOT_OK(TypeCast(label, out_labels, DataType(DataType::DE_FLOAT32)));
 
   int64_t row_labels = label_shape.size() == kMaxLabelShapeSize ? label_shape[1] : 1;
   int64_t num_classes = label_shape.size() == kMaxLabelShapeSize ? label_shape[dimension_two] : label_shape[1];
@@ -63,17 +65,10 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
         std::vector<int64_t> second_index = label_shape.size() == kMaxLabelShapeSize
                                               ? std::vector{(*rand_indx)[static_cast<size_t>(i)], j, k}
                                               : std::vector{(*rand_indx)[static_cast<size_t>(i)], k};
-        if (input.at(1)->type().IsSignedInt()) {
-          int64_t first_value, second_value;
-          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, first_index));
-          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, second_index));
-          RETURN_IF_NOT_OK((*out_labels)->SetItemAt(first_index, lam * first_value + (1 - lam) * second_value));
-        } else {
-          uint64_t first_value, second_value;
-          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, first_index));
-          RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, second_index));
-          RETURN_IF_NOT_OK((*out_labels)->SetItemAt(first_index, lam * first_value + (1 - lam) * second_value));
-        }
+        float first_value, second_value;
+        RETURN_IF_NOT_OK(float_label->GetItemAt(&first_value, first_index));
+        RETURN_IF_NOT_OK(float_label->GetItemAt(&second_value, second_index));
+        RETURN_IF_NOT_OK((*out_labels)->SetItemAt(first_index, lam * first_value + (1 - lam) * second_value));
       }
     }
   }
@@ -96,12 +91,10 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
                              ", but got: " + std::to_string(image_shape.size()) +
                              ", make sure image shape are <H,W,C> or <C,H,W> and batched before calling MixUpBatch.");
   }
-  if (!input.at(1)->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED(
-      "MixUpBatch: wrong labels type. The second column (labels) must only include int types, but got: " +
-      input.at(1)->type().ToString());
-  }
 
+  CHECK_FAIL_RETURN_UNEXPECTED(input.at(1)->type().IsNumeric(),
+                               "MixUpBatch: invalid label type, label must be in a numeric type, but got: " +
+                                 input.at(1)->type().ToString() + ". You may need to perform OneHot first.");
   if (label_shape.size() != kMinLabelShapeSize && label_shape.size() != kMaxLabelShapeSize) {
     RETURN_STATUS_UNEXPECTED(
       "MixUpBatch: wrong labels shape. "
@@ -137,7 +130,7 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   std::shared_ptr<Tensor> out_labels;
 
   // Compute labels
-  RETURN_IF_NOT_OK(ComputeLabels(input, &out_labels, &rand_indx, label_shape, lam, images.size()));
+  RETURN_IF_NOT_OK(ComputeLabels(input.at(1), &out_labels, &rand_indx, label_shape, lam, images.size()));
 
   // Compute images
   for (int64_t i = 0; i < images.size(); i++) {

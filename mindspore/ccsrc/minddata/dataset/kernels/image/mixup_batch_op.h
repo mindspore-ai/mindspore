@@ -43,8 +43,10 @@ class MixUpBatchOp : public TensorOp {
 
  private:
   // a helper function to shorten the main Compute function
-  Status ComputeLabels(const TensorRow &input, std::shared_ptr<Tensor> *out_labels, std::vector<int64_t> *rand_indx,
-                       const std::vector<int64_t> &label_shape, const float lam, const size_t images_size);
+  Status ComputeLabels(const std::shared_ptr<Tensor> &label, std::shared_ptr<Tensor> *out_labels,
+                       std::vector<int64_t> *rand_indx, const std::vector<int64_t> &label_shape, float lam,
+                       size_t images_size);
+
   float alpha_;
   std::mt19937 rnd_;
 };
