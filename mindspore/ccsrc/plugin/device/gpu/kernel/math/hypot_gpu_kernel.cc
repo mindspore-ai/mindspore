@@ -55,8 +55,6 @@ bool HypotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     return false;
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-
-  Resize(base_operator, inputs, outputs);
   return true;
 }
 
