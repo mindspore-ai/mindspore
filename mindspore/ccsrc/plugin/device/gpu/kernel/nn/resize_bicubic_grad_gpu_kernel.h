@@ -41,10 +41,13 @@ class ResizeBicubicGradGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
+
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

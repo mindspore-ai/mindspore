@@ -31,43 +31,36 @@ constexpr size_t index3 = 3;
 constexpr size_t num4 = 4;
 abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto original_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  // support dynamic rank
-  if (IsDynamicRank(grads_shape) || IsDynamicRank(original_image_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
-  }
-  if (grads_shape.size() != num4) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', The rank of grads shape need to be equal to 4, but got " << grads_shape.size();
-  }
-  if (original_image_shape.size() != num4) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', the rank of original_image shape need to be equal to 4, but got "
-                             << original_image_shape.size();
-  }
 
-  // support dynamic shape
-  if (IsDynamic(grads_shape) || IsDynamic(original_image_shape)) {
-    ShapeVector shape_out;
-    for (size_t i = 0; i < original_image_shape.size(); ++i) {
-      shape_out.push_back(abstract::Shape::kShapeDimAny);
+  std::vector<std::vector<int64_t>> all_shapes = {grads_shape, original_image_shape};
+  auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
+  auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
+
+  if (!is_dynamic_rank) {
+    (void)CheckAndConvertUtils::CheckInteger("grads rank", grads_shape.size(), kEqual, num4, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("original image rank", original_image_shape.size(), kEqual, num4,
+                                             prim_name);
+  }
+  if (!is_dynamic) {
+    if (grads_shape[0] != original_image_shape[0]) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[0] is " << grads_shape[0]
+                               << ", but the shape of original_image_shape[0] is " << original_image_shape[0]
+                               << ". The first dimension of the shape of grads_shape "
+                               << "must be equal to that of original_image_shape.";
     }
-    return std::make_shared<abstract::Shape>(shape_out);
+    if (grads_shape[index3] != original_image_shape[index3]) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[3] is "
+                               << grads_shape[index3] << ", but the shape of original_image_shape[3] is "
+                               << original_image_shape[index3] << ". The third dimension of the shape of grads_shape "
+                               << "must be equal to that of original_image_shape.";
+    }
   }
 
-  if (grads_shape[0] != original_image_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[0] is " << grads_shape[0]
-                             << ", but the shape of original_image_shape[0] is " << original_image_shape[0]
-                             << ". The first dimension of the shape of grads_shape "
-                             << "must be equal to that of original_image_shape.";
-  }
-  if (grads_shape[index3] != original_image_shape[index3]) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[3] is "
-                             << grads_shape[index3] << ", but the shape of original_image_shape[3] is "
-                             << original_image_shape[index3] << ". The third dimension of the shape of grads_shape "
-                             << "must be equal to that of original_image_shape.";
-  }
   return std::make_shared<abstract::Shape>(original_image_shape);
 }
 

@@ -39,6 +39,9 @@ class RandomPoissonGpuKernelMod : public NativeGpuKernelMod, public MatchKernelH
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
@@ -48,9 +51,6 @@ class RandomPoissonGpuKernelMod : public NativeGpuKernelMod, public MatchKernelH
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
@@ -58,8 +58,6 @@ class RandomPoissonGpuKernelMod : public NativeGpuKernelMod, public MatchKernelH
     rate_elements_ = 1;
     output_elements_ = 1;
     is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
@@ -72,9 +70,6 @@ class RandomPoissonGpuKernelMod : public NativeGpuKernelMod, public MatchKernelH
 
   int64_t rate_elements_;
   int64_t output_elements_;
-  int64_t unit_shape_size_;
-  int64_t unit_rate_size_;
-  int64_t unit_output_size_;
   int64_t seed_{0};
   int64_t seed2_{0};
   bool is_null_input_{false};

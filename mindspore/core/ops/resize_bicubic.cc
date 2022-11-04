@@ -36,16 +36,25 @@ void AttrTest(bool a, bool b) {
 
 abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  std::vector<int64_t> output_shape(4, -1);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+
+  auto align_corners_ptr = primitive->GetAttr("align_corners");
+  bool align_corners = GetValue<bool>(align_corners_ptr);
+  auto half_pixel_centers_ptr = primitive->GetAttr("half_pixel_centers");
+  bool half_pixel_centers = GetValue<bool>(half_pixel_centers_ptr);
+  AttrTest(align_corners, half_pixel_centers);
+
   const int64_t shape0_dim = 4;
+  std::vector<int64_t> output_shape(shape0_dim, -1);
   auto shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (!IsDynamicRank(shape0) && shape0.size() != shape0_dim) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the images tensor must be a 4-D tensor. But got "
-                             << shape0.size() << "-D";
+  if (!IsDynamicRank(shape0)) {
+    (void)CheckAndConvertUtils::CheckInteger("images rank", SizeToLong(shape0.size()), kEqual, shape0_dim, prim_name);
     constexpr int64_t indexid3 = 3;
     output_shape[0] = shape0[0];
     output_shape[indexid3] = shape0[indexid3];
   }
+
   auto shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   if (shape1.size() != 1) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size tensor must be a 1-D tensor. But got "
@@ -55,11 +64,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   if (!IsDynamic(shape1) && shape1[0] != calnum2) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size shape must be 2. But got " << shape1[0];
   }
-  auto align_corners_ptr = primitive->GetAttr("align_corners");
-  bool align_corners = GetValue<bool>(align_corners_ptr);
-  auto half_pixel_centers_ptr = primitive->GetAttr("half_pixel_centers");
-  bool half_pixel_centers = GetValue<bool>(half_pixel_centers_ptr);
-  AttrTest(align_corners, half_pixel_centers);
+
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
     auto input1_value = input_args[1]->BuildValue();
     if (!input1_value->isa<tensor::Tensor>()) {
@@ -72,6 +77,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   }
   return std::make_shared<abstract::Shape>(output_shape);
 }
+
 TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
@@ -84,6 +90,7 @@ TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<
   return kFloat32;
 }
 }  // namespace
+
 MIND_API_OPERATOR_IMPL(ResizeBicubic, BaseOperator);
 void ResizeBicubic::set_align_corners(const bool align_corners) {
   (void)this->AddAttr("align_corners", api::MakeValue(align_corners));
@@ -109,6 +116,9 @@ void ResizeBicubic::Init(const bool align_corners, const bool half_pixel_centers
 AbstractBasePtr ResizeBicubicInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = ResizeBicubicInferType(primitive, input_args);

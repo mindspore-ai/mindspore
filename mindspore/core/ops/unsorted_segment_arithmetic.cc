@@ -79,16 +79,19 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape])) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
+
   auto segment_ids_shape_ptr = input_args[kInputIndex1]->BuildShape();
   MS_EXCEPTION_IF_NULL(segment_ids_shape_ptr);
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(segment_ids_shape_ptr)[kShape])) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
+
   auto num_segments_shape_ptr = input_args[kInputIndex2]->BuildShape();
   MS_EXCEPTION_IF_NULL(num_segments_shape_ptr);
 

@@ -85,6 +85,7 @@ bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
 bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto iter = kScatterNdFunctorTypeMap.find(kernel_name_);
   if (iter == kScatterNdFunctorTypeMap.end()) {
@@ -144,6 +145,7 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
 
   index_depth_ = SizeToInt(index_depth);
+  out_strides_.clear();
   int32_t out_stride = 1;
   out_strides_.push_back(out_stride);
   for (int i = SizeToInt(index_depth_) - kMinIndiceRank; i >= 0; i--) {
@@ -211,6 +213,7 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorGPUKern
   };
   return func_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdUpdate, ScatterNdFunctorGPUKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdAdd, ScatterNdFunctorGPUKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdSub, ScatterNdFunctorGPUKernelMod);
