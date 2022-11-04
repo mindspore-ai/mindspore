@@ -525,6 +525,7 @@ class TestBasicWarningValidator:
         test_cross_entroy()
         self.check_warning_log()
 
+    @pytest.mark.skip(reason="random failures")
     def test_transformer_encoder_no_warning(self):
         """
         Feature: Test the warning log
