@@ -107,17 +107,19 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
   flatbuffers::FlatBufferBuilder builder(kBufferSize);
   size_t data_size;
   auto buffer = lite::MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph_t, &data_size);
-  auto buf = malloc(data_size);
-  memcpy(buf, buffer, data_size);
-  int ret =
-    lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(buf), kMindIR_Lite, data_size, helpers_.get());
+  if (lite_model_buf_ != nullptr) {
+    free(lite_model_buf_);
+    lite_model_buf_ = nullptr;
+  }
+  lite_model_buf_ = malloc(data_size);
+  memcpy(lite_model_buf_, buffer, data_size);
+  int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(lite_model_buf_), kMindIR_Lite, data_size,
+                                                    helpers_.get());
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Load model by meta graph failed";
-    free(buf);
     delete meta_graph_t;
     return false;
   }
-  free(buf);
   delete meta_graph_t;
   return true;
 }
@@ -350,6 +352,7 @@ std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(
     return nullptr;
   }
 
+  session->SetKeepModelBuf(true);
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
