@@ -252,7 +252,11 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
     builder.SetOutputsDeviceType({type});
     builder.SetOutputsFormat({format});
     d_kernel_info->set_select_kernel_build_info(builder.Build());
-    AnfAlgo::SetOutputAddr(address, 0, parameter.get());
+    // If the flag is enable, it means the graph would run in subgraph sink mode, the internal parameter cannot share
+    // the same device address.
+    if (!node_graph->has_flag(kFlagEnableZeroCopyInGraph)) {
+      AnfAlgo::SetOutputAddr(address, 0, parameter.get());
+    }
     auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type),
                                                                parameter->Shape()->cast<abstract::BaseShapePtr>());
     parameter->set_abstract(abstract);
@@ -873,10 +877,16 @@ void KernelGraphMgr::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &pa
 }
 
 KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
-                                                    DeviceType device_target, bool common_opt) {
+                                                    DeviceType device_target, bool common_opt,
+                                                    bool is_enable_zero_copy) {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> other_graph_cnode;
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
+  // Set the zero copy flag in subgraph sink mode.
+  if (is_enable_zero_copy) {
+    MS_LOG(INFO) << "Set zero copy flag for graph:" << graph->ToString();
+    graph->set_flag(kFlagEnableZeroCopyInGraph, true);
+  }
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();
   for (const auto &node : lst) {
     MS_EXCEPTION_IF_NULL(node);
@@ -1146,6 +1156,17 @@ std::string KernelGraphMgr::AddPartialParametersMap(const AnfNodePtr &partial_no
   return graph_target;
 }
 
+namespace {
+bool IsNeedAddPartialParameter(const AnfNodePtr &user, const std::string &kernel_target,
+                               const std::shared_ptr<KernelGraph> &graph) {
+  // If the flag is enable, it means the graph would run in subgraph sink mode, the real parameter on partial
+  // cannot share the same device address with the formal parameter.
+  MS_EXCEPTION_IF_NULL(graph);
+  return common::AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice &&
+         !ExistGraphCaller(user) && (!graph->has_flag(kFlagEnableZeroCopyInGraph));
+}
+}  // namespace
+
 void KernelGraphMgr::HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
                                           const FuncGraphManagerPtr &front_func_graph_manager,
                                           const std::shared_ptr<KernelGraph> &backend_graph) {
@@ -1176,8 +1197,7 @@ void KernelGraphMgr::HandleInternalOutput(const AnfNodePtr &input_front_node, co
   if (internal_output) {
     auto users = ExtendNodeUsers(front_func_graph_manager, front_node);
     for (auto &user : users) {
-      if (common::AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice &&
-          !ExistGraphCaller(user)) {
+      if (IsNeedAddPartialParameter(user, kernel_target, backend_graph)) {
         auto partial_target = AddPartialParametersMap(user);
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;

@@ -255,12 +255,11 @@ void OptimizeNopNode(KernelGraph *graph) {
   graph->set_execution_order(new_execution_order);
 }
 
-bool SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
+bool IsEnableZeroCopy(bool run_in_pynative) {
   if (run_in_pynative) {
     return false;
   }
 
-  MS_EXCEPTION_IF_NULL(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   bool task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
@@ -283,8 +282,6 @@ bool SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
   if (common::GetEnv("DISABLE_ZERO_COPY") == "1") {
     return false;
   }
-  MS_LOG(INFO) << "Set zero copy flag for graph:" << graph->ToString();
-  graph->set_flag(kFlagEnableZeroCopyInGraph, true);
   return true;
 }
 }  // namespace
@@ -299,7 +296,8 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   auto nodes = segment->nodes_;
   auto device_terget = device_context->GetDeviceType();
   // Generate kernel graph.
-  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_terget);
+  KernelGraphPtr graph =
+    session_->ConstructKernelGraph(nodes, outputs, device_terget, true, IsEnableZeroCopy(run_in_pynative));
   MS_EXCEPTION_IF_NULL(graph);
   opt::EliminateIllegalDataTypePass(graph);
   SetGraphDependency(graph, segment);
@@ -477,10 +475,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
 #endif
-  // If the zero copy flag has been set in graph, the relationship between partial and parameter should be disabled.
-  if (SetZeroCopyFlag(graph, run_in_pynative)) {
-    session_->ClearPartialParameterMap();
-  }
   MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // Execute optimization pass.
   device_context->kernel_executor_->OptimizeGraph(graph);
