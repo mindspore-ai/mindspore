@@ -17,7 +17,7 @@ import pytest
 
 import mindspore as ms
 import mindspore.ops as ops
-from mindspore import nn, context, Tensor, shard
+from mindspore import nn, context, Tensor, Parameter, shard
 
 
 def setup_function():
@@ -46,6 +46,16 @@ class NetMatMul(nn.Cell):
 
     def construct(self, x, y):
         return self.matmul(x, y)
+
+
+class NetMatMulWithParameter(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.matmul = ops.MatMul()
+        self.param = Parameter(Tensor(np.ones([8, 10])), name="param")
+
+    def construct(self, x):
+        return self.matmul(x, self.param)
 
 
 class Net(nn.Cell):
@@ -105,13 +115,62 @@ def test_in_strategy_format_check():
     """
     Feature: shard function for cell
     Description: unsupported in_strategy format
-    Expectation: throw an exception indicating an supported in_strategy format
+    Expectation: throw an exception indicating a supported in_strategy format
     """
     set_context()
     in_strategy = ([8, 1], None)
     out_strategy = (None,)
     error_log = "in_strategy should be a two-dimension tuple"
     cell_shard_execution(in_strategy, out_strategy, error_log)
+
+
+def test_parameter_plan_dimension_check():
+    """
+    Feature: shard function for cell
+    Description: inconsistent parameter dimension and parameter layout dimension
+    Expectation: throw an exception indicating inconsistent parameter dimension and parameter layout dimension
+    """
+    set_context()
+    in_strategy = (None,)
+    parameter_plan = {"param": (1, 1, 1)}
+    error_log = "the length of param_strategy: 3, is not equal to param_shape len: 2"
+    net = NetMatMulWithParameter()
+    with pytest.raises(Exception) as err:
+        net.shard(in_strategy=in_strategy, parameter_plan=parameter_plan)
+    assert error_log in str(err.value)
+
+
+def test_parameter_plan_layout_check():
+    """
+    Feature: shard function for cell
+    Description: layout has a value that is not divisible into shape
+    Expectation: throw an exception indicating layout is invalid
+    """
+    set_context()
+    in_strategy = (None,)
+    parameter_plan = {"param": (2, 4)}
+    error_log = "For 'param', the param_shape is (8, 10) and the setting param_strategy is (2, 4). " \
+                "The param_shape[1]: 10 cannot be divisible by param_strategy[1]: 4."
+    net = NetMatMulWithParameter()
+    with pytest.raises(Exception) as err:
+        net.shard(in_strategy=in_strategy, parameter_plan=parameter_plan)
+    assert error_log in str(err.value)
+
+
+def test_parameter_plan_format_check():
+    """
+    Feature: shard function for cell
+    Description: unsupported parameter_plan format
+    Expectation: throw an exception indicating a supported parameter_plan format
+    """
+    set_context()
+    in_strategy = (None,)
+    parameter_plan = {"param": None}
+    error_log = "For 'Shard', the type of each key and value in 'parameter_plan' must be str and tuple"
+    net = NetMatMulWithParameter()
+    with pytest.raises(Exception) as err:
+        net.shard(in_strategy=in_strategy, parameter_plan=parameter_plan)
+    assert error_log in str(err.value)
 
 
 def test_vmap_nested_shard_check():

@@ -175,7 +175,7 @@ AnfNodeIndexSet FindAnfNodeIndexSetToInsertStrategy(const FuncGraphPtr &func_gra
     CNodePtr cnode = user.first->cast<CNodePtr>();
     // If the cnode is not a splittable operator, apply strategy to the next cnode
     if (!IsSplittableOperator(GetPrimName(cnode)) || IsPrimitiveCNode(cnode, prim::kPrimVirtualDataset) ||
-        IsPrimitiveCNode(cnode, prim::kPrimCast)) {
+        IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimReshape)) {
       auto tmp_users = manager->node_users()[cnode];
       (void)std::for_each(tmp_users.begin(), tmp_users.end(),
                           [&bfs_list](const std::pair<AnfNodePtr, int> &user) { bfs_list.push(user); });
@@ -271,74 +271,20 @@ static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const A
   return concerned_nodes;
 }
 
-static bool CheckParamLayout(const ValueNodePtr &layout) {
-  auto parameter_plan = layout->value()->cast<ValueTuplePtr>()->value();
-  for (const auto &p : parameter_plan) {
-    if (!p->isa<ValueTuple>()) {
-      MS_LOG(EXCEPTION) << "each item in layout must be tuple";
-    }
-    auto p_tuple = p->cast<ValueTuplePtr>()->value();
-    auto param_name = p_tuple.at(kIndex0);
-    if (!param_name->isa<StringImm>()) {
-      MS_LOG(ERROR) << "param_name must be a string";
-      return false;
-    }
-    auto param_layout = p_tuple.at(kIndex1);
-    if (!CheckOneDimensionalIntTuple(param_layout)) {
-      MS_LOG(ERROR) << "param_layout must be a one-dimensional integer tuple";
-      return false;
-    }
-  }
-  return true;
-}
-
-AnfNodePtr SearchParamByName(const std::vector<AnfNodePtr> &parameter_list, std::string param_name) {
-  const std::string prefix = "self.";
-  if (param_name.rfind(prefix) == 0) {
-    param_name = param_name.substr(prefix.size(), param_name.size() - prefix.size());
-  }
-
-  for (auto parameter : parameter_list) {
-    auto parameter_ptr = parameter->cast<ParameterPtr>();
-    if (parameter_ptr != nullptr && parameter_ptr->name() == param_name) {
-      return parameter;
-    }
-  }
-  return nullptr;
-}
-
 static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const FuncGraphPtr &func_graph,
-                                             const AnfNodePtr &parameter_plan,
                                              const std::set<CNodePtr> &input_concerned_node) {
-  auto parameter_plan_vnode = parameter_plan->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(parameter_plan_vnode);
-  if (parameter_plan_vnode->value()->isa<None>()) {
-    MS_LOG(INFO) << "parameter_plan is none, no need to set layout for parameter";
-    return std::set<CNodePtr>();
-  }
-  if (!IsValueNode<ValueTuple>(parameter_plan_vnode) || !CheckParamLayout(parameter_plan_vnode)) {
-    MS_LOG(EXCEPTION) << "parameter_plan should be a tuple while each element must be (string, 1-D tuple)";
-  }
-  auto parameter_plan_list = parameter_plan_vnode->value()->cast<ValueTuplePtr>()->value();
   FuncGraphManagerPtr manager = func_graph->manager();
   auto root_parameters = root->parameters();
   std::set<CNodePtr> concerned_cnode;
-  std::unordered_map<AnfNodePtr, Shape> parameter_layout_setting;
-  for (auto p : parameter_plan_list) {
-    auto p_tuple = p->cast<ValueTuplePtr>()->value();
-    auto param_layout = GetValue<Shape>(p_tuple[kIndex1]);
-    auto param_name = GetValue<std::string>(p_tuple[0]);
-    auto parameter = SearchParamByName(root_parameters, param_name);
-    if (parameter == nullptr) {
-      MS_LOG(WARNING) << "Parameter \'" << param_name << "\' is not exist, ignore it.";
-      continue;
-    } else if (parameter_layout_setting.find(parameter) != parameter_layout_setting.end()) {
-      MS_LOG(WARNING) << "The layout of parameter '" << param_name << "' has been set to "
-                      << parameter_layout_setting[parameter] << ", current setting " << param_layout
-                      << " will be ignored.";
+  for (auto param : root_parameters) {
+    auto parameter = param->cast<ParameterPtr>();
+    auto param_info = parameter->param_info();
+    if (param_info == nullptr || param_info->param_strategy().empty()) {
+      // Do not set param_strategy, skip it.
       continue;
     }
-    parameter_layout_setting.insert({parameter, param_layout});
+    auto param_strategy = parameter->param_info()->param_strategy();
+    auto param_name = parameter->param_info()->name();
     AnfNodeIndexSet users = manager->node_users()[parameter];
     auto to_insert_nodes_set = FindAnfNodeIndexSetToInsertStrategy(func_graph, users);
     for (auto user : to_insert_nodes_set) {
@@ -364,7 +310,7 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
         identity_cnode->set_abstract(pre_cnode_abstract->Clone());
         manager->Replace(pre_cnode, identity_cnode);
         target_cnode = identity_cnode;
-        current_strategies = {param_layout};
+        current_strategies = {param_strategy};
       } else {
         // Setting layout into target_cnode directly.
         PrimitivePtr prim = GetCNodePrimitive(target_cnode);
@@ -375,7 +321,7 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
         } else {
           current_strategies = GenerateEmptyStrategies(target_cnode);
         }
-        current_strategies[user.second - 1] = param_layout;
+        current_strategies[user.second - 1] = param_strategy;
         (void)concerned_cnode.insert(target_cnode);
       }
       SetStrategyToCNode(target_cnode, current_strategies);
@@ -405,13 +351,11 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
                                 const int64_t &device_num) {
   constexpr size_t kShardFnIndex = 1;
   constexpr size_t kShardInStrategyIndex = 2;
-  constexpr size_t kShardParameterPlanIndex = 4;
   for (auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimShard)) {
       auto cnode = node->cast<CNodePtr>();
       auto vnode = cnode->input(kShardFnIndex)->cast<ValueNodePtr>();
       auto in_strategy = cnode->input(kShardInStrategyIndex);
-      auto parameter_plan = cnode->input(kShardParameterPlanIndex);
       ScopeGuard scope_guard(vnode->scope());
       auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
       MS_EXCEPTION_IF_NULL(func_graph);
@@ -424,7 +368,7 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       }
       std::set<CNodePtr> concerned_cnode;
       auto input_concerned_cnode = SetInputLayout(func_graph, in_strategy, device_num);
-      auto parameter_concerned_cnode = SetParameterLayout(root, func_graph, parameter_plan, input_concerned_cnode);
+      auto parameter_concerned_cnode = SetParameterLayout(root, func_graph, input_concerned_cnode);
       (void)std::set_union(input_concerned_cnode.begin(), input_concerned_cnode.end(),
                            parameter_concerned_cnode.begin(), parameter_concerned_cnode.end(),
                            std::inserter(concerned_cnode, concerned_cnode.end()));

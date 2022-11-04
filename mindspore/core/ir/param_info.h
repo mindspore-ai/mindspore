@@ -79,6 +79,7 @@ class ParamInfo {
     this->be_cloned_index_.push_back(index);
     clone->init_in_server_ = this->init_in_server_;
     clone->requires_aggr_ = this->requires_aggr_;
+    clone->param_strategy_ = this->param_strategy_;
     clone->ClearParameter();
     return clone;
   }
@@ -107,6 +108,9 @@ class ParamInfo {
 
   bool cache_enable() const { return cache_enable_; }
   void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
+
+  const std::vector<int64_t> &param_strategy() const { return param_strategy_; }
+  void set_param_strategy(const std::vector<int64_t> &param_strategy) { param_strategy_ = param_strategy; }
 
   std::vector<int64_t> cache_shape() const { return cache_shape_; }
   void set_cache_shape(const std::vector<int64_t> &cache_shape) { cache_shape_ = cache_shape; }
@@ -139,6 +143,8 @@ class ParamInfo {
   bool use_persistent_storage_{false};
   // Used to identify the same Parameter for Worker and Server in the embedding cache scenario.
   int32_t key_{-1};
+  // Used to indicate parameter strategy, only take effect in cell shard
+  std::vector<int64_t> param_strategy_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_

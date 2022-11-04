@@ -925,7 +925,7 @@ AbstractBasePtr InferImplTaylor(const AnalysisEnginePtr &, const PrimitivePtr &p
 AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
   // Inputs: func, in_axes, out_axes, device, level.
-  constexpr size_t shard_input_size = 6;
+  constexpr size_t shard_input_size = 5;
   CheckArgsSize(primitive->name(), args_spec_list, shard_input_size);
   MS_LOG(DEBUG) << "Evaluate Shard: " << args_spec_list[0]->ToString();
 

@@ -36,7 +36,7 @@ class Shard(Shard_):
     def __call__(self, fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
         if ms.context.get_context("mode") != ms.context.PYNATIVE_MODE or \
                 ms.context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
-            raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
+            raise AssertionError(f"Cell shard only supports auto parallel under PyNative mode.")
         if ms.context.get_context("device_target") not in ["Ascend", "GPU"]:
             raise AssertionError(f"'Shard' now only supports 'Ascend' and 'GPU'")
         if ms.context.get_auto_parallel_context("search_mode") != "sharding_propagation":
@@ -46,16 +46,6 @@ class Shard(Shard_):
         if not isinstance(out_strategy, (type(None), tuple)):
             raise TypeError(f"For 'Shard', the 'out_strategy' should be None or tuple, "
                             f"but got {type(out_strategy).__name__}")
-        if not isinstance(parameter_plan, (dict, type(None))):
-            raise TypeError(f"For 'Shard', the 'parameter_plan' should be a dict or None, "
-                            f"but got {type(parameter_plan).__name__}")
-        if isinstance(parameter_plan, dict):
-            for k in parameter_plan.keys():
-                v = parameter_plan[k]
-                if not isinstance(k, str) or not isinstance(v, tuple):
-                    raise TypeError(f"For 'Shard', the type of each key and value in 'parameter_plan' must be str and "
-                                    f"tuple, but got {type(k).__name__} and {type(parameter_plan[v]).__name__}")
-        parameter_plan = self._parameter_plan_dict2tuple(parameter_plan)
 
         if not isinstance(device, str):
             raise TypeError(f"For 'Shard', the 'device' should be a string, "
@@ -75,7 +65,7 @@ class Shard(Shard_):
                            "and the 'dataset_strategy' will be set to 'full_batch'.")
             ms.context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-        if self._is_attrs_has_been_set(fn, in_strategy, out_strategy, parameter_plan, device, level):
+        if self._is_attrs_has_been_set(fn, in_strategy, out_strategy, device, level):
             return self.shard_fn
         shard_ = Shard()
 
@@ -83,10 +73,13 @@ class Shard(Shard_):
             for param in fn.trainable_params():
                 param.is_in_shard = True
 
+        # Set parameter layout to corresponding parameter
+        self._set_param_layout_into_parameter(fn, parameter_plan)
+
         def shard_fn(*args):
             @ms.common.jit(hash_args=fn)
             def after_shard(*args):
-                return shard_(fn, in_strategy, out_strategy, parameter_plan, device, level)(*args)
+                return shard_(fn, in_strategy, out_strategy, device, level)(*args)
 
             return after_shard(*args)
 
@@ -94,25 +87,63 @@ class Shard(Shard_):
         self.fn = fn
         self.in_strategy = in_strategy
         self.out_strategy = out_strategy
-        self.parameter_plan = parameter_plan
         self.device = device
         self.level = level
         return self.shard_fn
 
     @staticmethod
-    def _parameter_plan_dict2tuple(parameter_plan):
-        if not isinstance(parameter_plan, dict):
-            return parameter_plan
+    def _search_parameter_by_name(param_name: str, net):
+        param_name = param_name.replace("self.", "")
+        for param in net.trainable_params():
+            if param.name == param_name:
+                return param
+        return None
 
-        parameter_plan_tuple = ()
-        for k in parameter_plan:
-            parameter_plan_tuple += ((k, parameter_plan[k]),)
-        return parameter_plan_tuple
+    @staticmethod
+    def _check_layout_is_valid(param_name, param_shape, param_strategy):
+        if len(param_strategy) != len(param_shape):
+            raise ValueError(f"For {param_name}, the length of param_strategy: {len(param_strategy)}, "
+                             f"is not equal to param_shape len: {len(param_shape)}.")
+        for i, _ in enumerate(param_strategy):
+            if param_shape[i] % param_strategy[i] != 0:
+                raise ValueError(f"For '{param_name}', the param_shape is {param_shape} and "
+                                 f"the setting param_strategy is {param_strategy}. "
+                                 f"The param_shape[{i}]: {param_shape[i]} cannot be divisible by "
+                                 f"param_strategy[{i}]: {param_strategy[i]}.")
 
-    def _is_attrs_has_been_set(self, fn, in_strategy, out_strategy, parameter_plan, device, level):
+    def _set_param_layout_into_parameter(self, fn, parameter_plan):
+        """ Set param_strategy into parameter if fn is a Cell and parameter_plan is a dict."""
+        if parameter_plan is None:
+            return
+        if isinstance(parameter_plan, dict):
+            if not isinstance(fn, ms.nn.Cell):
+                raise TypeError(f"If parameter_plan is set, type of fn must be mindspore.nn.Cell, but got {type(fn)}")
+            for k in parameter_plan.keys():
+                v = parameter_plan[k]
+                if not isinstance(k, str) or not isinstance(v, tuple):
+                    raise TypeError(f"For 'Shard', the type of each key and value in 'parameter_plan' must be str and "
+                                    f"tuple, but got {type(k).__name__} and {type(v).__name__}")
+        else:
+            raise TypeError(f"For 'Shard', the 'parameter_plan' should be a dict or None, "
+                            f"but got {type(parameter_plan).__name__}")
+
+        for param_name in parameter_plan.keys():
+            param_strategy = parameter_plan[param_name]
+            param = self._search_parameter_by_name(param_name, fn)
+            if param is None:
+                logger.warning(f"{param_name} is not exist, ignored its setting.")
+                continue
+
+            self._check_layout_is_valid(param_name, param.shape, param_strategy)
+            if param.param_info.param_strategy:
+                logger.warning(f"The layout of parameter '{param_name}' "
+                               f"has been set to {param.param_info.param_strategy}, "
+                               f"current setting {param_strategy} will be ignored.")
+            param.param_info.param_strategy = param_strategy
+
+    def _is_attrs_has_been_set(self, fn, in_strategy, out_strategy, device, level):
         return self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
-               self.out_strategy == out_strategy and self.parameter_plan == parameter_plan and \
-               self.device == device and self.level == level
+               self.out_strategy == out_strategy and self.device == device and self.level == level
 
 
 def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
