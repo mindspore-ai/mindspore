@@ -36,10 +36,10 @@ const size_t kHeavisideOutputsNum = 1;
 
 bool HeavisideCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  input0_shape = inputs[0]->GetShapeVector();
-  input1_shape = inputs[1]->GetShapeVector();
-  output_shape = outputs[0]->GetShapeVector();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHeavisideInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHeavisideOutputsNum, kernel_name_);
   input0_dtype_ = inputs[0]->GetDtype();
   input1_dtype_ = inputs[1]->GetDtype();
   if (input0_dtype_ != input1_dtype_) {
@@ -59,12 +59,21 @@ bool HeavisideCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
+int HeavisideCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input0_shape = inputs[0]->GetShapeVector();
+  input1_shape = inputs[1]->GetShapeVector();
+  output_shape = outputs[0]->GetShapeVector();
+  return KRET_OK;
+}
+
 template <typename T>
 bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHeavisideInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHeavisideOutputsNum, kernel_name_);
-
   BroadcastIterator base_iter(input0_shape, input1_shape, output_shape);
   const T *input0 = static_cast<const T *>(inputs[0]->addr);
   const T *input1 = static_cast<const T *>(inputs[1]->addr);

@@ -33,10 +33,10 @@ const size_t kGcdOutputsNum = 1;
 
 bool GcdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  x1_shape_ = inputs[0]->GetShapeVector();
-  x2_shape_ = inputs[1]->GetShapeVector();
-  y_shape_ = outputs[0]->GetShapeVector();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGcdInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGcdOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -47,11 +47,21 @@ bool GcdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
+int GcdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs,
+                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  x1_shape_ = inputs[0]->GetShapeVector();
+  x2_shape_ = inputs[1]->GetShapeVector();
+  y_shape_ = outputs[0]->GetShapeVector();
+  return KRET_OK;
+}
+
 template <typename T>
 bool GcdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGcdInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGcdOutputsNum, kernel_name_);
   const T *x1 = static_cast<const T *>(inputs[0]->addr);
   const T *x2 = static_cast<const T *>(inputs[1]->addr);
   T *y = static_cast<T *>(outputs[0]->addr);
