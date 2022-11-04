@@ -12,7 +12,7 @@ mindspore.ops.glu
     请参考 `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
 
     参数：
-        - **x** (Tensor) - 被分Tensor，数据类型为number.Number, shape为 :math:`(\ast_1, N, \ast_2)` ，其中`*`为任意额外维度。
+        - **x** (Tensor) - 被分Tensor，数据类型为number.Number, shape为 :math:`(\ast_1, N, \ast_2)` ，其中 `*` 为任意额外维度。
         - **axis** (int，可选) - 指定分割轴。数据类型为整型，默认值：-1。
 
     返回：

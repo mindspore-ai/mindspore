@@ -21,6 +21,6 @@ mindspore.ops.expand
         - **ValueError** - 如果 `size` 的长度小于 `input_x` shape的大小。
         - **ValueError** - 如果 `size` 不是一个1D Tensor。
         - **ValueError** - 如果 `size` 某维度的值不等于 `input_x` 对应维度的值，且 `input_x` 该维度不为1。
-        - **ValueError** - 如果 `size` 有小于0的值在最前面且对应` input_x` 不存在的维度上。
+        - **ValueError** - 如果 `size` 有小于0的值在最前面且对应 `input_x` 不存在的维度上。
         - **ValueError** - 如果输出的元素数量超过1000000。
        
