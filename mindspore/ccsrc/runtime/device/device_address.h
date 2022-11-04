@@ -197,8 +197,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   // Asynchronously copy device memory to host side.
   virtual bool AsyncDeviceToHost(const ShapeVector &, size_t, TypeId, void *, size_t) const { return true; }
 
-  UserDataPtr user_data() const { return user_data_; }
-  void set_user_data(const UserDataPtr &user_data) { user_data_ = user_data; }
   // Free the ptr in user data when the ref count is 0.
   virtual void ClearUserData() {}
 
@@ -232,9 +230,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name_{""};
   uint32_t device_id_{0};
   bool from_persistent_mem_{false};
-
-  // User data is the extra data required by the kernel launch in addition to device ptr.
-  UserDataPtr user_data_{nullptr};
 
   friend class KernelRuntime;
   friend class MemoryManager;
