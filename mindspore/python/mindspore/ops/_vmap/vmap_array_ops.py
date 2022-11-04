@@ -224,23 +224,19 @@ def get_tile_vmap_rule(prim, axis_size):
         prim = Primitive(prim)
 
     @constexpr
-    def _get_tile_shape(input_shape, multiples):
+    def _get_batch_multiples(input_shape, dim, multiples):
         input_ndim = len(input_shape)
         multiples_ndim = len(multiples)
-        input_shape = (input_shape[0],) + (1,) * (multiples_ndim - input_ndim + 1) + input_shape[1:]
-        multiples = (1,) * (input_ndim - multiples_ndim) + multiples
-        input_expand_shape = (input_shape[0],) + tuple([
-            j
-            for i in input_shape[1:]
-            for j in [1, i]
-        ])
-        repeat_shape = (input_shape[0],) + tuple([
-            k
-            for pair in zip(multiples[1:], input_shape[1:])
-            for k in pair
-        ])
-        output_shape = tuple([a * b for a, b in zip(input_shape, multiples)])
-        return input_expand_shape, repeat_shape, output_shape
+        if multiples_ndim < input_ndim - 1:
+            multiples = (1,) * (input_ndim - 1 - multiples_ndim) + multiples
+
+        rev_dim = input_ndim - 1 - dim
+        if rev_dim == 0:
+            return multiples + (1,), multiples_ndim
+
+        batch_multiples = list(multiples)
+        batch_multiples.insert(-rev_dim, 1)
+        return tuple(batch_multiples), multiples_ndim - rev_dim
 
     def vmap_rule(input_bdim, multiples_bdim):
         is_all_none, result = vmap_general_preprocess(prim, input_bdim, multiples_bdim)
@@ -252,13 +248,10 @@ def get_tile_vmap_rule(prim, axis_size):
         if multiples_dim is not None:
             _raise_value_error("The source axis of shape in `Tile` must be None, but got {}.".format(multiples_dim))
 
-        input_x = _bdim_at_front(input_x, dim, axis_size)
         input_shape = F.shape(input_x)
-        input_expand_shape, repeat_shape, output_shape = _get_tile_shape(input_shape, multiples)
-        expand_input = F.reshape(input_x, input_expand_shape)
-        repeat_tensor = P.BroadcastTo(repeat_shape)(expand_input)
-        output = F.reshape(repeat_tensor, output_shape)
-        return output, 0
+        batch_multiples, out_dim = _get_batch_multiples(input_shape, dim, multiples)
+        repeat_tensor = P.Tile()(input_x, batch_multiples)
+        return repeat_tensor, out_dim
 
     return vmap_rule
 
