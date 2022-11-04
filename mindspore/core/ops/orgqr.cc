@@ -36,6 +36,9 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<Abstr
   const size_t kColIndex = 1;
   const size_t kTwo = 2;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (IsDynamic(x_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
   auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   if (x_shape.size() != kInputNoBatch && x_shape.size() != kInputWithBatch) {
     MS_EXCEPTION(ValueError) << "For Orgqr, the rank of x must be equal to 2 or 3"

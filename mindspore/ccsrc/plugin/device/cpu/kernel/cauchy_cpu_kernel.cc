@@ -30,8 +30,6 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kCauchyOutputNum = 1;
-constexpr auto kAttrSigma = "sigma";
-constexpr auto kAttrMedian = "median";
 }  // namespace
 
 bool CauchyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

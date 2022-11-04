@@ -26,11 +26,10 @@ constexpr size_t kOutputsNum = 1;
 }  // namespace
 bool LowerBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
-  if (inputs.size() != kInputsNum || outputs.size() != kOutputsNum) {
-    MS_LOG(ERROR) << kernel_name_ << ": input and output size must be " << kInputsNum << " and " << kOutputsNum
-                  << ", but get " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -48,12 +47,7 @@ int LowerBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   sorted_x_shape_ = inputs[0]->GetShapeVector();
   values_shape_ = inputs[1]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
-  size_t size_exp = 2;
-  if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||
-      sorted_x_shape_[0] != values_shape_[0]) {
-    MS_LOG(WARNING) << "The shape of input is invalid.";
-    return KRET_RESIZE_FAILED;
-  }
+
   sorted_x_num_ = static_cast<size_t>(sorted_x_shape_[0] * sorted_x_shape_[1]);
   values_num_ = static_cast<size_t>(values_shape_[0] * values_shape_[1]);
   output_num_ = static_cast<size_t>(output_shape_[0] * output_shape_[1]);

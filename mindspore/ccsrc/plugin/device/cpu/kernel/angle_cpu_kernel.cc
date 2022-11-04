@@ -28,6 +28,8 @@ namespace kernel {
 bool AngleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   kernel_name_ = base_operator->name();
   input_dtype_ = inputs[0]->GetDtype();
   return true;
@@ -35,8 +37,6 @@ bool AngleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 
 bool AngleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   bool ret = true;
   switch (input_dtype_) {
     case (kNumberTypeComplex64): {

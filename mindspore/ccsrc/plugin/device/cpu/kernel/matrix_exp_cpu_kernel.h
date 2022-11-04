@@ -52,8 +52,6 @@ class MatrixExpCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  bool CheckInputShape() const;
-
   template <typename Derived1, typename Derived2, typename Derived3>
   void MTaylorApproximant(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I, int order,
                           Eigen::MatrixBase<Derived3> *E) const;
