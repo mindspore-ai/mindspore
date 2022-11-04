@@ -27,11 +27,14 @@
 
 namespace mindspore {
 namespace kernel {
-class CauchyCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CauchyCpuKernelMod : public NativeCpuKernelMod {
  public:
   CauchyCpuKernelMod() = default;
   ~CauchyCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -42,7 +45,8 @@ class CauchyCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &outputs);
 
-  float sigma_ = 1.0, median_ = 0;
+  float sigma_{1.0};
+  float median_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

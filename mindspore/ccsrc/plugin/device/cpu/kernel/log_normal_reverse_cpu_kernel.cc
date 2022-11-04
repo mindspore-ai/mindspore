@@ -26,29 +26,38 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const uint32_t kNumInput = 1;
-const uint32_t kNumOutput = 1;
+constexpr uint32_t kNumInput = 1;
+constexpr uint32_t kNumOutput = 1;
+constexpr auto kAttrMean = "mean";
+constexpr auto kAttrStd = "std";
 }  // namespace
 
-void LogNormalReverseCpuKernel::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat16) {
-    if (input_dtype_ != kNumberTypeFloat64) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << ", the datatype of the input1 not support, support datatype: float16, float32, float64.";
-    }
+bool LogNormalReverseCpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  MS_ERROR_IF_NULL(prim);
+  input_mean_ = GetValue<float>(prim->GetAttr(kAttrMean));
+  input_std_ = GetValue<float>(prim->GetAttr(kAttrStd));
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  if (input_dtype_ != output_dtype_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the data type of the input does not match the data type of the output.";
+  return true;
+}
+
+int LogNormalReverseCpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  input_mean_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "mean");
-  input_std_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "std");
+  input_dtype_ = inputs[kIndex0]->GetDtype();
+  return KRET_OK;
 }
 
 bool LogNormalReverseCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
