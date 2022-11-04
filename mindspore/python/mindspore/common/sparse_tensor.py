@@ -217,7 +217,7 @@ class COOTensor(COOTensor_):
 
     Common arithmetic operations include: addition (+), subtraction (-), multiplication (*),
     and division (/). For details about operations supported by `COOTensor`, see
-    [operators](https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators).
+    `operators <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators>`_.
 
     Note:
         This is an experimental feature and is subjected to change.
@@ -534,7 +534,7 @@ class CSRTensor(CSRTensor_):
 
     Common arithmetic operations include: addition (+), subtraction (-), multiplication (*),
     and division (/). For details about operations supported by `CSRTensor`, see
-    [operators](https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators).
+    `operators <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators>`_.
 
     Note:
         This is an experimental feature and is subjected to change.
