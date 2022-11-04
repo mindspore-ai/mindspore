@@ -36,7 +36,7 @@ std::set<lite::Tensor *> KernelExecUtil::AllOutTensor(const std::vector<KernelEx
   std::set<lite::Tensor *> all_out_tensors{};
   for (const auto &kernel_in_subgraph : kernels) {
     for (auto *tensor : kernel_in_subgraph->out_tensors()) {
-      all_out_tensors.insert(tensor);
+      (void)all_out_tensors.insert(tensor);
     }
   }
   return all_out_tensors;
@@ -260,7 +260,7 @@ void KernelExecUtil::FindAllInoutKernelsInSubgraphKernel(const std::vector<Kerne
     auto sub_graph = reinterpret_cast<SubGraphKernel *>(kernel);
     MS_ASSERT(sub_graph != nullptr);
     auto kernel_in_subgraph = sub_graph->nodes();
-    all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
+    (void)all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
   }
 
   KernelExecUtil::FindAllInoutKernels(all_kernels);
@@ -311,7 +311,7 @@ int KernelExecUtil::SetKernelTensorDataType(const kernel::KernelExec *kernel) {
   return RET_OK;
 }
 
-bool KernelExecUtil::IsOutputSubGraph(KernelExec *subgraph_kernel) {
+bool KernelExecUtil::IsOutputSubGraph(const KernelExec *subgraph_kernel) {
   return !subgraph_kernel->out_tensors().empty() &&
          std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),
                      [](lite::Tensor *tensor) { return tensor->IsGraphOutput(); });
@@ -456,7 +456,7 @@ SubGraphKernel *KernelExecUtil::BelongToWhichSubGraph(const std::vector<KernelEx
       continue;
     }
     if (std::any_of(subgraph->nodes().begin(), subgraph->nodes().end(),
-                    [&kernel](KernelExec *node) { return node == kernel; })) {
+                    [&kernel](const KernelExec *node) { return node == kernel; })) {
       return subgraph;
     }
   }
@@ -483,12 +483,12 @@ bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) {
   return false;
 }
 
-bool KernelExecUtil::IsNonTailCall(KernelExec *node) {
+bool KernelExecUtil::IsNonTailCall(const KernelExec *node) {
   return node->type() == schema::PrimitiveType_Call &&
          !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
 
-bool KernelExecUtil::IsTailCall(KernelExec *node) {
+bool KernelExecUtil::IsTailCall(const KernelExec *node) {
   return node->type() == schema::PrimitiveType_Call &&
          (reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
 }
@@ -574,7 +574,7 @@ std::vector<KernelExec *> KernelExecUtil::GetCallInputPartialsCorrespondingOutpu
   return all_subgraphs;
 }
 
-KernelExec *KernelExecUtil::GetPartialOutputCall(KernelExec *partial_node) {
+KernelExec *KernelExecUtil::GetPartialOutputCall(const KernelExec *partial_node) {
   if (partial_node->type() != schema::PrimitiveType_PartialFusion) {
     MS_LOG(ERROR) << "input node is not partial node.";
     return nullptr;
@@ -620,9 +620,9 @@ KernelExec *KernelExecUtil::GetPartialOutputCall(KernelExec *partial_node) {
 
 bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) { return false; }
 
-bool KernelExecUtil::IsNonTailCall(KernelExec *node) { return false; }
+bool KernelExecUtil::IsNonTailCall(const KernelExec *node) { return false; }
 
-bool KernelExecUtil::IsTailCall(KernelExec *node) { return false; }
+bool KernelExecUtil::IsTailCall(const KernelExec *node) { return false; }
 
 bool KernelExecUtil::IsNonTailCallSubGraph(KernelExec *kernel) { return false; }
 
@@ -634,7 +634,7 @@ std::vector<KernelExec *> KernelExecUtil::GetCallInputPartialsCorrespondingOutpu
   return {};
 }
 
-KernelExec *KernelExecUtil::GetPartialOutputCall(KernelExec *partial_node) { return nullptr; }
+KernelExec *KernelExecUtil::GetPartialOutputCall(const KernelExec *partial_node) { return nullptr; }
 
 #endif
 }  // namespace mindspore::kernel

@@ -18,7 +18,7 @@
 #include "src/tensor.h"
 
 namespace mindspore::kernel {
-int ExitSubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &after) { return lite::RET_OK; }
+int ExitSubGraphKernel::Execute(const KernelCallBack &, const KernelCallBack &) { return lite::RET_OK; }
 
 SubGraphKernel *ExitSubGraphKernel::Create(Kernel *kernel) {
   auto sub_kernel = new kernel::ExitSubGraphKernel(kernel);
@@ -29,5 +29,5 @@ SubGraphKernel *ExitSubGraphKernel::Create(Kernel *kernel) {
   return sub_kernel;
 }
 
-void ExitSubGraphKernel::SetPartial(kernel::KernelExec *partial_node) { partials_.insert(partial_node); }
+void ExitSubGraphKernel::SetPartial(kernel::KernelExec *partial_node) { (void)partials_.insert(partial_node); }
 }  // namespace mindspore::kernel

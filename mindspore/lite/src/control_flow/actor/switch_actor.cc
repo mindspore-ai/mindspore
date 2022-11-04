@@ -145,7 +145,11 @@ int LiteSwitchOpActor::CompileArrow(const std::unordered_map<void *, std::set<st
   }
 
   if (!kernel_->out_tensors().empty()) {
-    CompileArrowThroughOutputTensors(receivers_map);
+    ret = CompileArrowThroughOutputTensors(receivers_map);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "CompileArrowThroughOutputTensors failed.";
+      return ret;
+    }
   }
 
   AppendOutputTensors();
@@ -282,7 +286,7 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
 
   auto ret = InitInputData();
   if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
+    (void)input_op_datas_.erase(op_uuid);
     context->SetFailed(ret);
     return;
   }

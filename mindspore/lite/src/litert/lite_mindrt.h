@@ -65,7 +65,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
  public:
   void AddResultIndex(size_t index);
-  const kernel::KernelExec *GetKernel() { return kernel_; }
+  const kernel::KernelExec *GetKernel() const { return kernel_; }
   // call this function after CompileArrow
   virtual std::set<kernel::KernelExec *> GetPartialKernels() const {
     if (partial_node_ == nullptr) {

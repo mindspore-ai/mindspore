@@ -111,7 +111,7 @@ std::set<kernel::KernelExec *> ControlFlowScheduler::GetNonTailCallSubGraphs(
     if (!kernel::KernelExecUtil::IsNonTailCallSubGraph(subgraph_kernel)) {
       continue;
     }
-    non_tail_subgraph_kernels.insert(kernel);
+    (void)non_tail_subgraph_kernels.insert(kernel);
   }
   return non_tail_subgraph_kernels;
 }
@@ -135,7 +135,7 @@ int ControlFlowScheduler::AdjustNodesForTailCallSubGraph(std::vector<kernel::Ker
     if (IsContain(*second_part_nodes, need)) {
       continue;
     }
-    auto is_need = [&need](kernel::KernelExec *node) { return node == need; };
+    auto is_need = [&need](const kernel::KernelExec *node) { return node == need; };
     auto iter = std::find_if(first_part_nodes->begin(), first_part_nodes->end(), is_need);
     MS_CHECK_TRUE_MSG(iter != first_part_nodes->end(), RET_ERROR, "graph is not right");
     second_part_nodes->insert(second_part_nodes->begin(), *iter);
@@ -225,7 +225,7 @@ void ControlFlowScheduler::AppendToProcessQ(std::vector<kernel::KernelExec *> *n
   for (auto &item : new_non_tail_call_subgraphs) {
     if (all_non_tail_subgraphs->find(item) == all_non_tail_subgraphs->end()) {
       to_process_q_.push(item);
-      all_non_tail_subgraphs->insert(item);
+      (void)all_non_tail_subgraphs->insert(item);
     }
   }
   return;
@@ -287,7 +287,7 @@ int ControlFlowScheduler::RecordAllNonTailCallLinkInfo(std::vector<kernel::Kerne
 void ControlFlowScheduler::RecordSubgraphCaller(const size_t &subgraph_index, kernel::KernelExec *partial_node) {
   if (more_than_once_called_partial_nodes_.find(subgraph_index) == more_than_once_called_partial_nodes_.end()) {
     std::set<kernel::KernelExec *> tmp_set{partial_node};
-    more_than_once_called_partial_nodes_.insert(
+    (void)more_than_once_called_partial_nodes_.insert(
       std::pair<size_t, std::set<kernel::KernelExec *>>{subgraph_index, tmp_set});
   } else {
     more_than_once_called_partial_nodes_[subgraph_index].insert(partial_node);
@@ -344,7 +344,7 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateExitSubGraph(kernel::SubGrap
     }
     src_tensors_->push_back(new_tensor);
     new_output_tensors.push_back(new_tensor);
-    kernel::KernelExecUtil::ReplaceSubGraphNodesOutTensor(subgraph, old_tensor, new_tensor);
+    (void)kernel::KernelExecUtil::ReplaceSubGraphNodesOutTensor(subgraph, old_tensor, new_tensor);
     subgraph->set_out_tensor(new_tensor, i);
   }
   auto exit_subgraph = kernel::KernelExecUtil::CreateSubGraphKernel({}, &new_output_tensors, &old_output_tensors,
@@ -374,11 +374,12 @@ kernel::SubGraphKernel *ControlFlowScheduler::AddOutputKernel(kernel::SubGraphKe
     }
     src_tensors_->push_back(new_tensor);
     new_output_tensors.push_back(new_tensor);
-    kernel::KernelExecUtil::ReplaceSubGraphNodesOutTensor(subgraph, old_tensor, new_tensor);
+    (void)kernel::KernelExecUtil::ReplaceSubGraphNodesOutTensor(subgraph, old_tensor, new_tensor);
     call_node->set_out_tensor(new_tensor, i);
     context_->ReplaceLinkInfoReceiverWithNewOne(new_tensor, old_tensor);
   }
   auto output_node = kernel::IdentityKernel::Create(new_output_tensors, old_output_tensors, this->context_);
+  MS_CHECK_FALSE_MSG(output_node == nullptr, nullptr, "Create Identity failed.");
   output_node->set_name(call_node->name() + "_output");
   kernel::KernelKey output_desc = call_node->desc();
   output_desc.type = PrimType_Inner_Identity;
@@ -546,7 +547,7 @@ int ControlFlowScheduler::RecordTailCallLinkInfo(kernel::KernelExec *tail_call) 
     return ret;
   }
 
-  if (std::any_of(final_graphs.begin(), final_graphs.end(), [&tail_call](kernel::KernelExec *item) {
+  if (std::any_of(final_graphs.begin(), final_graphs.end(), [&tail_call](const kernel::KernelExec *item) {
         return item->out_tensors().size() != tail_call->out_tensors().size();
       })) {
     MS_LOG(DEBUG) << "not is mindir model, return ok.";
@@ -603,6 +604,7 @@ kernel::SubGraphKernel *ControlFlowScheduler::IsolatePartialInputs(kernel::SubGr
     new_partial_inputs.push_back(new_tensor);
   }
   auto identity_node = kernel::IdentityKernel::Create(old_partial_inputs, new_partial_inputs, this->context_);
+  MS_CHECK_TRUE_MSG(identity_node != nullptr, nullptr, "Create Identity kernel failed.");
   identity_node->set_name(partial->name() + "_input_identity");
   kernel::KernelKey identity_desc = partial->desc();
   identity_desc.type = PrimType_Inner_Identity;
@@ -617,7 +619,7 @@ kernel::SubGraphKernel *ControlFlowScheduler::IsolatePartialInputs(kernel::SubGr
   identity_node->AddOutKernel(partial);
   partial->set_in_kernels({identity_node});
   auto partial_iter = std::find(nodes.begin(), nodes.end(), partial);
-  nodes.insert(partial_iter, identity_node);
+  (void)nodes.insert(partial_iter, identity_node);
   auto subgraph_type = subgraph->subgraph_type();
   auto new_subgraph =
     kernel::KernelExecUtil::CreateSubGraphKernel(nodes, &inputs, &outputs, subgraph_type, *context_, schema_version_);
@@ -715,7 +717,7 @@ int ControlFlowScheduler::IsolateInputOfMultipleCalledGraph(std::vector<kernel::
 
   for (auto item : replace_pair) {
     auto old_subgrpah = item.first;
-    subgraphs_need_boundary_.erase(old_subgrpah);
+    (void)subgraphs_need_boundary_.erase(old_subgrpah);
   }
 
   // update all dst_kernels

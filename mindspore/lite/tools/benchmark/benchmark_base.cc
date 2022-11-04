@@ -333,7 +333,7 @@ int BenchmarkBase::CheckDeviceTypeValid() {
   return RET_OK;
 }
 
-int BenchmarkBase::InitDumpConfigFromJson(char *path) {
+int BenchmarkBase::InitDumpConfigFromJson(const char *path) {
 #ifndef BENCHMARK_CLIP_JSON
   auto real_path = RealPath(path);
   std::ifstream ifs(real_path);

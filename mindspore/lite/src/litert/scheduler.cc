@@ -16,6 +16,7 @@
 
 #include "src/litert/scheduler.h"
 #include <map>
+#include <unordered_set>
 #include <queue>
 #include <string>
 #include <vector>
@@ -528,7 +529,7 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   return RET_OK;
 }
 
-int Scheduler::CheckInputParam(std::vector<kernel::KernelExec *> *dst_kernels) {
+int Scheduler::CheckInputParam(const std::vector<kernel::KernelExec *> *dst_kernels) const {
   if (dst_kernels == nullptr) {
     return RET_ERROR;
   }

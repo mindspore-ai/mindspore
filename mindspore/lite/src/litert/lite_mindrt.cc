@@ -221,8 +221,8 @@ int LiteOpActor::UpdateActorOutput() {
     return RET_ERROR;
   }
   partial_node_ = partial_nodes.front();
-  std::copy(partial_node_->in_tensors().begin(), partial_node_->in_tensors().end(),
-            std::back_inserter(origin_output_tensors));
+  (void)std::copy(partial_node_->in_tensors().begin(), partial_node_->in_tensors().end(),
+                  std::back_inserter(origin_output_tensors));
 
   kernel_->set_out_tensors(origin_output_tensors);
 
@@ -381,7 +381,7 @@ int LiteOpActor::InitInputData() {
     auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
     ret = subgraph_kernel->ReSize();
     MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel Resize failed.");
-    subgraph_kernel->MallocNodesOutputSpace();
+    ret = subgraph_kernel->MallocNodesOutputSpace();
     MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel MallocSubgraphInputs failed.");
   }
   return RET_OK;

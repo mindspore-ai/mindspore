@@ -65,8 +65,7 @@ int MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_t
     MS_LOG(ERROR) << "CopyTensorListTensorDataType failed.";
     return ret;
   }
-  lite::MoveTensorListTensorData(dst_tensorlist, src_tensorlist);
-  return RET_OK;
+  return lite::MoveTensorListTensorData(dst_tensorlist, src_tensorlist);
 }
 
 int MoveData(const std::vector<lite::Tensor *>::iterator &dst_begin,

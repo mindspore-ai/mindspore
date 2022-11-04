@@ -286,8 +286,8 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, Al
   result->set_tensor_name(src.tensor_name() + "_duplicate");
   auto src_tensor_dtype = src.tensors_data_type_;
   std::vector<std::vector<int> > tensor_shape{};
-  std::transform(src.tensors_.begin(), src.tensors_.end(), std::back_inserter(tensor_shape),
-                 [](const Tensor *tensor_item) { return tensor_item->shape(); });
+  (void)std::transform(src.tensors_.begin(), src.tensors_.end(), std::back_inserter(tensor_shape),
+                       [](const Tensor *tensor_item) { return tensor_item->shape(); });
 
   for (LiteQuantParam quant : src.quant_params()) {
     result->AddQuantParam(quant);

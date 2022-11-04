@@ -33,10 +33,10 @@ class KernelExecUtil {
   static int TopologicalSortKernels(std::vector<KernelExec *> *kernels);
   static void InitTensorInitRefCount(const std::vector<KernelExec *> &kernels);
   static bool IsSwitchTypeCall(KernelExec *kernel);
-  static bool IsNonTailCall(KernelExec *node);
-  static bool IsTailCall(KernelExec *node);
+  static bool IsNonTailCall(const KernelExec *node);
+  static bool IsTailCall(const KernelExec *node);
   static std::vector<KernelExec *> GetCallInputPartials(KernelExec *call_node);
-  static KernelExec *GetPartialOutputCall(KernelExec *partial_node);
+  static KernelExec *GetPartialOutputCall(const KernelExec *partial_node);
   static bool IsNonTailCallSubGraph(KernelExec *kernel);
   static bool IsTailCallSubGraph(KernelExec *kernel);
   static std::vector<KernelExec *> GetCallInputPartialsCorrespondingOutputSubgraph(KernelExec *call_node);
@@ -55,7 +55,7 @@ class KernelExecUtil {
   static int ReplaceSubGraphNodesInTensor(KernelExec *kernel, const lite::Tensor *old_tensor, lite::Tensor *new_tensor);
   static int ReplaceSubGraphNodesOutTensor(KernelExec *kernel, const lite::Tensor *old_tensor,
                                            lite::Tensor *new_tensor);
-  static bool IsOutputSubGraph(KernelExec *subgraph_kernel);
+  static bool IsOutputSubGraph(const KernelExec *subgraph_kernel);
   static SubGraphKernel *BelongToWhichSubGraph(const std::vector<KernelExec *> &subgraphs, KernelExec *kernel);
 
  private:

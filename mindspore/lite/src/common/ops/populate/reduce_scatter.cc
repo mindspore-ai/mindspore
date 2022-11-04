@@ -46,8 +46,8 @@ OpParameter *PopulateReduceScatterParameter(const void *prim) {
     MS_LOG(ERROR) << "Malloc ReduceScatterParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(ReduceScatterParameter));
-  memcpy(param->group_, value->group()->c_str(), value->group()->size());
+  (void)memset(param, 0, sizeof(ReduceScatterParameter));
+  (void)memcpy(param->group_, value->group()->c_str(), value->group()->size());
   param->rank_size_ = value->rank_size();
   param->mode_ = value->mode();
   param->op_parameter_.type_ = primitive->value_type();

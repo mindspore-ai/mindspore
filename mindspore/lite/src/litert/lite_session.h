@@ -139,7 +139,7 @@ class LiteSession {
   int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);
   int PrepareKernels(const Model *model);
   int SetTensorInitRefCount(const Model *model);
-  int SetNonTaiCallSubgraphOutputInitRefCount(const std::vector<kernel::KernelExec *> &non_tail_call_kernels);
+  int SetNonTaiCallSubgraphOutputInitRefCount();
   static int ReSizeKernels(
     const std::vector<kernel::KernelExec *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> &isolate_input_map = std::unordered_map<Tensor *, Tensor *>());

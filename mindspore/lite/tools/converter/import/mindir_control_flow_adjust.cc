@@ -201,7 +201,8 @@ int MindIRControlFlowAdjust::MoveCallInputsToPartialFusionInputs(const std::set<
       MS_ASSERT(call_first_input_cnode != nullptr);
       if (IsPartialFusion(call_first_input_cnode)) {
         auto partial_cnode_inputs = call_first_input_cnode->inputs();
-        std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(), std::back_inserter(partial_cnode_inputs));
+        (void)std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(),
+                        std::back_inserter(partial_cnode_inputs));
         call_first_input_cnode->set_inputs(partial_cnode_inputs);
       }
 
@@ -219,14 +220,14 @@ int MindIRControlFlowAdjust::MoveCallInputsToPartialFusionInputs(const std::set<
 
         auto true_partial_cnode = switch_cnode_inputs.at(kSwitchTruePartialIndex)->cast<CNodePtr>();
         auto true_partial_cnode_inputs = true_partial_cnode->inputs();
-        std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(),
-                  std::back_inserter(true_partial_cnode_inputs));
+        (void)std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(),
+                        std::back_inserter(true_partial_cnode_inputs));
         true_partial_cnode->set_inputs(true_partial_cnode_inputs);
 
         auto false_partial_cnode = switch_cnode_inputs.at(kSwitchFalsePartialIndex)->cast<CNodePtr>();
         auto false_partial_cnode_inputs = false_partial_cnode->inputs();
-        std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(),
-                  std::back_inserter(false_partial_cnode_inputs));
+        (void)std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(),
+                        std::back_inserter(false_partial_cnode_inputs));
         false_partial_cnode->set_inputs(false_partial_cnode_inputs);
       }
 
