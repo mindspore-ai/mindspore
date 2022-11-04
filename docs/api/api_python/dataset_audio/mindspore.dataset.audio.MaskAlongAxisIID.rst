@@ -12,5 +12,9 @@ mindspore.dataset.audio.MaskAlongAxisIID
         - **axis** (int) - 要应用掩码的轴（1表示频率，2表示时间）。
 
     异常：
-        - **ValueError** - `mask_param` 参数值错误（小于0）。
-        - **ValueError** - `axis` 参数类型错误或者值错误，不属于 [1, 2]。
+        - **TypeError** - 当 `mask_param` 的类型不为int。
+        - **ValueError** - 当 `mask_param` 为负数。
+        - **TypeError** - 当 `mask_value` 的类型不为float。
+        - **TypeError** - 当 `axis` 的类型不为int。
+        - **ValueError** - 当 `axis` 取值不在[1, 2]范围内。
+        - **RuntimeError** - 当输入音频的shape不为<..., freq, time>。

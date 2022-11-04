@@ -77,7 +77,7 @@ class AllpassBiquad(AudioTensorOperation):
             in range of (0, 1]. Default: 0.707.
 
     Raises:
-        TypeError: If `sample_rate` is not of type integer.
+        TypeError: If `sample_rate` is not of type int.
         ValueError: If `sample_rate` is 0.
         TypeError: If `central_freq` is not of type float.
         TypeError: If `Q` is not of type float.
@@ -214,7 +214,7 @@ class BandBiquad(AudioTensorOperation):
             If False, uses mode oriented to pitched audio, i.e. voice, singing, or instrumental music. Default: False.
 
     Raises:
-        TypeError: If `sample_rate` is not of type integer.
+        TypeError: If `sample_rate` is not of type int.
         ValueError: If `sample_rate` is 0.
         TypeError: If `central_freq` is not of type float.
         TypeError: If `Q` is not of type float.
@@ -275,7 +275,7 @@ class BandpassBiquad(AudioTensorOperation):
             If False, uses a constant 0dB peak gain. Default: False.
 
     Raises:
-        TypeError: If `sample_rate` is not of type integer.
+        TypeError: If `sample_rate` is not of type int.
         ValueError: If `sample_rate` is 0.
         TypeError: If `central_freq` is not of type float.
         TypeError: If `Q` is not of type float.
@@ -332,7 +332,7 @@ class BandrejectBiquad(AudioTensorOperation):
             in range of (0, 1]. Default: 0.707.
 
     Raises:
-        TypeError: If `sample_rate` is not of type integer.
+        TypeError: If `sample_rate` is not of type int.
         ValueError: If `sample_rate` is 0.
         TypeError: If `central_freq` is not of type float.
         TypeError: If `Q` is not of type float.
@@ -385,7 +385,7 @@ class BassBiquad(AudioTensorOperation):
             in range of (0, 1]. Default: 0.707.
 
     Raises:
-        TypeError: If `sample_rate` is not of type integer.
+        TypeError: If `sample_rate` is not of type int.
         ValueError: If `sample_rate` is 0.
         TypeError: If `gain` is not of type float.
         TypeError: If `central_freq` is not of type float.
@@ -499,28 +499,34 @@ DE_C_BORDER_TYPE = {
 
 class ComputeDeltas(AudioTensorOperation):
     r"""
-    Compute delta coefficients of a spectrogram.
+    Compute delta coefficients, also known as differential coefficients, of a spectrogram.
+
+    Delta coefficients help to understand the dynamics of the power spectrum. It can be
+    computed using the following formula.
 
     .. math::
         d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
 
     where :math:`d_{t}` is the deltas at time :math:`t` , :math:`c_{t}` is the spectrogram coefficients
-    at time :math:`t` , :math:`N` is :math:`(\text{win_length}-1)//2` .
+    at time :math:`t` , :math:`N` is :math:`(\text{win_length} - 1) // 2` .
 
     Args:
         win_length (int, optional): The window length used for computing delta, must be no less than 3. Default: 5.
-        pad_mode (BorderType, optional): Mode parameter passed to padding. Default: BorderType.EDGE. It can be any of
-            [BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BordBorderTypeer.SYMMETRIC].
+        pad_mode (BorderType, optional): Mode parameter passed to padding, can be BorderType.CONSTANT, BorderType.EDGE,
+            BorderType.REFLECT or BorderType.SYMMETRIC. Default: BorderType.EDGE.
 
-            - BorderType.CONSTANT, means it fills the border with constant values.
+            - BorderType.CONSTANT, pad with a constant value.
+            - BorderType.EDGE, pad with the last value on the edge.
+            - BorderType.REFLECT, reflect the value on the edge while omitting the last one.
+              For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [3, 2, 1, 2, 3, 4, 3, 2].
+            - BorderType.SYMMETRIC, reflect the value on the edge while repeating the last one.
+              For example, pad [1, 2, 3, 4] with 2 elements on both sides will result in [2, 1, 1, 2, 3, 4, 4, 3].
 
-            - BorderType.EDGE, means it pads with the last value on the edge.
-
-            - BorderType.REFLECT, means it reflects the values on the edge omitting the last
-              value of edge.
-
-            - BorderType.SYMMETRIC, means it reflects the values on the edge repeating the last
-              value of edge.
+    Raises:
+        TypeError: If `win_length` is not of type int.
+        ValueError: If `win_length` is less than 3.
+        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.BorderType` .
+        RuntimeError: If input tensor is not in shape of <..., freq, time>.
 
     Examples:
         >>> import numpy as np
@@ -549,7 +555,6 @@ class Contrast(AudioTensorOperation):
     Comparable with compression, this effect modifies an audio signal to make it sound louder.
 
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
-
 
     Note:
         The dimension of the audio waveform to be processed needs to be (..., time).
@@ -642,14 +647,17 @@ class DCShift(AudioTensorOperation):
 
 class DeemphBiquad(AudioTensorOperation):
     """
-    Design two-pole deemph filter for audio waveform of dimension of (..., time).
+    Apply Compact Disc (IEC 60908) de-emphasis (a treble attenuation shelving filter) to the audio waveform.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
-            the value must be 44100 or 48000.
+        sample_rate (int): Sampling rate of the waveform, must be 44100 or 48000 (Hz).
 
     Raises:
-        RuntimeError: If the shape of input audio waveform does not match <..., time>.
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is not 44100 or 48000.
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -721,12 +729,17 @@ class Dither(AudioTensorOperation):
 
     Args:
         density_function (DensityFunction, optional): The density function of a continuous
-            random variable. Can be one of DensityFunction.TPDF (Triangular Probability Density Function),
+            random variable, can be DensityFunction.TPDF (Triangular Probability Density Function),
             DensityFunction.RPDF (Rectangular Probability Density Function) or
             DensityFunction.GPDF (Gaussian Probability Density Function).
             Default: DensityFunction.TPDF.
         noise_shaping (bool, optional): A filtering process that shapes the spectral
             energy of quantisation error. Default: False.
+
+    Raises:
+        TypeError: If `density_function` is not of type :class:`mindspore.dataset.audio.DensityFunction` .
+        TypeError: If `noise_shaping` is not of type bool.
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -749,7 +762,9 @@ class Dither(AudioTensorOperation):
 
 class EqualizerBiquad(AudioTensorOperation):
     """
-    Design biquad equalizer filter and perform filtering. Similar to SoX implementation.
+    Design biquad equalizer filter and perform filtering.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -880,18 +895,39 @@ class Flanger(AudioTensorOperation):
     """
     Apply a flanger effect to the audio.
 
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
-        delay (float, optional): Desired delay in milliseconds (ms), range: [0, 30]. Default: 0.0.
-        depth (float, optional): Desired delay depth in milliseconds (ms), range: [0, 10]. Default: 2.0.
-        regen (float, optional): Desired regen (feedback gain) in dB, range: [-95, 95]. Default: 0.0.
-        width (float, optional): Desired width (delay gain) in dB, range: [0, 100]. Default: 71.0.
-        speed (float, optional): Modulation speed in Hz, range: [0.1, 10]. Default: 0.5.
-        phase (float, optional): Percentage phase-shift for multi-channel, range: [0, 100]. Default: 25.0.
-        modulation (Modulation, optional): Modulation of the input tensor. Default: Modulation.SINUSOIDAL.
-            It can be one of Modulation.SINUSOIDAL or Modulation.TRIANGULAR.
-        interpolation (Interpolation, optional): Interpolation of the input tensor. Default: Interpolation.LINEAR.
-            It can be one of Interpolation.LINEAR or Interpolation.QUADRATIC.
+        delay (float, optional): Desired delay in milliseconds, in range of [0, 30]. Default: 0.0.
+        depth (float, optional): Desired delay depth in milliseconds, in range of [0, 10]. Default: 2.0.
+        regen (float, optional): Desired regen (feedback gain) in dB, in range of [-95, 95]. Default: 0.0.
+        width (float, optional): Desired width (delay gain) in dB, in range of [0, 100]. Default: 71.0.
+        speed (float, optional): Modulation speed in Hz, in range of [0.1, 10]. Default: 0.5.
+        phase (float, optional): Percentage phase-shift for multi-channel, in range of [0, 100]. Default: 25.0.
+        modulation (Modulation, optional): Modulation method, can be Modulation.SINUSOIDAL or Modulation.TRIANGULAR.
+            Default: Modulation.SINUSOIDAL.
+        interpolation (Interpolation, optional): Interpolation method, can be Interpolation.LINEAR or
+            Interpolation.QUADRATIC. Default: Interpolation.LINEAR.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is zero.
+        TypeError: If `delay` is not of type float.
+        ValueError: If `delay` is not in range of [0, 30].
+        TypeError: If `depth` is not of type float.
+        ValueError: If `depth` is not in range of [0, 10].
+        TypeError: If `regen` is not of type float.
+        ValueError: If `regen` is not in range of [-95, 95].
+        TypeError: If `width` is not of type float.
+        ValueError: If `width` is not in range of [0, 100].
+        TypeError: If `speed` is not of type float.
+        ValueError: If `speed` is not in range of [0.1, 10].
+        TypeError: If `phase` is not of type float.
+        ValueError: If `phase` is not in range of [0, 100].
+        TypeError: If `modulation` is not of type :class:`mindspore.dataset.audio.Modulation` .
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.audio.Interpolation` .
+        RuntimeError: If input tensor is not in shape of <..., channel, time>.
 
     Examples:
         >>> import numpy as np
@@ -942,9 +978,9 @@ class FrequencyMasking(AudioTensorOperation):
 
     Raises:
         TypeError: If `iid_masks` is not of type bool.
-        TypeError: If `freq_mask_param` is not of type integer.
+        TypeError: If `freq_mask_param` is not of type int.
         ValueError: If `freq_mask_param` is greater than the length of audio waveform in frequency domain.
-        TypeError: If `mask_start` is not of type integer.
+        TypeError: If `mask_start` is not of type int.
         ValueError: If `mask_start` is a negative number.
         TypeError: If `mask_value` is not of type float.
         ValueError: If `mask_value` is a negative number.
@@ -1060,7 +1096,9 @@ class GriffinLim(AudioTensorOperation):
 
 class HighpassBiquad(AudioTensorOperation):
     """
-    Design biquad highpass filter and perform filtering. Similar to SoX implementation.
+    Design biquad highpass filter and perform filtering.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -1142,19 +1180,23 @@ class InverseMelScale(AudioTensorOperation):
 
 class LFilter(AudioTensorOperation):
     """
-    Design two-pole filter for audio waveform of dimension of (..., time).
+    Perform an IIR filter by evaluating different equation.
 
     Args:
-        a_coeffs (sequence): denominator coefficients of difference equation of dimension of (n_order + 1).
+        a_coeffs (Sequence[float]): Denominator coefficients of difference equation of dimension.
             Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
             Must be same size as b_coeffs (pad with 0's as necessary).
-        b_coeffs (sequence): numerator coefficients of difference equation of dimension of (n_order + 1).
+        b_coeffs (Sequence[float]): Numerator coefficients of difference equation of dimension.
             Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
             Must be same size as a_coeffs (pad with 0's as necessary).
         clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1]. Default: True.
 
     Raises:
-        RuntimeError: If the shape of input audio waveform does not match <..., time>.
+        TypeError: If `a_coeffs` is not of type Sequence[float].
+        TypeError: If `b_coeffs` is not of type Sequence[float].
+        ValueError: If `a_coeffs` and `b_coeffs` are of different sizes.
+        TypeError: If `clamp` is not of type bool.
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1200,7 +1242,7 @@ class LowpassBiquad(AudioTensorOperation):
             in range of (0, 1]. Default: 0.707.
 
     Raises:
-        TypeError: If `sample_rate` is not of type integer.
+        TypeError: If `sample_rate` is not of type int.
         ValueError: If `sample_rate` is 0.
         TypeError: If `cutoff_freq` is not of type float.
         TypeError: If `Q` is not of type float.
@@ -1272,7 +1314,7 @@ class MaskAlongAxis(AudioTensorOperation):
     Raises:
         ValueError: If `mask_start` is invalid (< 0).
         ValueError: If `mask_width` is invalid (< 1).
-        ValueError: If `axis` is not type of integer or not within [1, 2].
+        ValueError: If `axis` is not type of int or not within [1, 2].
 
     Examples:
         >>> import numpy as np
@@ -1308,8 +1350,12 @@ class MaskAlongAxisIID(AudioTensorOperation):
         axis (int): Axis to apply masking on (1 for frequency and 2 for time).
 
     Raises:
-        ValueError: If `mask_param` is invalid (< 0) or not type of integer.
-        ValueError: If `axis` is not type of integer or not within [1, 2].
+        TypeError: If `mask_param` is not of type int.
+        ValueError: If `mask_param` is a negative value.
+        TypeError: If `mask_value` is not of type float.
+        TypeError: If `axis` is not of type int.
+        ValueError: If `axis` is not in range of [1, 2].
+        RuntimeError: If input tensor is not in shape of <..., freq, time>.
 
     Examples:
         >>> import numpy as np
@@ -1382,10 +1428,18 @@ class MelScale(AudioTensorOperation):
 
 class MuLawDecoding(AudioTensorOperation):
     """
-    Decode mu-law encoded signal.
+    Decode mu-law encoded signal, refer to `mu-law algorithm <https://en.wikipedia.org/wiki/M-law_algorithm>`_ .
 
     Args:
         quantization_channels (int, optional): Number of channels, which must be positive. Default: 256.
+
+    Raises:
+        TypeError: If `quantization_channels` is not of type int.
+        ValueError: If `quantization_channels` is not a positive number.
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1432,12 +1486,21 @@ class MuLawEncoding(AudioTensorOperation):
 
 class Overdrive(AudioTensorOperation):
     """
-    Apply overdrive on input audio.
+    Apply an overdrive effect to the audio waveform.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
         gain (float, optional): Desired gain at the boost (or attenuation) in dB, in range of [0, 100]. Default: 20.0.
         color (float, optional): Controls the amount of even harmonic content in the over-driven output,
             in range of [0, 100]. Default: 20.0.
+
+    Raises:
+        TypeError: If `gain` is not of type float.
+        ValueError: If `gain` is not in range of [0, 100].
+        TypeError: If `color` is not of type float.
+        ValueError: If `color` is not in range of [0, 100].
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1462,18 +1525,34 @@ class Phaser(AudioTensorOperation):
     """
     Apply a phasing effect to the audio.
 
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
-        gain_in (float, optional): Desired input gain at the boost (or attenuation) in dB.
-            Allowed range of values is [0, 1]. Default: 0.4.
-        gain_out (float, optional): Desired output gain at the boost (or attenuation) in dB.
-            Allowed range of values is [0, 1e9]. Default: 0.74.
-        delay_ms (float, optional): Desired delay in milli seconds. Allowed range of values is [0, 5]. Default: 3.0.
-        decay (float, optional): Desired decay relative to gain-in. Allowed range of values is [0, 0.99]. Default: 0.4.
-        mod_speed (float, optional): Modulation speed in Hz. Allowed range of values is [0.1, 2]. Default: 0.5.
+        gain_in (float, optional): Desired input gain at the boost (or attenuation) in dB,
+            in range of [0.0, 1.0]. Default: 0.4.
+        gain_out (float, optional): Desired output gain at the boost (or attenuation) in dB,
+            in range of [0.0, 1e9]. Default: 0.74.
+        delay_ms (float, optional): Desired delay in milliseconds, in range of [0.0, 5.0]. Default: 3.0.
+        decay (float, optional): Desired decay relative to gain-in, in range of [0.0, 0.99]. Default: 0.4.
+        mod_speed (float, optional): Modulation speed in Hz, in range of [0.1, 2.0]. Default: 0.5.
         sinusoidal (bool, optional): If True, use sinusoidal modulation (preferable for multiple instruments).
-            If False, use triangular modulation (gives single instruments a sharper
-            phasing effect. Default: True.
+            If False, use triangular modulation (gives single instruments a sharper phasing effect). Default: True.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        TypeError: If `gain_in` is not of type float.
+        ValueError: If `gain_in` is not in range of [0.0, 1.0].
+        TypeError: If `gain_out` is not of type float.
+        ValueError: If `gain_out` is not in range of [0.0, 1e9].
+        TypeError: If `delay_ms` is not of type float.
+        ValueError: If `delay_ms` is not in range of [0.0, 5.0].
+        TypeError: If `decay` is not of type float.
+        ValueError: If `decay` is not in range of [0.0, 0.99].
+        TypeError: If `mod_speed` is not of type float.
+        ValueError: If `mod_speed` is not in range of [0.1, 2.0].
+        TypeError: If `sinusoidal` is not of type bool.
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1503,11 +1582,17 @@ class Phaser(AudioTensorOperation):
 
 class PhaseVocoder(AudioTensorOperation):
     """
-    Given a STFT tensor, speed up in time without modifying pitch by a factor of rate.
+    Given a STFT spectrogram, speed up in time without modifying pitch by a factor of rate.
 
     Args:
         rate (float): Speed-up factor.
-        phase_advance (numpy.ndarray): Expected phase advance in each bin in shape of (freq, 1).
+        phase_advance (numpy.ndarray): Expected phase advance in each bin, in shape of (freq, 1).
+
+    Raises:
+        TypeError: If `rate` is not of type float.
+        ValueError: If `rate` is not a positive number.
+        TypeError: If `phase_advance` is not of type :class:`numpy.ndarray` .
+        RuntimeError: If input tensor is not in shape of <..., freq, num_frame, complex=2>.
 
     Examples:
         >>> import numpy as np
@@ -1538,16 +1623,27 @@ class Resample(AudioTensorOperation):
     Resample a signal from one frequency to another. A resample method can be given.
 
     Args:
-        orig_freq (float, optional): The original frequency of the signal, which must be positive. Default: 16000.
-        new_freq (float, optional): The desired frequency, which must be positive. Default: 16000.
-        resample_method (ResampleMethod, optional): The resample method, which can be
-            ResampleMethod.SINC_INTERPOLATION and ResampleMethod.KAISER_WINDOW.
-            Default: ResampleMethod.SINC_INTERPOLATION.
-        lowpass_filter_width (int, optional): Controls the shaperness of the filter, more means sharper but less
-            efficient, which must be positive. Default: 6.
+        orig_freq (float, optional): The original frequency of the signal, must be positive. Default: 16000.
+        new_freq (float, optional): The desired frequency, must be positive. Default: 16000.
+        resample_method (ResampleMethod, optional): The resample method to use, can be ResampleMethod.SINC_INTERPOLATION
+            or ResampleMethod.KAISER_WINDOW. Default: ResampleMethod.SINC_INTERPOLATION.
+        lowpass_filter_width (int, optional): Controls the sharpness of the filter, more means sharper but less
+            efficient, must be positive. Default: 6.
         rolloff (float, optional): The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values
-            reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1]. Default: 0.99.
+            reduce anti-aliasing, but also reduce some of the highest frequencies, in range of (0, 1]. Default: 0.99.
         beta (float, optional): The shape parameter used for kaiser window. Default: None, will use 14.769656459379492.
+
+    Raises:
+        TypeError: If `orig_freq` is not of type float.
+        ValueError: If `orig_freq` is not a positive number.
+        TypeError: If `new_freq` is not of type float.
+        ValueError: If `new_freq` is not a positive number.
+        TypeError: If `resample_method` is not of type :class:`mindspore.dataset.audio.ResampleMethod` .
+        TypeError: If `lowpass_filter_width` is not of type int.
+        ValueError: If `lowpass_filter_width` is not a positive number.
+        TypeError: If `rolloff` is not of type float.
+        ValueError: If `rolloff` is not in range of (0, 1].
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1580,7 +1676,9 @@ class Resample(AudioTensorOperation):
 
 class RiaaBiquad(AudioTensorOperation):
     """
-    Apply RIAA vinyl playback equalization. Similar to SoX implementation.
+    Apply RIAA vinyl playback equalization.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
         sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
@@ -1646,17 +1744,32 @@ DE_C_WINDOW_TYPE = {WindowType.BARTLETT: cde.WindowType.DE_WINDOW_TYPE_BARTLETT,
 
 class SpectralCentroid(TensorOperation):
     """
-    Create a spectral centroid from an audio signal.
+    Compute the spectral centroid for each channel along the time axis.
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
-        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
-        win_length (int, optional): Window size. Default: None, will use n_fft.
-        hop_length (int, optional): Length of hop between STFT windows. Default: None, will use win_length // 2.
+        sample_rate (int): Sampling rate of audio signal, e.g. 44100 (Hz).
+        n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins. Default: 400.
+        win_length (int, optional): Window size. Default: None, will use `n_fft` .
+        hop_length (int, optional): Length of hop between STFT windows. Default: None, will use `win_length // 2` .
         pad (int, optional): Two sided padding of signal. Default: 0.
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
-            which can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
+            can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
             or WindowType.KAISER. Default: WindowType.HANN.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is a negative number.
+        TypeError: If `n_fft` is not of type int.
+        ValueError: If `n_fft` is not a positive number.
+        TypeError: If `win_length` is not of type int.
+        ValueError: If `win_length` is not a positive number.
+        ValueError: If `win_length` is greater than `n_fft`.
+        TypeError: If `hop_length` is not of type int.
+        ValueError: If `hop_length` is not a positive number.
+        TypeError: If `pad` is not of type int.
+        ValueError: If `pad` is a negative number.
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.WindowType` .
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1687,21 +1800,40 @@ class Spectrogram(TensorOperation):
     Create a spectrogram from an audio signal.
 
     Args:
-        n_fft (int, optional): Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
-        win_length (int, optional): Window size. Default: None, will use n_fft.
-        hop_length (int, optional): Length of hop between STFT windows. Default: None, will use win_length // 2.
+        n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins. Default: 400.
+        win_length (int, optional): Window size. Default: None, will use `n_fft` .
+        hop_length (int, optional): Length of hop between STFT windows. Default: None, will use `win_length // 2` .
         pad (int, optional): Two sided padding of signal. Default: 0.
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
-            which can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
-            or WindowType.KAISER. Default: WindowType.HANN. Currently kaiser window is not supported on macOS.
-        power (float, optional): Exponent for the magnitude spectrogram, which must be greater
-            than or equal to 0, e.g., 1 for energy, 2 for power, etc. Default: 2.0.
+            can be WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN
+            or WindowType.KAISER. Currently, Kaiser window is not supported on macOS. Default: WindowType.HANN.
+        power (float, optional): Exponent for the magnitude spectrogram, must be non negative,
+            e.g., 1 for energy, 2 for power, etc. Default: 2.0.
         normalized (bool, optional): Whether to normalize by magnitude after stft. Default: False.
         center (bool, optional): Whether to pad waveform on both sides. Default: True.
-        pad_mode (BorderType, optional): Controls the padding method used when center is True,
-            which can be BorderType.REFLECT, BorderType.CONSTANT, BorderType.EDGE, BorderType.SYMMETRIC.
+        pad_mode (BorderType, optional): Controls the padding method used when `center` is True,
+            can be BorderType.REFLECT, BorderType.CONSTANT, BorderType.EDGE or BorderType.SYMMETRIC.
             Default: BorderType.REFLECT.
         onesided (bool, optional): Controls whether to return half of results to avoid redundancy. Default: True.
+
+    Raises:
+        TypeError: If `n_fft` is not of type int.
+        ValueError: If `n_fft` is not a positive number.
+        TypeError: If `win_length` is not of type int.
+        ValueError: If `win_length` is not a positive number.
+        ValueError: If `win_length` is greater than `n_fft`.
+        TypeError: If `hop_length` is not of type int.
+        ValueError: If `hop_length` is not a positive number.
+        TypeError: If `pad` is not of type int.
+        ValueError: If `pad` is a negative number.
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.WindowType` .
+        TypeError: If `power` is not of type float.
+        ValueError: If `power` is a negative number.
+        TypeError: If `normalized` is not of type bool.
+        TypeError: If `center` is not of type bool.
+        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.BorderType` .
+        TypeError: If `onesided` is not of type bool.
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1805,9 +1937,9 @@ class TimeStretch(AudioTensorOperation):
             the original rate.
 
     Raises:
-        TypeError: If `hop_length` is not of type integer.
+        TypeError: If `hop_length` is not of type int.
         ValueError: If `hop_length` is not a positive number.
-        TypeError: If `n_freq` is not of type integer.
+        TypeError: If `n_freq` is not of type int.
         ValueError: If `n_freq` is not a positive number.
         TypeError: If `fixed_rate` is not of type float.
         ValueError: If `fixed_rate` is not a positive number.
@@ -1847,13 +1979,25 @@ class TimeStretch(AudioTensorOperation):
 
 class TrebleBiquad(AudioTensorOperation):
     """
-    Design a treble tone-control effect. Similar to SoX implementation.
+    Design a treble tone-control effect.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        sample_rate (int): Sampling rate (in Hz), which can't be zero.
         gain (float): Desired gain at the boost (or attenuation) in dB.
         central_freq (float, optional): Central frequency (in Hz). Default: 3000.
-        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
+        Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
+            in range of (0, 1]. Default: 0.707.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `gain` is not of type float.
+        TypeError: If `central_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1878,37 +2022,79 @@ class TrebleBiquad(AudioTensorOperation):
 
 class Vad(AudioTensorOperation):
     """
-    Attempt to trim silent background sounds from the end of the voice recording.
+    Voice activity detector.
+
+    Attempt to trim silence and quiet background sounds from the ends of recordings of speech.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
-        sample_rate (int): Sample rate of audio signal.
+        sample_rate (int): Sampling rate of audio signal.
         trigger_level (float, optional): The measurement level used to trigger activity detection. Default: 7.0.
-        trigger_time (float, optional): The time constant (in seconds) used to help ignore short sounds. Default: 0.25.
-        search_time (float, optional): The amount of audio (in seconds) to search for quieter/shorter sounds to include
-            prior to the detected trigger point. Default: 1.0.
-        allowed_gap (float, optional): The allowed gap (in seconds) between quiteter/shorter sounds to include prior to
-            the detected trigger point. Default: 0.25.
+        trigger_time (float, optional): The time constant (in seconds) used to help ignore short bursts of
+            sounds. Default: 0.25.
+        search_time (float, optional): The amount of audio (in seconds) to search for quieter/shorter bursts of audio
+            to include prior to the detected trigger point. Default: 1.0.
+        allowed_gap (float, optional): The allowed gap (in seconds) between quieter/shorter bursts of audio to include
+            prior to the detected trigger point. Default: 0.25.
         pre_trigger_time (float, optional): The amount of audio (in seconds) to preserve before the trigger point and
             any found quieter/shorter bursts. Default: 0.0.
         boot_time (float, optional): The time for the initial noise estimate. Default: 0.35.
-        noise_up_time (float, optional): Time constant used by the adaptive noise estimator, when the noise level is
+        noise_up_time (float, optional): Time constant used by the adaptive noise estimator for when the noise level is
             increasing. Default: 0.1.
-        noise_down_time (float, optional): Time constant used by the adaptive noise estimator, when the noise level is
-            decreasing. Default: 0.01.
-        noise_reduction_amount (float, optional): The amount of noise reduction used in the detection algorithm.
+        noise_down_time (float, optional): Time constant used by the adaptive noise estimator for when the noise level
+            is decreasing. Default: 0.01.
+        noise_reduction_amount (float, optional): Amount of noise reduction to use in the detection algorithm.
             Default: 1.35.
-        measure_freq (float, optional): The frequency of the algorithm’s processing. Default: 20.0.
-        measure_duration (float, optional): The duration of measurement. Default: None, use twice the measurement
+        measure_freq (float, optional): Frequency of the algorithm's processing/measurements. Default: 20.0.
+        measure_duration (float, optional): The duration of measurement. Default: None, will use twice the measurement
             period.
-        measure_smooth_time (float, optional): The time constant used to smooth spectral measurements. Default: 0.4.
-        hp_filter_freq (float, optional): The "Brick-wall" frequency of high-pass filter applied at the input to the
+        measure_smooth_time (float, optional): Time constant used to smooth spectral measurements. Default: 0.4.
+        hp_filter_freq (float, optional): The 'Brick-wall' frequency of high-pass filter applied at the input to the
             detector algorithm. Default: 50.0.
-        lp_filter_freq (float, optional): The "Brick-wall" frequency of low-pass filter applied at the input to the
+        lp_filter_freq (float, optional): The 'Brick-wall' frequency of low-pass filter applied at the input to the
             detector algorithm. Default: 6000.0.
-        hp_lifter_freq (float, optional): The "Brick-wall" frequency of high-pass lifter applied at the input to the
+        hp_lifter_freq (float, optional): The 'Brick-wall' frequency of high-pass lifter used in the
             detector algorithm. Default: 150.0.
-        lp_lifter_freq (float, optional): The "Brick-wall" frequency of low-pass lifter applied at the input to the
+        lp_lifter_freq (float, optional): The 'Brick-wall' frequency of low-pass lifter used in the
             detector algorithm. Default: 2000.0.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is not a positive number.
+        TypeError: If `trigger_level` is not of type float.
+        TypeError: If `trigger_time` is not of type float.
+        ValueError: If `trigger_time` is a negative number.
+        TypeError: If `search_time` is not of type float.
+        ValueError: If `search_time` is a negative number.
+        TypeError: If `allowed_gap` is not of type float.
+        ValueError: If `allowed_gap` is a negative number.
+        TypeError: If `pre_trigger_time` is not of type float.
+        ValueError: If `pre_trigger_time` is a negative number.
+        TypeError: If `boot_time` is not of type float.
+        ValueError: If `boot_time` is a negative number.
+        TypeError: If `noise_up_time` is not of type float.
+        ValueError: If `noise_up_time` is a negative number.
+        TypeError: If `noise_down_time` is not of type float.
+        ValueError: If `noise_down_time` is a negative number.
+        ValueError: If `noise_up_time` is less than `noise_down_time`.
+        TypeError: If `noise_reduction_amount` is not of type float.
+        ValueError: If `noise_reduction_amount` is a negative number.
+        TypeError: If `measure_freq` is not of type float.
+        ValueError: If `measure_freq` is not a positive number.
+        TypeError: If `measure_duration` is not of type float.
+        ValueError: If `measure_duration` is a negative number.
+        TypeError: If `measure_smooth_time` is not of type float.
+        ValueError: If `measure_smooth_time` is a negative number.
+        TypeError: If `hp_filter_freq` is not of type float.
+        ValueError: If `hp_filter_freq` is not a positive number.
+        TypeError: If `lp_filter_freq` is not of type float.
+        ValueError: If `lp_filter_freq` is not a positive number.
+        TypeError: If `hp_lifter_freq` is not of type float.
+        ValueError: If `hp_lifter_freq` is not a positive number.
+        TypeError: If `lp_lifter_freq` is not of type float.
+        ValueError: If `lp_lifter_freq` is not a positive number.
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1958,15 +2144,22 @@ DE_C_GAIN_TYPE = {GainType.AMPLITUDE: cde.GainType.DE_GAIN_TYPE_AMPLITUDE,
 
 class Vol(AudioTensorOperation):
     """
-    Apply amplification or attenuation to the whole waveform.
+    Adjust volume of waveform.
 
     Args:
-        gain (float): Value of gain adjustment.
-            If gain_type = amplitude, gain stands for nonnegative amplitude ratio.
-            If gain_type = power, gain stands for power.
-            If gain_type = db, gain stands for decibels.
-        gain_type (GainType, optional): Type of gain, contains the following three enumeration values
-            GainType.AMPLITUDE, GainType.POWER and GainType.DB. Default: GainType.AMPLITUDE.
+        gain (float): Gain at the boost (or attenuation).
+            If `gain_type` is GainType.AMPLITUDE, it is a non negative amplitude ratio.
+            If `gain_type` is GainType.POWER, it is a power (voltage squared).
+            If `gain_type` is GainType.DB, it is in decibels.
+        gain_type (GainType, optional): Type of gain, can be GainType.AMPLITUDE, GainType.POWER
+            or GainType.DB. Default: GainType.AMPLITUDE.
+
+    Raises:
+        TypeError: If `gain` is not of type float.
+        TypeError: If `gain_type` is not of type :class:`mindspore.dataset.audio.GainType` .
+        ValueError: If `gain` is a negative number when `gain_type` is GainType.AMPLITUDE.
+        ValueError: If `gain` is not a positive number when `gain_type` is GainType.POWER.
+        RuntimeError: If input tensor is not in shape of <..., time>.
 
     Examples:
         >>> import numpy as np
