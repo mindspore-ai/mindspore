@@ -42,6 +42,7 @@ set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/factory.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/any_utils.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
