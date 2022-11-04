@@ -35,6 +35,12 @@ OpParameter *PopulateArgMaxParameter(const void *prim) {
     free(arg_param);
     return nullptr;
   }
+  if (param->axis() > INT32_MAX) {
+    MS_LOG(ERROR) << "check le fail, value1:" << param->axis() << " value2: " << INT32_MAX;
+    free(arg_param);
+    return nullptr;
+  }
+
   arg_param->axis_ = param->axis();
   arg_param->topk_ = param->top_k();
   arg_param->out_value_ = param->out_max_value();

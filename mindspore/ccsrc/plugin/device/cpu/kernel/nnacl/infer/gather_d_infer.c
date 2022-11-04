@@ -23,9 +23,9 @@ int GatherDInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   if (ret != NNACL_OK) {
     return ret;
   }
-  const int input_size_limit = 2;
+  const int input_size_limit = 3;
   const int output_size_limit = 1;
-  if (inputs_size < input_size_limit || outputs_size != output_size_limit) {
+  if (inputs_size != input_size_limit || outputs_size != output_size_limit) {
     return NNACL_ERR;
   }
   const TensorC *input = inputs[0];
