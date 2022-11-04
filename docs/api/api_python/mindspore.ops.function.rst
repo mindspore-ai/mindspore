@@ -465,7 +465,6 @@ Parameter操作函数
 
     mindspore.ops.derivative
     mindspore.ops.jet
-    mindspore.ops.vmap
 
 调试函数
 ----------------

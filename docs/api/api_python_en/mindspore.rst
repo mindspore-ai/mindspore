@@ -168,6 +168,16 @@ Automatic Differentiation
     mindspore.jvp
     mindspore.vjp
 
+Automatic Vectorization
+---------------------------------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.vmap
+
 Context
 --------
 

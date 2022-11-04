@@ -465,7 +465,6 @@ Differential Functions
 
     mindspore.ops.derivative
     mindspore.ops.jet
-    mindspore.ops.vmap
 
 Debugging Functions
 -------------------
