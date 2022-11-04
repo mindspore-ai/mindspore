@@ -49,17 +49,17 @@ __device__ __forceinline__ int32_t GetInsertIndex(const CG &g, const int32_t *er
   if (g.thread_rank() == 0) {
     if (erased_counter->load(cuda::std::memory_order_relaxed) > 0) {
       // Idle slot position is preferred.
-      int32_t idle_index = erased_counter->fetch_sub(1) - 1;
+      int32_t idle_index = erased_counter->fetch_sub(1, cuda::std::memory_order_relaxed) - 1;
       // Idle slot position compete fail.
       if (idle_index < 0) {
         erased_counter->store(0, cuda::std::memory_order_relaxed);
-        candidate_index = current_index->fetch_add(1);
+        candidate_index = current_index->fetch_add(1, cuda::std::memory_order_relaxed);
       } else {
         candidate_index = erased_slot[idle_index];
       }
     } else {
       // If idle slot is empty, use new position in blocks.
-      candidate_index = current_index->fetch_add(1);
+      candidate_index = current_index->fetch_add(1, cuda::std::memory_order_relaxed);
     }
   }
   // Sync index in block in cooperative group.
@@ -121,19 +121,32 @@ __global__ void InitNormalDisRandomGen(uint32_t seed, curandStatePhilox4_32_10_t
 // Insert default normal distribution random value.
 template <typename Value>
 __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
-                                            size_t elements_per_block, const Value mean, const Value stddev,
+                                            size_t elements_per_block, size_t *const *lookup_cnts_ptr,
+                                            size_t min_lookup_cnt, const Value mean, const Value stddev,
                                             curandStatePhilox4_32_10_t *state, bool **idle_flags_ptr,
                                             Value *const *blocks_ptr) {
   size_t total_thread_num = blockDim.x * gridDim.x;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num; pos += total_thread_num) {
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
-    if (!idle_flags_ptr[block_idx][offset_in_block]) {
+
+    bool enable_permission = min_lookup_cnt > 1;
+    bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == min_lookup_cnt;
+    // Need not to initialize if the current slot is not idle and does not meet the permission condition.
+    if (!idle_flags_ptr[block_idx][offset_in_block] && (!(enable_permission && meet_permit_cond))) {
       continue;
     }
 
     const size_t current_pos_in_block = offset_in_block * value_dim;
     Value *element_ptr = &blocks_ptr[block_idx][current_pos_in_block];
+
+    if (enable_permission && !meet_permit_cond) {
+      for (size_t i = 0; i < value_dim; i++) {
+        // Initialize by zero for elements which do not meet the permission condition.
+        element_ptr[i] = 0;
+      }
+      continue;
+    }
 
     // 1. Copy state to local memory for performance.
     curandStatePhilox4_32_10_t localState = state[pos % total_thread_num];
@@ -163,13 +176,17 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
 // Insert default value into map by specific value.
 template <typename Value>
 __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
-                                   size_t elements_per_block, const Value default_value, bool **idle_flags_ptr,
-                                   Value *const *blocks_ptr) {
+                                   size_t elements_per_block, size_t *const *lookup_cnts_ptr, size_t min_lookup_cnt,
+                                   const Value default_value, bool **idle_flags_ptr, Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num;
        pos += blockDim.x * gridDim.x) {
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
-    if (!idle_flags_ptr[block_idx][offset_in_block]) {
+
+    bool enable_permission = min_lookup_cnt > 1;
+    bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == min_lookup_cnt;
+    // Need not to initialize if the current slot is not idle and does not meet the permission condition.
+    if (!idle_flags_ptr[block_idx][offset_in_block] && (!(enable_permission && meet_permit_cond))) {
       continue;
     }
 
@@ -177,8 +194,15 @@ __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_element
     Value *element_ptr = &blocks_ptr[block_idx][current_pos_in_block];
 
     // Note: could use tile or block to parallel.
-    for (size_t i = 0; i < value_dim; i++) {
-      element_ptr[i] = default_value;
+    if (enable_permission && !meet_permit_cond) {
+      for (size_t i = 0; i < value_dim; i++) {
+        // Initialize by zero for elements which do not meet the permission condition.
+        element_ptr[i] = 0;
+      }
+    } else {
+      for (size_t i = 0; i < value_dim; i++) {
+        element_ptr[i] = default_value;
+      }
     }
 
     idle_flags_ptr[block_idx][offset_in_block] = false;
@@ -207,37 +231,146 @@ __global__ void GetValues(size_t value_dim, size_t total_size, const int *indice
 // Insert values into map by indices in blocks.
 template <typename Value>
 __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const int *indices, const Value *insert_values,
-                             const size_t elements_per_block, bool **idle_flags_ptr, Value *const *blocks_ptr) {
+                             const size_t elements_per_block, size_t *const *lookup_cnts_ptr, size_t min_lookup_cnt,
+                             size_t global_timestamp, size_t *const *update_timestamps_ptr, bool *const *idle_flags_ptr,
+                             Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / value_dim;
     const size_t offset = pos % value_dim;
     if (indices[index] < 0) {
       continue;
     }
+
     const size_t block_idx = indices[index] / elements_per_block;
     const size_t offset_in_block = indices[index] % elements_per_block;
+
+    if (min_lookup_cnt > 1 && lookup_cnts_ptr[block_idx][offset_in_block] < min_lookup_cnt) {
+      continue;
+    }
 
     const size_t current_pos_in_block = offset_in_block * value_dim + offset;
     blocks_ptr[block_idx][current_pos_in_block] = insert_values[pos];
 
+    // Update idle status.
     if (pos % value_dim == 0 && idle_flags_ptr[block_idx][offset_in_block]) {
       idle_flags_ptr[block_idx][offset_in_block] = false;
+    }
+
+    // Update timestamp.
+    if (pos % value_dim == 0) {
+      update_timestamps_ptr[block_idx][offset_in_block] = global_timestamp;
+    }
+  }
+}
+
+template <uint32_t block_size>
+__global__ void CountPermissionNum(size_t elements_per_block, size_t key_num, const int *indices,
+                                   size_t *const *lookup_cnts_ptr, size_t min_lookup_cnt,
+                                   CudaAtomicSize *insert_counter) {
+  typedef cub::BlockReduce<size_t, block_size> BlockReduce;
+  __shared__ typename BlockReduce::TempStorage temp_storage;
+  size_t local_counter = 0;
+
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < key_num; pos += blockDim.x * gridDim.x) {
+    const size_t block_idx = indices[pos] / elements_per_block;
+    const size_t offset_in_block = indices[pos] % elements_per_block;
+    lookup_cnts_ptr[block_idx][offset_in_block] += 1;
+
+    if (lookup_cnts_ptr[block_idx][offset_in_block] == min_lookup_cnt) {
+      // Insert a new element.
+      local_counter++;
+    }
+  }
+
+  size_t insert_num_per_block = BlockReduce(temp_storage).Sum(local_counter);
+  if (threadIdx.x == 0) {
+    *insert_counter += insert_num_per_block;
+  }
+}
+
+template <uint32_t block_size>
+__global__ void CountExpiredNum(size_t blocks_num, size_t min_lookup_cnt, size_t global_timestamp,
+                                size_t max_time_interval, size_t elements_per_block, bool *const *idle_flags_ptr,
+                                size_t *const *lookup_cnts_ptr, size_t *const *update_timestamps_ptr,
+                                CudaAtomicSize *expired_counter) {
+  typedef cub::BlockReduce<size_t, block_size> BlockReduce;
+  __shared__ typename BlockReduce::TempStorage temp_storage;
+  size_t local_expired_counter = 0;
+
+  for (size_t i = 0; i < blocks_num; i++) {
+    for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < elements_per_block; pos += blockDim.x * gridDim.x) {
+      // Ignore elements at idle slot or ones that have not been really inserted into hash table yet.
+      if (idle_flags_ptr[i][pos] || lookup_cnts_ptr[i][pos] < min_lookup_cnt) {
+        continue;
+      }
+
+      // Counter expired element.
+      size_t timestamp = update_timestamps_ptr[i][pos];
+      if (global_timestamp > timestamp && (global_timestamp - timestamp) > max_time_interval) {
+        local_expired_counter++;
+      }
+    }
+  }
+
+  size_t expired_num_per_block = BlockReduce(temp_storage).Sum(local_expired_counter);
+  if (threadIdx.x == 0) {
+    *expired_counter += expired_num_per_block;
+  }
+}
+
+template <typename Key>
+__global__ void FindExpiredKeysAndIndices(size_t key_num, size_t elements_per_block, size_t min_lookup_cnt,
+                                          size_t global_timestamp, size_t max_time_interval,
+                                          bool *const *idle_flags_ptr, size_t *const *lookup_cnts_ptr,
+                                          size_t *const *update_timestamps_ptr, const Key *all_keys,
+                                          const int *all_indices, CudaAtomicSize *expired_counter, Key *expired_keys,
+                                          int *expired_indices) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < key_num; pos += blockDim.x * gridDim.x) {
+    Key key = all_keys[pos];
+    int index = all_indices[pos];
+
+    const size_t block_idx = index / elements_per_block;
+    const size_t offset_in_block = index % elements_per_block;
+
+    // Ignore elements at idle slot or ones that have not been really inserted into hash table yet.
+    if (idle_flags_ptr[block_idx][offset_in_block] || lookup_cnts_ptr[block_idx][offset_in_block] < min_lookup_cnt) {
+      continue;
+    }
+
+    // Record expired keys and indices.
+    size_t timestamp = update_timestamps_ptr[block_idx][offset_in_block];
+    if (global_timestamp > timestamp && (global_timestamp - timestamp) > max_time_interval) {
+      size_t expired_index = expired_counter->fetch_add(1, cuda::std::memory_order_relaxed);
+      expired_keys[expired_index] = key;
+      expired_indices[expired_index] = index;
     }
   }
 }
 
 // Erase elements in hash map, update idle status for erased slots.
-__global__ void EraseElements(size_t erase_num, size_t elements_per_block, int empty_index, const int *erase_indices,
-                              bool **idle_flags_ptr) {
+__global__ void EraseElementsByIndices(size_t erase_num, size_t elements_per_block, int empty_index,
+                                       const int *erased_indices, bool *const *idle_flags_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < erase_num; pos += blockDim.x * gridDim.x) {
     // Elements which do not exist in hash map.
-    if (erase_indices[pos] == empty_index) {
+    if (erased_indices[pos] == empty_index) {
       continue;
     }
 
-    const size_t block_idx = erase_indices[pos] / elements_per_block;
-    const size_t offset_in_block = erase_indices[pos] % elements_per_block;
+    const size_t block_idx = erased_indices[pos] / elements_per_block;
+    const size_t offset_in_block = erased_indices[pos] % elements_per_block;
     idle_flags_ptr[block_idx][offset_in_block] = true;
+  }
+}
+
+__global__ void AddErasedSlots(size_t erased_num, int empty_index, const int *erased_indices,
+                               CudaAtomicInt *erased_counter, int *erased_slot) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < erased_num; pos += blockDim.x * gridDim.x) {
+    // Elements which do not exist in hash map.
+    if (erased_indices[pos] == empty_index) {
+      continue;
+    }
+
+    erased_slot[erased_counter->fetch_add(1, cuda::std::memory_order_relaxed)] = erased_indices[pos];
   }
 }
 }  // namespace gpu

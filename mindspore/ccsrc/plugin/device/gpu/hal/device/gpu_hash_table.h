@@ -110,6 +110,9 @@ class GPUHashTable : public HashTable<Key, Value> {
   // Get all indices in blocks according to the key.
   bool GetIndicesByKeys(const Key *key, size_t key_num, bool insert_miss_key, int32_t *indices, cudaStream_t stream);
 
+  // Update hash table size when insert new elements into hash table.
+  bool UpdateSize(size_t key_num, const int *indices, cudaStream_t stream, bool update_lookup_count = true);
+
   // Insert default value according to initializer, initializer can be 'normal', 'zeros' or 'ones'.
   bool InsertDefaultValueByInitializer(size_t key_num, const std::string &initializer, const int *indices,
                                        cudaStream_t stream);
@@ -128,8 +131,30 @@ class GPUHashTable : public HashTable<Key, Value> {
   // Free GPU memory use char_alloc_.
   void FreeMemory(void *ptr);
 
-  // Reset the buffer that record block and idle status.
-  bool ResetBlockAndIdleFlag(cudaStream_t stream);
+  // Allocate a new block for hash table.
+  bool AddNewBlock(cudaStream_t stream);
+
+  // Reset the buffers that record pointers for block, idle status, lookup counter and updated timestamps.
+  bool ResetAllBlockRecorders(cudaStream_t stream);
+
+  // Free the buffers that record pointers for block, idle status, lookup counter and updated timestamps.
+  void FreeAllBlockRecorders();
+
+  // Evict elements that are not frequently accessed automatically.
+  bool EvictExpiredElements(cudaStream_t stream);
+
+  // Count the number for expired elememts in hash table.
+  // If the elements in the hash table are not used or updated within the time interval indicated by the
+  // `max_time_interval_to_evict_`, these elements will be expired.
+  bool CountExpiredElements(cudaStream_t stream, size_t *expired_num);
+
+  // Find all keys and indices for expired elememts in hash table.
+  // If the elements in the hash table are not used or updated within the time interval indicated by the
+  // `max_time_interval_to_evict_`, these elements will be expired.
+  bool FindExpiredElements(Key *expired_keys, int *expired_indices, cudaStream_t stream);
+
+  // Erase expired elememts in hash table.
+  bool EraseElements(const Key *keys, size_t key_num, const int *indices, cudaStream_t stream);
 
   // Record all block memory that contain all values.
   std::vector<Value *> blocks_;
@@ -141,6 +166,23 @@ class GPUHashTable : public HashTable<Key, Value> {
   // Record whether every slot is occupied or not for all block, the buffer is on device memory.
   bool **idle_flags_ptr_{nullptr};
 
+  // Record the number of times each element is accessed for all block.
+  std::vector<size_t *> lookup_cnts_;
+  // Record the number of times each element is accessed for all block, the buffer is on device memory.
+  size_t **lookup_cnts_ptr_{nullptr};
+
+  // Record the timestamp of each element in the hash table that was modified.
+  std::vector<size_t *> update_timestamps_;
+  // Record the timestamp of each element in the hash table that was modified, the buffer is on device memory.
+  size_t **update_timestamps_ptr_{nullptr};
+
+  // To improve the initialization performance of idle status and lookup counter, the following two initializers are
+  // initialized once as static variables:
+  // The initializer(initialized value: true) for idle flags.
+  static std::vector<int8_t> idle_flags_initializer_;
+  // The initializer(initialized value: 0) for lookup counters.
+  static std::vector<size_t> lookup_counter_initializer_;
+
   // The sentinel record the latest used location in blocks.
   cuda::atomic<std::size_t, cuda::thread_scope_device> *current_index_{nullptr};
 
@@ -149,6 +191,9 @@ class GPUHashTable : public HashTable<Key, Value> {
   cuda::atomic<int32_t, cuda::thread_scope_device> *erased_counter_{nullptr};
   // The buffer keep all the idle slot position(offset index to the beginning of block).
   int32_t *erased_slot_{nullptr};
+
+  // Record all erased keys on host memory.
+  std::vector<Key> erased_keys_;
 
   // The value dimension for each key.
   size_t value_dim_;
@@ -171,7 +216,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   size_t capacity_{0};
 
   // The number of elements of one block.
-  size_t elements_per_block_{kInitialCapacity};
+  static const size_t elements_per_block_{kInitialCapacity};
 
   // Record the number of successfully inserted keys.
   cuda::atomic<std::size_t, cuda::thread_scope_device> *insert_success_number_{nullptr};
@@ -185,6 +230,18 @@ class GPUHashTable : public HashTable<Key, Value> {
   int random_gen_threads_per_block_{GET_THREADS};
   // The grid size used to launch cuda kernel for inserting normal distribution random values.
   int random_gen_block_count_{(kMaxThreadsPerBlockRandomGen - 1) / random_gen_threads_per_block_ + 1};
+
+  // Permission threshold: When an element is accessed more than this threshold, it will be actually inserted into
+  // the hash table.
+  size_t min_lookup_cnt_before_permit_{1};
+
+  // Element eviction time interval threshold: evict elements that are not frequently accessed automatically,
+  // if the elements in the hash table are not used or updated within the time interval indicated by the threshold,
+  // these elements will be removed from the hash table.
+  size_t max_time_interval_to_evict_{SIZE_MAX};
+
+  // Global timestamp, which is currently recorded when the hash table is updated.
+  size_t global_timestamp_{0};
 };
 }  // namespace gpu
 }  // namespace device
