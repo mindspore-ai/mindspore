@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include "ir/anf.h"
+#include "ir/dtype.h"
 
 namespace mindspore {
 namespace expander {
@@ -42,12 +43,24 @@ class Node : public std::enable_shared_from_this<Node> {
     return anf_node_->cast<T>();
   }
 
+  std::vector<int64_t> shape();
+  std::vector<std::vector<int64_t>> shapes();
+
+  TypePtr dtype();
+  std::vector<TypePtr> dtypes();
+
   const Emitter *emitter() const { return emitter_; }
 
  protected:
+  // the wrapped anfnode.
   AnfNodePtr anf_node_{nullptr};
-  // hold an emitter for operator overloading.
+  // hold the emitter who created this node.
   const Emitter *emitter_{nullptr};
+
+  // cache the output shape after first query
+  BaseShapePtr shape_{nullptr};
+  // cache the output dtype after first query
+  TypePtr type_{nullptr};
 };
 using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;

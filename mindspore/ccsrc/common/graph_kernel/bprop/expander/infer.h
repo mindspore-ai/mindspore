@@ -24,7 +24,11 @@ namespace expander {
 /// \brief ExpanderInfer is the adapter for inferring functions that is called in emitter.
 class ExpanderInfer {
  public:
+  /// \brief Infer shape and dtype for node
   virtual void Infer(const NodePtr &node) = 0;
+
+  virtual BaseShapePtr GetShape(const NodePtr &node) = 0;
+  virtual TypePtr GetDtype(const NodePtr &node) = 0;
 };
 using ExpanderInferPtr = std::shared_ptr<ExpanderInfer>;
 
@@ -32,6 +36,8 @@ using ExpanderInferPtr = std::shared_ptr<ExpanderInfer>;
 class CppInfer : public ExpanderInfer {
  public:
   void Infer(const NodePtr &node) override;
+  BaseShapePtr GetShape(const NodePtr &node) override;
+  TypePtr GetDtype(const NodePtr &node) override;
 };
 }  // namespace expander
 }  // namespace mindspore

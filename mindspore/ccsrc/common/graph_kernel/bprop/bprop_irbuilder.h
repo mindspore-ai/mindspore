@@ -47,10 +47,10 @@ class BpropIRBuilder : public Emitter {
   const NodePtrList &GetInputs() const { return *inputs_ptr_; }
 
   // For node that has single output
-  ShapeVector GetShape(const NodePtr &node) const;
+  ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
   // For node that has multiple outputs
-  std::vector<ShapeVector> GetShapes(const NodePtr &node) const;
-  TypePtr GetDtype(const NodePtr &node) const;
+  std::vector<ShapeVector> GetShapes(const NodePtr &node) const { return node->shapes(); }
+  TypePtr GetDtype(const NodePtr &node) const { return node->dtype(); }
   TypeId GetDtypeId(const NodePtr &node) const { return GetDtype(node)->type_id(); }
   ValuePtr GetAttr(const NodePtr &node, const std::string &attr) const;
   int64_t GetSize(const NodePtr &node) const;

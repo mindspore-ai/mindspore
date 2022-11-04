@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <utility>
 #include "ir/func_graph.h"
 #include "ops/core_ops.h"
 #include "include/common/utils/utils.h"
@@ -44,12 +45,10 @@ class Emitter {
     return Emit(prim::kTupleGetItem, {input, Value(static_cast<int64_t>(i))});
   }
 
-  NodePtr Cast(const NodePtr &node, const TypePtr &type) const { return Emit("Cast", {node, EmitValue(type)}); }
+  NodePtr Cast(const NodePtr &node, const TypePtr &type) const;
   NodePtr Cast(const NodePtr &node, TypeId type_id) const { return Cast(node, TypeIdToType(type_id)); }
 
-  NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const {
-    return Emit(prim::kReshape, {node, Tensor(shape)});
-  }
+  NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const;
   NodePtr ExpandDims(const NodePtr &node, int64_t axis) const { return Emit(kExpandDimsOpName, {node, Value(axis)}); }
   NodePtr Abs(const NodePtr &node) const { return Emit(prim::kAbs, {node}); }
   NodePtr Neg(const NodePtr &node) const { return Emit(prim::kNeg, {node}); }
@@ -97,6 +96,8 @@ class Emitter {
   }
   NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalAnd", {lhs, rhs}); }
   NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalOr", {lhs, rhs}); }
+  std::pair<bool, ShapeVector> NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
+                                          bool keep_dim) const;
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
   NodePtr ZerosLike(const NodePtr &node) const;
@@ -119,6 +120,8 @@ class Emitter {
     auto tensor_ptr = std::make_shared<tensor::Tensor>(data_type, shape, data, src_data_type);
     return EmitValue(tensor_ptr);
   }
+
+  ExpanderInferPtr infer() const { return infer_; }
 
  protected:
   NodePtr NewNode(const AnfNodePtr &anfnode) const { return std::make_shared<Node>(anfnode, this); }

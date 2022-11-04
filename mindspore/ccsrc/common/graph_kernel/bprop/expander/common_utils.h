@@ -38,6 +38,8 @@ std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vecto
 
 std::vector<int64_t> GetAxisList(const ValuePtr &value);
 
+int64_t CheckRange(int64_t idx, int64_t dim_size);
+
 NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                             const NodePtr &dy);
 
