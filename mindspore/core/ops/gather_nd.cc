@@ -37,13 +37,6 @@ abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::
   }
   auto input_rank = input_shape.size();
   auto indices_rank = indices_shape.size();
-  if (IsDynamic(input_shape)) {
-    ShapeVector output_shape_dyn;
-    for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
-      output_shape_dyn.push_back(abstract::Shape::kShapeDimAny);
-    }
-    return std::make_shared<abstract::Shape>(output_shape_dyn);
-  }
   (void)CheckAndConvertUtils::CheckInteger("Input of indices data", SizeToLong(input_rank), kGreaterEqual,
                                            indices_shape[indices_rank - 1], prim_name);
   std::vector<int64_t> output_shape;
