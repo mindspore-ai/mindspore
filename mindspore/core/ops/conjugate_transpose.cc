@@ -32,33 +32,48 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  ShapeVector p_value;
-  ShapeVector p_value_raw;
+  auto is_dynamic_rank = IsDynamicRank(x_shape);
+  if (is_dynamic_rank) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+
+  constexpr int64_t dim_7 = 7;
+  (void)CheckAndConvertUtils::CheckInteger("[x] rank", static_cast<int64_t>(x_shape.size()), kLessEqual, dim_7,
+                                           op_name);
+
   auto perm_value = input_args[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(perm_value);
-  if (perm_value->isa<ValueTuple>()) {
+  if (perm_value->isa<AnyValue>()) {
+    std::vector<int64_t> output_shape(static_cast<int>(x_shape.size()), -1);
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+
+  ShapeVector p_value;
+  ShapeVector p_value_raw;
+  if (perm_value->isa<tensor::Tensor>()) {
+    p_value_raw = CheckAndConvertUtils::CheckTensorIntValue("input[perm]", perm_value, op_name);
+  } else if (perm_value->isa<ValueTuple>()) {
     p_value_raw = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the type of perm must be Tuple, but got "
                             << input_args[1]->BuildType()->ToString() << " .";
   }
+
   for (auto p : p_value_raw) {
     p = (p >= 0) ? p : (static_cast<int64_t>(p_value_raw.size()) + p);
     p_value.emplace_back(p);
   }
+
   if (x_shape.size() != p_value.size()) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dimension of x " << x_shape.size() << " and perm "
                              << p_value.size() << " must be equal, but got the dimension of x " << x_shape.size()
                              << " and perm " << p_value.size() << " .";
   }
-  constexpr int64_t dim_7 = 7;
-  if (p_value.size() > dim_7) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dimension of perm must be less than 8, but get "
-                             << p_value.size() << " .";
-  }
+
   for (auto i : p_value) {
     (void)CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, SizeToLong(p_value.size()), op_name);
   }
+
   std::vector<int64_t> tmp(p_value);
   for (auto it = tmp.begin(); it != tmp.end();) {
     auto dim = *it;
@@ -69,6 +84,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of perm must be different.";
     }
   }
+
   std::vector<int64_t> in_shape(p_value);
   (void)std::transform(in_shape.begin(), in_shape.end(), in_shape.begin(), [x_shape](size_t i) { return x_shape[i]; });
   return std::make_shared<abstract::Shape>(in_shape);
@@ -85,7 +101,6 @@ TypePtr ConjugateTransposeInferType(const PrimitivePtr &prim, const std::vector<
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(ConjugateTranspose, BaseOperator);
 AbstractBasePtr ConjugateTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -95,6 +110,9 @@ AbstractBasePtr ConjugateTransposeInfer(const abstract::AnalysisEnginePtr &, con
   auto shape = ConjugateTransposeInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
+
+REGISTER_HOST_DEPENDS(kNameConjugateTranspose, {1});
+MIND_API_OPERATOR_IMPL(ConjugateTranspose, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(ConjugateTranspose, prim::kPrimConjugateTranspose, ConjugateTransposeInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

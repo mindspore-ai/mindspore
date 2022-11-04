@@ -136,7 +136,6 @@ void SparseApplyFtrl::Init(float lr, float l1, float l2, float lr_power, bool us
   set_use_locking(use_locking);
 }
 
-MIND_API_OPERATOR_IMPL(SparseApplyFtrl, BaseOperator);
 AbstractBasePtr SparseApplyFtrlInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -154,14 +153,14 @@ AbstractBasePtr SparseApplyFtrlInfer(const abstract::AnalysisEnginePtr &, const 
   (void)CheckAndConvertUtils::CheckValue(kL1, l1, kGreaterEqual, 0.0f, op_name);
   (void)CheckAndConvertUtils::CheckValue(kL2, l2, kGreaterEqual, 0.0f, op_name);
   (void)CheckAndConvertUtils::CheckValue(kLrPower, lr_power, kLessEqual, 0.0f, op_name);
-
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
-                                           sparse_apply_ftrl::kSparseApplyFtrlInputNum, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args),
+                                           kEqual, sparse_apply_ftrl::kSparseApplyFtrlInputNum, op_name);
   auto types = sparse_apply_ftrl::SparseApplyFtrlInferType(primitive, input_args);
   auto shapes = sparse_apply_ftrl::SparseApplyFtrlInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 
+MIND_API_OPERATOR_IMPL(SparseApplyFtrl, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyFtrl, prim::kPrimSparseApplyFtrl, SparseApplyFtrlInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

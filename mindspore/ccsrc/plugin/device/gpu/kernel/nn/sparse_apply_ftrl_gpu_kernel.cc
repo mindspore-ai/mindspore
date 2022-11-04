@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/nn/sparse_ftrl_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/nn/sparse_apply_ftrl_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {

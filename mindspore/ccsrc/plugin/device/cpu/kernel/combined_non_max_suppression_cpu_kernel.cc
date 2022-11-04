@@ -342,26 +342,49 @@ void CombinedNonMaxSuppressionCpuKernelMod::CheckOutput() {
   }
 }
 
-void CombinedNonMaxSuppressionCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  node_wpt_ = kernel_node;
-  input0_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input1_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, KIndex1);
-  input2_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, KIndex2);
-  input3_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, KIndex3);
-  input4_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, KIndex4);
-  input5_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, KIndex5);
+bool CombinedNonMaxSuppressionCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                 const std::vector<KernelTensorPtr> &inputs,
+                                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  return true;
+}
+
+int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                  const std::vector<KernelTensorPtr> &inputs,
+                                                  const std::vector<KernelTensorPtr> &outputs,
+                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  size_t input_num = inputs.size();
+  size_t output_num = outputs.size();
+  CHECK_KERNEL_INPUTS_NUM(input_num, kCombinedNonMaxSuppressionInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(output_num, kCombinedNonMaxSuppressionOutputsNum, kernel_name_);
+
+  input0_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input1_shape_ = inputs.at(KIndex1)->GetDeviceShapeAdaptively();
+  input2_shape_ = inputs.at(KIndex2)->GetDeviceShapeAdaptively();
+  input3_shape_ = inputs.at(KIndex3)->GetDeviceShapeAdaptively();
+  input4_shape_ = inputs.at(KIndex4)->GetDeviceShapeAdaptively();
+  input5_shape_ = inputs.at(KIndex5)->GetDeviceShapeAdaptively();
+
+  output0_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  output1_shape_ = outputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  output2_shape_ = outputs.at(kIndex2)->GetDeviceShapeAdaptively();
+  output3_shape_ = outputs.at(kIndex3)->GetDeviceShapeAdaptively();
+
   soft_nms_sigma_ = 0.0;
   num_bath_ = static_cast<int>(input0_shape_[0]);
   num_boxes_ = static_cast<int>(input0_shape_[KIndex1]);
   q_ = static_cast<int>(input0_shape_[KIndex2]);
   num_class_ = static_cast<int>((input1_shape_[KIndex2]));
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
 
   pad_per_class_ = false;
   clip_boxes_ = true;
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+
+  PrimitivePtr prim = base_operator->GetPrim();
   auto pad_per_class = prim->GetAttr("pad_per_class");
   auto clip_boxes = prim->GetAttr("clip_boxes");
   if (pad_per_class != nullptr) {
@@ -370,8 +393,11 @@ void CombinedNonMaxSuppressionCpuKernelMod::InitKernel(const CNodePtr &kernel_no
   if (clip_boxes != nullptr) {
     clip_boxes_ = GetValue<bool>(clip_boxes);
   }
-  CHECK_KERNEL_INPUTS_NUM(input_num, kCombinedNonMaxSuppressionInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kCombinedNonMaxSuppressionOutputsNum, kernel_name_);
+
+  CheckInput();
+  CheckOutput();
+
+  return KRET_OK;
 }
 
 bool CombinedNonMaxSuppressionCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -392,24 +418,9 @@ bool CombinedNonMaxSuppressionCpuKernelMod::Launch(const std::vector<kernel::Add
   } else {
     num_detection_ = max_total_size_;
   }
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_ << ".";
-  }
-  ShapeVector shape0 = {input0_shape_[0], static_cast<int64_t>(num_detection_), DimSize4};
-  ShapeVector shape1 = {input0_shape_[0], static_cast<int64_t>(num_detection_)};
-  ShapeVector shape2 = {input0_shape_[0], static_cast<int64_t>(num_detection_)};
-  ShapeVector shape3 = {input0_shape_[0]};
-  common::AnfAlgo::SetOutputInferTypeAndShape(
-    {kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeInt32}, {shape0, shape1, shape2, shape3},
-    node_.get());
-  output0_shape_ = AnfAlgo::GetOutputDeviceShape(node_, KIndex0);
-  output1_shape_ = AnfAlgo::GetOutputDeviceShape(node_, KIndex1);
-  output2_shape_ = AnfAlgo::GetOutputDeviceShape(node_, KIndex2);
-  output3_shape_ = AnfAlgo::GetOutputDeviceShape(node_, KIndex3);
+
   size_per_class_ = max_output_size_per_class_ < num_boxes_ ? max_output_size_per_class_ : num_boxes_;
-  CheckInput();
-  CheckOutput();
+
   if (max_total_size_ <= 0) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " max_total_size must be > 0, but got " << max_total_size_ << ".";
   }
@@ -435,6 +446,7 @@ bool CombinedNonMaxSuppressionCpuKernelMod::Launch(const std::vector<kernel::Add
   (void)nms_perbath(boxes, scores, nmsed_boxes, nmsed_scores, nmsed_class, valid_detection);
   return true;
 }
+
 std::vector<KernelAttr> CombinedNonMaxSuppressionCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> kernel_attr_list = {
     KernelAttr()

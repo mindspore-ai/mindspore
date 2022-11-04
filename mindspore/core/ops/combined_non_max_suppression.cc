@@ -31,6 +31,7 @@ const int64_t kInputDimension1 = 3;
 const int64_t kDimsize = 4;
 const int64_t kInputs = 6;
 const size_t ksecond = 2;
+
 tensor::TensorPtr Get_Value(const std::vector<AbstractBasePtr> &input_args, size_t index) {
   auto input = input_args[index]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(input);
@@ -38,15 +39,14 @@ tensor::TensorPtr Get_Value(const std::vector<AbstractBasePtr> &input_args, size
   MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
   return input_shape_value_ptr->cast<tensor::TensorPtr>();
 }
-abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &primitive,
-                                                            const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
-  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto input3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto input4_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto input5_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+
+void CombinedNonMaxSuppressionCheckShapeSize(const ShapeVector &input0_shape, const ShapeVector &input1_shape,
+                                             const ShapeVector &input2_shape, const ShapeVector &input3_shape,
+                                             const ShapeVector &input4_shape, const ShapeVector &input5_shape,
+                                             const bool &is_dynamic_rank, const std::string &prim_name) {
+  if (is_dynamic_rank) {
+    return;
+  }
   (void)CheckAndConvertUtils::CheckInteger("boxes dim", SizeToLong(input0_shape.size()), kEqual, kInputDimension0,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("scores dim", SizeToLong(input1_shape.size()), kEqual, kInputDimension1,
@@ -55,6 +55,13 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
   (void)CheckAndConvertUtils::CheckInteger("max_total_size dim", SizeToLong(input3_shape.size()), kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("iou_threshold", SizeToLong(input4_shape.size()), kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("score_threshold", SizeToLong(input5_shape.size()), kEqual, 0, prim_name);
+}
+
+void CombinedNonMaxSuppressionCheckShapeValue(const ShapeVector &input0_shape, const ShapeVector &input1_shape,
+                                              const bool &is_dynamic, const std::string &prim_name) {
+  if (is_dynamic) {
+    return;
+  }
   if (input0_shape[0] != input1_shape[0]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the boxes's 1st dim must be same with the scores's"
                              << " 1st dim, but got" << input0_shape[0] << " and " << input1_shape[0] << ".";
@@ -72,45 +79,35 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the boxes's 4th dim must be equal to 4, but got"
                              << input0_shape[kInputIndex3] << ".";
   }
-  for (int64_t i = 0; i < kInputs; i++) {
-    if (!input_args[i]->isa<abstract::AbstractTensor>()) {
-      MS_EXCEPTION(TypeError) << "For " << prim_name << " input" << i << " only support tensor!";
-    }
-  }
+}
+
+abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitivePtr &primitive,
+                                                                const std::vector<AbstractBasePtr> &input_args,
+                                                                const bool &is_dynamic) {
+  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto pad_per_class_ptr = primitive->GetAttr("pad_per_class");
   MS_EXCEPTION_IF_NULL(pad_per_class_ptr);
   bool pad_per_class = GetValue<bool>(pad_per_class_ptr);
-  auto input2_tensor = Get_Value(input_args, kInputIndex2);
-  auto input3_tensor = Get_Value(input_args, kInputIndex3);
-  auto input4_tensor = Get_Value(input_args, kInputIndex4);
-  auto input5_tensor = Get_Value(input_args, kInputIndex5);
-  if (IsValue(input_args[kInputIndex2]->BuildValue()) && IsValue(input_args[kInputIndex3]->BuildValue())) {
-    if (IsValue(input_args[kInputIndex4]->BuildValue()) && input_args[kInputIndex5]->BuildValue()) {
-      auto iou_threshold = *(static_cast<float *>(input4_tensor->data_c()));
-      auto score_threshold = *(static_cast<float *>(input5_tensor->data_c()));
-      if (iou_threshold < 0 || iou_threshold > 1) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", iou_threshold must be in [0,1], but got " << iou_threshold
-                                 << ".";
-      }
-      if (score_threshold < 0 && input0_shape[kInputIndex2] == input1_shape[kInputIndex2]) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", it is temporarily unsupported when boxes's 2'nd dim "
-                                 << "is not 1 and score_threshold is less than 1.";
-      }
-    }
+
+  if (!is_dynamic && IsValue(input_args[kInputIndex2]->BuildValue()) &&
+      IsValue(input_args[kInputIndex3]->BuildValue())) {
+    auto input2_tensor = Get_Value(input_args, kInputIndex2);
+    auto input3_tensor = Get_Value(input_args, kInputIndex3);
     auto max_output_size_per_class = *(static_cast<int32_t *>(input2_tensor->data_c()));
     auto max_total_size = *(static_cast<int32_t *>(input3_tensor->data_c()));
-    if (max_total_size <= 0) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << " max_total_size must be > 0, but got " << max_total_size
-                               << ".";
-    }
-    if (max_output_size_per_class <= 0) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << " max_output_size_per_class must be > 0, but got "
-                               << max_output_size_per_class << ".";
-    }
+
+    const int32_t kNumZero = 0;
+    CheckAndConvertUtils::CheckInteger("max_total_size", max_total_size, kGreaterThan, kNumZero, primitive->name());
+
+    CheckAndConvertUtils::CheckInteger("max_output_size_per_clas", max_output_size_per_class, kGreaterThan, kNumZero,
+                                       primitive->name());
+
     auto num_detection = max_total_size;
     if (pad_per_class) {
       num_detection = std::min(max_total_size, max_output_size_per_class * static_cast<int32_t>(input1_shape[ksecond]));
     }
+
     int64_t bs = input0_shape[0];
     ShapeVector shape1 = {bs, num_detection, 4};
     ShapeVector shape2 = {bs, num_detection};
@@ -122,12 +119,56 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
     auto out4 = std::make_shared<abstract::Shape>(shape4);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out1, out2, out3, out4});
   } else {
-    auto shape1 = std::make_shared<abstract::Shape>(ShapeVector{-2});
-    auto shape2 = std::make_shared<abstract::Shape>(ShapeVector{-2});
-    auto shape3 = std::make_shared<abstract::Shape>(ShapeVector{-2});
-    auto shape4 = std::make_shared<abstract::Shape>(ShapeVector{-2});
+    auto shape1 = std::make_shared<abstract::Shape>(ShapeVector{-1, -1, 4});
+    auto shape2 = std::make_shared<abstract::Shape>(ShapeVector{-1, -1});
+    auto shape3 = std::make_shared<abstract::Shape>(ShapeVector{-1, -1});
+    auto shape4 = std::make_shared<abstract::Shape>(ShapeVector{-1});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{shape1, shape2, shape3, shape4});
   }
+}
+
+abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &primitive,
+                                                            const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto input3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto input4_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto input5_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+
+  std::vector<ShapeVector> all_shapes = {input0_shape, input1_shape, input2_shape,
+                                         input3_shape, input4_shape, input5_shape};
+  auto is_dynamic = (IsDynamic(input0_shape) || IsDynamic(input1_shape));
+  auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
+
+  CombinedNonMaxSuppressionCheckShapeSize(input0_shape, input1_shape, input2_shape, input3_shape, input4_shape,
+                                          input5_shape, is_dynamic_rank, prim_name);
+
+  CombinedNonMaxSuppressionCheckShapeValue(input0_shape, input1_shape, is_dynamic, prim_name);
+
+  for (int64_t i = 0; i < kInputs; i++) {
+    if (!input_args[i]->isa<abstract::AbstractTensor>()) {
+      MS_EXCEPTION(TypeError) << "For " << prim_name << " input" << i << " only support tensor!";
+    }
+  }
+
+  if (IsValue(input_args[kInputIndex4]->BuildValue()) && IsValue(input_args[kInputIndex5]->BuildValue())) {
+    auto input4_tensor = Get_Value(input_args, kInputIndex4);
+    auto input5_tensor = Get_Value(input_args, kInputIndex5);
+    auto iou_threshold = *(static_cast<float *>(input4_tensor->data_c()));
+    auto score_threshold = *(static_cast<float *>(input5_tensor->data_c()));
+    if (iou_threshold < 0 || iou_threshold > 1) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", iou_threshold must be in [0,1], but got " << iou_threshold
+                               << ".";
+    }
+    if (score_threshold < 0 && !is_dynamic && input0_shape[kInputIndex2] == input1_shape[kInputIndex2]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", it is temporarily unsupported when boxes's 2'nd dim "
+                               << "is not 1 and score_threshold is less than 1.";
+    }
+  }
+
+  return CombinedNonMaxSuppressionGetOutputShape(primitive, input_args, is_dynamic);
 }
 
 TuplePtr CombinedNonMaxSuppressionInferType(const PrimitivePtr &primitive,
