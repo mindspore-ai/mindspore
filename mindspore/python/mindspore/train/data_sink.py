@@ -23,6 +23,7 @@ from mindspore.train.dataset_helper import _has_dynamic_shape, _check_inputs
 import mindspore.dataset as ds
 from mindspore._c_expression import _set_dataset_mode_config
 from mindspore.parallel._utils import _get_device_num, _need_to_full, _to_full_shapes, _get_pipeline_stages
+from mindspore._checkparam import Validator
 
 
 def _init_sink_dataset(dataset, sink_size, input_signature):
@@ -169,6 +170,7 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
         2
     """
 
+    Validator.check_value_type("sink_size", sink_size, int, "Data sink")
     if sink_size <= 0:
         raise ValueError(
             f"The 'sink_size' must be positive, but got sink_size {sink_size}.")
