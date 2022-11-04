@@ -4633,29 +4633,28 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     Combines an array of sliding local blocks into a large containing tensor.
 
     .. warning::
-        - Currently, only 4-D input tensors (batched image-like tensors) are supported.
+        - Currently, only 4-D output tensors (batched image-like tensors) are supported.
 
     Args:
-        input (Tensor): a tensor with data type float16 or float.
+        input (Tensor): 4-D Tensor with data type float16 or float32.
         output_size (Tensor): 1D tensor with `2` elements of data type int.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
-        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
+        dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
-        padding (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+        padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 0.
-        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
+        stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
 
     Returns:
-        A Tensor, with same type as 'input'.
+        A Tensor, with same type as `input` , format of the Tesnor is (N, C, H, W).
 
     Raises:
-        TypeError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` data type is not in
-            Union[int, tuple[int], list[int]].
-        ValueError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` value is not
+        TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.
+        ValueError: If `kernel_size`, `dilation`, `stride` value is not
             greater than zero or elements number more than `2`.
-        ValueError: If :attr:`padding` value is less than zero or elements number more than `2`.
+        ValueError: If `padding` value is less than zero or elements number more than `2`.
         ValueError: If `input.shape[2] != kernel_size[0] * kernel_size[1]`.
         ValueError: If `input.shape[3]` does not match the calculated number of sliding blocks.
 
@@ -4689,37 +4688,35 @@ def _check_unfold_params(param, param_name, param_size):
 
 def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     """
-    Extracts sliding local blocks from a batched input tensor.
+    Extracts sliding local blocks from a batched input tensor. Format
+    of the input Tensor is (N, C, H, W).
 
     .. warning::
         - Currently, only 4-D input tensors (batched image-like tensors) are supported.
 
     Args:
-        input (Tensor): input tensor. Support all real number data type.
+        input (Tensor): 4-D Tensor. Support all real number data type.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
-        dilation (Union[int, tuple[int], list[int]]): The dilation of the window, should be two int
+        dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
-        padding (Union[int, tuple[int], list[int]]): The pad of the window, that must be
-            a tuple of one or two or four `int` for height and width.
+        padding (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be
+            a tuple/list of one or two or four `int` for height and width.
             If one int, pad_height = pad_width.
             If two int, pad_height = padding[0], pad_width = padding[1].
             If four int, padding = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]
             Default: 0.
-        stride (Union[int, tuple[int], list[int]]): The stride of the window, should be two int
+        stride (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
 
     Returns:
-        A Tensor, with same type as 'input'.
+        A Tensor, with same type as `input`.
 
     Raises:
-        TypeError: If :attr:`kernel_size` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`stride` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`dilation` data type is not in Union[int, tuple[int], list[int]].
-        ValueError: If :attr:`kernel_size` value is not greater than zero or elements number more than `2`.
-        ValueError: If :attr:`stride` value is not greater than zero or elements number more than `2`.
-        ValueError: If :attr:`dilation` value is not greater than zero or elements number more than `2`.
-        ValueError: If :attr:`padding` value is not greater than zero.
+        TypeError: If any data type of `kernel_size`, `stride`, `dilation`, `kernel_size` is not int, tuple or list.
+        ValueError: If `kernel_size`, `dilation`, `stride` value is not
+            greater than zero or elements number more than `2`.
+        ValueError: If `padding` value is not greater than zero.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -145,6 +145,8 @@ Element-by-Element Operations
     mindspore.ops.acos
     mindspore.ops.acosh
     mindspore.ops.add
+    mindspore.ops.addcdiv
+    mindspore.ops.addcmul
     mindspore.ops.addn
     mindspore.ops.asin
     mindspore.ops.asinh
