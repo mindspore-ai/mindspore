@@ -32,6 +32,10 @@ constexpr int64_t kFloatStatusNum = 8;
 MIND_API_OPERATOR_IMPL(NPUAllocFloatStatus, BaseOperator);
 AbstractBasePtr NPUAllocFloatStatusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args.size() != 0) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "' op, input num should be 0, bug gets "
+                            << input_args.size();
+  }
   ShapeVector output_shape;
   output_shape.push_back(kFloatStatusNum);
   return abstract::MakeAbstract(std::make_shared<abstract::Shape>(output_shape), kTensorTypeFP32);
