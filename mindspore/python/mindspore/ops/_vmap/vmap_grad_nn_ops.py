@@ -14,6 +14,7 @@
 # ============================================================================
 
 """The vmap implement of grad operator corresponding to nn_ops."""
+from __future__ import absolute_import
 
 from __future__ import division
 from functools import reduce

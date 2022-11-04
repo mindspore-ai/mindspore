@@ -91,7 +91,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
 
   auto alpha_rank = SizeToLong(alpha_beta_shape.size());
   for (int64_t i = 0; i < alpha_rank; i++) {
-    shape_vec.push_back(alpha_beta_shape[i]);
+    shape_vec.push_back(alpha_beta_shape[LongToSize(i)]);
   }
 
   return std::make_shared<abstract::Shape>(shape_vec);

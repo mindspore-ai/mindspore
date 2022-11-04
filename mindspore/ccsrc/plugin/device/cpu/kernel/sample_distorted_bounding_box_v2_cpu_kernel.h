@@ -93,7 +93,7 @@ class SampleDistortedBoundingBoxV2CPUKernelMod : public NativeCpuKernelMod {
   void InitMSPhiloxRandom(int64_t seed, int64_t seed2);
   uint32_t GenerateSingle();
   bool SatisfiesOverlapConstraints(const Region &crop, float minimum_object_covered,
-                                   const std::vector<Region> &bounding_boxes);
+                                   const std::vector<Region> &bounding_boxes) const;
   bool GenerateRandomCrop(int original_width, int original_height, float min_relative_crop_area,
                           float max_relative_crop_area, float aspect_ratio, Region *crop_rect);
   template <typename T>

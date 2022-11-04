@@ -30,9 +30,10 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
-from .._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, dyn_fill
-from .._grad.grad_base import sum_grad_reduce_axis
-from ..operations._inner_ops import DynamicBroadcastGradientArgs
+from mindspore.ops._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, \
+    dyn_fill
+from mindspore.ops._grad.grad_base import sum_grad_reduce_axis
+from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -291,7 +292,7 @@ def get_bprop_tile(self):
         """
         rankr = dyn_shape_op(r_shape)[0]
         tmp = range_op(0, 20, 2, mstype.int64)
-        return stridedslice(tmp, (0,), F.expand_dims(rankr//2, 0), (1,))
+        return stridedslice(tmp, (0,), F.expand_dims(rankr // 2, 0), (1,))
 
     def bprop(x, multiples, out, dout):
         shapex = shape_op(x)
@@ -522,7 +523,7 @@ def _dyn_generate_shape_index(out_shape, indices_shape, axis):
     if axis < 0:
         axis += out_rank - ind_rank + 1
     perm_part1 = P.Range()(F.cast(0, mstype.int32), F.cast(20, mstype.int32), F.cast(1, mstype.int32))
-    perm_part1 = perm_part1[axis : axis + ind_rank]
+    perm_part1 = perm_part1[axis: axis + ind_rank]
     index = P.Range()(F.cast(0, mstype.int32), F.cast(out_rank, mstype.int32), F.cast(1, mstype.int32))
     perm = P.Concat(0)((perm_part1, index[:axis], index[axis + ind_rank:]))
     return perm
@@ -568,7 +569,7 @@ def get_bprop_gather_v2(self):
     def bprop(x, indices, axis, out, dout):
         is_mutable, axis = convert_to_tensor(axis)
         if (is_shape_unknown(shape_op(x)) or is_shape_unknown(shape_op(indices)) or \
-                is_shape_unknown(shape_op(dout))) and is_mutable:
+            is_shape_unknown(shape_op(dout))) and is_mutable:
             return _dyn_bprop_gather_v2(x, indices, axis, dout)
         orig_indices = indices
         if F.rank(dout) == 0:
@@ -871,7 +872,7 @@ def get_bprop_strided_slice_grad(self):
 
     def bprop(dy, shapex, begin, end, strides, out, dout):
         return strided_slice(dout, begin, end, strides), zeros_like(shapex), zeros_like(begin), zeros_like(end), \
-            zeros_like(strides)
+               zeros_like(strides)
 
     return bprop
 

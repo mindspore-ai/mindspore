@@ -56,13 +56,13 @@ class ListDiffCPUKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   std::vector<KernelTensorPtr> outputs_ = {};
-  size_t data_size_;
-  size_t index_size_;
-  int64_t x_size_;
-  int64_t y_size_;
-  int64_t out_size_;
-  TypeId out_type_;
-  TypeId idx_type_;
+  size_t data_size_{0};
+  size_t index_size_{0};
+  int64_t x_size_{0};
+  int64_t y_size_{0};
+  int64_t out_size_{0};
+  TypeId out_type_{kTypeUnknown};
+  TypeId idx_type_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -19,21 +19,21 @@ from functools import reduce
 import numpy as np
 import mindspore as ms
 from mindspore import nn
-from .. import functional as F
-from .. import operations as P
-from ..operations import _grad_ops as G
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
-from .grad_base import bprop_getters
-from .grad_base import convert_to_tensor
-from .grad_base import sum_grad_reduce_axis, dyn_fill, dyn_rank
-from .grad_base import dyn_ones, dyn_rank_1d
-from ..primitive import constexpr
-from ..composite.multitype_ops import _constexpr_utils as const_utils
-from ..operations._inner_ops import DynamicBroadcastGradientArgs, DynamicBroadcastTo
-from ...common import Tensor
-from .._utils.utils import is_shape_unknown, is_dim_unknown
-from ...common import dtype as mstype
+from mindspore.common import Tensor
+from mindspore.common import dtype as mstype
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.functional import broadcast_gradient_args, reduced_shape, tuple_div
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad.grad_base import convert_to_tensor
+from mindspore.ops._grad.grad_base import sum_grad_reduce_axis, dyn_fill, dyn_rank
+from mindspore.ops._grad.grad_base import dyn_ones, dyn_rank_1d
+from mindspore.ops.primitive import constexpr
+from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
+from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, DynamicBroadcastTo
+from mindspore.ops._utils.utils import is_shape_unknown, is_dim_unknown
 
 shape_op = P.Shape()
 dyn_shape_op = P.TensorShape()

@@ -195,11 +195,11 @@ static std::vector<int> generate_intervals(random_sample_t random_sample, int in
       static_cast<random_sample_t>(input_size - kernel_size) / static_cast<random_sample_t>(output_size - 1);
 
     for (int i = 0; i < output_size - 1; ++i) {
-      sequence[i] = static_cast<int>((static_cast<random_sample_t>(i) + random_sample) * alpha) -
-                    static_cast<int>(random_sample * alpha);
+      sequence[IntToSize(i)] = static_cast<int>((static_cast<random_sample_t>(i) + random_sample) * alpha) -
+                               static_cast<int>(random_sample * alpha);
     }
   }
-  sequence[output_size - 1] = input_size - kernel_size;
+  sequence[IntToSize(output_size) - 1] = FloatToInt(input_size - kernel_size);
 
   return sequence;
 }

@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `add` operations."""
+from __future__ import absolute_import
 
 from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite import base

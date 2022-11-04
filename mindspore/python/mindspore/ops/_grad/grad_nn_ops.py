@@ -15,19 +15,19 @@
 
 """Define the grad rules of neural network related operations."""
 import numpy as np
-from mindspore.ops.primitive import constexpr
-from mindspore.ops.operations import nn_ops as nps
+from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
-from .grad_base import bprop_getters, dyn_size, create_tensor_by_element, dyn_rank
-from .. import functional as F
-from .. import operations as P
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations import _grad_ops as G
-from ..operations import _inner_ops as inner
-from ..operations import _rl_inner_ops as rl_ops
-from ... import context
-from .._utils.utils import range_op, get_1d_shape, is_shape_unknown, is_dim_unknown
+from mindspore.ops.primitive import constexpr
+from mindspore.ops.operations import nn_ops as nps
+from mindspore.ops._grad.grad_base import bprop_getters, dyn_size, create_tensor_by_element, dyn_rank
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations import _rl_inner_ops as rl_ops
+from mindspore.ops._utils.utils import range_op, get_1d_shape, is_shape_unknown, is_dim_unknown
 
 
 @bprop_getters.register(P.BiasAdd)

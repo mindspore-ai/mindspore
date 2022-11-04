@@ -15,11 +15,11 @@
 
 """Generate bprop for quantization aware ops"""
 
-from .. import operations as P
-from ..operations import _quant_ops as Q
-from .grad_base import bprop_getters
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ... import context
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _quant_ops as Q
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore import context
 
 
 @bprop_getters.register(Q.FakeQuantPerLayer)

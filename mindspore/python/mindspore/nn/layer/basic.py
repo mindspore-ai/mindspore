@@ -1534,7 +1534,7 @@ class MatrixSetDiag(Cell):
     :math:`[I, J, K, ..., M, N]`, where:
 
     .. math::
-        output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n]\ for\ m == n
+        output[i, j, k, ..., m, n] = diagonal[i, j, k, ..., n]\ for\ m == n
 
     .. math::
         output[i, j, k, ..., m, n] = x[i, j, k, ..., m, n]\ for\ m != n

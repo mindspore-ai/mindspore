@@ -58,7 +58,7 @@ int NonMaxSuppressionWithOverlapsCpuKernelMod::Resize(const BaseOperatorPtr &bas
   }
   outputs_ = outputs;
   auto overlaps_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  num_boxes_ = overlaps_shape[0];
+  num_boxes_ = LongToInt(overlaps_shape[0]);
   return KRET_OK;
 }
 
@@ -111,7 +111,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
     }
     next_candidate.suppress_begin_index = cnt;
     if (!should_suppress) {
-      indices_data[cnt] = next_candidate.box_index;
+      indices_data[IntToSize(cnt)] = next_candidate.box_index;
       cnt += 1;
     }
   }

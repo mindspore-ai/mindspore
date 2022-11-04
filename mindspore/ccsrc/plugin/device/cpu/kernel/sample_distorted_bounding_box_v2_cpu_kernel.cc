@@ -61,7 +61,10 @@ float SampleDistortedBoundingBoxV2CPUKernelMod::RandFloat() {
   const uint32_t val = (exp << 23) | man;
 
   float result;
-  (void)memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  int ret = memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+  }
   return result - 1.0f;
 }
 
@@ -89,9 +92,8 @@ uint32_t SampleDistortedBoundingBoxV2CPUKernelMod::GenerateSingle() {
   return unused_results_[used_result_index_++];
 }
 
-bool SampleDistortedBoundingBoxV2CPUKernelMod::SatisfiesOverlapConstraints(const Region &crop,
-                                                                           float minimum_object_covered,
-                                                                           const std::vector<Region> &bounding_boxes) {
+bool SampleDistortedBoundingBoxV2CPUKernelMod::SatisfiesOverlapConstraints(
+  const Region &crop, float minimum_object_covered, const std::vector<Region> &bounding_boxes) const {
   const float kMinArea = 1.0;
   if (crop.Area() < kMinArea) {
     return false;
@@ -344,7 +346,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<
     const int32_t y_min = static_cast<int32_t>(bounding_boxes[b * kShapeSize4 + 0] * height);
     const int32_t x_max = static_cast<int32_t>(bounding_boxes[b * kShapeSize4 + 3] * width);
     const int32_t y_max = static_cast<int32_t>(bounding_boxes[b * kShapeSize4 + 2] * height);
-    boxes.push_back(Region(x_min, y_min, x_max, y_max));
+    (void)boxes.emplace_back(Region(x_min, y_min, x_max, y_max));
   }
 
   const Region ms_image_rect(0, 0, width, height);

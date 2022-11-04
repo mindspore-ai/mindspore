@@ -14,6 +14,8 @@
 # ============================================================================
 
 """inner_ops"""
+from __future__ import absolute_import
+
 from mindspore import context
 from mindspore.ops.operations.comm_ops import _VirtualPipelineEnd
 from mindspore.ops._grad.grad_base import bprop_getters

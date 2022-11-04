@@ -65,12 +65,12 @@ TypePtr KLDivLossInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto input_x_type = input_args[kInputIndex0]->BuildType();
   auto input_target_type = input_args[kInputIndex1]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, op_name);
 
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_x_type);
-  types.emplace("target", input_target_type);
-  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  (void)types.emplace("x", input_x_type);
+  (void)types.emplace("target", input_target_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return input_x_type;
 }
 

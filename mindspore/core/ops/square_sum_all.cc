@@ -40,7 +40,7 @@ abstract::TupleShapePtr SquareSumAllInferShape(const PrimitivePtr &primitive,
   if (primitive->HasAttr(kBatchRank)) {
     int64_t batch_rank = GetValue<int64_t>(primitive->GetAttr(kBatchRank));
     for (int64_t index = 0; index < batch_rank; index++) {
-      shape_vec.push_back(input_x_shape[index]);
+      shape_vec.push_back(input_x_shape[LongToSize(index)]);
     }
   }
   auto output_shape = std::make_shared<abstract::Shape>(shape_vec);

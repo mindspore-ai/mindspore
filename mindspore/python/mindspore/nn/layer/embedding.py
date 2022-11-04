@@ -382,7 +382,7 @@ class EmbeddingLookup(Cell):
         if server_num == 0:
             raise ValueError("The Parameter Server number is zero.")
         # Assign the embedding table dimensions.
-        for i in range(server_num):
+        for _ in range(server_num):
             self.embedding_table_vocab_dim_list.append(self.vocab_size // server_num)
         rest_vocab_size = self.vocab_size % server_num
         if rest_vocab_size != 0:

@@ -73,7 +73,7 @@ bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vecto
     for (std::int64_t i = begin; i < end; i += 1) {
       AdjustContrastv2(&(input[i * static_cast<int64_t>(per_batch_elements)]),
                        &(output[i * static_cast<int64_t>(per_batch_elements)]), contrast_factor[0], x_dim_sizes[n - 1],
-                       per_batch_elements);
+                       SizeToLong(per_batch_elements));
     }
   });
 }
