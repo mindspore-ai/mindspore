@@ -30,8 +30,6 @@ STATUS LogMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto log_prim = api::utils::cast<api::SharedPtr<ops::Log>>(prim);
-  MS_ASSERT(log_prim != nullptr);
 
   auto log_operator = std::make_unique<mapper::LogOperator>();
   if (log_operator == nullptr) {

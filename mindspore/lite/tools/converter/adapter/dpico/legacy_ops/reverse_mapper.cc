@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mapper/reverse_mapper.h"
+#include "legacy_ops/reverse_mapper.h"
 #include <memory>
 #include <utility>
 #include <vector>

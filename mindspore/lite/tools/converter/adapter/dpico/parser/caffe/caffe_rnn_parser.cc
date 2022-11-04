@@ -34,19 +34,19 @@ BaseOperatorPtr CaffeRnnParser::Parse(const caffe::LayerParameter &proto, const 
   if (proto.has_recurrent_param()) {
     const auto &rnn_param = proto.recurrent_param();
     if (rnn_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(rnn_param.num_output()));
+      (void)prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(rnn_param.num_output()));
     }
     if (rnn_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(rnn_param.expose_hidden()));
-      prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(rnn_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(rnn_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!rnn_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(rnn_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(rnn_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(rnn_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!rnn_param.expose_hidden()));
     }
   }
 
   // set default value
-  prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
-  prim->AddAttr(dpico::kHasOutputGateFlag, api::MakeValue<bool>(true));
+  (void)prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kHasOutputGateFlag, api::MakeValue<bool>(true));
 
   return prim;
 }

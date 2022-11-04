@@ -61,13 +61,12 @@ STATUS InputAdjust::AddAttrToInput(const api::FuncGraphPtr &func_graph, const ap
   api::AnfNodePtr param_node;
   switch (flag) {
     case 1: {
+      MS_CHECK_TRUE_MSG(!dpico::CastToInt(value_ptr).empty(), RET_ERROR, "value is empty");
       auto value_data_vec = dpico::CastToInt(value_ptr);
-      if (!value_data_vec.empty()) {
-        auto value_data = value_data_vec.front();
-        param_node =
-          dpico::BuildIntValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-        break;
-      }
+      auto value_data = value_data_vec.front();
+      param_node =
+        dpico::BuildIntValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+      break;
     }
     case kBuildInputFlagTwo: {
       auto value_data = dpico::CastToInt(value_ptr);
@@ -104,7 +103,7 @@ bool InputAdjust::Run(const api::FuncGraphPtr &func_graph) {
   auto manager = api::FuncGraphManager::Manage(func_graph, true);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";
-    return lite ::RET_NULL_PTR;
+    return false;
   }
   auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
   STATUS status = lite::RET_OK;

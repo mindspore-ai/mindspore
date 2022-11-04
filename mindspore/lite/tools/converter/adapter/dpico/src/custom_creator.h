@@ -34,7 +34,7 @@ class CustomOpCreator {
  public:
   explicit CustomOpCreator(int custom_id = 0, bool has_unsupported = false)
       : custom_id_(custom_id), has_unsupported_(has_unsupported) {}
-  int GetCustomId() { return custom_id_; }
+  int GetCustomId() const { return custom_id_; }
   ~CustomOpCreator() = default;
   api::CNodePtr CreateCustomOp(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
                                const ModelCoreInfoPtr &om_model_info);

@@ -58,11 +58,13 @@ bool SoftmaxChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Form
       auto axis_data = api::GetValue<std::vector<int64_t>>(axis_ptr);
       auto axis = axis_data[0];
       if (axis < 0) {
-        axis = (axis + input_shape.size()) % input_shape.size();
+        int64_t input_shape_len = static_cast<int64_t>(input_shape.size());
+        axis = (axis + input_shape_len) % input_shape_len;
         std::vector<int64_t> axes = {axis};
-        primitive->AddAttr(ops::kAxis, api::MakeValue(axes));
+        (void)primitive->AddAttr(ops::kAxis, api::MakeValue(axes));
       }
-      if (axis != kAxis1 && axis != kAxis2 && axis != kAxis3) {
+      if (static_cast<size_t>(axis) != kAxis1 && static_cast<size_t>(axis) != kAxis2 &&
+          static_cast<size_t>(axis) != kAxis3) {
         MS_LOG(WARNING) << "axis val only supports 1/2/3 by dpico. " << op->fullname_with_scope();
         return false;
       }
@@ -70,7 +72,7 @@ bool SoftmaxChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Form
         if (!CheckVectorAndTensorChannel(input_shape, format)) {
           return false;
         }
-      } else if (axis == kAxis3) {
+      } else if (static_cast<size_t>(axis) == kAxis3) {
         int64_t input_w;
         if (GetWidth(input_shape, format, &input_w) != RET_OK) {
           MS_LOG(ERROR) << "get input_w failed";

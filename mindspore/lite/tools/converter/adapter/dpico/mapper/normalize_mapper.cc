@@ -42,6 +42,10 @@ STATUS SetNormalizeDataInfo(const api::CNodePtr &cnode, mapper::NormalizeOperato
         MS_LOG(INFO) << "graph input don't have blobs";
         continue;
       }
+      if (input_param_node->default_param() == nullptr) {
+        MS_LOG(ERROR) << "input_param_node->default_param() is nullptr";
+        return RET_ERROR;
+      }
       auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
       if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
         auto raw_datas = static_cast<float *>(tensor_info->data());

@@ -17,9 +17,16 @@
 #ifndef MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_CUSTOM_CONFIG_MANAGER_H_
 #define MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_CUSTOM_CONFIG_MANAGER_H_
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <vector>
+#include <fstream>
 #include <map>
 #include <string>
 #include <memory>
+
 namespace mindspore {
 namespace lite {
 class CustomConfigManager {
@@ -27,9 +34,14 @@ class CustomConfigManager {
   CustomConfigManager() = default;
   ~CustomConfigManager() = default;
 
+  inline int AccessFile(const std::string &file_path, int access_mode) {
+    return access(file_path.c_str(), access_mode);
+  }
+  std::string RealPath(const char *path);
   int Init(const std::map<std::string, std::string> &dpico_config);
   int UpdateConfig(const std::map<std::string, std::string> &dpico_config);
-  size_t MaxRoiNum() const { return max_roi_num_; }
+  bool IsEnableMultiModelSharingMemPrepare(const std::map<std::string, std::string> &model_share_config);
+  bool IsEnableMultiModelSharingMem(const std::map<std::string, std::string> &model_share_config);
   float NmsThreshold() const { return nms_threshold_; }
   float ScoreThreshold() const { return score_threshold_; }
   float MinHeight() const { return min_height_; }
@@ -44,8 +56,7 @@ class CustomConfigManager {
   float score_threshold_{0.08f};
   float min_height_{1.0f};
   float min_width_{1.0f};
-  size_t g_total_t_{0};
-  size_t max_roi_num_{300};
+  size_t g_total_t_{0};  // user configuration is not supported
   bool detect_post_process_{false};
   std::string acl_config_file_;
   bool inited_{false};

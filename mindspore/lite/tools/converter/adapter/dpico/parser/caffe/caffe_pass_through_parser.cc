@@ -37,7 +37,7 @@ BaseOperatorPtr CaffePassThroughParser::Parse(const caffe::LayerParameter &proto
     const auto &pass_through_param = proto.pass_through_param();
     if (pass_through_param.has_num_output()) {
       uint32_t num_output = pass_through_param.num_output();
-      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(num_output));  // for mapper
+      (void)prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(num_output));  // for mapper
 
       std::vector<uint8_t> num_output_attr(sizeof(uint32_t));
       if (memcpy_s(num_output_attr.data(), num_output_attr.size() * sizeof(uint8_t), &num_output, sizeof(uint32_t)) !=
@@ -49,7 +49,7 @@ BaseOperatorPtr CaffePassThroughParser::Parse(const caffe::LayerParameter &proto
     }
     if (pass_through_param.has_block_height()) {
       uint32_t block_height = pass_through_param.block_height();
-      prim->AddAttr(dpico::kBlockHeight, api::MakeValue<int64_t>(block_height));
+      (void)prim->AddAttr(dpico::kBlockHeight, api::MakeValue<int64_t>(block_height));
 
       std::vector<uint8_t> block_height_attr(sizeof(uint32_t));
       if (memcpy_s(block_height_attr.data(), block_height_attr.size() * sizeof(uint8_t), &block_height,
@@ -61,7 +61,7 @@ BaseOperatorPtr CaffePassThroughParser::Parse(const caffe::LayerParameter &proto
     }
     if (pass_through_param.has_block_width()) {
       uint32_t block_width = pass_through_param.block_width();
-      prim->AddAttr(dpico::kBlockWidth, api::MakeValue<int64_t>(block_width));
+      (void)prim->AddAttr(dpico::kBlockWidth, api::MakeValue<int64_t>(block_width));
 
       std::vector<uint8_t> block_width_attr(sizeof(uint32_t));
       if (memcpy_s(block_width_attr.data(), block_width_attr.size() * sizeof(uint8_t), &block_width,

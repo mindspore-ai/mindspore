@@ -45,7 +45,7 @@ BaseOperatorPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, c
     }
     if (upsample_param.upsample_h()) {
       uint32_t upsample_h = upsample_param.upsample_h();
-      prim->AddAttr(dpico::kUpsampleH, api::MakeValue<int64_t>(upsample_h));
+      (void)prim->AddAttr(dpico::kUpsampleH, api::MakeValue<int64_t>(upsample_h));
 
       std::vector<uint8_t> upsample_h_attr(sizeof(uint32_t));
       if (memcpy_s(upsample_h_attr.data(), upsample_h_attr.size() * sizeof(uint8_t), &upsample_h, sizeof(uint32_t)) !=
@@ -57,7 +57,7 @@ BaseOperatorPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, c
     }
     if (upsample_param.upsample_w()) {
       uint32_t upsample_w = upsample_param.upsample_w();
-      prim->AddAttr(dpico::kUpsampleH, api::MakeValue<int64_t>(upsample_w));
+      (void)prim->AddAttr(dpico::kUpsampleH, api::MakeValue<int64_t>(upsample_w));
 
       std::vector<uint8_t> upsample_w_attr(sizeof(uint32_t));
       if (memcpy_s(upsample_w_attr.data(), upsample_w_attr.size() * sizeof(uint8_t), &upsample_w, sizeof(uint32_t)) !=
@@ -71,10 +71,10 @@ BaseOperatorPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, c
       auto mode = upsample_param.interpolation_mode();
       switch (mode) {
         case caffe::UpsampleParameter_InterpolationMode_NEAREST:
-          prim->AddAttr(dpico::kInterpolationMode, api::MakeValue<std::string>(dpico::kNearest));
+          (void)prim->AddAttr(dpico::kInterpolationMode, api::MakeValue<std::string>(dpico::kNearest));
           break;
         case caffe::UpsampleParameter_InterpolationMode_BILINEAR:
-          prim->AddAttr(dpico::kInterpolationMode, api::MakeValue<std::string>(dpico::kBilinear));
+          (void)prim->AddAttr(dpico::kInterpolationMode, api::MakeValue<std::string>(dpico::kBilinear));
           break;
         default:
           MS_LOG(ERROR) << "current interpolation mode is not supported. " << mode;
@@ -83,7 +83,7 @@ BaseOperatorPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, c
     }
   }
 
-  prim->AddAttr(ops::kScale, api::MakeValue<float>(scale));
+  (void)prim->AddAttr(ops::kScale, api::MakeValue<float>(scale));
   std::vector<uint8_t> scale_attr(sizeof(float));
   if (memcpy_s(scale_attr.data(), scale_attr.size() * sizeof(uint8_t), &scale, sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";

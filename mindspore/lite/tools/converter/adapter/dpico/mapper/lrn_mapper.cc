@@ -47,11 +47,13 @@ STATUS LrnMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *
 
   lrn_operator->SetOpType(mapper::OpType::LRN);
   auto local_size = lrn_prim->get_depth_radius() * 2 + 1;
-  lrn_operator->SetLrnLocalSize(local_size);
+  lrn_operator->SetLrnLocalSize(static_cast<uint32_t>(local_size));
   lrn_operator->SetLrnAlpha(lrn_prim->get_alpha() * local_size);
   lrn_operator->SetLrnBeta(lrn_prim->get_beta());
   if (lrn_prim->GetAttr(kLrnK) != nullptr) {
     lrn_operator->SetLrnK(api::GetValue<float>(lrn_prim->GetAttr(kLrnK)));
+  } else if (lrn_prim->GetAttr("bias") != nullptr) {
+    lrn_operator->SetLrnK(api::GetValue<float>(lrn_prim->GetAttr("bias")));
   }
   if (PushOfflineArgs(cnode, lrn_operator.get(), 1) != RET_OK) {
     MS_LOG(ERROR) << "push offline args failed. " << cnode->fullname_with_scope();

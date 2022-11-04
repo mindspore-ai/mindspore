@@ -182,7 +182,7 @@ int HandleConstConvWeightShared(const api::FuncGraphPtr &graph, const api::AnfNo
       MS_ASSERT(trans_cnode != nullptr);
       auto prim = api::GetValueNode<api::PrimitivePtr>(trans_cnode->input(0));
       MS_ASSERT(prim != nullptr);
-      prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(dst_format));
+      (void)prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(dst_format));
       auto weight_value = dpico::GetTensorInfo(weight_node);
       MS_ASSERT(weight_value != nullptr);
       auto weight_shape = weight_value->shape();
@@ -263,6 +263,10 @@ void GetAllFuncGraph(const api::FuncGraphPtr &func_graph, std::set<api::FuncGrap
     if (api::utils::isa<api::CNodePtr>(node)) {
       auto cnode = node->cast<api::CNodePtr>();
       for (auto &input : cnode->inputs()) {
+        if (input == nullptr) {
+          MS_LOG(ERROR) << "input is nullptr.";
+          return;
+        }
         if (input->isa<api::ValueNode>()) {
           new_fg = api::GetValueNode<api::FuncGraphPtr>(node);
           if (new_fg != nullptr) {
@@ -325,6 +329,10 @@ bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded
                                    google::protobuf::Message *proto) {
   if (proto == nullptr) {
     MS_LOG(ERROR) << "incorrect parameter. nullptr == proto";
+    return false;
+  }
+  if (coded_stream == nullptr) {
+    MS_LOG(ERROR) << "coded_stream is nullptr.";
     return false;
   }
   coded_stream->SetTotalBytesLimit(INT_MAX, WARNING_THRESHOLD);

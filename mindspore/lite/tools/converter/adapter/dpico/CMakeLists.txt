@@ -7,14 +7,15 @@ else()
     message(FATAL_ERROR "error, HISI_SDK_PATH env not found")
 endif()
 
-set(OPENCV_PATH ${SD3403_ATC_LIB_PATH}/opencv-4.2.0)
-set(PROTOBUF_PATH ${SD3403_ATC_LIB_PATH}/protobuf-3.9.0)
-set(PICO_PROTO_PATH ${SD3403_ATC_LIB_PATH}/pico_proto)
-set(PICO_MAPPER_PATH ${SD3403_ATC_LIB_PATH}/pico_mapper)
+set(OPENCV_PATH ${SD3403_ATC_LIB_PATH}/opencv-4.5.2)
+set(PROTOBUF_PATH ${SD3403_ATC_LIB_PATH}/protobuf-3.13.0)
+set(PICO_PROTO_PATH ${SD3403_ATC_LIB_PATH}/pico_proto_0924)
+set(PICO_MAPPER_PATH ${SD3403_ATC_LIB_PATH}/pico_mapper_0924)
 
 set(PROTOC ${PROTOBUF_PATH}/bin/protoc)
 set(PROTO_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/pico_proto)
 file(MAKE_DIRECTORY ${PROTO_OUTPUT_PATH})
+execute_process(COMMAND chmod +x ${PROTOC})
 execute_process(COMMAND
         ${PROTOC} -I=${PICO_PROTO_PATH} --cpp_out=${PROTO_OUTPUT_PATH} pico_caffe.proto)
 execute_process(COMMAND
@@ -28,6 +29,8 @@ file(GLOB_RECURSE DPICO_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
         ${TOOLS_DIR}/converter/adapter/utils.cc
+        ${PROTO_OUTPUT_PATH}/onnx.pb.cc
+        ${PROTO_OUTPUT_PATH}/pico_caffe.pb.cc
         )
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -43,11 +46,11 @@ set_property(SOURCE ${DPICO_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=minds
 add_library(dpico_atc_adapter SHARED ${DPICO_SRC})
 add_dependencies(dpico_atc_adapter fbs_src fbs_inner_src)
 target_link_libraries(dpico_atc_adapter
-        ${PICO_MAPPER_PATH}/lib/libpico_mapper_api.so
-        ${PROTOBUF_PATH}/lib/libprotobuf.so.3.9.0.0
-        ${OPENCV_PATH}/lib/libopencv_core.so.4.2
-        ${OPENCV_PATH}/lib/libopencv_imgcodecs.so.4.2
-        ${OPENCV_PATH}/lib/libopencv_imgproc.so.4.2
+        ${PICO_MAPPER_PATH}/lib/libsvp_atc_api.so
+        ${PROTOBUF_PATH}/lib/libprotobuf.so.3.13.0.0
+        ${OPENCV_PATH}/lib/libopencv_core.so.4.5.2
+        ${OPENCV_PATH}/lib/libopencv_imgcodecs.so.4.5.2
+        ${OPENCV_PATH}/lib/libopencv_imgproc.so.4.5.2
         stdc++fs)
 
 if((NOT WIN32) AND ${CMAKE_BUILD_TYPE} STREQUAL "Release")

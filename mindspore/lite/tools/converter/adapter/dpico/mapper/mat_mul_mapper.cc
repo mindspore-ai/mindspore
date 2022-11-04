@@ -68,7 +68,15 @@ STATUS MatMulMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr
   if (prim->GetAttr(kOperatorType) != nullptr) {
     auto op_type = api::GetValue<std::string>(prim->GetAttr(kOperatorType));
     if (op_type == "FullConnection") {
-      OpMapperRegistry::GetInstance()->GetOpMapper(op_type)->Map(cnode, base_operators, prim, output_cnodes);
+      if (OpMapperRegistry::GetInstance()->GetOpMapper(op_type) == nullptr) {
+        MS_LOG(ERROR) << "FullConnection get op mapper failed. ";
+        return RET_ERROR;
+      }
+      int ret = OpMapperRegistry::GetInstance()->GetOpMapper(op_type)->Map(cnode, base_operators, prim, output_cnodes);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "FullConnection mapper failed. ";
+        return RET_ERROR;
+      }
     } else if (op_type == "Matrix") {
       if (DoMaxtixOperatorMap(cnode, base_operators, prim, output_cnodes) != RET_OK) {
         MS_LOG(ERROR) << "map to matrix operator failed. " << cnode->fullname_with_scope();

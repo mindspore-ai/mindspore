@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <fstream>
+#include <climits>
+#include <memory>
+#include <cstring>
 #include "common/string_util.h"
 #include "common/op_attr.h"
 #include "manager/custom_config_manager.h"
@@ -32,6 +37,28 @@ int CustomConfigManager::Init(const std::map<std::string, std::string> &dpico_co
   }
   return RET_OK;
 }
+std::string CustomConfigManager::RealPath(const char *path) {
+  if (path == nullptr) {
+    MS_LOG(ERROR) << "path is nullptr";
+    return "";
+  }
+  if ((std::strlen(path)) >= PATH_MAX) {
+    MS_LOG(ERROR) << "path is too long";
+    return "";
+  }
+  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
+  if (resolved_path == nullptr) {
+    MS_LOG(ERROR) << "new resolved_path failed";
+    return "";
+  }
+  char *real_path = realpath(path, resolved_path.get());
+  if (real_path == nullptr || strlen(real_path) == 0) {
+    MS_LOG(ERROR) << "file path is not valid : " << path;
+    return "";
+  }
+  std::string res = resolved_path.get();
+  return res;
+}
 int CustomConfigManager::UpdateConfig(const std::map<std::string, std::string> &dpico_config) {
   // parse float params
   std::map<std::string, float *> float_params = {{kNmsThreshold, &nms_threshold_},
@@ -42,21 +69,6 @@ int CustomConfigManager::UpdateConfig(const std::map<std::string, std::string> &
     if (dpico_config.find(param.first) != dpico_config.end()) {
       if (IsValidDoubleNum(dpico_config.at(param.first))) {
         *param.second = std::stof(dpico_config.at(param.first));
-      } else {
-        MS_LOG(WARNING) << param.first
-                        << " param in config is invalid, will use default or last value:" << *param.second;
-      }
-    } else {
-      MS_LOG(INFO) << param.first << " param isn't configured, will use default or last value:" << *param.second;
-    }
-  }
-
-  // parse size_t params
-  std::map<std::string, size_t *> unsigned_params = {{kMaxRoiNum, &max_roi_num_}, {kGTotalT, &g_total_t_}};
-  for (const auto &param : unsigned_params) {
-    if (dpico_config.find(param.first) != dpico_config.end()) {
-      if (IsValidUnsignedNum(dpico_config.at(param.first))) {
-        *param.second = std::stoul(dpico_config.at(param.first));
       } else {
         MS_LOG(WARNING) << param.first
                         << " param in config is invalid, will use default or last value:" << *param.second;
@@ -84,8 +96,24 @@ int CustomConfigManager::UpdateConfig(const std::map<std::string, std::string> &
   // parse string params
   if (dpico_config.find(kAclConfigPath) != dpico_config.end()) {
     acl_config_file_ = dpico_config.at(kAclConfigPath);
+    if (AccessFile(acl_config_file_, F_OK) != 0) {
+      MS_LOG(ERROR) << " AclConfigPath not exist, please check.";
+      return RET_ERROR;
+    }
+    auto acl_config_file = RealPath(acl_config_file_.c_str());
+    if (acl_config_file.empty()) {
+      MS_LOG(ERROR) << "Get realpath failed, AclConfigPath is " << acl_config_file;
+      return RET_ERROR;
+    }
   }
   return RET_OK;
+}
+bool CustomConfigManager::IsEnableMultiModelSharingMemPrepare(
+  const std::map<std::string, std::string> &model_share_config) {
+  return model_share_config.find(kModelSharingPrepareKey) != model_share_config.end();
+}
+bool CustomConfigManager::IsEnableMultiModelSharingMem(const std::map<std::string, std::string> &model_share_config) {
+  return model_share_config.find(kModelSharingKey) != model_share_config.end();
 }
 }  // namespace lite
 }  // namespace mindspore

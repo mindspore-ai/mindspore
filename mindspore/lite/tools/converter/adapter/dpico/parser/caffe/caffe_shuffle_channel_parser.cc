@@ -34,7 +34,7 @@ BaseOperatorPtr CaffeShuffleChannelParser::Parse(const caffe::LayerParameter &pr
   if (proto.has_shuffle_channel_param()) {
     const caffe::ShuffleChannelParameter &shuffle_channel_parameter = proto.shuffle_channel_param();
     if (shuffle_channel_parameter.has_group()) {
-      prim->AddAttr(ops::kGroup, api::MakeValue<int64_t>(shuffle_channel_parameter.group()));
+      (void)prim->AddAttr(ops::kGroup, api::MakeValue<int64_t>(shuffle_channel_parameter.group()));
     }
   }
 

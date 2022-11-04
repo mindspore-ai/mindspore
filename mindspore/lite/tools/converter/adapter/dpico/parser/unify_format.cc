@@ -47,15 +47,23 @@ STATUS UnifyFormatToNHWC::GenNewInput(const api::FuncGraphPtr &func_graph, const
   std::string trans_name = before ? cnode->fullname_with_scope() + "_pre_" + std::to_string(index - 1)
                                   : cnode->fullname_with_scope() + "_post";
   auto trans_cnode = dpico::GenTransposeNode(func_graph, trans_input, perm, trans_name);
+  if (trans_cnode == nullptr) {
+    MS_LOG(ERROR) << "trans_cnode is nullptr.";
+    return RET_ERROR;
+  }
   auto abstract = trans_input->abstract();
   if (abstract != nullptr) {
     trans_cnode->set_abstract(abstract->Clone());
   }
   auto trans_prim = api::GetValueNode<api::PrimitivePtr>(trans_cnode->input(0));
+  if (trans_prim == nullptr) {
+    MS_LOG(ERROR) << "trans_prim is nullptr.";
+    return RET_ERROR;
+  }
   if (perm == dpico::kNC2NH) {
-    trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NCHW));
+    (void)trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NCHW));
   } else if (perm == dpico::kNH2NC) {
-    trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
+    (void)trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
   }
   auto manager = func_graph->manager();
   if (manager == nullptr) {
@@ -65,7 +73,7 @@ STATUS UnifyFormatToNHWC::GenNewInput(const api::FuncGraphPtr &func_graph, const
   if (before) {
     manager->SetEdge(cnode, index, trans_cnode);
   } else {
-    manager->Replace(cnode, trans_cnode);
+    (void)manager->Replace(cnode, trans_cnode);
   }
   return lite::RET_OK;
 }
@@ -101,6 +109,10 @@ STATUS UnifyFormatToNHWC::InsertPostTransNode(const api::FuncGraphPtr &func_grap
     auto node_users = func_graph->manager()->GetUsers(cnode);
     for (auto &node_user : node_users) {
       auto post_node = node_user.first;
+      if (post_node == nullptr) {
+        MS_LOG(ERROR) << "post_node is nullptr.";
+        return RET_ERROR;
+      }
       if (!dpico::CheckPrimitiveType(post_node, api::MakeShared<ops::TupleGetItem>())) {
         MS_LOG(ERROR) << "post node is invalid.";
         return lite::RET_ERROR;
@@ -122,6 +134,10 @@ STATUS UnifyFormatToNHWC::HandleGraphInput(const api::FuncGraphPtr &func_graph) 
   MS_ASSERT(func_graph != nullptr);
   auto graph_input = func_graph->get_inputs();
   for (auto &input : graph_input) {
+    if (input == nullptr) {
+      MS_LOG(ERROR) << "input is nullptr.";
+      return RET_ERROR;
+    }
     auto input_param = input->cast<api::ParameterPtr>();
     MS_ASSERT(input_param != nullptr);
     auto abstract = input_param->abstract();
@@ -143,7 +159,7 @@ STATUS UnifyFormatToNHWC::HandleGraphInput(const api::FuncGraphPtr &func_graph) 
     }
     auto trans_prim = api::GetValueNode<api::PrimitivePtr>(trans_cnode->input(0));
     MS_ASSERT(trans_prim != nullptr);
-    trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
+    (void)trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
     trans_cnode->set_abstract(abstract->Clone());
     auto transfer_shape_ptr = api::MakeShared<api::Shape>(transfer_shape);
     if (transfer_shape_ptr == nullptr) {
@@ -182,7 +198,7 @@ STATUS UnifyFormatToNHWC::HandleGraphNode(const api::FuncGraphPtr &func_graph, c
     MS_LOG(ERROR) << "current node's prim is nullptr, " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
-  prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(mindspore::NHWC));
+  (void)prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(mindspore::NHWC));
   if (InsertPostTransNode(func_graph, cnode, after_perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "insert post node failed." << cnode->fullname_with_scope();
     return lite::RET_ERROR;

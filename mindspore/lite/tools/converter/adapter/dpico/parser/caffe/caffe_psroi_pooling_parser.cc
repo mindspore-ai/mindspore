@@ -38,7 +38,7 @@ BaseOperatorPtr CaffePSROIPoolingParser::Parse(const caffe::LayerParameter &prot
     const auto &psroi_pooling_param = proto.psroi_pooling_param();
     if (psroi_pooling_param.has_spatial_scale()) {
       float spatial_scale = psroi_pooling_param.spatial_scale();
-      prim->AddAttr(dpico::kSpatialScale, api::MakeValue<float>(spatial_scale));
+      (void)prim->AddAttr(dpico::kSpatialScale, api::MakeValue<float>(spatial_scale));
 
       std::vector<uint8_t> spatial_scale_attr(sizeof(float));
       if (memcpy_s(spatial_scale_attr.data(), spatial_scale_attr.size() * sizeof(uint8_t), &spatial_scale,
@@ -50,7 +50,7 @@ BaseOperatorPtr CaffePSROIPoolingParser::Parse(const caffe::LayerParameter &prot
     }
     if (psroi_pooling_param.has_group_size()) {
       int32_t group_size = psroi_pooling_param.group_size();
-      prim->AddAttr(dpico::kGroupSize, api::MakeValue<int64_t>(group_size));
+      (void)prim->AddAttr(dpico::kGroupSize, api::MakeValue<int64_t>(group_size));
 
       std::vector<uint8_t> group_size_attr(sizeof(int32_t));
       if (memcpy_s(group_size_attr.data(), group_size_attr.size() * sizeof(uint8_t), &group_size, sizeof(int32_t)) !=
@@ -62,7 +62,7 @@ BaseOperatorPtr CaffePSROIPoolingParser::Parse(const caffe::LayerParameter &prot
     }
     if (psroi_pooling_param.has_output_dim()) {
       int32_t output_dim = psroi_pooling_param.output_dim();
-      prim->AddAttr(dpico::kOutputDim, api::MakeValue<int64_t>(output_dim));
+      (void)prim->AddAttr(dpico::kOutputDim, api::MakeValue<int64_t>(output_dim));
 
       std::vector<uint8_t> output_dim_attr(sizeof(int32_t));
       if (memcpy_s(output_dim_attr.data(), output_dim_attr.size() * sizeof(uint8_t), &output_dim, sizeof(int32_t)) !=

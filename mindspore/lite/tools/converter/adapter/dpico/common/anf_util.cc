@@ -69,6 +69,10 @@ STATUS GetPrimitiveType(const api::AnfNodePtr &node, std::string *name) {
     MS_LOG(ERROR) << "name is nulltr.";
     return RET_ERROR;
   }
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "node is nullptr.";
+    return RET_ERROR;
+  }
   if (node->isa<api::CNode>()) {
     auto cnode = node->cast<api::CNodePtr>();
     auto primitive = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
@@ -87,6 +91,10 @@ STATUS GetPrimitiveType(const api::AnfNodePtr &node, std::string *name) {
     }
   } else if (node->isa<api::ValueNode>()) {
     auto fn_value = api::GetValueNode<api::PrimitivePtr>(node);
+    if (fn_value == nullptr) {
+      MS_LOG(ERROR) << "fn_value is nullptr.";
+      return RET_ERROR;
+    }
     *name = fn_value->name();
     return RET_OK;
   }
@@ -142,7 +150,7 @@ size_t GetTupleGetItemOutIndex(const api::CNodePtr &tuple_get_item) {
   MS_ASSERT(tuple_get_item != nullptr);
   if (tuple_get_item->size() != kTupleGetItemInputSize) {
     MS_LOG(ERROR) << "The node tuple_get_item must have 2 inputs!";
-    return -1;
+    return SIZE_MAX;
   }
   auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
   MS_ASSERT(output_index_value_node != nullptr);
@@ -151,12 +159,16 @@ size_t GetTupleGetItemOutIndex(const api::CNodePtr &tuple_get_item) {
   auto value_vec = CastToInt(value_node->value());
   if (value_vec.empty()) {
     MS_LOG(ERROR) << "value vec is empty.";
-    return -1;
+    return SIZE_MAX;
   }
   return IntToSize(value_vec.front());
 }
 STATUS GetOutputShapesFromCNode(const api::CNodePtr &cnode, std::vector<ShapeVector> *output_shapes) {
   api::AbstractBasePtr abstract = nullptr;
+  if (output_shapes == nullptr) {
+    MS_LOG(ERROR) << "output_shapes is nullptr.";
+    return RET_ERROR;
+  }
   if (CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>())) {
     auto tuple_inputs = cnode->inputs();
     MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
@@ -194,7 +206,7 @@ STATUS GetOutputShapesFromCNode(const api::CNodePtr &cnode, std::vector<ShapeVec
         MS_LOG(ERROR) << "shape_vector is empty." << cnode->fullname_with_scope();
         return RET_ERROR;
       }
-      output_shapes->emplace_back(shape_vector);
+      (void)output_shapes->emplace_back(shape_vector);
     }
     return RET_OK;
   } else {
@@ -207,7 +219,7 @@ STATUS GetOutputShapesFromCNode(const api::CNodePtr &cnode, std::vector<ShapeVec
       MS_LOG(ERROR) << "shape_vector is empty." << cnode->fullname_with_scope();
       return RET_ERROR;
     }
-    output_shapes->emplace_back(shape_vector);
+    (void)output_shapes->emplace_back(shape_vector);
   }
   return RET_OK;
 }
@@ -321,8 +333,8 @@ std::string TypeIdToString(TypeId type_id) {
     {kNumberTypeUInt, "UInt32"},     {kNumberTypeUInt32, "UInt32"},    {kObjectTypeString, "String"},
     {kNumberTypeBool, "Bool"},       {kObjectTypeTensorType, "Tensor"}};
   std::string type_str = "Unknown";
-  if (kTypeIdMap.find(type_id) != kTypeIdMap.end()) {
-    type_str = kTypeIdMap.at(type_id);
+  if (kTypeIdMap.find(static_cast<int>(type_id)) != kTypeIdMap.end()) {
+    type_str = kTypeIdMap.at(static_cast<int>(type_id));
   }
   return type_str;
 }
@@ -523,7 +535,7 @@ api::ParameterPtr BuildIntValueParameterNode(const api::FuncGraphPtr &func_graph
 api::ParameterPtr BuildIntVecParameterNode(const api::FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
                                            const std::string &node_name) {
   MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(data.size() != 0);
+  MS_CHECK_TRUE_MSG(data.size() != 0, nullptr, "Data size is 0");
   auto param_node = func_graph->add_parameter();
   param_node->set_name(node_name);
 
@@ -547,7 +559,7 @@ api::ParameterPtr BuildIntVec2DParameterNode(const api::FuncGraphPtr &func_graph
                                              const std::vector<std::vector<int32_t>> &data,
                                              const std::string &node_name) {
   MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(data.size() != 0);
+  MS_CHECK_TRUE_MSG(data.size() != 0, nullptr, "Data size is 0");
   auto param_node = func_graph->add_parameter();
   param_node->set_name(node_name);
 
@@ -557,7 +569,7 @@ api::ParameterPtr BuildIntVec2DParameterNode(const api::FuncGraphPtr &func_graph
 
   std::vector<int32_t> data_1d;
   for (auto pair : data) {
-    data_1d.insert(data_1d.end(), pair.begin(), pair.end());
+    (void)data_1d.insert(data_1d.end(), pair.begin(), pair.end());
   }
 
   auto size = data_1d.size() * sizeof(int32_t);

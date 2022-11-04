@@ -29,14 +29,12 @@ namespace dpico {
 namespace {
 STATUS SetPReluDataInfo(const api::CNodePtr &cnode, const api::PrimitivePtr &prim,
                         mapper::PreluOperator *prelu_operator) {
-  if (prim->GetAttr(ops::kSlope) != nullptr) {
-    prelu_operator->SetAlphaNegVec(api::GetValue<std::vector<float>>(prim->GetAttr(ops::kSlope)));
-  } else if (cnode->inputs().size() > kInputIndex2) {
+  if (cnode->inputs().size() > kInputIndex2) {
     auto input_anode = cnode->input(kInputIndex2);
     if (api::utils::isa<api::ParameterPtr>(input_anode)) {
       auto input_param_node = input_anode->cast<api::ParameterPtr>();
       if (input_param_node == nullptr) {
-        MS_LOG(ERROR) << input_param_node->fullname_with_scope() << " is nullptr.";
+        MS_LOG(ERROR) << "input_param_node is nullptr.";
         return RET_ERROR;
       }
       auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
@@ -49,6 +47,8 @@ STATUS SetPReluDataInfo(const api::CNodePtr &cnode, const api::PrimitivePtr &pri
         return RET_ERROR;
       }
     }
+  } else if (prim->GetAttr(ops::kSlope) != nullptr) {
+    prelu_operator->SetAlphaNegVec(api::GetValue<std::vector<float>>(prim->GetAttr(ops::kSlope)));
   }
   return RET_OK;
 }

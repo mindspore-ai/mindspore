@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mapper/roi_align_mapper.h"
+#include "legacy_ops/roi_align_mapper.h"
 #include <memory>
 #include <utility>
 #include <vector>

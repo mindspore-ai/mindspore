@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace dpico {
-bool SppChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool SppChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format) {
   auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";

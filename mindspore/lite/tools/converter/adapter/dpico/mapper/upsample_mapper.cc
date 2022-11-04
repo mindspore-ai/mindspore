@@ -46,12 +46,6 @@ STATUS UpsampleMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorP
   if (prim->GetAttr(ops::kScale) != nullptr) {
     upsample_operator->SetUpsampleScale(api::GetValue<float>(prim->GetAttr(ops::kScale)));
   }
-  if (prim->GetAttr(kUpsampleH) != nullptr) {
-    upsample_operator->SetUpsampleHeight(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kUpsampleH))));
-  }
-  if (prim->GetAttr(kUpsampleW) != nullptr) {
-    upsample_operator->SetUpsampleWidth(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kUpsampleW))));
-  }
   if (prim->GetAttr(kInterpolationMode) != nullptr) {
     auto mode = api::GetValue<std::string>(prim->GetAttr(kInterpolationMode));
     if (mode == kNearest) {

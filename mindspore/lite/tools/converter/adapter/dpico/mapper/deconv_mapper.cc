@@ -59,7 +59,7 @@ STATUS DeconvMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr
     MS_LOG(ERROR) << "deconv_operator is nullptr.";
     return RET_ERROR;
   }
-  deconv_operator->SetGroup(deconv_prim->get_group());
+  deconv_operator->SetGroup(static_cast<uint32_t>(deconv_prim->get_group()));
 
   if (SetCommonAttr(cnode, deconv_operator.get(), output_cnodes) != RET_OK) {
     MS_LOG(ERROR) << "set common attr failed. " << cnode->fullname_with_scope();
@@ -67,29 +67,27 @@ STATUS DeconvMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr
   }
 
   deconv_operator->SetOpType(mapper::OpType::DECONVOLUTION);
-  deconv_operator->SetOutputChannel(deconv_prim->get_out_channel());
-  deconv_operator->SetKernelHeight(kernel_size[0]);
-  deconv_operator->SetKernelWidth(kernel_size[1]);
-  deconv_operator->SetStrideHeight(stride[0]);
-  deconv_operator->SetStrideWidth(stride[1]);
-  deconv_operator->SetDilationHeight(dilation[0]);
-  deconv_operator->SetDilationWidth(dilation[1]);
+  deconv_operator->SetOutputChannel(static_cast<uint32_t>(deconv_prim->get_out_channel()));
+  deconv_operator->SetKernelHeight(static_cast<uint32_t>(kernel_size[0]));
+  deconv_operator->SetKernelWidth(static_cast<uint32_t>(kernel_size[1]));
+  deconv_operator->SetStrideHeight(static_cast<uint32_t>(stride[0]));
+  deconv_operator->SetStrideWidth(static_cast<uint32_t>(stride[1]));
+  deconv_operator->SetDilationHeight(static_cast<uint32_t>(dilation[0]));
+  deconv_operator->SetDilationWidth(static_cast<uint32_t>(dilation[1]));
   if (pad_mode == PadMode::PAD) {
     auto pad_list = deconv_prim->get_pad_list();
     if (pad_list.size() != kDeconvPadListSize) {
       MS_LOG(ERROR) << "pad_list size is invalid. " << pad_list.size();
       return RET_ERROR;
     }
-    deconv_operator->SetPadUp(pad_list[0]);
-    deconv_operator->SetPadDown(pad_list[1]);
-    deconv_operator->SetPadLeft(pad_list[kAxis2]);
-    deconv_operator->SetPadRight(pad_list[kAxis3]);
+    deconv_operator->SetPadUp(static_cast<int>(pad_list[0]));
+    deconv_operator->SetPadDown(static_cast<int>(pad_list[1]));
+    deconv_operator->SetPadLeft(static_cast<int>(pad_list[kAxis2]));
+    deconv_operator->SetPadRight(static_cast<int>(pad_list[kAxis3]));
   } else if (pad_mode == PadMode::SAME) {
     deconv_operator->SetAutoPadType(mapper::AutoPadType::PAD_SAME_UPPER);
-    deconv_operator->SetAutoPadFlag(true);
   } else if (pad_mode == PadMode::VALID) {
     deconv_operator->SetAutoPadType(mapper::AutoPadType::PAD_VALID);
-    deconv_operator->SetAutoPadFlag(true);
   } else {
     MS_LOG(ERROR) << "Non supported pad mode. " << pad_mode;
     return RET_ERROR;

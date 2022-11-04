@@ -25,7 +25,7 @@ BaseOperatorPtr CaffeDepthwiseConvolutionParser::Parse(const caffe::LayerParamet
                                                        const caffe::LayerParameter &weight) {
   auto prim = CaffeConvolutionParser::Parse(proto, weight);
   if (prim != nullptr) {
-    prim->AddAttr(ops::kIsDepthWise, api::MakeValue<bool>(true));
+    (void)prim->AddAttr(ops::kIsDepthWise, api::MakeValue<bool>(true));
   }
   return prim;
 }

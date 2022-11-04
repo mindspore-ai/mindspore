@@ -36,7 +36,7 @@ bool PowFusionChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Fo
   }
   DataInfo data_info;
   if (op->inputs().size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
-    if (data_info.data_type_ != kNumberTypeFloat32) {
+    if (data_info.data_type_ != static_cast<int>(kNumberTypeFloat32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return false;
     }

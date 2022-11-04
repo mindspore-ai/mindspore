@@ -34,16 +34,16 @@ BaseOperatorPtr CaffeNormalizeParser::Parse(const caffe::LayerParameter &proto, 
   if (proto.has_norm_param()) {
     const caffe::NormalizeParameter &normalize_param = proto.norm_param();
     if (normalize_param.has_across_spatial()) {
-      prim->AddAttr(dpico::kAcrossSpatial, api::MakeValue<bool>(normalize_param.across_spatial()));
+      (void)prim->AddAttr(dpico::kAcrossSpatial, api::MakeValue<bool>(normalize_param.across_spatial()));
     }
     if (normalize_param.has_channel_shared()) {
-      prim->AddAttr(dpico::kChannelShared, api::MakeValue<bool>(normalize_param.channel_shared()));
+      (void)prim->AddAttr(dpico::kChannelShared, api::MakeValue<bool>(normalize_param.channel_shared()));
     }
     if (normalize_param.has_sqrt_a()) {
-      prim->AddAttr(dpico::kSqrtA, api::MakeValue<float>(normalize_param.sqrt_a()));
+      (void)prim->AddAttr(dpico::kSqrtA, api::MakeValue<float>(normalize_param.sqrt_a()));
     }
     if (normalize_param.has_eps()) {
-      prim->AddAttr(ops::kEps, api::MakeValue<float>(normalize_param.eps()));
+      (void)prim->AddAttr(ops::kEps, api::MakeValue<float>(normalize_param.eps()));
     }
   }
 

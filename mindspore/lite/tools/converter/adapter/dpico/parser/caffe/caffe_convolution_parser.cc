@@ -105,7 +105,7 @@ BaseOperatorPtr CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto
   }
 
   if (convParam.has_bias_term()) {
-    prim->AddAttr(dpico::kBiasTerm, api::MakeValue<bool>(convParam.bias_term()));
+    (void)prim->AddAttr(dpico::kBiasTerm, api::MakeValue<bool>(convParam.bias_term()));
   }
 
   return prim;

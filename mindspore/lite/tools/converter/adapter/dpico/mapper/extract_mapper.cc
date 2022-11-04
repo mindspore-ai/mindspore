@@ -43,13 +43,15 @@ STATUS ExtractMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPt
 
   extract_operator->SetOpType(mapper::OpType::EXTRACT);
   if (prim->GetAttr(dpico::kSlicePointBegin) != nullptr) {
-    extract_operator->SetSlicePointBegin(api::GetValue<int64_t>(prim->GetAttr(dpico::kSlicePointBegin)));
+    extract_operator->SetSlicePointBegin(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kSlicePointBegin))));
   }
   if (prim->GetAttr(dpico::kSlicePointEnd) != nullptr) {
-    extract_operator->SetSlicePointEnd(api::GetValue<int64_t>(prim->GetAttr(dpico::kSlicePointEnd)));
+    extract_operator->SetSlicePointEnd(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kSlicePointEnd))));
   }
   if (prim->GetAttr(ops::kAxis) != nullptr) {
-    extract_operator->SetAxis(api::GetValue<int64_t>(prim->GetAttr(ops::kAxis)));
+    extract_operator->SetAxis(static_cast<int>(api::GetValue<int64_t>(prim->GetAttr(ops::kAxis))));
   }
   base_operators->push_back(std::move(extract_operator));
   return RET_OK;

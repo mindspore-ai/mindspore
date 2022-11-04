@@ -47,6 +47,7 @@ int WriteDetBoxesToTensorData(const std::vector<std::vector<float>> &det_boxes,
                               mindspore::MSTensor *detect_boxes_tensor);
 
 int AclMalloc(void **buf, size_t size);
+int AclFree(void **buf);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_ACL_MODEL_HELPER_H_

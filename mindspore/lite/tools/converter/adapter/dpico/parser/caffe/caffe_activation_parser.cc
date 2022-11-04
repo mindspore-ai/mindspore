@@ -108,7 +108,7 @@ BaseOperatorPtr CaffeHswishParser::Parse(const caffe::LayerParameter &proto, con
   if (proto.has_hswish_param()) {
     const caffe::HswishParameter &hswishParameter = proto.hswish_param();
     if (hswishParameter.has_negative_slope()) {
-      prim->AddAttr(dpico::kNegativeSlope, api::MakeValue<float>(hswishParameter.negative_slope()));
+      (void)prim->AddAttr(dpico::kNegativeSlope, api::MakeValue<float>(hswishParameter.negative_slope()));
     }
   }
   return prim;

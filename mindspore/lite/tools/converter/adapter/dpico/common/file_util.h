@@ -67,7 +67,7 @@ inline int WriteToBin(const std::string &file_path, void *data, const size_t siz
   if (!out_file.good() || !out_file.is_open()) {
     return RET_ERROR;
   }
-  out_file.write(reinterpret_cast<char *>(data), size);
+  (void)out_file.write(reinterpret_cast<char *>(data), size);
   out_file.close();
   return RET_OK;
 }

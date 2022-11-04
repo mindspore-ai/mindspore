@@ -16,30 +16,22 @@
 
 #include "manager/acl_context_manager.h"
 #include <string>
+#include <mutex>
 #include "include/svp_acl.h"
 #include "include/errorcode.h"
 #include "common/check_base.h"
 namespace mindspore {
 namespace lite {
+std::mutex acl_context_mutex;
 AclContextManager::~AclContextManager() {
-  if (acl_rt_stream_ != nullptr) {
-    auto ret = svp_acl_rt_destroy_stream(acl_rt_stream_);
-    MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "acl destroy stream failed.");
-    acl_rt_stream_ = nullptr;
-  }
-  if (acl_rt_context_ != nullptr) {
-    auto ret = svp_acl_rt_destroy_context(acl_rt_context_);
-    MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "acl destroy context failed.");
-    acl_rt_context_ = nullptr;
-    ret = svp_acl_rt_reset_device(acl_device_id_);
-    MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "acl reset device failed.");
-    ret = svp_acl_finalize();
-    MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "finalize acl failed.");
-  }
+  std::unique_lock<std::mutex> lock(acl_context_mutex);
+  auto ret = svp_acl_finalize();
+  MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "finalize acl failed.");
 }
 
 int AclContextManager::Init(const std::string &acl_config_path) {
-  if (acl_rt_context_ != nullptr) {
+  std::unique_lock<std::mutex> lock(acl_context_mutex);
+  if (acl_init_flag_) {
     MS_LOG(INFO) << "device only needs to init once.";
     return RET_OK;
   }
@@ -49,13 +41,8 @@ int AclContextManager::Init(const std::string &acl_config_path) {
   } else {
     ret = svp_acl_init(acl_config_path.c_str());
   }
+  acl_init_flag_ = true;
   MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp acl init failed.");
-  ret = svp_acl_rt_set_device(acl_device_id_);
-  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp acl rt set device failed.");
-  ret = svp_acl_rt_create_context(&acl_rt_context_, acl_device_id_);
-  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp acl rt create context failed.");
-  ret = svp_acl_rt_create_stream(&acl_rt_stream_);
-  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp acl rt create stream failed.");
   svp_acl_rt_run_mode acl_run_mode;
   ret = svp_acl_rt_get_run_mode(&acl_run_mode);
   MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp acl rt get run mode failed.");

@@ -32,8 +32,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kHiddenLayerSize = 4;
-constexpr size_t kInputSize5 = 5;
-constexpr size_t kInputSize6 = 6;
+constexpr size_t kInputSize4 = 4;
 }  // namespace
 std::shared_ptr<KernelInterface> DpicoLstmInferCreater() {
   std::shared_ptr<KernelInterface> infer = std::make_shared<DpicoLstmInterface>();
@@ -50,7 +49,7 @@ Status DpicoLstmInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::
     MS_LOG(ERROR) << "Check custom input output failed.";
     return kLiteError;
   }
-  if (inputs->size() != kInputSize5 && inputs->size() != kInputSize6) {
+  if (inputs->size() < kInputSize4) {
     MS_LOG(ERROR) << "inputs size is invalid: " << inputs->size();
     return kLiteError;
   }
@@ -69,7 +68,7 @@ Status DpicoLstmInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::
     return kLiteError;
   }
   output_shape[0] = 1;  // bidirectional ? 2 : 1
-  output_shape[dpico::kInputIndex2] = hidden_weight.Shape().at(0) / kHiddenLayerSize;
+  output_shape[dpico::kInputIndex2] = hidden_weight.Shape().at(0) / static_cast<int64_t>(kHiddenLayerSize);
   output.SetShape(output_shape);
   return kSuccess;
 }

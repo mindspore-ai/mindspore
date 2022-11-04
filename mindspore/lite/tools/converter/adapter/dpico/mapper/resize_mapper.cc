@@ -98,7 +98,7 @@ STATUS SetResizeDataInfo(const api::CNodePtr &cnode, const api::PrimitivePtr &pr
     return RET_ERROR;
   }
   auto elem_cnt = tensor_info->DataSize();
-  MS_CHECK_TRUE_MSG(elem_cnt == kDims2, RET_ERROR,
+  MS_CHECK_TRUE_MSG(static_cast<size_t>(elem_cnt) == kDims2, RET_ERROR,
                     "resize param element size should be 2. " << cnode->fullname_with_scope());
   if (tensor_info->data_type() == kNumberTypeInt32 || tensor_info->data_type() == kNumberTypeInt) {
     std::vector<int> size_vec;

@@ -24,6 +24,7 @@
 namespace mindspore {
 namespace lite {
 namespace {
+constexpr int kInnerProductAxis = 2;
 void TransformShape(caffe::BlobShape *shape) {
   auto origin_row = shape->dim(0);
   auto origin_col = shape->dim(1);
@@ -70,18 +71,19 @@ BaseOperatorPtr CaffeInnerProductParser::Parse(const caffe::LayerParameter &prot
       MS_LOG(ERROR) << "dim val can't be 0.";
       return nullptr;
     }
-    (void)dpico::TransposeMatrix(blob->mutable_data()->mutable_data(), shape->dim(0), shape->dim(1));
-    (void)TransformShape(shape);
+    dpico::TransposeMatrix(blob->mutable_data()->mutable_data(), static_cast<int>(shape->dim(0)),
+                           static_cast<int>(shape->dim(1)));
+    TransformShape(shape);
   }
 
   if (!innerProductParam.has_num_output()) {
     MS_LOG(ERROR) << "InnerProduct Parse num_output for " << proto.name().c_str() << " failed.";
     return nullptr;
   } else {
-    prim->AddAttr(dpico::kNumOutput, api::MakeValue(static_cast<int64_t>(innerProductParam.num_output())));
+    (void)prim->AddAttr(dpico::kNumOutput, api::MakeValue(static_cast<int64_t>(innerProductParam.num_output())));
   }
 
-  if (innerProductParam.axis() == 1 || innerProductParam.axis() == dpico::kAxis2) {
+  if (innerProductParam.axis() == 1 || innerProductParam.axis() == kInnerProductAxis) {
     prim->set_axis(innerProductParam.axis());
     prim->set_use_axis(true);
   } else {

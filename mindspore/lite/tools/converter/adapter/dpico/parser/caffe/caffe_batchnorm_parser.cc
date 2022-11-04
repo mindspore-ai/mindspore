@@ -50,7 +50,7 @@ BaseOperatorPtr CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, 
   prim->set_epsilon(epsilon);
 
   if (batchNormParam.has_use_global_stats()) {
-    prim->AddAttr(dpico::kUseGlobalStats, api::MakeValue(batchNormParam.use_global_stats()));
+    (void)prim->AddAttr(dpico::kUseGlobalStats, api::MakeValue(batchNormParam.use_global_stats()));
   }
 
   return prim;

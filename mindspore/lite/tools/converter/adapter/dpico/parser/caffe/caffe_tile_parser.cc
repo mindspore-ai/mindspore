@@ -45,7 +45,7 @@ BaseOperatorPtr CaffeTileParser::Parse(const caffe::LayerParameter &proto, const
   } else {
     multiples.push_back(1);
   }
-  prim->AddAttr(dpico::kMultiples, api::MakeValue(multiples));
+  (void)prim->AddAttr(dpico::kMultiples, api::MakeValue(multiples));
 
   return prim;
 }

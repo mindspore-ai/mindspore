@@ -83,7 +83,7 @@ class DataPreprocessor {
     size_t shape_size = 1;
     for (size_t i = 0; i < op_shape.size(); i++) {
       if (op_shape.at(i) < 0) {
-        MS_LOG(ERROR) << "dim val should be greater than 0";
+        MS_LOG(ERROR) << "dim val should be equal or greater than 0";
         return RET_ERROR;
       }
       if (SIZE_MUL_OVERFLOW(shape_size, static_cast<size_t>(op_shape.at(i)))) {
@@ -96,7 +96,7 @@ class DataPreprocessor {
     std::vector<T> nums;
     U num;
     while (ss >> num) {
-      nums.emplace_back(num);
+      (void)nums.emplace_back(num);
     }
     if (nums.size() != shape_size) {
       MS_LOG(ERROR) << op_name << "'s input size " << nums.size() << " is not equal to origin input shape size "

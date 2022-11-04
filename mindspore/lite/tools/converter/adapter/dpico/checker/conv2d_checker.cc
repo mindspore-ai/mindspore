@@ -135,15 +135,16 @@ bool CheckAttr(const api::CNodePtr &op, const api::PrimitivePtr &primitive, int6
     auto kernel_data = api::GetValue<std::vector<int64_t>>(kernel_ptr);
     auto stride_data = api::GetValue<std::vector<int64_t>>(stride_ptr);
     if (CheckPrimitiveType(op, api::MakeShared<ops::Conv2DFusion>())) {
+      MS_CHECK_TRUE_MSG(kCoefficient * stride_data[1] != 0, false, "kCoefficient * stride_data[1] should not be 0.");
       if (kernel_data[0] > kConvUpperBound / (input_w / (kCoefficient * stride_data[1]) * stride_data[1])) {
         MS_LOG(WARNING) << "kernel and stride should satisfy kernel_h <= 2048 / (w / (16 * stride) * stride) "
                         << op->fullname_with_scope();
         return false;
       }
     } else if (CheckPrimitiveType(op, api::MakeShared<ops::Conv2dTransposeFusion>())) {
-      MS_CHECK_TRUE_MSG(input_w != 0, false, "input_w should be 0.");
-      if (kernel_data[0] > (kMaxNumOutput / input_w - 1.0) * stride_data[0] + 1.0) {
-        MS_LOG(WARNING) << "kernel and stride should satisfy kernel_h <= (32768 / w - 1) * stride + 1.0 "
+      MS_CHECK_TRUE_MSG(input_w != 0, false, "input_w should not be 0.");
+      if (kernel_data[0] > (kMaxNumOutput / input_w - 1) * stride_data[0] + 1) {
+        MS_LOG(WARNING) << "kernel and stride should satisfy kernel_h <= (32768 / w - 1) * stride + 1 "
                         << op->fullname_with_scope();
         return false;
       }

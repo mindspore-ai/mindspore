@@ -31,15 +31,15 @@ BaseOperatorPtr CaffeLogParser::Parse(const caffe::LayerParameter &proto, const 
     const caffe::LogParameter &log_param = proto.log_param();
 
     if (log_param.has_base()) {
-      prim->AddAttr(ops::kBase, api::MakeValue<float>(log_param.base()));
+      (void)prim->AddAttr(ops::kBase, api::MakeValue<float>(log_param.base()));
     }
 
     if (log_param.has_scale()) {
-      prim->AddAttr(ops::kScale, api::MakeValue<float>(log_param.scale()));
+      (void)prim->AddAttr(ops::kScale, api::MakeValue<float>(log_param.scale()));
     }
 
     if (log_param.has_shift()) {
-      prim->AddAttr(ops::kShift, api::MakeValue<float>(log_param.shift()));
+      (void)prim->AddAttr(ops::kShift, api::MakeValue<float>(log_param.shift()));
     }
   }
 

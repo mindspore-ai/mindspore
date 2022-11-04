@@ -79,7 +79,7 @@ BaseOperatorPtr CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pro
   auto &weightBlob = weight.blobs(0);
   if (weightBlob.has_shape()) {
     if (weightBlob.has_shape()) {
-      if (weightBlob.shape().dim_size() != dpico::kDims4) {
+      if (static_cast<size_t>(weightBlob.shape().dim_size()) != dpico::kDims4) {
         MS_LOG(ERROR) << "Dims of Kernel should be " << dpico::kDims4;
         return nullptr;
       }
@@ -105,7 +105,7 @@ BaseOperatorPtr CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pro
     }
   }
   if (group != 1) {
-    prim->AddAttr(ops::kIsDepthWise, api::MakeValue<bool>(true));
+    (void)prim->AddAttr(ops::kIsDepthWise, api::MakeValue<bool>(true));
   }
 
   return prim;

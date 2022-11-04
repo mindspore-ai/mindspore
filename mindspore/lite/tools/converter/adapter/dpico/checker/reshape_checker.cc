@@ -55,7 +55,7 @@ bool ReshapeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Form
   std::vector<int64_t> shape_data;
   auto shape_ptr = primitive->GetAttr(ops::kShape);
   if (op->inputs().size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
-    if (data_info.data_type_ != kNumberTypeInt32) {
+    if (data_info.data_type_ != static_cast<int>(kNumberTypeInt32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return false;
     }
@@ -77,7 +77,7 @@ bool ReshapeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Form
     MS_LOG(ERROR) << "can't get shape value. " << op->fullname_with_scope();
     return false;
   }
-  primitive->AddAttr(ops::kShape, api::MakeValue(shape_data));
+  (void)primitive->AddAttr(ops::kShape, api::MakeValue(shape_data));
 
   auto param_ptr = op->input(kInputIndex2)->cast<api::ParameterPtr>();
   if (param_ptr == nullptr) {

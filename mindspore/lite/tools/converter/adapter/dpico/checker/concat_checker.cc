@@ -28,11 +28,11 @@ bool CheckConcatInputW(const ShapeVector &input_shape, int64_t axis, int64_t inp
   bool supported = true;
   if (input_shape.size() == kDims2 && input_w > UINT_MAX) {
     supported = false;
-  } else if (axis == kAxis1 && input_w > UINT_MAX) {
+  } else if (static_cast<size_t>(axis) == kAxis1 && input_w > UINT_MAX) {
     supported = false;
-  } else if (axis == kAxis2 && input_w > kMaxInputWOf2Dims) {
+  } else if (static_cast<size_t>(axis) == kAxis2 && input_w > kMaxInputWOf2Dims) {
     supported = false;
-  } else if (axis == kAxis3 && input_w > kMaxInputWOf4Dims) {
+  } else if (static_cast<size_t>(axis) == kAxis3 && input_w > kMaxInputWOf4Dims) {
     supported = false;
   }
   if (!supported) {

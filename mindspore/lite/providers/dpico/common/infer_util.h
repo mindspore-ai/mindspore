@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <thread>
 #include "include/api/types.h"
 #include "schema/model_generated.h"
 
@@ -27,6 +28,19 @@ namespace lite {
 int CheckCustomInputOutput(const std::vector<mindspore::MSTensor> *inputs,
                            const std::vector<mindspore::MSTensor> *outputs, const schema::Primitive *primitive);
 int CheckCustomParam(const schema::Custom *param, const std::string &param_name);
+class DpicoAicpuThreadManager {
+ public:
+  DpicoAicpuThreadManager() = default;
+  ~DpicoAicpuThreadManager() = default;
+  int CreateAicpuThread(uint32_t model_id);
+  int DestroyAicpuThread();
+  bool g_threadExitFlag_{true};
+
+ private:
+  uint32_t all_aicpu_task_num_{0};
+  bool is_aicpu_thread_activity_{false};
+  std::thread aicpu_thread_;
+};
 }  // namespace lite
 }  // namespace mindspore
 

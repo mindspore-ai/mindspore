@@ -32,7 +32,11 @@ STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index)
     MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
   }
 
-  *axis_index = (axis + dpico::kDims4) % dpico::kDims4;
+  if (axis_index == nullptr) {
+    MS_LOG(ERROR) << "axis_index is nullptr.";
+    return RET_ERROR;
+  }
+  *axis_index = (static_cast<uint32_t>(axis) + dpico::kDims4) % dpico::kDims4;
   return RET_OK;
 }
 

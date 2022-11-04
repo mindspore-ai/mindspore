@@ -49,9 +49,9 @@ BaseOperatorPtr CaffeLRNParser::Parse(const caffe::LayerParameter &proto, const 
     }
     if (lrnParam.has_norm_region()) {
       if (lrnParam.norm_region() == caffe::LRNParameter_NormRegion::LRNParameter_NormRegion_WITHIN_CHANNEL) {
-        prim->AddAttr(ops::kNormRegion, api::MakeValue("WITHIN_CHANNEL"));
+        (void)prim->AddAttr(ops::kNormRegion, api::MakeValue("WITHIN_CHANNEL"));
       } else if (lrnParam.norm_region() == caffe::LRNParameter_NormRegion::LRNParameter_NormRegion_ACROSS_CHANNELS) {
-        prim->AddAttr(ops::kNormRegion, api::MakeValue("ACROSS_CHANNELS"));
+        (void)prim->AddAttr(ops::kNormRegion, api::MakeValue("ACROSS_CHANNELS"));
       } else {
         MS_LOG(ERROR) << "invalid norm region param. " << lrnParam.norm_region();
         return nullptr;
@@ -69,7 +69,7 @@ BaseOperatorPtr CaffeLRNParser::Parse(const caffe::LayerParameter &proto, const 
   prim->set_alpha(alpha);
   int two_sides = 2;
   prim->set_depth_radius(size / two_sides);
-  prim->AddAttr(dpico::kLrnK, api::MakeValue<float>(k));
+  (void)prim->AddAttr(dpico::kLrnK, api::MakeValue<float>(k));
   return prim;
 }
 

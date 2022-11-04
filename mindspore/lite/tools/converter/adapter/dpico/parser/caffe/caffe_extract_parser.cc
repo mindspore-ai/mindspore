@@ -38,7 +38,7 @@ STATUS SetExtractAxis(const caffe::ExtractParameter &extract_param, ops::Custom 
   } else if (extract_param.has_slice_dim()) {
     axis = static_cast<int32_t>(extract_param.slice_dim());
   }
-  prim->AddAttr(ops::kAxis, api::MakeValue<int64_t>(axis));
+  (void)prim->AddAttr(ops::kAxis, api::MakeValue<int64_t>(axis));
 
   std::vector<uint8_t> axis_attr(sizeof(int32_t));
   if (memcpy_s(axis_attr.data(), axis_attr.size() * sizeof(uint8_t), &axis, sizeof(int32_t)) != EOK) {
@@ -57,7 +57,7 @@ STATUS SetExtractSlicePointBegin(const caffe::ExtractParameter &extract_param, o
   if (extract_param.has_slice_point_begin()) {
     slice_point_begin = extract_param.slice_point_begin();
   }
-  prim->AddAttr(dpico::kSlicePointBegin, api::MakeValue<int64_t>(slice_point_begin));
+  (void)prim->AddAttr(dpico::kSlicePointBegin, api::MakeValue<int64_t>(slice_point_begin));
 
   std::vector<uint8_t> slice_point_begin_attr(sizeof(uint32_t));
   if (memcpy_s(slice_point_begin_attr.data(), slice_point_begin_attr.size() * sizeof(uint8_t), &slice_point_begin,
@@ -77,7 +77,7 @@ STATUS SetExtractSlicePointEnd(const caffe::ExtractParameter &extract_param, ops
   if (extract_param.has_slice_point_end()) {
     slice_point_end = extract_param.slice_point_end();
   }
-  prim->AddAttr(dpico::kSlicePointEnd, api::MakeValue<int64_t>(slice_point_end));
+  (void)prim->AddAttr(dpico::kSlicePointEnd, api::MakeValue<int64_t>(slice_point_end));
 
   std::vector<uint8_t> slice_point_end_attr(sizeof(uint32_t));
   if (memcpy_s(slice_point_end_attr.data(), slice_point_end_attr.size() * sizeof(uint8_t), &slice_point_end,

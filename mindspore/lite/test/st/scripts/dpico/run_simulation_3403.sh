@@ -75,11 +75,11 @@ function Run_Converter() {
     cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
 
     #  atc tool
-    cp ${dpico_atc_path}/pico_mapper/bin/atc ./ || exit 1
+    cp ${dpico_atc_path}/pico_mapper_0924/bin/atc ./ || exit 1
     chmod +x atc
 
     cp tools/converter/converter/converter_lite ./ || exit 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/lib/:${dpico_atc_path}/pico_mapper/lib:${dpico_atc_path}/protobuf-3.9.0/lib:${dpico_atc_path}/opencv-4.2.0/lib
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/lib/:${dpico_atc_path}/pico_mapper_0924/lib:${dpico_atc_path}/protobuf-3.13.0/lib:${dpico_atc_path}/opencv-4.5.2/lib
     chmod +x ./tools/benchmark/benchmark
 
     echo ' ' > ${run_converter_log_file}

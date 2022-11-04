@@ -19,11 +19,16 @@
 #include <vector>
 #include "common/log_util.h"
 #include "include/errorcode.h"
+#include "include/svp_acl_rt.h"
+#include "include/svp_acl.h"
+#include "include/svp_acl_ext.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 namespace mindspore {
 namespace lite {
+static bool kThreadRunning = true;
+
 int CheckCustomInputOutput(const std::vector<mindspore::MSTensor> *inputs,
                            const std::vector<mindspore::MSTensor> *outputs, const schema::Primitive *primitive) {
   if (inputs == nullptr) {
@@ -65,6 +70,44 @@ int CheckCustomParam(const schema::Custom *param, const std::string &param_name)
   if (param->type()->str() != param_name) {
     MS_LOG(ERROR) << "current custom node should be " << param_name << ", but in fact it's " << param->type()->str();
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+void AicpuThread() {
+  MS_LOG(INFO) << "create aicpu thread success";
+  while (kThreadRunning) {
+    svp_acl_error ret = svp_acl_ext_process_aicpu_task(1000);  // 1000 ms
+    if (ret != SVP_ACL_SUCCESS && ret != SVP_ACL_ERROR_RT_REPORT_TIMEOUT) {
+      MS_LOG(ERROR) << "create aicpu thread failed!";
+      break;
+    }
+  }
+  MS_LOG(INFO) << "end to destroy aicpu thread";
+}
+
+int DpicoAicpuThreadManager::CreateAicpuThread(uint32_t model_id) {
+  uint32_t aicpu_task_num = 0;
+  svp_acl_ext_get_mdl_aicpu_task_num(model_id, &aicpu_task_num);
+  all_aicpu_task_num_ += aicpu_task_num;
+  if (all_aicpu_task_num_ > 0 && !is_aicpu_thread_activity_) {
+    g_threadExitFlag_ = true;
+    kThreadRunning = g_threadExitFlag_;
+    aicpu_thread_ = std::thread(AicpuThread);
+    is_aicpu_thread_activity_ = true;
+  }
+  return RET_OK;
+}
+
+int DpicoAicpuThreadManager::DestroyAicpuThread() {
+  if (all_aicpu_task_num_ > 0 && is_aicpu_thread_activity_) {
+    g_threadExitFlag_ = false;
+    kThreadRunning = g_threadExitFlag_;
+    if (aicpu_thread_.joinable()) {
+      aicpu_thread_.join();
+    }
+    all_aicpu_task_num_ = 0;
+    is_aicpu_thread_activity_ = false;
   }
   return RET_OK;
 }

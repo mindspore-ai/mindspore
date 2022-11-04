@@ -100,7 +100,12 @@ STATUS GetVectorChannel(const std::vector<int64_t> &shape, int64_t *channel) {
 }
 
 bool HasOfflineData(const api::AnfNodePtr &node) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "node is nullptr.";
+    return false;
+  }
   auto param = node->cast<api::ParameterPtr>();
+
   return param != nullptr && param->has_default();
 }
 

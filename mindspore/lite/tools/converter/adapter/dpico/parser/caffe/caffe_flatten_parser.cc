@@ -30,11 +30,11 @@ BaseOperatorPtr CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, co
   const caffe::FlattenParameter &flatten_param = proto.flatten_param();
 
   if (flatten_param.has_axis()) {
-    prim->AddAttr(dpico::kStartAxis, api::MakeValue<int64_t>(flatten_param.axis()));
+    (void)prim->AddAttr(dpico::kStartAxis, api::MakeValue<int64_t>(flatten_param.axis()));
   }
 
   if (flatten_param.has_end_axis()) {
-    prim->AddAttr(dpico::kEndAxis, api::MakeValue<int64_t>(flatten_param.end_axis()));
+    (void)prim->AddAttr(dpico::kEndAxis, api::MakeValue<int64_t>(flatten_param.end_axis()));
   }
 
   return prim;

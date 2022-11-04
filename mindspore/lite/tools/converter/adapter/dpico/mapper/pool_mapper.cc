@@ -40,22 +40,20 @@ STATUS SetPadAttr(const api::PrimitivePtr &prim, mapper::PoolOperator *pool_oper
         MS_LOG(ERROR) << "pad_list size is invalid. " << pad_list.size();
         return RET_ERROR;
       }
-      pool_operator->SetPadUp(pad_list[0]);
-      pool_operator->SetPadDown(pad_list[1]);
-      pool_operator->SetPadLeft(pad_list[kAxis2]);
-      pool_operator->SetPadRight(pad_list[kAxis3]);
+      pool_operator->SetPadUp(static_cast<int>(pad_list[0]));
+      pool_operator->SetPadDown(static_cast<int>(pad_list[1]));
+      pool_operator->SetPadLeft(static_cast<int>(pad_list[kAxis2]));
+      pool_operator->SetPadRight(static_cast<int>(pad_list[kAxis3]));
       if (pad_list[0] == pad_list[1]) {
-        pool_operator->SetPadHeight(pad_list[0]);
+        pool_operator->SetPadHeight(static_cast<uint32_t>(pad_list[0]));
       }
       if (pad_list[kAxis2] == pad_list[kAxis3]) {
-        pool_operator->SetPadWidth(pad_list[kAxis3]);
+        pool_operator->SetPadWidth(static_cast<uint32_t>(pad_list[kAxis3]));
       }
     } else if (pad_mode == PadMode::SAME) {
       pool_operator->SetAutoPadType(mapper::AutoPadType::PAD_SAME_UPPER);
-      pool_operator->SetAutoPadFlag(true);
     } else if (pad_mode == PadMode::VALID) {
       pool_operator->SetAutoPadType(mapper::AutoPadType::PAD_VALID);
-      pool_operator->SetAutoPadFlag(true);
     } else {
       MS_LOG(ERROR) << "Non supported pad mode. " << pad_mode;
       return RET_ERROR;
@@ -101,8 +99,8 @@ STATUS PoolMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
       MS_LOG(ERROR) << "kernel_size should be 2 dims, which is " << kernel_size.size();
       return RET_ERROR;
     }
-    pool_operator->SetKernelHeight(kernel_size[0]);
-    pool_operator->SetKernelWidth(kernel_size[1]);
+    pool_operator->SetKernelHeight(static_cast<uint32_t>(kernel_size[0]));
+    pool_operator->SetKernelWidth(static_cast<uint32_t>(kernel_size[1]));
   }
 
   if (prim->GetAttr(ops::kStrides) != nullptr) {
@@ -111,8 +109,8 @@ STATUS PoolMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
       MS_LOG(ERROR) << "stride should be 2 dims, which is " << stride.size();
       return RET_ERROR;
     }
-    pool_operator->SetStrideHeight(stride[0]);
-    pool_operator->SetStrideWidth(stride[1]);
+    pool_operator->SetStrideHeight(static_cast<uint32_t>(stride[0]));
+    pool_operator->SetStrideWidth(static_cast<uint32_t>(stride[1]));
   }
 
   if (prim->GetAttr(ops::kGlobal) != nullptr) {
@@ -122,9 +120,9 @@ STATUS PoolMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
 
   if (prim->GetAttr(ops::kRoundMode) != nullptr) {
     auto round_mode = api::GetValue<int64_t>(prim->GetAttr(ops::kRoundMode));
-    if (round_mode == RoundMode::CEIL) {
+    if (round_mode == static_cast<int64_t>(RoundMode::CEIL)) {
       pool_operator->SetRoundMode(mapper::POOLING_ROUND_MODE_CEIL);
-    } else if (round_mode == RoundMode::FLOOR) {
+    } else if (round_mode == static_cast<int64_t>(RoundMode::FLOOR)) {
       pool_operator->SetRoundMode(mapper::POOLING_ROUND_MODE_FLOOR);
     }
   }

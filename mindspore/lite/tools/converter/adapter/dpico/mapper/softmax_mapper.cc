@@ -46,11 +46,12 @@ STATUS SoftmaxMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPt
   }
 
   softmax_operator->SetOpType(mapper::OpType::SOFTMAX);
-  if (softmax_prim->get_axis().empty()) {
+  auto axes = softmax_prim->get_axis();
+  if (axes.empty()) {
     MS_LOG(ERROR) << "axis attr is empty.";
     return RET_ERROR;
   } else {
-    softmax_operator->SetRealAxes(static_cast<mapper::SoftmaxAxes>(softmax_prim->get_axis().at(0)));
+    softmax_operator->SetRealAxes(static_cast<mapper::SoftmaxAxes>(axes.at(0)));
   }
   if (PushOfflineArgs(cnode, softmax_operator.get(), 1) != RET_OK) {
     MS_LOG(ERROR) << "push offline args failed. " << cnode->fullname_with_scope();

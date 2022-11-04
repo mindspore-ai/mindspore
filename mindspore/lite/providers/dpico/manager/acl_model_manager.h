@@ -38,7 +38,8 @@ class AclModelManager {
   AclModelManager() = default;
   ~AclModelManager();
 
-  int Init(const std::map<std::string, std::string> &dpico_config, const schema::Primitive *primitive,
+  int Init(const std::map<std::string, std::string> &dpico_config,
+           const std::map<std::string, std::string> &model_share_config, const schema::Primitive *primitive,
            const std::vector<mindspore::MSTensor> &input_tensors,
            const std::vector<mindspore::MSTensor> &output_tensors);
   int UpdateBatchSize(const std::vector<mindspore::MSTensor> &input_tensors);
@@ -48,7 +49,8 @@ class AclModelManager {
   int UpdateAclInputs(std::vector<mindspore::MSTensor> *input_tensors);
   int UpdateAclOutputs(std::vector<mindspore::MSTensor> *output_tensors);
   int Execute(const std::vector<mindspore::MSTensor> &input_tensors,
-              const std::vector<mindspore::MSTensor> &output_tensors);
+              const std::vector<mindspore::MSTensor> &output_tensors,
+              const std::map<std::string, std::string> &model_share_config);
 
  private:
   int LoadModel(const std::vector<mindspore::MSTensor> &input_tensors);
@@ -57,6 +59,8 @@ class AclModelManager {
   int AddDetectParamInput();
   int DetectPostProcess(mindspore::MSTensor *output_tensors);
   int CreateTaskBufAndWorkBuf();
+  int CreateNoShareTaskBufAndWorkBuf();
+  int GetMaxTaskAndWorkBufSize();
   int CopyTensorDataToAclInputs(const std::vector<mindspore::MSTensor> &input_tensors);
   int CopyAclOutputsToTensorData(const std::vector<mindspore::MSTensor> &output_tensors);
   int FlushAclInputsAndOutputs();
@@ -74,6 +78,7 @@ class AclModelManager {
   size_t actual_batch_size_{1};
   /** acl related variables */
   uint32_t acl_model_id_{0};
+  int32_t acl_device_id_{0};
   AclModelType acl_model_type_{kCnn};
   void *acl_model_ptr_{nullptr};
   svp_acl_mdl_desc *acl_model_desc_{nullptr};

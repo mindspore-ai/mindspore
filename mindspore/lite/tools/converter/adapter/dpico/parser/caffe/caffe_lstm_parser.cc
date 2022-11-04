@@ -33,23 +33,23 @@ BaseOperatorPtr CaffeLstmParser::Parse(const caffe::LayerParameter &proto, const
   if (proto.has_recurrent_param()) {
     const auto &lstm_param = proto.recurrent_param();
     if (lstm_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(lstm_param.num_output()));
+      (void)prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(lstm_param.num_output()));
     }
     if (lstm_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialCOnlineFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialCFlag, api::MakeValue<bool>(!lstm_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!lstm_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kInitialCOnlineFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kUseDefaultInitialCFlag, api::MakeValue<bool>(!lstm_param.expose_hidden()));
     }
   }
 
   // set default value
-  prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
-  prim->AddAttr(dpico::kPeepHoleFlag, api::MakeValue<bool>(false));
-  prim->AddAttr(dpico::kLstmWeightOrderIofcFlag, api::MakeValue<bool>(false));
-  prim->AddAttr(dpico::kSequenceLensOnlineFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kPeepHoleFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kLstmWeightOrderIofcFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kSequenceLensOnlineFlag, api::MakeValue<bool>(false));
 
   return prim;
 }

@@ -67,7 +67,7 @@ Status DpicoPsRoiPoolInterface::Infer(std::vector<mindspore::MSTensor> *inputs,
       MS_LOG(ERROR) << "param->attr()->Get(i) is nullptr or param->attr()->Get(i)->name() is nullptr";
       return kLiteError;
     }
-    custom_attrs.insert({param->attr()->Get(i)->name()->str(), param->attr()->Get(i)->data()});
+    (void)custom_attrs.emplace(std::pair(param->attr()->Get(i)->name()->str(), param->attr()->Get(i)->data()));
   }
   if (custom_attrs.count(dpico::kGroupSize) == 1) {
     if (memcpy_s(&group_size, sizeof(int32_t), custom_attrs[dpico::kGroupSize]->data(),

@@ -116,14 +116,14 @@ STATUS ConvMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
       MS_LOG(ERROR) << "conv_operator is nullptr.";
       return RET_ERROR;
     }
-    conv_operator->SetGroup(conv_attr.group);
+    conv_operator->SetGroup(static_cast<uint32_t>(conv_attr.group));
   } else {
     conv_operator = std::make_unique<mapper::ConvOperator>();
     if (conv_operator == nullptr) {
       MS_LOG(ERROR) << "conv_operator is nullptr.";
       return RET_ERROR;
     }
-    conv_operator->SetGroup(conv_attr.group);
+    conv_operator->SetGroup(static_cast<uint32_t>(conv_attr.group));
   }
 
   if (SetCommonAttr(cnode, conv_operator.get(), output_cnodes) != RET_OK) {
@@ -146,16 +146,14 @@ STATUS ConvMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
       MS_LOG(ERROR) << "pad_list size is invalid. " << pad_list.size();
       return RET_ERROR;
     }
-    conv_operator->SetPadUp(pad_list[0]);
-    conv_operator->SetPadDown(pad_list[1]);
-    conv_operator->SetPadLeft(pad_list[kAxis2]);
-    conv_operator->SetPadRight(pad_list[kAxis3]);
+    conv_operator->SetPadUp(static_cast<int>(pad_list[0]));
+    conv_operator->SetPadDown(static_cast<int>(pad_list[1]));
+    conv_operator->SetPadLeft(static_cast<int>(pad_list[kAxis2]));
+    conv_operator->SetPadRight(static_cast<int>(pad_list[kAxis3]));
   } else if (conv_attr.pad_mode == PadMode::SAME) {
     conv_operator->SetAutoPadType(mapper::AutoPadType::PAD_SAME_UPPER);
-    conv_operator->SetAutoPadFlag(true);
   } else if (conv_attr.pad_mode == PadMode::VALID) {
     conv_operator->SetAutoPadType(mapper::AutoPadType::PAD_VALID);
-    conv_operator->SetAutoPadFlag(true);
   } else {
     MS_LOG(ERROR) << "Non supported pad mode. " << conv_attr.pad_mode;
     return RET_ERROR;

@@ -85,7 +85,7 @@ STATUS AddDumpKernels(const api::FuncGraphPtr &func_graph, const Subgraph &subgr
   auto subgraph_inputs = GetSubgraphInputs(subgraph, func_graph);
   MS_CHECK_TRUE_MSG(!subgraph_inputs.empty(), RET_ERROR,
                     "get subgraph inputs failed. subgraph id is " << subgraph.graph_id);
-  dump_kernels->insert(dump_kernels->end(), subgraph_inputs.begin(), subgraph_inputs.end());
+  (void)dump_kernels->insert(dump_kernels->end(), subgraph_inputs.begin(), subgraph_inputs.end());
   bool is_main_graph =
     func_graph->get_attr(kIsMainGraph) != nullptr && api::GetValue<bool>(func_graph->get_attr(kIsMainGraph));
   if (is_main_graph) {
@@ -105,7 +105,7 @@ STATUS AddDumpKernels(const api::FuncGraphPtr &func_graph, const Subgraph &subgr
       if (iter == cnode_inputs.end()) {
         continue;
       }
-      param_to_cnode->emplace(node, std::make_pair(inner_cnode, iter - cnode_inputs.begin() - 1));
+      (void)param_to_cnode->emplace(node, std::make_pair(inner_cnode, iter - cnode_inputs.begin() - 1));
     }
   }
   return RET_OK;
@@ -283,7 +283,8 @@ STATUS DpicoPass::MarkNodes(const api::FuncGraphPtr &func_graph) {
       auto op_checker = OpCheckerRegistry::GetInstance()->GetOpChecker(op_type_name);
       if (op_checker != nullptr) {
         auto node_users = manager->GetUsers(cnode);
-        is_supported = CheckInputDimSize(cnode) && op_checker->Check(cnode, node_users.size(), mindspore::Format::NCHW);
+        is_supported = CheckInputDimSize(cnode) &&
+                       op_checker->Check(cnode, static_cast<int>(node_users.size()), mindspore::Format::NCHW);
       }
       is_supported = is_supported && CheckOpHasInferred(cnode);
       is_supported = is_supported && (CheckPrimitiveType(cnode, api::MakeShared<ops::Cast>())
@@ -295,7 +296,7 @@ STATUS DpicoPass::MarkNodes(const api::FuncGraphPtr &func_graph) {
       unsupported_ops[op_type_name].push_back(cnode->fullname_with_scope());
       unsupported_ops_size++;
     }
-    primitive->AddAttr(kIsMapperSupported, api::MakeValue<bool>(is_supported));
+    (void)primitive->AddAttr(kIsMapperSupported, api::MakeValue<bool>(is_supported));
   }
 #ifdef Debug
   PrintUnsupportedOps(unsupported_ops, unsupported_ops_size, func_graph);
@@ -354,7 +355,7 @@ STATUS DpicoPass::DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_ori
       MS_LOG(DEBUG) << "required tensors are all graph inputs, which do not need to dump data.";
       return RET_OK;
     }
-    int dump_level = param_to_cnode.empty() ? kDumpOutput : kDumpInputOutput;
+    int dump_level = static_cast<int>(param_to_cnode.empty() ? kDumpOutput : kDumpInputOutput);
     auto calib_data_generator = std::make_shared<CalibDataGenerator>(dump_level, param_to_cnode);
     MS_CHECK_TRUE_MSG(calib_data_generator != nullptr, RET_ERROR, "new calib generator failed.");
     if (calib_data_generator->Run(graph_inputs, dump_kernels) != RET_OK &&
@@ -370,7 +371,7 @@ STATUS DpicoPass::DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_ori
 STATUS DpicoPass::ReplaceSubgraphWithCustom(const api::FuncGraphPtr &func_graph, bool use_origin_config) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
   auto manager = api::FuncGraphManager::Manage(func_graph, true);
-  MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "manager is nullptr.");
   for (auto &subgraph : graph_split_info_.subgraphs_map[func_graph]) {
     if (!subgraph.is_supported) {
       continue;
@@ -393,8 +394,8 @@ STATUS DpicoPass::ReplaceSubgraphWithCustom(const api::FuncGraphPtr &func_graph,
     MS_CHECK_TRUE_MSG(custom_op_creator_ != nullptr, RET_ERROR, "custom_op_creator_ is nullptr.");
     if (om_generator->Run(func_graph, subgraph, custom_op_creator_->GetCustomId(), om_model_info.get(),
                           use_origin_config) != RET_OK) {
-      MS_LOG(WARNING) << "current subgraph generate om failed, this subgraph will be running on CPU.";
-      continue;
+      MS_LOG(ERROR) << "current subgraph generate om failed.";
+      return RET_ERROR;
     }
     MS_CHECK_TRUE_MSG(WriteOmBufferToFile(om_model_info, custom_op_creator_->GetCustomId()) == RET_OK, RET_ERROR,
                       "save om file failed. custom id is " << custom_op_creator_->GetCustomId());
@@ -507,8 +508,8 @@ REG_PASS(DpicoPass, dpico::DpicoPass)
 }  // namespace dpico
 }  // namespace mindspore
 namespace mindspore::registry {
-std::vector<std::string> schedule_pipe = {"ConstFoldPass",         "ToNCHWFormat", "DpicoPreprocessPass",
-                                          "DecreaseTransposeAlgo", "DumpGraph",    "DpicoPass",
-                                          "ToNHWCFormat"};
+const std::vector<std::string> schedule_pipe = {"ConstFoldPass",         "ToNCHWFormat", "DpicoPreprocessPass",
+                                                "DecreaseTransposeAlgo", "DumpGraph",    "DpicoPass",
+                                                "ToNHWCFormat"};
 REG_SCHEDULED_PASS(POSITION_BEGIN, schedule_pipe)
 }  // namespace mindspore::registry

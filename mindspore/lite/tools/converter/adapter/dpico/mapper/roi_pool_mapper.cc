@@ -45,10 +45,10 @@ STATUS RoiPoolMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPt
 
   roi_pool_operator->SetOpType(mapper::OpType::ROIPOOLING);
   if (roi_pool_prim->GetAttr(ops::kPooledH) != nullptr) {
-    roi_pool_operator->SetRoiPooledHeight(roi_pool_prim->get_pooled_h());
+    roi_pool_operator->SetRoiPooledHeight(static_cast<uint32_t>(roi_pool_prim->get_pooled_h()));
   }
   if (roi_pool_prim->GetAttr(ops::kPooledW) != nullptr) {
-    roi_pool_operator->SetRoiPooledWidth(roi_pool_prim->get_pooled_w());
+    roi_pool_operator->SetRoiPooledWidth(static_cast<uint32_t>(roi_pool_prim->get_pooled_w()));
   }
   if (roi_pool_prim->GetAttr(ops::kScale) != nullptr) {
     roi_pool_operator->SetRoiScale(roi_pool_prim->get_scale());

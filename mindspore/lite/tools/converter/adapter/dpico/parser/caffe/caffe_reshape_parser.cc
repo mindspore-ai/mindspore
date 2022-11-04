@@ -38,14 +38,14 @@ BaseOperatorPtr CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, co
   for (int i = 0; i < blob_shape.dim_size(); i++) {
     shape.push_back(blob_shape.dim(i));
   }
-  prim->AddAttr(ops::kShape, api::MakeValue(shape));
+  (void)prim->AddAttr(ops::kShape, api::MakeValue(shape));
 
   if (reshapeParam.has_axis()) {
-    prim->AddAttr(ops::kAxis, api::MakeValue(reshapeParam.axis()));
+    (void)prim->AddAttr(ops::kAxis, api::MakeValue(reshapeParam.axis()));
   }
 
   if (reshapeParam.has_num_axes()) {
-    prim->AddAttr(dpico::kNumAxes, api::MakeValue(reshapeParam.num_axes()));
+    (void)prim->AddAttr(dpico::kNumAxes, api::MakeValue(reshapeParam.num_axes()));
   }
 
   return prim;
