@@ -12,6 +12,6 @@ add_library(kernels-dvpp-image OBJECT
         dvpp_resize_jpeg_op.cc
         acl_adapter.cc
         )
-if(ENABLE_ACL)
+if(ENABLE_ACL OR MSLITE_ENABLE_ACL)
     add_subdirectory(utils)
 endif()
