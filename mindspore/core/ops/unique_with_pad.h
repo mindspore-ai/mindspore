@@ -16,9 +16,14 @@
 
 #ifndef MINDSPORE_CORE_OPS_UNIQUE_WITH_PAD_H_
 #define MINDSPORE_CORE_OPS_UNIQUE_WITH_PAD_H_
+
+#include <memory>
+#include <vector>
+
+#include "abstract/abstract_value.h"
 #include "ops/base_operator.h"
+#include "utils/check_convert_utils.h"
 #include "mindapi/base/types.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,6 +39,10 @@ class MIND_API UniqueWithPad : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
+
+AbstractBasePtr UniqueWithPadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args);
+using PrimUniqueWithPadPtr = std::shared_ptr<UniqueWithPad>;
 }  // namespace ops
 }  // namespace mindspore
 

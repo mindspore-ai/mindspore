@@ -1286,7 +1286,7 @@ class Padding(Primitive):
         self.pad_dim_size = pad_dim_size
 
 
-class UniqueWithPad(PrimitiveWithCheck):
+class UniqueWithPad(Primitive):
     """
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
@@ -1313,14 +1313,7 @@ class UniqueWithPad(PrimitiveWithCheck):
     @prim_attr_register
     def __init__(self):
         """init UniqueWithPad"""
-
-    def __check__(self, x, pad_num):
-        type_list = [mstype.int32, mstype.int64, mstype.float32]
-        validator.check_tensor_dtype_valid("x", x['dtype'], type_list, self.name)
-        if not hasattr(self, 'batch_rank'):
-            validator.check_subclass("pad_num", pad_num['dtype'], type_list, self.name)
-            x_shape = list(x['shape'])
-            validator.check("rank of x", len(x_shape), '', 1, Rel.EQ, self.name)
+        self.init_prim_io_names(inputs=['x', 'pad_num'], outputs=['y', 'idx'])
 
 
 class Split(Primitive):

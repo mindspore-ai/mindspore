@@ -29,17 +29,17 @@ namespace mindspore {
 namespace kernel {
 class UniqueWithPadGpuKernelMod : public UniqueGpuKernelMod {
  public:
-  UniqueWithPadGpuKernelMod() {
-    KernelMod::kernel_name_ = "UniqueWithPad";
-    ResetResource();
-  }
+  UniqueWithPadGpuKernelMod() { ResetResource(); }
   ~UniqueWithPadGpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+
  protected:
-  void SyncData() override{};
   std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel
