@@ -1572,7 +1572,7 @@ class LSTMGrad(PrimitiveWithInfer):
         return (dy_dtype, dy_dtype, dy_dtype, hx_dtype)
 
 
-class DynamicRNNGrad(PrimitiveWithInfer):
+class DynamicRNNGrad(Primitive):
     """Computes the input gradients of DynamicRNN."""
 
     @prim_attr_register
@@ -1587,35 +1587,6 @@ class DynamicRNNGrad(PrimitiveWithInfer):
                  time_major=True,
                  forget_bias=0.0):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
-
-    def infer_shape(self, x_shape, w_shape, b_shape, y_shape, init_h_shape, init_c_shape, h_shape,
-                    c_shape, dy_shape, dh_shape, dc_shape, i_shape, j_shape, f_shape, o_shape, tanhc_shape):
-        validator.check_equal_int(len(x_shape), 3, "x_shape", self.name)
-        num_step, batch_size, input_size = x_shape
-        hidden_size = w_shape[-1] // 4
-        if w_shape[-1] % 4 != 0:
-            raise ValueError(f"For {self.name}, w_shape[-1] should multiple of 4.")
-        validator.check("w_shape[0]", w_shape[0], "input_size + hidden_size",
-                        input_size + hidden_size, Rel.EQ, self.name)
-        valid_shape = [num_step, batch_size, hidden_size]
-        validator.check("b_shape[0]", b_shape[0], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
-        validator.check("y_shape", y_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("h_shape", h_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("c_shape", c_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("i_shape", i_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("j_shape", j_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("f_shape", f_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("o_shape", o_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("tanhc_shape", tanhc_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("dy_shape", dy_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("dh_shape", dh_shape, "excepted shape", [batch_size, hidden_size], Rel.EQ, self.name)
-        validator.check("dc_shape", dc_shape, "excepted shape", [batch_size, hidden_size], Rel.EQ, self.name)
-
-        return w_shape, (w_shape[1],), x_shape, dh_shape, dc_shape
-
-    def infer_dtype(self, x_dtype, w_dtype, b_dtype, y_dtype, init_h_dtype, init_c_dtype, h_dtype,
-                    c_dtype, dy_dtype, dh_dtype, dc_dtype, i_dtype, j_dtype, f_dtype, o_dtype, tanhc_dtype):
-        return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
 class GruGradData(PrimitiveWithInfer):
