@@ -85,64 +85,6 @@ def test_parameter_1_2(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_parameter_2_1(mode):
-    """
-    Feature: Check the names of parameters.
-    Description: If parameters in init have same name, an exception will be thrown.
-    Expectation: No exception.
-    """
-
-    class ParamNet(Cell):
-        def __init__(self):
-            super(ParamNet, self).__init__()
-            self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
-            self.param_b = Parameter(Tensor([2], ms.float32), name="name_a")
-
-        def construct(self):
-            return self.param_a + self.param_b
-
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        context.set_context(mode=mode)
-        net = ParamNet()
-        res = net()
-        assert res == 3
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_parameter_2_2(mode):
-    """
-    Feature: Check the names of parameters.
-    Description: Check the name of parameter in init.
-    Expectation: No exception.
-    """
-
-    class ParamNet(Cell):
-        def __init__(self):
-            super(ParamNet, self).__init__()
-            self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
-            self.res1 = ParameterTuple((Parameter(Tensor([2], ms.float32)), self.param_a))
-            self.param_a = Parameter(Tensor([3], ms.float32), name="name_a")
-            self.res2 = self.res1[0] + self.param_a
-
-        def construct(self):
-            return self.param_a + self.res1[0] + self.res2
-
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        context.set_context(mode=mode)
-        net = ParamNet()
-        res = net()
-        assert res == 10
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_3(mode):
     """
@@ -166,61 +108,6 @@ def test_parameter_3(mode):
     assert res == 3
     assert net.param_a.name == "param_a"
     assert net.param_b.name == "param_b"
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_parameter_4(mode):
-    """
-    Feature: Check the names of parameters.
-    Description: Check the name of parameter in init.
-    Expectation: No exception.
-    """
-
-    class ParamNet(Cell):
-        def __init__(self):
-            super(ParamNet, self).__init__()
-            self.res1 = ParameterTuple((Parameter(Tensor([2], ms.float32), name="name_a"),
-                                        Parameter(Tensor([4], ms.float32), name="name_a")))
-
-        def construct(self):
-            return self.res1[0] + self.res1[1]
-
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        context.set_context(mode=mode)
-        net = ParamNet()
-        res = net()
-        assert res == 6
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_parameter_5_1(mode):
-    """
-    Feature: Check the names of parameters.
-    Description: Check the name of parameter in init.
-    Expectation: No exception.
-    """
-
-    class ParamNet(Cell):
-        def __init__(self):
-            super(ParamNet, self).__init__()
-            self.res1 = ParameterTuple((Parameter(Tensor([2], ms.float32)), Parameter(Tensor([4], ms.float32))))
-
-        def construct(self):
-            return self.res1[0] + self.res1[1]
-
-    with pytest.raises(ValueError, match="its name 'Parameter' already exists."):
-        context.set_context(mode=mode)
-        net = ParamNet()
-        res = net()
-        assert res == 6
 
 
 @pytest.mark.level1
@@ -322,35 +209,6 @@ def test_parameter_in_tuple(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_parameter_parameter_tuple_1(mode):
-    """
-    Feature: Check the names of parameters.
-    Description: Check the name of parameter in init.
-    Expectation: No exception.
-    """
-
-    class ParamNet(Cell):
-        def __init__(self):
-            super(ParamNet, self).__init__()
-            self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
-            self.param_tuple = ParameterTuple((Parameter(Tensor([5], ms.float32), name="name_a"),
-                                               Parameter(Tensor([5], ms.float32), name="name_b")))
-
-        def construct(self):
-            return self.param_a + self.param_tuple[0] + self.param_tuple[1]
-
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        context.set_context(mode=mode)
-        net = ParamNet()
-        res = net()
-        assert res == 11
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_parameter_tuple_2(mode):
     """
@@ -424,39 +282,6 @@ def test_parameter(mode):
     assert net.param_tuple[1].name == "Parameter$2"
     assert net.param_list[0].name == "Parameter$3"
     assert net.param_list[1].name == "Parameter$4"
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_parameter_same_name_between_tuple_or_list(mode):
-    """
-    Feature: Check the names of parameters between tuple or list.
-    Description: If the same name exists between tuple and list, an exception will be thrown.
-    Expectation: Get the expected exception report.
-    """
-
-    class ParamNet(Cell):
-        def __init__(self):
-            super(ParamNet, self).__init__()
-            self.param_tuple = (Parameter(Tensor([1], ms.float32), name="name_a"),
-                                Parameter(Tensor([2], ms.float32)))
-            self.param_list = [Parameter(Tensor([3], ms.float32), name="name_a"),
-                               Parameter(Tensor([4], ms.float32))]
-
-        def construct(self, x):
-            res = self.param_tuple[0] + self.param_tuple[1] + self.param_list[0] + self.param_listp[1] + x
-            return res
-
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        context.set_context(mode=mode)
-        net = ParamNet()
-        x = Tensor([10], ms.float32)
-        output = net(x)
-        output_expect = Tensor(20, ms.float32)
-        assert output == output_expect
 
 
 @pytest.mark.level0
