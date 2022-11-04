@@ -97,7 +97,7 @@ class CheckpointConfig:
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
-                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
+                        mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
         exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: False.
 
     Raises:

@@ -570,11 +570,11 @@ def obfuscate_model(obf_config, **kwargs):
 
             - enc_key (bytes): Byte type key used for encryption. The valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, to take effect when dec_key is set.
-              Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
+              Option: 'AES-GCM' | 'AES-CBC' | 'SM4-CBC'. Default: 'AES-GCM'.
 
     Raises:
         TypeError: If obf_config is not a dict.
-        ValueError: If enc_key is passed and enc_mode is not in ["AES-GCM", "AES-CBC"].
+        ValueError: If enc_key is passed and enc_mode is not in ["AES-GCM", "AES-CBC", "SM4-CBC"].
         ValueError: If original_model_path is not provided in obf_config.
         ValueError: If the model saved in original_model_path has been obfuscated.
         ValueError: If save_model_path is not provided in obf_config.
@@ -629,10 +629,10 @@ def obfuscate_model(obf_config, **kwargs):
         enc_mode = "AES-GCM"
         if 'enc_mode' in kwargs.keys():
             enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
-            if enc_mode not in ["AES-GCM", "AES-CBC"]:
+            if enc_mode not in ["AES-GCM", "AES-CBC", "SM4-CBC"]:
                 raise ValueError(
-                    "Only MindIR files that encrypted with 'AES-GCM' or 'AES-CBC' is supported for obfuscate_model(),"
-                    " but got {}.".format(enc_mode))
+                    "Only MindIR files that encrypted with 'AES-GCM', 'AES-CBC' or 'SM4-CBC' is supported for"
+                    "obfuscate_model(), but got {}.".format(enc_mode))
         obf_graph = dynamic_obfuscate_mindir(file_name=file_path, obf_ratio=obf_ratio, obf_password=obf_password,
                                              append_password=append_password, dec_key=enc_key, key_len=len(enc_key),
                                              dec_mode=enc_mode)
@@ -1364,10 +1364,10 @@ def _set_obfuscate_config(**kwargs):
     logger.warning("Obfuscate model.")
     if 'enc_mode' in kwargs.keys():
         enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
-        if enc_mode not in ["AES-GCM", "AES-CBC"]:
+        if enc_mode not in ["AES-GCM", "AES-CBC", "SM4-CBC"]:
             raise ValueError(
-                "Only MindIR files that encrypted with 'AES-GCM' or 'AES-CBC' is supported for obfuscation,"
-                "but got {}.".format(enc_mode))
+                "Only MindIR files that encrypted with 'AES-GCM', 'AES-CBC' or 'SM4-CBC' is supported for"
+                "obfuscation, but got {}.".format(enc_mode))
     obf_ratio, customized_funcs, obf_password = _check_obfuscate_params(kwargs.get('obf_config'))
     if customized_funcs and obf_password > 0:
         logger.warning("Although 'customized_func' and 'obf_password' are set, the 'obf_password' mode would be"
@@ -1880,7 +1880,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
                                       is not required. Default: None.
         dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption
-                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
+                        mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
 
     Raises:
         TypeError: The type of inputs do not match the requirements.
