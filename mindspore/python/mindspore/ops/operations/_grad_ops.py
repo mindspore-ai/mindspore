@@ -3801,6 +3801,18 @@ class HSigmoidGrad(Primitive):
         self.init_prim_io_names(inputs=['grads', 'input_x'], outputs=['output'])
 
 
+class GluGrad(Primitive):
+    """
+    Computes grad for Glu operation.
+    """
+
+    @prim_attr_register
+    def __init__(self, axis):
+        self.add_prim_attr("cust_aicpu", self.name)
+        self.init_prim_io_names(inputs=["grads", "x"], outputs=["y"])
+        validator.check_value_type("axis", axis, [int], self.name)
+
+
 class CholeskyGrad(Primitive):
     r"""
     Computes the reverse mode backpropgated gradient of the Cholesky algorithm.

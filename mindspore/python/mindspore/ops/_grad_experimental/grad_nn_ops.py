@@ -63,6 +63,7 @@ from mindspore.ops.operations.nn_ops import MaxPool3DWithArgmax
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
+from mindspore.ops.operations.nn_ops import GLU
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -488,6 +489,18 @@ def get_bprop_resize_bilinear(self):
     def bprop(input_x, size, out, dout):
         dx = resize_grad(dout, input_x)
         return (dx, zeros_like(size))
+
+    return bprop
+
+
+@bprop_getters.register(GLU)
+def get_bprop_glu(self):
+    """Grad definition for `Glu` operation."""
+    input_grad = G.GluGrad(self.axis)
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
 
     return bprop
 

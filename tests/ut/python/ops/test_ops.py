@@ -148,6 +148,7 @@ from mindspore.ops.operations.nn_ops import MaxPoolV1
 from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
+from mindspore.ops.operations.nn_ops import GLU
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToDense
 from mindspore.ops.operations.sparse_ops import SetSize
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
@@ -2653,6 +2654,14 @@ test_case_nn_ops = [
         'block': G.EluGrad(),
         'desc_inputs': [[2, 3, 4], [2, 3, 4]],
         'desc_bprop': [[2, 3, 4]],
+        'skip': ['backward']}),
+    ('GLU', {
+        'block': GLU(),
+        'desc_inputs': [[2, 3, 4]],
+        'desc_bprop': [[2, 3, 2]]}),
+    ('GluGrad', {
+        'block': G.GluGrad(axis=1),
+        'desc_inputs': [[2, 1, 4], [2, 2, 4]],
         'skip': ['backward']}),
     ('Sigmoid', {
         'block': P.Sigmoid(),
