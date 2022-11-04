@@ -1593,7 +1593,7 @@ def softmax(x, axis=-1):
     where :math:`N` is the length of the tensor.
 
     Args:
-        axis (Int): The axis to perform the Softmax operation. Default: -1.
+        axis (Union[int, tuple[int]], optional): The axis to perform the Softmax operation. Default: -1.
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
 
@@ -1601,7 +1601,7 @@ def softmax(x, axis=-1):
         Tensor, with the same type and shape as the logits.
 
     Raises:
-        TypeError: If `axis` is nnot an int.
+        TypeError: If `axis` is not an int or a tuple.
         TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `axis` is a tuple whose length is less than 1.
         ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape))
@@ -2007,7 +2007,7 @@ def relu(x):
     r"""
     Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
-    It returns max(x, 0) element-wise. Specially, the neurons with the negative output
+    It returns :math:`\max(x,\  0)` element-wise. Specially, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::
@@ -2099,7 +2099,7 @@ def prelu(x, weight):
           The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
         weight (Tensor):  Weight Tensor. The data type is float16 or float32.
           The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.
-          On GPU devices, when the input is a scalar, the shape is 1.
+          On GPU devices, when the input is a scalar, the shape is (1,).
 
     Returns:
         Tensor, with the same dtype as `x`.

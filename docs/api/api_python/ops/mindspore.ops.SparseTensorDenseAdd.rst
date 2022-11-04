@@ -3,16 +3,16 @@ mindspore.ops.SparseTensorDenseAdd
 
 .. py:class:: mindspore.ops.SparseTensorDenseAdd
 
-    一个稀疏张量加上稠密张量得到一个稠密张量。
+    一个稀疏tensor加上稠密Tensor得到一个稠密Tensor。
 
     输入：
-        - **x1_indices** (Tensor) - 二维张量，表示稀疏张量的索引位置，shape为 :math:`(n, 2)`。
-        - **x1_values** (Tensor) - 一维张量，表示稀疏张量索引位置对应值，shape为 :math:`(n,)`。
-        - **x1_shape** (tuple(int)) - 稀疏张量对应的稠密张量维度，shape为 :math:`(N, C)`。
-        - **x2** (Tensor) - 稠密张量，数据类型与稀疏张量一致。
+        - **x1_indices** (Tensor) - 二维Tensor，表示稀疏Tensor的索引位置，shape为 :math:`(n, 2)` ，支持的数据类型为int32和int64，其值必须为非负数。
+        - **x1_values** (Tensor) - 一维Tensor，表示稀疏Tensor索引位置对应值，shape为 :math:`(n,)`。
+        - **x1_shape** (tuple(int)) - 稀疏Tensor对应的稠密Tensor的shape，是一个不含负数， 长度为2的tuple，shape为 :math:`(N, C)`。
+        - **x2** (Tensor) - 稠密Tensor，数据类型与稀疏Tensor一致。
 
     输出：
-        张量，shape与 `x1_shape` 一致。
+        Tensor，shape与 `x1_shape` 一致。
 
     异常：
         - **TypeError** - `x1_indices` 和 `x1_shape` 不是int32或者int64。

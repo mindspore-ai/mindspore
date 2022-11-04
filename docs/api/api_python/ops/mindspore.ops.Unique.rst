@@ -13,7 +13,7 @@ mindspore.ops.Unique
         - **input_x** (Tensor) - 输入Tensor。shape为 :math:`(N,*)` ，其中 :math:`*` 表示，任意数量的附加维度。
 
     输出：
-        tuple，形如( `y` , `idx` )的Tensor对象， `y` 与 `input_x` 的数据类型相同，记录的是 `input_x` 中的唯一元素。 `idx` 是一个Tensor，记录的是输入 `input_x` 元素相对应的索引。
+        Tuple，形如( `y` , `idx` )的Tensor对象， `y` 与 `input_x` 的数据类型相同，记录的是 `input_x` 中的唯一元素。 `idx` 是一个Tensor，记录的是输入 `input_x` 元素相对应的索引。
 
     异常：
         - **TypeError** - 如果 `input_x` 不是Tensor。

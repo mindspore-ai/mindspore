@@ -3,7 +3,7 @@ mindspore.ops.relu
 
 .. py:function:: mindspore.ops.relu(x)
 
-    线性修正单元激活函数（Rectified Linear Unit）。
+    对输入Tensor逐元素计算线性修正单元激活函数（Rectified Linear Unit）值。
 
     返回 :math:`\max(x,\  0)` 的值。负值神经元将被设置为0，正值神经元将保持不变。
 

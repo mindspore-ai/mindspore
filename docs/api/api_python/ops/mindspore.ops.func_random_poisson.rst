@@ -3,7 +3,7 @@ mindspore.ops.random_poisson
 
 .. py:function:: mindspore.ops.random_poisson(shape, rate, seed=None, dtype=mstype.float32)
 
-    从各指定均值的泊松分布中，随机采样 `shape` 形状的随机数。
+    从一个指定均值为 `rate` 的泊松分布中，随机生成形状为 `shape` 的随机数Tensor。
 
     .. math::
 

@@ -6273,11 +6273,11 @@ class SparseApplyProximalAdagrad(Primitive):
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Variable tensor to be updated, has the same shape and dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a float number or
-          a scalar tensor with float16 or float32 data type.
+          a scalar tensor with float16 or float32 data type. It must be positive.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be a float number or
-          a scalar tensor with float16 or float32 data type.
+          a scalar tensor with float16 or float32 data type. It must be non-negative.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a float number or
-          a scalar tensor with float16 or float32 data type.
+          a scalar tensor with float16 or float32 data type. It must be non-negative.
         - **grad** (Tensor) - A tensor of the same type as `var` and
           grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
@@ -6294,6 +6294,7 @@ class SparseApplyProximalAdagrad(Primitive):
         TypeError: If `use_locking` is not a bool.
         TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If `lr` <= 0 or `l1` < 0 or `l2` < 0.
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
@@ -6924,7 +6925,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         l2_shrinkage (float): L2 shrinkage regularization.
         lr_power (float): Learning rate power controls how the learning rate decreases during training,
             must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool): If `True`, the var and accumulation tensors will be protected from being updated.
+        use_locking (bool, optional): If `True`, the var and accumulation tensors will be protected from being updated.
             Default: False.
 
     Inputs:

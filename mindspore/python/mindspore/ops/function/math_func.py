@@ -2186,7 +2186,7 @@ def matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor. The shape is `x.shape[:-2]`, and the dtype is same as `x`.
+        Tensor. The shape is :math:`x.shape[:-2]`, and the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2251,7 +2251,8 @@ def log_matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor. The signs of the log determinants. The shape is `x.shape[:-2]`, and the dtype is same as `x`.
+        Tensor. The signs of the log determinants. The shape is :math:`x.shape[:-2]`,
+        and the dtype is same as `x`.
         Tensor. The absolute values of the log determinants. The shape is :math:`x.shape[:-2]`, and
         the dtype is same as `x`.
 
@@ -2483,8 +2484,8 @@ def ldexp(x, other):
 
 def logit(x, eps=None):
     r"""
-    Calculate the logit of a tensor element-wise. When eps is not None, element in 'x' is clamped to [eps, 1-eps].
-    When eps is None, input 'x' is not clamped.
+    Calculate the logit of a tensor element-wise. When eps is not None, element in `x` is clamped to [eps, 1-eps].
+    When eps is None, input `x` is not clamped.
 
     .. math::
         \begin{align}
@@ -3395,11 +3396,13 @@ def logaddexp2(x1, x2):
 
 def std(input_x, axis=(), unbiased=True, keep_dims=False):
     """
-    Returns the standard-deviation and mean of each row of the input tensor in the dimension `axis`.
+    Returns the standard-deviation and mean of each row of the input tensor by default,
+    or it can calculate them in specified dimension `axis`.
     If `axis` is a list of dimensions, reduce over all of them.
 
     Args:
-        input_x (Tensor[Number]): Input tensor.
+        input_x (Tensor[Number]): Input tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
+          where :math:`*` means any number of additional dims, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
                                                   Only constant value is allowed.
                                                   Must be in the range [-rank(`input_x`), rank(`input_x`)).
@@ -3411,7 +3414,14 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
                           If false, don't keep these dimensions.
 
     Returns:
-        A tuple (output_std, output_mean) containing the standard deviation and mean.
+        A tuple of 2 Tensors (output_std, output_mean) containing the standard deviation and mean.
+        Suppose the shape of `input_x` is :math:`(x_0, x_1, ..., x_R)`:
+        - If `axis` is () and `keep_dims` is set to False, returns a 0-D Tensor, indicating
+          the standard deviation of all elements in `input_x`.
+        - If `axis` is int 1 and `keep_dims` is set to False, then the returned Tensor
+          has shape :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keep_dims` is set to False,
+          then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
@@ -3446,8 +3456,7 @@ def sqrt(x):
         out_{i} = \\sqrt{x_{i}}
 
     Args:
-        x (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
-
+        x (Tensor): The input tensor with a dtype of number.Number, its rank must be in [0, 7] inclusive.
     Returns:
         Tensor, has the same shape and dtype as the `x`.
 
