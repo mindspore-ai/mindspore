@@ -1226,10 +1226,34 @@ class ScatterMathOpsCost : public OperatorCost {
     is_inputs_should_in_memory_[0] = true;
   }
 
-  void set_strategy(Shape strategy) { strategy_ = strategy; }
+  void set_is_split_axis(bool is_split_axis) { is_split_axis_ = is_split_axis; }
+  void set_coefficient(int32_t input_coefficient, int32_t indices_coefficient, int32_t updates_coefficient) {
+    input_coefficient_ = input_coefficient;
+    indices_coefficient_ = indices_coefficient;
+    updates_coefficient_ = updates_coefficient;
+  }
 
  protected:
-  Shape strategy_;
+  bool is_split_axis_ = false;
+  int32_t input_coefficient_ = 1;
+  int32_t indices_coefficient_ = 3;
+  int32_t updates_coefficient_ = 2;
+};
+
+class ScatterNdOpsCost : public ScatterMathOpsCost {
+ public:
+  ScatterNdOpsCost() : ScatterMathOpsCost() {}
+  ~ScatterNdOpsCost() override = default;
+};
+
+class TensorScatterOpsCost : public ScatterMathOpsCost {
+ public:
+  TensorScatterOpsCost() : ScatterMathOpsCost() {}
+  ~TensorScatterOpsCost() override = default;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int64_t stage_id) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                             int64_t stage_id) const override;
 };
 
 class CropAndResizeCost : public OperatorCost {
