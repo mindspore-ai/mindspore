@@ -22,12 +22,11 @@ namespace kernel {
 bool ROIAlignGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
   // Check input and output numbers
-  constexpr size_t kInputNumNoShape = 2;
-  constexpr size_t kInputNumWithShape = 3;
+  constexpr size_t kInputNum = 3;
   constexpr size_t kOutputNum = 1;
   kernel_name_ = base_operator->name();
-  if (inputs.size() != kInputNumNoShape && inputs.size() != kInputNumWithShape) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << inputs.size()
+  if (inputs.size() != kInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << ".";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
@@ -40,11 +39,7 @@ bool ROIAlignGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   pooled_width_ = op->get_pooled_width();
   spatial_scale_ = op->get_spatial_scale();
   sample_num_ = op->get_sample_num();
-  if (inputs.size() == kInputNumWithShape) {
-    is_xdiff_shape_dyn_ = true;
-    return true;
-  }
-  xdiff_shape_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr("xdiff_shape"));
+
   return true;
 }
 
@@ -54,12 +49,13 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  if (is_xdiff_shape_dyn_) {
-    get_xdiff_shape_value_ = TryGetIntValue(inputs, kIndex2, kernel_name_, &xdiff_shape_);
-    if (!get_xdiff_shape_value_) {
-      return KRET_OK;
-    }
+
+  std::vector<int64_t> xdiff_shape;
+  if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &xdiff_shape, true)) {
+    MS_LOG(ERROR) << "For " << kernel_name_ << " can't get filter_sizes input!";
+    return KRET_RESIZE_FAILED;
   }
+
   // Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
@@ -75,9 +71,9 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                   << rois_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (xdiff_shape_.size() > kDiffDims) {
+  if (xdiff_shape.size() > kDiffDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of xdiff_shape cannot be greater than 4, but got "
-                  << xdiff_shape_.size() << ".";
+                  << xdiff_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
   // Calculate the sizes of inputs and output
@@ -89,10 +85,10 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
   rois_size_ = roi_rows_ * roi_cols_ * rois_type_size;
 
-  batch_ = xdiff_shape_[kIndex0];
-  channel_ = xdiff_shape_[kIndex1];
-  height_ = xdiff_shape_[kIndex2];
-  width_ = xdiff_shape_[kIndex3];
+  batch_ = xdiff_shape[kIndex0];
+  channel_ = xdiff_shape[kIndex1];
+  height_ = xdiff_shape[kIndex2];
+  width_ = xdiff_shape[kIndex3];
   output_size_ = batch_ * channel_ * height_ * width_ * dy_type_size;
 
   ResetResource();

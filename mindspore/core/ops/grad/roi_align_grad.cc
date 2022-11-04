@@ -36,10 +36,8 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    constexpr size_t kInputNumNoShape = 2;
-    constexpr size_t kInputNumWithShape = 3;
-    (void)CheckAndConvertUtils::CheckInRange("the number of inputs", input_args.size(), kIncludeBoth,
-                                             {kInputNumNoShape, kInputNumWithShape}, primitive->name());
+    constexpr size_t kInputNum = 3;
+    (void)CheckAndConvertUtils::CheckInteger("the number of inputs", input_args.size(), kEqual, kInputNum, op_name);
     auto feature_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
@@ -53,15 +51,10 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
       (void)CheckAndConvertUtils::CheckInteger("rank of rois shape", SizeToLong(rois_shape.size()), kEqual,
                                                kROIGradRoisShapeSize, op_name);
     }
-    ShapeVector out_shape;
-    if (input_args.size() == static_cast<size_t>(kInputNumWithShape)) {
-      auto input_shape = input_args[kInputIndex2];
-      out_shape = GetShapeValue(primitive, input_shape);
-    } else {
-      auto xdiff_shape_attr = primitive->GetAttr("xdiff_shape");
-      MS_EXCEPTION_IF_NULL(xdiff_shape_attr);
-      out_shape = GetValue<ShapeVector>(xdiff_shape_attr);
-    }
+
+    auto input_shape = input_args[kInputIndex2];
+    ShapeVector out_shape = GetShapeValue(primitive, input_shape);
+
     return std::make_shared<abstract::Shape>(out_shape);
   }
 

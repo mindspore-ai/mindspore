@@ -77,8 +77,6 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
  private:
   void *stream_ptr_{nullptr};
   bool is_null_input_{false};
-  bool is_xdiff_shape_dyn_{false};
-  bool get_xdiff_shape_value_{false};
   int64_t pooled_height_{0};
   int64_t pooled_width_{0};
   float spatial_scale_{0.0};
@@ -90,8 +88,6 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
   int64_t channel_{0};
   int64_t height_{0};
   int64_t width_{0};
-
-  std::vector<int64_t> xdiff_shape_;
 
   size_t dy_size_{0};
   size_t rois_size_{0};
