@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_SUM_WITH_NUM_SGEMENTS_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_SUM_WITH_NUM_SGEMENTS_CPU_KERNEL_H_
 
+#include <map>
+#include <utility>
 #include <functional>
 #include <numeric>
 #include <algorithm>
@@ -29,12 +31,16 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseSegmentSumWithNumSegmentsCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseSegmentSumWithNumSegmentsCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseSegmentSumWithNumSegmentsCpuKernelMod() = default;
   ~SparseSegmentSumWithNumSegmentsCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -42,11 +48,20 @@ class SparseSegmentSumWithNumSegmentsCpuKernelMod : public DeprecatedNativeCpuKe
   template <typename T1, typename T2>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override {
+    std::vector<KernelAttr> kernel_attr_list;
+    (void)std::transform(f_list_.begin(), f_list_.end(), std::back_inserter(kernel_attr_list),
+                         [](const std::pair<KernelAttr, LaunchKernelFunc> &pair) { return pair.first; });
+    return kernel_attr_list;
+  }
+
+  using LaunchKernelFunc =
+    std::function<void(SparseSegmentSumWithNumSegmentsCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &)>;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  static std::vector<std::pair<KernelAttr, LaunchKernelFunc>> f_list_;
+  LaunchKernelFunc kernel_func_;
   ShapeVector x_shape_;
   ShapeVector segment_ids_shape_;
   ShapeVector y_shape_;
