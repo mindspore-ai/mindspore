@@ -515,6 +515,12 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
 /// \param[in] data The tensor data.
 /// \return The status code.
 Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data);
+
+/// \brief Reads a file in binary mode.
+/// \param[in] filename The path to the file to be read.
+/// \param[out] output The binary data.
+/// \return The status code.
+Status ReadFile(const std::string &filename, std::shared_ptr<Tensor> *output);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

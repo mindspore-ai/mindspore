@@ -1150,6 +1150,19 @@ RandomVerticalFlipWithBBox::RandomVerticalFlipWithBBox(float prob) : data_(std::
 std::shared_ptr<TensorOperation> RandomVerticalFlipWithBBox::Parse() {
   return std::make_shared<RandomVerticalFlipWithBBoxOperation>(data_->probability_);
 }
+
+// ReadFile Function.
+Status ReadFile(const std::string &filename, mindspore::MSTensor *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  std::shared_ptr<Tensor> de_tensor;
+  RETURN_IF_NOT_OK(mindspore::dataset::ReadFile(filename, &de_tensor));
+  CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(),
+                               "ReadFile: Get an empty tensor with shape " + de_tensor->shape().ToString());
+  *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+
+  return Status::OK();
+}
 #endif  // not ENABLE_ANDROID
 
 // Rescale Transform Operation.

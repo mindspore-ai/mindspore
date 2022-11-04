@@ -12,6 +12,6 @@ mindspore.dataset.vision.write_file
     异常：
         - **TypeError** - 如果 `filename` 不是str类型。
         - **TypeError** - 如果 `data` 不是numpy.ndarray或mindspore.Tensor类型。
-        - **RuntimeError** - 如果 `filename` 路径不是普通文件。
+        - **RuntimeError** - 如果 `filename` 不是普通文件。
         - **RuntimeError** - 如果 `data` 的数据类型不是uint8类型。
         - **RuntimeError** - 如果 `data` 的shape不是一维数组。

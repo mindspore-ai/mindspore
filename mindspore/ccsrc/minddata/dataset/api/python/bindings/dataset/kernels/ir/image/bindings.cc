@@ -765,6 +765,14 @@ PYBIND_REGISTER(RandomVerticalFlipWithBBoxOperation, 1, ([](const py::module *m)
                     }));
                 }));
 
+PYBIND_REGISTER(ReadFileOperation, 1, ([](py::module *m) {
+                  (void)m->def("read_file", ([](const std::string &filename) {
+                                 std::shared_ptr<Tensor> output;
+                                 THROW_IF_ERROR(ReadFile(filename, &output));
+                                 return output;
+                               }));
+                }));
+
 PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::RescaleOperation, TensorOperation, std::shared_ptr<vision::RescaleOperation>>(
