@@ -23,6 +23,7 @@
 #include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore {
+/// \brief Single Op Session implementation, used in Ascend Device Context.
 class SingleOpInferSession : public InferSession {
  public:
   SingleOpInferSession() = default;
