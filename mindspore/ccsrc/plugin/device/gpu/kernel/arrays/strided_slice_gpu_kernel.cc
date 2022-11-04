@@ -72,9 +72,9 @@ int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                       << ", but got " << input_shape_.size();
   }
   if (is_dynamic_attr_) {
-    GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
-    GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
-    GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
+    TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_);
+    TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_);
+    TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_);
   }
   CollectInfo(base_operator, is_dynamic_attr_);
 

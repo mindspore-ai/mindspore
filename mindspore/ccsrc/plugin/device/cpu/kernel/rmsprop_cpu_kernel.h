@@ -48,7 +48,8 @@ class RMSPropCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchRMSPropUnuseCenter(T *variable, T *mean_square, T *moment, T *gradients, float *learning_rate);
+  void LaunchRMSPropUnuseCenter(T *variable, T *mean_square, T *moment, T *gradients, float *learning_rate,
+                                float *decay, float *momentum, float *epsilon);
   template <typename T>
   void LaunchRMSPropUseCenter(T *variable, T *mean_square, T *moment, T *gradients, T *mean_gradients, float *momentum,
                               float *learning_rate, float *decay, float *epsilon);
@@ -64,9 +65,6 @@ class RMSPropCpuKernelMod : public NativeCpuKernelMod {
 
   size_t size_{1};
   bool use_center_{false};
-  float decay_{0.f};
-  float momentum_{0.9f};
-  float epsilon_{1e-12};
   int64_t batch_size_{1};
   int64_t batch_rank_{0};
   int64_t input_elements_{0};

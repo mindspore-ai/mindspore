@@ -305,35 +305,5 @@ bool TryGetIntValue(const CNodePtr &kernel_node, const size_t input_index, std::
   *attr_value = res.value();
   return true;
 }
-
-std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
-  const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, const std::string &kernel_name, bool data_from_host) {
-  if (inputs.size() <= input_index) {
-    MS_LOG(DEBUG) << "For '" << kernel_name << "', inputs size is " << inputs.size() << ", but require " << input_index;
-    return std::nullopt;
-  }
-
-  AddressPtr data{nullptr};
-  if (data_from_host) {
-    data = inputs[input_index]->GetHostData();
-  } else {
-    data = inputs[input_index]->GetData();
-  }
-
-  // The value of dynamic attr can only be obtained after the InferOp() is executed.
-  if (data == nullptr || data->addr == nullptr) {
-    MS_LOG(DEBUG) << "For '" << kernel_name << "', fail to find the " << input_index << "th input's data.";
-    return std::nullopt;
-  }
-
-  const auto &data_format = inputs[input_index]->GetFormat();
-  if (data_format != mindspore::Format::DEFAULT_FORMAT && data_format != mindspore::Format::NCHW) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "',  the format of the " << input_index
-                      << "th input currently should be the default format and does not support " << data_format;
-  }
-
-  return GetIntValueFromData(data->addr, inputs[input_index]->GetDtype(), data->size, input_index, kernel_name);
-}
 }  // namespace kernel
 }  // namespace mindspore

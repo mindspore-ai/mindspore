@@ -45,10 +45,10 @@ int StridedSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
-  GetDynamicAttrIntValue(inputs, kShapexIndex_, inputsOnHost, kernel_name_, &shapex_);
-  GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
-  GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
-  GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
+  TryGetIntValue(inputs, kShapexIndex_, kernel_name_, &shapex_);
+  TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_);
+  TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_);
+  TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_);
   input_shape_.clear();
   for (auto x : shapex_) {
     input_shape_.push_back(static_cast<size_t>(x));

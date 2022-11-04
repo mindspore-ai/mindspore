@@ -182,7 +182,7 @@ int TransposeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   std::vector<int64_t> perm;
-  if (GetDynamicAttrIntValue(inputs, kAxisIndex1st, inputsOnHost, kernel_name_, &perm)) {
+  if (TryGetIntValue(inputs, kAxisIndex1st, kernel_name_, &perm)) {
     GetPermValue(perm);
     get_dynamic_perm_value_ = true;
   }
