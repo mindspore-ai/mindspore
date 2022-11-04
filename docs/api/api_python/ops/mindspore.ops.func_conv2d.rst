@@ -32,6 +32,9 @@ mindspore.ops.conv2d
         - **dilation** (Union(int, tuple[int])，可选) - 卷积核膨胀尺寸。数据类型为int或由2个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值：1。
         - **group** (int，可选) - 将过滤器拆分为组。默认值：1。
 
+    .. note::
+        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 的场景下，必须要满足 `in\_channels` = `out\_channels` = `group` 的约束条件。
+
     返回：
         Tensor，卷积后的值。shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
 
