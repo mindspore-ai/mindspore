@@ -115,7 +115,6 @@ def test_melscale_fbanks_invalid_input():
         logger.info("Test melscale_fbanks with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:
             audio.melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm, mel_type)
-        print(error_info)
         assert error_msg in str(error_info.value)
 
     test_invalid_input("invalid n_freqs parameter Value", 99999999999, 0, 50, 5, 100, audio.NormType.NONE,

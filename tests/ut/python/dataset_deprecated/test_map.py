@@ -266,8 +266,8 @@ def test_map_with_exact_log():
         for data in dataset.create_dict_iterator():
             print(data["data"], data["label"])
     print("-----{}++++".format(info.value), flush=True)
-    assert str(info.value).count("Exception thrown from PyFunc") == 1
-    assert str(info.value).count("Caught TypeError in map") == 1
+    assert str(info.value).count("Exception thrown from user defined Python function") == 1
+    assert str(info.value).count("map operation") == 1
     assert str(info.value).count("img should be PIL image") == 1
 
 

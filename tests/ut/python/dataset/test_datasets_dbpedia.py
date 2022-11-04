@@ -114,7 +114,7 @@ def test_dbpedia_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
     try:
         data = ds.DBpediaDataset(DATA_DIR, usage="test", shuffle=False)
         data = data.map(operations=exception_func, input_columns=["content"], num_parallel_workers=1)
@@ -122,7 +122,7 @@ def test_dbpedia_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == "__main__":

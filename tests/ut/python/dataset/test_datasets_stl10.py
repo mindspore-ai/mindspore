@@ -305,7 +305,7 @@ def test_stl10_exception():
     def exception_func(item):
         raise Exception("Error occur!")
 
-    error_msg_8 = "The corresponding data files"
+    error_msg_8 = "The corresponding data file is"
     with pytest.raises(RuntimeError, match=error_msg_8):
         all_data = ds.STL10Dataset(DATA_DIR, "all")
         all_data = all_data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)

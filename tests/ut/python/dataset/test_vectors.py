@@ -195,7 +195,7 @@ def test_vectors_invalid_input():
                        error=RuntimeError, error_msg="invalid file, file is empty.")
     test_invalid_input("the count of `unknown_init`'s element is different with word vector.",
                        DATASET_ROOT_PATH + "vectors.txt",
-                       error=RuntimeError, error_msg="Unexpected error. ToVectors: " +
+                       error=RuntimeError, error_msg="ToVectors: " +
                        "unk_init must be the same length as vectors, but got unk_init: 2 and vectors: 6",
                        unk_init=[-1, -1])
     test_invalid_input("The file not exist", DATASET_ROOT_PATH + "not_exist.txt", error=RuntimeError,

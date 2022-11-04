@@ -124,7 +124,7 @@ def test_minddtaset_generatordataset_exception_01(add_and_remove_cv_file):
         for _ in range(num_epochs):
             for _ in iter_:
                 num_iter += 1
-    assert 'Unexpected error. Invalid data, column name:' in str(error_info.value)
+    assert 'Invalid data, column name:' in str(error_info.value)
 
 
 # pylint: disable=redefined-outer-name
@@ -187,7 +187,7 @@ def test_minddtaset_generatordataset_exception_02(add_and_remove_file):
             for item in iter_:
                 print("item: ", item)
                 num_iter += 1
-    assert 'Unexpected error. Invalid data, column name:' in str(error_info.value)
+    assert 'Invalid data, column name:' in str(error_info.value)
 
 
 def test_two_level_pipeline_with_multiprocessing():

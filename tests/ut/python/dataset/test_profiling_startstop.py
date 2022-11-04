@@ -252,7 +252,7 @@ class TestMindDataProfilingStartStop:
             # Reissue Start MindData Profiling
             self.md_profiler.start()
 
-        assert "MD ProfilingManager is already running." in str(info)
+        assert "MD ProfilingManager is already running." in str(info.value)
 
         # Stop MindData Profiling
         self.md_profiler.stop()
@@ -290,7 +290,7 @@ class TestMindDataProfilingStartStop:
             # Stop MindData Profiling - without prior Start()
             self.md_profiler.stop()
 
-        assert "MD ProfilingManager has not started yet." in str(info)
+        assert "MD ProfilingManager has not started yet." in str(info.value)
 
         # Start MindData Profiling
         self.md_profiler.start()

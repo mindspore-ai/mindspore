@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "utils/ms_utils.h"
+#include "minddata/dataset/util/md_log_adapter.h"
 #include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "minddata/mindrecord/include/shard_error.h"
@@ -30,13 +31,14 @@
 #include "pybind11/stl.h"
 
 namespace py = pybind11;
+using mindspore::dataset::MDLogAdapter;
 
 namespace mindspore {
 namespace mindrecord {
-#define THROW_IF_ERROR(s)                                      \
-  do {                                                         \
-    Status rc = std::move(s);                                  \
-    if (rc.IsError()) throw std::runtime_error(rc.ToString()); \
+#define THROW_IF_ERROR(s)                                                            \
+  do {                                                                               \
+    Status rc = std::move(s);                                                        \
+    if (rc.IsError()) throw std::runtime_error(MDLogAdapter::Apply(&rc).ToString()); \
   } while (false)
 
 void BindSchema(py::module *m) {

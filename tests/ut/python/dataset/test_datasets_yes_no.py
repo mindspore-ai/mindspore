@@ -143,7 +143,7 @@ def test_yes_no_exception():
     def exception_func(item):
         raise Exception("Error occur!")
 
-    error_msg_8 = "The corresponding data files"
+    error_msg_8 = "The corresponding data file is"
     with pytest.raises(RuntimeError, match=error_msg_8):
         data = ds.YesNoDataset(DATA_DIR)
         data = data.map(operations=exception_func, input_columns=[

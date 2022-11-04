@@ -437,7 +437,7 @@ def test_tfrecord_exception():
         data = data.map(operations=exception_func, input_columns=["col_1d"], num_parallel_workers=1)
         for _ in data.__iter__():
             pass
-    assert "map operation: [PyFunc] failed. The corresponding data files" in str(info.value)
+    assert "map operation: [PyFunc] failed. The corresponding data file is" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         schema = ds.Schema()
@@ -448,7 +448,7 @@ def test_tfrecord_exception():
         data = data.map(operations=exception_func, input_columns=["col_2d"], num_parallel_workers=1)
         for _ in data.__iter__():
             pass
-    assert "map operation: [PyFunc] failed. The corresponding data files" in str(info.value)
+    assert "map operation: [PyFunc] failed. The corresponding data file is" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         schema = ds.Schema()
@@ -459,7 +459,7 @@ def test_tfrecord_exception():
         data = data.map(operations=exception_func, input_columns=["col_3d"], num_parallel_workers=1)
         for _ in data.__iter__():
             pass
-    assert "map operation: [PyFunc] failed. The corresponding data files" in str(info.value)
+    assert "map operation: [PyFunc] failed. The corresponding data file is" in str(info.value)
 
 
 if __name__ == '__main__':

@@ -53,9 +53,10 @@ class ExceptionHandler:
 
     def reraise(self):
         """Reraise the caught exception in the main thread/process"""
-        # Error message like: "Caught ValueError in GeneratorDataset worker process. Original Traceback:".
-        err_msg = "Caught {} {}.\nOriginal {}".format(
-            self.except_type.__name__, self.where, self.except_msg)
+        # Find the last traceback which is more useful to user.
+        index = [i for i in range(len(self.except_msg)) if self.except_msg.startswith('Traceback', i)]
+        err_msg = "{}".format(self.except_msg[index[-1]:]).strip()
+
         if self.except_type == KeyError:
             # As KeyError will call its repr() function automatically, which makes stack info hard to read.
             err_msg = KeyErrorParse(err_msg)

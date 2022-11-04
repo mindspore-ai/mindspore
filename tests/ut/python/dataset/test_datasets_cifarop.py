@@ -487,7 +487,7 @@ def test_cifar_exception_file_path():
             num_rows += 1
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.Cifar10Dataset(DATA_DIR_10)
@@ -497,7 +497,7 @@ def test_cifar_exception_file_path():
             num_rows += 1
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.Cifar100Dataset(DATA_DIR_100)
@@ -507,7 +507,7 @@ def test_cifar_exception_file_path():
             num_rows += 1
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.Cifar100Dataset(DATA_DIR_100)
@@ -517,7 +517,7 @@ def test_cifar_exception_file_path():
             num_rows += 1
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.Cifar100Dataset(DATA_DIR_100)
@@ -527,7 +527,7 @@ def test_cifar_exception_file_path():
             num_rows += 1
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 def test_cifar10_pk_sampler_get_dataset_size():

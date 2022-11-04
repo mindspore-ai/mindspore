@@ -98,7 +98,7 @@ def test_five_crop_error_msg():
         for _ in data:
             pass
     error_msg = \
-        "Unexpected error. map operation: [ToTensor] failed. The op is OneToOne, can only accept one tensor as input."
+        "map operation: [ToTensor] failed. The op is OneToOne, can only accept one tensor as input."
     assert error_msg in str(info.value)
 
 

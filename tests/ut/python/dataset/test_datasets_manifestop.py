@@ -179,7 +179,7 @@ def test_manifest_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.ManifestDataset(DATA_FILE)
@@ -189,7 +189,7 @@ def test_manifest_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.ManifestDataset(DATA_FILE)
@@ -198,7 +198,7 @@ def test_manifest_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     NO_SOURCE_DATA_FILE = "../data/dataset/testManifestData/invalidNoSource.manifest"
     try:

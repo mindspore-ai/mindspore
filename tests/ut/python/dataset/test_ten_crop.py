@@ -191,7 +191,7 @@ def test_ten_crop_wrong_img_error_msg():
     with pytest.raises(RuntimeError) as info:
         data.create_tuple_iterator(num_epochs=1).__next__()
     error_msg = \
-        "Unexpected error. map operation: [ToTensor] failed. The op is OneToOne, can only accept one tensor as input."
+        "map operation: [ToTensor] failed. The op is OneToOne, can only accept one tensor as input."
     assert error_msg in str(info.value)
 
 

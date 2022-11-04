@@ -154,7 +154,7 @@ def test_griffin_lim_pipeline_invalid_param_constraint():
     data1 = ds.NumpySlicesDataset(in_data, column_names=["multi_dimensional_data"], shuffle=False)
 
     with pytest.raises(RuntimeError,
-                       match=r"Unexpected error. map operation: \[GriffinLim\] failed. " +
+                       match=r"map operation: \[GriffinLim\] failed. " +
                        r"GriffinLim: the frequency of the input should equal to n_fft / 2 \+ 1"):
         transforms = [c_audio.GriffinLim(n_fft=100)]
         data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
@@ -162,7 +162,7 @@ def test_griffin_lim_pipeline_invalid_param_constraint():
             _ = item["multi_dimensional_data"]
 
     with pytest.raises(RuntimeError,
-                       match=r"Unexpected error. map operation: \[GriffinLim\] failed. " +
+                       match=r"map operation: \[GriffinLim\] failed. " +
                        r"GriffinLim: the frequency of the input should equal to n_fft / 2 \+ 1"):
         transforms = [c_audio.GriffinLim(n_fft=300, n_iter=10, win_length=0, hop_length=120)]
         data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
@@ -170,7 +170,7 @@ def test_griffin_lim_pipeline_invalid_param_constraint():
             _ = item["multi_dimensional_data"]
 
     with pytest.raises(RuntimeError,
-                       match=r"Syntax error. GriffinLim: momentum equal to or greater than 1 can be unstable, " +
+                       match=r"GriffinLim: momentum equal to or greater than 1 can be unstable, " +
                        "but got: 1.000000"):
         transforms = [c_audio.GriffinLim(n_fft=300, n_iter=10, win_length=0, hop_length=0, power=2, momentum=1)]
         data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])

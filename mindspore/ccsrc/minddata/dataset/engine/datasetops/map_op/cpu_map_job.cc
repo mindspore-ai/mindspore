@@ -62,7 +62,7 @@ Status CpuMapJob::RebuildMapErrorMsg(const TensorRow &input_row, const size_t &i
   std::string abbr_op_name = op_name.substr(0, op_name.length() - 2);
   err_msg += "map operation: [" + abbr_op_name + "] failed. ";
   if (input_row.getPath().size() > 0 && !input_row.getPath()[0].empty()) {
-    err_msg += "The corresponding data files: " + input_row.getPath()[0];
+    err_msg += "The corresponding data file is: " + input_row.getPath()[0];
     if (input_row.getPath().size() > 1) {
       std::set<std::string> path_set;
       path_set.insert(input_row.getPath()[0]);
@@ -80,6 +80,9 @@ Status CpuMapJob::RebuildMapErrorMsg(const TensorRow &input_row, const size_t &i
     err_msg += "Error description:\n";
   }
   err_msg += tensor_err_msg;
+  if (abbr_op_name == "PyFunc") {
+    RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, err_msg);
+  }
   rc->SetErrDescription(err_msg);
   return *rc;
 }

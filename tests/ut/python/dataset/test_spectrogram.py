@@ -413,7 +413,7 @@ def test_spectrogram_param():
         _ = audio.Spectrogram(n_fft=100, center=False)(wav)
     except RuntimeError as error:
         logger.info("Got an exception in Spectrogram: {}".format(str(error)))
-        assert "Unexpected error. Spectrogram: n_fft should be more than 0 and less than 30," \
+        assert "Spectrogram: n_fft should be more than 0 and less than 30," \
                " but got n_fft: 100." in str(error)
 
 

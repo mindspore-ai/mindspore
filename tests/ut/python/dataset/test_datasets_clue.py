@@ -409,7 +409,7 @@ def test_clue_exception_file_path():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.CLUEDataset(train_file, task='AFQMC', usage='train')
@@ -418,7 +418,7 @@ def test_clue_exception_file_path():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.CLUEDataset(train_file, task='AFQMC', usage='train')
@@ -427,7 +427,7 @@ def test_clue_exception_file_path():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == "__main__":

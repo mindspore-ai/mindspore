@@ -453,7 +453,7 @@ def test_omniglot_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(
             e)
 
     try:
@@ -466,7 +466,7 @@ def test_omniglot_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
     try:
         data = ds.OmniglotDataset(DATA_DIR)
@@ -476,7 +476,7 @@ def test_omniglot_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+        assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
 if __name__ == '__main__':

@@ -648,7 +648,7 @@ def test_cache_map_failure11():
         num_iter = 0
         for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
-    assert "Unexpected error. Server is not set up with spill support" in str(
+    assert "Server is not set up with spill support" in str(
         e.value)
 
     assert num_iter == 0

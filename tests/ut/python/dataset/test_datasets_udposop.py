@@ -311,7 +311,7 @@ def test_udpos_dataset_exceptions():
         data = data.map(operations=exception_func, input_columns=["word"], num_parallel_workers=1)
         for _ in data.__iter__():
             pass
-    assert "map operation: [PyFunc] failed. The corresponding data files" in str(error_info.value)
+    assert "map operation: [PyFunc] failed. The corresponding data file is" in str(error_info.value)
 
 
 if __name__ == "__main__":
