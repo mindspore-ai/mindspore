@@ -2192,7 +2192,7 @@ class Sqrt(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class Reciprocal(PrimitiveWithInfer):
+class Reciprocal(PrimitiveWithCheck):
     r"""
     Returns reciprocal of a tensor element-wise.
 
@@ -2229,13 +2229,6 @@ class Reciprocal(PrimitiveWithInfer):
         else:
             self.target = "OTHER"
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x):
-        return x
-
-    def infer_dtype(self, x):
-        validator.check_subclass("x", x, mstype.tensor, self.name)
-        return x
 
     def infer_value(self, x):
         if x is not None:

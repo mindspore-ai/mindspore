@@ -39,7 +39,7 @@ abstract::ShapePtr ReciprocalGradInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ReciprocalGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
@@ -55,8 +55,8 @@ AbstractBasePtr ReciprocalGradInfer(const abstract::AnalysisEnginePtr &, const P
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto shape = ReciprocalGradInferShape(primitive, input_args);
   auto type = ReciprocalGradInferType(primitive, input_args);
+  auto shape = ReciprocalGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 
