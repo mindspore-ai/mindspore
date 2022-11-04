@@ -15,6 +15,8 @@
 
 
 """Define the grad rules of neural network related operations."""
+from __future__ import absolute_import
+
 from mindspore import Tensor
 from mindspore.ops import matmul
 from mindspore.ops.operations.nn_ops import GridSampler2D

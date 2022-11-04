@@ -59,7 +59,7 @@ class MatrixDiagPartV3CpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> k_shape_;
-  TypeId input_dtype_;
+  TypeId input_dtype_{kTypeUnknown};
   std::string align_{"RIGHT_LEFT"};
   int64_t num_diags_ = 1;
   int64_t max_diag_len_ = 0;

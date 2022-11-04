@@ -20,7 +20,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
-from .. import operations as P
+from mindspore.ops import operations as P
 
 
 @constexpr

@@ -49,6 +49,16 @@ class _ReverseSequence(Cell):
         self.seq_dim = seq_dim
         self.batch_dim = batch_dim
 
+
+    @staticmethod
+    def make_shape(shape, dtype, range_dim):
+        """Calculates the shape according by the inputs."""
+        output = P.Ones()(shape, mstype.float32)
+        output = P.CumSum()(output, range_dim)
+        output = P.Cast()(output, dtype)
+        output = output - 1
+        return output
+
     def construct(self, x, seq_lengths):
         """Defines the ReverseSequence operator computation performed."""
         batch_size = x.shape[self.batch_dim]
@@ -77,14 +87,4 @@ class _ReverseSequence(Cell):
 
         output = P.GatherNd()(x, start_indices)
 
-        return output
-
-
-    @staticmethod
-    def make_shape(shape, dtype, range_dim):
-        """Calculates the shape according by the inputs."""
-        output = P.Ones()(shape, mstype.float32)
-        output = P.CumSum()(output, range_dim)
-        output = P.Cast()(output, dtype)
-        output = output - 1
         return output

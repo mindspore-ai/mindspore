@@ -20,8 +20,8 @@ from mindspore._checkparam import Validator as validator
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import DynamicResizeNearestNeighbor
-from ..function.math_func import cummin as cummin_
-from .. import operations as P
+from mindspore.ops.function.math_func import cummin as cummin_
+from mindspore.ops import operations as P
 
 
 @constexpr

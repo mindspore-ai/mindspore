@@ -19,7 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from .grad_base import bprop_getters
+from mindspore.ops._grad.grad_base import bprop_getters
 
 # Unused parameters are placeholders.
 

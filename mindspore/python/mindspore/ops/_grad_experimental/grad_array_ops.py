@@ -14,6 +14,8 @@
 # ============================================================================
 
 """array_ops"""
+from __future__ import absolute_import
+
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype

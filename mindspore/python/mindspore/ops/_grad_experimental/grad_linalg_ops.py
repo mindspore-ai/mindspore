@@ -14,20 +14,22 @@
 # ============================================================================
 
 """Define the grad rules of linalg related operations."""
+from __future__ import absolute_import
+
 import numpy as np
 import mindspore
 
-from .. import Tensor
-from .. import functional as F
-from .. import operations as P
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations import math_ops as math
-from ..operations import linalg_ops as linalg
-from ..operations import array_ops as arrays
-from ..primitive import constexpr
-from .._grad.grad_base import bprop_getters
-from .._grad.grad_base import dyn_rank
-from .._utils.utils import is_shape_unknown
+from mindspore.ops import Tensor
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations import math_ops as math
+from mindspore.ops.operations import linalg_ops as linalg
+from mindspore.ops.operations import array_ops as arrays
+from mindspore.ops.primitive import constexpr
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad.grad_base import dyn_rank
+from mindspore.ops._utils.utils import is_shape_unknown
 
 _shape = arrays.Shape()
 _dyn_shape = arrays.TensorShape()

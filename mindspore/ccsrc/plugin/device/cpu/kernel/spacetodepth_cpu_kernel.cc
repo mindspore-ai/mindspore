@@ -86,7 +86,7 @@ bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
 
   auto input_shape = input_shape_;
   auto output_shape = output_shape_;
-  size_t block_size = block_size_;
+  int64_t block_size = SizeToLong(block_size_);
   size_t input_dimension = input_shape.size();
   int64_t input_strides[3] = {1, 1, 1};
 

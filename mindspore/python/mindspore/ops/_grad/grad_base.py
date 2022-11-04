@@ -15,12 +15,12 @@
 
 """grad base functions"""
 
-from .._register_for_op import Registry
-from ..primitive import Primitive
-from ...common import Tensor
-from .. import operations as P
-from ...common import dtype as mstype
-from ..operations._inner_ops import DynamicBroadcastTo
+from mindspore.ops._register_for_op import Registry
+from mindspore.ops.primitive import Primitive
+from mindspore.common import Tensor
+from mindspore.ops import operations as P
+from mindspore.common import dtype as mstype
+from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 
 dyn_shape = P.TensorShape()
 cast = P.Cast()

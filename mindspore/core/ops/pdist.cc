@@ -40,7 +40,7 @@ abstract::ShapePtr PdistInferShape(const PrimitivePtr &primitive, const std::vec
   if (x_shape[x_size - input_dim] >= 0) {
     int64_t dim_R = x_shape[x_size - input_dim];
     const float out_shape_used = 0.5;
-    dim_R = dim_R * (dim_R - 1) * out_shape_used;
+    dim_R = FloatToLong(dim_R * (dim_R - 1) * out_shape_used);
     std::vector<int64_t> out_shape;
     for (size_t i = 0; i < x_size - input_dim; i++) {
       out_shape.push_back(x_shape[i]);

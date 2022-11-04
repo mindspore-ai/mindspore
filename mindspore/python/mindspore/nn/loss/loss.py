@@ -2041,7 +2041,7 @@ def _check_cross_entropy_inputs(logits_shape, label_shape,
 
 @constexpr
 def _cross_entropy_ignore_index_warning(prim_name):
-    """Internal function, used to warrning when ignore_index > 0 for probabilities."""
+    """Internal function, used to warning when ignore_index > 0 for probabilities."""
     log.warning(f"For \'{prim_name}\', 'ignore_index' does not work when 'labels' is Probability.")
 
 

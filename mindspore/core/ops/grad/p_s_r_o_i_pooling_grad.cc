@@ -46,7 +46,8 @@ abstract::ShapePtr PSROIPoolingGradInferShape(const PrimitivePtr &primitive,
   auto output_dim = GetValue<int64_t>(dim_ptr);
 
   const int64_t kInputElement = 2;
-  CheckAndConvertUtils::Check("dim of input_size", input_size.size(), kGreaterEqual, kInputElement, primitive->name());
+  CheckAndConvertUtils::Check("dim of input_size", SizeToLong(input_size.size()), kGreaterEqual, kInputElement,
+                              primitive->name());
   CheckAndConvertUtils::CheckInRange<int64_t>("group_size", group_size, kIncludeNeither, {0, 128}, primitive->name());
   if (output_dim != x_shape[1]) {
     MS_EXCEPTION(ValueError) << "For 'PSROIPoolingGrad', the channel of input feature is invalid, got: " << x_shape[1]

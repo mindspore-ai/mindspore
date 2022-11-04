@@ -14,9 +14,10 @@
 # ============================================================================
 
 """Cache for Primitive."""
+from __future__ import absolute_import
 
-from .primitive import constexpr
-from . import Primitive
+from mindspore.ops.primitive import constexpr
+from mindspore.ops import Primitive
 
 _PRIM_CACHE = {}
 

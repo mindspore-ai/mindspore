@@ -200,7 +200,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   uint64_t h_axis = 2;
   uint64_t w_axis = 3;
   int64_t data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
-  if (data_format == Format::NHWC) {
+  if (data_format == static_cast<int64_t>(Format::NHWC)) {
     c_axis = 3;
     h_axis = 1;
     w_axis = 2;
@@ -252,8 +252,9 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
                                         MakeValue(pad_list[3])};
   primitive->set_attr("pad_list", MakeValue(pad_list_val));
 
-  output_shape = (data_format == Format::NHWC) ? ShapeVector{x_shape[n_axis], output_hw[0], output_hw[1], out_channel}
-                                               : ShapeVector{x_shape[n_axis], out_channel, output_hw[0], output_hw[1]};
+  output_shape = (data_format == static_cast<int64_t>(Format::NHWC))
+                   ? ShapeVector{x_shape[n_axis], output_hw[0], output_hw[1], out_channel}
+                   : ShapeVector{x_shape[n_axis], out_channel, output_hw[0], output_hw[1]};
   CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
   return std::make_shared<abstract::Shape>(output_shape);
 }
