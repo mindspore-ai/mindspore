@@ -16,6 +16,9 @@ mindspore.nn.Conv2d
     此时，输入Tensor对应的 `data_format` 为"NCHW"，完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，其中 `group` 是在空间维度上分割输入 `x` 的组数。如果输入Tensor对应的 `data_format` 为"NHWC"，完整卷积核的shape则为 :math:`(C_{out}, \text{kernel_size[0]}, \text{kernel_size[1]}), C_{in} / \text{group}`。
     详细介绍请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。
 
+    .. note::
+        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 的场景下，必须要满足 `in\_channels` = `out\_channels` = `group` 的约束条件。
+
     参数：
         - **in_channels** (int) - Conv2d层输入Tensor的空间维度。
         - **out_channels** (int) - Conv2d层输出Tensor的空间维度。
