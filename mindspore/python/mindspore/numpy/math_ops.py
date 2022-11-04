@@ -1512,7 +1512,7 @@ def hypot(x1, x2, dtype=None):
         On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
 
     Args:
-        x1 (Tensor): Leg of the traingle(s).
+        x1 (Tensor): Leg of the triangle(s).
         x2 (Tensor): Leg of the triangle(s). If ``x1.shape != x2.shape``, they
             must be broadcastable to a common shape (which becomes the shape of
             the output).

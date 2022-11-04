@@ -138,7 +138,7 @@ bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 
   auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->addr);
   auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size, inputs[SCALE]->addr, inputs[SCALE]->size);
-  if (scale_ret != 0) {
+  if (scale_ret != EOK) {
     MS_LOG(EXCEPTION) << "Scale memcpy error!";
   }
   auto max_size = workspace[SCALE_BIAS]->size - inputs[SCALE]->size;
@@ -158,12 +158,12 @@ bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 
   auto wksp_out = reinterpret_cast<float *>(workspace[DIFF_SCALE_BIAS]->addr);
   auto diff_scale_ret = memcpy_s(outputs[DSCALE]->addr, outputs[DSCALE]->size, wksp_out, inputs[SCALE]->size);
-  if (diff_scale_ret != 0) {
+  if (diff_scale_ret != EOK) {
     MS_LOG(EXCEPTION) << "Diff_scale memcpy to output[1] error.";
   }
   auto diff_bias_ret = memcpy_s(outputs[DBIAS]->addr, outputs[DBIAS]->size,
                                 wksp_out + (outputs[DSCALE]->size / sizeof(float)), outputs[DBIAS]->size);
-  if (diff_bias_ret != 0) {
+  if (diff_bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Diff_bias memcpy to  to output[2] error.";
   }
   return true;

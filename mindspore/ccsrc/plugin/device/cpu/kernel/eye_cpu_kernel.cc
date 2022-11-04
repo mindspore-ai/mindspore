@@ -63,7 +63,10 @@ bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
 
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
   auto ouput_ptr = outputs[0]->addr;
-  (void)memset(ouput_ptr, 0, data_size);
+  auto ret = memset_s(ouput_ptr, outputs[0]->size, 0, data_size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+  }
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   T num = static_cast<T>(1);
   for (int64_t i = 0; i < num_min; i++) {

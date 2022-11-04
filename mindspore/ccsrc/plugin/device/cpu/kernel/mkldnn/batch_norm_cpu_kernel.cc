@@ -128,7 +128,7 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   auto scale_ret = memcpy_s(wksp, workspace[0]->size, inputs[1]->addr, inputs[1]->size);
   auto max_size = workspace[0]->size - inputs[1]->size;
   auto bias_ret = memcpy_s(wksp + (inputs[1]->size / sizeof(float)), max_size, inputs[2]->addr, inputs[2]->size);
-  if (scale_ret != 0 || bias_ret != 0) {
+  if (scale_ret != EOK || bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
   }
   if (is_train_) {
