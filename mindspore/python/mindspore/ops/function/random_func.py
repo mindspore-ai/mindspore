@@ -249,17 +249,19 @@ def standard_normal(shape, seed=0, seed2=0):
         f(x)=\frac{1}{\sqrt{2 \pi}} e^{\left(-\frac{x^{2}}{2}\right)}
 
     Args:
-        shape (tuple): The shape of random tensor to be generated. Only constant value is allowed.
+        shape (Union[tuple, Tensor]): The shape of random tensor to be generated. Only constant value is allowed
+          when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
         seed (int): Random seed, must be non-negative. Default: 0.
         seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
 
     Returns:
-        Tensor. The shape is the same as the input `shape`. The dtype is float32.
+        Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Raises:
         TypeError: If `seed` or `seed2` is not an int.
-        TypeError: If `shape` is not a tuple.
-        ValueError: If `shape` is not a constant value.
+        TypeError: If `shape` is neither a tuple nor a Tensor.
+        ValueError: If `seed` or `seed2` is not a non-negative int.
+        ValueError: If `shape` is a tuple containing non-positive items.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
