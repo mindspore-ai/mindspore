@@ -65,7 +65,9 @@ abstract::ShapePtr MedianGradInferShape(const PrimitivePtr &primitive, const std
   auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("y_grad shape", y_grad_shape, kEqual, y_shape, op_name, ValueError);
+  if (!IsDynamic(y_grad_shape) && !IsDynamic(y_shape)) {
+    CheckAndConvertUtils::Check("y_grad shape", y_grad_shape, kEqual, y_shape, op_name, ValueError);
+  }
   return std::make_shared<abstract::Shape>(x_shape);
 }
 

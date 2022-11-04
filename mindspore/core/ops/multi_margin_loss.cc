@@ -50,8 +50,15 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  if (IsDynamicRank(x_shape) || IsDynamicRank(target_shape)) {
-    return std::make_shared<abstract::Shape>(target_shape);
+
+  int64_t reduction = 0;
+  CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
+  auto out_shape = target_shape;
+  if (reduction == static_cast<int64_t>(REDUCTION_SUM) || reduction == static_cast<int64_t>(MEAN)) {
+    out_shape.resize(kInputIndex0);
+  }
+  if (IsDynamic(x_shape) || IsDynamic(target_shape)) {
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 
   if (x_shape.size() != kDim2 || target_shape.size() != kDim1) {
@@ -73,6 +80,9 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
     if (element->type_id() != kMetaTypeNone) {
       auto weight_shape =
         CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+      if (IsDynamic(weight_shape)) {
+        return std::make_shared<abstract::Shape>(out_shape);
+      }
       if (weight_shape.size() != kDim1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << " the rank of weight should be 1,"
                                  << " but get " << weight_shape.size();
@@ -84,12 +94,7 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
       }
     }
   }
-  int64_t reduction = 0;
-  CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
-  auto out_shape = target_shape;
-  if (reduction == static_cast<int64_t>(REDUCTION_SUM) || reduction == static_cast<int64_t>(MEAN)) {
-    out_shape.resize(kInputIndex0);
-  }
+
   return std::make_shared<abstract::Shape>(out_shape);
 }
 }  // namespace
