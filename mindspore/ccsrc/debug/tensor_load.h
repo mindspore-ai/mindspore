@@ -245,9 +245,10 @@ class TensorLoader {
 #ifdef ONLINE_DBG_MODE
   /*
    * Feature group: Dump.
-   * Target device group: GPU.
+   * Target device group: GPU, Ascend.
    * Runtime category: Old runtime, MindRT.
-   * Description: Load tensor data from debugger backend cache (tensor_list_map_) and dump to file in npy format.
+   * Description: Load tensor data from debugger backend cache (tensor_list_map_) and dump to file in npy format,
+   *              used for GPU and Ascend KernelByKernel mode.
    */
   bool DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) {
     if (filepath.empty()) {

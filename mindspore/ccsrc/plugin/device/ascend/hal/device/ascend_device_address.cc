@@ -770,6 +770,10 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
   MS_EXCEPTION_IF_NULL(out_tensor);
   size_t host_size = LongToSize(out_tensor->data().nbytes());
+  if (host_size == 0) {
+    MS_LOG(INFO) << "Tensor size is 0 for tensor: " << tensor_name;
+    return true;
+  }
   bool ret_sync = false;
   if (trans_flag) {
     ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());

@@ -55,7 +55,10 @@ SUMMARY_RETURN_VALUE = {'dtype': mstype.int32, 'shape': [1], 'value': None}
 
 class ScalarSummary(Primitive):
     """
-    Outputs a scalar to a protocol buffer through a scalar summary operator.
+    This operator will put a scalar to a summary file with protocol buffer format. It must be used with SummaryRecord
+    or SummaryCollector, which specify the directory of the summary file. The summary file can
+    be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
+    mindinsight/docs/en/master/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable, it must not be an empty string.
@@ -107,7 +110,10 @@ class ScalarSummary(Primitive):
 
 class ImageSummary(PrimitiveWithInfer):
     """
-    Outputs the image tensor to protocol buffer through image summary operator.
+    This operator will put an image tensor to a summary file with protocol buffer format. It must be used with
+    SummaryRecord or SummaryCollector, which specify the directory of the summary file. The summary file can
+    be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
+    mindinsight/docs/en/master/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable, it must not be an empty string.
@@ -133,8 +139,8 @@ class ImageSummary(PrimitiveWithInfer):
         ...
         ...     def construct(self, x):
         ...         name = "image"
-        ...         out = self.summary(name, x)
-        ...         return out
+        ...         self.summary(name, x)
+        ...         return x
         ...
     """
 
@@ -165,7 +171,10 @@ class ImageSummary(PrimitiveWithInfer):
 
 class TensorSummary(Primitive):
     """
-    Outputs a tensor to a protocol buffer through a tensor summary operator.
+    This operator will put a tensor to a summary file with protocol buffer format. It must be used with SummaryRecord
+    or SummaryCollector, which specify the directory of the summary file. The summary file can
+    be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
+    mindinsight/docs/en/master/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable.
@@ -217,7 +226,10 @@ class TensorSummary(Primitive):
 
 class HistogramSummary(PrimitiveWithInfer):
     """
-    Outputs the tensor to protocol buffer through histogram summary operator.
+    This operator will calculate the histogram of a tensor and put it to a summary file with protocol buffer format.
+    It must be used with SummaryRecord or SummaryCollector, which specify the directory of the summary file.
+    The summary file can be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
+    mindinsight/docs/en/master/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable.
@@ -437,7 +449,7 @@ class HookBackward(PrimitiveWithInfer):
 
 class Print(Primitive):
     """
-    Outputs the inputs to stdout.
+    Print the inputs to stdout.
 
     Refer to :func:`mindspore.ops.print` for more detail.
 

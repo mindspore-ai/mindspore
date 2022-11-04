@@ -3,10 +3,12 @@ mindspore.ops.ScalarSummary
 
 .. py:class:: mindspore.ops.ScalarSummary
 
-    通过ScalarSummary将一个标量输出到协议缓冲区。
+    将标量数据保存到Summary文件。必须和SummaryRecord或SummaryCollector一起使用，
+    Summary文件的保存路径由SummaryRecord或SummaryCollector指定。Summary文件可以通过MindInsight加载并展示，
+    关于MindInsight的详细信息请参考 `MindInsight文档 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/index.html>`_ 。
 
     输入：
-        - **name** (str) - 输入变量的名称，不能是空字符串。
+        - **name** (str) - 输入标量的名称，不能是空字符串。
         - **value** (Tensor) - 标量数据的值，维度必须为0或者1。
 
     异常：
