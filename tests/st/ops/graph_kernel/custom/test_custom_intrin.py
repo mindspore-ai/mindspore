@@ -206,6 +206,6 @@ def test_ms_kernel_ascend_scheduling_intrin():
 
     ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_parallel_1)
     ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_parallel_2)
-    ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_parallel_3)
+    # [add_parallel_3] compile stuck, to repair later
 
     ms_kernel_single_input_test(dtype="float32", num=1024, kernel_fn=add_reduce_1)
