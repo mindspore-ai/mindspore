@@ -1,15 +1,15 @@
 mindspore.ops.trunc
 ===================
 
-.. py:function:: mindspore.ops.trunc(input_x)
+.. py:function:: mindspore.ops.trunc(input)
 
     返回一个新的张量，该张量具有输入元素的截断整数值。
 
     参数：
-        - **input_x** (Tensor) - 任意维度的Tensor。
+        - **input** (Tensor) - 任意维度的Tensor。
 
     返回：
-        Tensor，shape和数据类型与 `input_x` 相同。
+        Tensor，shape和数据类型与 `input` 相同。
 
     异常：
-        - **TypeError** - `input_x` 不是Tensor。
+        - **TypeError** - `input` 不是Tensor。

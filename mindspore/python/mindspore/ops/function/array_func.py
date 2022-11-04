@@ -4761,7 +4761,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     to the right equal to the size of the resulting diagonals.
 
     Args:
-        a (Tensor): Array from which the diagonals are taken.
+        input (Tensor): Array from which the diagonals are taken.
         offset (int, optional): Offset of the diagonal from the main diagonal.
             Can be positive or negative. Defaults: 0.
         dim1 (int, optional): Axis to be used as the first axis of the 2-D
