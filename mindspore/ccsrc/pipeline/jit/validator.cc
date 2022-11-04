@@ -212,7 +212,7 @@ void CheckDeadNodeInOutputRecursively(const AnfNodePtr &node, const AbstractBase
   }
   TypePtr type = abstract->BuildType();
   MS_EXCEPTION_IF_NULL(type);
-  if (type->isa<Problem>()) {
+  if (type->isa<Problem>() || type->isa<Function>()) {
     MS_LOG(EXCEPTION) << "Function in output is not supported. Please check your code. "
                       << trace::GetDebugInfo(node->debug_info());
   }
