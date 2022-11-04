@@ -7271,7 +7271,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         return c_dtype, mstype.float16, c_dtype, c_dtype, c_dtype, c_dtype, c_dtype
 
 
-class DynamicRNN(PrimitiveWithInfer):
+class DynamicRNN(Primitive):
     r"""
     Applies a recurrent neural network to the input.
     Only long short-term memory (LSTM) is supported currently.
@@ -7395,43 +7395,6 @@ class DynamicRNN(PrimitiveWithInfer):
         self.direction = validator.check_string(direction, ['UNIDIRECTIONAL'], "direction", self.name)
         validator.check_value_type("activation", activation, [str], self.name)
         self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
-
-    def infer_shape(self, x_shape, w_shape, b_shape, seq_shape, h_shape, c_shape):
-        validator.check_int(len(x_shape), 3, Rel.EQ, "x_shape", self.name)
-        validator.check_int(len(w_shape), 2, Rel.EQ, "w rank", self.name)
-        validator.check_int(len(b_shape), 1, Rel.EQ, "b rank", self.name)
-        validator.check_int(len(h_shape), 3, Rel.EQ, "h_shape", self.name)
-        validator.check_int(len(c_shape), 3, Rel.EQ, "c_shape", self.name)
-        if seq_shape is not None:
-            raise ValueError(f"For '{self.name}', the 'seq_length' must be None.")
-
-        num_step, batch_size, input_size = x_shape
-        hidden_size = w_shape[-1] // 4
-
-        validator.check("b_shape[-1]", b_shape[-1], "w_shape[-1]", w_shape[-1], Rel.EQ, self.name)
-        if w_shape[-1] % 4 != 0:
-            raise ValueError(f"For '{self.name}', the last dimension of 'w' must be a multiple of 4, "
-                             f"but got {w_shape[-1]}.")
-        validator.check("w_shape[0]", w_shape[0], "input_size + hidden_size",
-                        input_size + hidden_size, Rel.EQ, self.name)
-        validator.check("b_shape[0]", b_shape[0], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
-        validator.check_int(h_shape[0], 1, Rel.EQ, "h_shape[0]", self.name)
-        validator.check("h_shape[1]", h_shape[1], "batch_size", batch_size, Rel.EQ, self.name)
-        validator.check("h_shape[2]", h_shape[2], "hidden_size", hidden_size, Rel.EQ, self.name)
-        validator.check("c_shape", c_shape, "h_shape", h_shape, Rel.EQ, self.name)
-        self.placeholder_index = [3]
-        self.add_prim_attr("placeholder_index", self.placeholder_index)
-        self.add_prim_attr("input_size", input_size)
-        self.add_prim_attr("hidden_size", hidden_size)
-        y_shape = (num_step, batch_size, hidden_size)
-        return y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape
-
-    def infer_dtype(self, x_dtype, w_dtype, b_dtype, seq_dtype, h_dtype, c_dtype):
-        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=[mstype.float16], prim_name=self.name),
-                  ("x", "w", "h", "c"),
-                  (x_dtype, w_dtype, h_dtype, c_dtype)))
-        validator.check_tensor_dtype_valid("b", b_dtype, (mstype.float16, mstype.float32), self.name)
-        return b_dtype, x_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype
 
 
 class DynamicGRUV2(PrimitiveWithInfer):
