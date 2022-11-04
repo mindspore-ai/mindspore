@@ -44,6 +44,8 @@ class ElementWiseTensorRT : public TensorRTOp {
 
   int PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input);
 
+  int BroadcastInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input);
+
   nvinfer1::ElementWiseOperation element_wise_op_;
 };
 }  // namespace mindspore::lite

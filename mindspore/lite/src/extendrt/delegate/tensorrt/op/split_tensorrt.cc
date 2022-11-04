@@ -131,17 +131,22 @@ int SplitTensorRT::AddInnerOp(TensorRTContext *ctx) {
     }
 
     nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
+    bool res_is_tensor = true;
     if (type_ == schema::PrimitiveType_Unstack) {
       auto shuffer_layer = ctx->network()->addShuffle(*out_tensor);
-      auto shuffer_dims_opt = SqueezeDims(out_tensor->getDimensions(), axis_);
-      if (!shuffer_dims_opt) {
-        MS_LOG(ERROR) << "SqueezeDims failed.";
-        return RET_ERROR;
+      res_is_tensor = out_tensor->getDimensions().nbDims > 1;
+      if (res_is_tensor) {
+        auto shuffer_dims_opt = SqueezeDims(out_tensor->getDimensions(), axis_);
+        if (!shuffer_dims_opt) {
+          MS_LOG(ERROR) << "SqueezeDims failed.";
+          return RET_ERROR;
+        }
+        shuffer_layer->setReshapeDimensions(shuffer_dims_opt.value());
       }
-      shuffer_layer->setReshapeDimensions(shuffer_dims_opt.value());
+      shuffer_layer->setReshapeDimensions(out_tensor->getDimensions());
       out_tensor = shuffer_layer->getOutput(0);
     }
-    ctx->RegisterTensor(ITensorHelper{out_tensor, split_input.format_, split_input.same_format_},
+    ctx->RegisterTensor(ITensorHelper{out_tensor, split_input.format_, split_input.same_format_, res_is_tensor},
                         out_tensors_[i].Name());
   }
   this->layer_ = slice_layer;

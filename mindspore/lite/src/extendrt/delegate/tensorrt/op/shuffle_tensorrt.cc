@@ -119,7 +119,7 @@ int ShuffleTensorRT::AddInnerOp(TensorRTContext *ctx) {
       break;
     }
     case schema::PrimitiveType_Squeeze: {
-      ret = AddSqueezeOp(shuffle_layer);
+      ret = AddSqueezeOp(ctx, shuffle_layer);
       break;
     }
     case schema::PrimitiveType_Transpose: {
@@ -193,10 +193,11 @@ int ShuffleTensorRT::InputTensorPreprocess(TensorRTContext *ctx) {
   return RET_OK;
 }
 
-int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
+int ShuffleTensorRT::AddSqueezeOp(TensorRTContext *ctx, nvinfer1::IShuffleLayer *shuffle_layer) {
   // axis
-  auto squeeze_shape = shuffler_input_->getDimensions();
-  std::vector<int64_t> new_shape(squeeze_shape.d, squeeze_shape.d + squeeze_shape.nbDims);
+  std::vector<int> axes;
+  auto input_shape = shuffler_input_->getDimensions();
+  std::vector<int64_t> new_shape(input_shape.d, input_shape.d + input_shape.nbDims);
   if (param_axis_ == nullptr) {
     MS_LOG(WARNING) << op_name_ << " has null axis.";
     for (int i = new_shape.size() - 1; i >= 0; i--) {
@@ -206,20 +207,29 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     }
   } else {
     for (int i = param_axis_->size() - 1; i >= 0; i--) {
-      if (new_shape[param_axis_->Get(i)] != 1) {
-        MS_LOG(WARNING) << "squeeze_shape value at " << i << " is " << param_axis_->Get(i) << ", need check "
-                        << op_name_;
+      auto axis = param_axis_->Get(i);
+      if (axis < 0) {
+        axis += shuffler_input_->getDimensions().nbDims;
       }
-      new_shape.erase(new_shape.begin() + param_axis_->Get(i));
+      new_shape.erase(new_shape.begin() + axis);
+      axes.push_back(axis);
     }
   }
-
-  nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(new_shape);
-  if (squeeze_dims.nbDims == -1) {
-    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-    return RET_ERROR;
+  std::vector<int> subscripts(shuffler_input_->getDimensions().nbDims);
+  std::iota(subscripts.begin(), subscripts.end(), 0);
+  auto p = std::remove_if(subscripts.begin(), subscripts.end(),
+                          [axes](int x) { return std::find(axes.begin(), axes.end(), x) != axes.end(); });
+  subscripts.resize(p - subscripts.begin());
+  bool anyValuesUnknown = std::any_of(new_shape.begin(), new_shape.end(), [](int shape) { return shape == -1; });
+  if (!anyValuesUnknown) {
+    nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(new_shape);
+    shuffle_layer->setReshapeDimensions(squeeze_dims);
+  } else {
+    auto squeeze_shape = ctx->network()->addShape(*shuffler_input_)->getOutput(0);
+    auto subscripts_tensor = ctx->ConvertTo1DTensor(subscripts);
+    auto newDims = ctx->network()->addGather(*squeeze_shape, *subscripts_tensor, 0)->getOutput(0);
+    shuffle_layer->setInput(1, *newDims);
   }
-  shuffle_layer->setReshapeDimensions(squeeze_dims);
   shuffler_output_ = shuffle_layer->getOutput(0);
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }
@@ -333,14 +343,37 @@ int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   }
   auto axis_data = static_cast<const int *>(in_tensors_[1].Data().get());
   int axis = axis_data[0];
+  if (axis > (-1 - shuffler_input_->getDimensions().nbDims) && axis < -1) {
+    axis = shuffler_input_->getDimensions().nbDims + axis + 1;
+  }
   shuffler_output_ = ExpandDim(ctx_, shuffler_input_, axis);
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }
 
 int ShuffleTensorRT::AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   if (in_tensors_[1].Data() == nullptr) {
-    auto input_shape_tensor = input(ctx_, 1).trt_tensor_;
-    shuffler_output_ = Broadcast(ctx_, shuffler_input_, input_shape_tensor);
+#if TRT_VERSION_GE(7, 2)
+    auto shape_tensor = input(ctx_, 1).trt_tensor_;
+    auto input = ctx_->network()->addShape(*shuffler_input_)->getOutput(0);
+    auto one_tensor = ctx_->ConvertTo1DTensor(1);
+    auto eq_one =
+      ctx_->network()->addElementWise(*shape_tensor, *one_tensor, nvinfer1::ElementWiseOperation::kEQUAL)->getOutput(0);
+    auto int_eq_one = TRTTensorCast(ctx_, eq_one, nvinfer1::DataType::kINT32, op_name_ + "_cast_int_one");
+    auto x = ctx_->network()->addElementWise(*int_eq_one, *input, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
+    auto zero_tensor = ctx_->ConvertTo1DTensor(0);
+    auto not_eq_one =
+      ctx_->network()->addElementWise(*zero_tensor, *int_eq_one, nvinfer1::ElementWiseOperation::kEQUAL)->getOutput(0);
+    auto int_not_eq_one = TRTTensorCast(ctx_, not_eq_one, nvinfer1::DataType::kINT32, op_name_ + "_cast_int_not_one");
+    auto y = ctx_->network()
+               ->addElementWise(*int_not_eq_one, *shape_tensor, nvinfer1::ElementWiseOperation::kPROD)
+               ->getOutput(0);
+    auto new_shape = ctx_->network()->addElementWise(*x, *y, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
+    shuffler_output_ = Broadcast(ctx_, shuffler_input_, new_shape);
+#else
+    MS_LOG(WARNING)
+      << "low TensorRT version don't support broadcastto op, please upgrade TensorRT version to 7.2 or higher";
+    return RET_ERROR;
+#endif
   } else {
     std::vector<int> input_shape;
     const int *shape_ptr = reinterpret_cast<const int *>(in_tensors_[1].Data().get());

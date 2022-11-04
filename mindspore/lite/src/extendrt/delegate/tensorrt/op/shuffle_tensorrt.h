@@ -37,7 +37,7 @@ class ShuffleTensorRT : public TensorRTOp {
 
  private:
   int InputTensorPreprocess(TensorRTContext *ctx);
-  int AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer);
+  int AddSqueezeOp(TensorRTContext *ctx, nvinfer1::IShuffleLayer *shuffle_layer);
   int AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer);
