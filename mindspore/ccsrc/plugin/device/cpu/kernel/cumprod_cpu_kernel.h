@@ -89,6 +89,7 @@ class CumProdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   int axis_{0};
   TypeId dtype_{kTypeUnknown};
   bool is_dynamic_shape_{false};
+  int input_dim_length_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

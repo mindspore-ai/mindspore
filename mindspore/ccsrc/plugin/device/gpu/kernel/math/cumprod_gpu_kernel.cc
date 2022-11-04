@@ -20,8 +20,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kCumProdInputsNum = 1;
-constexpr size_t kCumProdDynamicInputsNum = 2;
+constexpr size_t kCumProdInputsNum = 2;
 constexpr size_t kCumProdOutputsNum = 1;
 constexpr size_t kDimSize0 = 0;
 constexpr size_t kDimSize1 = 1;
@@ -42,17 +41,21 @@ bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   if (any(input_addr, output_addr, ws_addr)) {
     return false;
   }
-  if (is_dynamic_shape_) {
-    auto axis_addr = GetDeviceAddress<T>(inputs, kIndex1);
-    if (axis_addr == nullptr) {
-      return false;
-    }
-    int64_t axis_tmp;
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost),
-                                       "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
-    axis_ = static_cast<int>(axis_tmp);
-    Reshape();
+  auto axis_addr = GetDeviceAddress<T>(inputs, kIndex1);
+  if (axis_addr == nullptr) {
+    return false;
   }
+  int64_t axis_tmp;
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost),
+                                     "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+  axis_ = static_cast<int>(axis_tmp);
+  if (axis_ >= input_dim_length_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
+                  << " and the length of 'input' dimension: " << input_dim_length_;
+    return false;
+  }
+  Reshape();
   CumProd(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_, stride2_,
           exclusive_, reverse_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
@@ -65,14 +68,11 @@ bool CumProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   kernel_name_ = kernel_ptr->name();
   exclusive_ = kernel_ptr->GetExclusive();
   reverse_ = kernel_ptr->GetReverse();
-
+  is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
+  MS_LOG(ERROR) << "is_dynamic_shape_ = " << is_dynamic_shape_;
   auto input_num = inputs.size();
-  if (input_num == kCumProdInputsNum) {
-    is_dynamic_shape_ = false;
-  } else if (input_num == kCumProdDynamicInputsNum) {
-    is_dynamic_shape_ = true;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+  if (input_num != kCumProdInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     return false;
   }
 
@@ -97,19 +97,7 @@ int CumProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return KRET_OK;
   }
 
-  int input_dim_length = SizeToInt(shape_.size());
-  if (!is_dynamic_shape_) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
-    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-    axis_ = static_cast<int>(kernel_ptr->GetAxis());
-    if (axis_ >= input_dim_length) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
-                    << " and the length of 'input' dimension: " << input_dim_length;
-      return KRET_RESIZE_FAILED;
-    }
-    Reshape();
-  }
+  input_dim_length_ = SizeToInt(shape_.size());
   workspace_size_list_.push_back(input_size_list_.at(kIndex0));
   return KRET_OK;
 }

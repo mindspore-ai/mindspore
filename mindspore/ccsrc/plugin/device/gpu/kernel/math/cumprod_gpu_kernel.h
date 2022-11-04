@@ -70,6 +70,7 @@ class CumProdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
   std::vector<size_t> shape_{};
   bool is_dynamic_shape_{false};
   void *cuda_stream_{nullptr};
+  int input_dim_length_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

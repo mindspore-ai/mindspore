@@ -20,20 +20,16 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kCumSumStaticInputsNum = 1;
-constexpr size_t kCumSumDynamicInputsNum = 2;
+constexpr size_t kCumSumInputsNum = 2;
 }  // namespace
 
 bool CumSumGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->GetPrim()->name();
   auto input_num = inputs.size();
-  if (input_num == kCumSumStaticInputsNum) {
-    is_dynamic_shape_ = false;
-  } else if (input_num == kCumSumDynamicInputsNum) {
-    is_dynamic_shape_ = true;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+  is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
+  if (input_num != kCumSumInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     return false;
   }
 
@@ -64,10 +60,6 @@ int CumSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   exclusive_ = kernel_ptr->get_exclusive();
   reverse_ = kernel_ptr->get_reverse();
-  if (!is_dynamic_shape_) {
-    axis_ = static_cast<int>(kernel_ptr->get_axis());
-    Reshape();
-  }
   workspace_size_list_.push_back(input_size_list_.at(kIndex0));
   return KRET_OK;
 }
@@ -106,27 +98,23 @@ bool CumSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   if (any(input_addr, output_addr, ws_addr, cuda_stream)) {
     return false;
   }
-  if (is_dynamic_shape_) {
-    const auto &axis_addr = inputs.at(kIndex1);
-    MS_EXCEPTION_IF_NULL(axis_addr);
-    if (axis_addr->size == sizeof(int)) {
-      int axis_tmp;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
-      axis_ = axis_tmp;
-    } else if (inputs.at(kIndex1)->size == sizeof(int64_t)) {
-      int64_t axis_tmp;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
-        "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
-      axis_ = static_cast<int>(axis_tmp);
-    } else {
-      MS_LOG(ERROR) << "The dtype of 'axis' should be int or int64";
-      return false;
-    }
-    Reshape();
+  const auto &axis_addr = inputs.at(kIndex1);
+  MS_EXCEPTION_IF_NULL(axis_addr);
+  if (axis_addr->size == sizeof(int)) {
+    int axis_tmp;
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
+                                       "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+    axis_ = axis_tmp;
+  } else if (inputs.at(kIndex1)->size == sizeof(int64_t)) {
+    int64_t axis_tmp;
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr->addr, axis_addr->size, cudaMemcpyDeviceToHost),
+                                       "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
+    axis_ = static_cast<int>(axis_tmp);
+  } else {
+    MS_LOG(ERROR) << "The dtype of 'axis' should be int or int64";
+    return false;
   }
+  Reshape();
   CumSum(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_, stride2_,
          exclusive_, reverse_, device_id_, cuda_stream);
   return true;

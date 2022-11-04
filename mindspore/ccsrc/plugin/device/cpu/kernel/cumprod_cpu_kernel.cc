@@ -23,8 +23,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kCumProdInputsNum = 1;
-constexpr size_t kCumProdDynamicInputsNum = 2;
+constexpr size_t kCumProdInputsNum = 2;
 constexpr size_t kCumProdOutputsNum = 1;
 constexpr size_t kDimSize0 = 0;
 constexpr size_t kDimSize1 = 1;
@@ -41,13 +40,10 @@ bool CumProdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   dtype_ = inputs[kIndex0]->GetDtype();
   exclusive_ = kernel_ptr->GetExclusive();
   reverse_ = kernel_ptr->GetReverse();
+  is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
 
   auto input_num = inputs.size();
-  if (input_num == kCumProdInputsNum) {
-    is_dynamic_shape_ = false;
-  } else if (input_num == kCumProdDynamicInputsNum) {
-    is_dynamic_shape_ = true;
-  } else {
+  if (input_num != kCumProdInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
     return false;
   }
@@ -67,19 +63,7 @@ int CumProdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
   shape_ = inputs[kIndex0]->GetShapeVector();
   dst_shape_ = outputs[kIndex0]->GetShapeVector();
-  int input_dim_length = SizeToInt(shape_.size());
-  if (!is_dynamic_shape_) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
-    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-    axis_ = static_cast<int>(kernel_ptr->GetAxis());
-    if (axis_ >= input_dim_length) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
-                    << " and the length of 'input' dimension: " << input_dim_length;
-      return KRET_RESIZE_FAILED;
-    }
-    Reshape();
-  }
+  input_dim_length_ = SizeToInt(shape_.size());
   workspace_size_list_.push_back(input_size_list_.at(kIndex0));
   return KRET_OK;
 }
@@ -246,14 +230,18 @@ bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   if (any(input, ws, output)) {
     return false;
   }
-  if (is_dynamic_shape_) {
-    auto axis_addr = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-    if (axis_addr == nullptr) {
-      return false;
-    }
-    axis_ = static_cast<int>(*axis_addr);
-    Reshape();
+  auto axis_addr = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
+  if (axis_addr == nullptr) {
+    return false;
   }
+  axis_ = static_cast<int>(*axis_addr);
+  if (axis_ >= input_dim_length_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
+                  << " and the length of 'input' dimension: " << input_dim_length_;
+    return false;
+  }
+  Reshape();
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
   auto task = [this, &input, &output, &ws](size_t start, size_t end) {

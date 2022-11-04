@@ -46,13 +46,6 @@ bool CumSum::get_reverse() const {
   return GetValue<bool>(value_ptr);
 }
 
-void CumSum::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
-
-int64_t CumSum::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
-
 abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
