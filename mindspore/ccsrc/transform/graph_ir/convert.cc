@@ -64,6 +64,7 @@ constexpr size_t kAfterIndexInCache = 2;
 constexpr size_t kDataInputIndex = 1;
 constexpr size_t kReturnInputSize = 2;
 constexpr size_t kMergeInputSize = 2;
+constexpr size_t kNoOpOptThreshold = 3;
 constexpr auto kTypeNoOp = "NoOp";
 constexpr auto kTypeIdentity = "Identity";
 constexpr auto kTypeIdentityN = "IdentityN";
@@ -1444,6 +1445,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
   (void)df_graph_->SetOutputs(graph_outputs_);
 
   IdentityOptimization();
+  NoOpOptimization();
 
   compute_sout_ << "}" << endl;
   // For the graph(e.g. eval_subgraph) whose IterNum is 1, donot set NeedIteration flag.
@@ -2082,6 +2084,58 @@ void DfGraphConvertor::IdentityOptimization() {
     }
   }
   MS_LOG(INFO) << "End IdentityOptimization, graph: " << anf_graph_->ToString();
+}
+
+void DfGraphConvertor::NoOpOptimization() {
+  MS_LOG(INFO) << "Start NoOpOptimization, graph:" << anf_graph_->ToString();
+  MS_EXCEPTION_IF_NULL(df_graph_);
+  auto all_nodes = df_graph_->GetAllNodes();
+  for (const auto &node : all_nodes) {
+    if (IsNoOpRedundant(node)) {
+      RemoveNoOp(node);
+    }
+  }
+  MS_LOG(INFO) << "End NoopOptimization, graph:" << anf_graph_->ToString();
+}
+
+bool DfGraphConvertor::IsNoOpRedundant(const ::ge::GNode &node) const {
+  auto node_type = GetGNodeType(node);
+  if (node_type != kTypeNoOp) {
+    return false;
+  }
+  auto out_control_node = node.GetOutControlNodes();
+  auto in_control_node = node.GetInControlNodes();
+  if (out_control_node.size() == 1 || in_control_node.size() == 1) {
+    return true;
+  }
+  if (out_control_node.size() > kNoOpOptThreshold || in_control_node.size() > kNoOpOptThreshold) {
+    return false;
+  }
+  return true;
+}
+void DfGraphConvertor::RemoveNoOp(::ge::GNode noop) {
+  MS_LOG(INFO) << "Start Remove NoOp, node:" << GetGNodeName(noop);
+  auto node_type = GetGNodeType(noop);
+  if (node_type != kTypeNoOp) {
+    MS_LOG(EXCEPTION) << "Node is not NoOp, but is: " << GetGNodeName(noop);
+  }
+
+  auto in_control_nodes = noop.GetInControlNodes();
+  auto out_control_nodes = noop.GetOutControlNodes();
+  auto ret = df_graph_->RemoveNode(noop);
+  if (ret != ::ge::GRAPH_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Remove node failed, node: " << GetGNodeName(noop);
+  }
+  for (auto src_node : in_control_nodes) {
+    for (auto dst_node : out_control_nodes) {
+      ret = df_graph_->AddControlEdge(*src_node, *dst_node);
+      if (ret != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "Add control edge failed, src node: " << GetGNodeName(*src_node)
+                          << ", dst node:" << GetGNodeName(*dst_node);
+      }
+    }
+  }
+  MS_LOG(INFO) << "End Remove Noop, node: " << GetGNodeName(noop);
 }
 
 void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr &branch_node,
