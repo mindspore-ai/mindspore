@@ -17,6 +17,9 @@ mindspore.ops.conv2d
 
     请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。更详细的介绍，参见：http://cs231n.github.io/convolutional-networks/。
 
+    .. note::
+        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 的场景下，必须要满足 `in\_channels` = `out\_channels` = `group` 的约束条件。
+
     参数：
         - **inputs** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
         - **weight** (Tensor) - 设置卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` ，则shape为 :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
