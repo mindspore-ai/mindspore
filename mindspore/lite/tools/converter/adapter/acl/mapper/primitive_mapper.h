@@ -52,7 +52,7 @@ class PrimitiveMapper {
  private:
   void AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) const;
 
-  void AdjustOnnxPoolAttr(const PrimitivePtr &dst_prim) const;
+  void AdjustOnnxPoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) const;
 
   std::string name_;
 };
