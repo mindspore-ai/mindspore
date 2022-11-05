@@ -56,7 +56,7 @@ std::unordered_map<std::string, VectorRef> MulAddFusion::DefinePatterns() const 
 }
 
 bool MulAddFusion::CheckAddNode(const mindspore::CNodePtr &cnode) const {
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(cnode != nullptr, false);
   if (cnode->size() != kInputSizeThree) {
     MS_LOG(DEBUG) << "Add op is null or has error input size";
     return false;
@@ -95,7 +95,8 @@ bool MulAddFusion::CheckAddNode(const mindspore::CNodePtr &cnode) const {
 }
 
 bool MulAddFusion::CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const mindspore::CNodePtr &cnode) const {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(cnode != nullptr, false);
   if (IsMultiOutputTensors(func_graph, cnode)) {
     MS_LOG(DEBUG) << "Mul op has multi-output";
     return false;
@@ -158,11 +159,15 @@ bool MulAddFusion::AdjustScaleBiasTensorShape(size_t *axis_offset) const {
   // set shape for abstract
   auto mul_abstract = mul_const_anode_->abstract();
   MS_CHECK_TRUE_RET(mul_abstract != nullptr, false);
-  mul_abstract->set_shape(std::make_shared<abstract::Shape>(scale_shape));
+  auto new_shape = std::make_shared<abstract::Shape>(scale_shape);
+  MS_CHECK_TRUE_RET(new_shape != nullptr, false);
+  mul_abstract->set_shape(new_shape);
 
   auto add_abstract = add_const_anode_->abstract();
   MS_CHECK_TRUE_RET(add_abstract != nullptr, false);
-  add_abstract->set_shape(std::make_shared<abstract::Shape>(scale_shape));
+  auto new_add_shape = std::make_shared<abstract::Shape>(scale_shape);
+  MS_CHECK_TRUE_RET(new_add_shape != nullptr, false);
+  add_abstract->set_shape(new_add_shape);
   return true;
 }
 
@@ -182,6 +187,10 @@ bool MulAddFusion::ScaleInputShapeValid(size_t *axis_offset) const {
   }
   size_t rank_diff = mul_input_shape_.size() - scale_shape.size();
   for (size_t i = 0; i < scale_shape.size(); ++i) {
+    if (i + rank_diff < *axis_offset) {
+      MS_LOG(ERROR) << "Sub overflow occur may cause index out of range.";
+      return false;
+    }
     if (mul_input_shape_[i + rank_diff - *axis_offset] != scale_shape[i]) {
       return false;
     }
@@ -205,7 +214,6 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
     return nullptr;
   }
   auto add_cnode = node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(add_cnode != nullptr, nullptr);
   if (!CheckAddNode(add_cnode)) {
     MS_LOG(DEBUG) << "Add op is not suit for mul-add-fusion: " << node->fullname_with_scope();
     return nullptr;
@@ -215,14 +223,12 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
                                                                        : add_cnode->input(THIRD_INPUT);
   MS_CHECK_TRUE_RET(mul_node != nullptr, nullptr);
   auto mul_cnode = mul_node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(mul_cnode != nullptr, nullptr);
   if (!CheckMulNode(func_graph, mul_cnode)) {
     MS_LOG(DEBUG) << "Mul op is not suit for mul-add-fusion: " << mul_cnode->fullname_with_scope();
     return nullptr;
   }
 
   auto mul_input_anode = mul_cnode->input(SECOND_INPUT);
-  MS_CHECK_TRUE_RET(mul_input_anode != nullptr, nullptr);
   if (utils::isa<ParameterPtr>(mul_input_anode)) {
     auto param_node = mul_input_anode->cast<ParameterPtr>();
     MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
@@ -236,10 +242,8 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
   MS_CHECK_TRUE_RET(mul_const_anode_ != nullptr && add_const_anode_ != nullptr, nullptr);
   bias_tensor_ = GetTensorInfo(add_const_anode_);
   scale_tensor_ = GetTensorInfo(mul_const_anode_);
-  if (bias_tensor_ == nullptr || scale_tensor_ == nullptr) {
-    return nullptr;
-  }
-
+  MS_CHECK_TRUE_RET(bias_tensor_ != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(scale_tensor_ != nullptr, nullptr);
   MS_CHECK_TRUE_RET(mul_input_anode != nullptr, nullptr);
   if (mul_input_anode->isa<CNode>()) {
     if (!MulInputAnodeIsInferred(mul_input_anode)) {
@@ -265,6 +269,10 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
   scale_primitive->set_activation_type(scale_act_type_);
   auto scale_primitive_c = scale_primitive->GetPrim();
   MS_CHECK_TRUE_RET(scale_primitive_c != nullptr, nullptr);
+  if (INT_ADD_OVERFLOW_THRESHOLD(bias_tensor_->shape_c().size(), axis_offset, SIZE_MAX)) {
+    MS_LOG(ERROR) << "Add overflow: " << bias_tensor_->shape_c().size() << " + " << axis_offset;
+    return nullptr;
+  }
   scale_primitive->set_axis(-(static_cast<int64_t>(bias_tensor_->shape_c().size() + axis_offset)));
 
   // create scale op

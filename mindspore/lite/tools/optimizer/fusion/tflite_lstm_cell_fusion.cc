@@ -215,7 +215,9 @@ AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &p
 AnfNodePtr TfliteLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
   std::vector<CondVarPtr> placeholders;
   for (int i = 0; i < 20; ++i) {
-    placeholders.emplace_back(std::make_shared<CondVar>(IsParameterNode));
+    auto cond_var_node = std::make_shared<CondVar>(IsParameterNode);
+    MS_CHECK_TRUE_RET(cond_var_node != nullptr, {});
+    placeholders.emplace_back(cond_var_node);
   }
   auto is_var1 = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_var1 != nullptr, {});

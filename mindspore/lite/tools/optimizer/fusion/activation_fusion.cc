@@ -23,6 +23,7 @@
 #include "nnacl/op_base.h"
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -58,10 +59,10 @@ STATUS DoFusion(CNodePtr cur_cnode, const CNodePtr &pre_cnode) {
   cur_act_prim->set_min_val(new_min_val);
   cur_act_prim->set_max_val(new_max_val);
   cur_act_prim->set_activation_type(HARD_TANH);
-  if (new_min_val == 0 && new_max_val == kValueThreshold6) {
+  if (mindspore::lite::FloatCompare(new_min_val, 0) && mindspore::lite::FloatCompare(new_max_val, kValueThreshold6)) {
     cur_act_prim->set_activation_type(RELU6);
   }
-  if (new_min_val == 0 && new_max_val == FLT_MAX) {
+  if (mindspore::lite::FloatCompare(new_min_val, 0) && mindspore::lite::FloatCompare(new_max_val, FLT_MAX)) {
     cur_act_prim->set_activation_type(RELU);
   }
   return lite::RET_OK;

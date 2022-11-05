@@ -409,7 +409,9 @@ const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineProcessInputPattern(
   MS_CHECK_TRUE_RET(is_stack != nullptr, {});
   auto is_var = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_var != nullptr, {});
-  auto stack = VectorRef({is_stack, std::make_shared<Var>(), is_var, stack_params.at(0), stack_params.at(1)});
+  auto stack_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(stack_var != nullptr, {});
+  auto stack = VectorRef({is_stack, stack_var, is_var, stack_params.at(0), stack_params.at(1)});
   auto is_reshape3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape));
   MS_CHECK_TRUE_RET(is_reshape3 != nullptr, {});
   result = VectorRef({is_reshape3, result, stack});

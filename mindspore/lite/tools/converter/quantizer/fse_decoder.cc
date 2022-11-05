@@ -74,7 +74,6 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
     MS_LOG(ERROR) << "tensor data is nullptr.";
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(src_tensor.data());
   auto total_size = src_tensor.length();
   int out_sz = dst_tensor->ElementsNum();
   MS_CHECK_GT(out_sz, 0, RET_ERROR);

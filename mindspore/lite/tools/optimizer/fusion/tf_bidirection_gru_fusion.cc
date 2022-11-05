@@ -301,6 +301,7 @@ AnfNodePtr TfBidirectionGruFusion::GetCondGraphPattern(const PrimitiveVarMapPtr 
   MS_CHECK_TRUE_RET(is_return != nullptr, nullptr);
   VectorRef return_ref = VectorRef({is_return, logicaland_ref});
   VarPtr is_fg = std::make_shared<Var>("RootG");
+  MS_CHECK_TRUE_RET(is_fg != nullptr, nullptr);
   auto pattern = Helper::SexpToNode(return_ref, is_fg, primitive_vars.get(), true);
   return pattern;
 }

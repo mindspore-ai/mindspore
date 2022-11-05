@@ -84,7 +84,6 @@ class AnfExporter {
   // To deal witch case which call node has not output.
   int SetTailCallForNonOutput();
 
- private:
   // Key is a pair of node and its output id. Value is the mapped tensor id of meta_graph.
   std::map<std::pair<AnfNodePtr, size_t>, size_t> node_id_map_;
   // The first item is FuncGraph which has been exported, the second item is the subgraph index in meta_graph

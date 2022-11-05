@@ -99,6 +99,7 @@ STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &do
     return RET_ERROR;
   }
   auto up_bias_size = up_bias_shape[0];
+  // assert not overflow while calculating index
   for (int i = 0; i < new_bias_size; i++) {
     for (int j = 0; j < up_bias_size; j++) {
       new_bias_data[i] += up_bias_data[j] * down_weight_data[i * up_bias_size + j];
@@ -143,6 +144,7 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
   }
   MS_ASSERT(tensor_info->data_c() != nullptr);
   auto new_weight_data = static_cast<float *>(tensor_info->data_c());
+  // assert not overflow while calculating index
   for (int i = 0; i < cout1; i++) {
     auto down_weight_base = i * cout0;
     auto new_weight_base = i * window_size * cin0;

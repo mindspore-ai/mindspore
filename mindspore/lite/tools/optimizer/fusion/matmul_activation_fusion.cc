@@ -27,7 +27,9 @@
 namespace mindspore::opt {
 const BaseRef MatMulActivationFusion::DefinePattern() const {
   auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMulFusion>);
+  MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
   auto is_act = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  MS_CHECK_TRUE_RET(is_act != nullptr, {});
   auto act = VectorRef({is_act, is_matmul});
   return act;
 }

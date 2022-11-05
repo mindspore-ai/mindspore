@@ -32,6 +32,8 @@
 
 namespace mindspore {
 namespace lite {
+using STATUS = int;
+
 std::vector<CNodePtr> GetInputCNode(const CNodePtr &cnode);
 
 template <typename T>
@@ -46,7 +48,6 @@ int CreateOperator(const std::unique_ptr<schema::PrimitiveT> &primitive, schema:
   return RET_OK;
 }
 
-using STATUS = int;
 STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<schema::CNodeT> &node);
 
 inline schema::PrimitiveType GetCNodeTType(const schema::CNodeT &cNodeT) {
