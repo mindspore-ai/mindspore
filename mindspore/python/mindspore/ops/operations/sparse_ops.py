@@ -2457,3 +2457,69 @@ class DenseToSparseSetOperation(Primitive):
 
         validator.check_value_type("set_operation", set_operation, [str], self.name)
         validator.check_value_type("validate_indices", validate_indices, [bool], self.name)
+
+
+class RaggedTensorToTensor(Primitive):
+    r"""
+    Create a dense tensor from a ragged tensor, possibly altering its shape.
+
+    Args:
+        row_partition_types(list(str)): A list of `strings`. The types of the row partition tensors.
+            At present, these can be:
+            "ROW_SPLITS": the row_splits tensor from the ragged tensor.
+            "VALUE_ROWIDS": the value_rowids tensor from the ragged tensor.
+            "FIRST_DIM_SIZE": if value_rowids is used for the first dimension, then it is preceded by "FIRST_DIM_SIZE".
+
+    Inputs:
+        - **shape** (Tensor) - A 1-D `Tensor`. Must be one of the following types: `int64`, `int32`.
+          The desired shape of the output tensor.
+        - **values** (Tensor) - A 1-D `Tensor` representing the values of the ragged tensor.
+        - **default_value** (Tensor) - A `Tensor` representing the default value of the ragged tensor.
+          Must have the same type as `values` and less dimension than `values`.
+        - **row_partition_tensors** (list(Tensor)) - A list of at least 1 `Tensor` objects with the same
+          type in: `int64`, `int32`.
+
+    Outputs:
+        A `Tensor`. Has the same type as `values` and the shape is `shape`.
+
+    Raises:
+        TypeError: If the type of `shape`, `values` or `default_value` is not Tensor.
+        ValueError: If the dimension of `shape` or `values` is not 1.
+        ValueError: If the dimension of `default_value` is more than `values`.
+        RuntimeError: If the order of `row_partition_tensors` is not support
+            when the `row_partition_types` is "ROW_SPLITS".
+        RuntimeError: If value rowid is not less than first dim size
+            when the `row_partition_types` is "FIRST_DIM_SIZE", "VALUE_ROWIDS".
+        RuntimeError: If the order of `row_partition_types` is not support.
+        RuntimeError: If the value of `row_partition_types` is not support.
+        RuntimeError: If row partition size plus `values` rank is not equal to `shape` rank.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore.ops.operations.sparse_ops import RaggedTensorToTensor
+        >>> shape = Tensor([4, 4], mstype.int32)
+        >>> values = Tensor([1, 2, 3, 4, 5, 6, 7, 8, 9], mstype.int64)
+        >>> default_value = Tensor(0, dtype=mstype.int64)
+        >>> row_partition_tensors_list = []
+        >>> row_partition_tensors = Tensor([0, 3, 3, 7, 9], mstype.int32)
+        >>> row_partition_tensors_list.append(row_partition_tensors)
+        >>> row_partition_types = ["ROW_SPLITS"]
+        >>> ragged_tensor_to_tensor = RaggedTensorToTensor(row_partition_types)
+        >>> out = ragged_tensor_to_tensor(shape, values, default_value, row_partition_tensors_list)
+        >>> print(out)
+        [[1 2 3 0]
+         [0 0 0 0]
+         [4 5 6 7]
+         [8 9 0 0]]
+    """
+
+    @prim_attr_register
+    def __init__(self, row_partition_types):
+        """Initialize RaggedTensorToTensor"""
+        validator.check_value_type("row_partition_types", row_partition_types, [list], self.name)
+        self.init_prim_io_names(inputs=['shape', 'values', 'default_value', 'row_partition_tensors'],
+                                outputs=['result'])

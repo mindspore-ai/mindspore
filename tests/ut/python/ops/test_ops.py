@@ -149,6 +149,7 @@ from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.nn_ops import GLU
+from mindspore.ops.operations.sparse_ops import RaggedTensorToTensor
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToDense
 from mindspore.ops.operations.sparse_ops import SetSize
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
@@ -4715,6 +4716,14 @@ test_case_sparse_ops = [
                         Tensor(np.array([0, 0]).astype(np.int64)),
                         Tensor(np.array([[0, 1], [1, 2], [2, 2]]).astype(np.int64))],
         'skip': ['backward']}),
+    ('RaggedTensorToTensor', {
+        'block': RaggedTensorToTensor(row_partition_types=["ROW_SPLITS"]),
+        'desc_inputs': [Tensor([4, 4], mstype.int32),
+                        Tensor([1, 2, 3, 4, 5, 6, 7, 8, 9], mstype.int64),
+                        Tensor(0, mstype.int64),
+                        (Tensor([0, 3, 3, 7, 9], mstype.int32),)],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,

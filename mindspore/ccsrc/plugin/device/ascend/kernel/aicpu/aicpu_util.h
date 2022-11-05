@@ -182,6 +182,7 @@ constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kRange = "Range";
 constexpr auto kSliceGrad = "SliceGrad";
+constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -265,7 +266,8 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kSliceGrad,
                                               kRandomShuffle,
                                               kRange};
-const std::set<std::string> kDynamicInputOps{kPrint,
+const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
+                                             kPrint,
                                              kPack,
                                              kMeshgrid,
                                              kStackInitOpName,
