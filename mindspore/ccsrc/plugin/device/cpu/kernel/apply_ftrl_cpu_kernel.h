@@ -46,6 +46,7 @@ class ApplyFtrlCpuKernelMod : public NativeCpuKernelMod {
   void LaunchApplyFtrl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   int64_t batch_rank_{0};
+  int64_t batch_rank_tensor{1};
   int64_t batch_size_{1};
   size_t input_elements_;
   TypeId dtype_{kTypeUnknown};
