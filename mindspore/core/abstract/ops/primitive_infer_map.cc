@@ -400,7 +400,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimTransposeNOD, R{InferImplTranspose, nullptr, true}},
     {prim::kPrimStridedSlice, R{ops::StridedSliceInfer, nullptr, true}},
     {prim::kPrimSlice, R{ops::SliceInfer, nullptr, true}},
-    {prim::kPrimReshape, R{InferImplReshape, nullptr, true}},
     {prim::kPrimSliceGrad, R{ops::SliceGradInfer, nullptr, true}},
     {prim::kPrimConcat, R{InferImplConcat, nullptr, true}},
     {prim::kPrimConcatOffset, R{InferImplConcatOffset, nullptr, true}},
