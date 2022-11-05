@@ -150,6 +150,9 @@ bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const Anf
     return false;
   }
   auto element_num = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+  if (element_num == 0) {
+    return false;
+  }
   return out_channel % element_num == 0;
 }
 

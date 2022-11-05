@@ -53,7 +53,6 @@ class MetaGraphSerializer {
   bool SerializeModel(const void *content, size_t size, const Byte *key, const size_t key_len,
                       const std::string &enc_mode);
 
- private:
   int64_t cur_offset_ = 0;
   std::string save_path_;
   std::string model_name_;

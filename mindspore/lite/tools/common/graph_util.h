@@ -36,11 +36,11 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "nnacl/op_base.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace lite {
 #define MAX_GRAPH_SIZE 1024
-using STATUS = int;
 enum InsertPlace { kBefore, kAfter };
 
 using NodeIter = std::vector<std::unique_ptr<schema::CNodeT>>::iterator;

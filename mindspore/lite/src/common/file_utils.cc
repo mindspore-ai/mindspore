@@ -122,7 +122,13 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
   }
 
   ifs.seekg(0, std::ios::end);
-  size_t total_size = ifs.tellg();
+  auto goffset = ifs.tellg();
+  if (goffset < 0) {
+    MS_LOG(ERROR) << "read file range failed";
+    ifs.close();
+    return nullptr;
+  }
+  size_t total_size = static_cast<size_t>(goffset);
   if (offset_pos + len_pos > total_size) {
     MS_LOG(ERROR) << "file segment out of range";
     ifs.close();
@@ -171,7 +177,13 @@ char *ReadFile(const char *file, size_t *size) {
   }
 
   ifs->seekg(0, std::ios::end);
-  *size = ifs->tellg();
+  auto goffset = ifs->tellg();
+  if (goffset < 0) {
+    MS_LOG(ERROR) << "read file range failed";
+    ifs->close();
+    return nullptr;
+  }
+  *size = static_cast<size_t>(goffset);
   auto buf = new (std::nothrow) char[*size];
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << file;

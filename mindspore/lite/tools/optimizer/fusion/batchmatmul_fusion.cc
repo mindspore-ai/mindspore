@@ -217,6 +217,10 @@ int ResetReshapeParameters(const AnfNodePtr &reshape_node) {
     MS_LOG(ERROR) << "Create tensor info failed";
     return RET_ERROR;
   } else if (shape[0] < kFcRightInputDims) {
+    if (INT_ADD_OVERFLOW_THRESHOLD(rmatmul_input_shape[0], 1, INT64_MAX)) {
+      MS_LOG(ERROR) << "rmatmul_input_shape[0] overflow: " << rmatmul_input_shape[0];
+      return RET_ERROR;
+    }
     shape[0] = rmatmul_input_shape[0] + 1;
   }
 
