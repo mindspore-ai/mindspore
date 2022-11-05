@@ -99,8 +99,11 @@ Status PythonSamplerRT::InitSampler() {
   return Status::OK();
 }
 
-Status PythonSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(need_to_reset_, "[Internal ERROR] Reset() Sampler called early or late.");
+Status PythonSamplerRT::ResetSampler(const bool failover_reset) {
+  if (failover_reset) {
+    return Status::OK();
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(need_to_reset_, "[Internal ERROR] ResetSampler() called early or late.");
   need_to_reset_ = false;
   py::gil_scoped_acquire gil_acquire;
   if (Py_IsInitialized() == 0) {
@@ -113,7 +116,7 @@ Status PythonSamplerRT::ResetSampler() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();

@@ -83,8 +83,8 @@ Status BatchOp::operator()() {
   RETURN_IF_NOT_OK(callback_manager_.Init(this));
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
-  int64_t epoch_num = 0, batch_num = 0, cnt = 0;
-  int64_t ep_step = 0, total_step = 0;
+  int64_t epoch_num = op_current_epochs_;  // in failover reset this can be greater than zero
+  int64_t ep_step = 0, total_step = 0, batch_num = 0, cnt = 0;
   RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
 
   TensorRow new_row;

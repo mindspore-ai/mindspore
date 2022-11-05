@@ -435,6 +435,15 @@ void DatasetOp::UpdateRepeatAndEpochCounter() {
   MS_LOG(DEBUG) << Name() << " current repeats: " << op_current_repeats_ << ", current epochs: " << op_current_epochs_;
 }
 
+Status DatasetOp::SetEpoch(const int64_t epoch) {
+  CHECK_FAIL_RETURN_UNEXPECTED(epoch >= 0,
+                               "New epoch value must be greater than or equal to 0, got: " + std::to_string(epoch));
+  while (op_current_epochs_ < epoch) {
+    UpdateRepeatAndEpochCounter();
+  }
+  return Status::OK();
+}
+
 int64_t DatasetOp::GetTreeBatchSize() {
   if (child_.size() == 1) {
     return child_[0]->GetTreeBatchSize();

@@ -94,7 +94,7 @@ void WeightedRandomSamplerRT::InitOnePassSampling() {
 }
 
 // Reset the internal variable to the initial state and reshuffle the indices.
-Status WeightedRandomSamplerRT::ResetSampler() {
+Status WeightedRandomSamplerRT::ResetSampler(const bool failover_reset) {
   sample_id_ = 0;
   rand_gen_.seed(GetSeed());
   if (!replacement_) {
@@ -104,7 +104,7 @@ Status WeightedRandomSamplerRT::ResetSampler() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();

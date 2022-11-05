@@ -54,7 +54,10 @@ void GeneratorOp::Print(std::ostream &out, bool show_all) const {
 // hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
 Status GeneratorOp::InitSampler() {
   if (sampler_ != nullptr) {
-    return sampler_->HandshakeRandomAccessOp(this);
+    // Let the sampler know if we are resetting the pipeline to a specific epoch (op_current_repeats_ > 0)
+    // to mimic the behaviour in that state and have repeatability.
+    // Note that number of repeats is used since in each epoch we may reset sampler multiple times.
+    return sampler_->HandshakeRandomAccessOp(this, op_current_repeats_);
   }
   return Status::OK();
 }

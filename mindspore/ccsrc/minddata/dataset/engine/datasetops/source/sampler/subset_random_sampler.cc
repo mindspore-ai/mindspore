@@ -46,12 +46,12 @@ Status SubsetRandomSamplerRT::InitSampler() {
 }
 
 // Reset the internal variable to the initial state.
-Status SubsetRandomSamplerRT::ResetSampler() {
+Status SubsetRandomSamplerRT::ResetSampler(const bool failover_reset) {
   // Randomized the indices again.
   rand_gen_.seed(GetSeed());
   std::shuffle(indices_.begin(), indices_.end(), rand_gen_);
 
-  return SubsetSamplerRT::ResetSampler();
+  return SubsetSamplerRT::ResetSampler(failover_reset);
 }
 
 void SubsetRandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {

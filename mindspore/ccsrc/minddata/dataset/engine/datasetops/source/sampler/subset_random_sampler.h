@@ -43,9 +43,10 @@ class SubsetRandomSamplerRT : public SubsetSamplerRT {
   /// \return Status
   Status InitSampler() override;
 
-  /// Reset the internal variable to the initial state and reshuffle the indices.
-  /// \return Status
-  Status ResetSampler() override;
+  /// \brief Reset the internal variable(s) to the initial state and reshuffle the indices.
+  /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
+  /// \return Status The status code returned
+  Status ResetSampler(const bool failover_reset = false) override;
 
   /// Printer for debugging purposes.
   /// \param out - output stream to write to

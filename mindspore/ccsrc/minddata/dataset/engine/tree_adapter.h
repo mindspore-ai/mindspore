@@ -57,7 +57,8 @@ class TreeAdapter {
 
   // This function performs syntax checking, semantics checking, optimizes, and then builds
   // the Execution tree.
-  Status Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs = -1, int64_t step = 0);
+  Status Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs = -1, int64_t step = 0,
+                 const int64_t epoch_num = 0);
 
   // Return the root node of the IR after cloned from the parsed IR tree
   std::shared_ptr<DatasetNode> RootIRNode() const { return root_ir_; }
@@ -115,10 +116,13 @@ class TreeAdapter {
   Status PostPass(std::shared_ptr<DatasetNode> ir);
 
   // Build an Execution tree
-  Status Build(std::shared_ptr<DatasetNode> root_ir);
+  Status Build(std::shared_ptr<DatasetNode> root_ir, const int64_t epoch_num = 0);
 
   // This RECURSIVE function walks the (optimized) IR tree in DFS to build its corresponding Execution tree.
   Status BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
+
+  // Adjust the pipeline (eg, move rng_ forward) if in reset mode
+  Status AdjustReset(const int64_t epoch_num);
 
   std::unordered_map<std::string, int32_t> column_name_map_;
   std::shared_ptr<DatasetNode> input_ir_;

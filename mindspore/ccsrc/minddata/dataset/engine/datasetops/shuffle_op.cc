@@ -47,6 +47,19 @@ ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_con
       shuffle_last_row_idx_(0),
       shuffle_buffer_state_(kShuffleStateInit) {}
 
+Status ShuffleOp::PrepareOperator() {
+  // Run any common code from super class first before adding our own
+  RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
+
+  // in reset mode, we need to move forward the random generator seed.
+  if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
+    for (auto i = 0; i < op_current_repeats_; i++) {
+      SelfReset();
+    }
+  }
+  return Status::OK();
+}
+
 // Private function to re-init the shuffle op for another epoch.  Shuffle op calls this by
 // itself rather than waiting for the reset driven from operators above it in the pipeline.
 Status ShuffleOp::SelfReset() {
@@ -54,11 +67,11 @@ Status ShuffleOp::SelfReset() {
   // If reshuffle_each_epoch is false, then we always use the same seed for every
   // epoch.
   // If reshuffle_each_epoch is true, then the first epoch uses the given seed,
-  // and all subsequent epochs will then keep on using the rng_ without resetting it
-  if (!reshuffle_each_epoch_) {
-    rng_ = std::mt19937_64(shuffle_seed_);
+  // and we increment the seed by one in all subsequent epochs
+  if (reshuffle_each_epoch_) {
+    shuffle_seed_++;
   }
-
+  rng_ = std::mt19937_64(shuffle_seed_);
   shuffle_buffer_ = std::make_unique<TensorTable>();
   shuffle_last_row_idx_ = 0;
   shuffle_buffer_state_ = kShuffleStateInit;

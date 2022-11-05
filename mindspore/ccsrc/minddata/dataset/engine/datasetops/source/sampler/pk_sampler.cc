@@ -105,22 +105,29 @@ Status PKSamplerRT::GetNextSample(TensorRow *out) {
   return Status::OK();
 }
 
-Status PKSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "[Internal ERROR] Reset() Sampler called early or late.");
+Status PKSamplerRT::ResetSampler(const bool failover_reset) {
+  CHECK_FAIL_RETURN_UNEXPECTED(failover_reset || next_id_ == num_samples_,
+                               "[Internal ERROR] ResetSampler() called early or late.");
   next_id_ = 0;
   rnd_.seed(seed_++);
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();
 }
 
-Status PKSamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+Status PKSamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count) {
   RETURN_UNEXPECTED_IF_NULL(op);
   RETURN_IF_NOT_OK(op->GetClassIds(&label_to_ids_));
   RETURN_IF_NOT_OK(InitSampler());
+  // Move forward sampler's random generator if resetting the pipeline in fast_recovery mode
+  if (GlobalContext::config_manager()->fast_recovery()) {
+    for (auto i = 0; i < reset_count; i++) {
+      RETURN_IF_NOT_OK(ResetSampler(true));  // failover_reset = true
+    }
+  }
   return Status::OK();
 }
 

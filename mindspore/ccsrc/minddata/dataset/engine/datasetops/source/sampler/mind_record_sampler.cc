@@ -63,7 +63,7 @@ Status MindRecordSamplerRT::InitSampler() {
   return Status::OK();
 }
 
-Status MindRecordSamplerRT::ResetSampler() {
+Status MindRecordSamplerRT::ResetSampler(const bool failover_reset) {
   // drive the shard reader reshuffle tasks to redo the sampling for another epoch
   // Note that when cache is attached, this function is driven by cache lookup op rather than mindrecord op.
   // Therefore, the reshuffle of tasks might happen in the middle of mindrecord's epoch

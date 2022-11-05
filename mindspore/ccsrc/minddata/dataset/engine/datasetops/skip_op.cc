@@ -50,6 +50,9 @@ Status SkipOp::GetNextRow(TensorRow *row) {
   bool eoe_received = false;
   while (skip_count_ < max_skips_) {
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
+    if (row->eof()) {
+      return Status::OK();
+    }
     if (row->eoe() && !once_only_) {
       eoe_received = true;
       break;

@@ -87,6 +87,13 @@ class ShuffleOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kShuffleOp; }
 
+  // \brief During tree prepare phase, operators may have specific post-operations to perform depending on
+  //     their role.
+  // \notes Derived versions of this function should always call their superclass version first
+  //     before providing their own implementations.
+  // @return Status The status code returned
+  Status PrepareOperator() override;
+
  private:
   // Private function to add a new row to the shuffle buffer.
   // @return Status The status code returned
