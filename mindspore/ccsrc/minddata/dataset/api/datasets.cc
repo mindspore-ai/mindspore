@@ -446,9 +446,9 @@ BucketBatchByLengthDataset::BucketBatchByLengthDataset(
   if (input == nullptr) {
     ir_node_ = nullptr;
   } else {
-    auto ds = std::make_shared<BucketBatchByLengthNode>(
-      input->IRNode(), VectorCharToString(column_names), bucket_boundaries, bucket_batch_sizes, c_func,
-      PadInfoCharToString(map), pad_to_bucket_boundary, drop_remainder);
+    auto ds = std::make_shared<BucketBatchByLengthNode>(input->IRNode(), VectorCharToString(column_names),
+                                                        bucket_boundaries, bucket_batch_sizes, c_func,
+                                                        MapCharToString(map), pad_to_bucket_boundary, drop_remainder);
 
     ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
   }
