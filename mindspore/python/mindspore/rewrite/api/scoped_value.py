@@ -73,6 +73,10 @@ class ScopedValue:
 
         Returns:
             An instance of `ScopedValue`.
+
+        Examples:
+            >>> from mindspore.rewrite import ScopedValue
+            >>> variable = ScopedValue.create_variable_value(2)
         """
         if isinstance(value, int):
             return cls(ValueType.IntValue, "", value)
@@ -108,6 +112,10 @@ class ScopedValue:
         Raises:
             TypeError: If `name` is not `str`.
             TypeError: If `scope` is not `str`.
+
+        Examples:
+            >>> from mindspore.rewrite import ScopedValue
+            >>> variable = ScopedValue.create_naming_value("conv", "self")
         """
         Validator.check_value_type("name", name, [str], "ScopedValue")
         Validator.check_value_type("scope", scope, [str], "ScopedValue")
@@ -129,6 +137,10 @@ class ScopedValue:
             RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
             TypeError: If `names` is not `list` or `tuple` and name in `names` is not `str`.
             TypeError: If `scopes` is not `list` or `tuple` and scope in `scopes` is not `str`.
+
+        Examples:
+            >>> from mindspore.rewrite import ScopedValue
+            >>> variables = ScopedValue.create_name_values(["z", "z_1"]), name="subnet")
         """
         Validator.check_element_type_of_iterable("names", names, [str], "ScopedValue")
         if scopes is not None:

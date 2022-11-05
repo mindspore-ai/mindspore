@@ -36,7 +36,7 @@ class TreeNodeHelper:
         Getting symbol_tree from a `Tree` type `Node`.
 
         Args:
-            node (Node): A `Node` who may hold a sub-symbol_tree.
+            node (Node): A `Node` which may hold a sub-symbol_tree.
 
         Returns:
             An instance of SymbolTree represents sub-symbol_tree. Note that `node`'s symbol_tree maybe None, in this

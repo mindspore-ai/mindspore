@@ -99,6 +99,14 @@ class SymbolTree:
             TypeError: If the type of `targets` is not str.
             TypeError: If arg in `args` is not ParamType.
             TypeError: If key of `kwarg` is not a str or value of kwarg in `kwargs` is not ParamType.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("conv1")
+            >>> new_node = stree.create_call_function(F.abs, ["x"], node)
         """
         Validator.check_value_type("func", func, [FunctionType], "SymbolTree node")
         Validator.check_element_type_of_iterable("targets", targets, [str], "SymbolTree node")
@@ -119,6 +127,13 @@ class SymbolTree:
 
         Returns:
             An instance of `SymbolTree`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> handler = stree.get_handler()
         """
         return self._symbol_tree
 
@@ -128,6 +143,14 @@ class SymbolTree:
 
         Returns:
             A generator for node of current `SymbolTree`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> for node in stree.nodes():
+            ...     node.set_attribute("channel", 3)
         """
         for node in self._symbol_tree.nodes():
             yield Node(node)
@@ -144,6 +167,13 @@ class SymbolTree:
 
         Raises:
             TypeError: If `node_name` is not `str`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("conv1")
         """
         Validator.check_value_type("node_name", node_name, [str], "SymbolTree")
         node_impl = self._symbol_tree.get_node(node_name)
@@ -157,6 +187,13 @@ class SymbolTree:
 
         Returns:
             [Node], the node list of the current `Symboltree`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> inputs = stree.get_inputs()
         """
         return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
 
@@ -176,6 +213,15 @@ class SymbolTree:
 
         Raises:
             TypeError: if `node` is not a `Node`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> for node in stree.nodes():
+            ...     if node.get_name() == "conv1":
+            ...         position = stree.before(node)
         """
         Validator.check_value_type("node", node, [Node], "SymbolTree")
         return self._symbol_tree.before(node.get_handler())
@@ -196,6 +242,15 @@ class SymbolTree:
 
         Raises:
             TypeError: If `node` is not a `Node`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> for node in stree.nodes():
+            ...     if node.get_name() == "conv1":
+            ...         position = stree.after(node)
         """
         Validator.check_value_type("node", node, [Node], "SymbolTree")
         return self._symbol_tree.after(node.get_handler())
@@ -218,6 +273,16 @@ class SymbolTree:
             RuntimeError: If `position` is not belong to current `SymbolTree`.
             TypeError: If `position` is not a `Position`.
             TypeError: If `node` is not a `Node`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("conv1")
+            >>> position = stree.after(node)
+            >>> new_node = stree.create_call_function(F.abs, ["x"], node)
+            >>> stree.insert(position, new_node)
         """
         Validator.check_value_type("position", position, [Position], "SymbolTree")
         Validator.check_value_type("node", node, [Node], "SymbolTree")
@@ -235,6 +300,18 @@ class SymbolTree:
 
         Raises:
             TypeError: If `node` is not a `Node`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("conv1")
+            >>> input_node = node.get_inputs()[0]
+            >>> output_nodes = node.get_users()
+            >>> for n in output_nodes:
+            ...     n.set_arg(0, "x")
+            >>> stree.erase_node(node)
         """
         Validator.check_value_type("node", node, [Node], "SymbolTree")
         return Node(self._symbol_tree.erase_node(node.get_handler()))
@@ -264,9 +341,18 @@ class SymbolTree:
             An instance of Node represents root of node_tree been replaced in.
 
         Raises:
-            RuntimeError: Old node is isolated.
+            RuntimeError: Old node is not isolated.
             TypeError: If `old_node` is not a `Node`.
             TypeError: If `new_nodes` is not a `list` or node in `new_nodes` is not a `Node`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("conv1")
+            >>> new_node = stree.create_call_function(F.abs, ["x"], node)
+            >>> stree.replace(node, [new_node])
         """
         Validator.check_value_type("old_node", old_node, [Node], "SymbolTree")
         Validator.check_element_type_of_iterable("new_nodes", new_nodes, [Node], "SymbolTree")
@@ -288,6 +374,13 @@ class SymbolTree:
             RuntimeError: If `index` is out of range.
             TypeError: If `index` is not a `int` number.
             TypeError: If `return_value` is not a `str`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> stree.set_output(0, "x_10")
         """
         Validator.check_value_type("index", index, [int], "SymbolTree")
         Validator.check_value_type("return_value", return_value, [str], "SymbolTree")
@@ -295,13 +388,20 @@ class SymbolTree:
 
     def dump(self):
         """
-        Dump graph to console.
+        Print the ir map information corresponding to the network in 'SymbolTree' to the screen.
         """
         self._symbol_tree.dump()
 
     def print_node_tabulate(self):
         """
         Print node information of graph.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> stree.print_node_tabulate()
         """
         self._symbol_tree.print_node_tabulate()
 
@@ -311,6 +411,13 @@ class SymbolTree:
 
         Returns:
             A str represents source code of modified network.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> stree.get_code()
         """
         return self._symbol_tree.get_code()
 
@@ -321,6 +428,13 @@ class SymbolTree:
 
         Returns:
             A network object.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> stree.get_network()
         """
         return self._symbol_tree.get_network()
 
@@ -330,16 +444,40 @@ class SymbolTree:
 
         Args:
             file_name (str): filename to be set.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> stree.set_saved_file_name("new_net")
         """
         Validator.check_value_type("file_name", file_name, [str], "Saving network")
         self._symbol_tree.set_saved_file_name(file_name)
 
     def get_saved_file_name(self):
-        """Gets the filename used to save the network."""
+        """
+        Gets the filename used to save the network.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)x
+            >>> stree.set_saved_file_name("new_net")
+            >>> stree.get_saved_file_name()
+        """
         return self._symbol_tree.get_saved_file_name()
 
     def save_network_to_file(self):
         """
         Save the modified network to a file. Default file name is `network_define.py`.
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from lenet import Lenet
+            >>> net = Lenet()
+            >>> stree = SymbolTree.create(net)
+            >>> stree.save_network_to_file()
         """
         self._symbol_tree.save_network_to_file()
