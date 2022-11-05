@@ -222,7 +222,7 @@ template <typename T>
 template <typename Op>
 void ArithLogicCpuTypeFunc<T>::BinaryOp(const T *input1, const T *input2, bool *out, Op op) {
   int64_t input1_size = 1;
-  int64_t input2_size = 2;
+  int64_t input2_size = 1;
 
   for (size_t i = 0; i < output_shape_.size(); i++) {
     input1_size *= input_shape1_[i];
@@ -270,7 +270,7 @@ template <typename T>
 template <typename Op>
 void ArithComplexLogicCpuTypeFunc<T>::BinaryOp(const T *input1, const T *input2, bool *out, Op op) {
   int64_t input1_size = 1;
-  int64_t input2_size = 2;
+  int64_t input2_size = 1;
 
   for (size_t i = 0; i < output_shape_.size(); i++) {
     input1_size *= input_shape1_[i];

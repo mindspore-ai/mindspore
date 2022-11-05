@@ -27,6 +27,14 @@ constexpr auto kFlattenGrad = "FlattenGrad";
 constexpr auto kExpandDims = "ExpandDims";
 constexpr auto kSqueeze = "Squeeze";
 }  // namespace
+
+bool MemcpyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
+                              const std::vector<KernelTensorPtr> &) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  return true;
+}
+
 bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty()) {
@@ -40,11 +48,19 @@ bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   if (inputs[0]->addr == outputs[0]->addr) {
     return true;
   }
-  size_t copy_size = outputs[0]->size;
-  auto ret = memcpy_s(outputs[0]->addr, copy_size, inputs[0]->addr, copy_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+  const auto *input_addr = reinterpret_cast<unsigned char *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<unsigned char *>(outputs[0]->addr);
+  int cp_ret = EOK;
+  auto task = [input_addr, output_addr, &cp_ret](size_t start, size_t end) {
+    auto ret = memcpy_s(output_addr + start, end - start, input_addr + start, end - start);
+    if (ret != EOK && cp_ret == EOK) {
+      cp_ret = ret;
+    }
+  };
+  if (cp_ret != EOK) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
   }
+  ParallelLaunchAutoSearch(task, outputs[0]->size, this, &parallel_search_info_);
   return true;
 }
 

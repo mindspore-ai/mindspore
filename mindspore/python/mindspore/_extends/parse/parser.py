@@ -856,7 +856,8 @@ class Parser:
             attr = 'source'
             try:
                 source = inspect.getsourcelines(self.fn)
-                if context.get_context('support_binary') and '/mindspore/' not in self.filename and \
+                if context.get_context('support_binary') and \
+                   '/mindspore/' not in self.filename and '\\mindspore\\' not in self.filename and \
                    (not hasattr(self.fn, attr) or getattr(self.fn, attr) != source):
                     if not os.access(self.filename, os.W_OK):
                         raise PermissionError(f"Don't have the write permission on the file {self.filename}.")

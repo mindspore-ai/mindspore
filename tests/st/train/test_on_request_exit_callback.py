@@ -24,7 +24,7 @@ import numpy as np
 import pytest
 
 from mindspore import Model
-from mindspore import nn
+from mindspore import nn, context
 from mindspore import dataset as ds
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.train.callback import Callback, OnRequestExit, LossMonitor
@@ -136,6 +136,7 @@ def test_on_request_exit_callback():
     Expectation: When a signal received,
         the train process should be stopped and save the ckpt and mindir should be saved.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     directory = "./data"
     if os.path.exists(directory):
         shutil.rmtree(directory)

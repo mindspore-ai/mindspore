@@ -36,7 +36,14 @@ constexpr size_t kAddNOutputsNum = 1;
 void AddInt(const int *in_0, const int *in_1, int *out, int start, int end) {
   int ret = ElementAddInt(in_0 + start, in_1 + start, out + start, end - start);
   if (ret != NNACL_OK) {
-    MS_LOG(EXCEPTION) << "Add failed.";
+    MS_LOG(EXCEPTION) << "For 'AddN', AddInt failed.";
+  }
+}
+
+void AddFloat(const float *in_0, const float *in_1, float *out, int start, int end) {
+  int ret = ElementAdd(in_0 + start, in_1 + start, out + start, end - start);
+  if (ret != NNACL_OK) {
+    MS_LOG(EXCEPTION) << "For 'AddN', AddFloat failed.";
   }
 }
 
@@ -66,29 +73,7 @@ bool AddNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  dtype_ = inputs[kIndex0]->GetDtype();
   return true;
-}
-
-int AddNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
-    return ret;
-  }
-  auto src0_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto src1_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  auto dst_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
-  dnnl::memory::desc src0_mem_desc = GetDefaultMemDesc(src0_shape);
-  dnnl::memory::desc src1_mem_desc = GetDefaultMemDesc(src1_shape);
-  dnnl::memory::desc dst_mem_desc = GetDefaultMemDesc(dst_shape);
-  auto desc = CreateDesc<dnnl::binary::desc>(dnnl::algorithm::binary_add, src0_mem_desc, src1_mem_desc, dst_mem_desc);
-  auto prim_desc = CreateDesc<dnnl::binary::primitive_desc>(desc, engine_);
-  primitive_ = CreatePrimitive<dnnl::binary>(prim_desc);
-  AddArgument(DNNL_ARG_SRC_0, src0_mem_desc);
-  AddArgument(DNNL_ARG_SRC_1, src1_mem_desc);
-  AddArgument(DNNL_ARG_DST, dst_mem_desc);
-  return KRET_OK;
 }
 
 template <typename T>
@@ -97,41 +82,25 @@ bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddNOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat32) {
-    SetArgumentHandle(DNNL_ARG_SRC_0, inputs[0]->addr);
-    SetArgumentHandle(DNNL_ARG_SRC_1, inputs[1]->addr);
-    SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
-    ExecutePrimitive();
-    for (size_t index = 2; index < input_num_; ++index) {
-      SetArgumentHandle(DNNL_ARG_SRC_0, outputs[0]->addr);
-      SetArgumentHandle(DNNL_ARG_SRC_1, inputs[index]->addr);
-      SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
-      ExecutePrimitive();
-    }
-  } else if (dtype_ == kNumberTypeInt32) {
-    size_t elements_num = outputs[0]->size / sizeof(int);
-    const auto input_0 = reinterpret_cast<int *>(inputs[0]->addr);
-    const auto input_1 = reinterpret_cast<int *>(inputs[1]->addr);
-    auto output = reinterpret_cast<int *>(outputs[0]->addr);
-    auto task_0 = std::bind(AddInt, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
-    ParallelLaunchAutoSearch(task_0, elements_num, this, &parallel_search_info_);
-    for (size_t index = 2; index < input_num_; ++index) {
-      const auto input = reinterpret_cast<int *>(inputs[index]->addr);
-      auto task = std::bind(AddInt, input, output, output, std::placeholders::_1, std::placeholders::_2);
-      ParallelLaunchAutoSearch(task, elements_num, this, &parallel_search_info_);
-    }
+  std::function<void(const T *, const T *, T *, int, int)> comput_func;
+  if constexpr (std::is_same<T, float>::value) {
+    comput_func = AddFloat;
+  } else if constexpr (std::is_same<T, int>::value) {
+    comput_func = AddInt;
   } else {
-    size_t elements_num = outputs[0]->size / sizeof(T);
-    const auto input_0 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto input_1 = reinterpret_cast<T *>(inputs[1]->addr);
-    auto output = reinterpret_cast<T *>(outputs[0]->addr);
-    auto task_0 = std::bind(AddT<T>, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
-    ParallelLaunchAutoSearch(task_0, elements_num, this, &parallel_search_info_);
-    for (size_t index = 2; index < input_num_; ++index) {
-      const auto input = reinterpret_cast<T *>(inputs[index]->addr);
-      auto task = std::bind(AddT<T>, input, output, output, std::placeholders::_1, std::placeholders::_2);
-      ParallelLaunchAutoSearch(task, elements_num, this, &parallel_search_info_);
-    }
+    comput_func = AddT<T>;
+  }
+
+  size_t elements_num = outputs[0]->size / sizeof(T);
+  const auto input_0 = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto input_1 = reinterpret_cast<T *>(inputs[1]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto task_0 = std::bind(comput_func, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
+  ParallelLaunchAutoSearch(task_0, elements_num, this, &parallel_search_info_);
+  for (size_t index = 2; index < input_num_; ++index) {
+    const auto input = reinterpret_cast<T *>(inputs[index]->addr);
+    auto task = std::bind(comput_func, input, output, output, std::placeholders::_1, std::placeholders::_2);
+    ParallelLaunchAutoSearch(task, elements_num, this, &parallel_search_info_);
   }
   return true;
 }
