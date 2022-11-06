@@ -35,7 +35,7 @@
 #include <pmmintrin.h>
 #endif
 #endif
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #include "thread/hqueue.h"
 
 #define USE_HQUEUE

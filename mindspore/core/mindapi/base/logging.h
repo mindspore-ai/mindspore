@@ -22,7 +22,6 @@
 #include <sstream>
 #include <utility>
 #include "mindapi/base/macros.h"
-#include "utils/macros.h"
 
 namespace mindspore::api {
 enum class LogLevel : uint8_t { kDebug = 0, kInfo, kWarning, kError, kException };

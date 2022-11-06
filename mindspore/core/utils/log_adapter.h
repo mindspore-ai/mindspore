@@ -26,7 +26,7 @@
 #include <vector>
 #include <thread>
 #include <functional>
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #ifndef BUILD_LITE
 #include "utils/os.h"
 #endif

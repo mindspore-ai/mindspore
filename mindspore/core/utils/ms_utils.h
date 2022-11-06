@@ -25,7 +25,7 @@
 #include <limits>
 #include <cmath>
 #include <chrono>
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 namespace mindspore {
 class MSLogTime {
  public:

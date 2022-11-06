@@ -33,7 +33,7 @@
 #include "utils/hash_set.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #include "base/base_ref.h"
 #include "base/effect_info.h"
 #include "ir/anf.h"

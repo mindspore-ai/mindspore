@@ -17,7 +17,7 @@
 #define MIND_LOG_NO_MS_LOG
 #include "mindapi/base/logging.h"
 #include "utils/log_adapter.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore::api {
 static MsLogLevel ToMsLogLevel(LogLevel level) {

@@ -23,7 +23,7 @@
 #include <set>
 #include "utils/hash_map.h"
 #include "utils/info.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 class MS_CORE_API PrimalDebugInfoManager {

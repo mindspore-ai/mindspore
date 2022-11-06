@@ -18,7 +18,7 @@
 #define MINDSPORE_CORE_UTILS_SYSTEM_SHA256_H_
 
 #include <string>
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 namespace system {

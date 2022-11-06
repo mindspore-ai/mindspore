@@ -18,7 +18,6 @@
 #include <memory>
 #include "include/registry/node_parser_registry.h"
 #include "ops/fusion/add_fusion.h"
-#include "schema/schema_generated.h"
 
 namespace mindspore {
 namespace converter {

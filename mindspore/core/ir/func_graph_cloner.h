@@ -30,7 +30,7 @@
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "utils/hashing.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 class Cloner;
