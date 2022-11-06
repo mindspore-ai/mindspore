@@ -3518,6 +3518,20 @@ def less_equal(input, other):
     return F.less_equal(input, other)
 
 
+def lcm(x, other):
+    r"""
+    Computes least common multiplier of input tensors element-wise.
+    """
+    return F.lcm(x, other)
+
+
+def ldexp(x, other):
+    r"""
+    Multiplies input by 2**:attr:other.
+    """
+    return F.ldexp(x, other)
+
+
 def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     r"""
     Combines an array of sliding local blocks into a large containing tensor.

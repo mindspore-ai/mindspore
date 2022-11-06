@@ -3893,6 +3893,20 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('less_equal')(self, other)
 
+    def lcm(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.lcm`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('lcm')(self, other)
+
+    def ldexp(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.ldexp`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('ldexp')(self, other)
+
     def fold(self, output_size, kernel_size, dilation=1, padding=0, stride=1):
         r"""
         For details, please refer to :func:`mindspore.ops.fold`.

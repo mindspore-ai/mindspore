@@ -2437,23 +2437,23 @@ def trunc(input):
 
 def ldexp(x, other):
     """
-    Multiplies input by 2**:attr:other.
+    Multiplies input by 2** `other` .
 
     .. math::
 
-        out_{i} = input_{i} * ( 2_{i} ^{ other} )
+        out_{i} = x_{i} * ( 2_{i} ^{other} )
 
-    Note:
+    .. note::
         Typically this function can create floating point numbers
         by multiplying mantissas in input with powers of intger 2
-        from the exponents in :attr:’other’.
+        from the exponents in `other`.
 
     Args:
         x (Tensor): The input tensor.
         other (Tensor): A tensor of exponents, typically integers.
 
     Returns:
-        out (Tensor, optional) : the output tensor.
+        Tensor, the output tensor.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -6892,6 +6892,7 @@ __all__ = [
     'less',
     'logaddexp2',
     'tensor_le',
+    'lcm',
     'le',
     'lerp',
     'norm',

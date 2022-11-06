@@ -235,6 +235,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"copy", std::string("copy")},                                      // copy()
        {"inplace_update", std::string("inplace_update")},                  // P.InplaceUpdate
        {"lerp", std::string("lerp")},                                      // lerp()
+       {"lcm", std::string("lcm")},                                        // F.lcm()
+       {"ldexp", std::string("ldexp")},                                    // F.ldexp()
        {"log1p", std::string("log1p")},                                    // P.Log1p()
        {"logit", std::string("logit")},                                    // Logit()
        {"negative", std::string("negative")},                              // neg()
