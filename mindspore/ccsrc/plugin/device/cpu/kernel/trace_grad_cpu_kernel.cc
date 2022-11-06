@@ -99,7 +99,9 @@ void TraceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto shape = GetDeviceAddress<int64_t>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
 
-  (void)memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
+  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to init output memory.";
+  }
   int64_t min_size = std::min(shape[0], shape[1]);
   for (int64_t i = 0; i < min_size; ++i) {
     *(output_addr + i * shape[1] + i) = *grad;

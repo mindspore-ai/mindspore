@@ -238,7 +238,7 @@ uint32_t Fp32ToFp16(float value) {
   uint32_t fp32_bits;
   auto ret = memcpy_s(reinterpret_cast<std::byte *>(&fp32_bits), sizeof(fp32_bits),
                       reinterpret_cast<std::byte *>(&value), sizeof(value));
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "Set data memcpy_s failed, ret = " << ret;
   }
 

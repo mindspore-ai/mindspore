@@ -96,7 +96,9 @@ void TraceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   size_t min_size = std::min(input_shape_[0], input_shape_[1]);
-  (void)memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
+  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to init output memory.";
+  }
   for (size_t i = 0; i < min_size; ++i) {
     *output_addr += *(input_addr + i * input_shape_[1] + i);
   }

@@ -286,7 +286,7 @@ size_t RecvActor::ParseDynamicShapeData(const RpcDataPtr &dynamic_shape_data, si
     // Step 2: parse the size of serialized protobuf message.
     data_to_be_parsed += strlen(kRpcDynamicShapeData);
     size_t pb_msg_size = 0;
-    MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(&pb_msg_size, sizeof(pb_msg_size), data_to_be_parsed, sizeof(size_t)) == 0,
+    MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(&pb_msg_size, sizeof(pb_msg_size), data_to_be_parsed, sizeof(size_t)) == EOK,
                                "memcpy_s protobuf message size failed.");
 
     // Step 3: deserialize the protobuf message.

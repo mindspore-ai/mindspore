@@ -582,7 +582,7 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
   auto ret =
     common::huge_memcpy(tensor_data_buf, tensor_info->data().nbytes(), data + tensor_proto.external_data().offset(),
                         LongToSize(tensor_proto.external_data().length()));
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
     return false;
   }

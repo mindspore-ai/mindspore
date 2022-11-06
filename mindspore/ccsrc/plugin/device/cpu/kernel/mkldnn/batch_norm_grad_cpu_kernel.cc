@@ -143,7 +143,7 @@ bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   }
   auto max_size = workspace[SCALE_BIAS]->size - inputs[SCALE]->size;
   auto bias_ret = memset_s(wksp_in + (inputs[SCALE]->size / sizeof(float)), max_size, 0, max_size);
-  if (bias_ret != 0) {
+  if (bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Bias memset 0 error.";
   }
 

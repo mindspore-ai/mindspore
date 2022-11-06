@@ -61,7 +61,7 @@ bool MSCollectiveOpsImpl::RingAllGather(const void *sendbuff, void *recvbuff, si
   size_t src_size = send_count * sizeof(T);
   size_t dst_size = send_count * sizeof(T);
   int ret = memcpy_s(output_buff + chunk_offset[rank_id_], dst_size, sendbuff, src_size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
                   << ", dest size is " << dst_size << ", src size is " << src_size;
     return false;
@@ -104,7 +104,7 @@ bool MSCollectiveOpsImpl::RingAllGatherImpl(uint32_t send_to_rank, uint32_t recv
     MS_EXCEPTION_IF_NULL(message);
     auto ret =
       memcpy_s(recv_chunk, chunk_sizes[recv_chunk_index] * sizeof(T), message->body.data(), message->body.length());
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
                     << ", dest size is " << (chunk_sizes[recv_chunk_index] * sizeof(T)) << ", src size is "
                     << message->body.length();
@@ -173,7 +173,7 @@ bool MSCollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t
 
     MS_EXCEPTION_IF_NULL(message);
     int ret = memcpy_s(recvbuff, count * sizeof(T), message->body.data(), message->body.length());
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
                     << ", dest size is " << (count * sizeof(T)) << ", src size is " << message->body.length();
       return false;

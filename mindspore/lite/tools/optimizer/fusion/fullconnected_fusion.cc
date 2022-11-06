@@ -160,7 +160,9 @@ int CalNewCnodeBias(const FuncGraphPtr &func_graph, const CNodePtr &curr_cnode, 
     auto tensor_info = lite::CreateTensorInfo(nullptr, 0, shape_vector, prev_bias_tensor->data_type());
     MS_CHECK_TRUE_RET(tensor_info != nullptr, RET_ERROR);
     curr_bias_data = reinterpret_cast<float *>(tensor_info->data_c());
-    memset_s(curr_bias_data, curr_weight_shape[0] * sizeof(float), 0, curr_weight_shape[0] * sizeof(float));
+    MS_CHECK_TRUE_RET(
+      memset_s(curr_bias_data, curr_weight_shape[0] * sizeof(float), 0, curr_weight_shape[0] * sizeof(float)) == EOK,
+      RET_ERROR);
     auto status = lite::InitParameterFromTensorInfo(new_bias_node, tensor_info);
     MS_CHECK_TRUE_RET(status != RET_OK, RET_ERROR);
     auto manager = func_graph->manager();

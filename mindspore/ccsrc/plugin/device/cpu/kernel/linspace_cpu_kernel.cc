@@ -75,8 +75,8 @@ bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   if (num == 1) {
     const auto input = inputs[kIndex0];
     const auto output = outputs[kIndex0];
-    if (int ret = memcpy_s(output->addr, output->size, input->addr, input->size); ret != 0) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it launch memcpy_s failed, ret = " << ret << ".";
+    if (memcpy_s(output->addr, output->size, input->addr, input->size) != EOK) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it launch memcpy_s failed.";
     }
     return true;
   }

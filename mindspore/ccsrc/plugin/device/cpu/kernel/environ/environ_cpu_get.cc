@@ -93,7 +93,7 @@ bool EnvironGetCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
   }
 
   auto ret = memcpy_s(output_value, value_size_, value, value_size_);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Output memcpy error: " << ret;
   }
   return true;

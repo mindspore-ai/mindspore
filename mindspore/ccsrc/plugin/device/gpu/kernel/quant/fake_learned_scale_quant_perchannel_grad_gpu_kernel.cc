@@ -93,7 +93,9 @@ bool FakeLearnedScaleQuantPerChannelGradGpuKernelMod::Launch(const std::vector<A
   MS_EXCEPTION_IF_NULL(input_quant);
   const int kChannelLen = num_channels_;
   std::vector<float> alpha_no_grad(kChannelLen);
-  memset_s(alpha_no_grad.data(), kChannelLen * sizeof(float), 0, kChannelLen * sizeof(float));
+  if (memset_s(alpha_no_grad.data(), kChannelLen * sizeof(float), 0, kChannelLen * sizeof(float)) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to set memory.";
+  }
 
   if (global_step_ >= quant_delay_) {
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,

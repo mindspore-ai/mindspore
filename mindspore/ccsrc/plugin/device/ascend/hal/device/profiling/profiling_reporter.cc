@@ -254,7 +254,7 @@ void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size
   report_data.data = data;
   report_data.dataLen = data_size;
   auto ret = memcpy_s(report_data.tag, MSPROF_ENGINE_MAX_TAG_LEN + 1, tag_name.c_str(), tag_name.length());
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name << ", ret: " << ret;
   }
 

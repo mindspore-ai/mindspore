@@ -104,7 +104,7 @@ class ProfilingReporter {
     if (value.size() < property_size) {
       property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_STRING);
       const auto ret = strncpy_s(property->data.dataStr, property_size, value.c_str(), value.size());
-      if (ret != 0) {
+      if (ret != EOK) {
         MS_LOG(ERROR) << "[Profiling] strncpy_s value " << value.c_str() << " error!";
         return;
       }

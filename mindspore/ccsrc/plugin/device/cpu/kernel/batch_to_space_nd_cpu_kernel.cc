@@ -81,7 +81,7 @@ bool BatchToSpaceNDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   int ret = memset_s(output, outputs[0]->size, 0, sizeof(T) * LongToSize(output_size_));
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
   }
 

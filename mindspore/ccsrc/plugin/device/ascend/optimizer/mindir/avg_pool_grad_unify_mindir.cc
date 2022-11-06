@@ -142,7 +142,7 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const Anf
     size_t src_size = hw_output.size() * kFloat32Len;
     auto dst_size = LongToSize(output_shape[kDim2]) * LongToSize(output_shape[kDim3]) * kFloat32Len;
     auto ret = memcpy_s(&output[LongToSize(i) * hw_output.size()], dst_size, &hw_output[0], src_size);
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "Call memcpy_s error, errorno(" << ret << ")";
     }
   }

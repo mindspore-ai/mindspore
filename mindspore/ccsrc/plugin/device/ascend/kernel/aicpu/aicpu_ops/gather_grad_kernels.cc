@@ -105,7 +105,7 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task() {
   int64_t dim_after_axis =
     std::accumulate(output_shape_.begin() + dim_ + 1, output_shape_.end(), 1, std::multiplies<int64_t>());
   int64_t output_size = dim_before_axis * dim_at_axis_output * dim_after_axis * sizeof(S);
-  if (memset_s(output, output_size, 0x0, output_size)) {
+  if (memset_s(output, output_size, 0x0, output_size) != EOK) {
     AICPU_LOGE("memset_s failed!");
     return kAicpuKernelStateFailed;
   }

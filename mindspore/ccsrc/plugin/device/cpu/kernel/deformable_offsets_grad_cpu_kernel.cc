@@ -412,11 +412,11 @@ bool DeformableOffsetsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   auto grad_offset_size = outputs[kGradOffsetIndex]->size;
   // Reset output initial value to 0.
   auto ret = memset_s(output_grad_x, grad_x_size, 0, grad_x_size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output_grad_x  memset_s error. Error no: " << ret;
   }
   ret = memset_s(output_grad_offset, grad_offset_size, 0, grad_offset_size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output_grad_offset memset_s error. Error no: " << ret;
   }
   if (data_format_ == kOpFormat_NCHW) {

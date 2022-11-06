@@ -591,7 +591,7 @@ STATUS CheckOnnxModel(const onnx::GraphProto &onnx_graph) {
     for (int i = 0; i < onnx_node.input_size(); i++) {
       auto &input = onnx_node.input(i);
       if (providers.count(input) == 0) {
-        MS_LOG(WARNING) << "Can not find node input: " << input;
+        MS_LOG(WARNING) << "Can not find node input: " << input << " of " << onnx_node.name();
       }
     }
   }

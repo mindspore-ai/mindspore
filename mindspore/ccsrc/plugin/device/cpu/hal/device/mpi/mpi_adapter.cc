@@ -237,7 +237,7 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
       RAISE_EXCEPTION(exception_msg.str());
     }
     auto copy_ret = memcpy_s(output, output_size, input + (IntToSize(scatter_index)) * input_data_num, data_size);
-    if (copy_ret != 0) {
+    if (copy_ret != EOK) {
       RAISE_EXCEPTION_WITH_PARAM("copy output memory fail!ret = ", copy_ret);
     }
   }

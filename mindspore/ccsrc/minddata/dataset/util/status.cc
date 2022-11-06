@@ -65,7 +65,7 @@ float GetMemoryUsage() {
     }
 
     auto ret = memset_s(buf, sizeof(buf), 0, sizeof(buf));
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(WARNING) << "memset_s failed when get memory usage. This might be caused by insufficient memory.";
       fclose(fd);
       return 0.0;
