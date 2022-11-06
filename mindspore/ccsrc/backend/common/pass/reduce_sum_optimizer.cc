@@ -22,10 +22,12 @@
 namespace mindspore {
 namespace opt {
 namespace {
-const int axis_input_index = 2;
+constexpr int axis_input_index = 2;
 }  // namespace
 
 AnfNodePtr ReduceSumOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> rank_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimRank->name());
   rank_inputs.push_back(NewValueNode(prim));
@@ -38,6 +40,8 @@ AnfNodePtr ReduceSumOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGr
 }
 
 AnfNodePtr ReduceSumOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const {
+  MS_EXCEPTION_IF_NULL(rank_op);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> range_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimRange->name());
   range_inputs.push_back(NewValueNode(prim));

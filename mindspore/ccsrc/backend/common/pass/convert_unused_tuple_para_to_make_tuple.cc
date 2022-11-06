@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace opt {
 bool ConvertUnusedTupleParaToMakeTuple::Run(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = dyn_cast<session::KernelGraph>(func_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   for (auto &input : kernel_graph->inputs()) {

@@ -35,6 +35,7 @@ const AnfNodePtr ConvertDynamicBroadcastTo::Process(const FuncGraphPtr &func_gra
     auto input_x = common::AnfAlgo::GetInputNode(ori_cnode, 0);
     CNodePtr broadcast_to_node =
       opt::NewCNode({NewValueNode(std::make_shared<Primitive>(broadcast_to_op_name)), input_x}, func_graph, {node});
+    MS_EXCEPTION_IF_NULL(broadcast_to_node);
     broadcast_to_node->set_abstract(node->abstract());
     auto shape_ptr = node->abstract()->BuildShape()->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape_ptr);
