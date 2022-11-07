@@ -18,6 +18,7 @@
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 #include "common/graph_kernel/bprop/expander/common_utils.h"
 #include "include/common/utils/utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -495,11 +496,31 @@ NodePtrList CommonSparseSegmentBprop(const BpropIRBuilder *ib, const std::string
   auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
   auto shape_x = ib->GetShape(x);
   auto output_dim0 = ib->Tensor(shape_x[0], kInt32);
-  if (ib->GetDtype(indices) != kInt32) {
+  if (ib->GetDtypeId(indices) != kNumberTypeInt32) {
     indices = ib->Cast(indices, kInt32);
   }
   segment_ids = ib->Cast(segment_ids, kInt32);
   auto dx = ib->Emit(grad_op, {dout, indices, segment_ids, output_dim0});
+  NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
+  if (with_segments) {
+    result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
+  }
+  return result;
+}
+
+NodePtrList CommonSparseSegmentBpropForCpu(const BpropIRBuilder *ib, bool with_segments) {
+  auto x = ib->GetInput(kIndex0);
+  auto indices = ib->GetInput(kIndex1);
+  auto segment_ids = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
+  auto shape_x = ib->GetShape(x);
+  auto output_dim0 = ib->Tensor(shape_x[0], kInt32);
+  segment_ids = ib->Cast(segment_ids, kInt32);
+  auto input0 = ib->Emit("Gather", {dout, segment_ids, ib->Tensor(0, kInt64)});
+  input0 = ib->Cast(input0, kFloat32);
+  indices = ib->Cast(indices, kInt32);
+  auto dx = ib->Emit("UnsortedSegmentSum", {input0, indices, output_dim0});
+  dx = ib->Cast(dx, ib->GetDtype(dout));
   NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
   if (with_segments) {
     result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
@@ -516,10 +537,16 @@ REG_BPROP_BUILDER("SparseSegmentSqrtNWithNumSegments").SetBody([](const BpropIRB
 });
 
 REG_BPROP_BUILDER("SparseSegmentSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  if (ib->GetTargetFromContext() == kCPUDevice) {
+    return CommonSparseSegmentBpropForCpu(ib, false);
+  }
   return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", false);
 });
 
 REG_BPROP_BUILDER("SparseSegmentSumWithNumSegments").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  if (ib->GetTargetFromContext() == kCPUDevice) {
+    return CommonSparseSegmentBpropForCpu(ib, true);
+  }
   return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", true);
 });
 
