@@ -144,7 +144,7 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     if ((input_device_tensors_[i] != nullptr) && (input_device_tensors_[i]->dynamic_ref_count() == 0) &&
         (device_contexts_[i] != nullptr)) {
-      MS_LOG(WARNING) << GetAID().Name() << " input index:" << i << " has no user and free the memory.";
+      MS_LOG(INFO) << GetAID().Name() << " input index:" << i << " has no user and free the memory.";
       device_contexts_[i]->device_res_manager_->FreeMemory(input_device_tensors_[i]);
     }
   }
