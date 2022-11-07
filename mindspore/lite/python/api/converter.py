@@ -29,8 +29,32 @@ __all__ = ['FmkType', 'Converter']
 
 class FmkType(Enum):
     """
-    The FmkType is used to define Input model framework type.
+    When Converter, the `FmkType` is used to define Input model framework type.
+
+    Currently, the following model framework types are supported:
+
+    ===========================  ============================================================================
+    Definition                    Description
+    ===========================  ============================================================================
+    `FmkType.TF`                 TensorFlow model's framework type, and the model uses .pb as suffix.
+    `FmkType.CAFFE`              Caffe model's framework type, and the model uses .prototxt as suffix.
+    `FmkType.ONNX`               ONNX model's framework type, and the model uses .onnx as suffix.
+    `FmkType.MINDIR`             MindSpore model's framework type, and the model uses .mindir as suffix.
+    `FmkType.TFLITE`             TensorFlow Lite model's framework type, and the model uses .tflite as suffix.
+    `FmkType.PYTORCH`            PyTorch model's framework type, and the model uses .pt or .pth as suffix.
+    ===========================  ============================================================================
+
+    Examples:
+        # Method 1: Import mindspore_lite package
+        >>> import mindspore_lite as mslite
+        >>> print(mslite.FmkType.TF)
+        FmkType.TF
+        # Method 2: from mindspore_lite package import FmkType
+        >>> from mindspore_lite import FmkType
+        >>> print(FmkType.TF)
+        FmkType.TF
     """
+
     TF = 0
     CAFFE = 1
     ONNX = 2
@@ -41,46 +65,109 @@ class FmkType(Enum):
 
 class Converter:
     r"""
-    Converter is used to convert third-party models.
+    Constructs a `Converter` class. The usage scenarios are: 1. Convert the third-party model into MindSpore model or
+    MindSpore Lite model; 2. Convert MindSpore model into MindSpore Lite model.
 
     Note:
-        If the default value of the parameter is none, it means the parameter is not set.
+        Please construct the `Converter` class first, and then generate the model by executing the Converter.converter()
+        method.
+
+        The encryption and decryption function is only valid when it is set to `MSLITE_ENABLE_MODEL_ENCRYPTION=on` at
+        the compile time, and only supports Linux x86 platforms. `decrypt_key` and `encrypt_key` are string expressed in
+        hexadecimal. For example, if the key is defined as '(b)0123456789ABCDEF' , the corresponding hexadecimal
+        expression is '30313233343637383939414243444546' . Linux platform users can use the' xxd 'tool to convert the
+        key expressed in bytes into hexadecimal expressions. It should be noted that the encryption and decryption
+        algorithm has been updated in version 1.7, resulting in the new python interface does not support the conversion
+        of MindSpore Lite's encryption exported models in version 1.6 and earlier.
 
     Args:
         fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
             FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH.
-        model_file (str): Path of the input model. e.g. "/home/user/model.prototxt". Options:
-            TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite" |
-            PYTORCH: "\*.pt or \*.pth".
-        output_file (str): Path of the output model. The suffix .ms can be automatically generated.
-            e.g. "/home/user/model.prototxt", it will generate the model named model.prototxt.ms in /home/user/
-        weight_file (str, optional): Input model weight file. Required only when fmk_type is FmkType.CAFFE.
-            e.g. "/home/user/model.caffemodel". Default: "".
-        config_file (str, optional): Configuration for post-training, offline split op to parallel,
-            disable op fusion ability and set plugin so path. e.g. "/home/user/model.cfg". Default: "".
-        weight_fp16 (bool, optional): Serialize const tensor in Float16 data type,
-            only effective for const tensor in Float32 data type. Default: False.
-        input_shape (dict{str, list[int]}, optional): Set the dimension of the model input,
-            the order of input dimensions is consistent with the original model. For some models, the model structure
-            can be further optimized, but the transformed model may lose the characteristics of dynamic shape.
-            e.g. {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}. Default: {}.
-        input_format (Format, optional): Assign the input format of exported model. Only Valid for 4-dimensional input.
-            Options: Format.NHWC | Format.NCHW. Default: Format.NHWC.
-        input_data_type (DataType, optional): Data type of input tensors. The default type is same with the type
-            defined in model. Default: DataType.FLOAT32.
-        output_data_type (DataType, optional): Data type of output tensors.
-            The default type is same with the type defined in model. Default: DataType.FLOAT32.
-        export_mindir (ModelType, optional): Which model type need to be export. Default: ModelType.MINDIR_LITE.
-        decrypt_key (str, optional): The key used to decrypt the file, expressed in hexadecimal characters.
-            Only valid when fmk_type is FmkType.MINDIR. Default: "".
-        decrypt_mode (str, optional): Decryption method for the MindIR file. Only valid when dec_key is set.
-            Options: "AES-GCM" | "AES-CBC". Default: "AES-GCM".
-        enable_encryption (bool, optional): Whether to export the encryption model. Default: False.
-        encrypt_key (str, optional): The key used to encrypt the file, expressed in hexadecimal characters.
-            Only support decrypt_mode is "AES-GCM", the key length is 16. Default: "".
-        infer (bool, optional): Whether to do pre-inference after convert. Default: False.
-        train_model (bool, optional): whether the model is going to be trained on device. Default: False.
-        no_fusion(bool, optional): Avoid fusion optimization, fusion optimization is allowed by default. Default: False.
+        model_file (str): Set the path of the input model when converter. For example, "/home/user/model.prototxt".
+            Options:TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" |
+            TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth".
+        output_file (str): Set the path of the output model. The suffix .ms or .mindir can be automatically generated.
+            If set `export_mindir` to ModelType.MINDIR, then MindSpore's model will be generated, which uses .mindir as
+            suffix. If set `export_mindir` to ModelType.MINDIR_LITE, then MindSpore Lite's model will be generated,
+            which uses .ms as suffix. For example, the input model is "/home/user/model.prototxt", it will generate the
+            model named model.prototxt.ms in /home/user/.
+        weight_file (str, optional): Set the path of input model weight file. Required only when fmk_type is
+            FmkType.CAFFE. The Caffe model is generally divided into two files: 'model.prototxt' is model structure,
+            corresponding to 'model_file` parameter; `model.Caffemodel' is model weight value file, corresponding to
+            `weight_file` parameter. For example, "/home/user/model.caffemodel". Default: "".
+        config_file (str, optional): Set the path of the configuration file of Converter can be used to post-training,
+            offline split op to parallel, disable op fusion ability and set plugin so path. `config_file' uses the
+            `key = value` method to define the related parameters.
+            For the configuration parameters related to post training quantization, please refer to
+            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+            For the configuration parameters related to extension, please refer to
+            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+            For example, "/home/user/model.cfg". Default: "".
+        weight_fp16 (bool, optional): If it is True, the const Tensor of the Float32 in the model will be saved as the
+            Float16 data type during Converter, and the generated model size will be compressed. Then, according to
+            `DeviceInfo`'s `enable_fp16` parameter determines the inputs' data type to perform inference. The priority
+            of `weight_fp16` is very low. For example, if quantization is enabled, for the weight of the quantized,
+            `weight_fp16` will not take effect again. `weight_fp16` only effective for the const Tensor in Float32 data
+            type. Default: False.
+        input_shape (dict{str, list[int]}, optional): Set the dimension of the model input. The order of input
+            dimensions is consistent with the original model. In the following scenarios, users may need to set the
+            parameter. For example, {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}. Default: None, None is
+            equivalent to {}.
+
+                - Usage 1:The input of the model to be converted is dynamic shape, but prepare to use fixed shape for
+                  inference, then set the parameter to fixed shape. After setting, when inferring on the converted
+                  model, the default input shape is the same as the parameter setting, no need to resize.
+                - Usage 2: No matter whether the original input of the model to be converted is dynamic shape or not,
+                  but prepare to use fixed shape for inference, and the performance of the model is
+                  expected to be optimized as much as possible, then set the parameter to fixed shape. After
+                  setting, the model structure will be further optimized, but the converted model may lose the
+                  characteristics of dynamic shape(some operators strongly related to shape will be merged).
+                - Usage 3: When using the converter function to generate code for Micro inference execution, it is
+                  recommended to set the parameter to reduce the probability of errors during deployment.
+                  When the model contains a Shape ops or the input of the model to be converted is a dynamic
+                  shape, you must set the parameter to fixed shape to support the relevant shape optimization and
+                  code generation.
+
+        input_format (Format, optional): Set the input format of exported model. Only Valid for 4-dimensional input. The
+            following 2 input formats are supported: Format.NCHW | Format.NHWC. Default: Format.NHWC.
+
+                - Format.NCHW: Store tensor data in the order of batch N, channel C, height H and width W.
+                - Format.NHWC: Store tensor data in the order of batch N, height H, width W and channel C.
+
+        input_data_type (DataType, optional): Set the data type of the quantization model input Tensor. It is only valid
+            when the quantization parameters ( `scale` and `zero point` ) of the model input tensor are available.
+            The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
+            DataType.UNKNOWN. Default: DataType.FLOAT32.
+
+                - DataType.FLOAT32: 32-bit floating-point number.
+                - DataType.INT8:    8-bit integer.
+                - DataType.UINT8:   unsigned 8-bit integer.
+                - DataType.UNKNOWN: Set the Same DataType as the model input Tensor.
+
+        output_data_type (DataType, optional): Set the data type of the quantization model output Tensor. It is only
+            valid when the quantization parameters ( `scale` and `zero point` ) of the model output tensor are
+            available. The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
+            DataType.UNKNOWN. Default: DataType.FLOAT32.
+
+                - DataType.FLOAT32: 32-bit floating-point number.
+                - DataType.INT8:    8-bit integer.
+                - DataType.UINT8:   unsigned 8-bit integer.
+                - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
+
+        export_mindir (ModelType, optional): Set the model type needs to be export. Options: ModelType.MINDIR |
+            ModelType.MINDIR_LITE. Default: ModelType.MINDIR_LITE.
+        decrypt_key (str, optional): Set the key used to decrypt the encrypted MindIR file, expressed in hexadecimal
+            characters. Only valid when fmk_type is FmkType.MINDIR. Default: "".
+        decrypt_mode (str, optional): Set decryption mode for the encrypted MindIR file. Only valid when dec_key is
+            set. Options: "AES-GCM" | "AES-CBC". Default: "AES-GCM".
+        enable_encryption (bool, optional): Whether to encrypt the model when exporting. Export encryption can protect
+            the integrity of the model, but it will increase the initialization time at runtime. Default: False.
+        encrypt_key (str, optional): Set the key used to encrypt the model when exporting, expressed in hexadecimal
+            characters. Only support when `decrypt_mode` is "AES-GCM", the key length is 16. Default: "".
+        infer (bool, optional): Whether to do pre-inference after Converter. Default: False.
+        train_model (bool, optional):   Whether the model is going to be trained on device. Default: False.
+        no_fusion(bool, optional): Whether avoid fusion optimization, fusion optimization is allowed by default.
+            Default: False.
 
     Raises:
         TypeError: `fmk_type` is not a FmkType.
@@ -114,6 +201,7 @@ class Converter:
         >>> import mindspore_lite as mslite
         >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
         ...                              "mobilenet_v2_1.0_224.tflite")
+        # The ms model may be generated only after converter.converter() is executed after the class is constructed.
         >>> print(converter)
         config_file: ,
         config_info: {},
@@ -225,37 +313,42 @@ class Converter:
               f"no_fusion: {self._converter.get_no_fusion()}."
         return res
 
-    def set_config_info(self, section, config_info):
+    def set_config_info(self, section="", config_info=None):
         """
-        Set config info for converter.It is used together with get_config_info method for online converter.
+        Set config info for Converter.It is used together with `get_config_info` method for online converter.
 
         Args:
-            section (str): The category of the configuration parameter.
-                Set the individual parameters of the configFile together with config_info.
-                e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: None.
-                For the configuration parameters related to post training quantization, please refer to
-                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
-                For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
+            section (str, optional): The category of the configuration parameter.
+                Set the individual parameters of the configfile together with `config_info` .
+                For example, for `section` = "common_quant_param", `config_info` = {"quant_type":"WEIGHT_QUANT"}.
+                Default: "".
 
-                - "common_quant_param": Common quantization parameter. One of configuration parameters for quantization.
+                For the configuration parameters related to post training quantization, please refer to
+                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+
+                For the configuration parameters related to extension, please refer to
+                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+
+                - "common_quant_param": Common quantization parameter.
                 - "mixed_bit_weight_quant_param": Mixed bit weight quantization parameter.
-                  One of configuration parameters for quantization.
-                - "full_quant_param": Full quantization parameter. One of configuration parameters for quantization.
-                - "data_preprocess_param": Data preprocess parameter. One of configuration parameters for quantization.
-                - "registry": Extension configuration parameter. One of configuration parameters for extension.
+                - "full_quant_param": Full quantization parameter.
+                - "data_preprocess_param": Data preprocess quantization parameter.
+                - "registry": Extension configuration parameter.
 
-            config_info (dict{str, str}): List of configuration parameters.
-                Set the individual parameters of the configFile together with section.
-                e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: None.
+            config_info (dict{str, str}, optional): List of configuration parameters.
+                Set the individual parameters of the configfile together with `section` .
+                For example, for `section` = "common_quant_param", `config_info` = {"quant_type":"WEIGHT_QUANT"}.
+                Default: None, None is equivalent to {}.
+
                 For the configuration parameters related to post training quantization, please refer to
-                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
+                `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
+
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
+                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
 
         Raises:
             TypeError: `section` is not a str.
-            TypeError: `config_info` is not a dict.
+            TypeError: `config_info` is not a dict .
             TypeError: `config_info` is a dict, but the keys are not str.
             TypeError: `config_info` is a dict, the keys are str, but the values are not str.
 
@@ -274,8 +367,8 @@ class Converter:
 
     def get_config_info(self):
         """
-        Get config info of converter.It is used together with set_config_info method for online converter.
-        Please use set_config_info method before get_config_info.
+        Get config info of converter.It is used together with `set_config_info` method for online converter.
+        Please use `set_config_info` method before `get_config_info` .
 
         Returns:
             dict{str, dict{str, str}}, the config info which has been set in converter.
@@ -306,6 +399,7 @@ class Converter:
             ...                              "mobilenet_v2_1.0_224.tflite")
             >>> converter.converter()
             CONVERT RESULT SUCCESS:0
+            >>> # mobilenet_v2_1.0_224.tflite.ms model will be generated.
         """
         ret = self._converter.converter()
         if not ret.IsOk():

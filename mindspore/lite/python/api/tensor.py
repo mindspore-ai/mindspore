@@ -26,8 +26,40 @@ __all__ = ['DataType', 'Format', 'Tensor']
 
 class DataType(Enum):
     """
-    The Enum of data type.
+    The DataType class defines the data type of the Tensor in MindSpore Lite.
+
+    Currently, the following 'DataType' are supported:
+
+    ===========================  ==================================================================
+    Definition                    Description
+    ===========================  ==================================================================
+    `DataType.UNKNOWN`           No matching any of the following known types.
+    `DataType.BOOL`              Boolean `True` or `False` .
+    `DataType.INT8`              8-bit integer.
+    `DataType.INT16`             16-bit integer.
+    `DataType.INT32`             32-bit integer.
+    `DataType.INT64`             64-bit integer.
+    `DataType.UINT8`             unsigned 8-bit integer.
+    `DataType.UINT16`            unsigned 16-bit integer.
+    `DataType.UINT32`            unsigned 32-bit integer.
+    `DataType.UINT64`            unsigned 64-bit integer.
+    `DataType.FLOAT16`           16-bit floating-point number.
+    `DataType.FLOAT32`           32-bit floating-point number.
+    `DataType.FLOAT64`           64-bit floating-point number.
+    `DataType.INVALID`           The maximum threshold value of DataType to prevent invalid types.
+    ===========================  ==================================================================
+
+    Examples:
+        # Method 1: Import mindspore_lite package
+        >>> import mindspore_lite as mslite
+        >>> print(mslite.DataType.FLOAT32)
+        DataType.FLOAT32
+        # Method 2: from mindspore_lite package import DataType
+        >>> from mindspore_lite import DataType
+        >>> print(DataType.FLOAT32)
+        DataType.FLOAT32
     """
+
     UNKNOWN = 0
     BOOL = 30
     INT8 = 32
@@ -46,8 +78,46 @@ class DataType(Enum):
 
 class Format(Enum):
     """
-    The Enum of format.
+    The Format class defines the format of the Tensor in MindSpore Lite.
+
+    Currently, the following 'Format' are supported:
+
+    ===========================  ===================================================================================
+    Definition                    Description
+    ===========================  ===================================================================================
+    `Format.DEFAULT`             default format.
+    `Format.NCHW`                Store tensor data in the order of batch N, channel C, height H and width W.
+    `Format.NHWC`                Store tensor data in the order of batch N, height H, width W and channel C.
+    `Format.NHWC4`               C-axis 4-byte aligned `Format.NHWC` .
+    `Format.HWKC`                Store tensor data in the order of height H, width W, kernel num K and channel C.
+    `Format.HWCK`                Store tensor data in the order of height H, width W, channel C and kernel num K.
+    `Format.KCHW`                Store tensor data in the order of kernel num K, channel C, height H and width W.
+    `Format.CKHW`                Store tensor data in the order of channel C, kernel num K, height H and width W.
+    `Format.KHWC`                Store tensor data in the order of kernel num K, height H, width W and channel C.
+    `Format.CHWK`                Store tensor data in the order of channel C, height H, width W and kernel num K.
+    `Format.HW`                  Store tensor data in the order of height H and width W.
+    `Format.HW4`                 w-axis 4-byte aligned `Format.HW` .
+    `Format.NC`                  Store tensor data in the order of batch N and channel C.
+    `Format.NC4`                 C-axis 4-byte aligned `Format.NC` .
+    `Format.NC4HW4`              C-axis 4-byte aligned and W-axis 4-byte aligned `Format.NCHW` .
+    `Format.NCDHW`               Store tensor data in the order of batch N, channel C, depth D, height H and width W.
+    `Format.NWC`                 Store tensor data in the order of batch N, width W and channel C.
+    `Format.NCW`                 Store tensor data in the order of batch N, channel C and width W.
+    `Format.NDHWC`               Store tensor data in the order of batch N, depth D, height H, width W and channel C.
+    `Format.NC8HW8`              C-axis 8-byte aligned and W-axis 8-byte aligned `Format.NCHW` .
+    ===========================  ===================================================================================
+
+    Examples:
+        # Method 1: Import mindspore_lite package
+        >>> import mindspore_lite as mslite
+        >>> print(mslite.Format.NHWC)
+        Format.NHWC
+        # Method 2: from mindspore_lite package import Format
+        >>> from mindspore_lite import Format
+        >>> print(Format.NHWC)
+        Format.NHWC
     """
+
     DEFAULT = -1
     NCHW = 0
     NHWC = 1
@@ -153,10 +223,10 @@ format_cxx_py_map = {
 
 class Tensor:
     """
-    The Tensor class defines a tensor in MindSporeLite.
+    The `Tensor` class defines a Tensor in MindSpore Lite.
 
     Args:
-        tensor(Tensor, optional): The data to be stored in a new tensor. It can be another Tensor. Default: None.
+        tensor(Tensor, optional): The data to be stored in a new Tensor. It can be from another Tensor. Default: None.
 
     Raises:
         TypeError: `tensor` is neither a Tensor nor None.
@@ -178,17 +248,17 @@ class Tensor:
         self._numpy_obj = None
         if tensor is not None:
             if not isinstance(tensor, _c_lite_wrapper.TensorBind):
-                raise TypeError(f"tensor must be TensorBind, but got {type(tensor)}.")
+                raise TypeError(f"tensor must be MindSpore Lite's Tensor, but got {type(tensor)}.")
             self._tensor = tensor
         else:
             self._tensor = _c_lite_wrapper.create_tensor()
 
     def set_tensor_name(self, tensor_name):
         """
-        Set the name of the tensor.
+        Set the name of the Tensor.
 
         Args:
-            tensor_name (str): The name of the tensor.
+            tensor_name (str): The name of the Tensor.
 
         Raises:
             TypeError: `tensor_name` is not a str.
@@ -204,10 +274,10 @@ class Tensor:
 
     def get_tensor_name(self):
         """
-        Get the name of the tensor.
+        Get the name of the Tensor.
 
         Returns:
-            str, the name of the tensor.
+            str, the name of the Tensor.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -240,10 +310,10 @@ class Tensor:
 
     def get_data_type(self):
         """
-        Get the data type of the tensor.
+        Get the data type of the Tensor.
 
         Returns:
-            DataType, the data type of the tensor.
+            DataType, the data type of the Tensor.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -257,10 +327,10 @@ class Tensor:
 
     def set_shape(self, shape):
         """
-        Set shape for the tensor.
+        Set shape for the Tensor.
 
         Args:
-            shape (list[int]): The shape of the tensor.
+            shape (list[int]): The shape of the Tensor.
 
         Raises:
             TypeError: `shape` is not a list.
@@ -280,10 +350,10 @@ class Tensor:
 
     def get_shape(self):
         """
-        Get the shape of the tensor.
+        Get the shape of the Tensor.
 
         Returns:
-            list[int], the shape of the tensor.
+            list[int], the shape of the Tensor.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -297,10 +367,10 @@ class Tensor:
 
     def set_format(self, tensor_format):
         """
-        Set format of the tensor.
+        Set format of the Tensor.
 
         Args:
-            tensor_format (Format): The format of the tensor.
+            tensor_format (Format): The format of the Tensor.
 
         Raises:
             TypeError: `tensor_format` is not a Format.
@@ -316,10 +386,10 @@ class Tensor:
 
     def get_format(self):
         """
-        Get the format of the tensor.
+        Get the format of the Tensor.
 
         Returns:
-            Format, the format of the tensor.
+            Format, the format of the Tensor.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -333,10 +403,10 @@ class Tensor:
 
     def get_element_num(self):
         """
-        Get the element num of the tensor.
+        Get the element num of the Tensor.
 
         Returns:
-            int, the element num of the tensor data.
+            int, the element num of the Tensor data.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -349,11 +419,12 @@ class Tensor:
 
     def get_data_size(self):
         """
-        Get the data size of the tensor, i.e.,
-        data_size = element_num * data_type.
+        Get the data size of the Tensor.
+
+        data size of the Tensor = the element num of the Tensor * size of unit data type of the Tensor.
 
         Returns:
-            int, the data size of the tensor data.
+            int, the data size of the Tensor data.
 
         Examples:
             >>> # data_size is related to data_type
@@ -368,18 +439,18 @@ class Tensor:
 
     def set_data_from_numpy(self, numpy_obj):
         """
-        Set the data for the tensor from the numpy object.
+        Set the data for the Tensor from the numpy object.
 
         Args:
             numpy_obj(numpy.ndarray): the numpy object.
 
         Raises:
             TypeError: `numpy_obj` is not a numpy.ndarray.
-            RuntimeError: The data type of `numpy_obj` is not equivalent to the data type of the tensor.
-            RuntimeError: The data size of `numpy_obj` is not equal to the data size of the tensor.
+            RuntimeError: The data type of `numpy_obj` is not equivalent to the data type of the Tensor.
+            RuntimeError: The data size of `numpy_obj` is not equal to the data size of the Tensor.
 
         Examples:
-            >>> # 1. set tensor data which is from file
+            >>> # 1. set Tensor data which is from file
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
@@ -394,7 +465,7 @@ class Tensor:
             format: Format.NCHW,
             element_num: 150528,
             data_size: 602112.
-            >>> # 2. set tensor data which is numpy arange
+            >>> # 2. set Tensor data which is numpy arange
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
@@ -437,10 +508,10 @@ class Tensor:
 
     def get_data_to_numpy(self):
         """
-        Get the data from the tensor to the numpy object.
+        Get the data from the Tensor to the numpy object.
 
         Returns:
-            numpy.ndarray, the numpy object from tensor data.
+            numpy.ndarray, the numpy object from Tensor data.
 
         Examples:
             >>> import mindspore_lite as mslite

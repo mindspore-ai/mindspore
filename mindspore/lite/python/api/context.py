@@ -23,26 +23,33 @@ __all__ = ['Context', 'DeviceInfo', 'CPUDeviceInfo', 'GPUDeviceInfo', 'AscendDev
 
 class Context:
     """
-    Context is used to store environment variables during execution.
+    Context is used to transfer environment variables during execution.
 
     The context should be configured before running the program.
     If it is not configured, it will be automatically set according to the device target by default.
 
     Note:
-        If core_list and mode are set by SetThreadAffinity at the same time, the core_list is effective, but the mode
-        is not effective.
-        If the default value of the parameter is none, it means the parameter is not set.
+        If `thread_affinity_core_list` and `thread_affinity_mode` are set at the same time in one context, the
+        `thread_affinity_core_list` is effective, but the `thread_affinity_mode` is not effective.
 
     Args:
-        thread_num (int, optional): Set the number of threads at runtime. Default: None.
-        inter_op_parallel_num (int, optional): Set the parallel number of operators at runtime. Default: None.
-        thread_affinity_mode (int, optional): Set the thread affinity to CPU cores. Default: None.
+        thread_num (int, optional): Set the number of threads at runtime. `thread_num` cannot be less than
+            `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically adjusted
+            based on computer performance and core numbers. Default: None, None is equivalent to 0.
+        inter_op_parallel_num (int, optional): Set the parallel number of operators at runtime. `inter_op_parallel_num`
+            cannot be greater than `thread_num` . Setting `inter_op_parallel_num` to 0 represents
+            `inter_op_parallel_num` will be automatically adjusted based on computer performance and core num. Default:
+            None, None is equivalent to 0.
+        thread_affinity_mode (int, optional): Set the mode of the CPU/GPU/NPU core binding policy at runtime. The
+        following `thread_affinity_mode` are supported. Default: None, None is equivalent to 0.
 
-            - 0: no affinities.
-            - 1: big cores first.
-            - 2: little cores first.
+            - 0: no binding core.
+            - 1: binding big cores first.
+            - 2: binding middle cores first.
 
-        thread_affinity_core_list (list[int], optional): Set the thread lists to CPU cores. Default: None.
+        thread_affinity_core_list (list[int], optional): Set the list of CPU/GPU/NPU core binding policies at runtime.
+            For example, [0,1] on the CPU device represents the specified binding of CPU0 and CPU1. Default: None, None
+            is equivalent to [].
         enable_parallel (bool, optional): Set the status whether to perform model inference or training in parallel.
             Default: False.
 
@@ -74,11 +81,11 @@ class Context:
         if thread_num is not None:
             check_isinstance("thread_num", thread_num, int)
             if thread_num < 0:
-                raise ValueError(f"Context's init failed, thread_num must be positive.")
+                raise ValueError(f"Context's init failed, thread_num must be a non-negative int.")
         if inter_op_parallel_num is not None:
             check_isinstance("inter_op_parallel_num", inter_op_parallel_num, int)
             if inter_op_parallel_num < 0:
-                raise ValueError(f"Context's init failed, inter_op_parallel_num must be positive.")
+                raise ValueError(f"Context's init failed, inter_op_parallel_num must be a non-negative int.")
         if thread_affinity_mode is not None:
             check_isinstance("thread_affinity_mode", thread_affinity_mode, int)
         check_list_of_element("thread_affinity_core_list", thread_affinity_core_list, int, enable_none=True)
@@ -142,7 +149,7 @@ class Context:
 
 class DeviceInfo:
     """
-    DeviceInfo base class.
+    Helper class used to describe device hardware information.
     """
 
     def __init__(self):
@@ -151,10 +158,11 @@ class DeviceInfo:
 
 class CPUDeviceInfo(DeviceInfo):
     """
-    Helper class to set cpu device info, and it inherits DeviceInfo base class.
+    Helper class used to describe CPU device hardware information, and it inherits :class:`mindspore_lite.DeviceInfo`
+    base class.
 
     Args:
-        enable_fp16(bool, optional): enables to perform the float16 inference. Default: False.
+        enable_fp16(bool, optional): Whether to enable performing the Float16 inference. Default: False.
 
     Raises:
         TypeError: `enable_fp16` is not a bool.
@@ -190,11 +198,12 @@ class CPUDeviceInfo(DeviceInfo):
 
 class GPUDeviceInfo(DeviceInfo):
     """
-    Helper class to set gpu device info, and it inherits DeviceInfo base class.
+    Helper class used to describe GPU device hardware information, and it inherits :class:`mindspore_lite.DeviceInfo`
+    base class.
 
     Args:
         device_id(int, optional): The device id. Default: 0.
-        enable_fp16(bool, optional): enables to perform the float16 inference. Default: False.
+        enable_fp16(bool, optional): enables to perform the Float16 inference. Default: False.
 
     Raises:
         TypeError: `device_id` is not an int.
@@ -202,6 +211,9 @@ class GPUDeviceInfo(DeviceInfo):
         ValueError: `device_id` is less than 0.
 
     Examples:
+        >>> # Use case: inference on GPU device.
+        >>> # precondition 1: Building MindSpore Lite GPU package by export MSLITE_GPU_BACKEND=tensorrt.
+        >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
         >>> import mindspore_lite as mslite
         >>> gpu_device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=False)
         >>> print(gpu_device_info)
@@ -225,7 +237,7 @@ class GPUDeviceInfo(DeviceInfo):
         super(GPUDeviceInfo, self).__init__()
         check_isinstance("device_id", device_id, int)
         if device_id < 0:
-            raise ValueError(f"GPUDeviceInfo's init failed, device_id must be positive.")
+            raise ValueError(f"GPUDeviceInfo's init failed, device_id must be a non-negative int.")
         check_isinstance("enable_fp16", enable_fp16, bool)
         self._device_info = _c_lite_wrapper.GPUDeviceInfoBind()
         self._device_info.set_device_id(device_id)
@@ -245,6 +257,9 @@ class GPUDeviceInfo(DeviceInfo):
             int, the ID of the current device in the cluster, which starts from 0.
 
         Examples:
+            >>> # Use case: inference on GPU device.
+            >>> # precondition 1: Building MindSpore Lite GPU package by export MSLITE_GPU_BACKEND=tensorrt.
+            >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
             >>> import mindspore_lite as mslite
             >>> device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=True)
             >>> rank_id = device_info.get_rank_id()
@@ -261,6 +276,9 @@ class GPUDeviceInfo(DeviceInfo):
             int, the number of the clusters.
 
         Examples:
+            >>> # Use case: inference on GPU device.
+            >>> # precondition 1: Building MindSpore Lite GPU package by export MSLITE_GPU_BACKEND=tensorrt.
+            >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
             >>> import mindspore_lite as mslite
             >>> device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=True)
             >>> group_size = device_info.get_group_size()
@@ -272,7 +290,8 @@ class GPUDeviceInfo(DeviceInfo):
 
 class AscendDeviceInfo(DeviceInfo):
     """
-    Helper class to set Ascend device infos, and it inherits DeviceInfo base class.
+    Helper class used to describe Ascend device hardware information, and it inherits :class:`mindspore_lite.DeviceInfo`
+    base class.
 
     Args:
         device_id(int, optional): The device id. Default: 0.
@@ -282,6 +301,9 @@ class AscendDeviceInfo(DeviceInfo):
         ValueError: `device_id` is less than 0.
 
     Examples:
+        >>> # Use case: inference on Ascend device.
+        >>> # precondiction 1: Building MindSpore Lite Ascend package on Ascend device.
+        >>> # precondiction 2: install wheel package of MindSpore Lite built by precondiction 1.
         >>> import mindspore_lite as mslite
         >>> ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
         >>> print(ascend_device_info)
@@ -304,7 +326,7 @@ class AscendDeviceInfo(DeviceInfo):
         super(AscendDeviceInfo, self).__init__()
         check_isinstance("device_id", device_id, int)
         if device_id < 0:
-            raise ValueError(f"AscendDeviceInfo's init failed, device_id must be positive.")
+            raise ValueError(f"AscendDeviceInfo's init failed, device_id must be a non-negative int.")
         self._device_info = _c_lite_wrapper.AscendDeviceInfoBind()
         self._device_info.set_device_id(device_id)
 

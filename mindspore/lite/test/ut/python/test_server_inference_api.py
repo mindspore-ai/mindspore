@@ -21,14 +21,14 @@ import pytest
 
 
 # ============================ RunnerConfig ============================
-def test_runner_config_01():
+def test_runner_config_context_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         runner_config = mslite.RunnerConfig(context=cpu_device_info, workers_num=4, config_info=None)
     assert "context must be Context" in str(raise_info.value)
 
 
-def test_runner_config_02():
+def test_runner_config_workers_num_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -37,16 +37,16 @@ def test_runner_config_02():
     assert "workers_num must be int" in str(raise_info.value)
 
 
-def test_runner_config_03():
+def test_runner_config_workers_num_negative_error():
     with pytest.raises(ValueError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
         context.append_device_info(cpu_device_info)
         runner_config = mslite.RunnerConfig(context=context, workers_num=-4, config_info=None)
-    assert "workers_num must be positive" in str(raise_info.value)
+    assert "workers_num must be a non-negative int" in str(raise_info.value)
 
 
-def test_runner_config_04():
+def test_runner_config_config_info_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -55,7 +55,7 @@ def test_runner_config_04():
     assert "config_info must be dict" in str(raise_info.value)
 
 
-def test_runner_config_05():
+def test_runner_config_config_info_key_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -64,7 +64,7 @@ def test_runner_config_05():
     assert "config_info_key must be str" in str(raise_info.value)
 
 
-def test_runner_config_06():
+def test_runner_config_config_info_value_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -73,7 +73,7 @@ def test_runner_config_06():
     assert "config_info_value must be dict" in str(raise_info.value)
 
 
-def test_runner_config_07():
+def test_runner_config_config_info_value_key_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -82,7 +82,7 @@ def test_runner_config_07():
     assert "config_info_value_key must be str" in str(raise_info.value)
 
 
-def test_runner_config_08():
+def test_runner_config_config_info_value_value_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -91,7 +91,25 @@ def test_runner_config_08():
     assert "config_info_value_value must be str" in str(raise_info.value)
 
 
-def test_runner_config_09():
+def test_runner_config_config_path_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(config_path=1)
+    assert "config_path must be str" in str(raise_info.value)
+
+
+def test_runner_config_config_path_not_exist_error():
+    with pytest.raises(RuntimeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(config_path="test.cfg")
+    assert "config_path does not exist" in str(raise_info.value)
+
+
+def test_runner_config_01():
     cpu_device_info = mslite.CPUDeviceInfo()
     context = mslite.Context()
     context.append_device_info(cpu_device_info)
@@ -99,7 +117,7 @@ def test_runner_config_09():
     assert "workers num:" in str(runner_config)
 
 
-def test_runner_config_10():
+def test_runner_config_02():
     cpu_device_info = mslite.CPUDeviceInfo()
     context = mslite.Context()
     context.append_device_info(cpu_device_info)
@@ -114,7 +132,7 @@ def test_model_parallel_runner_01():
     assert "model_path:" in str(model_parallel_runner)
 
 
-def test_model_parallel_runner_init_01():
+def test_model_parallel_runner_init_model_path_type_error():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -125,17 +143,7 @@ def test_model_parallel_runner_init_01():
     assert "model_path must be str" in str(raise_info.value)
 
 
-def test_model_parallel_runner_init_02():
-    with pytest.raises(TypeError) as raise_info:
-        cpu_device_info = mslite.CPUDeviceInfo()
-        context = mslite.Context()
-        context.append_device_info(cpu_device_info)
-        model_parallel_runner = mslite.ModelParallelRunner()
-        model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=context)
-    assert "runner_config must be RunnerConfig" in str(raise_info.value)
-
-
-def test_model_parallel_runner_init_03():
+def test_model_parallel_runner_init_model_path_not_exist_error():
     with pytest.raises(RuntimeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
@@ -146,7 +154,17 @@ def test_model_parallel_runner_init_03():
     assert "model_path does not exist" in str(raise_info.value)
 
 
-def test_model_parallel_runner_init_04():
+def test_model_parallel_runner_init_runner_config_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        model_parallel_runner = mslite.ModelParallelRunner()
+        model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=context)
+    assert "runner_config must be RunnerConfig" in str(raise_info.value)
+
+
+def test_model_parallel_runner_init_runtime_error():
     with pytest.raises(RuntimeError) as raise_info:
         context = mslite.Context()
         runner_config = mslite.model.RunnerConfig(context, 4)
@@ -155,7 +173,7 @@ def test_model_parallel_runner_init_04():
     assert "init failed" in str(raise_info.value)
 
 
-def test_model_parallel_runner_init_05():
+def test_model_parallel_runner_init_02():
     context = mslite.Context()
     model_parallel_runner = mslite.model.ModelParallelRunner()
     model_parallel_runner.init(model_path="mobilenetv2.ms")
@@ -172,7 +190,7 @@ def get_model_parallel_runner():
     return model_parallel_runner
 
 
-def test_model_parallel_runner_predict_01():
+def test_model_parallel_runner_predict_inputs_type_error():
     with pytest.raises(TypeError) as raise_info:
         model_parallel_runner = get_model_parallel_runner()
         inputs = model_parallel_runner.get_inputs()
@@ -181,7 +199,7 @@ def test_model_parallel_runner_predict_01():
     assert "inputs must be list" in str(raise_info.value)
 
 
-def test_model_parallel_runner_predict_02():
+def test_model_parallel_runner_predict_inputs_elements_type_error():
     with pytest.raises(TypeError) as raise_info:
         model_parallel_runner = get_model_parallel_runner()
         inputs = model_parallel_runner.get_inputs()
@@ -190,7 +208,7 @@ def test_model_parallel_runner_predict_02():
     assert "inputs element must be Tensor" in str(raise_info.value)
 
 
-def test_model_parallel_runner_predict_03():
+def test_model_parallel_runner_predict_outputs_type_error():
     with pytest.raises(TypeError) as raise_info:
         model_parallel_runner = get_model_parallel_runner()
         inputs = model_parallel_runner.get_inputs()
@@ -199,7 +217,7 @@ def test_model_parallel_runner_predict_03():
     assert "outputs must be list" in str(raise_info.value)
 
 
-def test_model_parallel_runner_predict_04():
+def test_model_parallel_runner_predict_outputs_elements_type_error():
     with pytest.raises(TypeError) as raise_info:
         model_parallel_runner = get_model_parallel_runner()
         inputs = model_parallel_runner.get_inputs()
@@ -208,7 +226,7 @@ def test_model_parallel_runner_predict_04():
     assert "outputs element must be Tensor" in str(raise_info.value)
 
 
-def test_model_parallel_runner_predict_05():
+def test_model_parallel_runner_predict_runtime_error():
     with pytest.raises(RuntimeError) as raise_info:
         model_parallel_runner = get_model_parallel_runner()
         tensor1 = mslite.Tensor()
@@ -219,7 +237,7 @@ def test_model_parallel_runner_predict_05():
     assert "predict failed" in str(raise_info.value)
 
 
-def test_model_parallel_runner_predict_06():
+def test_model_parallel_runner_predict_01():
     model_parallel_runner = get_model_parallel_runner()
     inputs = model_parallel_runner.get_inputs()
     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
@@ -228,7 +246,7 @@ def test_model_parallel_runner_predict_06():
     model_parallel_runner.predict(inputs, outputs)
 
 
-def test_model_parallel_runner_predict_07():
+def test_model_parallel_runner_predict_02():
     model_parallel_runner = get_model_parallel_runner()
     inputs = model_parallel_runner.get_inputs()
     input_tensor = mslite.Tensor()
