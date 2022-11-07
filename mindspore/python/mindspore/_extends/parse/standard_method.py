@@ -3405,11 +3405,32 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     return F.addr(x, vec1, vec2, beta=beta, alpha=alpha)
 
 
+def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
+    r"""
+    Performs matrix multiplication with a reduced sum, and add `x` to the result.
+    """
+    return F.addbmm(x, batch1, batch2, beta=beta, alpha=alpha)
+
+
+def addmm(x, mat1, mat2, *, beta=1, alpha=1):
+    r"""
+    Performs matrix multiplication, and add `x` to the result.
+    """
+    return F.addmm(x, mat1, mat2, beta=beta, alpha=alpha)
+
+
 def addmv(x, mat, vec, beta=1, alpha=1):
     r"""
     Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
     """
     return F.addmv(x, mat, vec, beta, alpha)
+
+
+def adjoint(x):
+    r"""
+    Computes the conjucated matrix with the last 2 dimensions transposed.
+    """
+    return F.adjoint(x)
 
 
 def asinh(x):
