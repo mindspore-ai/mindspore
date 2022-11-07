@@ -52,6 +52,9 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
     MS_LOG(ERROR) << "Maps is nullptr.";
     return RET_ERROR;
   }
+  for (const auto &config_info : *maps) {
+    ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(config_info.first, config_info.second);
+  }
   auto ret = ParseDataPreProcessString(*maps);
   (void)maps->erase(kDataPreprocessParam);
   if (ret != RET_OK) {
@@ -99,9 +102,6 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseWeightQuantString failed.";
     return ret;
-  }
-  for (const auto &config_info : *maps) {
-    ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(config_info.first, config_info.second);
   }
   return RET_OK;
 }

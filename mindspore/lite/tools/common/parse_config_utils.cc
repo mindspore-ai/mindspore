@@ -92,8 +92,15 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
       return RET_ERROR;
     }
     std::string key = split_vector.at(0);
+    if (!EraseBlankSpaceAndLineBreak(&key)) {
+      MS_LOG(ERROR) << "Erase Blank Space for key failed.";
+      return RET_ERROR;
+    }
     std::string value = split_vector.at(1);
-
+    if (!EraseBlankSpaceAndLineBreak(&value)) {
+      MS_LOG(ERROR) << "Erase Blank Space for value failed.";
+      return RET_ERROR;
+    }
     (*maps)[section][key] = value;
   }
   return RET_OK;

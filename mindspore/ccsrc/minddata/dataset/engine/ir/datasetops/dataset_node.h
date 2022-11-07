@@ -414,10 +414,6 @@ class MappableSourceNode : public DatasetNode {
   /// \brief Destructor
   virtual ~MappableSourceNode() = default;
 
-  /// \brief Node name getter
-  /// \return Name of the current node
-  virtual std::string Name() const = 0;
-
   /// \brief Sampler getter
   /// \return SamplerObj of the current node
   virtual std::shared_ptr<SamplerObj> Sampler() = 0;
@@ -444,10 +440,6 @@ class NonMappableSourceNode : public DatasetNode {
 
   /// \brief Destructor
   virtual ~NonMappableSourceNode() = default;
-
-  /// \brief Node name getter
-  /// \return Name of the current node
-  virtual std::string Name() const = 0;
 
   /// \brief By default non-mappable dataset does not support sampling. However, if a cache operator
   ///     is injected at some other place higher in the tree, that cache can inherit this sampler

@@ -27,7 +27,8 @@ bool EraseBlankSpaceAndLineBreak(std::string *input_string) {
     MS_LOG(ERROR) << "input_string is nullptr";
     return false;
   }
-  (void)input_string->erase(std::remove(input_string->begin(), input_string->end(), ' '), input_string->end());
+  (void)input_string->erase(0, input_string->find_first_not_of(" "));
+  (void)input_string->erase(input_string->find_last_not_of(" ") + 1);
   (void)input_string->erase(std::remove(input_string->begin(), input_string->end(), '\r'), input_string->end());
   (void)input_string->erase(std::remove(input_string->begin(), input_string->end(), '\n'), input_string->end());
   return true;
@@ -137,6 +138,11 @@ bool ConvertBool(std::string str, bool *value) {
 bool ConvertDoubleVector(const std::string &str, std::vector<double> *value) {
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  std::regex r("^[[].+]$");
+  if (!std::regex_match(str, r)) {
+    MS_LOG(ERROR) << "the value should begin with [ and end with ]";
     return false;
   }
   // remove []

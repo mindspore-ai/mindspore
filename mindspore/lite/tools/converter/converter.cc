@@ -67,12 +67,65 @@ constexpr size_t kPluginPathMaxNum = 10;
 constexpr int kPathLengthUpperLimit = 1024;
 constexpr size_t kEncMaxLen = 16;
 constexpr size_t kFlatbuffersBuilderInitSize = 1024;
+constexpr auto kFmk = "fmk";
+constexpr auto kModelFile = "modelFile";
+constexpr auto kOutputFile = "outputFile";
+constexpr auto kWeightFile = "weightFile";
+constexpr auto kFp16 = "fp16";
+constexpr auto kInputshape = "inputShape";
+constexpr auto kInputDataFormat = "inputDataFormat";
+constexpr auto kEncryptKey = "encryptKey";
+constexpr auto kEncryption = "encryption";
+constexpr auto kInputDataType = "inputDataType";
+constexpr auto kOutputDataType = "outputDataType";
+constexpr auto kInfer = "infer";
 
 FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
   auto impl = func_graph->impl();
   return std::dynamic_pointer_cast<FuncGraph>(impl);
 }
 }  // namespace
+
+STATUS StoreConverterParameters(const std::shared_ptr<ConverterPara> &param) {
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "Input param is nullptr";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  std::string param_input_shape;
+  for (auto i = param->input_shape.cbegin(); i != param->input_shape.cend(); ++i) {
+    std::stringstream input_shape_ss;
+    string input_shape_str;
+    (void)copy(i->second.begin(), i->second.end(), std::ostream_iterator<int>(input_shape_ss, ","));
+    input_shape_str = input_shape_ss.str();
+    input_shape_str.erase(input_shape_str.end() - 1);
+    param_input_shape += i->first + ":" + input_shape_str + ";";
+  }
+  std::map<std::string, std::map<std::string, std::string>> conver_param_maps;
+  conver_param_maps[mindspore::converter::KConverterParam][kFmk] = std::to_string(param->fmk_type);
+  conver_param_maps[mindspore::converter::KConverterParam][kModelFile] = param->model_file;
+  conver_param_maps[mindspore::converter::KConverterParam][kOutputFile] = param->output_file;
+  conver_param_maps[mindspore::converter::KConverterParam][kWeightFile] = param->weight_file;
+  std::stringstream weight_fp16_ss;
+  weight_fp16_ss << std::boolalpha << param->weight_fp16;
+  conver_param_maps[mindspore::converter::KConverterParam][kFp16] = weight_fp16_ss.str();
+  conver_param_maps[mindspore::converter::KConverterParam][kInputshape] = param_input_shape;
+  conver_param_maps[mindspore::converter::KConverterParam][kInputDataFormat] = std::to_string(param->input_format);
+  conver_param_maps[mindspore::converter::KConverterParam][kEncryptKey] = param->encrypt_key;
+  std::stringstream encryption_ss;
+  encryption_ss << std::boolalpha << param->enable_encryption;
+  conver_param_maps[mindspore::converter::KConverterParam][kEncryption] = encryption_ss.str();
+  conver_param_maps[mindspore::converter::KConverterParam][kInputDataType] =
+    std::to_string(static_cast<int>(param->input_data_type));
+  conver_param_maps[mindspore::converter::KConverterParam][kOutputDataType] =
+    std::to_string(static_cast<int>(param->output_data_type));
+  std::stringstream pre_infer_ss;
+  pre_infer_ss << std::boolalpha << param->pre_infer;
+  conver_param_maps[mindspore::converter::KConverterParam][kInfer] = pre_infer_ss.str();
+  for (const auto &config_info : conver_param_maps) {
+    ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(config_info.first, config_info.second);
+  }
+  return RET_OK;
+}
 
 FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> &param) {
   api::FuncGraphPtr func_graph_base = nullptr;
@@ -141,6 +194,11 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
       std::cerr << "Init config file failed." << std::endl;
       return RET_ERROR;
     }
+  }
+  auto ret = StoreConverterParameters(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get converter parameter failed.";
+    return RET_ERROR;
   }
   // load plugin
   static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;

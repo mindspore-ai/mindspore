@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -114,10 +115,14 @@ class ConverterInnerContext {
 
   void SetExternalUsedConfigInfos(const std::string &section,
                                   const std::map<std::string, std::string> &external_infos) {
-    if (external_used_config_infos_.find(section) != external_used_config_infos_.end()) {
-      MS_LOG(WARNING) << "This section " << section << " has been saved. Now, the content will be overwrite.";
+    for (auto const &external_info : external_infos) {
+      if (external_used_config_infos_[section].find(external_info.first) !=
+          external_used_config_infos_[section].end()) {
+        MS_LOG(WARNING) << "This content " << external_info.first
+                        << " has been saved. Now the value will be overwrite.";
+      }
+      external_used_config_infos_[section][external_info.first] = external_info.second;
     }
-    (void)external_used_config_infos_.emplace(section, external_infos);
   }
 
   const std::map<std::string, std::map<std::string, std::string>> &GetExternalUsedConfigInfos() const {
@@ -128,7 +133,16 @@ class ConverterInnerContext {
   std::string GetTargetDevice() const { return target_device_; }
 
  private:
-  ConverterInnerContext() = default;
+  ConverterInnerContext() {
+    (void)external_used_config_infos_.emplace(mindspore::converter::KCommonQuantParam,
+                                              std::map<std::string, std::string>{});
+    (void)external_used_config_infos_.emplace(mindspore::converter::KFullQuantParam,
+                                              std::map<std::string, std::string>{});
+    (void)external_used_config_infos_.emplace(mindspore::converter::KDataPreProcess,
+                                              std::map<std::string, std::string>{});
+    (void)external_used_config_infos_.emplace(mindspore::converter::KMixBitWeightQuantParam,
+                                              std::map<std::string, std::string>{});
+  }
   virtual ~ConverterInnerContext() = default;
   std::map<int32_t, int32_t> graph_input_data_type_map_;
   std::map<int32_t, int32_t> graph_output_data_type_map_;

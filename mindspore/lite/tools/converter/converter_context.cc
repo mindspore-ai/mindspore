@@ -20,6 +20,8 @@
 
 namespace mindspore {
 namespace converter {
+constexpr int kMaxInput = 255;
+
 void ConverterContext::SetGraphOutputTensorNames(const std::vector<std::vector<char>> &&output_names) {
   auto converter_context = lite::ConverterInnerContext::GetInstance();
   if (converter_context == nullptr) {
@@ -39,6 +41,14 @@ std::vector<std::vector<char>> ConverterContext::GetGraphOutputTensorNamesInChar
 }
 
 std::map<std::vector<char>, std::vector<char>> ConverterContext::GetConfigInfo(const std::vector<char> &&section) {
+  if (section.empty()) {
+    MS_LOG(ERROR) << "Get config information parameter is empty.";
+    return {};
+  }
+  if (section.size() > kMaxInput) {
+    MS_LOG(ERROR) << "Config information parameter is too long";
+    return {};
+  }
   auto converter_context = lite::ConverterInnerContext::GetInstance();
   if (converter_context == nullptr) {
     MS_LOG(ERROR) << "Get config information only used by external extension failed.";

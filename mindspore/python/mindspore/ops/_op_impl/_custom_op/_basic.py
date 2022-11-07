@@ -46,7 +46,6 @@ def _check_mn_shape(m_shape, n_shape, km_shape, kn_shape):
         raise RuntimeError("input shape M and N can't both be 1")
 
     if km_shape != kn_shape:
-        print(km_shape, kn_shape)
         raise RuntimeError("reduce axis not same")
 
     if m_shape % cce.BLOCK_IN != 0 and m_shape != 1:

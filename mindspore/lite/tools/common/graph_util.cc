@@ -679,7 +679,7 @@ int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t 
     MS_LOG(ERROR) << "GetBufferPointer nullptr";
     return RET_ERROR;
   }
-  *model_buf = new char[*size];
+  *model_buf = new (std::nothrow) char[*size];
   if (*model_buf == nullptr) {
     MS_LOG(ERROR) << "malloc model_buf failed";
     return RET_ERROR;
