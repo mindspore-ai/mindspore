@@ -139,6 +139,8 @@ bool IsTrainOp(const CNodePtr &cnode);
 
 bool IsMarkedTrainOp(const CNodePtr &cnode);
 
+ShapeVector GetAnfNodeOutputShape(const AnfNodePtr &node, size_t output_idx);
+
 int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
 
 size_t GetOutputSize(const AnfNodePtr &anf_node);

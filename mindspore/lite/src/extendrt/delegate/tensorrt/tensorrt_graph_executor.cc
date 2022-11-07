@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <fstream>
 #include "src/extendrt/delegate/delegate_utils.h"
 #include "ccsrc/kernel/common_utils.h"
 #include "ccsrc/backend/common/optimizer/helper.h"
@@ -356,6 +357,23 @@ int TensorRTExecutor::ParseOptimizationProfile() {
     return RET_FAILED;
   }
   trt_profile_configs_ = profile_configs;
+  auto precision_mode = ProfileParser::GetOption(gpu_context, lite::kPrecisionMode, "");
+  if (precision_mode == "force_fp16") {
+    device_info_->SetEnableFP16(true);
+    MS_LOG(INFO) << "Set precision mode to fp16 by config file";
+  }
+  return RET_OK;
+}
+
+int TensorRTExecutor::ParseDumpOptions(const std::map<std::string, std::string> &gpu_context) {
+  auto dump_ops_str = ProfileParser::GetOption(gpu_context, lite::kDumpOps, "");
+  if (!dump_ops_str.empty()) {
+    dump_ops_ = ProfileParser::Split(dump_ops_str, ";");
+    dump_dir_ = ProfileParser::GetOption(gpu_context, lite::kDumpDir, "");
+    if (dump_dir_.empty()) {
+      dump_dir_ = ".";
+    }
+  }
   return RET_OK;
 }
 
@@ -397,12 +415,17 @@ Status TensorRTExecutor::BuildSubGraph(const KernelGraphPtr &kernel_graph) {
     }
     tensorrt_op->SetRuntime(this->runtime_);
     tensorrt_ops.push_back(tensorrt_op);
+    if (!dump_ops_.empty() && std::find(dump_ops_.begin(), dump_ops_.end(), node_name) != dump_ops_.end()) {
+      std::copy(output_tensors.begin(), output_tensors.end(), std::back_inserter(dump_outputs_));
+    }
   }
   status = GetModelOutputsInfo(kernel_graph, &tensor_info_list, &outputs_);
   if (status != kSuccess) {
     return status;
   }
-  tensorrt_graph_ = CreateTensorRTGraph(tensorrt_ops, kernel_graph, tensorrt_subgraph_index, inputs_, outputs_);
+  std::vector<TensorInfo> trt_outputs = outputs_;
+  std::copy(dump_outputs_.begin(), dump_outputs_.end(), std::back_inserter(trt_outputs));
+  tensorrt_graph_ = CreateTensorRTGraph(tensorrt_ops, kernel_graph, tensorrt_subgraph_index, inputs_, trt_outputs);
   if (!tensorrt_graph_) {
     MS_LOG(ERROR) << "Create tensorrt graph failed";
     return mindspore::kLiteError;
@@ -513,15 +536,62 @@ bool TensorRTExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<ten
     MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != execute outputs size " << inputs.size();
     return false;
   }
-  if (!outputs->empty() && outputs_.size() != outputs->size()) {
-    MS_LOG(ERROR) << "Graph outputs size " << inputs_.size() << " != expected outputs size " << outputs->size();
-    return false;
-  }
   if (tensorrt_graph_ == nullptr) {
     MS_LOG(ERROR) << "TensorRT subgraph is nullptr.";
     return false;
   }
-  return tensorrt_graph_->Execute(inputs, outputs) == RET_OK;
+  if (dump_outputs_.empty()) {
+    if (!outputs->empty() && outputs_.size() != outputs->size()) {
+      MS_LOG(ERROR) << "Graph outputs size " << inputs_.size() << " != expected outputs size " << outputs->size();
+      return false;
+    }
+    return tensorrt_graph_->Execute(inputs, outputs) == RET_OK;
+  }
+
+  if (!outputs->empty()) {
+    MS_LOG(ERROR) << "Cannot has graph outputs when dump op";
+    return false;
+  }
+  std::vector<tensor::Tensor> trt_outputs;
+  if (tensorrt_graph_->Execute(inputs, &trt_outputs) != RET_OK) {
+    return false;
+  }
+  if (trt_outputs.size() != outputs_.size() + dump_outputs_.size()) {
+    MS_LOG(ERROR) << "TensorRT Graph outputs size " << trt_outputs.size() << " != graph outputs size "
+                  << outputs_.size() << " + dump output size " << dump_outputs_.size();
+    return false;
+  }
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    outputs->push_back(trt_outputs[i]);
+  }
+  if (!has_dumped_) {
+    has_dumped_ = true;
+    auto dump_tensor = [this](const std::string &file_name, const tensor::Tensor &tensor) {
+      std::string new_file = file_name;
+      for (size_t i = 0; i < new_file.size(); i++) {
+        if (new_file[i] == '/' || new_file[i] == '\\') {
+          new_file[i] = '_';
+        }
+      }
+      std::ofstream fp(dump_dir_ + "/" + new_file, std::ofstream::binary);
+      if (!fp.is_open()) {
+        MS_LOG(WARNING) << "Failed to open file " << dump_dir_ + "/" + file_name;
+        return;
+      }
+      fp.write(reinterpret_cast<const char *>(tensor.data_c()), tensor.Size());
+    };
+    for (size_t i = 0; i < inputs.size(); i++) {
+      dump_tensor("input_" + std::to_string(i) + ".bin", inputs[i]);
+    }
+    for (size_t i = 0; i < outputs->size(); i++) {
+      dump_tensor("output_" + std::to_string(i) + ".bin", (*outputs)[i]);
+    }
+    for (size_t i = outputs_.size(); i < trt_outputs.size(); i++) {
+      auto tensor_info = dump_outputs_[i - outputs_.size()];
+      dump_tensor(tensor_info.Name() + ".bin", trt_outputs[i]);
+    }
+  }
+  return true;
 }
 
 bool TensorRTExecutor::Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,

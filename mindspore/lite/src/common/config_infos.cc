@@ -239,6 +239,10 @@ bool ProfileParser::ParseDynamicDims(const std::string &dynamic_dims_str, Profil
 }
 
 bool ProfileParser::ParseOptDims(const std::string &opt_dims_str, ProfileConfigs *profile_configs_ptr) {
+  if (opt_dims_str.empty()) {
+    MS_LOG(ERROR) << "The option " << lite::kOptimizeDims << " cannot be empty in [gpu_context]";
+    return false;
+  }
   auto &profile_configs = *profile_configs_ptr;
   auto inputs_of_str = Split(opt_dims_str, ";");
   if (inputs_of_str.size() != profile_configs.input_infos.size()) {
@@ -300,13 +304,9 @@ bool ProfileParser::Parse(const std::map<std::string, std::string> &context, boo
     return false;
   }
   auto &profile_configs = *profile_configs_ptr;
-  auto get_item = [&context](const std::string &key) -> std::string {
-    auto it = context.find(key);
-    return it != context.end() ? it->second : "";
-  };
-  auto input_shapes = get_item(lite::kInputShape);
-  auto dynamic_dims = get_item(lite::kDynamicDims);
-  auto opt_dims = get_item(lite::kOptimizeDims);
+  auto input_shapes = GetOption(context, lite::kInputShape, "");
+  auto dynamic_dims = GetOption(context, lite::kDynamicDims, "");
+  auto opt_dims = GetOption(context, lite::kOptimizeDims, "");
   if (input_shapes.empty() && dynamic_dims.empty() && opt_dims.empty()) {
     MS_LOG(INFO) << "Do not found config of input range('" << lite::kInputShape << "')";
     return true;
@@ -362,7 +362,7 @@ bool ProfileParser::ReorderByInputNames(const std::vector<std::string> &input_na
   auto &profiles = profile_configs->profiles;
 
   for (size_t input_index = 0; input_index < input_names.size(); input_index++) {
-    auto input_name = input_names[input_index];
+    const auto &input_name = input_names[input_index];
     size_t i = 0;
     for (; i < input_infos.size(); i++) {
       if (input_infos[i].name == input_name) {
@@ -380,5 +380,14 @@ bool ProfileParser::ReorderByInputNames(const std::vector<std::string> &input_na
   }
   *profile_configs = new_profile_configs;
   return true;
+}
+
+std::string ProfileParser::GetOption(const std::map<std::string, std::string> &context, const std::string &option,
+                                     const std::string &default_val) {
+  auto it = context.find(option);
+  if (it == context.end()) {
+    return default_val;
+  }
+  return it->second;
 }
 }  // namespace mindspore

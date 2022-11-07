@@ -38,6 +38,7 @@
 #include "ops/op_utils.h"
 #include "ops/custom.h"
 #include "include/common/utils/anfalgo.h"
+#include "tools/optimizer/common/format_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -1091,6 +1092,62 @@ size_t GetOutputSize(const AnfNodePtr &anf_node) {
   return 1;
 }
 
+ShapeVector GetAnfNodeOutputShape(const AnfNodePtr &node, size_t output_idx) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "anf_node is nullptr.";
+    return {};
+  }
+  auto as_value_node = node->cast<ValueNodePtr>();
+  if (as_value_node) {
+    auto value = as_value_node->value();
+    auto tensor = value->cast<tensor::TensorPtr>();
+    if (tensor) {
+      return tensor->shape_c();
+    }
+    return {};
+  }
+  auto base_shape = node->Shape();
+  if (base_shape == nullptr) {
+    MS_LOG(INFO) << "Failed to get shape from node " << node->fullname_with_scope();
+    return {};
+  }
+  if (base_shape->isa<abstract::Shape>()) {
+    if (output_idx != 0) {
+      MS_LOG(EXCEPTION) << "The node " << node->fullname_with_scope() << "is a single output node but got index ["
+                        << output_idx;
+    }
+    auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    return shape_ptr->shape();
+  } else if (base_shape->isa<abstract::NoShape>()) {
+    return ShapeVector();
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (output_idx >= tuple_shape->size()) {
+      MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
+                        << node->fullname_with_scope();
+    }
+    auto b_shp = (*tuple_shape)[output_idx];
+    if (b_shp->isa<abstract::Shape>()) {
+      auto shape_ptr = b_shp->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      return shape_ptr->shape();
+    } else if (b_shp->isa<abstract::NoShape>()) {
+      return ShapeVector();
+    } else if (b_shp->isa<abstract::TupleShape>()) {
+      MS_LOG(INFO) << "The output shape of node:" << node->fullname_with_scope() << " index:" << output_idx
+                   << " is a TupleShape:" << base_shape->ToString();
+      return ShapeVector();
+    } else {
+      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
+                        << "node :" << node->fullname_with_scope() << ".";
+    }
+  }
+  return ShapeVector();
+}
+
 int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
   if (anf_node == nullptr || type_id == nullptr) {
     MS_LOG(ERROR) << "anf_node or type_id is nullptr.";
@@ -1255,22 +1312,44 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
     return;
   }
   auto nodes = func_graph->TopoSort(func_graph->get_return());
+  auto type_name = [](const AnfNodePtr &anf_node) -> std::string {
+    if (anf_node->cast<CNodePtr>()) {
+      return GetCNodeFuncName(anf_node->cast<CNodePtr>());
+    } else if (anf_node->cast<ParameterPtr>()) {
+      return "Parameter";
+    } else if (anf_node->cast<ValueNodePtr>()) {
+      return "ValueNode";
+    }
+    return anf_node->ToString();
+  };
   for (auto &node : nodes) {
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) {
-      fp << "Node " << node->fullname_with_scope() << std::endl;
+    if (IsValueNode<Primitive>(node)) {
       continue;
     }
-    fp << "Node " << node->fullname_with_scope() << ", type: " << GetCNodeFuncName(cnode) << std::endl;
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      fp << node->fullname_with_scope() << ", type: " << type_name(node)
+         << ", shape: " << GetAnfNodeOutputShape(node, 0) << std::endl;
+      continue;
+    }
     auto inputs = cnode->inputs();
-    for (size_t i = 1; i < inputs.size(); i++) {
-      auto input_as_cnode = inputs[i]->cast<CNodePtr>();
-      if (input_as_cnode) {
-        fp << "----input " << inputs[i]->fullname_with_scope() << ", type " << GetCNodeFuncName(input_as_cnode)
-           << std::endl;
-      } else {
-        fp << "---input " << inputs[i]->fullname_with_scope() << ", type " << inputs[i]->ToString() << std::endl;
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    Format format = DEFAULT_FORMAT;
+    if (prim && prim->HasAttr(ops::kFormat)) {
+      format = static_cast<Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
+    }
+    std::vector<int> outputs_format;
+    if (prim && prim->HasAttr(kOutputsFormat)) {
+      outputs_format = CastToInt(prim->GetAttr(kOutputsFormat));
+    }
+    fp << node->fullname_with_scope() << ", type: " << type_name(node) << ", shape: " << GetAnfNodeOutputShape(node, 0)
+       << ", format: " << format << ", output formats: " << outputs_format << std::endl;
+    for (auto &input : inputs) {
+      if (IsValueNode<Primitive>(input)) {
+        continue;
       }
+      fp << "---input " << input->fullname_with_scope() << ", type: " << type_name(input)
+         << ", shape: " << GetAnfNodeOutputShape(input, 0) << std::endl;
     }
   }
 }

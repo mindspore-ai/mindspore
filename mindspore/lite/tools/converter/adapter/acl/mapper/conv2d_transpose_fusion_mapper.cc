@@ -98,6 +98,10 @@ STATUS Conv2dTransposeMapper::AdjustOutputPadding(const PrimitivePtr &dst_prim) 
     output_padding[kDim4D] = val[1];
   }
   dst_prim->set_attr(ops::kOutputPaddings, MakeValue(output_padding));
+  auto pad_list_value_ptr = dst_prim->GetAttr(ops::kPadList);
+  if (!pad_list_value_ptr) {
+    dst_prim->set_attr(ops::kPadList, MakeValue(std::vector<int64_t>{0, 0, 0, 0}));
+  }
   return RET_OK;
 }
 
