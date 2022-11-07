@@ -14,7 +14,7 @@ mindspore.ops.softmax
 
     参数：
         - **x** (Tensor) - Softmax的输入，任意维度的Tensor。其数据类型为float16或float32。
-        - **axis** (Union[int, tuple[int]]) - 指定Softmax操作的轴。默认值：-1。
+        - **axis** (Union[int, tuple[int]], 可选) - 指定Softmax操作的轴。默认值：-1。
 
     返回：
         Tensor，数据类型和shape与 `x` 相同。

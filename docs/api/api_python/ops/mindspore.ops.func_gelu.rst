@@ -30,4 +30,6 @@ mindspore.ops.gelu
         Tensor，具有与 `input_x` 相同的数据类型和shape。
 
     异常：
+        - **TypeError** - 如果 `input_x` 的数据类型不是Tensor。
         - **TypeError** - `input_x` 的数据类型既不是float16、float32或者float64。
+        - **ValueError** - 如果 `approximate` 的值既不是 `none` 也不是 `tanh`。

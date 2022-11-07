@@ -64,7 +64,7 @@ class ScalarSummary(Primitive):
     Raises:
         TypeError: If `name` is not a str.
         TypeError: If `value` is not a Tensor.
-        TypeError: If dim of `value` is greater than 1.
+        ValueError: If dim of `value` is greater than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

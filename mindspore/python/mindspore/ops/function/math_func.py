@@ -3416,6 +3416,7 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
     Returns:
         A tuple of 2 Tensors (output_std, output_mean) containing the standard deviation and mean.
         Suppose the shape of `input_x` is :math:`(x_0, x_1, ..., x_R)`:
+
         - If `axis` is () and `keep_dims` is set to False, returns a 0-D Tensor, indicating
           the standard deviation of all elements in `input_x`.
         - If `axis` is int 1 and `keep_dims` is set to False, then the returned Tensor

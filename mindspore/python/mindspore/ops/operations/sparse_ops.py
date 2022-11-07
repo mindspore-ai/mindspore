@@ -412,7 +412,7 @@ class SparseToDense(Primitive):
         - **sparse_shape** (tuple(int)) - A positive int tuple which specifies the shape of sparse tensor,
           should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
 
-    Returns:
+    Outputs:
         Tensor, converted from sparse tensor. The dtype is same as `values`, and the shape is `sparse_shape`.
 
     Raises:

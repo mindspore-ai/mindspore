@@ -1,7 +1,7 @@
 mindspore.ops.CheckValid
 =========================
 
-.. py:class:: mindspore.ops.CheckValide()
+.. py:class:: mindspore.ops.CheckValid()
 
     检查边界框。
 
