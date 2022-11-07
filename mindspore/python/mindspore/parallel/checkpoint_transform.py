@@ -185,7 +185,8 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         raise TypeError("The save_checkpoint_file_name should be a str.")
     if save_checkpoint_file_name[-5:] != ".ckpt":
         raise ValueError("The save_checkpoint_file_name {} should end with .ckpt".format(save_checkpoint_file_name))
-    if os.path.dirname(dst_strategy_file) and not os.path.exists(os.path.dirname(dst_strategy_file)):
+    if dst_strategy_file and os.path.dirname(dst_strategy_file) and not os.path.exists(
+            os.path.dirname(dst_strategy_file)):
         raise ValueError("The director of dst_strategy_file: {} is not exists.".
                          format(os.path.dirname(dst_strategy_file)))
     for rank, local_file in checkpoint_files_map.items():
