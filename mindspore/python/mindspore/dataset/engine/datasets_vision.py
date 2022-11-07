@@ -1645,8 +1645,6 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
         >>> # Read 3 samples from FakeImage dataset
         >>> dataset = ds.FakeImageDataset(num_images=1000, image_size=(224,224,3),
         ...                               num_classes=10, base_seed=0, num_samples=3)
-        >>>
-        >>> # Note: In FakeImage dataset, each dictionary has keys "image" and "label"
     """
 
     @check_fake_image_dataset
@@ -2548,8 +2546,6 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
         >>>
         >>> # Read 3 samples from KMNIST dataset
         >>> dataset = ds.KMnistDataset(dataset_dir=kmnist_dataset_dir, num_samples=3)
-        >>>
-        >>> # Note: In kmnist_dataset dataset, each dictionary has keys "image" and "label"
 
     About KMNIST dataset:
 
@@ -3336,9 +3332,6 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
         >>> # Read 3 samples from PhotoTour dataset.
         >>> dataset = ds.PhotoTourDataset(dataset_dir="/path/to/photo_tour_dataset_directory",
         ...                               name='liberty', usage='train', num_samples=3)
-        >>>
-        >>> # In PhotoTourDataset dataset, if usage is 'train', each dictionary has key "image",
-        >>> # else has keys "image1" "image2" and "matches".
 
     About PhotoTour dataset:
 
@@ -3484,8 +3477,6 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
         >>> # Read 3 samples from Places365 dataset
         >>> dataset = ds.Places365Dataset(dataset_dir=place365_dataset_dir, usage='train-standard',
         ...                               small=True, decode=True, num_samples=3)
-        >>>
-        >>> # In places365 dataset, each dictionary has keys "image" and "label".
 
     About Places365 dataset:
 
@@ -4485,8 +4476,6 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         >>>
         >>> # Read 3 samples from USPS dataset
         >>> dataset = ds.USPSDataset(dataset_dir=usps_dataset_dir, num_samples=3)
-        >>>
-        >>> # Note: In USPS dataset, each dictionary has keys "image" and "label"
 
     About USPS dataset:
 
