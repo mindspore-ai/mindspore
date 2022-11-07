@@ -362,6 +362,7 @@ constexpr auto kSortOpName = "Sort";
 constexpr auto kSpaceToBatchOpName = "SpaceToBatch";
 constexpr auto kSpaceToDepthOpName = "SpaceToDepth";
 constexpr auto kSparseApplyAdadeltaOpName = "SparseApplyAdadelta";
+constexpr auto kSparseFillEmptyRows = "SparseFillEmptyRows";
 constexpr auto kSparseApplyAdagradOpName = "SparseApplyAdagrad";
 constexpr auto kSparseApplyAdagradV2OpName = "SparseApplyAdagradV2";
 constexpr auto kSparseApplyFtrlOpName = "SparseApplyFtrl";

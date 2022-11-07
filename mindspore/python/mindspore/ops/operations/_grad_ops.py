@@ -29,6 +29,16 @@ from mindspore.communication.management import GlobalComm
 from mindspore.ops._utils import is_shape_unknown, is_dim_unknown
 
 
+class SparseFillEmptyRowsGrad(Primitive):
+    """Performs grad of SparseFillEmptyRows operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseFillEmptyRowsGrad."""
+        self.init_prim_io_names(inputs=['reverse_index_map', 'grad_values'],
+                                outputs=['y_values', 'y_default_value'])
+
+
 class AbsGrad(PrimitiveWithInfer):
     """Computes gradients for abs operation."""
 

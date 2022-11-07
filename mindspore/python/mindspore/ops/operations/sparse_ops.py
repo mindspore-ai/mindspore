@@ -1391,6 +1391,64 @@ class SparseMatrixNNZ(Primitive):
             inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers', 'x_col_indices', 'x_values'], outputs=['y'])
 
 
+class SparseFillEmptyRows(Primitive):
+    """
+    Fill the blank lines in the input 2D SparseTensor with default values.
+
+    Inputs:
+        - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+        - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+          The shape should be :math:`(n,)`.
+        - **dense_shape** (Tensor) - A 1-D Tensor, represents the shape of SparseTensor. Support int64.
+        - **default_value** (Tensor) - A 0-D Tensor of the same type as `values`, scalar value to
+          fill the blank lines in the input 2D SparseTensor.
+
+    Outputs:
+        - **output_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor
+          after being filled. Support int64, each element value should be a non-negative int number.
+          The shape is :math:`(n, 2)`.
+        - **output_values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
+          in the `output_indices`, the shape of which should be :math:`(n,)`.
+        - **empty_row_indicator** (Tensor) - A 1-D Tensor. It indicates whether each row is empty.
+          Support bool. The shape is :math:`(n,)`.
+        - **reverse_index_map** (Tensor) - A 1-D Tensor. It is the index which position are not filled.
+          Support bool. The shape is :math:`(n,)`.
+
+    Raises:
+        TypeError: If the dtype of `indices` is not int64.
+        TypeError: If the dtype of `dense_shape` is not int64.
+        TypeError: If the dtype of `values` and the dtype of `default_value` are not same.
+        ValueError: If `sparse_shape`, shape of `indices` and shape of `values` don't meet the parameter description.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = Tensor([[1, 0]], dtype=mstype.int64)
+        >>> values = Tensor([4], dtype=mstype.float32)
+        >>> dense_shape = Tensor([2, 3], dtype=mstype.int64)
+        >>> default_value = Tensor(5, dtype=mstype.float32)
+        >>> sparsefillemptyrows = ops.SparseFillEmptyRows()
+        >>> out = sparsefillemptyrows(indices, values, dense_shape, default_value)
+        >>> print(out[0])
+        Tensor(shape=[2, 2], dtype=Int64, value=
+        [[0, 0],
+         [1, 0]])
+        >>> print(out[1])
+        Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  4.00000000e+00])
+        >>> print(out[2])
+        Tensor(shape=[2], dtype=Bool, value= [ True, False])
+        >>> print(out[3])
+        Tensor(shape=[1], dtype=Int64, value= [1])
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseFillEmptyRows."""
+        self.init_prim_io_names(inputs=['indices', 'values', 'dense_shape', 'default_value'],
+                                outputs=['output_indices', 'output_values', 'empty_row_indicator', 'reverse_index_map'])
+
+
 class SparseSegmentMeanWithNumSegments(Primitive):
     """
     Compute the mean along sparse segments of a tensor. It is allowed to have missing id in segment_ids.

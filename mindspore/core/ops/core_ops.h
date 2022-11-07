@@ -347,6 +347,7 @@ constexpr auto kDenseToSparseSetOperation = "DenseToSparseSetOperation";
 
 // Sparse ops
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
+constexpr auto kSparseFillEmptyRows = "SparseFillEmptyRows";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
 constexpr auto kSparseSoftmax = "SparseSoftmax";
 constexpr auto kSparseAddmm = "SparseAddmm";
@@ -383,6 +384,7 @@ constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSe
 
 // Sparse Grad ops
 constexpr auto kSparseAddGrad = "SparseAddGrad";
+constexpr auto kSparseFillEmptyRowsGrad = "SparseFillEmptyRowsGrad";
 constexpr auto kSparseTensorDenseAdd = "SparseTensorDenseAdd";
 constexpr auto kSparseSlice = "SparseSlice";
 constexpr auto kSparseSliceGrad = "SparseSliceGrad";
@@ -1087,6 +1089,7 @@ GVAR_DEF(PrimitivePtr, kPrimMapTensorGetGrad, std::make_shared<Primitive>(kMapTe
 
 // Sparse ops
 GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>(kSparseTensorDenseMatmul));
+GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRows, std::make_shared<Primitive>(kSparseFillEmptyRows));
 GVAR_DEF(PrimitivePtr, kPrimSparseToDenseV2, std::make_shared<Primitive>(kSparseToDenseV2));
 GVAR_DEF(PrimitivePtr, kPrimSparseSoftmax, std::make_shared<Primitive>(kSparseSoftmax));
 GVAR_DEF(PrimitivePtr, kPrimSparseAddmm, std::make_shared<Primitive>(kSparseAddmm));
@@ -1132,6 +1135,7 @@ GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNWithNumSegments,
 
 // Sparse Grad ops
 GVAR_DEF(PrimitivePtr, kPrimSparseAddGrad, std::make_shared<Primitive>(kSparseAddGrad));
+GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRowsGrad, std::make_shared<Primitive>(kSparseFillEmptyRowsGrad));
 GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseAdd, std::make_shared<Primitive>(kSparseTensorDenseAdd));
 GVAR_DEF(PrimitivePtr, kPrimSparseSlice, std::make_shared<Primitive>(kSparseSlice));
 GVAR_DEF(PrimitivePtr, kPrimSparseSliceGrad, std::make_shared<Primitive>(kSparseSliceGrad));

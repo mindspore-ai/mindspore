@@ -152,6 +152,7 @@ bool IsOneOfComputeDepend(const std::string &name) {
                                                 kSparseSparseMinimumOpName,
                                                 kSparseSparseMaximumOpName,
                                                 kRpcRecvOpName,
+                                                kSparseFillEmptyRows,
                                                 kAdaptiveMaxPool3DGradOpName};
 
   auto iter = kComputeDepend.find(name);
