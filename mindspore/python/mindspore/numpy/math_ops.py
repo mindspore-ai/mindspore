@@ -2269,6 +2269,8 @@ def _handle_inputs(cov_input, rowvar):
     if cov_input.ndim > 2:
         _raise_value_error("input array has dimension more than 2.")
     cov_input = cov_input.astype("float32")
+    if cov_input.size == 0:
+        _raise_value_error("The value of cov_input should not be None, but got {}.".format(cov_input))
     cov_input = _expand(cov_input, 2)
     if not isinstance(rowvar, bool):
         _raise_type_error("input rowvar should be boolean.")
