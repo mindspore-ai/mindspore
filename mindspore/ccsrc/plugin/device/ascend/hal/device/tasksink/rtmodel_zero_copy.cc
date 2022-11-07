@@ -614,7 +614,16 @@ bool RtModelZeroCopy::UpdateTaskArgs(const session::KernelGraph &graph, void *st
     return false;
   }
 
-  MS_LOG(INFO) << "Check rtMode valid " << ((rtStreamSynchronize(stream) == RT_ERROR_NONE) && CheckRtModelValid(graph));
+  if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
+    MS_LOG(WARNING) << "Sync stream for graph:" << graph.ToString() << " failed.";
+    return true;
+  }
+
+  // If the zero copy in graph mode is enabled, the input and output addr in task may not be same as addr in graph,
+  // so skip the addr check.
+  if (!graph.has_flag(kFlagEnableZeroCopyInGraph)) {
+    MS_LOG(INFO) << "Check rtMode valid " << (CheckRtModelValid(graph));
+  }
   return true;
 }
 
