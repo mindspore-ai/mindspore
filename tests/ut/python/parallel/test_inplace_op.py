@@ -48,42 +48,55 @@ class InplaceSubNet(Cell):
         return self.inplace_sub(x, input_v)
 
 
-def test_inplace_add_auto_parallel():
+class InplaceUpdateNet(Cell):
+    def __init__(self, indices, strategy=None):
+        super(InplaceUpdateNet, self).__init__()
+        self.inplace_update = P.InplaceUpdate(indices).shard(strategy)
+
+    def construct(self, x, input_v):
+        return self.inplace_update(x, input_v)
+
+
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+def test_inplace_add_auto_parallel(network):
     """
-    Feature: test InplaceAdd auto parallel
+    Feature: test InplaceOp auto parallel
     Description: auto parallel
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
-    net = InplaceAddNet(indices_)
+    net = network(indices_)
     compile_net(net, x_, input_v_)
 
 
-def test_inplace_add_model_parallel():
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+def test_inplace_op_model_parallel(network):
     """
-    Feature: test InplaceAdd model parallel
+    Feature: test InplaceOp model parallel
     Description: model parallel
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = ((1, 4, 2), (1, 4, 2))
-    net = InplaceAddNet(indices_, strategy)
+    net = network(indices_, strategy)
     compile_net(net, x_, input_v_)
 
 
-def test_inplace_add_model_parallel_with_repeated_cal():
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+def test_inplace_add_model_parallel_with_repeated_cal(network):
     """
-    Feature: test InplaceAdd model parallel with repeated calculation
+    Feature: test InplaceOp model parallel with repeated calculation
     Description: model parallel
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = ((1, 2, 2), (1, 2, 2))
-    net = InplaceAddNet(indices_, strategy)
+    net = network(indices_, strategy)
     compile_net(net, x_, input_v_)
 
 
-def test_inplace_add_strategy_error():
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+def test_inplace_add_strategy_error(network):
     """
     Feature: test invalid strategy for InplaceAdd
     Description: illegal strategy
@@ -91,54 +104,6 @@ def test_inplace_add_strategy_error():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = ((1, 4, 2), (1, 2, 4))
-    net = InplaceAddNet(indices_, strategy)
-    with pytest.raises(RuntimeError):
-        compile_net(net, x_, input_v_)
-
-
-def test_inplace_sub_auto_parallel():
-    """
-    Feature: test InplaceSub auto parallel
-    Description: auto parallel
-    Expectation: compile success
-    """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
-    net = InplaceSubNet(indices_)
-    compile_net(net, x_, input_v_)
-
-
-def test_inplace_sub_model_parallel():
-    """
-    Feature: test InplaceSub model parallel
-    Description: model parallel
-    Expectation: compile success
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy = ((1, 4, 2), (1, 4, 2))
-    net = InplaceSubNet(indices_, strategy)
-    compile_net(net, x_, input_v_)
-
-
-def test_inplace_sub_model_parallel_with_repeated_cal():
-    """
-    Feature: test InplaceSub model parallel with repeated calculation
-    Description: model parallel
-    Expectation: compile success
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy = ((1, 2, 2), (1, 2, 2))
-    net = InplaceSubNet(indices_, strategy)
-    compile_net(net, x_, input_v_)
-
-
-def test_inplace_sub_strategy_error():
-    """
-    Feature: test invalid strategy for InplaceSub
-    Description: illegal strategy
-    Expectation: raise RuntimeError
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy = ((1, 4, 2), (1, 2, 4))
-    net = InplaceSubNet(indices_, strategy)
+    net = network(indices_, strategy)
     with pytest.raises(RuntimeError):
         compile_net(net, x_, input_v_)

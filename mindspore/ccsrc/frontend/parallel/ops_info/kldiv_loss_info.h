@@ -48,6 +48,7 @@ class KLDivLossInfo : public OperatorInfo {
  private:
   Status InferGroup();
 
+  std::size_t batch_split_num_;
   std::string reduction_;
   std::vector<Group> group_list_;
 };

@@ -35,8 +35,6 @@ class RandomChoiceWithMaskInfo : public OperatorInfo {
         seed_(0),
         seed2_(0) {}
   ~RandomChoiceWithMaskInfo() = default;
-  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
   void ReplaceNodeInputOrAttrs() override;
@@ -51,8 +49,6 @@ class RandomChoiceWithMaskInfo : public OperatorInfo {
   Status InferAsLossDivisor() override;
 
  private:
-  void CheckGPUBackend();
-
   int64_t seed_;
   int64_t seed2_;
   static int64_t SEED_NUM;

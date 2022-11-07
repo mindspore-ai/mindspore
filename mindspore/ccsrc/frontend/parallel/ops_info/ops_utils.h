@@ -270,6 +270,7 @@ constexpr char ROI_END_MODE[] = "roi_end_mode";
 constexpr char REDUCTION[] = "reduction";
 constexpr char MEAN[] = "mean";
 constexpr char ATTR_NONE[] = "none";
+constexpr char BATCH_MEAN[] = "batchmean";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

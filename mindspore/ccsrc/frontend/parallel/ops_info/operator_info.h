@@ -392,6 +392,7 @@ AnfNodePtr CreateValueTupleAnfNodePtr(const std::vector<int64_t> &value_tuple);
 AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple);
 
 ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype);
+Operator CreateDivOpWithType(float divisor, const TypePtr &dtype);
 }  // namespace parallel
 }  // namespace mindspore
 

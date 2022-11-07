@@ -49,11 +49,12 @@ class LinSpaceInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
 
  private:
-  Status InferSliceId();
+  void InferSliceId();
   Status ComputeReplaceGraph(const CNodePtr &cnode);
   int64_t GetSplitNum();
 
   int64_t slice_id_ = 0;
+  int64_t split_num_ = 0;
   int64_t output_size_ = 0;
 };
 }  // namespace parallel

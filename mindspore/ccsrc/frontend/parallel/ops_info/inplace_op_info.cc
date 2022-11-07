@@ -18,12 +18,12 @@
 #include <algorithm>
 #include <functional>
 
-#include "frontend/parallel/ops_info/inplace_add_info.h"
+#include "frontend/parallel/ops_info/inplace_op_info.h"
 #include "frontend/parallel/dynamic_creator.h"
 
 namespace mindspore {
 namespace parallel {
-Status InplaceAddInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status InplaceOpBase::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
@@ -44,7 +44,7 @@ Status InplaceAddInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status InplaceAddInfo::InferDevMatrixShape() {
+Status InplaceOpBase::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
 
   auto strategies = strategy_->GetInputDim();
@@ -55,7 +55,7 @@ Status InplaceAddInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status InplaceAddInfo::InferTensorMap() {
+Status InplaceOpBase::InferTensorMap() {
   inputs_tensor_map_.clear();
   outputs_tensor_map_.clear();
 
@@ -77,7 +77,7 @@ Status InplaceAddInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-std::vector<StrategyPtr> InplaceAddInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> InplaceOpBase::GenerateOpStrategies(int64_t stage_id) {
   Shapes splittable_inputs = inputs_shape_;
   for (size_t i = 0; i < splittable_inputs.size(); ++i) {
     for (size_t j = 0; j < splittable_inputs[i].size(); ++j) {
@@ -91,12 +91,13 @@ std::vector<StrategyPtr> InplaceAddInfo::GenerateOpStrategies(int64_t stage_id) 
   return sp_vector;
 }
 
-void InplaceAddInfo::ReComputeBatchSplitFlagList() {
+void InplaceOpBase::ReComputeBatchSplitFlagList() {
   split_flag_list_[0] = false;
   split_flag_list_[1] = false;
 }
 
 REGISTER(InplaceAddInfo);
 REGISTER(InplaceSubInfo);
+REGISTER(InplaceUpdateInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -38,16 +38,21 @@ Status LinSpaceInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  auto split_num = strategies[0][0];
-  if (output_size_ % split_num != 0) {
-    MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(strategies) << ", output size is  "
-                  << output_size_ << " cannot be divisible by strategy value " << split_num;
+  split_num_ = strategies[0][0];
+  if (split_num_ <= 0) {
+    MS_LOG(ERROR) << name_ << ": Each element in strategy must be a positive integer, but got "
+                  << StrategyToString(strategies);
+    return FAILED;
   }
-
-  if (stage_device_size_ % split_num != 0) {
+  if (output_size_ % split_num_ != 0) {
+    MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(strategies) << ", output size is  "
+                  << output_size_ << " cannot be divisible by strategy value " << split_num_;
+    return FAILED;
+  }
+  if (stage_device_size_ % split_num_ != 0) {
     MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(strategies)
                   << ", the device size in this stage is " << stage_device_size_
-                  << " cannot be divisible by the strategy value " << split_num;
+                  << " cannot be divisible by the strategy value " << split_num_;
     return FAILED;
   }
   return SUCCESS;
@@ -97,31 +102,15 @@ std::shared_ptr<Strategies> LinSpaceInfo::GenerateBatchStrategies() {
   return std::make_shared<Strategies>(strategies);
 }
 
-int64_t LinSpaceInfo::GetSplitNum() {
-  auto strategies = strategy_->GetInputDim();
-  auto split_strategy = strategies.at(0);
-  auto split_num = split_strategy.at(0);
-  return split_num;
-}
-
 ReplaceGraphPtr LinSpaceInfo::replace_graph(const CNodePtr &cnode) {
-  auto split_num = GetSplitNum();
-  if (split_num > 1 && ComputeReplaceGraph(cnode) != SUCCESS) {
+  if (split_num_ > 1 && ComputeReplaceGraph(cnode) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
   }
   return replace_graph_;
 }
 
 Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
-  auto split_num = GetSplitNum();
-  if (split_num == 0) {
-    MS_LOG(ERROR) << name_ << ": split num is 1, no need to replace graph";
-    return FAILED;
-  }
-  if (output_size_ % split_num != 0) {
-    return FAILED;
-  }
-  if (split_num == 1) {
+  if (split_num_ == 1) {
     MS_LOG(INFO) << name_ << ": split num is 1, no need to replace graph";
     return SUCCESS;
   }
@@ -132,7 +121,7 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     return FAILED;
   }
 
-  int64_t slice_output_size = output_size_ / split_num;
+  int64_t slice_output_size = output_size_ / split_num_;
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), gen_g.virtual_input_node()});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), sub});
   AnfNodePtr interval = nullptr;
@@ -146,6 +135,7 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   // new_start = start + slice_id * slice_output_size * interval
   // new_end = new_start + (slice_output_size - 1) * interval
   // new_x = slice_output_size
+  InferSliceId();
   auto offset_size = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(slice_id_ * slice_output_size), dtype});
   auto start_offset = gen_g.PushBack({gen_g.NewOpInst(MUL), interval, offset_size});
   auto new_start = gen_g.PushBack({gen_g.NewOpInst(ADD), gen_g.virtual_input_node(), start_offset});
@@ -161,7 +151,7 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   return SUCCESS;
 }
 
-Status LinSpaceInfo::InferSliceId() {
+void LinSpaceInfo::InferSliceId() {
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->rank_index_in_stage();
   slice_id_ = rank;
@@ -172,7 +162,6 @@ Status LinSpaceInfo::InferSliceId() {
       slice_id_ %= dev_matrix_shape_.front();
     }
   }
-  return SUCCESS;
 }
 
 REGISTER(LinSpaceInfo);

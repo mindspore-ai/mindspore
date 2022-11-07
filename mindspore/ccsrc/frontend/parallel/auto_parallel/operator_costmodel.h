@@ -667,6 +667,8 @@ using BitwiseOrCost = SubCost;
 using BitwiseXorCost = SubCost;
 using AddNCost = SubCost;
 using InplaceAddCost = SubCost;
+using InplaceSubCost = InplaceAddCost;
+using InplaceUpdateCost = InplaceAddCost;
 using MaskedFillCost = SubCost;
 
 class MulCost : public SubCost {
