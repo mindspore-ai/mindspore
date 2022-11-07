@@ -230,7 +230,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   }
   // opt::GeOptimization(origin_graph);
   (void)BuildDFGraph(kg, GetParams(kg), false);
-  kernel_graph->set_run_mode(device::RunMode::kGraphMode);
+  kg->set_run_mode(device::RunMode::kGraphMode);
   // copy init weight to device
   RunGeInitGraph(kg);
   return true;
