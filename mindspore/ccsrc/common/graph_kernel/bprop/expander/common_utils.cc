@@ -622,4 +622,20 @@ bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_type
     return IsIdentidityOrSubclass(check_type, accept);
   });
 }
+
+ShapeVector PoolToNHWC(const ShapeVector &v) {
+  ShapeVector new_v(v);
+  new_v[kIndex1] = v[kIndex2];
+  new_v[kIndex2] = v[kIndex3];
+  new_v[kIndex3] = v[kIndex1];
+  return new_v;
+}
+ShapeVector ConvToNHWC(const ShapeVector &v) {
+  ShapeVector new_v(v);
+  new_v[kIndex0] = v[kIndex1];
+  new_v[kIndex1] = v[kIndex2];
+  new_v[kIndex2] = v[kIndex3];
+  new_v[kIndex3] = 1;
+  return new_v;
+}
 }  // namespace mindspore::expander::bprop
