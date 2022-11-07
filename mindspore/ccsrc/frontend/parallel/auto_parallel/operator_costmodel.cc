@@ -1895,15 +1895,65 @@ double ScatterMathOpsCost::GetForwardComputationCost(const std::vector<TensorInf
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for gatherv2 cost";
   }
   // don't split axis
-  if (strategy_.at(0) == 1) {
+  if (!is_split_axis_) {
     result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
               ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) +
               ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[2]);
   } else {
     // split axis
+    result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * input_coefficient_ +
+              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * indices_coefficient_ +
+              ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * updates_coefficient_;
+  }
+
+  return result;
+}
+
+double TensorScatterOpsCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                                 int64_t stage_id) const {
+  double result = 0.0;
+  CheckGlobalDeviceManager();
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+
+  for (size_t j = 0; j < inputs.size(); ++j) {
+    if (!is_parameter_[j]) {
+      continue;
+    }
+    TensorInfo input_a_tensor_info = inputs[j];
+    Shape input_a_shape = input_a_tensor_info.shape();
+    Shape input_a_slice_shape = input_a_tensor_info.slice_shape();
+    int64_t used_device_num = 1;
+    for (size_t i = 0; i < input_a_shape.size(); ++i) {
+      used_device_num *= input_a_shape[i] / input_a_slice_shape[i];
+    }
+    if (total_device_num != LongToSize(used_device_num)) {
+      result += ListProduct(input_a_slice_shape) * static_cast<double>(inputs_type_lengths_[j]);
+    }
+  }
+  return result;
+}
+
+double TensorScatterOpsCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                        const std::vector<TensorInfo> &outputs, int64_t) const {
+  double result = 0.0;
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  Shape input1_slice_shape = inputs[1].slice_shape();
+  Shape input2_slice_shape = inputs[2].slice_shape();  // equal to output shape
+  // brop func using 3 times input/out in average.
+  // don't split axis
+  if (!is_split_axis_) {
     result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
-              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * 3 +
-              ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * 2;
+              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) +
+              ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[2]);
+    result *= 3;
+
+  } else {
+    // split axis
+    result +=
+      ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * (input_coefficient_ + 3) +
+      ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * (indices_coefficient_ + 3) +
+      ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * (updates_coefficient_ + 3);
   }
 
   return result;

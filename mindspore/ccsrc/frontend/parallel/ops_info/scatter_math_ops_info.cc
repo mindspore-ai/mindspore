@@ -262,7 +262,7 @@ Status ScatterMathOpsInfo::InitForCostModel(const StrategyPtr &in_strategy, cons
   auto param_strategy = strategy_->GetInputDim().at(0);
   // cost model set axis and strategy
   auto scatter_ops_cost = std::dynamic_pointer_cast<ScatterMathOpsCost>(operator_cost());
-  scatter_ops_cost->set_strategy(param_strategy);
+  scatter_ops_cost->set_is_split_axis((param_strategy[0] > 1));
   MS_LOG(INFO) << name_ << ": Init for cost model success.";
   return SUCCESS;
 }
