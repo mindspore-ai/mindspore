@@ -6832,7 +6832,7 @@ class SparseApplyFtrl(Primitive):
         l2 (float): l2 regularization strength, must be greater than or equal to zero.
         lr_power (float): Learning rate power controls how the learning rate decreases during training,
             must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool): Use locks for updating operation if true . Default: False.
+        use_locking (bool, optional): Use locks for updating operation if true . Default: False.
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.

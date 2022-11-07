@@ -3948,6 +3948,7 @@ def elu(input_x, alpha=1.0):
             \alpha(e^{x}  - 1) & \text{if } x \le 0\\
             x & \text{if } x \gt 0\\
         \end{array}\right.
+
     Where :math:`x` is the element of input Tensor, :math:`\alpha` is param `alpha`,
     it determines the smoothness of ELU.
     The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
