@@ -97,6 +97,10 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   std::unordered_map<Tensor *, Tensor *> *isolate_input_map_ = nullptr; /* real obj in session */
   lite::InnerContext *ctx_ = nullptr;
 
+  kernel::KernelExec *partial_node_ = nullptr;
+  kernel::KernelExec *call_node_ = nullptr;
+  bool support_fp16_ = false;
+
  private:
   int CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
                         const std::set<void *> &receiver_tensors, const size_t &output_index,
@@ -106,11 +110,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
                         const std::unordered_map<AID, std::set<size_t>> &receiver_index_set);
   void MarkArrowAsCompiled(const AID *actor_name, size_t to_index,
                            std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
-
- private:
-  kernel::KernelExec *partial_node_ = nullptr;
-  kernel::KernelExec *call_node_ = nullptr;
-  bool support_fp16_ = false;
 };
 
 int MindrtInit();

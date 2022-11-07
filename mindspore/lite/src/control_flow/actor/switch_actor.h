@@ -29,7 +29,6 @@ class LiteSwitchOpActor : public LiteOpActor {
  public:
   explicit LiteSwitchOpActor(kernel::KernelExec *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
   ~LiteSwitchOpActor() override {
-    delete call_node_;
     delete switch_type_node_;
     for (auto &partial_node : partial_nodes_) {
       delete partial_node;
@@ -67,7 +66,6 @@ class LiteSwitchOpActor : public LiteOpActor {
 
   std::vector<kernel::KernelExec *> partial_nodes_{};
   kernel::KernelExec *switch_type_node_ = nullptr;
-  kernel::KernelExec *call_node_ = nullptr;
 
   // each element is a set of output data which is going to be send to the next target actor.
   std::vector<std::vector<OpDataPtr<Tensor>>> all_branchs_output_data_;

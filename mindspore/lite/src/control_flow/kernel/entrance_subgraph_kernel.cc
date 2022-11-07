@@ -18,7 +18,7 @@
 #include "src/tensor.h"
 
 namespace mindspore::kernel {
-int EntranceSubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &after) { return lite::RET_OK; }
+int EntranceSubGraphKernel::Execute(const KernelCallBack &, const KernelCallBack &) { return lite::RET_OK; }
 
 SubGraphKernel *EntranceSubGraphKernel::Create(Kernel *kernel) {
   auto sub_kernel = new kernel::EntranceSubGraphKernel(kernel);

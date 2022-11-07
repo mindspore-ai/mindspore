@@ -263,7 +263,8 @@ int MindIRControlFlowAdjust::MoveCallInputsToPartialFusionInputs(const std::set<
             return RET_NOT_SUPPORT;
           }
           std::vector<AnfNodePtr> partial_cnode_inputs = {lite::GetPartialFusionPrim(), make_tuple_op_value_input};
-          std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(), std::back_inserter(partial_cnode_inputs));
+          (void)std::copy(call_cnode_inputs.begin() + 1, call_cnode_inputs.end(),
+                          std::back_inserter(partial_cnode_inputs));
           auto partial_cnode = graph->NewCNode(partial_cnode_inputs);
           MS_CHECK_TRUE_MSG(partial_cnode != nullptr, RET_NULL_PTR, "Failed to create C node.");
           partial_cnode->set_fullname_with_scope("partial_" + make_tuple_op->fullname_with_scope() + "_" +

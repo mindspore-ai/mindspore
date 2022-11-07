@@ -47,9 +47,6 @@ class EntranceSubGraphKernel : public SubGraphKernel {
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 
   int ReSize() override { return RET_OK; };
-
- protected:
-  int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_KERNEL_ENTRANCE_SUBGRAPH_KERNEL_H_
