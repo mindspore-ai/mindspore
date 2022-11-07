@@ -6824,6 +6824,7 @@ class TensorScatterElements(Primitive):
 class ExtractVolumePatches(Primitive):
     r"""
     Extract patches from input and put them in the "depth" output dimension.
+    "depth" dimension is the second dim of output.
 
     Args:
         kernel_size (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.

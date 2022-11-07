@@ -105,6 +105,9 @@ def custom_info_register(*reg_info):
     Returns:
         Function, returns a decorator for op info register.
 
+    Raises:
+        TypeError: If `reg_info` is not a tuple.
+
     Examples:
         >>> from mindspore.ops import custom_info_register, CustomRegOp, DataType
         >>> custom_func_ascend_info = CustomRegOp() \
@@ -520,7 +523,6 @@ class TBERegOp(RegOp):
         Args:
             unknown_shape_formats (list): Description data arrangement of operator input / output tensor in dynamic
                                           shape scene.
-                                          Default: (), means dynamic shape is not supported.
         """
         RegOp._is_list(unknown_shape_formats)
         self.unknown_shape_formats_.append(unknown_shape_formats)

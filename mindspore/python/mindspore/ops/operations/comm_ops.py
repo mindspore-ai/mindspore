@@ -383,8 +383,10 @@ class _HostAllGather(PrimitiveWithInfer):
 
 
 class ReduceScatter(Primitive):
-    """
+    r"""
     Reduces and scatters tensors from the specified communication group.
+    For more details about it, please refer to `ReduceScatter \
+    <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_ .
 
     Note:
         The tensors must have the same shape and format in all processes of the collection. The user needs to preset
@@ -397,10 +399,17 @@ class ReduceScatter(Primitive):
                   like SUM and MAX. Default: ReduceOp.SUM.
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
+    Inputs:
+        - **input_x** (Tensor) - Input Tensor, suppose it has a shape :math:`(N, *)`, where `*`
+          means any number of additional dimensions. N must be divisible by rank_size.
+          rank_size refers to the number of cards in the communication group.
+
+    Outputs:
+        Tensor, it has the same dtype as `input_x` with a shape of :math:`(N/rank\_size, *)`.
+
     Raises:
         TypeError: If any of operation and group is not a string.
-        ValueError: If the first dimension of the input cannot be divided by the rank size. Rank size refers to the
-            number of cards in the communication group.
+        ValueError: If the first dimension of the input cannot be divided by the rank_size.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -754,7 +763,7 @@ class AlltoAll(PrimitiveWithInfer):
 
         :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
 
-        :math:`y_other = x_other`.
+        :math:`y_{other} = x_{other}`.
 
     Raises:
         TypeError: If group is not a string.
@@ -824,11 +833,14 @@ class AlltoAll(PrimitiveWithInfer):
 
 
 class NeighborExchangeV2(Primitive):
-    """
-    NeighborExchangeV2 is a collective operation.
+    r"""
+    NeighborExchangeV2 is a collective communication operation.
 
     NeighborExchangeV2 sends data from the local rank to ranks in the `send_rank_ids`,
-    as while receive data from `recv_rank_ids`.
+    as while receive data from `recv_rank_ids`. Please refer to
+    `NeighborExchangeV2 data exchange rules \
+    <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_
+    to learn about how the data is exchanged between neighborhood devices.
 
     Note:
         The user needs to preset
@@ -846,12 +858,26 @@ class NeighborExchangeV2(Primitive):
         recv_rank_ids (list(int)): Ranks which the data is received from. 8 rank_ids represents 8 directions,
                                    if one direction is not recv from , set it -1.
         send_lens (list(int)): Data lens which send to the send_rank_ids, 4 numbers represent the lens of
-                               [top, bottom, left, right].
+                               [send_top, send_bottom, send_left, send_right].
         recv_lens (list(int)): Data lens which received from recv_rank_ids, 4 numbers represent the lens of
-                               [top, bottom, left, right].
+                               [recv_top, recv_bottom, recv_left, recv_right].
         data_format (str): Data format, only support NCHW now.
         group (str, optional): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP", which means
                      "hccl_world_group" in Ascend, and "nccl_world_group" in GPU.
+
+    Inputs:
+        - **input_x** (Tensor) - The Tensor before being exchanged. It has a shape of :math:`(N, C, H, W)`.
+
+    Outputs:
+        The Tensor after being exchanged. If input shape is :math:`(N, C, H, W)`, output shape is
+            :math:`(N, C, H+recv\_top+recv\_bottom, W+recv\_left+recv\_right)`.
+
+    Raises:
+        TypeError: If `group` is not a string or any one of `send_rank_ids`,
+            `recv_rank_ids`, `send_lens`, `recv_lens` is not a list.
+        ValueError: If `send_rank_ids` or `recv_rank_ids` has value less than -1 or has repeated values.
+        ValueError: If `send_lens`, `recv_lens` has value less than 0.
+        ValueError: If `data_format` is not "NCHW".
 
     Supported Platforms:
         ``Ascend``

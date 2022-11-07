@@ -25,3 +25,4 @@ mindspore.ops.Multinomial
         - **TypeError** - 如果 `x` 不是数据类型为float16、float32或者float64的Tensor。
         - **TypeError** - 如果 `num_sample` 不是int类型。
         - **TypeError** - 如果 `dtype` 不是int32或者int64类型。
+        - **TypeError** - 如果 `seed` 或者 `seed2` 小于零。
