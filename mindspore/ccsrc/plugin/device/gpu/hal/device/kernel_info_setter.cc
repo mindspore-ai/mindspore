@@ -33,6 +33,8 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
+#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {
 namespace device {
@@ -40,6 +42,25 @@ namespace gpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
+static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentProdOpName,
+                                                        kUniqueWithPadOpName,
+                                                        kMaskedFillOpName,
+                                                        kDataFormatDimMapOpName,
+                                                        kInstanceNorm,
+                                                        kInstanceNormGradOpName,
+                                                        kRandomChoiceWithMaskOpName,
+                                                        kUniformCandidateSamplerOpName,
+                                                        kApplyAdamOpName,
+                                                        kSplitOpName,
+                                                        kApplyAdagradDAOpName,
+                                                        kApplyRMSPropOpName,
+                                                        kApplyCenteredRMSPropOpName,
+                                                        kRandomShuffleOpName,
+                                                        kApplyAdamWithAmsgradOpName,
+                                                        prim::kMatrixBandPart,
+                                                        prim::kDiag,
+                                                        prim::kSparseSegmentMean};
+
 kernel::OpImplyType GetImplyType(KernelType kernel_type) {
   kernel::OpImplyType imply_type =
     kernel_type == KernelType::GPU_KERNEL ? kernel::OpImplyType::kImplyGPU : kernel::OpImplyType::kImplyAKG;
@@ -514,6 +535,56 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
   format_transform_ = false;
 }
 
+bool GetSelectKernelResult(const CNodePtr &kernel_node,
+                           const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> &builder,
+                           KernelType *kernel_type,
+                           std::vector<std::tuple<size_t, TypeId, TypeId>> *input_reduce_index) {
+  bool result = false;
+  std::vector<std::tuple<size_t, TypeId, TypeId>> output_reduce_index;
+  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    // Custom op select kernel from OpLib
+    result = SelectCustomKernel(kernel_node, builder->Build(), kernel_type);
+  } else if (*kernel_type == UNKNOWN_KERNEL_TYPE) {
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
+      result = kernel::NativeGpuKernelMod::GpuCheckSupport(kernel_name, GetKernelAttrFromBuildInfo(builder->Build()));
+      if (!result) {
+        std::tie(result, *input_reduce_index, output_reduce_index) =
+          kernel::NativeGpuKernelMod::GpuReducePrecisionCheck(kernel_name,
+                                                              GetKernelAttrFromBuildInfo(builder->Build()));
+        if (result) {
+          const size_t kReduceToTypeIdx = 2;
+          for (const auto &item : *input_reduce_index) {
+            auto idx = std::get<0>(item);
+            auto to_type_id = std::get<kReduceToTypeIdx>(item);
+            builder->SetInputDeviceType(to_type_id, idx);
+          }
+          for (const auto &item : output_reduce_index) {
+            auto idx = std::get<0>(item);
+            auto to_type_id = std::get<kReduceToTypeIdx>(item);
+            builder->SetOutputDeviceType(to_type_id, idx);
+          }
+        }
+      }
+    } else {
+      result = kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(
+        common::AnfAlgo::GetCNodeName(kernel_node), builder->Build());
+      if (!result) {
+        result = kernel::NativeGpuKernelModFactory::GetInstance().ReducePrecision(
+          common::AnfAlgo::GetCNodeName(kernel_node), builder);
+      }
+    }
+
+    if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
+      result = SelectAkgKernel(kernel_node, builder->Build());
+      *kernel_type = AKG_KERNEL;
+    }
+  } else if (*kernel_type == AKG_KERNEL) {
+    result = SelectAkgKernel(kernel_node, builder->Build());
+  }
+  return result;
+}
+
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (common::AnfAlgo::IsGraphKernel(kernel_node)) {
@@ -521,6 +592,14 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     MS_EXCEPTION_IF_NULL(func_graph);
     SetGraphKernelInfo(kernel_node, func_graph);
     return {};
+  }
+  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, kernel_node) &&
+      !kVmapGPUWhiteList.count(common::AnfAlgo::GetCNodeName(kernel_node))) {
+    std::stringstream ss;
+    ss << common::AnfAlgo::GetCNodeName(kernel_node)
+       << " does not support 'batch_rank' on GPU, which means that 'vmap' cannot support "
+       << common::AnfAlgo::GetCNodeName(kernel_node) << " on GPU currently.";
+    return {ss.str(), NotSupportError};
   }
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
@@ -546,49 +625,8 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   builder->SetInputsDeviceType(inputs_type);
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
-  bool result = false;
   std::vector<std::tuple<size_t, TypeId, TypeId>> input_reduce_index;
-  std::vector<std::tuple<size_t, TypeId, TypeId>> output_reduce_index;
-  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
-    // Custom op select kernel from OpLib
-    result = SelectCustomKernel(kernel_node, builder->Build(), &kernel_type);
-  } else if (kernel_type == UNKNOWN_KERNEL_TYPE) {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
-      result = kernel::NativeGpuKernelMod::GpuCheckSupport(kernel_name, GetKernelAttrFromBuildInfo(builder->Build()));
-      if (!result) {
-        std::tie(result, input_reduce_index, output_reduce_index) = kernel::NativeGpuKernelMod::GpuReducePrecisionCheck(
-          kernel_name, GetKernelAttrFromBuildInfo(builder->Build()));
-        if (result) {
-          const size_t kReduceToTypeIdx = 2;
-          for (const auto &item : input_reduce_index) {
-            auto idx = std::get<0>(item);
-            auto to_type_id = std::get<kReduceToTypeIdx>(item);
-            builder->SetInputDeviceType(to_type_id, idx);
-          }
-          for (const auto &item : output_reduce_index) {
-            auto idx = std::get<0>(item);
-            auto to_type_id = std::get<kReduceToTypeIdx>(item);
-            builder->SetOutputDeviceType(to_type_id, idx);
-          }
-        }
-      }
-    } else {
-      result = kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(
-        common::AnfAlgo::GetCNodeName(kernel_node), builder->Build());
-      if (!result) {
-        result = kernel::NativeGpuKernelModFactory::GetInstance().ReducePrecision(
-          common::AnfAlgo::GetCNodeName(kernel_node), builder);
-      }
-    }
-
-    if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
-      result = SelectAkgKernel(kernel_node, builder->Build());
-      kernel_type = AKG_KERNEL;
-    }
-  } else if (kernel_type == AKG_KERNEL) {
-    result = SelectAkgKernel(kernel_node, builder->Build());
-  }
+  bool result = GetSelectKernelResult(kernel_node, builder, &kernel_type, &input_reduce_index);
   if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
     return PrintUnsupportedTypeWarning(kernel_node, inputs_type, outputs_type, kernel_type);
   }

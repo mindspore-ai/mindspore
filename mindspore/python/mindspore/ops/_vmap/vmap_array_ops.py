@@ -1982,15 +1982,10 @@ def get_im2col_vmap_rule(prim, axis_size):
 def get_split_vmap_rule(prim, axis_size):
     """VmapRule for `Split`."""
 
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
-    else:
-        batch_rank = 1
     axis = prim.axis
     if axis >= 0:
         axis += 1
     batch_prim = P.Split(axis, prim.output_num)
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
 
     def vmap_rule(x_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
