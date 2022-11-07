@@ -53,8 +53,10 @@ class MapTensorPutGpuKernelMod : public MapTensorGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
-  bool InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs);
+  void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape);
+
+  size_t input_key_type_size_{0};
+  size_t input_value_type_size_{0};
 
   using MapTensorPutLaunchFunc =
     std::function<bool(MapTensorPutGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,

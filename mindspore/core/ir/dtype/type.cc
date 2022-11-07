@@ -44,6 +44,7 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Un
                                                               {kObjectTypeSlice, "Slice"},
                                                               {kObjectTypeKeyword, "Keyword"},
                                                               {kObjectTypeTensorType, "Tensor"},
+                                                              {kObjectTypeMapTensorType, "MapTensor"},
                                                               {kObjectTypeRowTensorType, "RowTensor"},
                                                               {kObjectTypeCOOTensorType, "COOTensor"},
                                                               {kObjectTypeCSRTensorType, "CSRTensor"},

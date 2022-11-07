@@ -770,6 +770,12 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
   } else if (shapes.size() == 1 && tuple_node == kNodeTupleOutSet.end()) {
     // single output handle
+    if (abstract_ptr != nullptr && abstract_ptr->isa<abstract::AbstractMapTensor>()) {
+      // For AbstractMapTensor.
+      abstract_ptr->set_shape(std::make_shared<abstract::Shape>(shapes[0]));
+      return;
+    }
+
     abstract::AbstractTensorPtr abstract = nullptr;
     if (abstract_ptr != nullptr) {
       auto max_shape0 = GetOutputMaxShape(node_ptr, 0);

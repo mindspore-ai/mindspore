@@ -67,7 +67,10 @@ bool MapTensorGetDataGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 
   // Get kernel launch function.
   kernel_launch_func_ = map_tensor_get_data_func_list_[index].second;
-  InitSize(base_operator, inputs, outputs);
+
+  output_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
+  output_value_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex1).first);
+
   return true;
 }
 
@@ -76,7 +79,20 @@ int MapTensorGetDataGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &outputs,
                                          const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  InitSize(base_operator, inputs, outputs);
+
+  MS_EXCEPTION_IF_NULL(inputs.at(kIndex0));
+  const auto &map_shape = inputs.at(kIndex0)->GetShapeVector();
+
+  MS_EXCEPTION_IF_NULL(outputs.at(kIndex0));
+  const auto &keys_shape = outputs.at(kIndex0)->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(outputs.at(kIndex1));
+  const auto &values_shape = outputs.at(kIndex1)->GetShapeVector();
+
+  if (IsDynamic(map_shape) || IsDynamic(keys_shape) || IsDynamic(values_shape)) {
+    return KRET_UNKNOWN_SHAPE;
+  }
+
+  InitSizeLists(keys_shape, values_shape);
   return KRET_OK;
 }
 
@@ -97,23 +113,21 @@ bool MapTensorGetDataGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
-  return hash_table_ptr->GetKeysAndValues(static_cast<KeyType *>(outputs[kIndex0]->addr),
-                                          static_cast<ValueType *>(outputs[kIndex1]->addr), stream_ptr);
+  return hash_table_ptr->GetKeysAndValues(static_cast<KeyType *>(outputs.at(kIndex0)->addr),
+                                          static_cast<ValueType *>(outputs.at(kIndex1)->addr), stream_ptr);
 }
 
-bool MapTensorGetDataGpuKernelMod::InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+void MapTensorGetDataGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {
   // Return size 1 as the first input size for MapTensorGetData. Real map tensor is assigned by framework.
   input_size_list_.push_back(kSizeOne);
 
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  auto key_size = outputs[kIndex0]->GetSizeInBytes();
-  output_size_list_.push_back(key_size);
+  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
+  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
+  output_size_list_.push_back(keys_size * output_key_type_size_);
 
-  MS_EXCEPTION_IF_NULL(outputs[kIndex1]);
-  auto value_size = outputs[kIndex1]->GetSizeInBytes();
-  output_size_list_.push_back(value_size);
-  return true;
+  auto value_size = std::accumulate(values_shape.begin(), values_shape.end(), 1, std::multiplies{});
+  MS_EXCEPTION_IF_ZERO("value size", value_size);
+  output_size_list_.push_back(value_size * output_value_type_size_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MapTensorGetData, MapTensorGetDataGpuKernelMod);

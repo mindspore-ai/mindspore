@@ -69,11 +69,12 @@ bool MapTensorGetGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 
   // Get kernel launch function.
   kernel_launch_func_ = map_tensor_get_grad_func_list_[index].second;
-  InitSize(base_operator, inputs, outputs);
+
+  input_keys_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
+  input_dout_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
 
   // The output of this kernel is dynamic, so need update the output shape.
   is_need_retrieve_output_shape_ = true;
-  outputs_ = outputs;
   return true;
 }
 
@@ -82,23 +83,29 @@ int MapTensorGetGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &outputs,
                                          const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  InitSize(base_operator, inputs, outputs);
 
-  auto keys = inputs.at(kIndex1);
-  MS_EXCEPTION_IF_NULL(keys);
-  auto keys_shape = keys->GetShapeVector();
-  for (size_t i = 0; i < keys_shape.size(); i++) {
-    key_size_ *= keys_shape[i];
+  MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));
+  const auto &keys_shape = inputs.at(kIndex1)->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(inputs.at(kIndex2));
+  const auto &dout_shape = inputs.at(kIndex2)->GetShapeVector();
+  if (IsDynamic(keys_shape) || IsDynamic(dout_shape)) {
+    return KRET_UNKNOWN_SHAPE;
   }
 
-  value_dims_.push_back(key_size_);
-  auto dout = inputs.at(kIndex2);
-  MS_EXCEPTION_IF_NULL(dout);
-  auto dout_shape = dout->GetShapeVector();
+  InitSizeLists(keys_shape, dout_shape);
+
+  keys_size_ = 1;
+  value_dims_.clear();
+  for (size_t i = 0; i < keys_shape.size(); i++) {
+    keys_size_ *= keys_shape[i];
+  }
+  value_dims_.push_back(keys_size_);
+
   for (size_t i = keys_shape.size(); i < dout_shape.size(); i++) {
     value_dims_.push_back(dout_shape[i]);
   }
 
+  outputs_ = outputs;
   return KRET_OK;
 }
 
@@ -126,27 +133,29 @@ bool MapTensorGetGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
     auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, float>>(kUserDataData);
     MS_EXCEPTION_IF_NULL(hash_table_ptr);
 
-    return hash_table_ptr->Insert(reinterpret_cast<KeyType *>(inputs[kIndex1]->addr),
-                                  inputs[kIndex1]->size / sizeof(KeyType),
-                                  reinterpret_cast<float *>(inputs[kIndex2]->addr), stream_ptr);
+    return hash_table_ptr->Insert(reinterpret_cast<KeyType *>(inputs.at(kIndex1)->addr),
+                                  inputs.at(kIndex1)->size / sizeof(KeyType),
+                                  reinterpret_cast<float *>(inputs.at(kIndex2)->addr), stream_ptr);
   } else {
     MS_LOG(EXCEPTION) << "GPU hash table does not support value type:" << value_type;
   }
   return false;
 }
 
-bool MapTensorGetGradGpuKernelMod::InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+void MapTensorGetGradGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &dout_shape) {
   // Put size one for map tensor input, the real memory will allocate by gpu hash table dynamically.
   input_size_list_.push_back(kSizeOne);
-  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
-  input_size_list_.push_back(inputs[kIndex1]->GetSizeInBytes());
-  MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
-  input_size_list_.push_back(inputs[kIndex2]->GetSizeInBytes());
+
+  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
+  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
+  input_size_list_.push_back(keys_size * input_keys_type_size_);
+
+  auto dout_size = std::accumulate(dout_shape.begin(), dout_shape.end(), 1, std::multiplies{});
+  MS_EXCEPTION_IF_ZERO("dout size", dout_size);
+  input_size_list_.push_back(dout_size * input_dout_type_size_);
 
   // Put size one for map tensor output, the real memory will allocate by gpu hash table dynamically.
   output_size_list_.push_back(kSizeOne);
-  return true;
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MapTensorGetGrad, MapTensorGetGradGpuKernelMod);
