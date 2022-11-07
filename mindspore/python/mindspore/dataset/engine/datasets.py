@@ -334,9 +334,6 @@ class Dataset:
         self.saved_output_shapes = None
         self.estimated_output_shapes = None
         self.runtime_context = None
-        self.dynamic_setting = [False, None]
-        self.saved_min_shapes = None
-        self.saved_max_shapes = None
         self._col_names = None
         self.dataset_size = None
         self._batch_size = None
@@ -1643,23 +1640,6 @@ class Dataset:
                 logger.warning("Got 0 sample from dataset pipeline, check if drop all data or load dataset fail.")
 
         return self.dataset_size
-
-    @staticmethod
-    def __check_dynamic_column_name(dynamic_columns, dataset_columns):
-        for column in dynamic_columns:
-            if column not in dataset_columns:
-                raise RuntimeError("dynamic column [" + column + "] does not match any column in dataset: " +
-                                   str(dataset_columns))
-
-    @staticmethod
-    def __check_dynamic_column_shape(data, col, dynamic_columns):
-        shape_mismatch = "dynamic column [" + col + "] with shape " + str(dynamic_columns[col]) + \
-                         " does not match dataset column [" + col + "] with shape " + str(list(data[col].shape))
-        if data[col].ndim != len(dynamic_columns[col]):
-            raise RuntimeError(shape_mismatch)
-        for dim in range(len(dynamic_columns[col])):
-            if dynamic_columns[col][dim] is not None and dynamic_columns[col][dim] != data[col].shape[dim]:
-                raise RuntimeError(shape_mismatch)
 
     def num_classes(self):
         """
