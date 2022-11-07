@@ -142,7 +142,7 @@ class SequentialCell(Cell):
         >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
         >>> relu = nn.ReLU()
         >>> seq = nn.SequentialCell([conv, relu])
-        >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
+        >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype = mindspore.float32)
         >>> output = seq(x)
         >>> print(output)
         [[[[27. 27.]
@@ -285,7 +285,8 @@ class CellList(_CellListBase, Cell):
     Holds Cells in a list. For more details about Cell, please refer to
     `Cell <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
 
-    CellList can be used like a regular Python list, the Cells it contains have been initialized.
+    CellList can be used like a regular Python list, the Cells it contains have been initialized. Unlike the
+    SequentialCell, the cells in CellList are not connected.
 
     Args:
         args (list, optional): List of subclass of Cell.
@@ -295,6 +296,8 @@ class CellList(_CellListBase, Cell):
 
     Examples:
         >>> import mindspore.nn as nn
+        >>> import mindspore as ms
+        >>> import numpy as np
         >>>
         >>> conv = nn.Conv2d(100, 20, 3)
         >>> bn = nn.BatchNorm2d(20)
@@ -303,6 +306,12 @@ class CellList(_CellListBase, Cell):
         >>> cell_ls.insert(0, conv)
         >>> cell_ls.append(relu)
         >>> cell_ls.extend([relu, relu])
+        >>> cell_ls_3 = cell_ls[3]
+        >>> input1 = ms.Tensor(np.ones([2, 3]), ms.float32)
+        >>> output = cell_ls_3(input1)
+        >>> print(output)
+        [[1. 1. 1.]
+        [1. 1. 1.]]
     """
     def __init__(self, *args, **kwargs):
         """Initialize CellList."""
