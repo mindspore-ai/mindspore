@@ -24,6 +24,7 @@ from mindspore.ops.operations.sparse_ops import (
     SparseAdd,
     SparseMatrixAdd,
     SparseMatrixSoftmax,
+    SparseMatrixSparseMatMul,
     CSRSparseMatrixToDense
 )
 from mindspore.common import dtype as mstype
@@ -225,6 +226,84 @@ def csr_mv(csr_tensor: CSRTensor, dense: Tensor) -> Tensor:
     """
     csr_tensor_values, dense = promote_tensor(csr_tensor.values, dense)
     return _csr_ops.CSRMV()(csr_tensor.indptr, csr_tensor.indices, csr_tensor_values, csr_tensor.shape, dense)
+
+
+def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = False,
+           adjoint_a: bool = False, adjoint_b: bool = False):
+    """
+    Return the matrix multiplication result of the right-multiply matrix（dense or CSRTensor） of the CSRTensor.
+    The CSRTensor with shape `[M, N]` needs to adapt the right matrix with shape `[N, K]`
+    to get the dense matrix or CSRTensor with result `[M, K]`.
+
+    Note:
+        Currently supports GPU backend with right matrix is CSRTensor.
+
+    Args:
+        a (CSRTensor): Sparse CSR Tensor, rank should be 2.
+        b (CSRTensor): Sparse CSR Tensor, rank should be 2.
+        trans_a (bool): whether to transpose CSRTensor a.
+        trans_a (bool): whether to transpose CSRTensor b.
+        adjoint_a (bool): whether to adjoint CSRTensor a.
+        adjoint_b (bool): whether to adjoint CSRTensor b.
+
+    Returns:
+        CSRTensor.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore import dtype as mstype
+        >>> a_shape = (4, 5)
+        >>> a_indptr = Tensor([0, 1, 1, 3, 4], dtype=mstype.int32)
+        >>> a_indices = Tensor([0, 3, 4, 0],dtype=mstype.int32)
+        >>> a_values = Tensor([1.0, 5.0, -1.0, -2.0], dtype=mstype.float32)
+        >>> b_shape = (5, 3)
+        >>> b_indptr = Tensor([0, 1, 1, 3, 3, 3], dtype=mstype.int32)
+        >>> b_indices = Tensor([0, 0, 1],dtype=mstype.int32)
+        >>> b_values = Tensor([2.0, 7.0, 8.0], dtype=mstype.float32)
+        >>> a = CSRTensor(a_indptr, a_indices, a_values, a_shape)
+        >>> b = CSRTensor(b_indptr, b_indices, b_values, b_shape)
+        >>> c = csr_mm(a, b)
+        >>> print(c.shape)
+        (4, 3)
+        >>> print(c.values)
+        [2. -4.]
+        >>> print(c.indptr)
+        [0 1 1 1 2]
+        >>> print(c.indices)
+        [0 0]
+    """
+    if isinstance(a, CSRTensor) and isinstance(b, CSRTensor):
+        a_batch_pointers = make_tensor([0, a.values.shape[0]], a.indices.dtype)
+        b_batch_pointers = make_tensor([0, b.values.shape[0]], b.indices.dtype)
+        a_shape = make_tensor(a.shape, a.indices.dtype)
+        b_shape = make_tensor(b.shape, b.indices.dtype)
+        sparse_matrix_sparse_matmul = SparseMatrixSparseMatMul(transpose_a=trans_a,
+                                                               transpose_b=trans_b,
+                                                               adjoint_a=adjoint_a,
+                                                               adjoint_b=adjoint_b)
+
+        _, _, c_indptr, c_indices, c_values = sparse_matrix_sparse_matmul(a_shape,
+                                                                          a_batch_pointers,
+                                                                          a.indptr,
+                                                                          a.indices,
+                                                                          a.values,
+                                                                          b_shape,
+                                                                          b_batch_pointers,
+                                                                          b.indptr,
+                                                                          b.indices,
+                                                                          b.values)
+        m, a2 = a.shape
+        b1, k = b.shape
+        if trans_a or adjoint_a:
+            m = a2
+        if trans_b or adjoint_b:
+            k = b1
+        return CSRTensor(c_indptr, c_indices, c_values, (m, k))
+    raise_type_error("For functional operator csr_mm, inputs a and b must be type of CSRTensor currently.")
+    return None
 
 
 def csr_reduce_sum(csr_tensor: CSRTensor, axis: int) -> Tensor:

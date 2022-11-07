@@ -376,6 +376,7 @@ from .sparse_func import (
     csr_gather,
     csr_mul,
     csr_mv,
+    csr_mm,
     csr_reduce_sum,
     csr_to_coo,
     csr2coo,
