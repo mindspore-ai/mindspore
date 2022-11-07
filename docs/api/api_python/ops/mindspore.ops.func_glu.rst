@@ -16,7 +16,7 @@ mindspore.ops.glu
         - **axis** (int，可选) - 指定分割轴。数据类型为整型，默认值：-1。
 
     返回：
-        Tensor，数据类型与输入 `x` 相同，shape为 :math:`(\ast_1, M, \ast_2)`，其中:math:`M=N/2`
+        Tensor，数据类型与输入 `x` 相同，shape为 :math:`(\ast_1, M, \ast_2)`，其中 :math:`M=N/2`
 
     异常：
         - **TypeError** -  `x` 数据类型不是number.Number。
