@@ -40,6 +40,7 @@ bool GradientsAllReduceDependLastSend::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && common::AnfAlgo::IsFusion(cnode)) {
       auto last_input = cnode->inputs().back();
       if (IsPrimitiveCNode(last_input, prim::kPrimTensorMove)) {
@@ -66,6 +67,7 @@ bool GradientsAllReduceDependLastSend::InsertDependBetweenAllReduceAndSend(const
                                                                            const CNodePtr &last_send) const {
   bool changed = false;
   FuncGraphManagerPtr manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   for (auto &addn : addn_list) {
     std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), addn,
                                       last_send};

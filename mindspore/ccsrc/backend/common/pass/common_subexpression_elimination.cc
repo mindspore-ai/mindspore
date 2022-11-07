@@ -62,6 +62,7 @@ void EliminateDuplicatedTupleGetItem(const FuncGraphPtr &graph, const FuncGraphM
       continue;
     }
     auto getitem_cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(getitem_cnode);
     KernelWithIndex input_with_index{getitem_cnode->input(kRealInputNodeIndexInTupleGetItem),
                                      GetGetitemIndex(getitem_cnode)};
     if (getitem_dup_map.count(input_with_index) == 0) {
@@ -105,6 +106,8 @@ bool BackendCSE::CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNode
 }
 
 bool BackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(main);
+  MS_EXCEPTION_IF_NULL(node);
   auto c_main = main->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(c_main);
   auto c_node = node->cast<CNodePtr>();

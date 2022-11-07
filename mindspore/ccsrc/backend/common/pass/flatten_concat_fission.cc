@@ -67,7 +67,7 @@ CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const std::pair<std::vect
 
   size_t input_num = node_info.first.size() - 1;
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(static_cast<int64_t>(input_num)), concat_node);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(UlongToLong(input_num)), concat_node);
   std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
   return concat_node;
