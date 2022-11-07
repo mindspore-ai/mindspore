@@ -10259,3 +10259,36 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
         self.add_prim_attr("output_shape", self.output_shape)
         self.data_format = validator.check_string(data_format, ['NCHW'], 'data_format', self.name)
         self.init_prim_io_names(inputs=['input_x', 'random_samples'], outputs=['y', 'argmax'])
+
+
+class ChannelShuffle(Primitive):
+    r"""
+    Divide the channels in a tensor of shape (*, C, H, W) into g groups and
+    rearrange them as (*, C/g, g, H*W), while keeping the original tensor shapes.
+
+    Refer to :func:`mindspore.ops.channel_shuffle` for more detail.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> group = 2
+        >>> x = Tensor(np.arange(1 * 4 * 2 * 2).reshape(1, 4, 2, 2).astype(np.int16))
+        >>> channel_shuffle_func = mindspore.ops.operations.ChannelShuffle(group)
+        >>> y = channel_shuffle_func(x)
+        >>> print(y)
+        [[[[ 0  1]
+           [ 2  3]]
+           [[ 8  9]
+           [10 11]]
+           [[ 4  5]
+           [ 6  7]]
+           [[12 13]
+           [14 15]]]]
+    """
+    @prim_attr_register
+    def __init__(self, group):
+        """Initialize ChannelShuffle"""
+        if not isinstance(group, int):
+            raise ValueError(f"For '{self.name}', attr 'group' must be an positive int number")
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])

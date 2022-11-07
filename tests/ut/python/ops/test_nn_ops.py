@@ -516,6 +516,17 @@ class LRNGradNet(nn.Cell):
         return self.lrn_grad(dout, x, out)
 
 
+class ChannelShuffleFunc(nn.Cell):
+    """ ChannelShuffleFunc definition """
+
+    def __init__(self):
+        super(ChannelShuffleFunc, self).__init__()
+        self.channel_shuffle = mindspore.ops.function.nn_func.channel_shuffle
+
+    def construct(self, x, group):
+        return self.channel_shuffle(x, group)
+
+
 test_cases = [
     ('SoftMaxGrad', {
         'block': SoftMaxGrad(VirtualNetWithLoss(P.Softmax())),
@@ -665,6 +676,11 @@ test_cases = [
         'desc_inputs': [Tensor(np.ones([2, 10, 5]))],
         'skip': ['backward']
     }),
+    ('ChannelShuffleFunc', {
+        'block': ChannelShuffleFunc(),
+        'desc_inputs': [Tensor(np.arange(1 * 4 * 2 * 2).reshape(1, 4, 2, 2).astype(np.int16)), 2],
+        'skip': ['backward']
+    })
 ]
 
 test_cases_for_verify_exception = [
