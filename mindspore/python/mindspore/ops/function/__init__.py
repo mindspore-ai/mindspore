@@ -335,6 +335,8 @@ from .nn_func import (
     flip,
     fliplr,
     flipud,
+    fractional_max_pool2d,
+    fractional_max_pool3d,
     pixel_shuffle,
     pixel_unshuffle,
     hardshrink,

@@ -32,6 +32,8 @@ Neural Network
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
     mindspore.ops.flatten
+    mindspore.ops.fractional_max_pool2d
+    mindspore.ops.fractional_max_pool3d
     mindspore.ops.interpolate
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d

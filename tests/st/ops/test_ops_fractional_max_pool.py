@@ -17,24 +17,17 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import ops
 import mindspore.common.dtype as mstype
 import mindspore as ms
 
 
 class FractionalMaxPool2dNet(nn.Cell):
-    """FractionalMaxPool2d"""
-
-    def __init__(self):
-        super(FractionalMaxPool2dNet, self).__init__()
-        _random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
-        self.pool1 = nn.FractionalMaxPool2d(kernel_size=2, output_size=(2, 2), _random_samples=_random_samples,
-                                            return_indices=True)
-        self.pool2 = nn.FractionalMaxPool2d(kernel_size=2, output_ratio=(0.5, 0.5), _random_samples=_random_samples,
-                                            return_indices=True)
+    """FractionalMaxPool2d ops"""
 
     def construct(self, x):
-        output1 = self.pool1(x)
-        output2 = self.pool2(x)
+        output1 = ops.fractional_max_pool2d(x, kernel_size=2, output_size=(2, 2), return_indices=True)
+        output2 = ops.fractional_max_pool2d(x, kernel_size=2, output_ratio=(0.5, 0.5), return_indices=True)
         return output1, output2
 
 
@@ -73,25 +66,19 @@ def test_fractional_maxpool2d_normal(mode):
 
 
 class FractionalMaxPool3dNet(nn.Cell):
-    """FractionalMaxPool3d"""
-
-    def __init__(self):
-        super(FractionalMaxPool3dNet, self).__init__()
-        _random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
-        self.pool1 = nn.FractionalMaxPool3d(kernel_size=(1.0, 1.0, 1.0), _random_samples=_random_samples,
-                                            output_size=(1, 1, 2), return_indices=True)
-        self.pool2 = nn.FractionalMaxPool3d(kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
-                                            _random_samples=_random_samples, return_indices=True)
+    """FractionalMaxPool3d ops"""
 
     def construct(self, x):
-        output1 = self.pool1(x)
-        output2 = self.pool2(x)
+        output1 = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_size=(1, 1, 2), return_indices=True)
+        output2 = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
+                                            return_indices=True)
         return output1, output2
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fractional_maxpool3d_normal(mode):
