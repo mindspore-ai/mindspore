@@ -97,10 +97,6 @@ bool PdistGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << kPdistGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  auto x_shape = inputs[1]->GetShapeVector();
-  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
-  x_dim_ = static_cast<int64_t>(x_shape_.size());
-  x_size_ = std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>());
   auto x_dtype_ = inputs[1]->GetDtype();
   switch (x_dtype_) {
     case kNumberTypeFloat32:
@@ -118,11 +114,14 @@ bool PdistGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 
 int PdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others) == KRET_RESIZE_FAILED) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return KRET_RESIZE_FAILED;
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
+  auto x_shape = inputs[1]->GetShapeVector();
+  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
+  x_dim_ = static_cast<int64_t>(x_shape_.size());
+  x_size_ = std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>());
   return 0;
 }
 

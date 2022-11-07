@@ -68,23 +68,21 @@ bool PdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   kernel_name_ = kernel_ptr->name();
   p_ = kernel_ptr->get_p();
-
-  auto input_shape = inputs[0]->GetShapeVector();
-  auto input_dim_ = input_shape.size();
-  h_ = input_shape[input_dim_ - kIndex2];
-  w_ = input_shape[input_dim_ - kIndex1];
   dtype_ = inputs[0]->GetDtype();
   return true;
 }
 
 int PdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others) == KRET_RESIZE_FAILED) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return KRET_RESIZE_FAILED;
+                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  return 0;
+  auto input_shape = inputs[0]->GetShapeVector();
+  auto input_dim_ = input_shape.size();
+  h_ = input_shape[input_dim_ - kIndex2];
+  w_ = input_shape[input_dim_ - kIndex1];
+  return KRET_OK;
 }
 
 template <typename F, typename T>
