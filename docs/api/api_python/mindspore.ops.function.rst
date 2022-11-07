@@ -146,6 +146,7 @@ mindspore.ops.function
     mindspore.ops.absolute
     mindspore.ops.accumulate_n
     mindspore.ops.acos
+    mindspore.ops.arccos
     mindspore.ops.acosh
     mindspore.ops.add
     mindspore.ops.addcdiv

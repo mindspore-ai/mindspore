@@ -218,6 +218,7 @@ from .math_func import (
     tan,
     asin,
     acos,
+    arccos,
     atan,
     arcsin,
     arccosh,

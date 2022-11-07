@@ -144,6 +144,7 @@ Element-by-Element Operations
     :template: classtemplate.rst
 
     mindspore.ops.abs
+    mindspore.ops.absolute
     mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.acosh
@@ -151,6 +152,7 @@ Element-by-Element Operations
     mindspore.ops.addcdiv
     mindspore.ops.addcmul
     mindspore.ops.addn
+    mindspore.ops.arccos
     mindspore.ops.arccosh
     mindspore.ops.arcsin
     mindspore.ops.arctan

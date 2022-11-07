@@ -28,6 +28,7 @@
 
     mindspore.Tensor.abs
     mindspore.Tensor.absolute
+    mindspore.Tensor.acos
     mindspore.Tensor.add
     mindspore.Tensor.addcdiv
     mindspore.Tensor.addcmul
@@ -38,6 +39,7 @@
     mindspore.Tensor.amin
     mindspore.Tensor.any
     mindspore.Tensor.approximate_equal
+    mindspore.Tensor.arccos
     mindspore.Tensor.arccosh
     mindspore.Tensor.arcsin
     mindspore.Tensor.arcsinh
