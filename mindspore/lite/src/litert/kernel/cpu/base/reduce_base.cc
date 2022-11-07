@@ -119,11 +119,11 @@ int ReduceBaseCPUKernel::Prepare() {
       }
     } else {
       MS_CHECK_FALSE(axes_tensor->Size() == 0, RET_ERROR);
-      memcpy(axes_, axes_tensor->data(), axes_tensor->Size());
+      (void)memcpy(axes_, axes_tensor->data(), axes_tensor->Size());
     }
   } else {
     num_axes_ = reduce_param->num_axes_;
-    memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
+    (void)memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
   }
 
   mode_ = reduce_param->mode_;

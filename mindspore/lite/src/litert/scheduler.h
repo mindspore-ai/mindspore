@@ -64,7 +64,7 @@ class Scheduler {
  private:
   bool CheckRunNCXPass();
   int SchedulePreProcess();
-  int CheckInputParam(std::vector<kernel::KernelExec *> *dst_kernels);
+  int CheckInputParam(const std::vector<kernel::KernelExec *> *dst_kernels) const;
   void FindNodeInoutTensors(const LiteGraph::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);
   LiteGraph::Node *NodeInputIsPartial(const LiteGraph::Node *node);
   int InferPartialShape(const LiteGraph::Node *node);

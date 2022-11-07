@@ -36,7 +36,7 @@ namespace mindspore::lite {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 class ControlFlowScheduler {
  public:
-  ControlFlowScheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, std::vector<Tensor *> *src_tensors)
+  ControlFlowScheduler(InnerContext *ctx, const mindspore::Context *, std::vector<Tensor *> *src_tensors)
       : context_(ctx), src_tensors_(src_tensors) {}
   ~ControlFlowScheduler() = default;
   int Schedule(std::vector<kernel::KernelExec *> *dst_kernels);

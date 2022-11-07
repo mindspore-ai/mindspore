@@ -35,7 +35,7 @@ OpParameter *PopulateRandomStandardNormalParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc RandomParam failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(RandomNormalParam));
+  (void)memset(param, 0, sizeof(RandomNormalParam));
 
   param->op_parameter_.type_ = primitive->value_type();
   if (value->seed2() != 0) {

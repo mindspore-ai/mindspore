@@ -34,7 +34,7 @@ void LiteExitOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *conte
   }
 
   auto ret = InitInputData();
-  input_op_datas_.erase(op_uuid);
+  (void)input_op_datas_.erase(op_uuid);
   if (ret != RET_OK) {
     context->SetFailed(ret);
     return;
@@ -72,7 +72,7 @@ int LiteExitOpActor::SetInputShape() {
   return RET_OK;
 }
 
-void LiteExitOpActor::SetEntranceInputAID(OpData<Tensor> *inputs) {
+void LiteExitOpActor::SetEntranceInputAID(const OpData<Tensor> *inputs) {
   if (inputs->index_ == kEntranceTensorIndex) {
     entrance_input_aid_ = inputs->op_id_;
   }
@@ -185,7 +185,7 @@ int LiteExitOpActor::CreateMappingInfo() {
       return RET_ERROR;
     }
     MappingInfo info(partial, call_node);
-    all_mapping_info_.emplace_back(info);
+    (void)all_mapping_info_.emplace_back(info);
   }
   return RET_OK;
 }

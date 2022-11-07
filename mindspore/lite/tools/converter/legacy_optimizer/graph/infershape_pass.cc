@@ -516,7 +516,7 @@ int InferShapePass::InferSwitchOrSwitchLayerNode(const bool &is_tail_call, const
   for (auto &partial_node : all_partial_nodes) {
     if (partial_cnode_inferred_.find(partial_node) == partial_cnode_inferred_.end()) {
       to_process.push_back(partial_node);
-      partial_cnode_inferred_.insert(partial_node);
+      (void)partial_cnode_inferred_.insert(partial_node);
     }
   }
 

@@ -40,7 +40,7 @@ void LiteEntranceOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *c
     inputs_data_[item->index_] = item->data_;
   }
 
-  InitInputData();
+  (void)InitInputData();
   input_actor_id_data_[inputs->op_id_].clear();
   AsyncOutput(context);
   SetOutputData(context);

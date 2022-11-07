@@ -241,7 +241,7 @@ class MS_API BenchmarkBase {
   int CompareStringData(const std::string &name, const std::vector<std::string> &calib_strings,
                         const std::vector<std::string> &output_strings);
 
-  int InitDumpConfigFromJson(char *path);
+  int InitDumpConfigFromJson(const char *path);
 
   int InitCallbackParameter();
 
@@ -450,7 +450,7 @@ class MS_API BenchmarkBase {
     MS_ASSERT(data != nullptr);
     size_t elements_num = size / sizeof(T);
     (void)std::generate_n(static_cast<T *>(data), elements_num,
-                          [&]() { return static_cast<T>(distribution(random_engine_)); });
+                          [&, this]() { return static_cast<T>(distribution(random_engine_)); });
   }
 
   bool CheckShapeValid(const std::vector<size_t> &calib_output_shape, const std::vector<size_t> &real_output_shape) {

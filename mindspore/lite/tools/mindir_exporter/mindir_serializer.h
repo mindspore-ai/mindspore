@@ -54,7 +54,7 @@ class MindIRSerializer {
   int CreateParameterDir();
   std::shared_ptr<Parameter> GetFgParaAccordingToProtoName(const std::string &proto_name);
   int ChangeParaDataFile(const std::string &file);
-  bool IsSystemLittleEndidan();
+  bool IsSystemLittleEndidan() const;
   int GetDataFile(const std::string &data_file_name, std::ofstream *fout, int64_t *parameter_size, int64_t *offset);
   std::string CreateExternalPath(const std::string &external_file);
   int RemoveQuantParameterHolder(FuncGraphPtr func_graph);

@@ -40,7 +40,7 @@ bool DeleteDirRecursively(const std::string &dir_name) {
   std::vector<std::string> file_names{};
   while ((dirent = readdir(dir)) != 0) {
     if (strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0) {
-      file_names.push_back(dirent->d_name);
+      file_names.emplace_back(dirent->d_name);
     }
   }
   for (auto &file_name : file_names) {
@@ -213,7 +213,10 @@ std::shared_ptr<Parameter> MindIRSerializer::GetFgParaAccordingToProtoName(const
 int MindIRSerializer::ChangeParaDataFile(const std::string &file) {
   auto real_path = CreateExternalPath(file);
   if (fs_->FileExist(real_path)) {
-    fs_->DeleteFile(real_path);
+    if (!fs_->DeleteFile(real_path)) {
+      MS_LOG(ERROR) << "delete file failed.";
+      return RET_ERROR;
+    }
   }
   ChangeFileMode(real_path, S_IWUSR);
   data_fs_ = OpenFile(real_path, std::ios::app);
@@ -223,18 +226,17 @@ int MindIRSerializer::ChangeParaDataFile(const std::string &file) {
   }
   char front_info[OFFSET]{0};
   front_info[0] = IsSystemLittleEndidan();
-  data_fs_->write(front_info, OFFSET);
+  (void)data_fs_->write(front_info, OFFSET);
   return RET_OK;
 }
 
-bool MindIRSerializer::IsSystemLittleEndidan() {
+bool MindIRSerializer::IsSystemLittleEndidan() const {
   int check = 0x01;
   auto address = reinterpret_cast<char *>(&check);
   return *address == 0x01;
 }
 
-int MindIRSerializer::GetDataFile(const std::string &data_file_name, std::ofstream *fout, int64_t *parameter_size,
-                                  int64_t *offset) {
+int MindIRSerializer::GetDataFile(const std::string &data_file_name, std::ofstream *fout, int64_t *, int64_t *offset) {
   if (offset == nullptr) {
     MS_LOG(ERROR) << "offset is nullptr.";
     return RET_NULL_PTR;
@@ -251,7 +253,7 @@ int MindIRSerializer::GetDataFile(const std::string &data_file_name, std::ofstre
 
   std::byte place_holder[OFFSET];
   fout = new std::ofstream;
-  fout->write(reinterpret_cast<const char *>(place_holder), *offset);
+  (void)fout->write(reinterpret_cast<const char *>(place_holder), *offset);
 
   return RET_OK;
 }
@@ -287,7 +289,7 @@ int MindIRSerializer::SplitSave() {
   data_fs_ = OpenFile(external_local_path, std::ios::out | std::ios::binary | std::ios::trunc);
   if (data_fs_ == nullptr) {
     MS_LOG(ERROR) << "Open " << external_local_path << " failed";
-    return false;
+    return RET_ERROR;
   }
   ret = ChangeParaDataFile(external_local);
   if (ret != RET_OK) {

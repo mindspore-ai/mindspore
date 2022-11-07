@@ -682,13 +682,12 @@ int LiteSession::SetTensorInitRefCount(const Model *model) {
   }
 
   if (!non_tail_call_kernels_.empty()) {
-    return SetNonTaiCallSubgraphOutputInitRefCount(non_tail_call_kernels_);
+    return SetNonTaiCallSubgraphOutputInitRefCount();
   }
   return RET_OK;
 }
 
-int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
-  const std::vector<kernel::KernelExec *> &non_tail_call_kernels) {
+int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount() {
   for (auto call_kernel : non_tail_call_kernels_) {
     auto call_output = call_kernel->out_tensors();
     auto all_out_subgraphs = kernel::KernelExecUtil::GetCallInputPartialsCorrespondingOutputSubgraph(call_kernel);

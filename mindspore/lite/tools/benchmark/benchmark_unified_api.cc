@@ -862,27 +862,27 @@ int BenchmarkUnifiedApi::MarkPerformance() {
   if (flags_->time_profiling_) {
     const std::vector<std::string> per_op_name = {"opName", "avg(ms)", "percent", "calledTimes", "opTotalTime"};
     const std::vector<std::string> per_op_type = {"opType", "avg(ms)", "percent", "calledTimes", "opTotalTime"};
-    PrintResult(per_op_name, op_times_by_name_);
-    PrintResult(per_op_type, op_times_by_type_);
+    (void)PrintResult(per_op_name, op_times_by_name_);
+    (void)PrintResult(per_op_type, op_times_by_type_);
 #ifdef ENABLE_ARM64
   } else if (flags_->perf_profiling_) {
     if (flags_->perf_event_ == "CACHE") {
       const std::vector<std::string> per_op_name = {"opName", "cache ref(k)", "cache ref(%)", "miss(k)", "miss(%)"};
       const std::vector<std::string> per_op_type = {"opType", "cache ref(k)", "cache ref(%)", "miss(k)", "miss(%)"};
-      PrintPerfResult(per_op_name, op_perf_by_name_);
-      PrintPerfResult(per_op_type, op_perf_by_type_);
+      (void)PrintPerfResult(per_op_name, op_perf_by_name_);
+      (void)PrintPerfResult(per_op_type, op_perf_by_type_);
     } else if (flags_->perf_event_ == "STALL") {
       const std::vector<std::string> per_op_name = {"opName", "frontend(k)", "frontend(%)", "backendend(k)",
                                                     "backendend(%)"};
       const std::vector<std::string> per_op_type = {"opType", "frontend(k)", "frontend(%)", "backendend(k)",
                                                     "backendend(%)"};
-      PrintPerfResult(per_op_name, op_perf_by_name_);
-      PrintPerfResult(per_op_type, op_perf_by_type_);
+      (void)PrintPerfResult(per_op_name, op_perf_by_name_);
+      (void)PrintPerfResult(per_op_type, op_perf_by_type_);
     } else {
       const std::vector<std::string> per_op_name = {"opName", "cycles(k)", "cycles(%)", "ins(k)", "ins(%)"};
       const std::vector<std::string> per_op_type = {"opType", "cycles(k)", "cycles(%)", "ins(k)", "ins(%)"};
-      PrintPerfResult(per_op_name, op_perf_by_name_);
-      PrintPerfResult(per_op_type, op_perf_by_type_);
+      (void)PrintPerfResult(per_op_name, op_perf_by_name_);
+      (void)PrintPerfResult(per_op_type, op_perf_by_type_);
     }
 #endif
   }
