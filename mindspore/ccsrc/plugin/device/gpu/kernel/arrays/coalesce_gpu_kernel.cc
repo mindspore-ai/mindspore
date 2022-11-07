@@ -59,17 +59,25 @@ bool CoalesceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
-  if (helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) != 0) {
-    return false;
+  cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+  int ret = helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr);
+  int FALSE_1 = 1;
+  int FALSE_2 = 2;
+  int FALSE_3 = 3;
+  if (ret == FALSE_1) {
+    MS_EXCEPTION(ValueError) << "For coalesce, indices cannot be less than 0";
+  }
+  if (ret == FALSE_2) {
+    MS_EXCEPTION(ValueError) << "For coalesce, shape must be greater than 0";
+  }
+  if (ret == FALSE_3) {
+    MS_EXCEPTION(ValueError) << "For coalesce, indices must be less than shape of the corresponding dimension";
   }
   return true;
 }
 
 bool CoalesceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
-  base_operator_ = base_operator;
-  inputs_ = inputs;
-  outputs_ = outputs;
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
@@ -84,35 +92,34 @@ int CoalesceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs,
                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   std::vector<std::vector<int64_t>> input_shapes;
-  std::vector<std::vector<int64_t>> output_shapes;
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
       return KRET_UNKNOWN_SHAPE;
     }
+    input_shapes.emplace_back(input_shape);
   }
-  output_shapes.emplace_back(outputs.at(kIndex0)->GetShapeVector());
-  output_shapes.emplace_back(outputs.at(kIndex1)->GetShapeVector());
-  output_shapes.emplace_back(outputs.at(kIndex2)->GetShapeVector());
-  input_shapes.emplace_back(inputs.at(kIndex0)->GetShapeVector());
-  input_shapes.emplace_back(inputs.at(kIndex1)->GetShapeVector());
-  input_shapes.emplace_back(inputs.at(kIndex2)->GetShapeVector());
-  if (First_Resize == true) {
-    if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
-      return KRET_RESIZE_FAILED;
-    }
-    First_Resize = false;
+  auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
+  auto input_shape_shape = inputs[kIndex2]->GetShapeVector();
+  // push back the max shape to output_size_list_
+  auto output_max_indices_shape = input_indices_shape;
+  std::vector<int64_t> output_max_values_shape = {input_indices_shape[1]};
+  std::vector<std::vector<int64_t>> output_shapes;
+  output_shapes.emplace_back(output_max_indices_shape);
+  output_shapes.emplace_back(output_max_values_shape);
+  output_shapes.emplace_back(input_shape_shape);
+  if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
+    return KRET_RESIZE_FAILED;
   }
   input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
-  base_operator_ = base_operator;
-  inputs_ = inputs;
   outputs_ = outputs;
   return KRET_OK;
 }
 
 void CoalesceGpuKernelMod::SyncData() {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "Coalesce cudaStreamSynchronized failed");
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   size_t output_num = outputs_.size();
   for (size_t i = 0; i < output_num; ++i) {

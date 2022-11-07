@@ -27,23 +27,25 @@
 namespace mindspore {
 namespace cukernel {
 constexpr size_t INPUT_NUM = 3;
-constexpr size_t WORK_NUM = 1;
-constexpr size_t OUTPUT_NUM = 3;
-constexpr int SHAPE = 2;
+constexpr int DIM0 = 0;
+constexpr int DIM1 = 1;
+constexpr int DIM2 = 2;
 
 template <typename T>
 class CoalesceHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit CoalesceHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
-      : GpuKernelHelperBase(kernel_name, device_id) {
-    values_num = 1;
-    output_shape_num = 0;
-    indices_num = 1;
-    shape_elements = 1;
-    is_null_input_ = false;
-  }
+      : GpuKernelHelperBase(kernel_name, device_id) {}
 
   virtual ~CoalesceHelperGpuKernel() = default;
+  void ResetResource() override {
+    values_num_ = 1;
+    indices_num_ = 1;
+    shape_elements_ = 1;
+    input_size_list_.clear();
+    work_size_list_.clear();
+    output_size_list_.clear();
+  }
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     ResetResource();
@@ -51,34 +53,30 @@ class CoalesceHelperGpuKernel : public GpuKernelHelperBase {
     if (flag != 0) {
       return flag;
     }
-    size_t workspace_size;
-    for (const auto &val : input_shapes[1]) {
-      values_num *= val;
+    for (const auto &val : input_shapes[DIM1]) {
+      values_num_ *= val;
     }
-    for (const auto &val : input_shapes[0]) {
-      indices_num *= val;
+    for (const auto &val : input_shapes[DIM0]) {
+      indices_num_ *= val;
     }
-    indices_num = indices_num / values_num;
-    for (const auto &val : input_shapes[2]) {
-      shape_elements *= val;
+    indices_num_ = indices_num_ / values_num_;
+    for (const auto &val : input_shapes[DIM2]) {
+      shape_elements_ *= val;
     }
 
-    input_size_list_[1] = values_num * sizeof(T);
-    workspace_size = values_num * sizeof(int64_t);
+    input_size_list_[1] = values_num_ * sizeof(T);
+    size_t workspace_size = values_num_ * sizeof(int64_t);
     work_size_list_.emplace_back(workspace_size);
     work_size_list_.emplace_back(workspace_size);
     work_size_list_.emplace_back(workspace_size);
-    output_size_list_.emplace_back(input_size_list_[0]);
-    output_size_list_.emplace_back(input_size_list_[1]);
-    output_size_list_.emplace_back(shape_elements * sizeof(int64_t));
+    output_size_list_.emplace_back(input_size_list_[DIM0]);
+    output_size_list_.emplace_back(input_size_list_[DIM1]);
+    output_size_list_.emplace_back(shape_elements_ * sizeof(int64_t));
     return 0;
   }
 
   int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
               const std::vector<void *> &work_ptrs, void *cuda_stream) override {
-    if (is_null_input_) {
-      return 0;
-    }
     int64_t *input_indices = nullptr;
     T *input_values = nullptr;
     int64_t *input_shape = nullptr;
@@ -89,61 +87,34 @@ class CoalesceHelperGpuKernel : public GpuKernelHelperBase {
     T *output_value = nullptr;
     int64_t *output_shape = nullptr;
 
-    int flag = GetDeviceAddress<int64_t>(input_ptrs, 0, kernel_name_, &input_indices);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<T>(input_ptrs, 1, kernel_name_, &input_values);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<int64_t>(input_ptrs, SHAPE, kernel_name_, &input_shape);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<int64_t>(work_ptrs, 0, kernel_name_, &flatten_input_indices);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<int64_t>(work_ptrs, 1, kernel_name_, &unique_indices);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<int64_t>(work_ptrs, SHAPE, kernel_name_, &origin_indices);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<int64_t>(output_ptrs, 0, kernel_name_, &output_indices);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<T>(output_ptrs, 1, kernel_name_, &output_value);
-    if (flag != 0) {
-      return flag;
-    }
-    flag = GetDeviceAddress<int64_t>(output_ptrs, SHAPE, kernel_name_, &output_shape);
-    if (flag != 0) {
-      return flag;
-    }
+    (void)GetDeviceAddress<int64_t>(input_ptrs, DIM0, kernel_name_, &input_indices);
+    (void)GetDeviceAddress<T>(input_ptrs, DIM1, kernel_name_, &input_values);
+    (void)GetDeviceAddress<int64_t>(input_ptrs, DIM2, kernel_name_, &input_shape);
+    (void)GetDeviceAddress<int64_t>(work_ptrs, DIM0, kernel_name_, &flatten_input_indices);
+    (void)GetDeviceAddress<int64_t>(work_ptrs, DIM1, kernel_name_, &unique_indices);
+    (void)GetDeviceAddress<int64_t>(work_ptrs, DIM2, kernel_name_, &origin_indices);
+    (void)GetDeviceAddress<int64_t>(output_ptrs, DIM0, kernel_name_, &output_indices);
+    (void)GetDeviceAddress<T>(output_ptrs, DIM1, kernel_name_, &output_value);
+    (void)GetDeviceAddress<int64_t>(output_ptrs, DIM2, kernel_name_, &output_shape);
+    int ret_flag_host = 0;
 
-    output_shape_num = Coalesce(origin_indices, unique_indices, shape_elements, indices_num, values_num,
-                                flatten_input_indices, input_indices, input_values, input_shape, output_indices,
-                                output_value, output_shape, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
-    return 0;
+    output_shape_num_ =
+      Coalesce(origin_indices, unique_indices, shape_elements_, indices_num_, values_num_, &ret_flag_host,
+               flatten_input_indices, input_indices, input_values, input_shape, output_indices, output_value,
+               output_shape, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    return ret_flag_host;
   }
   TensorInfo GetOutputTensorInfo() override {
     TensorInfo dyn_out;
-    dyn_out.shapes.push_back({{output_shape_num}});
+    dyn_out.shapes.push_back({{output_shape_num_}});
     return dyn_out;
   }
 
  private:
-  bool is_null_input_;
-  size_t input_size_;
-  size_t values_num;
-  int output_shape_num;
-  size_t indices_num;
-  size_t shape_elements;
+  size_t values_num_;
+  int output_shape_num_;
+  size_t indices_num_;
+  size_t shape_elements_;
 };
 }  // namespace cukernel
 }  // namespace mindspore
