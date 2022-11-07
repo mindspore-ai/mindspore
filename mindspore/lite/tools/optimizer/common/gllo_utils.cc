@@ -881,9 +881,10 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
   MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
   param_node->set_name(node_name);
 
+  MS_CHECK_TRUE_RET(!data.empty(), nullptr);
   std::vector<int64_t> shape_vector;
   shape_vector.push_back(data.size());
-  shape_vector.push_back(2);
+  shape_vector.push_back(data.at(0).size());
 
   std::vector<int32_t> data_1d;
   for (auto pair : data) {

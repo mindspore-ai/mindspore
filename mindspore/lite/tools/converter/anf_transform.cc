@@ -634,30 +634,18 @@ bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_
     return false;
   }
 
-  auto eliminate_cast_pass = std::make_shared<opt::EliminateRedundantCastPass>(param->fmk_type, param->train_model);
-  MS_CHECK_TRUE_RET(eliminate_cast_pass != nullptr, false);
-  if (!eliminate_cast_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run cast elimination pass failed.";
-    return false;
-  }
-
-  auto reduce_act_pass = std::make_shared<opt::ReduceSameActPass>();
-  MS_CHECK_TRUE_RET(reduce_act_pass != nullptr, false);
-  if (!reduce_act_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run reduce same act pass failed.";
-    return false;
-  }
-
-  auto split_one_pass = std::make_shared<opt::SplitOnePass>();
-  MS_CHECK_TRUE_RET(split_one_pass != nullptr, false);
-  if (!split_one_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run split one pass failed.";
-    return false;
-  }
-  auto mul_constant_pass = std::make_shared<opt::MulConstantPass>();
-  MS_CHECK_TRUE_RET(mul_constant_pass != nullptr, false);
-  if (!mul_constant_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run mul constant pass failed!";
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  MS_CHECK_TRUE_RET(optimizer != nullptr, false);
+  auto eliminate_pm = std::make_shared<opt::LitePassManager>("anf graph eliminate redundant pass manager", true);
+  MS_CHECK_TRUE_RET(eliminate_pm != nullptr, false);
+  eliminate_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(param->train_model));
+  eliminate_pm->AddPass(std::make_shared<opt::EliminateRedundantCastPass>(param->fmk_type, param->train_model));
+  eliminate_pm->AddPass(std::make_shared<opt::ReduceSameActPass>());
+  eliminate_pm->AddPass(std::make_shared<opt::SplitOnePass>());
+  eliminate_pm->AddPass(std::make_shared<opt::MulConstantPass>());
+  optimizer->AddPassManager(eliminate_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run graph convert pass failed.";
     return false;
   }
   return true;
