@@ -17,22 +17,38 @@
 
 #include "mindspore/core/ops/op_utils.h"
 
-namespace {
-const size_t kOutputNum = 1;
-const size_t kInputNum = 3;
-}  // namespace
-
 namespace mindspore {
 namespace kernel {
-void BincountCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_arr_sizes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  input_size_sizes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  input_weights_sizes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
-  dt_arr_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  dt_weights_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex2);
-  output_sizes_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+bool BincountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  constexpr size_t input_num = 3;
+  constexpr size_t output_num = 1;
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  dt_arr_ = inputs[kIndex0]->GetDtype();
+  dt_weights_ = inputs[kIndex2]->GetDtype();
+  return true;
+}
+
+int BincountCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input_arr_sizes_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_size_sizes_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  input_weights_sizes_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
+  output_sizes_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename T_in, typename T_out>
@@ -72,8 +88,6 @@ void BincountCpuKernelMod::SetMap() {
 
 bool BincountCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                                   const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   const size_t array_num = SizeOf(input_arr_sizes_);
   const size_t weights_num = SizeOf(input_weights_sizes_);
   if (array_num != weights_num) {

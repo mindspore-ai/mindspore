@@ -30,8 +30,15 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
   auto arr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
+  // support dynamic rank
   if (IsDynamicRank(arr_shape) || IsDynamicRank(size_shape) || IsDynamicRank(w_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
+  // support dynamic shape
+  if (IsDynamic(arr_shape) || IsDynamic(size_shape) || IsDynamic(w_shape)) {
+    ShapeVector shape_out{abstract::Shape::kShapeDimAny};
+    return std::make_shared<abstract::Shape>(shape_out);
   }
   CheckAndConvertUtils::CheckInteger("size", size_shape.size(), kEqual, 0, primitive->name());
   auto size_value_ptr = input_args[kInputIndex1]->BuildValue();
@@ -45,9 +52,8 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("size", out_shape, primitive->name());
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    std::vector<int64_t> out_shape;
-    (void)out_shape.emplace_back(-1);
-    return std::make_shared<abstract::Shape>(out_shape);
+    ShapeVector shape_out{abstract::Shape::kShapeDimAny};
+    return std::make_shared<abstract::Shape>(shape_out);
   }
 }
 TypePtr BincountInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
