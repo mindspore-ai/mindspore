@@ -1499,7 +1499,7 @@ class GLU(Cell):
         - **x** (Tensor) - :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`, with the same dtype as the `x`.
+        Tensor, the same dtype as the `x`, with the shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
