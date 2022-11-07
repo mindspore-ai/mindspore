@@ -30,6 +30,7 @@
 #include <cfloat>
 #include <utility>
 #include <algorithm>
+#include <nlohmann/json.hpp>
 #include "include/api/model.h"
 #include "include/api/types.h"
 #include "include/api/context.h"
@@ -54,6 +55,18 @@ enum MS_API DataType { kImage = 0, kBinary = 1 };
 
 constexpr float relativeTolerance = 1e-5;
 constexpr float absoluteTolerance = 1e-8;
+extern const std::unordered_map<int, std::string> kTypeIdMap;
+extern const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap;
+
+namespace dump {
+constexpr auto kConfigPath = "MINDSPORE_DUMP_CONFIG";
+constexpr auto kSettings = "common_dump_settings";
+constexpr auto kMode = "dump_mode";
+constexpr auto kPath = "path";
+constexpr auto kNetName = "net_name";
+constexpr auto kInputOutput = "input_output";
+constexpr auto kKernels = "kernels";
+}  // namespace dump
 
 template <typename T>
 float TensorSum(const void *data, int size) {
@@ -122,6 +135,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::string loss_name_ = "";
   std::string inference_file_ = "";
   bool unified_api_ = false;
+  bool dump_tensor_data_ = false;
 };
 
 class MS_API NetTrain {
@@ -193,6 +207,7 @@ class MS_API NetTrain {
     }
     return meanError;
   }
+  int InitDumpConfigFromJson(std::string path);
 
  private:
   // call GenerateInputData or ReadInputFile to init inputTensors
@@ -218,6 +233,10 @@ class MS_API NetTrain {
                                   const std::shared_ptr<mindspore::Context> &context,
                                   const std::shared_ptr<TrainCfg> &train_cfg, int epochs);
   int InitCallbackParameter();
+
+  int InitDumpTensorDataCallbackParameter();
+
+  int InitTimeProfilingCallbackParameter();
 
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
@@ -280,6 +299,8 @@ class MS_API NetTrain {
 
   mindspore::MSKernelCallBack before_call_back_{nullptr};
   mindspore::MSKernelCallBack after_call_back_{nullptr};
+  nlohmann::json dump_cfg_json_;
+  std::string dump_file_output_dir_;
 };
 
 int MS_API RunNetTrain(int argc, const char **argv);

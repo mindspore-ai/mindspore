@@ -42,6 +42,21 @@ constexpr int kField4 = 4;
 constexpr int kFieldsToPrint = 5;
 constexpr int kPrintOffset = 4;
 static const int kTHOUSAND = 1000;
+constexpr int kDumpInputsAndOutputs = 0;
+constexpr int kDumpOutputs = 2;
+
+const std::unordered_map<int, std::string> kTypeIdMap{
+  {kNumberTypeFloat16, "Float16"}, {kNumberTypeFloat, "Float32"},    {kNumberTypeFloat32, "Float32"},
+  {kNumberTypeInt8, "Int8"},       {kNumberTypeInt16, "Int16"},      {kNumberTypeInt, "Int32"},
+  {kNumberTypeInt32, "Int32"},     {kNumberTypeUInt8, "UInt8"},      {kNumberTypeUInt16, "UInt16"},
+  {kNumberTypeUInt, "UInt32"},     {kNumberTypeUInt32, "UInt32"},    {kObjectTypeString, "String"},
+  {kNumberTypeBool, "Bool"},       {kObjectTypeTensorType, "Tensor"}};
+
+const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap{
+  {mindspore::NCHW, "NCHW"}, {mindspore::NHWC, "NHWC"},     {mindspore::NHWC4, "NHWC4"}, {mindspore::HWKC, "HWKC"},
+  {mindspore::HWCK, "HWCK"}, {mindspore::KCHW, "KCHW"},     {mindspore::CKHW, "CKHW"},   {mindspore::KHWC, "KHWC"},
+  {mindspore::CHWK, "CHWK"}, {mindspore::HW, "HW"},         {mindspore::HW4, "HW4"},     {mindspore::NC, "NC"},
+  {mindspore::NC4, "NC4"},   {mindspore::NC4HW4, "NC4HW4"}, {mindspore::NCDHW, "NCDHW"}};
 
 std::function<int(NetTrainFlags *)> NetTrain::nr_cb_ = nullptr;
 
@@ -239,6 +254,30 @@ int NetTrain::CompareOutput() {
   }
 }
 
+std::string GenerateOutputFileName(mindspore::MSTensor *tensor, const std::string &op_name,
+                                   const std::string &file_type, const size_t &idx) {
+  std::string file_name = op_name;
+  auto pos = file_name.find_first_of('/');
+  while (pos != std::string::npos) {
+    file_name.replace(pos, 1, ".");
+    pos = file_name.find_first_of('/');
+  }
+  file_name += "_" + file_type + "_" + std::to_string(idx) + "_shape_";
+  for (const auto &dim : tensor->Shape()) {
+    file_name += std::to_string(dim) + "_";
+  }
+  if (kTypeIdMap.find(static_cast<int>(tensor->DataType())) != kTypeIdMap.end()) {
+    file_name += kTypeIdMap.at(static_cast<int>(tensor->DataType()));
+  }
+  auto tensor_format = tensor->format();
+  if (kTensorFormatMap.find(tensor_format) != kTensorFormatMap.end()) {
+    file_name += "_" + kTensorFormatMap.at(tensor_format) + ".bin";
+  }
+
+  file_name += ".bin";
+  return file_name;
+}
+
 int NetTrain::MarkPerformance() {
   MS_LOG(INFO) << "Running train loops...";
   std::cout << "Running train loops..." << std::endl;
@@ -248,8 +287,7 @@ int NetTrain::MarkPerformance() {
 
   for (int i = 0; i < flags_->epochs_; i++) {
     auto start = GetTimeUs();
-    auto status =
-      flags_->time_profiling_ ? ms_model_.RunStep(before_call_back_, after_call_back_) : ms_model_.RunStep();
+    auto status = ms_model_.RunStep(before_call_back_, after_call_back_);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status;
@@ -297,7 +335,7 @@ int NetTrain::MarkAccuracy(bool enforce_accuracy) {
         return RET_ERROR;
     }
   }
-  auto status = ms_model_.RunStep();
+  auto status = ms_model_.RunStep(before_call_back_, after_call_back_);
   if (status != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
@@ -632,7 +670,55 @@ void NetTrain::CheckSum(MSTensor *tensor, const std::string &node_type, int id, 
   }
 }
 
-int NetTrain::InitCallbackParameter() {
+int NetTrain::InitDumpTensorDataCallbackParameter() {
+  // before callback
+  before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
+                          const std::vector<mindspore::MSTensor> &before_outputs, const MSCallBackParam &call_param) {
+    auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
+    auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
+    auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
+    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
+      if (input_output_mode == 0 || input_output_mode == 1) {
+        for (size_t i = 0; i < before_inputs.size(); i++) {
+          auto ms_tensor = before_inputs.at(i);
+          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name, "input", i);
+          auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
+          if (WriteToBin(abs_file_path, ms_tensor.MutableData(), ms_tensor.DataSize()) != RET_OK) {  // save to file
+            MS_LOG(ERROR) << "write tensor data to file failed.";
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
+  // after callback
+  after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
+                         const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
+    auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
+    auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
+    auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
+    if (dump_mode == kDumpInputsAndOutputs ||
+        std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
+      if (input_output_mode == kDumpInputsAndOutputs || input_output_mode == kDumpOutputs) {
+        for (size_t i = 0; i < after_outputs.size(); i++) {
+          auto ms_tensor = after_outputs.at(i);
+          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name, "output", i);
+          auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
+          if (WriteToBin(abs_file_path, ms_tensor.MutableData(), ms_tensor.DataSize()) != RET_OK) {  // save to file
+            MS_LOG(ERROR) << "write tensor data to file failed.";
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+  return RET_OK;
+}
+
+int NetTrain::InitTimeProfilingCallbackParameter() {
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
                           const std::vector<mindspore::MSTensor> &before_outputs,
@@ -691,6 +777,16 @@ int NetTrain::InitCallbackParameter() {
     return true;
   };
   return RET_OK;
+}
+
+int NetTrain::InitCallbackParameter() {
+  int ret = RET_OK;
+  if (flags_->dump_tensor_data_) {
+    ret = InitDumpTensorDataCallbackParameter();
+  } else if (flags_->time_profiling_) {
+    ret = InitTimeProfilingCallbackParameter();
+  }
+  return ret;
 }
 
 void NetTrainFlags::InitResizeDimsList() {
@@ -758,14 +854,25 @@ int NetTrain::Init() {
     return 1;
   }
 
-  if (flags_->time_profiling_) {
-    auto status = InitCallbackParameter();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Init callback Parameter failed.";
-      std::cerr << "Init callback Parameter failed." << std::endl;
+  // get dump data output path
+  auto dump_cfg_path = std::getenv(dump::kConfigPath);
+  if (dump_cfg_path != nullptr) {
+    flags_->dump_tensor_data_ = true;
+    if (InitDumpConfigFromJson(dump_cfg_path) != RET_OK) {
+      MS_LOG(ERROR) << "parse dump config file failed.";
       return RET_ERROR;
     }
+  } else {
+    MS_LOG(INFO) << "No MINDSPORE_DUMP_CONFIG in env, don't need to dump data";
   }
+
+  auto status = InitCallbackParameter();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Init callback Parameter failed.";
+    std::cerr << "Init callback Parameter failed." << std::endl;
+    return RET_ERROR;
+  }
+
   flags_->InitResizeDimsList();
   if (!flags_->resize_dims_.empty() && !flags_->input_data_list_.empty() &&
       flags_->resize_dims_.size() != flags_->input_data_list_.size()) {
@@ -778,6 +885,70 @@ int NetTrain::Init() {
 
 namespace {
 constexpr int kNumToPrint = 5;
+}
+
+int NetTrain::InitDumpConfigFromJson(std::string path) {
+  auto real_path = RealPath(path.c_str());
+  std::ifstream ifs(real_path);
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "file: " << real_path << " is not exist";
+    return RET_ERROR;
+  }
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "file: " << real_path << " open failed";
+    return RET_ERROR;
+  }
+
+  try {
+    dump_cfg_json_ = nlohmann::json::parse(ifs);
+  } catch (const nlohmann::json::parse_error &error) {
+    MS_LOG(ERROR) << "parse json file failed, please check your file.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings] == nullptr) {
+    MS_LOG(ERROR) << "\"common_dump_settings\" is required.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kMode] == nullptr) {
+    MS_LOG(ERROR) << "\"dump_mode\" is required.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kPath] == nullptr) {
+    MS_LOG(ERROR) << "\"path\" is required.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kNetName] == nullptr) {
+    dump_cfg_json_[dump::kSettings][dump::kNetName] = "default";
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kInputOutput] == nullptr) {
+    dump_cfg_json_[dump::kSettings][dump::kInputOutput] = 0;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kKernels] != nullptr &&
+      !dump_cfg_json_[dump::kSettings][dump::kKernels].empty()) {
+    if (dump_cfg_json_[dump::kSettings][dump::kMode] == 0) {
+      MS_LOG(ERROR) << R"("dump_mode" should be 1 when "kernels" isn't empty.)";
+      return RET_ERROR;
+    }
+  }
+
+  auto abs_path = dump_cfg_json_[dump::kSettings][dump::kPath].get<std::string>();
+  auto net_name = dump_cfg_json_[dump::kSettings][dump::kNetName].get<std::string>();
+  if (abs_path.back() == '\\' || abs_path.back() == '/') {
+    dump_file_output_dir_ = abs_path + net_name;
+  } else {
+#ifdef _WIN32
+    dump_file_output_dir_ = abs_path + "\\" + net_name;
+#else
+    dump_file_output_dir_ = abs_path + "/" + net_name;
+#endif
+  }
+
+  auto status = CreateOutputDir(&dump_file_output_dir_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "create data output directory failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int NetTrain::PrintResult(const std::vector<std::string> &title,
