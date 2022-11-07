@@ -122,7 +122,6 @@ class WeightQuantizer : public Quantizer {
  private:
   bool is_auto_tune_{false};
   bool is_mixed_bit_{false};
-  bool inference_dequant_{false};
   bool linear_quant_{true};
   size_t bit_num_{8};
   double mixed_bit_init_scale_ = 0.02;

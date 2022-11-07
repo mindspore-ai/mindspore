@@ -83,6 +83,11 @@ enum InsertDirection {
   BACKWARD,
 };
 
+enum DequantStrategy {
+  DEFAULT,  // initial phase to dequant
+  ON_THE_FLY,
+};
+
 struct CommonQuantParam {
   schema::QuantType quant_type = schema::QuantType_QUANT_NONE;
   int bit_num = 8;
@@ -94,6 +99,10 @@ struct CommonQuantParam {
   std::set<std::string> skip_quant_node;
   int thread_num = 4;
   bool enable_encode = true;
+};
+
+struct WeightQuantParam {
+  DequantStrategy dequant_strategy = DEFAULT;
 };
 
 struct MixedBitWeightQuantParam {

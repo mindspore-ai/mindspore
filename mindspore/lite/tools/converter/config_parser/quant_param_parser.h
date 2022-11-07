@@ -27,6 +27,7 @@ class QuantParamParser {
   static int ParseMixedBitWeightQuant(const MixedBitWeightQuantString &mixed_bit_weight_quant_string,
                                       quant::MixedBitWeightQuantParam *mixed_bit_weight_quant);
   static int ParseFullQuant(const FullQuantString &full_quant_string, quant::FullQuantParam *full_quant);
+  static int ParseWeightQuant(const WeightQuantString &weight_quant_string, quant::WeightQuantParam *weight_quant);
 
  private:
   static int ParseQuantType(const std::string &quant_type_str, schema::QuantType *quant_type);

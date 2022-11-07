@@ -53,6 +53,10 @@ struct MixedBitWeightQuantString {
   std::string max_iterations;
 };
 
+struct WeightQuantString {
+  std::string dequant_strategy;
+};
+
 struct FullQuantString {
   std::string activation_quant_method;
   std::string bias_correction;
@@ -98,6 +102,7 @@ class ConfigFileParser {
   CommonQuantString GetCommonQuantString() const { return this->common_quant_string_; }
   MixedBitWeightQuantString GetMixedBitWeightQuantString() const { return this->mixed_bit_quant_string_; }
   FullQuantString GetFullQuantString() const { return this->full_quant_string_; }
+  WeightQuantString GetWeightQuantString() const { return this->weight_quant_string_; }
   RegistryInfoString GetRegistryInfoString() const { return this->registry_info_string_; }
   AclOptionCfgString GetAclOptionCfgString() { return this->acl_option_cfg_string_; }
   MicroParamString GetMicroParamString() { return this->micro_param_string_; }
@@ -107,6 +112,7 @@ class ConfigFileParser {
   int ParseCommonQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseMixedBitQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseFullQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
+  int ParseWeightQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseRegistryInfoString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseAclOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int SetMapData(const std::map<std::string, std::string> &input_map,
@@ -118,6 +124,7 @@ class ConfigFileParser {
   CommonQuantString common_quant_string_;
   MixedBitWeightQuantString mixed_bit_quant_string_;
   FullQuantString full_quant_string_;
+  WeightQuantString weight_quant_string_;
   RegistryInfoString registry_info_string_;
   AclOptionCfgString acl_option_cfg_string_;
   MicroParamString micro_param_string_;

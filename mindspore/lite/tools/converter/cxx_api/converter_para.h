@@ -66,6 +66,7 @@ struct ConverterPara {
   lite::quant::CommonQuantParam commonQuantParam;
   lite::quant::MixedBitWeightQuantParam mixedBitWeightQuantParam;
   lite::quant::FullQuantParam fullQuantParam;
+  lite::quant::WeightQuantParam weightQuantParam;
   lite::preprocess::DataPreProcessParam dataPreProcessParam;
   lite::acl::AclModelOptionCfg aclModelOptionCfgParam;
   lite::micro::MicroParam microParam;
