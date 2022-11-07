@@ -173,6 +173,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__matmul__", std::string("matmul")},                              // F.matmul
        {"xdivy", std::string("xdivy")},                                    // P.Xdivy
        {"abs", std::string("abs_")},                                       // C.abs_
+       {"absolute", std::string("abs_")},                                  // C.abs_
        {"mean", std::string("mean")},                                      // C.mean
        {"prod", std::string("prod")},                                      // C.reduce_prod
        {"__truediv__", std::string("truediv")},                            // C.truediv

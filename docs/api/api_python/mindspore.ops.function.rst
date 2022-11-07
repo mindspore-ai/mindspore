@@ -140,6 +140,7 @@ mindspore.ops.function
     :template: classtemplate.rst
 
     mindspore.ops.abs
+    mindspore.ops.absolute
     mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.acosh

@@ -27,6 +27,7 @@
     :nosignatures:
 
     mindspore.Tensor.abs
+    mindspore.Tensor.absolute
     mindspore.Tensor.add
     mindspore.Tensor.addcdiv
     mindspore.Tensor.addcmul
