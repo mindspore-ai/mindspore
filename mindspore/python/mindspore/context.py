@@ -269,7 +269,7 @@ class _Context:
     def set_auto_tune_mode(self, tune_mode):
         candidate = ["NO_TUNE", "RL", "GA", "RL,GA", "GA,RL"]
         if tune_mode in candidate:
-            self.set_param(ms_ctx_param.tune_mode, tune_mode)
+            self.set_param(ms_ctx_param.auto_tune_mode, tune_mode)
         else:
             raise ValueError(f"For 'context.set_context', the argument 'auto_tune_mode' must be in "
                              f"['NO_TUNE', 'RL', 'GA', 'RL,GA', 'GA,RL'], but got {tune_mode}.")
