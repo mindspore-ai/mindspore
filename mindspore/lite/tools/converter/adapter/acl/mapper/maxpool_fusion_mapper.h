@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_MAXPOOL_FUSION_MAPPER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_MAXPOOL_FUSION_MAPPER_H_
 
+#include <vector>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
 #include "ops/fusion/max_pool_fusion.h"
 
@@ -30,6 +31,9 @@ class MaxPoolFusionMapper : public PrimitiveMapper {
   ~MaxPoolFusionMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
+
+ private:
+  bool IsKernelSizeValid(const PrimitivePtr &prim) const;
 };
 }  // namespace lite
 }  // namespace mindspore
