@@ -420,6 +420,12 @@ void Tensor::FreeData() {
       free(this->data_);
       this->data_ = nullptr;
     }
+  } else if (this->category_ == Category::VAR) {
+    if (!IS_STATIC_ALLOCATOR(allocator_) || allocator_->RefCount(this->data_) != 0) {
+      if (this->init_ref_count_ == 1) {
+        this->data_ = nullptr;
+      }
+    }
   }
 }
 
