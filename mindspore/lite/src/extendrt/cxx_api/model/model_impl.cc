@@ -15,7 +15,6 @@
  */
 
 #include <algorithm>
-
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
 #include "extendrt/cxx_api/file_utils.h"
@@ -27,7 +26,7 @@
 #include "src/extendrt/utils/serialization.h"
 #include "mindapi/ir/func_graph.h"
 #include "mindapi/base/base.h"
-
+#include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 namespace mindspore {
 namespace {
 const char *const kExecutionPlan = "execution_plan";
@@ -140,19 +139,30 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 Status ModelImpl::CompileGraphOnline(const void *model_data, size_t data_size,
                                      const std::shared_ptr<Context> &model_context) {
   MS_LOG(INFO) << "Need runtime convert";
-  auto convert = ConverterPlugin::Instance().GetConverterFunc();
-  if (convert == nullptr) {
-    MS_LOG(ERROR) << "convert is nullptr";
-    return kLiteNullptr;
+  FuncGraphPtr func_graph = FuncGraphReuseManager::GetInstance()->GetSharedFuncGraph(config_info_);
+  if (func_graph == nullptr) {
+    auto convert = ConverterPlugin::Instance().GetConverterFunc();
+    if (convert == nullptr) {
+      MS_LOG(ERROR) << "convert is nullptr";
+      return kLiteNullptr;
+    }
+    auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context, config_info_);
+    if (api_graph == nullptr) {
+      MS_LOG(ERROR) << "Failed to converter graph";
+      return kLiteNullptr;
+    }
+    auto impl = api_graph->impl();
+    func_graph = std::dynamic_pointer_cast<FuncGraph>(impl);
+    auto status = FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "store function graph failed.";
+      return kLiteError;
+    }
+  } else {
+    MS_LOG(INFO) << "the model buffer is the same as the last time. We do not need to perform repeated online "
+                    "conversion, and we can directly use the cached function graph.";
   }
-  auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context, config_info_);
-  if (api_graph == nullptr) {
-    MS_LOG(ERROR) << "Failed to converter graph";
-    return kLiteNullptr;
-  }
-  auto impl = api_graph->impl();
-  auto inner_graph = std::dynamic_pointer_cast<FuncGraph>(impl);
-  return session_->CompileGraph(inner_graph);
+  return session_->CompileGraph(func_graph);
 }
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
@@ -270,7 +280,12 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
   }
   if (!output_remain) {
-    *outputs = TensorUtils::TensorToMSTensor(graph_outputs, session_->GetOutputNames());
+    auto session_outputs = session_->GetOutputNames();
+    if (session_outputs.empty() || session_outputs.size() != graph_outputs.size()) {
+      MS_LOG(ERROR) << "output name is wrong.";
+      return kLiteError;
+    }
+    *outputs = TensorUtils::TensorToMSTensor(graph_outputs, session_outputs);
   }
   auto session_outputs = GetOutputs();
   if (graph_outputs.size() != session_outputs.size()) {
@@ -430,4 +445,6 @@ std::string ModelImpl::GetConfig(const std::string &section, const std::string &
   }
   return elem_iter->second;
 }
+
+ModelImpl::~ModelImpl() { FuncGraphReuseManager::GetInstance()->ReleaseSharedFuncGraph(config_info_); }
 }  // namespace mindspore

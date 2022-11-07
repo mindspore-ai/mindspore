@@ -844,14 +844,13 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
   }
   bool create_worker_success = true;
   MS_LOG(INFO) << "Strategy: " << strategy << " | worker num: " << model_pool_info_[strategy].all_workers_num_;
+  runner_id_ = lite::PackWeightManager::GetInstance()->GenRunnerID();
   for (size_t i = 0; i < model_pool_info_[strategy].all_workers_num_; i++) {
+    std::map<std::string, std::string> ids;
+    ids[lite::kInnerRunnerID] = runner_id_;
+    ids[lite::kInnerNumaID] = std::to_string(model_pool_config[i]->numa_id);
+    model_pool_config[i]->config_info[lite::kInnerIDs] = ids;
     model_pool_config[i]->strategy = strategy;
-    int numa_node_id = model_pool_config[i]->numa_id;
-    auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id);
-    MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
-    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
-    MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
-    model_bufs_.push_back(new_model_buf);
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
       MS_LOG(ERROR) << "model worker is nullptr.";
@@ -859,7 +858,7 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
     }
     auto task_queue_id = model_pool_config[i]->task_queue_id;
     model_pool_info_[strategy].predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
-    MS_LOG(INFO) << "Strategy: " << strategy << " | create worker index: " << i
+    MS_LOG(INFO) << "Strategy: " << strategy << " | create worker index: " << i << " | runner id: " << runner_id_
                  << " | numa id: " << model_pool_config[i]->numa_id
                  << " | worker affinity mode: " << model_pool_config[i]->context->GetThreadAffinityMode()
                  << " | worker bind core list: " << model_pool_config[i]->context->GetThreadAffinityCoreList()
@@ -875,9 +874,12 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
         }
       }
     }
-    worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
+    worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, graph_buf, size,
                                              model_pool_config[i], model_pool_info_[strategy].predict_task_queue_,
                                              &create_worker_success));
+    if (i == 0) {
+      model_worker->WaitCreateWorkerDone();
+    }
     auto worker_info = std::make_shared<WorkerInfo>();
     worker_info->worker_config = model_pool_config[i];
     worker_info->worker = model_worker;
@@ -935,7 +937,6 @@ Status ModelPool::CreateModelPoolWorker(const char *model_buf, size_t size, Mode
 
   status = CreateWorkers(model_buf, size, model_pool_config, strategy);
   if (status != kSuccess) {
-    lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(model_buf);
     MS_LOG(ERROR) << "create worker failed.";
     return kLiteError;
   }
@@ -1103,16 +1104,18 @@ Status ModelPool::InitByBuf(const char *model_data, size_t size, const std::shar
 Status ModelPool::InitByPath(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   model_path_ = model_path;
   size_t size = 0;
-  graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
-  if (graph_buf_ == nullptr) {
+  auto graph_buf = lite::ReadFile(model_path.c_str(), &size);
+  if (graph_buf == nullptr) {
     MS_LOG(ERROR) << "read model failed, model path: " << model_path;
     return kLiteNullptr;
   }
-  auto status = Init(graph_buf_, size, runner_config);
+  auto status = Init(graph_buf, size, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "init failed.";
     return kLiteError;
   }
+  delete[] graph_buf;
+  graph_buf = nullptr;
   is_initialized_ = true;
   return kSuccess;
 }
@@ -1261,13 +1264,6 @@ ModelPool::~ModelPool() {
       th.join();
     }
   }
-  // free weight sharing related memory
-  if (graph_buf_ != nullptr) {
-    lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
-    delete[] graph_buf_;
-    graph_buf_ = nullptr;
-  }
-  lite::PackWeightManager::GetInstance()->FreePackWeight(model_bufs_);
-  model_bufs_.clear();
+  lite::PackWeightManager::GetInstance()->FreePackWeight(runner_id_);
 }
 }  // namespace mindspore

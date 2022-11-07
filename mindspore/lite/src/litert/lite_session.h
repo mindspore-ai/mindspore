@@ -121,6 +121,8 @@ class LiteSession {
 
   void SetKeepModelBuf(bool keep_model_buf) { keep_model_buf_ = keep_model_buf; }
 
+  void SetModelId(std::string id) { id_ = id; }
+
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
   int CheckTensorValid(lite::Tensor *dst_tensor);
@@ -217,6 +219,8 @@ class LiteSession {
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
   std::vector<kernel::KernelExec *> non_tail_call_kernels_;
+  std::string id_;
+  bool is_shared_weight_ = false;
 };
 }  // namespace lite
 }  // namespace mindspore

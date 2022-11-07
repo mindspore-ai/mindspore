@@ -53,7 +53,7 @@ class ConverterPlugin {
 class ModelImpl {
  public:
   ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {}
-  ~ModelImpl() {}
+  ~ModelImpl();
 
   /// \brief Build a model from model buffer so that it can run on a device.
   ///

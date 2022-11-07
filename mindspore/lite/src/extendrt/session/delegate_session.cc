@@ -17,6 +17,7 @@
 #include "extendrt/session/delegate_session.h"
 #include <vector>
 #include <string>
+#include <mutex>
 #include <memory>
 #include "extendrt/utils/tensor_utils.h"
 #include "src/extendrt/utils/kernel_build_utils.h"
@@ -24,10 +25,12 @@
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
 #include "extendrt/session/optimizer/tensorrt_optimizer.h"
+#include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 
 namespace mindspore {
 namespace {
 constexpr auto kAscendProviderGe = "ge";
+std::mutex kernel_graph_mutex;
 }  // namespace
 
 GraphSinkSession::~GraphSinkSession() {
@@ -92,11 +95,22 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
   }
   func_graph_ = graph;
   std::vector<KernelGraphPtr> all_out_graph;
-  kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
-  MS_EXCEPTION_IF_NULL(kernel_graph_);
-  auto &kernel_nodes = kernel_graph_->execution_order();
-  for (const auto &kernel_node : kernel_nodes) {
-    mindspore::infer::SetKernelInfo(kernel_node);
+  {
+    std::unique_lock<std::mutex> l(kernel_graph_mutex);
+    kernel_graph_ = FuncGraphReuseManager::GetInstance()->GetKernelGraph(config_infos_);
+    if (kernel_graph_ == nullptr) {
+      kernel_graph_ =
+        kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
+      MS_EXCEPTION_IF_NULL(kernel_graph_);
+      auto &kernel_nodes = kernel_graph_->execution_order();
+      for (const auto &kernel_node : kernel_nodes) {
+        mindspore::infer::SetKernelInfo(kernel_node);
+      }
+      FuncGraphReuseManager::GetInstance()->StoreKernelGraph(config_infos_, kernel_graph_);
+    } else {
+      MS_LOG(INFO) << "the kernel graph is the same as the last time. We do not need to construct, and we can directly "
+                      "use the cached kernel graph.";
+    }
   }
   bool ret = true;
   if (is_use_kernel_graph_) {
@@ -116,8 +130,20 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
 
 Status GraphSinkSession::InitGraphInputsOutputs() {
   std::vector<tensor::TensorPtr> graph_inputs, graph_outputs;
-  kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &graph_inputs, &input_names_);
-  kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &graph_outputs, &output_names_);
+  {
+    std::unique_lock<std::mutex> l(kernel_graph_mutex);
+    FuncGraphReuseManager::GetInstance()->GetInOut(config_infos_, &graph_inputs, &graph_outputs, &input_names_,
+                                                   &output_names_);
+    if (graph_inputs.empty() || graph_outputs.empty() || input_names_.empty() || output_names_.empty()) {
+      kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &graph_inputs, &input_names_);
+      kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &graph_outputs, &output_names_);
+      FuncGraphReuseManager::GetInstance()->StoreInOut(config_infos_, graph_inputs, graph_outputs, input_names_,
+                                                       output_names_);
+    } else {
+      MS_LOG(INFO) << "the input and output are the same as the last time. We do not need to construct, and we can "
+                      "directly use the cached input and output info.";
+    }
+  }
   if (graph_inputs.size() != input_names_.size()) {
     MS_LOG(ERROR) << "Graph input size " << graph_inputs.size() << " != input names size " << input_names_.size();
     return kCoreFailed;
@@ -262,6 +288,7 @@ static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_pt
   if (provider != kAscendProviderGe) {
     session->Init(ctx);
   }
+  session->SetConfigInfo(config_infos);
   return session;
 }
 REG_SESSION(kDelegateSession, DelegateSessionCreator);

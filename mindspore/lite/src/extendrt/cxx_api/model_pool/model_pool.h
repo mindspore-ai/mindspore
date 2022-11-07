@@ -157,8 +157,6 @@ class ModelPool {
   std::unordered_map<Strategy, std::vector<std::shared_ptr<WorkerInfo>>> all_workers_;
   // store model pool related information
   std::unordered_map<Strategy, ModelPoolInfo> model_pool_info_;
-  std::vector<char *> model_bufs_;
-  char *graph_buf_ = nullptr;
 
   // save all worker thread
   std::vector<std::thread> worker_thread_vec_;
@@ -189,6 +187,7 @@ class ModelPool {
   std::shared_mutex model_pool_mutex_;
   bool is_initialized_ = false;
   std::string model_path_;
+  std::string runner_id_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_

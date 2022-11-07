@@ -1008,6 +1008,10 @@ LiteSession::~LiteSession() {
 #endif
   delete ms_context_;
   ms_context_ = nullptr;
+  lite::PackWeightManager::GetInstance()->FreePackWeight(id_);
+  if (model_ != nullptr && is_shared_weight_) {
+    model_->buf = nullptr;
+  }
   delete (model_);
   model_ = nullptr;
   is_running_.store(false);
@@ -1662,9 +1666,20 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
 int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
                                                 const size_t &buf_size) {
 #endif
+  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, buf_size, &id_, config_info_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "InitPackWeightByBuf failed.";
+    return RET_ERROR;
+  }
+  auto new_model_buf =
+    lite::PackWeightManager::GetInstance()->GetSharedModelBuf(model_buf, id_, config_info_, &is_shared_weight_);
+  if (new_model_buf == nullptr) {
+    MS_LOG(ERROR) << "get shared model buf is nullptr.";
+    return RET_ERROR;
+  }
   size_t lite_buf_size = 0;
   char *lite_buf = nullptr;
-  auto buf_model_type = LoadModelByBuff(model_buf, buf_size, &lite_buf, &lite_buf_size, model_type);
+  auto buf_model_type = LoadModelByBuff(new_model_buf, buf_size, &lite_buf, &lite_buf_size, model_type);
   if (buf_model_type == mindspore::ModelType::kUnknownType || lite_buf == nullptr) {
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
@@ -1679,10 +1694,6 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
   }
-  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightByBuf(model_buf, buf_size);
-  MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "InitPackWeightByBuf failed.");
-
-  (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(keep_model_buf_);
   auto ret = CompileGraph(model);
   model->buf = nullptr;
   // if (buf_model_type == mindspore::ModelType::kMindIR) {
@@ -1705,20 +1716,31 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(model_buf, model_size, true, model_type, model_path);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model failed";
-    delete[] model_buf;
+  auto status =
+    lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, model_size, &id_, config_info_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "InitPackWeightByBuf failed.";
     return RET_ERROR;
   }
-  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightByBuf(model_buf, model_size);
-  MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "InitPackWeightByBuf failed.");
-
+  auto new_model_buf =
+    lite::PackWeightManager::GetInstance()->GetSharedModelBuf(model_buf, id_, config_info_, &is_shared_weight_);
+  if (new_model_buf == nullptr) {
+    MS_LOG(ERROR) << "get shared model buf is nullptr.";
+    return RET_ERROR;
+  }
+  if (is_shared_weight_) {
+    delete[] model_buf;
+    model_buf = nullptr;
+  }
+  auto *model = lite::ImportFromBuffer(new_model_buf, model_size, true, model_type, model_path);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model failed";
+    return RET_ERROR;
+  }
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
-    delete[] model_buf;
     model->buf = nullptr;
     delete model;
     return RET_ERROR;
