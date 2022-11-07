@@ -14,16 +14,16 @@ mindspore_lite.GPUDeviceInfo
         - **TypeError** - `enable_fp16` 不是bool类型。
         - **ValueError** - `device_id` 小于0。
 
-    .. py:method:: get_rank_id()
-
-        从上下文获取当前设备在集群中的ID。
-
-        返回：
-            int，当前设备在集群中的ID，固定从0开始编号。
-
     .. py:method:: get_group_size()
 
         从上下文获取集群数量。
 
         返回：
             int，集群数量。
+
+    .. py:method:: get_rank_id()
+
+        从上下文获取当前设备在集群中的ID。
+
+        返回：
+            int，当前设备在集群中的ID，固定从0开始编号。

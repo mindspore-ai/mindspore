@@ -95,7 +95,8 @@ class Model:
 
         Args:
             model_path (str): Path of the input model when build from file. For example, "/home/user/model.ms". Options:
-                MindSpore model: "model.mindir" | MindSpore Lite model: "model.ms".
+                MindSpore model: "model.mindir" | MindSpore Lite model: "model.ms". For details, see
+                `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
             model_type (ModelType): Define The type of input model file. Options: ModelType.MINDIR |
                 ModelType.MINDIR_LITE.
             context (Context): Define the context used to transfer options during execution.
@@ -556,6 +557,9 @@ class ModelParallelRunner:
     multiple workers, which are the units that actually perform parallel inferring. The primary use case is when
     multiple clients send inference tasks to the server, the server perform parallel inference, shorten the inference
     time, and then return the inference results to the clients.
+
+    Note:
+        First use the `init` method for initialization, and then call other methods.
 
     Examples:
         >>> # Use case: serving inference.

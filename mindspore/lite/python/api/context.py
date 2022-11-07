@@ -41,7 +41,7 @@ class Context:
             `inter_op_parallel_num` will be automatically adjusted based on computer performance and core num. Default:
             None, None is equivalent to 0.
         thread_affinity_mode (int, optional): Set the mode of the CPU/GPU/NPU core binding policy at runtime. The
-        following `thread_affinity_mode` are supported. Default: None, None is equivalent to 0.
+            following `thread_affinity_mode` are supported. Default: None, None is equivalent to 0.
 
             - 0: no binding core.
             - 1: binding big cores first.

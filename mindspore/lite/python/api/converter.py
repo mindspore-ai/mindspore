@@ -82,7 +82,8 @@ class Converter:
 
     Args:
         fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
-            FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH.
+            FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH. For details, see
+            `FmkType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.FmkType.html>`_ .
         model_file (str): Set the path of the input model when converter. For example, "/home/user/model.prototxt".
             Options:TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" |
             TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth".
@@ -155,7 +156,8 @@ class Converter:
                 - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
 
         export_mindir (ModelType, optional): Set the model type needs to be export. Options: ModelType.MINDIR |
-            ModelType.MINDIR_LITE. Default: ModelType.MINDIR_LITE.
+            ModelType.MINDIR_LITE. Default: ModelType.MINDIR_LITE. For details, see
+            `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
         decrypt_key (str, optional): Set the key used to decrypt the encrypted MindIR file, expressed in hexadecimal
             characters. Only valid when fmk_type is FmkType.MINDIR. Default: "".
         decrypt_mode (str, optional): Set decryption mode for the encrypted MindIR file. Only valid when dec_key is
