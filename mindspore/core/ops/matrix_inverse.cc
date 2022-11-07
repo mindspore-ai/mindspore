@@ -32,7 +32,7 @@ void MatrixInverse::Init(const bool adjoint) { this->set_adjoint(adjoint); }
 void MatrixInverse::set_adjoint(const bool adjoint) { (void)this->AddAttr(kAdjoint, api::MakeValue(adjoint)); }
 
 bool MatrixInverse::get_adjoint() const {
-  auto value_ptr = GetAttr(kAlign);
+  auto value_ptr = GetAttr(kAdjoint);
   return GetValue<bool>(value_ptr);
 }
 
