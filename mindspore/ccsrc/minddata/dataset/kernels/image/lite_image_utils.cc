@@ -32,6 +32,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "minddata/dataset/core/cv_tensor.h"
+#include "minddata/dataset/kernels/image/resize_cubic_op.h"
 #endif
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
 namespace mindspore {
@@ -295,11 +296,39 @@ static LDataType GetLiteCVDataType(const DataType &data_type) {
   }
 }
 
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+  if (!input_cv->mat().data) {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Decode: load image failed.");
+  }
+  try {
+    cv::Mat img_mat = cv::imdecode(input_cv->mat(), cv::IMREAD_COLOR | cv::IMREAD_IGNORE_ORIENTATION);
+    if (img_mat.data == nullptr) {
+      std::string err = "Decode: image decode failed.";
+      RETURN_STATUS_UNEXPECTED(err);
+    }
+    cv::cvtColor(img_mat, img_mat, static_cast<int>(cv::COLOR_BGR2RGB));
+    std::shared_ptr<CVTensor> output_cv;
+    dsize_t rank_num = 3;
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(img_mat, rank_num, &output_cv));
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Decode: " + std::string(e.what()));
+  }
+}
+#endif
+
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   if (IsNonEmptyJPEG(input)) {
     return JpegCropAndDecode(input, output);
   } else {
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+    return DecodeCv(input, output);
+#else
     RETURN_STATUS_UNEXPECTED("Decode: Decode only supports jpeg for android");
+#endif
   }
 }
 
@@ -420,6 +449,91 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   return Status::OK();
 }
 
+#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+int GetCVInterpolationMode(InterpolationMode mode) {
+  switch (mode) {
+    case InterpolationMode::kLinear:
+      return static_cast<int>(cv::InterpolationFlags::INTER_LINEAR);
+    case InterpolationMode::kCubic:
+      return static_cast<int>(cv::InterpolationFlags::INTER_CUBIC);
+    case InterpolationMode::kArea:
+      return static_cast<int>(cv::InterpolationFlags::INTER_AREA);
+    case InterpolationMode::kNearestNeighbour:
+      return static_cast<int>(cv::InterpolationFlags::INTER_NEAREST);
+    default:
+      return static_cast<int>(cv::InterpolationFlags::INTER_LINEAR);
+  }
+}
+
+Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t output_height,
+              int32_t output_width, double fx, double fy, InterpolationMode mode) {
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+  if (!input_cv->mat().data) {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Resize: load image failed.");
+  }
+  RETURN_IF_NOT_OK(ValidateImageRank("Resize", input_cv->Rank()));
+
+  cv::Mat in_image = input_cv->mat();
+  const uint32_t kResizeShapeLimits = 1000;
+  // resize image too large or too small, 1000 is arbitrarily chosen here to prevent open cv from segmentation fault
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kResizeShapeLimits) > in_image.rows,
+                               "Resize: in_image rows out of bounds.");
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int>::max() / kResizeShapeLimits) > in_image.cols,
+                               "Resize: in_image cols out of bounds.");
+  if (output_height > in_image.rows * kResizeShapeLimits || output_width > in_image.cols * kResizeShapeLimits) {
+    std::string err_msg =
+      "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image, got output "
+      "height: " +
+      std::to_string(output_height) + ", width: " + std::to_string(output_width) +
+      ", and original image size:" + std::to_string(in_image.rows) + ", " + std::to_string(in_image.cols);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
+  }
+  if (output_height == 0 || output_width == 0) {
+    std::string err_msg = "Resize: the input value of 'resize' is invalid, width or height is zero.";
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
+  }
+
+  if (mode == InterpolationMode::kCubicPil) {
+    if (input_cv->shape().Size() != kDefaultImageChannel ||
+        input_cv->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
+      RETURN_STATUS_UNEXPECTED("Resize: Interpolation mode PILCUBIC only supports image with 3 channels, but got: " +
+                               input_cv->shape().ToString());
+    }
+
+    LiteMat imIn, imOut;
+    std::shared_ptr<Tensor> output_tensor;
+    TensorShape new_shape = TensorShape({output_height, output_width, 3});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    imOut.Init(output_width, output_height, static_cast<int>(input_cv->shape()[kChannelIndexHWC]),
+               reinterpret_cast<void *>(buffer), LDataType::UINT8);
+    imIn.Init(static_cast<int>(input_cv->shape()[1]), static_cast<int>(input_cv->shape()[0]),
+              static_cast<int>(input_cv->shape()[kChannelIndexHWC]), input_cv->mat().data, LDataType::UINT8);
+    if (ResizeCubic(imIn, imOut, output_width, output_height) == false) {
+      RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
+    }
+    *output = output_tensor;
+    return Status::OK();
+  }
+  try {
+    TensorShape shape{output_height, output_width};
+    if (input_cv->Rank() == kDefaultImageRank) {
+      int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
+      shape = shape.AppendDim(num_channels);
+    }
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(shape, input_cv->type(), &output_cv));
+
+    auto cv_mode = GetCVInterpolationMode(mode);
+    cv::resize(in_image, output_cv->mat(), cv::Size(output_width, output_height), fx, fy, cv_mode);
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Resize: " + std::string(e.what()));
+  }
+}
+
+#else
 Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t output_height,
               int32_t output_width, double fx, double fy, InterpolationMode mode) {
   if (mode != InterpolationMode::kLinear) {
@@ -473,6 +587,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
   return Status::OK();
 }
+#endif
 
 Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, int32_t img_orientation,
                       TensorRow *outputs) {
