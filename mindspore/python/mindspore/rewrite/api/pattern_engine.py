@@ -33,8 +33,8 @@ class PatternNode:
 
     Args:
         pattern_node_name (str): Name of current node.
-        match_type (Type): A type represents what type would be matched of current node.
-        inputs (list[PatternNode]): Input nodes of current node.
+        match_type (Type): A type represents what type would be matched of current node. Default: None.
+        inputs (list[PatternNode]): Input nodes of current node. Default: None.
     """
 
     def __init__(self, pattern_node_name: str, match_type: Type = Type[None], inputs: ['PatternNode'] = None):
@@ -166,13 +166,13 @@ class PatternNode:
 
     def name(self) -> str:
         """
-        Getter of name.
+        Getter of PatternNode name.
         """
         return self._name
 
     def type(self):
         """
-        Getter of type.
+        Getter of PatternNode type.
         """
         return self._type
 
@@ -192,8 +192,17 @@ class VarNode(PatternNode):
 class Replacement(abc.ABC):
     """
     Interface of replacement function.
-    """
 
+    Examples:
+        >>> from mindspore.rewrite import Replacement, Node
+        >>> from mindspore.nn import nn
+        >>> class BnReplacement(Replacement):
+        ...     def build(self, pattern, is_chain_pattern: bool, matched):
+        ...         bn_node: Node = matched.get(pattern.name())
+        ...         conv = nn.Conv2d(16, 16, 3)
+        ...         conv_node = Node.create_call_cell(conv, ['x1'], bn_node.get_args(), bn_node.get_kwargs())
+        ...         return [conv_node]
+    """
     @abc.abstractmethod
     def build(self, pattern: PatternNode, is_chain_pattern: bool, matched: OrderedDict) -> [Node]:
         """
