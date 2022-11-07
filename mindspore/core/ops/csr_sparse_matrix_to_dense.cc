@@ -51,7 +51,8 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
                              << values_shape.size() << ".";
   }
   // Dynamic Rank
-  if (IsDynamicRank(d_shape_shape)) {
+  if (IsDynamicRank(d_shape_shape) || IsDynamicRank(b_ptrs_shape) || IsDynamicRank(r_ptrs_shape) ||
+      IsDynamicRank(c_ind_shape) || IsDynamicRank(values_shape)) {
     ShapeVector dense_shape = {-2};
     return std::make_shared<abstract::Shape>(dense_shape);
   }
