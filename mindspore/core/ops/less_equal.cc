@@ -47,8 +47,8 @@ TypePtr LessEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 MIND_API_OPERATOR_IMPL(LessEqual, BaseOperator);
 AbstractBasePtr LessEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_shape = LessEqualInferShape(primitive, input_args);
   auto infer_type = LessEqualInferType(primitive, input_args);
+  auto infer_shape = LessEqualInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LessEqual, prim::kPrimLessEqual, LessEqualInfer, nullptr, true);
