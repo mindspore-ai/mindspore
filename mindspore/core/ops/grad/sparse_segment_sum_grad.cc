@@ -35,6 +35,11 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto output_dim0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(grad_shape) || IsDynamicRank(indices_shape) || IsDynamicRank(segment_ids_shape) ||
+      IsDynamicRank(output_dim0_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
   (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual, kInputIndex1,
                                            prim->name());
   (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
@@ -52,9 +57,6 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of indices and segment_ids must be the same, "
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
-  }
-  if (IsDynamicRank(grad_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
   if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
