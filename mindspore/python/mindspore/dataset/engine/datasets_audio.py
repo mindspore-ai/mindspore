@@ -665,9 +665,6 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         >>>
         >>> # Read 3 samples from SpeechCommands dataset
         >>> dataset = ds.SpeechCommandsDataset(dataset_dir=speech_commands_dataset_dir, num_samples=3)
-        >>>
-        >>> # Note: In SpeechCommands dataset, each dictionary has keys "waveform", "sample_rate", "label",
-        >>> # "speaker_id" and "utterance_number".
 
     About SpeechCommands dataset:
 
