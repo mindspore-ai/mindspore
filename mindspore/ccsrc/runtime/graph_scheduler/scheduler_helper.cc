@@ -558,6 +558,15 @@ KernelGraphPtr SchedulerHelper::FecthKernelGraphByActor(AbstractActor *const act
     MS_EXCEPTION_IF_NULL(from_kernel);
   }
 
+  // The device data source actor is from the GetNext cnode that is not a boundary of the graph and is equivalent to the
+  // kernel actor when inserted the memory actor.
+  if (actor->type() == KernelTransformType::kDeviceDataSourceActor) {
+    auto device_ds_actor = dynamic_cast<DeviceQueueDataSourceActor *>(actor);
+    MS_EXCEPTION_IF_NULL(device_ds_actor);
+    from_kernel = device_ds_actor->data_kernel().get();
+    MS_EXCEPTION_IF_NULL(from_kernel);
+  }
+
   // Only the copy actor from device tensor store need to fetch the kernel graph, because the copy actor is not a
   // boundary of the graph and is equivalent to the kernel actor when inserted the memory actor.
   if ((actor->type() == KernelTransformType::kCopyActor) &&
