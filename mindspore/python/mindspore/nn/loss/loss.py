@@ -525,19 +525,12 @@ class MarginRankingLoss(LossBase):
     def __init__(self, margin=0.0, reduction='mean'):
         """Initialize MarginRankingLoss."""
         super(MarginRankingLoss, self).__init__(reduction)
-        self.margin = validator.check_value_type("margin", margin, [float], self.cls_name)
         self.reduction = reduction
         self.margin = margin
-        self.maximum = P.Maximum()
 
     def construct(self, input1, input2, target):
-        _check_is_tensor('input1', input1, self.cls_name)
-        _check_is_tensor('input2', input2, self.cls_name)
-        _check_is_tensor('target', target, self.cls_name)
-        F.same_type_shape(input1, input2)
-        F.same_type_shape(target, input1)
-        x = self.maximum(0, -target * (input1 - input2) + self.margin)
-        return self.get_loss(x)
+        x = ops.margin_ranking_loss(input1, input2, target, self.margin, self.reduction)
+        return x
 
 
 class SmoothL1Loss(LossBase):

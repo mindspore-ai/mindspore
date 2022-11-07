@@ -18,21 +18,17 @@ import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 
 
 class MarginRankingLoss(nn.Cell):
-    def __init__(self, reduction="none"):
+    def __init__(self, reduction):
         super(MarginRankingLoss, self).__init__()
-        self.margin_ranking_loss = nn.MarginRankingLoss(margin=0.0, reduction=reduction)
+        self.reduction = reduction
 
-    def construct(self, x, y, label):
-        return self.margin_ranking_loss(x, y, label)
-
-
-input1 = Tensor(np.array([0.3864, -2.4093, -1.4076]), ms.float32)
-input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
-target = Tensor(np.array([-1, -1, 1]), ms.float32)
+    def construct(self, x, y, label, margin):
+        return ops.margin_ranking_loss(x, y, label, margin=margin, reduction=self.reduction)
 
 
 @pytest.mark.level0
@@ -46,13 +42,16 @@ target = Tensor(np.array([-1, -1, 1]), ms.float32)
 @pytest.mark.parametrize('reduction', ["none", "mean", "sum"])
 def test_margin_ranking_loss(mode, reduction):
     """
-    Feature: test MarginRankingLoss op with reduction none.
+    Feature: test MarginRankingLoss op.
     Description: Verify the result of MarginRankingLoss.
     Expectation: expect correct forward result.
     """
     ms.set_context(mode=mode)
-    loss = MarginRankingLoss(reduction=reduction)
-    output = loss(input1, input2, target)
+    loss = MarginRankingLoss(reduction)
+    input1 = Tensor(np.array([0.3864, -2.4093, -1.4076]), ms.float32)
+    input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
+    target = Tensor(np.array([-1, -1, 1]), ms.float32)
+    output = loss(input1, input2, target, 0.0)
     if reduction == 'none':
         expect_output = np.array([0.98759997, 0., 2.7003999])
     elif reduction == 'sum':
@@ -61,33 +60,3 @@ def test_margin_ranking_loss(mode, reduction):
         expect_output = np.array(1.2293333)
 
     assert np.allclose(output.asnumpy(), expect_output)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-def test_tensor_dim(mode):
-    """
-    Feature: test tensor dim
-    Description: Verify the result of dim.
-    Expectation: expect correct forward result.
-    """
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.tensor = Tensor([[1, 2, 3], [4, 5, 6]])
-
-        def construct(self, x):
-            return x.dim(), self.tensor.dim()
-
-    net = Net()
-    input11 = Tensor([[1, 2, 3], [4, 5, 6]])
-    input22 = Tensor([[[1, 2, 3], [4, 5, 6]]])
-    net(input11)
-    net(input22)

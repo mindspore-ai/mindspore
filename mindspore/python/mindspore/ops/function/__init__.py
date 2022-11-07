@@ -328,6 +328,7 @@ from .nn_func import (
     log_softmax,
     lrn,
     mish,
+    margin_ranking_loss,
     max_unpool1d,
     max_unpool2d,
     max_unpool3d,

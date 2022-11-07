@@ -3651,8 +3651,8 @@ class Tensor(Tensor_):
 
     def arcsinh(self):
         r"""
-        See `Tensor.asinh()
-        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.asinh.html>`_.
+        Alias for Tensor.asinh().
+        For details, please refer to :func:`mindspore.ops.asinh`.
         """
         self._init_check()
         return tensor_operator_registry.get('asinh')(self)
@@ -3673,8 +3673,8 @@ class Tensor(Tensor_):
 
     def arctanh(self):
         r"""
-        See `Tensor.atanh()
-        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/Tensor/mindspore.Tensor.atanh.html>`_.
+        Alias for Tensor.atanh().
+        For details, please refer to :func:`mindspore.ops.atanh`.
         """
         self._init_check()
         return tensor_operator_registry.get('atanh')(self)
