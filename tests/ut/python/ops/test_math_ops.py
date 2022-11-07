@@ -321,6 +321,15 @@ class DiagNet(nn.Cell):
         return x - self.diag(self.fill(mstype.float32, (3,), 1.0))
 
 
+class FmaxFunc(nn.Cell):
+    def __init__(self):
+        super(FmaxFunc, self).__init__()
+        self.fmax_ = ops.function.math_func.fmax
+
+    def construct(self, x1, x2):
+        return self.fmax_(x1, x2)
+
+
 class NetWithLossCumSum(nn.Cell):
     """ NetWithLossCumSum definition """
 
@@ -954,6 +963,11 @@ raise_set = [
         'block': Zeta(),
         'desc_inputs': [Tensor(np.array([1, 1, 1, 1], np.float32)),
                         Tensor([0.5, 0.5, 0.5, 0.5], mstype.float32)]}),
+    ('Fmax', {
+        'block': FmaxFunc(),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float32)),
+                        Tensor(np.array([2.0, 1.0, 4.0], np.float32))],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float32))]}),
     ('Lcm', {
         'block': LcmFunc(),
         'desc_inputs': [Tensor(np.array([2, 5, 8]).astype(np.int32)),

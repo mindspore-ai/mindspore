@@ -7574,6 +7574,33 @@ class Fmin(Primitive):
         self.init_prim_io_names(inputs=['x1, x2'], outputs=['y'])
 
 
+class Fmax(Primitive):
+    """
+    Computes the maximum of input tensors element-wise.
+
+    Refer to :func:`mindspore.ops.fmax` for more detail.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
+        >>> x2 = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
+        >>> fmax = ops.Fmax()
+        >>> output = fmax(x1, x2)
+        >>> print(output)
+        [4. 5. 6.]
+    """
+
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Fmax"""
+        self.add_prim_attr('ignore_nan', True)
+        self.init_prim_io_names(inputs=['x1, x2'], outputs=['y'])
+
+
 class Eig(Primitive):
     """
     Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).

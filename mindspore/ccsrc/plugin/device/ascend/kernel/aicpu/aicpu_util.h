@@ -179,6 +179,7 @@ constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kEqual = "Equal";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
+constexpr auto kFmax = "Fmax";
 constexpr auto kGLU = "GLU";
 constexpr auto kFmin = "Fmin";
 constexpr auto kArgmax = "Argmax";
@@ -334,6 +335,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kACos, "Acos"},
   {kHSigmoid, "HardSigmoid"},
   {kFmin, "Minimum"},
+  {kFmax, "Maximum"},
   {kHSigmoidGrad, "HardSigmoidGrad"},
   {kArgmax, "ArgMax"},
   {kArgmin, "ArgMin"},

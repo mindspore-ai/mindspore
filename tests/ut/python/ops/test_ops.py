@@ -56,6 +56,7 @@ from mindspore.ops.operations.math_ops import MatrixLogarithm
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import InplaceIndexAdd
 from mindspore.ops.operations.math_ops import NextAfter
+from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations.math_ops import ComplexAbs
 from mindspore.ops.operations.math_ops import Orgqr
 from mindspore.ops.operations.math_ops import CompareAndBitpack
@@ -2601,6 +2602,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[2, 2, 3]]).astype(np.float32)),
                         Tensor(np.array([[2, 2, 3]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[2, 2, 3]]).astype(np.float32))]}),
+    ('Fmax', {
+        'block': Fmax(),
+        'desc_inputs': [Tensor(np.array([2, 2, 3]).astype(np.float32)),
+                        Tensor(np.array([2, 2, 3]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([2, 2, 3]).astype(np.float32))]}),
     ('Trace', {
         'block': Trace(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]).astype(np.float32))],
