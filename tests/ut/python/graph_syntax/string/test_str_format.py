@@ -135,8 +135,8 @@ def test_format_with_key_input():
     with pytest.raises(TypeError) as ex:
         result_st = foo()
         assert result_st == "hello Mind,It's me, Spore"
-    assert "Unsupported parameter type for python primitive," \
-           " the parameter value is KeywordArg[key : name2, value : Mind]" in str(ex.value)
+    assert "Only supported positional parameter type for python primitive, "\
+           "but got keyword parameter type." in str(ex.value)
 
 
 def test_format_with_list_index():

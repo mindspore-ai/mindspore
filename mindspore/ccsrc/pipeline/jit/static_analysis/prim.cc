@@ -825,6 +825,16 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
       MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
                               << " for python primitive." << abs_base->ToString();
     }
+    if (abs_base->isa<AbstractKeywordArg>()) {
+      std::stringstream ss;
+      ss << "For example: \n";
+      ss << "x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32)) \n";
+      ss << "reduce_sum = ops.ReduceSum(True) \n";
+      ss << "output = reduce_sum(x, 2)";
+      ss << "#Try to use reduce_sum(x, 2) instead of reduce_sum(x, axis=2). ";
+      MS_EXCEPTION(TypeError) << "Only supported positional parameter type for python primitive, "
+                              << "but got keyword parameter type. " << ss.str();
+    }
     MS_EXCEPTION(TypeError) << "Unsupported parameter type for python primitive, the parameter value is "
                             << value->ToString();
   }
