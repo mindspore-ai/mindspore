@@ -139,8 +139,11 @@ AbstractBasePtr GatherDInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto prim_name = primitive->name();
+
   // check
+  auto prim_name = primitive->name();
+  const int64_t inputs_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, prim_name);
   std::set<TypePtr> index_valid_types = {kInt32, kInt64};
   std::set<TypePtr> dim_valid_types = {kInt32, kInt64, std::make_shared<TensorType>(kInt32),
                                        std::make_shared<TensorType>(kInt64)};

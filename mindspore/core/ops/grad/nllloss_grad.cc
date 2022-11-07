@@ -15,6 +15,8 @@
  */
 
 #include "ops/grad/nllloss_grad.h"
+
+#include <sstream>
 #include <map>
 #include <vector>
 #include <memory>
