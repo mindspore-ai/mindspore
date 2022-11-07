@@ -19,4 +19,4 @@ mindspore.nn.GLU
         - **x** (Tensor) - Tensor的shape为 :math:`(\ast_1, N, \ast_2)` 。 `*` 表示任意数量的维度。
 
     输出：
-        Tensor，数据类型与输入 `x` 相同，shape等于 `x` 按照 `axis` 拆分后的一半。
+        Tensor，数据类型与输入 `x` 相同，shape为 :math:`(\ast_1, M, \ast_2)`，其中 :math:`M=N/2`
