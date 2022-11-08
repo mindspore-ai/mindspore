@@ -50,10 +50,15 @@ class IOUInfer : public abstract::OpInferBase {
     auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_shape_ptr);
     auto x_shp = x_shape_map[kShape];
     auto y_shp = y_shape_map[kShape];
+
+    if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    }
+
     if (x_shp.size() != kIouInputDims || y_shp.size() != kIouInputDims) {
-      MS_EXCEPTION(ValueError)
-        << "For 'BatchMatMul', input x, y must have the same dimension size and must be 2. But got x size = "
-        << x_shp.size() << ", y size = " << y_shp.size() << ".";
+      MS_EXCEPTION(ValueError) << "For '" << kNameIOU
+                               << "', input x, y must have the same dimension size and must be 2. But got x size = "
+                               << x_shp.size() << ", y size = " << y_shp.size() << ".";
     }
     if (x_shp[kCoordinatesIndex] != -1) {
       (void)CheckAndConvertUtils::CheckInteger("anchor_boxes.shape[1]", x_shp[kCoordinatesIndex], kEqual,
