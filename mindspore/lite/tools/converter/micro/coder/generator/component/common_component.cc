@@ -101,7 +101,7 @@ const char cortex_set_workspace[] = R"RAW(
   int buffer_size = GetBufferSize();
   char* buf = workspace;
   SetBuffer(buf);
-
+  buffer_size = UP_ROUND(buffer_size, 4);
 )RAW";
 void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                   const Configurator &config) {
@@ -119,8 +119,8 @@ void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<Code
     for (size_t i = 0; i < outputs.size(); ++i) {
       ofs << "  shape_size += " << outputs[i]->shape().size() << " * sizeof(int64_t);\n";
     }
-    ofs << "  return GetBufferSize() + WEIGHT_BUF_SIZE + shape_size + "
-        << "(sizeof(MicroTensor) + sizeof(MicroTensor *)) * "
+    ofs << "  return UP_ROUND(GetBufferSize(),4) + UP_ROUND(WEIGHT_BUF_SIZE,4) + shape_size + "
+        << "(UP_ROUND(sizeof(MicroTensor),4) + UP_ROUND(sizeof(MicroTensor *),4)) * "
         << (ctx->graph_inputs().size() + ctx->graph_outputs().size()) << ";\n}\n";
   } else {
     ofs << "size_t MSModelCalcWorkspaceSize(MSModelHandle model) {\n  return 0;\n}\n";
@@ -135,13 +135,16 @@ void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderCont
     ofs << "  " << ctx->weight_name() << " = (uint8_t *)&buf[buffer_size];\n";
     ofs << R"RAW(
   buffer_size += WEIGHT_BUF_SIZE;
+  buffer_size = UP_ROUND(buffer_size,4);
 
   micro_model->inputs.handle_list = (MSTensorHandle *)&buf[buffer_size];
   buffer_size +=  GRAPH_INPUTS_SIZE * sizeof(MicroTensor *);
+  buffer_size = UP_ROUND(buffer_size,4);
   MicroTensor **input_tensors = (MicroTensor **)micro_model->inputs.handle_list;
 
   micro_model->outputs.handle_list = (MSTensorHandle *)&buf[buffer_size];
   buffer_size +=  GRAPH_OUTPUTS_SIZE * sizeof(MicroTensor *);
+  buffer_size = UP_ROUND(buffer_size,4);
   MicroTensor **output_tensors = (MicroTensor **)micro_model->outputs.handle_list;
 )RAW";
     ofs << "  int i;\n"
@@ -149,9 +152,11 @@ void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderCont
     std::vector<Tensor *> inputs = ctx->graph_inputs();
     for (size_t i = 0; i < inputs.size(); ++i) {
       ofs << "    input_tensors[i] = (MicroTensor *)&buf[buffer_size];\n"
-          << "    buffer_size += sizeof(MicroTensor);\n";
+          << "    buffer_size += sizeof(MicroTensor);\n"
+          << "    buffer_size = UP_ROUND(buffer_size,4);\n";
       ofs << "    input_tensors[i]->shape = (int64_t *)&buf[buffer_size];\n"
-          << "    buffer_size += " << inputs[i]->shape().size() * sizeof(int64_t) << ";\n";
+          << "    buffer_size += " << inputs[i]->shape().size() * sizeof(int64_t) << ";\n"
+          << "    buffer_size = UP_ROUND(buffer_size,4);\n";
     }
     ofs << "  }\n";
 
@@ -159,9 +164,11 @@ void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderCont
     std::vector<Tensor *> outputs = ctx->graph_outputs();
     for (size_t i = 0; i < outputs.size(); ++i) {
       ofs << "    output_tensors[i] = (MicroTensor *)&buf[buffer_size];\n"
-          << "    buffer_size += sizeof(MicroTensor);\n";
+          << "    buffer_size += sizeof(MicroTensor);\n"
+          << "    buffer_size = UP_ROUND(buffer_size,4);\n";
       ofs << "    output_tensors[i]->shape = (int64_t *)&buf[buffer_size];\n"
-          << "    buffer_size += " << outputs[i]->shape().size() * sizeof(int64_t) << ";\n";
+          << "    buffer_size += " << outputs[i]->shape().size() * sizeof(int64_t) << ";\n"
+          << "    buffer_size = UP_ROUND(buffer_size,4);\n";
     }
     ofs << "  }\n";
     ofs << R"RAW(

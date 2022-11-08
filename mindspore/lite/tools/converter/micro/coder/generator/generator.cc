@@ -183,19 +183,10 @@ extern "C" {
   for (size_t i = 0; i < outputs.size(); ++i) {
     shape_size += outputs[i]->shape().size();
   }
-  typedef struct {
-    int type;
-    int format;
-    void *name;
-    int ndim;
-    int64_t *shape;
-    void *data;
-    int quant_nums;
-  } MicroTensor;
-
-  size_t workspace_size =
-    ctx_->total_buffer_size() + ctx_->weight_buffer_size() + shape_size * sizeof(int64_t) +
-    (sizeof(MicroTensor) + sizeof(MicroTensor *)) * (ctx_->graph_inputs().size() + ctx_->graph_outputs().size());
+  constexpr int kMicroTensorSize = 32;
+  size_t workspace_size = UP_ROUND(ctx_->total_buffer_size(), C4NUM) + UP_ROUND(ctx_->weight_buffer_size(), C4NUM) +
+                          shape_size * sizeof(int64_t) +
+                          (kMicroTensorSize) * (ctx_->graph_inputs().size() + ctx_->graph_outputs().size());
 
   of << "#define WORK_SPACE_SIZE " << workspace_size << "\n";
   of << R"RAW(
@@ -286,7 +277,6 @@ int Generator::CodeMSModelImplement() {
     ofs << "#include \"" << kThreadWrapper << "\"\n";
   }
   ofs << "#include \"weight.h\"\n\n";
-
   CodeMSTensorHandleArrayDestroyState(ofs, *config_);
   CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelCalcWorkspaceSize(ofs, ctx_, *config_);
