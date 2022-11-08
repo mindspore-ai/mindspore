@@ -348,10 +348,10 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
   }
   out_shp = ib->GetShape(dout);
   auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v);
-  auto values_transpose = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>(perm_1)});
+  auto values_transpose = ib->Transpose(dout, perm_1);
   auto tmp = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
   auto perm_2 = GenerateInverseIndex(x_shp, axis_v);
-  auto params_grad = ib->Emit("Transpose", {tmp, ib->Value<ShapeVector>(perm_2)});
+  auto params_grad = ib->Transpose(tmp, perm_2);
   return {params_grad, ib->ZerosLike(orig_indices), ib->ZerosLike(axis)};
 }
 

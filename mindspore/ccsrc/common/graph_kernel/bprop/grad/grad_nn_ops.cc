@@ -978,11 +978,11 @@ REG_BPROP_BUILDER("Softmax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto dout = ib->GetInput(kIndex2);
   auto shp = ib->GetShape(x);
   auto reverse_axis = GetTransposeAxis(shp, one_axis);
-  out = ib->Emit("Transpose", {out, ib->Value<ShapeVector>(reverse_axis)});
-  dout = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>(reverse_axis)});
+  out = ib->Transpose(out, reverse_axis);
+  dout = ib->Transpose(dout, reverse_axis);
   ShapeVector reduce_axis = {-1};
   auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), reduce_axis, true)));
-  dx = ib->Emit("Transpose", {dx, ib->Value<ShapeVector>(reverse_axis)});
+  dx = ib->Transpose(dx, reverse_axis);
   return {dx};
 });
 

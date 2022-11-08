@@ -56,9 +56,7 @@ class Emitter {
   NodePtr Reciprocal(const NodePtr &node) const { return Emit(prim::kReciprocal, {node}); }
   NodePtr Square(const NodePtr &node) const { return Emit(prim::kSquare, {node}); }
   NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
-  NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const {
-    return Emit(kTransposeOpName, {node, Value(perm)});
-  }
+  NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const;
   NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) const {
     return Emit(kTileOpName, {node, Value(multiples)});
   }
