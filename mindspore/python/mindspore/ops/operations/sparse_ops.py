@@ -2353,7 +2353,7 @@ class SparseReshape(Primitive):
         RuntimeError: If inferred-dim(-1) in `new_shape` cannot be correctly inferred.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 0, 0],
