@@ -127,8 +127,7 @@ class MSANFModelParser {
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> GetAbstractForNode(
     const mind_ir::AttributeProto &attr_proto);
   AnfNodePtr GetAnfNode(const std::string &node_name);
-  tensor::TensorPtr GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor,
-                                                     bool need_load_data = true);
+  tensor::TensorPtr GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor);
 
   FuncGraphPtr top_graph_ = nullptr;
   std::string producer_name_;

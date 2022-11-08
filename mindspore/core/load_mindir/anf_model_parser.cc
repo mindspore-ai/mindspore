@@ -267,8 +267,7 @@ AnfNodePtr NewValueNodeWithAbstract(const T &value) {
 }
 }  // namespace
 
-tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor,
-                                                                     bool need_load_data) {
+tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor) {
   ShapeVector shape;
   const int attr_tensor_type = attr_tensor.data_type();
   for (int i = 0; i < attr_tensor.dims_size(); ++i) {
@@ -303,9 +302,14 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
       MS_LOG(ERROR) << "Failed to get tensor form tensor proto.";
       return nullptr;
     }
-  } else if (need_load_data) {
-    MS_LOG(ERROR) << "Failed to get tensor form tensor proto.";
-    return nullptr;
+  } else if (attr_tensor.has_external_data()) {
+    auto ret = GetTensorDataFromExternal(attr_tensor, tensor);
+    if (!ret) {
+      MS_LOG(ERROR) << "Failed Load data from external.";
+      return nullptr;
+    }
+  } else {
+    MS_LOG(DEBUG) << "Parameter will load initialized data.";
   }
   return tensor;
 }
@@ -506,19 +510,13 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
     anfnode_build_map_[parameter_proto.name()] = node;
     return true;
   }
-  auto tensor = GenerateTensorPtrFromTensorProto(parameter_proto, false);
-  tensor->set_param_info(param_info);
-  if (parameter_proto.has_raw_data()) {
-    node->set_default_param(tensor);
-  } else if (parameter_proto.has_external_data()) {
-    auto ret = GetTensorDataFromExternal(parameter_proto, tensor);
-    if (!ret) {
-      return false;
-    }
-    node->set_default_param(tensor);
-  } else {
-    MS_LOG(DEBUG) << "Parameter will load initialized data.";
+  auto tensor = GenerateTensorPtrFromTensorProto(parameter_proto);
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Build tensor failed from the parameter proto.";
+    return false;
   }
+  tensor->set_param_info(param_info);
+  node->set_default_param(tensor);
   node->set_abstract(tensor->ToAbstract());
 
   anfnode_build_map_[parameter_proto.name()] = node;
@@ -968,6 +966,7 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
   tensor::TensorPtr tensor_info = GenerateTensorPtrFromTensorProto(attr_tensor);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "Failed to get the tensor for ValueNode.";
+    return false;
   }
   auto new_value_node = NewValueNode(MakeValue(tensor_info));
   MS_EXCEPTION_IF_NULL(new_value_node);
@@ -1329,6 +1328,10 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
 }
 
 bool MSANFModelParser::BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node_proto) {
+  if (node_proto.output_size() == 0) {
+    MS_LOG(ERROR) << "The Proto output is empty.";
+    return false;
+  }
   const std::string &value_node_name = node_proto.output(0);
   const mind_ir::AttributeProto &attr_proto = node_proto.attribute(0);
   if (attr_proto.has_ref_attr_name()) {
