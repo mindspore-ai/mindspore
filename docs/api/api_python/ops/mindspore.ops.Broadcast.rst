@@ -6,8 +6,7 @@
     对输入数据整组广播。
 
     .. note::
-        集合中的所有进程的Tensor的shape和数据格式相同。在运行下面样例时，用户需要预设通信环境变量，请在 `MindSpore \
-        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.ops.html#通信算子>`_ 官网上查看详情。
+        集合中的所有进程的Tensor的shape和数据格式相同。
 
     参数：
         - **root_rank** (int) - 表示发送源的进程编号。除发送数据的进程外，存在于所有进程中。
@@ -21,3 +20,10 @@
 
     异常：
         - **TypeError** - root_rank不是int或group不是str。
+
+    样例：
+
+    .. note::
+        .. include:: mindspore.ops.comm_note.rst
+
+        该样例需要在多卡环境下运行。

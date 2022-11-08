@@ -22,5 +22,11 @@ mindspore.ops.ReduceScatter
 
     异常：
         - **TypeError** - 如果 `op` 和 `group` 不是字符串。
-        - **ValueError** - 如果输入的第一个维度不能被rank_size整除。
+        - **ValueError** - 如果输入的第一个维度不能被rank size整除。
 
+    样例：
+
+    .. note::
+        .. include:: mindspore.ops.comm_note.rst
+        
+        该样例需要在2卡环境下运行。

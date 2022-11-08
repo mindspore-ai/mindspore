@@ -46,17 +46,23 @@ class ReduceOp:
     - MIN: Take the minimum.
     - PROD: Take the product.
 
-    Note:
-        For more, refer to example. This needs to run in an environment with multiple graphics cards.
-        The user needs to preset
-        communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
-
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with multiple devices.
+
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor, ops
         >>> from mindspore.ops import ReduceOp
@@ -109,10 +115,7 @@ class AllReduce(Primitive):
 
     Note:
         The operation of AllReduce does not support "prod" currently.
-        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
-        communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions, like sum, max, and min.
@@ -135,7 +138,19 @@ class AllReduce(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with multiple devices.
+
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -181,10 +196,7 @@ class AllGather(PrimitiveWithInfer):
     Gathers tensors from the specified communication group.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
-        communication environment variables before running the following example. Please check the details on the
-        official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
@@ -205,7 +217,19 @@ class AllGather(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with 2 devices.
+
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
@@ -389,10 +413,7 @@ class ReduceScatter(Primitive):
     <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_ .
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
-        communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
@@ -415,7 +436,19 @@ class ReduceScatter(Primitive):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with 2 devices.
+
         >>> import mindspore as ms
         >>> from mindspore import Tensor
         >>> from mindspore.communication import init
@@ -519,10 +552,7 @@ class Broadcast(PrimitiveWithInfer):
     Broadcasts the tensor to the whole group.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
-        communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         root_rank (int): Source rank. Required in all processes except the one
@@ -543,10 +573,19 @@ class Broadcast(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> # This example should be run with multiple processes.
-        >>> # Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
-        >>> # on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
-        >>> # Variables, Calling the Collective Communication Library, Running The Script.
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with multiple devices.
+
         >>> import mindspore as ms
         >>> from mindspore import Tensor
         >>> from mindspore.communication import init
@@ -737,11 +776,6 @@ class AlltoAll(PrimitiveWithInfer):
     - The gather phase: Each process concatenates the received blocks along the concat_dimension.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection. The user needs to preset
-        communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
-
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
         <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
@@ -772,7 +806,19 @@ class AlltoAll(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> # This example should be run with 8 devices. Refer to the tutorial > Distributed Training on mindspore.cn
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with 8 devices.
+
         >>> import os
         >>> import mindspore as ms
         >>> from mindspore import Tensor
@@ -843,11 +889,6 @@ class NeighborExchangeV2(Primitive):
     to learn about how the data is exchanged between neighborhood devices.
 
     Note:
-        The user needs to preset
-        communication environment variables before running the following example, please check the details on the
-        official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
-
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
         <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
@@ -883,7 +924,19 @@ class NeighborExchangeV2(Primitive):
         ``Ascend``
 
     Examples:
-        >>> # This example should be run with 2 devices. Refer to the tutorial > Distributed Training on mindspore.cn
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with 2 devices.
+
         >>> import os
         >>> import mindspore as ms
         >>> from mindspore import Tensor

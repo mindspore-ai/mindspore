@@ -34,9 +34,9 @@ class Node:
 
     Args:
         node (NodeImpl): A handler of `NodeImpl`. `NodeImpl` mentioned below is implementation of `Node` which is not
-        an interface of Rewrite. Rewrite recommend invoking specific create method of `Node` to instantiate an instance
-        of Node such as `create_call_cell` rather than invoking constructor of `Node` directly, so don't care about
-        what is `NodeImpl` and use its instance just as a handler.
+            an interface of Rewrite. Rewrite recommend invoking specific create method of `Node`
+            to instantiate an instance of Node such as `create_call_cell` rather than invoking constructor of `Node`
+            directly, so don't care about what is `NodeImpl` and use its instance just as a handler.
     """
 
     def __init__(self, node: NodeImpl):

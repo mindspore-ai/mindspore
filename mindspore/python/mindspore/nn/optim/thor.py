@@ -337,6 +337,12 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         ``Ascend`` ``GPU``
 
     Examples:
+        .. note::
+            Before running the following example, you need to customize the network Net and
+            dataset preparation function create_dataset. Refer to
+            `Building a Network <https://www.mindspore.cn/tutorials/en/master/beginner/model.html>`_
+            and `Dataset <https://www.mindspore.cn/tutorials/en/master/beginner/dataset.html>`_ .
+
         >>> import mindspore as ms
         >>> from mindspore.nn import thor
         >>> from mindspore import nn

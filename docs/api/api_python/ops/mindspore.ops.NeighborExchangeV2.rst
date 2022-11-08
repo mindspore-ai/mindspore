@@ -30,3 +30,10 @@ mindspore.ops.NeighborExchangeV2
         - **ValueError** - 如果 `send_rank_ids` 或者 `recv_rank_ids` 存在小于-1的值或者存在重复值。
         - **ValueError** - 如果 `send_lens` 或者 `recv_lens` 存在小于零的值。
         - **ValueError** - 如果 `data_format` 不是"NCHW"。
+
+    样例：
+
+    .. note::
+        .. include:: mindspore.ops.comm_note.rst
+
+        该样例需要在2卡环境下运行。

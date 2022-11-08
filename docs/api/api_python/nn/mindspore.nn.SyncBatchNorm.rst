@@ -38,3 +38,10 @@ mindspore.nn.SyncBatchNorm
         - **ValueError** - `num_features` 小于1。
         - **ValueError** - `momentum` 不在范围[0, 1]内。
         - **ValueError** - `process_groups` 中的rank ID不在[0, rank_size)范围内。
+
+    样例：
+
+    .. note::
+        .. include:: ../ops/mindspore.ops.comm_note.rst
+
+        该样例需要在多卡环境下运行。
