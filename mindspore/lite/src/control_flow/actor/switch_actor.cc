@@ -294,11 +294,11 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
   ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
                   *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
   if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
+    (void)input_op_datas_.erase(op_uuid);
     context->SetFailed(ret);
     return;
   }
-  input_op_datas_.erase(op_uuid);
+  (void)input_op_datas_.erase(op_uuid);
 
   auto cond_ptr = reinterpret_cast<bool *>(switch_type_node_->in_tensors()[kSwitchCondTensorIndex]->data());
   if (cond_ptr == nullptr) {

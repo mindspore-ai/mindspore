@@ -48,10 +48,12 @@ bool DeleteDirRecursively(const std::string &dir_name) {
     auto real_file_path = RealPath(file_path.c_str());
     auto result = unlink(real_file_path.c_str());
     if (result != 0) {
+      closedir(dir);
       MS_LOG(ERROR) << "Delete the file(" << real_file_path << ") failed." << ErrnoToString(errno);
       return false;
     }
   }
+  closedir(dir);
   return true;
 }
 }  // namespace
@@ -281,7 +283,10 @@ int MindIRSerializer::SplitSave() {
   std::string external_local = model_name_ + "_data_" + std::to_string(index);
   auto external_local_path = CreateExternalPath(external_local);
   if (fs_->FileExist(external_local_path)) {
-    fs_->DeleteFile(external_local_path);
+    if (!fs_->DeleteFile(external_local_path)) {
+      MS_LOG(ERROR) << "delete file failed.";
+      return RET_ERROR;
+    }
   }
   int64_t parameter_size = 0;
   int64_t offset = OFFSET;

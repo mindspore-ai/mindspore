@@ -150,7 +150,7 @@ int ControlFlowScheduler::SplitSubGraphNodesIntoTwoParts(kernel::SubGraphKernel 
   auto nodes = subgraph_kernel->nodes();
 
   // get the position of the last non-tail call op.
-  auto is_non_tail_call = [](kernel::KernelExec *node) { return kernel::KernelExecUtil::IsNonTailCall(node); };
+  auto is_non_tail_call = [](const kernel::KernelExec *node) { return kernel::KernelExecUtil::IsNonTailCall(node); };
   auto last_non_tail_call_iter = std::find_if(nodes.rbegin(), nodes.rend(), is_non_tail_call);
   auto distance = nodes.rend() - last_non_tail_call_iter;
   if (distance == 0) {
@@ -315,7 +315,8 @@ kernel::SubGraphKernel *ControlFlowScheduler::CreateEntranceSubGraph(kernel::Sub
     }
     src_tensors_->push_back(new_tensor);
     new_input_tensors.push_back(new_tensor);
-    kernel::KernelExecUtil::ReplaceSubGraphNodesInTensor(subgraph, old_tensor, new_tensor);
+    auto ret = kernel::KernelExecUtil::ReplaceSubGraphNodesInTensor(subgraph, old_tensor, new_tensor);
+    MS_CHECK_FALSE_MSG(ret != RET_OK, nullptr, "ReplaceSubGraphNodesInTensor failed.");
     subgraph->set_in_tensor(new_tensor, i);
   }
   auto entrance_subgraph = kernel::KernelExecUtil::CreateSubGraphKernel(

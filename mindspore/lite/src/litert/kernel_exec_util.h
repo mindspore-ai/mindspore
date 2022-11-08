@@ -35,7 +35,7 @@ class KernelExecUtil {
   static bool IsSwitchTypeCall(KernelExec *kernel);
   static bool IsNonTailCall(const KernelExec *node);
   static bool IsTailCall(const KernelExec *node);
-  static std::vector<KernelExec *> GetCallInputPartials(KernelExec *call_node);
+  static std::vector<KernelExec *> GetCallInputPartials(const KernelExec *call_node);
   static KernelExec *GetPartialOutputCall(const KernelExec *partial_node);
   static bool IsNonTailCallSubGraph(KernelExec *kernel);
   static bool IsTailCallSubGraph(KernelExec *kernel);

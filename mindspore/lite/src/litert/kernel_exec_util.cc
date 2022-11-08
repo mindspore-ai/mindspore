@@ -499,7 +499,8 @@ bool KernelExecUtil::IsNonTailCallSubGraph(KernelExec *kernel) {
     return false;
   }
   auto nodes = subgraph_kernel->nodes();
-  return std::any_of(nodes.begin(), nodes.end(), [](KernelExec *node) { return KernelExecUtil::IsNonTailCall(node); });
+  return std::any_of(nodes.begin(), nodes.end(),
+                     [](const KernelExec *node) { return KernelExecUtil::IsNonTailCall(node); });
 }
 
 bool KernelExecUtil::IsTailCallSubGraph(KernelExec *kernel) {
@@ -511,13 +512,13 @@ bool KernelExecUtil::IsTailCallSubGraph(KernelExec *kernel) {
     return false;
   }
   auto output_nodes = subgraph_kernel->out_nodes();
-  if (std::any_of(output_nodes.begin(), output_nodes.end(), [](KernelExec *node) { return IsTailCall(node); })) {
+  if (std::any_of(output_nodes.begin(), output_nodes.end(), [](const KernelExec *node) { return IsTailCall(node); })) {
     return true;
   }
   return false;
 }
 
-std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(KernelExec *call_node) {
+std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(const KernelExec *call_node) {
   if (call_node->type() != schema::PrimitiveType_Call) {
     MS_LOG(ERROR) << "input node is not call node.";
     return {};
@@ -628,7 +629,7 @@ bool KernelExecUtil::IsNonTailCallSubGraph(KernelExec *kernel) { return false; }
 
 bool KernelExecUtil::IsTailCallSubGraph(KernelExec *kernel) { return false; }
 
-std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(KernelExec *call_node) { return {}; }
+std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(const KernelExec *call_node) { return {}; }
 
 std::vector<KernelExec *> KernelExecUtil::GetCallInputPartialsCorrespondingOutputSubgraph(KernelExec *call_node) {
   return {};

@@ -428,10 +428,12 @@ int CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorl
   }
   if (!dst_tensorlist->shape().empty()) {
     if (src_tensorlist->tensors_data_type() == kNumberTypeFloat16) {
-      dst_tensorlist->MallocTensorListData(kNumberTypeFloat32, tensors_shapes);
+      auto ret = dst_tensorlist->MallocTensorListData(kNumberTypeFloat32, tensors_shapes);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "dst_tensorlist MallocTensorListData failed.");
     }
     if (src_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
-      dst_tensorlist->MallocTensorListData(kNumberTypeFloat16, tensors_shapes);
+      auto ret = dst_tensorlist->MallocTensorListData(kNumberTypeFloat16, tensors_shapes);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "dst_tensorlist MallocTensorListData failed.");
     }
   }
   dst_tensorlist->set_allocator(src_tensorlist->allocator());
@@ -591,7 +593,8 @@ TensorList *MallocTensorListDataAccordingToTensorListC(Tensor *tensor, TensorLis
   auto tensor_shape = std::vector<std::vector<int>>(
     tensor_list_c->element_num_, std::vector<int>(tensor_list_c->element_shape_,
                                                   tensor_list_c->element_shape_ + tensor_list_c->element_shape_size_));
-  tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
+  auto ret = tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
+  MS_CHECK_FALSE_MSG(ret != RET_OK, nullptr, "tensor list MallocTensorListData");
   return tensor_list;
 }
 

@@ -39,7 +39,7 @@ int TensorListSetItemCPUKernel::Prepare() {
   return RET_OK;
 }
 
-int TensorListSetItemCPUKernel::CheckParam() {
+int TensorListSetItemCPUKernel::CheckParam() const {
   if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
     MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type() << " must be int";
     return RET_ERROR;
