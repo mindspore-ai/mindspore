@@ -51,6 +51,7 @@ class SparseSparseMaximumCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   void CheckInputShape(const std::vector<KernelTensorPtr> &inputs, const int64_t a_nnz, const int64_t b_nnz,
                        const int64_t num_dims);
+  void CheckShapeMatch(const std::vector<AddressPtr> &inputs);
 
   std::vector<KernelTensorPtr> outputs_;
   TypeId dtype_{kTypeUnknown};
