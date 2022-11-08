@@ -79,5 +79,7 @@ NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2);
 NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x);
 bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types);
+ShapeVector PoolToNHWC(const ShapeVector &v);
+ShapeVector ConvToNHWC(const ShapeVector &v);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_EXPANDER_COMMON_UTILS_H_
