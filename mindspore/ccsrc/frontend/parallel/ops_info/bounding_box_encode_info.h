@@ -42,10 +42,7 @@ class BoundingBoxEncodeInfo : public OperatorInfo {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status GetAttrs() override {
-    infer_strategy_mode_ = SAME_MODE;
-    return SUCCESS;
-  }
+  Status GetAttrs() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; };
 
  private:

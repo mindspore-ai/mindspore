@@ -57,7 +57,6 @@ class UnsortedSegmentOpInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetAttrs() override;
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 };
 
 class UnsortedSegmentSumInfo : public UnsortedSegmentOpInfo {

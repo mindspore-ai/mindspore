@@ -34,7 +34,6 @@ Status ROIAlignInfo::GetAttrs() {
     }
     (void)roi_align_attrs.emplace_back(std::make_pair(attr_key, attrs_[attr_key]));
   }
-  infer_strategy_mode_ = INDEPENDENT_MODE;
   return SUCCESS;
 }
 

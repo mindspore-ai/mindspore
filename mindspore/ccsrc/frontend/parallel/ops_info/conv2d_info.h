@@ -146,7 +146,6 @@ class Conv2DInfo : public OperatorInfo {
   virtual int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 
  private:
   Status CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy);
@@ -179,7 +178,6 @@ class Conv2DBackpropInputInfo : public Conv2DInfo {
   int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias) override;
   int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias) override;
   int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias) override;
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 
  private:
   Shape out_shape_;

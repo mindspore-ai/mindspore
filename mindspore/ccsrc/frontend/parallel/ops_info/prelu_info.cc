@@ -89,7 +89,6 @@ Status PReLUInfo::GetAttrs() {
                   << outputs_shape_.size() << " is wrong.";
     return FAILED;
   }
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -108,34 +107,6 @@ std::vector<StrategyPtr> PReLUInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
-
-// in_strategy: ((A, B, C), ()),  Shapes: ((a, b, c), (b)), return: ((A, B, C), (B))
-// in_strategy: ((A, B, C), ()),  Shapes: ((a, b, c), (1)), return: ((A, B, C), (1))
-// in_strategy: ((), (B)),  Shapes: ((a, b, c), (b)), return: ((1, B, 1), (B))
-Shapes PReLUInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();
-  }
-
-  if (!in_strategy[0].empty()) {
-    if (in_strategy[0].size() < 2) {
-      MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[0] must be larger than 1, but got "
-                        << in_strategy[0].size();
-    }
-    if (inputs_shape_[1][0] > 1) {
-      return Shapes({in_strategy[0], {in_strategy[0][1]}});
-    } else {
-      return Shapes({in_strategy[0], {1}});
-    }
-  }
-
-  if (!in_strategy[1].empty()) {
-    Shape tmp(inputs_shape_[0].size(), 1);
-    tmp[1] = in_strategy[1][0];
-    return Shapes({tmp, in_strategy[1]});
-  }
-  MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0] and in_strategy[1] are empty";
-}
 
 REGISTER(PReLUInfo);
 }  // namespace parallel
