@@ -17,6 +17,7 @@
 #include <iostream>
 #include <cstring>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 #include "include/api/status.h"
@@ -28,14 +29,16 @@ namespace lite {
 namespace {
 constexpr int kNumPrintOfOutData = 20;
 Status FillInputData(const std::vector<mindspore::MSTensor> &inputs) {
+  std::mt19937 random_engine;
   for (auto tensor : inputs) {
     auto input_data = tensor.MutableData();
     if (input_data == nullptr) {
       std::cerr << "MallocData for inTensor failed.\n";
       return kLiteError;
     }
-    std::vector<float> temp(tensor.ElementNum(), 1.0f);
-    memcpy(input_data, temp.data(), tensor.DataSize());
+    auto distribution = std::uniform_real_distribution<float>(1.0f, 1.0f);
+    (void)std::generate_n(static_cast<float *>(input_data), tensor.ElementNum(),
+                          [&]() { return distribution(random_engine); });
   }
   return kSuccess;
 }

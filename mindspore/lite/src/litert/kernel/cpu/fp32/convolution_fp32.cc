@@ -93,6 +93,7 @@ int ConvolutionCPUKernel::Prepare() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
+    MS_CHECK_TRUE_MSG(filter_tensor->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
     CHECK_NULL_RETURN(filter_tensor);
     size_t in_channel = filter_tensor->Channel();
     size_t out_channel = filter_tensor->Batch();

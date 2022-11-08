@@ -74,6 +74,8 @@ int ConvolutionDepthwiseSWCPUKernelX86::Prepare() {
 #endif
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
+    CHECK_NULL_RETURN(weight_tensor);
+    MS_CHECK_TRUE_MSG(weight_tensor->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
     int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
     MS_CHECK_INT_MUL_NOT_OVERFLOW(weight_tensor->Height(), weight_tensor->Width(), RET_ERROR);
     int weight_size_hw = weight_tensor->Height() * weight_tensor->Width();

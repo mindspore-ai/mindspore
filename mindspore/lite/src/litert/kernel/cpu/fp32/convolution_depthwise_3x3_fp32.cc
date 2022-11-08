@@ -16,6 +16,7 @@
 
 #include "src/litert/kernel/cpu/fp32/convolution_depthwise_3x3_fp32.h"
 #include "include/errorcode.h"
+#include "nnacl/op_base.h"
 
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
 using mindspore::lite::RET_ERROR;
@@ -31,6 +32,7 @@ int ConvolutionDepthwise3x3CPUKernel::Prepare() {
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(weight_tensor);
+    MS_CHECK_TRUE_MSG(weight_tensor->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
     int channel = weight_tensor->Batch();
     int c4 = UP_ROUND(channel, C4NUM);
     MS_CHECK_INT_MUL_NOT_OVERFLOW(c4, C12NUM, RET_ERROR);

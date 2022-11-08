@@ -124,6 +124,7 @@ int ConvolutionWinogradBaseCPUKernel::Prepare() {
   conv_param_->output_unit_ = output_unit_;
   if (op_parameter_->is_train_session_) {
     auto filter_tensor = in_tensors_.at(kWeightIndex);
+    MS_CHECK_TRUE_MSG(filter_tensor->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
     CHECK_NULL_RETURN(filter_tensor);
     int in_channel = filter_tensor->Channel();
     int out_channel = filter_tensor->Batch();

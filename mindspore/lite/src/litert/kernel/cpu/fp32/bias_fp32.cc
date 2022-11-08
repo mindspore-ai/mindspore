@@ -41,6 +41,9 @@ int BiasAddRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int BiasCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (!InferShapeDone()) {
     return RET_OK;
   }

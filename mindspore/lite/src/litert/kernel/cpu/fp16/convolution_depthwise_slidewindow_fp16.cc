@@ -97,6 +97,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Prepare() {
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(weight_tensor);
+    MS_CHECK_TRUE_MSG(weight_tensor->shape().size() == C4NUM, RET_ERROR, "Conv-like: weight-shape only support 4D.");
     int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
     int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
     set_workspace_size(pack_weight_size * sizeof(float16_t));
