@@ -1755,7 +1755,7 @@ class ZerosLike(Primitive):
     Returns a Tensor with a value of 0 and its shape and data type is the same as the input.
 
     Inputs:
-        - **input_x** (Tensor) - Input Tensor of any dimension. The data type is int32, int64, float16 or float32.
+        - **input_x** (Tensor) - Input Tensor of any dimension. The data type is Number.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.

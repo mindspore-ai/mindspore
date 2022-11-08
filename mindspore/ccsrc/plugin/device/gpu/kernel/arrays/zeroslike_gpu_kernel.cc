@@ -16,6 +16,10 @@
 #include <cstdint>
 
 #include "plugin/device/gpu/kernel/arrays/zeroslike_gpu_kernel.h"
+#include "mindspore/core/ops/zeros_like.h"
+#include "mindspore/core/abstract/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -70,21 +74,69 @@ bool ZerosLikeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
+bool ZerosLikeGpuKernelMod::LaunchKernelComplex64(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &workspace,
+                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
+  utils::Complex<float> *output_device_address = GetDeviceAddress<utils::Complex<float>>(outputs, 0);
+
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    // have to use a float literal instead of an int literal because of ambiguous half() overload.
+    cudaMemsetAsync(output_device_address, 0, input_size_ * (sizeof(float) + sizeof(float)),
+                    reinterpret_cast<cudaStream_t>(stream_ptr)),
+    "cudaMemset failed");
+
+  return true;
+}
+
+bool ZerosLikeGpuKernelMod::LaunchKernelComplex128(const std::vector<AddressPtr> &inputs,
+                                                   const std::vector<AddressPtr> &workspace,
+                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
+  utils::Complex<double> *output_device_address = GetDeviceAddress<utils::Complex<double>>(outputs, 0);
+
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    // have to use a float literal instead of an int literal because of ambiguous half() overload.
+    cudaMemsetAsync(output_device_address, 0, input_size_ * (sizeof(double) + sizeof(double)),
+                    reinterpret_cast<cudaStream_t>(stream_ptr)),
+    "cudaMemset failed");
+
+  return true;
+}
+
 std::vector<std::pair<KernelAttr, ZerosLikeGpuKernelMod::ZerosLikeLaunchFunc>> ZerosLikeGpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    &ZerosLikeGpuKernelMod::LaunchKernel<bool>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
    &ZerosLikeGpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &ZerosLikeGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &ZerosLikeGpuKernelMod::LaunchKernel<int16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
    &ZerosLikeGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &ZerosLikeGpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &ZerosLikeGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &ZerosLikeGpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &ZerosLikeGpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &ZerosLikeGpuKernelMod::LaunchKernel<uint64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
    &ZerosLikeGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &ZerosLikeGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &ZerosLikeGpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &ZerosLikeGpuKernelMod::LaunchKernelComplex64},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &ZerosLikeGpuKernelMod::LaunchKernelComplex128},
 };
 
 std::vector<KernelAttr> ZerosLikeGpuKernelMod::GetOpSupport() {
