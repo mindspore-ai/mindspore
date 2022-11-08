@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "debug/debugger/debugger.h"
 #include <dirent.h>
 #include <cstdio>
 #include <fstream>
@@ -25,7 +25,6 @@
 #include <utility>
 #include <map>
 #include <regex>
-#include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "backend/common/session/session_basic.h"
 #include "backend/common/session/anf_runtime_algorithm.h"

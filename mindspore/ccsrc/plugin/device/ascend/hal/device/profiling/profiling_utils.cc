@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <algorithm>
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
+#include <algorithm>
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
