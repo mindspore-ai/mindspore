@@ -107,7 +107,7 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitiveP
     if (pad_per_class) {
       num_detection = std::min(max_total_size, max_output_size_per_class * static_cast<int32_t>(input1_shape[ksecond]));
     }
-
+    (void)primitive->AddAttr("per_detections", MakeValue(num_detection));
     int64_t bs = input0_shape[0];
     ShapeVector shape1 = {bs, num_detection, 4};
     ShapeVector shape2 = {bs, num_detection};
@@ -141,7 +141,6 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
                                          input3_shape, input4_shape, input5_shape};
   auto is_dynamic = (IsDynamic(input0_shape) || IsDynamic(input1_shape));
   auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
-
   CombinedNonMaxSuppressionCheckShapeSize(input0_shape, input1_shape, input2_shape, input3_shape, input4_shape,
                                           input5_shape, is_dynamic_rank, prim_name);
 
@@ -202,6 +201,16 @@ AbstractBasePtr CombinedNonMaxSuppressionInfer(const abstract::AnalysisEnginePtr
   auto infer_shape = CombinedNonMaxSuppressionInferShape(primitive, input_args);
   auto infer_type = CombinedNonMaxSuppressionInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+bool CombinedNonMaxSuppression::get_pad_per_class() const {
+  auto value_ptr = this->GetAttr("pad_per_class");
+  return GetValue<bool>(value_ptr);
+}
+
+bool CombinedNonMaxSuppression::get_clip_boxes() const {
+  auto value_ptr = this->GetAttr("clip_boxes");
+  return GetValue<bool>(value_ptr);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression,

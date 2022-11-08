@@ -17,7 +17,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops.operations.random_ops import RandomGammaGrad
+from mindspore.ops.operations._grad_ops import RandomGammaGrad
 
 
 class RandomGammaGradNet(nn.Cell):

@@ -1111,7 +1111,7 @@ class CombinedNonMaxSuppression(Primitive):
         ValueError: If `iou_threshold` not in [0,1].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> boxes = Tensor(np.array([[[[200, 100, 150, 100]],
