@@ -40,7 +40,7 @@ class Net(Cell):
         return self.cast(x, self.dtype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_bool():
@@ -70,7 +70,7 @@ def test_cast_bool():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_float16():
@@ -132,7 +132,7 @@ def test_cast_float32():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_float64():
@@ -163,7 +163,7 @@ def test_cast_float64():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int8():
@@ -194,7 +194,7 @@ def test_cast_int8():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int16():
@@ -225,7 +225,7 @@ def test_cast_int16():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int32():
@@ -256,7 +256,7 @@ def test_cast_int32():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_int64():
@@ -287,7 +287,7 @@ def test_cast_int64():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint8():
@@ -318,7 +318,7 @@ def test_cast_uint8():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint16():
@@ -349,7 +349,7 @@ def test_cast_uint16():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint32():
@@ -380,7 +380,7 @@ def test_cast_uint32():
         assert output.asnumpy().shape == (3, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cast_uint64():
