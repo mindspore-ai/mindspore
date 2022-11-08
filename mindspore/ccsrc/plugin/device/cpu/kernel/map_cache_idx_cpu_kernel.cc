@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/cache_embedding_hashmap_struct.h"
 
@@ -48,18 +49,6 @@ int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
   return compress_count;
 }
 
-void UpdateShape(size_t miss_count, const CNodePtr &node) {
-  ShapeVector out_shape;
-  (void)out_shape.emplace_back(SizeToLong(miss_count));
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
-  std::vector<TypeId> dtypes(output_num);
-  for (size_t i = 0; i < output_num; i++) {
-    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node, i);
-  }
-  common::AnfAlgo::SetOutputInferTypeAndShape(
-    dtypes, {common::AnfAlgo::GetOutputInferShape(node, 0), out_shape, out_shape, out_shape}, node.get());
-}
-
 void CheckMissCount(size_t miss_count, int count_size, float total_count, float hit_count) {
   if (miss_count != 0) {
     MS_LOG(INFO) << "Miss count: " << miss_count;
@@ -70,48 +59,57 @@ void CheckMissCount(size_t miss_count, int count_size, float total_count, float 
   }
 }
 
-void MapCacheIdxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  auto hashmap_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (IsDynamic(hashmap_shape)) {
-    return;
-  }
-  if (hashmap_shape.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' must be 2-D, but got "
-                      << hashmap_shape.size() << "-D.";
-  }
-  hashmap_length_ = LongToSize(hashmap_shape[0]);
-  if (hashmap_length_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension of 'HashMap' must be greater than 0, but got " << hashmap_length_;
-  }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  is_need_retrieve_output_shape_ = true;
-}
-
-bool MapCacheIdxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool MapCacheIdxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapCacheIdxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapCacheIdxOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int32 or int64, but got " << dtype_;
+
+  outputs_ = outputs;
+  is_need_retrieve_output_shape_ = true;
+  outputs_size_ = outputs.size();
+  for (size_t i = 0; i < outputs_size_; i++) {
+    dtypes_.push_back(outputs[i]->GetDtype());
   }
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
   return true;
 }
 
-template <typename T>
-void MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto node = node_wpt_.lock();
-  auto emb_idx_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+int MapCacheIdxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, ret: " << ret;
+    return ret;
+  }
+
+  auto hashmap_shape = inputs[kIndex0]->GetShapeVector();
+  auto emb_idx_shape = inputs[kIndex1]->GetShapeVector();
   batch_size_ = SizeOf(emb_idx_shape);
+
+  hashmap_length_ = LongToSize(hashmap_shape[0]);
+  if (hashmap_length_ == 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the first dimension of 'HashMap' must be greater than 0, but got "
+                  << hashmap_length_;
+    return KRET_RESIZE_FAILED;
+  }
+
+  return KRET_OK;
+}
+
+template <typename T>
+bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &workspace,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
   HashmapEntry<T> *hashmap = reinterpret_cast<HashmapEntry<T> *>(inputs[0]->addr);
   auto input_indices = reinterpret_cast<T *>(inputs[1]->addr);
   T *step_ = reinterpret_cast<T *>(inputs[2]->addr);
@@ -122,7 +120,7 @@ void MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto output_miss_emb_idx = reinterpret_cast<T *>(outputs[2]->addr);
   auto output_swap_cache_idx = reinterpret_cast<T *>(outputs[3]->addr);
   std::vector<T> miss_idx;
-  size_t miss_count = 0;
+  miss_count_ = 0;
   float total_count = 0;
   int count_size = 0;
   float hit_count = 0;
@@ -147,20 +145,20 @@ void MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     total_count += SizeToFloat(count);
     if (hashmap[tmp_entry].IsEmpty()) {
       (void)miss_idx.emplace_back(i);
-      output_miss_emb_idx[miss_count] = key;
+      output_miss_emb_idx[miss_count_] = key;
       output_cache_idx[i] = -1;
-      miss_count++;
+      miss_count_++;
     } else {
       hit_count += 1;
       output_cache_idx[i] = hashmap[tmp_entry].value_;
       hashmap[tmp_entry].step_ = step_[0];
     }
   }
-  CheckMissCount(miss_count, count_size, total_count, hit_count);
+  CheckMissCount(miss_count_, count_size, total_count, hit_count);
   float total_insert_count = 0;
   float total_delete_count = 0;
   // swap hash map
-  for (size_t i = 0; i < miss_count; ++i) {
+  for (size_t i = 0; i < miss_count_; ++i) {
     T emb_idx = output_miss_emb_idx[i];
     T entry = HashFunc(emb_idx, hashmap_length_);
     size_t tag_count = 1;
@@ -193,15 +191,76 @@ void MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     total_delete_count += IntToFloat(compress_count + SizeToInt(delete_count));
     total_insert_count += SizeToFloat(tag_count);
   }
-  if (miss_count != 0) {
-    MS_LOG(INFO) << "Insert count: " << total_insert_count / miss_count;
-    MS_LOG(INFO) << "Delete count: " << total_delete_count / miss_count;
+  if (miss_count_ != 0) {
+    MS_LOG(INFO) << "Insert count: " << total_insert_count / miss_count_;
+    MS_LOG(INFO) << "Delete count: " << total_delete_count / miss_count_;
   }
   step_[0] += 1;
-  for (size_t i = 0; i < miss_count; ++i) {
+  for (size_t i = 0; i < miss_count_; ++i) {
     output_cache_idx[miss_idx[i]] = output_swap_cache_idx[i];
   }
-  UpdateShape(miss_count, node);
+
+  return true;
+}
+
+void MapCacheIdxCpuKernelMod::SyncData() {
+  ShapeVector out_shape = {SizeToLong(miss_count_)};
+  for (size_t i = 1; i < outputs_size_; i++) {
+    outputs_[i]->SetShapeVector(out_shape);
+  }
+}
+
+std::vector<std::pair<KernelAttr, MapCacheIdxCpuKernelMod::MapCacheIdxFunc>> MapCacheIdxCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &MapCacheIdxCpuKernelMod::LaunchKernel<int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   &MapCacheIdxCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   &MapCacheIdxCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &MapCacheIdxCpuKernelMod::LaunchKernel<int>}};
+
+std::vector<KernelAttr> MapCacheIdxCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MapCacheIdxFunc> &item) { return item.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapCacheIdx, MapCacheIdxCpuKernelMod);
