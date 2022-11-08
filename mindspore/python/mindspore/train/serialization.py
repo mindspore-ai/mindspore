@@ -1416,6 +1416,17 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         else:
             logger.warning("The parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
                            .format(param_proto.name))
+    for map_param_proto in model.graph.map_parameter:
+        map_param_name = map_param_proto.name[map_param_proto.name.find(":") + 1:]
+        if map_param_name in net_dict.keys():
+            map_parameter = net_dict[map_param_name]
+            key_nparr, value_nparr, status_nparr = map_parameter.export_data()
+            map_param_proto.key_tensor.raw_data = key_nparr.tobytes()
+            map_param_proto.value_tensor.raw_data = value_nparr.tobytes()
+            map_param_proto.status_tensor.raw_data = status_nparr.tobytes()
+        else:
+            logger.warning("The map_parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
+                           .format(map_param_proto.name))
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
     current_path = os.path.abspath(file_name)

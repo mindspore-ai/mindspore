@@ -152,11 +152,12 @@ class MS_CORE_API Ellipsis final : public Named {
 };
 GVAR_DEF(NamedPtr, kEllipsis, std::make_shared<Ellipsis>());
 
-class MindIRClassType final : public Named {
+class MS_CORE_API MindIRClassType final : public Named {
  public:
   explicit MindIRClassType(const std::string &class_type) : Named(class_type) {}
   ~MindIRClassType() override = default;
   MS_DECLARE_PARENT(MindIRClassType, Named);
+  abstract::AbstractBasePtr ToAbstract() override;
 };
 using MindIRClassTypePtr = std::shared_ptr<MindIRClassType>;
 
@@ -168,24 +169,26 @@ class MindIRMetaFuncGraph final : public Named {
 };
 using MindIRMetaFuncGraphPtr = std::shared_ptr<MindIRMetaFuncGraph>;
 
-class MindIRNameSpace final : public Named {
+class MS_CORE_API MindIRNameSpace final : public Named {
  public:
   explicit MindIRNameSpace(const std::string &name_space) : Named(name_space), name_space_(name_space) {}
   ~MindIRNameSpace() override = default;
   MS_DECLARE_PARENT(MindIRNameSpace, Named);
   const std::string &name_space() const { return name_space_; }
+  abstract::AbstractBasePtr ToAbstract() override;
 
  private:
   std::string name_space_;
 };
 using MindIRNameSpacePtr = std::shared_ptr<MindIRNameSpace>;
 
-class MindIRSymbol final : public Named {
+class MS_CORE_API MindIRSymbol final : public Named {
  public:
   explicit MindIRSymbol(const std::string &symbol) : Named(symbol), symbol_(symbol) {}
   ~MindIRSymbol() override = default;
   MS_DECLARE_PARENT(MindIRSymbol, Named);
   const std::string &symbol() const { return symbol_; }
+  abstract::AbstractBasePtr ToAbstract() override;
 
  private:
   std::string symbol_;

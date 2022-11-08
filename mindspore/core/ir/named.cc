@@ -31,4 +31,16 @@ abstract::AbstractBasePtr None::ToAbstract() { return std::make_shared<abstract:
 abstract::AbstractBasePtr Null::ToAbstract() { return std::make_shared<abstract::AbstractNull>(); }
 
 abstract::AbstractBasePtr Ellipsis::ToAbstract() { return std::make_shared<abstract::AbstractEllipsis>(); }
+
+abstract::AbstractBasePtr MindIRClassType::ToAbstract() {
+  return std::make_shared<abstract::AbstractScalar>(shared_from_base<MindIRClassType>(), std::make_shared<TypeType>());
+}
+
+abstract::AbstractBasePtr MindIRNameSpace::ToAbstract() {
+  return std::make_shared<abstract::AbstractScalar>(shared_from_base<MindIRNameSpace>(), std::make_shared<External>());
+}
+
+abstract::AbstractBasePtr MindIRSymbol::ToAbstract() {
+  return std::make_shared<abstract::AbstractScalar>(shared_from_base<MindIRSymbol>(), std::make_shared<External>());
+}
 }  // namespace mindspore

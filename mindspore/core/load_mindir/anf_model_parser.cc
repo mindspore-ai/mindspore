@@ -27,6 +27,7 @@
 #include <algorithm>
 #include "ir/tensor.h"
 #include "ir/param_info.h"
+#include "ir/map_tensor.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -298,13 +299,13 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor->data_c());
     errno_t ret = memcpy_s(tensor_data_buf, tensor->data().nbytes(), tensor_buf.data(), tensor_buf.size());
     if (ret != EOK) {
-      MS_LOG(ERROR) << "Failed to get tensor form tensor proto.";
+      MS_LOG(ERROR) << "Failed to copy data from tensor proto.";
       return nullptr;
     }
   } else if (attr_tensor.has_external_data()) {
     auto ret = GetTensorDataFromExternal(attr_tensor, tensor);
     if (!ret) {
-      MS_LOG(ERROR) << "Failed Load data from external.";
+      MS_LOG(ERROR) << "Failed to get external data from tensor proto.";
       return nullptr;
     }
   } else {
@@ -321,28 +322,13 @@ abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType
       return GetAbsTensorFromTensorProto(attr_tensor);
     }
     case mind_ir::AttributeProto_AttributeType_CSR_TENSOR: {
-      std::vector<abstract::AbstractBasePtr> vec;
-      for (int i = 0; i < attr_proto.values_size(); ++i) {
-        auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
-        if (abs == nullptr) {
-          MS_LOG(WARNING) << "Failed to get the CSRTensor's abstract from AttrProto. " << attr_proto.DebugString();
-          return nullptr;
-        }
-        (void)vec.emplace_back(abs);
-      }
-      return std::make_shared<abstract::AbstractCSRTensor>(vec);
+      return BuildAbstractCSRTensorFromAttrProto(attr_proto);
     }
     case mind_ir::AttributeProto_AttributeType_COO_TENSOR: {
-      std::vector<abstract::AbstractBasePtr> vec;
-      for (int i = 0; i < attr_proto.values_size(); ++i) {
-        auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
-        if (abs == nullptr) {
-          MS_LOG(WARNING) << "Failed to get the COOTensor's abstract from AttrProto. " << attr_proto.DebugString();
-          return nullptr;
-        }
-        (void)vec.emplace_back(abs);
-      }
-      return std::make_shared<abstract::AbstractCOOTensor>(vec);
+      return BuildAbstractCOOTensorFromAttrProto(attr_proto);
+    }
+    case mind_ir::AttributeProto_AttributeType_MAP_TENSOR: {
+      return BuildAbstractMapTensorFromAttrProto(attr_proto);
     }
     case mind_ir::AttributeProto_AttributeType_TUPLE: {
       std::vector<abstract::AbstractBasePtr> vec;
@@ -522,6 +508,146 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   return true;
 }
 
+abstract::AbstractCOOTensorPtr MSANFModelParser::BuildAbstractCOOTensorFromAttrProto(
+  const mind_ir::AttributeProto &attr_proto) {
+  std::vector<abstract::AbstractBasePtr> vec;
+  for (int i = 0; i < attr_proto.values_size(); ++i) {
+    auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
+    if (abs == nullptr) {
+      MS_LOG(WARNING) << "Failed to get the COOTensor's abstract from AttrProto. " << attr_proto.DebugString();
+      return nullptr;
+    }
+    (void)vec.emplace_back(abs);
+  }
+  return std::make_shared<abstract::AbstractCOOTensor>(vec);
+}
+
+abstract::AbstractCSRTensorPtr MSANFModelParser::BuildAbstractCSRTensorFromAttrProto(
+  const mind_ir::AttributeProto &attr_proto) {
+  std::vector<abstract::AbstractBasePtr> vec;
+  for (int i = 0; i < attr_proto.values_size(); ++i) {
+    auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
+    if (abs == nullptr) {
+      MS_LOG(WARNING) << "Failed to get the CSRTensor's abstract from AttrProto. " << attr_proto.DebugString();
+      return nullptr;
+    }
+    (void)vec.emplace_back(abs);
+  }
+  return std::make_shared<abstract::AbstractCSRTensor>(vec);
+}
+
+abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrProto(
+  const mind_ir::AttributeProto &attr_proto) {
+  // default value
+  if (attr_proto.values_size() != 1) {
+    MS_LOG(EXCEPTION) << "AttrProto for AbstractMapTensor should has 1 value, but got " << attr_proto.values_size();
+  }
+  const auto &default_value_proto = attr_proto.values(0);
+  auto default_value = ObtainCNodeAttrInSingleScalarForm(default_value_proto);
+  MS_EXCEPTION_IF_NULL(default_value);
+
+  constexpr size_t kAbstractMapTensorAttrProtoTensorsSize = 2;
+  if (attr_proto.tensors_size() != kAbstractMapTensorAttrProtoTensorsSize) {
+    MS_LOG(EXCEPTION) << "AttrProto for AbstractMapTensor should has 2 tensors, but got " << attr_proto.tensors_size();
+  }
+  // key tensor
+  const auto &key_tensor_proto = attr_proto.tensors(0);
+  auto key_tensor_abs = GetAbsTensorFromTensorProto(key_tensor_proto);
+  MS_EXCEPTION_IF_NULL(key_tensor_abs);
+  // value tensor
+  const auto &value_tensor_proto = attr_proto.tensors(1);
+  auto value_tensor_abs = GetAbsTensorFromTensorProto(value_tensor_proto);
+  MS_EXCEPTION_IF_NULL(value_tensor_abs);
+  auto value_build_shape_ptr = value_tensor_abs->BuildShape();
+  if (!value_build_shape_ptr->isa<abstract::Shape>()) {
+    MS_LOG(EXCEPTION) << "value_shape of AbstractMapTensor should be a Shape, but got "
+                      << value_build_shape_ptr->ToString();
+  }
+  auto value_shape_ptr = value_build_shape_ptr->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(value_shape_ptr);
+  auto map_tensor = std::make_shared<tensor::MapTensor>(key_tensor_abs->BuildType()->type_id(),
+                                                        value_tensor_abs->BuildType()->type_id(),
+                                                        value_shape_ptr->shape(), default_value);
+  return std::make_shared<abstract::AbstractMapTensor>(map_tensor);
+}
+
+bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &node,
+                                                           const mind_ir::MapTensorProto &map_parameter_proto) {
+  MS_EXCEPTION_IF_NULL(node);
+
+  if (!map_parameter_proto.has_name()) {
+    MS_LOG(ERROR) << "mind_ir MapTensorProto has no name!";
+    return false;
+  }
+
+  string debug_info_name = ParseParameterName(map_parameter_proto.name());
+  auto debug_info_ptr = std::make_shared<NodeDebugInfo>(debug_info_name);
+  node->set_debug_info(debug_info_ptr);
+  node->set_name(debug_info_name);
+
+  ParamInfoPtr param_info = std::make_shared<ParamInfo>();
+  param_info->set_name(debug_info_name);
+
+  MS_LOG(DEBUG) << "Load map parameter name: " << map_parameter_proto.name();
+  if (IsIncLoad() && load_tensor_map_.find(map_parameter_proto.name()) != load_tensor_map_.end()) {
+    MS_LOG(ERROR) << "MapParameter dose not support incremental loading, param_name: " << map_parameter_proto.name();
+    return false;
+  }
+
+  // default value
+  if (!map_parameter_proto.has_default_value()) {
+    MS_LOG(ERROR) << "MapTensorProto should have default value: " << map_parameter_proto.name();
+    return false;
+  }
+  const auto &default_value_proto = map_parameter_proto.default_value();
+  auto default_value = BuildValueFromAttributeProto(default_value_proto);
+  if (default_value == nullptr) {
+    MS_LOG(ERROR) << "Build default value from AttributeProto failed.";
+    return false;
+  }
+  // key tensor
+  if (!map_parameter_proto.has_key_tensor()) {
+    MS_LOG(ERROR) << "MapTensorProto should have key tensor: " << map_parameter_proto.name();
+    return false;
+  }
+  const auto &key_tensor_proto = map_parameter_proto.key_tensor();
+  auto key_tensor = GenerateTensorPtrFromTensorProto(key_tensor_proto);
+  if (key_tensor == nullptr) {
+    MS_LOG(ERROR) << "Generate key tensor from TensorProto failed.";
+    return false;
+  }
+  // value tensor
+  if (!map_parameter_proto.has_value_tensor()) {
+    MS_LOG(ERROR) << "MapTensorProto should have value tensor: " << map_parameter_proto.name();
+    return false;
+  }
+  const auto &value_tensor_proto = map_parameter_proto.value_tensor();
+  auto value_tensor = GenerateTensorPtrFromTensorProto(value_tensor_proto);
+  if (value_tensor == nullptr) {
+    MS_LOG(ERROR) << "Generate value tensor from TensorProto failed.";
+    return false;
+  }
+  // status tensor
+  if (!map_parameter_proto.has_status_tensor()) {
+    MS_LOG(ERROR) << "MapTensorProto should have status tensor: " << map_parameter_proto.name();
+    return false;
+  }
+  const auto &status_tensor_proto = map_parameter_proto.status_tensor();
+  auto status_tensor = GenerateTensorPtrFromTensorProto(status_tensor_proto);
+  if (status_tensor == nullptr) {
+    MS_LOG(ERROR) << "Generate status tensor from TensorProto failed.";
+    return false;
+  }
+
+  auto map_tensor = std::make_shared<tensor::MapTensor>(key_tensor, value_tensor, status_tensor, default_value);
+  map_tensor->set_param_info(param_info);
+  node->set_default_param(map_tensor);
+  node->set_abstract(map_tensor->ToAbstract());
+
+  anfnode_build_map_[map_parameter_proto.name()] = node;
+  return true;
+}
+
 bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto,
                                                  const tensor::TensorPtr &tensor_info) {
   if (!tensor_proto.has_external_data()) {
@@ -671,6 +797,21 @@ bool MSANFModelParser::ImportParametersForGraph(const FuncGraphPtr &outputFuncGr
     const mind_ir::TensorProto &parameter_proto = importProto.parameter(i);
     if (!BuildParameterForFuncGraph(outputFuncGraph->add_parameter(), parameter_proto)) {
       MS_LOG(ERROR) << "Build parameter for funcgraph fail at index: " << i;
+      return false;
+    }
+  }
+  outputFuncGraph->set_fv_param_count(IntToSize(importProto.parameter_size()));
+  return true;
+}
+
+bool MSANFModelParser::ImportMapParametersForGraph(const FuncGraphPtr &outputFuncGraph,
+                                                   const mind_ir::GraphProto &importProto) {
+  MS_EXCEPTION_IF_NULL(outputFuncGraph);
+  MS_LOG(INFO) << "All MapParameters size is: " << importProto.map_parameter_size();
+  for (int i = 0; i < importProto.map_parameter_size(); ++i) {
+    const mind_ir::MapTensorProto &map_parameter_proto = importProto.map_parameter(i);
+    if (!BuildMapParameterFromMapTensorProto(outputFuncGraph->add_parameter(), map_parameter_proto)) {
+      MS_LOG(ERROR) << "Build map parameter for funcgraph fail at index: " << i;
       return false;
     }
   }
@@ -1040,14 +1181,6 @@ bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_n
   return true;
 }
 
-bool MSANFModelParser::ObtainValueNodeInTypeNullForm(const std::string &value_node_name) {
-  auto new_value_node = NewValueNode(kTypeNull);
-  MS_EXCEPTION_IF_NULL(new_value_node);
-  new_value_node->set_abstract(kTypeNull->ToAbstract());
-  anfnode_build_map_[value_node_name] = new_value_node;
-  return true;
-}
-
 bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_name,
                                                   const mind_ir::AttributeProto &attr_proto) {
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
@@ -1201,85 +1334,75 @@ ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributePro
   return value_sequence;
 }
 
-bool MSANFModelParser::GetAttrValueForValueNodeWithType(const std::string &value_node_name,
-                                                        const mind_ir::AttributeProto &attr_proto) {
-  ValueNodePtr new_value_node;
+ValuePtr MSANFModelParser::BuildValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto) {
   switch (attr_proto.type()) {
     case mind_ir::AttributeProto_AttributeType_TENSORS: {
-      mind_ir::TensorProto tensor_proto = attr_proto.tensors(0);
+      const auto &tensor_proto = attr_proto.tensors(0);
       if (tensor_proto.has_raw_data()) {
         // For real tensor.
-        (void)ObtainValueNodeInTensorForm(value_node_name, tensor_proto);
+        tensor::TensorPtr tensor_info = GenerateTensorPtrFromTensorProto(tensor_proto);
+        if (tensor_info == nullptr) {
+          MS_LOG(ERROR) << "Failed to GenerateTensorPtrFromTensorProto.";
+          return nullptr;
+        }
+        return MakeValue(tensor_info);
       } else {
         // For data type.
-        (void)ObtainValueNodeInTypeForm(value_node_name, tensor_proto);
+        const int attr_tensor_type = tensor_proto.data_type();
+        auto iter = kDefaultValueSwitchMap.find(attr_tensor_type);
+        if (iter == kDefaultValueSwitchMap.end()) {
+          MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
+          return nullptr;
+        }
+        return TypeIdToType(iter->second);
       }
-      break;
     }
     case mind_ir::AttributeProto_AttributeType_NONE: {
-      (void)ObtainValueNodeInNoneForm(value_node_name);
-      break;
+      return kNone;
     }
     case mind_ir::AttributeProto_AttributeType_UMONAD: {
-      new_value_node = NewValueNode(kUMonad);
-      new_value_node->set_abstract(kUMonad->ToAbstract());
-      anfnode_build_map_[value_node_name] = new_value_node;
-      break;
+      return kUMonad;
     }
     case mind_ir::AttributeProto_AttributeType_IOMONAD: {
-      new_value_node = NewValueNode(kIOMonad);
-      new_value_node->set_abstract(kIOMonad->ToAbstract());
-      anfnode_build_map_[value_node_name] = new_value_node;
-      break;
+      return kIOMonad;
     }
     case mind_ir::AttributeProto_AttributeType_TUPLE:
     case mind_ir::AttributeProto_AttributeType_LIST: {
-      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
-      if (sequence_value == nullptr) {
-        MS_LOG(ERROR) << "Failed to get sequence value for " << value_node_name;
-        return false;
-      }
-      new_value_node = NewValueNode(sequence_value);
-      new_value_node->set_abstract(sequence_value->ToAbstract());
-      anfnode_build_map_[value_node_name] = new_value_node;
-      break;
+      return ObtainValueInSequenceForm(attr_proto);
     }
     case mind_ir::AttributeProto_AttributeType_CLASS_TYPE: {
       auto class_type = static_cast<std::string>(attr_proto.s());
-      auto mindir_class_type = std::make_shared<MindIRClassType>(class_type);
-      new_value_node = NewValueNode(mindir_class_type);
-      anfnode_build_map_[value_node_name] = new_value_node;
-      break;
+      return std::make_shared<MindIRClassType>(class_type);
     }
     case mind_ir::AttributeProto_AttributeType_TYPE_NULL: {
-      (void)ObtainValueNodeInTypeNullForm(value_node_name);
-      break;
+      return kTypeNull;
     }
     case mind_ir::AttributeProto_AttributeType_NAME_SPACE: {
       auto name_space = static_cast<std::string>(attr_proto.s());
-      auto mindir_name_space = std::make_shared<MindIRNameSpace>(name_space);
-      new_value_node = NewValueNode(mindir_name_space);
-      anfnode_build_map_[value_node_name] = new_value_node;
-      break;
+      return std::make_shared<MindIRNameSpace>(name_space);
     }
     case mind_ir::AttributeProto_AttributeType_SYMBOL: {
       auto symbol = static_cast<std::string>(attr_proto.s());
-      auto mindir_symbol = std::make_shared<MindIRSymbol>(symbol);
-      new_value_node = NewValueNode(mindir_symbol);
-      anfnode_build_map_[value_node_name] = new_value_node;
-      break;
+      return std::make_shared<MindIRSymbol>(symbol);
     }
     default: {
-      ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
-      if (value == nullptr) {
-        MS_LOG(ERROR) << "Can not get the value for attr: " << value_node_name;
-        return false;
-      }
-      new_value_node = NewValueNode(value);
-      new_value_node->set_abstract(value->ToAbstract());
-      anfnode_build_map_[value_node_name] = new_value_node;
+      return ObtainCNodeAttrInSingleScalarForm(attr_proto);
     }
   }
+}
+
+bool MSANFModelParser::GetAttrValueForValueNodeWithType(const std::string &value_node_name,
+                                                        const mind_ir::AttributeProto &attr_proto) {
+  auto value = BuildValueFromAttributeProto(attr_proto);
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "Failed to build value from AttributeProto while building valuenode: " << value_node_name;
+    return false;
+  }
+  auto abstract = value->ToAbstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  ValueNodePtr new_value_node = NewValueNode(value);
+  new_value_node->set_abstract(abstract);
+  anfnode_build_map_[value_node_name] = new_value_node;
   return true;
 }
 
@@ -1650,11 +1773,15 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const
     MS_LOG(ERROR) << "Import parameters for graph fail!";
     return false;
   }
+  if (!ImportMapParametersForGraph(outputFuncGraph, importProto)) {
+    MS_LOG(ERROR) << "Import map parameters for graph failed!";
+    return false;
+  }
   if (ImportNodesForGraph(outputFuncGraph, importProto)) {
     MS_LOG(DEBUG) << "Success to parse graph: " << outputFuncGraph->ToString() << ": " << outputFuncGraph.get();
     return true;
   }
-  MS_LOG(ERROR) << "Failed to parse nodes. " << importProto.DebugString();
+  MS_LOG(ERROR) << "Failed to parse nodes. ";
   return false;
 }
 

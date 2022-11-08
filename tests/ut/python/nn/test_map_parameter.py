@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os.path
+
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -19,6 +21,7 @@ from mindspore import context, Tensor, Parameter, ParameterTuple
 from mindspore.experimental import MapParameter
 from mindspore.common.initializer import initializer
 from mindspore.ops import composite as C
+from mindspore import export, load
 
 
 def test_basic_operations():
@@ -237,3 +240,38 @@ def test_map_parameter_filter():
     net = MyNet()
     out = net()
     print("out:", out)
+
+
+def test_simple_graph_export_load():
+    """
+    Feature: MapParameter
+    Description: Test IR graph export and load with MapParameter.
+    Expectation: IR graph with MapParameter exported and loaded without exceptions.
+    """
+
+    class MyNet(nn.Cell):
+        def __init__(self):
+            nn.Cell.__init__(self)
+            self.p = Parameter(initializer('ones', (2, 3), ms.float32))
+            self.m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+            self.key = Tensor([1, 2], dtype=ms.int32)
+
+        def construct(self, x):
+            self.m.put(self.key, x)
+            value1 = self.m.get(self.key)
+            value2 = self.m[self.key]
+            self.m[self.key] = value2
+            self.m.erase(self.key)
+            keys = self.m.get_keys()
+            values = self.m.get_values()
+            self.m.put(keys, values)
+            return self.p + value1 + value2
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = MyNet()
+    t = initializer('ones', (2, 3), ms.float32)
+    t = t.init_data()
+    file_path = "./map-parameter.mindir"
+    export(net, t, file_name=file_path, file_format="MINDIR")
+    assert os.path.isfile(file_path)
+    load(file_path)
