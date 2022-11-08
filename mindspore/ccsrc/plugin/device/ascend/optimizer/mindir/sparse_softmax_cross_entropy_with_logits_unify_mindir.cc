@@ -68,7 +68,7 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
 
-  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, IntToSize(0));
+  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
   int64_t depth = 0;
   if (!logits_shape.empty()) {
     size_t index = logits_shape.size() - 1;
@@ -112,7 +112,7 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   auto one_hot_node = pass.NewCNode(one_hot_inputs, graph);
   MS_EXCEPTION_IF_NULL(one_hot_node);
   one_hot_node->set_scope(sparse_softmax_node->scope());
-  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, IntToSize(1));
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
   labels_shape.emplace_back(depth);
   if (IsDynamic(labels_shape)) {
     auto kernel_info = common::AnfAlgo::GetPrevNodeOutput(sparse_softmax_node, 1);
@@ -155,12 +155,12 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
     MS_LOG(EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
   }
 
-  auto data_types = common::AnfAlgo::GetOutputInferDataType(one_hot_node, IntToSize(0));
+  auto data_types = common::AnfAlgo::GetOutputInferDataType(one_hot_node, 0UL);
   auto types = {data_types, data_types};
   if (IsDynamic(labels_shape)) {
     ShapeVector shape_tmp = {labels_shape[0]};
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(one_hot_node, IntToSize(0));
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(one_hot_node, IntToSize(0));
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(one_hot_node, 0UL);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(one_hot_node, 0UL);
     if (!min_shape.empty() && !max_shape.empty()) {
       min_shape = ShapeVector(min_shape[0]);
       max_shape = ShapeVector(max_shape[0]);
@@ -239,21 +239,21 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
 void UpdateAbstract(const CNodePtr &real_div_node, const CNodePtr &expand_dims_node) {
   MS_EXCEPTION_IF_NULL(real_div_node);
   MS_EXCEPTION_IF_NULL(expand_dims_node);
-  auto y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, IntToSize(0));
+  auto y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0UL);
   (void)y_shape.emplace_back(1);
   if (IsDynamic(y_shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, IntToSize(0));
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, IntToSize(0));
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0UL);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0UL);
     if (!min_shape.empty() && !max_shape.empty()) {
       (void)min_shape.emplace_back(1);
       (void)max_shape.emplace_back(1);
     }
 
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, IntToSize(0))},
+    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0UL)},
                                                  {std::make_shared<abstract::Shape>(y_shape, min_shape, max_shape)},
                                                  expand_dims_node.get());
   } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, IntToSize(0))},
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0UL)},
                                                 {y_shape}, expand_dims_node.get());
   }
 }
@@ -342,8 +342,8 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   MS_EXCEPTION_IF_NULL(tile_node);
   tile_node->set_scope(mul_node->scope());
   common::AnfAlgo::SetOutputTypeAndDetailShape(
-    {common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, IntToSize(1))},
-    {common::AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, IntToSize(1))}, tile_node.get());
+    {common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1UL)},
+    {common::AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1UL)}, tile_node.get());
   if (is_convert_const_to_attr) {
     common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), tile_node);
   }
@@ -360,7 +360,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(tile_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
-  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, IntToSize(1));
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
   if (labels_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "Label's shape should be 1-D, but got " << labels_shape.size()
                       << trace::DumpSourceLines(sparse_softmax_node);
@@ -408,7 +408,7 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(softmax_output_node);
-  auto softmax_output_shape = common::AnfAlgo::GetOutputInferShape(softmax_output_node, IntToSize(0));
+  auto softmax_output_shape = common::AnfAlgo::GetOutputInferShape(softmax_output_node, 0UL);
   if (softmax_output_shape.size() != softmax_output_shape_size) {
     MS_LOG(EXCEPTION) << "SoftmaxCrossEntropyWithLogits the second output shape size should be "
                       << softmax_output_shape_size << ", but got " << softmax_output_shape.size()
@@ -618,7 +618,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::Process(c
   MS_EXCEPTION_IF_NULL(node);
 
   auto depend_node = node->cast<CNodePtr>();
-  auto sparse_softmax_node_grad = GetSparseNode(depend_node, IntToSize(1));
+  auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1UL);
   auto sparse_softmax_node = GetSparseNode(depend_node, kIndex2);
 
   CNodePtr softmax_node;
