@@ -669,7 +669,7 @@ class WordpieceTokenizer(TextTensorOperation):
         with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
     Raises:
-        TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab`.
+        TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab` .
         TypeError: If `suffix_indicator` is not of type str.
         TypeError: If `max_bytes_per_token` is not of type int.
         TypeError: If `unknown_token` is not of type str.
@@ -730,10 +730,10 @@ if platform.system().lower() != 'windows':
         Args:
             lower_case (bool, optional): Whether to perform lowercase processing on the text. If True, will fold the
                 text to lower case and strip accented characters. If False, will only perform normalization on the
-                text, with mode specified by `normalization_form`. Default: False.
+                text, with mode specified by `normalization_form` . Default: False.
             keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
             normalization_form (NormalizeForm, optional):
-                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_, only valid when `lower_case`
+                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ , only valid when `lower_case`
                 is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
                 NormalizeForm.NFKD. Default: NormalizeForm.NONE.
 
@@ -750,7 +750,7 @@ if platform.system().lower() != 'windows':
         Raises:
             TypeError: If `lower_case` is not of type bool.
             TypeError: If `keep_whitespace` is not of type bool.
-            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm`.
+            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm` .
             TypeError: If `preserve_unused_token` is not of type bool.
             TypeError: If `with_offsets` is not of type bool.
             RuntimeError: If dtype of input Tensor is not str.
@@ -817,10 +817,10 @@ if platform.system().lower() != 'windows':
                 output. Default: '[UNK]'.
             lower_case (bool, optional): Whether to perform lowercase processing on the text. If True, will fold the
                 text to lower case and strip accented characters. If False, will only perform normalization on the
-                text, with mode specified by `normalization_form`. Default: False.
+                text, with mode specified by `normalization_form` . Default: False.
             keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
             normalization_form (NormalizeForm, optional):
-                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_, only valid when `lower_case`
+                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ , only valid when `lower_case`
                 is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
                 NormalizeForm.NFKD. Default: NormalizeForm.NONE.
 
@@ -835,14 +835,14 @@ if platform.system().lower() != 'windows':
             with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
         Raises:
-            TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab`.
+            TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab` .
             TypeError: If `suffix_indicator` is not of type str.
             TypeError: If `max_bytes_per_token` is not of type int.
             ValueError: If `max_bytes_per_token` is negative.
             TypeError: If `unknown_token` is not of type str.
             TypeError: If `lower_case` is not of type bool.
             TypeError: If `keep_whitespace` is not of type bool.
-            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm`.
+            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm` .
             TypeError: If `preserve_unused_token` is not of type bool.
             TypeError: If `with_offsets` is not of type bool.
 
@@ -904,7 +904,7 @@ if platform.system().lower() != 'windows':
     class CaseFold(TextTensorOperation):
         """
         Apply case fold operation on UTF-8 string tensor, which is aggressive that can convert more characters into
-        lower case than :func:`str.lower`. For supported normalization forms, please refer to
+        lower case than :func:`str.lower` . For supported normalization forms, please refer to
         `ICU_Normalizer2 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classicu_1_1Normalizer2.html>`_ .
 
         Note:

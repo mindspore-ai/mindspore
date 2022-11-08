@@ -40,7 +40,7 @@ class Cifar10ToMR:
 
     Note:
         For details about Examples, please refer to `Converting the CIFAR-10 Dataset <https://
-        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-the-cifar-10-dataset>`_.
+        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-the-cifar-10-dataset>`_ .
 
     Args:
         source (str): The cifar10 directory to be transformed.
@@ -79,7 +79,7 @@ class Cifar10ToMR:
 
         Args:
             fields (list[str], optional): A list of index fields. Default: None. For index field settings,
-                please refer to :func:`mindspore.mindrecord.FileWriter.add_index`.
+                please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
@@ -116,7 +116,7 @@ class Cifar10ToMR:
 
         Args:
             fields (list[str], optional): A list of index fields. Default: None. For index field settings,
-                please refer to :func:`mindspore.mindrecord.FileWriter.add_index`.
+                please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

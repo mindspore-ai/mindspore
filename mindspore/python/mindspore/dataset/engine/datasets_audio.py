@@ -36,7 +36,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses CMUArctic dataset.
 
-    The generated dataset has four columns: :py:obj:`["waveform", "sample_rate", "transcript", "utterance_id"]`.
+    The generated dataset has four columns: :py:obj:`["waveform", "sample_rate", "transcript", "utterance_id"]` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
     The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
     The tensor of column :py:obj:`transcript` is of a scalar of string type.
@@ -57,7 +57,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -75,7 +75,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
     Note:
         - CMUArctic dataset doesn't support PKSampler.
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
@@ -174,7 +174,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses GTZAN dataset.
 
-    The generated dataset has three columns: :py:obj:`["waveform", "sample_rate", "label"]`.
+    The generated dataset has three columns: :py:obj:`["waveform", "sample_rate", "label"]` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
     The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
     The tensor of column :py:obj:`label` is of a scalar of string type.
@@ -193,7 +193,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -211,7 +211,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
 
     Note:
         - GTZAN doesn't support PKSampler.
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
@@ -306,7 +306,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
     A source dataset that reads and parses the LibriTTS dataset.
 
     The generated dataset has seven columns :py:obj:`['waveform', 'sample_rate', 'original_text', 'normalized_text',
-    'speaker_id', 'chapter_id', 'utterance_id']`.
+    'speaker_id', 'chapter_id', 'utterance_id']` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
     The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
     The tensor of column :py:obj:`original_text` is of a scalar of string type.
@@ -329,7 +329,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -347,7 +347,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
 
     Note:
         - LibriTTS dataset doesn't support PKSampler.
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
@@ -491,7 +491,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -593,7 +593,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses the SpeechCommands dataset.
 
-    The generated dataset has five columns :py:obj:`[waveform, sample_rate, label, speaker_id, utterance_number]`.
+    The generated dataset has five columns :py:obj:`[waveform, sample_rate, label, speaker_id, utterance_number]` .
     The tensor of column :py:obj:`waveform` is a vector of the float32 type.
     The tensor of column :py:obj:`sample_rate` is a scalar of the int32 type.
     The tensor of column :py:obj:`label` is a scalar of the string type.
@@ -615,7 +615,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
             Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument can only be specified
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument can only be specified
             when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -631,7 +631,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -718,10 +718,10 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
     The columns of generated dataset depend on the source SPH files and the corresponding STM files.
 
     The generated dataset has six columns :py:obj:`[waveform, sample_rate, transcript, talk_id, speaker_id,
-    identifier]`.
+    identifier]` .
 
     The data type of column `waveform` is float32, the data type of column `sample_rate` is int32,
-    and the data type of columns `transcript`, `talk_id`, `speaker_id` and `identifier` is string.
+    and the data type of columns `transcript` , `talk_id` , `speaker_id` and `identifier` is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -746,7 +746,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -762,7 +762,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -927,7 +927,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses the YesNo dataset.
 
-    The generated dataset has three columns :py:obj:`[waveform, sample_rate, labels]`.
+    The generated dataset has three columns :py:obj:`[waveform, sample_rate, labels]` .
     The tensor of column :py:obj:`waveform` is a vector of the float32 type.
     The tensor of column :py:obj:`sample_rate` is a scalar of the int32 type.
     The tensor of column :py:obj:`labels` is a scalar of the int32 type.
@@ -944,7 +944,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument can only
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument can only
             be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -960,7 +960,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`

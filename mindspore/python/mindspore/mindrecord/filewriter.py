@@ -163,7 +163,7 @@ class FileWriter:
         The schema is added to describe the raw data to be written.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
 
         Args:
             content (dict): Dictionary of schema content.
@@ -186,14 +186,14 @@ class FileWriter:
     def add_index(self, index_fields):
         """
         Select index fields from schema to accelerate reading.
-        schema is added through `add_schema`.
+        schema is added through `add_schema` .
 
         Note:
             The index fields should be primitive type. e.g. int/float/str.
             If the function is not called, the fields of the primitive type
             in schema are set as indexes by default.
 
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
 
         Args:
             index_fields (list[str]): fields from schema.
@@ -220,7 +220,7 @@ class FileWriter:
     def open_and_set_header(self):
         """
         Open writer and set header which stores meta information. The function is only used for parallel \
-        writing and is called before the `write_raw_data`.
+        writing and is called before the `write_raw_data` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
@@ -243,7 +243,7 @@ class FileWriter:
         files after the raw data is verified against the schema.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
 
         Args:
            raw_data (list[dict]): List of raw data.
@@ -331,7 +331,7 @@ class FileWriter:
         Flush data in memory to disk and generate the corresponding database files.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

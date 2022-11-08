@@ -328,11 +328,11 @@ class DistributedSampler(BuiltinSampler):
 
     Args:
         num_shards (int): Number of shards to divide the dataset into.
-        shard_id (int): Shard ID of the current shard, which should within the range of [0, `num_shards`-1].
+        shard_id (int): Shard ID of the current shard, which should within the range of [0, `num_shards` - 1].
         shuffle (bool, optional): If True, the indices are shuffled, otherwise it will not be shuffled. Default: True.
         num_samples (int, optional): The number of samples to draw. Default: None, which means sample all elements.
         offset(int, optional): The starting shard ID where the elements in the dataset are sent to, which
-            should be no more than `num_shards`. This parameter is only valid when a ConcatDataset takes
+            should be no more than `num_shards` . This parameter is only valid when a ConcatDataset takes
             a DistributedSampler as its sampler. It will affect the number of samples of per shard.
             Default: -1, which means each shard has the same number of samples.
 
@@ -344,8 +344,8 @@ class DistributedSampler(BuiltinSampler):
         TypeError: If `offset` is not of type int.
         ValueError: If `num_samples` is a negative value.
         RuntimeError: If `num_shards` is not a positive value.
-        RuntimeError: If `shard_id` is smaller than 0 or equal to `num_shards` or larger than `num_shards`.
-        RuntimeError: If `offset` is greater than `num_shards`.
+        RuntimeError: If `shard_id` is smaller than 0 or equal to `num_shards` or larger than `num_shards` .
+        RuntimeError: If `offset` is greater than `num_shards` .
 
     Examples:
         >>> # creates a distributed sampler with 10 shards in total. This shard is shard 5.

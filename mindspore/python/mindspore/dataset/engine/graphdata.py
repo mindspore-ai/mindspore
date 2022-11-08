@@ -38,7 +38,7 @@ from .datasets_user_defined import GeneratorDataset
 
 class SamplingStrategy(IntEnum):
     """
-    Specifies the sampling strategy when execute `get_sampled_neighbors`.
+    Specifies the sampling strategy when execute `get_sampled_neighbors` .
 
     - RANDOM: Random sampling with replacement.
     - EDGE_WEIGHT: Sampling with edge weight as probability.
@@ -55,7 +55,7 @@ DE_C_INTER_SAMPLING_STRATEGY = {
 
 class OutputFormat(IntEnum):
     """
-    Specifies the output storage format when execute `get_all_neighbors`.
+    Specifies the output storage format when execute `get_all_neighbors` .
 
     - NORMAL: Normal format.
     - COO: COO format.
@@ -229,7 +229,7 @@ class GraphData:
     @check_gnn_get_all_neighbors
     def get_all_neighbors(self, node_list, neighbor_type, output_format=OutputFormat.NORMAL):
         """
-        Get `neighbor_type` neighbors of the nodes in `node_list`.
+        Get `neighbor_type` neighbors of the nodes in `node_list` .
         We try to use the following example to illustrate the definition of these formats. 1 represents connected
         between two nodes, and 0 represents not connected.
 
@@ -397,7 +397,7 @@ class GraphData:
     @check_gnn_get_neg_sampled_neighbors
     def get_neg_sampled_neighbors(self, node_list, neg_neighbor_num, neg_neighbor_type):
         """
-        Get `neg_neighbor_type` negative sampled neighbors of the nodes in `node_list`.
+        Get `neg_neighbor_type` negative sampled neighbors of the nodes in `node_list` .
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
@@ -425,7 +425,7 @@ class GraphData:
     @check_gnn_get_node_feature
     def get_node_feature(self, node_list, feature_types):
         """
-        Get `feature_types` feature of the nodes in `node_list`.
+        Get `feature_types` feature of the nodes in `node_list` .
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
@@ -454,7 +454,7 @@ class GraphData:
     @check_gnn_get_edge_feature
     def get_edge_feature(self, edge_list, feature_types):
         """
-        Get `feature_types` feature of the edges in `edge_list`.
+        Get `feature_types` feature of the edges in `edge_list` .
 
         Args:
             edge_list (Union[list, numpy.ndarray]): The given list of edges.
@@ -532,8 +532,8 @@ class Graph(GraphData):
     A graph object for storing Graph structure and feature data, and provide capabilities such as graph sampling.
 
     This class supports init graph With input numpy array data, which represent node, edge and its features.
-    If working mode is `local`, there is no need to specify input arguments like `working_mode`, `hostname`, `port`,
-    `num_client`, `auto_shutdown`.
+    If working mode is `local` , there is no need to specify input arguments like `working_mode` , `hostname` , `port` ,
+    `num_client` , `auto_shutdown` .
 
     Args:
         edges(Union[list, numpy.ndarray]): edges of graph in COO format with shape [2, num_edges].
@@ -722,7 +722,7 @@ class Graph(GraphData):
     @check_gnn_get_all_neighbors
     def get_all_neighbors(self, node_list, neighbor_type, output_format=OutputFormat.NORMAL):
         """
-        Get `neighbor_type` neighbors of the nodes in `node_list`.
+        Get `neighbor_type` neighbors of the nodes in `node_list` .
         We try to use the following example to illustrate the definition of these formats. 1 represents connected
         between two nodes, and 0 represents not connected.
 
@@ -901,7 +901,7 @@ class Graph(GraphData):
     @check_gnn_get_neg_sampled_neighbors
     def get_neg_sampled_neighbors(self, node_list, neg_neighbor_num, neg_neighbor_type):
         """
-        Get `neg_neighbor_type` negative sampled neighbors of the nodes in `node_list`.
+        Get `neg_neighbor_type` negative sampled neighbors of the nodes in `node_list` .
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
@@ -933,7 +933,7 @@ class Graph(GraphData):
     @check_gnn_get_node_feature
     def get_node_feature(self, node_list, feature_types):
         """
-        Get `feature_types` feature of the nodes in `node_list`.
+        Get `feature_types` feature of the nodes in `node_list` .
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
@@ -969,7 +969,7 @@ class Graph(GraphData):
     @check_gnn_get_edge_feature
     def get_edge_feature(self, edge_list, feature_types):
         """
-        Get `feature_types` feature of the edges in `edge_list`.
+        Get `feature_types` feature of the edges in `edge_list` .
 
         Args:
             edge_list (Union[list, numpy.ndarray]): The given list of edges.
@@ -1261,11 +1261,11 @@ class InMemoryGraphDataset(GeneratorDataset):
     """
     Basic Dataset for loading graph into memory.
 
-    Recommended to Implement your own dataset with inheriting this class, and implement your own method like `process`,
-    `save` and `load`, refer source code of `ArgoverseDataset` for how to implement your own dataset. When init your own
-    dataset like ArgoverseDataset, The executed process like follows. Check if there are already processed data under
-    given `data_dir`, if so will call `load` method to load it directly, otherwise it will call `process` method to
-    create graphs and call `save` method to save the graphs into `save_dir`.
+    Recommended to Implement your own dataset with inheriting this class, and implement your own method like `process` ,
+    `save` and `load` , refer source code of `ArgoverseDataset` for how to implement your own dataset. When init your
+    own dataset like ArgoverseDataset, The executed process like follows. Check if there are already processed data
+    under given `data_dir` , if so will call `load` method to load it directly, otherwise it will call `process` method
+    to create graphs and call `save` method to save the graphs into `save_dir` .
 
     You can access graph in created dataset using `graphs = my_dataset.graphs` and also you can iterate dataset
     and get data using `my_dataset.create_tuple_iterator()` (in this way you need to implement methods like
@@ -1275,10 +1275,10 @@ class InMemoryGraphDataset(GeneratorDataset):
     Args:
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
-        save_dir (str): relative directory for saving processed dataset, this directory is under `data_dir`.
+        save_dir (str): relative directory for saving processed dataset, this directory is under `data_dir` .
             Default: './processed'.
         column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
-            num of column name should be equal to num of item in return data when implement method like `__getitem__`.
+            num of column name should be equal to num of item in return data when implement method like `__getitem__` .
             Default: 'graph'.
         num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all samples.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
@@ -1287,7 +1287,7 @@ class InMemoryGraphDataset(GeneratorDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max
             sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument must be specified only
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
             when num_shards is also specified.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: True.
@@ -1382,7 +1382,7 @@ class ArgoverseDataset(InMemoryGraphDataset):
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
         column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
-            num of column name should be equal to num of item in return data when implement method like `__getitem__`,
+            num of column name should be equal to num of item in return data when implement method like `__getitem__` ,
             recommend to specify it with
             `column_names=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]` like the following example.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.

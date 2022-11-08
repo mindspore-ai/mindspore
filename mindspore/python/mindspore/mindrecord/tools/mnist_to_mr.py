@@ -46,7 +46,7 @@ class MnistToMR:
         partition_number (int, optional): The partition size. Default: 1.
 
     Raises:
-        ValueError: If `source`, `destination`, `partition_number` is invalid.
+        ValueError: If `source` , `destination` , `partition_number` is invalid.
     """
 
     def __init__(self, source, destination, partition_number=1):

@@ -46,7 +46,7 @@ class ImageNetToMR:
         partition_number (int, optional): The partition size. Default: 1.
 
     Raises:
-        ValueError: If `map_file`, `image_dir` or `destination` is invalid.
+        ValueError: If `map_file` , `image_dir` or `destination` is invalid.
     """
 
     def __init__(self, map_file, image_dir, destination, partition_number=1):

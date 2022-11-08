@@ -5,7 +5,7 @@ mindspore.dataset.vision.RandomErasing
 
     按照指定的概率擦除输入numpy.ndarray图像上随机矩形区域内的像素。
 
-    请参阅论文 `Random Erasing Data Augmentation <https://arxiv.org/pdf/1708.04896.pdf>`_。
+    请参阅论文 `Random Erasing Data Augmentation <https://arxiv.org/pdf/1708.04896.pdf>`_ 。
 
     参数：
         - **prob** (float，可选) - 执行随机擦除的概率，取值范围：[0.0, 1.0]。默认值：0.5。

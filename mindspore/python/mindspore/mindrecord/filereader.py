@@ -43,7 +43,7 @@ class FileReader:
         operator (int, optional): Reserved parameter for operators. Default: None.
 
     Raises:
-        ParamValueError: If `file_name`, `num_consumer` or `columns` is invalid.
+        ParamValueError: If `file_name` , `num_consumer` or `columns` is invalid.
 
     Examples:
         >>> from mindspore.mindrecord import FileReader

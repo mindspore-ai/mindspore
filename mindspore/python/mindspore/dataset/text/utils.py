@@ -75,7 +75,7 @@ class FastText(cde.FastText):
 
         Args:
             file_path (str): Path of the file that contains the vectors. The shuffix of pre-trained vector sets
-                must be `*.vec`.
+                must be `*.vec` .
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
@@ -111,7 +111,7 @@ class GloVe(cde.GloVe):
 
         Args:
             file_path (str): Path of the file that contains the vectors. The format of pre-trained vector sets
-                must be `glove.6B.*.txt`.
+                must be `glove.6B.*.txt` .
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
@@ -136,7 +136,7 @@ class GloVe(cde.GloVe):
 
 class JiebaMode(IntEnum):
     """
-    An enumeration for :class:`mindspore.dataset.text.JiebaTokenizer`.
+    An enumeration for :class:`mindspore.dataset.text.JiebaTokenizer` .
 
     Possible enumeration values are: JiebaMode.MIX, JiebaMode.MP, JiebaMode.HMM.
 
@@ -314,7 +314,7 @@ class SentencePieceVocab:
 
 class SPieceTokenizerLoadType(IntEnum):
     """
-    An enumeration for loading type of :class:`mindspore.dataset.text.SentencePieceTokenizer`.
+    An enumeration for loading type of :class:`mindspore.dataset.text.SentencePieceTokenizer` .
 
     Possible enumeration values are: SPieceTokenizerLoadType.FILE, SPieceTokenizerLoadType.MODEL.
 
@@ -328,7 +328,7 @@ class SPieceTokenizerLoadType(IntEnum):
 
 class SPieceTokenizerOutType(IntEnum):
     """
-    An enumeration for :class:`mindspore.dataset.text.SentencePieceTokenizer`.
+    An enumeration for :class:`mindspore.dataset.text.SentencePieceTokenizer` .
 
     Possible enumeration values are: SPieceTokenizerOutType.STRING, SPieceTokenizerOutType.INT.
 
@@ -591,14 +591,14 @@ class Vocab:
 
 def to_bytes(array, encoding='utf8'):
     """
-    Convert NumPy array of `str` to array of `bytes` by encoding each element based on charset `encoding`.
+    Convert NumPy array of `str` to array of `bytes` by encoding each element based on charset `encoding` .
 
     Args:
         array (numpy.ndarray): Array of `str` type representing strings.
         encoding (str): Indicating the charset for encoding. Default: 'utf8'.
 
     Returns:
-        numpy.ndarray, NumPy array of `bytes`.
+        numpy.ndarray, NumPy array of `bytes` .
 
     Examples:
         >>> import numpy as np
@@ -618,14 +618,14 @@ def to_bytes(array, encoding='utf8'):
 
 def to_str(array, encoding='utf8'):
     """
-    Convert NumPy array of `bytes` to array of `str` by decoding each element based on charset `encoding`.
+    Convert NumPy array of `bytes` to array of `str` by decoding each element based on charset `encoding` .
 
     Args:
         array (numpy.ndarray): Array of `bytes` type representing strings.
         encoding (str): Indicating the charset for decoding. Default: 'utf8'.
 
     Returns:
-        numpy.ndarray, NumPy array of `str`.
+        numpy.ndarray, NumPy array of `str` .
 
     Examples:
         >>> import numpy as np

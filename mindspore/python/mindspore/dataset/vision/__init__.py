@@ -44,7 +44,7 @@ The data transform operation can be executed in the data processing pipeline or 
 
 - Pipeline mode is generally used to process datasets. For examples, please refer to
   `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/
-  mindspore.dataset.html#introduction-to-data-processing-pipeline>`_.
+  mindspore.dataset.html#introduction-to-data-processing-pipeline>`_ .
 - Eager mode is generally used for scattered samples. Examples of image preprocessing are as follows:
 
   .. code-block::
