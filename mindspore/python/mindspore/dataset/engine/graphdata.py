@@ -198,6 +198,13 @@ class GraphData:
         Returns:
             numpy.ndarray, array of nodes.
 
+        Examples:
+            >>> from mindspore.dataset import GraphData
+            >>>
+            >>> g = ds.GraphData("/path/to/testdata", 1)
+            >>> edges = g.get_all_edges(0)
+            >>> nodes = g.get_nodes_from_edges(edges)
+
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
         """
@@ -488,6 +495,12 @@ class GraphData:
         Returns:
             dict, meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
             node_feature_type and edge_feature_type.
+
+        Examples:
+        >>> from mindspore.dataset import GraphData
+        >>>
+        >>> g = ds.GraphData("/path/to/testdata", 2)
+        >>> graph_info = g.graph_info()
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -1282,17 +1295,29 @@ class InMemoryGraphDataset(GeneratorDataset):
             Default: 'graph'.
         num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all samples.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table below.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. This parameter can only be
+            specified when the implemented dataset has a random access attribute ( `__getitem__` ). Default: None.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max
             sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
-            when num_shards is also specified.
+            when `num_shards` is also specified.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: True.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes.  This is only used if python_multiprocessing is set to True. Default: 6 MB.
+            data between processes. This is only used if python_multiprocessing is set to True. Default: 6 MB.
+
+    Raises:
+        TypeError: If `data_dir` is not of type str.
+        TypeError: If `save_dir` is not of type str.
+        TypeError: If `num_parallel_workers` is not of type int.
+        TypeError: If `shuffle` is not of type bool.
+        TypeError: If `python_multiprocessing` is not of type bool.
+        TypeError: If `perf_mode` is not of type bool.
+        RuntimeError: If `data_dir` is not valid or does not exit.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
         >>> from mindspore.dataset import InMemoryGraphDataset, Graph
@@ -1381,18 +1406,27 @@ class ArgoverseDataset(InMemoryGraphDataset):
     Args:
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
-        column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
-            num of column name should be equal to num of item in return data when implement method like `__getitem__` ,
-            recommend to specify it with
+        column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset.
+            Default: "graph". Num of column name should be equal to num of item in return data when implement method
+            like `__getitem__`, recommend to specify it with
             `column_names=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]` like the following example.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table below.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. This parameter can only be
+            specified when the implemented dataset has a random access attribute ( `__getitem__` ). Default: None.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: True.
         perf_mode(bool, optional): mode for obtaining higher performance when iterate created dataset(will call
             `__getitem__` method in this process). Default True, will save all the data in graph
             (like edge index, node feature and graph feature) into graph feature.
+
+    Raises:
+        TypeError: If `data_dir` is not of type str.
+        TypeError: If `num_parallel_workers` is not of type int.
+        TypeError: If `shuffle` is not of type bool.
+        TypeError: If `python_multiprocessing` is not of type bool.
+        TypeError: If `perf_mode` is not of type bool.
+        RuntimeError: If `data_dir` is not valid or does not exit.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
         >>> from mindspore.dataset import ArgoverseDataset
@@ -1403,6 +1437,37 @@ class ArgoverseDataset(InMemoryGraphDataset):
         ...                                                "time_step_len"])
         >>> for item in graph_dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
         ...     pass
+
+    About Argoverse Dataset:
+
+    Argverse is the first dataset containing high-precision maps, which contains 290KM high-precision map data with
+    geometric shape and semantic information.
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── argoverse_dataset_dir
+            ├── train
+            │    ├──...
+            ├── val
+            │    └──...
+            ├── test
+            │    └──...
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{Argoverse,
+        author     = {Ming-Fang Chang and John W Lambert and Patsorn Sangkloy and Jagjeet Singh
+                   and Slawomir Bak and Andrew Hartnett and De Wang and Peter Carr
+                   and Simon Lucey and Deva Ramanan and James Hays},
+        title      = {Argoverse: 3D Tracking and Forecasting with Rich Maps},
+        booktitle  = {Conference on Computer Vision and Pattern Recognition (CVPR)},
+        year       = {2019}
+        }
     """
 
     def __init__(self, data_dir, column_names="graph", num_parallel_workers=1, shuffle=None,

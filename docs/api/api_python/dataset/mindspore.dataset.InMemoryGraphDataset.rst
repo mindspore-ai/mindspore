@@ -21,6 +21,18 @@
         - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算。默认值：True。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
         - **max_rowsize** (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间。默认值：6，单位为MB。仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
 
+    异常：
+        - **TypeError** - 如果 `data_dir` 不是str类型。
+        - **TypeError** - 如果 `save_dir` 不是str类型。
+        - **TypeError** - 如果 `num_parallel_workers` 不是int类型。
+        - **TypeError** - 如果 `shuffle` 不是bool类型。
+        - **TypeError** - 如果 `python_multiprocessing` 不是bool类型。
+        - **TypeError** - 如果 `perf_mode` 不是bool类型。
+        - **RuntimeError** - 如果 `data_dir` 无效或不存在。
+        - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+        - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
+
     .. py:method:: load()
 
         从给定（处理好的）路径加载数据，也可以在自己实现的Dataset类中实现这个方法。

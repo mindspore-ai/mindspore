@@ -10,9 +10,7 @@ mindspore.dataset.IMDBDataset
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'test'或 'all'。默认值：None，读取全部样本。
-        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。
-          对于Polarity数据集， 'train'将读取360万个训练样本， 'test'将读取40万个测试样本， 'all'将读取所有400万个样本。
-          对于Full数据集， 'train'将读取300万个训练样本， 'test'将读取65万个测试样本， 'all'将读取所有365万个样本。默认值：None，读取所有样本。
+        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。

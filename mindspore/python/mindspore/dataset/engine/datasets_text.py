@@ -647,17 +647,14 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
 
 class EnWik9Dataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses EnWik9 Polarity and EnWik9 Full datasets.
+    A source dataset that reads and parses EnWik9 datasets.
 
     The generated dataset has one column :py:obj:`[text]` with type string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_samples (int, optional): The number of samples to be included in the dataset.
-            For Polarity dataset, 'train' will read from 3,600,000 train samples, 'test' will read from 400,000 test
-            samples, 'all' will read from all 4,000,000 samples.
-            For Full dataset, 'train' will read from 3,000,000 train samples, 'test' will read from 650,000 test
-            samples, 'all' will read from all 3,650,000 samples. Default: None, will include all samples.
+            Default: None, will include all samples.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the mindspore.dataset.config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
@@ -744,9 +741,6 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
         usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'.
             Default: None, will read all samples.
         num_samples (int, optional): The number of images to be included in the dataset.
-            For Polarity dataset, 'train' will read from 3,600,000 train samples, 'test' will read from 400,000 test
-            samples, 'all' will read from all 4,000,000 samples. For Full dataset, 'train' will read from 3,000,000
-            train samples, 'test' will read from 650,000 test samples, 'all' will read from all 3,650,000 samples.
             Default: None, will include all samples.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the mindspore.dataset.config.

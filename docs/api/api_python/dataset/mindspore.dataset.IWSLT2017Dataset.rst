@@ -33,7 +33,7 @@ mindspore.dataset.IWSLT2017Dataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
-    **关于IWSLT2016数据集：**
+    **关于IWSLT2017数据集：**
 
     IWSLT是一个专门讨论口译各个方面的重要年度科学会议。IWSLT评估活动中的MT任务被构成一个数据集，该数据集可通过 `wit3 <https://wit3.fbk.eu>`_ 公开获取。
     IWSLT2017数据集中有德语、英语、意大利语、荷兰语和罗马尼亚语，数据集包括其中任何两种语言的翻译。

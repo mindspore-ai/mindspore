@@ -450,6 +450,9 @@ class Dataset:
 
         Returns:
             str, JSON string of the pipeline.
+
+        Examples:
+            >>> dataset_json = dataset.to_json("/path/to/mnist_dataset_pipeline.json")
         """
         ir_tree, _ = self.create_ir_tree()
         return json.loads(ir_tree.to_json(filename))
@@ -1316,6 +1319,14 @@ class Dataset:
 
         Returns:
             Dataset, dataset for transferring.
+
+        Examples:
+            >>> data = ds.TFRecordDataset('/path/to/TF_FILES', '/path/to/TF_SCHEMA_FILE', shuffle=ds.Shuffle.FILES)
+            >>>
+            >>> data = data.device_que()
+            >>> data.send()
+            >>> time.sleep(0.1)
+            >>> data.stop_send()
         """
         return TransferDataset(self, send_epoch_end, create_data_info_queue)
 
@@ -1389,6 +1400,17 @@ class Dataset:
             num_files (int, optional): Number of dataset files. Default: 1.
             file_type (str, optional): Dataset format. Default: 'mindrecord'.
 
+        Examples:
+            >>> import numpy as np
+            >>>
+            >>> def generator_1d():
+            ...     for i in range(10):
+            ...         yield (np.array([i]),)
+            >>>
+            >>>
+            >>> # apply dataset operations
+            >>> d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
+            >>> d1.save('/path/to/save_file')
         """
         ir_tree, api_tree = self.create_ir_tree()
 
@@ -1689,6 +1711,39 @@ class Dataset:
                 When num_batch is None, it will default to the number specified by the
                 sync_wait operation. Default: None.
             data (Any): The data passed to the callback, user defined. Default: None.
+
+        Examples:
+            >>> import numpy as np
+            >>>
+            >>>
+            >>> def gen():
+            ...     for i in range(100):
+            ...         yield (np.array(i),)
+            >>>
+            >>>
+            >>> class Augment:
+            ...     def __init__(self, loss):
+            ...         self.loss = loss
+            ...
+            ...     def preprocess(self, input_):
+            ...         return input_
+            ...
+            ...     def update(self, data):
+            ...         self.loss = data["loss"]
+            >>>
+            >>>
+            >>> batch_size = 10
+            >>> dataset = ds.GeneratorDataset(gen, column_names=["input"])
+            >>> aug = Augment(0)
+            >>> dataset = dataset.sync_wait(condition_name='', num_batch=1)
+            >>> dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+            >>> dataset = dataset.batch(batch_size)
+            >>>
+            >>> count = 0
+            >>> for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     count += 1
+            ...     data = {"loss": count}
+            ...     dataset.sync_update(condition_name="", data=data)
         """
         if (not isinstance(num_batch, int) and num_batch is not None) or \
                 (isinstance(num_batch, int) and num_batch <= 0):
@@ -1761,7 +1816,18 @@ class Dataset:
         return {}
 
     def reset(self):
-        """Reset the dataset for next epoch."""
+        """
+        Reset the dataset for next epoch.
+
+        Examples:
+            >>> mind_dataset_dir = ["/path/to/mind_dataset_file"]
+            >>> data_set = ds.MindDataset(dataset_files=mind_dataset_dir)
+            >>> for _ in range(5):
+            ...     num_iter = 0
+            ...     for data in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            ...         num_iter += 1
+            ...     data_set.reset()
+        """
 
     def is_shuffled(self):
         """Returns True if the dataset or its children is shuffled."""
@@ -3797,6 +3863,12 @@ class Schema:
 
         Raises:
             ValueError: If column type is unknown.
+
+        Examples:
+        >>> from mindspore import dtype as mstype
+        >>>
+        >>> schema = ds.Schema()
+        >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
         """
         if isinstance(de_type, typing.Type):
             de_type = mstype_to_detype(de_type)
@@ -3841,6 +3913,12 @@ class Schema:
 
         Returns:
             str, JSON string of the schema.
+
+        Examples:
+            >>> from mindspore.dataset import Schema
+            >>>
+            >>> schema1 = ds.Schema()
+            >>> schema2 = schema1.to_json()
         """
         return self.cpp_schema.to_json()
 
@@ -3855,6 +3933,16 @@ class Schema:
             RuntimeError: if there is unknown item in the object.
             RuntimeError: if dataset type is missing in the object.
             RuntimeError: if columns are missing in the object.
+
+        Examples:
+            >>> import json
+            >>>
+            >>> from mindspore.dataset import Schema
+            >>>
+            >>> with open("/path/to/schema_file") as file:
+            ...     json_obj = json.load(file)
+            ...     schema = ds.Schema()
+            ...     schema.from_json(json_obj)
         """
         self.cpp_schema.from_string(json.dumps(json_obj, indent=2))
 

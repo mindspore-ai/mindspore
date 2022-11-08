@@ -3114,6 +3114,26 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
         >>>
         >>> # 2) Read samples (specified in manifest_file.manifest) for shard 0 in a 2-way distributed training setup
         >>> dataset = ds.ManifestDataset(dataset_file=manifest_dataset_dir, num_shards=2, shard_id=0)
+
+    About Manifest dataset:
+
+    Manifest file contains a list of files included in a dataset, including basic file info such as File name and File
+    ID, along with extended file metadata. Manifest is a data format file supported by Huawei Modelarts. For details,
+    see `Specifications for Importing the Manifest File <https://support.huaweicloud.com/engineers-modelarts/
+    modelarts_23_0009.html>`_ .
+
+    .. code-block::
+
+        .
+        └── manifest_dataset_directory
+            ├── train
+            │    ├── 1.JPEG
+            │    ├── 2.JPEG
+            │    ├── ...
+            ├── eval
+            │    ├── 1.JPEG
+            │    ├── 2.JPEG
+            │    ├── ...
     """
 
     @check_manifestdataset

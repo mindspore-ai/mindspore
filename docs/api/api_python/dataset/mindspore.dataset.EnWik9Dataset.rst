@@ -3,15 +3,13 @@ mindspore.dataset.EnWik9Dataset
 
 .. py:class:: mindspore.dataset.EnWik9Dataset(dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=True, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析EnWik9 Full和EnWik9 Polarity数据集。
+    读取和解析EnWik9数据集。
 
     生成的数据集有一列 `[text]` ，数据类型为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。
-          对于Polarity数据集， 'train'将读取360万个训练样本， 'test'将读取40万个测试样本， 'all'将读取所有400万个样本。
-          对于Full数据集， 'train'将读取300万个训练样本， 'test'将读取65万个测试样本， 'all'将读取所有365万个样本。默认值：None，读取所有样本。
+        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：True。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。

@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.ArgoverseDataset
 ====================================
 
-.. py:class:: mindspore.dataset.ArgoverseDataset(data_dir, column_names="graph", shuffle=None, num_parallel_workers=1, python_multiprocessing=True, perf_mode=True)
+.. py:class:: mindspore.dataset.ArgoverseDataset(data_dir, column_names="graph", num_parallel_workers=1, shuffle=None, python_multiprocessing=True, perf_mode=True)
 
     加载argoverse数据集并进行图（Graph）初始化。
 
@@ -15,6 +15,45 @@
         - **shuffle** (bool，可选) - 是否混洗数据集。当实现的Dataset带有可随机访问属性（ `__getitem__` ）时，才可以指定该参数。默认值：None。
         - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算。默认值：True。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
         - **perf_mode** (bool，可选) - 遍历创建的dataset对象时获得更高性能的模式（在此过程中将调用 `__getitem__` 方法）。默认值：True，将Graph的所有数据（如边的索引、节点特征和图的特征）都作为图特征进行存储。
+
+    异常：
+        - **TypeError** - 如果 `data_dir` 不是str类型。
+        - **TypeError** - 如果 `num_parallel_workers` 不是int类型。
+        - **TypeError** - 如果 `shuffle` 不是bool类型。
+        - **TypeError** - 如果 `python_multiprocessing` 不是bool类型。
+        - **TypeError** - 如果 `perf_mode` 不是bool类型。
+        - **RuntimeError** - 如果 `data_dir` 无效或不存在。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
+
+    **关于Argoverse数据集：**
+
+    Argoverse是第一个包含高精地图的数据集，它包含了290KM的带有几何形状和语义信息的高精度地图数据。
+
+    可以将数据集文件解压缩到以下结构中，并通过MindSpore的API读取：
+
+    .. code-block::
+
+        .
+        └── argoversedataset_dir
+            ├── train
+            │    ├──...
+            ├── val
+            │    └──...
+            ├── test
+            │    └──...
+
+    **引用：**
+
+    .. code-block::
+
+        @inproceedings{Argoverse,
+        author     = {Ming-Fang Chang and John W Lambert and Patsorn Sangkloy and Jagjeet Singh
+                   and Slawomir Bak and Andrew Hartnett and De Wang and Peter Carr
+                   and Simon Lucey and Deva Ramanan and James Hays},
+        title      = {Argoverse: 3D Tracking and Forecasting with Rich Maps},
+        booktitle  = {Conference on Computer Vision and Pattern Recognition (CVPR)},
+        year       = {2019}
+        }
 
 
     .. py:method:: load()
