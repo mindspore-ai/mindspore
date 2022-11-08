@@ -10,11 +10,11 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libevent/repository/archive/release-2.1.12-stable.tar.gz")
-    set(MD5 "0d5a27436bf7ff8253420c8cf09f47ca")
+    set(SHA256 "7180a979aaa7000e1264da484f712d403fcf7679b1e9212c4e3d09f5c93efc24")
 else()
     set(REQ_URL
       "https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz")
-    set(MD5 "b5333f021f880fe76490d8a799cd79f4")
+    set(SHA256 "92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb")
 endif()
 
 message("libevent using openssl stub dir: " ${openssl_ROOT})
@@ -23,7 +23,7 @@ mindspore_add_pkg(libevent
         VER 2.1.12
         LIBS event event_pthreads event_core event_openssl
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/libevent/libevent.patch001
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF -DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT}
           -DEVENT__LIBRARY_TYPE:STRING=STATIC)

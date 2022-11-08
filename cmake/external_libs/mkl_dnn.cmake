@@ -13,8 +13,8 @@ endif()
 if(ENABLE_GITEE_EULER)
         set(GIT_REPOSITORY "git@gitee.com:src-openeuler/onednn.git")
         set(GIT_TAG "0d726f1")
-        set(MD5 "6a062e36ea1bee03ff55bf44ee243e27")
-    __download_pkg_with_git(ONEDNN ${GIT_REPOSITORY} ${GIT_TAG} ${MD5})
+        set(SHA256 "4d655c0751ee6439584ef5e3d465953fe0c2f4ee2700bc02699bdc1d1572af0d")
+    __download_pkg_with_git(ONEDNN ${GIT_REPOSITORY} ${GIT_TAG} ${SHA256})
     set(ONE_DNN_SRC "${TOP_DIR}/mindspore/lite/build/_deps/onednn-src")
     execute_process(COMMAND tar -xf ${ONE_DNN_SRC}/v2.2.tar.gz --strip-components 1 -C ${ONE_DNN_SRC})
 endif()
@@ -25,20 +25,20 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
         HEAD_ONLY ./include
         RELEASE on
         URL http://tools.mindspore.cn/libs/dnnl/dnnl_win_2.2.0_cpu_vcomp.zip
-        MD5 139fcdbd601a970fb86dd15b30ba5ae3)
+        SHA256 ef4b9d341de192e299529023ead42da80b6fcdf2bf6f3a4696ab397dcbe1c795)
 else()
     if(ENABLE_GITEE)
         set(REQ_URL "https://gitee.com/mirrors/MKL-DNN/repository/archive/v2.2.tar.gz")
-        set(MD5 "49c650e0cc24ef9ae7033d4cb22ebfad")
+        set(SHA256 "2e809b11727af9d10784a5481b445a14387297161b5cc7f9c969c57fe40752bc")
     else()
         set(REQ_URL "https://github.com/oneapi-src/oneDNN/archive/v2.2.tar.gz")
-        set(MD5 "6a062e36ea1bee03ff55bf44ee243e27")
+        set(SHA256 "4d655c0751ee6439584ef5e3d465953fe0c2f4ee2700bc02699bdc1d1572af0d")
     endif()
     mindspore_add_pkg(onednn
         VER 2.2
         LIBS dnnl mkldnn
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0001-fix-user-threadpool-bug.patch
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0002-fix-pool-nthr-bug.patch
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0003-fix-zero-threads-identified-on-AMD.patch

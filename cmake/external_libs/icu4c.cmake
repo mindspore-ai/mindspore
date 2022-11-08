@@ -5,19 +5,19 @@ set(LIB_ICU_I18N icui18n)
 if(ENABLE_GITEE_EULER)
     set(GIT_REPOSITORY "https://gitee.com/src-openeuler/icu.git")
     set(GIT_TAG "openEuler-22.03-LTS")
-    set(MD5 "fa4070da839ce75469a8de962f2a0c2a")
+    set(SHA256 "612513798f36d229f7467cc8f0aef4dfb16c7012e1f4d8dbeee813922c4dfe9f")
     set(ICU4C_SRC "${TOP_DIR}/build/mindspore/_deps/icu4c-src/icu4c")
     set(ICU4C_TAR_SRC "${TOP_DIR}/build/mindspore/_deps/icu4c-src")
-    __download_pkg_with_git(icu4c ${GIT_REPOSITORY} ${GIT_TAG} ${MD5})
+    __download_pkg_with_git(icu4c ${GIT_REPOSITORY} ${GIT_TAG} ${SHA256})
     execute_process(COMMAND mkdir ${ICU4C_SRC})
     execute_process(COMMAND tar -xf ${ICU4C_TAR_SRC}/icu4c-69_1-src.tgz --strip-components 1 -C ${ICU4C_SRC})
 else()
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/icu/repository/archive/release-69-1.tar.gz")
-    set(MD5 "9f218f0eee9d49831e7e48fd136e689c")
+    set(SHA256 "cb085ebf0152045a84c84011348bb7e09e38248c02b5a85f69a7d85866774b82")
 else()
     set(REQ_URL "https://github.com/unicode-org/icu/archive/release-69-1.tar.gz")
-    set(MD5 "135125f633864285d637db5c01e0388b")
+    set(SHA256 "39ce83dd5d15c7539dde261733e106a391923f82caf1ce52ecaebb72d93b4579")
 endif()
 endif()
 
@@ -37,7 +37,7 @@ else()
                 VER 69.1
                 LIBS ${LIB_ICU_COMMON} ${LIB_ICU_DATA} ${LIB_ICU_I18N}
                 URL ${REQ_URL}
-                MD5 ${MD5}
+                SHA256 ${SHA256}
                 PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/icu4c/icu4c.patch01
                 CONFIGURE_COMMAND ./icu4c/source/runConfigureICU MacOSX --disable-tests
                                   --disable-samples --disable-icuio --disable-extras
@@ -48,7 +48,7 @@ else()
                 VER 69.1
                 LIBS ${LIB_ICU_COMMON} ${LIB_ICU_DATA} ${LIB_ICU_I18N}
                 URL ${REQ_URL}
-                MD5 ${MD5}
+                SHA256 ${SHA256}
                 PATCHES ${TOP_DIR}/third_party/patch/icu4c/icu4c.patch01
                 CONFIGURE_COMMAND ./icu4c/source/runConfigureICU Linux --enable-rpath --disable-tests --disable-samples
                                   --disable-icuio --disable-extras

@@ -3,13 +3,13 @@ set(PYTHON_VERSION ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR})
 if(ENABLE_GITEE)
     if(PYTHON_VERSION MATCHES "3.9")
         set(REQ_URL "https://gitee.com/mirrors/pybind11/repository/archive/v2.6.1.tar.gz")
-        set(MD5 "cd04f7bd275fedb97e8b583c115769e6")
+        set(SHA256 "c840509be94ac97216c3b4a3ed9f3fdba9948dbe38c16fcfaee3acc6dc93ed0e")
     elseif(PYTHON_VERSION MATCHES "3.8")
         set(REQ_URL "https://gitee.com/mirrors/pybind11/repository/archive/v2.6.1.tar.gz")
-        set(MD5 "cd04f7bd275fedb97e8b583c115769e6")
+        set(SHA256 "c840509be94ac97216c3b4a3ed9f3fdba9948dbe38c16fcfaee3acc6dc93ed0e")
     elseif(PYTHON_VERSION MATCHES "3.7")
         set(REQ_URL "https://gitee.com/mirrors/pybind11/repository/archive/v2.4.3.tar.gz")
-        set(MD5 "8f69438201bc824c63e5774bf8c1d422")
+        set(SHA256 "182cf9e2c5a7ae6f03f84cf17e826d7aa2b02aa2f3705db684dfe686c0278b36")
     else()
         message("Could not find 'Python 3.8' or 'Python 3.7' or 'Python 3.9'")
         return()
@@ -17,13 +17,13 @@ if(ENABLE_GITEE)
 else()
     if(PYTHON_VERSION MATCHES "3.9")
         set(REQ_URL "https://github.com/pybind/pybind11/archive/v2.6.1.tar.gz")
-        set(MD5 "32a7811f3db423df4ebfc731a28e5901")
+        set(SHA256 "cdbe326d357f18b83d10322ba202d69f11b2f49e2d87ade0dc2be0c5c34f8e2a")
     elseif(PYTHON_VERSION MATCHES "3.8")
         set(REQ_URL "https://github.com/pybind/pybind11/archive/v2.6.1.tar.gz")
-        set(MD5 "32a7811f3db423df4ebfc731a28e5901")
+        set(SHA256 "cdbe326d357f18b83d10322ba202d69f11b2f49e2d87ade0dc2be0c5c34f8e2a")
     elseif(PYTHON_VERSION MATCHES "3.7")
         set(REQ_URL "https://github.com/pybind/pybind11/archive/v2.4.3.tar.gz")
-        set(MD5 "62254c40f89925bb894be421fe4cdef2")
+        set(SHA256 "1eed57bc6863190e35637290f97a20c81cfe4d9090ac0a24f3bbf08f265eb71d")
     else()
         message("Could not find 'Python 3.8' or 'Python 3.7' or 'Python 3.9'")
         return()
@@ -37,7 +37,7 @@ if(PYTHON_VERSION MATCHES "3.9")
     mindspore_add_pkg(pybind11
         VER 2.6.1
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         PATCHES ${pybind11_patch}
         CMAKE_OPTION -DPYBIND11_TEST=OFF -DPYBIND11_LTO_CXX_FLAGS=FALSE
         )
@@ -45,14 +45,14 @@ elseif(PYTHON_VERSION MATCHES "3.8")
     mindspore_add_pkg(pybind11
         VER 2.6.1
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         CMAKE_OPTION -DPYBIND11_TEST=OFF -DPYBIND11_LTO_CXX_FLAGS=FALSE
         )
 else()
     mindspore_add_pkg(pybind11
         VER 2.4.3
         URL ${REQ_URL}
-        MD5 ${MD5}
+        SHA256 ${SHA256}
         CMAKE_OPTION -DPYBIND11_TEST=OFF -DPYBIND11_LTO_CXX_FLAGS=FALSE
         )
 endif()

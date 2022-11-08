@@ -1,9 +1,9 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/dirent/repository/archive/1.23.2.zip")
-    set(MD5 "9a1d076cd5fe6272e9f5078c67a7ca4c")
+    set(SHA256 "8a442ab85f670ed9db275b4f3e62f61872afbd8acbcbd1bb4cf212b7658e8838")
 else()
     set(REQ_URL "https://github.com/tronkko/dirent/archive/refs/tags/1.23.2.zip")
-    set(MD5 "43514791ab73ef5ac7c490afc7c3bab2")
+    set(SHA256 "4bcf07266f336bcd540fec5f75e90f027bd5081d3752f9ea5d408ef6ae30a897")
 endif()
 
 
@@ -13,7 +13,7 @@ if(MSVC)
         HEAD_ONLY ./include
         RELEASE on
         URL ${REQ_URL}
-        MD5 ${MD5})
+        SHA256 ${SHA256})
     include_directories(${dirent_INC})
 endif()
 
