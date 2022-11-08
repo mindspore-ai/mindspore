@@ -2856,6 +2856,22 @@ mindspore::HashSet<size_t> GeOpConvertor::GetNeedRemoveInput(const AnfNodePtr &n
   for (auto info : adpt->getInputAttrMap()) {
     remove_input_index.insert(info.first);
   }
+
+  static const std::unordered_set<std::string> kSpecialInputOps = {kDeformableOffsetsOpName};
+  auto op_type = GeOpConvertor::GetOpType(node, training);
+  if (kSpecialInputOps.count(op_type) == 0) {
+    return remove_input_index;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_size = cnode->inputs().size();
+  for (size_t i = 1; i < input_size; ++i) {
+    if (adpt->getInputMap().count(i) == 0) {
+      MS_LOG(INFO) << "Different input numbers between ge and vm for index " << i;
+      remove_input_index.insert(i);
+    }
+  }
   return remove_input_index;
 }
 

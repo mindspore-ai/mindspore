@@ -51,18 +51,21 @@ enum MatchCountPriority : size_t {
   MATCH_OUTPUT_DTYPE_COUNT,
   MATCH_COUNT_PRIORITY_END
 };
-static const std::set<std::string> kAclKernelSet = {kConv2DOpName,
-                                                    kConv2DBackpropFilterOpName,
-                                                    kConv2DBackpropInputOpName,
-                                                    kBNInferOpName,
-                                                    kBNTrainingUpdateGradOpName,
-                                                    kBNTrainingReduceGradOpName,
-                                                    kBNTrainingReduceOpName,
-                                                    kBNTrainingUpdateOpName,
-                                                    kMatMulOpName,
-                                                    kBatchMatMulOpName,
-                                                    kCastOpName,
-                                                    kReLUOpName};
+static const std::unordered_set<std::string> kAclKernelSet = {kConv2DOpName,
+                                                              kConv2DBackpropFilterOpName,
+                                                              kConv2DBackpropInputOpName,
+                                                              kBNInferOpName,
+                                                              kBNTrainingUpdateGradOpName,
+                                                              kBNTrainingReduceGradOpName,
+                                                              kBNTrainingReduceOpName,
+                                                              kBNTrainingUpdateOpName,
+                                                              kMatMulOpName,
+                                                              kBatchMatMulOpName,
+                                                              kCastOpName,
+                                                              kReLUOpName};
+static const std::unordered_set<std::string> kAclBlackList = {
+  kAddNOpName,   kTransposeNODOpName, kGatherV2OpName, kAvgPool3DOpName,  kResizeBilinearV2OpName, kIndexAddOpName,
+  kOneHotOpName, kTransDataOpName,    kCastOpName,     kROIAlignGradName, kSquareSumV1OpName};
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
@@ -841,6 +844,10 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
     MS_LOG(INFO) << "Current mode or device don't support acl kernel launch! Node info:" << kernel_node->DebugString();
     return;
   }
+  if (common::AnfAlgo::IsGraphKernel(kernel_node) || IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    MS_LOG(INFO) << "Current node is graph kernel or custom io! Node info:" << kernel_node->DebugString();
+    return;
+  }
   if (!common::AnfAlgo::IsDynamicShape(kernel_node)) {
     MS_LOG(INFO) << "Current node isn't a dynamic node! Node info:" << kernel_node->DebugString();
     return;
@@ -848,6 +855,10 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
   auto op_type = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kAclKernelSet.count(op_type) == 0) {
     MS_LOG(INFO) << "Current node not in acl kernel list! Node info:" << kernel_node->DebugString();
+    return;
+  }
+  if (kAclBlackList.count(op_type) != 0) {
+    MS_LOG(INFO) << "Current node in acl black list! Node info:" << kernel_node->DebugString();
     return;
   }
 
@@ -892,8 +903,11 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     SetTensorDeviceInfo(kernel_node);
     select_status = kStatusAllMatched;
   }
-  // If node can't find valid ai_core kernel info, re-find in ai_cpu kernel info
-  if (select_status == kNoMatched) {
+  if (select_status != kNoMatched) {
+    // If match the conditions of acl, current op run on acl mode.
+    SetAclKernelInfo(kernel_node);
+  } else {
+    // If node can't find valid ai_core kernel info, re-find in ai_cpu kernel info
     GatherInputAndOutputInferType(aicore_in_out_info, kernel_node);
     MS_LOG(DEBUG) << "The node [" << kernel_node->fullname_with_scope()
                   << "] cannot find valid TBE kernel info, try to get ai_cpu kernel info";
@@ -919,7 +933,6 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     return result;
   }
   SetRaiseOrReduceFlag(kernel_node, select_status);
-  SetAclKernelInfo(kernel_node);
   std::get<0>(result) = select_status;
   return result;
 }

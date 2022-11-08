@@ -27,10 +27,13 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+static const std::unordered_set<std::string> kAclStaticList = {kPackOpName, kTensorMoveOpName, kConcatDOpName,
+                                                               kCheckValidOpName};
 bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
                     std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_size_list);
+  std::vector<size_t> useless_input_lists;
   for (size_t i = 0; i < input_num; i++) {
     auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(anf_node, i);
     auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, index);
@@ -55,11 +58,19 @@ bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &inpu
       auto type_ptr = TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, index));
       int64_t size_i = 1;
       if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
-        return false;
+        MS_LOG(INFO) << "Useless optional input" << i << " with node " << anf_node->DebugString();
+        useless_input_lists.emplace_back(i);
+        size_t type_byte = GetTypeByte(type_ptr);
+        if (type_byte == 0) {
+          input_size_list->push_back(SIZE_MAX);
+          continue;
+        }
+        size_i = 0;
       }
       input_size_list->push_back(LongToSize(size_i));
     }
   }
+  common::AnfAlgo::SetNodeAttr(kAttrUselessInput, MakeValue(useless_input_lists), anf_node);
   return true;
 }
 
@@ -91,17 +102,20 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
   return true;
 }
 
-void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mode_ptr) {
+void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mod_ptr) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(kernel_mode_ptr);
+  MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   auto op_type = GeOpConvertor::GetOpType(node, true);
-  kernel_mode_ptr->SetOpType(op_type);
+  kernel_mod_ptr->SetOpType(op_type);
   const auto &input_desc_list = AclUtils::GetInputTensorDesc(node);
   const auto &output_desc_list = AclUtils::GetOutputTensorDesc(node);
-  kernel_mode_ptr->SetInputDescList(input_desc_list);
-  kernel_mode_ptr->SetOutputDescList(output_desc_list);
+  kernel_mod_ptr->SetInputDescList(input_desc_list);
+  kernel_mod_ptr->SetOutputDescList(output_desc_list);
   auto attr_list = GeOpConvertor::GetAttrAndValue(node, true);
-  kernel_mode_ptr->SetAttrList(attr_list);
+  kernel_mod_ptr->SetAttrList(attr_list);
+  if (kAclStaticList.count(op_type) == 0) {
+    kernel_mod_ptr->SetDynamic(true);
+  }
 }
 }  // namespace
 
@@ -112,10 +126,6 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
 
   if (!SetIOSize(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "SetIOSize failed for node:" << anf_node->DebugString();
-  }
-
-  if (common::AnfAlgo::IsDynamicShape(anf_node)) {
-    kernel_mod_ptr->SetDynamic(true);
   }
 
   SetGeInfo(anf_node, kernel_mod_ptr);

@@ -39,6 +39,7 @@ REG_ADPT_DESC(Conv2D, prim::kPrimConv2D->name(), ADPT_DESC(Conv2D))
 
 // Conv2DBackpropInput
 INPUT_MAP(Conv2DBackpropInput) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(input_size)}};
+ATTR_INPUT_MAP(Conv2DBackpropInput) = {{"input_sizes", 1}};
 ATTR_MAP(Conv2DBackpropInput) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
@@ -97,6 +98,7 @@ REG_ADPT_DESC(Conv2DTransposeD, kNameConv2DTransposeD, ADPT_DESC(Conv2DTranspose
 
 // Conv2DBackpropFilter
 INPUT_MAP(Conv2DBackpropFilter) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(filter_size)}};
+ATTR_INPUT_MAP(Conv2DBackpropFilter) = {{"filter_sizes", 2}};
 ATTR_MAP(Conv2DBackpropFilter) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
@@ -213,4 +215,17 @@ ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 REG_ADPT_DESC(DepthwiseConv2DBackpropFilterD, prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(),
               ADPT_DESC(DepthwiseConv2DBackpropFilterD))
+
+// DeformableOffsets
+INPUT_MAP(DeformableOffsets) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(offsets)}};
+ATTR_MAP(DeformableOffsets) = {
+  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"ksize", ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"deformable_groups", ATTR_DESC(deformable_groups, AnyTraits<int64_t>())},
+  {"modulated", ATTR_DESC(modulated, AnyTraits<bool>())}};
+OUTPUT_MAP(DeformableOffsets) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DeformableOffsets, kDeformableOffsetsOpName, ADPT_DESC(DeformableOffsets))
 }  // namespace mindspore::transform

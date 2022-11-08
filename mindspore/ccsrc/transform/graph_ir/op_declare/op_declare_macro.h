@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include "ir/value.h"
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
@@ -143,6 +144,10 @@ namespace mindspore::transform {
     [](const OperatorPtr op, const ValuePtr& value) { \
         auto p = std::static_pointer_cast<OpType>(op); \
         (void)p->set_attr_##name(ConvertAny(value, __VA_ARGS__)); \
+    },                     \
+    [](ValuePtr* ms_value) { \
+        auto real_value = ConvertAny(*ms_value, __VA_ARGS__); \
+        *ms_value = GetRealValue<decltype(real_value)>(real_value); \
     }                     \
   }
 

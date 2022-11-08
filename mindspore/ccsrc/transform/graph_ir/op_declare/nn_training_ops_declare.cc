@@ -187,7 +187,12 @@ INPUT_MAP(SparseApplyFtrlV2D) = {{1, INPUT_DESC(var)},
                                  {3, INPUT_DESC(linear)},
                                  {4, INPUT_DESC(grad)},
                                  {5, INPUT_DESC(indices)}};
-ATTR_MAP(SparseApplyFtrlV2D) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())}, {"l1", ATTR_DESC(l1, AnyTraits<float>())}};
+ATTR_MAP(SparseApplyFtrlV2D) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
+                                {"l1", ATTR_DESC(l1, AnyTraits<float>())},
+                                {"l2", ATTR_DESC(l2, AnyTraits<float>())},
+                                {"l2_shrinkage", ATTR_DESC(l2_shrinkage, AnyTraits<float>())},
+                                {"lr_power", ATTR_DESC(lr_power, AnyTraits<float>())},
+                                {"use_locking", ATTR_DESC(use_locking, AnyTraits<float>())}};
 OUTPUT_MAP(SparseApplyFtrlV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}, {2, OUTPUT_DESC(linear)}};
 REG_ADPT_DESC(SparseApplyFtrlV2D, kNameSparseApplyFtrlV2D, ADPT_DESC(SparseApplyFtrlV2D))
 

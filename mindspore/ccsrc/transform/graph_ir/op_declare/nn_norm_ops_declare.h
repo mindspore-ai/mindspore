@@ -87,5 +87,8 @@ DECLARE_OP_USE_OUTPUT(InstanceNorm)
 
 DECLARE_OP_ADAPTER(MultilabelMarginLoss)
 DECLARE_OP_USE_OUTPUT(MultilabelMarginLoss)
+
+DECLARE_OP_ADAPTER(Roll)
+DECLARE_OP_USE_OUTPUT(Roll)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_

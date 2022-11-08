@@ -20,6 +20,7 @@
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/nn_batch_norm_ops.h"
+#include "ops/reduce_ops.h"
 
 namespace mindspore::transform {
 DECLARE_OP_ADAPTER(BatchNorm)
@@ -27,6 +28,12 @@ DECLARE_OP_USE_OUTPUT(BatchNorm)
 
 DECLARE_OP_ADAPTER(BNInference)
 DECLARE_OP_USE_OUTPUT(BNInference)
+
+DECLARE_OP_ADAPTER(BNInfer)
+DECLARE_OP_USE_OUTPUT(BNInfer)
+
+DECLARE_OP_ADAPTER(BNInferGrad)
+DECLARE_OP_USE_OUTPUT(BNInferGrad)
 
 DECLARE_OP_ADAPTER(BatchNormGrad)
 DECLARE_OP_USE_OUTPUT(BatchNormGrad)

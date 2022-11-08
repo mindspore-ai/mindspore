@@ -48,6 +48,8 @@ class AclKernelMod : public AscendKernelMod {
 
  protected:
   void SyncData() override;
+  bool SkipUnRunNode(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr,
+                     const size_t input_size);
 
  private:
   std::vector<GeTensorDescPtr> input_desc_list_{};

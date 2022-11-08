@@ -659,9 +659,7 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const AnfNode
   for (auto &it : attr_map_) {
     auto value = prim->GetAttr(it.first);
     if (value != nullptr) {
-      // convert parts of attr to str eg. data_format or change ir attr to op attr eg. axis[0]
-      (void)CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), it.first, &value);
-      (void)CheckAndConvertUtils::CheckIrAttrtoOpAttr(prim->name(), it.first, &value);
+      it.second.get_attr(&value);
     } else {
       // set attr from extra_attr
       auto it_extra = extra_attr_->find(it.first);

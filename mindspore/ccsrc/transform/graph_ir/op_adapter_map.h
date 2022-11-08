@@ -131,6 +131,7 @@ constexpr const char kNameCumProd[] = "CumProd";
 constexpr const char kNameDiagpart[] = "Diagpart";
 constexpr const char kNameSplitD[] = "Split";
 constexpr const char kNameBatchToSpaceNd[] = "BatchToSpaceND";
+constexpr const char kNameBatchToSpaceNdV2[] = "BatchToSpaceNDV2";
 constexpr const char kNameFloor[] = "Floor";
 constexpr const char kNameNPUGetFloatStatus[] = "NPUGetFloatStatus";
 constexpr const char kNameAssign[] = "Assign";
@@ -341,6 +342,7 @@ constexpr const char kNameUnsqueeze[] = "Unsqueeze";
 constexpr const char kNamePadV3[] = "PadV3";
 constexpr const char kNamePadV2[] = "PadV2";
 constexpr const char kNameGlobalAvgPool[] = "GlobalAveragePool";
+constexpr const char kNameAdaptiveMaxPool2d[] = "AdaptiveMaxPool2D";
 constexpr const char kNameStridedSliceV2[] = "StridedSliceV2";
 constexpr const char kNameBNInference[] = "BNInference";
 constexpr const char kNameDeconvolution[] = "Deconvolution";
@@ -393,6 +395,7 @@ constexpr const char kNameUpdateState[] = "UpdateState";
 constexpr const char kNameTransData[] = "TransData";
 constexpr const char kNameSend[] = "Send";
 constexpr const char kNameReceive[] = "Receive";
+constexpr const char kNameIndexAdd[] = "IndexAdd";
 
 class OpAdapterDesc;
 

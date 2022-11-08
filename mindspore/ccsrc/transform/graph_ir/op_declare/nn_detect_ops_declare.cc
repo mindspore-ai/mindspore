@@ -47,7 +47,7 @@ REG_ADPT_DESC(BoundingBoxDecode, kNameBoundingBoxDecode, ADPT_DESC(BoundingBoxDe
 
 // Iou
 INPUT_MAP(Iou) = {{1, INPUT_DESC(bboxes)}, {2, INPUT_DESC(gtboxes)}};
-ATTR_MAP(Iou) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+ATTR_MAP(Iou) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}, {"eps", ATTR_DESC(eps, AnyTraits<float>())}};
 OUTPUT_MAP(Iou) = {{0, OUTPUT_DESC(overlap)}};
 REG_ADPT_DESC(Iou, kNameIOU, ADPT_DESC(Iou))
 

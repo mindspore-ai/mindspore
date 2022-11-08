@@ -41,13 +41,6 @@ ATTR_MAP(ExtractImagePatches) = {
 OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ExtractImagePatches, kNameExtractImagePatches, ADPT_DESC(ExtractImagePatches))
 
-// Transpose
-INPUT_MAP(TransposeD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(TransposeD) = {{2, ATTR_DESC(perm, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(TransposeD) = EMPTY_ATTR_MAP;
-// Do not set Transpose operator output descriptor
-REG_ADPT_DESC(TransposeD, prim::kPrimTranspose->name(), ADPT_DESC(TransposeD))
-
 // TransData
 INPUT_MAP(TransData) = {{1, INPUT_DESC(src)}};
 ATTR_MAP(TransData) = {{"src_format", ATTR_DESC(src_format, AnyTraits<std::string>())},
@@ -60,7 +53,7 @@ REG_ADPT_DESC(TransData, kNameTransData, ADPT_DESC(TransData))
 INPUT_MAP(Transpose) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(perm)}};
 ATTR_MAP(Transpose) = EMPTY_ATTR_MAP;
 // Do not set Transpose operator output descriptor
-REG_ADPT_DESC(Transpose, "TransposeV1", ADPT_DESC(Transpose))
+REG_ADPT_DESC(Transpose, prim::kPrimTranspose->name(), ADPT_DESC(Transpose))
 REG_ADPT_DESC(TransposeNOD, prim::kPrimTransposeNOD->name(), ADPT_DESC(Transpose))
 
 // SpaceToDepth
@@ -72,7 +65,8 @@ REG_ADPT_DESC(SpaceToDepth, kNameSpaceToDepth, ADPT_DESC(SpaceToDepth))
 // DepthToSpace
 INPUT_MAP(DepthToSpace) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(DepthToSpace) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
-                          {"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+                          {"mode", ATTR_DESC(mode, AnyTraits<std::string>())},
+                          {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(DepthToSpace) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DepthToSpace, kNameDepthToSpace, ADPT_DESC(DepthToSpace))
 
@@ -105,4 +99,5 @@ ATTR_MAP(BatchToSpaceND) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchToSpaceND) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceND, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(BatchToSpaceTF, kNameBatchToSpaceTF, ADPT_DESC(BatchToSpaceND))
+REG_ADPT_DESC(kNameBatchToSpaceNdV2, kNameBatchToSpaceNdV2, ADPT_DESC(BatchToSpaceND))
 }  // namespace mindspore::transform
