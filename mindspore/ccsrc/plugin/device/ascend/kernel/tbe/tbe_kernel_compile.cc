@@ -98,6 +98,7 @@ constexpr auto kTuneBankPath = "tune_bank_path";
 constexpr auto kTbeImplPath = "tbe_impl_path";
 constexpr auto kParaDebugPath = "para_debug_path";
 constexpr auto kTbePrebuildRes = "kernel_meta/tbe_prebuild_res/";
+constexpr auto kNotSupportFusionOp = "kernel_meta/not_support_fusion_op.cache";
 constexpr auto kMS_BUILD_PROCESS_NUM = "MS_BUILD_PROCESS_NUM";
 constexpr auto kMS_PARA_DEBUG_PATH = "PARA_DEBUG_PATH";
 constexpr auto kTBE_IMPL_PATH = "TBE_IMPL_PATH";
@@ -381,6 +382,22 @@ void TbeKernelCompileManager::SavePreBuildResult(const std::string &json_name, c
   prebuild_res_map_[json_name] = pre_res;
 }
 
+void TbeKernelCompileManager::SaveFailedTaskCompileResult(int task_id) {
+  auto task_info = task_map_[task_id];
+  auto json_name = task_info.json_name;
+  auto config_path = TbeUtils::GetOpDebugPath();
+  auto cache_file = config_path + kNotSupportFusionOp;
+  std::ofstream file_write;
+  file_write.open(cache_file, std::ios::app);
+  if (!file_write.is_open()) {
+    MS_LOG(WARNING) << "Create info file failed. [" << cache_file << "]";
+    return;
+  }
+  file_write << json_name << std::endl;
+  file_write.close();
+  not_support_fusion_ops_.insert(json_name);
+}
+
 void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const std::string &compile_info,
                                                            const std::string &job_type) {
   if (job_type == kPreCompile) {
@@ -465,6 +482,7 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
       SaveSucceedTaskCompileResult(target_status.target_job_id, build_result, type);
       (void)success_job->emplace_back(target_status.target_job_id);
     } else if (target_status.job_status == kFailed) {
+      SaveFailedTaskCompileResult(target_status.target_job_id);
       if (type == kPreCompile) {
         MS_LOG(INFO) << "Single op pre build failed, op: " << kernel_name
                      << "\n except_msg : " << target_status.except_msg;
@@ -790,6 +808,10 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
       // same fusion op only compile once
       continue;
     }
+    if (TbeUtils::IsOneOf(not_support_fusion_ops_, json_name)) {
+      // fusion op not support
+      continue;
+    }
     fusion_processed_kernels_.insert(json_name);
     JsonAssemble(job_type, fusion_op, &build_json);
     auto build_str = build_json.dump(indent);
@@ -841,6 +863,26 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   std::string check_info = ParseSelectAndCheckResult(json_ret, node);
   compute_json[kJInputDesc] = inputs_json_tmp;
   return check_info == kFullySupported;
+}
+
+void TbeKernelCompileManager::LoadNotSupportOp() {
+  static bool has_load = false;
+  if (!has_load) {
+    auto config_path = TbeUtils::GetOpDebugPath();
+    auto cache_file = config_path + kNotSupportFusionOp;
+    std::ifstream file_read;
+    file_read.open(cache_file.c_str());
+    if (!file_read.is_open()) {
+      MS_LOG(WARNING) << "File is not open. File: " << cache_file;
+      return;
+    }
+    std::string json_name;
+    while (file_read >> json_name) {
+      not_support_fusion_ops_.insert(json_name);
+    }
+    file_read.close();
+    has_load = true;
+  }
 }
 
 void TbeKernelCompileManager::LoadPreBuildResult() {
@@ -914,6 +956,8 @@ void TbeKernelCompileManager::TbeInitialize() {
   PrintInitResult(json_ret);
   // load cache before kernel build
   LoadPreBuildResult();
+  // load not support op
+  LoadNotSupportOp();
   TbeUtils::LoadCache();
 }
 
