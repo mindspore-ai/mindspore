@@ -16,6 +16,7 @@
 
 #include "thread/core_affinity.h"
 #include <string.h>
+#include <mutex>
 #include <cstdlib>
 #include <string>
 #include <algorithm>
@@ -30,6 +31,38 @@
 #endif
 
 namespace mindspore {
+namespace {
+bool is_initialized = false;
+std::mutex g_mutex;
+float ParseCPUFrequency() {
+  std::lock_guard<std::mutex> l(g_mutex);
+  float max_freq = -1.0f;
+#ifdef SERVER_INFERENCE
+  // The CPU cores in the server of the numa architecture are the same.
+  // The main frequency of the first core is obtained.
+  FILE *fp = popen("cat /proc/cpuinfo|grep cpu\\ MHz | sed -e 's/.*:[^0-9]//'", "r");
+  if (fp == nullptr) {
+    THREAD_ERROR("get system cpuinfo frequency failed");
+    return max_freq;
+  }
+
+  while (feof(fp) == 0) {
+    float freq = 0;
+    int tmp = fscanf(fp, "%f", &freq);
+    if (tmp != 1) {
+      break;
+    }
+    if (max_freq < freq) {
+      max_freq = freq;
+    }
+  }
+  (void)pclose(fp);
+#endif
+  is_initialized = true;
+  return max_freq;  // MHz
+}
+static const float g_max_frequency_ = ParseCPUFrequency();
+}  // namespace
 #ifdef _WIN32
 std::vector<DWORD_PTR> WindowsCoreList;
 #endif
@@ -216,29 +249,11 @@ int GetMaxFrequency(int core_id) {
 }
 
 float CoreAffinity::GetServerFrequency() {
-  float max_freq = -1.0f;
-#ifdef SERVER_INFERENCE
-  // The CPU cores in the server of the numa architecture are the same.
-  // The main frequency of the first core is obtained.
-  FILE *fp = popen("cat /proc/cpuinfo|grep cpu\\ MHz | sed -e 's/.*:[^0-9]//'", "r");
-  if (fp == nullptr) {
-    THREAD_ERROR("get system cpuinfo frequency failed");
-    return max_freq;
+  std::lock_guard<std::mutex> l(g_mutex);
+  if (is_initialized) {
+    return g_max_frequency_;
   }
-
-  while (feof(fp) == 0) {
-    float freq = 0;
-    int tmp = fscanf(fp, "%f", &freq);
-    if (tmp != 1) {
-      break;
-    }
-    if (max_freq < freq) {
-      max_freq = freq;
-    }
-  }
-  (void)pclose(fp);
-#endif
-  return max_freq;  // MHz
+  return ParseCPUFrequency();
 }
 
 #ifdef _WIN32

@@ -24,10 +24,10 @@
 #include "src/runtime/pack_weight_manager.h"
 #include "src/runtime/numa_adapter.h"
 #include "src/common/common.h"
+#include "src/runtime/cxx_api/model_pool/resource_manager.h"
 namespace mindspore {
 namespace {
 constexpr int kNumDeviceInfo = 2;
-constexpr int kNumIndex = 2;
 constexpr int kNumMaxTaskQueueSize = 1000;
 constexpr int kNumPhysicalCoreThreshold = 16;
 constexpr int kDefaultWorkerNumPerPhysicalCpu = 2;
@@ -35,104 +35,6 @@ constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
 constexpr int kNumDefaultInterOpParallel = 4;
 constexpr int kCoreNumTimes = 5;
-
-std::vector<int> ParseCpusetFile(int *percentage) {
-  std::vector<int> cpu_core = {};
-  std::ifstream infile("/sys/fs/cgroup/cpuset/cpuset.cpus", std::ios::in);
-  std::string line;
-  const char ch1 = ',';
-  const char ch2 = '-';
-  while (getline(infile, line, ch1)) {
-    if (line[line.size() - 1] == '\n') {
-      line = line.substr(0, line.size() - 1);
-    }
-    auto it = find(line.begin(), line.end(), ch2);
-    if (it != line.end()) {
-      auto begin_s = line.substr(0, it - line.begin());
-      auto end_s = line.substr(it - line.begin() + 1, line.size() - (it - line.begin()));
-      int begin = std::atoi(begin_s.c_str());
-      int end = std::atoi(end_s.c_str());
-      for (int i = begin; i <= end; i++) {
-        cpu_core.push_back(i);
-      }
-    } else {
-      cpu_core.push_back(std::atoi(line.c_str()));
-    }
-  }
-  std::ifstream quota_file("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", std::ios::in);
-  std::string quota_line;
-  getline(quota_file, quota_line);
-  if (quota_line[quota_line.size() - 1] == '\n') {
-    quota_line = quota_line.substr(0, quota_line.size() - 1);
-  }
-  auto quota = std::atoi(quota_line.c_str());
-  if (quota == -1) {
-    *percentage = -1;
-    return cpu_core;
-  }
-  std::ifstream period_file("/sys/fs/cgroup/cpu/cpu.cfs_period_us", std::ios::in);
-  std::string period_line;
-  getline(period_file, period_line);
-  if (period_line[period_line.size() - 1] == '\n') {
-    period_line = period_line.substr(0, period_line.size() - 1);
-  }
-  auto period = std::atoi(period_line.c_str());
-  if (period == 0) {
-    return {};
-  }
-  *percentage = quota / period;
-  return cpu_core;
-}
-
-Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vector<int> *logical_list) {
-  // physical id <=> one physical cpu core id
-  std::unordered_map<int, std::vector<int>> ids;
-  std::ifstream infile("/proc/cpuinfo", std::ios::in);
-  std::string line;
-  std::vector<int> processor_ids = {};
-  std::vector<int> physical_ids = {};
-  std::vector<int> core_ids = {};
-  while (getline(infile, line)) {
-    auto line_size = line.size();
-    if (line.find("processor") != std::string::npos) {
-      auto it = line.find(": ") + kNumIndex;
-      processor_ids.push_back(std::atoi(line.substr(it, line_size - 1).c_str()));
-    }
-    if (line.find("physical id") != std::string::npos) {
-      auto it = line.find(": ") + kNumIndex;
-      physical_ids.push_back(std::atoi(line.substr(it, line_size - 1).c_str()));
-    }
-    if (line.find("core id") != std::string::npos) {
-      auto it = line.find(": ") + kNumIndex;
-      core_ids.push_back(std::atoi(line.substr(it, line_size - 1).c_str()));
-    }
-  }
-  if (core_ids.empty() && physical_ids.empty()) {
-    MS_LOG(DEBUG) << "All cores are physical cores.";
-    for (size_t i = 0; i < processor_ids.size(); i++) {
-      physical_list->push_back(processor_ids[i]);
-    }
-    return kSuccess;
-  }
-  if (core_ids.size() == physical_ids.size() && physical_ids.size() == processor_ids.size()) {
-    for (size_t i = 0; i < processor_ids.size(); i++) {
-      if (ids.find(physical_ids[i]) == ids.end()) {
-        std::vector<int> core_id_list = {core_ids[i]};
-        ids.insert(std::make_pair(physical_ids[i], core_id_list));
-        physical_list->push_back(processor_ids[i]);
-        continue;
-      }
-      if (find(ids[physical_ids[i]].begin(), ids[physical_ids[i]].end(), core_ids[i]) == ids[physical_ids[i]].end()) {
-        ids[physical_ids[i]].push_back(core_ids[i]);
-        physical_list->push_back(processor_ids[i]);
-        continue;
-      } else {
-        logical_list->push_back(processor_ids[i]);
-      }
-    }
-  }
-  return kSuccess;
-}
 }  // namespace
 
 int ModelPool::GetDefaultThreadNum(int worker_num) {
@@ -148,39 +50,6 @@ int ModelPool::GetDefaultThreadNum(int worker_num) {
     default_thread_num = can_use_core_num_ >= worker_num ? can_use_core_num_ / worker_num : can_use_core_num_;
   }
   return default_thread_num;
-}
-
-Status ModelPool::DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
-                                                      const std::vector<int> &logical_core_list) {
-  std::vector<std::vector<int>> all_numa_core_list;
-  auto numa_num = numa::NUMAAdapter::GetInstance()->NodesNum();
-  for (int i = 0; i < numa_num; i++) {
-    std::vector<int> numa_cpu_list = numa::NUMAAdapter::GetInstance()->GetCPUList(i);
-    if (numa_cpu_list.empty()) {
-      MS_LOG(ERROR) << i << "-th numa node does not exist";
-      return kLiteError;
-    }
-    all_numa_core_list.push_back(numa_cpu_list);
-  }
-  MS_CHECK_TRUE_MSG(!all_numa_core_list.empty(), kLiteError, "numa core list is empty.");
-  for (auto one_numa_list : all_numa_core_list) {
-    MS_CHECK_TRUE_MSG(!one_numa_list.empty(), kLiteError, "one numa core list is empty.");
-    std::vector<int> physical_cores;
-    std::vector<int> logical_cores;
-    for (auto core_id : one_numa_list) {
-      if (find(physical_core_list.begin(), physical_core_list.end(), core_id) != physical_core_list.end()) {
-        physical_cores.push_back(core_id);
-      } else if (find(logical_core_list.begin(), logical_core_list.end(), core_id) != logical_core_list.end()) {
-        logical_cores.push_back(core_id);
-      } else {
-        MS_LOG(ERROR) << "core id not belong physical/logical core id.";
-        return kLiteError;
-      }
-    }
-    numa_physical_cores_.push_back(physical_cores);
-    numa_logical_cores_.push_back(logical_cores);
-  }
-  return kSuccess;
 }
 
 /*
@@ -258,16 +127,18 @@ Status ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_
   }
   std::vector<int> physical_core_list;
   std::vector<int> logical_core_list;
-  auto status = DistinguishPhysicalAndLogical(&physical_core_list, &logical_core_list);
+  auto status = ResourceManager::GetInstance()->DistinguishPhysicalAndLogical(&physical_core_list, &logical_core_list);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "distinguish physical and logical failed.";
     return kLiteError;
   }
   std::vector<int> all_core_list = {};
   if (!can_use_all_physical_core_) {
-    int percentage;
-    std::vector<int> can_use_core_list = ParseCpusetFile(&percentage);
-    if (percentage != -1) {
+    size_t percentage;
+    std::vector<int> can_use_core_list = ResourceManager::GetInstance()->ParseCpuCoreList(&percentage);
+    if (percentage != can_use_core_list.size()) {
+      MS_LOG(ERROR) << "can not use all resource, percentage: " << percentage
+                    << ", can use core list size: " << can_use_core_list.size();
       return kLiteFileError;
     }
     std::sort(physical_core_list.begin(), physical_core_list.end());
@@ -768,14 +639,8 @@ Status ModelPool::InitNumaParameter(const std::shared_ptr<RunnerConfig> &runner_
     return kSuccess;
   }
   numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
-  std::vector<int> physical_core_lite;
-  std::vector<int> logical_core_list;
-  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "distinguish physical and logical failed.";
-    return kLiteError;
-  }
-  status = DistinguishPhysicalAndLogicalByNuma(physical_core_lite, logical_core_list);
+  auto status =
+    ResourceManager::GetInstance()->DistinguishPhysicalAndLogicalByNuma(&numa_physical_cores_, &numa_logical_cores_);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "distinguish physical and logical by numa failed.";
     return kLiteError;
@@ -867,37 +732,36 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
   return kSuccess;
 }
 
-Status ModelPool::CanUseAllPhysicalResources(int *percentage) {
-  auto can_use_cores = ParseCpusetFile(percentage);
+Status ModelPool::CanUseAllPhysicalResources() {
+  size_t percentage;
+  auto can_use_cores = ResourceManager::GetInstance()->ParseCpuCoreList(&percentage);
   if (can_use_cores.empty()) {
     MS_LOG(ERROR) << "parse cpu files failed, | can use core list: " << can_use_cores
-                  << " | percentage: " << *percentage;
+                  << " | percentage: " << percentage;
     return kLiteError;
   }
-  if (*percentage == -1) {
+  if (percentage == can_use_cores.size()) {
+    MS_LOG(INFO) << "percentage: " << percentage << "can_use_cores size: " << can_use_cores.size();
     can_use_core_num_ = can_use_cores.size();
     all_core_num_ = lite::GetCoreNum();
     can_use_all_physical_core_ = can_use_core_num_ == all_core_num_;
+    bind_core_available_ = can_use_core_num_ == all_core_num_;
   } else {
-    can_use_core_num_ = *percentage;
+    can_use_core_num_ = percentage;
     can_use_all_physical_core_ = false;
+    bind_core_available_ = false;
   }
   return kSuccess;
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   model_path_ = model_path;
-  int percentage;
-  auto status = CanUseAllPhysicalResources(&percentage);
+  auto status = CanUseAllPhysicalResources();
   if (status != kSuccess) {
     MS_LOG(ERROR) << "parser sys file failed.";
     return kLiteError;
   }
-  if (percentage != -1) {
-    numa_available_ = false;
-    bind_core_available_ = false;
-  } else if (!can_use_all_physical_core_) {
-    MS_LOG(INFO) << "the number of usable cores is less than the number of hardware cores of the machine.";
+  if (!can_use_all_physical_core_) {
     numa_available_ = false;
   } else {
     status = InitNumaParameter(runner_config);

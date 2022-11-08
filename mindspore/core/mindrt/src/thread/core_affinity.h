@@ -58,7 +58,7 @@ class CoreAffinity {
   int BindProcess(BindMode bind_mode);
   std::vector<int> GetCoreId(size_t thread_num, BindMode bind_mode) const;
   void SetCoreId(const std::vector<int> &core_list);
-  static float GetServerFrequency();
+  float GetServerFrequency();
 
  private:
 #ifdef _WIN32
