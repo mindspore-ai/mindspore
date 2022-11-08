@@ -523,7 +523,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             Random accessible input is required. When this argument is specified, `num_samples` reflects the maximum
             sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument must be specified only
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: True.
@@ -542,8 +542,8 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
 
     Note:
         - Input `source` accepts user-defined Python functions (PyFuncs), Do not add network computing operators from
-          mindspore.nn and mindspore.ops or others into this `source`.
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          mindspore.nn and mindspore.ops or others into this `source` .
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -851,11 +851,11 @@ class NumpySlicesDataset(GeneratorDataset):
             Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument must be specified only
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
             when num_shards is also specified.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`

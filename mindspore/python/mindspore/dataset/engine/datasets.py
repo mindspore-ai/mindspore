@@ -535,7 +535,6 @@ class Dataset:
         Combine batch_size number of consecutive rows into batch which apply per_batch_map to the samples first.
 
         For any column, all the elements within that column must have the same shape.
-        If a per_batch_map callable is provided, it will be applied to the batches of tensors.
 
         Refer to the following figure for the execution process:
 
@@ -749,7 +748,7 @@ class Dataset:
 
         Args:
             func (function): A function that must take one `numpy.ndarray` as an argument and
-                return a `Dataset`.
+                return a `Dataset` .
 
         Returns:
             Dataset, dataset applied by the function.
@@ -811,12 +810,12 @@ class Dataset:
         columns of the previous operation are used as the input columns for the next operation.
 
         The columns outputted by the very last operation will be assigned names specified by
-        `output_columns`, and if not specified, the column name of output column is same as that of `input_columns`.
+        `output_columns` , and if not specified, the column name of output column is same as that of `input_columns` .
 
         - If you use transformations (
-          `vision transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_,
-          `nlp transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_,
-          `audio transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_)
+          `vision transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_ ,
+          `nlp transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_ ,
+          `audio transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_ )
           provided by mindspore dataset, please use the following parameters:
 
           .. image:: map_parameter_en.png
@@ -860,7 +859,7 @@ class Dataset:
             - Input `operations` accepts TensorOperations defined in mindspore.dataset part, plus user-defined
               Python functions (PyFuncs).
             - Do not add network computing operators from mindspore.nn and mindspore.ops or others into this
-              `operations`.
+              `operations` .
 
         Returns:
             Dataset, dataset after mapping operation.
@@ -1271,7 +1270,7 @@ class Dataset:
 
         Args:
             apply_func (function): A function that must take one `Dataset` as an argument and
-                                   return a preprocessed `Dataset`.
+                                   return a preprocessed `Dataset` .
 
         Returns:
             Dataset, dataset applied by the function.
@@ -1325,7 +1324,8 @@ class Dataset:
         Save the dynamic data processed by the dataset pipeline in common dataset format.
         Supported dataset formats: `mindrecord` only. And you can use `MindDataset` API to read the saved file(s).
 
-        Implicit type casting exists when saving data as `mindrecord`. The transform table shows how to do type casting.
+        Implicit type casting exists when saving data as `mindrecord` . The transform table shows how to do
+        type casting.
 
         .. list-table:: Implicit Type Casting when Saving as `mindrecord`
            :widths: 25 25 50
@@ -1404,7 +1404,7 @@ class Dataset:
     @check_tuple_iterator
     def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False, do_copy=True):
         """
-        Create an iterator over the dataset. The datatype retrieved back will be a list of `numpy.ndarray`.
+        Create an iterator over the dataset. The datatype retrieved back will be a list of `numpy.ndarray` .
 
         To specify which columns to list and the order needed, use columns_list. If columns_list
         is not provided, the order of the columns will remain unchanged.

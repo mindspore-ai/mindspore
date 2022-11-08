@@ -1549,7 +1549,7 @@ def check_zip(method):
 
 
 def check_zip_dataset(method):
-    """check the input arguments of zip method in `Dataset`."""
+    """check the input arguments of zip method in `Dataset` ."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -1562,7 +1562,7 @@ def check_zip_dataset(method):
 
 
 def check_concat(method):
-    """check the input arguments of concat method in `Dataset`."""
+    """check the input arguments of concat method in `Dataset` ."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

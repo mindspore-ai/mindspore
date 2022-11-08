@@ -110,11 +110,11 @@ class Caltech101Dataset(GeneratorDataset):
     """
     A source dataset that reads and parses Caltech101 dataset.
 
-    The columns of the generated dataset depend on the value of `target_type`.
+    The columns of the generated dataset depend on the value of `target_type` .
 
-    - When `target_type` is 'category', the columns are :py:obj:`[image, category]`.
-    - When `target_type` is 'annotation', the columns are :py:obj:`[image, annotation]`.
-    - When `target_type` is 'all', the columns are :py:obj:`[image, category, annotation]`.
+    - When `target_type` is 'category', the columns are :py:obj:`[image, category]` .
+    - When `target_type` is 'annotation', the columns are :py:obj:`[image, annotation]` .
+    - When `target_type` is 'all', the columns are :py:obj:`[image, category, annotation]` .
 
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`category` is of the uint32 type.
@@ -139,7 +139,7 @@ class Caltech101Dataset(GeneratorDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
 
     Raises:
@@ -153,7 +153,7 @@ class Caltech101Dataset(GeneratorDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -282,7 +282,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses Caltech256 dataset.
 
-    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of the uint32 type.
 
@@ -300,7 +300,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -317,7 +317,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -411,7 +411,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
     A source dataset that reads and parses CelebA dataset.
     Only support to read `list_attr_celeba.txt` currently, which is the attribute annotations of the dataset.
 
-    The generated dataset has two columns: :py:obj:`[image, attr]`.
+    The generated dataset has two columns: :py:obj:`[image, attr]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`attr` is of the uint32 type and one hot encoded.
 
@@ -430,7 +430,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -449,7 +449,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
         ValueError: If `usage` is not 'train', 'valid', 'test' or 'all'.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -581,7 +581,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
     A source dataset that reads and parses Cifar10 dataset.
     This api only supports parsing Cifar10 file in binary version now.
 
-    The generated dataset has two columns :py:obj:`[image, label]`.
+    The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is a scalar of the uint32 type.
 
@@ -601,7 +601,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -618,7 +618,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `usage` is not 'train', 'test' or 'all'.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -713,7 +713,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses Cifar100 dataset.
 
-    The generated dataset has three columns :py:obj:`[image, coarse_label, fine_label]`.
+    The generated dataset has three columns :py:obj:`[image, coarse_label, fine_label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`coarse_label` and :py:obj:`fine_labels` are each a scalar of uint32 type.
 
@@ -733,7 +733,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -750,7 +750,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `usage` is not 'train', 'test' or 'all'.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and shuffle
@@ -839,7 +839,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses Cityscapes dataset.
 
-    The generated dataset has two columns :py:obj:`[image, task]`.
+    The generated dataset has two columns :py:obj:`[image, task]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`task` is of the uint8 type if task is not 'polygon' otherwise task is
     a string tensor with serialize json.
@@ -863,7 +863,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -883,7 +883,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -1031,13 +1031,13 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
-            output at the end :py:obj:`[_meta-filename, dtype=string]`. Default: False.
+            output at the end :py:obj:`[_meta-filename, dtype=string]` . Default: False.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: None, no decryption.
 
@@ -1094,7 +1094,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op is added
           to remove the prefix('_meta-').
         - CocoDataset doesn't support PKSampler.
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -1256,7 +1256,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses DIV2KDataset dataset.
 
-    The generated dataset has two columns :py:obj:`[hr_image, lr_image]`.
+    The generated dataset has two columns :py:obj:`[hr_image, lr_image]` .
     The tensor of column :py:obj:`hr_image` and the tensor of column :py:obj:`lr_image` are of the uint8 type.
 
     Args:
@@ -1280,7 +1280,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -1302,7 +1302,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -1479,7 +1479,7 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -1701,7 +1701,7 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -1788,7 +1788,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses Flickr8k and Flickr30k dataset.
 
-    The generated dataset has two columns :py:obj:`[image, annotation]`.
+    The generated dataset has two columns :py:obj:`[image, annotation]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`annotation` is a tensor which contains 5 annotations string,
     such as ["a", "b", "c", "d", "e"].
@@ -1808,7 +1808,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -1826,7 +1826,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -2195,7 +2195,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
     A source dataset that reads images from a tree of directories.
     All images within one folder have the same label.
 
-    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of a scalar of uint32 type.
 
@@ -2219,7 +2219,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -2239,7 +2239,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
     Note:
         - The shape of the image column is [image_size] if decode flag is False, or [H,W,C] otherwise.
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -2331,8 +2331,8 @@ class KITTIDataset(MappableDataset):
     A source dataset that reads and parses the KITTI dataset.
 
     When usage is "train", the generated dataset has multiple columns: :py:obj:`[image, label, truncated,
-    occluded, alpha, bbox, dimensions, location, rotation_y]`; When usage is "test", the generated dataset
-    has only one column: :py:obj:`[image]`.
+    occluded, alpha, bbox, dimensions, location, rotation_y]` ; When usage is "test", the generated dataset
+    has only one column: :py:obj:`[image]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of the uint32 type.
     The tensor of column :py:obj:`truncated` is of the float32 type.
@@ -2345,8 +2345,8 @@ class KITTIDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train` or `test`. `train` will read 7481
-            train samples, `test` will read from 7518 test samples without label. Default: None, will use `train`.
+        usage (str, optional): Usage of this dataset, can be `train` or `test` . `train` will read 7481
+            train samples, `test` will read from 7518 test samples without label. Default: None, will use `train` .
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will include all images.
         num_parallel_workers (int, optional): Number of workers to read the data.
@@ -2371,10 +2371,10 @@ class KITTIDataset(MappableDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `dataset_dir` is not exist.
-        ValueError: If `shard_id` is invalid (< 0 or >= num_shards).
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards` ).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -2512,7 +2512,7 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -2598,7 +2598,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
     A source dataset that reads and parses the LFW dataset.
 
     When task is 'people', the generated dataset has two columns: :py:obj:`[image, label]`;
-    When task is 'pairs', the generated dataset has three columns: :py:obj:`[image1, image2, label]`.
+    When task is 'pairs', the generated dataset has three columns: :py:obj:`[image1, image2, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`image1` is of the uint8 type.
     The tensor of column :py:obj:`image2` is of the uint8 type.
@@ -2635,7 +2635,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If shard_id is invalid (< 0 or >= `num_shards` ).
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -2752,14 +2752,14 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the LSUN dataset.
 
-    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of a scalar of uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`
-            Default: None, will be set to `all`.
+        usage (str, optional): Usage of this dataset, can be `train` , `test` , `valid` or `all`
+            Default: None, will be set to `all` .
         classes(Union[str, list[str]], optional): Choose the specific classes to load. Default: None, means loading
             all classes in root directory.
         num_samples (int, optional): The number of images to be included in the dataset.
@@ -2785,7 +2785,7 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If 'sampler' and sharding are specified at the same time.
         RuntimeError: If 'num_shards' is specified but 'shard_id' is None.
         RuntimeError: If 'shard_id' is specified but 'num_shards' is None.
-        ValueError: If 'shard_id' is invalid (< 0 or >= num_shards).
+        ValueError: If 'shard_id' is invalid (< 0 or >= `num_shards` ).
         ValueError: If 'usage' or 'classes' is invalid (not in specific types).
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
@@ -2883,7 +2883,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset for reading images from a Manifest file.
 
-    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of a scalar of uint64 type.
 
@@ -2905,7 +2905,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max number of samples per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -2923,7 +2923,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     Note:
         - The shape of the image column is [image_size] if decode flag is False, or [H,W,C] otherwise.
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -3003,7 +3003,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the MNIST dataset.
 
-    The generated dataset has two columns :py:obj:`[image, label]`.
+    The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is a scalar of the uint32 type.
 
@@ -3022,7 +3022,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -3039,7 +3039,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -3125,7 +3125,7 @@ class OmniglotDataset(MappableDataset):
     """
     A source dataset that reads and parses the Omniglot dataset.
 
-    The generated dataset has two columns :py:obj:`[image, label]`.
+    The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is a scalar of the uint32 type.
 
@@ -3405,7 +3405,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the Places365 dataset.
 
-    The generated dataset has two columns :py:obj:`[image, label]`.
+    The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of the uint32 type.
 
@@ -3425,7 +3425,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -3545,7 +3545,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the QMNIST dataset.
 
-    The generated dataset has two columns :py:obj:`[image, label]`.
+    The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of the uint32 type.
 
@@ -3565,7 +3565,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -3581,7 +3581,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -3691,7 +3691,7 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
 
     Raises:
@@ -3823,7 +3823,7 @@ class SBDataset(GeneratorDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
 
     Raises:
@@ -3935,7 +3935,7 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the SBU dataset.
 
-    The generated dataset has two columns :py:obj:`[image, caption]`.
+    The generated dataset has two columns :py:obj:`[image, caption]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`caption` is of the string type.
 
@@ -3952,7 +3952,7 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -4050,7 +4050,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses Semeion dataset.
 
-    The generated dataset has two columns :py:obj:`[image, label]`.
+    The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is a scalar of the uint32 type.
 
@@ -4067,7 +4067,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -4083,7 +4083,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -4172,7 +4172,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses STL10 dataset.
 
-    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of a scalar of int32 type.
 
@@ -4195,7 +4195,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, 'num_samples' reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -4344,7 +4344,7 @@ class SVHNDataset(GeneratorDataset):
     """
     A source dataset that reads and parses SVHN dataset.
 
-    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of a scalar of uint32 type.
 
@@ -4360,7 +4360,7 @@ class SVHNDataset(GeneratorDataset):
             input is required. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, 'num_samples' reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument must be specified only
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
             when num_shards is also specified.
 
     Raises:
@@ -4453,7 +4453,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the USPS dataset.
 
-    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of the uint32 type.
 
@@ -4478,7 +4478,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -4550,9 +4550,9 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset with different task setting has different output columns:
 
-    - task = :py:obj:`Detection`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
-        :py:obj:`[label, dtype=uint32]`, :py:obj:`[difficult, dtype=uint32]`, :py:obj:`[truncate, dtype=uint32]`.
-    - task = :py:obj:`Segmentation`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[target,dtype=uint8]`.
+    - task = :py:obj:`Detection` , output columns: :py:obj:`[image, dtype=uint8]` , :py:obj:`[bbox, dtype=float32]` , \
+        :py:obj:`[label, dtype=uint32]` , :py:obj:`[difficult, dtype=uint32]` , :py:obj:`[truncate, dtype=uint32]` .
+    - task = :py:obj:`Segmentation` , output columns: :py:obj:`[image, dtype=uint8]` , :py:obj:`[target,dtype=uint8]` .
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -4577,7 +4577,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -4590,8 +4590,8 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
         RuntimeError: If xml of Annotations is an invalid format.
-        RuntimeError: If xml of Annotations loss attribution of `object`.
-        RuntimeError: If xml of Annotations loss attribution of `bndbox`.
+        RuntimeError: If xml of Annotations loss attribution of `object` .
+        RuntimeError: If xml of Annotations loss attribution of `bndbox` .
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
@@ -4605,7 +4605,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
     Note:
         - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op
           is added to remove the prefix('_meta-').
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -4775,7 +4775,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
             Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument can only be specified
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument can only be specified
             when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -4794,7 +4794,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `dataset_dir` is not exist.
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`

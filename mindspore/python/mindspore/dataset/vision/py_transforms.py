@@ -165,7 +165,7 @@ class CenterCrop(py_transforms.PyTensorOperation):
 
     Args:
         size (Union[int, Sequence[int, int]]): The size of the cropped image.
-            If int is provided, a square of size (`size`, `size`) will be cropped with this value.
+            If int is provided, a square of size `(size, size)` will be cropped with this value.
             If Sequence[int, int] is provided, its two elements will be taken as the cropped height and width.
 
     Raises:
@@ -210,7 +210,7 @@ class Cutout(py_transforms.PyTensorOperation):
     Randomly cut out a certain number of square patches on the input numpy.ndarray image,
     setting the pixel values in the patch to zero.
 
-    See `Improved Regularization of Convolutional Neural Networks with Cutout <https://arxiv.org/pdf/1708.04552.pdf>`_.
+    See `Improved Regularization of Convolutional Neural Networks with Cutout <https://arxiv.org/pdf/1708.04552.pdf>`_ .
 
     Args:
         length (int): The side length of square patches to be cut out.
@@ -361,7 +361,7 @@ class FiveCrop(py_transforms.PyTensorOperation):
 
     Args:
         size (Union[int, Sequence[int, int]]): The size of the cropped image.
-            If int is provided, a square of size (`size`, `size`) will be cropped with this value.
+            If int is provided, a square of size `(size, size)` will be cropped with this value.
             If Sequence[int, int] is provided, its two elements will be taken as the cropped height and width.
 
     Raises:
@@ -500,7 +500,7 @@ class HWC2CHW(py_transforms.PyTensorOperation):
     If the input image is of shape <H, W>, it will remain unchanged.
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray`.
+        TypeError: If the input image is not of type :class:`numpy.ndarray` .
         TypeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -578,12 +578,12 @@ class LinearTransformation(py_transforms.PyTensorOperation):
 
     Args:
         transformation_matrix (numpy.ndarray): A square transformation matrix in shape of (D, D), where
-            :math:`D = C \times H \times W`.
-        mean_vector (numpy.ndarray): A mean vector in shape of (D,), where :math:`D = C \times H \times W`.
+            :math:`D = C \times H \times W` .
+        mean_vector (numpy.ndarray): A mean vector in shape of (D,), where :math:`D = C \times H \times W` .
 
     Raises:
-        TypeError: If `transformation_matrix` is not of type :class:`numpy.ndarray`.
-        TypeError: If `mean_vector` is not of type :class:`numpy.ndarray`.
+        TypeError: If `transformation_matrix` is not of type :class:`numpy.ndarray` .
+        TypeError: If `mean_vector` is not of type :class:`numpy.ndarray` .
 
     Supported Platforms:
         ``CPU``
@@ -630,8 +630,8 @@ class MixUp(py_transforms.PyTensorOperation):
     Randomly mix up a batch of images together with its labels.
 
     Each image will be multiplied by a random weight :math:`lambda` generated from the Beta distribution and then added
-    to another image multiplied by :math:`1 - lambda`. The same transformation will be applied to their labels with the
-    same value of :math:`lambda`. Make sure that the labels are one-hot encoded in advance.
+    to another image multiplied by :math:`1 - lambda` . The same transformation will be applied to their labels with the
+    same value of :math:`lambda` . Make sure that the labels are one-hot encoded in advance.
 
     Args:
         batch_size (int): The number of images in a batch.
@@ -718,7 +718,7 @@ class Normalize(py_transforms.PyTensorOperation):
             and be arranged in channel order.
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray`.
+        TypeError: If the input image is not of type :class:`numpy.ndarray` .
         TypeError: If dimension of the input image is not 3.
         NotImplementedError: If dtype of the input image is int.
         ValueError: If lengths of `mean` and `std` are not equal.
@@ -786,7 +786,7 @@ class NormalizePad(py_transforms.PyTensorOperation):
         dtype (str): The dtype of the output image. Only "float32" and "float16" are supported. Default: "float32".
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray`.
+        TypeError: If the input image is not of type :class:`numpy.ndarray` .
         TypeError: If dimension of the input image is not 3.
         NotImplementedError: If dtype of the input image is int.
         ValueError: If lengths of `mean` and `std` are not equal.
@@ -860,7 +860,7 @@ class Pad(py_transforms.PyTensorOperation):
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int, int].
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
-        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
+        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border` .
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range of [0, 255].
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
@@ -907,7 +907,7 @@ class RandomAffine(py_transforms.PyTensorOperation):
 
     Args:
         degrees (Union[float, Sequence[float, float]]): Range of degrees to select from.
-            If float is provided, the degree will be randomly selected from (-`degrees`, `degrees`).
+            If float is provided, the degree will be randomly selected from ( `-degrees` , `degrees` ).
             If Sequence[float, float] is provided, it needs to be arranged in order of (min, max).
         translate (Sequence[float, float], optional): Maximum absolute fraction sequence in shape of (tx, ty)
             for horizontal and vertical translations. The horizontal and vertical shifts are randomly
@@ -918,7 +918,7 @@ class RandomAffine(py_transforms.PyTensorOperation):
         shear (Union[float, Sequence[float, float], Sequence[float, float, float, float]], optional):
             Range of shear factor to select from.
             If float is provided, a shearing parallel to X axis with a factor selected from
-            (- `shear` , `shear` ) will be applied.
+            ( `-shear` , `shear` ) will be applied.
             If Sequence[float, float] is provided, a shearing parallel to X axis with a factor selected
             from ( `shear` [0], `shear` [1]) will be applied.
             If Sequence[float, float, float, float] is provided, a shearing parallel to X axis with a factor selected
@@ -942,7 +942,7 @@ class RandomAffine(py_transforms.PyTensorOperation):
         TypeError: If `translate` is not of type Sequence[float, float].
         TypeError: If `scale` is not of type Sequence[float, float].
         TypeError: If `shear` is not of type float or Sequence[float, float].
-        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
         ValueError: If `degrees` is negative.
         ValueError: If `translate` is not in range of [-1.0, 1.0].
@@ -1062,20 +1062,20 @@ class RandomColorAdjust(py_transforms.PyTensorOperation):
         brightness (Union[float, Sequence[float, float]], optional): Range of brightness adjustment factor
             to select from, must be non negative.
             If float is provided, the factor will be uniformly selected from
-            [max(0, 1 - `brightness`), 1 + `brightness`).
+            [max(0, 1 - `brightness` ), 1 + `brightness` ).
             If Sequence[float, float] is provided, it should be arranged in order of (min, max). Default: (1, 1).
         contrast (Union[float, Sequence[float, float]], optional): Range of contrast adjustment factor
             to select from, must be non negative.
-            If float is provided, the factor will be uniformly selected from [max(0, 1 - `contrast`), 1 + `contrast`).
+            If float is provided, the factor will be uniformly selected from [max(0, 1 - `contrast` ), 1 + `contrast` ).
             If Sequence[float, float] is provided, it should be arranged in order of (min, max). Default: (1, 1).
         saturation (Union[float, Sequence[float, float]], optional): Range of saturation adjustment factor
             to select from, must be non negative.
             If float is provided, the factor will be uniformly selected from
-            [max(0, 1 - `saturation`), 1 + `saturation`).
+            [max(0, 1 - `saturation` ), 1 + `saturation` ).
             If Sequence[float, float] is provided, it should be arranged in order of (min, max). Default: (1, 1).
         hue (Union[float, Sequence[float, float]], optional): Range of hue adjustment factor to select from.
             If float is provided, it must be in range of [0, 0.5], and the factor will be uniformly
-            selected from [-`hue`, `hue`).
+            selected from [ `-hue` , `hue` ).
             If Sequence[float, float] is provided, the elements must be in range of [-0.5, 0.5] and arranged in
             order of (min, max). Default: (0, 0).
 
@@ -1130,7 +1130,7 @@ class RandomCrop(py_transforms.PyTensorOperation):
 
     Args:
         size (Union[int, Sequence[int, int]]): The size of the cropped image.
-            If int is provided, a square of size (`size`, `size`) will be cropped with this value.
+            If int is provided, a square of size `(size, size)` will be cropped with this value.
             If Sequence[int, int] is provided, its two elements will be taken as the cropped height and width.
         padding (Union[int, Sequence[int, int], Sequence[int, int, int, int]], optional): The number of pixels to pad
             on each border. When specified, it will pad the image before random cropping.
@@ -1164,7 +1164,7 @@ class RandomCrop(py_transforms.PyTensorOperation):
         TypeError: If `padding` is not of type int, Sequence[int, int] or Sequence[int, int, int, int].
         TypeError: If `pad_if_needed` is not of type bool.
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
-        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
+        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border` .
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range of [0, 255].
@@ -1214,7 +1214,7 @@ class RandomErasing(py_transforms.PyTensorOperation):
     """
     Randomly erase pixels within a random selected rectangle erea on the input numpy.ndarray image.
 
-    See `Random Erasing Data Augmentation <https://arxiv.org/pdf/1708.04896.pdf>`_.
+    See `Random Erasing Data Augmentation <https://arxiv.org/pdf/1708.04896.pdf>`_ .
 
     Args:
         prob (float, optional): Probability of performing erasing. Default: 0.5.
@@ -1446,7 +1446,7 @@ class RandomPerspective(py_transforms.PyTensorOperation):
     Raises:
         TypeError: If `distortion_scale` is not of type float.
         TypeError: If `prob` is not of type float.
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
         ValueError: If `distortion_scale` is not in range of [0, 1].
         ValueError: If `prob` is not in range of [0, 1].
 
@@ -1496,7 +1496,7 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
 
     Args:
         size (Union[int, Sequence[int, int]]): The size of the cropped image.
-            If int is provided, a square of size (`size`, `size`) will be cropped with this value.
+            If int is provided, a square of size `(size, size)` will be cropped with this value.
             If Sequence[int, int] is provided, its two elements will be taken as the cropped height and width.
         scale (Sequence[float, float], optional): Range of area scale of the cropped area relative
             to the original image to select from, arraged in order or (min, max). Default: (0.08, 1.0).
@@ -1517,7 +1517,7 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
         TypeError: If `size` is not of type int or Sequence[int, int].
         TypeError: If `scale` is not of type Sequence[float, float].
         TypeError: If `ratio` is not of type Sequence[float, float].
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
         TypeError: If `max_attempts` is not of type int.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
@@ -1568,7 +1568,7 @@ class RandomRotation(py_transforms.PyTensorOperation):
 
     Args:
         degrees (Union[float, Sequence[float, float]]): Range of rotation degree to select from.
-            If int is provided, the rotation degree will be randomly selected from (-`degrees`, `degrees`).
+            If int is provided, the rotation degree will be randomly selected from ( `-degrees` , `degrees` ).
             If Sequence[float, float] is provided, it should be arranged in order of (min, max).
         resample (Inter, optional): Method of interpolation. It can be Inter.NEAREST,
             Inter.BILINEAR or Inter.BICUBIC. If the input PIL Image is in mode of "1" or "P",
@@ -1592,7 +1592,7 @@ class RandomRotation(py_transforms.PyTensorOperation):
 
     Raises:
         TypeError: If `degrees` is not of type float or Sequence[float, float].
-        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
         TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type Sequence[int, int].
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
@@ -1746,7 +1746,7 @@ class Resize(py_transforms.PyTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int, int].
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
         ValueError: If `size` is not positive.
 
     Supported Platforms:
@@ -1879,7 +1879,7 @@ class TenCrop(py_transforms.PyTensorOperation):
 
     Args:
         size (Union[int, Sequence[int, int]]): The size of the cropped image.
-            If int is provided, a square of size (`size`, `size`) will be cropped with this value.
+            If int is provided, a square of size `(size, size)` will be cropped with this value.
             If Sequence[int, int] is provided, its two elements will be taken as the cropped height and width.
         use_vertical_flip (bool, optional): If True, flip the images vertically. Otherwise, flip them
             horizontally. Default: False.
@@ -1933,10 +1933,10 @@ class ToPIL(py_transforms.PyTensorOperation):
     Convert the input decoded numpy.ndarray image to PIL Image.
 
     Note:
-        The conversion mode will be determined by the data type using :class:`PIL.Image.fromarray`.
+        The conversion mode will be determined by the data type using :class:`PIL.Image.fromarray` .
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray` or :class:`PIL.Image.Image`.
+        TypeError: If the input image is not of type :class:`numpy.ndarray` or :class:`PIL.Image.Image` .
 
     Supported Platforms:
         ``CPU``
@@ -1977,10 +1977,10 @@ class ToTensor(py_transforms.PyTensorOperation):
     from (H, W, C) to (C, H, W).
 
     Args:
-        output_type (numpy.dtype, optional): The desired dtype of the output image. Default: :class:`numpy.float32`.
+        output_type (numpy.dtype, optional): The desired dtype of the output image. Default: :class:`numpy.float32` .
 
     Raises:
-        TypeError: If the input image is not of type :class:`PIL.Image.Image` or :class:`numpy.ndarray`.
+        TypeError: If the input image is not of type :class:`PIL.Image.Image` or :class:`numpy.ndarray` .
         TypeError: If dimension of the input image is not 2 or 3.
 
     Supported Platforms:
@@ -2021,10 +2021,10 @@ class ToType(py_transforms.PyTensorOperation):
     Convert the input numpy.ndarray image to the desired dtype.
 
     Args:
-        output_type (numpy.dtype): The desired dtype of the output image, e.g. :class:`numpy.float32`.
+        output_type (numpy.dtype): The desired dtype of the output image, e.g. :class:`numpy.float32` .
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray`.
+        TypeError: If the input image is not of type :class:`numpy.ndarray` .
 
     Supported Platforms:
         ``CPU``

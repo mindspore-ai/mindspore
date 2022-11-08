@@ -70,7 +70,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -132,7 +132,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, 'num_samples' reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: None, sampler is exclusive
@@ -156,7 +156,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
@@ -271,7 +271,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards. Default: False. If shard_equal_rows
             is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
@@ -380,7 +380,7 @@ class OBSMindDataset(GeneratorDataset):
         - It's necessary to create a synchronization directory on cloud storage in
           advance which be defined by parameter: `sync_obs_path` .
         - If training is offline(no cloud), it's recommended to set the
-          environment variable `BATCH_JOB_ID`.
+          environment variable `BATCH_JOB_ID` .
         - In distributed training, if there are multiple nodes(servers), all 8
           devices must be used in each node(server). If there is only one
           node(server), there is no such restriction.

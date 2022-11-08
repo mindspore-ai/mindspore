@@ -36,7 +36,7 @@ class CsvToMR:
 
     Note:
         For details about Examples, please refer to `Converting CSV Dataset <https://
-        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-csv-dataset>`_.
+        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-csv-dataset>`_ .
 
     Args:
         source (str): The file path of csv.
@@ -46,7 +46,7 @@ class CsvToMR:
         partition_number (int, optional): The partition size, Default: 1.
 
     Raises:
-        ValueError: If `source`, `destination`, `partition_number` is invalid.
+        ValueError: If `source` , `destination` , `partition_number` is invalid.
         RuntimeError: If `columns_list` is invalid.
     """
 

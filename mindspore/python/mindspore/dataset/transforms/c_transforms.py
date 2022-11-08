@@ -211,10 +211,10 @@ class Slice(TensorOperation):
                 `slice <https://docs.python.org/3.7/library/functions.html?highlight=slice#slice>`_ object along the
                 first dimension. Similar to start:stop:step.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`[:]` in Python indexing.
-            5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None`.
+            5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None` .
 
     Raises:
-        TypeError: If `slices` is not of type int, list[int], :py:obj:`slice`, :py:obj:`None` or :py:obj:`Ellipsis`.
+        TypeError: If `slices` is not of type int, list[int], :py:obj:`slice` , :py:obj:`None` or :py:obj:`Ellipsis` .
 
     Supported Platforms:
         ``CPU``

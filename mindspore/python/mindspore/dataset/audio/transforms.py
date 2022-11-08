@@ -122,16 +122,16 @@ class AmplitudeToDB(AudioTensorOperation):
         stype (ScaleType, optional): Scale of the input waveform, which can be
             ScaleType.POWER or ScaleType.MAGNITUDE. Default: ScaleType.POWER.
         ref_value (float, optional): Multiplier reference value for generating
-            `db_multiplier`. Default: 1.0. The formula is
+            `db_multiplier` . Default: 1.0. The formula is
 
-            :math:`\text{db_multiplier} = Log10(max(\text{ref_value}, amin))`.
+            :math:`\text{db_multiplier} = Log10(max(\text{ref_value}, amin))` .
 
         amin (float, optional): Lower bound to clamp the input waveform, which must
             be greater than zero. Default: 1e-10.
         top_db (float, optional): Minimum cut-off decibels, which must be non-negative. Default: 80.0.
 
     Raises:
-        TypeError: If `stype` is not of type :class:`mindspore.dataset.audio.utils.ScaleType`.
+        TypeError: If `stype` is not of type :class:`mindspore.dataset.audio.utils.ScaleType` .
         TypeError: If `ref_value` is not of type float.
         ValueError: If `ref_value` is not a positive number.
         TypeError: If `amin` is not of type float.
@@ -1044,7 +1044,7 @@ class GriffinLim(AudioTensorOperation):
     Compute waveform from a linear scale magnitude spectrogram using the Griffin-Lim transformation.
 
     About Griffin-Lim please refer to `A fast Griffin-Lim algorithm <https://doi.org/10.1109/WASPAA.2013.6701851>`_
-    and `Signal estimation from modified short-time Fourier transform <https://doi.org/10.1109/ICASSP.1983.1172092>`_.
+    and `Signal estimation from modified short-time Fourier transform <https://doi.org/10.1109/ICASSP.1983.1172092>`_ .
 
     Args:
         n_fft (int, optional): Size of FFT. Default: 400.
@@ -1062,8 +1062,8 @@ class GriffinLim(AudioTensorOperation):
             Default: True.
 
     Raises:
-        RuntimeError: If `n_fft` is not less than `length`.
-        RuntimeError: If `win_length` is not less than `n_fft`.
+        RuntimeError: If `n_fft` is not less than `length` .
+        RuntimeError: If `win_length` is not less than `n_fft` .
 
     Examples:
         >>> import numpy as np
@@ -1137,7 +1137,7 @@ class InverseMelScale(AudioTensorOperation):
         n_mels (int, optional): Number of mel filterbanks. Default: 128.
         sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
         f_min (float, optional): Minimum frequency. Default: 0.0.
-        f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2`.
+        f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2` .
         max_iter (int, optional): Maximum number of optimization iterations. Default: 100000.
         tolerance_loss (float, optional): Value of loss to stop optimization at. Default: 1e-5.
         tolerance_change (float, optional): Difference in losses to stop optimization at. Default: 1e-8.
@@ -1306,7 +1306,7 @@ class Magphase(AudioTensorOperation):
 
 class MaskAlongAxis(AudioTensorOperation):
     """
-    Apply a mask along `axis`. Mask will be applied from indices `[mask_start, mask_start + mask_width)`.
+    Apply a mask along `axis` . Mask will be applied from indices `[mask_start, mask_start + mask_width)` .
 
     Args:
         mask_start (int): Starting position of the mask, which must be non negative.
@@ -1342,9 +1342,10 @@ class MaskAlongAxis(AudioTensorOperation):
 
 class MaskAlongAxisIID(AudioTensorOperation):
     """
-    Apply a mask along `axis`. Mask will be applied from indices `[mask_start, mask_start + mask_width)`, where
-    `mask_width` is sampled from `uniform[0, mask_param]`, and `mask_start` from `uniform[0, max_length - mask_width]`,
-    `max_length` is the number of columns of the specified axis of the spectrogram.
+    Apply a mask along `axis` . Mask will be applied from indices `[mask_start, mask_start + mask_width)` , where
+    `mask_width` is sampled from `uniform[0, mask_param]` , and `mask_start` from
+    `uniform[0, max_length - mask_width]` , `max_length` is the number of columns of the specified axis
+    of the spectrogram.
 
     Args:
         mask_param (int): Number of columns to be masked, will be uniformly sampled from
@@ -1395,7 +1396,7 @@ class MelScale(AudioTensorOperation):
         n_mels (int, optional): Number of mel filterbanks. Default: 128.
         sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
         f_min (float, optional): Minimum frequency. Default: 0.
-        f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2`.
+        f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2` .
         n_stft (int, optional): Number of bins in STFT. Default: 201.
         norm (NormType, optional): Type of norm, value should be NormType.SLANEY or NormType::NONE.
             If norm is NormType.SLANEY, divide the triangular mel weight by the width of the mel band.
@@ -1766,7 +1767,7 @@ class SpectralCentroid(TensorOperation):
         ValueError: If `n_fft` is not a positive number.
         TypeError: If `win_length` is not of type int.
         ValueError: If `win_length` is not a positive number.
-        ValueError: If `win_length` is greater than `n_fft`.
+        ValueError: If `win_length` is greater than `n_fft` .
         TypeError: If `hop_length` is not of type int.
         ValueError: If `hop_length` is not a positive number.
         TypeError: If `pad` is not of type int.
@@ -1824,7 +1825,7 @@ class Spectrogram(TensorOperation):
         ValueError: If `n_fft` is not a positive number.
         TypeError: If `win_length` is not of type int.
         ValueError: If `win_length` is not a positive number.
-        ValueError: If `win_length` is greater than `n_fft`.
+        ValueError: If `win_length` is greater than `n_fft` .
         TypeError: If `hop_length` is not of type int.
         ValueError: If `hop_length` is not a positive number.
         TypeError: If `pad` is not of type int.
@@ -1934,7 +1935,7 @@ class TimeStretch(AudioTensorOperation):
 
     Args:
         hop_length (int, optional): Length of hop between STFT windows, i.e. the number of samples
-            between consecutive frames. Default: None, will use `n_freq - 1`.
+            between consecutive frames. Default: None, will use `n_freq - 1` .
         n_freq (int, optional): Number of filter banks from STFT. Default: 201.
         fixed_rate (float, optional): Rate to speed up or slow down by. Default: None, will keep
             the original rate.
@@ -2080,7 +2081,7 @@ class Vad(AudioTensorOperation):
         ValueError: If `noise_up_time` is a negative number.
         TypeError: If `noise_down_time` is not of type float.
         ValueError: If `noise_down_time` is a negative number.
-        ValueError: If `noise_up_time` is less than `noise_down_time`.
+        ValueError: If `noise_up_time` is less than `noise_down_time` .
         TypeError: If `noise_reduction_amount` is not of type float.
         ValueError: If `noise_reduction_amount` is a negative number.
         TypeError: If `measure_freq` is not of type float.
