@@ -41,16 +41,12 @@ class ScatterOpsInfo : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
-  Status GetAttrs() override {
-    infer_strategy_mode_ = INDIVIDUAL_MODE;
-    return SUCCESS;
-  }
+  Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override { return SUCCESS; }  // the scatter_update only use in eval/predict
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 };
 
 class ScatterUpdateInfo : public ScatterOpsInfo {

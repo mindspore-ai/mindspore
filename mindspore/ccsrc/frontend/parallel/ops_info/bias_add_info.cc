@@ -102,30 +102,6 @@ std::vector<StrategyPtr> BiasAddInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-// in_strategy: ((N, C, H, W), ()), inputs shapes: ((n, c, h, w), (c)), return: ((N, C, H, W), (C))
-// in_strategy: ((), (C)), inputs shapes: ((n, c, h, w), (c)), return: ((1, C, 1, 1), (C))
-// in_strategy: ((N, C), ()), inputs shapes: ((n, c), (c)), return: ((N, C), (C))
-// in_strategy: ((), (C)), inputs shapes: ((n, c), (c)), return: ((1, C), (C))
-Shapes BiasAddInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 2, but got " << in_strategy.size();
-  }
-
-  if (!in_strategy[0].empty()) {
-    if (in_strategy[0].size() != 2 && in_strategy[0].size() != 4) {
-      MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[0] must be 2 or 4, but got " << in_strategy[0].size();
-    }
-    return Shapes({in_strategy[0], {in_strategy[0][1]}});
-  }
-
-  if (in_strategy[1].size() != 1) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[1] must be 1, but got " << in_strategy[1].size();
-  }
-  Shape tmp(inputs_shape_[0].size(), 1);
-  tmp[1] = in_strategy[1][0];
-  return Shapes({tmp, in_strategy[1]});
-}
-
 REGISTER(BiasAddInfo);
 }  // namespace parallel
 }  // namespace mindspore

@@ -54,7 +54,6 @@ Status GatherDInfo::GetAttrs() {
 
   dim_ = LongToSize(dim);
   MS_LOG(INFO) << name_ << ": The dim is " << dim_;
-  infer_strategy_mode_ = SAME_MODE;
   return SUCCESS;
 }
 

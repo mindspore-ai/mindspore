@@ -43,7 +43,6 @@ class CdistInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferForwardCommunication() override { return SUCCESS; }
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 
  private:
   size_t input_dims_ = 0;

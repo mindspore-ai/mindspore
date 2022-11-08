@@ -51,7 +51,6 @@ Status GammaInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Seed2 must be greater or equal to zero, bug got " << seed2_;
     return FAILED;
   }
-  infer_strategy_mode_ = INDEPENDENT_MODE;
   return SUCCESS;
 }
 

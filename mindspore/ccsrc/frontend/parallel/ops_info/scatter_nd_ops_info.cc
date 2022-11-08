@@ -169,27 +169,6 @@ void ScatterNdOpsInfo::ReComputeBatchSplitFlagList() {
   }
 }
 
-// in_strategy: ((A, B, C, D), (), ()), Shapes: ((a, b, c, d), (e, f), (e, f, c, d))
-// return: ((A, B, C, D), (1, 1), (1, 1, C, D))
-// return: throw exception
-Shapes ScatterNdOpsInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != SIZE_THREE) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();
-  }
-
-  if (in_strategy[INDEX_ZERO].empty()) {
-    MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0] must be not empty, you should set the first input strategy.";
-  }
-
-  Shape indices_strategy, updates_strategy;
-  indices_strategy = Shape(inputs_shape_[INDEX_ONE].size(), 1);
-  updates_strategy = Shape(inputs_shape_[INDEX_TWO].size(), 1);
-  for (size_t i = 0; i < in_strategy[0].size() - gather_dims_size_; ++i) {
-    updates_strategy[indices_strategy.size() - 1 + i] = in_strategy[INDEX_ZERO][i + gather_dims_size_];
-  }
-  return Shapes({in_strategy[INDEX_ZERO], indices_strategy, updates_strategy});
-}
-
 ReplaceGraphPtr ScatterNdOpsInfo::replace_graph(const CNodePtr &cnode) {
   if (ComputeReplaceGraph(cnode) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << " replace graph failed";

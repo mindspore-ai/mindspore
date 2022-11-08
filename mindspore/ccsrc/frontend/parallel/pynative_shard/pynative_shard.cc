@@ -31,14 +31,22 @@
 
 namespace mindspore {
 namespace parallel {
+namespace {
+using ExpectFunc = std::function<bool(const CNodePtr &)>;
+}
 static void GenerateDefaultStrategy(const ValueNodePtr &axes, const std::vector<AnfNodePtr> &nodes,
-                                    std::vector<std::vector<int64_t>> *default_strategy) {
+                                    const size_t device_num, std::vector<std::vector<int64_t>> *default_strategy) {
   auto strategies = axes->value()->cast<ValueTuplePtr>()->value();
   size_t i = 0;
   for (auto &strategy : strategies) {
     auto node = nodes[i];
     if (strategy->isa<None>()) {
-      (void)default_strategy->emplace_back(Shape());
+      auto node_size = common::AnfAlgo::GetOutputInferShape(node, 0).size();
+      std::vector<int64_t> current_d_strategy(node_size, 1);
+      if (!current_d_strategy.empty()) {
+        current_d_strategy[0] = SizeToLong(device_num);
+      }
+      (void)default_strategy->emplace_back(std::move(current_d_strategy));
     } else {
       (void)default_strategy->emplace_back(GetValue<Shape>(strategy));
     }
@@ -46,26 +54,13 @@ static void GenerateDefaultStrategy(const ValueNodePtr &axes, const std::vector<
   }
 }
 
-// Generate strategies like ((), (), ..., ())
-Shapes GenerateEmptyStrategies(const CNodePtr &cnode) {
-  auto shape_list = ExtractShape(cnode);
-  if (shape_list.empty()) {
-    MS_LOG(EXCEPTION) << "Node: " << cnode->DebugString() << " failed to extract shape.";
-  }
-  return Shapes(shape_list[0].size(), Shape());
-}
-
 static bool CheckOneDimensionalIntTuple(const ValuePtr &value_ptr) {
   if (!value_ptr->isa<ValueTuple>()) {
     return false;
   }
   auto elements = value_ptr->cast<ValueTuplePtr>()->value();
-  for (auto &element : elements) {
-    if (!element->isa<Int64Imm>()) {
-      return false;
-    }
-  }
-  return true;
+  return std::all_of(elements.begin(), elements.end(),
+                     [](const ValuePtr &element) { return element->isa<Int64Imm>(); });
 }
 
 static bool CheckLayout(const ValueNodePtr &axes, bool *need_default_strategy, size_t *axes_size) {
@@ -83,12 +78,6 @@ static bool CheckLayout(const ValueNodePtr &axes, bool *need_default_strategy, s
   return true;
 }
 
-static Shapes GenerateFullStrategy(const Shapes &current_strategy, const CNodePtr &cnode) {
-  OperatorInfoPtr op_info = CreateOperatorInfo(cnode);
-  MS_EXCEPTION_IF_NULL(op_info);
-  return op_info->GenerateFullStrategy(current_strategy);
-}
-
 static void GetInputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *input_nodes) {
   auto parameters = func_graph->parameters();
   for (auto &parameter : parameters) {
@@ -99,7 +88,7 @@ static void GetInputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr
   }
 }
 
-static bool CheckDeviceNum(const std::vector<std::vector<int64_t>> &strategies, const int64_t &device_num) {
+static bool CheckDeviceNum(const std::vector<std::vector<int64_t>> &strategies, const int64_t device_num) {
   for (size_t i = 0; i < strategies.size(); ++i) {
     auto strategy = strategies[i];
     int64_t required_num = 1;
@@ -119,34 +108,6 @@ static bool CheckDeviceNum(const std::vector<std::vector<int64_t>> &strategies, 
   return true;
 }
 
-// Generate strategy for cnode by input_strategy.
-// For the i-th input:
-// 1. If it is specified in input_strategy, the strategy in input_strategy is used;
-// 2. Otherwise, its strategy is assigned as ()
-static Shapes GenerateDefaultStrategiesForCNode(const CNodePtr &cnode, const Shapes &input_strategy) {
-  auto current_inputs = cnode->inputs();
-  Shapes elements;
-  for (size_t i = 1; i < current_inputs.size(); ++i) {
-    auto current_input = current_inputs[i];
-    if (current_input->isa<ValueNode>()) {
-      auto current_value = current_input->cast<ValueNodePtr>()->value();
-      if (!current_value->isa<mindspore::tensor::Tensor>()) {
-        continue;
-      }
-    }
-    if (IsPrimitiveCNode(current_input, prim::kPrimTupleGetItem)) {
-      auto tuple_getitem_cnode = current_input->cast<CNodePtr>();
-      auto tuple_index = tuple_getitem_cnode->input(2);
-      auto value_node = tuple_index->cast<ValueNodePtr>();
-      auto index = GetValue<int64_t>(value_node->value());
-      elements.push_back(input_strategy[index]);
-    } else {
-      (void)elements.emplace_back(Shape());
-    }
-  }
-  return elements;
-}
-
 static ValueTuplePtr ShapesToValueTuplePtr(const Shapes &shapes) {
   std::vector<ValuePtr> value_list;
   (void)std::transform(shapes.begin(), shapes.end(), std::back_inserter(value_list),
@@ -162,28 +123,46 @@ static Shapes ValueTuplePtrToShapes(const ValueTuplePtr &value_tuple_ptr) {
   return shapes;
 }
 
-AnfNodeIndexSet FindAnfNodeIndexSetToInsertStrategy(const FuncGraphPtr &func_graph, const AnfNodeIndexSet &node_users) {
+AnfNodeIndexSet FindAnfNodeIndexSetToInsertStrategy(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                    const ExpectFunc &filter_func) {
   FuncGraphManagerPtr manager = func_graph->manager();
   AnfNodeIndexSet ret_set;
-  std::queue<std::pair<AnfNodePtr, int>> bfs_list;
+  auto node_users = manager->node_users()[node];
+  std::queue<std::pair<AnfNodePtr, int>> bfs_queuq;
   (void)std::for_each(node_users.begin(), node_users.end(),
-                      [&bfs_list](const std::pair<AnfNodePtr, int> &user) { bfs_list.push(user); });
-
-  while (!bfs_list.empty()) {
-    auto user = bfs_list.front();
-    bfs_list.pop();
-    CNodePtr cnode = user.first->cast<CNodePtr>();
-    // If the cnode is not a splittable operator, apply strategy to the next cnode
-    if (!IsSplittableOperator(GetPrimName(cnode)) || IsPrimitiveCNode(cnode, prim::kPrimVirtualDataset) ||
-        IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimReshape)) {
+                      [&bfs_queuq](const std::pair<AnfNodePtr, int> &user) { bfs_queuq.push(user); });
+  while (!bfs_queuq.empty()) {
+    auto user = bfs_queuq.front();
+    bfs_queuq.pop();
+    auto cnode = user.first->cast<CNodePtr>();
+    if (!filter_func(cnode)) {
       auto tmp_users = manager->node_users()[cnode];
       (void)std::for_each(tmp_users.begin(), tmp_users.end(),
-                          [&bfs_list](const std::pair<AnfNodePtr, int> &user) { bfs_list.push(user); });
+                          [&bfs_queuq](const std::pair<AnfNodePtr, int> &user) { bfs_queuq.push(user); });
       continue;
     }
     ret_set.insert(user);
   }
   return ret_set;
+}
+
+bool IsSettingStrategyByInsertIdentity(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                       const std::string &param_name) {
+  FuncGraphManagerPtr manager = func_graph->manager();
+  auto node_users = manager->node_users()[cnode];
+  for (const auto &user : node_users) {
+    auto user_node = user.first;
+    if (IsPrimitiveCNode(user_node, prim::kPrimIdentity)) {
+      auto attrs = GetCNodePrimitive(user_node)->attrs();
+      if (StrategyFound(attrs)) {
+        auto origin_strategies = ValueTuplePtrToShapes(attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
+        MS_LOG(WARNING) << "For " << param_name << ", its strategy has been set to " << origin_strategies.at(0)
+                        << ", the relevant settings in input_strategy will be ignored";
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 // New a primitive for cnode and set in_strategy to it.
@@ -193,7 +172,7 @@ void SetStrategyToCNode(const CNodePtr &cnode, const Shapes &strategies) {
   MS_EXCEPTION_IF_NULL(prim);
   PrimitivePtr new_prim;
   if (prim->isa<PrimitivePy>()) {
-    PrimitivePyPtr prim_py = prim->cast<PrimitivePyPtr>();
+    auto prim_py = prim->cast<PrimitivePyPtr>();
     MS_EXCEPTION_IF_NULL(prim_py);
     new_prim = std::make_shared<PrimitivePy>(*prim_py);
   } else {
@@ -205,13 +184,12 @@ void SetStrategyToCNode(const CNodePtr &cnode, const Shapes &strategies) {
 
   ValuePtr new_prim_value = MakeValue(new_prim);
   ValueNodePtr new_prim_value_node = NewValueNode(new_prim_value);
-  AnfNodePtr new_prim_anf_node = new_prim_value_node->cast<AnfNodePtr>();
+  auto new_prim_anf_node = new_prim_value_node->cast<AnfNodePtr>();
   MS_EXCEPTION_IF_NULL(new_prim_anf_node);
   cnode->set_input(0, new_prim_anf_node);
 }
 
-static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_strategy,
-                                         const int64_t &device_num) {
+void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_strategy, const int64_t device_num) {
   auto in_strategy_tuple = in_strategy->cast<ValueNodePtr>();
   bool need_default_strategy = false;
   size_t in_strategy_size = 0;
@@ -227,14 +205,14 @@ static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const A
   }
   std::vector<std::vector<int64_t>> input_strategy;
   if (need_default_strategy) {
-    GenerateDefaultStrategy(in_strategy_tuple, input_nodes, &input_strategy);
+    GenerateDefaultStrategy(in_strategy_tuple, input_nodes, device_num, &input_strategy);
   } else {
     input_strategy = GetValue<std::vector<std::vector<int64_t>>>(in_strategy_tuple->value());
   }
   if (!CheckDeviceNum(input_strategy, device_num)) {
     MS_LOG(EXCEPTION) << "check device number failed";
   }
-  std::set<CNodePtr> concerned_nodes;
+
   FuncGraphManagerPtr manager = func_graph->manager();
   auto parameters = func_graph->parameters();
   for (size_t i = 0; i < parameters.size(); ++i) {
@@ -250,105 +228,76 @@ static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const A
                         << " is not equal to in_strategy dimension: " << input_strategy[i].size() << " at index " << i;
     }
     AnfNodeIndexSet param_sub_set = manager->node_users()[parameter];
-    auto to_insert_nodes_set = FindAnfNodeIndexSetToInsertStrategy(func_graph, param_sub_set);
+    auto to_insert_nodes_set = FindAnfNodeIndexSetToInsertStrategy(
+      func_graph, parameter, [](const CNodePtr &cnode) { return IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem); });
+    if (to_insert_nodes_set.empty()) {
+      MS_LOG(EXCEPTION) << "For input: \"" << parameter->fullname_with_scope()
+                        << "\", failed to find node to insert strategy.";
+    }
     for (auto &node : to_insert_nodes_set) {
-      CNodePtr param_cnode = node.first->cast<CNodePtr>();
-      auto param_attrs = GetCNodePrimitive(param_cnode)->attrs();
-      if (StrategyFound(param_attrs)) {
-        auto origin_strategies = ValueTuplePtrToShapes(param_attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
-        MS_LOG(WARNING) << "For " << param_cnode->fullname_with_scope() << ", its in_strategy has been set to "
-                        << origin_strategies << ", the relevant settings in input_strategy will be ignored";
+      auto tuple_get_item_cnode = node.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_get_item_cnode);
+      if (IsSettingStrategyByInsertIdentity(func_graph, tuple_get_item_cnode, parameter->fullname_with_scope())) {
         continue;
       }
-      (void)concerned_nodes.insert(param_cnode);
+
+      // Setting strategy by insert identity.
+      // e.g TupleGetItem(parameter, index) -> identity{in_strategy=[input_strategy[index]}
+      auto identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimIdentity), tuple_get_item_cnode});
+      auto tuple_get_item_cnode_abstract = tuple_get_item_cnode->abstract();
+      MS_EXCEPTION_IF_NULL(tuple_get_item_cnode_abstract);
+      identity_cnode->set_abstract(tuple_get_item_cnode_abstract->Clone());
+      manager->Replace(tuple_get_item_cnode, identity_cnode);
+
+      // Get corresponding param_layout
+      auto tuple_index = tuple_get_item_cnode->input(2);
+      auto value_node = tuple_index->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto index = GetValue<int64_t>(value_node->value());
+      Shapes current_strategies = {input_strategy[index]};
+      SetStrategyToCNode(identity_cnode, current_strategies);
     }
   }
-
-  for (auto &cnode : concerned_nodes) {
-    Shapes ret_strategy = GenerateDefaultStrategiesForCNode(cnode, input_strategy);
-    SetStrategyToCNode(cnode, ret_strategy);
-  }
-  return concerned_nodes;
 }
 
-static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const FuncGraphPtr &func_graph,
-                                             const std::set<CNodePtr> &input_concerned_node) {
+void SetParameterLayout(const FuncGraphPtr &root, const FuncGraphPtr &func_graph) {
   FuncGraphManagerPtr manager = func_graph->manager();
   auto root_parameters = root->parameters();
-  std::set<CNodePtr> concerned_cnode;
-  for (auto param : root_parameters) {
+  for (const auto &param : root_parameters) {
     auto parameter = param->cast<ParameterPtr>();
     auto param_info = parameter->param_info();
     if (param_info == nullptr || param_info->param_strategy().empty()) {
       // Do not set param_strategy, skip it.
       continue;
     }
-    auto param_strategy = parameter->param_info()->param_strategy();
-    auto param_name = parameter->param_info()->name();
+    auto param_strategy = param_info->param_strategy();
+    auto param_name = param_info->name();
     AnfNodeIndexSet users = manager->node_users()[parameter];
-    auto to_insert_nodes_set = FindAnfNodeIndexSetToInsertStrategy(func_graph, users);
-    for (auto user : to_insert_nodes_set) {
-      CNodePtr target_cnode = user.first->cast<CNodePtr>();
-      Shapes current_strategies;
-      if (input_concerned_node.find(target_cnode) == input_concerned_node.end()) {
-        // If target_cnode is not involve inputs, insert an identity between Load and target_cnode,
-        // and setting layout into identity.
-        // e.g Load(param) -> identity{in_strategy} -> target_cnode
-        auto pre_cnode = target_cnode->input(user.second)->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(pre_cnode);
-        if (IsPrimitiveCNode(pre_cnode, prim::kPrimCast)) {
-          pre_cnode = pre_cnode->inputs().at(kIndex1)->cast<CNodePtr>();
-        }
-        if (!IsPrimitiveCNode(pre_cnode, prim::kPrimLoad)) {
-          MS_LOG(EXCEPTION) << "The operator type of the " << user.second << "-th input in "
-                            << target_cnode->fullname_with_scope() << " must be 'Load', but got "
-                            << GetCNodePrimitive(pre_cnode)->ToString();
-        }
-        auto identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimIdentity), pre_cnode});
-        auto pre_cnode_abstract = pre_cnode->abstract();
-        MS_EXCEPTION_IF_NULL(pre_cnode_abstract);
-        identity_cnode->set_abstract(pre_cnode_abstract->Clone());
-        manager->Replace(pre_cnode, identity_cnode);
-        target_cnode = identity_cnode;
-        current_strategies = {param_strategy};
-      } else {
-        // Setting layout into target_cnode directly.
-        PrimitivePtr prim = GetCNodePrimitive(target_cnode);
-        MS_EXCEPTION_IF_NULL(prim);
-        auto attrs = prim->attrs();
-        if (StrategyFound(attrs)) {
-          current_strategies = ValueTuplePtrToShapes(attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
-        } else {
-          current_strategies = GenerateEmptyStrategies(target_cnode);
-        }
-        current_strategies[user.second - 1] = param_strategy;
-        (void)concerned_cnode.insert(target_cnode);
+    auto to_insert_nodes_set = FindAnfNodeIndexSetToInsertStrategy(
+      func_graph, parameter, [](const CNodePtr &cnode) { return IsPrimitiveCNode(cnode, prim::kPrimLoad); });
+    for (const auto &user : to_insert_nodes_set) {
+      auto load_cnode = user.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(load_cnode);
+      if (IsSettingStrategyByInsertIdentity(func_graph, load_cnode, param_name)) {
+        continue;
       }
-      SetStrategyToCNode(target_cnode, current_strategies);
-      MS_LOG(DEBUG) << "The layout of \"" << param_name << "\" has been set to the " << user.second << "th of "
-                    << target_cnode->fullname_with_scope() << "'s in_strategy. Current strategies is "
-                    << current_strategies;
-    }
-  }
-  return concerned_cnode;
-}
 
-void CompleteConcernedCNodeStrategies(std::set<CNodePtr> concerned_cnode) {
-  for (auto cnode : concerned_cnode) {
-    PrimitivePtr prim = GetCNodePrimitive(cnode);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto attrs = prim->attrs();
-    Shapes current_strategies = ValueTuplePtrToShapes(attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
-    Shapes full_strategies = GenerateFullStrategy(current_strategies, cnode);
-    attrs[parallel::IN_STRATEGY] = ShapesToValueTuplePtr(full_strategies);
-    (void)prim->SetAttrs(attrs);
-    MS_LOG(INFO) << cnode->fullname_with_scope() << ": Completion strategies success. " << current_strategies << " -> "
-                 << full_strategies << "(origin_strategies -> completion_strategies)";
+      // Setting param_layout by insert identity. e.g Load(param) -> identity{in_strategy=[param_layout]}
+      auto identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimIdentity), load_cnode});
+      auto load_cnode_abstract = load_cnode->abstract();
+      MS_EXCEPTION_IF_NULL(load_cnode_abstract);
+      identity_cnode->set_abstract(load_cnode_abstract->Clone());
+      manager->Replace(load_cnode, identity_cnode);
+      Shapes current_strategies = {param_strategy};
+      SetStrategyToCNode(identity_cnode, current_strategies);
+      MS_LOG(DEBUG) << "The layout of \"" << param_name << "\" has been set to "
+                    << identity_cnode->fullname_with_scope() << ". Current strategies is " << current_strategies;
+    }
   }
 }
 
 static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
-                                const int64_t &device_num) {
+                                const int64_t device_num) {
   constexpr size_t kShardFnIndex = 1;
   constexpr size_t kShardInStrategyIndex = 2;
   for (auto &node : all_nodes) {
@@ -366,13 +315,8 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       if (HasNestedMetaFg(func_graph)) {
         return false;
       }
-      std::set<CNodePtr> concerned_cnode;
-      auto input_concerned_cnode = SetInputLayout(func_graph, in_strategy, device_num);
-      auto parameter_concerned_cnode = SetParameterLayout(root, func_graph, input_concerned_cnode);
-      (void)std::set_union(input_concerned_cnode.begin(), input_concerned_cnode.end(),
-                           parameter_concerned_cnode.begin(), parameter_concerned_cnode.end(),
-                           std::inserter(concerned_cnode, concerned_cnode.end()));
-      CompleteConcernedCNodeStrategies(concerned_cnode);
+      SetInputLayout(func_graph, in_strategy, device_num);
+      SetParameterLayout(root, func_graph);
       return true;
     }
   }
