@@ -53,7 +53,10 @@ class FillGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<Fil
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
-  std::string x_type_str_;
+  template <typename T>
+  T GetInputDataFromDevice(const std::vector<AddressPtr> &inputs, size_t idx, cudaStream_t cuda_stream);
+
+  TypeId x_type_id_;
   size_t input_elements_{0};
   void *cuda_stream_{nullptr};
 };

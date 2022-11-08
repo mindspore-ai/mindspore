@@ -32,6 +32,17 @@ namespace kernel {
   { KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_U).AddOutputAttr(MS_V), &FillGpuKernelMod::LaunchKernel<T> }
 
 template <typename T>
+T FillGpuKernelMod::GetInputDataFromDevice(const std::vector<AddressPtr> &inputs, size_t idx,
+                                           cudaStream_t cuda_stream) {
+  auto value_ptr = GetDeviceAddress<T>(inputs, idx);
+  T original_value;
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&original_value, value_ptr, sizeof(T), cudaMemcpyDeviceToHost, cuda_stream),
+    "cudaMemcpy value variable failed.");
+  return original_value;
+}
+
+template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 const std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> &FillGpuKernelMod::GetFuncList() const {
   static std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> func_list;
@@ -44,35 +55,35 @@ const std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> &FillG
   std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc> type_pair;
   for (auto i : shape_type_list) {
     for (auto j : value_type_list) {
-      for (size_t k = 0; k < value_type_list.size(); k++) {
-        if (value_type_list[k] == kNumberTypeInt8) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], int8_t);
-        } else if (value_type_list[k] == kNumberTypeInt16) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], int16_t);
-        } else if (value_type_list[k] == kNumberTypeInt32) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], int32_t);
-        } else if (value_type_list[k] == kNumberTypeInt64) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], int64_t);
-        } else if (value_type_list[k] == kNumberTypeFloat16) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], half);
-        } else if (value_type_list[k] == kNumberTypeFloat32) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], float);
-        } else if (value_type_list[k] == kNumberTypeFloat64) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], double);
-        } else if (value_type_list[k] == kNumberTypeUInt8) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], uint8_t);
-        } else if (value_type_list[k] == kNumberTypeUInt16) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], uint16_t);
-        } else if (value_type_list[k] == kNumberTypeUInt32) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], uint32_t);
-        } else if (value_type_list[k] == kNumberTypeUInt64) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], uint64_t);
-        } else if (value_type_list[k] == kNumberTypeBool) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], bool);
-        } else if (value_type_list[k] == kNumberTypeComplex64) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], Complex<float>);
-        } else if (value_type_list[k] == kNumberTypeComplex128) {
-          type_pair = FILL_GPU_REG(i, j, value_type_list[k], Complex<double>);
+      for (auto k : value_type_list) {
+        if (k == kNumberTypeInt8) {
+          type_pair = FILL_GPU_REG(i, j, k, int8_t);
+        } else if (k == kNumberTypeInt16) {
+          type_pair = FILL_GPU_REG(i, j, k, int16_t);
+        } else if (k == kNumberTypeInt32) {
+          type_pair = FILL_GPU_REG(i, j, k, int32_t);
+        } else if (k == kNumberTypeInt64) {
+          type_pair = FILL_GPU_REG(i, j, k, int64_t);
+        } else if (k == kNumberTypeFloat16) {
+          type_pair = FILL_GPU_REG(i, j, k, float16);
+        } else if (k == kNumberTypeFloat32) {
+          type_pair = FILL_GPU_REG(i, j, k, float);
+        } else if (k == kNumberTypeFloat64) {
+          type_pair = FILL_GPU_REG(i, j, k, double);
+        } else if (k == kNumberTypeUInt8) {
+          type_pair = FILL_GPU_REG(i, j, k, uint8_t);
+        } else if (k == kNumberTypeUInt16) {
+          type_pair = FILL_GPU_REG(i, j, k, uint16_t);
+        } else if (k == kNumberTypeUInt32) {
+          type_pair = FILL_GPU_REG(i, j, k, uint32_t);
+        } else if (k == kNumberTypeUInt64) {
+          type_pair = FILL_GPU_REG(i, j, k, uint64_t);
+        } else if (k == kNumberTypeBool) {
+          type_pair = FILL_GPU_REG(i, j, k, bool);
+        } else if (k == kNumberTypeComplex64) {
+          type_pair = FILL_GPU_REG(i, j, k, Complex<float>);
+        } else if (k == kNumberTypeComplex128) {
+          type_pair = FILL_GPU_REG(i, j, k, Complex<double>);
         }
         func_list.emplace_back(type_pair);
       }
@@ -85,12 +96,7 @@ bool FillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
                             const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
-  if (tensor_attr.GetInputAttr(kIndex1).first != outputs[kIndex0]->GetDtype()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' "
-                      << "the datatype of the input [value] has to be exactly same as input[dtype].";
-  }
-  auto x_type_id = tensor_attr.GetInputAttr(kIndex1).first;
-  x_type_str_ = TypeIdToString(x_type_id);
+  x_type_id_ = tensor_attr.GetInputAttr(kIndex1).first;
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -112,13 +118,45 @@ int FillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 template <typename T>
 bool FillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) {
-  auto value_ptr = GetDeviceAddress<T>(inputs, kIndex1);
-  auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
   T value;
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&value, value_ptr, sizeof(T), cudaMemcpyDeviceToHost, cuda_stream),
+  if (x_type_id_ == kNumberTypeInt8) {
+    value = static_cast<T>(GetInputDataFromDevice<int8_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeInt16) {
+    value = static_cast<T>(GetInputDataFromDevice<int16_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeInt32) {
+    value = static_cast<T>(GetInputDataFromDevice<int32_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeInt64) {
+    value = static_cast<T>(GetInputDataFromDevice<int64_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeUInt8) {
+    value = static_cast<T>(GetInputDataFromDevice<uint8_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeUInt16) {
+    value = static_cast<T>(GetInputDataFromDevice<uint16_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeUInt32) {
+    value = static_cast<T>(GetInputDataFromDevice<uint32_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeUInt64) {
+    value = static_cast<T>(GetInputDataFromDevice<uint64_t>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeFloat16) {
+    value = static_cast<T>(GetInputDataFromDevice<float16>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeFloat32) {
+    value = static_cast<T>(GetInputDataFromDevice<float>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeFloat64) {
+    value = static_cast<T>(GetInputDataFromDevice<double>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeBool) {
+    value = static_cast<T>(GetInputDataFromDevice<bool>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeComplex64) {
+    value = static_cast<T>(GetInputDataFromDevice<Complex<float>>(inputs, kIndex1, cuda_stream));
+  } else if (x_type_id_ == kNumberTypeComplex128) {
+    value = static_cast<T>(GetInputDataFromDevice<Complex<double>>(inputs, kIndex1, cuda_stream));
+  }
+  auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(y_ptr, &value, sizeof(T), cudaMemcpyHostToDevice, cuda_stream),
                                      "cudaMemcpy value variable failed.");
-  Fill(input_elements_, 1, value_ptr, y_ptr, cuda_stream);
+  if (std::is_same<T, float16>::value) {
+    Fill(input_elements_, 1, reinterpret_cast<half *>(y_ptr), reinterpret_cast<half *>(y_ptr), cuda_stream);
+  } else {
+    Fill(input_elements_, 1, y_ptr, y_ptr, cuda_stream);
+  }
   return true;
 }
 
