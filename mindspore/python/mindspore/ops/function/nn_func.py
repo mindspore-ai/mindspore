@@ -2645,6 +2645,66 @@ def mish(x):
     return mish_(x)
 
 
+@constexpr
+def _check_value_type(arg_name, arg_value, valid_types, prim_name=None):
+    """Checks whether a value is instance of some types."""
+    return validator.check_value_type(arg_name, arg_value, valid_types, prim_name)
+
+
+@constexpr(check=False)
+def _check_is_tensor(param_name, input_data, cls_name):
+    """Internal function, used to check whether the input data is Tensor."""
+    if input_data is not None and not isinstance(ops.typeof(input_data), mstype.tensor_type):
+        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.tensor_type}', "
+                        f"but got '{ops.typeof(input_data)}'")
+
+
+def _get_axis(x):
+    """Get a range of axis for input."""
+    shape = ops.shape(x)
+    length = ops.tuple_len(shape)
+    perm = ops.make_range(0, length)
+    return perm
+
+
+def _get_loss(x, reduction, cls_name, weights=1.0):
+    """Calculate the loss with reduction and weights."""
+    if reduction not in ('mean', 'sum', 'none'):
+        raise ValueError(f"For '{cls_name}', the 'reduction' must be in ['mean', 'sum', 'none'], "
+                         f"but got {reduction}.")
+
+    reduce_mean = P.ReduceMean()
+    reduce_sum = P.ReduceSum()
+    mul = P.Mul()
+    cast = P.Cast()
+
+    input_dtype = x.dtype
+    x = cast(x, mstype.float32)
+    weights = cast(weights, mstype.float32)
+    x = mul(weights, x)
+    if reduction == 'mean':
+        x = reduce_mean(x, _get_axis(x))
+    if reduction == 'sum':
+        x = reduce_sum(x, _get_axis(x))
+    x = cast(x, input_dtype)
+    return x
+
+
+def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
+    """
+    For details, please refer to :class:`mindspore.nn.MarginRankingLoss`.
+    """
+    margin = _check_value_type("margin", margin, [float], "margin_ranking_loss")
+    _check_is_tensor('input1', input1, "margin_ranking_loss")
+    _check_is_tensor('input2', input2, "margin_ranking_loss")
+    _check_is_tensor('target', target, "margin_ranking_loss")
+    maximum = P.Maximum()
+    ops.same_type_shape(input1, input2)
+    ops.same_type_shape(target, input1)
+    x = maximum(0, -target * (input1 - input2) + margin)
+    return _get_loss(x, reduction, "margin_ranking_loss")
+
+
 def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     r"""
     Performs a 3D max pooling on the input Tensor.
@@ -4325,6 +4385,7 @@ __all__ = [
     'relu6',
     'conv3d',
     'glu',
+    'margin_ranking_loss',
     'multi_margin_loss',
     'multi_label_margin_loss',
     'elu',

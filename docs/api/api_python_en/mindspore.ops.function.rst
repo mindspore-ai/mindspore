@@ -36,6 +36,7 @@ Neural Network
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d
     mindspore.ops.lrn
+    mindspore.ops.margin_ranking_loss
     mindspore.ops.max_pool3d
     mindspore.ops.max_unpool1d
     mindspore.ops.max_unpool2d
