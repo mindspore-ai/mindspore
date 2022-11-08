@@ -1373,6 +1373,35 @@ def xlogy(x, y):
     return xlogy_(x, y)
 
 
+def arccosh(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.acosh`.
+    """
+    return acosh_(x)
+
+
+def arcsin(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.asin`.
+    """
+    return asin_(x)
+
+
+def arctan(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.atan`.
+    """
+    return atan_(x)
+
+
+def arctan2(x, other):
+    r"""
+    For details, please refer to :func:`mindspore.ops.atan2`.
+    """
+    _atan2 = _get_cache_prim(P.Atan2)()
+    return _atan2(x, other)
+
+
 def asin(x):
     r"""
     Computes arcsine of input tensors element-wise.
@@ -6895,6 +6924,10 @@ __all__ = [
     'addcdiv',
     'addcmul',
     'argmin',
+    'arccosh',
+    'arcsin',
+    'arctan',
+    'arctan2',
     'neg_tensor',
     'neg',
     'tensor_lt',

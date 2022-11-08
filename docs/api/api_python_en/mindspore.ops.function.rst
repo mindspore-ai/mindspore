@@ -151,6 +151,10 @@ Element-by-Element Operations
     mindspore.ops.addcdiv
     mindspore.ops.addcmul
     mindspore.ops.addn
+    mindspore.ops.arccosh
+    mindspore.ops.arcsin
+    mindspore.ops.arctan
+    mindspore.ops.arctan2
     mindspore.ops.asin
     mindspore.ops.asinh
     mindspore.ops.atan

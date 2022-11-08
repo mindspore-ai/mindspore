@@ -32,7 +32,11 @@ mindspore.Tensor
     mindspore.Tensor.amin
     mindspore.Tensor.any
     mindspore.Tensor.approximate_equal
+    mindspore.Tensor.arccosh
+    mindspore.Tensor.arcsin
     mindspore.Tensor.arcsinh
+    mindspore.Tensor.arctan
+    mindspore.Tensor.arctan2
     mindspore.Tensor.arctanh
     mindspore.Tensor.argmax
     mindspore.Tensor.argmax_with_value

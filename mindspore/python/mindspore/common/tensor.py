@@ -670,6 +670,34 @@ class Tensor(Tensor_):
         self.const_arg = const_arg
         return self
 
+    def arccosh(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.arccosh`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('acosh')(self)
+
+    def arcsin(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.arcsin`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('asin')(self)
+
+    def arctan(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.arctan`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('atan')(self)
+
+    def arctan2(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.arctan2`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('atan2')(self, other)
+
     def assign_value(self, value):
         """
         Assign another tensor value to this tensor.
