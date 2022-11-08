@@ -350,9 +350,9 @@ REG_BPROP_BUILDER("Maximum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
 REG_BPROP_BUILDER("CumSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  return {
-    ib->Emit("CumSum", {dout, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}}),
-    ib->ZerosLike(axis)};
+  auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
+  return {ib->Emit("CumSum", {dout, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}}),
+          ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("MulNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -905,14 +905,6 @@ REG_BPROP_BUILDER("ReduceSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   auto dout = ib->GetInput(kIndex3);
   auto dx = SumGrad(ib, x, GetAxisValue(axis), dout);
   return {dx, ib->ZerosLike(axis)};
-});
-
-REG_BPROP_BUILDER("CumSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  auto axis = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  return {
-    ib->Emit("CumSum", {dout, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}}),
-    ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
