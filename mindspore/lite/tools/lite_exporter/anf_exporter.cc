@@ -138,12 +138,10 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   QuantParamsVector output_quant_params;
   dst_node->quantType = schema::QuantType_QUANT_NONE;
   auto quant_tensor_info_ptr = primitive->GetAttr("quant_params");
-  QuantParamHolderPtr quant_param_holder = nullptr;
-  if (quant_tensor_info_ptr == nullptr ||
-      (quant_param_holder = quant_tensor_info_ptr->cast<QuantParamHolderPtr>()) == nullptr) {
-    quant_param_holder = std::make_shared<QuantParamHolder>(dst_node->inputIndex.size(), dst_node->outputIndex.size());
+  if (quant_tensor_info_ptr == nullptr) {
+    return RET_OK;
   }
-
+  auto quant_param_holder = quant_tensor_info_ptr->cast<QuantParamHolderPtr>();
   CHECK_NULL_RETURN(quant_param_holder);
   input_quant_params = quant_param_holder->get_input_quant_params();
   output_quant_params = quant_param_holder->get_output_quant_params();
