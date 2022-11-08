@@ -18,6 +18,7 @@ import pytest
 
 import mindspore as ms
 import mindspore.context as context
+from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
