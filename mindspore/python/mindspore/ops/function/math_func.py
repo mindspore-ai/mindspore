@@ -63,7 +63,7 @@ from mindspore.ops.operations.math_ops import (
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore.ops._primitive_cache import _get_cache_prim
-from ..._c_expression import Tensor as Tensor_
+from mindspore._c_expression import Tensor as Tensor_
 
 
 @constexpr
@@ -83,7 +83,7 @@ def get_x_shape(x_shape):
 #####################################
 # Public Operation Functions.
 #####################################
-absolute = P.Abs()
+absolute_ = P.Abs()
 tensor_ceil = P.Ceil()
 tensor_add = P.Add()
 neg_tensor = P.Neg()
@@ -228,7 +228,15 @@ def abs(x):
         >>> print(output)
         [1. 1. 0.]
     """
-    return absolute(x)
+    return absolute_(x)
+
+
+def absolute(x):
+    """
+    Alias for ops.abs().
+    For details, please refer to :func:`mindspore.ops.abs`.
+    """
+    return abs(x)
 
 
 def add(x, y):

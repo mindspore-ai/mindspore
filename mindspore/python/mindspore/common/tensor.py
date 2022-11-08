@@ -1400,6 +1400,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('abs')()(self)
 
+    def absolute(self):
+        """
+        Alias for Tensor.abs().
+        For details, please refer to :func:`mindspore.ops.abs`.
+        """
+        return self.abs()
+
     def ceil(self):
         """
         For details, please refer to :func:`mindspore.ops.ceil`.
