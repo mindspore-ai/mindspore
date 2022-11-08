@@ -1330,20 +1330,12 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
     if (cnode == nullptr) {
       fp << node->fullname_with_scope() << ", type: " << type_name(node)
          << ", shape: " << GetAnfNodeOutputShape(node, 0) << std::endl;
+      fp << std::endl;
       continue;
     }
-    auto inputs = cnode->inputs();
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    Format format = DEFAULT_FORMAT;
-    if (prim && prim->HasAttr(ops::kFormat)) {
-      format = static_cast<Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
-    }
-    std::vector<int> outputs_format;
-    if (prim && prim->HasAttr(kOutputsFormat)) {
-      outputs_format = CastToInt(prim->GetAttr(kOutputsFormat));
-    }
     fp << node->fullname_with_scope() << ", type: " << type_name(node) << ", shape: " << GetAnfNodeOutputShape(node, 0)
-       << ", format: " << format << ", output formats: " << outputs_format << std::endl;
+       << std::endl;
+    auto inputs = cnode->inputs();
     for (auto &input : inputs) {
       if (IsValueNode<Primitive>(input)) {
         continue;
@@ -1351,6 +1343,11 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
       fp << "---input " << input->fullname_with_scope() << ", type: " << type_name(input)
          << ", shape: " << GetAnfNodeOutputShape(input, 0) << std::endl;
     }
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    for (auto &attr : prim->attrs()) {
+      fp << "---attr " << attr.first << ": " << attr.second->ToString() << std::endl;
+    }
+    fp << std::endl;
   }
 }
 

@@ -144,6 +144,7 @@ FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> 
     }
     converter::ConverterParameters converter_parameters;
     converter_parameters.fmk = param->fmk_type;
+    converter_parameters.export_mindir = param->export_mindir;
     converter_parameters.model_file = param->model_file;
     converter_parameters.weight_file = param->weight_file;
     func_graph_base = model_parser_->Parse(converter_parameters);

@@ -52,10 +52,10 @@ constexpr int kTypeIndex = 0;
 constexpr int kElementShapeIndex = 1;
 constexpr int kTensorsNumIndex = 2;
 
-int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converter::ConverterParameters &flag) {
   for (const auto &func_graph : all_func_graphs) {
     MS_ASSERT(func_graph != nullptr);
-    if (!OnnxInputAdjust::Adjust(func_graph)) {
+    if (!OnnxInputAdjust::Adjust(func_graph, flag)) {
       MS_LOG(ERROR) << "onnx adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
@@ -635,12 +635,12 @@ api::FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &f
   }
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(graph, &all_func_graphs);
-  if ((status = Onnx2AnfAdjust(all_func_graphs)) != RET_OK) {
+  if ((status = Onnx2AnfAdjust(all_func_graphs, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Onnx2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeOnnx, false);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeOnnx, false, flag.export_mindir);
   MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "create unify_format return nullptr");
   if (!unify_format->Run(graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";

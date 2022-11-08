@@ -99,6 +99,7 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     auto converter = std::make_shared<mindspore::lite::ConverterImpl>();
     auto param = std::make_shared<ConverterPara>();
     param->fmk_type = converter::kFmkTypeMs;
+    param->export_mindir = kMindIR;
     auto mutable_graph = std::const_pointer_cast<FuncGraph>(graph);
     converter->Convert(param, &meta_graph_t, mutable_graph);
     if (this->IsNeedExtractTensorData(meta_graph_t)) {
