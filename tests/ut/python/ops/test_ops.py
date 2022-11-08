@@ -102,6 +102,7 @@ from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Heaviside
 from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import DivNoNan
+from mindspore.ops.operations.math_ops import Fmin
 from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import Median
@@ -2583,6 +2584,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0], [3.0, 4.0, 5.0]]).astype(np.float32)),
                         Tensor(np.array([[1.0], [2.0], [3.0]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[0.], [1.], [-0.5]]).astype(np.float32))]}),
+    ('Fmin', {
+        'block': Fmin(),
+        'desc_inputs': [Tensor(np.array([[2, 2, 3]]).astype(np.float32)),
+                        Tensor(np.array([[2, 2, 3]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[2, 2, 3]]).astype(np.float32))]}),
     ('Trace', {
         'block': Trace(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]).astype(np.float32))],

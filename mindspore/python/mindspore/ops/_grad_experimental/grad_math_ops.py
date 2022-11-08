@@ -60,6 +60,7 @@ from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Cholesky
+from mindspore.ops.operations.math_ops import Fmin
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import InplaceIndexAdd
 from mindspore.ops.operations.math_ops import AddV2
@@ -1323,6 +1324,54 @@ def get_bprop_trace(self):
         else:
             dx = input_grad(dout, cast(to_array(shape), mstype.int64))
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Fmin)
+def get_bprop_fmin(self):
+    """Grad definition for 'Fmin' operation"""
+    shape_ = P.Shape()
+    masked_fill_op = P.MaskedFill()
+    logical_or_op = P.LogicalOr()
+    logical_not_op = P.LogicalNot()
+    logical_and_op = P.LogicalAnd()
+    mul_op = P.Mul()
+    is_nan_op = P.IsNan()
+    reshape_ = P.Reshape()
+
+    def bprop(x1, x2, out, dout):
+        x1 = F.cast(x1, mstype.float32)
+        x2 = F.cast(x2, mstype.float32)
+        dout = F.cast(dout, mstype.float32)
+        b1 = logical_or_op((x1 <= x2), is_nan_op(x2))
+        b2 = logical_or_op((x2 < x1), logical_and_op(is_nan_op(x1), logical_not_op(is_nan_op(x2))))
+        rx1 = masked_fill_op(x1, b1, 1.)
+        rx1 = masked_fill_op(rx1, logical_not_op(b1), 0.)
+        rx2 = masked_fill_op(x2, b2, 1.)
+        rx2 = masked_fill_op(rx2, logical_not_op(b2), 0.)
+        rrx1 = mul_op(rx1, dout)
+        rrx2 = mul_op(rx2, dout)
+        shape_of_x1 = shape_(x1)
+        shape_of_x2 = shape_(x2)
+        x1_dim = len(shape_of_x1)
+        x2_dim = len(shape_of_x2)
+        if x1_dim == 0 and x2_dim != 0:
+            sum_r1 = rrx1.sum()
+            sum_r2 = rrx2
+        elif x1_dim == 0 and x2_dim == 0:
+            sum_r1 = rrx1.sum()
+            sum_r2 = rrx2.sum()
+        elif x1_dim != 0 and x2_dim == 0:
+            sum_r2 = rrx2.sum()
+            sum_r1 = rrx1
+        else:
+            rx, ry = DynamicBroadcastGradientArgs()(shape_of_x1, shape_of_x2)
+            sum_r1 = sum_grad_reduce_axis(rrx1, rx)
+            sum_r2 = sum_grad_reduce_axis(rrx2, ry)
+        brrx1 = reshape_(sum_r1, shape_of_x1)
+        brrx2 = reshape_(sum_r2, shape_of_x2)
+        return brrx1, brrx2
 
     return bprop
 

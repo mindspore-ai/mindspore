@@ -180,6 +180,7 @@ constexpr auto kEqual = "Equal";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
 constexpr auto kGLU = "GLU";
+constexpr auto kFmin = "Fmin";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kRange = "Range";
@@ -322,6 +323,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kTensorScatterElements, "ScatterElements"},
   {kACos, "Acos"},
   {kHSigmoid, "HardSigmoid"},
+  {kFmin, "Minimum"},
   {kHSigmoidGrad, "HardSigmoidGrad"},
   {kArgmax, "ArgMax"},
   {kArgmin, "ArgMin"},

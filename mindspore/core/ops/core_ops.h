@@ -1384,6 +1384,7 @@ GVAR_DEF(PrimitivePtr, kPrimCholeskySolve, std::make_shared<Primitive>("Cholesky
 GVAR_DEF(PrimitivePtr, kPrimKLDivLossGrad, std::make_shared<Primitive>("KLDivLossGrad"));
 GVAR_DEF(PrimitivePtr, kPrimFFTWithSize, std::make_shared<Primitive>(kFFTWithSize));
 GVAR_DEF(PrimitivePtr, kPrimOrgqr, std::make_shared<Primitive>("Orgqr"));
+GVAR_DEF(PrimitivePtr, kPrimFmin, std::make_shared<Primitive>("Fmin"));
 GVAR_DEF(PrimitivePtr, kPrimTriuIndices, std::make_shared<Primitive>("TriuIndices"));
 GVAR_DEF(PrimitivePtr, kPrimTrilIndices, std::make_shared<Primitive>("TrilIndices"));
 GVAR_DEF(PrimitivePtr, kPrimEig, std::make_shared<Primitive>("Eig"));
