@@ -5,8 +5,6 @@ mindspore.data_sink
 
     对输入的函数封装生成一个新的函数。
 
-    该生成的函数会以数据下沉模式执行。
-
     参数：
         - **fn** (Function) - 将与数据集一起运行的函数。
         - **dataset** (Dataset) - 训练数据集迭代器。数据集可以由数据集生成器API在 :class:`mindspore.dataset` 中生成，例如 :class:`mindspore.dataset.ImageFolderDataset` 。
