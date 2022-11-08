@@ -32,18 +32,22 @@ abstract::ShapePtr MatrixLogarithmInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto build_shape = input_args[0]->BuildShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_rank = SizeToLong(x_shape.size());
   const constexpr int64_t kNumber1 = 1;
   const constexpr int64_t kNumber2 = 2;
-  CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
-  auto column_size = x_shape[x_rank - kNumber1];
-  auto row_size = x_shape[x_rank - kNumber2];
-  if (column_size != row_size) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the last two dimensions of input 'x' must be equal"
-                             << ", but got x.shape = " << build_shape->ToString() << ".";
+  if (!IsDynamicRank(x_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kGreaterEqual, kNumber2, prim_name);
   }
-  std::vector<int64_t> out_shape(x_shape.begin(), x_shape.end());
-  return std::make_shared<abstract::Shape>(out_shape);
+  if (!IsDynamic(x_shape)) {
+    const int64_t x_rank = x_shape.size();
+    auto column_size = x_shape[x_rank - kNumber1];
+    auto row_size = x_shape[x_rank - kNumber2];
+    if (column_size != row_size) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the last two dimensions of input 'x' must be equal"
+                               << ", but got x.shape = " << build_shape->ToString() << ".";
+    }
+  }
+
+  return std::make_shared<abstract::Shape>(x_shape);
 }
 
 TypePtr MatrixLogarithmInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

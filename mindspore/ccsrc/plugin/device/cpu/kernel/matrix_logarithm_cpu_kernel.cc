@@ -34,18 +34,31 @@ static constexpr int kNumber2 = 2;
 constexpr size_t kParallelDataNums = 2 * 1024;
 constexpr int64_t kParallelDataNumMid = 16 * 1024;
 }  // namespace
+bool MatrixLogarithmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
 
-void MatrixLogarithmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputSize, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputSize, kernel_name_);
-  auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto shape_y = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+int MatrixLogarithmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto shape_x = inputs.at(kIndex0)->GetShapeVector();
+  auto shape_y = outputs.at(kIndex0)->GetShapeVector();
   size_t shape_size_x = shape_x.size();
   if (shape_size_x < kNumber2) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input 'x' must be at least rank 2.";
@@ -59,39 +72,39 @@ void MatrixLogarithmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                         << " must be equal.";
     }
   }
+  shape_x_ = shape_x;
+  return KRET_OK;
 }
 
-bool MatrixLogarithmCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> & /* workspace */,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeComplex64) {
-    LaunchMatrixLogarithm<std::complex<float>>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeComplex128) {
-    LaunchMatrixLogarithm<std::complex<double>>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For MatrixLogarithm, data type " << TypeIdLabel(dtype_) << " not support.";
-  }
-  return true;
+std::vector<std::pair<KernelAttr, MatrixLogarithmCpuKernelMod::MatrixLogarithmLaunchFunc>>
+  MatrixLogarithmCpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm<std::complex<float>>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm<std::complex<double>>}};
+
+std::vector<KernelAttr> MatrixLogarithmCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MatrixLogarithmCpuKernelMod::MatrixLogarithmLaunchFunc> &pair) {
+                         return pair.first;
+                       });
+  return support_list;
 }
 
 template <typename T>
 void MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm(const std::vector<AddressPtr> &inputs,
                                                         const std::vector<AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For MatrixLogarithm, node_wpt_ is expired.";
-  }
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
-  auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
-  size_t shape_size = shape_x.size();
-  auto m = shape_x[shape_size - 1];
+  size_t shape_size = shape_x_.size();
+  auto m = shape_x_[shape_size - 1];
   size_t size_mm = m * m;
   if (size_mm > 0) {
     size_t input_num = 1;
-    for (size_t i = 0; i < shape_x.size(); i++) {
-      input_num *= shape_x[i];
+    for (size_t i = 0; i < shape_x_.size(); i++) {
+      input_num *= shape_x_[i];
     }
     size_t matrix_num = input_num / size_mm;
     size_t data_size = input_num * sizeof(T);

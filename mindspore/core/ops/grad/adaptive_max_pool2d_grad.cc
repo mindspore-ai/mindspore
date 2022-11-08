@@ -30,39 +30,33 @@ namespace ops {
 namespace {
 constexpr size_t inputArgLen = 3;
 constexpr int64_t kDynamicRankVal = -2;
-constexpr size_t kDynamicRankL = 1;
 
 abstract::ShapePtr AdaptiveMaxPool2DGradInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  if (input_args.size() != inputArgLen) {
-    MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2DGrad], the num of input args should be 3, but got "
-                             << input_args.size();
-  }
   auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
 
+  std::vector<ShapeVector> all_shapes = {y_grad_shape, x_shape, argmax_shape};
+  auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
+  if (is_dynamic_rank) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{kDynamicRankVal});
+  }
+
   const int64_t y_grad_dims = SizeToLong(y_grad_shape.size());
   const int64_t x_dims = SizeToLong(x_shape.size());
   const int64_t argmax_dims = SizeToLong(argmax_shape.size());
-
   (void)CheckAndConvertUtils::CheckInteger("y_grad_dims", y_grad_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
   (void)CheckAndConvertUtils::CheckInteger("argmax_dims", argmax_dims, kEqual, x_dims, kNameAdaptiveMaxPool2DGrad);
-  if (y_grad_shape.size() == kDynamicRankL && y_grad_shape[0] == kDynamicRankVal) {
-    ShapeVector out_shape = {kDynamicRankVal};
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
 
   CheckAndConvertUtils::CheckInRange("y_grad_dim", y_grad_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
   CheckAndConvertUtils::CheckInRange("x_dim", x_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
   CheckAndConvertUtils::CheckInRange("argmax_dim", argmax_dims, kIncludeBoth, {3, 4}, kNameAdaptiveMaxPool2DGrad);
 
-  if (y_grad_shape != argmax_shape) {
+  auto is_dynamic = IsDynamic(y_grad_shape) || IsDynamic(argmax_shape);
+  if (!is_dynamic && y_grad_shape != argmax_shape) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the shape of 'y_grad' should be consistent with the shape of 'argmax'.";
   }
@@ -72,13 +66,7 @@ abstract::ShapePtr AdaptiveMaxPool2DGradInferShape(const PrimitivePtr &primitive
 
 TypePtr AdaptiveMaxPool2DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  if (input_args.size() != inputArgLen) {
-    MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2DGrad], the num of input args should be 3, but got "
-                             << input_args.size();
-  }
+  auto op_name = primitive->name();
   auto y_grad_dtype = input_args[0]->BuildType();
   auto argmax_dtype = input_args[2]->BuildType();
 
@@ -89,7 +77,7 @@ TypePtr AdaptiveMaxPool2DGradInferType(const PrimitivePtr &primitive, const std:
   (void)args.emplace("y_grad", input_args[0]->BuildType());
   (void)args.emplace("x", input_args[1]->BuildType());
 
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(args, floating_data_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(args, floating_data_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax_dtype", argmax_dtype, argmax_valid_types,
                                                    kNameAdaptiveMaxPool2DGrad);
   return y_grad_dtype;
@@ -99,6 +87,9 @@ TypePtr AdaptiveMaxPool2DGradInferType(const PrimitivePtr &primitive, const std:
 AbstractBasePtr AdaptiveMaxPool2DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   constexpr int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = AdaptiveMaxPool2DGradInferType(primitive, input_args);
@@ -106,7 +97,7 @@ AbstractBasePtr AdaptiveMaxPool2DGradInfer(const abstract::AnalysisEnginePtr &, 
   return abstract::MakeAbstract(shapes, types);
 }
 
-MIND_API_OPERATOR_NAME_IMPL(AdaptiveMaxPool2DGrad, kNameAdaptiveMaxPool2DGrad, BaseOperator);
+MIND_API_OPERATOR_IMPL(AdaptiveMaxPool2DGrad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveMaxPool2DGrad, prim::kPrimAdaptiveMaxPool2DGrad, AdaptiveMaxPool2DGradInfer,
                              nullptr, true);
 }  // namespace ops
