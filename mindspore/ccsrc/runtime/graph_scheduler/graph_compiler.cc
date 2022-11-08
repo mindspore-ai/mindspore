@@ -269,12 +269,20 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
     return false;
   }
 
+// In ps cache mode, the whole graph sink has set multi_graph_sink to false, the zero copy cannot be enabled.
+#if defined(__linux__) && defined(WITH_BACKEND)
+  if (ps::PSContext::instance()->cache_enable()) {
+    return false;
+  }
+#endif
+
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
   bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel ||
                           parallel_mode == parallel::kHybridParallel || parallel_mode == parallel::kDataParallel;
-  // If there are auto parallel in graph, the flag should not be set.
+  // If there are auto parallel in graph, the flag should not be set. In parallel, the continue memory in communication
+  // ops not support addr change.
   if (is_parallel_mode) {
     return false;
   }

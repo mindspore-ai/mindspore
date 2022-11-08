@@ -92,7 +92,8 @@ bool NeedSkipZeroCopy(const CNodePtr &node) {
     return true;
   }
   auto kernel_type = AnfAlgo::GetKernelType(node);
-  if (kernel_type != KernelType::TBE_KERNEL && kernel_type != KernelType::AICPU_KERNEL) {
+  if (kernel_type != KernelType::TBE_KERNEL && kernel_type != KernelType::AICPU_KERNEL &&
+      kernel_type != KernelType::AKG_KERNEL) {
     MS_LOG(INFO) << "Skip generate ZeroCopyTask for " << node->fullname_with_scope();
     return true;
   }
