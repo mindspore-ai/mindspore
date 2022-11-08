@@ -342,21 +342,26 @@ std::vector<KernelWithIndex> GetInputNodeWithIndex(const CNodePtr &node, const T
   auto input_num = common::AnfAlgo::GetInputTensorNum(node);
   if (common::AnfAlgo::GetCNodeName(node) == kAtomicAddrCleanOpName) {
     // For atomic addr clean op, the args in task is not the input node of kernel, we should get the real input index
-    // from the input node.
+    // from the input node. The output and workspace addr should be reset, and the output addr should be collect.
+    size_t workspace_size = 0;
     for (size_t i = 0; i < input_num; ++i) {
       const auto &input = node->input(i + 1);
       MS_EXCEPTION_IF_NULL(input);
-      if (input->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, input->cast<CNodePtr>())) {
-        auto clean_output_indexs = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(input, kAttrAtomicOutputIndexs);
-        for (auto index : clean_output_indexs) {
-          MS_LOG(DEBUG) << "atomic addr clean index:" << index << " for node:" << input->fullname_with_scope();
-          input_node_with_indexs.emplace_back(input, index);
+      if (input->isa<CNode>()) {
+        if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, input->cast<CNodePtr>())) {
+          auto clean_output_indexs = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(input, kAttrAtomicOutputIndexs);
+          for (auto index : clean_output_indexs) {
+            MS_LOG(DEBUG) << "atomic addr clean index:" << index << " for node:" << input->fullname_with_scope();
+            input_node_with_indexs.emplace_back(input, index);
+          }
+        } else if (common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, input->cast<CNodePtr>())) {
+          workspace_size += common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(input, kAttrAtomicWorkspaceIndexs).size();
         }
       }
     }
-    if (input_node_with_indexs.size() != (task->ArgsSize() / sizeof(void *))) {
-      MS_LOG(ERROR) << "Invalid input size:" << input_node_with_indexs.size()
-                    << " task size:" << (task->ArgsSize() / sizeof(void *)) << " for node:" << node->DebugString();
+    if (input_node_with_indexs.size() + workspace_size != (task->ArgsSize() / sizeof(void *))) {
+      MS_LOG(WARNING) << "Invalid input size:" << input_node_with_indexs.size()
+                      << " task size:" << (task->ArgsSize() / sizeof(void *)) << " for node:" << node->DebugString();
     }
   } else {
     for (size_t i = 0; i < input_num; ++i) {
