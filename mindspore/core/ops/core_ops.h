@@ -148,6 +148,7 @@ constexpr auto kTrace = "Trace";
 constexpr auto kTraceGrad = "TraceGrad";
 constexpr auto kMatrixLogarithm = "MatrixLogarithm";
 constexpr auto kMatrixTriangularSolve = "MatrixTriangularSolve";
+constexpr auto kSelfAdjointEig = "SelfAdjointEig";
 
 // Arrays
 constexpr auto kLeftShift = "LeftShift";
@@ -1312,6 +1313,7 @@ GVAR_DEF(PrimitivePtr, kPrimEigh, std::make_shared<Primitive>("Eigh"));
 GVAR_DEF(PrimitivePtr, kPrimQr, std::make_shared<Primitive>("Qr"));
 GVAR_DEF(PrimitivePtr, kPrimMatrixLogarithm, std::make_shared<Primitive>(kMatrixLogarithm));
 GVAR_DEF(PrimitivePtr, kPrimMatrixTriangularSolve, std::make_shared<Primitive>(kMatrixTriangularSolve));
+GVAR_DEF(PrimitivePtr, kPrimSelfAdjointEig, std::make_shared<Primitive>("SelfAdjointEig"));
 
 // linalg
 GVAR_DEF(PrimitivePtr, kPrimGeqrf, std::make_shared<Primitive>("Geqrf"));
