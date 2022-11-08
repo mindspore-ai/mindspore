@@ -38,32 +38,9 @@ bool ScaleAndTranslateCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_name_ = kernel_ptr->name();
-  input0_shape_ = inputs[kIndex0]->GetShapeVector();
-  input1_shape_ = inputs[kIndex1]->GetShapeVector();
-  input2_shape_ = inputs[kIndex2]->GetShapeVector();
-  input3_shape_ = inputs[kIndex3]->GetShapeVector();
   input0_dtype_ = inputs[kIndex0]->GetDtype();
   kernel_type_ = kernel_ptr->get_kernel_type();
   antialias_ = kernel_ptr->get_antialias();
-  size_t input0_dim = 4;
-  std::vector<int64_t> valid_shape = {2};
-  // dims check
-  if (input0_shape_.size() != input0_dim) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input[images]'s rank must be 4, but got "
-                      << input0_shape_.size() << ".";
-  }
-  if (input1_shape_ != valid_shape) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input[size]'s shape must be (2,), but got " << input1_shape_
-                      << ".";
-  }
-  if (input2_shape_ != valid_shape) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input[scale]'s shape must be (2,), but got " << input1_shape_
-                      << ".";
-  }
-  if (input3_shape_ != valid_shape) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input[translation]'s shape must be (2,), but got "
-                      << input1_shape_ << ".";
-  }
   switch (input0_dtype_) {
     case kNumberTypeInt8:
       kernel_func_ = &ScaleAndTranslateCpuKernelMod::LaunchKernel<int8_t>;
@@ -102,27 +79,8 @@ bool ScaleAndTranslateGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
     return false;
   }
   kernel_name_ = kernel_ptr->name();
-  input1_shape_ = inputs[kIndex1]->GetShapeVector();
-  input2_shape_ = inputs[kIndex2]->GetShapeVector();
-  input3_shape_ = inputs[kIndex3]->GetShapeVector();
-  output_shape_ = outputs[kIndex0]->GetShapeVector();
   kernel_type_ = kernel_ptr->get_kernel_type();
   antialias_ = kernel_ptr->get_antialias();
-  size_t dim = 4;
-  std::vector<int64_t> valid_shape = {2};
-  // dims check
-  if (input1_shape_.size() != dim) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input[original_image]'s rank must be 4, but got "
-                      << input1_shape_.size() << ".";
-  }
-  if (input2_shape_ != valid_shape) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input[scale]'s shape must be (2,), but got " << input1_shape_
-                      << ".";
-  }
-  if (input3_shape_ != valid_shape) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input[translation]'s shape must be (2,), but got "
-                      << input1_shape_ << ".";
-  }
   kernel_func_ = &ScaleAndTranslateGradCpuKernelMod::LaunchKernel<float>;
   return true;
 }
@@ -527,10 +485,13 @@ int ScaleAndTranslateCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &others) {
-  int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, others); ret != KRET_OK) {
     return ret;
   }
+  input0_shape_ = inputs[kIndex0]->GetShapeVector();
+  input1_shape_ = inputs[kIndex1]->GetShapeVector();
+  input2_shape_ = inputs[kIndex2]->GetShapeVector();
+  input3_shape_ = inputs[kIndex3]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   return 0;
 }
@@ -539,11 +500,14 @@ int ScaleAndTranslateGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs,
                                               const std::map<uint32_t, tensor::TensorPtr> &others) {
-  int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, others); ret != KRET_OK) {
     return ret;
   }
   input0_shape_ = inputs[kIndex0]->GetShapeVector();
+  input1_shape_ = inputs[kIndex1]->GetShapeVector();
+  input2_shape_ = inputs[kIndex2]->GetShapeVector();
+  input3_shape_ = inputs[kIndex3]->GetShapeVector();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
   return 0;
 }
 

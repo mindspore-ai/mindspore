@@ -36,6 +36,12 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto translation_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(images_shape) || IsDynamicRank(size_shape) || IsDynamicRank(scale_shape) ||
+      IsDynamicRank(translation_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   const int64_t kShapeSize = 1;
   const int64_t kElementsNumber = 2;
   const int64_t kImagesShapeSize = 4;
@@ -102,9 +108,7 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
     (void)out_shape.emplace_back(-1);
     (void)out_shape.emplace_back(-1);
     (void)out_shape.emplace_back(images_shape[kInputIndex3]);
-    ShapeVector shape_min = {images_shape[kInputIndex0], 1, 1, images_shape[kInputIndex3]};
-    ShapeVector shape_max = {images_shape[kInputIndex0], 1, 1, images_shape[kInputIndex3]};
-    return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 }
 
