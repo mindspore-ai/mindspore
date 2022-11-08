@@ -3,7 +3,7 @@ mindspore.dataset.Dataset.batch
 
 .. py:method:: mindspore.dataset.Dataset.batch(batch_size, drop_remainder=False, num_parallel_workers=None, **kwargs)
 
-    将数据集中连续 `batch_size` 条数据合并为一个批处理数据，其中batch成一个Tensor前可选择使用 `per_batch_map` 对样本进行处理。
+    将数据集中连续 `batch_size` 条数据组合为一个批数据，并可通过可选参数 `per_batch_map` 指定组合前要进行的预处理操作。
 
     `batch` 操作要求每列中的数据具有相同的shape。
 

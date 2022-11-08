@@ -235,6 +235,9 @@ Status DataQueueOp::SendDataToAscend() {
   TensorRow curr_row;
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
   first_fetch_flag_ = true;
+
+  MS_LOG(INFO) << "Begin to send data to device, channel name: " << channel_name_;
+
   while (!curr_row.eof() && !is_break_loop) {
     while (!curr_row.eoe() && !is_break_loop) {
       RETURN_IF_NOT_OK(FilterMetadata(&curr_row));
@@ -263,6 +266,7 @@ Status DataQueueOp::SendDataToAscend() {
       batch_record_start = ProfilingTime::GetCurMilliSecond();
 #endif
       send_batch++;
+      MS_LOG(INFO) << "Have sent " << send_batch << " batch(es) to device, channel name: " << channel_name_;
 #ifdef ENABLE_DUMP_IR
       RETURN_IF_NOT_OK(md_channel_info_->RecordBatchQueue(ChildOpConnectorSize()));
       RETURN_IF_NOT_OK(md_channel_info_->RecordPreprocessBatch(send_batch));
@@ -543,6 +547,7 @@ Status DataQueueOp::PushDataToGPU() {
                         gpu_connector_->capacity(), gpu_connector_->size());
 #endif
       send_batch++;
+      MS_LOG(INFO) << "Have sent " << send_batch << " batch(es) to device, channel name: " << channel_name_;
 #ifdef ENABLE_DUMP_IR
       md_channel_info_->RecordBatchQueue(gpu_connector_->size());
       md_channel_info_->RecordPreprocessBatch(send_batch);
@@ -638,6 +643,9 @@ Status DataQueueOp::SendDataToGPU() {
   first_fetch_flag_ = true;
   int64_t num_buf = 0;
   bool is_break_loop = false;
+
+  MS_LOG(INFO) << "Begin to send data to device, channel name: " << channel_name_;
+
   while (!current_row.eof() && !is_break_loop && !device::DataQueueMgr::GetInstance().IsClosed()) {
     while (!current_row.eoe() && !is_break_loop && !device::DataQueueMgr::GetInstance().IsClosed()) {
       RETURN_IF_NOT_OK(FilterMetadata(&current_row));
