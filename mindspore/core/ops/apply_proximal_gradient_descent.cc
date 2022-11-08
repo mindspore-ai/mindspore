@@ -34,38 +34,43 @@ abstract::ShapePtr ApplyProximalGradientDescentInferShape(const PrimitivePtr &pr
                                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
+  auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto delta_shape = input_args[kInputIndex4]->BuildShape();
-
+  auto delta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  // dynamic rank
+  if (IsDynamicRank(var_shape) || IsDynamicRank(delta_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
   size_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
   }
-
   (void)CheckAndConvertUtils::CheckInteger("alpha_shape size", SizeToLong(alpha_shape.size()), kLessEqual, batch_rank,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("l1_shape size", SizeToLong(l1_shape.size()), kLessEqual, batch_rank,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("l2_shape size", SizeToLong(l2_shape.size()), kLessEqual, batch_rank,
                                            prim_name);
-
-  // var and delta must have the same shape
-  auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
-  auto delta_shape_ptr = delta_shape->cast<abstract::ShapePtr>();
-  if (!var_shape_ptr->IsDynamic() && !delta_shape_ptr->IsDynamic()) {
-    if (*var_shape != *delta_shape) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', evaluator arg 'delta' must have the same shape as 'var'. But got 'delta' shape: "
-                               << delta_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
-    }
+  ShapeVector output_vec;
+  for (size_t i = 0; i < var_shape.size(); i++) {
+    output_vec.push_back(var_shape[i]);
   }
-  auto shape_element = var_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+  abstract::ShapePtr output_shape_ptr = std::make_shared<abstract::Shape>(output_vec);
+  // dynamic shape
+  if (IsDynamic(var_shape) || IsDynamic(delta_shape)) {
+    return output_shape_ptr;
+  }
+  // var and delta must have the same shape
+  if (var_shape != delta_shape) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', evaluator arg 'delta' must have the same shape as 'var'. But got 'delta' shape: "
+                             << delta_shape << ", 'var' shape: " << var_shape << ".";
+  }
+  return output_shape_ptr;
 }
 
 TypePtr ApplyProximalGradientDescentInferType(const PrimitivePtr &prim,
