@@ -22,6 +22,7 @@
 #include <memory>
 #include "mindspore/lite/include/errorcode.h"
 #include "ops/conv2d.h"
+#include "ops/batch_norm.h"
 #include "ops/squeeze.h"
 #include "ops/unsqueeze.h"
 #include "ops/primitive_c.h"
@@ -101,6 +102,22 @@ lite::STATUS Conv1DInOutAdjust::ExpandFilterShape(const AnfNodePtr &weight_node,
   return RET_OK;
 }
 
+CNodePtr Conv1DInOutAdjust::getOutputNode(const FuncGraphPtr &func_graph, const CNodePtr input_node,
+                                          const PrimitivePtr &primitive_type) {
+  MS_ASSERT(func_graph != nullptr);
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  auto node_users = manager->node_users()[input_node];
+  if (node_users.size() == 1) {
+    for (auto &node_user : node_users) {
+      if (opt::CheckPrimitiveType(node_user.first, primitive_type)) {
+        return node_user.first->cast<CNodePtr>();
+      }
+    }
+  }
+  return nullptr;
+}
+
 bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
@@ -133,16 +150,26 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
       default:
         continue;
     }
-
     auto input_node = cnode->input(1);
     auto unsqueeze = NewUnsqueezeOpNode(func_graph, input_node, axis, cnode->fullname_with_scope() + "_unsqueeze");
     MS_CHECK_TRUE_MSG(unsqueeze != nullptr, false, "New unsqueeze node failed.");
     unsqueeze->set_abstract(input_node->abstract()->Clone());
     manager->SetEdge(cnode, SECOND_INPUT, unsqueeze);
-    auto squeeze = NewSqueezeOpNode(func_graph, cnode, axis);
+    CNodePtr squeeze_node = cnode;
+    auto batchnorm_node = getOutputNode(func_graph, cnode, prim::kPrimFusedBatchNorm);
+    auto activate_node = getOutputNode(func_graph, cnode, prim::kPrimActivation);
+    if (batchnorm_node != nullptr) {
+      squeeze_node = batchnorm_node;
+    } else if (activate_node != nullptr) {
+      auto batch_norm = getOutputNode(func_graph, activate_node, prim::kPrimFusedBatchNorm);
+      if (batch_norm != nullptr) {
+        squeeze_node = batch_norm;
+      }
+    }
+    auto squeeze = NewSqueezeOpNode(func_graph, squeeze_node, axis);
     MS_CHECK_TRUE_MSG(squeeze != nullptr, false, "New squeeze node failed.");
-    squeeze->set_abstract(cnode->abstract()->Clone());
-    (void)manager->Replace(cnode, squeeze);
+    squeeze->set_abstract(squeeze_node->abstract()->Clone());
+    (void)manager->Replace(squeeze_node, squeeze);
 
     MS_ASSERT(cnode->inputs().size() > kConvWeightIndex);
     auto weight_node = cnode->input(kConvWeightIndex);
