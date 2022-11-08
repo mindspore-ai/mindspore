@@ -28,7 +28,7 @@
 #include "mindapi/base/types.h"
 
 namespace mindspore::opt {
-const BaseRef ResizeFusion::DefinePattern() const {
+const BaseRef ResizeFusion1::DefinePattern() const {
   input_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(input_ != nullptr, false);
 
@@ -91,15 +91,66 @@ const BaseRef ResizeFusion::DefinePattern() const {
 
   return resize_ref;
 }
-CNodePtr ResizeFusion::GetAddCnode(const AnfNodePtr &node) const {
-  MS_ASSERT(node != nullptr);
-  if (!utils::isa<CNode>(node)) {
-    return nullptr;
-  }
-  return node->cast<CNodePtr>();
+
+const BaseRef ResizeFusion2::DefinePattern() const {
+  MS_LOG(WARNING) << "DefinePattern begin";
+  input_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_ != nullptr, false);
+
+  auto is_transpose = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_transpose != nullptr, {});
+  VectorRef transpose_ref = VectorRef({is_transpose, input_});
+
+  auto is_shape = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimShape>);
+  MS_CHECK_TRUE_RET(is_shape != nullptr, {});
+  VectorRef shape_ref = VectorRef({is_shape, transpose_ref});
+
+  auto is_slice = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimStridedSlice>);
+  MS_CHECK_TRUE_RET(is_slice != nullptr, {});
+  auto is_seq_var = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
+  VectorRef slice_ref = VectorRef({is_slice, shape_ref, is_seq_var});
+
+  auto is_cast_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimCast>);
+  MS_CHECK_TRUE_RET(is_cast_1 != nullptr, {});
+  auto var1 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(var1 != nullptr, false);
+  VectorRef shape_cast_ref_1 = VectorRef({is_cast_1, slice_ref, var1});
+
+  auto input2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input2 != nullptr, false);
+
+  auto is_cast_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimCast>);
+  MS_CHECK_TRUE_RET(is_cast_2 != nullptr, {});
+  auto var2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(var2 != nullptr, false);
+  VectorRef shape_cast_ref_2 = VectorRef({is_cast_2, input2, var2});
+
+  auto is_div = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimDivFusion>);
+  MS_CHECK_TRUE_RET(is_div != nullptr, {});
+  VectorRef div_ref = VectorRef({is_div, shape_cast_ref_2, shape_cast_ref_1});
+
+  auto is_concat = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimConcat>);
+  MS_CHECK_TRUE_RET(is_concat != nullptr, {});
+  auto var3 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(var3 != nullptr, false);
+  VectorRef concat_ref = VectorRef({is_concat, var3, div_ref});
+
+  auto is_gather = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimGather>);
+  MS_CHECK_TRUE_RET(is_gather != nullptr, {});
+  auto is_seq_var1 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var1 != nullptr, false);
+  VectorRef gather_ref = VectorRef({is_gather, concat_ref, is_seq_var1});
+
+  auto is_resize = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimResize>);
+  MS_CHECK_TRUE_RET(is_resize != nullptr, {});
+  VectorRef resize_ref = VectorRef({is_resize, input_, gather_ref});
+  MS_LOG(WARNING) << "DefinePattern end";
+
+  return resize_ref;
 }
 
-int ResizeFusion::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
+int ResizeFusion1::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
   MS_ASSERT(node != nullptr);
   auto resize_cnode = node->cast<CNodePtr>();
   MS_ASSERT(resize_cnode != nullptr);
@@ -156,6 +207,33 @@ int ResizeFusion::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &nod
   MS_ASSERT(manager != nullptr);
   manager->SetEdge(resize_cnode, kInputIndexTwo, shape_tensor);
 
+  return lite::RET_OK;
+}
+
+int ResizeFusion2::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
+  MS_LOG(WARNING) << "DoFuison begin";
+  MS_ASSERT(node != nullptr);
+  auto resize_cnode = node->cast<CNodePtr>();
+  MS_ASSERT(resize_cnode != nullptr);
+  auto gather_cnode = resize_cnode->input(kInputIndexTwo)->cast<CNodePtr>();
+  MS_ASSERT(gather_cnode != nullptr);
+
+  auto concat_cnode = gather_cnode->input(1)->cast<CNodePtr>();
+  MS_ASSERT(concat_cnode != nullptr);
+
+  auto div_cnode = concat_cnode->input(kInputIndexTwo)->cast<CNodePtr>();
+  MS_ASSERT(div_cnode != nullptr);
+
+  auto cast_cnode = div_cnode->input(1)->cast<CNodePtr>();
+  MS_ASSERT(cast_cnode != nullptr);
+
+  auto resize_input = cast_cnode->input(1);
+
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  manager->SetEdge(resize_cnode, kInputIndexTwo, resize_input);
+
+  MS_LOG(WARNING) << "DoFuison end";
   return lite::RET_OK;
 }
 
