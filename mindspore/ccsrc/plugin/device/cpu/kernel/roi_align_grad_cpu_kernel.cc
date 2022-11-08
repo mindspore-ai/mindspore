@@ -132,11 +132,10 @@ bool ROIAlignGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   //  Get the number of the input args
-  constexpr size_t kInputSize = 2;
-  constexpr size_t kInputSizeWithShape = 3;
+  constexpr size_t kInputSize = 3;
   constexpr size_t kOutputSize = 1;
-  if (inputs.size() != kInputSize && inputs.size() != kInputSizeWithShape) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << inputs.size()
+  if (inputs.size() != kInputSize) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << ".";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
@@ -150,11 +149,6 @@ bool ROIAlignGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   spatial_scale_ = op->get_spatial_scale();
   sample_num_ = LongToInt(op->get_sample_num());
   roi_end_mode_ = 1;
-  if (inputs.size() == kInputSizeWithShape) {
-    is_xdiff_shape_dyn_ = true;
-    return true;
-  }
-  xdiff_shape_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr("xdiff_shape"));
   return true;
 }
 
@@ -164,12 +158,13 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  if (is_xdiff_shape_dyn_) {
-    get_xdiff_shape_value_ = TryGetIntValue(inputs, kIndex2, kernel_name_, &xdiff_shape_, false);
-    if (!get_xdiff_shape_value_) {
-      return KRET_OK;
-    }
+
+  std::vector<int64_t> xdiff_shape;
+  if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &xdiff_shape, false)) {
+    MS_LOG(ERROR) << "For " << kernel_name_ << " can't get filter_sizes input!";
+    return KRET_RESIZE_FAILED;
   }
+
   //  Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
@@ -185,9 +180,9 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                   << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (xdiff_shape_.size() > kDiffDims) {
+  if (xdiff_shape.size() > kDiffDims) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of xdiff_shape cannot be greater than 4, but got "
-                  << xdiff_shape_.size() << ".";
+                  << xdiff_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
   // Calculate the sizes of inputs and output
@@ -199,11 +194,11 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   roi_rows_ = LongToInt(rois_shape[kIndex0]);
   roi_cols_ = LongToInt(rois_shape[kIndex1]);
 
-  output_size_ = std::accumulate(xdiff_shape_.begin(), xdiff_shape_.end(), 1, std::multiplies{}) * dy_type_size;
-  batch_ = LongToInt(xdiff_shape_[kIndex0]);
-  channels_ = LongToInt(xdiff_shape_[kIndex1]);
-  height_ = LongToInt(xdiff_shape_[kIndex2]);
-  width_ = LongToInt(xdiff_shape_[kIndex3]);
+  output_size_ = std::accumulate(xdiff_shape.begin(), xdiff_shape.end(), 1, std::multiplies{}) * dy_type_size;
+  batch_ = LongToInt(xdiff_shape[kIndex0]);
+  channels_ = LongToInt(xdiff_shape[kIndex1]);
+  height_ = LongToInt(xdiff_shape[kIndex2]);
+  width_ = LongToInt(xdiff_shape[kIndex3]);
 
   ResetResource();
   InitSizeLists();

@@ -83,8 +83,6 @@ class ROIAlignGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHe
   int height_{0};
   int width_{0};
 
-  std::vector<int64_t> xdiff_shape_;
-
   size_t dy_size_{0};
   size_t rois_size_{0};
   size_t output_size_{0};
