@@ -1676,7 +1676,7 @@ class GruGradWeight(PrimitiveWithInfer):
         return hx_dtype
 
 
-class DynamicGRUV2Grad(PrimitiveWithInfer):
+class DynamicGRUV2Grad(Primitive):
     r"""
     Computes the input gradients of DynamicGRUV2.
 
@@ -1755,62 +1755,14 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         self.direction = validator.check_string(direction, ['UNIDIRECTIONAL'], "direction", self.name)
         self.gate_order = validator.check_string(gate_order, ['zrh', 'rzh'], "gate_order", self.name)
         self.reset_after = validator.check_value_type("reset_after", reset_after, [bool], self.name)
-
-    def infer_shape(self, x_shape, winput_shape, whidden_shape, y_shape, init_h_shape, h_shape,
-                    dy_shape, dh_shape, update_shape, reset_shape, new_shape, hnew_shape, seq_shape, mask_shape):
-        validator.check_int(len(x_shape), 3, Rel.EQ, "x shape", self.name)
-        validator.check_int(len(winput_shape), 2, Rel.EQ, "weight input shape rank", self.name)
-        validator.check_int(len(whidden_shape), 2, Rel.EQ, "weight hidden shape rank", self.name)
-        validator.check_int(len(y_shape), 3, Rel.EQ, "y shape rank", self.name)
-        num_step, batch_size, input_size = x_shape
-        hidden_size = whidden_shape[0]
-        validator.check("weight_hidden_shape[-1]", whidden_shape[-1], "3 * hidden_size",
-                        3 * hidden_size, Rel.EQ, self.name)
-        validator.check("weight_input_shape", winput_shape, "excepted shape",
-                        [input_size, 3 * hidden_size], Rel.EQ, self.name)
-        if self.num_proj > 0:
-            valid_y_shape = [num_step, batch_size, min(hidden_size, self.num_proj)]
-        else:
-            valid_y_shape = [num_step, batch_size, hidden_size]
-        validator.check("y_shape", y_shape, "excepted shape", valid_y_shape, Rel.EQ, self.name)
-
-        validator.check("init_h_shape", init_h_shape, "excepted shape",
-                        [batch_size, hidden_size], Rel.EQ, self.name)
-        valid_shape = [num_step, batch_size, hidden_size]
-        validator.check("h_shape", h_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("dy_shape", dy_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("dh_shape", dh_shape, "excepted shape",
-                        [batch_size, hidden_size], Rel.EQ, self.name)
-        validator.check("update_shape", update_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("reset_shape", reset_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("new_shape", new_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        validator.check("hnew_shape", hnew_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
-        if seq_shape is not None:
-            validator.check("seq_shape", seq_shape, "batch_size", batch_size, Rel.EQ, self.name)
-
-        dx_shape = (num_step, batch_size, input_size)
-        dh_shape = (batch_size, hidden_size)
-        dwinput_shape = (input_size, 3 * hidden_size)
-        dwhidden_shape = (hidden_size, 3 * hidden_size)
-        db_shape = (3 * hidden_size,)
-        return dwinput_shape, dwhidden_shape, db_shape, db_shape, dx_shape, dh_shape
-
-    def infer_dtype(self, x_dtype, winput_dtype, whidden_dtype, y_dtype, init_h_dtype, h_dtype,
-                    dy_dtype, dh_dtype, update_dtype, reset_dtype, new_dtype, hnew_dtype, seq_dtype, mask_dtype):
-        valid_types = (mstype.float16, mstype.float32)
-        args = {"y_dtype": y_dtype, "h_dtype": h_dtype, "dy_dtype": dy_dtype,
-                "dh_dtype": dh_dtype, "update_dtype": update_dtype, "reset_dtype": reset_dtype,
-                "new_dtype": new_dtype, "hnew_dtype": hnew_dtype}
-        validator.check_tensor_dtype_valid("x_dtype", x_dtype, valid_types, self.name)
-        validator.check_tensor_dtype_valid("winput_dtype", winput_dtype, valid_types, self.name)
-        validator.check_tensor_dtype_valid("whidden_dtype", whidden_dtype, valid_types, self.name)
-        validator.check_tensor_dtype_valid("init_h_dtype", init_h_dtype, valid_types, self.name)
-        validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
-        if seq_dtype is not None:
-            validator.check_tensor_dtype_valid("seq_dtype", seq_dtype, valid_types, self.name)
-        if mask_dtype is not None:
-            validator.check_tensor_dtype_valid("mask_dtype", mask_dtype, valid_types, self.name)
-        return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
+        self.init_prim_io_names(inputs=[
+            "x", "weight_input", "weight_hidden", "y", "init_h", "h", "dy",
+            "dh", "update", "reset", "new", "hidden_new", "seq_length", "mask"
+        ],
+                                outputs=[
+                                    "dw_input", "dw_hidden", "db_input",
+                                    "db_hidden", "dx", "dh_prev"
+                                ])
 
 
 class PReLUGrad(Primitive):
