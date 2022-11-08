@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ void RegPass(const std::string &pass_name, const PassBasePtr &pass) {
   }
   std::unique_lock<std::mutex> lock(pass_mutex);
   if (outer_pass_storage.size() == kPassNumLimit) {
-    MS_LOG(WARNING) << "ass's number is up to the limitation. The pass will not be registered.";
+    MS_LOG(WARNING) << "pass's number is up to the limitation. The pass will not be registered.";
     return;
   }
   outer_pass_storage[pass_name] = pass;

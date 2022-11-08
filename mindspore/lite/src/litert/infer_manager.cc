@@ -131,7 +131,7 @@ int CheckInfershapeResult(int result, const std::vector<lite::Tensor *> &inputs,
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter, std::shared_ptr<Allocator> allocator) {
-  MS_ASSERT(parameter != nullptr);
+  MS_CHECK_TRUE_MSG(parameter != nullptr, RET_ERROR, "parameter is nullptr.");
   if (inputs.empty()) {
     MS_LOG(ERROR) << "No input!";
     return RET_ERROR;

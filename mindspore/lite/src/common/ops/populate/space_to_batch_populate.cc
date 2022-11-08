@@ -48,7 +48,7 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
     free(param);
     return nullptr;
   }
-  param->m_ = block_sizes.size();
+  param->m_ = static_cast<int>(block_sizes.size());
 
   auto param_paddings = value->paddings();
   if (param_paddings == nullptr) {

@@ -30,16 +30,18 @@ class DepthwiseConv2DInfo : public Conv2DInfo {
   DepthwiseConv2DInfo(const std::string &name, const SplitStrategy &strategy) : Conv2DInfo(name, strategy) {}
   ~DepthwiseConv2DInfo() override = default;
 
- private:
+ protected:
   int InferReplaceOp() override;
-  int InferParallelCNodes() override;
   int CheckStrategy(const SplitStrategy &strategy) override;
+  int InferParallelCNodes() override;
   int ConstructOutputCNodes(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                             const std::vector<AnfNodePtr> &feature_split_outputs,
                             const std::vector<AnfNodePtr> &kernel_split_outputs,
                             const std::vector<AnfNodePtr> &bias_split_outputs) override;
   AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
                                   size_t split_dim, size_t split_num, const std::vector<int64_t> &splits);
+
+ private:
   int CreateConstantOutputsOfSplit(std::vector<AnfNodePtr> *split_outputs, int input_index);
 
   int CheckDepthWiseConv2DPrimitiveType();
