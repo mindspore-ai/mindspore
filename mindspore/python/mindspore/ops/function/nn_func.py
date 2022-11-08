@@ -40,6 +40,9 @@ hardswish_ = P.HSwish()
 mish_ = NN_OPS.Mish()
 selu_ = NN_OPS.SeLU()
 sigmoid_ = NN_OPS.Sigmoid()
+signed_type = [mstype.int8, mstype.byte, mstype.int16, mstype.short, mstype.int32, mstype.intc, mstype.int64,
+               mstype.intp, mstype.float16, mstype.half, mstype.float32, mstype.single, mstype.float64,
+               mstype.double, mstype.complex64, mstype.complex128]
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -1350,6 +1353,237 @@ def hardshrink(x, lambd=0.5):
     """
     hshrink_op = _get_cache_prim(P.HShrink)(lambd)
     return hshrink_op(x)
+
+
+@constexpr
+def _check_axis_in_range(axis, ndim):
+    """Checks axes are with the bounds of ndim"""
+    if not isinstance(axis, int):
+        raise TypeError(f'The dims must be integers, but got {type(axis)}')
+    if not -ndim <= axis < ndim:
+        raise ValueError(f"The 'axis' must be in the range of [-{ndim}, {ndim}), but got {axis}.")
+    return axis % ndim
+
+
+@constexpr
+def _check_axis_valid(axes, ndim):
+    """
+    Checks axes are valid given ndim, and returns axes that can be passed
+    to the built-in operator (non-negative, int or tuple)
+    """
+    if axes is None:
+        raise ValueError(f"The parameter dims can not be None.")
+    if isinstance(axes, (tuple, list)):
+        axes = tuple(map(lambda x: _check_axis_in_range(x, ndim), axes))
+        if any(axes.count(el) > 1 for el in axes):
+            raise ValueError(f"The element of parameter 'dims' can not be duplicate, but got {axes}.")
+        return axes
+    raise ValueError(f"The parameter dims must be tuple of ints, but got {type(axes)}")
+
+
+@constexpr
+def _get_flip_start(ndim, shape, axes):
+    """Calculate the start index of flip"""
+    return tuple([shape[i] - 1 if i in axes else 0 for i in range(ndim)])
+
+
+@constexpr
+def _get_flip_end(ndim, shape, axes):
+    """Calculate the end index of flip"""
+    return tuple([-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim)])
+
+
+@constexpr
+def _get_flip_strides(ndim, axes):
+    """Calculate the strides of flip"""
+    return tuple([-1 if i in axes else 1 for i in range(ndim)])
+
+
+@constexpr
+def _is_shape_empty(shp):
+    """Check whether shape contains zero"""
+    if isinstance(shp, int):
+        return shp == 0
+    return ops.shape_mul(shp) == 0
+
+
+def _check_input_tensor(arg_name, *tensors):
+    """Check whether the input is tensor"""
+    for tensor in tensors:
+        if not isinstance(tensor, Tensor):
+            raise TypeError(f"For '{arg_name}', the input must be Tensor, but got {ops.typeof(tensor)}")
+    return True
+
+
+def flip(x, dims):
+    """
+    Reverses the order of elements in a tensor along the given axis.
+
+    The shape of the tensor is preserved, but the elements are reordered.
+
+    Args:
+        x (Tensor): Input tensor.
+        dims (Union[list[int], tuple[int]]): Axis or axes along which to flip over.
+            Flipping is performed on all of the axes specified in the tuple,
+            If `dims` is a tuple of integers contains negative, it counts from the last to the first axis.
+
+    Returns:
+        Tensor, with the entries of `dims` reversed.
+
+    Raises:
+        TypeError: If the input is not a tensor.
+        ValueError: If `dims` is None.
+        ValueError: If `dims` is not a tuple of ints.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Example:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.arange(8).reshape((2, 2, 2)))
+        >>> output = ops.flip(x, (0, 2))
+        >>> print(output)
+        [[[5. 4.]
+        [7. 6.]]
+        [[1. 0.]
+        [3. 2.]]]
+    """
+    _check_input_tensor("flip", x)
+    ndim = ops.rank(x)
+    shape = ops.shape(x)
+    dims = _check_axis_valid(dims, ndim)
+    if _is_shape_empty(shape):
+        return x
+    start = _get_flip_start(ndim, shape, dims)
+    end = _get_flip_end(ndim, shape, dims)
+    strides = _get_flip_strides(ndim, dims)
+    res = ops.strided_slice(x, start, end, strides)
+    return res
+
+
+def flipud(x):
+    """
+    Flips the entries in each column in the up/down direction.
+    Rows are preserved, but appear in a different order than before.
+
+    Args:
+        x (Tensor): Input array.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If the input is not a tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Example:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.arange(8).reshape((2, 2, 2)))
+        >>> output = ops.flipud(x)
+        >>> print(output)
+        [[[4. 5.]
+        [6. 7.]]
+        [[0. 1.]
+        [2. 3.]]]
+    """
+    return flip(x, (0,))
+
+
+def fliplr(x):
+    """
+    Flips the entries in each row in the left/right direction.
+    Columns are preserved, but appear in a different order than before.
+
+    Args:
+        x (Tensor): Input tensor.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If the input is not a tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Example:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.arange(8).reshape((2, 2, 2)))
+        >>> output = ops.fliplr(x)
+        >>> print(output)
+        [[[2. 3.]
+        [0. 1.]]
+        [[6. 7.]
+        [4. 5.]]]
+    """
+    return flip(x, (1,))
+
+
+def is_floating_point(x):
+    """
+    Judge whether the data type of `x` is a floating point data type i.e., one of mindspore.flot64, mindspore.float32,
+    mindspore.float16.
+
+    Args:
+        x (Tensor): The input Tensor.
+
+    Returns:
+        Bool. If the dtype of `x` is a floating point data type, return True. Otherwise, return False.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> x = ms.Tensor([1, 2, 3], ms.float32)
+        >>> y = ms.Tensor([1, 2, 3], ms.int64)
+        >>> output = ops.is_floating_point(x)
+        >>> output2 = ops.is_floating_point(y)
+        >>> print(output)
+        True
+        >>> print(output2)
+        False
+    """
+    return x.dtype in [mstype.float32, mstype.float16, mstype.float64]
+
+
+def is_signed(x):
+    """
+    Judge whether the data type of `x` is a signed data type.
+
+    Args:
+        x (Tensor): The input tensor.
+
+    Returns:
+        Bool. If the dtype of `x` is a signed data type, return True. Otherwise, return False.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> x = ms.Tensor([1, 2, 3], ms.int64)
+        >>> y = ms.Tensor([1, 2, 3], ms.uint64)
+        >>> output = ops.is_signed(x)
+        >>> output2 = ops.is_signed(y)
+        >>> print(output)
+        True
+        >>> print(output2)
+        False
+    """
+    return x.dtype in signed_type
 
 
 def hardswish(x):
@@ -4358,6 +4592,11 @@ __all__ = [
     'pixel_unshuffle',
     'hardshrink',
     'soft_shrink',
+    'is_floating_point',
+    'is_signed',
+    'flip',
+    'fliplr',
+    'flipud',
     'intopk',
     'interpolate',
     'log_softmax',

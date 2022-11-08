@@ -265,6 +265,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
        {"isclose", std::string("isclose")},                                // P.IsClose()
+       {"is_floating_point", std::string("is_floating_point")},            // is_floating_point()
+       {"is_signed", std::string("is_signed")},                            // is_signed()
        {"inv", std::string("inv")},                                        // inv()
        {"invert", std::string("invert")},                                  // invert()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
@@ -296,6 +298,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()
        {"ceil", std::string("ceil")},                                      // P.Ceil
        {"floor", std::string("floor")},                                    // P.floor
+       {"flip", std::string("flip")},                                      // flip
+       {"fliplr", std::string("fliplr")},                                  // fliplr
+       {"flipud", std::string("flipud")},                                  // flipud
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"soft_shrink", std::string("soft_shrink")},                        // P.SoftShrink
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()

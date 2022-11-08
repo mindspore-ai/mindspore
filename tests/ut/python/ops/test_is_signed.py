@@ -13,9 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """
-test roll api
+test is signed api
 """
-import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -25,15 +24,15 @@ from mindspore.common.api import _cell_graph_executor
 
 class Roll(nn.Cell):
     def construct(self, x):
-        return ops.roll(x, shifts=2, dims=0)
+        return ops.is_signed(x)
 
 
-def test_compile_roll():
+def test_compile_is_signed():
     """
-    Feature: Test Roll
-    Description: Test the functionality of roll
+    Feature: Test is signed
+    Description: Test the functionality of is signed
     Expectation: Success
     """
     net = Roll()
-    x = ms.Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
+    x = ms.Tensor([1, 2, 3], ms.int64)
     _cell_graph_executor.compile(net, x)
