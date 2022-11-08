@@ -5391,7 +5391,7 @@ class BatchToSpace(PrimitiveWithInfer):
         return out_shape
 
 
-class SpaceToBatchND(PrimitiveWithInfer):
+class SpaceToBatchND(Primitive):
     r"""
     Divides spatial dimensions into blocks and combines the block size with the original batch.
 
@@ -5402,14 +5402,15 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     Args:
         block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block
-            with all elements greater than 1. If `block_shape` is a list or tuple,
+            with all elements greater than or euqal to 1. If `block_shape` is a list or tuple,
             the length of `block_shape` is the number of spatial dimensions, called M later.
             If `block_shape` is an int, the block size of M dimensions are the same, equal to `block_shape`.
             In this case of Ascend, M must be 2.
         paddings (Union[tuple, list]): The padding values for spatial dimensions, containing M subtraction list.
-            Each contains 2 integer values. All values must be greater than 0.
+            Each contains 2 integer values. All values must be greater than or equal to 0.
             `paddings[i]` specifies the paddings for the spatial dimension i,
-            which corresponds to the input dimension i + offset.
+            which corresponds to the input dimension i + offset,where offset = N-M,
+            and N is the number of input dimensions.
             For each i, input_shape[i + offset]+paddings[i][0]+paddings[i][1]
             should be divisible by block_shape[i].
 
@@ -5423,9 +5424,9 @@ class SpaceToBatchND(PrimitiveWithInfer):
         The shape of the output tensor will be :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`,
         where
 
-        :math:`n' = n*(block\_shape[0]*...*block\_shape[M])`
+        :math:`n' = n*(block\_shape[0]*...*block\_shape[M-1])`
 
-        :math:`w'_i = (w_i+paddings[i][0]+paddings[i][1])//block\_shape[i]`
+        :math:`w'_i = (w_i+paddings[i-1][0]+paddings[i-1][1])//block\_shape[i-1]`
 
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.
@@ -5433,11 +5434,11 @@ class SpaceToBatchND(PrimitiveWithInfer):
         ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
         ValueError: If the length of `block_shape` is not 2 on Ascend.
         ValueError: If shape of `paddings` is not (M, 2), where M is the length of `block_shape`.
-        ValueError: If the element of `block_shape` is not an integer larger than 1.
-        ValueError: If the element of `paddings` is not an integer larger than 0.
+        ValueError: If the element of `block_shape` is not an integer larger than or equal to 1.
+        ValueError: If the element of `paddings` is not an integer larger than or euqal to 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> block_shape = [2, 2]
@@ -5456,6 +5457,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
     def __init__(self, block_shape, paddings):
         """Initialize SpaceToBatchND"""
         validator.check_value_type('paddings type', paddings, [list, tuple], self.name)
+        validator.check('paddings length', len(paddings), '', 1, Rel.GE, self.name)
 
         if isinstance(block_shape, int):
             block_shape = (block_shape,) * np.array(paddings).shape[0]
@@ -5478,37 +5480,6 @@ class SpaceToBatchND(PrimitiveWithInfer):
             validator.check_value_type('paddings element', elem, [int], self.name)
         self.paddings = paddings
 
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
-
-    def infer_shape(self, x_shape):
-        x_rank = len(x_shape)
-        if context.get_context("device_target") == "Ascend":
-            validator.check_equal_int(x_rank, 4, 'x_shape rank', self.name)
-        out_shape = copy.deepcopy(x_shape)
-
-        block_shape_prod = 1
-        offset = len(x_shape) - len(self.block_shape)
-        if offset <= 0:
-            raise ValueError(f"For '{self.name}', the dim of the input should be larger than that of the blocks, "
-                             f"but the shape of the inputs is {x_shape} "
-                             f"while the shape of blocks is {self.block_shape}.")
-        for i in range(len(self.block_shape)):
-            padded = out_shape[i + offset] + self.paddings[i][0] + \
-                     self.paddings[i][1]
-            if padded % self.block_shape[i] != 0:
-                raise ValueError(f"For '{self.name}', the padded must be divisible by 'block_shape', "
-                                 f"where padded = input_x_shape[i + 2] + paddings[i][0] + paddings[i][1], "
-                                 f"but got input_x_shape[{i + offset}]: {out_shape[i + offset]}, "
-                                 f"paddings[{i}][0]: {self.paddings[i][0]} and paddings[{i}][1]: {self.paddings[i][1]}."
-                                 f" Please check the official api documents for "
-                                 f"more information about the output tensor.")
-            out_shape[i + offset] = padded // self.block_shape[i]
-            block_shape_prod = block_shape_prod * self.block_shape[i]
-        out_shape[0] *= block_shape_prod
-        return out_shape
-
 
 class BatchToSpaceND(Primitive):
     r"""
@@ -5517,26 +5488,37 @@ class BatchToSpaceND(Primitive):
     Refer to :func:`mindspore.ops.batch_to_space_nd` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> block_size = 2
+        >>> crops = [[0, 0], [0, 0]]
+        >>> batch_to_space = ops.BatchToSpace(block_size, crops)
+        >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
+        >>> output = batch_to_space(input_x)
+        >>> print(output)
+        [[[[1.  2.]
+           [3.  4.]]]]
     """
 
     @prim_attr_register
     def __init__(self, block_shape, crops):
         """Initialize BatchToSpaceND"""
         if isinstance(block_shape, int):
-            block_shape = (block_shape,) * 2
+            block_shape = (block_shape,) * np.array(crops).shape[0]
         self.add_prim_attr("block_shape", block_shape)
         validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
         validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, Rel.EQ, self.name)
         block_rank = len(block_shape)
-        validator.check('block_shape length', block_rank, '', 2, Rel.EQ, self.name)
+        if context.get_context("device_target") == "Ascend":
+            validator.check('block_shape length', block_rank, '', 2, Rel.EQ, self.name)
         for elem in block_shape:
             validator.check('block_shape element', elem, '', 1, Rel.GE, self.name)
             validator.check_value_type('block_shape element', elem, [int], self.name)
         self.block_shape = block_shape
 
         validator.check_value_type('crops type', crops, [list, tuple], self.name)
-        validator.check('crops length', len(crops), '', 2, Rel.EQ, self.name)
+        validator.check('crops length', len(crops), '', 1, Rel.GE, self.name)
         validator.check('crops shape', np.array(crops).shape, '', (block_rank, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*crops):
             validator.check_non_negative_int(elem, 'crops element', self.name)

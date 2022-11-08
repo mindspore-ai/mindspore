@@ -36,19 +36,19 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
-  constexpr int64_t len = 4;
+  constexpr int64_t ascend_len = 4;
+  constexpr int64_t len = 2;
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()),
-                                           (is_ascend ? kEqual : kGreaterEqual), len, prim_name);
+                                           (is_ascend ? kEqual : kGreaterEqual), (is_ascend ? ascend_len : len),
+                                           prim_name);
   if (IsDynamicShape(x_shape)) {
     std::vector<int64_t> res(x_shape.size(), abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(res);
   }
-
   auto out_shape = x_shape;
-
   int64_t block_shape_prod = 1;
   auto block_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockShape));
   auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
@@ -58,14 +58,17 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
     block_shape_prod = block_shape_prod * block_shape[i];
     auto x_block_prod = out_shape[i + offset] * block_shape[i];
     auto crops_sum = crops[i][0] + crops[i][1];
-    CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, crops_sum, prim_name);
+    if (out_shape[i + offset] >= 0)
+      CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, crops_sum, prim_name);
     out_shape[i + offset] = x_block_prod - crops_sum;
   }
-  if (out_shape[0] % block_shape_prod != 0) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim_name
-      << "', the first dim of 'input_x' must be divisible by 'block_shape_prod'. But got first dim of 'input_x': "
-      << out_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
+  if (out_shape[0] >= 0) {
+    if (out_shape[0] % block_shape_prod != 0) {
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', the first dim of 'input_x' must be divisible by 'block_shape_prod'. But got first dim of 'input_x': "
+        << out_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
+    }
   }
   out_shape[0] = int64_t(floor(out_shape[0] / static_cast<float>(block_shape_prod)));
   return std::make_shared<abstract::Shape>(out_shape);

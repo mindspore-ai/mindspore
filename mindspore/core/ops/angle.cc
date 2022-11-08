@@ -31,6 +31,10 @@ abstract::ShapePtr AngleInferShape(const PrimitivePtr &primitive, const std::vec
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(primitive_name, input_args, 0);
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
