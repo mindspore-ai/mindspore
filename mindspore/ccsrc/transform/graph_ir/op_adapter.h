@@ -392,13 +392,15 @@ class OpAdapter : public BaseOpAdapter {
     MS_EXCEPTION_IF_NULL(vec);
     for (auto &it : vec->value()) {
       MS_EXCEPTION_IF_NULL(it);
-      if (!it->isa<ValueTuple>()) {
-        MS_LOG(EXCEPTION) << "It should be ValueTuple, but got " << it->type_name();
-      }
-      auto sub_vector = it->cast<ValueTuplePtr>();
       std::vector<int64_t> sublist;
-      for (auto &item : sub_vector->value()) {
-        sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+      if (!it->isa<ValueTuple>()) {
+        if (it->type_name() != "ValueList") {
+          MS_LOG(EXCEPTION) << "It should be ValueTuple or ValueList, but got " << it->type_name();
+        }
+        auto sub_vector = it->cast<ValueTuplePtr>();
+        for (auto &item : sub_vector->value()) {
+          sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+        }
       }
       list.push_back(sublist);
     }
