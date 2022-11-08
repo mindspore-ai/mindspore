@@ -1126,7 +1126,9 @@ def strided_slice(input_x,
           must not greater than the dim of `input_x`.
 
     During the slicing process, the fragment (end-begin)/strides are extracted from each dimension.
-    Example: For a 5*6*7 Tensor `input_x`, set `begin`, `end` and `strides` to (1, 3, 2), (3, 5, 6),
+
+    Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
+    set `begin`, `end` and `strides` to (1, 3, 2), (3, 5, 6),
     (1, 1, 2) respectively, then elements from index 1 to 3 are extrected for dim 0, index 3 to 5
     are extrected for dim 1 and index 2 to 6 with a `stirded` of 2 are extrected for dim 2, this
     process is equivalent to a pythonic slice `input_x[1:3, 3:5, 2:6:2]`.
@@ -1134,14 +1136,17 @@ def strided_slice(input_x,
     If the length of `begin` 、 `end` and `strides` is smaller than the dim of `input_x`,
     then all elements are extracted from the missing dims, it behaves like all the
     missing dims are filled with zeros, size of that missing dim and ones.
-    Example: For a 5*6*7 Tensor `input_x`, set `begin`, `end` and `strides` to (1, 3),
+
+    Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
+    set `begin`, `end` and `strides` to (1, 3),
     (3, 5), (1, 1) respectively, then elements from index 1 to 3 are extrected
     for dim 0, index 3 to 5 are extrected for dim 1 and index 3 to 5 are extrected
     for dim 2, this process is equivalent to a pythonic slice `input_x[1:3, 3:5, 0:7]`.
 
     Here's how a mask works:
     For each specific mask, it will be converted to a binary representation internally, and then
-    reverse the result to start the calculation. For a 5*6*7 Tensor with a given mask value of 3 which
+    reverse the result to start the calculation. For Tensor `input_x` with
+    shape :math:`(5, 6, 7)`. Given mask value of 3 which
     can be represented as 0b011. Reverse that we get 0b110, which implies the first and second dim of the
     original Tensor will be effected by this mask. See examples below, for simplicity all mask mentioned
     below are all in their reverted binary form:
@@ -1150,7 +1155,7 @@ def strided_slice(input_x,
 
       If the ith bit of `begin_mask` is 1, `begin[i]` is ignored and the fullest
       possible range in that dimension is used instead. `end_mask` is analogous,
-      except with the end range. For a 5*6*7*8 Tensor `input_x`,  if `begin_mask`
+      except with the end range. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`,  if `begin_mask`
       is 0b110, `end_mask` is 0b011, the slice `input_x[0:3, 0:6, 2:7:2]` is produced.
 
     - `ellipsis_mask`
@@ -1165,14 +1170,15 @@ def strided_slice(input_x,
 
       If the ith bit of `new_axis_mask` is 1, `begin`, `end` and `strides` are
       ignored and a new length 1 dimension is added at the specified position
-      in the output Tensor. For a 5*6*7 Tensor `input_x`, if `new_axis_mask`
+      in the output Tensor. For Tensor `input_x` with shape :math:`(5, 6, 7)`, if `new_axis_mask`
       is 0b110,  a new dim is added to the second dim, which will produce
       a Tensor with shape :math:`(5, 1, 6, 7)`.
 
     - `shrink_axis_mask`
 
       If the ith bit of `shrink_axis_mask` is 1, `begin`, `end` and `strides`
-      are ignored and dimension i will be shrunk to 0. For a 5*6*7 Tensor `input_x`,
+      are ignored and dimension i will be shrunk to 0.
+      For Tensor `input_x` with shape :math:`(5, 6, 7)`,
       if `shrink_axis_mask` is 0b010, it is equivalent to slice `x[:, 5, :]`
       and results in an output shape of :math:`(5, 7)`.
 

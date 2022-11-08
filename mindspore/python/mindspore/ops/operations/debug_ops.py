@@ -70,8 +70,10 @@ class ScalarSummary(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
         >>>
         >>>
         >>> class SummaryDemo(nn.Cell):
@@ -178,8 +180,10 @@ class TensorSummary(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
         >>>
         >>>
         >>> class SummaryDemo(nn.Cell):
@@ -227,8 +231,10 @@ class HistogramSummary(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
         >>>
         >>>
         >>> class SummaryDemo(nn.Cell):
@@ -242,7 +248,9 @@ class HistogramSummary(PrimitiveWithInfer):
         ...         name = "x"
         ...         self.summary(name, x)
         ...         return x
-        ...
+        >>> summary = SummaryDemo()(Tensor([1, 2]), Tensor([3, 4]))
+        >>> print(summary)
+        Tensor(shape=[2], dtype=Int64, value= [3, 5])
     """
 
     @prim_attr_register

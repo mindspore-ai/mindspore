@@ -151,4 +151,4 @@
         动态Shape场景下算子输入/输出Tensor的数据排布。
 
         参数：
-            - **unknown_shape_formats** (list) - 表示动态Shape场景下算子输入/输出Tensor的数据排布。默认值：()，不支持动态Shape。
+            - **unknown_shape_formats** (list) - 表示动态Shape场景下算子输入/输出Tensor的数据排布。

@@ -7,9 +7,12 @@
 
     `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。输入必须是两个Tensor或一个Tensor和一个Scalar。当输入是两个Tensor时，它们的数据类型不能同时为bool，它们的shape可以广播。当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
 
+    .. note::
+        当 `x` 和 `y` 数据类型都为复数的时候， 须同时为complex64或者complex128。
+
     参数：
-        - **x** (Union[Tensor, Number, bool]) - float，complex或bool类型的Tensor。
-        - **y** (Union[Tensor, Number, bool]) - float、complex或bool类型的Tensor。`x` 和 `y` 不能同时为bool类型。
+        - **x** (Union[Tensor, Number, bool]) - number.Number或bool类型的Tensor，或者是一个bool或者number。
+        - **y** (Union[Tensor, Number, bool]) - number.Number或bool类型的Tensor，或者是一个bool或者number， `x` 和 `y` 不能同时为bool类型。
 
     返回：
         Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数据类型较高的类型。

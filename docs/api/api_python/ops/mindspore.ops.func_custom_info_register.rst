@@ -13,3 +13,6 @@ mindspore.ops.custom_info_register
         
     返回：
         function，返回算子信息注册的装饰器。
+
+    异常：
+        - **TypeError** - 如果 `reg_info` 不是tuple。

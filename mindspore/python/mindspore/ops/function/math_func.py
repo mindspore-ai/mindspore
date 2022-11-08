@@ -778,8 +778,7 @@ def floor_div(x, y):
         x (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
         y (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
+            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
@@ -880,7 +879,7 @@ def floor_mod(x, y):
         x (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
         y (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor or a tensor whose data type is number or bool.
+            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2672,7 +2671,7 @@ def less(x, y):
         x (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
         y (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor or a tensor whose data type is number or bool.
+            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
@@ -5580,7 +5579,7 @@ def bmm(input_x, mat2):
 
         \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
 
-    The first input tensor must be not less than `3` and the second input must be not less than `2`.
+    The dim of `input_x` can not be less than `3` and the dim of `mat2` can not be less than `2`.
 
     Args:
         input_x (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
@@ -5592,8 +5591,9 @@ def bmm(input_x, mat2):
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
     Raises:
-        ValueError: If length of shape of `input_x` is not equal to length of shape of `mat2` or
-                    length of shape of `input_x` is less than `3`.
+        ValueError: If dim of `input_x` is less than `3` or dim of `mat2` is less than `2`.
+        ValueError: If the length of the third dim of `input_x` is not equal to
+            the length of the second dim of `mat2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5860,12 +5860,13 @@ def xdivy(x, y):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
+    .. note::
+        When `x` and `y` are both of datatype complex, they should be both complex64 or complex128 at the same time.
+
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number, or a bool,
-          or a tensor whose data type is float16, float32, float64, complex64, complex128 or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number,
-          or a bool when the first input is a tensor, or a tensor whose data type is float16,
-          float32, float64, complex64, complex128 or bool.
+        x (Union[Tensor, Number, bool]):  Tensor of datatype number.Number或bool, or it can be a bool or number.
+        y (Union[Tensor, Number, bool]): Tensor of datatype number.Number或bool, or it can be a bool or number.
+            `x` and `y` can not be both bool at the same time.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -6606,7 +6607,7 @@ def cross(input, other, dim=None):
 
     Args:
         input (Tensor): input is a tensor.
-        other (Tensor): other is a tensor. input `other` must have the same shape and type as input `input`, and
+        other (Tensor):  The other Tensor, `other` must have the same shape and type as input `input`, and
             the size of their `dim` dimension should be `3`.
         dim (int): dimension to apply cross product in. Default: None.
 

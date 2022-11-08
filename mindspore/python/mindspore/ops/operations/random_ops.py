@@ -796,7 +796,8 @@ class Multinomial(Primitive):
         TypeError: If neither `seed` nor `seed2` is an int.
         TypeError: If `x` is not a Tensor whose dtype is float16, float32, float64.
         TypeError: If dtype of `num_samples` is not int.
-        TypeError: If dtype is not int32 or int64.
+        TypeError: If `dtype` is not int32 or int64.
+        ValueError: If `seed` or `seed2` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -8,7 +8,7 @@ mindspore.ops.bmm
     .. math::
         \text{output}[..., :, :] = \text{matrix}(x[..., :, :]) * \text{matrix}(y[..., :, :])
 
-    第一个输入Tensor必不能小于 `3`，第二个输入必不能小于 `2` 。
+    `input_x` 的维度不能小于 `3` ， `mat2` 的维度不能小于 `2` 。
 
     参数：
         - **input_x** (Tensor) - 输入相乘的第一个Tensor。其shape为 :math:`(*B, N, C)` ，其中 :math:`*B` 表示批处理大小，可以是多维度， :math:`N` 和 :math:`C` 是最后两个维度的大小。
@@ -18,4 +18,6 @@ mindspore.ops.bmm
         Tensor，输出Tensor的shape为 :math:`(*B, N, M)` 。
 
     异常：
-        - **ValueError** - `input_x` 的shape长度不等于 `mat2` 的shape长度或 `input_x` 的shape长度小于 `3` 。
+        - **ValueError** - `input_x` 的维度小于 `3` 或者 `mat2` 的维度小于2。
+        - **ValueError** - `input_x` 第三维的长度不等于 `mat2` 第二维的长度。
+
