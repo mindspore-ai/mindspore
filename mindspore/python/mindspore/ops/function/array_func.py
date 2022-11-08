@@ -665,10 +665,10 @@ def unique_with_pad(x, pad_num):
          Tensor(shape=[6], dtype=Int32, value= [0, 1, 1, 2, 3, 3]))
         >>> y = output[0]
         >>> print(y)
-        [1 2 5 3 0 0]
+        [1 2 3 5 0 0]
         >>> idx = output[1]
         >>> print(idx)
-        [0 1 2 1 3 2]
+        [0 1 1 2 3 3]
     """
     return unique_with_pad_(x, pad_num)
 
