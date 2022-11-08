@@ -40,7 +40,7 @@ constexpr float kKernelMatrixInitNum = 1.0;
 constexpr size_t kFloat32Len = 4;  // size of float32
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  return common::AnfAlgo::GetPrevNodeOutputInferShape(node, IntToSize(0));
+  return common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0UL);
 }
 
 int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t ksize, int64_t stride,
@@ -195,7 +195,7 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   auto avgpool_grad = CheckAnfNodeIfCNodeAndInputSize(node, kAvgPoolGradInputNum);
 
   auto x_shape = GetInputXShape(avgpool_grad);
-  auto x_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(avgpool_grad, IntToSize(0));
+  auto x_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(avgpool_grad, 0UL);
   auto k_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrKernelSize);
   auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrStrides);
   auto prim = GetCNodePrimitive(avgpool_grad);
@@ -209,7 +209,7 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   auto kernel_matrix_vnode = CreateKernelMatrixValueNode(graph, node, x_shape, k_size, x_dtype);
 
   std::vector<AnfNodePtr> avgpool_grad_vm_inputs = {NewValueNode(std::make_shared<Primitive>(kAvgPoolGradVmOpName)),
-                                                    x_shape_vnode, avgpool_grad->input(IntToSize(3)), mean_matrix_vnode,
+                                                    x_shape_vnode, avgpool_grad->input(3UL), mean_matrix_vnode,
                                                     kernel_matrix_vnode};
   auto avgpool_grad_vm = NewCNode(avgpool_grad_vm_inputs, graph);
   MS_EXCEPTION_IF_NULL(avgpool_grad_vm);
