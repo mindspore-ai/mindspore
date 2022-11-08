@@ -62,6 +62,7 @@ mindspore.ops.function
     mindspore.ops.binary_cross_entropy
     mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.cross_entropy
+    mindspore.ops.gaussian_nll_loss
     mindspore.ops.hinge_embedding_loss
     mindspore.ops.mse_loss
     mindspore.ops.nll_loss

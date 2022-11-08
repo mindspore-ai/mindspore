@@ -15,7 +15,6 @@
 """loss"""
 from __future__ import absolute_import, division
 
-import math
 import mindspore
 import mindspore.common.dtype as mstype
 import mindspore.ops as ops
@@ -2390,7 +2389,7 @@ class GaussianNLLLoss(LossBase):
         >>> var = Tensor(np.ones((4, 1)), mstype.float32)
         >>> output = loss(logits, labels, var)
         >>> print(output)
-        Tensor(shape=[], dtype=Float32, value= 1.4375)
+        1.4374993
 
     Reference:
         Nix, D. A. and Weigend, A. S., "Estimating the mean and variance of the
@@ -2400,25 +2399,19 @@ class GaussianNLLLoss(LossBase):
     """
 
     def __init__(self, *, full=False, eps=1e-6, reduction='mean'):
-        super(GaussianNLLLoss, self).__init__(reduction)
+        super(GaussianNLLLoss, self).__init__()
         validator.check_float_range(eps, 0, float('inf'), Rel.INC_NEITHER, "eps", self.cls_name)
         validator.check_value_type('full', full, [bool], self.cls_name)
+        validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', 'gaussian_nll_loss')
         self.full = full
         self.eps = eps
-        self.max = P.Maximum()
-        self.log = P.Log()
-        self.square = P.Square()
+        self.reduction = reduction
 
     def construct(self, logits, labels, var):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         _check_is_tensor('var', var, self.cls_name)
-        maxima = self.max(var, self.eps)
-        logarithm = self.log(maxima)
-        squared_loss = self.square(logits - labels)
-        c = 0 if not self.full else 0.5 * math.log(2 * math.pi)
-        loss = 0.5 * (logarithm + squared_loss / maxima) + c
-        return self.get_loss(loss)
+        return ops.gaussian_nll_loss(logits, labels, var, self.full, self.eps, self.reduction)
 
 
 class HingeEmbeddingLoss(LossBase):
@@ -2480,7 +2473,7 @@ class HingeEmbeddingLoss(LossBase):
         >>> loss = nn.HingeEmbeddingLoss(reduction='mean')
         >>> output = loss(logits, labels)
         >>> print(output)
-        Tensor(shape=[], dtype=Float32, value= 1.6666667)
+        0.16666667
     """
 
     def __init__(self, margin=1.0, reduction='mean'):
