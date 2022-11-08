@@ -135,41 +135,6 @@ void CreateSessionAndGraphRunner() {
   }
 }
 
-std::tuple<std::vector<transform::GeTensorPtr>, std::vector<transform::GeTensorPtr>> GetInputTensor(
-  const FuncGraphPtr &anf_graph) {
-  MS_EXCEPTION_IF_NULL(anf_graph);
-  transform::TensorOrderMap init_input_map;
-  std::vector<tensor::TensorPtr> init_input;
-  std::vector<tensor::TensorPtr> compute_input;
-  for (auto &anf_node : anf_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto para = anf_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(para);
-    if (para->has_default()) {
-      auto value = para->default_param();
-      MS_EXCEPTION_IF_NULL(value);
-      init_input_map.emplace(para->name(), value->cast<std::shared_ptr<tensor::Tensor>>());
-    } else {
-      auto abstract = para->abstract();
-      MS_EXCEPTION_IF_NULL(abstract);
-      auto undetermined_abstract = abstract->cast<std::shared_ptr<abstract::AbstractUndetermined>>();
-      MS_EXCEPTION_IF_NULL(undetermined_abstract);
-      MS_EXCEPTION_IF_NULL(undetermined_abstract->element());
-      auto base_shape = para->Shape();
-      MS_EXCEPTION_IF_NULL(base_shape);
-      auto type = undetermined_abstract->element()->BuildType();
-      MS_EXCEPTION_IF_NULL(type);
-      auto shape = base_shape->cast<abstract::ShapePtr>();
-      compute_input.emplace_back(
-        std::make_shared<tensor::Tensor>(type->type_id(), (shape != nullptr ? shape->shape() : ShapeVector{})));
-    }
-  }
-  (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
-                       [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
-  return {transform::ConvertInputTensors(init_input, kOpFormat_NCHW),
-          transform::ConvertInputTensors(compute_input, kOpFormat_NCHW)};
-}
-
 void RunGeInitGraph(const FuncGraphPtr &anf_graph) {
   MS_LOG(DEBUG) << "ExecInitGraph start.";
 
@@ -188,7 +153,6 @@ void RunGeInitGraph(const FuncGraphPtr &anf_graph) {
   }
 
   std::vector<transform::GeTensorPtr> ge_tensors;
-  std::tie(ge_tensors, std::ignore) = GetInputTensor(anf_graph);
   {
     // Release GIL before calling into (potentially long-running) C++ code
     mindspore::ScopedLongRunning long_running;

@@ -35,6 +35,8 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
+#include "runtime/config.h"
+#include "runtime/dev.h"
 
 namespace mindspore {
 namespace device {
@@ -93,41 +95,6 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   return res;
 }
 
-std::tuple<std::vector<transform::GeTensorPtr>, std::vector<transform::GeTensorPtr>> GetInputTensor(
-  const FuncGraphPtr &anf_graph) {
-  MS_EXCEPTION_IF_NULL(anf_graph);
-  transform::TensorOrderMap init_input_map;
-  std::vector<tensor::TensorPtr> init_input;
-  std::vector<tensor::TensorPtr> compute_input;
-  for (auto &anf_node : anf_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto para = anf_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(para);
-    if (para->has_default()) {
-      auto value = para->default_param();
-      MS_EXCEPTION_IF_NULL(value);
-      init_input_map.emplace(para->name(), value->cast<std::shared_ptr<tensor::Tensor>>());
-    } else {
-      auto abstract = para->abstract();
-      MS_EXCEPTION_IF_NULL(abstract);
-      auto undetermined_abstract = abstract->cast<std::shared_ptr<abstract::AbstractUndetermined>>();
-      MS_EXCEPTION_IF_NULL(undetermined_abstract);
-      MS_EXCEPTION_IF_NULL(undetermined_abstract->element());
-      auto base_shape = para->Shape();
-      MS_EXCEPTION_IF_NULL(base_shape);
-      auto type = undetermined_abstract->element()->BuildType();
-      MS_EXCEPTION_IF_NULL(type);
-      auto shape = base_shape->cast<abstract::ShapePtr>();
-      compute_input.emplace_back(
-        std::make_shared<tensor::Tensor>(type->type_id(), (shape != nullptr ? shape->shape() : ShapeVector{})));
-    }
-  }
-  (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
-                       [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
-  return {transform::ConvertInputTensors(init_input, kOpFormat_NCHW),
-          transform::ConvertInputTensors(compute_input, kOpFormat_NCHW)};
-}
-
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph);
@@ -164,6 +131,25 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   return true;
 }
 
+std::vector<transform::GeTensorPtr> GetInputTensors(const FuncGraphPtr &anf_graph) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  transform::TensorOrderMap init_input_map;
+  std::vector<tensor::TensorPtr> init_input;
+  for (auto &anf_node : anf_graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(anf_node);
+    auto para = anf_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(para);
+    if (para->has_default()) {
+      auto value = para->default_param();
+      MS_EXCEPTION_IF_NULL(value);
+      init_input_map.emplace(para->name(), value->cast<std::shared_ptr<tensor::Tensor>>());
+    }
+  }
+  (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
+                       [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
+  return transform::ConvertInputTensors(init_input, kOpFormat_NCHW);
+}
+
 void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   MS_LOG(DEBUG) << "ExecInitGraph start.";
 
@@ -182,7 +168,6 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   }
 
   std::vector<transform::GeTensorPtr> ge_tensors;
-  std::tie(ge_tensors, std::ignore) = GetInputTensor(anf_graph);
   {
     // Release GIL before calling into (potentially long-running) C++ code
     mindspore::ScopedLongRunning long_running;
@@ -196,6 +181,7 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
     if ((ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::DISTRIBUTION) &&
         (transform::GetGraphByName(BROADCAST_GRAPH_NAME) != nullptr)) {
       run_options.name = BROADCAST_GRAPH_NAME;
+      ge_tensors = GetInputTensors(anf_graph);
       ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
       if (ret != transform::Status::SUCCESS) {
         MS_LOG(EXCEPTION) << "Exec BROADCAST_GRAPH_NAME failed.";
@@ -412,13 +398,18 @@ void GeDeviceContext::Initialize() {
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
 
-  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  InitGe(MsContext::GetInstance());
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
+  int32_t is_heterogenous = 0;
+  (void)rtGetIsHeterogenous(&is_heterogenous);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
+  InitGe(ms_context);
   std::string rank_id = common::GetEnv("RANK_ID");
   std::string rank_table_file = common::GetEnv("RANK_TABLE_FILE");
   if (!rank_id.empty() && !rank_table_file.empty()) {
-    (void)hccl::HcclAdapter::GetInstance().InitHccl(MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID),
-                                                    rank_id, rank_table_file, hccl::HcclMode::kGraph);
+    (void)hccl::HcclAdapter::GetInstance().InitHccl(ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id,
+                                                    rank_table_file, hccl::HcclMode::kGraph);
   }
 
   initialized_ = true;

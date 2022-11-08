@@ -103,6 +103,20 @@ class AscendHostQueue : public DataQueue {
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override { return DataQueueStatus::SUCCESS; }
   DataQueueStatus Pop() override { return DataQueueStatus::SUCCESS; }
 
+  static constexpr int64_t kMaxDimSize = 32;
+#pragma pack(push, 1)
+  struct RuntimeTensorDesc {
+    uint64_t data_addr;
+    int64_t data_offset_size;
+    int64_t dtype;
+    int64_t shape[kMaxDimSize + 1];
+    int64_t original_shape[kMaxDimSize + 1];
+    int64_t format;
+    int64_t sub_format;
+    uint8_t reserved[456];
+  };
+#pragma pack(pop)
+
   struct DataItemInfo {
     struct ItemInfo {
       int32_t version;

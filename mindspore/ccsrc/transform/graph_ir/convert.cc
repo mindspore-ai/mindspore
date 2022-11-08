@@ -315,8 +315,7 @@ void DfGraphConvertor::SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broa
   this->broadcast_graph_ = broadcast_graph;
 }
 
-void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
-  int index = 0;
+void DfGraphConvertor::InitParamWithConst(const TensorOrderMap &tensors) {
   std::vector<Operator> init_input;
   for (auto it : tensors) {
     std::string name = it.first;
@@ -335,50 +334,36 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (op_itor == op_cache_.end()) {
       MS_LOG(EXCEPTION) << "Can not find op for node " << node->ToString() << ".";
     }
-    auto adpt = FindAdapter(kNameParam, training_);
-    if (adpt == nullptr) {
+
+    auto adpt_const = FindAdapter(kNameConst, training_);
+    if (adpt_const == nullptr) {
       continue;
     }
-    auto param_op = adpt->generate(name + "_data");
-    MS_LOG(INFO) << "Add parameter " << name << " as input, index " << index << ".";
+    auto const_op = adpt_const->generate(name + "_const");
+    (void)adpt_const->setAttr(const_op, "value", it.second);
 
+    auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
+    if (desc == nullptr) {
+      MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
+      continue;
+    }
+    (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*desc);
     if (!training_) {
-      auto adpt_const = FindAdapter(kNameConst, training_);
-      if (adpt_const == nullptr) {
-        continue;
-      }
-      auto const_op = adpt_const->generate(name + "_const");
-      (void)adpt_const->setAttr(const_op, "value", it.second);
-
-      auto const_op_desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
-      if (const_op_desc == nullptr) {
-        MS_LOG(WARNING) << "Create variable " << name << " output descriptor failed!";
-        continue;
-      }
-      (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*const_op_desc);
       const_op_to_value_[const_op] = it.second;
       vars_[name] = const_op;
       op_itor->second = const_op;
       continue;
     }
 
-    // create tensor descriptor for output descriptor
-    auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
-    if (desc == nullptr) {
-      MS_LOG(ERROR) << "Create variable " << name << " output descriptor failed!";
-      continue;
-    }
-
     // we need three variable ops for each graph with same name
     // build init subgraph
     if (it.second->is_init() == 0) {
-      (void)std::static_pointer_cast<Data>(param_op)->set_attr_index(index++);
       auto init_var = std::make_shared<Variable>(name);
       auto assign_op = std::make_shared<Assign>("assign_" + name);
       (void)init_var->update_output_desc_y(*desc);
-      (void)assign_op->set_input_ref(*init_var).set_input_value(*param_op);
+      (void)assign_op->set_input_ref(*init_var).set_input_value(*const_op);
       init_input.push_back(*init_var);
-      init_ops_.push_back(param_op);
+      init_ops_.push_back(const_op);
       init_ops_.push_back(assign_op);
       init_ops_.push_back(init_var);
     }
@@ -419,7 +404,7 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
       }
     }
   }
-  InitParamWithData(tensors);
+  InitParamWithConst(tensors);
   init_sout_ << "}" << endl;
   return *this;
 }
