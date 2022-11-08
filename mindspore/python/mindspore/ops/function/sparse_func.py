@@ -126,7 +126,7 @@ def coalesce(x_indices: Tensor, x_values: Tensor, x_shape: Tensor) -> Tuple[Tens
         >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=ms.int64)
         >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
         >>> x_shape = Tensor([3, 3], dtype=ms.int64)
-        >>> y_indices, y_values, y_shape = ops.coalesce(x_indices, x_values, x_shape)
+        >>> y_indices, y_values, y_shape = ops.Coalesce()(x_indices, x_values, x_shape)
         >>> print(y_indices)
         [[0 1]
          [1 2]]
