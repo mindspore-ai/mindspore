@@ -44,6 +44,7 @@ bool MinimumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
     MS_LOG(ERROR) << "Minimum does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;

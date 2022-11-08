@@ -43,6 +43,7 @@ bool MinimumGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For MinimumGradGrad, data type: " << kernel_attr << " is not supported.";
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;
