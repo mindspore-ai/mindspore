@@ -49,8 +49,17 @@ constexpr auto KModelOptionAscendFusionSwitchCfgPath = "mindspore.option.ascend.
 constexpr auto kModelOptionAscendDynamicBatchSize = "mindspore.option.ascend.dynamic_batch_size";
 constexpr auto kModelOptionAscendDynamicImageSize = "mindspore.option.ascend.dynamic_image_size";
 constexpr auto kModelOptionAscendBufferOptimize = "mindspore.option.ascend.buffer_optimize";
+#ifdef USE_GLOG
+extern "C" {
+extern void mindspore_log_init();
+}
+#endif
 
-Context::Context() : data_(std::make_shared<Data>()) {}
+Context::Context() : data_(std::make_shared<Data>()) {
+#ifdef USE_GLOG
+  mindspore::mindspore_log_init();
+#endif
+}
 
 template <class T, typename U = std::remove_cv_t<std::remove_reference_t<T>>>
 static const U &GetValue(const std::shared_ptr<DeviceInfoContext::Data> &data, const std::string &key) {
