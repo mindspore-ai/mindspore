@@ -619,7 +619,7 @@ class DBToAmplitude(AudioTensorOperation):
 
 class DCShift(AudioTensorOperation):
     """
-    Apply a DC shift to the audio.
+    Apply a DC shift to the audio. This can be useful to remove DC offset from audio.
 
     Args:
         shift (float): The amount to shift the audio, the value must be in the range [-2.0, 2.0].
@@ -807,9 +807,8 @@ class Fade(AudioTensorOperation):
     Args:
         fade_in_len (int, optional): Length of fade-in (time frames), which must be non-negative. Default: 0.
         fade_out_len (int, optional): Length of fade-out (time frames), which must be non-negative. Default: 0.
-        fade_shape (FadeShape, optional): Shape of fade. Default: FadeShape.LINEAR. Can be one of
-            FadeShape.QUARTER_SINE, FadeShape.HALF_SINE, FadeShape.LINEAR, FadeShape.LOGARITHMIC or
-            FadeShape.EXPONENTIAL.
+        fade_shape (FadeShape, optional): Shape of fade, five different types can be chosen as defined in FadeShape.
+            Default: FadeShape.LINEAR.
 
             -FadeShape.QUARTER_SINE, means it tend to 0 in an quarter sin function.
 
@@ -1042,13 +1041,10 @@ class Gain(AudioTensorOperation):
 
 class GriffinLim(AudioTensorOperation):
     r"""
-    Approximate magnitude spectrogram inversion using the GriffinLim algorithm.
+    Compute waveform from a linear scale magnitude spectrogram using the Griffin-Lim transformation.
 
-    .. math::
-        x(n)=\frac{\sum_{m=-\infty}^{\infty} w(m S-n) y_{w}(m S, n)}{\sum_{m=-\infty}^{\infty} w^{2}(m S-n)}
-
-    where w represents the window function, y represents the reconstructed signal of each frame and x represents the
-    whole signal.
+    About Griffin-Lim please refer to `A fast Griffin-Lim algorithm <https://doi.org/10.1109/WASPAA.2013.6701851>`_
+    and `Signal estimation from modified short-time Fourier transform <https://doi.org/10.1109/ICASSP.1983.1172092>`_.
 
     Args:
         n_fft (int, optional): Size of FFT. Default: 400.
@@ -1065,6 +1061,10 @@ class GriffinLim(AudioTensorOperation):
         rand_init (bool, optional): Flag for random phase initialization or all-zero phase initialization.
             Default: True.
 
+    Raises:
+        RuntimeError: If `n_fft` is not less than `length`.
+        RuntimeError: If `win_length` is not less than `n_fft`.
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1075,7 +1075,7 @@ class GriffinLim(AudioTensorOperation):
     """
 
     @check_griffin_lim
-    def __init__(self, n_fft=400, n_iter=32, win_length=None, hop_length=None, window_type=WindowType.HANN, power=2,
+    def __init__(self, n_fft=400, n_iter=32, win_length=None, hop_length=None, window_type=WindowType.HANN, power=2.0,
                  momentum=0.99, length=None, rand_init=True):
         super().__init__()
         self.n_fft = n_fft
@@ -1105,6 +1105,9 @@ class HighpassBiquad(AudioTensorOperation):
         cutoff_freq (float): Filter cutoff frequency (in Hz).
         Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
 
+    Raises:
+        RuntimeError: If the shape of input audio waveform does not match (..., time).
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1127,14 +1130,14 @@ class HighpassBiquad(AudioTensorOperation):
 
 class InverseMelScale(AudioTensorOperation):
     """
-    Solve for a normal STFT form a mel frequency STFT, using a conversion matrix.
+    Solve for a normal STFT from a mel frequency STFT, using a conversion matrix.
 
     Args:
         n_stft (int): Number of bins in STFT.
         n_mels (int, optional): Number of mel filterbanks. Default: 128.
         sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
         f_min (float, optional): Minimum frequency. Default: 0.0.
-        f_max (float, optional): Maximum frequency. Default: None, will be set to sample_rate // 2.
+        f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2`.
         max_iter (int, optional): Maximum number of optimization iterations. Default: 100000.
         tolerance_loss (float, optional): Value of loss to stop optimization at. Default: 1e-5.
         tolerance_change (float, optional): Difference in losses to stop optimization at. Default: 1e-8.
@@ -1281,7 +1284,7 @@ class Magphase(AudioTensorOperation):
         power (float): Power of the norm, which must be non-negative. Default: 1.0.
 
     Raises:
-        RuntimeError: If the shape of input audio waveform does not match <..., 2>.
+        RuntimeError: If the shape of input audio waveform does not match (..., 2).
 
     Examples:
         >>> import numpy as np
@@ -1309,7 +1312,7 @@ class MaskAlongAxis(AudioTensorOperation):
         mask_start (int): Starting position of the mask, which must be non negative.
         mask_width (int): The width of the mask, which must be larger than 0.
         mask_value (float): Value to assign to the masked columns.
-        axis (int): Axis to apply masking on (1 for frequency and 2 for time).
+        axis (int): Axis to apply mask on (1 for frequency and 2 for time).
 
     Raises:
         ValueError: If `mask_start` is invalid (< 0).
@@ -1347,7 +1350,7 @@ class MaskAlongAxisIID(AudioTensorOperation):
         mask_param (int): Number of columns to be masked, will be uniformly sampled from
             [0, mask_param], must be non negative.
         mask_value (float): Value to assign to the masked columns.
-        axis (int): Axis to apply masking on (1 for frequency and 2 for time).
+        axis (int): Axis to apply mask on (1 for frequency and 2 for time).
 
     Raises:
         TypeError: If `mask_param` is not of type int.
@@ -1392,7 +1395,7 @@ class MelScale(AudioTensorOperation):
         n_mels (int, optional): Number of mel filterbanks. Default: 128.
         sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
         f_min (float, optional): Minimum frequency. Default: 0.
-        f_max (float, optional): Maximum frequency. Default: None, will be set to sample_rate // 2.
+        f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2`.
         n_stft (int, optional): Number of bins in STFT. Default: 201.
         norm (NormType, optional): Type of norm, value should be NormType.SLANEY or NormType::NONE.
             If norm is NormType.SLANEY, divide the triangular mel weight by the width of the mel band.

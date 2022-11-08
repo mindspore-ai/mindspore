@@ -11,4 +11,4 @@ mindspore.dataset.audio.create_dct
         - **norm** (NormMode, 可选) - 标准化模式，可以是NormMode.NONE或NormMode.ORTHO。默认值：NormMode.NONE。
 
     返回：
-        numpy.ndarray，DCT转换矩阵。
+        numpy.ndarray，shape为 ( `n_mels`, `n_mfcc` ) 的DCT转换矩阵。
