@@ -16,6 +16,7 @@
 #include "common/graph_kernel/bprop/bprop_irbuilder.h"
 #include "common/graph_kernel/bprop/expander/common_utils.h"
 #include "include/common/utils/utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -785,12 +786,9 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetBody([](const BpropIRBuilder *ib) ->
                              {{"axis", MakeValue<int64_t>(-1)}});
   idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
-  auto dtype = ib->GetDtype(dout);
+  std::vector<int64_t> ones(out_indices_num, 1);
   auto sp_tensor =
-    ib->Emit("ScatterNd", {idx_tensor,
-                           ib->Emit("Fill", {ib->EmitValue(dtype), ib->Value<ShapeVector>({out_indices_num}),
-                                             ib->Tensor(1, ib->GetDtype(x))}),
-                           ib->Value<ShapeVector>(sp_shape)});
+    ib->Emit("ScatterNd", {idx_tensor, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape)});
   sp_tensor = ib->Emit(
     "Slice", {sp_tensor, ib->Value<ShapeVector>({1, 0}), ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num})});
   auto grad = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>({0, 2, 3, 1})});
@@ -801,6 +799,44 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetBody([](const BpropIRBuilder *ib) ->
   auto dx = ib->Reshape(jac, {x_row, x_col, x_batch, x_depth});
   dx = ib->Emit("Transpose", {dx, ib->Value<ShapeVector>({2, 3, 0, 1})});
   return {dx};
+});
+
+REG_BPROP_BUILDER("HSwish").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("HSwishGrad", {dout, x});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("HSigmoid").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("HSigmoidGrad", {dout, x});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Elu").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("EluGrad", {dout, out});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Sigmoid").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("SigmoidGrad", {out, dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("SigmoidGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto y = ib->GetInput(kIndex0);
+  auto grad = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dy = ib->Mul((ib->Mul(dout, grad)),
+                    (ib->Sub(ib->Tensor(1, ib->GetDtype(grad)), (ib->Mul(ib->Tensor(2, ib->GetDtype(y)), y)))));
+  auto dgrad = ib->Emit("SigmoidGrad", {y, dout});
+  return {dy, dgrad};
 });
 
 REG_BPROP_BUILDER("LogSoftmax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -1130,10 +1166,9 @@ REG_BPROP_BUILDER("BCEWithLogitsLoss").SetBody([](const BpropIRBuilder *ib) -> N
   auto t = ib->Mul(target, pos_weight);
   auto dx =
     ib->Mul(ib->Sub(ib->Mul(ib->Sub(ib->Add(t, ib->Tensor(1, ib->GetDtype(t))), target), sigmoid_input), t), dout);
-  auto grad_target =
-    ib->Mul(ib->Sub(ib->Emit("Log", {ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)}),
-                    ib->Mul(pos_weight, ib->Emit("Log", {sigmoid_input}))),
-            dout);
+  auto grad_target = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)),
+                                     ib->Mul(pos_weight, ib->Log(sigmoid_input))),
+                             dout);
 
   dx = ib->Mul(dx, weight);
   grad_target = ib->Mul(grad_target, weight);
@@ -1352,13 +1387,14 @@ REG_BPROP_BUILDER("MaxUnpool3D").SetBody([](const BpropIRBuilder *ib) -> NodePtr
 
 REG_BPROP_BUILDER("NthElement").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto input_x = ib->GetInput(kIndex0);
+  auto n = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto indicators =
-    ib->Cast(ib->Emit("Equal", {ib->Emit("ExpandDims", {out, ib->Tensor(-1)}), input_x}), ib->GetDtype(input_x));
-  dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
-  auto num_select = ib->Emit("ExpandDims", {ib->ReduceSum(indicators, {-1}), ib->Tensor(-1)});
-  return {ib->Mul((ib->Emit("Div", {indicators, num_select})), dout), ib->ZerosLike(ib->GetInput(kIndex1))};
+  auto indicators = ib->Cast(ib->Emit("Equal", {ib->Emit("ExpandDims", {out, ib->Value<int64_t>(-1)}), input_x}),
+                             ib->GetDtype(input_x));
+  dout = ib->Emit("ExpandDims", {dout, ib->Value<int64_t>(-1)});
+  auto num_select = ib->Emit("ExpandDims", {ib->ReduceSum(indicators, {-1}), ib->Value<int64_t>(-1)});
+  return {ib->Mul(ib->Emit("Div", {indicators, num_select}), dout), ib->ZerosLike(n)};
 });
 
 REG_BPROP_BUILDER("AdaptiveAvgPool3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -1566,4 +1602,47 @@ REG_BPROP_BUILDER("DepthwiseConv2dNative").SetBody([](const BpropIRBuilder *ib) 
                       {"group", ib->GetAttr("group")}});
   return {dx, dw};
 });
+
+REG_BPROP_BUILDER("PadV3").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto constant_values = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto mode = GetValue<std::string>(ib->GetAttr("mode"));
+  NodePtr dx;
+  auto pad = paddings->get()->abstract()->BuildValue();
+  MS_EXCEPTION_IF_NULL(pad);
+  std::vector<int64_t> pad_value;
+  if (pad->isa<tensor::Tensor>()) {
+    pad_value = CheckAndConvertUtils::CheckTensorIntValue("paddings value", pad, "PadV3");
+  } else {
+    pad_value = CheckAndConvertUtils::CheckTupleInt("paddings tuple value", pad, "PadV3");
+  }
+  if (mode == "constant") {
+    (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+    dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
+                  {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
+  } else {
+    dx = ib->Emit("PadV3Grad", {dout, ib->Tensor(pad_value)},
+                  {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
+  }
+  return {dx, ib->ZerosLike(paddings), ib->ZerosLike(constant_values)};
+});
+
+NodePtrList CommonMaxMinGradBprop(const BpropIRBuilder *ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto btmp = ib->TupleGetItem(out, 0);
+  auto btmp_type = ib->GetDtype(btmp);
+  auto out0 = ib->Cast(ib->NotEqual(btmp, ib->Tensor(0, btmp_type)), btmp_type);
+  auto btmp1 = ib->TupleGetItem(out, 1);
+  auto btmp1_type = ib->GetDtype(btmp1);
+  auto out1 = ib->Cast(ib->NotEqual(btmp1, ib->Tensor(0, btmp1_type)), btmp1_type);
+  auto dz = ib->Add(ib->Mul(out0, ib->TupleGetItem(dout, 0)), ib->Mul(out1, ib->TupleGetItem(dout, 1)));
+  return {ib->ZerosLike(x), ib->ZerosLike(y), dz};
+}
+REG_BPROP_BUILDER("MaximumGrad").SetBody(CommonMaxMinGradBprop);
+REG_BPROP_BUILDER("MinimumGrad").SetBody(CommonMaxMinGradBprop);
 }  // namespace mindspore::expander::bprop

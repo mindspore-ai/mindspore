@@ -55,14 +55,34 @@ NodePtr Emitter::EmitValue(const ValuePtr &value) const {
   return node;
 }
 
+NodePtr Emitter::Exp(const NodePtr &x) const {
+  return Emit(
+    kExpOpName, {x},
+    {{"base", MakeValue<double>(-1.0)}, {"scale", MakeValue<double>(1.0)}, {"shift", MakeValue<double>(0.0)}});
+}
+
+NodePtr Emitter::Log(const NodePtr &x) const {
+  return Emit(kLogOpName, {x},
+              {{"base", MakeValue<double>(-1.0)},
+               {"scale", MakeValue<double>(1.0)},
+               {"shift", MakeValue<double>(0.0)},
+               {"cust_aicpu", MakeValue(kLogOpName)}});
+}
+
 NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
   return Emit(prim::kPrimMatMul->name(), {a, b},
-              {{"transpose_a", MakeValue(transpose_a)}, {"transpose_b", MakeValue(transpose_b)}});
+              {{"transpose_x1", MakeValue(transpose_a)},
+               {"transpose_x2", MakeValue(transpose_b)},
+               {"transpose_a", MakeValue(transpose_a)},
+               {"transpose_b", MakeValue(transpose_b)}});
 }
 
 NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
   return Emit(prim::kPrimBatchMatMul->name(), {a, b},
-              {{"transpose_a", MakeValue(transpose_a)}, {"transpose_b", MakeValue(transpose_b)}});
+              {{"transpose_x1", MakeValue(transpose_a)},
+               {"transpose_x2", MakeValue(transpose_b)},
+               {"transpose_a", MakeValue(transpose_a)},
+               {"transpose_b", MakeValue(transpose_b)}});
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {

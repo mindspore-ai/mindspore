@@ -280,7 +280,7 @@ REG_BPROP_BUILDER("Erf").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
     ib->Cast(ib->RealDiv(ib->Tensor(2, ib->GetDtype(x)), (ib->Emit("Sqrt", {ib->Tensor(pi, ib->GetDtype(x))}))),
              ib->GetDtype(x));
   auto x_square = ib->Emit("Square", {x});
-  auto dx = ib->Mul((ib->Mul(dout, half_root_pi)), (ib->Emit("Exp", {ib->Emit("Neg", {x_square})})));
+  auto dx = ib->Mul((ib->Mul(dout, half_root_pi)), (ib->Exp(ib->Emit("Neg", {x_square}))));
   return {dx};
 });
 
@@ -291,8 +291,7 @@ REG_BPROP_BUILDER("Erfc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
     ib->Cast(ib->RealDiv(ib->Tensor(2, ib->GetDtype(x)), (ib->Emit("Sqrt", {ib->Tensor(pi, ib->GetDtype(x))}))),
              ib->GetDtype(x));
   auto x_square = ib->Emit("Square", {x});
-  auto dx =
-    ib->Mul(dout, (ib->Mul((ib->Emit("Neg", {half_root_pi})), (ib->Emit("Exp", {ib->Emit("Neg", {x_square})})))));
+  auto dx = ib->Mul(dout, (ib->Mul((ib->Emit("Neg", {half_root_pi})), (ib->Exp(ib->Emit("Neg", {x_square}))))));
   return {dx};
 });
 
@@ -308,14 +307,14 @@ REG_BPROP_BUILDER("Pow").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
                           ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(x)), ib->Value<ShapeVector>(ib->GetShape(x)),
                                             ib->Tensor(1, ib->GetDtype(x))}),
                           x});
-  auto bc_dpower = ib->Mul((ib->Mul(out, (ib->Emit("Log", {x})))), dout);
+  auto bc_dpower = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
   return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
 });
 
-REG_BPROP_BUILDER("Exp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER(kExpOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto g = ib->Emit("Exp", {x});
+  auto g = ib->Exp(x);
   auto dx = ib->Mul(g, dout);
   return {dx};
 });
@@ -323,7 +322,7 @@ REG_BPROP_BUILDER("Exp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
 REG_BPROP_BUILDER("Expm1").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto g = ib->Emit("Exp", {x});
+  auto g = ib->Exp(x);
   auto dx = ib->Mul(g, dout);
   return {dx};
 });
@@ -577,8 +576,9 @@ REG_BPROP_BUILDER("LuUnpack").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto lu_data = ib->GetInput(kIndex0);
   auto lu_pivots = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto tmp = ib->Emit("LuUnpackGrad", {ib->TupleGetItem(dout, 1), ib->TupleGetItem(dout, 2), lu_data},
-                      {{"L_grad_flag", MakeValue(true)}, {"U_grad_flag", MakeValue(true)}});
+  auto tmp = ib->Emit(
+    "LuUnpackGrad", {ib->TupleGetItem(dout, 1), ib->TupleGetItem(dout, 2), lu_data},
+    {{"L_grad_flag", MakeValue(true)}, {"U_grad_flag", MakeValue(true)}, {"cust_aicpu", MakeValue("LuUnpackGrad")}});
   auto dl = ib->TupleGetItem(tmp, 0);
   auto du = ib->TupleGetItem(tmp, 1);
   auto lu_data_grad = ib->Add(dl, du);
@@ -893,7 +893,7 @@ REG_BPROP_BUILDER("Erfinv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   auto sqrt = ib->Emit("Sqrt", {ib->Tensor(pi, out_type)});
   auto root_pi_over_two = ib->RealDiv(sqrt, ib->Tensor(2, ib->GetDtype(sqrt)));
   auto out_square = ib->Emit("Square", {out});
-  auto dx = ib->Mul((ib->Mul(dout, root_pi_over_two)), (ib->Emit("Exp", {out_square})));
+  auto dx = ib->Mul((ib->Mul(dout, root_pi_over_two)), (ib->Exp(out_square)));
   return {dx};
 });
 
@@ -1024,11 +1024,11 @@ REG_BPROP_BUILDER("Betainc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto dout = ib->GetInput(kIndex4);
   auto sx = ib->GetShape(input_x);
   auto log_beta = (LGamma(ib, input_a) + LGamma(ib, input_b)) - LGamma(ib, ib->Add(input_a, input_b));
-  auto partial_x = ib->Emit(
-    "Exp", {ib->Sub((ib->Add((ib->Mul((ib->Sub(input_b, ib->Tensor(1, ib->GetDtype(input_b)))),
-                                      (ib->Emit("Log1p", {ib->Neg(input_x)})))),
-                             (ib->Emit("Xlogy", {ib->Sub(input_a, ib->Tensor(1, ib->GetDtype(input_b))), input_x})))),
-                    log_beta)});
+  auto partial_x = ib->Exp(ib->Sub(
+    (ib->Add(
+      (ib->Mul((ib->Sub(input_b, ib->Tensor(1, ib->GetDtype(input_b)))), (ib->Emit("Log1p", {ib->Neg(input_x)})))),
+      (ib->Emit("Xlogy", {ib->Sub(input_a, ib->Tensor(1, ib->GetDtype(input_b))), input_x})))),
+    log_beta));
   return {ib->ZerosLike(input_a), ib->ZerosLike(input_b), ib->Reshape(ib->Mul(partial_x, dout), sx)};
 });
 
@@ -1657,17 +1657,17 @@ REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody([](const BpropIRBuilder *ib) ->
   }
   dtype_min = ib->Emit("BroadcastTo", {dtype_min}, {{"shape", MakeValue(ib->GetShape(dout))}});
   auto log_grad_positive =
-    ib->Emit("Select", {ib->Greater(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Emit("Log", {dout}), dtype_min});
-  auto log_grad_negative = ib->Emit(
-    "Select", {ib->Less(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Emit("Log", {ib->Neg(dout)}), dtype_min});
+    ib->Emit("Select", {ib->Greater(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Log(dout), dtype_min});
+  auto log_grad_negative =
+    ib->Emit("Select", {ib->Less(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Log(ib->Neg(dout)), dtype_min});
   auto output_pos =
-    ib->Emit("Exp", {ib->Add((ib->Emit("CumulativeLogsumexp", {ib->Sub(log_grad_positive, out), axis},
-                                       {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}})),
-                             x)});
+    ib->Exp(ib->Add((ib->Emit("CumulativeLogsumexp", {ib->Sub(log_grad_positive, out), axis},
+                              {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}})),
+                    x));
   auto output_neg =
-    ib->Emit("Exp", {ib->Add((ib->Emit("CumulativeLogsumexp", {ib->Sub(log_grad_negative, out), axis},
-                                       {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}})),
-                             x)});
+    ib->Exp(ib->Add((ib->Emit("CumulativeLogsumexp", {ib->Sub(log_grad_negative, out), axis},
+                              {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}})),
+                    x));
   if (fp64_flag) {
     output_pos = ib->Cast(output_pos, kFloat64);
     output_neg = ib->Cast(output_neg, kFloat64);
@@ -1693,10 +1693,8 @@ NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
   auto rx = rax[1];
   auto partial_a = ib->Emit("IgammaGradA", {a, x});
   auto lgamma = LGamma(ib, a);
-  auto partial_x = ib->Emit(
-    "Exp",
-    {ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Emit("Log", {x})))))),
-             lgamma)});
+  auto partial_x = ib->Exp(
+    ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
   NodePtr r1, r2;
   if (ra.size()) {
     r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra), sa);
@@ -1718,5 +1716,12 @@ REG_BPROP_BUILDER("Igammac").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   r_dx[0] = ib->Neg(r_dx[0]);
   r_dx[1] = ib->Neg(r_dx[1]);
   return r_dx;
+});
+
+REG_BPROP_BUILDER("Einsum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("EinsumGrad", {x, dout}, {{"equation", ib->GetAttr("equation")}});
+  return {dx};
 });
 }  // namespace mindspore::expander::bprop

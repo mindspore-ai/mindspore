@@ -261,7 +261,7 @@ REG_BPROP_BUILDER("Pack").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto ret = ib->Emit("UnstackWithNum", {dout}, {{"num", ib->GetAttr("num")}, {"axis", ib->GetAttr("axis")}});
+  auto ret = ib->Emit("Unstack", {dout}, {{"num", ib->GetAttr("num")}, {"axis", ib->GetAttr("axis")}});
   return {ret};
 });
 
@@ -269,7 +269,7 @@ REG_BPROP_BUILDER("Stack").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto ret = ib->Emit("UnstackWithNum", {dout}, {{"num", ib->GetAttr("num")}, {"axis", ib->GetAttr("axis")}});
+  auto ret = ib->Emit("Unstack", {dout}, {{"num", ib->GetAttr("num")}, {"axis", ib->GetAttr("axis")}});
   return {ret};
 });
 
@@ -424,20 +424,16 @@ REG_BPROP_BUILDER("BatchMatMul").SetBody([](const BpropIRBuilder *ib) -> NodePtr
 
   NodePtr dx;
   if (ta) {
-    dx =
-      ib->Emit("BatchMatMul", {w, dout}, {{"transpose_a", MakeValue(ta && tb)}, {"transpose_b", MakeValue(ta || !tb)}});
+    dx = ib->BatchMatMul(w, dout, (ta && tb), (ta || !tb));
   } else {
-    dx =
-      ib->Emit("BatchMatMul", {dout, w}, {{"transpose_a", MakeValue(ta && tb)}, {"transpose_b", MakeValue(ta || !tb)}});
+    dx = ib->BatchMatMul(dout, w, (ta && tb), (ta || !tb));
   }
 
   NodePtr dw;
   if (tb) {
-    dw = ib->Emit("BatchMatMul", {dout, x},
-                  {{"transpose_a", MakeValue((!ta) || tb)}, {"transpose_b", MakeValue(ta && tb)}});
+    dw = ib->BatchMatMul(dout, x, ((!ta) || tb), (ta && tb));
   } else {
-    dw = ib->Emit("BatchMatMul", {x, dout},
-                  {{"transpose_a", MakeValue((!ta) || tb)}, {"transpose_b", MakeValue(ta && tb)}});
+    dw = ib->BatchMatMul(x, dout, ((!ta) || tb), (ta && tb));
   }
 
   return BinopGradCommonWithShift(ib, x, w, dx, dw, 2);
@@ -526,7 +522,9 @@ REG_BPROP_BUILDER(kConcatOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
   // use Split if is_uniform is true
   if (is_uniform) {
     auto input_nums = SizeToLong(input_shapes.size());
-    auto dx = ib->Emit(kSplitOpName, {dout}, {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(input_nums)}});
+    auto dx = ib->Emit(
+      kSplitOpName, {dout},
+      {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(input_nums)}, {"num_split", MakeValue(input_nums)}});
     return {dx};
   }
   // else use Slice
@@ -739,13 +737,18 @@ REG_BPROP_BUILDER("BroadcastTo").SetBody([](const BpropIRBuilder *ib) -> NodePtr
 
 REG_BPROP_BUILDER("SpaceToDepth").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex2);
-  return {
-    ib->Emit("DepthToSpace", {dout}, {{"block_size", ib->GetAttr("block_size")}, {"format", ib->GetAttr("format")}})};
+  return {ib->Emit("DepthToSpace", {dout},
+                   {{"block_size", ib->GetAttr("block_size")},
+                    {"data_format", MakeValue("NCHW")},
+                    {"format", ib->GetAttr("format")}})};
 });
 
 REG_BPROP_BUILDER("DepthToSpace").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex2);
-  return {ib->Emit("SpaceToDepth", {dout}, {{"block_size", ib->GetAttr("block_size")}})};
+  return {ib->Emit("SpaceToDepth", {dout},
+                   {{"block_size", ib->GetAttr("block_size")},
+                    {"data_format", MakeValue("NCHW")},
+                    {"format", ib->GetAttr("format")}})};
 });
 
 REG_BPROP_BUILDER("ScatterMax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -1136,11 +1139,9 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetBody([](const BpropIRBuilder *ib) -
                              {{"axis", MakeValue<int64_t>(-1)}});
   auto idx_map = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
-  auto sp_mat_full = ib->Emit(
-    "ScatterNd", {idx_map,
-                  ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(dout)), ib->Value<ShapeVector>({out_indices_num}),
-                                    ib->Tensor(1, ib->GetDtype(x))}),
-                  ib->Value<ShapeVector>(sp_shape)});
+  std::vector<int64_t> ones(out_indices_num, 1);
+  auto sp_mat_full =
+    ib->Emit("ScatterNd", {idx_map, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape)});
   auto sp_tensor = ib->Emit("Slice", {sp_mat_full, ib->Value<ShapeVector>({1, 0}),
                                       ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num})});
   auto grad = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>({0, 2, 3, 4, 1})});

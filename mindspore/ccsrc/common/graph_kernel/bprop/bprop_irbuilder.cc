@@ -185,10 +185,8 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
   for (const auto &[_axis, slice] : slices) {
     auto axis = CheckRange(_axis, static_cast<int64_t>(n));
     if (slice.size() >= kDim2) {
+      begin_strides[axis] = slice[kIndex0];
       end_strides[axis] = slice[kIndex1];
-      if (end_strides[axis] <= begin_strides[axis]) {
-        shrink_axis_mask |= (1 << axis);
-      }
       if (end_strides[axis] == LLONG_MAX) {
         end_mask |= (1 << axis);
       }

@@ -598,9 +598,9 @@ NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
   auto log_lanczos_tensor = ib->Tensor(log_lanczos_gamma_plus_one_half, input_dtype);
   auto t = ib->Add(z, lanczos_tensor);
   auto log_t = ib->Add((ib->Emit("Log1p", {ib->RealDiv(z, lanczos_tensor)})), log_lanczos_tensor);
-  auto log_y = ib->Add((ib->Add((ib->Emit("Log", {reflex_x})),
-                                (ib->Mul((ib->Sub((ib->Add(z, one_half)), (ib->RealDiv(t, log_t)))), log_t)))),
-                       log_sqrt_two_pi);
+  auto log_y = ib->Add(
+    (ib->Add((ib->Log(reflex_x)), (ib->Mul((ib->Sub((ib->Add(z, one_half)), (ib->RealDiv(t, log_t)))), log_t)))),
+    log_sqrt_two_pi);
   auto abs_input = ib->Emit("Abs", {x});
   auto abs_frac_input = ib->Sub(abs_input, (ib->Emit("Floor", {abs_input})));
   auto new_x = ib->Emit("Select", {ib->Emit("LessEqual", {x, zero}),
@@ -608,7 +608,7 @@ NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
   auto reduced_frac_input =
     ib->Emit("Select", {ib->Emit("Greater", {abs_frac_input, one_half}), ib->Sub(one, abs_frac_input), abs_frac_input});
   auto reflection_denom =
-    ib->Emit("Log", {ib->Emit("Sin", {ib->Mul(ib->Tensor(pi, ib->GetDtype(reduced_frac_input)), reduced_frac_input)})});
+    ib->Log(ib->Emit("Sin", {ib->Mul(ib->Tensor(pi, ib->GetDtype(reduced_frac_input)), reduced_frac_input)}));
   auto reflection =
     ib->Emit("Select", {ib->Emit("IsFinite", {reflection_denom}),
                         ib->Add((ib->Sub((ib->Neg(reflection_denom)), log_y)), ib->Tensor(log_pi, ib->GetDtype(log_y))),

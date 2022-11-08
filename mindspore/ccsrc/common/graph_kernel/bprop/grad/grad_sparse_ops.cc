@@ -153,8 +153,9 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetBody([](const BpropIRBuilder *ib
   }
   constexpr int64_t axis = -1;
   constexpr int64_t output_num = 2;
-  auto split_indices =
-    ib->Emit(kSplitOpName, {indices}, {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(output_num)}});
+  auto split_indices = ib->Emit(
+    kSplitOpName, {indices},
+    {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(output_num)}, {"num_split", MakeValue(output_num)}});
   auto rows = ib->ReduceSum(ib->TupleGetItem(split_indices, kIndex0), {axis});
   auto cols = ib->ReduceSum(ib->TupleGetItem(split_indices, kIndex1), {axis});
   auto zero = ib->Value<int64_t>(0);
@@ -528,5 +529,73 @@ REG_BPROP_BUILDER("SparseTensorDenseAdd").SetBody([](const BpropIRBuilder *ib) -
   auto x1_shape = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex5);
   return {ib->ZerosLike(x1_indices), ib->Emit("GatherNd", {dout, x1_indices}), ib->ZerosLike(x1_shape), dout};
+});
+
+REG_BPROP_BUILDER("SparseSegmentMeanWithNumSegments").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  return CommonSparseSegmentBprop(ib, "SparseSegmentMeanGrad", true);
+});
+
+REG_BPROP_BUILDER("SparseReorder").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto indices = ib->GetInput(kIndex0);
+  auto shape = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto num_entries = ib->GetShape(indices)[0];
+  auto start = ib->Tensor(0, kInt32);
+  auto limit = ib->Tensor(LongToInt(num_entries), kInt32);
+  auto delta = ib->Tensor(1, kInt32);
+  constexpr int64_t max_len = 1000000;
+  auto entry_indices = ib->Emit("Range", {start, limit, delta}, {{"maxlen", MakeValue(max_len)}});
+  auto output = ib->Emit("SparseReorder", {indices, entry_indices, shape});
+  constexpr int64_t sort_axis = -1;
+  constexpr int64_t gather_axis = 0;
+  auto inverted_permutation = ib->Emit("Sort", {ib->Cast(ib->TupleGetItem(output, 1), kFloat32)},
+                                       {{"axis", MakeValue(sort_axis)}, {"descending", MakeValue(false)}});
+  auto res = {
+    ib->ZerosLike(indices),
+    ib->Emit("Gather", {ib->TupleGetItem(dout, 1), ib->TupleGetItem(inverted_permutation, 1), ib->Value(gather_axis)}),
+    ib->ZerosLike(shape)};
+  return res;
+});
+
+REG_BPROP_BUILDER("SparseDenseCwiseMul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x1_indices = ib->GetInput(kIndex0);
+  auto x1_values = ib->GetInput(kIndex1);
+  auto x1_shape = ib->GetInput(kIndex2);
+  auto x2 = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto x2_shape = ib->GetShape(x2);
+  auto scaling = ib->RealDiv(x1_shape, ib->Tensor(x2_shape));
+  auto scaled_indices = ib->RealDiv(x1_indices, scaling);
+  std::vector<int64_t> begin = {0, ib->GetSize(x1_shape) - SizeToLong(x2_shape.size())};
+  std::vector<int64_t> size = {-1, -1};
+  scaled_indices = ib->Cast(ib->Emit("Slice", {scaled_indices, ib->Value(begin), ib->Value(size)}), kInt64);
+  auto dense_vals = ib->Emit("GatherNd", {x2, scaled_indices});
+  auto dx1 = ib->Mul(dout, dense_vals);
+  auto dx2_val = ib->Mul(dout, x1_values);
+  auto dx2 = ib->Emit("SparseTensorDenseAdd", {scaled_indices, dx2_val, ib->Tensor(x2_shape), ib->ZerosLike(x2)});
+  NodePtrList d_all = {ib->ZerosLike(x1_indices), dx1, ib->ZerosLike(x1_shape), dx2};
+  return d_all;
+});
+
+REG_BPROP_BUILDER("SparseDenseCwiseDiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+  auto x1_indices = ib->GetInput(kIndex0);
+  auto x1_values = ib->GetInput(kIndex1);
+  auto x1_shape = ib->GetInput(kIndex2);
+  auto x2 = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto x2_shape = ib->GetShape(x2);
+  auto scaling = ib->RealDiv(x1_shape, ib->Tensor(x2_shape));
+  auto scaled_indices = ib->RealDiv(x1_indices, scaling);
+  std::vector<int64_t> begin = {0, ib->GetSize(x1_shape) - SizeToLong(x2_shape.size())};
+  std::vector<int64_t> size = {-1, -1};
+  scaled_indices = ib->Cast(ib->Emit("Slice", {scaled_indices, ib->Value(begin), ib->Value(size)}), kInt64);
+  auto dense_vals = ib->Emit("GatherNd", {x2, scaled_indices});
+  auto dx1 = ib->RealDiv(dout, dense_vals);
+  auto dense_vals_2 = ib->Mul(dense_vals, dense_vals);
+  auto w = ib->Neg(ib->RealDiv(x1_values, dense_vals_2));
+  auto dx2_val = ib->Mul(dout, w);
+  auto dx2 = ib->Emit("SparseTensorDenseAdd", {scaled_indices, dx2_val, ib->Tensor(x2_shape), ib->ZerosLike(x2)});
+  NodePtrList d_all = {ib->ZerosLike(x1_indices), dx1, ib->ZerosLike(x1_shape), dx2};
+  return d_all;
 });
 }  // namespace mindspore::expander::bprop

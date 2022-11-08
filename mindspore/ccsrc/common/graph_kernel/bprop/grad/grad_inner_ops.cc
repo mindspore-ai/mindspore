@@ -23,7 +23,7 @@ namespace mindspore::expander::bprop {
 static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
   auto eye = ib->Emit("Eye", {ib->EmitValue(MakeValue(x_shape.back())), ib->EmitValue(MakeValue(x_shape.back())),
                               ib->EmitValue(x_dtype)});
-  auto base_eye = ib->Emit("Flatten", {eye});
+  auto base_eye = ib->Reshape(eye, {-1});
   ShapeVector shape2(x_shape.begin(), x_shape.end() - 1);
   auto tile = ib->Emit("Tile", {base_eye, ib->EmitValue(MakeValue(shape2))});
   auto shape3 = x_shape;
@@ -34,7 +34,7 @@ static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &
 static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
   auto eye = ib->Emit("Eye", {ib->EmitValue(MakeValue(x_shape[x_shape.size() - kDim2])),
                               ib->EmitValue(MakeValue(x_shape.back())), ib->EmitValue(x_dtype)});
-  auto base_eye = ib->Emit("Flatten", {eye});
+  auto base_eye = ib->Reshape(eye, {-1});
   ShapeVector shape2(x_shape.begin(), x_shape.end() - kDim2);
   auto tile = ib->Emit("Tile", {base_eye, ib->EmitValue(MakeValue(shape2))});
   return ib->Reshape(tile, x_shape);

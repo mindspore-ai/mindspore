@@ -72,6 +72,8 @@ class Emitter {
   NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kDivOpName, {lhs, rhs}); }
   NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kRealDiv, {lhs, rhs}); }
   NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kPowOpName, {lhs, rhs}); }
+  NodePtr Exp(const NodePtr &x) const;
+  NodePtr Log(const NodePtr &x) const;
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
   NodePtr BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
