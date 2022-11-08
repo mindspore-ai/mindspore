@@ -104,6 +104,8 @@ tensor_le = P.LessEqual()
 tensor_gt = P.Greater()
 tensor_ge = P.GreaterEqual()
 not_equal = P.NotEqual()
+size_ = P.Size()
+transpose_ = P.Transpose()
 
 #####################################
 # Private Operation Functions.
@@ -463,6 +465,87 @@ def neg(x):
         [-1.  -2.   1.  -2.   0.   3.5]
     """
     return neg_tensor(x)
+
+
+def positive(x):
+    r"""
+    Return self Tensor.
+
+    Args:
+        x(Tensor): Input Tensor.
+
+    Returns:
+        Tensor, self input.
+
+    Raises:
+        TypeError: If the dtype of self Tensor is bool type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), ms.float32)
+        >>> print(ops.positive(x))
+        [-5.0, 1.5, 3.0, 100.0]
+    """
+    if x.dtype == mstype.bool_:
+        raise TypeError("For positive, the type of tensor can not be bool.")
+    return x
+
+
+def numel(x):
+    r"""
+    Returns a Scalar of type int that represents the total number of elements in the Tensor.
+
+    Args:
+        x (Tensor): Input Tensor.
+
+    Returns:
+        int. A scalar representing the total of elements in the Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+        >>> print(ops.numel(input_x))
+        4
+    """
+    return size_(x)
+
+
+def permute(x, dims):
+    """
+    Permutes the dimensions of the input tensor according to input `dims` .
+
+    Args:
+        x(Tensor): Input Tensor.
+        dims(Union[tuple(int), list(int), int]): Permute will permute the tensor to the input `dims` order.
+
+    Returns:
+        Tensor, has the same dimension as input tensor, with `dims` suitably permuted.
+
+    Raises:
+        ValueError: If `dims` is none.
+        ValueError: If the number of `dims` is not equal to Tensor's ndim.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+        >>> input_perm = (0, 2, 1)
+        >>> print(ops.permute(input_x, input_perm))
+        [[[ 1.  4.]
+          [ 2.  5.]
+          [ 3.  6.]]
+         [[ 7. 10.]
+          [ 8. 11.]
+          [ 9. 12.]]]
+    """
+    return transpose_(x, dims)
 
 
 def ceil(x):
@@ -6970,6 +7053,8 @@ __all__ = [
     'equal',
     'not_equal',
     'ne',
+    'numel',
+    'permute',
     'inplace_update',
     'inplace_add',
     'inplace_sub',
@@ -6987,6 +7072,7 @@ __all__ = [
     'maximum',
     'minimum',
     'median',
+    'positive',
     'floor',
     'logical_not',
     'logical_or',

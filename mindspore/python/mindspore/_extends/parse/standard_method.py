@@ -1080,6 +1080,38 @@ def rot90(x, k, dims):
     return F.rot90(x, k, dims)
 
 
+def numel(x):
+    """
+    Returns a Scalar of type int that represents the total number of elements in the Tensor.
+    """
+    return F.numel(x)
+
+
+def permute(x, *dims):
+    """
+    Permutes the dimensions of the input tensor according to input permutation.
+    """
+    if dims is None:
+        raise ValueError(f"For Tensor.permute, the dims must not be none.")
+    if len(dims) == 1:
+        return F.permute(x, *dims)
+    return F.permute(x, dims)
+
+
+def positive(x):
+    """
+    Return self Tensor.
+    """
+    return F.positive(x)
+
+
+def remainder(x, divisor):
+    """
+    Returns element-wise remainder of division.
+    """
+    return F.remainder(x, divisor)
+
+
 def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
     """
     Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.

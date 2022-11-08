@@ -157,13 +157,18 @@
     mindspore.Tensor.ndim
     mindspore.Tensor.ndimension
     mindspore.Tensor.negative
+    mindspore.Tensor.nelement
+    mindspore.Tensor.numel
     mindspore.Tensor.nonzero
     mindspore.Tensor.norm
+    mindspore.Tensor.permute
+    mindspore.Tensor.positive
     mindspore.Tensor.pow
     mindspore.Tensor.prod
     mindspore.Tensor.ptp
     mindspore.Tensor.random_categorical
     mindspore.Tensor.ravel
+    mindspore.Tensor.remainder
     mindspore.Tensor.renorm
     mindspore.Tensor.repeat
     mindspore.Tensor.repeat_interleave

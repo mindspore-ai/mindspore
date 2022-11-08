@@ -1778,6 +1778,47 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('rot90')(self, k, dims)
 
+    def nelement(self):
+        r"""
+        Alias for numel().
+
+        For details, please refer to :func:`mindspore.ops.numel`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('nelement')(self)
+
+    def numel(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.numel`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('numel')(self)
+
+    def permute(self, *dims):
+        """
+        For details, please refer to :func:`mindspore.ops.permute`.
+        """
+        self._init_check()
+        if not dims:
+            raise ValueError(f"For Tensor.permute, the dims must not be none.")
+        if len(dims) == 1:
+            return tensor_operator_registry.get("permute")(self, *dims)
+        return tensor_operator_registry.get("permute")(self, dims)
+
+    def positive(self):
+        """
+        For details, please refer to :func:`mindspore.ops.positive`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get("positive")(self)
+
+    def remainder(self, divisor):
+        r"""
+        For details, please refer to :func:`mindspore.ops.remainder`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('remainder')(self, divisor)
+
     def flatten(self, order='C'):
         r"""
         For details, please refer to :func:`mindspore.ops.flatten`.

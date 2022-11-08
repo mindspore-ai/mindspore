@@ -201,6 +201,7 @@ Element-by-Element Operations
     mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.neg
+    mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.roll
     mindspore.ops.round
@@ -364,6 +365,8 @@ Array Operation
     mindspore.ops.meshgrid
     mindspore.ops.normal
     mindspore.ops.nonzero
+    mindspore.ops.numel
+    mindspore.ops.permute
     mindspore.ops.population_count
     mindspore.ops.range
     mindspore.ops.rank
