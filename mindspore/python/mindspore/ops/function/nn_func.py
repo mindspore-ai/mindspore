@@ -4160,7 +4160,7 @@ def glu(x, axis=-1):
         axis (int, optional): the dimension on which to split the input. It must be int. Default: -1.
 
     Returns:
-        Tensor of shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`, with the same dtype as the `x`.
+        Tensor, the same dtype as the `x`, with the shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`.
 
     Raises:
         TypeError: If dtype of `x` is not number.Number.
