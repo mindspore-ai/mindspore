@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kCenteredRMSPropInputsNum = 9;
-constexpr size_t kRMSPropInputsNum = 5;
+constexpr size_t kRMSPropInputsNum = 8;
 constexpr auto kApplyRMSProp = "ApplyRMSProp";
 constexpr auto kApplyCenteredRMSProp = "ApplyCenteredRMSProp";
 constexpr auto kNumberZero = 0;
@@ -44,8 +44,7 @@ constexpr auto kNumberEight = 8;
 template <typename T>
 class RMSPropGpuKernelMod : public NativeGpuKernelMod {
  public:
-  RMSPropGpuKernelMod()
-      : size_(1), use_center_(false), is_null_input_(false), decay_(0.0), momentum_(0.9), epsilon_(1e-12) {}
+  RMSPropGpuKernelMod() : size_(1), use_center_(false), is_null_input_(false) {}
   ~RMSPropGpuKernelMod() override = default;
   int CheckShapeEqual(std::vector<int64_t> size_a, std::vector<int64_t> size_b, const char *name_a,
                       const char *name_b) {
@@ -130,13 +129,16 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
       return true;
     }
     if (!use_center_) {
-      T *variable = GetDeviceAddress<T>(inputs, 0);
-      T *mean_square = GetDeviceAddress<T>(inputs, 1);
-      T *moment = GetDeviceAddress<T>(inputs, 2);
-      T *learning_rate = GetDeviceAddress<T>(inputs, 3);
-      T *gradients = GetDeviceAddress<T>(inputs, 4);
+      T *variable = GetDeviceAddress<T>(inputs, kNumberZero);
+      T *mean_square = GetDeviceAddress<T>(inputs, kNumberOne);
+      T *moment = GetDeviceAddress<T>(inputs, kNumberTwo);
+      T *learning_rate = GetDeviceAddress<T>(inputs, kNumberThree);
+      T *gradients = GetDeviceAddress<T>(inputs, kNumberFour);
+      T *decay = GetDeviceAddress<T>(inputs, kNumberFive);
+      T *momentum = GetDeviceAddress<T>(inputs, kNumberSix);
+      T *epsilon = GetDeviceAddress<T>(inputs, kNumberSeven);
 
-      RmsProp(batch_size_, input_elements_, learning_rate, decay_, momentum_, epsilon_, variable, mean_square, moment,
+      RmsProp(batch_size_, input_elements_, learning_rate, decay, momentum, epsilon, variable, mean_square, moment,
               gradients, size_, reinterpret_cast<cudaStream_t>(stream));
     } else {
       T *variable = GetDeviceAddress<T>(inputs, 0);
@@ -161,12 +163,6 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
     batch_rank_ = base_operator->get_batch_rank();
     if (node_name == "ApplyCenteredRMSProp") {
       use_center_ = true;
-    }
-    if (node_name == "ApplyRMSProp") {
-      auto kernel_ptr = std::make_shared<ops::ApplyRMSProp>(base_operator->GetPrim());
-      decay_ = kernel_ptr->get_attr("rho");
-      momentum_ = kernel_ptr->get_attr("momentum");
-      epsilon_ = kernel_ptr->get_attr("epsilon");
     }
     auto input_shape = inputs[0]->GetShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, node_name, "var");
@@ -207,9 +203,6 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
   size_t size_;
   bool use_center_;
   bool is_null_input_;
-  float decay_;
-  float momentum_;
-  float epsilon_;
   int64_t batch_size_{1};
   int64_t batch_rank_{0};
   int64_t input_elements_;

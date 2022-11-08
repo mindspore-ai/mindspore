@@ -91,7 +91,7 @@ int TileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     }
     multiples = GetValue<std::vector<int64_t>>(multi_attr);
   } else {
-    GetDynamicAttrIntValue(inputs, kIndex1, inputsOnHost, kernel_name_, &multiples);
+    TryGetIntValue(inputs, kIndex1, kernel_name_, &multiples);
   }
   int64_t filling_value = static_cast<int64_t>(multiples.size()) - static_cast<int64_t>(input_shape_.size());
   (void)input_shape_.insert(input_shape_.begin(), filling_value, kIndex1);

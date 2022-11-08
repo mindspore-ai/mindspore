@@ -223,8 +223,8 @@ int SliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
                               const std::vector<KernelTensorPtr> &outputs,
                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   if (is_dynamic_attr_) {
-    if (GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_) &&
-        GetDynamicAttrIntValue(inputs, kSizeIndex_, inputsOnHost, kernel_name_, &size_)) {
+    if (TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_) &&
+        TryGetIntValue(inputs, kSizeIndex_, kernel_name_, &size_)) {
       get_dynamic_attr_value_ = true;
       ProccessAttr(inputs);
     }

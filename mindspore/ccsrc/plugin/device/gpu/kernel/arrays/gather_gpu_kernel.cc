@@ -384,7 +384,7 @@ int GatherFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     }
     dim_value = value_res.second;
   } else {
-    if (!GetDynamicAttrIntValue(inputs, 1, inputsOnHost, kernel_name_, &dim_value)) {
+    if (!TryGetIntValue(inputs, 1, kernel_name_, &dim_value)) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', dim value must be valid.";
       return KRET_RESIZE_FAILED;
     }

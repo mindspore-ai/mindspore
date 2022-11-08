@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kCenteredRMSPropInputsNum = 9;
-constexpr size_t kRMSPropInputsNum = 5;
+constexpr size_t kRMSPropInputsNum = 8;
 constexpr auto kApplyRMSProp = "ApplyRMSProp";
 constexpr auto kApplyCenteredRMSProp = "ApplyCenteredRMSProp";
 constexpr auto kNumberZero = 0;
@@ -42,20 +42,23 @@ constexpr auto kNumberEight = 8;
 
 template <typename T>
 void RMSPropCpuKernelMod::LaunchRMSPropUnuseCenter(T *variable, T *mean_square, T *moment, T *gradients,
-                                                   float *learning_rate) {
+                                                   float *learning_rate, float *decay, float *momentum,
+                                                   float *epsilon) {
   std::function<void(size_t, size_t)> task;
   for (int64_t b = 0; b < batch_size_; b++) {
     if (dtype_ == kNumberTypeFloat32) {
-      task = [this, &variable, &mean_square, &moment, &gradients, &learning_rate](size_t start, size_t end) {
-        (void)RMSPropUnuseCenterFp32(variable, mean_square, moment, gradients, momentum_, learning_rate[0], decay_,
-                                     epsilon_, start, end);
+      task = [this, &variable, &mean_square, &moment, &gradients, &learning_rate, &decay, &momentum, &epsilon](
+               size_t start, size_t end) {
+        (void)RMSPropUnuseCenterFp32(variable, mean_square, moment, gradients, momentum[0], learning_rate[0], decay[0],
+                                     epsilon[0], start, end);
       };
     } else {
       // multithreading
-      task = [this, &variable, &mean_square, &moment, &gradients, &learning_rate](size_t start, size_t end) {
+      task = [this, &variable, &mean_square, &moment, &gradients, &learning_rate, &decay, &momentum, &epsilon](
+               size_t start, size_t end) {
         for (size_t i = start; i < end; i++) {
-          mean_square[i] += (gradients[i] * gradients[i] - mean_square[i]) * (1.0 - decay_);
-          moment[i] = moment[i] * momentum_ + (gradients[i] * learning_rate[0]) / sqrt(mean_square[i] + epsilon_);
+          mean_square[i] += (gradients[i] * gradients[i] - mean_square[i]) * (1.0 - decay[0]);
+          moment[i] = moment[i] * momentum[0] + (gradients[i] * learning_rate[0]) / sqrt(mean_square[i] + epsilon[0]);
           variable[i] -= moment[i];
         }
       };
@@ -116,13 +119,6 @@ bool RMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   if (node_name == "ApplyCenteredRMSProp") {
     use_center_ = true;
   }
-  if (node_name == "ApplyRMSProp") {
-    auto kernel_ptr = std::make_shared<ops::ApplyRMSProp>(base_operator->GetPrim());
-    decay_ = kernel_ptr->get_attr("rho");
-    momentum_ = kernel_ptr->get_attr("momentum");
-    epsilon_ = kernel_ptr->get_attr("epsilon");
-  }
-
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
   }
@@ -214,10 +210,13 @@ bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     float *moment = reinterpret_cast<float *>(inputs[kNumberTwo]->addr);
     float *learning_rate = reinterpret_cast<float *>(inputs[kNumberThree]->addr);
     float *gradients = reinterpret_cast<float *>(inputs[kNumberFour]->addr);
+    float *decay = reinterpret_cast<float *>(inputs[kNumberFive]->addr);
+    float *momentum = reinterpret_cast<float *>(inputs[kNumberSix]->addr);
+    float *epsilon = reinterpret_cast<float *>(inputs[kNumberSeven]->addr);
 
     size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
     MS_LOG(INFO) << "RMSPropCpuKernelMod lens:" << lens << " size_:" << size_;
-    LaunchRMSPropUnuseCenter<T>(variable, mean_square, moment, gradients, learning_rate);
+    LaunchRMSPropUnuseCenter<T>(variable, mean_square, moment, gradients, learning_rate, decay, momentum, epsilon);
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
     T *variable = reinterpret_cast<float *>(inputs[kNumberZero]->addr);
@@ -241,6 +240,9 @@ bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 std::map<std::string, std::vector<std::pair<KernelAttr, RMSPropCpuKernelMod::RMSPropFunc>>>
   RMSPropCpuKernelMod::func_list_ = {{kApplyRMSProp,
                                       {{KernelAttr()
+                                          .AddInputAttr(kNumberTypeFloat32)
+                                          .AddInputAttr(kNumberTypeFloat32)
+                                          .AddInputAttr(kNumberTypeFloat32)
                                           .AddInputAttr(kNumberTypeFloat32)
                                           .AddInputAttr(kNumberTypeFloat32)
                                           .AddInputAttr(kNumberTypeFloat32)

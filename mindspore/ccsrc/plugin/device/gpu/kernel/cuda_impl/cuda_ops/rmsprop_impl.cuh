@@ -20,8 +20,8 @@
 
 template <typename T>
 CUDA_LIB_EXPORT void RmsProp(const size_t batch_size, const size_t input_elements, const T *learning_rate,
-                             const T decay, const T momentum, const T epsilon, T *variable, T *mean_square, T *moment,
-                             T *gradients, const size_t size, cudaStream_t cuda_stream);
+                             const T *decay, const T *momentum, const T *epsilon, T *variable, T *mean_square,
+                             T *moment, T *gradients, const size_t size, cudaStream_t cuda_stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void RmsPropCenter(const size_t batch_size, const size_t input_elements, const T *learning_rate,

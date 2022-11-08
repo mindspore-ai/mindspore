@@ -388,35 +388,6 @@ inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t inde
   return reinterpret_cast<T *>(addr_list[index]->addr);
 }
 
-BACKEND_EXPORT std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
-  const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-  const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name, bool data_from_host);
-
-inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                                   const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
-                                   int64_t *attr_value, bool data_from_host = true) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name, data_from_host);
-  if (!res.has_value()) {
-    return false;
-  }
-  if (res.value().empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', value of the dynamic attr is empty!";
-  }
-  *attr_value = res.value()[0];
-  return true;
-}
-
-inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                                   const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
-                                   std::vector<int64_t> *attr_value, bool data_from_host = true) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name, data_from_host);
-  if (!res.has_value()) {
-    return false;
-  }
-  *attr_value = res.value();
-  return true;
-}
-
 BACKEND_EXPORT std::optional<std::vector<int64_t>> TryGetIntValueFromInputs(const std::vector<KernelTensorPtr> &inputs,
                                                                             const size_t input_index,
                                                                             const std::string &kernel_name,
