@@ -274,6 +274,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
         param_proto->set_name(param_graph.parameter(param_index).name());
         param_proto->set_data_type(param_graph.parameter(param_index).data_type());
         param_proto->set_raw_data(param_graph.parameter(param_index).raw_data());
+        param_proto->set_compression_type(param_graph.parameter(param_index).compression_type());
         for (const auto &dim : param_graph.parameter(param_index).dims()) {
           param_proto->add_dims(dim);
         }

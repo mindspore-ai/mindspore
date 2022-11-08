@@ -274,7 +274,21 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   for (int i = 0; i < attr_tensor.dims_size(); ++i) {
     shape.push_back(attr_tensor.dims(i));
   }
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+  tensor::TensorPtr tensor = nullptr;
+  if (!attr_tensor.has_compression_type() ||
+      attr_tensor.compression_type() == mind_ir::TensorProto_CompressionType_NO_COMPRESSION) {
+    tensor = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+  } else {
+    auto compression_type = static_cast<TensorCompressionType>(static_cast<int>(attr_tensor.compression_type()));
+    size_t data_size = 0;
+    if (!attr_tensor.has_external_data()) {
+      data_size = attr_tensor.raw_data().size();
+    } else {
+      data_size = attr_tensor.external_data().length();
+    }
+    tensor =
+      std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape, data_size, compression_type);
+  }
 
   if (!IsIncLoad() || load_tensor_map_.find(attr_tensor.name()) == load_tensor_map_.end()) {
     load_tensor_map_[attr_tensor.name()] = tensor;
@@ -974,7 +988,21 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
     for (int j = 0; j < attr_tensor.dims_size(); ++j) {
       shape.push_back(attr_tensor.dims(j));
     }
-    tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+    tensor::TensorPtr tensor_info = nullptr;
+    if (!attr_tensor.has_compression_type() ||
+        attr_tensor.compression_type() == mind_ir::TensorProto_CompressionType_NO_COMPRESSION) {
+      tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+    } else {
+      auto compression_type = static_cast<TensorCompressionType>(static_cast<int>(attr_tensor.compression_type()));
+      size_t data_size = 0;
+      if (!attr_tensor.has_external_data()) {
+        data_size = attr_tensor.raw_data().size();
+      } else {
+        data_size = attr_tensor.external_data().length();
+      }
+      tensor_info =
+        std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape, data_size, compression_type);
+    }
     const std::string &tensor_buf = attr_tensor.raw_data();
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     errno_t ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
