@@ -6168,7 +6168,7 @@ class LuSolve(Primitive):
         ValueError: If `x` dimension less than 2, `lu_data` dimension less than 2 or `lu_pivots` dimension less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([[1], [3], [3]]), mindspore.float32)
