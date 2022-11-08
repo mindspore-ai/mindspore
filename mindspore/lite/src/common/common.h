@@ -68,6 +68,9 @@ static const char *const kGPUContext = "gpu_context";
 static const char *const kInputShape = "input_shape";
 static const char *const kDynamicDims = "dynamic_dims";
 static const char *const kOptimizeDims = "opt_dims";
+static const char *const kPrecisionMode = "precision_mode";
+static const char *const kDumpOps = "dump_ops";
+static const char *const kDumpDir = "dump_dir";
 }  // namespace lite
 }  // namespace mindspore
 

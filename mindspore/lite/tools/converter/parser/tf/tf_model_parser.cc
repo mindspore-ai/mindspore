@@ -165,24 +165,33 @@ STATUS SetInt32TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     MS_LOG(ERROR) << "new data failed";
     return RET_ERROR;
   }
-
-  if (tensor_proto.int_val_size() == 1) {
-    for (int i = 0; i < shape_size; i++) {
-      tensor_data[i] = tensor_proto.int_val(0);
+  if (shape_size == 0) {
+    return RET_OK;
+  }
+  if (tensor_proto.tensor_content().empty()) {
+    const auto &origin_data = tensor_proto.int_val();
+    if (tensor_proto.int_val_size() == 1) {
+      for (int i = 0; i < shape_size; ++i) {
+        tensor_data[i] = origin_data[0];
+      }
+    } else {
+      MS_CHECK_GE(tensor_proto.int_val_size(), shape_size, RET_ERROR);
+      for (int i = 0; i < shape_size; ++i) {
+        tensor_data[i] = origin_data[i];
+      }
     }
-  }
-  if (INT_MUL_OVERFLOW_THRESHOLD(shape_size, sizeof(int32_t), SIZE_MAX)) {
-    MS_LOG(ERROR) << "data_size overflow.";
-    return RET_ERROR;
-  }
-  if (shape_size != 0 && tensor_proto.tensor_content().size() == shape_size * sizeof(int32_t)) {
+  } else {
+    if (INT_MUL_OVERFLOW_THRESHOLD(shape_size, sizeof(int32_t), SIZE_MAX)) {
+      MS_LOG(ERROR) << "data_size overflow.";
+      return RET_ERROR;
+    }
+    MS_CHECK_GE(tensor_proto.tensor_content().size(), shape_size * sizeof(int32_t), RET_ERROR);
     const auto addr = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
     if (::memcpy_s(tensor_data, (*tensor_info)->Size(), addr, shape_size * sizeof(int32_t)) != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed";
       return RET_ERROR;
     }
   }
-
   return RET_OK;
 }
 
@@ -203,14 +212,29 @@ STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     MS_LOG(ERROR) << "new data failed";
     return RET_ERROR;
   }
-  if (tensor_proto.tensor_shape().dim_size() == 0) {  // scalar
+  if (shape_size == 0) {
+    return RET_OK;
+  }
+  if (tensor_proto.tensor_content().empty()) {
     const auto &origin_data = tensor_proto.int64_val();
-    for (int i = 0; i < tensor_proto.int64_val_size(); ++i) {
-      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(ERROR) << "int64 data " << origin_data[i] << "too big to fit into int32";
+    if (tensor_proto.int64_val_size() == 1) {
+      auto dim_val = origin_data[0];
+      if (dim_val > static_cast<int64_t>(INT32_MAX) || dim_val < static_cast<int64_t>(INT32_MIN)) {
+        MS_LOG(ERROR) << "int64 data " << dim_val << "too big to fit into int32";
         return RET_ERROR;
-      } else {
-        tensor_data[i] = static_cast<int>(origin_data[i]);
+      }
+      for (int i = 0; i < shape_size; ++i) {
+        tensor_data[i] = static_cast<int>(dim_val);
+      }
+    } else {
+      MS_CHECK_GE(tensor_proto.int64_val_size(), shape_size, RET_ERROR);
+      for (int i = 0; i < shape_size; ++i) {
+        auto dim_val = origin_data[i];
+        if (dim_val > static_cast<int64_t>(INT32_MAX) || dim_val < static_cast<int64_t>(INT32_MIN)) {
+          MS_LOG(ERROR) << "int64 data " << dim_val << "too big to fit into int32";
+          return RET_ERROR;
+        }
+        tensor_data[i] = static_cast<int>(dim_val);
       }
     }
   } else {
@@ -1007,7 +1031,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   MSLITE_CHECK_PTR(anf_node_map);
   STATUS status = RET_OK;
   const auto &op_type = node_def.op();
-  if (op_type == "Identity" || op_type == "StopGradient") {
+  if (op_type == "Identity" || op_type == "StopGradient" || op_type == "NoOp") {
     return RET_OK;
   } else if (op_type == "Placeholder" || op_type == "Const") {
     node_output_num_[node_def.name()] = 1;

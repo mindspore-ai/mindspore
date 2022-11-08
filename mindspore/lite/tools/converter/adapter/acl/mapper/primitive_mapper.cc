@@ -123,29 +123,33 @@ void PrimitiveMapper::AdjustCaffePoolAttr(const std::string &src_prim_name, cons
 
 void PrimitiveMapper::AdjustOnnxPoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) const {
   auto pad_mode_val = dst_prim->GetAttr(ops::kPadMode);
-  if (pad_mode_val == nullptr) {
-    MS_LOG(INFO) << "There is no attr pad mode";
-    return;
-  }
   static std::map<int64_t, std::string> kPadModToStrMap = {
     {PadMode::PAD, "CALCULATED"},
     {PadMode::SAME, "SAME"},
     {PadMode::VALID, "VALID"},
   };
-  auto pad_mode = GetValue<int64_t>(pad_mode_val);
-  std::string padding_mode = "CALCULATED";
-  if (kPadModToStrMap.find(pad_mode) != kPadModToStrMap.end()) {
-    padding_mode = kPadModToStrMap[pad_mode];
+  if (pad_mode_val) {
+    auto pad_mode = GetValue<int64_t>(pad_mode_val);
+    std::string padding_mode = "CALCULATED";
+    if (kPadModToStrMap.find(pad_mode) != kPadModToStrMap.end()) {
+      padding_mode = kPadModToStrMap[pad_mode];
+    }
+    if (src_prim_name == ops::kNameMaxPool && padding_mode == "CALCULATED") {
+      padding_mode = "VALID";
+    }
+    std::string pad_mode_name = src_prim_name == acl::kNameMaxPoolV3 ? kNamePaddingMode : ops::kPadMode;
+    dst_prim->AddAttr(pad_mode_name, MakeValue(padding_mode));
+  } else {
+    MS_LOG(INFO) << "There is no attr pad mode";
   }
-  if (src_prim_name == ops::kNameMaxPool && padding_mode == "CALCULATED") {
-    padding_mode = "VALID";
-  }
-  std::string pad_mode_name = src_prim_name == acl::kNameMaxPoolV3 ? kNamePaddingMode : ops::kPadMode;
-  dst_prim->AddAttr(pad_mode_name, MakeValue(padding_mode));
   auto run_mode_val = dst_prim->GetAttr(ops::kRoundMode);
-  int64_t run_mode = GetValue<int64_t>(run_mode_val);
-  bool ceil_mode = run_mode == RoundMode::CEIL;
-  dst_prim->AddAttr(kNameCeilMode, MakeValue(ceil_mode));
+  if (run_mode_val) {
+    int64_t run_mode = GetValue<int64_t>(run_mode_val);
+    bool ceil_mode = run_mode == RoundMode::CEIL;
+    dst_prim->AddAttr(kNameCeilMode, MakeValue(ceil_mode));
+  } else {
+    MS_LOG(INFO) << "There is no attr run mode";
+  }
 }
 
 STATUS PrimitiveMapper::AdjustPoolAttr(int fmk_type, const std::string &src_prim_name,

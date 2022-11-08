@@ -72,6 +72,7 @@ class TensorRTExecutor : public LiteGraphExecutor {
                                                         const KernelGraphPtr &graph, int index,
                                                         const std::vector<TensorInfo> &inputs,
                                                         const std::vector<TensorInfo> &outputs);
+  int ParseDumpOptions(const std::map<std::string, std::string> &gpu_context);
 
   std::shared_ptr<mindspore::Context> context_{nullptr};
   ConfigInfos config_infos_;
@@ -94,6 +95,10 @@ class TensorRTExecutor : public LiteGraphExecutor {
   std::shared_ptr<TensorRTSubGraph> tensorrt_graph_ = nullptr;
   std::vector<TensorInfo> inputs_;
   std::vector<TensorInfo> outputs_;
+  std::vector<TensorInfo> dump_outputs_;
+  std::vector<std::string> dump_ops_;
+  std::string dump_dir_;
+  bool has_dumped_ = false;
 
   KernelGraphUtilsPtr kernel_graph_utils_;
 };

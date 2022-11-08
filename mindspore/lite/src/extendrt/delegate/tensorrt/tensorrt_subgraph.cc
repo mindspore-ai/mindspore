@@ -560,6 +560,10 @@ int TensorRTSubGraph::Prepare() {
   for (auto &tensor : outputs_) {
     int max_index = GetProfileBindingIndex(tensor.Name(), profile_index_);
     auto out_dims = trt_context_->getBindingDimensions(max_index);
+    if (out_dims.nbDims < 0) {
+      MS_LOG(ERROR) << "Output dims number " << out_dims.nbDims << " cannot less than 0";
+      return RET_ERROR;
+    }
     int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
     DebugDims("out dims", out_dims);
     MS_LOG(INFO) << "Set output shape by tensorrt binding output";

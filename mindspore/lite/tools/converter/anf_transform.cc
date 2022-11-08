@@ -103,6 +103,7 @@
 #endif
 #include "src/common/log_util.h"
 #include "src/common/string_utils.h"
+#include "src/common/config_infos.h"
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
 #include "tools/optimizer/fusion/reshape_like_operator_ablation.h"
@@ -151,15 +152,14 @@ std::string TransInputShapesToString(const std::map<std::string, std::vector<int
 std::map<std::string, std::vector<int64_t>> TransStringToInputShapes(const std::string &shapes_str) {
   std::map<std::string, std::vector<int64_t>> shapes;
   auto shapes_pairs = lite::SplitStringToVector(shapes_str, ';');
-  constexpr size_t name_shape_pair_size = 2;
   for (auto &kv_str : shapes_pairs) {
-    auto kv_pair_strs = lite::SplitStringToVector(kv_str, ':');
-    if (kv_pair_strs.size() != name_shape_pair_size) {
+    auto pos = kv_str.rfind(':');
+    if (pos == std::string::npos || pos + 1 == kv_str.size()) {
       MS_LOG_ERROR << "Invalid input shapes string: " << shapes_str;
       return {};
     }
-    auto &name = kv_pair_strs[0];
-    auto &shape_str = kv_pair_strs[1];
+    auto name = kv_str.substr(0, pos);
+    auto shape_str = kv_str.substr(pos + 1);
     auto shape_dims_str = lite::SplitStringToVector(shape_str, ',');
     std::vector<int64_t> shape;
     shape.reserve(shape_dims_str.size());
@@ -430,6 +430,17 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   if (param->device.find("Ascend") != std::string::npos) {
     if (opt::AclPassPlugin::GetInstance().HasPluginSo()) {
+      auto is_static_input = param->aclModelOptionCfgParam.dynamic_image_size.empty() &&
+                             param->aclModelOptionCfgParam.dynamic_batch_size.empty();
+      if (is_static_input) {
+        auto status = RunConstFoldPass(old_graph, param);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "Run const fold pass failed.";
+          return RET_ERROR;
+        }
+      } else {
+        MS_LOG(INFO) << "Support dynamic input, not do const fold pass";
+      }
       auto acl_pass_ptr = opt::AclPassPlugin::GetInstance().CreateAclPass(param);
       if (acl_pass_ptr == nullptr) {
         MS_LOG(ERROR) << "Acl pass ptr is nullptr.";

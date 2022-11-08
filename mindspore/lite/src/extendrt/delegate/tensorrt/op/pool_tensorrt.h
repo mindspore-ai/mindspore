@@ -36,7 +36,7 @@ class PoolTensorRT : public TensorRTOp {
  private:
   int ParseParams(TensorRTContext *ctx);
 
-  void AddParams(nvinfer1::IPoolingLayer *pooling_layer);
+  int AddParams(nvinfer1::IPoolingLayer *pooling_layer);
 
   std::vector<int64_t> kernel_size_;
 

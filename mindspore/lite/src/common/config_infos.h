@@ -54,13 +54,17 @@ class MS_API ProfileParser {
 
   static bool ReorderByInputNames(const std::vector<std::string> &input_names, ProfileConfigs *profile_configs);
 
+  static std::string GetOption(const std::map<std::string, std::string> &context, const std::string &option,
+                               const std::string &default_val = "");
+
+  static bool StrToInt64(const std::string &str, int64_t *val);
+  static std::vector<std::string> Split(const std::string &str, const std::string &delim);
+
  private:
   static bool ParseOptDims(const std::string &opt_dims_str, ProfileConfigs *profile_configs);
   static bool ParseDynamicDims(const std::string &dynamic_dims_str, ProfileConfigs *profile_configs);
   static bool ParseInputShape(const std::string &input_shapes_str, ProfileConfigs *profile_configs);
 
-  static bool StrToInt64(const std::string &str, int64_t *val);
-  static std::vector<std::string> Split(const std::string &str, const std::string &delim);
   static bool ParseShapeStr(const std::vector<std::string> &str_dims, ShapeVector *shape_ptr);
   static bool ParseRangeStr(const std::string &range_str, int64_t *min_ptr, int64_t *max_ptr);
   static bool ParseOptDimStr(const std::string &opt_dim_str, int64_t *opt_ptr);

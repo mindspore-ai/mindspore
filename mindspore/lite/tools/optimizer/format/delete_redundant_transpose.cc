@@ -182,6 +182,11 @@ STATUS DeleteRedundantTranspose::UpdateNodeFormat(const CNodePtr &cnode) {
     auto post_prim = GetValueNode<PrimitivePtr>(post_cnode->input(0));
     MS_ASSERT(post_prim != nullptr);
     post_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(forward_format));
+    if (prim->HasAttr(opt::kOutputsFormat)) {
+      auto org_format = CastToInt(prim->GetAttr(opt::kOutputsFormat));
+      std::vector<int64_t> outputs_format(org_format.size(), forward_format);
+      (void)prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
+    }
   }
   return lite::RET_OK;
 }

@@ -72,7 +72,6 @@ file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
 #    )
 
 link_libraries(${CUDA_LIB_PATH}/libcudnn.so)
-link_libraries(${CUDA_LIB_PATH}/libnvrtc.so)
 link_libraries(${CUDA_LIB_PATH}/libcublasLt.so)
 
 add_library(libcudart SHARED IMPORTED)

@@ -43,6 +43,11 @@ int ReshapeBaseCPUKernel::Run() {
   CHECK_NULL_RETURN(in_tensor);
   auto out_tensor = out_tensors().front();
   CHECK_NULL_RETURN(out_tensor);
+  auto in_shape = in_tensor->shape();
+  // element number is 0, no need to copy data
+  if (std::any_of(in_shape.begin(), in_shape.end(), [](auto dim) { return dim == 0; })) {
+    return RET_OK;
+  }
 
   if (in_tensor->data_type() != out_tensor->data_type() || in_tensor->data() == nullptr ||
       in_tensor->Size() != out_tensor->Size()) {

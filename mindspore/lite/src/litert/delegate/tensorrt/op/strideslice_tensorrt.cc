@@ -115,7 +115,7 @@ int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *s
 
   auto input_dims = slice_input->trt_tensor_->getDimensions();
 
-  size_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
+  int64_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
   if (static_cast<size_t>(begin.ElementNum()) == slice_input->trt_tensor_->getDimensions().nbDims) {
     start_dims_ = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
     auto end_dims = lite::ConvertCudaDims(end.Data().get(), end.ElementNum());
