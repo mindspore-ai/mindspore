@@ -75,11 +75,10 @@ Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
     RETURN_STATUS_UNEXPECTED(
       "CutMixBatch: please make sure images are <H,W,C> or <C,H,W> format, and batched before calling CutMixBatch.");
   }
-  if (!input.at(1)->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED(
-      "CutMixBatch: Wrong labels type. The second column (labels) must only include int types, but got:" +
-      input.at(1)->type().ToString());
-  }
+
+  CHECK_FAIL_RETURN_UNEXPECTED(input.at(1)->type().IsNumeric(),
+                               "CutMixBatch: invalid label type, label must be in a numeric type, but got: " +
+                                 input.at(1)->type().ToString() + ". You may need to perform OneHot first.");
   if (label_shape.size() != kMinLabelShapeSize && label_shape.size() != kMaxLabelShapeSize) {
     RETURN_STATUS_UNEXPECTED(
       "CutMixBatch: wrong labels shape. "
@@ -105,19 +104,19 @@ Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
   return Status::OK();
 }
 
-Status CutMixBatchOp::ComputeImage(const TensorRow &input, const int64_t rand_indx_i, const float lam, float *label_lam,
-                                   std::shared_ptr<Tensor> *image_i) {
-  std::vector<int64_t> image_shape = input.at(0)->shape().AsVector();
+Status CutMixBatchOp::ComputeImage(const std::shared_ptr<Tensor> &image, int64_t rand_indx_i, float lam,
+                                   float *label_lam, std::shared_ptr<Tensor> *image_i) {
+  std::vector<int64_t> image_shape = image->shape().AsVector();
   int x, y, crop_width, crop_height;
   // Get a random image
   TensorShape remaining({-1});
   uchar *start_addr_of_index = nullptr;
   std::shared_ptr<Tensor> rand_image;
 
-  RETURN_IF_NOT_OK(input.at(0)->StartAddrOfIndex({rand_indx_i, 0, 0, 0}, &start_addr_of_index, &remaining));
+  RETURN_IF_NOT_OK(image->StartAddrOfIndex({rand_indx_i, 0, 0, 0}, &start_addr_of_index, &remaining));
   RETURN_IF_NOT_OK(Tensor::CreateFromMemory(
-    TensorShape({image_shape[kDimensionOne], image_shape[kDimensionTwo], image_shape[kDimensionThree]}),
-    input.at(0)->type(), start_addr_of_index, &rand_image));
+    TensorShape({image_shape[kDimensionOne], image_shape[kDimensionTwo], image_shape[kDimensionThree]}), image->type(),
+    start_addr_of_index, &rand_image));
 
   // Compute image
   if (image_batch_format_ == ImageBatchFormat::kNHWC) {
@@ -154,30 +153,22 @@ Status CutMixBatchOp::ComputeImage(const TensorRow &input, const int64_t rand_in
   return Status::OK();
 }
 
-Status CutMixBatchOp::ComputeLabel(const TensorRow &input, const int64_t rand_indx_i, const int64_t index_i,
-                                   const int64_t row_labels, const int64_t num_classes,
-                                   const std::size_t label_shape_size, const float label_lam,
-                                   std::shared_ptr<Tensor> *out_labels) {
+Status CutMixBatchOp::ComputeLabel(const std::shared_ptr<Tensor> &label, int64_t rand_indx_i, int64_t index_i,
+                                   int64_t row_labels, int64_t num_classes, std::size_t label_shape_size,
+                                   float label_lam, std::shared_ptr<Tensor> *out_labels) {
   // Compute labels
+  std::shared_ptr<Tensor> float_label;
+  RETURN_IF_NOT_OK(TypeCast(label, &float_label, DataType(DataType::DE_FLOAT32)));
   for (int64_t j = 0; j < row_labels; j++) {
     for (int64_t k = 0; k < num_classes; k++) {
       std::vector<int64_t> first_index =
         label_shape_size == kMaxLabelShapeSize ? std::vector{index_i, j, k} : std::vector{index_i, k};
       std::vector<int64_t> second_index =
         label_shape_size == kMaxLabelShapeSize ? std::vector{rand_indx_i, j, k} : std::vector{rand_indx_i, k};
-      if (input.at(1)->type().IsSignedInt()) {
-        int64_t first_value, second_value;
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, first_index));
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, second_index));
-        RETURN_IF_NOT_OK(
-          (*out_labels)->SetItemAt(first_index, label_lam * first_value + (1 - label_lam) * second_value));
-      } else {
-        uint64_t first_value, second_value;
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, first_index));
-        RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&second_value, second_index));
-        RETURN_IF_NOT_OK(
-          (*out_labels)->SetItemAt(first_index, label_lam * first_value + (1 - label_lam) * second_value));
-      }
+      float first_value, second_value;
+      RETURN_IF_NOT_OK(float_label->GetItemAt(&first_value, first_index));
+      RETURN_IF_NOT_OK(float_label->GetItemAt(&second_value, second_index));
+      RETURN_IF_NOT_OK((*out_labels)->SetItemAt(first_index, label_lam * first_value + (1 - label_lam) * second_value));
     }
   }
 
@@ -208,7 +199,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Tensor holding the output labels
   std::shared_ptr<Tensor> out_labels;
-  RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), &out_labels, DataType(DataType::DE_FLOAT32)));
+  RETURN_IF_NOT_OK(TypeCast(input.at(1), &out_labels, DataType(DataType::DE_FLOAT32)));
   int64_t row_labels = label_shape.size() == kValueThree ? label_shape[kDimensionOne] : kValueOne;
   int64_t num_classes = label_shape.size() == kValueThree ? label_shape[kDimensionTwo] : label_shape[kDimensionOne];
 
@@ -227,9 +218,9 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
     if (random_number < prob_) {
       float label_lam;  // lambda used for labels
       // Compute image
-      RETURN_IF_NOT_OK(ComputeImage(input, rand_indx[i], lam, &label_lam, &images[i]));
+      RETURN_IF_NOT_OK(ComputeImage(input.at(0), rand_indx[i], lam, &label_lam, &images[i]));
       // Compute labels
-      RETURN_IF_NOT_OK(ComputeLabel(input, rand_indx[i], static_cast<int64_t>(i), row_labels, num_classes,
+      RETURN_IF_NOT_OK(ComputeLabel(input.at(1), rand_indx[i], static_cast<int64_t>(i), row_labels, num_classes,
                                     label_shape.size(), label_lam, &out_labels));
     }
   }

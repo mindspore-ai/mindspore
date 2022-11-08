@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
-import mindspore.dataset.transforms as data_trans
+import mindspore.dataset.transforms as transforms
 from mindspore import log as logger
 from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_seed, \
     config_get_set_num_parallel_workers
@@ -53,7 +53,7 @@ def test_mixup_batch_success1(plot=False):
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch(2)
     data1 = data1.batch(5, drop_remainder=True)
@@ -102,7 +102,7 @@ def test_mixup_batch_success2(plot=False):
     decode_op = vision.Decode()
     data1 = data1.map(operations=[decode_op], input_columns=["image"])
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
 
     mixup_batch_op = vision.MixUpBatch(2.0)
@@ -147,7 +147,7 @@ def test_mixup_batch_success3(plot=False):
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch()
     data1 = data1.batch(5, drop_remainder=True)
@@ -196,7 +196,7 @@ def test_mixup_batch_success4(plot=False):
     decode_op = vision.Decode()
     data1 = data1.map(operations=[decode_op], input_columns=["image"])
 
-    one_hot_op = data_trans.OneHot(num_classes=100)
+    one_hot_op = transforms.OneHot(num_classes=100)
     data1 = data1.map(operations=one_hot_op, input_columns=["attr"])
 
     mixup_batch_op = vision.MixUpBatch()
@@ -232,7 +232,7 @@ def test_mixup_batch_md5():
     # MixUp Images
     data = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data = data.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch()
     data = data.batch(5, drop_remainder=True)
@@ -244,6 +244,52 @@ def test_mixup_batch_md5():
     # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_mixup_batch_float_label():
+    """
+    Feature: MixUpBatch
+    Description: Test MixUpBatch with label in type of float
+    Expectation: Output is as expected
+    """
+    original_seed = config_get_set_seed(0)
+
+    image = np.random.randint(0, 255, (3, 28, 28, 1), dtype=np.uint8)
+    label = np.random.randint(0, 5, (3, 1))
+    decode_label = transforms.OneHot(5)(label)
+    float_label = transforms.TypeCast(float)(decode_label)
+    _, mix_label = vision.MixUpBatch()(image, float_label)
+    expected_label = np.array([[0., 0.6824126, 0., 0., 0.3175874],
+                               [0., 0., 0., 0., 1.],
+                               [0., 0.3175874, 0., 0., 0.6824126]])
+    np.testing.assert_almost_equal(mix_label, expected_label)
+
+    ds.config.set_seed(original_seed)
+
+
+def test_mixup_batch_twice():
+    """
+    Feature: MixUpBatch
+    Description: Test MixUpBatch called twice
+    Expectation: Output is as expected
+    """
+    original_seed = config_get_set_seed(1)
+
+    dataset = ds.Cifar10Dataset(DATA_DIR, num_samples=3, shuffle=False)
+    one_hot = transforms.OneHot(num_classes=10)
+    dataset = dataset.map(operations=one_hot, input_columns=["label"])
+    mix_up_batch = vision.MixUpBatch()
+    dataset = dataset.batch(3, drop_remainder=False)
+    dataset = dataset.map(operations=mix_up_batch, input_columns=["image", "label"])
+    dataset = dataset.map(operations=mix_up_batch, input_columns=["image", "label"])
+
+    expected_label = np.array([[0.29373336, 0.49647674, 0.20978989, 0., 0., 0., 0., 0., 0., 0.],
+                               [0.20978989, 0.29373336, 0.49647674, 0., 0., 0., 0., 0., 0., 0.],
+                               [0.49647674, 0.20978989, 0.29373336, 0., 0., 0., 0., 0., 0., 0.]])
+    for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        np.testing.assert_almost_equal(item["label"], expected_label)
+
+    ds.config.set_seed(original_seed)
 
 
 def test_mixup_batch_fail1():
@@ -268,7 +314,7 @@ def test_mixup_batch_fail1():
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch(0.1)
     with pytest.raises(RuntimeError) as error:
@@ -304,7 +350,7 @@ def test_mixup_batch_fail2():
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.MixUpBatch(-1)
@@ -333,7 +379,7 @@ def test_mixup_batch_fail3():
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     mixup_batch_op = vision.MixUpBatch()
     data1 = data1.batch(5, drop_remainder=True)
@@ -372,7 +418,7 @@ def test_mixup_batch_fail4():
     # MixUp Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    one_hot_op = data_trans.OneHot(num_classes=10)
+    one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
         vision.MixUpBatch(0.0)
@@ -414,6 +460,20 @@ def test_mixup_batch_fail5():
             else:
                 images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
     error_message = "wrong labels shape. The second column (labels) must have a shape of NC or NLC"
+    assert error_message in str(error.value)
+
+
+def test_mix_up_batch_invalid_label_type():
+    """
+    Feature: MixUpBatch
+    Description: Test MixUpBatch with label in str type
+    Expectation: Error is raised as expected
+    """
+    image = np.random.randint(0, 255, (3, 28, 28, 1), dtype=np.uint8)
+    label = np.array([["one"], ["two"], ["three"]])
+    with pytest.raises(RuntimeError) as error:
+        _ = vision.MixUpBatch()(image, label)
+    error_message = "MixUpBatch: invalid label type, label must be in a numeric type"
     assert error_message in str(error.value)
 
 

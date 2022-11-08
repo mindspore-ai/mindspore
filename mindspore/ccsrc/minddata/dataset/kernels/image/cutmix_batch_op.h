@@ -54,7 +54,7 @@ class CutMixBatchOp : public TensorOp {
   /// \param[in] label_lam Lambda used for labels, will be updated after computing each image.
   /// \param[in] image_i The result of the i-th computed image.
   /// \returns Status
-  Status ComputeImage(const TensorRow &input, const int64_t rand_indx_i, const float lam, float *label_lam,
+  Status ComputeImage(const std::shared_ptr<Tensor> &image, int64_t rand_indx_i, float lam, float *label_lam,
                       std::shared_ptr<Tensor> *image_i);
 
   /// \brief Helper function used in Compute to compute each label corresponding to each image.
@@ -67,9 +67,10 @@ class CutMixBatchOp : public TensorOp {
   /// \param[in] label_lam Lambda used for setting the location.
   /// \param[in] out_labels The output of the i-th label, corresponding to the i-th computed image.
   /// \returns Status
-  Status ComputeLabel(const TensorRow &input, const int64_t rand_indx_i, const int64_t index_i,
-                      const int64_t row_labels, const int64_t num_classes, const std::size_t label_shape_size,
-                      const float label_lam, std::shared_ptr<Tensor> *out_labels);
+  Status ComputeLabel(const std::shared_ptr<Tensor> &label, int64_t rand_indx_i, int64_t index_i, int64_t row_labels,
+                      int64_t num_classes, std::size_t label_shape_size, float label_lam,
+                      std::shared_ptr<Tensor> *out_labels);
+
   float alpha_;
   float prob_;
   ImageBatchFormat image_batch_format_;
