@@ -134,7 +134,7 @@ bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<AddressPtr> &inputs,
   size_t input_x_element_num = get_element_num(input_x_shape_);
   size_t output_y_element_num = get_element_num(output_y_shape_);
 
-  (void)input_x_shape_.insert(input_x_shape_.begin(), IntToSize(RANK - input_x_shape_.size()), 1);
+  (void)input_x_shape_.insert(input_x_shape_.begin(), RANK - input_x_shape_.size(), 1);
   input_x_bcast_.resize(RANK, kNoBroadcastValue);
   for (size_t i = 0; i < RANK; i++) {
     if (input_x_shape_[i] == input_shape_[i]) {
