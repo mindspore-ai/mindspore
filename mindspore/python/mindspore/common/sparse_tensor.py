@@ -359,13 +359,26 @@ class COOTensor(COOTensor_):
 
     def coalesce(self) -> COOTensor:
         """
-        Return the coalesced sparse tensor of the input.
+        Returns a coalesced copy of an uncoalesced sparse tensor.
 
         Returns:
-            COOTensor.
+            A COOTensor.
 
         Supported Platforms:
             ``GPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import mindspore.ops as ops
+            >>> from mindspore import Tensor, COOTensor
+            >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=ms.int64)
+            >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
+            >>> x_shape = (3, 3)
+            >>> coo_tensor = COOTensor(x_indices.transpose(), x_values, x_shape)
+            >>> res = coo_tensor.coalesce(x_indices, x_values, x_shape)
+            >>> print(res)
+            COOTensor(shape=[3, 3], dtype=Float32, indices=Tensor(shape=[2, 2], dtype=Int64,
+                value=[[0 1] [1 2]]), values=Tensor(shape=[2], dtype=Float32, value=[6.00000000e+00 4.00000000e+00]))
         """
         shape = Tensor(self.shape)
         res_indices, res_values, _ = tensor_operator_registry.get("coalesce")(self.indices.transpose(),
