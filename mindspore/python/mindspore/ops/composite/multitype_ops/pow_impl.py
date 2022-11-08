@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `pow` operations."""
 
+from __future__ import absolute_import
 from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F

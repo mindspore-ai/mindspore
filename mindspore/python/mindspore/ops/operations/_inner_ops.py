@@ -558,7 +558,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
         validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
 
         if x_shape[-2] < x_shape[-1]:
-            validator.check("diagnoal shape", diagonal_shape, "x shape excluding the last dimension",
+            validator.check("diagonal shape", diagonal_shape, "x shape excluding the last dimension",
                             x_shape[:-1], Rel.EQ, self.name)
         else:
             validator.check("diagonal shape", diagonal_shape, "x shape excluding the second last dimension",

@@ -63,7 +63,7 @@ int NonMaxSuppressionWithOverlapsCpuKernelMod::Resize(const BaseOperatorPtr &bas
 }
 
 bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &workspace,
+                                                       const std::vector<kernel::AddressPtr> &,
                                                        const std::vector<kernel::AddressPtr> &outputs) {
   Eigen::TensorMap<Eigen::Tensor<float, kOverlapsRank, Eigen::RowMajor>> overlaps_map(
     reinterpret_cast<float *>(inputs[0]->addr), num_boxes_, num_boxes_);
@@ -103,7 +103,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
     candidate_priority_queue.pop();
     bool should_suppress = false;
     for (int32_t j = cnt - 1; j >= next_candidate.suppress_begin_index; --j) {
-      similarity = overlaps_map(next_candidate.box_index, indices_data[j]);
+      similarity = overlaps_map(next_candidate.box_index, indices_data[IntToSize(j)]);
       if (similarity >= overlap_threshold) {
         should_suppress = true;
         break;
@@ -118,7 +118,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
   auto value = reinterpret_cast<int32_t *>(outputs[0]->addr);
   real_output_size_ = std::min(cnt, max_output_size);
   for (int32_t j = 0; j < real_output_size_; ++j) {
-    *(value + j) = indices_data[j];
+    *(value + j) = indices_data[IntToSize(j)];
   }
   return true;
 }

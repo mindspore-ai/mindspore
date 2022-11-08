@@ -14,6 +14,8 @@
 # ============================================================================
 
 """control_ops"""
+
+from __future__ import absolute_import
 from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register
 from mindspore._checkparam import Validator as validator, Rel
 from mindspore.common import dtype as mstype

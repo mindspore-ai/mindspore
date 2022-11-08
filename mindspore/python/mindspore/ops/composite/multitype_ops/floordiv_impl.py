@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `floordiv` operations."""
-
+from __future__ import absolute_import
 from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F

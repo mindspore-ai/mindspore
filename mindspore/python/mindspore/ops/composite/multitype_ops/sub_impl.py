@@ -14,6 +14,8 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `sub` operations."""
+
+from __future__ import absolute_import
 from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import check_equal, make_tensor
 from mindspore.ops.composite import base

@@ -198,7 +198,7 @@ void DenseToDenseSetOperationCpuKernelMod::SetCompute(const std::set<T> &set1, c
 }
 
 template <typename T>
-bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kernel::AddressPtr> &inputs,
+bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kernel::AddressPtr> &,
                                                           const std::vector<kernel::AddressPtr> &outputs,
                                                           const ShapeVector &output_shape, const size_t num_values,
                                                           const std::map<std::vector<size_t>, std::set<T>> *sets) {

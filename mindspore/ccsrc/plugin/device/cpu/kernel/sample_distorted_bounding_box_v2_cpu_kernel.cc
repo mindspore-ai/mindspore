@@ -70,7 +70,7 @@ float SampleDistortedBoundingBoxV2CPUKernelMod::RandFloat() {
 
 uint32_t SampleDistortedBoundingBoxV2CPUKernelMod::Uniform(uint32_t n) {
   if (n == 0) {
-    return GenerateSingle() * n;
+    return 0;
   } else if (0 == (n & (n - 1))) {
     return GenerateSingle() & (n - 1);
   } else {

@@ -16,7 +16,7 @@
 """Defines parameter operators with functional form."""
 
 from mindspore.ops import operations as P
-from .._primitive_cache import _get_cache_prim
+from mindspore.ops._primitive_cache import _get_cache_prim
 
 assign_ = P.Assign()
 

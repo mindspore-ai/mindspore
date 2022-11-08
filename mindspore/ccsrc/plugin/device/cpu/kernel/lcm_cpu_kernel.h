@@ -32,7 +32,7 @@ class LcmCpuKernelMod : public NativeCpuKernelMod {
   LcmCpuKernelMod() = default;
   ~LcmCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }

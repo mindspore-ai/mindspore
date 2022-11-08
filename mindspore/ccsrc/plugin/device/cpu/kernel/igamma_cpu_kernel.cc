@@ -52,7 +52,7 @@ static constexpr std::array<double, 8> kLanczosCoefficients = {
   771.3234287776530788486528258894,   -176.61502916214059906584551354,
   12.507343278686904814458936853,     -0.13857109526572011689554707,
   9.984369578019570859563e-6,         1.50563273514931155834e-7};
-double log_lanczos_gamma_plus_one_half = std::log(kLanczosGamma + 0.5);
+const double log_lanczos_gamma_plus_one_half = std::log(kLanczosGamma + 0.5);
 constexpr int64_t kParallelDataNums = 256;
 constexpr int64_t kSameShape = 0;
 constexpr int64_t kXOneElement = 1;

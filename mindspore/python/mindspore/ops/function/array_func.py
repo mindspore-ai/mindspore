@@ -21,7 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 
-from ..operations.array_ops import (
+from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
     NonZero,
     MatrixDiagV3,
@@ -40,11 +40,11 @@ from ..operations.array_ops import (
     Lstsq,
     Mvlgamma,
 )
-from ..operations.array_ops import TensorScatterElements
-from ...common import Tensor
-from .._primitive_cache import _get_cache_prim
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
+from mindspore.ops.operations.array_ops import TensorScatterElements
+from mindspore.common import Tensor
+from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
 
 eye_ = P.Eye()
 fill_ = P.Fill()

@@ -19,7 +19,7 @@ Composite operators.
 Pre-defined combination of operators.
 """
 
-
+from __future__ import absolute_import
 from mindspore.ops.composite.base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
     core, tail, zip_operation, _Vmap, _TaylorOperation
 from mindspore.ops.composite.env_ops import env_get

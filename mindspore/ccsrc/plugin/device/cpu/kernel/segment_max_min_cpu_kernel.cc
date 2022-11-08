@@ -180,7 +180,7 @@ bool SegmentMaxMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
       const size_t count = static_cast<size_t>(segments[i]);
       int64_t count_no = 0;
       for (size_t j = 0; j < i; ++j) {
-        count_no += segments[j];
+        count_no += static_cast<size_t>(segments[j]);
       }
       size_t input_addr_base = LongToSize(count_no) * num_compare_per;
       auto task = [&](size_t start, size_t end) {
@@ -206,7 +206,7 @@ bool SegmentMaxMinCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
         const size_t count = static_cast<size_t>(segments[i]);
         int64_t count_no = 0;
         for (size_t j = 0; j < i; ++j) {
-          count_no += segments[j];
+          count_no += static_cast<size_t>(segments[j]);
         }
         size_t input_addr_base = LongToSize(count_no) * num_compare_per;
         for (size_t j = 0; j < num_compare_per; ++j) {

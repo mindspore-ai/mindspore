@@ -13,10 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """cache_ops"""
-from ..._checkparam import Validator as validator
-from ...common import dtype as mstype
-from ..primitive import prim_attr_register, PrimitiveWithCheck
-from .. import signature as sig
+
+from __future__ import absolute_import
+from mindspore._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import prim_attr_register, PrimitiveWithCheck
+from mindspore.ops import signature as sig
 
 
 class UpdateCache(PrimitiveWithCheck):
@@ -103,7 +105,7 @@ class SubAndFilter(PrimitiveWithCheck):
 
 class MapUniform(PrimitiveWithCheck):
     """
-    Map a tensor by using fomula : value = key % `group_num` * `per_group_size` + key // `group_num`.
+    Map a tensor by using formula : value = key % `group_num` * `per_group_size` + key // `group_num`.
 
     Inputs:
         - **input** (Tensor) - Input Tensor.

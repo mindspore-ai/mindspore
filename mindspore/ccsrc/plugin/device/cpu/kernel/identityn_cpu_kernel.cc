@@ -72,7 +72,7 @@ int IdentityNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool IdentityNCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool IdentityNCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
   for (size_t idx = 0; idx < inputs.size(); ++idx) {
     auto idx_in_addr = inputs[idx]->addr;
@@ -96,7 +96,7 @@ bool IdentityNCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 }
 
 std::vector<KernelAttr> IdentityNCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {};
+  static const std::vector<KernelAttr> support_list = {};
   return support_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IdentityN, IdentityNCpuKernelMod);

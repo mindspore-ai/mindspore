@@ -131,12 +131,12 @@ class DenseThor(Cell):
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
         self.mul = P.Mul()
-        self.is_Ascend = True
+        self.is_ascend = True
         self.split_dim = 128
         if context.get_context("device_target") == "Ascend":
             self._process_ascend_dense_thor(out_channels, in_channels)
         else:
-            self.is_Ascend = False
+            self.is_ascend = False
             self.cube_matmul = P.MatMul(transpose_a=True)
         self.getG = P.InsertGradientOf(self.save_gradient)
 
@@ -153,7 +153,7 @@ class DenseThor(Cell):
            save_gradient
         """
         out = dout
-        if self.is_Ascend:
+        if self.is_ascend:
             if not self.is_nsp_layer:
                 shape = self.shape(dout)
                 normalizer = self.cast(shape[0], mstype.float32)
@@ -170,7 +170,7 @@ class DenseThor(Cell):
 
     def construct(self, x):
         if self.thor:
-            if self.is_Ascend:
+            if self.is_ascend:
                 inputs = self.cube_matmul(x, x)
                 shape = self.shape(x)
                 normalizer = self.cast(shape[0], mstype.float32)
@@ -399,11 +399,11 @@ class Conv2dThor(_ConvThor):
         self.cast = P.Cast()
         self.a_normalizer = Parameter(initializer(1, [1], mstype.float32), name="a_normalizer", requires_grad=False)
         self.g_normalizer = Parameter(initializer(1, [1], mstype.float32), name="g_normalizer", requires_grad=False)
-        self.is_Ascend = True
+        self.is_ascend = True
         if context.get_context("device_target") == "Ascend":
             self._process_ascend_conv2d_thor(kernel_size, stride)
         else:
-            self.is_Ascend = False
+            self.is_ascend = False
             self.img2col = ThorIm2Col(kernel_size=kernel_size, stride=stride, pad_mode="same")
             self.matmul = P.MatMul(transpose_b=True)
             self.reduce_mean = P.ReduceMean(keep_dims=False)
@@ -453,7 +453,7 @@ class Conv2dThor(_ConvThor):
     def save_gradient(self, dout):
         """save_gradient"""
         out = dout
-        if self.is_Ascend:
+        if self.is_ascend:
             dout_shape = self.shape(dout)
             dout = self.transpose(dout, (0, 2, 3, 1))
             dout = self.reshape(dout, (-1, dout_shape[1]))
@@ -479,7 +479,7 @@ class Conv2dThor(_ConvThor):
 
     def construct(self, x):
         if self.thor:
-            if self.is_Ascend:
+            if self.is_ascend:
                 matrix_a = self.im2col(x)
                 matrix_a_shape = self.shape(matrix_a)
                 y = matrix_a_shape[3]
@@ -510,13 +510,13 @@ class Conv2dThor(_ConvThor):
                 output = self.conv2d(x, self.weight)
                 output = self.getG(output)
         else:
-            if self.is_Ascend:
+            if self.is_ascend:
                 weight = self.cast(self.weight, mstype.float16)
                 output = self.conv2d(x, weight)
             else:
                 output = self.conv2d(x, self.weight)
         if self.has_bias:
-            if self.is_Ascend:
+            if self.is_ascend:
                 bias = self.cast(self.bias, mstype.float16)
                 output = self.bias_add(output, bias)
             else:

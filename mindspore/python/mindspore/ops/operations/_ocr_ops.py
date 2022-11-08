@@ -16,8 +16,8 @@
 """Inner OCR operators."""
 
 from __future__ import absolute_import
-from ..primitive import PrimitiveWithInfer, Primitive, prim_attr_register
-from ...common import dtype as mstype
+from mindspore.ops.primitive import PrimitiveWithInfer, Primitive, prim_attr_register
+from mindspore.common import dtype as mstype
 
 
 class GetShape(PrimitiveWithInfer):

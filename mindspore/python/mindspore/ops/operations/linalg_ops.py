@@ -15,8 +15,10 @@
 
 """Operators for linalg."""
 
-from ..._checkparam import Validator
-from ..primitive import Primitive, prim_attr_register
+from __future__ import absolute_import
+from mindspore._checkparam import Validator
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.primitive import prim_attr_register
 
 
 class Geqrf(Primitive):
