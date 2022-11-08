@@ -101,7 +101,7 @@ function Run_Hi3516() {
   echo "start push files to hi3516"
   echo ${device_ip}
   scp -r ${benchmark_test_path} root@${device_ip}:/user/nnie/benchmark_test/ || exit 1
-  ssh root@${device_ip} "cd /user/nnie/benchmark_test/${benchmark_test_path}; sh run_benchmark_nnie_micro.sh"
+  ssh root@${device_ip} "cd /user/nnie/benchmark_test/benchmark_micro; sh run_benchmark_nnie_micro.sh"
   if [ $? = 0 ]; then
     run_result='hi3516: micro pass'; echo ${run_result} >> ${run_benchmark_result_file};
   else

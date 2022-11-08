@@ -139,6 +139,12 @@ if [[ $backend == "all" || $backend == "arm32_3516D" ]]; then
       echo "Run nnie hi3516 failed"
       exit 1
     fi
+    sh $cur_path/scripts/nnie/run_converter_nnie_micro.sh -r $release_path -m $models_path -d $device_id -e $backend -l $level
+    hi3516_micro_status=$?
+    if [[ $hi3516_micro_status -ne 0 ]]; then
+      echo "Run micro nnie hi3516 failed"
+      exit 1
+    fi
 fi
 
 if [[ $backend == "all" || $backend == "simulation_sd3403" ]]; then
