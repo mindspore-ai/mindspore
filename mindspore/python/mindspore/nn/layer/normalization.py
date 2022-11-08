@@ -496,10 +496,19 @@ class SyncBatchNorm(_BatchNorm):
         ``Ascend``
 
     Examples:
-        >>> # This example should be run with multiple processes.
-        >>> # Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
-        >>> # on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
-        >>> # Variables, Calling the Collective Communication Library, Running the Script.
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `Ascend tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+
+            This example should be run with multiple devices.
+
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore.communication import init

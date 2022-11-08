@@ -385,7 +385,7 @@ mindspore.rewrite
             - **TypeError** - 如果参数 `index` 不是int类型。
             - **TypeError** - 如果参数 `arg` 不是str或者ScopedValue类型。
 
-    .. py:method:: mindspore.rewrite.Node.set_arg_by_node(arg_idx: int, src_node: Node, out_idx: Optional[int] = None)
+    .. py:method:: mindspore.rewrite.Node.set_arg_by_node(arg_idx: int, src_node: 'Node', out_idx: Optional[int] = None)
 
         将另一个节点设置为当前节点的输入。
 

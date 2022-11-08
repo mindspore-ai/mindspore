@@ -34,6 +34,12 @@ class TimeMonitor(Callback):
         ValueError: If data_size is not positive int.
 
     Examples:
+        .. note::
+            Before running the following example, you need to customize the network LeNet5 and
+            dataset preparation function create_dataset. Refer to
+            `Building a Network <https://www.mindspore.cn/tutorials/en/master/beginner/model.html>`_
+            and `Dataset <https://www.mindspore.cn/tutorials/en/master/beginner/dataset.html>`_ .
+
         >>> from mindspore import nn
         >>> from mindspore.train import Model, TimeMonitor
         >>>

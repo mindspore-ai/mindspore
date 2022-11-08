@@ -6,7 +6,7 @@
     使用指定方式对通信组内的所有设备的Tensor数据进行规约操作，所有设备都得到相同的结果。
 
     .. note::
-        AllReduce操作暂不支持"prod"。集合中的所有进程的Tensor必须具有相同的shape和格式。用户在使用之前需要设置环境变量，运行下面的例子，获取详情请点击官方网站 `MindSpore <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.ops.html#通信算子>`_ 。
+        AllReduce操作暂不支持"prod"。集合中的所有进程的Tensor必须具有相同的shape和格式。
 
     参数：
         - **op** (str) - 规约的具体操作，如"sum"、"max"、和"min"。默认值：ReduceOp.SUM。
@@ -21,3 +21,10 @@
     异常：
         - **TypeError** - `op` 或 `group` 不是str，或者输入的数据类型是bool。
         - **ValueError** - `op` 为"prod"。
+
+    样例：
+
+    .. note::
+        .. include:: mindspore.ops.comm_note.rst
+
+        该样例需要在多卡环境下运行。

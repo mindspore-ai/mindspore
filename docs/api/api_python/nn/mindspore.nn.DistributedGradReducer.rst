@@ -16,3 +16,10 @@ mindspore.nn.DistributedGradReducer
 
     异常：
         - **ValueError** - 如果degree不是int或小于0。
+
+    样例：
+
+    .. note::
+        .. include:: ../ops/mindspore.ops.comm_note.rst
+
+        该样例需要在多卡环境下运行。

@@ -24,6 +24,11 @@ mindspore.train.CheckpointConfig
     异常：
         - **ValueError** - 输入参数的类型不正确。
 
+    样例：
+
+    .. note::
+        运行以下样例之前，需自定义网络LeNet5和数据集准备函数create_dataset。详见 `数据集 Dataset <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/dataset.html>`_ 和 `网络构建 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/model.html>`_ 。
+
     .. py:method:: append_dict
         :property:
 

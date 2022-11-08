@@ -213,6 +213,12 @@ class ConvertModelUtils:
             ``Ascend`` ``GPU``
 
         Examples:
+            .. note::
+                Before running the following example, you need to customize the network Net and
+                dataset preparation function create_dataset. Refer to
+                `Dataset <https://www.mindspore.cn/tutorials/en/master/beginner/dataset.html>`_ and
+                `Building a Network <https://www.mindspore.cn/tutorials/en/master/beginner/model.html>`_ .
+
             >>> import mindspore as ms
             >>> from mindspore import nn
             >>> from mindspore import Tensor

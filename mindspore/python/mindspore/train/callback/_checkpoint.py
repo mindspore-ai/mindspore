@@ -104,6 +104,12 @@ class CheckpointConfig:
         ValueError: If input parameter is not the correct type.
 
     Examples:
+        .. note::
+            Before running the following example, you need to customize the network LeNet5 and
+            dataset preparation function create_dataset. Refer to
+            `Building a Network <https://www.mindspore.cn/tutorials/en/master/beginner/model.html>`_
+            and `Dataset <https://www.mindspore.cn/tutorials/en/master/beginner/dataset.html>`_ .
+
         >>> from mindspore import nn
         >>> from mindspore.common.initializer import Normal
         >>> from mindspore.train import Model, CheckpointConfig, ModelCheckpoint

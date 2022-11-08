@@ -6,7 +6,7 @@
     在指定的通信组中汇聚Tensor。
 
     .. note::
-        集合中所有进程的Tensor必须具有相同的shape和格式。用户在使用之前需要设置环境变量，运行下面的例子。获取详情请点击官方网站 `MindSpore <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.ops.html#通信算子>`_ 。
+        集合中所有进程的Tensor必须具有相同的shape和格式。
 
     参数：
         - **group** (str) - 工作的通信组，默认值："GlobalComm.WORLD_COMM_GROUP"（即Ascend平台为"hccl_world_group"，GPU平台为"nccl_world_group" ）。
@@ -20,3 +20,10 @@
     异常：
         - **TypeError** - `group` 不是str。
         - **ValueError** - 调用进程的rank id大于本通信组的rank大小。
+
+    样例：
+
+    .. note::
+        .. include:: mindspore.ops.comm_note.rst
+
+        该样例需要在2卡环境下运行。
