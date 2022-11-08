@@ -858,3 +858,38 @@ def test_csr_magic_methods():
 
     sub_output = jit(test_csr_sub)(indptr, indptr_2, indices, indices_2, values, values_2, shape)
     compare_csr(sub_output, sub_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_csr_add_dynamic_shape_methods():
+    """
+    Feature: Test csr add dynamic shape methods.
+    Description: Test csr_add.
+    Expectation: Success.
+    """
+    if get_platform() != "linux":
+        return
+
+    class Net(nn.Cell):
+        def construct(self, x, y, z):
+            return -x + y + z
+
+    indptr = Tensor([0, 1, 2, 4, 5], dtype=mstype.int32)
+    indices = Tensor([4, 4, 1, 2, 2], dtype=mstype.int32)
+    shape = (4, 5)
+    values = Tensor(np.arange(5) - 2.5, dtype=mstype.float32)
+
+    def test_csr_add(indptr, indices, values, shape):
+        x = CSRTensor(indptr, indices, values, shape)
+        net = Net()
+        return net(x, x, x)
+
+    add_expect = CSRTensor(indptr, indices, Tensor(
+        [-2.5, -1.5, -0.5, 0.5, 1.5], mstype.float32), shape)
+    add_output = test_csr_add(indptr, indices, values, shape)
+    compare_csr(add_output, add_expect)
+    add_output = jit(test_csr_add)(indptr, indices, values, shape)
+    compare_csr(add_output, add_expect)

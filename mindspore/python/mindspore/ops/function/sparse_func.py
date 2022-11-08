@@ -27,6 +27,7 @@ from mindspore.ops.operations.sparse_ops import (
     SparseMatrixSparseMatMul,
     CSRSparseMatrixToDense
 )
+from mindspore import ops
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.ops.operations.array_ops import GatherNd, Coalesce
@@ -808,8 +809,8 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
     a, b = promote_csr(a, b)
     alpha = alpha.astype(a.dtype)
     beta = beta.astype(a.dtype)
-    a_batch_pointers = make_tensor([0, a.values.shape[0]], a.indptr.dtype)
-    b_batch_pointers = make_tensor([0, b.values.shape[0]], b.indptr.dtype)
+    a_batch_pointers = ops.concat((make_tensor([0]), ops.TensorShape()(a.values))).astype(a.indptr.dtype)
+    b_batch_pointers = ops.concat((make_tensor([0]), ops.TensorShape()(b.values))).astype(b.indptr.dtype)
     a_shape = make_tensor(a.shape, a.indptr.dtype)
     b_shape = make_tensor(b.shape, b.indptr.dtype)
     _, _, indptr, indices, values = csr_add_op(a_shape, a_batch_pointers, a.indptr, a.indices, a.values,
