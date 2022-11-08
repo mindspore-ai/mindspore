@@ -49,8 +49,6 @@ class CoalesceGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
   void ResetResource() noexcept {
-    is_null_input_ = false;
-    stream_ptr_ = nullptr;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -64,13 +62,9 @@ class CoalesceGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void *stream_ptr_;
-  bool is_null_input_;
-  bool First_Resize = true;
+  cudaStream_t cuda_stream_;
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
   std::optional<bool> is_input_dynamic_shape_ = {};
-  BaseOperatorPtr base_operator_ = nullptr;
-  std::vector<KernelTensorPtr> inputs_ = {};
   std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel

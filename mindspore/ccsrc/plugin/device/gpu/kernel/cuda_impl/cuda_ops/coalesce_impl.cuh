@@ -19,8 +19,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
 CUDA_LIB_EXPORT int Coalesce(int64_t* origin_indices, int64_t* unique_indices, const size_t shape_elements,
-                             const size_t indices_num, const size_t values_num, int64_t* flatten_input_indices,
-                             const int64_t* input_indices, const T* input_values, const int64_t* input_shape,
+                             const size_t indices_num, const size_t values_num, int* ret_flag_host,
+                             int64_t* flatten_input_indices, const int64_t* input_indices,
+                             const T* input_values, const int64_t* input_shape,
                              int64_t* output_indices, T* output_value, int64_t* output_shape,
                              const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif
