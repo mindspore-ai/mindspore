@@ -29,15 +29,15 @@ class PackWeightManager {
  public:
   static PackWeightManager *GetInstance();
   ~PackWeightManager() = default;
-  STATUS InitPackWeight(const char *model_buf, size_t model_size, int numa_id = -1);
+  STATUS InitPackWeight(const char *model_buf, size_t model_size, int numa_id = -1, bool copy_use = true);
   STATUS InitPackWeightByBuf(const char *model_buf, size_t model_size);
-  char *GetNumaModelBuf(const char *model_buf, int numa_id);
+  const char *GetNumaModelBuf(const char *model_buf, int numa_id);
   STATUS StoreOriginTensorData(Model *model, std::vector<Tensor *> *all_tensors);
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
   void Free(void *tensor_data);
   bool IsCopyTensor(int op_type);
   void *ReplaceFp16Data(void *origin_fp16_data, size_t size, bool *replace);
-  void FreePackWeight(std::vector<char *> model_bufs);
+  void FreePackWeight(std::vector<const char *> model_bufs);
   void DeleteOriginModelBufInfo(const char *model_buf);
 
  private:

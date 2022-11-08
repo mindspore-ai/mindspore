@@ -100,7 +100,7 @@ class ModelPool {
                                            const std::vector<std::vector<int>> &all_worker_bind_list,
                                            const std::vector<int> &numa_node_id);
 
-  Status CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config);
+  Status CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config, bool copy_model);
 
   Status CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config);
 
@@ -152,7 +152,7 @@ class ModelPool {
   int can_use_core_num_ = -1;
   int all_core_num_ = -1;
 
-  std::vector<char *> model_bufs_;
+  std::vector<const char *> model_bufs_;
   char *graph_buf_ = nullptr;
 
   std::shared_mutex model_pool_mutex_;

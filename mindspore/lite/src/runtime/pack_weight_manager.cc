@@ -56,7 +56,7 @@ STATUS PackWeightManager::InitPackWeightByBuf(const char *model_buf, size_t mode
   return RET_OK;
 }
 
-STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_size, int numa_id) {
+STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_size, int numa_id, bool copy_use) {
 #ifdef SHARING_MODEL_WEIGHT
   {
     std::unique_lock<std::mutex> l(manager_mutex_);
@@ -68,7 +68,7 @@ STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_siz
       }
     }
   }
-  auto status = pack_weight_->InitWeightManagerByBuf(model_buf, model_size, numa_id, true);
+  auto status = pack_weight_->InitWeightManagerByBuf(model_buf, model_size, numa_id, copy_use);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
     return RET_ERROR;
@@ -78,7 +78,7 @@ STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_siz
   return RET_OK;
 }
 
-char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
+const char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
 #ifdef SHARING_MODEL_WEIGHT
   return pack_weight_->GetNumaModelBuf(model_buf, numa_id);
 #endif
@@ -187,7 +187,7 @@ void PackWeightManager::Free(void *tensor_data) {
   FreeData(tensor_data);
 }
 
-void PackWeightManager::FreePackWeight(std::vector<char *> model_bufs) {
+void PackWeightManager::FreePackWeight(std::vector<const char *> model_bufs) {
 #ifdef SHARING_MODEL_WEIGHT
   if (pack_weight_ != nullptr) {
     pack_weight_->FreePackWeight(model_bufs, false);

@@ -42,12 +42,12 @@ class PackWeight {
   PackWeight() = default;
   ~PackWeight();
   STATUS InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id = -1, bool copy_buf = false);
-  char *GetNumaModelBuf(const char *model_buf, int numa_id);
+  const char *GetNumaModelBuf(const char *model_buf, int numa_id);
   STATUS StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data);
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
   STATUS ReplaceOriginTensorData(const char *model_buf, std::vector<Tensor *> *tensors, int tensor_index);
   void *ReplaceFp16Data(void *origin_fp16_data, size_t size);
-  void FreePackWeight(std::vector<char *> model_bufs, bool all);
+  void FreePackWeight(std::vector<const char *> model_bufs, bool all);
   void DeleteOriginModelBufInfo(const char *model_buf);
 
  private:
@@ -59,7 +59,7 @@ class PackWeight {
   std::mutex mtx_weight_;
   std::unordered_map<const char *, ModelConstWeight *> buf_model_weight_;
   std::unordered_map<const char *, std::vector<int>> numa_model_buf_;
-  std::unordered_map<const char *, std::vector<char *>> model_buf_map_;
+  std::unordered_map<const char *, std::vector<const char *>> model_buf_map_;
   std::unordered_map<void *, void *> fp16_fp32_data_pair_;
 };
 }  // namespace mindspore::lite
