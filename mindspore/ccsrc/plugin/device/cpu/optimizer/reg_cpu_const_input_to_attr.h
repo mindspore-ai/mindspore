@@ -23,7 +23,6 @@ namespace mindspore::opt {
 #define RER_CPU_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kCPUDevice, true, __VA_ARGS__)
 
 RER_CPU_DYNAMIC_CONST_TO_ATTR(kCastOpName, 1);
-RER_CPU_DYNAMIC_CONST_TO_ATTR(kConcatOpName, 0);
 RER_CPU_DYNAMIC_CONST_TO_ATTR(kFillOpName, 0);
 RER_CPU_DYNAMIC_CONST_TO_ATTR(kReduceAllOpName, 1);
 RER_CPU_DYNAMIC_CONST_TO_ATTR(kReduceAnyOpName, 1);
