@@ -25,6 +25,12 @@
 
 namespace mindspore {
 namespace converter {
+constexpr auto KConverterParam = "converter_parameters";
+constexpr auto KCommonQuantParam = "common_quant_param";
+constexpr auto KFullQuantParam = "full_quant_param";
+constexpr auto KDataPreProcess = "data_preprocess_param";
+constexpr auto KMixBitWeightQuantParam = "mixed_bit_weight_quant_param";
+
 /// \brief FmkType defined frameworks which converter tool supports.
 enum MS_API FmkType : int {
   kFmkTypeTf = 0,

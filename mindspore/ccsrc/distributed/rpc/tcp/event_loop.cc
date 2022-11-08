@@ -48,7 +48,7 @@ int EventLoopRun(EventLoop *evloop, int timeout) {
     MS_LOG(ERROR) << "Failed to call malloc events";
     return RPC_ERROR;
   }
-  if (memset_s(events, size, 0, size) > 0) {
+  if (memset_s(events, size, 0, size) != EOK) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     free(events);
     return RPC_ERROR;
@@ -264,7 +264,7 @@ int EventLoop::SetEventHandler(int fd, uint32_t events, EventHandler handler, vo
   Event *evdata = nullptr;
   int ret = 0;
 
-  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev)) > 0) {
+  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev)) != EOK) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     return RPC_ERROR;
   }
@@ -348,7 +348,7 @@ int EventLoop::UpdateEpollEvent(int fd, uint32_t events) {
     MS_LOG(ERROR) << "Failed to call event lookup, fd:" << fd << ",events:" << events_;
     return RPC_ERROR;
   }
-  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev)) > 0) {
+  if (memset_s(&ev, sizeof(ev), 0, sizeof(ev)) != EOK) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     return RPC_ERROR;
   }
