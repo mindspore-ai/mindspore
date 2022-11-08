@@ -495,7 +495,7 @@ void Tensor::set_quant_clusters(const std::vector<float> &clusters) { this->quan
 
 Tensor *Tensor::CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape, const void *data,
                              size_t data_len) {
-  auto tensor = new (std::nothrow) lite::Tensor();
+  auto tensor = std::make_unique<lite::Tensor>();
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor.";
     return nullptr;
@@ -504,7 +504,6 @@ Tensor *Tensor::CreateTensor(const std::string &name, TypeId type, const std::ve
   size_t shape_size = 1;
   for (size_t i = 0; i < shape.size(); ++i) {
     if (shape[i] < 0) {
-      delete tensor;
       return nullptr;
     }
     shape_size *= static_cast<size_t>(shape[i]);
@@ -512,31 +511,28 @@ Tensor *Tensor::CreateTensor(const std::string &name, TypeId type, const std::ve
   auto data_type_size = lite::DataTypeSize(type);
   if (data_type_size == 0) {
     MS_LOG(ERROR) << "not support create this type: " << type;
-    delete tensor;
     return nullptr;
   }
 
   if (data == nullptr && data_len != 0) {
     MS_LOG(ERROR) << "shape, data type and data len not match.";
-    delete tensor;
     return nullptr;
   }
 
   if (data != nullptr && data_len != shape_size * data_type_size) {
     MS_LOG(ERROR) << "shape, data type and data len not match.";
-    delete tensor;
     return nullptr;
   }
   tensor->set_data(const_cast<void *>(data));
   tensor->set_shape(shape);
   tensor->set_tensor_name(name);
   tensor->set_data_type(type);
-  return tensor;
+  return tensor.release();
 }
 
 Tensor *Tensor::CreateTensorByDeepCopy(const std::string &name, TypeId type, const std::vector<int> &shape,
                                        const void *data, size_t data_len) {
-  auto tensor = new (std::nothrow) lite::Tensor();
+  auto tensor = std::make_unique<lite::Tensor>();
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor.";
     return nullptr;
@@ -545,17 +541,14 @@ Tensor *Tensor::CreateTensorByDeepCopy(const std::string &name, TypeId type, con
   auto data_type_size = lite::DataTypeSize(type);
   if (data_type_size == 0) {
     MS_LOG(ERROR) << "not support create this type: " << type;
-    delete tensor;
     return nullptr;
   }
 
-  if (data_len < 0 || data_len > MAX_MALLOC_SIZE) {
+  if (data_len > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "data length is invalid.";
-    delete tensor;
     return nullptr;
   } else if (data_len == 0 && data != nullptr) {
     MS_LOG(ERROR) << "data length and data are not match.";
-    delete tensor;
     return nullptr;
   } else if (data_len == 0 && data == nullptr) {
     tensor->set_data(const_cast<void *>(data));
@@ -563,7 +556,6 @@ Tensor *Tensor::CreateTensorByDeepCopy(const std::string &name, TypeId type, con
     void *new_data = malloc(data_len);
     if (new_data == nullptr) {
       MS_LOG(ERROR) << "Failed to malloc data.";
-      delete tensor;
       return nullptr;
     }
     if (data != nullptr) {
@@ -578,7 +570,6 @@ Tensor *Tensor::CreateTensorByDeepCopy(const std::string &name, TypeId type, con
   } else {
     for (size_t i = 0; i < shape.size(); ++i) {
       if (shape[i] < 0) {
-        delete tensor;
         return nullptr;
       }
       shape_size *= static_cast<size_t>(shape[i]);
@@ -592,7 +583,7 @@ Tensor *Tensor::CreateTensorByDeepCopy(const std::string &name, TypeId type, con
   }
   tensor->set_tensor_name(name);
   tensor->set_data_type(type);
-  return tensor;
+  return tensor.release();
 }
 
 }  // namespace lite
