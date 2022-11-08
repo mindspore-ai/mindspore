@@ -11,7 +11,7 @@ mindspore.dataset.vision.AdjustGamma
     更多详细信息，请参见 `Gamma矫正 <https://en.wikipedia.org/wiki/Gamma_correction>`_ 。
 
     参数：
-        - **gamma** (float) - 输出图像像素值与输入图像像素值呈指数相关。 `gamma` 大于1使阴影更暗，而 `gamma` 小于1使黑暗区域更亮。
+        - **gamma** (float) - 非负实数。输出图像像素值与输入图像像素值呈指数相关。 `gamma` 大于1使阴影更暗，而 `gamma` 小于1使黑暗区域更亮。
         - **gain** (float, 可选) - 常数乘数。默认值：1.0。
 
     异常：

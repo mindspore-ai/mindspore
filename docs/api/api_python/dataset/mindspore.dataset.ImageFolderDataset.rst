@@ -29,7 +29,7 @@ mindspore.dataset.ImageFolderDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **RuntimeError** - `class_indexing` 参数的类型不是dict。
-        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note::
         - 如果 `decode` 参数的值为False，则得到的 `image` 列的shape为[undecoded_image_size]，如果为True则 `image` 列的shape为[H,W,C]。

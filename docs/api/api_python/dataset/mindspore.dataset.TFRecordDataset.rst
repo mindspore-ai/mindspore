@@ -7,8 +7,8 @@ mindspore.dataset.TFRecordDataset
 
     参数：
         - **dataset_files** (Union[str, list[str]]) - 数据集文件路径，支持单文件路径字符串、多文件路径字符串列表或可被glob库模式匹配的字符串，文件列表将在内部进行字典排序。
-        - **schema** (Union[str, Schema], 可选) - 读取模式策略，用于指定读取数据列的数据类型、数据维度等信息。
-          支持传入JSON文件路径或 mindspore.dataset.Schema 构造的对象。默认值：None，不指定。
+        - **schema** (Union[str, Schema], 可选) - 数据格式策略，用于指定读取数据列的数据类型、数据维度等信息。
+          支持传入JSON文件路径或 mindspore.dataset.Schema 构造的对象。默认值：None。
         - **columns_list** (list[str], 可选) - 指定从TFRecord文件中读取的数据列。默认值：None，读取所有列。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
 
@@ -33,7 +33,7 @@ mindspore.dataset.TFRecordDataset
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
+        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
 
 .. include:: mindspore.dataset.api_list_nlp.rst

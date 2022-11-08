@@ -402,9 +402,9 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         ValueError: task is not in 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' or 'CSL'.
         ValueError: usage is not in 'train', 'test' or 'eval'.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
@@ -1118,10 +1118,10 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `Shuffle.GLOBAL`. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
@@ -1312,10 +1312,10 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
             'all' will read from all 510,000 samples. Default: None, all samples.
         num_samples (int, optional): Number of samples (rows) to read. Default: None, read all samples.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `Shuffle.GLOBAL`. Bool type and Shuffle enum are both supported to pass in.
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed.
-            If shuffle is True, performs global shuffle.
-            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
 
@@ -1332,9 +1332,9 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
         >>> sogou_news_dataset_dir = "/path/to/sogou_news_dataset_dir"
@@ -1404,10 +1404,10 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `Shuffle.GLOBAL`. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
@@ -1565,10 +1565,10 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
             'all' will read from all 16,622 samples. Default: None, all samples.
         num_samples (int, optional): Number of samples (rows) to read. Default: None, reads the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `Shuffle.GLOBAL`. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
@@ -1586,13 +1586,32 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
         >>> udpos_dataset_dir = "/path/to/udpos_dataset_dir"
         >>> dataset = ds.UDPOSDataset(dataset_dir=udpos_dataset_dir, usage='all')
+
+    About UDPOS dataset:
+
+    Text corpus dataset that clarifies syntactic or semantic sentence structure.
+    The corpus comprises 254,830 words and 16,622 sentences, taken from various web media including
+    weblogs, newsgroups, emails and reviews.
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{silveira14gold,
+          year = {2014},
+          author = {Natalia Silveira and Timothy Dozat and Marie-Catherine de Marneffe and Samuel Bowman
+            and Miriam Connor and John Bauer and Christopher D. Manning},
+          title = {A Gold Standard Dependency Corpus for {E}nglish},
+          booktitle = {Proceedings of the Ninth International Conference on Language
+            Resources and Evaluation (LREC-2014)}
+        }
     """
 
     @check_udpos_dataset
@@ -1622,10 +1641,10 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `Shuffle.GLOBAL`. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
@@ -1641,11 +1660,11 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files or invalid.
-        ValueError: If `num_samples` is invalid (< 0).
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `num_samples` is invalid (< 0).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     About WikiTextDataset dataset:
 
@@ -1711,10 +1730,10 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `Shuffle.GLOBAL`. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
@@ -1730,10 +1749,10 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
         >>> yahoo_answers_dataset_dir = "/path/to/yahoo_answers_dataset_directory"
@@ -1804,10 +1823,10 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
             'all' will read from all 700,000 samples. Default: None, all samples.
         num_samples (int, optional): Number of samples (rows) to read. Default: None, reads all samples.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `Shuffle.GLOBAL`. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed;
-            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
-            Otherwise, there are two levels of shuffling:
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed.
+            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
+            Set the mode of data shuffling by passing in enumeration variables:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
 
@@ -1824,9 +1843,9 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
         >>> yelp_review_dataset_dir = "/path/to/yelp_review_dataset_dir"

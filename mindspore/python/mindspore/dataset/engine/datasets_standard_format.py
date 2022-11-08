@@ -248,8 +248,9 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in a lexicographical order.
-        schema (Union[str, Schema], optional): Path to the JSON schema file or schema object. Default: None.
-            If the schema is not provided, the meta data from the TFData file is considered the schema.
+        schema (Union[str, Schema], optional): Data format policy, which specifies the data types and shapes of the data
+            column to be read. Both JSON file path and objects constructed by mindspore.dataset.Schema are acceptable.
+            Default: None.
         columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
         num_samples (int, optional): The number of samples (rows) to be included in the dataset. Default: None.
             If num_samples is None and numRows(parsed from schema) does not exist, read the full dataset;

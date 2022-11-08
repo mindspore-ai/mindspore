@@ -3,7 +3,7 @@ mindspore.dataset.vision.RandomAdjustSharpness
 
 .. py:class:: mindspore.dataset.vision.RandomAdjustSharpness(degree, prob=0.5)
 
-    以给定的概率随机调整输入图像的清晰度。
+    以给定的概率随机调整输入图像的锐度。
 
     参数：
         - **degree** (float) - 锐度调整度，必须是非负的。

@@ -52,9 +52,9 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
@@ -188,9 +188,9 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
@@ -324,9 +324,9 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This
@@ -610,9 +610,9 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument can only be specified
@@ -623,11 +623,11 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
@@ -740,9 +740,9 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
-            order behavior shown in the table.
+            order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, expected order behavior shown in the table.
+            dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
@@ -754,11 +754,11 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain stm files.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
@@ -939,7 +939,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, will use value set in the config.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table.
+            Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.

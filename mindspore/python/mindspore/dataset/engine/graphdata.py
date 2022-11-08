@@ -1282,13 +1282,13 @@ class InMemoryGraphDataset(GeneratorDataset):
             Default: 'graph'.
         num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all samples.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
-            Default: None, expected order behavior shown in the table.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
-            Random accessible input is required. When this argument is specified, `num_samples` reflects the max
+            When this argument is specified, `num_samples` reflects the max
             sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards`. Default: None. This argument must be specified only
-            when num_shards is also specified. Random accessible input is required.
+            when num_shards is also specified.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: True.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
@@ -1386,8 +1386,8 @@ class ArgoverseDataset(InMemoryGraphDataset):
             recommend to specify it with
             `column_names=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]` like the following example.
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
-            Default: None, expected order behavior shown in the table.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table below.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: True.
         perf_mode(bool, optional): mode for obtaining higher performance when iterate created dataset(will call
