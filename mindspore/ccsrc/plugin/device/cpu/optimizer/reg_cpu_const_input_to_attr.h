@@ -38,8 +38,6 @@ RER_CPU_STATIC_CONST_TO_ATTR(kCSRMVOpName, 3);
 RER_CPU_STATIC_CONST_TO_ATTR(kCSRReduceSumOpName, 3, 4);
 RER_CPU_STATIC_CONST_TO_ATTR(kCumprodOpName, 1);
 RER_CPU_STATIC_CONST_TO_ATTR(kFillOpName, 0);
-RER_CPU_STATIC_CONST_TO_ATTR(kMeanGradOpName, 1);
-RER_CPU_STATIC_CONST_TO_ATTR(kParallelResizeBilinearGradOpName, 2);
 RER_CPU_STATIC_CONST_TO_ATTR(kSparseApplyAdagradOpName, 2);
 }  // namespace mindspore::opt
 
