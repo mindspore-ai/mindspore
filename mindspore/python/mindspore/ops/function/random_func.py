@@ -109,6 +109,7 @@ def standard_laplace(shape, seed=0, seed2=0):
         TypeError: If shape is neither a tuple nor a Tensor.
         ValueError: If seed or seed2 is not a non-negative int.
         ValueError: If shape is a tuple containing non-positive items.
+        ValueError: If shape is a Tensor, and the rank of the Tensor is not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
