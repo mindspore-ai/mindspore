@@ -74,6 +74,7 @@ from .array_func import (
     gather_nd,
     scalar_cast,
     masked_fill,
+    narrow,
     tensor_scatter_add,
     tensor_scatter_sub,
     tensor_scatter_mul,
@@ -107,7 +108,6 @@ from .array_func import (
     fills,
     broadcast_to,
     unsorted_segment_sum,
-    adaptive_max_pool2d,
     col2im,
     split,
     index_fill,
@@ -310,6 +310,7 @@ from .nn_func import (
     adaptive_avg_pool2d,
     adaptive_avg_pool3d,
     adaptive_max_pool1d,
+    adaptive_max_pool2d,
     adaptive_max_pool3d,
     avg_pool1d,
     avg_pool2d,
@@ -453,6 +454,9 @@ from .spectral_func import (
     blackman_window,
     bartlett_window,
 )
+from .vmap_func import (
+    vmap,
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -466,4 +470,5 @@ __all__.extend(grad_func.__all__)
 __all__.extend(debug_func.__all__)
 __all__.extend(image_func.__all__)
 __all__.extend(spectral_func.__all__)
+__all__.extend(vmap_func.__all__)
 __all__.sort()

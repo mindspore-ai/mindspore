@@ -22,6 +22,7 @@ Examples:
 """
 from __future__ import absolute_import
 
+from mindspore.common import Tensor
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 from mindspore.ops.vm_impl_registry import get_vm_impl_fn, vm_impl_registry
 from mindspore.ops.op_info_register import op_info_register, custom_info_register, AkgGpuRegOp, AkgAscendRegOp, \

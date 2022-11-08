@@ -40,7 +40,6 @@ from ..operations.array_ops import (
     Lstsq,
     Mvlgamma,
 )
-from ..operations.nn_ops import AdaptiveMaxPool2D
 from ..operations.array_ops import TensorScatterElements
 from ...common import Tensor
 from .._primitive_cache import _get_cache_prim
@@ -3763,93 +3762,6 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
     return unsorted_segment_prod_(x, segment_ids, num_segments)
 
 
-def adaptive_max_pool2d(input_x, output_size, return_indices=False):
-    r"""
-    adaptive_max_pool2d operation.
-
-    This operator applies a 2D adaptive max pooling to an input signal composed of multiple input planes.
-    That is, for any input size, the size of the specified output is H x W.
-    The number of output features is equal to the number of input planes.
-
-    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
-    H is the feature height, and W is the feature width.
-
-    .. math::
-
-        \begin{align}
-        h_{start} &= floor(i * H_{in} / H_{out})\\
-        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
-        w_{start} &= floor(j * W_{in} / W_{out})\\
-        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
-        Output(i,j) &= {\max Input[h_{start}:h_{end}, w_{start}:w_{end}]}
-        \end{align}
-
-    Note:
-        Ascend platform only supports float16 type for input_x.
-
-    Args:
-        input_x (Tensor): The input of adaptive_max_pool2d, which is a 3D or 4D tensor,
-            with float16, float32 or float64 data type.
-
-        output_size (Union[int, tuple]): The target output size is H x W.
-            ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
-            which means the output size is the same as the input.
-
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
-
-    Returns:
-        Tensor, with the same type as the `input_x`.
-
-        Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
-
-    Raises:
-        TypeError: If `output_size` is not int or tuple.
-        TypeError: If `input_x` is not a tensor.
-        TypeError: If `return_indices` is not a bool.
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
-        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        ValueError: If the dimension of `input_x` is not NCHW or CHW.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> # case 1: output_size=(None, 2)
-        >>> input_x = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
-        >>> output = ops.adaptive_max_pool2d(input_x, (None, 2))
-        >>> print(output)
-        [[[[2. 3.]
-           [5. 6.]
-           [8. 9.]]
-          [[2. 3.]
-           [5. 6.]
-           [8. 9.]]
-          [[2. 3.]
-           [5. 6.]
-           [8. 9.]]]]
-        >>> # case 2: output_size=2
-        >>> output = ops.adaptive_max_pool2d(input_x, 2)
-        >>> print(output)
-        [[[[5. 6.]
-           [8. 9.]]
-          [[5. 6.]
-           [8. 9.]]
-          [[5. 6.]
-           [8. 9.]]]]
-        >>> # case 3: output_size=(1, 2)
-        >>> output = ops.adaptive_max_pool2d(input_x, (1, 2))
-        >>> print(output)
-        [[[[8. 9.]]
-          [[8. 9.]]
-          [[8. 9.]]]]
-    """
-    _adaptive_max_pool2d = _get_cache_prim(AdaptiveMaxPool2D)(output_size, return_indices)
-    return _adaptive_max_pool2d(input_x)
-
-
 def index_fill(x, dim, index, value):
     """
     Fills the elements under the `dim` dimension of the input Tensor `x` with the input `value`
@@ -4460,6 +4372,54 @@ def min(x, axis=0, keep_dims=False):
     return argmin_with_value_(x)
 
 
+def narrow(inputs, axis, start, length):
+    """
+    Returns a narrowed tensor from input tensor, and
+    the dimension axis is input from start to start + length.
+
+    Args:
+        inputs (Tensor): the tensor to narrow.
+        axis (int): the axis along which to narrow.
+        start (int): the starting dimension.
+        length (int): the distance to the ending dimension.
+
+    Returns:
+        Tensor.
+
+        - output (Tensors) - The narrowed tensor.
+
+    Raises:
+        TypeError: If the input is not a tensor or tuple or list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> from mindspore import Tensor
+        >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
+        >>> output = ops.narrow(x, 0, 0, 2)
+        >>> print(output)
+        [[ 1 2 3]
+         [ 4 5 6]]
+        >>> output = ops.narrow(x, 1, 1, 2)
+        >>> print(output)
+        [[ 2 3]
+         [ 5 6]
+         [ 8 9]]
+    """
+    validator.check_axis_in_range(axis, inputs.ndim)
+    validator.check_int_range(start, 0, inputs.shape[axis], Rel.INC_LEFT)
+    validator.check_int_range(length, 1, inputs.shape[axis] - start, Rel.INC_BOTH)
+
+    begins = [0] * inputs.ndim
+    begins[axis] = start
+    sizes = [i for i in inputs.shape]
+    sizes[axis] = length
+    return P.Slice()(inputs, begins, sizes)
+
+
 def unsorted_segment_sum(input_x, segment_ids, num_segments):
     r"""
     Computes the sum of a tensor along segments.
@@ -4993,6 +4953,7 @@ __all__ = [
     'one_hot',
     'masked_fill',
     'masked_select',
+    'narrow',
     'scatter_add',
     'scatter_mul',
     'scatter_max',
@@ -5007,7 +4968,6 @@ __all__ = [
     'diag',
     'meshgrid',
     'affine_grid',
-    'adaptive_max_pool2d',
     'meshgrid',
     'broadcast_to',
     'col2im',

@@ -37,4 +37,3 @@ mindspore.nn.BatchNorm3d
         - **TypeError** - `eps` 不是浮点数。
         - **ValueError** - `num_features` 小于1。
         - **ValueError** - `momentum` 不在范围[0, 1]内。
-        - **ValueError** - `data_format` 不是'NCDHW'。

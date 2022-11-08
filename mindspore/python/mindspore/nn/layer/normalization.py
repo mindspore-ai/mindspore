@@ -379,7 +379,6 @@ class BatchNorm3d(Cell):
         TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
-        ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
