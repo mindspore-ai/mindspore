@@ -333,8 +333,12 @@ class Cell(Cell_):
         # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
         # here using pop(id(self), None) to avoid KeyError exception
         cells_compile_cache.pop(id(self), None)
-        if self.compile_cache:
-            _cell_graph_executor.del_net_res(self.compile_cache)
+        try:
+            if self.compile_cache:
+                _cell_graph_executor.del_net_res(self.compile_cache)
+        except AttributeError:
+            raise AttributeError(f"The '{type(self).__name__}' object does not inherit attribute from 'cell'. "
+                                 f"Please use 'super().__init__()'.")
 
     def __delattr__(self, name):
         if name in self._params:
@@ -453,8 +457,14 @@ class Cell(Cell_):
                             f"but got {len(inputs)}.")
 
     def _hook_fn_registered(self):
-        if self._enable_forward_pre_hook or self._enable_forward_hook or self._enable_backward_hook:
-            return True
+        '''Hook function in graph mode'''
+        #Check super().__init__() in graph mode.
+        try:
+            if self._enable_forward_pre_hook or self._enable_forward_hook or self._enable_backward_hook:
+                return True
+        except AttributeError:
+            raise AttributeError(f"The '{type(self).__name__}' object does not inherit attribute from 'cell'. "
+                                 f"Please use 'super().__init__()'.")
         if not self._is_recursion_hook:
             self._is_recursion_hook = True
             for cell in self.cells():
