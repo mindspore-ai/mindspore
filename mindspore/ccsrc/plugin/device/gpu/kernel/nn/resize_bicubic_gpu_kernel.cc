@@ -73,7 +73,6 @@ bool ResizeBicubicGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
-  Resize(base_operator, inputs, outputs);
   return true;
 }
 

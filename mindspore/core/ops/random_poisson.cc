@@ -35,7 +35,7 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  if (IsDynamicRank(shape_shape) || IsDynamicRank(rate_shape)) {
+  if (IsDynamic(shape_shape) || IsDynamicRank(rate_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
   if (shape_shape.size() != 1) {

@@ -24,6 +24,7 @@ std::unique_ptr<cukernel::GpuKernelHelperBase> CreateResizeBicubicGradKernelPtr(
                                                                                 const uint32_t &device_id) {
   return std::make_unique<cukernel::ResizeBicubicGradHelperGpuKernel<T, S>>(kernel_name, device_id);
 }
+
 using ResizeBicubicGradPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
@@ -65,7 +66,6 @@ bool ResizeBicubicGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
-  Resize(base_operator, inputs, outputs);
   return true;
 }
 

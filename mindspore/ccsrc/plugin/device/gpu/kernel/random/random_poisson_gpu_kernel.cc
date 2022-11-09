@@ -46,12 +46,6 @@ bool RandomPoissonGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  unit_shape_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
-  unit_rate_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(1).first);
-  unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(0).first);
-
   auto kernel_ptr = std::make_shared<ops::RandomPoisson>(base_operator->GetPrim());
   seed_ = static_cast<int64_t>(kernel_ptr->get_seed());
   seed2_ = static_cast<int64_t>(kernel_ptr->get_seed2());
@@ -61,29 +55,17 @@ bool RandomPoissonGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
 int RandomPoissonGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs,
                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  if (auto ret = KernelMod ::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
   ResetResource();
-  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> rate_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                         inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  int64_t shape_elements = std::accumulate(shape_shape.begin(), shape_shape.end(), 1, std::multiplies<int64_t>());
+  std::vector<int64_t> rate_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
   rate_elements_ = std::accumulate(rate_shape.begin(), rate_shape.end(), 1, std::multiplies<int64_t>());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  input_size_list_.emplace_back(shape_elements * unit_shape_size_);
-  input_size_list_.emplace_back(rate_elements_ * unit_rate_size_);
-  output_size_list_.emplace_back(output_elements_ * unit_output_size_);
   workspace_size_list_.push_back(output_elements_ * sizeof(curandState));
   return KRET_OK;
 }

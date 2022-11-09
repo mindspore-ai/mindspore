@@ -23,6 +23,7 @@ import pytest
 
 
 class NetResizeBicubic(nn.Cell):
+
     def __init__(self):
         super(NetResizeBicubic, self).__init__()
         align_corners = False
@@ -43,7 +44,10 @@ def test_resize_bicubic_graph():
     Expectation: success or throw pytest error
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    types = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.int64, np.float16, np.float32, np.float64]
+    types = [
+        np.int8, np.uint8, np.int16, np.uint16, np.int32, np.int64, np.float16,
+        np.float32, np.float64
+    ]
     for type_i in types:
         img = np.array([1, 2, 3, 4])
         img = img.reshape([1, 2, 2, 1])
@@ -54,15 +58,10 @@ def test_resize_bicubic_graph():
         expect_type = output.asnumpy().dtype
         expect = np.array([1, 1.5, 2, 2.09375])
         expect = expect.reshape([1, 1, 4, 1])
-        if type_i == np.float64:
-            expect = expect.astype(np.float64)
-            assert expect_type == 'float64'
-            assert (output.asnumpy() == expect).all()
-        else:
-            expect = expect.astype(np.float32)
-            assert expect_type == 'float32'
-            assert (output.asnumpy() == expect).all()
 
+        expect = expect.astype(np.float32)
+        assert expect_type == 'float32'
+        assert (output.asnumpy() == expect).all()
 
 
 @pytest.mark.level1
@@ -75,7 +74,10 @@ def test_resize_bicubic_pynative():
     Expectation: success or throw pytest error
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
-    types_2 = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.int64, np.float16, np.float32, np.float64]
+    types_2 = [
+        np.int8, np.uint8, np.int16, np.uint16, np.int32, np.int64, np.float16,
+        np.float32, np.float64
+    ]
     for type_i in types_2:
         img = np.array([1, 2, 3, 4])
         img = img.reshape([1, 2, 2, 1])
@@ -86,11 +88,7 @@ def test_resize_bicubic_pynative():
         expect_type_2 = output.asnumpy().dtype
         expect = np.array([1, 1.5, 2, 2.09375])
         expect = expect.reshape([1, 1, 4, 1])
-        if type_i == np.float64:
-            expect = expect.astype(np.float64)
-            assert expect_type_2 == 'float64'
-            assert (output.asnumpy() == expect).all()
-        else:
-            expect = expect.astype(np.float32)
-            assert expect_type_2 == 'float32'
-            assert (output.asnumpy() == expect).all()
+
+        expect = expect.astype(np.float32)
+        assert expect_type_2 == 'float32'
+        assert (output.asnumpy() == expect).all()
