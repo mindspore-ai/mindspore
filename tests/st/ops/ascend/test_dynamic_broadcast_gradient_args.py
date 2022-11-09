@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
+import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 
@@ -31,6 +31,10 @@ class Net(nn.Cell):
         return self.args(s0, s1)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_net():
     shape0 = (4, 2, 1)
     shape1 = (2, 7)

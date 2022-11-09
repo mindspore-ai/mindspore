@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -38,6 +39,10 @@ x = np.ones([2, 4, 2, 2]).astype(np.int32)
 y = np.array([1.0]).astype(np.float32)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_net():
     mask = Net()
     tx, ty = Tensor(x), Tensor(y)
