@@ -1546,6 +1546,14 @@ def acos(x):
     return acos_(x)
 
 
+def arccos(x):
+    """
+    Alias for ops.acos().
+    For details, please refer to :func:`mindspore.ops.acos`.
+    """
+    return acos(x)
+
+
 def atan(x):
     r"""
     Computes the trigonometric inverse tangent of the input element-wise.
@@ -7088,6 +7096,7 @@ __all__ = [
     'tan',
     'asin',
     'acos',
+    'arccos',
     'atan',
     'sinh',
     'cosh',

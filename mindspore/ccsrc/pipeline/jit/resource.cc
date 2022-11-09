@@ -329,6 +329,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"isfinite", std::string("isfinite")},                              // P.isfinite()
        {"cos", std::string("cos")},                                        // cos()
        {"acos", std::string("acos")},                                      // acos()
+       {"arccos", std::string("acos")},                                    // acos()
        {"acosh", std::string("acosh")},                                    // acosh()
        {"sigmoid", std::string("sigmoid")},                                // P.Sigmoid()
        {"addr", std::string("addr")},                                      // addr()

@@ -1337,27 +1337,17 @@ class Tensor(Tensor_):
 
     def acos(self):
         r"""
-        Computes arccosine of input tensors element-wise.
-
-        .. math::
-
-            out_i = cos^{-1}(x_i)
-
-        Returns:
-            Tensor, has the same shape as `x`.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> a = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-            >>> output = a.acos()
-            >>> print(output)
-            [0.737726  1.5307857 1.2661036 0.9764105]
+        For details, please refer to :func:`mindspore.ops.acos`.
         """
         self._init_check()
         return tensor_operator_registry.get('acos')(self)
+
+    def arccos(self):
+        r"""
+        Alias for Tensor.acos().
+        For details, please refer to :func:`mindspore.ops.acos`.
+        """
+        return self.acos()
 
     def cos(self):
         r"""

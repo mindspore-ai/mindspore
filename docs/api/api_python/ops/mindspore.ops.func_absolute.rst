@@ -5,4 +5,4 @@ mindspore.ops.absolute
 
     ops.abs()的别名。
 
-    详情请查看 :func:`mindspore.ops.abs`
+    详情请查看 :func:`mindspore.ops.abs`。
