@@ -31,6 +31,7 @@ from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell, TrainOneStepCell
 from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
+from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.train import Model
 from mindspore.parallel import set_algo_parameters
 from parallel.utils.utils import BasicValidator
@@ -545,6 +546,7 @@ def test_pipeline_transformer_gradient_shard_true_sp():
     """
     set_auto_parallel_context(search_mode="sharding_propagation",
                               parallel_mode=ParallelMode.AUTO_PARALLEL)
+    _set_multi_subgraphs()
     set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
     pipeline_single_transformer(grad_accumulation_shard=True)
 
@@ -567,6 +569,7 @@ def test_pipeline_transformer_gradient_shard_false_sp():
     """
     set_auto_parallel_context(search_mode="sharding_propagation",
                               parallel_mode=ParallelMode.AUTO_PARALLEL)
+    _set_multi_subgraphs()
     set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
     pipeline_single_transformer(grad_accumulation_shard=False)
 
