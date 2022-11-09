@@ -36,6 +36,14 @@ OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
   }
   memset(param, 0, sizeof(DepthToSpaceParameter));
 
+  param->mode_ = 0;
+  if (value->mode() != nullptr) {
+    std::string mode = value->mode()->c_str();
+    if (mode == "CRD") {
+      param->mode_ = 1;
+    }
+  }
+
   param->op_parameter_.type_ = primitive->value_type();
   param->block_size_ = value->block_size();
 

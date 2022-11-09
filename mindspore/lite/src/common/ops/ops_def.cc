@@ -498,6 +498,7 @@ OP_SCHEMA_DEF_END(Depend)
 OP_SCHEMA_DEF(DepthToSpace)
 OP_ATTR(block_size, long)
 OP_ATTR_ENUM_WITH_VALUE(format, Format, 0)
+OP_ATTR(mode, string)
 OP_SCHEMA_DEF_END(DepthToSpace)
 
 OP_SCHEMA_DEF(DetectionPostProcess)

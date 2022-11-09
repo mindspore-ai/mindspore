@@ -49,6 +49,10 @@ class MIND_API DepthToSpace : public BaseOperator {
   ///
   /// \return format.
   Format get_format() const;
+  /// \brief Get mode.
+  ///
+  /// \return mode.
+  std::string get_mode() const;
 };
 
 abstract::AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
