@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/hal/hardware/gpu_device_context.h"
 #ifndef _WIN32
 #include <dlfcn.h>
+#include <libgen.h>
 #endif
 #include <utility>
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
@@ -813,6 +814,14 @@ std::shared_ptr<void> GPUDeviceResManager::AllocateHostMemory(size_t size) const
 }
 
 MS_REGISTER_DEVICE(kGPUDevice, GPUDeviceContext);
+#ifdef WITH_BACKEND
+MSCONTEXT_REGISTER_INIT_FUNC(kGPUDevice, [](MsContext *ctx) -> void {
+  MS_EXCEPTION_IF_NULL(ctx);
+  if (ctx->backend_policy() != "ms") {
+    ctx->set_backend_policy("ms");
+  }
+});
+#endif
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

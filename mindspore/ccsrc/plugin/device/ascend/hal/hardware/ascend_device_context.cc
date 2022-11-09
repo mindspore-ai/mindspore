@@ -144,6 +144,21 @@ DeprecatedInterface *AscendDeviceContext::GetDeprecatedInterface() {
 
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);
 MS_REGISTER_DEVICE(kDavinciMultiGraphInferenceDevice, AscendDeviceContext);
+#ifdef WITH_BACKEND
+MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
+  MS_EXCEPTION_IF_NULL(ctx);
+  auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
+  if (enable_ge == "1") {
+    if (ctx->backend_policy() != "ge") {
+      ctx->set_backend_policy("ge");
+    }
+  } else {
+    if (ctx->backend_policy() != "ms") {
+      ctx->set_backend_policy("ms");
+    }
+  }
+});
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

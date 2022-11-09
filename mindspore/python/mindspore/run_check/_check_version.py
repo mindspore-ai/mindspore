@@ -26,15 +26,15 @@ from abc import abstractmethod, ABCMeta
 from packaging import version
 import numpy as np
 from mindspore import log as logger
+from mindspore._c_expression import MSContext, ms_ctx_param
 from ..version import __version__
-from ..default_config import __package_name__
 
 
 class EnvChecker(metaclass=ABCMeta):
     """basic class for environment check"""
 
     @abstractmethod
-    def check_env(self, e):
+    def check_env(self):
         pass
 
     @abstractmethod
@@ -46,12 +46,35 @@ class EnvChecker(metaclass=ABCMeta):
         pass
 
 
+class CPUEnvChecker(EnvChecker):
+    """CPU environment check."""
+
+    def __init__(self, library_path):
+        self.library_path = library_path
+
+    def check_env(self):
+        pass
+
+    def check_version(self):
+        pass
+
+    def set_env(self):
+        """set env for cpu"""
+        plugin_dir = os.path.dirname(self.library_path)
+        akg_dir = os.path.join(plugin_dir, "plugin/cpu")
+        if os.getenv('LD_LIBRARY_PATH'):
+            os.environ['LD_LIBRARY_PATH'] = akg_dir + ":" + os.environ['LD_LIBRARY_PATH']
+        else:
+            os.environ['LD_LIBRARY_PATH'] = akg_dir
+
+
 class GPUEnvChecker(EnvChecker):
     """GPU environment check."""
 
-    def __init__(self):
+    def __init__(self, library_path):
         self.version = ["10.1", "11.1", "11.6"]
-        self.lib_key_to_lib_name = {'libcu': 'libcuda.so'}
+        self.lib_key_to_lib_name = {'libcu': 'libcuda.so', 'libcudnn': 'libcudnn.so'}
+        self.library_path = library_path
         # env
         self.path = os.getenv("PATH")
         self.ld_lib_path = os.getenv("LD_LIBRARY_PATH")
@@ -62,8 +85,8 @@ class GPUEnvChecker(EnvChecker):
         self.cuda_bin_path = self._get_bin_path("cuda")
         self.cudnn_lib_path = self._get_lib_path("libcudnn")
 
-    def check_env(self, e):
-        raise e
+    def check_env(self):
+        pass
 
     def check_version(self):
         """Check cuda version."""
@@ -111,7 +134,16 @@ class GPUEnvChecker(EnvChecker):
         return self.v
 
     def set_env(self):
-        return
+        """set env for gpu"""
+        v = self.get_cudart_version()
+        v = version.parse(v)
+        v_str = str(v.major) + "." + str(v.minor)
+        plugin_dir = os.path.dirname(self.library_path)
+        akg_dir = os.path.join(plugin_dir, "gpu" + v_str)
+        if os.getenv('LD_LIBRARY_PATH'):
+            os.environ['LD_LIBRARY_PATH'] = akg_dir + ":" + os.environ['LD_LIBRARY_PATH']
+        else:
+            os.environ['LD_LIBRARY_PATH'] = akg_dir
 
     def _get_bin_path(self, bin_name):
         """Get bin path by bin name."""
@@ -123,7 +155,7 @@ class GPUEnvChecker(EnvChecker):
         """Get cuda bin path by lib path."""
         path_list = []
         for path in self.cuda_lib_path:
-            path = os.path.abspath(path.strip()+"/bin/")
+            path = os.path.abspath(path.strip() + "/bin/")
             if Path(path).is_dir():
                 path_list.append(path)
         return np.unique(path_list)
@@ -178,14 +210,14 @@ class GPUEnvChecker(EnvChecker):
         current_path = os.path.split(os.path.realpath(__file__))[0]
         mindspore_path = os.path.join(current_path, "../lib/plugin")
         try:
-            real_path = glob.glob(mindspore_path + "/libmindspore_gpu.so")
+            real_path = self.library_path
             if real_path == []:
                 logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found, please "
                              f"confirm that libmindspore_gpu.so is in directory:{mindspore_path} and the correct cuda "
                              "version has been installed, you can refer to the installation "
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
-            ldd_r = subprocess.Popen(['ldd', real_path[0]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ldd_r = subprocess.Popen(['ldd', self.library_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             ldd_result = subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
             result = ldd_result.communicate(timeout=5)[0].decode()
             for i in result.split('\n'):
@@ -221,7 +253,8 @@ class GPUEnvChecker(EnvChecker):
 class AscendEnvChecker(EnvChecker):
     """ascend environment check"""
 
-    def __init__(self):
+    def __init__(self, library_path):
+        self.library_path = library_path
         self.version = ["1.83"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/compiler/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/compiler/version.info"
@@ -278,9 +311,8 @@ class AscendEnvChecker(EnvChecker):
         self.ascend_opp_path_check = "/op"
         self.v = ""
 
-    def check_env(self, e):
+    def check_env(self):
         self._check_env()
-        raise e
 
     def check_version(self):
         if not Path(self.fwk_version).is_file():
@@ -309,7 +341,7 @@ class AscendEnvChecker(EnvChecker):
                                             "_check_deps_version.py")
         call_cmd = [sys.executable, deps_version_checker] + input_args
         try:
-            process = subprocess.run(call_cmd, timeout=3, text=True, capture_output=True, check=False)
+            process = subprocess.run(call_cmd, timeout=30, text=True, capture_output=True, check=False)
             if process.stdout.strip() != "":
                 logger.warning(process.stdout.strip())
                 warning_countdown = 3
@@ -320,6 +352,13 @@ class AscendEnvChecker(EnvChecker):
             logger.info("Package te, topi, hccl version check timed out, skip.")
 
     def set_env(self):
+        plugin_dir = os.path.dirname(self.library_path)
+        akg_dir = os.path.join(plugin_dir, "ascend")
+        if os.getenv('LD_LIBRARY_PATH'):
+            os.environ['LD_LIBRARY_PATH'] = akg_dir + ":" + os.environ['LD_LIBRARY_PATH']
+        else:
+            os.environ['LD_LIBRARY_PATH'] = akg_dir
+
         if not self.tbe_path:
             self._check_env()
             return
@@ -331,10 +370,7 @@ class AscendEnvChecker(EnvChecker):
         except Exception:
             sys.path = deepcopy(origin_path)
             if Path(self.tbe_path).is_dir():
-                if os.getenv('LD_LIBRARY_PATH'):
-                    os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
-                else:
-                    os.environ['LD_LIBRARY_PATH'] = self.tbe_path
+                os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
             else:
                 raise EnvironmentError(
                     f"No such directory: {self.tbe_path}, Please check if Ascend AI software package (Ascend Data "
@@ -418,34 +454,57 @@ class AscendEnvChecker(EnvChecker):
         return self.v
 
 
+def check_env(device, _):
+    """callback function for checking environment variables"""
+    if device.lower() == "ascend":
+        env_checker = AscendEnvChecker(None)
+    elif device.lower() == "gpu":
+        env_checker = GPUEnvChecker(None)
+    else:
+        logger.info(f"Device {device} does not need to check any environment variable, skipping.")
+        return
+    env_checker.check_env()
+
+
+def set_env(device, library_path):
+    """callback function for setting environment variables"""
+    if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
+        if device in os.environ["MS_DEV_CLOSE_VERSION_CHECK"]:
+            return
+        os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = os.environ["MS_DEV_CLOSE_VERSION_CHECK"] + ":" + device
+    else:
+        os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = device
+
+    if device.lower() == "ascend":
+        env_checker = AscendEnvChecker(library_path)
+    elif device.lower() == "gpu":
+        env_checker = GPUEnvChecker(library_path)
+    elif device.lower() == "cpu":
+        env_checker = CPUEnvChecker(library_path)
+    else:
+        logger.info(f"Device {device} does not need to check any environment variable, skipping.")
+        return
+
+    env_checker.check_version()
+    env_checker.set_env()
+
+
 def check_version_and_env_config():
     """check version and env config"""
-    if __package_name__.lower() == "mindspore-ascend":
-        env_checker = AscendEnvChecker()
-        # Note: pre-load libgomp.so to solve error like "cannot allocate memory in statis TLS block"
-        try:
-            import ctypes
-            ctypes.cdll.LoadLibrary("libgomp.so.1")
-        except OSError:
-            logger.warning(
-                "Pre-Load Lirary libgomp.so.1 failed, this might cause cannot allocate TLS memory problem, "
-                "if so find solution in FAQ in https://www.mindspore.cn/docs/en/master/faq/installation.html.")
-    elif __package_name__.lower() == "mindspore-gpu":
-        env_checker = GPUEnvChecker()
-    else:
-        logger.info(f"Package version {__package_name__} does not need to check any environment variable, skipping.")
-        return
-    if os.getenv("MS_DEV_CLOSE_VERSION_CHECK") == "ON":
-        return
-    os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = "ON"
-
+    # Note: pre-load libgomp.so to solve error like "cannot allocate memory in statis TLS block"
     try:
-        # check version of ascend site or cuda
-        env_checker.check_version()
-        import mindspore._c_expression as _c_expression  # pylint: disable=unused-import
-        env_checker.set_env()
-    except ImportError as e:
-        env_checker.check_env(e)
+        import ctypes
+        ctypes.cdll.LoadLibrary("libgomp.so.1")
+    except OSError:
+        logger.warning(
+            "Pre-Load Lirary libgomp.so.1 failed, this might cause cannot allocate TLS memory problem, "
+            "if so find solution in FAQ in https://www.mindspore.cn/docs/en/master/faq/installation.html.")
+    if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
+        return
+    MSContext.get_instance().register_check_env_callback(check_env)
+    MSContext.get_instance().register_set_env_callback(set_env)
+    MSContext.get_instance().set_param(ms_ctx_param.device_target,
+                                       MSContext.get_instance().get_param(ms_ctx_param.device_target))
 
 
 def _set_pb_env():
@@ -464,25 +523,24 @@ def _set_pb_env():
 def _add_cuda_path():
     """add cuda path on windows."""
     if platform.system().lower() == 'windows':
-        if __package_name__.lower() == "mindspore_gpu":
-            cuda_home = os.environ.get('CUDA_PATH')
-            if cuda_home is None:
-                logger.error("mindspore-gpu on windows need CUDA_PATH, but not set it now")
+        cuda_home = os.environ.get('CUDA_PATH')
+        if cuda_home is None:
+            pass
+        else:
+            cuda_bin_path = os.path.join(os.environ['CUDA_PATH'], 'bin')
+            if sys.version_info >= (3, 8):
+                os.add_dll_directory(cuda_bin_path)
             else:
-                cuda_bin_path = os.path.join(os.environ['CUDA_PATH'], 'bin')
-                if sys.version_info >= (3, 8):
-                    os.add_dll_directory(cuda_bin_path)
-                else:
-                    os.environ['PATH'] += os.pathsep + cuda_bin_path
-            cudann_home = os.environ.get('CUDNN_HOME')
-            if cudann_home is None:
-                logger.error("mindspore-gpu on windows need CUDNN_HOME, but not set it now")
+                os.environ['PATH'] += os.pathsep + cuda_bin_path
+        cudann_home = os.environ.get('CUDNN_HOME')
+        if cudann_home is None:
+            pass
+        else:
+            cuda_home_bin_path = os.path.join(os.environ['CUDNN_HOME'], 'bin')
+            if sys.version_info >= (3, 8):
+                os.add_dll_directory(cuda_home_bin_path)
             else:
-                cuda_home_bin_path = os.path.join(os.environ['CUDNN_HOME'], 'bin')
-                if sys.version_info >= (3, 8):
-                    os.add_dll_directory(cuda_home_bin_path)
-                else:
-                    os.environ['PATH'] += os.pathsep + cuda_home_bin_path
+                os.environ['PATH'] += os.pathsep + cuda_home_bin_path
 
 
 check_version_and_env_config()

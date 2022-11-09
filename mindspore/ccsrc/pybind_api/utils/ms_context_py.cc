@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <pybind11/functional.h>
+#include <pybind11/chrono.h>
 #include <memory>
-#include <string>
 #include "utils/ms_context.h"
 #include "utils/log_adapter.h"
 #include "include/common/pybind_api/api_register.h"
@@ -113,6 +113,12 @@ void RegMsContext(py::module *m) {
     .def("set_param", &mindspore::MsCtxSetParameter, "Set value for specified parameter.")
     .def("get_backend_policy", &mindspore::MsContext::backend_policy, "Get backend policy.")
     .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.")
-    .def("enable_dump_ir", &mindspore::MsContext::enable_dump_ir, "Get the ENABLE_DUMP_IR.");
+    .def("enable_dump_ir", &mindspore::MsContext::enable_dump_ir, "Get the ENABLE_DUMP_IR.")
+    .def("is_ascend_plugin_loaded", &mindspore::MsContext::IsAscendPluginLoaded,
+         "Get the status that has ascend plugin been loaded.")
+    .def("register_set_env_callback", &mindspore::MsContext::RegisterSetEnv,
+         "Register callback function for check environment variable.")
+    .def("register_check_env_callback", &mindspore::MsContext::RegisterCheckEnv,
+         "Register callback function for check environment variable.");
 }
 }  // namespace mindspore

@@ -37,16 +37,11 @@ constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 }  // namespace
 void ModelImpl::SetMsContext() {
-  if (MsContext::GetInstance() == nullptr) {
-    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
-    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
-      auto back_policy_env = std::getenv("MSLITE_ENABLE_HELPER");
-      if (back_policy_env != nullptr) {
-        device_type_seter.reset(new (std::nothrow) MsContext("ge", kAscendDevice));
-      } else {
-        device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
-      }
-    });
+  if (MsContext::GetInstance() != nullptr) {
+    auto back_policy_env = std::getenv("MSLITE_ENABLE_HELPER");
+    if (back_policy_env != nullptr) {
+      MsContext::GetInstance()->set_backend_policy("ge");
+    }
   }
 }
 

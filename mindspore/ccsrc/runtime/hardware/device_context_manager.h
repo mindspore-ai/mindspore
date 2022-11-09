@@ -31,7 +31,8 @@ namespace mindspore {
 namespace plugin_loader {
 class PluginLoader {
  public:
-  static void LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles);
+  static bool LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles,
+                             std::stringstream *err_msg);
   static void CloseDynamicLib(const std::string &dl_name, void *handle);
   static bool GetPluginPath(std::string *file_path);
 
@@ -52,6 +53,7 @@ class BACKEND_EXPORT DeviceContextManager {
   void ClearDeviceContexts();
   void WaitTaskFinishOnDevice() const;
   void UnloadPlugin();
+  std::string GetErrorMsg() const;
 
  private:
   DeviceContextManager() = default;
@@ -60,13 +62,15 @@ class BACKEND_EXPORT DeviceContextManager {
   void LoadPlugin();
 
   std::map<std::string, void *> plugin_maps_;
-  bool load_init_{false};
+  bool load_init_;
   std::string plugin_path_;
 
   // The string converted from DeviceContextKey -> DeviceContextPtr.
   std::map<std::string, DeviceContextPtr> device_contexts_;
   // The name of device -> DeviceContextCreator.
   std::map<std::string, DeviceContextCreator> device_context_creators_;
+  // record error message of dlopen, print when create device_context failed.
+  std::stringstream dlopen_error_msg_;
 };
 
 class BACKEND_EXPORT DeviceContextRegister {

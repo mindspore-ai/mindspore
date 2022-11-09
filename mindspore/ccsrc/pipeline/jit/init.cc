@@ -29,6 +29,7 @@
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/mpi/mpi_config.h"
 #include "utils/ms_utils.h"
+#include "utils/ms_context.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
@@ -417,6 +418,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
+    mindspore::MsContext::GetInstance()->RegisterCheckEnv(nullptr);
+    mindspore::MsContext::GetInstance()->RegisterSetEnv(nullptr);
 #ifndef ENABLE_SECURITY
     try {
       py::module profiler = py::module::import("mindspore.profiler").attr("EnvProfiler")();
