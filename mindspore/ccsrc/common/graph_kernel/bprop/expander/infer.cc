@@ -63,5 +63,17 @@ void CppInfer::Infer(const NodePtr &node) {
   }
   cnode->set_abstract(result);
 }
+
+BaseShapePtr CppInfer::GetShape(const NodePtr &node) {
+  auto abs = node->get()->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  return abs->BuildShape();
+}
+
+TypePtr CppInfer::GetDtype(const NodePtr &node) {
+  auto abs = node->get()->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  return abs->BuildType();
+}
 }  // namespace expander
 }  // namespace mindspore

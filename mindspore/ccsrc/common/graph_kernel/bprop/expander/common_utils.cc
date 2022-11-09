@@ -31,6 +31,10 @@ namespace mindspore::expander::bprop {
 namespace {
 NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis) {
   auto dx_origin_dtypeptr = ib->GetDtype(dx);
+  auto need_reduce = ib->NeedReduce(ib->GetShape(dx), axis, false);
+  if (!need_reduce.first) {
+    return ib->Reshape(dx, need_reduce.second);
+  }
   auto dx_origin_dtype = dx_origin_dtypeptr->type_id();
   if (dx_origin_dtype == TypeId::kNumberTypeInt16 || dx_origin_dtype == TypeId::kNumberTypeInt32 ||
       dx_origin_dtype == TypeId::kNumberTypeInt64) {
@@ -285,12 +289,12 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
 }
 
 std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step) {
-  auto size = (stop - start) / step;
+  int64_t size = (step != 0) ? ((stop - start) / step) : 0;
   if (size <= 0) {
     return {};
   }
   size = ((stop - start) % step == 0) ? size : size + 1;
-  std::vector<int64_t> range(size);
+  std::vector<int64_t> range(LongToSize(size));
   std::generate(range.begin(), range.end(), [n = start - step, step]() mutable {
     n = n + step;
     return n;
@@ -312,6 +316,13 @@ std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64
   reverse_axis[axis] = rk - 1;
   reverse_axis[rk - 1] = axis;
   return reverse_axis;
+}
+
+int64_t CheckRange(int64_t idx, int64_t dim_size) {
+  if (idx < -dim_size || idx >= dim_size) {
+    MS_EXCEPTION(IndexError) << "index {" << idx << "} is out of bounds for dimension with size {" << dim_size << "}";
+  }
+  return idx < 0 ? (idx + dim_size) : idx;
 }
 
 NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type) {
@@ -336,7 +347,7 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
   auto x_shp = ib->GetShape(x);
   auto out_shp = ib->GetShape(dout);
   auto ind_shp = ib->GetShape(indices);
-  auto axis_v = GetIntFromValueNode(axis);
+  auto axis_v = CheckRange(GetIntFromValueNode(axis), SizeToLong(x_shp.size()));
   if (out_shp.empty()) {
     dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
   }
@@ -515,10 +526,7 @@ NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vect
   auto indicators = ib->Cast(ib->Emit("Equal", {y, x}), ib->GetDtype(grad));
   auto minn = 1e-24;
   auto min_num = ib->Tensor(minn, ib->GetDtype(grad));
-  auto num_selected =
-    ib->Reshape(ib->Emit("ReduceSum", {indicators, ib->Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(false)}}),
-                output_shape_kept_dims) +
-    min_num;
+  auto num_selected = ib->Reshape(ib->ReduceSum(indicators, axis, false), output_shape_kept_dims) + min_num;
   return indicators / num_selected * grad;
 }
 

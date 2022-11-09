@@ -914,7 +914,7 @@ REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto dout = ib->GetInput(kIndex3);
   auto input_shape = ib->GetShape(x);
   auto output_shape_kept_dims = ReduceShape(input_shape, GetAxisValue(axis));
-  dout = ib->Emit("Reshape", {dout, ib->Value<ShapeVector>(output_shape_kept_dims)});
+  dout = ib->Reshape(dout, output_shape_kept_dims);
   auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
   auto grad = ib->Emit("Tile", {dout, ib->Value<ShapeVector>(tile_scaling)});
   auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetAxisValue(axis));
@@ -964,7 +964,11 @@ REG_BPROP_BUILDER("ReduceMean").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     }
     return size;
   };
-  auto div_shape = getSize(shape_x) / getSize(shape_out);
+  auto shape_out_sz = getSize(shape_out);
+  if (shape_out_sz == 0) {
+    MS_EXCEPTION(ValueError) << "out shape size can not be 0";
+  }
+  auto div_shape = getSize(shape_x) / shape_out_sz;
   auto dx = ib->RealDiv(grad, ib->Tensor(div_shape, ib->GetDtype(grad)));
   return {dx, ib->ZerosLike(axis)};
 });

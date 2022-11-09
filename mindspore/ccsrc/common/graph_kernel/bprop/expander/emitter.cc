@@ -17,6 +17,9 @@
 #include "common/graph_kernel/bprop/expander/emitter.h"
 
 #include <algorithm>
+#include <functional>
+#include <unordered_set>
+#include <utility>
 #include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
 
@@ -69,6 +72,28 @@ NodePtr Emitter::Log(const NodePtr &x) const {
                {"cust_aicpu", MakeValue(kLogOpName)}});
 }
 
+NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) const {
+  // do not emit a node when the dst type is the same as src type
+  if (node->dtype()->type_id() == type->type_id()) {
+    return node;
+  }
+  return Emit("Cast", {node, EmitValue(type)});
+}
+
+NodePtr Emitter::Reshape(const NodePtr &node, const ShapeVector &shape) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_shape = node->shape();
+  if (shape.size() != node_shape.size()) {
+    return Emit(prim::kReshape, {node, Value(shape)});
+  }
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] != node_shape[i] && shape[i] != -1) {
+      return Emit(prim::kReshape, {node, Value(shape)});
+    }
+  }
+  return node;
+}
+
 NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
   return Emit(prim::kPrimMatMul->name(), {a, b},
               {{"transpose_x1", MakeValue(transpose_a)},
@@ -114,7 +139,54 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   return Emit(prim::kZerosLike, {node});
 }
 
+std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
+                                                 bool keep_dim) const {
+  if (shape.empty()) {
+    return std::make_pair(false, shape);
+  }
+  auto rank = SizeToLong(shape.size());
+  auto real_axis = axis;
+  if (real_axis.empty()) {
+    // all reduce
+    for (int64_t i = 0; i < rank; ++i) {
+      real_axis.push_back(i);
+    }
+  }
+  std::unordered_set<size_t> uniq_axis;
+  for (size_t i = 0; i < real_axis.size(); ++i) {
+    if (real_axis[i] < -rank || real_axis[i] >= rank) {
+      MS_EXCEPTION(ValueError) << "Reduce axis[" << i << "] is " << real_axis[i] << ", which is out of range [-" << rank
+                               << ", " << rank << ") for shape: " << shape;
+    }
+    auto axis_i = real_axis[i] < 0 ? real_axis[i] + rank : real_axis[i];
+    (void)uniq_axis.insert(LongToSize(axis_i));
+  }
+  // Calc reduce output shape
+  ShapeVector out_shape;
+  bool need_reduce = false;
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (uniq_axis.find(i) == uniq_axis.end()) {
+      // not reduce axis
+      out_shape.push_back(shape[i]);
+    } else {
+      // reduce axis
+      if (shape[i] != 1) {
+        need_reduce = true;
+      }
+      if (keep_dim) {
+        out_shape.push_back(1);
+      }
+    }
+  }
+  return std::make_pair(need_reduce, out_shape);
+}
+
 NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) const {
+  MS_EXCEPTION_IF_NULL(x);
+  auto need_reduce = NeedReduce(x->shape(), axis, keep_dims);
+  if (!need_reduce.first) {
+    return Reshape(x, need_reduce.second);
+  }
   return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(keep_dims)}});
 }
 

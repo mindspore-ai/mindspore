@@ -899,7 +899,7 @@ REG_BPROP_BUILDER("Tanh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex2);
   auto x_dtype_id = ib->GetDtypeId(x);
   NodePtr dx;
-  if (x_dtype_id == 46 || x_dtype_id == 47) {
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     dout = ib->Emit("Conj", {dout});
     dx = ib->Emit("TanhGrad", {out, dout});
     dx = ib->Emit("Conj", {dx});

@@ -37,7 +37,7 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
     for (size_t i = 0; i < back_size; ++i) {
       broadcastable_shape.push_back(1);
     }
-    is_positive = ib->Emit("Reshape", {is_positive, ib->Value<ShapeVector>(broadcastable_shape)});
+    is_positive = ib->Reshape(is_positive, broadcastable_shape);
     auto gathered_shape = ib->GetShape(gathered);
     is_positive = ib->Emit("LogicalAnd",
                            {is_positive, ib->Emit("Fill", {ib->EmitValue(kBool), ib->Value<ShapeVector>(gathered_shape),
@@ -58,8 +58,8 @@ NodePtrList UnsortedSegmentMinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr 
 
   auto tmp = ib->Emit("Equal", {x, gathered_outputs});
   auto is_selected = ib->Emit("LogicalAnd", {tmp, is_positive});
-  auto num_selected = ib->Emit(
-    "UnsortedSegmentSum", {ib->Emit("Cast", {is_selected, ib->Value(ib->GetDtype(dout))}), segment_ids, num_segments});
+  auto num_selected =
+    ib->Emit("UnsortedSegmentSum", {ib->Cast(is_selected, ib->GetDtype(dout)), segment_ids, num_segments});
   auto weighted_grads = ib->Emit("RealDiv", {dout, num_selected});
   auto temp_outs_2 = GatherDropNegatives(ib, weighted_grads, nullptr, zero_clipped_indices, is_positive);
   MS_EXCEPTION_IF_CHECK_FAIL(temp_outs.size() > 0, "Outputs should not be empty.");
@@ -158,7 +158,7 @@ REG_BPROP_BUILDER("SparseGatherV2").SetBody([](const BpropIRBuilder *ib) -> Node
   auto axis = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto x_shp = ib->GetShape(x);
-  auto axis_int = GetValue<int64_t>(axis->get<ValueNodePtr>()->value());
+  auto axis_int = CheckRange(GetValue<int64_t>(axis->get<ValueNodePtr>()->value()), SizeToLong(x_shp.size()));
   if (axis_int == 0) {
     ShapeVector values_shape{ib->GetSize(indices)};
     if (x_shp.size() > 1) {
@@ -730,7 +730,7 @@ REG_BPROP_BUILDER("BroadcastTo").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   auto tuple_out = BroadcastGradientArgs(broadcast_shape, x_shape);
   MS_EXCEPTION_IF_CHECK_FAIL(!tuple_out.empty(), "BroadcastGradientArgs out should not be empty!");
   auto reduction_axes = tuple_out[kIndex1];
-  auto reduced_grad = ib->Emit("ReduceSum", {dout, ib->Value(reduction_axes)}, {{"keep_dims", MakeValue(true)}});
+  auto reduced_grad = ib->ReduceSum(dout, reduction_axes, true);
   auto dx = ib->Reshape(reduced_grad, x_shape);
   return {dx};
 });
@@ -846,12 +846,17 @@ REG_BPROP_BUILDER("Tile").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout_reshaped = ib->Reshape(dout, r_shape);
   auto dout_dtype = ib->GetDtype(dout_reshaped)->type_id();
   NodePtr dx;
-  if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
-    dout_reshaped = ib->Cast(dout_reshaped, kFloat32);
-    dx = ib->Emit("ReduceSum", {dout_reshaped, ib->Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(false)}});
-    dx = ib->Cast(dx, dout_dtype);
+  auto need_reduce = ib->NeedReduce(r_shape, axis, false);
+  if (need_reduce.first) {
+    if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
+      dout_reshaped = ib->Cast(dout_reshaped, kFloat32);
+      dx = ib->Emit("ReduceSum", {dout_reshaped, ib->Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(false)}});
+      dx = ib->Cast(dx, dout_dtype);
+    } else {
+      dx = ib->Emit("ReduceSum", {dout_reshaped, ib->Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(false)}});
+    }
   } else {
-    dx = ib->Emit("ReduceSum", {dout_reshaped, ib->Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(false)}});
+    dx = ib->Reshape(dout_reshaped, need_reduce.second);
   }
   dx = ib->Reshape(dx, shapex);
   return {dx, ib->ZerosLike(input_multiples)};
