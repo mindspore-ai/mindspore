@@ -990,30 +990,7 @@ class Tensor(Tensor_):
 
     def subtract(self, other, *, alpha=1):
         r"""
-        Performs the element-wise subtraction of input tensors.
-
-        .. math::
-            output[i] = x[i] - alpha * y[i]
-
-        Args:
-            other (Union[Tensor, number.Number]): The tensor or number to be subtracted.
-            alpha (Number): The multiplier for `other`. Default: 1.
-
-        Returns:
-            Tensor, has the same shape and dtype as input tensors.
-
-        Raises:
-            TypeError: `other` is not Tensor, number.Number.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([4, 5, 6]), mindspore.float32)
-            >>> y = Tensor(np.array([1, 2, 3]), mindspore.float32)
-            >>> z = x.subtract(y, alpha=1)
-            >>> print(z)
-            [3. 3. 3.]
+        For details, please refer to :func:`mindspore.ops.subtract`.
         """
         self._init_check()
         return tensor_operator_registry.get('sub')(self, alpha * other)

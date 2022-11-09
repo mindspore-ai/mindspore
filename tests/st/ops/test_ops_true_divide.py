@@ -2,13 +2,14 @@ import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore import context
 
 
 class Net(nn.Cell):
     def construct(self, x, other):
-        return x.true_divide(other)
+        return ops.true_divide(x, other)
 
 
 @pytest.mark.level0
@@ -19,10 +20,10 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_true_divide(mode):
+def test_ops_true_divide(mode):
     """
-    Feature: tensor.true_divide()
-    Description: Verify the result of tensor.true_divide
+    Feature: ops.true_divide
+    Description: Verify the result of ops.true_divide
     Expectation: success
     """
     context.set_context(mode=mode)

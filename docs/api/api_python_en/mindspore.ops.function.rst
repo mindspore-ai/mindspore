@@ -214,8 +214,10 @@ Element-by-Element Operations
     mindspore.ops.sqrt
     mindspore.ops.square
     mindspore.ops.sub
+    mindspore.ops.subtract
     mindspore.ops.svd
     mindspore.ops.tan
+    mindspore.ops.true_divide
     mindspore.ops.trunc
     mindspore.ops.truncate_div
     mindspore.ops.truncate_mod
