@@ -28,21 +28,34 @@ constexpr auto kUpsampleNearest3DGradOutputNum = 1;
 constexpr size_t kGrainSize = 32768;
 }  // namespace
 
-void UpsampleNearest3DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  in_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
-  // the input grad of backward process is the output of forward process
-  output_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  input_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
+bool UpsampleNearest3DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->GetPrim()->name();
+  in_type_ = inputs.at(kIndex0)->GetDtype();
+  auto kernel_ptr = std::make_shared<ops::UpsampleNearest3DGrad>(base_operator->GetPrim());
+  attr_scales_ = kernel_ptr->get_scale_factors();
+  if (attr_scales_.empty()) {
+    attr_scales_ = {0, 0, 0};
+  }
+  return true;
+}
+
+int UpsampleNearest3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs,
+                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  output_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
   if (output_shape_.size() != kShape5dDims) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'grads_output' should be " << kShape5dDims
                       << ", but got " << output_shape_.size();
   }
-  attr_scales_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, kAttrScales);
-  if (attr_scales_.empty()) {
-    attr_scales_ = {0, 0, 0};
-  }
+  return KRET_OK;
 }
 
 bool UpsampleNearest3DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
