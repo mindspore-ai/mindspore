@@ -23,6 +23,7 @@ from mindspore import log
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations.nn_ops import MultiMarginLoss as MultiMarginLossOp
 from mindspore.ops.operations.nn_ops import MultilabelMarginLoss as MultilabelMarginLossOp
 from mindspore.ops.operations.nn_ops import TripletMarginLoss as TripletMarginLossOp
@@ -1387,7 +1388,7 @@ class CosineEmbeddingLoss(LossBase):
         _check_is_tensor('logits_x1', logits_x1, self.cls_name)
         _check_is_tensor('logits_x2', logits_x2, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
-        F.same_type_shape(logits_x1, logits_x2)
+        inner.same_type_shape_(logits_x1, logits_x2)
         _check_reduced_shape_valid(F.shape(logits_x1), F.shape(labels), (1,), self.cls_name, "logits_x1", "labels")
         # if labels > 0, 1-cosine(logits_x1, logits_x2)
         # else, max(0, cosine(logits_x1, logits_x2)-margin)

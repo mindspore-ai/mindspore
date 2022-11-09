@@ -30,7 +30,6 @@ mindspore
 
     mindspore.dtype
     mindspore.dtype_to_nptype
-    mindspore.issubclass_
     mindspore.dtype_to_pytype
     mindspore.pytype_to_dtype
     mindspore.get_py_obj_dtype

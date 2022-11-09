@@ -32,7 +32,7 @@ from mindspore.ops._grad.grad_base import sum_grad_reduce_axis, dyn_fill, dyn_ra
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_rank_1d
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
-from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, DynamicBroadcastTo
+from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, DynamicBroadcastTo, IsSubClass
 from mindspore.ops._utils.utils import is_shape_unknown, is_dim_unknown
 
 shape_op = P.Shape()
@@ -41,7 +41,7 @@ reduce_prod = P.ReduceProd()
 reduce_sum = P.ReduceSum()
 reshape = P.Reshape()
 tile = P.Tile()
-is_sub_class = P.IsSubClass()
+is_sub_class = IsSubClass()
 to_array = P.TupleToArray()
 real_div = P.RealDiv()
 

@@ -47,7 +47,7 @@ __dtype__ = [
 ]
 
 __method__ = [
-    "dtype_to_nptype", "issubclass_", "dtype_to_pytype",
+    "dtype_to_nptype", "dtype_to_pytype",
     "pytype_to_dtype", "get_py_obj_dtype"
 ]
 
@@ -296,20 +296,6 @@ def _issubclass_(type_, dtype):
         return False
     return typing.is_subclass(type_, dtype)
 
-
-def issubclass_(type_, dtype):
-    """
-    Determine whether `type_` is a subclass of `dtype`.
-
-    Args:
-        type_ (:class:`mindspore.dtype`): Target MindSpore dtype.
-        dtype (:class:`mindspore.dtype`): Compare MindSpore dtype.
-
-    Returns:
-        bool, True or False.
-    """
-    logger.warning("'issubclass_' will be deprecated and removed in a future version.")
-    return _issubclass_(type_, dtype)
 
 
 def type_size_in_bytes(dtype):

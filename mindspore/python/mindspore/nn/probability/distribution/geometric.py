@@ -15,6 +15,7 @@
 """Geometric Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import composite as C
 from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
@@ -161,7 +162,7 @@ class Geometric(Distribution):
         self.dtypeop = P.DType()
         self.fill = P.Fill()
         self.floor = P.Floor()
-        self.issubclass = P.IsSubClass()
+        self.issubclass = inner.IsSubClass()
         self.less = P.Less()
         self.pow = P.Pow()
         self.select = P.Select()

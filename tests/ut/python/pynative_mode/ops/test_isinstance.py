@@ -14,11 +14,11 @@
 # ============================================================================
 """ test_multitype """
 import mindspore as ms
-from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 
 def test_isinstance():
-    assert P.IsInstance()([1, 2, 3], ms.list_) is True
-    assert P.IsInstance()((1, 2, 3), ms.tuple_) is True
-    assert P.IsInstance()(1.0, ms.float_) is True
-    assert P.IsInstance()(1, ms.int_) is True
+    assert inner.IsInstance()([1, 2, 3], ms.list_) is True
+    assert inner.IsInstance()((1, 2, 3), ms.tuple_) is True
+    assert inner.IsInstance()(1.0, ms.float_) is True
+    assert inner.IsInstance()(1, ms.int_) is True

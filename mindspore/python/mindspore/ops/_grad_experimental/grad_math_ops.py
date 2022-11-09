@@ -22,6 +22,7 @@ from mindspore.nn import LGamma
 from mindspore.ops import functional as F
 from mindspore.ops.functional import broadcast_gradient_args
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations.math_ops import Trace, Bernoulli, Renorm
 from mindspore import nn, ops, Tensor
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
@@ -155,7 +156,7 @@ def get_bprop_index_lerp(self):
     """Generate bprop for Lerp"""
     mul_op = P.Mul()
     sub_op = P.Sub()
-    is_instance_op = P.IsInstance()
+    is_instance_op = inner.IsInstance()
 
     def bprop(start, end, weight, out, dout):
         dout = F.cast(dout, mstype.float32)

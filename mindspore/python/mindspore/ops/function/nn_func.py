@@ -20,6 +20,7 @@ from math import pi
 import mindspore.ops as ops
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.operations import image_ops as IMG
 from mindspore.ops._utils import is_shape_unknown
@@ -3020,8 +3021,8 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     _check_is_tensor('input2', input2, "margin_ranking_loss")
     _check_is_tensor('target', target, "margin_ranking_loss")
     maximum = P.Maximum()
-    ops.same_type_shape(input1, input2)
-    ops.same_type_shape(target, input1)
+    inner.same_type_shape_(input1, input2)
+    inner.same_type_shape_(target, input1)
     x = maximum(0, -target * (input1 - input2) + margin)
     return _get_loss(x, reduction, "margin_ranking_loss")
 

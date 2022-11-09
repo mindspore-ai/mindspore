@@ -16,6 +16,7 @@
 from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
@@ -96,8 +97,8 @@ class Bijector(Cell):
         self.dtype_base = P.DType()
         self.shape_base = P.Shape()
         self.fill_base = P.Fill()
-        self.sametypeshape_base = P.SameTypeShape()
-        self.issubclass_base = P.IsSubClass()
+        self.sametypeshape_base = inner.SameTypeShape()
+        self.issubclass_base = inner.IsSubClass()
 
     @property
     def name(self):

@@ -183,7 +183,6 @@ from .math_func import (
     isclose,
     hypot,
     heaviside,
-    same_type_shape,
     gcd,
     log,
     log_matrix_determinant,

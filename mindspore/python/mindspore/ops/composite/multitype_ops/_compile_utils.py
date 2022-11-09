@@ -21,7 +21,8 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import base
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, TopTypeof
+from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, \
+    TopTypeof, issubclass_
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import Tensor, CSRTensor, COOTensor
@@ -505,13 +506,13 @@ def get_slice_stride(slice_index, dim_size):
     if step is None:
         step = const_utils.make_tensor(1)
 
-    if F.issubclass_(F.typeof(start), mstype.number):
+    if issubclass_(F.typeof(start), mstype.number):
         start = const_utils.make_tensor(start)
 
-    if F.issubclass_(F.typeof(stop), mstype.number):
+    if issubclass_(F.typeof(stop), mstype.number):
         stop = const_utils.make_tensor(stop)
 
-    if F.issubclass_(F.typeof(step), mstype.number):
+    if issubclass_(F.typeof(step), mstype.number):
         step = const_utils.make_tensor(step)
 
     return start, stop, step

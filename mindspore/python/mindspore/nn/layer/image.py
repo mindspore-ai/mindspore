@@ -23,6 +23,7 @@ import mindspore.common.dtype as mstype
 import mindspore.ops as ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
 from mindspore._checkparam import Rel, Validator as validator
@@ -281,7 +282,7 @@ class SSIM(Cell):
     def construct(self, img1, img2):
         _check_input_dtype(F.dtype(img1), "img1", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_filter_size(F.shape(img1), "img1", self.filter_size, self.cls_name)
-        P.SameTypeShape()(img1, img2)
+        inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
         max_val = F.scalar_cast(self.max_val, F.dtype(img1))
         max_val = _convert_img_dtype_to_float32(max_val, dtype_max_val)
@@ -390,7 +391,7 @@ class MSSSIM(Cell):
         _check_input_4d(F.shape(img2), "img2", self.cls_name)
         valid_type = [mstype.float64, mstype.float32, mstype.float16, mstype.uint8]
         _check_input_dtype(F.dtype(img1), 'img1', valid_type, self.cls_name)
-        P.SameTypeShape()(img1, img2)
+        inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
         max_val = F.scalar_cast(self.max_val, F.dtype(img1))
         max_val = _convert_img_dtype_to_float32(max_val, dtype_max_val)
@@ -467,7 +468,7 @@ class PSNR(Cell):
     def construct(self, img1, img2):
         _check_input_4d(F.shape(img1), "img1", self.cls_name)
         _check_input_4d(F.shape(img2), "img2", self.cls_name)
-        P.SameTypeShape()(img1, img2)
+        inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
         max_val = F.scalar_cast(self.max_val, F.dtype(img1))
         max_val = _convert_img_dtype_to_float32(max_val, dtype_max_val)
