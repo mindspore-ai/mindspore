@@ -118,13 +118,6 @@ bool CumProd::GetReverse() const {
   return GetValue<bool>(value_ptr);
 }
 
-void CumProd::SetAxis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
-
-int64_t CumProd::GetAxis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
-
 AbstractBasePtr CumProdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(CumProdInferShape(primitive, input_args), CumProdInferType(primitive, input_args));
