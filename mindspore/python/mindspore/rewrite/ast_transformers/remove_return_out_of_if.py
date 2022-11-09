@@ -19,6 +19,8 @@ import copy
 from typing import Any, Union
 from enum import Enum
 
+from ..common import error_str
+
 
 class ReturnType(Enum):
     """
@@ -121,7 +123,7 @@ class RemoveReturnOutOfIf(ast.NodeTransformer):
             RuntimeError: Father node has not input attr.
         """
         if not hasattr(father_node, attr):
-            raise RuntimeError('Father node has not input attr', attr)
+            raise RuntimeError(error_str(f"Father node has not input attr '{attr}'", father_node=father_node))
         father_node_attr = getattr(father_node, attr)
         if RemoveReturnOutOfIf._last_node_is_return(if_node) == ReturnType.IfNotAllReturn:
             # nodes should be copied to all branches which not end with return
@@ -193,7 +195,8 @@ class RemoveReturnOutOfIf(ast.NodeTransformer):
 
             # assert body and or-else all end with return
             if not isinstance(last_node.body[-1], ast.Return) or not isinstance(last_node.orelse[-1], ast.Return):
-                raise RuntimeError("Body and orelse of if nodes not all end with ast.Return.")
+                raise RuntimeError(error_str("Body and orelse of if nodes not all end with ast.Return.",
+                                             father_node=last_node))
             output_name = RemoveReturnOutOfIf._get_output_names(output_names)
             # replace body return
             body_new_last_node = ast.Assign(

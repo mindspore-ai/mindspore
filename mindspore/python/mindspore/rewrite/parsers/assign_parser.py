@@ -32,6 +32,7 @@ from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
 from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder
 from mindspore.rewrite.ast_helpers import AstReplacer, AstModifier
 from mindspore.rewrite.common.event import Event
+from ..common import error_str
 
 
 class AssignParser(Parser):
@@ -65,7 +66,9 @@ class AssignParser(Parser):
         tuple_values = []
         for tuple_elt in tuple_elts:
             if not isinstance(tuple_elt, (ast.Constant, ast.Name)):
-                raise RuntimeError("Only support ast.Constant or ast.Name as elts of ast.Tuple.")
+                raise RuntimeError(f"Only support ast.Constant or ast.Name as elts of ast.Tuple, "
+                                   f"but got ast type {type(tuple_elt).__name__}",
+                                   child_node=tuple_elt, father_node=node)
             if isinstance(tuple_elt, ast.Constant):
                 tuple_values.append(tuple_elt.value)
             elif isinstance(tuple_elt, ast.Name):
@@ -92,7 +95,9 @@ class AssignParser(Parser):
         if isinstance(node, ast.Attribute):
             scope = node.value
             if not isinstance(scope, ast.Name):
-                raise RuntimeError("value of target of ast.Assign should be a ast.Name when target is a ast.Attribute.")
+                raise RuntimeError(error_str(f"value of target of ast.Assign should be a ast.Name when target is a "
+                                             f"ast.Attribute, but got ast type '{type(scope).__name__}'",
+                                             child_node=scope, father_node=node))
             return ScopedValue.create_naming_value(node.attr, scope.id)
         if isinstance(node, ast.Tuple):
             return AssignParser._create_scopedvalue_from_tuple_ast(node)
@@ -102,7 +107,9 @@ class AssignParser(Parser):
             return ScopedValue.create_variable_value(node.n)
         if isinstance(node, (ast.Str, ast.Bytes)):
             return ScopedValue.create_variable_value(node.s)
-        raise RuntimeError("Unsupported ast type to argument:", node)
+        raise RuntimeError(error_str(f"only support (ast.Name, ast.Attribute, ast.Tuple, ast.Constant, ast.Num"
+                                     f"ast.Str, ast.Bytes to argument), but got ast type '{type(node).__name__}'",
+                                     father_node=node))
 
     @staticmethod
     def _get_func_name(ast_node: ast.Call) -> str:
@@ -125,7 +132,8 @@ class AssignParser(Parser):
             return func.attr
         if isinstance(func, ast.Call):
             return AssignParser._get_func_name(func)
-        raise RuntimeError("FuncValue is should be Name or a Attribute or a Call:", astunparse.unparse(func))
+        raise RuntimeError(error_str(f"funcValue should be Name or a Attribute or a Call, but got ast type "
+                                     f"'{type(func).__name__}'", child_node=func, father_node=ast_node))
 
     @staticmethod
     def _get_func_scope(ast_node: ast.Call) -> str:
@@ -151,7 +159,8 @@ class AssignParser(Parser):
             return value.rsplit(".", 1)[0]
         if isinstance(func, ast.Call):
             return AssignParser._get_func_scope(func)
-        raise RuntimeError("FuncValue should be Name or a Attribute or a Call:", ast.dump(func))
+        raise RuntimeError(error_str(f"funcValue should be Name or a Attribute or a Call, but got ast type "
+                                     f"'{type(func).__name__}'", child_node=func, father_node=ast_node))
 
     @staticmethod
     def _get_symbol_object(symbol_name, origin_net):
@@ -225,7 +234,8 @@ class AssignParser(Parser):
         if all_targets.type == ValueType.TupleValue:
             for single_target in all_targets.value:
                 if not isinstance(single_target, ScopedValue) and not isinstance(single_target.value, str):
-                    raise RuntimeError("Only support str target in tuple.")
+                    raise RuntimeError(f"For MindSpore Rewrite, only support str target in tuple, but got type "
+                                       f"{type(single_target).__name__}")
                 targets.append(single_target)
         else:
             targets.append(all_targets)
@@ -269,7 +279,7 @@ class AssignParser(Parser):
             if not isinstance(body, ast.Assign):
                 continue
             if len(body.targets) > 1:
-                raise NotImplementedError("Not support multi-targets in assign now!")
+                raise NotImplementedError(error_str("not support multi-targets in assign now!", father_node=body))
             target = body.targets[0]
             if not isinstance(target, ast.Attribute) or not (target.value, ast.Name) or target.value.id != "self":
                 continue
@@ -331,8 +341,8 @@ class AssignParser(Parser):
                 node = stree.inner_create_call_function(func_name, father_ast_node, func_name, func, targets,
                                                         call_args, call_kwargs)
                 return node
-            raise RuntimeError("Operator instance undefined: '", astunparse.unparse(ast_node.func), "' of '",
-                               astunparse.unparse(ast_node), "'")
+            raise RuntimeError(error_str(f"operator instance undefined.",
+                                         child_node=ast_node.func, father_node=ast_node))
         if isinstance(op, Primitive):
             return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
         if isinstance(op, Cell):
@@ -381,7 +391,8 @@ class AssignParser(Parser):
                 return TreeNode.create_tree_node(new_stree, father_ast_node, targets, func, call_args, call_kwargs,
                                                  func_name, new_stree.get_origin_network())
             return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
-        raise RuntimeError("Only support Cell operator or Primitive operator, got ", type(op).__name__)
+        raise RuntimeError("For MindSpore Rewrite, only support Primitive or Cell operator or Primitive operator, got ",
+                           type(op).__name__)
 
     def process(self, stree: SymbolTree, node: ast.Assign):
         """
@@ -403,7 +414,8 @@ class AssignParser(Parser):
 
         targets = node.targets
         if len(targets) != 1:
-            raise RuntimeError("Only support one target in assign now")
+            raise RuntimeError(
+                error_str(f"only support one target in assign now.", child_node=targets, father_node=node))
         value = node.value
         if isinstance(value, ast.Call):
             node_ = self._convert_ast_call_to_node(value, node, stree)
@@ -442,7 +454,11 @@ class AssignParser(Parser):
             # add these as callmethod node if necessary
             stree.try_append_python_node(node, node)
         else:
-            raise RuntimeError(f"Unsupported statement({astunparse.unparse(node)}) in construct function!")
+            raise RuntimeError(
+                error_str(f"only support (ast.Call, ast.BinOp, ast.BoolOp, ast.Subscript, ast.Name, ast.Constant, "
+                          f"ast.Attribute, ast.Num, ast.NameConstant, ast.Bytes, ast.Str, ast.Tuple, ast.List, ast.Dict"
+                          f") as value of ast.assign, but got ast type '{type(value).__name__}'", child_node=value,
+                          father_node=node))
 
 
 g_assign_parser = reg_parser(AssignParser())

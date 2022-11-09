@@ -25,6 +25,7 @@ from ..symbol_tree import SymbolTree
 from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
 from ..ast_helpers import AstFinder
+from ..common import error_str
 
 
 class ModuleParser(Parser):
@@ -40,9 +41,9 @@ class ModuleParser(Parser):
         visitor = AstFinder(ast_node)
         classes = visitor.find_all(ast.ClassDef)
         if not classes:
-            raise RuntimeError("No class in module")
+            raise RuntimeError(error_str("no class in module.", father_node=ast_node))
         if len(classes) > 1:
-            raise RuntimeError("Multi-class in module is not supported now")
+            raise RuntimeError(error_str("multi-class in module is not supported now", father_node=ast_node))
         return classes[0]
 
     @staticmethod
@@ -52,6 +53,7 @@ class ModuleParser(Parser):
 
         class GetImportNode(ast.NodeVisitor):
             """Find all import nodes from input ast node."""
+
             def visit_Import(self, node: ast.Import) -> Any:
                 """Iterate over all nodes and save ast.Import nodes."""
                 import_nodes.append(copy.deepcopy(node))
@@ -82,13 +84,14 @@ class ModuleParser(Parser):
                                              level=0))
         origin_net_source_code_file = inspect.getfile(type(origin_net))
         if not os.path.exists(origin_net_source_code_file):
-            raise RuntimeError("File ", origin_net_source_code_file, " not exist")
+            raise RuntimeError("For MindSpore Rewrite, in module parser, File ", origin_net_source_code_file,
+                               " not exist")
         try:
             with open(origin_net_source_code_file, "r") as f:
                 source_code = f.read()
                 import_nodes = ModuleParser.get_import_node(ast.parse(source_code))
         except RuntimeError:
-            raise RuntimeError("get import nodes error")
+            raise RuntimeError("For MindSpore Rewrite, in module parser, get import nodes error")
         if import_nodes:
             for import_index, import_node in enumerate(import_nodes):
                 module.body.insert(import_index + 3, import_node)
@@ -104,7 +107,8 @@ class ModuleParser(Parser):
                 parser: Parser = ParserRegister.instance().get_parser(ast.ClassDef)
                 parser.process(stree, body)
             else:
-                logger.info(f"Ignoring unsupported node({astunparse.unparse(body)}) in ast.Module.")
+                logger.info(f"For MindSpore Rewrite, in module parser, Ignoring unsupported "
+                            f"node({astunparse.unparse(body)}) in ast.Module.")
 
 
 g_module_parser = reg_parser(ModuleParser())

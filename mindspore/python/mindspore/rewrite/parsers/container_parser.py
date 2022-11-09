@@ -20,10 +20,12 @@ from mindspore.rewrite.symbol_tree import SymbolTree
 from mindspore.rewrite.parser_register import ParserRegister
 
 from mindspore.rewrite.parser_register import reg_parser
+from ..common import error_str
 
 
 class ListParser(Parser):
     """Parse list in construct function to node of SymbolTree."""
+
     def target(self):
         """Parse target type."""
         return list
@@ -43,7 +45,8 @@ class ListParser(Parser):
             TypeError:Str parser only supports parsing list type nodes.
         """
         if not isinstance(node, ast.Str):
-            raise TypeError("Str parser only supports parsing list type nodes.")
+            raise TypeError(error_str(f"str parser only supports parsing list type nodes, but got ast type "
+                                      f"'{type(node).__name__}'", father_node=node))
         result = []
         for n in node:
             parser = ParserRegister.instance().get_parser(type(n))
@@ -54,6 +57,7 @@ class ListParser(Parser):
 
 class TupleParser(Parser):
     """Parse tuple in construct function to node of SymbolTree."""
+
     def target(self):
         """Parse target type."""
         return tuple
@@ -78,6 +82,7 @@ class TupleParser(Parser):
             value = parser.process(stree, n)
             result.append(value)
         return tuple(result)
+
 
 g_list_parser = reg_parser(ListParser())
 g_tuple_parser = reg_parser(TupleParser())

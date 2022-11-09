@@ -18,10 +18,12 @@ import ast
 from mindspore.rewrite.parser import Parser
 from mindspore.rewrite.symbol_tree import SymbolTree
 from mindspore.rewrite.parser_register import reg_parser
+from ..common import error_str
 
 
 class NameParser(Parser):
     """Parse ast.Name in construct function to node of SymbolTree."""
+
     def target(self):
         """Parse target type."""
         return ast.Name
@@ -38,12 +40,14 @@ class NameParser(Parser):
             TypeError: Name parser only supports parsing ast.Name type nodes.
         """
         if not isinstance(node, ast.Name):
-            raise TypeError("Name parser only supports parsing ast.Name type nodes.")
+            raise TypeError(error_str(f"name parser only supports parsing ast.Name type nodes, but got ast type"
+                                      f"'{type(node).__name__}'", father_node=node))
         return node.id
 
 
 class NumParser(Parser):
     """Parse ast.Num in construct function to node of SymbolTree."""
+
     def target(self):
         """Parse target type."""
         return ast.Num
@@ -60,12 +64,14 @@ class NumParser(Parser):
             TypeError: Num parser only supports parsing ast.Num type nodes.
         """
         if not isinstance(node, ast.Num):
-            raise TypeError("Num parser only supports parsing ast.Num type nodes.")
+            raise TypeError(error_str(f"num parser only supports parsing ast.Num type nodes, but got ast type "
+                                      f"'{type(node).__name__}'", father_node=node))
         return node.n
 
 
 class StrParser(Parser):
     """Parse ast.Str in construct function to node of SymbolTree."""
+
     def target(self):
         """Parse target type."""
         return ast.Str
@@ -85,8 +91,10 @@ class StrParser(Parser):
             TypeError:Str parser only supports parsing ast.Str type nodes.
         """
         if not isinstance(node, ast.Str):
-            raise TypeError("Str parser only supports parsing ast.Str type nodes.")
+            raise TypeError(error_str(f"str parser only supports parsing ast.Str type nodes, but got ast type "
+                                      f"'{type(node).__name__}'", father_node=node))
         return node.s
+
 
 g_name_parser = reg_parser(NameParser())
 g_num_parser = reg_parser(NumParser())

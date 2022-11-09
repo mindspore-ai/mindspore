@@ -29,6 +29,7 @@ EVAL_WHITE_LIST = ("self.", "range(", "zip(", "enumerate(", "reversed(")
 
 class ForParser(Parser):
     """ Class that implements parsing ast.For nodes """
+
     @staticmethod
     def modify_init_ast(stree, i, obj, iter_var_name):
         """Modify the ast node in init function."""
@@ -58,14 +59,16 @@ class ForParser(Parser):
             targets = node.target.id
         iter_code = astunparse.unparse(node.iter)
         if not iter_code.startswith(EVAL_WHITE_LIST):
-            logger.warning(f"Illegal iteration condition for For node, it must start with{EVAL_WHITE_LIST}")
+            logger.warning(
+                f"For MindSpore Rewrtie, illegal iteration condition for For node, it must start with{EVAL_WHITE_LIST}")
             return
         if iter_code.startswith("self"):
             iter_code = iter_code.replace("self", "stree.get_origin_network()")
         try:
             iter_obj = eval(iter_code)
         except Exception as e:
-            error_info = f"When eval '{iter_code}' by using JIT Fallback feature, an error occurred: {str(e)}"
+            error_info = f"For MindSpore Rewrtie, when eval '{iter_code}' by using JIT Fallback feature, " \
+                         f"an error occurred: {str(e)}"
             logger.error(error_info)
             raise e
 
@@ -82,12 +85,13 @@ class ForParser(Parser):
             if stree.get_ori_cls_name() == "SequentialCell":
                 stree.on_change(Event.CodeChangeEvent)
         elif isinstance(iter_obj, range):
-            raise NotImplementedError("range not support")
+            raise NotImplementedError("For MindSpore Rewrtie, range not support")
         elif isinstance(iter_obj, zip):
-            raise NotImplementedError("zip not support")
+            raise NotImplementedError("For MindSpore Rewrtie, zip not support")
         elif isinstance(iter_obj, enumerate):
-            raise NotImplementedError("enumerate not support")
+            raise NotImplementedError("For MindSpore Rewrtie, enumerate not support")
         else:
-            raise ValueError("not supported type: ", iter_obj)
+            raise ValueError("For MindSpore Rewrtie, not supported type: ", iter_obj)
+
 
 g_for_parser = reg_parser(ForParser())

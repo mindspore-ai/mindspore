@@ -13,10 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """Ast optimizer for flatten recursive call."""
+
 from typing import Any, Tuple
 import ast
 from ast import FunctionDef
+
 from mindspore import log as logger
+from ..common import error_str
 
 
 class FlattenRecursiveStmt(ast.NodeTransformer):
@@ -147,7 +150,9 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             targets = child.targets
             for target in targets:
                 if not isinstance(target, (ast.Name, ast.Tuple)):
-                    raise RuntimeError("currently only support ast.Name targets")
+                    raise RuntimeError(
+                        error_str(f"currently only support ast.Name targets, but got ast type "
+                                  f"'{type(target).__name__}'", child_node=target, father_node=child))
                 if isinstance(target, ast.Name):
                     target_name = target.id
                     if target_name not in target_names:
@@ -155,7 +160,10 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                 elif isinstance(target, ast.Tuple):
                     for elt in target.elts:
                         if not isinstance(elt, ast.Name):
-                            raise RuntimeError("currently only support ast.Name in ast.Tuple.")
+                            raise RuntimeError(
+                                error_str(f"currently only support ast.Name in ast.Tuple, "
+                                          f"but got ast type '{type(elt).__name__}'", child_node=elt,
+                                          father_node=child))
                         target_name = elt.id
                         if target_name not in target_names:
                             target_names.append(target_name)
