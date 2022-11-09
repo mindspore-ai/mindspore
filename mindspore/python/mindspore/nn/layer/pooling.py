@@ -1568,7 +1568,7 @@ class MaxUnpool1d(Cell):
         >>> maxunpool1d = nn.MaxUnpool1d(kernel_size =2, stride=2, padding=0)
         >>> output = maxunpool1d(x, indices)
         >>> print(output.asnumpy())
-        [[0, 2, 0, 4, 0, 6, 0, 8]]
+        [[0. 2. 0. 4. 0. 6. 0. 8.]]
     """
     def __init__(self, kernel_size, stride=None, padding=0):
         """Initialize MaxUnpool1d."""
