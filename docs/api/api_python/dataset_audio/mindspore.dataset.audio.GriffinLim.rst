@@ -1,7 +1,7 @@
 mindspore.dataset.audio.GriffinLim
 ==================================
 
-.. py:class:: mindspore.dataset.audio.GriffinLim(n_fft=400, n_iter=32, win_length=None, hop_length=None, window_type=WindowType.HANN, power=2, momentum=0.99, length=None, rand_init=True)
+.. py:class:: mindspore.dataset.audio.GriffinLim(n_fft=400, n_iter=32, win_length=None, hop_length=None, window_type=WindowType.HANN, power=2.0, momentum=0.99, length=None, rand_init=True)
 
     使用Griffin-Lim算法从线性幅度频谱图中计算信号波形。
 

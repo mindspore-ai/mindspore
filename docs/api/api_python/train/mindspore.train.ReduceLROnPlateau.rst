@@ -28,7 +28,7 @@ mindspore.train.ReduceLROnPlateau
     样例：
 
     .. note::
-        运行以下样例之前，需自定义网络LeNet5和数据集准备函数create_dataset。详见 `数据集 Dataset <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/dataset.html>`_ 和 `网络构建 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/model.html>`_ 。
+        运行以下样例之前，需自定义网络LeNet5和数据集准备函数create_dataset。详见 `网络构建 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/model.html>`_ 和 `数据集 Dataset <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/dataset.html>`_ 。
 
     .. py:method:: on_train_begin(run_context)
 
