@@ -73,9 +73,6 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     auto indices_size = std::accumulate(indices_shapes_.begin(), indices_shapes_.end(), 1, std::multiplies{});
     input_size_list_.push_back(LongToSize(input_size) * input_type_size_);
     input_size_list_.push_back(LongToSize(indices_size) * indices_type_size_);
-    if (is_dynamic_shape_) {
-      input_size_list_.push_back(axis_type_size_);
-    }
     auto output_size = std::accumulate(output_shapes_.begin(), output_shapes_.end(), 1, std::multiplies{});
     output_size_list_.push_back(LongToSize(output_size) * input_type_size_);
   }
@@ -113,7 +110,6 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> output_shapes_;
   int64_t dims_[kIndex3] = {};
   int64_t axis_ = 0;
-  bool is_dynamic_shape_ = false;
   bool is_null_input_ = false;
   size_t input_type_size_ = 0;
   size_t indices_type_size_ = 0;
