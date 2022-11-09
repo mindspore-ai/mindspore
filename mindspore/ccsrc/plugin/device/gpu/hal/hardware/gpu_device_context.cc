@@ -37,6 +37,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
+#include "backend/common/pass/clip_by_norm_fission.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -369,6 +370,7 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
     MS_LOG(INFO) << "Dynamic shape skip some fusion pass";
     pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
   } else {
+    pm->AddPass(std::make_shared<opt::ClipByNormFission>());
     pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());
     pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
     pm->AddPass(std::make_shared<opt::AdamFusion>());
