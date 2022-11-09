@@ -1766,6 +1766,20 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('rot90')(self, k, dims)
 
+    def deg2rad(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.deg2rad`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('deg2rad')(self)
+
+    def rad2deg(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.rad2deg`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('rad2deg')(self)
+
     def nelement(self):
         r"""
         Alias for numel().

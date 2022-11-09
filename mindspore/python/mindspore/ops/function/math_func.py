@@ -2624,7 +2624,7 @@ def ldexp(x, other):
 
         out_{i} = x_{i} * ( 2_{i} ^{other} )
 
-    .. note::
+    Note:
         Typically this function can create floating point numbers
         by multiplying mantissas in input with powers of intger 2
         from the exponents in `other`.
@@ -4053,11 +4053,11 @@ def lcm(x1, x2):
     The shape of two inputs should be broadcastable, and data type of them should be
     one of: int32, int64
 
-    Inputs:
+    Args:
         - **x1** (Tensor) - The first input tensor.
         - **x2** (Tensor) - The second input tensor.
 
-    Outputs:
+    Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
         with higher digits in the two inputs.
 

@@ -1084,6 +1084,20 @@ def rot90(x, k, dims):
     return F.rot90(x, k, dims)
 
 
+def rad2deg(x):
+    """
+    Returns a new tensor with each of the elements of `x` converted from angles in radians to degrees.
+    """
+    return F.rad2deg(x)
+
+
+def deg2rad(x):
+    """
+    Calculates a new tensor with each of the elements of `x` converted from angles in degrees to radians.
+    """
+    return F.deg2rad(x)
+
+
 def numel(x):
     """
     Returns a Scalar of type int that represents the total number of elements in the Tensor.

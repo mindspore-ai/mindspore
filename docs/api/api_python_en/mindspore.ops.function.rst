@@ -182,6 +182,7 @@ Element-by-Element Operations
     mindspore.ops.ceil
     mindspore.ops.cos
     mindspore.ops.cosh
+    mindspore.ops.deg2rad
     mindspore.ops.div
     mindspore.ops.erf
     mindspore.ops.erfc
@@ -210,6 +211,7 @@ Element-by-Element Operations
     mindspore.ops.pinv
     mindspore.ops.positive
     mindspore.ops.pow
+    mindspore.ops.rad2deg
     mindspore.ops.remainder
     mindspore.ops.roll
     mindspore.ops.round

@@ -257,6 +257,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"minimum", std::string("minimum")},                                // P.Minimum()
        {"cosh", std::string("cosh")},                                      // P.Cosh()
        {"tanh", std::string("tanh")},                                      // P.Tanh()
+       {"rad2deg", std::string("rad2deg")},                                // F.rad2deg()
+       {"deg2rad", std::string("deg2rad")},                                // F.deg2rad()
        {"round", std::string("round_")},                                   // P.Round()
        {"roll", std::string("roll")},                                      // P.Roll()
        {"rot90", std::string("rot90")},                                    // rot90()

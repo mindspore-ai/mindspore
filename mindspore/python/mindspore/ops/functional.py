@@ -342,6 +342,8 @@ tensor_operator_registry.register('sort', P.Sort)
 tensor_operator_registry.register('trunc', trunc)
 tensor_operator_registry.register('imag', imag)
 tensor_operator_registry.register('repeat_interleave', repeat_elements)
+tensor_operator_registry.register('rad2deg', rad2deg)
+tensor_operator_registry.register('deg2rad', deg2rad)
 tensor_operator_registry.register('roll', Roll)
 tensor_operator_registry.register('rot90', rot90)
 
