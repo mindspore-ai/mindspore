@@ -195,6 +195,8 @@ def _dyn_reduced_shape(input_shape, axis, x):
         real_axis = Tensor(axis, ms.int32)
 
     real_axis = (real_axis + input_rank) % input_rank
+    if real_axis.ndim == 0:
+        real_axis = P.ExpandDims()(real_axis, 0)
     expanded_axis = P.ExpandDims()(real_axis, 1)
     expanded_axis = P.Cast()(expanded_axis, ms.int32)
     update = P.Cast()(P.OnesLike()(real_axis), ms.float32)
@@ -1044,8 +1046,8 @@ def get_bprop_reduce_mean(self):
         if is_shape_unknown(shape_x):
             shape_x = dyn_shape_op(x)
             shape_out = dyn_shape_op(out)
-            div_shape = reduce_prod(cast(shape_x, mstype.float32), axis) /\
-                        reduce_prod(cast(shape_out, mstype.float32), axis)
+            div_shape = reduce_prod(cast(shape_x, mstype.float32), ()) /\
+                        reduce_prod(cast(shape_out, mstype.float32), ())
             dx = div_op(grad, cast(div_shape, dtype(grad)))
         else:
             div_shape = F.shape_mul(shape_x) / F.shape_mul(shape_out)
