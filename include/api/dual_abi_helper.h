@@ -67,18 +67,20 @@ inline std::set<std::string> SetCharToString(const std::set<std::vector<char>> &
   return ret;
 }
 
-inline std::map<std::vector<char>, int32_t> MapStringToChar(const std::map<std::string, int32_t> &s) {
-  std::map<std::vector<char>, int32_t> ret;
+template <class T>
+inline std::map<std::vector<char>, T> MapStringToChar(const std::map<std::string, T> &s) {
+  std::map<std::vector<char>, T> ret;
   std::transform(s.begin(), s.end(), std::inserter(ret, ret.begin()), [](auto str) {
-    return std::pair<std::vector<char>, int32_t>(std::vector<char>(str.first.begin(), str.first.end()), str.second);
+    return std::pair<std::vector<char>, T>(std::vector<char>(str.first.begin(), str.first.end()), str.second);
   });
   return ret;
 }
 
-inline std::map<std::string, int32_t> MapCharToString(const std::map<std::vector<char>, int32_t> &c) {
-  std::map<std::string, int32_t> ret;
+template <class T>
+inline std::map<std::string, T> MapCharToString(const std::map<std::vector<char>, T> &c) {
+  std::map<std::string, T> ret;
   std::transform(c.begin(), c.end(), std::inserter(ret, ret.begin()), [](auto ch) {
-    return std::pair<std::string, int32_t>(std::string(ch.first.begin(), ch.first.end()), ch.second);
+    return std::pair<std::string, T>(std::string(ch.first.begin(), ch.first.end()), ch.second);
   });
   return ret;
 }
@@ -147,24 +149,6 @@ inline std::vector<std::pair<std::vector<char>, int64_t>> PairStringInt64ToPairC
   std::vector<std::pair<std::vector<char>, int64_t>> ret;
   std::transform(s.begin(), s.end(), std::back_inserter(ret), [](auto str) {
     return std::pair<std::vector<char>, int64_t>(std::vector<char>(str.first.begin(), str.first.end()), str.second);
-  });
-  return ret;
-}
-
-template <class T>
-inline std::map<std::vector<char>, T> PadInfoStringToChar(const std::map<std::string, T> &s_pad_info) {
-  std::map<std::vector<char>, T> ret;
-  std::transform(s_pad_info.begin(), s_pad_info.end(), std::inserter(ret, ret.begin()), [](auto str) {
-    return std::pair<std::vector<char>, T>(std::vector<char>(str.first.begin(), str.first.end()), str.second);
-  });
-  return ret;
-}
-
-template <class T>
-inline std::map<std::string, T> PadInfoCharToString(const std::map<std::vector<char>, T> &c_pad_info) {
-  std::map<std::string, T> ret;
-  std::transform(c_pad_info.begin(), c_pad_info.end(), std::inserter(ret, ret.begin()), [](auto ch) {
-    return std::pair<std::string, T>(std::string(ch.first.begin(), ch.first.end()), ch.second);
   });
   return ret;
 }

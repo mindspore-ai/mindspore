@@ -28,54 +28,57 @@ constexpr size_t kMaxConfigNumPerSection = 1000;
 namespace lite {
 int RunConverter(const std::shared_ptr<ConverterPara> &data_);
 }
-Converter::Converter(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file,
-                     const std::string &weight_file) {
+Converter::Converter(converter::FmkType fmk_type, const std::vector<char> &model_file,
+                     const std::vector<char> &output_file, const std::vector<char> &weight_file) {
   data_ = std::make_shared<ConverterPara>();
   if (data_ != nullptr) {
     data_->fmk_type = fmk_type;
-    data_->model_file = model_file;
-    data_->output_file = output_file;
-    data_->weight_file = weight_file;
+    data_->model_file = CharToString(model_file);
+    data_->output_file = CharToString(output_file);
+    data_->weight_file = CharToString(weight_file);
   } else {
     MS_LOG(ERROR) << "Create ConverterPara failed";
   }
 }
 
-void Converter::SetConfigFile(const std::string &config_file) {
+void Converter::SetConfigFile(const std::vector<char> &config_file) {
   if (data_ != nullptr) {
-    data_->config_file = config_file;
+    data_->config_file = CharToString(config_file);
   }
 }
 
-std::string Converter::GetConfigFile() const {
+std::vector<char> Converter::GetConfigFileChar() const {
+  std::string cfg_file = "";
   if (data_ != nullptr) {
-    return data_->config_file;
-  } else {
-    return "";
+    cfg_file = data_->config_file;
   }
+  return StringToChar(cfg_file);
 }
 
-void Converter::SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config) {
+void Converter::SetConfigInfo(const std::vector<char> &section,
+                              const std::map<std::vector<char>, std::vector<char>> &config) {
+  auto section_str = CharToString(section);
+  auto config_str = MapVectorCharToString(config);
   if (data_ != nullptr) {
     if (data_->config_param.size() > kMaxSectionNum) {
       MS_LOG(ERROR) << "Section num " << data_->config_param.size() << "exceeds max num " << kMaxSectionNum;
       return;
     }
-    if (data_->config_param.find(section) != data_->config_param.end()) {
-      MS_LOG(WARNING) << "Section " << section << "already exists, "
+    if (data_->config_param.find(section_str) != data_->config_param.end()) {
+      MS_LOG(WARNING) << "Section " << section_str << "already exists, "
                       << "value will be overwrite.";
     }
     if (config.size() > kMaxConfigNumPerSection) {
       MS_LOG(ERROR) << "Config num " << config.size() << " exceeds max num " << kMaxConfigNumPerSection << " in "
-                    << section;
+                    << section_str;
       return;
     }
-    data_->config_param[section] = config;
+    data_->config_param[section_str] = config_str;
   }
 }
 
-std::map<std::string, std::map<std::string, std::string>> Converter::GetConfigInfo() const {
-  return data_->config_param;
+std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> Converter::GetConfigInfoChar() const {
+  return MapMapStringToChar(data_->config_param);
 }
 
 void Converter::SetWeightFp16(bool weight_fp16) {
@@ -92,21 +95,22 @@ bool Converter::GetWeightFp16() const {
   }
 }
 
-void Converter::SetInputShape(const std::map<std::string, std::vector<int64_t>> &input_shape) {
+void Converter::SetInputShape(const std::map<std::vector<char>, std::vector<int64_t>> &input_shape) {
+  auto input_shape_str = MapCharToString(input_shape);
   if (data_ != nullptr) {
-    for (auto &it : input_shape) {
+    for (auto &it : input_shape_str) {
       lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(it.first, it.second);
     }
-    data_->input_shape = input_shape;
+    data_->input_shape = input_shape_str;
   }
 }
 
-std::map<std::string, std::vector<int64_t>> Converter::GetInputShape() const {
+std::map<std::vector<char>, std::vector<int64_t>> Converter::GetInputShapeChar() const {
+  std::map<std::string, std::vector<int64_t>> input_shape = {};
   if (data_ != nullptr) {
-    return data_->input_shape;
-  } else {
-    return {};
+    input_shape = data_->input_shape;
   }
+  return MapStringToChar(input_shape);
 }
 
 void Converter::SetInputFormat(Format format) {
@@ -168,32 +172,32 @@ ModelType Converter::GetExportMindIR() const {
   }
 }
 
-void Converter::SetDecryptKey(const std::string &key) {
+void Converter::SetDecryptKey(const std::vector<char> &key) {
   if (data_ != nullptr) {
-    data_->decrypt_key = key;
+    data_->decrypt_key = CharToString(key);
   }
 }
 
-std::string Converter::GetDecryptKey() const {
+std::vector<char> Converter::GetDecryptKeyChar() const {
+  std::string decrypt_key = "";
   if (data_ != nullptr) {
-    return data_->decrypt_key;
-  } else {
-    return "";
+    decrypt_key = data_->decrypt_key;
+  }
+  return StringToChar(decrypt_key);
+}
+
+void Converter::SetDecryptMode(const std::vector<char> &mode) {
+  if (data_ != nullptr) {
+    data_->decrypt_mode = CharToString(mode);
   }
 }
 
-void Converter::SetDecryptMode(const std::string &mode) {
+std::vector<char> Converter::GetDecryptModeChar() const {
+  std::string decrypt_mode = "";
   if (data_ != nullptr) {
-    data_->decrypt_mode = mode;
+    decrypt_mode = data_->decrypt_mode;
   }
-}
-
-std::string Converter::GetDecryptMode() const {
-  if (data_ != nullptr) {
-    return data_->decrypt_mode;
-  } else {
-    return "";
-  }
+  return StringToChar(decrypt_mode);
 }
 
 void Converter::SetEnableEncryption(bool encryption) {
@@ -210,18 +214,18 @@ bool Converter::GetEnableEncryption() const {
   }
 }
 
-void Converter::SetEncryptKey(const std::string &key) {
+void Converter::SetEncryptKey(const std::vector<char> &key) {
   if (data_ != nullptr) {
-    data_->encrypt_key = key;
+    data_->encrypt_key = CharToString(key);
   }
 }
 
-std::string Converter::GetEncryptKey() const {
+std::vector<char> Converter::GetEncryptKeyChar() const {
+  std::string encrypt_key = "";
   if (data_ != nullptr) {
-    return data_->encrypt_key;
-  } else {
-    return "";
+    encrypt_key = data_->encrypt_key;
   }
+  return StringToChar(encrypt_key);
 }
 
 void Converter::SetInfer(bool infer) {
@@ -266,18 +270,18 @@ bool Converter::GetNoFusion() {
   }
 }
 
-void Converter::SetDevice(const std::string &device) {
+void Converter::SetDevice(const std::vector<char> &device) {
   if (data_ != nullptr) {
-    data_->device = device;
+    data_->device = CharToString(device);
   }
 }
 
-std::string Converter::GetDevice() {
+std::vector<char> Converter::GetDeviceChar() {
+  std::string device = "";
   if (data_ != nullptr) {
-    return data_->device;
-  } else {
-    return "";
+    device = data_->device;
   }
+  return StringToChar(device);
 }
 
 Status Converter::Convert() {

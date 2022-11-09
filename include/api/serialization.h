@@ -129,7 +129,7 @@ Status Serialization::Load(const std::vector<std::string> &files, ModelType mode
 }
 
 Status Serialization::SetParameters(const std::map<std::string, Buffer> &parameters, Model *model) {
-  return SetParameters(PadInfoStringToChar<Buffer>(parameters), model);
+  return SetParameters(MapStringToChar<Buffer>(parameters), model);
 }
 
 Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::string &model_file,

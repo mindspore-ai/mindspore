@@ -262,7 +262,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
     bool pad_to_bucket_boundary = false, bool drop_remainder = false) {
     return std::make_shared<BucketBatchByLengthDataset>(
       shared_from_this(), VectorStringToChar(column_names), bucket_boundaries, bucket_batch_sizes,
-      element_length_function, PadInfoStringToChar(pad_info), pad_to_bucket_boundary, drop_remainder);
+      element_length_function, MapStringToChar(pad_info), pad_to_bucket_boundary, drop_remainder);
   }
 
   /// \brief Function to create a SentencePieceVocab from source dataset.
