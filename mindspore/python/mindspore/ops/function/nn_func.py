@@ -1525,7 +1525,7 @@ def flip(x, dims):
     Supported Platforms:
         ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
@@ -1567,7 +1567,7 @@ def flipud(x):
     Supported Platforms:
         ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
@@ -1599,7 +1599,7 @@ def fliplr(x):
     Supported Platforms:
         ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np

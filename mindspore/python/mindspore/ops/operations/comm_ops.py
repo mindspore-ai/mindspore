@@ -911,7 +911,7 @@ class NeighborExchangeV2(Primitive):
 
     Outputs:
         The Tensor after being exchanged. If input shape is :math:`(N, C, H, W)`, output shape is
-            :math:`(N, C, H+recv\_top+recv\_bottom, W+recv\_left+recv\_right)`.
+        :math:`(N, C, H+recv\_top+recv\_bottom, W+recv\_left+recv\_right)`.
 
     Raises:
         TypeError: If `group` is not a string or any one of `send_rank_ids`,
