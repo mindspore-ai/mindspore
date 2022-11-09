@@ -30,7 +30,7 @@ class MIND_API DynamicRNN : public BaseOperator {
   MIND_API_BASE_MEMBER(DynamicRNN);
 
   DynamicRNN() : BaseOperator(kNameDynamicRNN) {
-    InitIOName({"x", "w", "b", "seq_length", "init_h", "init_c", "wci", "wcf", "wco", "mask"},
+    InitIOName({"x", "w", "b", "seq_length", "init_h", "init_c"},
                {"y", "output_h", "output_c", "i", "j", "f", "o", "tanhc"});
   }
   void Init() {}
