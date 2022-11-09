@@ -36,6 +36,7 @@ class BACKEND_EXPORT SessionFactory {
 
   static SessionFactory &Get();
   void Register(const std::string &device_name, SessionCreator &&session_creator);
+  void Clear();
   std::shared_ptr<SessionBasic> Create(const std::string &device_name);
 
  private:

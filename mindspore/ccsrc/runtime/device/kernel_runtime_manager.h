@@ -36,6 +36,7 @@ class BACKEND_EXPORT KernelRuntimeManager {
  public:
   static KernelRuntimeManager &Instance();
   void Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator) const;
+  void Clear();
   KernelRuntime *GetKernelRuntime(const std::string &device_name, uint32_t device_id);
   KernelRuntime *GetCurrentKernelRuntime();
   KernelRuntime *GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id);

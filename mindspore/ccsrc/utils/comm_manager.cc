@@ -57,6 +57,8 @@ bool CommManager::Register(const std::string &name, const std::shared_ptr<CommMa
   return true;
 }
 
+void CommManager::Clear() { GetInstanceMap().clear(); }
+
 CommManager &CommManager::GetInstance() noexcept {
   if (GetInstanceMap().empty()) {
     MS_LOG(EXCEPTION) << "No CommManager instance found.";

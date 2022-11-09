@@ -257,15 +257,14 @@ using SomasCreator = std::function<std::shared_ptr<Somas>()>;
 // @todo will delete when old runtime remove
 class BACKEND_EXPORT SomasManager {
  public:
-  static SomasManager &Instance() {
-    static SomasManager instance{};
-    return instance;
-  }
+  static SomasManager &Instance();
   void Register(device::DeviceType device_type, SomasCreator &&creator) {
     if (base_map_.find(device_type) == base_map_.end()) {
       (void)base_map_.emplace(device_type, creator);
     }
   }
+  void Clear();
+
   SomasPtr GetSomas(device::DeviceType device_type) {
     auto iter = base_map_.find(device_type);
     if (base_map_.end() != iter) {

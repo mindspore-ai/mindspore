@@ -38,6 +38,8 @@ void DataQueueMgr::RegisterDataQueueCreator(const std::string &device_name, Data
   data_queue_creator_map_.emplace(device_name, std::forward<DataQueueCreator>(creator));
 }
 
+void DataQueueMgr::Clear() { data_queue_creator_map_.clear(); }
+
 std::shared_ptr<DataQueue> DataQueueMgr::CreateDataQueue(const std::string &device_name,
                                                          const std::string &channel_name, bool dynamic_shape,
                                                          size_t capacity, const std::vector<size_t> &shape) {

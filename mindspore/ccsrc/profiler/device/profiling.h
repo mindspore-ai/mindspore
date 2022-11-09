@@ -79,6 +79,7 @@ class BACKEND_EXPORT Profiler {
  public:
   static std::shared_ptr<Profiler> GetInstance(const std::string &name) noexcept;
   static bool Register(const std::string &name, const std::shared_ptr<Profiler> &instance);
+  static void Clear();
 
   Profiler() = default;
   virtual ~Profiler() = default;

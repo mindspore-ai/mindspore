@@ -2109,5 +2109,12 @@ common::KernelWithIndex Somas::GetVisitKernelWithReturnType(const AnfNodePtr &or
   }
   return prenode;
 }
+
+SomasManager &SomasManager::Instance() {
+  static SomasManager instance{};
+  return instance;
+}
+
+void SomasManager::Clear() { base_map_.clear(); }
 }  // namespace somas
 }  // namespace mindspore

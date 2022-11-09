@@ -32,12 +32,14 @@ namespace mindspore {
 class BACKEND_EXPORT DumpJsonParser {
  public:
   static DumpJsonParser &GetInstance() {
-    std::lock_guard<std::mutex> lock(instance_mutex_);
-    if (instance_ == nullptr) {
-      instance_ = std::shared_ptr<DumpJsonParser>(new DumpJsonParser);
-    }
+    std::call_once(instance_mutex_, []() {
+      if (instance_ == nullptr) {
+        instance_ = std::shared_ptr<DumpJsonParser>(new DumpJsonParser);
+      }
+    });
     return *instance_;
   }
+  static void Finalize() { instance_ = nullptr; }
 
   ~DumpJsonParser() = default;
   void Parse();
@@ -88,7 +90,7 @@ class BACKEND_EXPORT DumpJsonParser {
   DISABLE_COPY_AND_ASSIGN(DumpJsonParser)
 
   inline static std::shared_ptr<DumpJsonParser> instance_ = nullptr;
-  inline static std::mutex instance_mutex_;
+  inline static std::once_flag instance_mutex_;
 
   std::mutex lock_;
   bool async_dump_enabled_{false};
