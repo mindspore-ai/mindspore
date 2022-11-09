@@ -1460,13 +1460,13 @@ def prelu(x, weight):
 
     Args:
         x (Tensor): The input Tensor of the activation function. The data type is float16 or float32.
-          The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         weight (Tensor):  Weight Tensor. The data type is float16 or float32.
           The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.
           On GPU devices, when the input is a scalar, the shape is 1.
 
     Returns:
-        Tensor, with the same dtype as `x`.
+        Tensor, with the same shape and dtype as `x`.
 
     For detailed information, please refer to :class:`mindspore.nn.PReLU`.
 

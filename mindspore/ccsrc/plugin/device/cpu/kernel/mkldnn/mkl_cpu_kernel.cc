@@ -472,7 +472,7 @@ dnnl::memory::data_type MKLCpuKernelMod::GetDnnlDataType(TypeId ms_type_id) cons
     {kNumberTypeUInt8, dnnl::memory::data_type::u8}};
   auto iter = dnnl_data_type_map.find(ms_type_id);
   if (iter == dnnl_data_type_map.end()) {
-    MS_LOG(ERROR) << "Dnnl do not support data type:" << TypeIdToString(ms_type_id);
+    MS_LOG(WARNING) << "Dnnl do not support data type:" << TypeIdToString(ms_type_id);
     return dnnl::memory::data_type::undef;
   }
   return iter->second;

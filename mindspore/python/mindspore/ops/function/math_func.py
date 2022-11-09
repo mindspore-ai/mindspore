@@ -1680,7 +1680,7 @@ def bitwise_and(x, y):
     the relatively highest priority data type.
 
     Args:
-        x (Tensor): The input tensor with int16, int32 or uint16 data type.
+        x (Tensor): The input tensor with dtype of signed or unsigned int. It has a shape :
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         y (Tensor): The input tensor with same type as the `x`.
 
@@ -1717,7 +1717,8 @@ def bitwise_or(x, y):
     the relatively highest priority data type.
 
     Args:
-        x (Tensor): The input tensor with int16, int32 or uint16 data type.
+        x (Tensor): The input tensor with dtype of signed or unsigned int. It has a shape :
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         y (Tensor): The input tensor with same type as the `x`.
 
     Returns:
@@ -1753,7 +1754,8 @@ def bitwise_xor(x, y):
     the relatively highest priority data type.
 
     Args:
-        x (Tensor): The input tensor with int16, int32 or uint16 data type.
+        x (Tensor): The input tensor with dtype of signed or unsigned int. It has a shape :
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         y (Tensor): The input tensor with same type as the `x`.
 
     Returns:
