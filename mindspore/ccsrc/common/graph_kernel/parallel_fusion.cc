@@ -34,58 +34,27 @@ namespace mindspore::graphkernel {
 namespace {
 // Cuda's parameter table can accept maximum 4KB, so the number of parameters should be less than 512.
 constexpr size_t CUDA_PARA_LIMIT = 512;
-bool IsOneOf(const AnfNodePtr &node, const std::vector<PrimitivePtr> &ops_prim) {
-  return std::any_of(ops_prim.cbegin(), ops_prim.cend(),
-                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-}
 
-void ProcessThroughPassCNode(const std::function<bool(const AnfNodePtr &)> &pass_fn,
-                             OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
-  std::set<AnfNodePtr> latter_to_be_erased;
+void ProcessThroughPassCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
+  std::set<AnfNodePtr> to_be_erased;
   for (const auto &[node, node_rel] : (*node_rels)) {
-    if (!pass_fn(node) || latter_to_be_erased.count(node) != 0) {
+    if (!IsOneOfPrimitiveCNode(
+          node, {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimSqueeze, prim::kPrimTupleGetItem})) {
       continue;
     }
-
-    auto nexts = node_rel.nexts;
-    std::vector<AnfNodePtr> pre_nodes;
-    std::queue<AnfNodePtr> node_que;
-    node_que.push(node);
-
-    // Find until all pre nodes get false from pass_fn, and collect all these predecessor nodes.
-    while (!node_que.empty()) {
-      auto cur_node = node_que.front();
-      node_que.pop();
-
-      if (!pass_fn(cur_node)) {
-        pre_nodes.push_back(cur_node);
-        continue;
-      }
-
-      (void)latter_to_be_erased.insert(cur_node);
-      auto predecessors = (*node_rels)[cur_node].pres;
-      if (predecessors.empty()) {
-        continue;
-      }
-
-      for (const auto &pre_node : predecessors) {
-        (void)(*node_rels)[cur_node].pres.erase(pre_node);
-        (void)(*node_rels)[pre_node].nexts.erase(cur_node);
-        node_que.push(pre_node);
-      }
-    }
-
-    // Modify the relation: delete node <-> next_node, add pre node <-> next_node.
-    for (const auto &next_node : nexts) {
-      (void)(*node_rels)[next_node].pres.erase(node);
-      for (const auto &cur_node : pre_nodes) {
-        (void)(*node_rels)[next_node].pres.insert(cur_node);
-        (void)(*node_rels)[cur_node].nexts.insert(next_node);
+    to_be_erased.insert(node);
+    for (const auto &pre : node_rel.pres) {
+      auto &pre_nexts = (*node_rels)[pre].nexts;
+      (void)pre_nexts.erase(node);
+      for (const auto &next : node_rel.nexts) {
+        (void)pre_nexts.insert(next);
+        auto &next_pres = (*node_rels)[next].pres;
+        (void)next_pres.erase(node);
+        (void)next_pres.insert(pre);
       }
     }
   }
-
-  for (const auto &node : latter_to_be_erased) {
+  for (const auto &node : to_be_erased) {
     (void)node_rels->erase(node);
   }
 }
@@ -268,10 +237,7 @@ std::tuple<AnfNodePtrList, AnfNodePtrList, AnfNodePtrList, AnfNodePtrList> GetIn
   return std::make_tuple(multi_inputs_nodes, multi_outputs_nodes, no_input_nodes, no_output_nodes);
 }
 
-bool WhiteOpsFilter(const AnfNodePtr &node) {
-  std::vector<PrimitivePtr> whiteable_ops = {};  // Not special for now.
-  return common::AnfAlgo::IsGraphKernel(node) || IsOneOf(node, whiteable_ops);
-}
+bool WhiteOpsFilter(const AnfNodePtr &node) { return common::AnfAlgo::IsGraphKernel(node); }
 
 // Parallel cannot work with stitching for now.
 bool Parallelizable(const AnfNodePtr &node) { return WhiteOpsFilter(node) && !IsBufferStitchNode(node); }
@@ -444,11 +410,7 @@ OrderedMap<AnfNodePtr, NodeRelation> ParallelOpFusion::GenAnalysisGraph(const An
     }
   }
 
-  ProcessThroughPassCNode(
-    [](const AnfNodePtr &node) {
-      return IsOneOf(node, {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimSqueeze, prim::kPrimTupleGetItem});
-    },
-    &node_rels);
+  ProcessThroughPassCNode(&node_rels);
   ProcessTailMakeTupleCNode(&node_rels);
   ProcessLocalStructure(&node_rels, &virtual_noout_nodes_, &ignore_noin_nodes_);
 
