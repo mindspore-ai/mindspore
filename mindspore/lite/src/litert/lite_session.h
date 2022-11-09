@@ -80,6 +80,7 @@ class LiteSession {
   void SetConfigInfo(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
     config_info_ = config_info;
   }
+  void SetPrepareSessionFlag(bool is_prepare_session) { is_prepare_session_ = is_prepare_session; }
   const std::vector<Tensor *> &GetTensors() const { return this->tensors_; }
 
   virtual int Train() { return mindspore::lite::RET_ERROR; }
@@ -206,6 +207,7 @@ class LiteSession {
   Model *model_ = nullptr;
   std::atomic<bool> is_running_ = {false};
   bool is_train_session_ = false;
+  bool is_prepare_session_ = false;
   friend class TransferSession;
 #if GPU_OPENCL
   opencl::OpenCLRuntimeInnerWrapper *opencl_runtime_wrapper_{nullptr};

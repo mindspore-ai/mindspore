@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_SRC_MODEL_INFER_H_
 
 #include <vector>
+#include <map>
 #include <memory>
 #include <set>
 #include <utility>
@@ -34,7 +35,8 @@ using mindspore::lite::STATUS;
 
 class ModelInfer {
  public:
-  ModelInfer(const Buffer &om_data, const AclModelOptions &options);
+  ModelInfer(const Buffer &om_data, const AclModelOptions &options,
+             const std::map<std::string, std::string> &config_info);
   ~ModelInfer() = default;
 
   STATUS Init();
@@ -48,6 +50,8 @@ class ModelInfer {
 
  private:
   STATUS LoadAclModel(const Buffer &om_data);
+  bool IsEnableMultiModelSharingMemPrepare();
+  bool IsEnableMultiModelSharingMem();
 
   bool init_flag_;
   bool load_flag_;
@@ -56,6 +60,7 @@ class ModelInfer {
   Buffer om_data_;
   AclModelOptions options_;
   ModelProcess model_process_;
+  std::map<std::string, std::string> config_info_;
   std::shared_ptr<AclEnvGuard> acl_env_;
 };
 }  // namespace acl

@@ -57,10 +57,11 @@ class CalibDataGenerator {
 
  private:
   int GenerateDumpConfig(const std::string &dump_cfg_path, const std::vector<DumpOpInfo> &dump_infos);
-  std::string GetInputShapesStr(const api::AnfNodePtrList &graph_inputs);
+  std::vector<std::vector<int64_t>> GetInputShapes(const api::AnfNodePtrList &graph_inputs);
   std::vector<std::string> GetInDataFileList(const api::AnfNodePtrList &graph_inputs);
   int DumpKernelsData(const std::string &dump_cfg_path, const std::vector<std::string> &in_data_file_list,
-                      const std::string &input_shapes_str);
+                      const std::vector<std::string> kernel_names,
+                      const std::vector<std::vector<int64_t>> &input_shapes);
   STATUS ParseAttrFromFilename(struct OpAttr *op_attr, const std::string &file_name, bool is_input);
   int TransBinsToTxt(const std::vector<DumpOpInfo> &dump_infos);
 
@@ -75,7 +76,7 @@ class CalibDataGenerator {
     size_t shape_size = 1;
     for (size_t i = 0; i < op_attr.shape.size(); i++) {
       if (op_attr.shape.at(i) < 0) {
-        MS_LOG(ERROR) << "dim val should be greater than 0";
+        MS_LOG(ERROR) << "dim val should be equal or greater than 0";
         return RET_ERROR;
       }
       if (SIZE_MUL_OVERFLOW(shape_size, static_cast<size_t>(op_attr.shape.at(i)))) {
@@ -84,7 +85,7 @@ class CalibDataGenerator {
       }
       shape_size *= static_cast<size_t>(op_attr.shape.at(i));
     }
-    ifs.seekg(0, std::ios::end);
+    (void)ifs.seekg(0, std::ios::end);
     size_t file_size = static_cast<size_t>(ifs.tellg());
     if (file_size != shape_size * sizeof(T)) {
       MS_LOG(ERROR) << "file size " << file_size << " is not equal to shape size " << shape_size;
@@ -95,8 +96,8 @@ class CalibDataGenerator {
       MS_LOG(ERROR) << "new T failed.";
       return RET_ERROR;
     }
-    ifs.seekg(0, std::ios::beg);
-    ifs.read(reinterpret_cast<char *>(raw_datas.get()), shape_size * sizeof(T));
+    (void)ifs.seekg(0, std::ios::beg);
+    (void)ifs.read(reinterpret_cast<char *>(raw_datas.get()), shape_size * sizeof(T));
     ifs.close();
     if (op_attr.format == "NHWC" && op_attr.shape.size() == kDims4) {
       auto dst_datas = std::make_unique<T[]>(shape_size);

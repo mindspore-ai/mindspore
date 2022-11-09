@@ -17,10 +17,17 @@
 #include "src/litert/kernel/ascend/src/model_infer.h"
 #include "common/log_adapter.h"
 #include "acl/acl.h"
+#include "src/litert/kernel/ascend/src/acl_mem_manager.h"
 
 namespace mindspore::kernel {
 namespace acl {
-ModelInfer::ModelInfer(const Buffer &om_data, const AclModelOptions &options)
+namespace {
+constexpr auto kModelSharingPrepareKey = "multi_model_sharing_mem_prepare";
+constexpr auto kModelSharingKey = "multi_model_sharing_mem";
+}  // namespace
+
+ModelInfer::ModelInfer(const Buffer &om_data, const AclModelOptions &options,
+                       const std::map<std::string, std::string> &config_info)
     : init_flag_(false),
       load_flag_(false),
       device_type_("AscendCL"),
@@ -28,6 +35,7 @@ ModelInfer::ModelInfer(const Buffer &om_data, const AclModelOptions &options)
       om_data_(om_data),
       options_(options),
       model_process_(options),
+      config_info_(config_info),
       acl_env_(nullptr) {}
 
 STATUS ModelInfer::Init() {
@@ -108,6 +116,20 @@ STATUS ModelInfer::Finalize() {
   return lite::RET_OK;
 }
 
+bool ModelInfer::IsEnableMultiModelSharingMemPrepare() {
+  if (config_info_.find(kModelSharingPrepareKey) != config_info_.end()) {
+    return true;
+  }
+  return false;
+}
+
+bool ModelInfer::IsEnableMultiModelSharingMem() {
+  if (config_info_.find(kModelSharingKey) != config_info_.end()) {
+    return true;
+  }
+  return false;
+}
+
 STATUS ModelInfer::Load() {
   if (!load_flag_) {
     int ret = LoadAclModel(om_data_);
@@ -131,15 +153,51 @@ STATUS ModelInfer::LoadAclModel(const Buffer &om_data) {
   MS_LOG(INFO) << "Start load acl model.";
   // acl load model
   uint32_t acl_model_id;
-  auto acl_ret = aclmdlLoadFromMem(om_data.Data(), om_data.DataSize(), &acl_model_id);
-  if (acl_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed, ret = " << acl_ret;
-    return lite::RET_ERROR;
+  size_t work_size = 0;
+  size_t weight_size = 0;
+
+  if (IsEnableMultiModelSharingMemPrepare()) {
+    auto acl_ret = aclmdlQuerySizeFromMem(om_data.Data(), om_data.DataSize(), &work_size, &weight_size);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
+      return lite::RET_ERROR;
+    }
+    AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size);
+    return lite::RET_OK;
+  } else if (IsEnableMultiModelSharingMem()) {
+    AclModelMemInfo acl_work_mem_info;
+    AclModelMemInfo acl_weight_mem_info;
+    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info);
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get work mem failed.";
+      return ret;
+    }
+    ret = AclMemManager::GetInstance().GetModelWeightMem(&acl_weight_mem_info);
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get weight mem failed.";
+      return ret;
+    }
+    MS_LOG(DEBUG) << "Sharing work size = " << acl_work_mem_info.mem_size;
+    MS_LOG(DEBUG) << "Sharing weight size = " << acl_weight_mem_info.mem_size;
+    auto acl_ret =
+      aclmdlLoadFromMemWithMem(om_data.Data(), om_data.DataSize(), &acl_model_id, acl_work_mem_info.mem_addr,
+                               acl_work_mem_info.mem_size, acl_weight_mem_info.mem_addr, acl_weight_mem_info.mem_size);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclmdlLoadFromMemWithMem failed, ret = " << acl_ret;
+      return lite::RET_ERROR;
+    }
+    model_process_.SetSharingWorkspaceFlag(true);
+  } else {
+    auto acl_ret = aclmdlLoadFromMem(om_data.Data(), om_data.DataSize(), &acl_model_id);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed, ret = " << acl_ret;
+      return lite::RET_ERROR;
+    }
   }
 
   // acl init model resource
   model_process_.set_model_id(acl_model_id);
-  int ret = model_process_.PreInitModelResource();
+  auto ret = model_process_.PreInitModelResource();
   if (ret != lite::RET_OK) {
     (void)aclmdlUnload(acl_model_id);
     MS_LOG(ERROR) << "Pre init model resource failed.";

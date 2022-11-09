@@ -136,6 +136,8 @@ class ModelImpl {
   void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
   void SetConfig(const std::shared_ptr<TrainCfg> cfg) { cfg_ = cfg; }
   Status RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after);
+  bool IsEnableModelSharing(const std::string &model_path);
+  bool IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff);
   std::map<std::string, TypeId> execution_plan_;
   std::map<std::string, std::map<std::string, std::string>> config_info_;
 };

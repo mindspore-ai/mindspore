@@ -49,6 +49,7 @@ class CustomAscendKernel : public kernel::Kernel {
   STATUS GetRealImageSize(std::vector<mindspore::MSTensor> *inputs, int32_t *image_size, int32_t num);
 
   bool load_model_;
+  bool prepare_flag_;
   AclModelOptions acl_options_;
   std::shared_ptr<ModelInfer> model_infer_;
   size_t InputDataIndex_;

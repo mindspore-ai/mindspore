@@ -569,7 +569,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
 
-  if (is_train_session_) {
+  if (is_train_session_ || is_prepare_session_) {
     is_running_.store(false);
     return RET_OK;
   }
