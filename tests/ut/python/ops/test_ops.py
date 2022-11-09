@@ -186,6 +186,7 @@ from mindspore.ops.operations.array_ops import LeftShift
 from mindspore.ops.operations.array_ops import Expand
 from mindspore.ops.operations.array_ops import HammingWindow
 from mindspore.ops.operations.nn_ops import SparseApplyMomentum
+from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
 from mindspore._c_expression import security
 from mindspore.ops.operations.array_ops import Bincount
 from tests.security_utils import security_off_wrap
@@ -1428,6 +1429,17 @@ class SetSizeNet(nn.Cell):
     def construct(self, set_indices, set_values, set_shape):
         out = self.set_size(set_indices, set_values, set_shape)
         return out
+
+
+class AdaptiveAvgPool3DNet(nn.Cell):
+    """AdaptiveAvgPool3D net definition"""
+
+    def __init__(self, output_size):
+        super(AdaptiveAvgPool3DNet, self).__init__()
+        self.adaptive_avg_pool_3d = AdaptiveAvgPool3D(output_size)
+
+    def construct(self, x_):
+        return self.adaptive_avg_pool_3d(x_)
 
 
 class BincountNet(nn.Cell):
@@ -2701,6 +2713,10 @@ test_case_nn_ops = [
         'block': G.MaxPool3DGrad(kernel_size=2, strides=2, pad_mode="VALID"),
         'desc_inputs': [[3, 4, 6, 6, 6], [3, 4, 3, 3, 3], [3, 4, 3, 3, 3]],
         'desc_bprop': [[3, 4, 6, 6, 6]]}),
+    ('AdaptiveAvgPool3D', {
+        'block': AdaptiveAvgPool3DNet((8, 8, 8)),
+        'desc_inputs': [([2, 32, 28, 28], {'dtype': np.float32})],
+        'desc_bprop': [([2, 8, 8, 8], {'dtype': np.float32})]}),
     ('AvgPool', {
         'block': P.AvgPool(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
         'desc_inputs': [[100, 3, 28, 28]],

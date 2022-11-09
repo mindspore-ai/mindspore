@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_AdaptiveAvgPool3DGrad_H_
-#define MINDSPORE_CORE_OPS_AdaptiveAvgPool3DGrad_H_
+#ifndef MINDSPORE_CORE_OPS_ADAPTIVEAVGPOOL3DGRAD_H_
+#define MINDSPORE_CORE_OPS_ADAPTIVEAVGPOOL3DGRAD_H_
 #include <memory>
 #include <vector>
 
@@ -43,4 +43,4 @@ using PrimAdaptiveAvgPool3DGradPtr = std::shared_ptr<AdaptiveAvgPool3DGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_AdaptiveAvgPool3DGrad_H_
+#endif  // MINDSPORE_CORE_OPS_ADAPTIVEAVGPOOL3DGRAD_H_
