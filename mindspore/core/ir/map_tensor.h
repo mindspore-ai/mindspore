@@ -24,6 +24,7 @@
 #include "ir/dtype.h"
 #include "ir/tensor.h"
 #include "ir/param_info.h"
+#include "ir/scalar.h"
 #include "utils/macros.h"
 #include "utils/shape_utils.h"
 
@@ -57,7 +58,10 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \param[in] value_dtype [TypeId] The value data type id.
   /// \param[in] value_shape [TypeId] The value shape.
   /// \param[in] default_value [ValuePtr] The default value.
-  MapTensor(TypeId key_dtype, TypeId value_dtype, const ShapeVector &value_shape, const ValuePtr &default_value)
+  /// \param[in] permit_filter_value [ValuePtr] The permit filter value.
+  /// \param[in] evict_filter_value [ValuePtr] The evict filter value.
+  MapTensor(TypeId key_dtype, TypeId value_dtype, const ShapeVector &value_shape, const ValuePtr &default_value,
+            const ValuePtr &permit_filter_value = nullptr, const ValuePtr &evict_filter_value = nullptr)
       : key_dtype_(key_dtype), default_value_(default_value) {
     data_type_ = value_dtype;
     value_shape_ = value_shape;
@@ -68,6 +72,8 @@ class MS_CORE_API MapTensor final : public Tensor {
     key_tensor_ = std::make_shared<Tensor>(key_dtype, key_shape);
     value_tensor_ = std::make_shared<Tensor>(value_dtype, value_shape);
     status_tensor_ = std::make_shared<Tensor>(kNumberTypeUInt8, key_shape);
+    permit_filter_value_ = (permit_filter_value == nullptr) ? std::make_shared<Int32Imm>(1) : permit_filter_value;
+    evict_filter_value_ = (evict_filter_value == nullptr) ? std::make_shared<Int32Imm>(SIZE_MAX) : permit_filter_value;
   }
 
   /// \brief Create a new MapTensor.
@@ -76,8 +82,12 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \param[in] value_tensor [Tensor] The value tensor.
   /// \param[in] status_tensor [Tensor] The status tensor.
   /// \param[in] default_value [ValuePtr] The default value.
+  /// \param[in] permit_filter_value [ValuePtr] The permit filter value.
+  /// \param[in] evict_filter_value [ValuePtr] The evict filter value.
   MapTensor(const TensorPtr &key_tensor, const TensorPtr &value_tensor, const TensorPtr &status_tensor,
-            const ValuePtr &default_value) {
+            const ValuePtr &default_value, const ValuePtr &permit_filter_value = nullptr,
+            const ValuePtr &evict_filter_value = nullptr)
+      : default_value_(default_value) {
     key_dtype_ = key_tensor->data_type();
     data_type_ = value_tensor->data_type();
     value_shape_ = value_tensor->shape();
@@ -87,7 +97,8 @@ class MS_CORE_API MapTensor final : public Tensor {
     key_tensor_ = key_tensor;
     value_tensor_ = value_tensor;
     status_tensor_ = status_tensor;
-    default_value_ = default_value;
+    permit_filter_value_ = (permit_filter_value == nullptr) ? std::make_shared<Int32Imm>(1) : permit_filter_value;
+    evict_filter_value_ = (evict_filter_value == nullptr) ? std::make_shared<Int32Imm>(SIZE_MAX) : permit_filter_value;
   }
 
   ~MapTensor() override = default;
@@ -118,6 +129,10 @@ class MS_CORE_API MapTensor final : public Tensor {
   const ShapeVector &value_shape() const { return value_shape_; }
 
   const ValuePtr &default_value() const { return default_value_; }
+
+  const ValuePtr &permit_filter_value() const { return permit_filter_value_; }
+
+  const ValuePtr &evict_filter_value() const { return evict_filter_value_; }
 
   TypePtr KeyDtype() const { return TypeIdToType(key_dtype_); }
 
@@ -191,6 +206,13 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   // Default value. should be a scalar as the initial value or a string as the initializer name.
   ValuePtr default_value_;
+
+  // Permission threshold: When an element is accessed more than the threshold, it will be actually inserted into map.
+  ValuePtr permit_filter_value_{};
+
+  //  If the elements in the map are not used or updated within the time interval indicated by the threshold,
+  //  these elements will be removed from the map.
+  ValuePtr evict_filter_value_;
 
   // The shape of values
   ShapeVector value_shape_;

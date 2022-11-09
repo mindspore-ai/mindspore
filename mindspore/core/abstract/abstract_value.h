@@ -1562,6 +1562,9 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
                     const ValuePtr &ref_key_value, const ValuePtr &default_value);
   AbstractMapTensor(const AbstractMapTensor &other);
+  AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
+                    const ValuePtr &ref_key_value, const ValuePtr &default_value, const ValuePtr &permit_filter_value,
+                    const ValuePtr &evict_filter_value);
   ~AbstractMapTensor() override = default;
 
   MS_DECLARE_PARENT(AbstractMapTensor, AbstractBase)
@@ -1571,6 +1574,8 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   const ShapePtr &value_shape() const { return value_shape_; }
   const ValuePtr &ref_key_value() const { return ref_key_value_; }
   const ValuePtr &default_value() const { return default_value_; }
+  const ValuePtr &permit_filter_value() const { return permit_filter_value_; }
+  const ValuePtr &evict_filter_value() const { return evict_filter_value_; }
   TypePtr BuildType() const override { return GetTypeTrack(); }
   BaseShapePtr BuildShape() const override { return GetShapeTrack(); };
 
@@ -1586,6 +1591,10 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   ValuePtr ref_key_value_;
   // The default value, a scalar or string with initializer name.
   ValuePtr default_value_;
+  // Permission threshold.
+  ValuePtr permit_filter_value_;
+  // Remove threshold.
+  ValuePtr evict_filter_value_;
   // The value shape.
   ShapePtr value_shape_;
 };

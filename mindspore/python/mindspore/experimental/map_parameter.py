@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 __all__ = ['MapParameter']
 
+import sys
 from copy import copy
 import numbers
 import mindspore as ms
@@ -40,6 +41,8 @@ class MapParameter(Parameter):
         value_shape (Union[tuple, list, int]): Used to indicate the shape of the value Tensor. The argument should be
             a list of integers, a tuple of integers or an integer. Default: 1.
         default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: 'normal'.
+        permit_filter_value (numbers.Number): The permit filter value number. Default: 1.
+        evict_filter_value (numbers.Number): The evict filter value number. Default: MAX_SIZE.
         name (str): Name of the map parameter. Default: None.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
 
@@ -65,7 +68,8 @@ class MapParameter(Parameter):
         [[1. 1. 1.]]
     """
 
-    def __new__(cls, key_dtype=ms.int32, value_dtype=ms.float32, value_shape=1, default_value='normal', **kwargs):
+    def __new__(cls, key_dtype=ms.int32, value_dtype=ms.float32, value_shape=1, default_value='normal',
+                permit_filter_value=1, evict_filter_value=sys.maxsize, **kwargs):
         if isinstance(value_shape, numbers.Number):
             value_shape = (value_shape,)
         data = Tensor_(value_dtype, value_shape)
@@ -80,11 +84,14 @@ class MapParameter(Parameter):
         obj.value_dtype = value_dtype
         obj.value_shape = value_shape
         obj.default_value = default_value
+        obj.permit_filter_value = permit_filter_value
+        obj.evict_filter_value = evict_filter_value
         return obj
 
     def __init__(self, name=None, requires_grad=True, **kwargs):
         Parameter.__init__(self, self, name=name, requires_grad=requires_grad)
-        self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape, self.default_value)
+        self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape, self.default_value,
+                                      self.permit_filter_value, self.evict_filter_value)
 
     def __getitem__(self, key_tensor):
         return self.get(key_tensor)
@@ -124,7 +131,8 @@ class MapParameter(Parameter):
         self.param_info = info
         if init != 'same':
             x.default_value = init  # pylint: disable=W0201
-        x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value)  # pylint: disable=W0212
+        x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value, x.permit_filter_value,  # pylint: disable=W0212
+                                   x.evict_filter_value)
         return x
 
     def get(self, key_tensor):

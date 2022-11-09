@@ -234,3 +234,24 @@ def test_map_tensor_get_data_api():
     [the_keys, the_values] = map_tensor.get_data()
     print("the_keys:", the_keys)
     print("the_values:", the_values)
+
+
+def test_maptensor_filter():
+    """
+    Feature: MapParameter
+    Description: Test IR graph compiled with MapParameter, test with filter.
+    Expectation: IR graph with MapParameter created without exceptions.
+    """
+    class MyNet(nn.Cell):
+        def __init__(self):
+            nn.Cell.__init__(self)
+            self.m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,), permit_filter_value=2,
+                                  evict_filter_value=3)
+
+        def construct(self):
+            return self.m
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = MyNet()
+    out = net()
+    print("out:", out)

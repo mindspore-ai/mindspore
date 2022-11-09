@@ -476,7 +476,9 @@ BuiltInTypeMap &GetAttrMap() {
      }},
     {kObjectTypeMapTensorType,
      {
-       {"default_value", prim::kPrimMapTensorGetDefaultValue},  // F.map_tensor_get_default_value
+       {"default_value", prim::kPrimMapTensorGetDefaultValue},             // F.map_tensor_get_default_value
+       {"permit_filter_value", prim::kPrimMapTensorGetPermitFilterValue},  // F.map_tensor_get_permit_filter_value
+       {"evict_filter_value", prim::kPrimMapTensorGetEvictFilterValue},    // F.map_tensor_get_evict_filter_value
      }},
   };
   return attr_map;

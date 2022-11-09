@@ -350,6 +350,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimRowTensorAdd, R{InferImplRowTensorAdd, nullptr, false}},
     // MapTensor
     {prim::kPrimMapTensorGetDefaultValue, R{InferImplMapTensorGetDefaultValue, nullptr, true}},
+    {prim::kPrimMapTensorGetPermitFilterValue, R{InferImplMapTensorGetPermitFilterValue, nullptr, true}},
+    {prim::kPrimMapTensorGetEvictFilterValue, R{InferImplMapTensorGetEvictFilterValue, nullptr, true}},
     // Comm Ops
     {prim::kPrimAllSwap, R{InferImplAllSwap, nullptr, true}},
     {prim::kPrimMemCpyAsync, R{InferImplMemCpyAsync, nullptr, true}},

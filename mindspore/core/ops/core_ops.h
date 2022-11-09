@@ -332,6 +332,8 @@ constexpr auto kMapTensorGet = "MapTensorGet";
 constexpr auto kMapTensorPut = "MapTensorPut";
 constexpr auto kMapTensorErase = "MapTensorErase";
 constexpr auto kMapTensorGetDefaultValue = "MapTensorGetDefaultValue";
+constexpr auto kMapTensorGetPermitFilterValue = "MapTensorGetPermitFilterValue";
+constexpr auto kMapTensorGetEvictFilterValue = "MapTensorGetEvictFilterValue";
 constexpr auto kMapTensorGetKeys = "MapTensorGetKeys";
 constexpr auto kMapTensorGetValues = "MapTensorGetValues";
 constexpr auto kMapTensorGetData = "MapTensorGetData";
@@ -1082,6 +1084,8 @@ GVAR_DEF(PrimitivePtr, kPrimMapTensorGet, std::make_shared<Primitive>(kMapTensor
 GVAR_DEF(PrimitivePtr, kPrimMapTensorPut, std::make_shared<Primitive>(kMapTensorPut));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorErase, std::make_shared<Primitive>(kMapTensorErase));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetDefaultValue, std::make_shared<Primitive>(kMapTensorGetDefaultValue));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetPermitFilterValue, std::make_shared<Primitive>(kMapTensorGetPermitFilterValue));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGetEvictFilterValue, std::make_shared<Primitive>(kMapTensorGetEvictFilterValue));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetKeys, std::make_shared<Primitive>(kMapTensorGetKeys));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetValues, std::make_shared<Primitive>(kMapTensorGetValues));
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetData, std::make_shared<Primitive>(kMapTensorGetData));
