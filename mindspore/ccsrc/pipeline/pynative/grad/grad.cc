@@ -590,6 +590,7 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   auto bprop_graph = GetBpropGraph(grad_attr, cell, w_args, p_args, size, args);
   MS_EXCEPTION_IF_NULL(bprop_graph);
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
+  bprop_graph->set_attr(kAttrFuncGraphCellId, MakeValue(PyNativeAlgo::PyParser::GetIdByPyObj(cell)));
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);

@@ -275,6 +275,26 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Status record: start compile function graph: " << func_graph->ToString();
   PROF_START(compile_func_graph);
+
+  std::string func_graph_cell_id;
+  if (enable_backend_dynamic_detect_ && func_graph->has_flag(kFlagIsPynativeBpropGraph)) {
+    if (func_graph->has_attr(kAttrFuncGraphCellId)) {
+      func_graph_cell_id = GetValue<std::string>(func_graph->get_attr(kAttrFuncGraphCellId));
+    } else {
+      MS_LOG(EXCEPTION) << "graph:" << func_graph->ToString() << " has no cell id attr";
+    }
+
+    AnfUtils::CloseAbstractLock();
+    bool is_dynamic = IsFuncGraphDynamicShapeOrStruct(func_graph, func_graph_cell_id);
+    AnfUtils::OpenAbstractLock();
+    if (!is_dynamic) {
+      auto iter = graph_actor_infos_.find(func_graph_cell_id);
+      if (iter != graph_actor_infos_.end()) {
+        return iter->second;
+      }
+    }
+  }
+
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
   root_graph_ = root_graph;
@@ -321,6 +341,9 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   const ActorInfo &actor_info = graph_compiler_info->name_;
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   PROF_END(compile_func_graph);
+  if (enable_backend_dynamic_detect_ && func_graph->has_flag(kFlagIsPynativeBpropGraph)) {
+    graph_actor_infos_[func_graph_cell_id] = actor_info;
+  }
 
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
                << ", produce actor: " << actor_info;
