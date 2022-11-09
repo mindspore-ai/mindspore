@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace kernel {
-const size_t kStaticInputNum = 2;
 const size_t kDynInputNum = 3;
 bool GatherV2FwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
@@ -46,9 +45,6 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   size_t input_num = inputs.size();
   if (input_num == kDynInputNum) {
     TryGetIntValue(inputs, kIndex2, kernel_name_, &axis_);
-  } else if (input_num == kStaticInputNum) {
-    axis_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("axis")));
-    MS_LOG(INFO) << " GatherGpuV2FwdKernel running in Normal Mode.";
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
   }
@@ -66,15 +62,12 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     InitSizeLists();
     return KRET_OK;
   }
-
-  if (!is_dynamic_shape_) {
-    int dims = SizeToInt(input_shapes_.size());
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
-                        << "), but got " << axis_;
-    }
-    Reshape();
+  int dims = SizeToInt(input_shapes_.size());
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
+                      << "), but got " << axis_;
   }
+  Reshape();
   InitSizeLists();
   return KRET_OK;
 }
@@ -103,17 +96,6 @@ bool GatherV2FwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-
-  if (is_dynamic_shape_) {
-    G *axis_device_address = GetDeviceAddress<G>(inputs, kIndex2);  // only get this if in dynamic mode
-    G axis = 0;
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&axis, axis_device_address, sizeof(G), cudaMemcpyDeviceToHost,
-                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                       "cudaMemcpy seq_lengths from device to host failed.");
-    axis_ = static_cast<int>(axis);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - GatherV2 - in dynamic mode");
-    Reshape();
-  }
 
   auto input_dim1 = input_shapes_[IntToSize(axis_)];
 
@@ -156,10 +138,6 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod:
      }},
     {kSparseGatherV2,
      {
-       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-        &GatherV2FwdGpuKernelMod::LaunchKernel<float, int32_t, int64_t>},
-       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-        &GatherV2FwdGpuKernelMod::LaunchKernel<half, int32_t, int64_t>},
        {KernelAttr()
           .AddInputAttr(kNumberTypeFloat32)
           .AddInputAttr(kNumberTypeInt32)
