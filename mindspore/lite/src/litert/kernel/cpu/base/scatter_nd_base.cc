@@ -53,6 +53,7 @@ int ScatterNDCPUKernel::ReSize() {
   int indices_rank = static_cast<int>(indices->shape().size());
   int update_rank = static_cast<int>(update->shape().size());
   auto shape_rank = shape->ElementsNum();
+  MS_CHECK_TRUE_MSG(!indices_shape.empty(), RET_ERROR, "indices_shape shouldn't be empty.");
   int indice_unit_rank = indices->shape().back();
 
   // check indices shape

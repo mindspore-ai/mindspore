@@ -30,6 +30,10 @@ ModelParserRegistry::ModelParserRegistry(FmkType fmk, ModelParserCreator creator
     MS_LOG(ERROR) << "ILLEGAL FMK: fmk must be in FmkType.";
     return;
   }
+  if (creator == nullptr) {
+    MS_LOG(ERROR) << "ILLEGAL CREATOR: model parser creator is nullptr.";
+    return;
+  }
   model_parser_room[fmk] = creator;
 }
 

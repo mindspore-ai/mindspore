@@ -20,13 +20,13 @@ int Offset(const int *shape, const int dim0, const int dim1, const int dim2, con
   return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3] + dim3;
 }
 
-int OffsetComm(const int *shape, const int dim0, const int dim1, const int dim2) {
+int64_t OffsetComm(const int *shape, const int dim0, const int dim1, const int dim2) {
   return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3];
 }
 
 int Offset4d(const int *shape, const int *dims) { return Offset(shape, dims[0], dims[1], dims[2], dims[3]); }
 
-int Offset6d(const int *shape, const int *dims) {
+int64_t Offset6d(const int *shape, const int *dims) {
   return ((OffsetComm(shape, dims[0], dims[1], dims[2]) + dims[3]) * shape[4] + dims[4]) * shape[5];
 }
 
