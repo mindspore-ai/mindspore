@@ -49,6 +49,7 @@ from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.math_ops import MatrixTriangularSolve
+from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
@@ -817,6 +818,18 @@ def get_bprop_complex_abs(self):
 
     def bprop(x, out, dout):
         return (div_no_nan(mul(complex_grad(dout, zeros_like(dout)), x), complex_grad(out, zeros_like(out))),)
+
+    return bprop
+
+
+@bprop_getters.register(NanToNum)
+def get_bprop_nan_to_num(self):
+    """Grad definition for `NanToNum` operation."""
+    isfinite = P.IsFinite()
+
+    def bprop(x, out, dout):
+        dx = dout * isfinite(x)
+        return (dx,)
 
     return bprop
 

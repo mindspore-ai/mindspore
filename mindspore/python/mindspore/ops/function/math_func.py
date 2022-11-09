@@ -55,6 +55,7 @@ from mindspore.ops.operations.math_ops import (
     Lcm,
     Gcd,
     Sinc,
+    NanToNum,
     SparseSegmentMean,
     InplaceUpdateV2,
     Igamma,
@@ -3135,6 +3136,66 @@ def isreal(x):
 
     imag_op = _get_cache_prim(P.Imag)()
     return imag_op(x) == 0
+
+
+def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
+    """
+    Replaces `NaN`, positive infinity, and negative infinity values in the `x` with the values
+    specified by `nan`, `posinf`, and `neginf`, respectively. By default, NaN is replaced by 0,
+    positive infinity is replaced by the largest finite value representable by the x dtype,
+    and negative infinity is replaced by the smallest finite value representable by the x dtype.
+
+    Args:
+        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. With float32 or float16 data type.
+        nan (float): The value to replace `NaN`. Default value is 0.0.
+        posinf (float): If a Number, the value to replace positive infinity values with. If None, positive
+          infinity values are replaced with the greatest finite value representable by `x`'s dtype.
+          Default value is None.
+        neginf (float): if a Number, the value to replace negative infinity values with. If None, negative
+          infinity values are replaced with the lowest finite value representable by `x`'s dtype.
+          Default value is None.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mindspore.float32)
+        >>> output = ops.nan_to_num(x, 1.0, 2.0, 3.0)
+        >>> print(output)
+        [1.  2.  3.  3.14]
+    """
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("the input x must be Tensor!")
+    if nan is not None:
+        if not isinstance(nan, float):
+            raise TypeError("the parameter nan's dtype must be float.")
+    else:
+        nan = 0.0
+    if posinf is not None:
+        if not isinstance(posinf, float):
+            raise TypeError("the parameter posinf's dtype must be float.")
+    else:
+        if x.dtype == mstype.float16:
+            posinf = (float)(np.finfo(np.float16).max)
+        elif x.dtype == mstype.float32:
+            posinf = (float)(np.finfo(np.float32).max)
+    if neginf is not None:
+        if not isinstance(neginf, float):
+            raise TypeError("the parameter neginf's dtype must be float.")
+    else:
+        if x.dtype == mstype.float16:
+            neginf = (float)(np.finfo(np.float16).min)
+        elif x.dtype == mstype.float32:
+            neginf = (float)(np.finfo(np.float32).min)
+    _nan_to_num = _get_cache_prim(NanToNum)(nan=nan, posinf=posinf, neginf=neginf)
+    return _nan_to_num(x)
 
 
 def same_type_shape(input_x, input_y):
