@@ -7773,7 +7773,7 @@ class Conv3D(Primitive):
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False, ret_five=True)
         self.add_prim_attr('strides', self.stride)
         self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=False,
-                                               ret_five=True, third_one=True)
+                                               ret_five=True, third_one=False)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
@@ -7799,7 +7799,8 @@ class Conv3D(Primitive):
         self.format = validator.check_string(data_format, ['NCDHW'], 'data_format', self.name)
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
-        self.group = validator.check_equal_int(group, 1, 'group', self.name)
+        validator.check_value_type("group", group, (int,), self.name)
+        self.group = group
         self.add_prim_attr('groups', self.group)
         self.add_prim_attr('offset_x', 0)
 
