@@ -13,4 +13,5 @@ mindspore.ops.permute
         Tensor，具有和输入Tensor相同的维数，按照 `dims` 重新排列。
 
     异常：
+        - **ValueError** - `dims` 为None。
         - **ValueError** - `dims` 的元素总量不等于 `x` 的维数。
