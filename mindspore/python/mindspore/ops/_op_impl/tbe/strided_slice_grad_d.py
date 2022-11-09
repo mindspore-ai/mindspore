@@ -24,6 +24,7 @@ strided_slice_grad_d_op_info = TBERegOp("StridedSliceGrad") \
     .kernel_name("strided_slice_grad") \
     .partial_flag(True) \
     .dynamic_compile_static(True) \
+    .need_check_supported(True) \
     .attr("begin_mask", "optional", "int", "all", "0") \
     .attr("end_mask", "optional", "int", "all", "0") \
     .attr("ellipsis_mask", "optional", "int", "all", "0") \
