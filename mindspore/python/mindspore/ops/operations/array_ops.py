@@ -1515,7 +1515,7 @@ class MatrixSetDiagV3(Primitive):
             0), x.shape[-1] + min(-k[0], 0)).
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[7, 7, 7, 7],
