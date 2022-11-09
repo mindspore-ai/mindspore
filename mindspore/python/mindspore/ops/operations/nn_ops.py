@@ -2193,7 +2193,7 @@ class MaxUnpool2D(Primitive):
                     computed by attr `ksize, strides, pads`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
@@ -2290,7 +2290,7 @@ class MaxUnpool3D(Primitive):
                     computed by attr `ksize, strides, pads`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
