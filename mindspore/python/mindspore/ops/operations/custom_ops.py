@@ -97,12 +97,13 @@ def _compile_aot(file):
         Custom.compiled_bin.append(func_path)
 
         if file.endswith("cpp") or file.endswith("cc"):
-            cmd = ["g++", "-std=c++17", "--shared", "-fPIC"]
+            cmd = ["g++", "-std=c++17", "--shared", "-fPIC", "-D_GLIBCXX_USE_CXX11_ABI=0"]
             cmd += [include_file, "-o", func_path, file]
         elif file.endswith("cu"):
             cmd = ["nvcc"]
             cmd += ["--shared", "-Xcompiler", "-fPIC", "-O3", "-gencode", "arch=compute_70, code=sm_70"]
             cmd += ["--use_fast_math", "--expt-relaxed-constexpr", "--expt-extended-lambda"]
+            cmd += ["-D_GLIBCXX_USE_CXX11_ABI=0"]
 
             def _get_cuda_bare_metal_version():
                 raw_output = subprocess.check_output(["nvcc", "-V"],

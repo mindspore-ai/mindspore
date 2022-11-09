@@ -46,16 +46,16 @@ class AOTSingleOutputWithAttrNet(Cell):
 
 def get_file_path_gpu(cuda, so):
     dir_path = os.path.dirname(os.path.abspath(__file__))
-    cmd = "nvcc --shared -Xcompiler -fPIC  -o " + dir_path + "/aot_test_files/" + so + " " + dir_path + \
-          "/aot_test_files/" + cuda
+    cmd = "nvcc -D_GLIBCXX_USE_CXX11_ABI=0 --shared -Xcompiler -fPIC  -o " + dir_path + "/aot_test_files/" + so + \
+          " " + dir_path + "/aot_test_files/" + cuda
     func_path = dir_path + "/aot_test_files/" + so
     return cmd, func_path
 
 
 def get_file_path_cpu(cc, so):
     dir_path = os.path.dirname(os.path.abspath(__file__))
-    cmd = "g++ -std=c++17 --shared -fPIC -o " + dir_path + "/aot_test_files/" + so + " " + dir_path + \
-          "/aot_test_files/" + cc
+    cmd = "g++ -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17 --shared -fPIC -o " + dir_path + "/aot_test_files/" + so + " " + \
+          dir_path + "/aot_test_files/" + cc
     func_path = dir_path + "/aot_test_files/" + so
     return cmd, func_path
 
