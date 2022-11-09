@@ -59,16 +59,15 @@ NodePtr Emitter::EmitValue(const ValuePtr &value) const {
 }
 
 NodePtr Emitter::Exp(const NodePtr &x) const {
-  return Emit(
-    kExpOpName, {x},
-    {{"base", MakeValue<double>(-1.0)}, {"scale", MakeValue<double>(1.0)}, {"shift", MakeValue<double>(0.0)}});
+  return Emit(kExpOpName, {x},
+              {{"base", MakeValue<float>(-1.0)}, {"scale", MakeValue<float>(1.0)}, {"shift", MakeValue<float>(0.0)}});
 }
 
 NodePtr Emitter::Log(const NodePtr &x) const {
   return Emit(kLogOpName, {x},
-              {{"base", MakeValue<double>(-1.0)},
-               {"scale", MakeValue<double>(1.0)},
-               {"shift", MakeValue<double>(0.0)},
+              {{"base", MakeValue<float>(-1.0)},
+               {"scale", MakeValue<float>(1.0)},
+               {"shift", MakeValue<float>(0.0)},
                {"cust_aicpu", MakeValue(kLogOpName)}});
 }
 
