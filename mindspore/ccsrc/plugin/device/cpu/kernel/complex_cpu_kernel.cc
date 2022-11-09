@@ -32,31 +32,17 @@ constexpr size_t kComplexOutputsNum = 1;
 namespace mindspore {
 namespace kernel {
 bool ComplexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> & /* outputs */) {
+                               const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  input1_dtype_ = inputs[0]->GetDtype();
-  input2_dtype_ = inputs[0]->GetDtype();
-  return true;
-}
-
-bool ComplexCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                 const std::vector<AddressPtr> &outputs) {
-  bool ret = true;
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kComplexInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kComplexOutputsNum, kernel_name_);
-  switch (input1_dtype_) {
-    case kNumberTypeFloat32:
-      ret = LaunchKernel<float>(inputs, outputs);
-      break;
-    case kNumberTypeFloat64:
-      ret = LaunchKernel<double>(inputs, outputs);
-      break;
-    default:
-      ret = false;
-      MS_EXCEPTION(TypeError) << "For Complex, unsupported input data type: " << TypeIdToString(input1_dtype_) << " .";
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  return ret;
+  kernel_func_ = func_list_[index].second;
+  return true;
 }
 
 template <typename T>
@@ -74,15 +60,20 @@ bool ComplexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   return true;
 }
 
+std::vector<std::pair<KernelAttr, ComplexCpuKernelMod::ComplexLaunchFunc>> ComplexCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
+   &ComplexCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
+   &ComplexCpuKernelMod::LaunchKernel<double>}};
+
 std::vector<KernelAttr> ComplexCpuKernelMod::GetOpSupport() {
-  static const std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
-    KernelAttr()
-      .AddInputAttr(kNumberTypeFloat64)
-      .AddInputAttr(kNumberTypeFloat64)
-      .AddOutputAttr(kNumberTypeComplex128)};
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, ComplexCpuKernelMod::ComplexLaunchFunc> &pair) { return pair.first; });
   return support_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Complex, ComplexCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

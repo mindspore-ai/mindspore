@@ -33,29 +33,24 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
   const std::string &op_name = primitive->name();
   int64_t num_segments_v = 0;
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    auto n_value_ptr = input_args[kInputIndex2]->BuildValue();
-    MS_EXCEPTION_IF_NULL(n_value_ptr);
-    if (n_value_ptr->isa<tensor::Tensor>()) {
-      auto n_tensor_ptr = n_value_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_tensor_ptr);
-      num_segments_v = n_tensor_ptr->data_type() == kNumberTypeInt32 ? *static_cast<int32_t *>(n_tensor_ptr->data_c())
-                                                                     : *static_cast<int64_t *>(n_tensor_ptr->data_c());
-      (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
-      return num_segments_v;
+    if (input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
+      auto n_value = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
+      MS_EXCEPTION_IF_NULL(n_value);
+      auto n_value_ptr = n_value->BuildValue();
+      MS_EXCEPTION_IF_NULL(n_value_ptr);
+      auto n_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue("num_segments", n_value_ptr, op_name);
+      num_segments_v = n_value_ptr_tensor.back();
     } else {
-      auto n_abstract_tensor = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_abstract_tensor);
-      return -1;
+      num_segments_v = abstract::Shape::kShapeDimAny;
     }
+    return num_segments_v;
   } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
     auto num_segments_input_type = input_args[kInputIndex2]->BuildType();
+    auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
+    MS_EXCEPTION_IF_NULL(num_sample_ptr);
     if (num_segments_input_type->type_id() == kNumberTypeInt64) {
-      auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(num_sample_ptr);
       num_segments_v = GetValue<int64_t>(input_args[kInputIndex2]->BuildValue());
     } else if (num_segments_input_type->type_id() == kNumberTypeInt32) {
-      auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(num_sample_ptr);
       num_segments_v = GetValue<int32_t>(input_args[kInputIndex2]->BuildValue());
     } else {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "' the third input build type is invalid:"

@@ -37,40 +37,46 @@ abstract::ShapePtr SparseApplyMomentumInferShape(const PrimitivePtr &primitive,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
   auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShapeTrack())[kShape];
 
-  auto scalar_shape = 0;
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, scalar_shape,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", SizeToLong(momentum_shape.size()), kEqual,
-                                           scalar_shape, prim_name);
+  auto is_dynamic_scalar = IsDynamic(lr_shape) || IsDynamic(momentum_shape);
+  if (!is_dynamic_scalar) {
+    int64_t scalar_shape = 0;
+    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, scalar_shape,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", SizeToLong(momentum_shape.size()), kEqual,
+                                             scalar_shape, prim_name);
+  }
 
-  std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.emplace("shape of accum", accum_shape);
-  for (auto &elem : same_shape_args_map) {
-    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
+  auto is_dynamic_tensor = IsDynamic(var_shape) || IsDynamic(accum_shape);
+  if (!is_dynamic_tensor) {
+    std::map<std::string, ShapeVector> same_shape_args_map;
+    (void)same_shape_args_map.emplace("shape of accum", accum_shape);
+    for (auto &elem : same_shape_args_map) {
+      CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
+    }
   }
 
   // Var dimension must be equal or greater than 1.
   (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
-
-  if (var_shape.size() != grad_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', rank(grad) should be same as rank(var), but got rank(grad): " << grad_shape.size()
-                             << ", rank(var): " << var_shape.size() << ".";
-  }
-
-  for (size_t i = 1; i < var_shape.size(); ++i) {
-    if (var_shape[i] != grad_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i
-                               << ".";
-    }
-  }
-
   // Indices must be rank 1.
   (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
-  if (indices_shape[0] != grad_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', grad.shape[0] must be equal to indices.shape[0], but got grad.shape[0]: "
-                             << grad_shape[0] << " indices.shape[0]: " << indices_shape[0] << ".";
+  auto is_dynamic = IsDynamic(var_shape) || IsDynamic(grad_shape) || IsDynamic(indices_shape);
+  if (!is_dynamic) {
+    if (var_shape.size() != grad_shape.size()) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', rank(grad) should be same as rank(var), but got rank(grad): " << grad_shape.size()
+                               << ", rank(var): " << var_shape.size() << ".";
+    }
+    for (size_t i = 1; i < var_shape.size(); ++i) {
+      if (var_shape[i] != grad_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i
+                                 << ".";
+      }
+    }
+    if (indices_shape[0] != grad_shape[0]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', grad.shape[0] must be equal to indices.shape[0], but got grad.shape[0]: "
+                               << grad_shape[0] << " indices.shape[0]: " << indices_shape[0] << ".";
+    }
   }
 
   return std::make_shared<abstract::Shape>(var_shape);

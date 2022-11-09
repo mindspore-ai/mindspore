@@ -124,6 +124,7 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
 bool UnsortedSegmentArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                                  const std::vector<KernelTensorPtr> &inputs,
                                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
 

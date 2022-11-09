@@ -115,12 +115,6 @@ bool SparseConcatCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs,
   return false;
 }
 
-int SparseConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-}
-
 struct VmpByValue {
   bool operator()(const std::pair<size_t, int64_t> &lhs, const std::pair<size_t, int64_t> &rhs) {
     return lhs.second < rhs.second;
