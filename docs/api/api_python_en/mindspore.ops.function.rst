@@ -134,7 +134,6 @@ Mathematical Functions
     mindspore.ops.igamma
     mindspore.ops.igammac
     mindspore.ops.is_floating_point
-    mindspore.ops.is_signed
     mindspore.ops.pinv
 
 Element-by-Element Operations
@@ -386,6 +385,7 @@ Array Operation
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.repeat_elements
+    mindspore.ops.repeat_interleave
     mindspore.ops.reshape
     mindspore.ops.reverse
     mindspore.ops.reverse_sequence

@@ -3125,37 +3125,13 @@ class Tensor(Tensor_):
                 repeated_subs.append(tensor_operator_registry.get('repeat_elements')(sub, rep, axis))
         return tensor_operator_registry.get('concatenate')(axis)(repeated_subs)
 
-    def repeat_interleave(self, repeats, dims=None):
+    def repeat_interleave(self, repeats, dim=None):
         """
-        Repeat elements of a tensor along an axis, like `numpy.repeat`.
-
-        Args:
-            repeats (int): The number of times to repeat, must be positive.
-            dims (int): The axis along which to repeat, if None, defaults to 0.
-
-        Returns:
-            One tensor with values repeated along the specified axis. If x has shape
-            (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
-            si * repeats, ..., sn). The output type will be the same as the type of `x`.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> from mindspore import Tensor, ops
-            >>> import mindspore
-            >>> import numpy as np
-            >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-            >>> output = x.repeat_interleave(repeats=2, dims=0)
-            >>> print(output)
-            [[0 1 2]
-             [0 1 2]
-             [3 4 5]
-             [3 4 5]]
+        For details, please refer to :func:`mindspore.ops.repeat_interleave`.
         """
         self._init_check()
-        dims = dims if dims is not None else 0
-        return tensor_operator_registry.get('repeat_interleave')(self, repeats, dims)
+        dim = dim if dim is not None else 0
+        return tensor_operator_registry.get('repeat_interleave')(self, repeats, dim)
 
     def bernoulli(self, p=0.5, seed=-1):
         r"""
@@ -3740,8 +3716,7 @@ class Tensor(Tensor_):
         r"""
         Alias for :func:`mindspore.Tensor.asinh`.
         """
-        self._init_check()
-        return tensor_operator_registry.get('asinh')(self)
+        return self.asinh()
 
     def atan(self):
         r"""
@@ -3761,8 +3736,7 @@ class Tensor(Tensor_):
         r"""
         Alias for :func:`mindspore.Tensor.atanh`.
         """
-        self._init_check()
-        return tensor_operator_registry.get('atanh')(self)
+        return self.atanh()
 
     def bmm(self, mat2):
         r"""
@@ -4118,9 +4092,27 @@ class Tensor(Tensor_):
 
     def is_signed(self):
         """
-        For details, please refer to :func:`mindspore.ops.is_signed`.
+        Judge whether the data type of tensor is a signed data type.
+
+        Returns:
+            Bool. If the dtype of `self` is a signed data type, return True. Otherwise, return False.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = ms.Tensor([1, 2, 3], ms.int64)
+            >>> y = ms.Tensor([1, 2, 3], ms.uint64)
+            >>> output = x.is_signed()
+            >>> output2 = y.is_signed()
+            >>> print(output)
+            True
+            >>> print(output2)
+            False
         """
-        return tensor_operator_registry.get('is_signed')(self)
+        return self.dtype in mstype.signed_type
 
     def le(self, other):
         r"""

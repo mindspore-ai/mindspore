@@ -55,6 +55,39 @@ def _cal_reshape(x_shape, rep, axis):
     return tuple(x_reshape)
 
 
+def repeat_interleave(x, repeats, dim=None):
+    """
+    Repeat elements of a tensor along an axis, like `numpy.repeat`.
+
+    Args:
+        x (Tensor): The tensor to repeat values for. Must be of type: float16,
+            float32, int8, uint8, int16, int32, or int64.
+        repeats (int): The number of times to repeat, must be positive.
+        dim (int, optional): The axis along which to repeat, if None, defaults to 0.
+
+    Returns:
+        One tensor with values repeated along the specified axis. If x has shape
+        (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
+        si * repeats, ..., sn). The output type will be the same as the type of `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
+        >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
+        >>> output = x.repeat_interleave(repeats=2, dims=0)
+        >>> print(output)
+        [[0 1 2]
+         [0 1 2]
+         [3 4 5]
+         [3 4 5]]
+    """
+    return repeat_elements(x, repeats, dim)
+
+
 def repeat_elements(x, rep, axis=0):
     """
     Repeat elements of a tensor along an axis, like `np.repeat` .

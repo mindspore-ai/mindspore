@@ -29,7 +29,7 @@ from mindspore.ops.composite.multitype_ops.ones_like_impl import ones_like
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.composite.random_ops import normal, laplace, uniform, gamma, poisson, multinomial
 from mindspore.ops.composite.math_ops import count_nonzero, tensor_dot, dot, batch_dot, matmul, cummin
-from mindspore.ops.composite.array_ops import repeat_elements, sequence_mask
+from mindspore.ops.composite.array_ops import repeat_interleave, repeat_elements, sequence_mask
 from mindspore.ops.composite.vmap_ops import _VmapGeneralPreprocess, _VmapGeneralRule
 
 
@@ -59,6 +59,7 @@ __all__ = [
     'dot',
     'batch_dot',
     'repeat_elements',
+    'repeat_interleave',
     'sequence_mask',
     'matmul',
     '_Grad',

@@ -340,7 +340,6 @@ from .nn_func import (
     hardshrink,
     soft_shrink,
     is_floating_point,
-    is_signed,
     intopk,
     interpolate,
     kl_div,
