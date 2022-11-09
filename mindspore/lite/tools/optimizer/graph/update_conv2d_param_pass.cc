@@ -36,12 +36,8 @@ void SetConvAttr(const PrimitivePtr &prim, const std::vector<int64_t> &kernel_si
       prim->AddAttr(ops::kKernelSize, MakeValue(kernel_size));
     }
   }
-  if (prim->GetAttr(ops::kInChannel) == nullptr || GetValue<int64_t>(prim->GetAttr(ops::kInChannel)) <= 0) {
-    prim->AddAttr(ops::kInChannel, MakeValue(in_channel));
-  }
-  if (prim->GetAttr(ops::kOutChannel) == nullptr || GetValue<int64_t>(prim->GetAttr(ops::kOutChannel)) <= 0) {
-    prim->AddAttr(ops::kOutChannel, MakeValue(out_channel));
-  }
+  prim->AddAttr(ops::kInChannel, MakeValue(in_channel));
+  prim->AddAttr(ops::kOutChannel, MakeValue(out_channel));
 }
 }  // namespace
 
