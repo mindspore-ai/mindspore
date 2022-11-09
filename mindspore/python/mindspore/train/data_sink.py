@@ -26,7 +26,7 @@ from mindspore.parallel._utils import _get_device_num, _need_to_full, _to_full_s
 from mindspore._checkparam import Validator
 
 
-def _init_sink_dataset(dataset, sink_size, input_signature):
+def _init_sink_dataset(dataset, sink_size, input_signature, create_info):
     """
     Initialize data sinking
     """
@@ -38,7 +38,8 @@ def _init_sink_dataset(dataset, sink_size, input_signature):
     dynamic_shape = _has_dynamic_shape(dataset_shapes) or ds.config.get_dynamic_shape()
 
     # create transfer_dataset
-    is_info_queue = (sink_size == 1 and dataset_size != 1 and input_signature is None and not dynamic_shape and
+    is_info_queue = (create_info and sink_size == 1 and dataset_size != 1 and
+                     input_signature is None and not dynamic_shape and
                      context.get_context('device_target') == 'Ascend' and not context.get_context("enable_ge"))
     transfer_dataset = _exec_datagraph(dataset, sink_size, create_data_info_queue=is_info_queue)
     dataset.__transfer_dataset__ = transfer_dataset
@@ -181,9 +182,11 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
             f"but device target is {context.get_context('device_target')}.")
 
     loop = sink_size
+    create_info = True
     if jit_config is None:
+        create_info = (loop == 1)
         loop = 1
-    ori_next_op, is_info_queue = _init_sink_dataset(dataset, loop, input_signature)
+    ori_next_op, is_info_queue = _init_sink_dataset(dataset, loop, input_signature, create_info)
 
     @wraps(fn)
     def sink_process(*args, **kwargs):
