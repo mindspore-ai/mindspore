@@ -25,7 +25,7 @@ namespace {
 template <typename T, typename S>
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreateAdaptiveMaxPool2DGradKernelPtr(const std::string &kernel_name,
                                                                                     const uint32_t &device_id) {
-  return std::make_unique<cukernel::AdaptiveMaxPool2DGradHelperGpuKernel<T, S>>(kernel_name, device_id);
+  return std::make_unique<cukernel::AdaptiveMaxPoolGradHelperGpuKernel<T, S>>(kernel_name, device_id);
 }
 
 using AdaptiveMaxPool2DGradPtrCreatorFunc =
@@ -113,9 +113,6 @@ int AdaptiveMaxPool2DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_ = helper_ptr_->GetInputSizeList();
-  output_size_list_ = helper_ptr_->GetOutputSizeList();
-  workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;
 }
 
