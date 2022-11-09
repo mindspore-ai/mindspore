@@ -39,6 +39,7 @@ struct BaseOpRunInfo {
   bool has_dynamic_output = false;
   bool is_mixed_precision_cast = false;
   bool lazy_build = false;
+  bool use_dynamic_shape_process = false;
   std::string op_name;
   std::string next_op_name;
   std::string graph_info;

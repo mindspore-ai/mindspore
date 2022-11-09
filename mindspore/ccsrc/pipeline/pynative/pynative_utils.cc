@@ -480,9 +480,15 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
   if (device_target == kAscendDevice) {
     return false;
   }
-
+  auto flag = false;
+  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+  if (use_dynamic_shape_process) {
+    flag = true;
+  } else {
+    flag = PyNativeAlgo::Common::IsDynamicShape(op_run_info);
+  }
   auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
-    op_run_info->base_op_run_info.op_name, device_target, PyNativeAlgo::Common::IsDynamicShape(op_run_info));
+    op_run_info->base_op_run_info.op_name, device_target, flag);
   if (reg_info == nullptr) {
     return false;
   } else {

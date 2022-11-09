@@ -93,7 +93,7 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
   }
   std::ostringstream buf;
   buf << cur_target << "_";
-  buf << op_run_info->base_op_run_info.op_name;
+  buf << op_run_info->base_op_run_info.op_name << "_";
   bool has_const_input = false;
   const auto &op_prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(op_prim);
@@ -101,10 +101,15 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
   for (size_t index = 0; index < input_tensors.size(); ++index) {
     const auto &input_tensor = input_tensors[index];
     MS_EXCEPTION_IF_NULL(input_tensor);
-    if (input_tensor->base_shape_ptr() != nullptr) {
-      buf << input_tensor->base_shape_ptr()->ToString();
+    bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+    if (use_dynamic_shape_process) {
+      buf << input_tensor->shape().size() << "_";
     } else {
-      buf << input_tensor->shape();
+      if (input_tensor->base_shape_ptr() != nullptr) {
+        buf << input_tensor->base_shape_ptr()->ToString();
+      } else {
+        buf << input_tensor->shape();
+      }
     }
     buf << input_tensor->data_type();
     buf << input_tensor->padding_type();
@@ -452,7 +457,16 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
   VectorRef outputs;
   const auto &cur_mind_rt_backend = GetMindRtBackend(cur_target);
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-  cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
+  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+  if (use_dynamic_shape_process) {
+    cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
+  } else {
+    cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
+  }
+
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
+    op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
+  }
   const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";

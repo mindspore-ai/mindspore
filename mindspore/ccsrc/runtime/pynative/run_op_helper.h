@@ -28,5 +28,7 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
 
 void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
                       const device::DeviceContext *device_context);
+void RunSingleOpGraphDynamic(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
+                             const device::DeviceContext *device_context);
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_RUN_OP_RUN_OP_HELPER_H_

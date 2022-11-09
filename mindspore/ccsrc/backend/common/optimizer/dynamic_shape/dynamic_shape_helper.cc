@@ -40,7 +40,7 @@ constexpr int64_t kInvalidShape = -2;
 
 void InferShapeForNopNode(const AnfNodePtr &input_node) {
   MS_EXCEPTION_IF_NULL(input_node);
-  if (!common::AnfAlgo::IsNopNode(input_node) || !common::AnfAlgo::IsDynamicShape(input_node)) {
+  if (!common::AnfAlgo::IsNopNode(input_node)) {
     MS_LOG(INFO) << "Input node is not a nop node, no need infer.";
     return;
   }
@@ -305,10 +305,6 @@ void InferOp(const CNodePtr &cnode, void *args) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(WARNING) << "The node " << cnode->fullname_with_scope() << " is not dynamic shape.";
-    return;
-  }
 
   kernel::KernelArgs kernel_args;
   if (AnfAlgo::IsDynamicShapeSkipExecute(cnode)) {
