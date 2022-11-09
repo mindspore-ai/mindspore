@@ -242,11 +242,14 @@ function(mindspore_add_pkg pkg_name)
         set(${pkg_name}_PATCHES_HASH "${${pkg_name}_PATCHES_HASH},${_PF_SHA256}")
     endforeach()
 
+    # strip directory variables to ensure third party packages are installed in consistent locations
+    string(REPLACE ${TOP_DIR} "" ARGN_STRIPPED ${ARGN})
+    string(REPLACE ${_MS_LIB_CACHE} "" ARGN_STRIPPED ${ARGN_STRIPPED})
     # check options
     set(${pkg_name}_CONFIG_TXT
             "${CMAKE_CXX_COMPILER_VERSION}-${CMAKE_C_COMPILER_VERSION}
-            ${ARGN} - ${${pkg_name}_USE_STATIC_LIBS}- ${${pkg_name}_PATCHES_HASH}
-            ${${pkg_name}_CXXFLAGS}--${${pkg_name}_CFLAGS}--${${pkg_name}_LDFLAGS}")
+            ${ARGN_STRIPPED}-${${pkg_name}_USE_STATIC_LIBS}-${${pkg_name}_PATCHES_HASH}
+            ${${pkg_name}_CXXFLAGS}-${${pkg_name}_CFLAGS}-${${pkg_name}_LDFLAGS}")
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(${pkg_name}_CONFIG_TXT "${${pkg_name}_CONFIG_TXT}--${CMAKE_OSX_DEPLOYMENT_TARGET}")
     endif()
