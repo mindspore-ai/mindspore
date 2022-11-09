@@ -93,10 +93,14 @@ class TbeKernelCompileManager {
   // for 'pre-build', save op-pattern and output_data_desc;
   // for 'dynamic', save compile_res
   void SaveSucceedTaskCompileResult(int task_id, const std::string &compile_info, const std::string &job_type);
+  // save not support op
+  void SaveFailedTaskCompileResult(int task_id);
   // save op-pattern and output_data_desc;
   void SavePreBuildResult(const std::string &json_name, const std::string &pre_build_result);
   // load tbe prebuild result from cached json file
   void LoadPreBuildResult();
+  // load not support op
+  void LoadNotSupportOp();
   // query all build task
   void Query(const std::string &type);
   // single op build/pre-build
@@ -139,6 +143,8 @@ class TbeKernelCompileManager {
   std::map<int, TaskInfo> task_map_;
   // pre build result
   std::map<std::string, PreBuildResult> prebuild_res_map_;
+  // not support fusion op
+  std::set<std::string> not_support_fusion_ops_;
   // using full_name to find json_name when update fusion type and out data desc
   std::map<std::string, std::string> pre_build_full_name_to_json_name_;
   // save io size for kernel mod
