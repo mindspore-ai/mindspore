@@ -18,6 +18,7 @@
 #include <numeric>
 #include "src/litert/delegate/tensorrt/op/strideslice_tensorrt.h"
 #include "src/litert/delegate/tensorrt/tensorrt_utils.h"
+
 namespace mindspore::lite {
 nvinfer1::ITensor *StrideSliceTensorRT::GetDynamicAxisSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input,
                                                                 int size_dim, int axis,
@@ -61,8 +62,43 @@ nvinfer1::ITensor *StrideSliceTensorRT::GetDynamicAxisSliceSize(TensorRTContext 
   return gather_layer->getOutput(0);
 }
 
+nvinfer1::ITensor *StrideSliceTensorRT::GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *slice_input,
+                                                            size_t end_mask) {
+  std::vector<int> end_mask_axis;
+  std::vector<int> end_unmask_axis;
+  std::vector<int> start_vector;
+  for (int i = 0; i < size_dims_.nbDims; i++) {
+    start_vector.push_back(start_dims_.d[i]);
+    size_t mask = 1 << i;
+    if ((end_mask & mask) == 0) {
+      end_mask_axis.push_back(1);
+      end_unmask_axis.push_back(0);
+    } else {
+      end_mask_axis.push_back(0);
+      end_unmask_axis.push_back(1);
+    }
+  }
+  auto end_mask_tensor = ctx->ConvertTo1DTensor(end_mask_axis);
+  auto end_tensor =
+    ctx->network()
+      ->addElementWise(*input(ctx, INPUT_SIZE2).trt_tensor_, *end_mask_tensor, nvinfer1::ElementWiseOperation::kPROD)
+      ->getOutput(0);
+  auto end_unmask_tensor = ctx->ConvertTo1DTensor(end_unmask_axis);
+  auto input_shape = ctx->network()->addShape(*slice_input)->getOutput(0);
+  auto unmask_tensor = ctx->network()
+                         ->addElementWise(*input_shape, *end_unmask_tensor, nvinfer1::ElementWiseOperation::kPROD)
+                         ->getOutput(0);
+  auto real_end_tensor =
+    ctx->network()->addElementWise(*end_tensor, *unmask_tensor, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
+  auto start_tensor = ctx->ConvertTo1DTensor(start_vector);
+  auto size_tensor =
+    ctx->network()->addElementWise(*real_end_tensor, *start_tensor, nvinfer1::ElementWiseOperation::kSUB)->getOutput(0);
+  return size_tensor;
+}
+
 nvinfer1::ITensor *StrideSliceTensorRT::GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input,
-                                                            const nvinfer1::Dims &size_dims) {
+                                                            const nvinfer1::Dims &size_dims,
+                                                            const nvinfer1::Dims &start_dims) {
   auto in_tensor_shape = ctx->network()->addShape(*input)->getOutput(0);
   if (in_tensor_shape == nullptr) {
     MS_LOG(ERROR) << "add shape layer of input failed!";
@@ -71,20 +107,25 @@ nvinfer1::ITensor *StrideSliceTensorRT::GetDynamicSliceSize(TensorRTContext *ctx
   std::vector<int> is_dynamic;
   std::vector<int> is_fix;
   std::vector<int> size_vec;
+  std::vector<int> start_vec;
   for (int i = 0; i != size_dims.nbDims; ++i) {
     is_dynamic.push_back(size_dims.d[i] < 0);
     is_fix.push_back(size_dims.d[i] >= 0);
     size_vec.push_back(size_dims.d[i]);
+    start_vec.push_back(start_dims.d[i]);
   }
   auto is_dynamic_tensor = ctx->ConvertTo1DTensor(is_dynamic);
   auto is_fix_tensor = ctx->ConvertTo1DTensor(is_fix);
   auto size_tensor = ctx->ConvertTo1DTensor(size_vec);
-
+  auto start_tensor = ctx->ConvertTo1DTensor(start_vec);
+  auto dynamic_in_tensor =
+    ctx->network()->addElementWise(*in_tensor_shape, *start_tensor, nvinfer1::ElementWiseOperation::kSUB)->getOutput(0);
   auto fix_tensor =
     ctx->network()->addElementWise(*is_fix_tensor, *size_tensor, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
-  auto dynamic_tensor = ctx->network()
-                          ->addElementWise(*is_dynamic_tensor, *in_tensor_shape, nvinfer1::ElementWiseOperation::kPROD)
-                          ->getOutput(0);
+  auto dynamic_tensor =
+    ctx->network()
+      ->addElementWise(*is_dynamic_tensor, *dynamic_in_tensor, nvinfer1::ElementWiseOperation::kPROD)
+      ->getOutput(0);
   size_tensor =
     ctx->network()->addElementWise(*dynamic_tensor, *fix_tensor, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
   return size_tensor;
@@ -104,35 +145,29 @@ int StrideSliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive
   return RET_OK;
 }
 
-int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *slice_input) {
-  shrink_axis_ = op_primitive_->value_as_StridedSlice()->shrink_axis_mask();
-  size_t start_mask = op_primitive_->value_as_StridedSlice()->begin_mask();
-  size_t end_mask = op_primitive_->value_as_StridedSlice()->end_mask();
-
-  const mindspore::MSTensor &begin = in_tensors_.at(BEGINS_INDEX);
-  const mindspore::MSTensor &stride = in_tensors_.back();
-  const mindspore::MSTensor &end = in_tensors_.at(ENDS_INDEX);
-
+int StrideSliceTensorRT::ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_input, const mindspore::MSTensor &begin,
+                                     const mindspore::MSTensor &stride, const mindspore::MSTensor &end,
+                                     size_t start_mask, size_t end_mask, size_t axis_index) {
   auto input_dims = slice_input->trt_tensor_->getDimensions();
 
-  int64_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
   if (static_cast<size_t>(begin.ElementNum()) == slice_input->trt_tensor_->getDimensions().nbDims) {
     start_dims_ = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
+    stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
     auto end_dims = lite::ConvertCudaDims(end.Data().get(), end.ElementNum());
     size_dims_.nbDims = input_dims.nbDims;
+    const int *start_value = static_cast<const int *>(begin.Data().get());
+    const int *stride_value = static_cast<const int *>(stride.Data().get());
     for (int i = 0; i < size_dims_.nbDims; i++) {
       size_t mask = 1 << i;
       start_dims_.d[i] = ((start_mask & mask) == 0 ? start_dims_.d[i] : 0);
-      if (end.Data() == nullptr) {
-        continue;
+      if (end.Data() != nullptr) {
+        end_dims.d[i] = ((end_mask & mask) == 0 ? end_dims.d[i] : slice_input->trt_tensor_->getDimensions().d[i]);
+        size_dims_.d[i] = end_dims.d[i] - start_dims_.d[i];
       }
-      end_dims.d[i] = ((end_mask & mask) == 0 ? end_dims.d[i] : slice_input->trt_tensor_->getDimensions().d[i]);
-      size_dims_.d[i] = end_dims.d[i] - start_dims_.d[i];
-    }
-    stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
-    if (IsDynamicInput(ctx, 0)) {
-      size_tensor_ = GetDynamicSliceSize(ctx, slice_input->trt_tensor_, size_dims_);
-      size_dims_ = nvinfer1::Dims{-1};
+      if (*(start_value + i) < 0) {
+        start_dims_.d[i] = *(start_value + i) + input_dims.d[i];
+        stride_dims_.d[i] = -*(stride_value + i);
+      }
     }
   } else {
     if (axis_index == -1 || in_tensors_.at(axis_index).ElementNum() != 1) {
@@ -166,18 +201,44 @@ int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *s
         }
       }
     }
-    if (IsDynamicInput(ctx, 0)) {
-      size_tensor_ =
-        GetDynamicAxisSliceSize(ctx, slice_input->trt_tensor_, size_dims_.d[axis_value], axis_value, nullptr);
+  }
+  return RET_OK;
+}
+
+int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *slice_input) {
+  shrink_axis_ = op_primitive_->value_as_StridedSlice()->shrink_axis_mask();
+  size_t start_mask = op_primitive_->value_as_StridedSlice()->begin_mask();
+  size_t end_mask = op_primitive_->value_as_StridedSlice()->end_mask();
+
+  const mindspore::MSTensor &begin = in_tensors_.at(BEGINS_INDEX);
+  const mindspore::MSTensor &stride = in_tensors_.back();
+  const mindspore::MSTensor &end = in_tensors_.at(ENDS_INDEX);
+
+  size_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
+  if (static_cast<size_t>(begin.ElementNum()) == slice_input->trt_tensor_->getDimensions().nbDims) {
+    int dims_ret = ComputeDims(ctx, slice_input, begin, stride, end, start_mask, end_mask, axis_index);
+    if (dims_ret) {
+      MS_LOG(ERROR) << "comput start dims, stride dims, size dims filed for " << op_name_;
+      return RET_ERROR;
+    }
+    if (IsDynamicInput(ctx, 0) && end.Data() != nullptr) {
+      size_tensor_ = GetDynamicSliceSize(ctx, slice_input->trt_tensor_, size_dims_, start_dims_);
       size_dims_ = nvinfer1::Dims{-1};
     }
     if (end.Data() == nullptr) {
-      auto start_tensor = ctx->ConvertTo1DTensor(start_value);
-      auto len_tensor =
-        ctx->network()
-          ->addElementWise(*input(ctx, INPUT_SIZE2).trt_tensor_, *start_tensor, nvinfer1::ElementWiseOperation::kSUB)
-          ->getOutput(0);
-      size_tensor_ = GetDynamicAxisSliceSize(ctx, slice_input->trt_tensor_, -1, axis_value, len_tensor);
+      size_tensor_ = GetDynamicSliceSize(ctx, slice_input->trt_tensor_, end_mask);
+      size_dims_ = nvinfer1::Dims{-1};
+    }
+  } else {
+    int dims_ret = ComputeDims(ctx, slice_input, begin, stride, end, start_mask, end_mask, axis_index);
+    if (dims_ret) {
+      MS_LOG(ERROR) << "comput start dims, stride dims, size dims filed for " << op_name_;
+      return RET_ERROR;
+    }
+    int axis_value = *(static_cast<const int *>(in_tensors_.at(axis_index).Data().get()));
+    if (IsDynamicInput(ctx, 0)) {
+      size_tensor_ =
+        GetDynamicAxisSliceSize(ctx, slice_input->trt_tensor_, size_dims_.d[axis_value], axis_value, nullptr);
       size_dims_ = nvinfer1::Dims{-1};
     }
   }

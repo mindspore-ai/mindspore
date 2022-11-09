@@ -42,10 +42,14 @@ class StrideSliceTensorRT : public TensorRTOp {
 
  private:
   nvinfer1::ITensor *GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input,
-                                         const nvinfer1::Dims &size_dims);
+                                         const nvinfer1::Dims &size_dims, const nvinfer1::Dims &start_dims);
+  nvinfer1::ITensor *GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *slice_input, size_t end_mask);
   nvinfer1::ITensor *GetDynamicAxisSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input, int size_dim, int axis,
                                              nvinfer1::ITensor *size_tensor);
   int ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *slice_input);
+  int ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_input, const mindspore::MSTensor &begin,
+                  const mindspore::MSTensor &stride, const mindspore::MSTensor &end, size_t start_mask, size_t end_mask,
+                  size_t axis_index);
   size_t shrink_axis_;
   size_t start_axis_;
   size_t end_axis_;

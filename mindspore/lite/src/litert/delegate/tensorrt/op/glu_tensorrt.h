@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_PAD_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_PAD_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_GLU_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_GLU_TENSORRT_H_
 #include <string>
 #include <vector>
 #include "src/litert/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
-class PadTensorRT : public TensorRTOp {
+constexpr int SPLITE_NUM = 2;
+constexpr int INPUT_INDEX = 2;
+class GLUTensorRT : public TensorRTOp {
  public:
-  PadTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+  GLUTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
               const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
               const schema::QuantType &quant_type)
       : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
 
-  ~PadTensorRT() override = default;
+  ~GLUTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
@@ -35,14 +37,7 @@ class PadTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int ParasePaddingParam(TensorRTContext *ctx, int element_cnt, nvinfer1::ITensor *pad_input, const int *padding_data);
-  const int index_NHWC_ = 4;
-  const int index_NHC_ = 3;
-  float constant_value_ = 0.0f;
-  int h_pre_ = 0;
-  int h_post_ = 0;
-  int w_pre_ = 0;
-  int w_post_ = 0;
+  int64_t dim_{-1};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_PAD_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_GLU_TENSORRT_H_

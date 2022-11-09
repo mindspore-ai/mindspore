@@ -15,7 +15,6 @@
  */
 
 #include "src/litert/delegate/tensorrt/op/concate_tensorrt.h"
-#include <experimental/optional>
 #include <algorithm>
 
 namespace mindspore::lite {
@@ -104,13 +103,16 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
         MS_LOG(ERROR) << "addShuffle failed for TensorRT.";
         return RET_ERROR;
       }
-      auto shuffer_dims_opt = UnsqueezeDims(trt_input_tensors[i]->getDimensions(), axis_, 1);
-      if (!shuffer_dims_opt) {
-        MS_LOG(ERROR) << "UnsqueezeDims failed.";
-        return RET_ERROR;
+      bool has_rank_n = (trt_input_tensors[i]->getDimensions().nbDims > 1);
+      if (has_rank_n) {
+        auto shuffer_dims_opt = UnsqueezeDims(trt_input_tensors[i]->getDimensions(), axis_, 1);
+        if (!shuffer_dims_opt) {
+          MS_LOG(ERROR) << "UnsqueezeDims failed.";
+          return RET_ERROR;
+        }
+        shuffle_layer->setReshapeDimensions(shuffer_dims_opt.value());
+        trt_input_tensors[i] = shuffle_layer->getOutput(0);
       }
-      shuffle_layer->setReshapeDimensions(shuffer_dims_opt.value());
-      trt_input_tensors[i] = shuffle_layer->getOutput(0);
     }
   }
   nvinfer1::IConcatenationLayer *concate_layer =

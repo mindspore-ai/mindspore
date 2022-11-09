@@ -20,6 +20,14 @@
 #include "src/litert/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
+constexpr int PADDING_INDEX0 = 0;
+constexpr int PADDING_INDEX1 = 1;
+constexpr int PADDING_INDEX2 = 2;
+constexpr int PADDING_INDEX3 = 3;
+constexpr int PADDING_INDEX4 = 4;
+constexpr int PADDING_INDEX5 = 5;
+constexpr int PADDING_INDEX6 = 6;
+constexpr int PADDING_INDEX7 = 7;
 int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
                            const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -57,6 +65,44 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
   return RET_OK;
 }
 
+int PadTensorRT::ParasePaddingParam(TensorRTContext *ctx, int element_cnt, nvinfer1::ITensor *pad_input,
+                                    const int *padding_data) {
+  if (element_cnt == index_NHWC_ * INPUT_SIZE2) {
+    // only support pad at HW index
+    if (SameDims(pad_input->getDimensions(), in_tensors_[0].Shape())) {
+      // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
+      if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 2) != 0 || *(padding_data + 3) != 0) {
+        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
+      }
+      h_pre_ = PADDING_INDEX4, h_post_ = PADDING_INDEX5, w_pre_ = PADDING_INDEX6, w_post_ = PADDING_INDEX7;
+    } else {
+      // NHWC: 0: N_pre, 1: N_post, 2: H_pre, 3: H_post, 4: W_pre, 5: W_post, 6: C_pre, 7: C_post
+      if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 6) != 0 || *(padding_data + 7) != 0) {
+        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
+      }
+      h_pre_ = PADDING_INDEX2, h_post_ = PADDING_INDEX3, w_pre_ = PADDING_INDEX4, w_post_ = PADDING_INDEX5;
+    }
+  } else if (element_cnt == index_NHC_ * INPUT_SIZE2) {
+    if (input(ctx, 0).same_format_) {
+      // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
+      if (*padding_data != 0 || *(padding_data + 1) != 0) {
+        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
+      }
+      h_pre_ = PADDING_INDEX2, h_post_ = PADDING_INDEX3, w_pre_ = PADDING_INDEX4, w_post_ = PADDING_INDEX5;
+    } else {
+      // NHWC: 0: N_pre, 1: N_post, 2: H_pre, 3: H_post, 4: W_pre, 5: W_post, 6: C_pre, 7: C_post
+      if (*(padding_data + 4) != 0 || *(padding_data + 5) != 0) {
+        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
+      }
+      h_pre_ = PADDING_INDEX0, h_post_ = PADDING_INDEX1, w_pre_ = PADDING_INDEX2, w_post_ = PADDING_INDEX3;
+    }
+  } else {
+    MS_LOG(ERROR) << "need check for pad_tensor dims: " << op_name_ << ", pad_tensor ElementNum";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   mindspore::MSTensor &pad_tensor = in_tensors_[1];
   int element_cnt = std::accumulate(pad_tensor.Shape().begin(), pad_tensor.Shape().end(), 1, std::multiplies<int>());
@@ -85,42 +131,20 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data().get());
   MS_ASSERT(padding_data);
   nvinfer1::IPaddingLayer *padding_layer = nullptr;
-  if (element_cnt == index_NHWC_ * INPUT_SIZE2) {
-    // only support pad at HW index
-    int h_pre;
-    int h_post;
-    int w_pre;
-    int w_post;
-    if (SameDims(pad_input->getDimensions(), in_tensors_[0].Shape())) {
-      // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
-      if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 2) != 0 || *(padding_data + 3) != 0) {
-        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
-      }
-      h_pre = 4;
-      h_post = 5;
-      w_pre = 6;
-      w_post = 7;
-    } else {
-      // NHWC: 0: N_pre, 1: N_post, 2: H_pre, 3: H_post, 4: W_pre, 5: W_post, 6: C_pre, 7: C_post
-      if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 6) != 0 || *(padding_data + 7) != 0) {
-        MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
-      }
-      h_pre = 2;
-      h_post = 3;
-      w_pre = 4;
-      w_post = 5;
-    }
-    nvinfer1::DimsHW prePadding{*(padding_data + h_pre), *(padding_data + w_pre)};
-    nvinfer1::DimsHW postPadding{*(padding_data + h_post), *(padding_data + w_post)};
-    MS_LOG(DEBUG) << op_name_ << " prePadding: " << prePadding.d[0] << ", " << prePadding.d[1]
-                  << "; postPadding: " << postPadding.d[0] << ", " << postPadding.d[1];
-
-    padding_layer = ctx->network()->addPadding(*pad_input, prePadding, postPadding);
-  } else {
-    MS_LOG(ERROR) << "need check for pad_tensor dims: " << op_name_
-                  << ", pad_tensor ElementNum: " << pad_tensor.ElementNum();
-    return RET_ERROR;
+  int padding_ret = ParasePaddingParam(ctx, element_cnt, pad_input, padding_data);
+  if (padding_ret) {
+    MS_LOG(ERROR) << "parase padding parameter failed";
+    return RET_OK;
   }
+  bool input_size3 = (input(ctx, 0).trt_tensor_->getDimensions().nbDims == INPUT_SIZE3);
+  nvinfer1::DimsHW prePadding{*(padding_data + h_pre_), *(padding_data + w_pre_)};
+  nvinfer1::DimsHW postPadding{*(padding_data + h_post_), *(padding_data + w_post_)};
+  MS_LOG(DEBUG) << op_name_ << " prePadding: " << prePadding.d[0] << ", " << prePadding.d[1]
+                << "; postPadding: " << postPadding.d[0] << ", " << postPadding.d[1];
+  if (input_size3) {
+    pad_input = ExpandDim(ctx, pad_input, 0);
+  }
+  padding_layer = ctx->network()->addPadding(*pad_input, prePadding, postPadding);
   if (padding_layer == nullptr) {
     MS_LOG(ERROR) << "add padding layer failed for " << op_name_;
     return RET_ERROR;
@@ -128,6 +152,20 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = padding_layer;
   padding_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = padding_layer->getOutput(0);
+  if (input_size3) {
+    std::vector<int> axes{0};
+    auto squeeze_shape = ctx->network()->addShape(*out_tensor)->getOutput(0);
+    std::vector<int> subscripts(out_tensor->getDimensions().nbDims);
+    std::iota(subscripts.begin(), subscripts.end(), 0);
+    auto p = std::remove_if(subscripts.begin(), subscripts.end(),
+                            [axes](int x) { return std::find(axes.begin(), axes.end(), x) != axes.end(); });
+    subscripts.resize(p - subscripts.begin());
+    auto subscripts_tensor = ctx->ConvertTo1DTensor(subscripts);
+    auto newDims = ctx->network()->addGather(*squeeze_shape, *subscripts_tensor, 0)->getOutput(0);
+    auto shuffle_layer = ctx->network()->addShuffle(*out_tensor);
+    shuffle_layer->setInput(1, *newDims);
+    out_tensor = shuffle_layer->getOutput(0);
+  }
   bool same_format = SameDims(out_tensor->getDimensions(), out_tensors_[0].Shape()) &&
                      SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape());
   auto output_helper = ITensorHelper{out_tensor, Format::NCHW, same_format};
