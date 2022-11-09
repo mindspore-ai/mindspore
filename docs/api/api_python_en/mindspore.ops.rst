@@ -60,6 +60,7 @@ Neural Network
     mindspore.ops.DynamicGRUV2
     mindspore.ops.DynamicRNN
     mindspore.ops.Flatten
+    mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
     mindspore.ops.LRN
     mindspore.ops.LSTM
@@ -200,6 +201,7 @@ Image Processing
     mindspore.ops.CombinedNonMaxSuppression
     mindspore.ops.CropAndResize
     mindspore.ops.ExtractVolumePatches
+    mindspore.ops.HSVToRGB
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
@@ -338,6 +340,7 @@ Reduction Operator
     mindspore.ops.ReduceMean
     mindspore.ops.ReduceMin
     mindspore.ops.ReduceProd
+    mindspore.ops.ReduceStd
     mindspore.ops.ReduceSum
 
 Comparison Operator
@@ -409,6 +412,7 @@ Random Generation Operator
     :template: classtemplate.rst
 
     mindspore.ops.Gamma
+    mindspore.ops.LogNormalReverse
     mindspore.ops.Multinomial
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
@@ -444,18 +448,30 @@ Array Operation
     mindspore.ops.DiagPart
     mindspore.ops.DType
     mindspore.ops.ExpandDims
+    mindspore.ops.FFTWithSize
     mindspore.ops.FloatStatus
     mindspore.ops.Gather
     mindspore.ops.GatherD
     mindspore.ops.GatherNd
+    mindspore.ops.HammingWindow
+    mindspore.ops.Heaviside
+    mindspore.ops.Histogram
     mindspore.ops.HistogramFixedWidth
+    mindspore.ops.Hypot
     mindspore.ops.Identity
+    mindspore.ops.IdentityN
     mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
+    mindspore.ops.IndexFill
     mindspore.ops.InplaceAdd
     mindspore.ops.InplaceSub
     mindspore.ops.InplaceUpdate
     mindspore.ops.InvertPermutation
+    mindspore.ops.IsClose
+    mindspore.ops.Lcm
+    mindspore.ops.LeftShift
+    mindspore.ops.ListDiff
+    mindspore.ops.LogMatrixDeterminant
     mindspore.ops.LogSpace
     mindspore.ops.LowerBound
     mindspore.ops.Lstsq

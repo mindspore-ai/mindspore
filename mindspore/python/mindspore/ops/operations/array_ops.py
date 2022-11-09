@@ -6489,8 +6489,12 @@ class ListDiff(Primitive):
     is sorted in the same order that the numbers appear in `x` (duplicates are
     preserved). This operation also returns a list `idx` that represents the
     position of each `out` element in `x`. In other words:
+    :math:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` .
 
-    `out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]`
+    Args:
+        out_idx (:class:`mindspore.dtype`, optional): The dtype of `idx`,
+        an optioanal datatype of `mindspore.dtype.int32` and `mindspore.dtype.int64`.
+        Default: `mindspore.dtype.int32`.
 
     Inputs:
         - **x**: A 1-D `Tensor`. Values to keep. type support list [float16, float32,
@@ -6506,15 +6510,15 @@ class ListDiff(Primitive):
         TypeError: If `x` or `y` is not a Tensor.
         TypeError: If `x` or `y` datetype not in support list.
         TypeError: If `x` has different data type with `y`.
-        TypeError: If attr `out_idx` not in [mstype.int32, mstype.int64].
+        TypeError: If attr `out_idx` not in [mindspore.dtype.int32, mindspore.dtype.int64].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.arange(1, 7, 1), dtype=mstype.int32) # [1, 2, 3, 4, 5, 6]
-        >>> y = Tensor([1, 3, 5], dtype=mstype.int32)
-        >>> op = ops.ListDiff() # out_idx default is mstype.int32
+        >>> x = Tensor(np.arange(1, 7, 1), dtype=mindspore.dtype.int32) # [1, 2, 3, 4, 5, 6]
+        >>> y = Tensor([1, 3, 5], dtype=mindspore.dtype.int32)
+        >>> op = ops.ListDiff() # out_idx default is mindspore.dtype.int32
         >>> out, idx = op(x, y)
         >>> print(out)
         [2 4 6]
@@ -7092,7 +7096,8 @@ class LogSpace(Primitive):
         TypeError: If `input` is not a Tensor.
         TypeError: If `steps` is not an int.
         TypeError: If `base` is not an int.
-        TypeError: If `dtype` is not mindspore.float16, mindspore.float32 or mindspore.float64(for GPU).
+        TypeError: If `dtype` is not mindspore.float16, mindspore.float32 or
+            mindspore.float64(for GPU).
         ValueError: If `steps` is not a non-negative integer.
         ValueError: If `base` is not a non-negative integer.
 
@@ -7221,7 +7226,7 @@ class IndexFill(Primitive):
     Fills the elements under the dim dimension of the input Tensor with the input value
     by selecting the indices in the order given in index.
 
-    Refer to :func:`mindspore.ops.index_fill` for more detail.
+    Refer to :func:`mindspore.ops.index_fill` for more details.
     Inputs:
         - **x** (Tensor) - Input tensor.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -7545,13 +7550,16 @@ class HammingWindow(Primitive):
     where :math:`N` is the full window size.
 
     Args:
-        periodic (bool): a flag determines whether the returned window trims off the last
-            duplicate value from the symmetric window. If True, returns a window to be used
-            as periodic function, in above formula, :math:`N = \text{length} + 1`.
-            If False, return a symmetric window, :math:`N = \text{length}`. Default: True.
-        alpha (float): The coefficient :math:`\alpha` in the equation above, default to 0.54.
-        beta (float): The coefficient :math:`\beta` in the equation above, default to 0.46.
-        dtype (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.float16`,
+        periodic (bool, optional): a flag determines whether the returned window trims off
+            the last duplicate value from the symmetric window. Default: True.
+
+            - If True, returns a window to be used as periodic function, in above formula,
+              :math:`N = \text{length} + 1`.
+            - If False, return a symmetric window, :math:`N = \text{length}`.
+
+        alpha (float, optional): The coefficient :math:`\alpha` in the equation above. Default: 0.54.
+        beta (float, optional): The coefficient :math:`\beta` in the equation above. Default: 0.46.
+        dtype (:class:`mindspore.dtype`, optional): An optional data type of `mindspore.dtype.float16`,
             `mindspore.dtype.float32` and `mindspore.dtype.float64`. Default: `mindspore.dtype.float32`.
 
     Inputs:
