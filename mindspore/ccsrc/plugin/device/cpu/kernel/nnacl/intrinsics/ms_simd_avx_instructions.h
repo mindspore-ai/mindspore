@@ -82,6 +82,7 @@
 #define MS_AND256_MASK(src1, src2) _mm256_and_ps(src1, src2)
 #define MS_OR256_F32(src1, src2) _mm256_or_ps(src1, src2)
 #define MS_AND256_MASK_F32(src1, src2) _mm256_and_ps(src1, src2)
+#define MS_AND256_F32(src1, src2) _mm256_and_ps(src1, src2)
 
 #define MS256_ANDNOT_F32(src1, src2) _mm256_andnot_ps(src1, src2)
 #define MS256_SRLI_EPI32(src1, src2) _mm256_srli_epi32(src1, src2)

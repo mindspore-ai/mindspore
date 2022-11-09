@@ -95,11 +95,12 @@
 #define MS_CMPGT128_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
 #define MS_BLEND128_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
 #define MS_BLEND128_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
-#define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
+#define MS_CAST128_F32_S32(src) _mm_castsi128_ps(src)
 #define MS_DIV128_EPI32(src1, src2) _mm_cvttps_epi32(MS_DIV128_F32(_mm_cvtepi32_ps(src1), _mm_cvtepi32_ps(src2)))
 #define MS_AND128_MASK(src1, src2) _mm_and_ps(src1, src2)
 #define MS_OR128_F32(src1, src2) _mm_or_ps(src1, src2)
 #define MS_AND128_MASK_F32(src1, src2) _mm_and_ps(src1, src2)
+#define MS_AND128_F32(src1, src2) _mm_and_ps(src1, src2)
 
 #define MS128_ANDNOT_F32(src1, src2) _mm_andnot_ps(src1, src2)
 #define MS128_SRLI_EPI32(src1, src2) _mm_srli_epi32(src1, src2)
@@ -280,7 +281,7 @@ static inline MS_FLOAT32X4 VexpFp32(MS_FLOAT32X4 input) {
   MS_FLOAT32X4 tmp = MS_MULQ_F32(decimal, (MS_ADDQ_F32(param[2], MS_MULQ_F32(decimal, param[1]))));
   tmp = MS_MULQ_F32(decimal, MS_ADDQ_F32(param[4], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[3], tmp))));
   MS_FLOAT32X4 decimal_exp = MS_ADDQ_F32(param[5], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[5], tmp)));
-  return MS_MULQ_F32(decimal_exp, MS_CAST_F32_S32(int_exp));
+  return MS_MULQ_F32(decimal_exp, MS_CAST128_F32_S32(int_exp));
 }
 
 static inline void simd_exp128(MS_FLOAT32X4 input, float *dst) {
