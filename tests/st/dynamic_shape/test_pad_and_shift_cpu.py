@@ -34,8 +34,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_and_shift_cpu():
     x = Tensor(np.array([9, 13, -1, -1, -1, -1, -1, -1]), mstype.int32)

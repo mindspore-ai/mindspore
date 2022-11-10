@@ -54,8 +54,7 @@ class UniqueSquare(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unique_cpu():
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
@@ -68,8 +67,7 @@ def test_unique_cpu():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unique_square():
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
@@ -80,8 +78,7 @@ def test_unique_square():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unqiue_func_1d():
     """
@@ -99,8 +96,7 @@ def test_unqiue_func_1d():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unqiue_func_2d():
     """

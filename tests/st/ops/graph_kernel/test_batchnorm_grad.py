@@ -71,7 +71,7 @@ def test_bn_grad_infer():
     assert np.allclose(expect[1].asnumpy(), output[1].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(expect[2].asnumpy(), output[2].asnumpy(), 0.0001, 0.0001)
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bn_grad_train_gpu():

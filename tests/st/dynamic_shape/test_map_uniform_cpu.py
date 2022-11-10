@@ -35,8 +35,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_map_uniform():
     x = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]), mstype.int32)

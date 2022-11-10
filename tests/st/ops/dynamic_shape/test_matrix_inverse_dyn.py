@@ -47,8 +47,7 @@ def test_matrix_inverse():
     x_np = np.random.uniform(-2, 2, (3, 4, 4)).astype(np.float32)
     x = Tensor(x_np)
     x_dyn = Tensor(shape=[None, None, None], dtype=x.dtype)
-
-    context.set_context(device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     matrix_inverse = NetMatrixInverse()
     matrix_inverse.set_inputs(x_dyn)
     output0 = matrix_inverse(x)
