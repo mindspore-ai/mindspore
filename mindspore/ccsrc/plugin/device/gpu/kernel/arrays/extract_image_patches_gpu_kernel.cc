@@ -18,9 +18,12 @@
 
 #include <complex>
 #include <functional>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 constexpr size_t extract_image_rank_size = 4;
 void ExtractImagePatchesKernelMod::ResetResource() noexcept {
   input_size_ = 1;
@@ -175,8 +178,28 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ExtractImagePatchesKern
      &ExtractImagePatchesKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &ExtractImagePatchesKernelMod::LaunchKernel<half>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &ExtractImagePatchesKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &ExtractImagePatchesKernelMod::LaunchKernel<int16_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &ExtractImagePatchesKernelMod::LaunchKernel<int>}};
+     &ExtractImagePatchesKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &ExtractImagePatchesKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &ExtractImagePatchesKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &ExtractImagePatchesKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &ExtractImagePatchesKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &ExtractImagePatchesKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &ExtractImagePatchesKernelMod::LaunchKernel<Complex<float>>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &ExtractImagePatchesKernelMod::LaunchKernel<Complex<double>>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     &ExtractImagePatchesKernelMod::LaunchKernel<bool>}};
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ExtractImagePatches, ExtractImagePatchesKernelMod);
