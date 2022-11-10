@@ -11,6 +11,9 @@ set(TEST_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/net_train.cc
     )
 
+# add static securec link library
+include_directories(${TOP_DIR}/cmake/dependency_securec.cmake)
+
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     set(TEST_SRC
     ${TEST_SRC}
@@ -30,15 +33,15 @@ endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     if(SUPPORT_NPU AND ANDROID_STL STREQUAL "c++_static")
-        target_link_libraries(benchmark_train mindspore-lite mindspore-lite-train c++_shared)
+        target_link_libraries(benchmark_train mindspore-lite mindspore-lite-train c++_shared securec)
     else()
-        target_link_libraries(benchmark_train mindspore-lite mindspore-lite-train)
+        target_link_libraries(benchmark_train mindspore-lite mindspore-lite-train securec)
     endif()
 else()
     if(WIN32)
         target_link_libraries(benchmark_train mindspore-lite_static mindspore-lite-train_static pthread cpu_kernel_mid
-                              nnacl_mid train_cpu_kernel_mid)
+                              nnacl_mid train_cpu_kernel_mid securec)
     else()
-        target_link_libraries(benchmark_train mindspore-lite mindspore-lite-train pthread)
+        target_link_libraries(benchmark_train mindspore-lite mindspore-lite-train pthread securec)
     endif()
 endif()

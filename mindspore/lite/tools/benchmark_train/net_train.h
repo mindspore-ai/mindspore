@@ -220,6 +220,8 @@ class MS_API NetTrain {
 
   int ReadInputFile();
 
+  int LoadStepInput(size_t step);
+
   void InitMSContext(const std::shared_ptr<Context> &context);
 
   void InitTrainCfg(const std::shared_ptr<TrainCfg> &train_cfg);
@@ -301,6 +303,9 @@ class MS_API NetTrain {
   mindspore::MSKernelCallBack after_call_back_{nullptr};
   nlohmann::json dump_cfg_json_;
   std::string dump_file_output_dir_;
+  std::vector<std::shared_ptr<char>> inputs_buf_;
+  std::vector<size_t> inputs_size_;
+  size_t batch_num_ = 0;
 };
 
 int MS_API RunNetTrain(int argc, const char **argv);

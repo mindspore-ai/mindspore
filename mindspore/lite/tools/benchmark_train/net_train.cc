@@ -27,6 +27,7 @@
 #include "tools/benchmark_train/net_runner.h"
 #include "src/common/common.h"
 #include "include/api/serialization.h"
+#include "securec/include/securec.h"
 
 namespace mindspore {
 namespace lite {
@@ -99,34 +100,30 @@ float *NetTrain::ReadFileBuf(const std::string file, size_t *size) {
   return buf.release();
 }
 
-int NetTrain::GenerateRandomData(mindspore::MSTensor *tensor) {
-  auto input_data = tensor->MutableData();
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "MallocData for inTensor failed";
-    return RET_ERROR;
-  }
-  auto tensor_byte_size = tensor->DataSize();
-  char *casted_data = static_cast<char *>(input_data);
-  for (size_t i = 0; i < tensor_byte_size; i++) {
-    casted_data[i] =
-      (tensor->DataType() == mindspore::DataType::kNumberTypeFloat32) ? static_cast<char>(i) : static_cast<char>(0);
-  }
-  return RET_OK;
-}
-
 int NetTrain::GenerateInputData() {
   for (auto tensor : ms_inputs_for_api_) {
-    auto status = GenerateRandomData(&tensor);
-    if (status != RET_OK) {
-      std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
-      MS_LOG(ERROR) << "GenerateRandomData for inTensor failed: " << status;
-      return status;
+    auto tensor_byte_size = tensor.DataSize();
+    MS_ASSERT(tensor_byte_size != 0);
+    auto data_ptr = new (std::nothrow) char[tensor_byte_size];
+    if (data_ptr == nullptr) {
+      MS_LOG(ERROR) << "Malloc input data buffer failed, data_size:  " << tensor_byte_size;
+      return RET_ERROR;
+    }
+    inputs_buf_.emplace_back(data_ptr);
+    inputs_size_.emplace_back(tensor_byte_size);
+    for (size_t i = 0; i < tensor_byte_size; i++) {
+      data_ptr[i] =
+        (tensor.DataType() == mindspore::DataType::kNumberTypeFloat32) ? static_cast<char>(i) : static_cast<char>(0);
     }
   }
+  batch_num_ = 1;
   return RET_OK;
 }
 
 int NetTrain::LoadInput() {
+  inputs_buf_.clear();
+  inputs_size_.clear();
+  batch_num_ = 0;
   if (flags_->in_data_file_.empty()) {
     auto status = GenerateInputData();
     if (status != RET_OK) {
@@ -141,6 +138,23 @@ int NetTrain::LoadInput() {
       MS_LOG(ERROR) << "Read Input File error, " << status;
       return status;
     }
+  }
+  return RET_OK;
+}
+
+int NetTrain::LoadStepInput(size_t step) {
+  if (step >= batch_num_) {
+    auto cur_batch = step + 1;
+    MS_LOG(ERROR) << "Max input Batch is:" << batch_num_ << " but got batch :" << cur_batch;
+    return RET_ERROR;
+  }
+  for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
+    auto cur_tensor = ms_inputs_for_api_.at(i);
+    MS_ASSERT(cur_tensor != nullptr);
+    auto tensor_data_size = cur_tensor.DataSize();
+    auto input_data = cur_tensor.MutableData();
+    MS_ASSERT(input_data != nullptr);
+    memcpy_s(input_data, tensor_data_size, inputs_buf_[i].get() + step * tensor_data_size, tensor_data_size);
   }
   return RET_OK;
 }
@@ -165,17 +179,18 @@ int NetTrain::ReadInputFile() {
         return RET_ERROR;
       }
       auto tensor_data_size = cur_tensor.DataSize();
-      if (size != tensor_data_size) {
-        std::cerr << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
+      MS_ASSERT(tensor_byte_size != 0);
+      if (size == 0 || size % tensor_data_size != 0 || (batch_num_ != 0 && size / tensor_data_size != batch_num_)) {
+        std::cerr << "Input binary file size error, required :N * " << tensor_data_size << ", in fact: " << size
                   << " ,file_name: " << file_name.c_str() << std::endl;
-        MS_LOG(ERROR) << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
+        MS_LOG(ERROR) << "Input binary file size error, required: N * " << tensor_data_size << ", in fact: " << size
                       << " ,file_name: " << file_name.c_str();
         delete bin_buf;
         return RET_ERROR;
       }
-      auto input_data = cur_tensor.MutableData();
-      memcpy(input_data, bin_buf, tensor_data_size);
-      delete[](bin_buf);
+      inputs_buf_.emplace_back(bin_buf);
+      inputs_size_.emplace_back(size);
+      batch_num_ = size / tensor_data_size;
     }
   }
   return RET_OK;
@@ -287,11 +302,18 @@ int NetTrain::MarkPerformance() {
 
   for (int i = 0; i < flags_->epochs_; i++) {
     auto start = GetTimeUs();
-    auto status = ms_model_.RunStep(before_call_back_, after_call_back_);
-    if (status != mindspore::kSuccess) {
-      MS_LOG(ERROR) << "Inference error " << status;
-      std::cerr << "Inference error " << status;
-      return RET_ERROR;
+    for (size_t step = 0; step < batch_num_; step++) {
+      MS_LOG(INFO) << "Run for epoch:" << i << " step:" << step;
+      auto ret = LoadStepInput(step);
+      if (ret != RET_OK) {
+        return ret;
+      }
+      auto status = ms_model_.RunStep(before_call_back_, after_call_back_);
+      if (status != mindspore::kSuccess) {
+        MS_LOG(ERROR) << "Inference error " << status;
+        std::cerr << "Inference error " << status;
+        return RET_ERROR;
+      }
     }
 
     auto end = GetTimeUs();
@@ -322,6 +344,10 @@ int NetTrain::MarkPerformance() {
 
 int NetTrain::MarkAccuracy(bool enforce_accuracy) {
   MS_LOG(INFO) << "MarkAccuracy";
+  auto load_ret = LoadStepInput(0);
+  if (load_ret != RET_OK) {
+    return load_ret;
+  }
   for (auto &msInput : ms_model_.GetInputs()) {
     switch (msInput.DataType()) {
       case mindspore::DataType::kNumberTypeFloat32:
