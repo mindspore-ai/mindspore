@@ -281,7 +281,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
         return output_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float16, mstype.float32, mstype.float64],
+        validator.check_tensor_dtype_valid("input_x", x_dtype, [mstype.float16, mstype.float32, mstype.float64],
                                            self.name)
         return x_dtype
 

@@ -13,8 +13,8 @@ mindspore.ops.bitwise_xor
     如果 `x` 和 `y` 数据类型不同，低精度数据类型将自动转换成高精度数据类型。
 
     参数：
-        - **x** (Tensor) - 第一个输入，是一个数据类型为uint16、int16或int32的Tensor。
-        - **y** (Tensor) - 第二个输入，是一个与 `x` 相同类型的Tensor。
+        - **x** (Tensor) - 第一个输入，是一个数据类型为带符号或者不带符号的整数类型的Tensor，其shape为 :math:`(N,*)` ，其中 :math:`*` 为任意数量的额外维度。
+        - **y** (Tensor) - 第二个输入，是一个与 `x` shape和类型相同的Tensor。
 
     返回：
         Tensor，是一个与 `x` 相同类型的Tensor。

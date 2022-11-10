@@ -26,7 +26,7 @@ mindspore.nn.PReLU
         - **w** (Union[float, list, Tensor]) - 参数的初始值。它可以是float、float组成的list或与输入Tensor `x` 具有相同数据类型的Tensor。默认值：0.25。
 
     输入：
-        - **x** (Tensor) - PReLU的输入，任意维度的Tensor，其数据类型为float16或float32。
+        - **x** (Tensor) - PReLU的输入Tensor，其shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的额外维度，数据类型为float16或float32。
 
     输出：
         Tensor，数据类型和shape与 `x` 相同。
