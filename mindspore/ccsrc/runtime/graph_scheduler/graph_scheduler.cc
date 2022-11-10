@@ -765,11 +765,15 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-    for (const auto &output_with_index : outputs) {
+    // As the cse optimization of kernel graph, front cnodes with the same inputs will be optimized to the same
+    // backend cnode, it means that multiple front nodes will correspond to the same backend node. In order to
+    // ensure that all front nodes are obtained, only the front node to graph output map can be used, not the
+    // output to front node.
+    for (const auto &front_backend_pair : graph->front_node_to_graph_output_map()) {
+      const auto &output_with_index = front_backend_pair.second;
       auto output_kernel = output_with_index.first;
       MS_EXCEPTION_IF_NULL(output_kernel);
-      auto origin_output_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
+      auto origin_output_with_index = front_backend_pair.first;
       if (origin_output_with_index.first == nullptr) {
         MS_LOG(WARNING) << "The graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
                         << " with index: " << output_with_index.second << " has no front node.";
