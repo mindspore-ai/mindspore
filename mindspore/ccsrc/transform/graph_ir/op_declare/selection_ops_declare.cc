@@ -214,4 +214,10 @@ INPUT_MAP(MaskedSelect) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}};
 ATTR_MAP(MaskedSelect) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MaskedSelect) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaskedSelect, kNameMaskedSelect, ADPT_DESC(MaskedSelect))
+
+// MaskedFill
+INPUT_MAP(MaskedFill) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(value)}};
+ATTR_MAP(MaskedFill) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MaskedFill) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaskedFill, prim::kPrimMaskedFill->name(), ADPT_DESC(MaskedFill))
 }  // namespace mindspore::transform

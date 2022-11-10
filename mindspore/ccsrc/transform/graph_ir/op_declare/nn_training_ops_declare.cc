@@ -216,4 +216,13 @@ INPUT_MAP(ApplyCenteredRMSProp) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(mg)},   
 ATTR_MAP(ApplyCenteredRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyCenteredRMSProp) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ApplyCenteredRMSProp, kNameApplyCenteredRMSProp, ADPT_DESC(ApplyCenteredRMSProp))
+
+// SparseApplyRMSProp
+INPUT_MAP(SparseApplyRMSProp) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(ms)},   {3, INPUT_DESC(mom)},
+                                 {4, INPUT_DESC(lr)},      {5, INPUT_DESC(rho)},  {6, INPUT_DESC(momentum)},
+                                 {7, INPUT_DESC(epsilon)}, {8, INPUT_DESC(grad)}, {9, INPUT_DESC(indices)}};
+ATTR_INPUT_MAP(SparseApplyRMSProp) = {{"rho", 5}, {"momentum", 6}, {"epsilon", 7}};
+ATTR_MAP(SparseApplyRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseApplyRMSProp) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(SparseApplyRMSProp, prim::kPrimSparseApplyRMSProp->name(), ADPT_DESC(SparseApplyRMSProp))
 }  // namespace mindspore::transform

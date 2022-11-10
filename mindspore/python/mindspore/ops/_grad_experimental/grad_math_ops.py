@@ -342,7 +342,6 @@ def get_bprop_renorm(self):
     dim = self.dim
     max_norm = self.maxnorm
     greater_op = P.Greater()
-    masked_fill_op = P.MaskedFill()
     pow_op = P.Pow()
     abs_op = P.Abs()
     sign_op = P.Sign()
@@ -359,13 +358,13 @@ def get_bprop_renorm(self):
             norm_bp = sig * grad_out
         elif p == 2:
             m = input_x * (grad_out / norm)
-            norm_bp = masked_fill_op(m, norm == 0., 0.)
+            norm_bp = F.masked_fill(m, norm == 0., 0.)
         else:
             abs_ = abs_op(input_x)
             input_scaled = input_x * pow_op(abs_, (p - 2))
             pow_ = pow_op(norm, (p - 1))
             scale_v = grad_out / pow_
-            scale_v = masked_fill_op(scale_v, norm == 0., 0.)
+            scale_v = F.masked_fill(scale_v, norm == 0., 0.)
             norm_bp = input_scaled * scale_v
 
         v = norm + ext

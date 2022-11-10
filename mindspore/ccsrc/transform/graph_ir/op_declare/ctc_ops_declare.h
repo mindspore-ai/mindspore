@@ -25,6 +25,12 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(CTCLoss)
 DECLARE_OP_USE_OUTPUT(CTCLoss)
 
+DECLARE_OP_ADAPTER(CTCLossV2)
+DECLARE_OP_USE_OUTPUT(CTCLossV2)
+
+DECLARE_OP_ADAPTER(CTCLossV2Grad)
+DECLARE_OP_USE_OUTPUT(CTCLossV2Grad)
+
 DECLARE_OP_ADAPTER(CTCGreedyDecoder)
 DECLARE_OP_USE_OUTPUT(CTCGreedyDecoder)
 }  // namespace mindspore::transform

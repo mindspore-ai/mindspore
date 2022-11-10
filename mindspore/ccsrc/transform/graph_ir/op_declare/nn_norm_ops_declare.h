@@ -84,5 +84,8 @@ DECLARE_OP_USE_OUTPUT(KlDivLossGrad)
 
 DECLARE_OP_ADAPTER(InstanceNorm)
 DECLARE_OP_USE_OUTPUT(InstanceNorm)
+
+DECLARE_OP_ADAPTER(MultilabelMarginLoss)
+DECLARE_OP_USE_OUTPUT(MultilabelMarginLoss)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_

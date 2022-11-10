@@ -170,4 +170,10 @@ ATTR_MAP(InstanceNorm) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::
                           {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
 OUTPUT_MAP(InstanceNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
 REG_ADPT_DESC(InstanceNorm, prim::kPrimInstanceNorm->name(), ADPT_DESC(InstanceNorm))
+
+// MultilabelMarginLoss
+INPUT_MAP(MultilabelMarginLoss) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}};
+ATTR_MAP(MultilabelMarginLoss) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+OUTPUT_MAP(MultilabelMarginLoss) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(is_target)}};
+REG_ADPT_DESC(MultilabelMarginLoss, prim::kPrimMultilabelMarginLoss->name(), ADPT_DESC(MultilabelMarginLoss))
 }  // namespace mindspore::transform
