@@ -19,8 +19,10 @@ import numpy as np
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype, Parameter
 from mindspore.ops import operations as P
-from mindspore import jit
+from mindspore import jit, context
 import mindspore.ops.functional as F
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 @case_register.level0

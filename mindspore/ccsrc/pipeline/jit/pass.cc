@@ -191,20 +191,29 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
 }
 
 FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  MS_EXCEPTION_IF_NULL(resource->func_graph());
-  (void)TransformTopGraphPass(resource);
-
-  auto func_graph = resource->func_graph();
-  // PyNative dynamic shape need add those pass, like convert make_list to make_tuple.
-  // Cannot execute those pass due to performance reasons if the graph is a dynamic structure graph.
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph->has_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE) || !func_graph->has_flag(kFlagIsDynamicStructure)) {
-    (void)OptPassAGroup(resource);
-    (void)CleanAfterOptAPass(resource);
-  }
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig bg_final_opt = opt::OptPassConfig({
+    irpass.inline_,
+    irpass.tuple_list_get_set_item_eliminator_,
+    irpass.tuple_list_get_item_eliminator_,
+    irpass.tuple_list_set_item_eliminator_,
+    irpass.depend_value_elim_,
+  });
+  OptPassGroupMap map({{"ad_final_opt", bg_final_opt}});
+  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", resource, map);
+  MS_EXCEPTION_IF_NULL(resource);
+  auto func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
+    func_graph = bprop_graph_final_opt->step(func_graph, true);
+  };
+  //  Validate(func_graph);
+  return func_graph;
+}
+
+FuncGraphPtr OptGradGraphPass(const ResourcePtr &resource) {
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.inline_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
@@ -217,28 +226,21 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
   });
   opt::OptPassConfig fill_zeros_like = opt::OptPassConfig{irpass.zero_like_fill_zero_};
   OptPassGroupMap map({
-    {"ad_final_opt", bg_final_opt},
+    {"ad_final_opt", grad_graph_opt},
     {"zeros_like", fill_zeros_like},
   });
 
-  if (pynative::PyNativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
-    (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
-    opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
-    (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
-    opt::OptPassConfig environ_eliminate = opt::OptPassConfig({
-      irpass.incorporate_call_,
-      irpass.incorporate_call_switch_,
-    });
-    (void)map.emplace_back(std::make_pair("environ_eliminate", environ_eliminate));
-  }
-
-  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", resource, map);
-  func_graph = resource->func_graph();
+  (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+  opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
+  (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
+  MS_EXCEPTION_IF_NULL(resource);
+  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("grad_graph_opt", resource, map);
+  auto func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
   };
-  func_graph = LiftingClone(func_graph);
-  Validate(func_graph);
+  //  Validate(func_graph);
   return func_graph;
 }
 

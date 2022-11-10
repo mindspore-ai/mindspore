@@ -266,6 +266,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   cast_run_info->grad_flag = op_run_info->grad_flag;
+  cast_run_info->custom_bprop_cell_count = op_run_info->custom_bprop_cell_count;
   MS_EXCEPTION_IF_NULL(cast_prim_);
   cast_run_info->op_prim = cast_prim_;
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();

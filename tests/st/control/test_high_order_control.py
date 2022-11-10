@@ -18,7 +18,10 @@ from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype
 import mindspore.ops.functional as F
 import mindspore.ops.operations as P
+from mindspore import context
 import numpy as np
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 @case_register.level0

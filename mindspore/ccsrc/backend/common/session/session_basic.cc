@@ -872,7 +872,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
         }
       }
       input_tensor_info->input_tensors_mask.emplace_back(
-        (is_value_node && !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
+        (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask

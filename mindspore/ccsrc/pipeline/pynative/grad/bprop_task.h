@@ -14,37 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_
-#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BPROP_TASK_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BPROP_TASK_H_
+
+#include <functional>
+#include "runtime/pynative/async/task.h"
 
 namespace mindspore {
 namespace pynative {
-enum TaskType {
-  kUnknownTask = 0,
-  kOpRunTask,
-  kOpBuildTask,
-  kBpropTask,
-  kExitTask,
-};
-class AsyncTask {
+class BpropTask : public AsyncTask {
  public:
-  explicit AsyncTask(TaskType task_type) : task_type_(task_type) {}
-  virtual ~AsyncTask() = default;
-  virtual void Run() = 0;
-
-  TaskType task_type() const { return task_type_; }
+  explicit BpropTask(const std::function<void(void)> &task) : AsyncTask(kBpropTask), run_task_(task) {}
+  ~BpropTask() = default;
+  void Run() override;
 
  private:
-  TaskType task_type_;
-};
-
-class ExitTask : public AsyncTask {
- public:
-  ExitTask() : AsyncTask(kExitTask) {}
-  ~ExitTask() override = default;
-  void Run() override {}
+  std::function<void(void)> run_task_;
 };
 }  // namespace pynative
 }  // namespace mindspore
-
-#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BPROP_TASK_H_

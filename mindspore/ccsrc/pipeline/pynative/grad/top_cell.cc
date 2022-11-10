@@ -110,12 +110,15 @@ void TopCellInfo::SetParamNodeMapInGraphInfoMap(const std::string &id, const Par
   }
 }
 
-void TopCellInfo::SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index) const {
+void TopCellInfo::SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index,
+                                           bool save_flag) const {
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   // For example, set id of ((A,B),C) = {CNode, -1}
-  SetMultipleOutputToGraphInfoMap(id, node);
+  if (save_flag) {
+    SetMultipleOutputToGraphInfoMap(id, node);
+  }
 }
 
 void TopCellInfo::SetMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node) const {

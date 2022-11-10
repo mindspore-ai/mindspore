@@ -38,7 +38,9 @@ using MindrtBackendMap = std::map<std::string, std::shared_ptr<compile::MindRTBa
 class ForwardExecutor {
  public:
   ForwardExecutor()
-      : cast_operation_(std::make_shared<CastOperation>()), infer_operation_(std::make_shared<InferOperation>()) {}
+      : cast_operation_(std::make_shared<CastOperation>()),
+        infer_operation_(std::make_shared<InferOperation>()),
+        enable_async_(std::getenv("ENABLE_ASYNC")) {}
   ~ForwardExecutor() = default;
 
   void Init();
@@ -100,6 +102,7 @@ class ForwardExecutor {
   CastOperationPtr cast_operation_;
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
+  bool enable_async_ = false;
 };
 }  // namespace pynative
 }  // namespace mindspore

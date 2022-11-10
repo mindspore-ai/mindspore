@@ -495,11 +495,11 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
 
 StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto iter = GetPrimitiveToEvalImplMap().find(primitive);
-  if (iter == GetPrimitiveToEvalImplMap().end()) {
-    return {nullptr, nullptr, false};
+  const auto iter = GetPrimitiveToEvalImplMap().find(primitive);
+  if (iter != GetPrimitiveToEvalImplMap().end()) {
+    return iter->second;
   }
-  return iter->second;
+  return {nullptr, nullptr, false};
 }
 
 void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg) {

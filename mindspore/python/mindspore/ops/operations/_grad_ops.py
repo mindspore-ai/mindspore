@@ -492,9 +492,6 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
         self.group = group
         self.add_prim_attr('data_format', "NCHW")
 
-    def __call__(self, x, w_size, dout):
-        raise NotImplementedError
-
     def __infer__(self, x, w_size, dout):
         w_size_v = w_size['value']
         args = {'x': x['dtype'], 'dout': dout['dtype']}
@@ -558,9 +555,6 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
         self.dilation = dilation
         self.group = group
         self.add_prim_attr('data_format', "NCHW")
-
-    def __call__(self, x_size, w, dout):
-        raise NotImplementedError
 
     def __infer__(self, x_size, w, dout):
         args = {'w': w['dtype'], 'dout': dout['dtype']}
@@ -664,9 +658,6 @@ class UniqueGrad(Primitive):
     def __init__(self):
         self.init_prim_io_names(inputs=['dy', 'y'], outputs=['dx'])
 
-    def __call__(self, dy, x, scale, save_mean, save_inv_variance):
-        raise NotImplementedError
-
 
 class BNTrainingReduceGrad(Primitive):
     """Gradients of FusedBatchNorm operation."""
@@ -720,9 +711,6 @@ class NeighborExchangeV2Grad(PrimitiveWithInfer):
         return {'shape': dy_shape,
                 'dtype': dy['dtype'],
                 'value': None}
-
-    def __call__(self, tensor):
-        raise NotImplementedError
 
 
 class GeLUGrad(Primitive):
@@ -1389,9 +1377,6 @@ class LayerNormGrad(Primitive):
         self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
         self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
 
-    def __call__(self, x, dy, variance, mean, gamma):
-        raise NotImplementedError
-
 
 class LayerNormGradGrad(Primitive):
     """
@@ -1793,9 +1778,6 @@ class ReluGrad(Primitive):
         """Initialize ReluGrad"""
         self.init_prim_io_names(inputs=['y_backprop', 'x'], outputs=['output'])
 
-    def __call__(self, y_backprop, x):
-        raise NotImplementedError
-
 
 class ReLU6Grad(Primitive):
     """Performs grad of ReLU6 operation."""
@@ -1804,9 +1786,6 @@ class ReLU6Grad(Primitive):
     def __init__(self):
         self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
 
-    def __call__(self, y_grad, x):
-        raise NotImplementedError
-
 
 class ReluGradV2(Primitive):
     """Performs grad of ReLUV2 operation."""
@@ -1814,9 +1793,6 @@ class ReluGradV2(Primitive):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['gradients', 'mask'], outputs=['output'])
-
-    def __call__(self, gradients, mask):
-        raise NotImplementedError
 
 
 class EluGrad(Primitive):

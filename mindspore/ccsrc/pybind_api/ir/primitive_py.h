@@ -59,6 +59,7 @@ class PrimitivePy : public Primitive {
   void RemoveBackwardHookFn(const int &key);
   BaseRef RunHookFunction(const VectorRef &args) const;
   BaseRef RunCellBpropFunction(const py::tuple &py_args) const;
+  BaseRef RunOpBpropFunction(const py::tuple &py_args) const;
   BaseRef RunCellHookFunction(const py::tuple &py_args) const;
   BaseRef RunVariableHookFunction(const py::tuple &py_args) const;
   BaseRef RunComputeFunction(const VectorRef &args) const override;
