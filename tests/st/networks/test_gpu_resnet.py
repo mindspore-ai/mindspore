@@ -328,7 +328,7 @@ def resnet50(num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
@@ -352,7 +352,7 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
     assert (losses[-1].asnumpy() < 1)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_tensor_memory_opt(num_classes=10, epoch=8, batch_size=1):
@@ -406,7 +406,7 @@ def test_trainTensor_big_batchSize(num_classes=10, epoch=8, batch_size=338):
     assert (losses[-1].asnumpy() < 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):

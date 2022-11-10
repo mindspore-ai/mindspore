@@ -23,7 +23,7 @@ def test_train(device_type):
         test_lenet()
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_train_with_Ascend():

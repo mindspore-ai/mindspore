@@ -69,7 +69,8 @@ def model_fine_tune(train_net, fix_weight_layer):
         if fix_weight_layer in para.name:
             para.requires_grad = False
 
-@pytest.mark.level0
+
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

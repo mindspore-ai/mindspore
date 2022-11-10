@@ -68,7 +68,7 @@ class AlexNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
@@ -89,7 +89,7 @@ def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
     assert losses[-1] < 0.01
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_tensor_memory_opt(num_classes=10, epoch=15, batch_size=32):
