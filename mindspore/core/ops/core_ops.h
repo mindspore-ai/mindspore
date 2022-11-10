@@ -346,6 +346,7 @@ constexpr auto kCOOTensorDenseMatmul = "COOTensorDenseMatmul";
 constexpr auto kDenseToSparseSetOperation = "DenseToSparseSetOperation";
 
 // Sparse ops
+constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
 constexpr auto kSparseFillEmptyRows = "SparseFillEmptyRows";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
@@ -1088,6 +1089,7 @@ GVAR_DEF(PrimitivePtr, kPrimMapTensorGetData, std::make_shared<Primitive>(kMapTe
 GVAR_DEF(PrimitivePtr, kPrimMapTensorGetGrad, std::make_shared<Primitive>(kMapTensorGetGrad));
 
 // Sparse ops
+GVAR_DEF(PrimitivePtr, kPrimRaggedTensorToTensor, std::make_shared<Primitive>(kRaggedTensorToTensor));
 GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>(kSparseTensorDenseMatmul));
 GVAR_DEF(PrimitivePtr, kPrimSparseFillEmptyRows, std::make_shared<Primitive>(kSparseFillEmptyRows));
 GVAR_DEF(PrimitivePtr, kPrimSparseToDenseV2, std::make_shared<Primitive>(kSparseToDenseV2));
