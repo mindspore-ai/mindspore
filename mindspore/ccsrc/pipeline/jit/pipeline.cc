@@ -61,6 +61,7 @@
 #include "load_mindir/load_model.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/common/session/executor_manager.h"
+#include "backend/common/session/session_factory.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_executor.h"
@@ -69,6 +70,13 @@
 #include "mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.h"
 #include "mindspore/ccsrc/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 #include "distributed/init.h"
+#include "profiler/device/profiling.h"
+#include "kernel/akg/akg_kernel_build_manager.h"
+#include "kernel/graph_kernel_info.h"
+#include "include/backend/data_queue/data_queue_mgr.h"
+#ifndef ENABLE_SECURITY
+#include "debug/data_dump/dump_json_parser.h"
+#endif
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -1910,10 +1918,24 @@ void ClearResPart3() {
   MS_LOG(INFO) << "Start clear ProtobufLibrary...";
   google::protobuf::ShutdownProtobufLibrary();
   MS_LOG(INFO) << "End clear ProtobufLibrary...";
+}
 
-  MS_LOG(INFO) << "Start unload dynamic lib...";
-  device::DeviceContextManager::GetInstance().UnloadPlugin();
-  MS_LOG(INFO) << "End unload dynamic lib...";
+void ClearSingleton() {
+  MS_LOG(INFO) << "Start clear singleton...";
+  profiler::Profiler::Clear();
+#ifdef ENABLE_AKG
+  kernel::AkgKernelBuildManager::Instance().Clear();
+#endif
+  somas::SomasManager::Instance().Clear();
+  GraphKernelInfoManager::Instance().Clear();
+  device::DataQueueMgr::GetInstance().Clear();
+  session::SessionFactory::Get().Clear();
+  device::KernelRuntimeManager::Instance().Clear();
+#ifndef ENABLE_SECURITY
+  DumpJsonParser::Finalize();
+#endif
+  CommManager::Clear();
+  MS_LOG(INFO) << "End clear singleton.";
 }
 
 void ClearResAtexit() {
@@ -1921,6 +1943,10 @@ void ClearResAtexit() {
   ClearResPart1();
   ClearResPart2();
   ClearResPart3();
+  ClearSingleton();
+  MS_LOG(INFO) << "Start unload dynamic lib...";
+  device::DeviceContextManager::GetInstance().UnloadPlugin();
+  MS_LOG(INFO) << "End unload dynamic lib...";
 }
 
 py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode) {

@@ -30,6 +30,7 @@ class COMMON_EXPORT CommManager {
  public:
   static CommManager &GetInstance() noexcept;
   static bool Register(const std::string &name, const std::shared_ptr<CommManager> &instance);
+  static void Clear();
 
   CommManager(const CommManager &) = delete;
   virtual ~CommManager() = default;

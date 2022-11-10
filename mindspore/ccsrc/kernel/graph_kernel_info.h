@@ -47,6 +47,7 @@ class BACKEND_EXPORT GraphKernelInfoManager {
       (void)base_map_.emplace(device_type, creator);
     }
   }
+  void Clear() { base_map_.clear(); }
   std::shared_ptr<GraphKernelInfo> GetGraphKernelInfo(const std::string &device_type) {
     auto iter = base_map_.find(device_type);
     if (base_map_.end() != iter) {

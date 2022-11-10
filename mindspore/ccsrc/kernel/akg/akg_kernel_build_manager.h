@@ -31,6 +31,7 @@ class BACKEND_EXPORT AkgKernelBuildManager {
  public:
   static AkgKernelBuildManager &Instance();
   void Register(const std::string &device_type, AkgKernelBuildCreator &&creator);
+  void Clear() { base_map_.clear(); }
   std::shared_ptr<AkgKernelBuilder> GetAkgKernelBuilder(const std::string &device_type);
 
  private:

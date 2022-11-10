@@ -76,6 +76,7 @@ class BACKEND_EXPORT DataQueueMgr {
 
   static DataQueueMgr &GetInstance() noexcept;
   void RegisterDataQueueCreator(const std::string &device_name, DataQueueCreator &&creator);
+  void Clear();
   std::shared_ptr<DataQueue> CreateDataQueue(const std::string &device_name, const std::string &channel_name,
                                              bool dynamic_shape, size_t capacity = 0,
                                              const std::vector<size_t> &shape = {});

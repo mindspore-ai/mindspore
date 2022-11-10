@@ -34,6 +34,8 @@ void SessionFactory::Register(const std::string &device_name, SessionCreator &&s
   }
 }
 
+void SessionFactory::Clear() { session_creators_.clear(); }
+
 std::shared_ptr<SessionBasic> SessionFactory::Create(const std::string &device_name) {
   auto iter = session_creators_.find(device_name);
   if (session_creators_.end() != iter) {

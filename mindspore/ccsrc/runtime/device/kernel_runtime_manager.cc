@@ -52,6 +52,8 @@ void KernelRuntimeManager::Register(const std::string &device_name, KernelRuntim
   }
 }
 
+void KernelRuntimeManager::Clear() { runtime_creators_.clear(); }
+
 std::string KernelRuntimeManager::GetDeviceKey(const std::string &device_name, uint32_t device_id) const {
   std::string device_key = device_name + "_" + std::to_string(device_id);
   return device_key;

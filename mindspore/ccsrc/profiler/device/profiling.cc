@@ -51,6 +51,8 @@ bool Profiler::Register(const std::string &name, const std::shared_ptr<Profiler>
   return true;
 }
 
+void Profiler::Clear() { GetInstanceMap().clear(); }
+
 uint64_t Profiler::GetHostMonoTimeStamp() const {
   auto now = std::chrono::steady_clock::now();
   int64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
