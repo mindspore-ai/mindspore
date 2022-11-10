@@ -1508,7 +1508,7 @@ class GLU(Cell):
         >>> m = nn.GLU()
         >>> input = Tensor([[0.1,0.2,0.3,0.4],[0.5,0.6,0.7,0.8]])
         >>> output = m(input)
-        >>> print(out)
+        >>> print(output)
         [[0.05744425 0.11973753
          [0.33409387 0.41398472]]
     """
