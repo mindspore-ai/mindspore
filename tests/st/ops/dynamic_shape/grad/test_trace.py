@@ -19,8 +19,11 @@ import mindspore.ops.operations.math_ops as M
 from mindspore import nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
+context.set_context(mode=context.PYNATIVE_MODE)
+
 
 class NetTrace(nn.Cell):
+
     def __init__(self):
         super(NetTrace, self).__init__()
         self.trace = M.Trace()
@@ -29,36 +32,31 @@ class NetTrace(nn.Cell):
         return self.trace(x)
 
 
+def trace_test(is_dynamic_rank):
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+    test_dynamic = TestDynamicGrad(NetTrace())
+    test_dynamic.test_dynamic_grad_net([x], is_dynamic_rank=is_dynamic_rank)
+
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 def test_trace_dynamic_shape():
     """
     Feature: Trace Grad DynamicShape.
-    Description: Test case of dynamic shape for Trace grad operator on CPU and GPU.
+    Description: Test case of dynamic shape for Trace grad operator on CPU.
     Expectation: success.
     """
-    for device in ['GPU', 'CPU']:
-        context.set_context(mode=context.PYNATIVE_MODE, device_target=device)
-        test_dynamic = TestDynamicGrad(NetTrace())
-        x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
-        test_dynamic.test_dynamic_grad_net(x, False)
+    trace_test(False)
 
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-def test_trace_dynamic_shape_rank():
+def test_trace_dynamic_rank():
     """
-    Feature: Trace Grad DynamicShape.
-    Description: Test case of dynamic rank for Trace grad operator on CPU and GPU.
+    Feature: Trace Grad DynamicRank.
+    Description: Test case of dynamic rank for Trace grad operator on CPU.
     Expectation: success.
     """
-    for device in ['GPU', 'CPU']:
-        context.set_context(mode=context.PYNATIVE_MODE, device_target=device)
-        test_dynamic = TestDynamicGrad(NetTrace())
-        x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
-        test_dynamic.test_dynamic_grad_net(x, True)
+    trace_test(True)
