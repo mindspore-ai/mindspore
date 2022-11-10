@@ -38,7 +38,7 @@ class HashTable {
   // Find elements with specific keys, if a key does not exist, initialize the value for the key based on the
   // initialzer and insert the key-value pair into map. The initializer can be 'normal', 'zero' or 'one', and also
   // could be a specific Value type scalar.
-  virtual bool Find(const Key *keys, size_t key_num, Value *outputs, void *stream) = 0;
+  virtual bool Find(const Key *keys, size_t key_num, bool insert_default_value, Value *outputs, void *stream) = 0;
 
   // Insert elements with specific keys. If key exists, update the value of the key.
   virtual bool Insert(const Key *keys, size_t key_num, const Value *value, void *stream) = 0;

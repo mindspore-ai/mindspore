@@ -675,6 +675,7 @@ constexpr auto kAttrUseEmbeddingStore = "UseEmbeddingStore";
 constexpr auto kAttrParameterKey = "ParameterKey";
 constexpr auto kAttrMsFunctionControl = "ms_function_control";
 constexpr auto kAttrFuncGraphCellId = "func_graph_cell_id";
+constexpr auto kAttrInsertDefaultValue = "insert_default_value";
 
 // FuncGraph Flags
 constexpr auto kFlagsIsCutGraph = "is_cut_graph";

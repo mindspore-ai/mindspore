@@ -61,6 +61,7 @@ class MapTensorGetGpuKernelMod : public MapTensorGpuKernelMod {
                        const std::vector<AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, MapTensorGetLaunchFunc>> map_tensor_get_func_list_;
   MapTensorGetLaunchFunc kernel_launch_func_;
+  bool insert_default_value_{true};
 };
 }  // namespace kernel
 }  // namespace mindspore

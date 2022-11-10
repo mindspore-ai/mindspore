@@ -87,7 +87,7 @@ class MapParameter(Parameter):
         self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape, self.default_value)
 
     def __getitem__(self, key_tensor):
-        return self.get(key_tensor)
+        return self.get(key_tensor, True)
 
     def __setitem__(self, key_tensor, value_tensor):
         return self.put(key_tensor, value_tensor)
@@ -127,18 +127,19 @@ class MapParameter(Parameter):
         x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value)  # pylint: disable=W0212
         return x
 
-    def get(self, key_tensor):
+    def get(self, key_tensor, insert_default_value=True):
         """
         Get value tensor according the key tensor, fill and return the default value in map parameter if key is not
         existed.
 
         Args:
             key_tensor (Tensor): The key tensor.
+            insert_default_value (bool): The flag of insert default_value.
 
         Returns:
             Tensor, the value tensor for the key tensor.
         """
-        result_tensor = self._map_tensor.get(key_tensor)
+        result_tensor = self._map_tensor.get(key_tensor, insert_default_value)
         return Tensor(result_tensor, internal=True)
 
     def get_keys(self):

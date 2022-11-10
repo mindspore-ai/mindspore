@@ -67,7 +67,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   // Find elements with specific keys, if a key does not exist, initialize the value for the key based on the
   // initialzer and insert the key-value pair into map. The initializer can be 'normal', 'zero' or 'one', and also
   // could be a specific 'Value' type scalar.
-  bool Find(const Key *keys, size_t key_num, Value *outputs, void *stream) override;
+  bool Find(const Key *keys, size_t key_num, bool insert_default_value, Value *outputs, void *stream) override;
 
   // Insert elements with specific keys. If key exists, update the value of the key.
   bool Insert(const Key *keys, size_t key_num, const Value *value, void *stream) override;
@@ -102,11 +102,13 @@ class GPUHashTable : public HashTable<Key, Value> {
  private:
   // Find elements with specific keys, if the key does not exist, initialize the value for the key based on the
   // initialzer and insert the key-value pair into map.The initializer can be 'normal', 'zeros' or 'ones'.
-  bool Find(const Key *keys, size_t key_num, const std::string &initializer, Value *outputs, void *stream);
+  bool Find(const Key *keys, size_t key_num, bool insert_default_value, const std::string &initializer, Value *outputs,
+            void *stream);
 
   // Find elements with specific keys, if the key does not exist, initialize the value for the key by 'default_value'
   // and insert the key-value pair into map.
-  bool Find(const Key *keys, size_t key_num, const Value &default_value, Value *outputs, void *stream);
+  bool Find(const Key *keys, size_t key_num, bool insert_default_value, const Value &default_value, Value *outputs,
+            void *stream);
 
   // Get all indices in blocks according to the key.
   bool GetIndicesByKeys(const Key *key, size_t key_num, bool insert_miss_key, int32_t *indices, cudaStream_t stream);

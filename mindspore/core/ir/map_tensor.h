@@ -130,8 +130,9 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \brief Get or create values.
   ///
   /// \param[in] key_tensor [Tensor] The key tensor.
+  /// \param[in] insert_default_value [bool] The flag of insert default_value.
   /// \return The value tensor according the key tensor, return default_value if key_tensor is not exist.
-  TensorPtr Get(const TensorPtr &key_tensor);
+  TensorPtr Get(const TensorPtr &key_tensor, bool insert_default_value);
 
   /// \brief Put or insert key value pairs.
   ///

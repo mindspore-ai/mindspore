@@ -28,10 +28,11 @@ class MapTensorGet(Primitive):
         sig.make_sig('key_tensor'))
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, insert_default_value):
         """Initialize MapTensorGet"""
         self.init_prim_io_names(inputs=['map_tensor', 'key_tensor'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
+        self.insert_default_value = insert_default_value
 
 
 class MapTensorPut(Primitive):
@@ -104,7 +105,6 @@ class MapTensorGetData(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-get = MapTensorGet()
 put = MapTensorPut()
 erase = MapTensorErase()
 get_keys = MapTensorGetKeys()

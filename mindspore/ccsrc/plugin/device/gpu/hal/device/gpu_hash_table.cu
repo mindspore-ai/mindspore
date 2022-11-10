@@ -170,16 +170,17 @@ void GPUHashTable<Key, Value, Allocator>::FreeMemory(void *ptr) {
 }
 
 template <typename Key, typename Value, typename Allocator>
-bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, Value *outputs, void *stream) {
+bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, bool insert_default_value,
+                                               Value *outputs, void *stream) {
   if (!initializer_.empty()) {
-    return Find(keys, key_num, initializer_, outputs, stream);
+    return Find(keys, key_num, insert_default_value, initializer_, outputs, stream);
   }
-  return Find(keys, key_num, default_value_, outputs, stream);
+  return Find(keys, key_num, insert_default_value, default_value_, outputs, stream);
 }
 
 template <typename Key, typename Value, typename Allocator>
-bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, const std::string &initializer,
-                                               Value *outputs, void *stream) {
+bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, bool insert_default_value,
+                                               const std::string &initializer, Value *outputs, void *stream) {
   MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(outputs);
   MS_ERROR_IF_NULL(stream);
@@ -192,9 +193,11 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
 
   // 1. Get all indices in blocks according to the keys.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
+  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, insert_default_value, indices, cuda_stream),
+                           "Get indices by keys failed.");
 
-  RETURN_IF_FALSE_WITH_LOG(UpdateSize(key_num, indices, cuda_stream), "Update hash table size failed.");
+  RETURN_IF_FALSE_WITH_LOG(UpdateSize(key_num, indices, cuda_stream, insert_default_value),
+                           "Update hash table size failed.");
 
   // 2. Insert default value according to initializer, initializer can be 'normal', 'zeros' or 'ones'.
   RETURN_IF_FALSE_WITH_LOG(InsertDefaultValueByInitializer(key_num, initializer, indices, cuda_stream),
@@ -209,8 +212,8 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
 }
 
 template <typename Key, typename Value, typename Allocator>
-bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, const Value &default_value,
-                                               Value *outputs, void *stream) {
+bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, bool insert_default_value,
+                                               const Value &default_value, Value *outputs, void *stream) {
   MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(outputs);
   MS_ERROR_IF_NULL(stream);
@@ -223,9 +226,11 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
 
   // 1. Get all indices in blocks according to the keys.
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
-  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, true, indices, cuda_stream), "Get indices by keys failed.");
+  RETURN_IF_FALSE_WITH_LOG(GetIndicesByKeys(keys, key_num, insert_default_value, indices, cuda_stream),
+                           "Get indices by keys failed.");
 
-  RETURN_IF_FALSE_WITH_LOG(UpdateSize(key_num, indices, cuda_stream), "Update hash table size failed.");
+  RETURN_IF_FALSE_WITH_LOG(UpdateSize(key_num, indices, cuda_stream, insert_default_value),
+                           "Update hash table size failed.");
 
   // 2. Insert default value into map by specific value.
   InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(
