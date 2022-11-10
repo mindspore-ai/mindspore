@@ -42,7 +42,6 @@ from mindspore.train.metrics import Loss
 from mindspore import nn
 from mindspore.boost import AutoBoost
 from mindspore.context import ParallelMode
-from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
 from mindspore.common.api import _pynative_executor
@@ -322,10 +321,6 @@ class Model:
             network = nn.WithLossCell(network, self._loss_fn)
         # If need to check if loss_fn is not None, but optimizer is None
 
-        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            if self._optimizer is None:
-                # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
-                _set_multi_subgraphs()
         if net_inputs is not None:
             network.set_inputs(*net_inputs)
         return network
@@ -365,11 +360,6 @@ class Model:
             if net_inputs is not None:
                 self._eval_network.set_inputs(*net_inputs)
             self._eval_indexes = [0, 1, 2]
-
-        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            if self._optimizer is None:
-                # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
-                _set_multi_subgraphs()
 
     def _build_predict_network(self):
         """Build the network for prediction."""
