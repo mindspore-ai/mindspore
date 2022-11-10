@@ -19,6 +19,7 @@
 #include <asm/hwcap.h>
 #endif
 #include "src/common/utils.h"
+#include <mutex>
 #if defined(_MSC_VER) || defined(_WIN32)
 #include <windows.h>
 #undef ERROR
@@ -30,6 +31,24 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+std::mutex g_mutex;
+static bool is_initialized = false;
+int GetCPUCoreNum() {
+  std::lock_guard<std::mutex> l(g_mutex);
+  int core_num = 1;
+#if defined(_MSC_VER) || defined(_WIN32)
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  core_num = sysinfo.dwNumberOfProcessors;
+#else
+  core_num = sysconf(_SC_NPROCESSORS_CONF);
+#endif
+  is_initialized = true;
+  return core_num;
+}
+static const int cpu_core_num_ = GetCPUCoreNum();
+}  // namespace
 uint64_t GetTimeUs() {
 #ifdef SUPPORT_MSVC
   const int sec_to_us = 1000000;
@@ -180,15 +199,11 @@ size_t GetMaxMallocSize() {
 }
 
 int GetCoreNum() {
-  int core_num = 1;
-#if defined(_MSC_VER) || defined(_WIN32)
-  SYSTEM_INFO sysinfo;
-  GetSystemInfo(&sysinfo);
-  core_num = sysinfo.dwNumberOfProcessors;
-#else
-  core_num = sysconf(_SC_NPROCESSORS_CONF);
-#endif
-  return core_num;
+  std::lock_guard<std::mutex> l(g_mutex);
+  if (is_initialized) {
+    return cpu_core_num_;
+  }
+  return GetCPUCoreNum();
 }
 }  // namespace lite
 }  // namespace mindspore

@@ -428,7 +428,7 @@ int ThreadPool::InitAffinityInfo() {
 #endif
 
 #ifdef SERVER_INFERENCE
-  server_cpu_frequence = CoreAffinity::GetServerFrequency() / 1000.0f;  // 1GHz = 1000MHz
+  server_cpu_frequence = affinity_->GetServerFrequency() / 1000.0f;  // 1GHz = 1000MHz
 #endif
 
   return THREAD_OK;

@@ -74,6 +74,7 @@ if(MSLITE_ENABLE_PARALLEL_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/model_pool.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/model_parallel_runner.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/model_parallel_runner_impl.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/resource_manager.cc
             )
 endif()
 

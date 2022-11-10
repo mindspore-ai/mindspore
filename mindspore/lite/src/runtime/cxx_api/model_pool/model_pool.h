@@ -82,9 +82,6 @@ class ModelPool {
 
   void UpdateFreeTaskId(size_t id);
 
-  Status DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
-                                             const std::vector<int> &logical_core_list);
-
   Status InitNumaParameter(const std::shared_ptr<RunnerConfig> &runner_config);
 
   Status InitModelPoolBindList(const std::shared_ptr<Context> &init_context,
@@ -104,7 +101,7 @@ class ModelPool {
 
   Status CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config);
 
-  Status CanUseAllPhysicalResources(int *percentage);
+  Status CanUseAllPhysicalResources();
 
   int GetDefaultThreadNum(int worker_num = 0);
 
