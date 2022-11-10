@@ -9,8 +9,8 @@ mindspore.ops.pinv
         - **x** (Tensor) - 要计算的矩阵。矩阵必须至少有两个维度。支持数据类型为float32或float64。
 
     关键字参数：
-        - **atol** (float, tensor) - 绝对公差值。默认值：None。
-        - **rtol** (float, tensor) - 相对公差值。默认值：None。
+        - **atol** (float, Tensor) - 绝对公差值。默认值：None。
+        - **rtol** (float, Tensor) - 相对公差值。默认值：None。
         - **hermitian** (bool) - 为True时假设x为实对称矩阵。默认值：False。
 
     输出：
