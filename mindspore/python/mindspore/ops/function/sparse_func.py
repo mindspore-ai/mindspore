@@ -243,7 +243,7 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
         a (CSRTensor): Sparse CSR Tensor, rank should be 2.
         b (CSRTensor): Sparse CSR Tensor, rank should be 2.
         trans_a (bool): whether to transpose CSRTensor a.
-        trans_a (bool): whether to transpose CSRTensor b.
+        trans_b (bool): whether to transpose CSRTensor b.
         adjoint_a (bool): whether to adjoint CSRTensor a.
         adjoint_b (bool): whether to adjoint CSRTensor b.
 
