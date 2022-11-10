@@ -39,9 +39,7 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
     }
     is_positive = ib->Reshape(is_positive, broadcastable_shape);
     auto gathered_shape = ib->GetShape(gathered);
-    is_positive = ib->Emit("LogicalAnd",
-                           {is_positive, ib->Emit("Fill", {ib->EmitValue(kBool), ib->Value<ShapeVector>(gathered_shape),
-                                                           ib->Tensor(1, kBool)})});
+    is_positive = ib->Emit("LogicalAnd", {is_positive, ib->Fill(1.0, gathered_shape, TypeId::kNumberTypeBool)});
   }
   auto zero_slice = ib->ZerosLike(gathered);
   return {ib->Emit("Select", {is_positive, gathered, zero_slice}), zero_clipped_indices, is_positive};
@@ -209,7 +207,7 @@ REG_BPROP_BUILDER("Sort").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
     transposition = GetTransposition(axis, rank);
     top_k_input = ib->Transpose(input_x, transposition);
   }
-  auto tmp = ib->Emit("TopK", {top_k_input, ib->Value<int64_t>(k)});
+  auto tmp = ib->Emit("TopK", {top_k_input, ib->Value<int64_t>(k)}, {{"sorted", MakeValue(true)}});
   auto indices = ib->TupleGetItem(tmp, 1);
   auto ind_shape = ib->GetShape(indices);
   auto top_k_input_shape = ib->GetShape(top_k_input);
@@ -1333,7 +1331,7 @@ REG_BPROP_BUILDER("SegmentMean").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   }
   auto x_rank = ib->GetShape(input_x).size();
   auto ones_shape = ib->GetShape(segment_ids) + ShapeVector(x_rank - 1, 1LL);
-  auto ones = ib->Emit("Fill", {ib->EmitValue(kFloat32), ib->Value(ones_shape), ib->Tensor(1, kFloat32)});
+  auto ones = ib->Fill(1.0, ones_shape, TypeId::kNumberTypeFloat32);
   const int64_t max_len = 1000000;
   auto scaled_grad = ib->Div(dout, ib->Emit("SegmentSum", {ones, segment_ids}, {{"max_length", MakeValue(max_len)}}));
   auto dx = ib->Emit("Gather", {scaled_grad, segment_ids, ib->Value<int64_t>(0)});

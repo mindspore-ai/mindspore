@@ -139,6 +139,18 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   return Emit(prim::kZerosLike, {node});
 }
 
+NodePtr Emitter::Fill(const double &value, const ShapeVector &shape, TypeId data_type) const {
+  size_t data_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
+  std::vector<double> data(data_num, value);
+  return Tensor(data_type, shape, &data[0], TypeId::kNumberTypeFloat64);
+}
+
+NodePtr Emitter::Fill(const int64_t &value, const ShapeVector &shape, TypeId data_type) const {
+  size_t data_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
+  std::vector<int64_t> data(data_num, value);
+  return Tensor(data_type, shape, &data[0], TypeId::kNumberTypeInt64);
+}
+
 std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
                                                  bool keep_dim) const {
   if (shape.empty()) {

@@ -101,6 +101,8 @@ class Emitter {
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
   NodePtr ZerosLike(const NodePtr &node) const;
+  NodePtr Fill(const double &value, const ShapeVector &shape, TypeId data_type) const;
+  NodePtr Fill(const int64_t &value, const ShapeVector &shape, TypeId data_type) const;
 
   /// \brief Emit a value node
   template <typename T>
