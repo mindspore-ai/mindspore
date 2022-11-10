@@ -85,7 +85,7 @@ def test_ge_resnet50_cifar10_ascend():
     assert result
     log_file = os.path.join(cur_model_path, "scripts/train/log")
     loss_list = utils.get_loss_data_list(log_file)
-    assert loss_list[-1] < 1.7
+    assert loss_list[-1] < 1.8
 
 @pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
