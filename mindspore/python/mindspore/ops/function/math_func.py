@@ -467,6 +467,14 @@ def neg(x):
     return neg_tensor(x)
 
 
+def negative(x):
+    r"""
+    Alias for ops.neg().
+    For details, please refer to :func:`mindspore.ops.neg`.
+    """
+    return neg_tensor(x)
+
+
 def positive(x):
     r"""
     Return self Tensor.
@@ -528,8 +536,8 @@ def permute(x, dims):
         Tensor, has the same dimension as input tensor, with `dims` suitably permuted.
 
     Raises:
-        ValueError: If `dims` is none.
-        ValueError: If the number of `dims` is not equal to Tensor's ndim.
+        ValueError: If `dims` is None.
+        ValueError: If the number of elements of `dims` is not equal to `x` ndim.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7187,6 +7195,7 @@ __all__ = [
     'arctan2',
     'neg_tensor',
     'neg',
+    'negative',
     'tensor_lt',
     'less',
     'logaddexp2',

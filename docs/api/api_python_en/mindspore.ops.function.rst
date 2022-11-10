@@ -206,6 +206,7 @@ Element-by-Element Operations
     mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.neg
+    mindspore.ops.negative
     mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.roll

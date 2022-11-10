@@ -141,6 +141,7 @@ from .math_func import (
     addcmul,
     neg_tensor,
     neg,
+    negative,
     tensor_lt,
     less,
     tensor_le,
