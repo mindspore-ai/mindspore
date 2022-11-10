@@ -589,6 +589,9 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
   } else if (base_shape->isa<abstract::TupleShape>()) {
     auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (tuple_shape->size() == 0) {
+      return ShapeVector();
+    }
     if (output_idx >= tuple_shape->size()) {
       MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
                         << node->DebugString() << trace::DumpSourceLines(node);
@@ -643,6 +646,9 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(type_ptr);
   if (type_ptr->isa<Tuple>()) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
+    if (tuple_ptr->size() == 0) {
+      return tuple_ptr->type_id();
+    }
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (output_idx >= tuple_ptr->size()) {
       MS_LOG(EXCEPTION) << "Output index " << output_idx << " must be less than output number " << tuple_ptr->size();

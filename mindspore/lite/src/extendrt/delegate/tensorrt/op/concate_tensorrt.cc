@@ -67,6 +67,11 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "Check input tensors failed: " << op_name_;
     return RET_ERROR;
   }
+  if (type_ == ops::kNameConcat && in_tensors_.size() == 1) {
+    auto output = ctx->network()->addIdentity(*input(ctx, 0).trt_tensor_)->getOutput(0);
+    ctx->RegisterTensor(ITensorHelper{output}, out_tensors_[0].Name());
+    return RET_OK;
+  }
 
   nvinfer1::ITensor *trt_input_tensors[in_tensors_.size()];
   int ret = PreProcessInputs(ctx, trt_input_tensors);

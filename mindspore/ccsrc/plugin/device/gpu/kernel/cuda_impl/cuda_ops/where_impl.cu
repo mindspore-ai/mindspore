@@ -33,5 +33,8 @@ void Where(const int *cond, const T *input_x, const T *input_y, T *output, int e
 template void Where(const int *cond, const float *input_x, const float *input_y, float *output, int element_cnt,
                     const uint32_t &device_id, cudaStream_t stream);
 
+template void Where(const int *cond, const half *input_x, const half *input_y, half *output, int element_cnt,
+                    const uint32_t &device_id, cudaStream_t stream);
+
 template void Where(const int *cond, const int *input_x, const int *input_y, int *output, int element_cnt,
                     const uint32_t &device_id, cudaStream_t stream);

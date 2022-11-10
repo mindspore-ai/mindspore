@@ -67,9 +67,9 @@ __global__ void BoundingBoxDecodeKernel(const size_t size, const T *rois, const 
 
 template <>
 __global__ void BoundingBoxDecodeKernel(const size_t size, const half *rois, const half *deltas, half *bboxes,
-                                        const float m1, const float m2, const float m3, const float m4,
-                                        const float s1, const float s2, const float s3, const float s4,
-                                        const int max_height, const int max_width, const float ratio_clip) {
+                                        const float m1, const float m2, const float m3, const float m4, const float s1,
+                                        const float s2, const float s3, const float s4, const int max_height,
+                                        const int max_width, const float ratio_clip) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     const size_t left_x = i * 4;
     const size_t left_y = i * 4 + 1;
@@ -117,37 +117,30 @@ template <typename T>
 void BoundingBoxDecode(const size_t size, const T *rois, const T *deltas, T *bboxes, const float &m1, const float &m2,
                        const float &m3, const float &m4, const float &s1, const float &s2, const float &s3,
                        const float &s4, const int &max_height, const int &max_width, const float &ratio_clip,
-                       cudaStream_t cuda_stream) {
-  BoundingBoxDecodeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, rois, deltas, bboxes, m1, m2, m3, m4,
-                                                                             s1, s2, s3, s4, max_height, max_width,
-                                                                             ratio_clip);
+                       const uint32_t &device_id, cudaStream_t cuda_stream) {
+  BoundingBoxDecodeKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, rois, deltas, bboxes, m1, m2, m3, m4, s1, s2, s3, s4, max_height, max_width, ratio_clip);
 }
 
 template <>
 void BoundingBoxDecode(const size_t size, const half *rois, const half *deltas, half *bboxes, const float &m1,
-                       const float &m2,
-                       const float &m3, const float &m4, const float &s1, const float &s2, const float &s3,
-                       const float &s4, const int &max_height, const int &max_width, const float &ratio_clip,
-                       cudaStream_t cuda_stream) {
-  BoundingBoxDecodeKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, rois, deltas, bboxes, m1, m2,
-                                                                                   m3, m4, s1, s2, s3, s4, max_height,
-                                                                                   max_width, ratio_clip);
+                       const float &m2, const float &m3, const float &m4, const float &s1, const float &s2,
+                       const float &s3, const float &s4, const int &max_height, const int &max_width,
+                       const float &ratio_clip, const uint32_t &device_id, cudaStream_t cuda_stream) {
+  BoundingBoxDecodeKernel<half><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, rois, deltas, bboxes, m1, m2, m3, m4, s1, s2, s3, s4, max_height, max_width, ratio_clip);
 }
 
 template CUDA_LIB_EXPORT void BoundingBoxDecode<float>(const size_t size, const float *rois, const float *deltas,
-                                                       float *bboxes,
-                                                       const float &m1, const float &m2,
-                                                       const float &m3, const float &m4,
-                                                       const float &s1, const float &s2,
-                                                       const float &s3, const float &s4,
-                                                       const int &max_height, const int &max_width,
-                                                       const float &ratio_clip, cudaStream_t cuda_stream);
+                                                       float *bboxes, const float &m1, const float &m2, const float &m3,
+                                                       const float &m4, const float &s1, const float &s2,
+                                                       const float &s3, const float &s4, const int &max_height,
+                                                       const int &max_width, const float &ratio_clip,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void BoundingBoxDecode<half>(const size_t size, const half *rois, const half *deltas,
-                                                      half *bboxes,
-                                                      const float &m1, const float &m2,
-                                                      const float &m3, const float &m4,
-                                                      const float &s1, const float &s2,
-                                                      const float &s3, const float &s4,
-                                                      const int &max_height, const int &max_width,
-                                                      const float &ratio_clip, cudaStream_t cuda_stream);
+                                                      half *bboxes, const float &m1, const float &m2, const float &m3,
+                                                      const float &m4, const float &s1, const float &s2,
+                                                      const float &s3, const float &s4, const int &max_height,
+                                                      const int &max_width, const float &ratio_clip,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);

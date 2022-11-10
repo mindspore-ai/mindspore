@@ -54,6 +54,10 @@ int GatherNDTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "addGather failed for TensorRT.";
     return RET_ERROR;
   }
+  if (in_tensors_[0].DataType() == DataType::kNumberTypeBool) {
+    gather_nd_input.trt_tensor_ =
+      TRTTensorCast(ctx, gather_nd_input.trt_tensor_, nvinfer1::DataType::kINT32, op_name_ + "_input");
+  }
   nvinfer1::IGatherLayer *gather_layer =
     ctx->network()->addGatherV2(*gather_nd_input.trt_tensor_, *indices_tensor.trt_tensor_, nvinfer1::GatherMode::kND);
   if (gather_layer == nullptr) {

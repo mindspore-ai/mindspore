@@ -133,7 +133,7 @@ void DeconvolutionTensorRT::SetAttributes(const std::shared_ptr<ops::Conv2dTrans
   }
 
   // nbOutputMaps
-  int32_t nbOutputMaps = static_cast<int32_t>(ms_op->get_out_channel());
+  int nbOutputMaps = in_tensors_[1].Shape()[1];
   decon_layer->setNbOutputMaps(nbOutputMaps);
 
   // stride
@@ -158,7 +158,10 @@ void DeconvolutionTensorRT::SetAttributes(const std::shared_ptr<ops::Conv2dTrans
     decon_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
   } else {
     auto padding = ms_op->get_pad_list();
-    auto out_pad = ms_op->get_output_paddings();
+    std::vector<int64_t> out_pad(DIMENSION_2D, 0);
+    if (ms_op->HasAttr(ops::kOutputPaddings)) {
+      out_pad = ms_op->get_output_paddings();
+    }
     if (padding.empty() || out_pad.empty()) {
       MS_LOG(WARNING) << "on pad value of " << op_name_;
       return;

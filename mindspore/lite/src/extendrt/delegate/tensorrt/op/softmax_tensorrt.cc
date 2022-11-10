@@ -16,14 +16,21 @@
 
 #include "src/extendrt/delegate/tensorrt/op/softmax_tensorrt.h"
 #include "ops/softmax.h"
+#include "ops/log_softmax.h"
 
 namespace mindspore::lite {
 int SoftMaxTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                const std::vector<TensorInfo> &out_tensors) {
-  auto softmax_op = AsOps<ops::Softmax>();
-  if (softmax_op != nullptr) {
+  if (type_ == ops::kNameSoftmax) {
+    auto softmax_op = AsOps<ops::Softmax>();
     auto axis = softmax_op->get_axis();
     axis_val_ = std::vector<int64_t>(axis.begin(), axis.end());
+  }
+
+  if (type_ == ops::kNameLogSoftmax) {
+    auto log_softmax_op = AsOps<ops::LogSoftmax>();
+    auto axis = log_softmax_op->get_axis();
+    axis_val_ = std::vector<int64_t>(1, axis);
   }
 
   if (axis_val_.size() != 1) {
@@ -59,6 +66,9 @@ int SoftMaxTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "softmax output tensor create failed for TensorRT.";
     return RET_ERROR;
   }
+  if (type_ == ops::kNameLogSoftmax) {
+    out_tensor = ctx->network()->addUnary(*out_tensor, nvinfer1::UnaryOperation::kLOG)->getOutput(0);
+  }
   ctx->RegisterTensor(ITensorHelper{out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
                       out_tensors_[0].Name());
   return RET_OK;
@@ -79,4 +89,5 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
   return current_layer_;
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameSoftmax, SoftMaxTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameLogSoftmax, SoftMaxTensorRT)
 }  // namespace mindspore::lite

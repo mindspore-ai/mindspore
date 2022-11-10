@@ -32,6 +32,7 @@
 #include "ops/maximum.h"
 #include "ops/bias_add.h"
 #include "ops/equal.h"
+#include "ops/not_equal.h"
 #include "ops/less.h"
 #include "ops/greater.h"
 #include "ops/floor_mod.h"
@@ -55,6 +56,7 @@ std::unordered_map<std::string, nvinfer1::ElementWiseOperation> NOT_BOOL_PRIM2NV
   {ops::kNameBiasAdd, nvinfer1::ElementWiseOperation::kSUM},
 #if TRT_VERSION_GE(7, 2)
   {ops::kNameEqual, nvinfer1::ElementWiseOperation::kEQUAL},
+  {ops::kNameNotEqual, nvinfer1::ElementWiseOperation::kEQUAL},
 #endif
 };
 }  // namespace
@@ -157,7 +159,11 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
     }
   }
 #if TRT_VERSION_GE(7, 2)
-  std::unordered_set<std::string> bool_producer_ops = {ops::kNameEqual, ops::kNameGreater, ops::kNameLess};
+  if (type_ == ops::kNameNotEqual) {
+    op_out_tensor = ctx->network()->addUnary(*op_out_tensor, nvinfer1::UnaryOperation::kNOT)->getOutput(0);
+  }
+  std::unordered_set<std::string> bool_producer_ops = {ops::kNameNotEqual, ops::kNameEqual, ops::kNameGreater,
+                                                       ops::kNameLess};
   if (bool_producer_ops.find(type_) != bool_producer_ops.end()) {
     auto cast_layer = ctx->network()->addIdentity(*op_out_tensor);
     if (cast_layer == nullptr) {
@@ -185,7 +191,7 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
   }
   *x_input = input(ctx, 0);
   *y_input = input(ctx, 1);
-  if (x_input->trt_tensor_->getType() != y_input->trt_tensor_->getType()) {
+  if (in_tensors_[0].DataType() != in_tensors_[1].DataType()) {
     MS_LOG(INFO) << "trt op elementwise layer not support different input data type, cast to higher one";
     auto higher_index = in_tensors_[0].DataType() > in_tensors_[1].DataType() ? 0 : 1;
     auto highter_trt_tensor = input(ctx, higher_index).trt_tensor_;
@@ -219,6 +225,12 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
     }
     reshape_layer->setReshapeDimensions(output_dim);
     input_tensor->trt_tensor_ = reshape_layer->getOutput(0);
+  }
+  while (x_input->trt_tensor_->getDimensions().nbDims < y_input->trt_tensor_->getDimensions().nbDims) {
+    x_input->trt_tensor_ = ExpandDim(ctx, x_input->trt_tensor_, 0);
+  }
+  while (x_input->trt_tensor_->getDimensions().nbDims > y_input->trt_tensor_->getDimensions().nbDims) {
+    y_input->trt_tensor_ = ExpandDim(ctx, y_input->trt_tensor_, 0);
   }
   return RET_OK;
 }
@@ -326,6 +338,7 @@ REGISTER_TENSORRT_CREATOR(ops::kNameMaximum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameBiasAdd, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameFloorMod, ElementWiseTensorRT)
 #if TRT_VERSION_GE(7, 2)
+REGISTER_TENSORRT_CREATOR(ops::kNameNotEqual, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameEqual, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameLess, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameGreater, ElementWiseTensorRT)

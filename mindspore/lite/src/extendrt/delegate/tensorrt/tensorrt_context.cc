@@ -52,6 +52,7 @@ void TensorRTContext::RegisterLayer(nvinfer1::ILayer *layer, const std::string &
 }
 
 void TensorRTContext::RegisterTensor(ITensorHelper tensor, const std::string &basename) {
+  MS_LOG(DEBUG) << GetTensorFormat(tensor);
   std::string trt_name = basename + "_" + std::to_string(counter_++);
   tensor.trt_tensor_->setName(trt_name.c_str());
   MS_LOG(DEBUG) << "ms_tensor " << basename << " register to " << trt_name;

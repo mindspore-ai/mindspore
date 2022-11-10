@@ -298,6 +298,7 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(Activatio
     {ActivationType::RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
     {ActivationType::RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
     {ActivationType::HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
+    {ActivationType::HSIGMOID, ActivationParams{nvinfer1::ActivationType::kHARD_SIGMOID, true, 0.2f, true, 0.5f}},
     // using plugin
     {ActivationType::GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
     {ActivationType::SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}}};
@@ -481,6 +482,15 @@ nvinfer1::ITensor *TRTTensorCast(TensorRTContext *ctx, nvinfer1::ITensor *trt_te
                                  const std::string &name) {
 #if TRT_VERSION_GE(7, 2)
   data_type = data_type == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : data_type;
+  if (data_type == nvinfer1::DataType::kINT32 && trt_tensor->getType() == nvinfer1::DataType::kFLOAT) {
+    auto plugin = std::make_shared<CastPlugin>(name, trt_tensor->getType(), data_type);
+    nvinfer1::ITensor *inputTensors[] = {trt_tensor};
+    nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
+    cast_layer->setName(name.c_str());
+    nvinfer1::ITensor *cast_out = cast_layer->getOutput(0);
+    cast_out->setName((name + "_output").c_str());
+    return cast_out;
+  }
   auto cast_layer = ctx->network()->addIdentity(*trt_tensor);
 #else
   auto plugin = std::make_shared<CastPlugin>(name, trt_tensor->getType(), data_type);

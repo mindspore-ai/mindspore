@@ -127,6 +127,11 @@ nvinfer1::IPluginV2DynamicExt *LogicalPlugin::clone() const noexcept {
   return plugin;
 }
 
+bool LogicalPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
+                                              int nbOutputs) noexcept {
+  return tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR;
+}
+
 size_t LogicalPlugin::getSerializationSize() const noexcept { return sizeof(schema::PrimitiveType); }
 
 void LogicalPlugin::serialize(void *buffer) const noexcept {

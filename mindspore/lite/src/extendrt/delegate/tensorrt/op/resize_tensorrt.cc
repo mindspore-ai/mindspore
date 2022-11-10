@@ -39,12 +39,6 @@ int ResizeTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::v
     MS_LOG(ERROR) << "convert failed " << op_name_;
     return RET_ERROR;
   }
-  if (resize_op_->get_coordinate_transform_mode() == CoordinateTransformMode::ALIGN_CORNERS &&
-      resize_op_->get_method() == ResizeMethod::LINEAR) {
-    MS_LOG(ERROR) << "Resize op do not support coordinate_transform_mode == ALIGN_CORNERS when method == LINEAR "
-                  << op_name_;
-    return RET_ERROR;
-  }
   dynamic_shape_params_.support_hw_dynamic_ =
     (resize_op_->get_new_height() > 0 && resize_op_->get_new_width() > 0) ? false : true;
   dynamic_shape_params_.support_hw_dynamic_ &= resize_op_->get_method() != ResizeMethod::LINEAR;
@@ -170,8 +164,8 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
         }
       } else {
         float scales[DIMENSION_4D]{1, 1, 1, 1};
-        scales[kNCHW_H] = out_shape[kNCHW_H];
-        scales[kNCHW_W] = out_shape[kNCHW_W];
+        scales[kNCHW_H] = out_shape[kNHWC_H];
+        scales[kNCHW_W] = out_shape[kNHWC_W];
         resize_layer->setScales(scales, DIMENSION_4D);
       }
     }
@@ -187,12 +181,20 @@ void ResizeTensorRT::ParseValueFromShapeTensor(TensorRTContext *ctx, const Tenso
       for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
         out_shape->push_back(*(shape_data_fp32 + i));
       }
+      if (out_shape->size() == INPUT_SIZE2) {
+        out_shape->insert(out_shape->begin(), 1.f);
+        out_shape->insert(out_shape->end(), 1.f);
+      }
       break;
     }
     case DataType::kNumberTypeFloat16: {
       const uint16_t *shape_data_fp16 = static_cast<const uint16_t *>(shape_value_tensor.Data());
       for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
         out_shape->push_back(ShortToFloat32(*(shape_data_fp16 + i)));
+      }
+      if (out_shape->size() == INPUT_SIZE2) {
+        out_shape->insert(out_shape->begin(), 1.f);
+        out_shape->insert(out_shape->end(), 1.f);
       }
       break;
     }
@@ -232,7 +234,8 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
 #if TRT_VERSION_GE(8, 0)
   std::map<CoordinateTransformMode, nvinfer1::ResizeCoordinateTransformation> transform_map = {
     {CoordinateTransformMode::ASYMMETRIC, nvinfer1::ResizeCoordinateTransformation::kASYMMETRIC},
-    {CoordinateTransformMode::ALIGN_CORNERS, nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS},
+    // kASYMMETRIC has better precision
+    {CoordinateTransformMode::ALIGN_CORNERS, nvinfer1::ResizeCoordinateTransformation::kASYMMETRIC},
     {CoordinateTransformMode::HALF_PIXEL, nvinfer1::ResizeCoordinateTransformation::kHALF_PIXEL}};
   auto transform_it = transform_map.find(coordinate_transform_mode);
   if (transform_it == transform_map.end()) {
