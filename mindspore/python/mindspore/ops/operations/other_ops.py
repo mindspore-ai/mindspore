@@ -158,42 +158,7 @@ class BartlettWindow(Primitive):
     r"""
     Bartlett window function.
 
-    The input "window_length" is a tensor that datatype must be a integer, which controlling the returned window size.
-    In particular, If "window_length" = 1, the returned window contains a single value 1.
-
-    Attr "periodic" determines whether the returned window trims off the last duplicate value from the symmetric window
-    and is ready to be used as a periodic window with functions. Therefore, if attr "periodic" is true, the "N" in
-    formula is in fact "window_length" + 1.
-
-    .. math::
-
-        w[n] = 1 - \left| \frac{2n}{N-1} - 1 \right| = \begin{cases}
-        \frac{2n}{N - 1} & \text{if } 0 \leq n \leq \frac{N - 1}{2} \\
-        2 - \frac{2n}{N - 1} & \text{if } \frac{N - 1}{2} < n < N \\
-        \end{cases},
-
-        \text{where : N is the full window size.}
-
-    Args:
-        periodic(bool): If True, returns a window to be used as periodic function. If False, return a symmetric window.
-                        Default: True.
-        dtype(mindspore.dtype): The desired datatype of returned tensor. Only float16, float32 and float64 is allowed.
-                                Default: mstype.float32.
-
-    Inputs:
-        - **window_length** (Tensor) - The size of returned window, with data type int32, int64.
-          The input data should be an integer with a value of [0, 1000000].
-
-    Outputs:
-        A 1-D tensor of size "window_length" containing the window. Its datatype is set by the attr 'dtype'.
-
-    Raises:
-        TypeError: If "window_length" is not a Tensor.
-        TypeError: If the type of "window_length" is not one of: int32, int64.
-        TypeError: If "periodic" is not a bool.
-        TypeError: If "dtype" is not one of: float16, float32, float64.
-        ValueError: If the value range of "window_length" is not [0,1000000].
-        ValueError: If the dimension of "window_length" is not 0.
+    Refer to :func:`mindspore.ops.bartlett_window` for more details.
 
     Supported Platforms:
         ``GPU``

@@ -622,3 +622,14 @@ Customizing Operator
 
     mindspore.ops.Custom
 
+Spectral Operator
+-----------------
+
+.. autosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.BartlettWindow
+    mindspore.ops.BlackmanWindow
+
