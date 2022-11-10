@@ -26,6 +26,26 @@ from .vm_interface import vm
 # pylint: disable=unused-argument
 
 
+@vm_impl_getters.register(P.ZerosLike)
+def vm_impl_zeroslike(self):
+    def vm_impl(x):
+        x = x.asnumpy()
+        out = np.zeros_like(x)
+        return Tensor(out)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.Log)
+def vm_impl_log(self):
+    def vm_impl(x):
+        x = x.asnumpy()
+        out = np.log(x)
+        return Tensor(out)
+
+    return vm_impl
+
+
 @vm_impl_getters.register(P.Add)
 def vm_impl_tensor_add(self):
     """Generate vm_impl function for TensorAdd."""

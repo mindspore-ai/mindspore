@@ -238,10 +238,11 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
   top_cell->SetNodeMapInGraphInfoMap(out_id, ms_function_cnode);
 
   // Connect grad graph of ms_function to context.
-  auto k_pynative_cell_ptr = top_cell->k_pynative_cell_ptr();
-  MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-  if (!k_pynative_cell_ptr->KPynativeWithFProp(ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
-                                               grad_graph)) {
+  auto auto_grad_cell_ptr = top_cell->auto_grad_cell_ptr();
+  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
+  auto grad_param =
+    std::make_shared<ad::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value, grad_graph);
+  if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
                       << ms_function_cnode->DebugString();
   }
@@ -315,7 +316,6 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
   const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, &added_out_v);
   FuncGraphPtr grad_graph = executor->GetGradGraph(graph_phase_);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_forward_graph.ir", ms_func_graph);
-  PyNativeAlgo::Common::DumpGraphIR("ms_func_grad_graph.ir", grad_graph);
   GradMsFunctionInner(op_run_info, grad_executor.get(), added_out_v, ms_func_graph, grad_graph);
   SetMsFuncGraphParameters(ms_func_graph);
   graph_phase_.clear();

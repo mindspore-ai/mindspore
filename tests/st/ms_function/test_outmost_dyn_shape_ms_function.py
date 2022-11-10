@@ -16,12 +16,9 @@
 import platform
 import numpy as np
 import pytest
-
-import mindspore as ms
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
-from mindspore import jit
 
 
 class Net(nn.Cell):
@@ -32,8 +29,6 @@ class Net(nn.Cell):
         self.addn = ops.AddN()
         self.relu = nn.ReLU()
 
-    @jit(input_signature=(Tensor(shape=[2, 3, 6, None], dtype=ms.float32),
-                                  Tensor(shape=[2, 3, None, None], dtype=ms.float32)))
     def construct(self, x, y):
         x = self.addn((x, y))
         x = self.log(x)
@@ -58,8 +53,6 @@ class CmpNet(nn.Cell):
         return x
 
 
-@jit(input_signature=(Tensor(shape=[2, 3, 6, None], dtype=ms.float32),
-                              Tensor(shape=[2, 3, None, None], dtype=ms.float32)))
 def func(x, y):
     x = ops.AddN()((x, y))
     x = ops.Log()(x)

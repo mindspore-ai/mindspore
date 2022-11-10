@@ -60,6 +60,7 @@ struct FrontendOpRunInfo {
   bool output_get_by_infer_value = false;
   int mix_type{0};
   size_t input_size = 0;
+  size_t custom_bprop_cell_count = 0;
   PrimitivePyPtr op_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string op_info;
@@ -86,12 +87,13 @@ struct InputArgsInfo {
   bool has_custom_bprop;
   size_t input_size;
   std::string obj_id;
-
   bool has_sens{false};
   PrimitivePyPtr custom_bprp_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string cell_id;
   std::string input_args_id;
+  size_t custom_bprop_cell_count = 0;
+  size_t grad_order = 0;
   std::vector<std::string> input_arg_id_vec;
   std::vector<ValuePtr> input_arg_value_vec;
 };

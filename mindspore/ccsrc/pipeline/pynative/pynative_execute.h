@@ -71,6 +71,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void Sync() const;
   void SetLazyBuild(bool enable) const;
   bool IsFirstCell() const;
+  void WorkerJoin() { grad_executor_->WorkerJoin(); }
 
  private:
   PyNativeExecutor() = default;

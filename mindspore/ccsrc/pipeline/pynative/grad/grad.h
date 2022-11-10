@@ -22,10 +22,13 @@
 #include <utility>
 #include <stack>
 #include <vector>
+#include <map>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/ms_function_grad.h"
-
+#include "runtime/pynative/async/async_queue.h"
+#include "pipeline/pynative/grad/bprop_task.h"
+#include "pipeline/jit/resource.h"
 namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
@@ -38,7 +41,10 @@ class GradExecutor {
   GradExecutor() = default;
   ~GradExecutor() = default;
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
-      : forward_executor_(ForwardExecutorWeakPtr(forward_executor)), ms_function_(std::make_shared<MsFunction>()) {}
+      : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
+        ms_function_(std::make_shared<MsFunction>()),
+        async_executor_(std::make_unique<AsyncQueue>()),
+        enable_async_(std::getenv("ENABLE_ASYNC")) {}
 
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
     NewGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
@@ -70,6 +76,7 @@ class GradExecutor {
   // Construct grad graph for ms_function
   inline bool eliminate_forward() const { return eliminate_forward_; }
   inline void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
+  inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
   void SetHookChanged(const py::object &cell) const;
   void GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                     const py::object &grad_position, const py::args &args);
@@ -77,11 +84,14 @@ class GradExecutor {
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::args &args);
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
+  void AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
   void EndGraphImpl(const InputArgsInfoPtr &input_args_info);
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
+  void AsyncEndGraphImpl(const InputArgsInfoPtr input_args_info);
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
   void ClearRes();
+  void WorkerJoin() { async_executor_->WorkerJoin(); }
 
  private:
   ForwardExecutorPtr forward() const;
@@ -126,6 +136,7 @@ class GradExecutor {
   bool IsBpropGraph(const std::string &cell_id) const;
   void NewGraphInner(const py::object &obj, const py::args &args);
   void NewGraphImpl(const InputArgsInfoPtr &input_args_info);
+  void AsyncNewGraphImpl(const InputArgsInfoPtr &input_args_info);
   void SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const;
   void GetCustomBpropPrim(const py::object &obj, const py::args &args, const py::object &out,
                           const InputArgsInfoPtr &input_args_info);
@@ -145,8 +156,6 @@ class GradExecutor {
   AnfNodePtr GetValueSequenceInput(const ValuePtr &v, const std::string &obj_id) const;
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
-  void RecordGradNodeToGraphInfoMap(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &obj_id,
-                                    const ValuePtrList &input_args) const;
 
   bool grad_flag_{false};
   bool grad_is_running_{false};
@@ -168,6 +177,9 @@ class GradExecutor {
   std::stack<TopCellInfoPtr> high_order_stack_;
   ForwardExecutorWeakPtr forward_executor_;
   MsFunctionPtr ms_function_;
+  std::unique_ptr<AsyncQueue> async_executor_;
+  std::map<std::string, compile::BackendPtr> backends_;
+  bool enable_async_ = false;
 };
 }  // namespace pynative
 }  // namespace mindspore

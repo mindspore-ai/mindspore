@@ -895,6 +895,9 @@ bool TopoCompareFuncGraphNode(const AnfNodePtr &node, const bool &is_first_sort,
   if (is_first_sort) {
     (void)new_graph_info->topo_node_list.emplace_back(std::move(node_info));
   } else {
+    if (common::AnfAlgo::IsControlOpExecInBackend(cnode)) {
+      return true;
+    }
     if (topo_node_idx >= old_graph_info->topo_node_list.size()) {
       return true;
     }

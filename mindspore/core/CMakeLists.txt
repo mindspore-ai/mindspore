@@ -38,6 +38,7 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "utils/*.cc"
   "load_mindir/*.cc"
   "mindapi/src/*.cc"
+  "expander/*.cc"
   )
 
 set(CORE_SRC_LIST ${CORE_SRC_LIST} ${CORE_OPS_LIST})

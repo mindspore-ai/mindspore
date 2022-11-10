@@ -23,6 +23,7 @@ enum TaskType {
   kUnknownTask = 0,
   kOpRunTask,
   kOpBuildTask,
+  kBpropTask,
   kExitTask,
 };
 class AsyncTask {

@@ -37,7 +37,7 @@ def run_watch_dde_network(file_name, log_file_name):
     os.remove(log_file_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_watch_dde_error_log():

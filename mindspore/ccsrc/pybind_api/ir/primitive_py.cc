@@ -36,6 +36,7 @@ namespace {
 constexpr auto kBpropAttrName = "bprop";
 constexpr auto kCellHookAttrName = "cell_hook";
 constexpr auto kCellIDAttrName = "cell_id";
+constexpr auto kCustomOpBpropAttrName = "custom_op_bprop";
 std::map<std::string, std::string> kOpAttrNameReplaceMap = {
   {"data_format", "format"},
 };
@@ -359,6 +360,26 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
   }
 }
 
+BaseRef PrimitivePy::RunOpBpropFunction(const py::tuple &py_args) const {
+  if (backward_hook_fn_.size() > 1) {
+    MS_LOG(EXCEPTION) << "Multiple registration of bprop function is not supported.";
+  }
+  py::tuple grads;
+  SyncData(py_args);
+  py::tuple converted_args(py_args.size());
+  ConvertCTensorToPyTensor(py_args, &converted_args);
+  try {
+    MS_LOG(DEBUG) << "start execute custom op bprop";
+    for (const auto &elem : backward_hook_fn_) {
+      py::object grads_obj = elem.second(*converted_args);
+      grads = check_bprop_out(grads_obj, py_args, bprop_cls_name_);
+    }
+    return std::make_shared<PyObjectRef>(grads);
+  } catch (std::exception &bt) {
+    std::rethrow_exception(std::current_exception());
+  }
+}
+
 BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
   // Get the gradient passed to current bprop cut op.
   const auto args_size = py_args.size();
@@ -425,6 +446,10 @@ BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
   bool is_cell = this->HasAttr(kCellHookAttrName);
   if (is_cell) {
     return RunCellHookFunction(py_args);
+  }
+  bool is_custom_op_bprop = this->HasAttr(kCustomOpBpropAttrName);
+  if (is_custom_op_bprop) {
+    return RunOpBpropFunction(py_args);
   }
   return RunVariableHookFunction(py_args);
 }
