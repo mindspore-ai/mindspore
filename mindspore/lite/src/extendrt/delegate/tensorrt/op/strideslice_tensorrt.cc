@@ -161,6 +161,13 @@ int StrideSliceTensorRT::ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_
       start_dims_.d[i] = ((start_mask & mask) == 0 ? start_dims_.d[i] : 0);
       if (end.Data() != nullptr) {
         end_dims.d[i] = ((end_mask & mask) == 0 ? end_dims.d[i] : slice_input->trt_tensor_->getDimensions().d[i]);
+        if (end_dims.d[i] >= 0) {
+          size_dims_.d[i] = std::min(end_dims.d[i], input_dims.d[i]) - start_dims_.d[i];
+        } else if (end_dims.d[i] >= -input_dims.d[i]) {
+          size_dims_.d[i] = end_dims.d[i] + input_dims.d[i] - start_dims_.d[i];
+        } else {
+          size_dims_.d[i] = input_dims.d[i];
+        }
         size_dims_.d[i] = end_dims.d[i] - start_dims_.d[i];
       }
       if (*(start_value + i) < 0) {
@@ -174,6 +181,9 @@ int StrideSliceTensorRT::ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_
       return RET_ERROR;
     }
     int axis_value = *(static_cast<const int *>(in_tensors_.at(axis_index).Data().get()));
+    if (axis_value < 0) {
+      axis_value += input_dims.nbDims;
+    }
     int start_value = *(static_cast<const int *>(begin.Data().get()));
     int stride_value = *(static_cast<const int *>(stride.Data().get()));
     start_dims_.nbDims = input_dims.nbDims;

@@ -25,16 +25,36 @@ namespace opt {
 class ResizeFusion : public PatternProcessPass {
  public:
   explicit ResizeFusion(bool multigraph = true) : PatternProcessPass("ResizeFusion", multigraph) {}
-  ~ResizeFusion() override = default;
+  virtual ~ResizeFusion() = default;
 
  private:
-  const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  int DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
-  CNodePtr GetAddCnode(const AnfNodePtr &node) const;
-  float mul_factor_;
+  virtual int DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const = 0;
+};
+class ResizeFusion1 : public ResizeFusion {
+ public:
+  explicit ResizeFusion1(bool multigraph = true) : ResizeFusion(multigraph) {}
+  ~ResizeFusion1() override = default;
+
+ private:
+  const BaseRef DefinePattern() const override;
+
+ private:
+  int DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const override;
+  mutable VarPtr input_ = nullptr;
+};
+class ResizeFusion2 : public ResizeFusion {
+ public:
+  explicit ResizeFusion2(bool multigraph = true) : ResizeFusion(multigraph) {}
+  ~ResizeFusion2() override = default;
+
+ private:
+  const BaseRef DefinePattern() const override;
+
+ private:
+  int DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const override;
   mutable VarPtr input_ = nullptr;
 };
 }  // namespace opt

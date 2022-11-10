@@ -22,10 +22,6 @@
 namespace mindspore::lite {
 int NormalizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE3 && in_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -68,7 +64,7 @@ int NormalizeTensorRT::PreprocessInputs(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   if (in_tensors_.size() == BETA_INDEX + 1) {
-    auto expect_shape = ConvertMSShape(input(ctx, 0).trt_tensor_->getDimensions());
+    auto expect_shape = ConvertMSShape(norm_input_.trt_tensor_->getDimensions());
     gamma_ = ConvertTensorWithExpandDims(ctx, in_tensors_[1], expect_shape, op_name_ + in_tensors_[1].Name());
     CHECK_NULL_RETURN(gamma_);
     beta_ = ConvertTensorWithExpandDims(ctx, in_tensors_[BETA_INDEX], expect_shape,

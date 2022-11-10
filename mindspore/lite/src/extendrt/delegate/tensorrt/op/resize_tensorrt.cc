@@ -38,10 +38,6 @@ nvinfer1::ITensor *ConvertConstantTensor1D(TensorRTContext *ctx, int *weights_ve
 }  // namespace
 int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != 1 && in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
   }
@@ -57,8 +53,8 @@ int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
       resize_op_->method() == schema::ResizeMethod_LINEAR) {
     MS_LOG(ERROR) << "Resize op do not support coordinate_transform_mode == ALIGN_CORNERS when method == LINEAR "
                   << op_name_;
-    return RET_ERROR;
   }
+  dynamic_shape_params_.support_dynamic_ = (resize_op_->new_height() > 0 && resize_op_->new_width() > 0) ? false : true;
   dynamic_shape_params_.support_hw_dynamic_ =
     (resize_op_->new_height() > 0 && resize_op_->new_width() > 0) ? false : true;
   dynamic_shape_params_.support_hw_dynamic_ &= resize_op_->method() != schema::ResizeMethod_LINEAR;
@@ -88,14 +84,8 @@ int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(resize_in_tensor, Format::NCHW, false);
 
-  auto method = resize_op_->method();
   nvinfer1::ITensor *output_tensor = nullptr;
-  if (method == schema::ResizeMethod_LINEAR) {
-    MS_LOG(INFO) << "using plugin for resize";
-    output_tensor = RunPlugin(ctx, resize_in_tensor);
-  } else {
-    output_tensor = RunTensorRT(ctx, resize_in_tensor);
-  }
+  output_tensor = RunTensorRT(ctx, resize_in_tensor);
   if (output_tensor == nullptr) {
     return RET_ERROR;
   }
@@ -178,6 +168,7 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
       if (shape_tensor->getDimensions().d[0] == INPUT_SIZE4) {
         resize_layer->setInput(1, *shape_tensor);
       } else {
+        // if dynamic tensor is float , need a pass to fuse it .
         auto in_tensor_shape = ctx->network()->addShape(*resize_in_tensor)->getOutput(0);
         CHECK_NULL_RETURN(in_tensor_shape);
         nvinfer1::Dims start_dims{1, {0}};
@@ -308,12 +299,24 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
   }
   resize_layer->setResizeMode(method_map.at(method));
 
-  // unsupported for trt6, but support setCoordinateTransformation() in version8
-  auto coordinate_transform_mode = resize_op_->coordinate_transform_mode();
-  if (coordinate_transform_mode != schema::CoordinateTransformMode_ASYMMETRIC) {
-    MS_LOG(WARNING) << op_name_ << " has coordinate_transform_mode may not supported: "
-                    << EnumNameCoordinateTransformMode(coordinate_transform_mode);
+#if TRT_VERSION_GE(8, 0)
+  std::map<schema::CoordinateTransformMode, nvinfer1::ResizeCoordinateTransformation> transform_map = {
+    {schema::CoordinateTransformMode_ASYMMETRIC, nvinfer1::ResizeCoordinateTransformation::kASYMMETRIC},
+    {schema::CoordinateTransformMode_ALIGN_CORNERS, nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS},
+    {schema::CoordinateTransformMode_HALF_PIXEL, nvinfer1::ResizeCoordinateTransformation::kHALF_PIXEL}};
+  auto transform_it = transform_map.find(resize_op_->coordinate_transform_mode());
+  if (transform_it == transform_map.end()) {
+    MS_LOG(ERROR) << op_name_ << " not support resize coordinate transform mode "
+                  << resize_op_->coordinate_transform_mode();
+    return RET_ERROR;
   }
+  resize_layer->setCoordinateTransformation(transform_it->second);
+#else
+  if (resize_op_->coordinate_transform_mode() != schema::CoordinateTransformMode_ASYMMETRIC) {
+    MS_LOG(WARNING) << op_name_ << " has coordinate_transform_mode may not supported: "
+                    << static_cast<int>(resize_op_->coordinate_transform_mode());
+  }
+#endif
   return RET_OK;
 }
 

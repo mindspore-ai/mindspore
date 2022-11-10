@@ -30,10 +30,6 @@ MatMulTensorRT::~MatMulTensorRT() {
 int MatMulTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
                               const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE2 && in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -57,13 +53,7 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
     activation_ = primitive->activation_type();
   }
   nvinfer1::ITensor *out_tensor = nullptr;
-  if (RunFullConnect(ctx)) {
-    MS_LOG(DEBUG) << "use fully connected instead of matmul for " << op_name_;
-    out_tensor = AddAsFullConnect(ctx);
-  } else {
-    MS_LOG(DEBUG) << "use origin tensorrt matmul for " << op_name_;
-    out_tensor = AddAsMatmul(ctx);
-  }
+  out_tensor = AddAsMatmul(ctx);
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "add matmul failed for " << op_name_;
     return RET_ERROR;
