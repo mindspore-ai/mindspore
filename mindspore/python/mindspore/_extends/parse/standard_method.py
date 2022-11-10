@@ -3472,6 +3472,13 @@ def arctanh(x):
     return F.atanh(x)
 
 
+def baddbmm(x, batch1, batch2, beta=1, alpha=1):
+    r"""
+    For details, please refer to :func:`mindspore.ops.baddbmm`.
+    """
+    return F.baddbmm(x, batch1, batch2, beta=beta, alpha=alpha)
+
+
 def bmm(input_x, mat2):
     r"""
     Computes matrix multiplication between two tensors by batch.
