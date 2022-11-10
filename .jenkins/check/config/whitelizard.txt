@@ -209,3 +209,4 @@ mindspore/mindspore/ccsrc/pybind_api/ir/dtype_py.cc:mindspore::RegTyping
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::RegMetaTensor
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/eltwise_grad_cpu_kernel.cc:mindspore::kernel::EltWiseGradCpuTypeFunc<T>::InitFunc
 mindspore/mindspore/lite/tools/converter/quantizer/weight_quantizer.cc:mindspore::lite::quant::WeightQuantizer::LinearQuant
+mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv3d
