@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <tuple>
 
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
@@ -69,6 +70,7 @@ class ProfilingReporter {
                          const KernelType kernel_type) const;
   void ReportStepPoint(const vector<std::shared_ptr<StepPointDesc>> &points);
   void ReportParallelStrategy() const;
+  void ReportMDTraceData() const;
 
  private:
   uint32_t device_id_;
@@ -86,6 +88,8 @@ class ProfilingReporter {
   uint32_t GetStreamId(const string &node_name);
   uint32_t GetTaskId(const string &node_name);
   const CNodePtr GetCNode(const std::string &name) const;
+  std::tuple<std::string, std::string> GetTraceDataFilePath() const;
+  bool TraceDataPathValid(const std::string &path) const;
 
   void ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name) const;
   void ReportTask(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type) const;

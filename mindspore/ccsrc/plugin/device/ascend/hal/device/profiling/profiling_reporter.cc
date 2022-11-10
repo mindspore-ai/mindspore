@@ -15,6 +15,7 @@
  */
 #include <map>
 #include <algorithm>
+#include <fstream>
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
@@ -24,6 +25,7 @@
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "plugin/device/ascend/hal/profiler/options.h"
 
 namespace mindspore {
 namespace device {
@@ -184,6 +186,65 @@ void ProfilingReporter::ReportParallelStrategy() const {
   std::string tag_name = "parallel_strategy";
   ReportData(device_id_, reinterpret_cast<unsigned char *>(parallel_data.data()), parallel_data.size(), tag_name);
   MS_LOG(INFO) << "Stop to report " << parallel_data.size() << "(Bytes) parallel strategy data to Ascend Profiler.";
+}
+
+std::tuple<std::string, std::string> ProfilingReporter::GetTraceDataFilePath() const {
+  const std::string dir = mindspore::profiler::ascend::GetOutputPath();
+  std::map<std::string, std::string> trace_data_paths = {
+    {"device_queue", dir + "/" + "device_queue_profiling_" + std::to_string(device_id_) + ".txt"},
+    {"dataset_iterator", dir + "/" + "dataset_iterator_profiling_" + std::to_string(device_id_) + ".txt"}};
+  for (auto trace_data_path : trace_data_paths) {
+    if (TraceDataPathValid(trace_data_path.second)) {
+      return {trace_data_path.second, trace_data_path.first};
+    }
+  }
+  return {"", ""};
+}
+
+bool ProfilingReporter::TraceDataPathValid(const std::string &path) const {
+  int ret = access(path.c_str(), F_OK);
+  if (ret == -1) {
+    MS_LOG(ERROR) << "file: " << path << " is not exist.";
+    return false;
+  }
+
+  ret = access(path.c_str(), R_OK);
+  if (ret == -1) {
+    MS_LOG(ERROR) << "file: " << path << " is not readable.";
+    return false;
+  }
+
+  std::ifstream ifs(path);
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "file: " << path << " is not open.";
+    return false;
+  }
+  std::string str;
+  ifs >> str;
+  ifs.close();
+  if (str.empty()) {
+    MS_LOG(ERROR) << "file: " << path << " is empty.";
+    return false;
+  }
+  return true;
+}
+
+void ProfilingReporter::ReportMDTraceData() const {
+  auto [trace_data_path, tag_name] = GetTraceDataFilePath();
+  if (trace_data_path.empty() || tag_name.empty()) {
+    return;
+  }
+  std::ifstream ifs(trace_data_path, std::ios::binary);
+  if (!ifs.is_open()) {
+    return;
+  }
+  std::string line_data;
+  MS_LOG(INFO) << "Start to report trace data to Ascend Profiler.";
+  while (std::getline(ifs, line_data)) {
+    line_data += "\n";
+    ReportData(device_id_, reinterpret_cast<unsigned char *>(line_data.data()), line_data.size(), tag_name);
+  }
+  MS_LOG(INFO) << "Stop to report trace data to Ascend Profiler.";
 }
 
 void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size_t data_size,
