@@ -206,7 +206,14 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.NoRepeatNGram
 
 数学运算算子
-----------------
+^^^^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.Cross
 
 逐元素运算
 ^^^^^^^^^^^^^
@@ -395,6 +402,8 @@ Array操作
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.Concat
+    mindspore.ops.ConjugateTranspose
+    mindspore.ops.CumMax
     mindspore.ops.CumProd
     mindspore.ops.CumSum
     mindspore.ops.DataFormatDimMap
