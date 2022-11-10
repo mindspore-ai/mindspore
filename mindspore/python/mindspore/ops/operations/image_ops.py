@@ -44,7 +44,8 @@ class AdjustSaturation(Primitive):
         TypeError: If any iput is not Tensor.
         TypeError: If the type of `image` is not one of the following dtype: float16, float32.
         TypeError: If the type of `scale` is not float32.
-        ValueError: If the dimension of the 'image' is less than 3, or the last dimension of the 'image' is not 3.
+        ValueError: If the dimension of the 'image' is less than 3.
+        ValueError: If the last dimension of the 'image' is not 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
