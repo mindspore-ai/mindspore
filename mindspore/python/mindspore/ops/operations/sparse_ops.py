@@ -1030,7 +1030,7 @@ class SparseAddmm(Primitive):
         RuntimeError: If `x1_shape`, shape of `x2`, shape of `x3` don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
