@@ -3014,6 +3014,8 @@ def _get_loss(x, reduction, cls_name, weights=1.0):
 
 def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     """
+    MarginRankingLoss creates a criterion that measures the loss.
+
     For details, please refer to :class:`mindspore.nn.MarginRankingLoss`.
     """
     margin = _check_value_type("margin", margin, [float], "margin_ranking_loss")
