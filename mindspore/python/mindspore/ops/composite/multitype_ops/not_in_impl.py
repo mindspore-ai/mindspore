@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `not in` operations."""
-
+from __future__ import absolute_import
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils

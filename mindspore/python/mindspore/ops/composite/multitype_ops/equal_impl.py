@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `equal` operations."""
+from __future__ import absolute_import
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F

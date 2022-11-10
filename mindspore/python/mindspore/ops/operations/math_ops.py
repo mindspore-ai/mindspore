@@ -218,14 +218,6 @@ class Add(_MathBinaryOp):
             return out
         return None
 
-    def _infer_min_value(self, x, y):
-        """Calculate min value for output for Add op"""
-        return self._infer_specified_add_value(x, y)
-
-    def _infer_max_value(self, x, y):
-        """Calculate max value for output for Add op"""
-        return self._infer_specified_add_value(x, y)
-
     def infer_value(self, x, y):
         if x is not None and y is not None:
             x = x.asnumpy()
@@ -234,6 +226,14 @@ class Add(_MathBinaryOp):
             out = np.array(out, x.dtype)
             return Tensor(out)
         return None
+
+    def _infer_min_value(self, x, y):
+        """Calculate min value for output for Add op"""
+        return self._infer_specified_add_value(x, y)
+
+    def _infer_max_value(self, x, y):
+        """Calculate max value for output for Add op"""
+        return self._infer_specified_add_value(x, y)
 
     def _infer_shape_value(self, x, y):
         shape_value = self._infer_specified_add_value(x, y)

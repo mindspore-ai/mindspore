@@ -41,7 +41,7 @@ class NonDeterministicInts(Primitive):
           mindspore.int32 and mindspore.int64.
 
     Outputs:
-        Tensor. Its shape is spcified by the input `shape`. Its type is spcified by `dtype`.
+        Tensor. Its shape is specified by the input `shape`. Its type is specified by `dtype`.
 
     Raises:
         TypeError: If `shape` is not a Tensor.
@@ -94,7 +94,7 @@ class TruncatedNormal(Primitive):
           mindspore.int32 and mindspore.int64.
 
     Outputs:
-        Tensor. Its shape is spcified by the input `shape`. Its type is spcified by `dtype`.
+        Tensor. Its shape is specified by the input `shape`. Its type is specified by `dtype`.
         Its values are in [-2,2].
 
     Raises:
@@ -420,7 +420,7 @@ class ParameterizedTruncatedNormal(Primitive):
           truncated normal distribution. It must have the same type as means.
 
     Outputs:
-        Tensor. Its shape is spcified by the input `shape` and it must have the same type as means.
+        Tensor. Its shape is specified by the input `shape` and it must have the same type as means.
 
     Raises:
         TypeError: If `shape`, `mean`, `stdevs`, `min`, `max` and input tensor type are not allowed.
@@ -545,7 +545,7 @@ class RandomPoisson(Primitive):
           of occurrences of the event. Its type must be in [float16, float32, float64, int32, int64]
 
     Outputs:
-        Tensor. Its shape is (*shape, *rate.shape). Its type is spcified by `dtype`.
+        Tensor. Its shape is (*shape, *rate.shape). Its type is specified by `dtype`.
 
     Raises:
         TypeError: If `shape` is not a Tensor or its dtype is not int32 or int64.

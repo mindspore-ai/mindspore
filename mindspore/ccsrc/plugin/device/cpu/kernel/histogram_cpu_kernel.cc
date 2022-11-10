@@ -53,7 +53,7 @@ bool HistogramCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool HistogramCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool HistogramCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
   // Benchmarking framework only support float32 and float64
   // To meet precision requirements, cast float16 or int32 to float32

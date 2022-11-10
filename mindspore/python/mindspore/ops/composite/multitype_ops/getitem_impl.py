@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `getitem` operations."""
+from __future__ import absolute_import
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils

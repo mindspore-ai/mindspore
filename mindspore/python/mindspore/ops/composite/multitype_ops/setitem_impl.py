@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `setitem` operations."""
 
+from __future__ import absolute_import
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import SliceGetItem

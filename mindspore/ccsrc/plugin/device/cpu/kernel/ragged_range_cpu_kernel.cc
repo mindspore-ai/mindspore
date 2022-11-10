@@ -81,7 +81,7 @@ int RaggedRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 bool RaggedRangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
+                                     const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   size_t nrows = static_cast<size_t>(in_sizes_.empty() ? 1 : in_sizes_[0]);
   if (input_type_ == kNumberTypeInt32 && tsplits_type_ == kNumberTypeInt32) {
@@ -163,12 +163,13 @@ TSPLITS RaggedRangeCpuKernelMod::RangeSize(const T start, const T limit, const T
   if (((delta > static_cast<T>(0)) && (limit < start)) || ((delta < static_cast<T>(0)) && (limit > start))) {
     res = 0;
   } else {
-    res =
+    auto res_t =
       (std::is_integral<T>::value
          ? ((std::abs(static_cast<int64_t>(limit) - static_cast<int64_t>(start)) +
              std::abs(static_cast<int64_t>(delta)) - 1) /
             std::abs(static_cast<int64_t>(delta)))
          : std::ceil(std::abs((static_cast<double>(limit) - static_cast<double>(start)) / static_cast<double>(delta))));
+    return static_cast<size_t>(res_t);
   }
   return res;
 }

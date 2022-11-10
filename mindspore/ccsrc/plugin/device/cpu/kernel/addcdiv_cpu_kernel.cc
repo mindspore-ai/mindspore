@@ -144,7 +144,7 @@ void AddcdivCpuKernelMod::AddcdivMul(const T1 *input1, const T2 *input2, T1 *out
     for (size_t i = 0; i < output_shape_.size(); ++i) {
       output_size_ *= static_cast<int64_t>(output_shape_[i]);
     }
-    ParallelLaunchAutoSearch(mul_task, output_size_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(mul_task, LongToSize(output_size_), this, &parallel_search_info_);
   }
 }
 
@@ -166,7 +166,7 @@ void AddcdivCpuKernelMod::AddcdivAdd(const T *input1, const T *input2, T *output
     for (size_t i = 0; i < output_shape_.size(); ++i) {
       output_size_ *= static_cast<int64_t>(output_shape_[i]);
     }
-    ParallelLaunchAutoSearch(add_task, output_size_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(add_task, LongToSize(output_size_), this, &parallel_search_info_);
   }
 }
 
@@ -226,7 +226,7 @@ void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output
     for (size_t i = 0; i < output_shape_.size(); ++i) {
       output_size_ *= static_cast<int64_t>(output_shape_[i]);
     }
-    ParallelLaunchAutoSearch(div_task, output_size_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(div_task, LongToSize(output_size_), this, &parallel_search_info_);
   }
 }
 

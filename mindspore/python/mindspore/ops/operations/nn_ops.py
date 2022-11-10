@@ -27,7 +27,10 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
-from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.primitive import PrimitiveWithInfer
+from mindspore.ops.primitive import PrimitiveWithCheck
+from mindspore.ops.primitive import prim_attr_register
 
 
 def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False,

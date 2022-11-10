@@ -270,6 +270,9 @@ class AllGather(PrimitiveWithInfer):
         self.add_prim_attr('mean_flag', False)
         self.add_prim_attr('no_eliminate', True)
 
+    def __call__(self, tensor):
+        raise NotImplementedError
+
     def infer_shape(self, x_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
         if x_shape[0] > 0:
@@ -279,9 +282,6 @@ class AllGather(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
-
-    def __call__(self, tensor):
-        raise NotImplementedError
 
 
 class _MiniStepAllGather(PrimitiveWithInfer):

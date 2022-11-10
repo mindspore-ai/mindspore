@@ -14,6 +14,8 @@
 # ============================================================================
 
 """image_ops"""
+
+from __future__ import absolute_import
 from mindspore import context
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel

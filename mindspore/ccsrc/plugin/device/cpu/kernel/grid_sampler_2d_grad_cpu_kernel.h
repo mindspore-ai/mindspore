@@ -172,7 +172,7 @@ struct Vec256 {
   }
   Vec256<T> map(T (*f)(T)) const {
     Vec256<T> ret;
-    for (int64_t i = 0; i != size(); i++) {
+    for (size_t i = 0; i != IntToSize(size()); i++) {
       ret[i] = f(values[i]);
     }
     return ret;
@@ -193,7 +193,7 @@ struct Vec256 {
     Vec256 vec;
     int_same_size_t<T> buffer[size()];
     mask.store(buffer);
-    for (int64_t i = 0; i < size(); i++) {
+    for (size_t i = 0; i < IntToSize(size()); i++) {
       if (buffer[i] & 0x01) {
         vec[i] = b[i];
       } else {
@@ -204,15 +204,15 @@ struct Vec256 {
   }
   static Vec256<T> arange(T base = static_cast<T>(0), T step = static_cast<T>(1)) {
     Vec256 vec;
-    for (int64_t i = 0; i < size(); i++) {
+    for (size_t i = 0; i < IntToSize(size()); i++) {
       vec.values[i] = base + i * step;
     }
     return vec;
   }
   static Vec256<T> set(const Vec256<T> &a, const Vec256<T> &b, int64_t count = size()) {
     Vec256 vec;
-    for (int64_t i = 0; i < size(); i++) {
-      if (i < count) {
+    for (size_t i = 0; i < IntToSize(size()); i++) {
+      if (i < LongToSize(count)) {
         vec[i] = b[i];
       } else {
         vec[i] = a[i];
@@ -222,7 +222,7 @@ struct Vec256 {
   }
   Vec256<T> floor() const {
     Vec256<T> ret;
-    for (int64_t i = 0; i != size(); i++) {
+    for (size_t i = 0; i != IntToSize(size()); i++) {
       ret[i] = std::floor(values[i]);
     }
     return ret;
@@ -231,7 +231,7 @@ struct Vec256 {
   inline T round_impl(const T z) { return std::nearbyint(z); }
   Vec256<T> round() const {
     Vec256<T> ret;
-    for (int64_t i = 0; i != size(); i++) {
+    for (size_t i = 0; i != IntToSize(size()); i++) {
       ret[i] = std::nearbyint(values[i]);
     }
     return ret;
@@ -489,11 +489,11 @@ bool GeometryIsContiguous(std::array<int64_t, hFour> sizes, std::array<int64_t, 
   int64_t expected_stride = 1;
   bool contig_if_nonempty = true;
   for (int64_t i = dim - 1; i >= 0; i--) {
-    if (sizes[i] == 0) {
+    if (sizes[LongToSize(i)] == 0) {
       return true;
     }
     if (contig_if_nonempty) {
-      if (sizes[i] != 1 && strides[i] != expected_stride) {
+      if (sizes[LongToSize(i)] != 1 && strides[LongToSize(i)] != expected_stride) {
         contig_if_nonempty = false;
       }
       expected_stride *= sizes[i];
@@ -857,7 +857,7 @@ struct ApplyGridSample2D<T, hTwo, GridSamplerInterpolation::Nearest, padding, al
         ComputeW(input.size(3)) {}
 
   inline void Backward(TensorAcc<T, 3> *GInpSlice, TensorAcc<T, 3> *GGridSlice, const TensorAcc<T, 3> &GOutSlice,
-                       const TensorAcc<T, 3> &InpSlice, int64_t offset, const Vec &grid_x, const Vec &grid_y,
+                       const TensorAcc<T, 3> &, int64_t offset, const Vec &grid_x, const Vec &grid_y,
                        int64_t len) const {
     auto X = ComputeW.apply(grid_x);
     auto XNearest = X.round();
@@ -960,7 +960,7 @@ static inline void GridSampler2DGridSliceIterator(const TensorAcc<T, 3> &GridSli
     while (h < OutH) {
       auto grid_ptr_x = h * GridSH + GridPtr;
       auto grid_ptr_y = GridSCoor + grid_ptr_x;
-      auto i_offsets = iVec::arange(0, GridSW);
+      auto i_offsets = iVec::arange(0, LongToInt(GridSW));
       int64_t w = 0;
       while (w < OutW) {
         auto len = std::min(step, OutW - w);

@@ -15,10 +15,10 @@
 """thor_ops"""
 import math
 
-from ..primitive import prim_attr_register, PrimitiveWithInfer
-from ...common import dtype as mstype
-from ..._checkparam import Validator as validator
-from ..operations.nn_ops import _check_positive_int_or_tuple
+from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
+from mindspore.common import dtype as mstype
+from mindspore._checkparam import Validator as validator
+from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
 
 __all__ = ["CusBatchMatMul",
            "CusCholeskyTrsm",

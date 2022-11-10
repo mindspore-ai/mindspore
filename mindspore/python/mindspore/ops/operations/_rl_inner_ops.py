@@ -430,7 +430,7 @@ class PriorityReplayBufferCreate(PrimitiveWithInfer):
     PriorityReplayBuffer is experience container used in Deep Q-Networks.
     The algorithm is proposed in `Prioritized Experience Replay <https://arxiv.org/abs/1511.05952>`.
     Same as the normal replay buffer, it lets the reinforcement learning agents remember and reuse experiences from the
-    past. Besides, it replays important transitions more frequently and improve sample effciency.
+    past. Besides, it replays important transitions more frequently and improve sample efficiency.
 
     Args:
         capcity (int64): Capacity of the buffer. It is recommended that set capacity to pow(2, N).

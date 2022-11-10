@@ -106,12 +106,12 @@ bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       }
       input_pos_array.back() = tmp_pos;
       int64_t output_pos = input_pos_array[0];
-      output_pos =
-        (output_pos * output_shape[1]) +
-        (input_pos_array[1] +
-         (block_size * (input_pos_array[2] % block_size) + input_pos_array[3] % block_size) * input_shape[1]);
-      output_pos = (output_pos * output_shape[2]) + (input_pos_array[2] / block_size);
-      output_pos = (output_pos * output_shape[3]) + (input_pos_array[3] / block_size);
+      output_pos = (output_pos * output_shape[1]) +
+                   (input_pos_array[1] + (block_size * (input_pos_array[2] % SizeToLong(block_size)) +
+                                          input_pos_array[3] % SizeToLong(block_size)) *
+                                           input_shape[1]);
+      output_pos = (output_pos * output_shape[2]) + (input_pos_array[2] / SizeToLong(block_size));
+      output_pos = (output_pos * output_shape[3]) + (input_pos_array[3] / SizeToLong(block_size));
       output_addr[output_pos] = input_addr[i];
     }
   };
