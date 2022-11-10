@@ -20,18 +20,23 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class Conv3DTransposeCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class Conv3DTransposeCpuKernelMod : public MKLCpuKernelMod {
  public:
   Conv3DTransposeCpuKernelMod() = default;
   explicit Conv3DTransposeCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~Conv3DTransposeCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -40,6 +45,11 @@ class Conv3DTransposeCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  size_t group{0};
+  std::string format;
+  std::string pad_mode;
+  std::vector<int64_t> strides_include_nc;
+  std::vector<int64_t> dilation_include_nc;
   std::string kernel_type_;
 };
 }  // namespace kernel
