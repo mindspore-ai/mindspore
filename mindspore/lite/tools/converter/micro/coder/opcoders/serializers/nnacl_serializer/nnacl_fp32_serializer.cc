@@ -193,8 +193,8 @@ void NNaclFp32Serializer::CodeArrayStruct(const std::string &name, TensorC *tens
   int size = tensor.size();
   for (int i = 0; i < size; ++i) {
     std::string tensor_name = "tensor" + std::to_string(count++);
-    CodeBaseStruct<false>("TensorC", name, tensor_name, tensorC[i].is_ready_, tensorC[i].data_type_, tensorC[i].format_,
-                          tensor[i], tensorC[i].shape_size_, ToString(tensorC[i].shape_));
+    CodeBaseStruct<false>("TensorC", name, tensor_name, tensorC[i].data_type_, tensorC[i].format_, tensor[i],
+                          tensorC[i].shape_size_, ToString(tensorC[i].shape_));
     tensor_names.emplace_back(tensor_name);
   }
   code << "    TensorC"

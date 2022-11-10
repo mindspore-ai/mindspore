@@ -175,6 +175,7 @@ getCommonFile() {
     mindspore/lite/experimental/src/exec_env_utils.h
     mindspore/lite/src/expression/ops_utils.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.h
     mindspore/core/utils/log_adapter.h
     mindspore/core/ir/api_tensor_impl.h

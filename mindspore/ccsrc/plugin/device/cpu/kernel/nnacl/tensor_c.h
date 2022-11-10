@@ -20,13 +20,11 @@
 typedef enum TensorCFormat { NCHW, NHWC, NC4HW4, NUM_OF_FORMAT } TensorCFormat;
 
 typedef struct TensorC {
-  bool is_ready_;
   int data_type_;
   int format_;
   void *data_;
   size_t shape_size_;
   int shape_[MAX_SHAPE_SIZE];
-  char *name_;
 } TensorC;
 
 #endif  // MINDSPORE_NNACL_TENSOR_C_H_

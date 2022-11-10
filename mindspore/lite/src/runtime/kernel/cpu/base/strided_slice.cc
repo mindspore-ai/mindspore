@@ -286,7 +286,11 @@ int StridedSliceCPUKernel::SoftCopyInputToOutput() {
   output_tensor->FreeData();
   output_tensor->ResetRefCount();
   output_tensor->set_data(input_tensor->data());
-  output_tensor->set_own_data(input_tensor->own_data());
+  if (input_tensor->IsConst()) {
+    output_tensor->set_own_data(false);
+  } else {
+    output_tensor->set_own_data(input_tensor->own_data());
+  }
   return RET_OK;
 }
 
