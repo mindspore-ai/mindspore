@@ -6822,13 +6822,25 @@ class Lstsq(Primitive):
        \min_y & \|y\|_2 & \text{subject to} & xy = a.
        \end{array}
 
+    Args:
+        fast (bool, optional): Solving algorithm. Default: True.
+
+            - If `fast` is True, then the solution is computed by solving
+              the normal equations using Cholesky decomposition.
+            - If `fast` is False, an algorithm based on numerically robust
+              completee orthogonal decomposition is used.
+
+        l2_regularizer (float, optional): L2 regularization coefficient. Default: 0.0.
+
     Inputs:
-        - **x** (Tensor) - The m by n matrix `x`. The input tensor whose data type is float16, float32 or float64.
-        - **a** (Tensor) - The m by k matrix `a`. The input tensor whose data type is float16, float32 or float64.
+        - **x** (Tensor) - The m by n matrix `x`. The input tensor whose data type is
+          float16, float32 or float64.
+        - **a** (Tensor) - The m by k matrix `a`. The input tensor whose data type is
+          float16, float32 or float64.
 
     Outputs:
-        Tensor, the least squares or minimum norm problems solution, which has shape :math:`(n \times k)`.
-        The data type is the same with `x`.
+        Tensor, the least squares or minimum norm problems solution, which has shape
+        :math:`(n \times k)`. The data type is the same with `x`.
 
     Raises:
         TypeError: If the input `x` or `a` is not a Tensor.
@@ -6867,17 +6879,20 @@ class LowerBound(Primitive):
     of the input values element in the input sorted_x.
 
     Args:
-        out_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32` and
-            `mindspore.dtype.int64`. Default: `mindspore.dtype.int32`.
+        out_type (:class:`mindspore.dtype`, optional): An optional data type of
+            `mindspore.dtype.int32` and `mindspore.dtype.int64`.
+            Default: `mindspore.dtype.int32`.
 
     Inputs:
-        - **sorted_x** (Tensor) - The input tensor whose dtype is real number and the data of each row must be sorted
-          in ascending order. The rank must be 2.
-        - **values** (Tensor) - The input tensor whose dtype is the same as `sorted_x` and the first dimension of the
-          shape of `values` must be equal to that of `sorted_x`. The rank must be 2.
+        - **sorted_x** (Tensor) - The input tensor whose dtype is real number and
+          the data of each row must be sorted in ascending order. The rank must be 2.
+        - **values** (Tensor) - The input tensor whose dtype is the same as `sorted_x`
+          and the first dimension of the shape of `values` must be equal to that of
+          `sorted_x` . The rank must be 2.
 
     Outputs:
-        Tensor, whose dtype is determined by `out_type` and whose shape is the same as that of `values`.
+        Tensor, whose dtype is determined by `out_type` and whose shape is the same
+        as that of `values`.
 
     Raises:
         TypeError: If `sorted_x` is not a Tensor.
@@ -7047,8 +7062,9 @@ class RightShift(Primitive):
 
 class LogSpace(Primitive):
     r"""
-    Returns a one-dimensional tensor of size steps whose values are evenly spaced from base**start to base**end,
-    inclusive, on a logarithmic scale with base.
+    Returns a one-dimensional tensor of size steps whose values are evenly
+    spaced from :math:`base^{start}` to :math:`base^{end}` , inclusive,
+    on a logarithmic scale with base.
 
     .. math::
         \begin{aligned}
@@ -7057,10 +7073,10 @@ class LogSpace(Primitive):
         \end{aligned}
 
     Args:
-        steps (int): The steps must be a non-negative integer. default: 10
-        base (int): The base must be a non-negative integer. default: 10
-        dtype (mindspore.dtype): The dtype of output,
-          include mindspore.float16, mindspore.float32 or mindspore.float64(for GPU).
+        steps (int, optional): The steps must be a non-negative integer. Default: 10.
+        base (int, optional): The base must be a non-negative integer. Default: 10.
+        dtype (mindspore.dtype, optional): The dtype of output, include mindspore.float16,
+            mindspore.float32 or mindspore.float64(for GPU). Default: mindspore.float32.
 
 
     Inputs:
