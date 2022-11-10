@@ -14,7 +14,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/check_requirements.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/ascend_variables.cmake)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     if(NOT ENABLE_GLIBCXX)
         add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
     endif()
