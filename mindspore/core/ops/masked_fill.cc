@@ -78,7 +78,7 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
   MS_EXCEPTION_IF_NULL(context);
   bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   if (is_ascend) {
-    valid_types = {kFloat16, kFloat32, kInt8, kInt32};
+    valid_types = {kBool, kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   } else {
     valid_types = {kBool,    kInt8,    kInt16,   kInt32, kInt64, kUInt8, kUInt16,    kUInt32,    kUInt64,
                    kFloat16, kFloat32, kFloat64, kInt,   kUInt,  kFloat, kComplex64, kComplex128};
@@ -87,10 +87,13 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
     std::map<std::string, TypePtr> types;
     (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
     (void)types.emplace("value", input_args[kInputIndex2]->BuildType());
-    return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+    return types["input"];
   } else {
     (void)CheckAndConvertUtils::CheckSubClass("value", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
-    return CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), valid_types, op_name);
+    auto input_type = input_args[kInputIndex0]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, op_name);
+    return input_type;
   }
 }
 }  // namespace
@@ -98,8 +101,12 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
 MIND_API_OPERATOR_IMPL(MaskedFill, BaseOperator);
 AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(MaskedFillInferType(primitive, input_args),
-                                                    MaskedFillInferShape(primitive, input_args)->shape());
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputNum = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  auto infer_type = MaskedFillInferType(primitive, input_args);
+  auto infer_shape = MaskedFillInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(MaskedFill, prim::kPrimMaskedFill, MaskedFillInfer, nullptr, true);
 }  // namespace ops
