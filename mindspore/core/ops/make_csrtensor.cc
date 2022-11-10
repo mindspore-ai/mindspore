@@ -55,7 +55,11 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto indices_shp = indices->shape()->shape();
   CheckSparseShape(indices_shp.size(), kSizeOne, "Indices");
 
-  auto values_shp = values->shape()->shape();
+  for (const auto &elem_type : shape->ElementsType()) {
+    if (!elem_type->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << elem_type->ToString();
+    }
+  }
 
   // convert shape from tuple to shapevector(shape_vec)
   auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
@@ -67,10 +71,11 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
     return elem;
   });
 
-  for (const auto &elem_type : shape->ElementsType()) {
-    if (!elem_type->isa<Int>()) {
-      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << elem_type->ToString();
-    }
+  auto values_shp = values->shape()->shape();
+  if (values_shp.size() + 1 != shape_vec.size()) {
+    MS_EXCEPTION(ValueError) << "Values' dimension should equal to CSRTensor's dimension - 1, but got"
+                             << "Values' dimension: " << values_shp.size()
+                             << ", CSRTensor's dimension: " << shape_vec.size() << ".";
   }
 
   if (IsDynamic(indptr_shp) || IsDynamic(indices_shp) || IsDynamic(values_shp)) {

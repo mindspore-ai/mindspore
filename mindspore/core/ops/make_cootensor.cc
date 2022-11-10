@@ -52,6 +52,13 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto values_shp = values->shape()->shape();
   CheckSparseShape(values_shp.size(), kSizeOne, "Values");
 
+  for (const auto &elem_type : dense_shape->ElementsType()) {
+    if (!elem_type->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "For COOTensor, the element type of `shape` must be Int, but got "
+                              << elem_type->ToString();
+    }
+  }
+
   // Convert dense_shape from tuple to shapevector(dense_shape_vec)
   auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(dense_shape_value);
@@ -62,13 +69,6 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
                          auto elem = GetValue<int64_t>(e);
                          return elem;
                        });
-
-  for (const auto &elem_type : dense_shape->ElementsType()) {
-    if (!elem_type->isa<Int>()) {
-      MS_EXCEPTION(TypeError) << "For COOTensor, the element type of `shape` must be Int, but got "
-                              << elem_type->ToString();
-    }
-  }
 
   if (IsDynamic(indices_shp) || IsDynamic(values_shp)) {
     MS_LOG(DEBUG) << "Dynamic shape in MakeCOOTensor's inputs! Ignore shape check.";
