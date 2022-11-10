@@ -35,9 +35,13 @@ class MIND_API FractionalMaxPoolGradWithFixedKsize : public BaseOperator {
   FractionalMaxPoolGradWithFixedKsize() : BaseOperator(kNameFractionalMaxPoolGradWithFixedKsize) {
     InitIOName({"origin_input", "out_backprop", "argmax"}, {"y"});
   }
+  std::vector<bool> InputDynamic(const std::vector<int64_t> &out_backprop_shape_,
+                                 const std::vector<int64_t> &argmax_shape_,
+                                 const std::vector<int64_t> &origin_input_shape_, bool out_backprop_shape_dy_,
+                                 bool argmax_shape_dy_, bool origin_input_shape_dy_);
   void Init(const std::string data_format);
   /// \brief Init. Refer to the parameters of Python API @ref
-  /// mindspore.ops.operations._grad_ops.FractionalMaxPoolGradWithFixedKsize for the inputs.
+  /// mindspore.ops.operations._grad_ops.FractionalMaxPoolWithFixedKsize for the inputs.
   void set_data_format(const std::string data_format);
   /// \brief Set data format.
   std::string get_data_format() const;

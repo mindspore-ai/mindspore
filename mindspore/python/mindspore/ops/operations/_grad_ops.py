@@ -3718,7 +3718,7 @@ class FractionalMaxPoolGradWithFixedKsize(Primitive):
         ValueError: If the second dimension size of `origin_input` and `out_backprop` is not equal.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
