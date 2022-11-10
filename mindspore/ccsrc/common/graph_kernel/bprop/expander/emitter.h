@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <map>
+#include <tuple>
 #include "ir/func_graph.h"
 #include "ops/core_ops.h"
 #include "include/common/utils/utils.h"
@@ -30,7 +32,8 @@ namespace mindspore {
 namespace expander {
 class Emitter {
  public:
-  Emitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer) : func_graph_(func_graph), infer_(infer) {
+  Emitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr)
+      : func_graph_(func_graph), infer_(infer), scope_(scope) {
     MS_EXCEPTION_IF_NULL(infer);
   }
 
@@ -55,6 +58,8 @@ class Emitter {
   NodePtr Reciprocal(const NodePtr &node) const { return Emit(prim::kReciprocal, {node}); }
   NodePtr Square(const NodePtr &node) const { return Emit(prim::kSquare, {node}); }
   NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
+  NodePtr Exp(const NodePtr &x) const;
+  NodePtr Log(const NodePtr &x) const;
   NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const;
   NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) const {
     bool is_all_one = std::all_of(multiples.begin(), multiples.end(), [](int64_t shp) { return shp == 1; });
@@ -67,18 +72,19 @@ class Emitter {
     return Emit(kConcatOpName, {MakeTuple(inputs)}, {{kAttrAxis, MakeValue(axis)}});
   }
 
-  NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kAdd, {lhs, rhs}); }
-  NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kSub, {lhs, rhs}); }
-  NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kMul, {lhs, rhs}); }
-  NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kDivOpName, {lhs, rhs}); }
-  NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(prim::kRealDiv, {lhs, rhs}); }
-  NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return Emit(kPowOpName, {lhs, rhs}); }
-  NodePtr Exp(const NodePtr &x) const;
-  NodePtr Log(const NodePtr &x) const;
+  NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kAdd, lhs, rhs); }
+  NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kSub, lhs, rhs); }
+  NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kMul, lhs, rhs); }
+  NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kDivOpName, lhs, rhs); }
+  NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kRealDiv, lhs, rhs); }
+  NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kPowOpName, lhs, rhs); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
   NodePtr BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
+  NodePtr Maximum(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kMaximumOpName, lhs, rhs); }
+  NodePtr Minimum(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kMinimumOpName, lhs, rhs); }
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
-    return Emit(kSelectOpName, {cond, lhs, rhs});
+    auto [a, b] = UnifyDtype2(lhs, rhs);
+    return Emit(kSelectOpName, {cond, a, b});
   }
   NodePtr Less(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) const {
     return CmpOpWithCast(kLessOpName, lhs, rhs, dst_type);
@@ -132,12 +138,22 @@ class Emitter {
  protected:
   NodePtr NewNode(const AnfNodePtr &anfnode) const { return std::make_shared<Node>(anfnode, this); }
   NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) const {
-    auto node = Emit(op, {lhs, rhs});
+    auto node = UnifyDtypeAndEmit(op, lhs, rhs);
     return dst_type == nullptr ? node : Cast(node, dst_type);
+  }
+  std::tuple<NodePtr, NodePtr> UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) const;
+  NodePtr UnifyDtypeAndEmit(const std::string &op, const NodePtr &a, const NodePtr &b, const DAttr &attrs = {}) const {
+    auto [lhs, rhs] = UnifyDtype2(a, b);
+    return Emit(op, {lhs, rhs}, attrs);
   }
 
   FuncGraphPtr func_graph_;
   ExpanderInferPtr infer_{nullptr};
+  ScopePtr scope_{nullptr};
+  inline static const std::map<TypeId, size_t> type_map_ = {
+    {kNumberTypeBool, 1},    {kNumberTypeInt8, 2},    {kNumberTypeUInt8, 3},
+    {kNumberTypeInt16, 4},   {kNumberTypeInt32, 5},   {kNumberTypeInt64, 6},
+    {kNumberTypeFloat16, 7}, {kNumberTypeFloat32, 8}, {kNumberTypeFloat64, 9}};
 };
 using EmitterPtr = std::shared_ptr<Emitter>;
 

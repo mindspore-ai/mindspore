@@ -43,7 +43,7 @@ REG_BPROP_BUILDER(kAllReduceOpName).SetBody([](const BpropIRBuilder *ib) -> Node
   } else if (op == "sum") {
     return {dx};
   } else {
-    auto z = ib->Emit("Equal", {x, out});
+    auto z = ib->Equal(x, out);
     z = ib->Cast(z, ib->GetDtype(dx));
     return {ib->Mul(dx, z)};
   }

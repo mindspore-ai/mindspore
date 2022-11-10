@@ -47,6 +47,9 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
     return no->get();
   });
   auto cnode = func_graph_->NewCNode(cnode_inputs);
+  if (scope_ != nullptr) {
+    cnode->set_scope(scope_);
+  }
   auto node = NewNode(cnode->cast<AnfNodePtr>());
   infer_->Infer(node);
   return node;
@@ -94,19 +97,19 @@ NodePtr Emitter::Reshape(const NodePtr &node, const ShapeVector &shape) const {
 }
 
 NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
-  return Emit(prim::kPrimMatMul->name(), {a, b},
-              {{"transpose_x1", MakeValue(transpose_a)},
-               {"transpose_x2", MakeValue(transpose_b)},
-               {"transpose_a", MakeValue(transpose_a)},
-               {"transpose_b", MakeValue(transpose_b)}});
+  return UnifyDtypeAndEmit(prim::kPrimMatMul->name(), a, b,
+                           {{"transpose_x1", MakeValue(transpose_a)},
+                            {"transpose_x2", MakeValue(transpose_b)},
+                            {"transpose_a", MakeValue(transpose_a)},
+                            {"transpose_b", MakeValue(transpose_b)}});
 }
 
 NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
-  return Emit(prim::kPrimBatchMatMul->name(), {a, b},
-              {{"transpose_x1", MakeValue(transpose_a)},
-               {"transpose_x2", MakeValue(transpose_b)},
-               {"transpose_a", MakeValue(transpose_a)},
-               {"transpose_b", MakeValue(transpose_b)}});
+  return UnifyDtypeAndEmit(prim::kPrimBatchMatMul->name(), a, b,
+                           {{"transpose_x1", MakeValue(transpose_a)},
+                            {"transpose_x2", MakeValue(transpose_b)},
+                            {"transpose_a", MakeValue(transpose_a)},
+                            {"transpose_b", MakeValue(transpose_b)}});
 }
 
 NodePtr Emitter::Transpose(const NodePtr &node, const ShapeVector &perm) const {
@@ -123,10 +126,10 @@ NodePtr Emitter::Transpose(const NodePtr &node, const ShapeVector &perm) const {
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {
-  if (node->dtype()->type_id() == kMetaTypeNone) {
-    return Emit(prim::kZerosLike, {Tensor(0)});
-  }
   if (node->isa<ValueNode>()) {
+    if (node->dtype()->type_id() == kMetaTypeNone) {
+      return Emit(prim::kZerosLike, {Tensor(0)});
+    }
     auto value_node = node->get<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto v = value_node->value();
@@ -204,6 +207,18 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
     return Reshape(x, need_reduce.second);
   }
   return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(keep_dims)}});
+}
+
+std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) const {
+  auto it1 = type_map_.find(lhs->dtype()->type_id());
+  auto it2 = type_map_.find(rhs->dtype()->type_id());
+  if (it1 == type_map_.end() || it2 == type_map_.end() || it1->second == it2->second) {
+    return {lhs, rhs};
+  }
+  if (it1->second < it2->second) {
+    return {this->Cast(lhs, rhs->dtype()), rhs};
+  }
+  return {lhs, this->Cast(rhs, lhs->dtype())};
 }
 
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Add(lhs, rhs); }

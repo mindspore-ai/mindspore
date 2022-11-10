@@ -523,7 +523,7 @@ NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vect
   auto output_shape_kept_dims = ReduceShape(input_shape, axis);
   auto y = ib->Reshape(out, output_shape_kept_dims);
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
-  auto indicators = ib->Cast(ib->Emit("Equal", {y, x}), ib->GetDtype(grad));
+  auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
   auto minn = 1e-24;
   auto min_num = ib->Tensor(minn, ib->GetDtype(grad));
   auto num_selected = ib->Reshape(ib->ReduceSum(indicators, axis, false), output_shape_kept_dims) + min_num;
@@ -588,9 +588,9 @@ NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
   auto log_lanczos_gamma_plus_one_half = log(lanczos_gamma_plus_one_half);
   auto inf = std::numeric_limits<double>::infinity();
   auto infinity = ib->Fill(inf, ib->GetShape(x), input_dtype->type_id());
-  auto need_to_reflect = ib->Emit("Less", {x, one_half});
+  auto need_to_reflect = ib->Less(x, one_half);
   auto neg_input = ib->Neg(x);
-  auto z = ib->Emit("Select", {need_to_reflect, neg_input, ib->Sub(x, one)});
+  auto z = ib->Select(need_to_reflect, neg_input, ib->Sub(x, one));
   auto CalculateReflectedX = [&ib, &z, &k_base_lanczos_coeff, &k_lanczos_coefficients]() -> NodePtr {
     auto z_dtype = ib->GetDtype(z);
     NodePtr reflex_x = ib->Tensor(k_base_lanczos_coeff, z_dtype);
@@ -612,18 +612,17 @@ NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
     log_sqrt_two_pi);
   auto abs_input = ib->Emit("Abs", {x});
   auto abs_frac_input = ib->Sub(abs_input, (ib->Emit("Floor", {abs_input})));
-  auto new_x = ib->Emit("Select", {ib->Emit("LessEqual", {x, zero}),
-                                   ib->Emit("Select", {ib->Emit("Equal", {abs_frac_input, zero}), infinity, x}), x});
+  auto new_x = ib->Select(ib->LessEqual(x, zero), ib->Select(ib->Equal(abs_frac_input, zero), infinity, x), x);
   auto reduced_frac_input =
-    ib->Emit("Select", {ib->Emit("Greater", {abs_frac_input, one_half}), ib->Sub(one, abs_frac_input), abs_frac_input});
+    ib->Select(ib->Greater(abs_frac_input, one_half), ib->Sub(one, abs_frac_input), abs_frac_input);
   auto reflection_denom =
     ib->Log(ib->Emit("Sin", {ib->Mul(ib->Tensor(pi, ib->GetDtype(reduced_frac_input)), reduced_frac_input)}));
   auto reflection =
-    ib->Emit("Select", {ib->Emit("IsFinite", {reflection_denom}),
-                        ib->Add((ib->Sub((ib->Neg(reflection_denom)), log_y)), ib->Tensor(log_pi, ib->GetDtype(log_y))),
-                        ib->Neg(reflection_denom)});
-  auto result = ib->Emit("Select", {need_to_reflect, reflection, log_y});
-  return ib->Emit("Select", {ib->Emit("IsFinite", {new_x}), result, infinity});
+    ib->Select(ib->Emit("IsFinite", {reflection_denom}),
+               ib->Add((ib->Sub((ib->Neg(reflection_denom)), log_y)), ib->Tensor(log_pi, ib->GetDtype(log_y))),
+               ib->Neg(reflection_denom));
+  auto result = ib->Select(need_to_reflect, reflection, log_y);
+  return ib->Select(ib->Emit("IsFinite", {new_x}), result, infinity);
 }
 
 bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types) {

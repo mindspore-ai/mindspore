@@ -884,9 +884,9 @@ REG_BPROP_BUILDER("Softplus").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
 REG_BPROP_BUILDER("Softsign").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Mul(
-    dout, ib->Emit("Div", {ib->Tensor(1, ib->GetDtype(x)),
-                           ib->Emit("Square", {ib->Add(ib->Tensor(1, ib->GetDtype(x)), (ib->Emit("Abs", {x})))})}));
+  auto dx =
+    ib->Mul(dout, ib->Div(ib->Tensor(1, ib->GetDtype(x)),
+                          ib->Emit("Square", {ib->Add(ib->Tensor(1, ib->GetDtype(x)), (ib->Emit("Abs", {x})))})));
   return {dx};
 });
 
@@ -1287,9 +1287,9 @@ REG_BPROP_BUILDER("CeLU").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x_dtype = ib->GetDtype(x);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto greater = ib->Emit("GreaterEqual", {x, ib->Tensor(0.0, x_dtype)});
+  auto greater = ib->GreaterEqual(x, ib->Tensor(0.0, x_dtype));
   greater = ib->Cast(greater, x_dtype);
-  auto lesser = ib->Emit("Less", {x, ib->Tensor(0.0, x_dtype)});
+  auto lesser = ib->Less(x, ib->Tensor(0.0, x_dtype));
   lesser = ib->Cast(lesser, x_dtype);
   auto dx = ib->Mul(
     dout,
@@ -1426,10 +1426,10 @@ REG_BPROP_BUILDER("NthElement").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto n = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto indicators = ib->Cast(ib->Emit("Equal", {ib->ExpandDims(out, -1), input_x}), ib->GetDtype(input_x));
+  auto indicators = ib->Equal(ib->ExpandDims(out, -1), input_x, ib->GetDtype(input_x));
   dout = ib->ExpandDims(dout, -1);
   auto num_select = ib->ExpandDims(ib->ReduceSum(indicators, {-1}), -1);
-  return {ib->Mul(ib->Emit("Div", {indicators, num_select}), dout), ib->ZerosLike(n)};
+  return {ib->Mul(ib->Div(indicators, num_select), dout), ib->ZerosLike(n)};
 });
 
 REG_BPROP_BUILDER("AdaptiveAvgPool3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
