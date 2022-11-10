@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -333,6 +333,7 @@ class OpenCLKernel : public LiteKernel {
   lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap_;
   static inline std::map<std::string, BaseTuningParameter> tuned_param_cache_;
 };
+
 template <class T>
 kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
