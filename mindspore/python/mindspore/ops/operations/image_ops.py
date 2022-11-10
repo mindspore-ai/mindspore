@@ -131,7 +131,7 @@ class AdjustHue(Primitive):
 
     Inputs:
         - **image** (Tensor): RGB image or images. The size of the last dimension must be 3.
-          the dtype is float16 or float32.  At least 3-D.
+          the dtype is float16 or float32. At least 3-D.
         - **delta** (Tensor): How much to add to the hue channel, the dtype is float32. Must be 0-D.
 
     Output:
@@ -139,9 +139,9 @@ class AdjustHue(Primitive):
 
     Raises:
         TypeError: If neither `image` nor `delta` is a tensor.
-        TypeError: If the dtype of image not float16 or float32.
-        TypeError: If the dtype of delta not float32.
-        ValueError: If image have at less than 3 dimensions.
+        TypeError: If the dtype of `image` is neither float16 nor float32.
+        TypeError: If the dtype of `delta` not float32.
+        ValueError: If the dimension of `image` is less than 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
