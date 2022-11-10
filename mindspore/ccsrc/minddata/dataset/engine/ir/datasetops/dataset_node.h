@@ -322,6 +322,10 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Shared pointer to the original object
   std::shared_ptr<DatasetNode> SetDatasetCache(const std::shared_ptr<DatasetCache> &cache);
 
+  /// \brief Setter function for descendant_of_cache_
+  /// \param[in] descendant_of_cache Indicator for whether this node is a descendant of cache.
+  void setDescendantOfCache(bool descendant_of_cache) { descendant_of_cache_ = descendant_of_cache; }
+
   /// \brief A helper templated function for casting "this" pointer to shared_ptr<derived>
   ///     Similar to shared_from_this, except this one will give you the derived class as shared_ptr
   /// \return A shared_ptr casted to the derived class

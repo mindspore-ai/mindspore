@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace dataset {
 MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_wkrs, queue_size, std::move(sampler)) {}
+    : ParallelOp(num_wkrs, queue_size, std::move(sampler)), sample_ids_(nullptr), curr_row_(0), prepared_data_{false} {}
 
 #ifdef ENABLE_PYTHON
 Status MappableLeafOp::ImageDecrypt(const std::string &path, std::shared_ptr<Tensor> *tensor,
@@ -156,6 +156,31 @@ Status MappableLeafOp::SendWaitFlagToWorker(int32_t worker_id) {
 
 Status MappableLeafOp::SendQuitFlagToWorker(int32_t worker_id) {
   RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockNone)));
+  return Status::OK();
+}
+
+Status MappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  row->clear();
+  if (!prepared_data_) {
+    RETURN_IF_NOT_OK(InitPullMode());
+    prepared_data_ = true;
+  }
+  if (sample_ids_ == nullptr) {
+    RETURN_IF_NOT_OK(this->InitSampler());
+    TensorRow sample_row;
+    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
+    CHECK_FAIL_RETURN_UNEXPECTED(sample_row.size() > 0, "GetNextRowPullMode: Expect at least one sample in sampler.");
+    sample_ids_ = sample_row[0];
+  }
+  if (curr_row_ + 1 > sample_ids_->Size()) {
+    *row = TensorRow(TensorRow::kFlagEOE);
+    return Status::OK();
+  }
+  int64_t key;
+  RETURN_IF_NOT_OK(sample_ids_->GetItemAt(&key, {curr_row_}));
+  RETURN_IF_NOT_OK(LoadTensorRow(key, row));
+  curr_row_++;
   return Status::OK();
 }
 }  // namespace dataset

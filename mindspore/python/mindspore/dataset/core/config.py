@@ -46,7 +46,8 @@ __all__ = ['set_sending_batches', 'load', '_init_device_info',
            'set_auto_offload', 'get_auto_offload',
            'set_enable_watchdog', 'get_enable_watchdog',
            'set_fast_recovery', 'get_fast_recovery',
-           'set_multiprocessing_timeout_interval', 'get_multiprocessing_timeout_interval']
+           'set_multiprocessing_timeout_interval', 'get_multiprocessing_timeout_interval',
+           'set_debug_mode', 'get_debug_mode']
 
 INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
@@ -832,3 +833,43 @@ def get_fast_recovery():
         >>> is_fast_recovery = ds.config.get_fast_recovery()
     """
     return _config.get_fast_recovery()
+
+
+def set_debug_mode(debug_mode_flag):
+    """
+    Set the debug_mode flag of the dataset pipeline
+    Notes:
+        1. If both debug_mode and auto_offload are enabled, then during runtime, auto_offload is forcibly disabled.
+        2. If both debug_mode is enabled and a dataset pipeline has Map operation with offload set, then offload is
+           ignored.
+        3. If both debug_mode is enabled and a dataset operation has cache set, then the cache is dropped.
+
+    Args:
+        debug_mode_flag (bool): Whether dataset pipeline debugger is enabled, which forces the pipeline
+            to run synchronously and sequentially.
+
+    Raises:
+        TypeError: If `debug_mode_flag` is not a boolean data type.
+
+    Examples:
+        >>> ds.config.set_debug_mode(True)
+    """
+    if not isinstance(debug_mode_flag, bool):
+        raise TypeError("debug_mode_flag isn't of type boolean.")
+    if debug_mode_flag:
+        logger.warning("MindData Debug mode is enabled. Performance will be impacted because the pipeline will be"
+                       " running in a single thread.")
+    _config.set_debug_mode(debug_mode_flag)
+
+
+def get_debug_mode():
+    """
+    Get the debug_mode flag of the dataset pipeline
+
+    Returns:
+        bool, whether enables dataset pipeline debugger
+
+    Examples:
+        >>> debug_mode = ds.config.get_debug_mode()
+    """
+    return _config.get_debug_mode()

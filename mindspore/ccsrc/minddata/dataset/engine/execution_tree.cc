@@ -260,7 +260,7 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
 }
 
 // Walks the tree to perform modifications to the tree in post-order to get it ready for execution.
-Status ExecutionTree::Prepare() {
+Status ExecutionTree::Prepare(bool is_pull_mode) {
   if (root_ == nullptr) {
     RETURN_STATUS_UNEXPECTED("Please assign one operator as the root of this tree.");
   }
@@ -279,7 +279,11 @@ Status ExecutionTree::Prepare() {
 
   // By iterating from the end of the FIFO queue, we simulate the post-order walk.
   for (auto rit = fifo.crbegin(); rit != fifo.crend(); ++rit) {
-    RETURN_IF_NOT_OK((*rit)->PrepareOperator());
+    if (!is_pull_mode) {
+      RETURN_IF_NOT_OK((*rit)->PrepareOperator());
+    } else {
+      RETURN_IF_NOT_OK((*rit)->PrepareOperatorPullBased());
+    }
   }
 
   // The tree is prepared.

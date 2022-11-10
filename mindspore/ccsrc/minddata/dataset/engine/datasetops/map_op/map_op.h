@@ -149,6 +149,8 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   /// \return vector of int
   std::vector<int32_t> GetMPWorkerPIDs() const override;
 
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
  private:
   // A helper function to create jobs for workers.
   Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job, int32_t worker_id);
@@ -214,6 +216,9 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   Status Launch() override;
   Status AddNewWorkers(int32_t num_new_workers) override;
   Status RemoveWorkers(int32_t num_workers) override;
+
+ private:
+  Status RebuildMapErrorMsg(const TensorRow &input_row, const std::string &op_name, Status *rc);
 };
 }  // namespace dataset
 }  // namespace mindspore

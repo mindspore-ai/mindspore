@@ -44,7 +44,11 @@ PythonRuntimeContext::~PythonRuntimeContext() {
   }
 }
 
-PythonIteratorConsumer *PythonRuntimeContext::GetPythonConsumer() {
-  return dynamic_cast<PythonIteratorConsumer *>(tree_consumer_.get());
+TreeConsumer *PythonRuntimeContext::GetPythonConsumer() {
+  if (GlobalContext::config_manager()->get_debug_mode()) {
+    return dynamic_cast<PythonPullBasedIteratorConsumer *>(tree_consumer_.get());
+  } else {
+    return dynamic_cast<PythonIteratorConsumer *>(tree_consumer_.get());
+  }
 }
 }  // namespace mindspore::dataset

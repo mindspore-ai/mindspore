@@ -185,8 +185,9 @@ class ExecutionTree {
   std::shared_ptr<DatasetOp> root() const { return root_; }
 
   /// \brief The prepare phase walks the tree in post-order to perform modifications to get it ready for execution.
+  /// \param is_pull_mode - an indicator if it's in pull mode or not
   /// \return Status The status code returned
-  Status Prepare();
+  Status Prepare(bool is_pull_mode = false);
 
   /// \brief Return the pointer to the TaskGroup
   /// \return raw pointer to the TaskGroup

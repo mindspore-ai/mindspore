@@ -160,11 +160,6 @@ class AlbumOp : public MappableLeafOp {
   /// \return Status The status code returned
   Status loadColumnData(const std::string &file, int32_t index, nlohmann::json js, TensorRow *row);
 
-  /// \brief Gets the next row
-  /// \param row[out] - Fetched TensorRow
-  /// \return Status The status code returned
-  Status GetNextRowPullMode(TensorRow *const row) override;
-
   /// Private function for computing the assignment of the column name map.
   /// \return Status The status code returned
   Status ComputeColMap() override;
@@ -177,9 +172,6 @@ class AlbumOp : public MappableLeafOp {
   int64_t sampler_ind_;
   int64_t dirname_offset_;
   std::vector<std::string> image_rows_;
-  TensorPtr sample_ids_;
-
-  uint32_t curr_row_;
 };
 }  // namespace dataset
 }  // namespace mindspore

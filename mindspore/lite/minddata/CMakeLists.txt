@@ -190,6 +190,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/opt/pre/add_skip_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/getter_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/input_validation_pass.cc
+        ${MINDDATA_DIR}/engine/opt/pre/debug_mode_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/cache_validation_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/node_removal_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/epoch_ctrl_pass.cc

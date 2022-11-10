@@ -340,5 +340,17 @@ Status ImageFolderOp::GetNumClasses(int64_t *num_classes) {
   num_classes_ = *num_classes;
   return Status::OK();
 }
+
+Status ImageFolderOp::InitPullMode() {
+  // to avoid the concurrent and multi end signal in StartAsyncWalk, explicitly set num_workers_ to 1
+  num_workers_ = 1;
+  if (folder_name_queue_->empty()) {
+    RETURN_IF_NOT_OK(StartAsyncWalk());
+  }
+  if (image_name_queue_->empty()) {
+    RETURN_IF_NOT_OK(PrescanWorkerEntry(id()));
+  }
+  return PrepareData();
+}
 }  // namespace dataset
 }  // namespace mindspore

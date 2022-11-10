@@ -93,6 +93,7 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
   set_cache_port(j.value("cachePort", cache_port_));
   set_num_connections(j.value("numConnections", num_connections_));
   set_cache_prefetch_size(j.value("cachePrefetchSize", cache_prefetch_size_));
+  set_debug_mode(j.value("debug_mode_flag", debug_mode_flag_));
   return Status::OK();
 }
 

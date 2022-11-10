@@ -16,6 +16,7 @@ set(DATASET_ENGINE_OPT_SRC_FILES
     pre/node_offload_pass.cc
     pre/node_removal_pass.cc
     pre/skip_pushdown_pass.cc
+    pre/debug_mode_pass.cc
     )
 
 if(ENABLE_PYTHON)

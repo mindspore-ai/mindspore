@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,10 @@ class CelebAOp : public MappableLeafOp {
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
+
+  /// Initialize pull mode, calls PrepareData() within
+  /// @return Status The status code returned
+  Status InitPullMode() override;
 
   std::string folder_path_;  // directory of celeba folder
   bool decode_;

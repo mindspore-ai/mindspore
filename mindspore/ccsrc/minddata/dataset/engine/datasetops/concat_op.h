@@ -74,6 +74,8 @@ class ConcatOp : public PipelineOp {
 
   Status GetNextRow(TensorRow *row) override;
 
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
   /// Check if the current sample will be taken or dropped
   /// \return bool
   bool IgnoreSample();

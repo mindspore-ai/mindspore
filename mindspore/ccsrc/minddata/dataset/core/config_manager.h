@@ -293,6 +293,14 @@ class ConfigManager {
   // @return - Flag to indicate whether md pipeline recovers fast in failover reset
   bool fast_recovery() const { return fast_recovery_; }
 
+  // setter function
+  // @param debug_mode_flag - Indicate whether the debug mode is on
+  void set_debug_mode(const bool debug_mode_flag) { debug_mode_flag_ = debug_mode_flag; }
+
+  // getter function
+  // @return - Flag to indicate whether the debug mode is on
+  bool get_debug_mode() const { return debug_mode_flag_; }
+
  private:
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
@@ -327,7 +335,8 @@ class ConfigManager {
   uint32_t multiprocessing_timeout_interval_;  // Multiprocessing timeout interval in seconds
   std::string autotune_json_filepath_;         // Filepath name of the final AutoTune Configuration JSON file
   bool dynamic_shape_{false};
-  bool fast_recovery_{true};  // Used for failover scenario to recover quickly or produce same augmentations
+  bool fast_recovery_{true};     // Used for failover scenario to recover quickly or produce same augmentations
+  bool debug_mode_flag_{false};  // Indicator for debug mode
 };
 }  // namespace dataset
 }  // namespace mindspore

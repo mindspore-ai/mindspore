@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "minddata/dataset/callback/callback_param.h"
@@ -450,6 +451,63 @@ std::vector<int32_t> MapOp::GetMPWorkerPIDs() const {
     return python_mp_->get_pids();
   }
   return DatasetOp::GetMPWorkerPIDs();
+}
+
+Status MapOp::GetNextRowPullMode(TensorRow *const row) {
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+  if (new_row.empty()) {
+    return Status::OK();
+  }
+  auto column_name_id_map = child_[0]->column_name_id_map();
+  // Apply transforms on tensor
+  for (auto &t : tfuncs_[0]) {
+    for (auto &col_name : in_columns_) {
+      TensorRow i_row, o_row;
+      auto index = column_name_id_map[col_name];
+      i_row.push_back(new_row.at(index));
+      Status rc = t->Compute(i_row, &o_row);
+      if (rc.IsError()) {
+        std::string op_name = t->Name();
+        RETURN_IF_NOT_OK(RebuildMapErrorMsg(new_row, op_name, &rc));
+      }
+      // For next transform
+      new_row[index] = std::move(o_row.at(0));
+    }
+  }
+  (*row) = std::move(new_row);
+  return Status::OK();
+}
+
+Status MapOp::RebuildMapErrorMsg(const TensorRow &input_row, const std::string &op_name, Status *rc) {
+  std::string err_msg = "";
+  // Need to remove the suffix "Op" whose length is 2
+  std::string abbr_op_name = op_name.substr(0, op_name.length() - 2);
+  err_msg += "map operation: [" + abbr_op_name + "] failed. ";
+  if (input_row.getPath().size() > 0 && !input_row.getPath()[0].empty()) {
+    err_msg += "The corresponding data file is: " + input_row.getPath()[0];
+    if (input_row.getPath().size() > 1) {
+      std::set<std::string> path_set;
+      path_set.insert(input_row.getPath()[0]);
+      for (auto j = 1; j < input_row.getPath().size(); j++) {
+        if (!input_row.getPath()[j].empty() && path_set.find(input_row.getPath()[j]) == path_set.end()) {
+          err_msg += ", " + input_row.getPath()[j];
+          path_set.insert(input_row.getPath()[j]);
+        }
+      }
+    }
+    err_msg += ". ";
+  }
+  std::string tensor_err_msg = rc->GetErrDescription();
+  if (rc->GetLineOfCode() < 0) {
+    err_msg += "Error description:\n";
+  }
+  err_msg += tensor_err_msg;
+  if (abbr_op_name == "PyFunc") {
+    RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, err_msg);
+  }
+  rc->SetErrDescription(err_msg);
+  return *rc;
 }
 }  // namespace dataset
 }  // namespace mindspore

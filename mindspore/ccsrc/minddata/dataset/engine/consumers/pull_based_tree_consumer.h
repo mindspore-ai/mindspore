@@ -23,6 +23,7 @@
 #include <vector>
 #include <cstddef>
 #include "minddata/dataset/engine/tree_adapter_lite.h"
+#include "minddata/dataset/engine/consumers/tree_consumer.h"
 
 namespace mindspore::dataset {
 
@@ -30,14 +31,17 @@ class TreeAdapterLite;
 class TensorRow;
 
 /// Consumer that iterates over the dataset and returns the rows one by one as a in a pull based fashion
-class PullBasedIteratorConsumer {
+class PullBasedIteratorConsumer : public TreeConsumer {
  public:
   /// Constructor
-  PullBasedIteratorConsumer();
+  /// \param num_epochs number of epochs. Default: 1.
+  explicit PullBasedIteratorConsumer(int32_t num_epochs = 1) : TreeConsumer(num_epochs) {
+    tree_adapter_lite_ = std::make_unique<TreeAdapterLite>();
+  }
 
   ~PullBasedIteratorConsumer() = default;
 
-  Status Init(std::shared_ptr<DatasetNode> root);
+  Status Init(std::shared_ptr<DatasetNode> root) override;
 
   /// \brief Returns the next row in a vector format
   /// \note This is currently a placeholder function
@@ -48,17 +52,22 @@ class PullBasedIteratorConsumer {
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
-  Status GetNextAsVector(std::vector<TensorPtr> *const out);
+  Status GetNextAsVector(std::vector<TensorPtr> *const out) override;
 
   /// Returns the next row in as a map
   /// \param[out] out std::map of string to Tensor
   /// \return Status error code
-  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *out);
+  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out) override;
 
   /// Returns the next row in as a vector
   /// \param[out] vec std::vector of pairs of string to Tensor
   /// \return Status error code
-  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec);
+  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) override;
+
+ protected:
+  /// Method to return the name of the consumer
+  /// \return string
+  std::string Name() override { return "PullBasedIteratorConsumer"; }
 
  private:
   std::unique_ptr<TreeAdapterLite> tree_adapter_lite_;

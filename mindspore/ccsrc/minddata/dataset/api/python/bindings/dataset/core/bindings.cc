@@ -77,6 +77,8 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_dynamic_shape", &ConfigManager::dynamic_shape)
                     .def("set_fast_recovery", &ConfigManager::set_fast_recovery)
                     .def("get_fast_recovery", &ConfigManager::fast_recovery)
+                    .def("set_debug_mode", &ConfigManager::set_debug_mode)
+                    .def("get_debug_mode", &ConfigManager::get_debug_mode)
                     .def("load", [](ConfigManager &c, const std::string &s) { THROW_IF_ERROR(c.LoadFile(s)); });
                 }));
 

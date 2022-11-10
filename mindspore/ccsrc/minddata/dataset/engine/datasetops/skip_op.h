@@ -52,6 +52,12 @@ class SkipOp : public PipelineOp {
 
   void SetOnceOnly(bool once_only) { once_only_ = once_only; }
 
+ protected:
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
  private:
   int32_t max_skips_;   // The number of skips that the user requested
   int32_t skip_count_;  // A counter for the current number of executed skips

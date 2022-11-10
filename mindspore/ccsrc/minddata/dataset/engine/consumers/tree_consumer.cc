@@ -174,7 +174,7 @@ Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
   return Status::OK();
 }
 
-Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *out) {
+Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *const out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   out->clear();
 

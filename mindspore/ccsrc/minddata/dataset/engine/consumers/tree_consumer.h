@@ -80,6 +80,23 @@ class TreeConsumer {
   Status InitAutoTune();
 #endif
 
+  /// Returns the next row in a vector format
+  /// \param[out] out std::vector of Tensors
+  /// \return Status error code
+  virtual Status GetNextAsVector(std::vector<TensorPtr> *const out) { return Status::OK(); }
+
+  /// Returns the next row in as a map
+  /// \param[out] out std::map of string to Tensor
+  /// \return Status error code
+  virtual Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out) { return Status::OK(); }
+
+  /// Returns the next row in as a vector
+  /// \param[out] out std::vector of pairs of string to Tensor
+  /// \return Status error code
+  virtual Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) {
+    return Status::OK();
+  }
+
  protected:
   /// The class owns the tree_adapter that handles execution tree operations.
   std::unique_ptr<TreeAdapter> tree_adapter_;
@@ -111,17 +128,17 @@ class IteratorConsumer : public TreeConsumer {
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
-  Status GetNextAsVector(std::vector<TensorPtr> *out);
+  Status GetNextAsVector(std::vector<TensorPtr> *const out) override;
 
   /// Returns the next row in as a map
   /// \param[out] out std::map of string to Tensor
   /// \return Status error code
-  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out);
+  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out) override;
 
   /// Returns the next row in as a vector
   /// \param[out] out std::vector of pairs of string to Tensor
   /// \return Status error code
-  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec);
+  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) override;
 
   Status RegisterProfilingManager() override;
 
