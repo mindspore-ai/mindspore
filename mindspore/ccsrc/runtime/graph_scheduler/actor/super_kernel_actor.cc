@@ -131,8 +131,8 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
                                  .get();
     // Ge backend maybe nullptr.
     if (input_device_tensor == nullptr) {
-      MS_LOG(WARNING) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
-                      << " indx:" << device_tensor_store_key.first;
+      MS_LOG(DEBUG) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
+                    << " index:" << device_tensor_store_key.first;
       continue;
     }
 
