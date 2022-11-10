@@ -34,7 +34,7 @@
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/pynative/op_task.h"
+#include "runtime/pynative/async/backend_op_task.h"
 #include "runtime/pynative/op_compiler.h"
 #include "include/backend/visible.h"
 
@@ -88,7 +88,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
-  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks);
+  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &build_tasks);
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
@@ -126,7 +126,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
 
-  void OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context);
+  void OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context);
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;
