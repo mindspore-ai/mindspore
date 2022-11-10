@@ -83,6 +83,7 @@ struct AclOptionCfgString {
   std::string buffer_optimize;
   std::string insert_op_config_file_path;
   std::string dynamic_image_size;
+  std::string aoe_mode;
 };
 
 struct MicroParamString {

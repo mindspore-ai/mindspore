@@ -214,7 +214,8 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
       {"dynamic_batch_size", acl_option_cfg_string_.dynamic_batch_size},
       {"buffer_optimize", acl_option_cfg_string_.buffer_optimize},
       {"insert_op_config_file_path", acl_option_cfg_string_.insert_op_config_file_path},
-      {"dynamic_image_size", acl_option_cfg_string_.dynamic_image_size}};
+      {"dynamic_image_size", acl_option_cfg_string_.dynamic_image_size},
+      {"aoe_mode", acl_option_cfg_string_.aoe_mode}};
     return SetMapData(map, parse_map, kAclOptionParam);
   }
   return RET_OK;
