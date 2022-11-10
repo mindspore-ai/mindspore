@@ -24,11 +24,41 @@
 #include "include/transform/graph_ir/utils.h"
 #include "external/ge/ge_api.h"
 #include "runtime/config.h"
+#include "mindspore/ccsrc/pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
-void GeDeviceContext::Initialize() { InitGe(MsContext::GetInstance()); }
+GeDeviceContext &GeDeviceContext::GetInstance() {
+  static GeDeviceContext context;
+  return context;
+}
 
-void GeDeviceContext::Destroy() { (void)FinalizeGe(MsContext::GetInstance()); }
+void GeDeviceContext::Initialize() {
+  std::lock_guard<std::mutex> locker(mutex_);
+  call_num_++;
+  if (is_initialized_) {
+    MS_LOG(INFO) << "Ge device context has been initialized.";
+    return;
+  }
+  mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());
+  context_ = MsContext::GetInstance();
+  InitGe(context_);
+  is_initialized_ = true;
+}
+
+void GeDeviceContext::Destroy() {
+  std::lock_guard<std::mutex> locker(mutex_);
+  call_num_--;
+  if (!is_initialized_) {
+    MS_LOG(INFO) << "Ge device context has not been initialized, can't be destroyed.";
+    return;
+  }
+  if (call_num_ != 0) {
+    MS_LOG(INFO) << "It is not last called, can't not be destroyed, call num: " << call_num_;
+    return;
+  }
+  (void)FinalizeGe(context_);
+  is_initialized_ = false;
+}
 
 void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   MS_EXCEPTION_IF_NULL(inst_context);

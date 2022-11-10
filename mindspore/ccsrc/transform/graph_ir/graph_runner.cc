@@ -27,7 +27,7 @@
 #include "sys/time.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/callbacks.h"
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
 #include "transform/graph_ir/callbacks_ge.h"
 #include "common/ge_inner_error_codes.h"
 #endif
@@ -197,7 +197,7 @@ Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<G
 
   // call ge::RunGraphAsync() to exec a graph;
   std::vector<GeTensor> ge_inputs;
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ConfigManager::GetInstance().dataset_mode() != DS_SINK_MODE) {
@@ -210,7 +210,7 @@ Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<G
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
-#ifdef ENABLE_D
+#if (defined ENABLE_D) || (defined ENABLE_HELPER)
   std::mutex mutex;
   std::condition_variable condition;
   bool is_finished = false;

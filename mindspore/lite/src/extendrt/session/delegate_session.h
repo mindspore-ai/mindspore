@@ -25,10 +25,6 @@
 #include "runtime/hardware/device_context.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 #include "extendrt/session/lite_graph_executor.h"
-#ifdef ENABLE_HELPER
-#include "extendrt/delegate/ascend_ge/ge_device_context.h"
-#include "extendrt/delegate/ascend_ge/ge_utils.h"
-#endif
 namespace mindspore {
 /// \brief Delegate Session implementation, use delegate api for inference.
 // TODO(zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
@@ -70,9 +66,6 @@ class GraphSinkSession : public InferSession {
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
-#ifdef ENABLE_HELPER
-  std::shared_ptr<GeDeviceContext> ge_context_ = nullptr;
-#endif
   Status InitGraphInputsOutputs();
   ConfigInfos config_infos_;
 };

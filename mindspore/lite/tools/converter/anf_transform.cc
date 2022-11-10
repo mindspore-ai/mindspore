@@ -679,7 +679,7 @@ bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_
 }
 
 STATUS AnfTransform::ProcOnlineTransform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
+  if (!RunOptimizerPass(old_graph, {"RemoveRedundantOpPass", "InferShapePass", "ConstFoldPass"})) {
     MS_LOG(WARNING) << "Run infershape opt pass failed.";
   }
   auto status = DoFormatForMindIR(old_graph, param);

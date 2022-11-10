@@ -19,12 +19,16 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "ops/batch_matmul.h"
+#include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
+  auto src_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
+  auto transpose_b = src_prim->GetAttr(mindspore::ops::kTransposeB);
   std::vector<int64_t> shape_vector;
   if (acl::GetShapeVectorFromCNode(cnode, &shape_vector) != RET_OK) {
     MS_LOG(ERROR) << "Get shape of cnode failed.";
@@ -37,6 +41,8 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
     ops::BatchMatMul batch_mat_mul;
     dst_prim = batch_mat_mul.GetPrim();
   }
+  dst_prim->AddAttr("transpose_x1", transpose_a);
+  dst_prim->AddAttr("transpose_x2", transpose_b);
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "MatMulFusion mapper failed.";
     return RET_ERROR;
