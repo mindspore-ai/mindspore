@@ -15,7 +15,7 @@
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
-from math import pi
+from math import pi, log
 
 import mindspore.ops as ops
 from mindspore.ops.primitive import constexpr
@@ -3247,6 +3247,100 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
 
 
 @constexpr
+def _check_gaussian_nll_loss(full, eps, reduction):
+    validator.check_value_type('full', full, [bool], 'gaussian_nll_loss')
+    validator.check_positive_float(eps, 'eps', 'gaussian_nll_loss')
+    validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', 'gaussian_nll_loss')
+
+
+def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
+    r"""
+    Gaussian negative log likelihood loss.
+
+    The targets are treated as samples from Gaussian distributions with expectations and variances predicted by the
+    neural network. For a `target` tensor modelled as having Gaussian distribution with a tensor of expectations
+    `x` and a tensor of positive variances `var` the loss is:
+
+    .. math::
+        \text{loss} = \frac{1}{2}\left(\log\left(\text{max}\left(\text{var},
+        \ \text{eps}\right)\right) + \frac{\left(\text{x} - \text{target}\right)^2}
+        {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
+
+    where `eps` is used for stability of :math:`log`. By default, the constant term of the loss function is omitted
+    unless :math:`full=True`. If the shape of :math:`var` is not the same as `x` (due to a
+    homoscedastic assumption), it must either have a final dimension of 1 or have one fewer dimension
+    (with all other sizes being the same) for correct broadcasting.
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(N, *)` or :math:`(*)` where :math:`*` means any number of
+            additional dimensions.
+        target (Tensor): Tensor of shape :math:`(N, *)` or :math:`(*)`, same shape as the x, or same shape
+            as the x but with one dimension equal to 1 (to allow broadcasting).
+        var (Tensor): Tensor of shape :math:`(N, *)` or :math:`(*)`, same shape as x, or same shape as the x
+          but with one dimension equal to 1, or same shape as the x but with one fewer dimension
+          (to allow for broadcasting).
+        full (bool): Include the constant term in the loss calculation. When :math:`full=True`, the constant term
+            `const.` will be :math:`0.5 * log(2\pi)`. Default: False.
+        eps (float): Used to improve the stability of log function must be greater than 0. Default: 1e-6.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
+
+    Returns:
+        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `target` is not a Tensor.
+        TypeError: If `var` is not a Tensor.
+        TypeError: If `full` is not a bool.
+        TypeError: If `eps` is not a float.
+        ValueError: If `eps` is not a float within [0, inf).
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> import mindspore.common.dtype as mstype
+        >>> arr1 = np.arange(8).reshape((4, 2))
+        >>> arr2 = np.array([2, 3, 1, 4, 6, 4, 4, 9]).reshape((4, 2))
+        >>> x = Tensor(arr1, mstype.float32)
+        >>> var = Tensor(np.ones((4, 1)), mstype.float32)
+        >>> target = Tensor(arr2, mstype.float32)
+        >>> output = ops.gaussian_nll_loss(x, target, var)
+        >>> print(output)
+
+    Reference:
+        Nix, D. A. and Weigend, A. S., "Estimating the mean and variance of the
+        target probability distribution", Proceedings of 1994 IEEE International
+        Conference on Neural Networks (ICNN'94), Orlando, FL, USA, 1994, pp. 55-60
+        vol.1, doi: 10.1109/ICNN.1994.374138.
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For 'gaussian_nll_loss', 'x' must be a tensor, but got {type(x)}.")
+    if not isinstance(target, Tensor):
+        raise TypeError(f"For 'gaussian_nll_loss', 'target' must be a tensor, but got {type(target)}.")
+    if not isinstance(var, Tensor):
+        raise TypeError(f"For 'gaussian_nll_loss', 'var' must be a tensor, but got {type(var)}.")
+    _check_gaussian_nll_loss(full, eps, reduction)
+    max_op = P.Maximum()
+    log_op = P.Log()
+    square_op = P.Square()
+    maxima = max_op(var, eps)
+    logarithm = log_op(maxima)
+    squared_loss = square_op(x - target)
+    c = 0 if not full else 0.5 * log(2 * pi)
+    loss = 0.5 * (logarithm + squared_loss / maxima) + c
+    if reduction == 'mean':
+        loss = loss.mean()
+    elif reduction == 'sum':
+        loss = loss.sum()
+    return loss
+
+
+@constexpr
 def _check_hinge_embedding_loss(shape, shape2, prim_name):
     if shape2 != shape:
         raise ValueError(f"For '{prim_name}' the input tensor and the labels must have the same shape.")
@@ -4719,6 +4813,7 @@ __all__ = [
     'elu',
     'gelu',
     'hinge_embedding_loss',
+    'gaussian_nll_loss',
     'lp_pool1d',
     'lp_pool2d',
     'max_unpool1d',
