@@ -137,7 +137,7 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetBody([](const BpropIRBuilder *ib
   auto dense = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
   auto dense_grad = ib->Emit("SparseTensorDenseMatmul", {indices, values, dense_shape, dout},
-                             {{"adjoint_st", MakeValue(!adj_s)}, {"adjoint_dt", MakeValue(adj_d)}});
+                             {{"adjoint_st", MakeValue(!adj_s)}, {"adjoint_dt", MakeValue(false)}});
   auto perm = ib->Value<ShapeVector>({1, 0});
   if (adj_d) {
     dense_grad = ib->Emit("Transpose", {dense_grad, perm});
@@ -207,8 +207,7 @@ REG_BPROP_BUILDER("CSRReduceSum").SetBody([](const BpropIRBuilder *ib) -> NodePt
   auto shape_vec = GetAxisValue(shape);
   auto output_shape_kept_dims = ReduceShape(shape_vec, GetAxisValue(axis));
   auto tile_scaling = TupleDiv(shape_vec, output_shape_kept_dims);
-  auto values_grad_dense =
-    ib->Emit("Tile", {ib->Reshape(dout, output_shape_kept_dims), ib->Value<ShapeVector>(tile_scaling)});
+  auto values_grad_dense = ib->Tile(ib->Reshape(dout, output_shape_kept_dims), tile_scaling);
   auto values_grad = ib->Emit("CSRGather", {indptr, indices, values_grad_dense, shape});
   return {ib->ZerosLike(indptr), ib->ZerosLike(indices), values_grad, ib->ZerosLike(ib->Value<int64_t>(0)),
           ib->ZerosLike(axis)};
@@ -537,17 +536,17 @@ REG_BPROP_BUILDER("SparseSegmentSqrtNWithNumSegments").SetBody([](const BpropIRB
 });
 
 REG_BPROP_BUILDER("SparseSegmentSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  if (ib->GetTargetFromContext() == kCPUDevice) {
-    return CommonSparseSegmentBpropForCpu(ib, false);
+  if (ib->GetTargetFromContext() == kGPUDevice) {
+    return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", false);
   }
-  return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", false);
+  return CommonSparseSegmentBpropForCpu(ib, false);
 });
 
 REG_BPROP_BUILDER("SparseSegmentSumWithNumSegments").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  if (ib->GetTargetFromContext() == kCPUDevice) {
-    return CommonSparseSegmentBpropForCpu(ib, true);
+  if (ib->GetTargetFromContext() == kGPUDevice) {
+    return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", true);
   }
-  return CommonSparseSegmentBprop(ib, "SparseSegmentSumGrad", true);
+  return CommonSparseSegmentBpropForCpu(ib, true);
 });
 
 REG_BPROP_BUILDER("SparseTensorDenseAdd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {

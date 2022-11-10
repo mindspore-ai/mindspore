@@ -514,7 +514,7 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<in
   auto output_shape_kept_dims = ReduceShape(input_shape, axis);
   auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
-  return ib->Emit("Tile", {grad, ib->Value(tile_scaling)});
+  return ib->Tile(grad, tile_scaling);
 }
 
 NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &out,
@@ -537,6 +537,11 @@ NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int
   auto onehot_axis = x_axis;
   NodePtr dout_expand;
   NodePtr new_out = out;
+  if (onehot_axis >= SizeToLong(x_shape.size())) {
+    onehot_axis = -1;
+  } else if (onehot_axis < -1) {
+    onehot_axis += SizeToLong(x_shape.size());
+  }
   if (keep_dims) {
     dout_expand = ib->TupleGetItem(dout, 1);
     if (is_max) {
@@ -547,10 +552,7 @@ NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int
   } else {
     dout_expand = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(onehot_axis)});
   }
-  auto out_shape = ib->GetShape(ib->TupleGetItem(new_out, 0));
-  if (onehot_axis >= SizeToLong(out_shape.size())) {
-    onehot_axis = -1;
-  }
+
   auto type_x = ib->GetDtype(x);
   auto on_value = ib->Tensor(1, type_x);
   auto off_value = ib->Tensor(0, type_x);

@@ -600,10 +600,11 @@ REG_BPROP_BUILDER("CumProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
+  auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
   auto prod =
-    ib->Emit("CumProd", {x, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}});
+    ib->Emit("CumProd", {x, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(reverse)}});
   out = ib->Emit("CumSum", {ib->Mul(prod, dout), axis},
-                 {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", ib->GetAttr("reverse")}});
+                 {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}});
   return {ib->RealDiv(out, x), ib->ZerosLike(axis)};
 });
 
@@ -680,7 +681,7 @@ REG_BPROP_BUILDER("Xdivy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto x_dtype = ib->GetDtype(x);
-  auto not_zero_x = ib->Cast(ib->Emit("NotEqual", {x, ib->Tensor(0.0)}), x_dtype);
+  auto not_zero_x = ib->Cast(ib->Emit("NotEqual", {x, ib->Tensor(0.0, x_dtype)}), x_dtype);
   auto bc_x = (ib->Emit("Xdivy", {not_zero_x, y})) * dout;
   auto bc_y = (ib->Emit("Xdivy", {-x, ib->Emit("Square", {y})})) * dout;
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
@@ -734,7 +735,7 @@ REG_BPROP_BUILDER("Xlogy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto x_dtype = ib->GetDtype(x);
-  auto not_zero_x = ib->Cast(ib->Emit("NotEqual", {x, ib->Tensor(0.0)}), x_dtype);
+  auto not_zero_x = ib->Cast(ib->Emit("NotEqual", {x, ib->Tensor(0.0, x_dtype)}), x_dtype);
   auto bc_x = ib->Emit("Xlogy", {not_zero_x, y}) * dout;
   auto bc_y = ib->Emit("Xdivy", {x, y}) * dout;
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
@@ -912,14 +913,14 @@ REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto output_shape_kept_dims = ReduceShape(input_shape, GetAxisValue(axis));
   dout = ib->Reshape(dout, output_shape_kept_dims);
   auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
-  auto grad = ib->Emit("Tile", {dout, ib->Value<ShapeVector>(tile_scaling)});
+  auto grad = ib->Tile(dout, tile_scaling);
   auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetAxisValue(axis));
   auto permuted = ib->Transpose(x, perm);
   auto permuted_shape = ib->GetShape(permuted);
   auto reshaped = ib->Reshape(permuted, pack_shape);
-  auto left = ib->Emit("CumProd", {reshaped, ib->Tensor(0, ib->GetDtype(axis))},
+  auto left = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
                        {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(false)}});
-  auto right = ib->Emit("CumProd", {reshaped, ib->Tensor(0, ib->GetDtype(axis))},
+  auto right = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
                         {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
   out = ib->Mul(ib->Transpose(y, InvertPermutation(perm)), grad);
@@ -1094,7 +1095,7 @@ REG_BPROP_BUILDER("MatrixSolve").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   auto a_shape = ib->GetShape(input_a);
   auto matrix_rank = a_shape.size();
   auto EmitBmmGrad = [&ib](const NodePtr &a, const NodePtr &b) -> NodePtr {
-    auto grad_a = ib->BatchMatMul(a, b, false, false);
+    auto grad_a = ib->BatchMatMul(a, b, false, true);
     grad_a = ib->Emit("Neg", {grad_a});
     return grad_a;
   };
@@ -1116,15 +1117,6 @@ REG_BPROP_BUILDER("MatrixSolve").SetBody([](const BpropIRBuilder *ib) -> NodePtr
       return {EmitMatmulGrad(grad_b, out), grad_b};
     }
   }
-});
-
-REG_BPROP_BUILDER("MatrixInverse").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->MatMul(dout, out, false, true);
-  dx = ib->MatMul(out, dx, true, false);
-  dx = ib->Emit("Neg", {dx});
-  return {dx};
 });
 
 REG_BPROP_BUILDER("MatrixExp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -1279,6 +1271,7 @@ REG_BPROP_BUILDER("Lerp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto weight = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   dout = ib->Cast(dout, kFloat32);
+  auto dout_type = ib->GetDtype(dout);
   NodePtr sub_w, mul_w;
   if (weight->isa<ValueNode>()) {
     auto val_weight = weight->get<ValueNodePtr>();
@@ -1286,8 +1279,8 @@ REG_BPROP_BUILDER("Lerp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
     auto v = val_weight->value();
     MS_EXCEPTION_IF_NULL(v);
     auto val = GetValue<float>(v);
-    sub_w = ib->Tensor(1.0 - val, ib->GetDtype(dout));
-    mul_w = ib->Tensor(val, ib->GetDtype(dout));
+    sub_w = ib->Tensor(1.0 - val, dout_type);
+    mul_w = ib->Tensor(val, dout_type);
   } else {
     sub_w = ib->Sub(ib->Tensor(1.0, ib->GetDtype(weight)), weight);
     mul_w = weight;
@@ -1424,7 +1417,8 @@ REG_BPROP_BUILDER("Addcdiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   std::unordered_set<TypeId> type_list{TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat16,
                                        TypeId::kNumberTypeFloat64};
   auto dout_typeptr = ib->GetDtype(dout);
-  if (type_list.count(dout_typeptr->type_id()) > 0) {
+  bool need_cast = type_list.count(dout_typeptr->type_id()) > 0;
+  if (need_cast) {
     input_data = ib->Cast(input_data, kFloat32);
     x1 = ib->Cast(x1, kFloat32);
     x2 = ib->Cast(x2, kFloat32);
@@ -1443,7 +1437,7 @@ REG_BPROP_BUILDER("Addcdiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   dx2 = tmp_dx2[1];
   auto tmp_dvalue = BinopGradCommon(ib, inner_out, value, dout, dvalue);
   dvalue = tmp_dvalue[1];
-  if (type_list.count(dout_typeptr->type_id()) > 0) {
+  if (need_cast) {
     dinput_data = ib->Cast(dinput_data, dout_typeptr);
     dx1 = ib->Cast(dx1, dout_typeptr);
     dx2 = ib->Cast(dx2, dout_typeptr);
@@ -1462,7 +1456,8 @@ REG_BPROP_BUILDER("Addcmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
                                        TypeId::kNumberTypeInt64,   TypeId::kNumberTypeUInt8,
                                        TypeId::kNumberTypeFloat16, TypeId::kNumberTypeFloat64};
   auto dout_typeptr = ib->GetDtype(dout);
-  if (type_list.count(dout_typeptr->type_id()) > 0) {
+  bool need_cast = type_list.count(dout_typeptr->type_id()) > 0;
+  if (need_cast) {
     input_data = ib->Cast(input_data, kFloat32);
     x1 = ib->Cast(x1, kFloat32);
     x2 = ib->Cast(x2, kFloat32);
@@ -1481,7 +1476,7 @@ REG_BPROP_BUILDER("Addcmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   dx2 = tmp_dx2[1];
   auto tmp_dvalue = BinopGradCommon(ib, inner_out, value, dout, dvalue);
   dvalue = tmp_dvalue[1];
-  if (type_list.count(dout_typeptr->type_id()) > 0) {
+  if (need_cast) {
     dinput_data = ib->Cast(dinput_data, dout_typeptr);
     dx1 = ib->Cast(dx1, dout_typeptr);
     dx2 = ib->Cast(dx2, dout_typeptr);
@@ -1516,8 +1511,8 @@ REG_BPROP_BUILDER("LpNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
     return {ib->Mul(input_scaled, scale_v)};
   } else {
     auto input_x_abs = ib->Emit("Abs", {input_x});
-    auto input_scaled = ib->Mul(ib->Pow(input_x_abs, ib->Tensor(p - 2)), input_x);
-    auto scale_v = ib->RealDiv(dout, ib->Pow(out, ib->Tensor(p - 1)));
+    auto input_scaled = ib->Mul(ib->Pow(input_x_abs, ib->Tensor(p - 2, ib->GetDtype(input_x_abs))), input_x);
+    auto scale_v = ib->RealDiv(dout, ib->Pow(out, ib->Tensor(p - 1, ib->GetDtype(out))));
     return {ib->Mul(input_scaled, scale_v)};
   }
 });

@@ -591,7 +591,7 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtr
                          {"format", MakeValue("NCHW")}});
     auto ind = ib->TupleGetItem(tmp, 1);
     auto batch = ib->Tensor(Range(b), TypeIdToType(TypeId::kNumberTypeInt32));
-    batch = ib->Emit("Tile", {ib->Reshape(batch, {-1, 1}), ib->Value<std::vector<int64_t>>({1, (c * h) * w})});
+    batch = ib->Tile(ib->Reshape(batch, {-1, 1}), {1, (c * h) * w});
     auto gather_ind =
       ib->Emit("Stack", {ib->MakeTuple({batch, ib->Reshape(ind, {b, -1})})}, {{"axis", MakeValue<int64_t>(-1)}});
     dgrad = ib->Reshape(ib->Emit("GatherNd", {ib->Reshape(dout, {b, -1}), gather_ind}), {b, c, h, w});
@@ -780,7 +780,7 @@ REG_BPROP_BUILDER("BiasAddGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtr
     tile_mults = ShapeVector(dy_shape.begin(), dy_shape.end() - 1) + one_vec;
   }
   auto expanded_grad = ib->Reshape(dout, expanded_shape);
-  auto tiled_grad = ib->Emit("Tile", {expanded_grad, ib->Value<ShapeVector>(tile_mults)});
+  auto tiled_grad = ib->Tile(expanded_grad, tile_mults);
   return {tiled_grad};
 });
 

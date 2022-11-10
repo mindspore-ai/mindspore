@@ -57,6 +57,10 @@ class Emitter {
   NodePtr Sign(const NodePtr &node) const { return Emit(prim::kPrimSign->name(), {node}); }
   NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) const;
   NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) const {
+    bool is_all_one = std::all_of(multiples.begin(), multiples.end(), [](int64_t shp) { return shp == 1; });
+    if (is_all_one && node->shape().size() >= multiples.size()) {
+      return node;
+    }
     return Emit(kTileOpName, {node, Value(multiples)});
   }
   NodePtr Concat(const NodePtrList &inputs, int64_t axis) const {
