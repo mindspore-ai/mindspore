@@ -132,6 +132,9 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Adam
     mindspore.ops.AdamWeightDecay
     mindspore.ops.AdaptiveAvgPool2D
+    mindspore.ops.AdaptiveAvgPool3D
+    mindspore.ops.AdaptiveMaxPool2D
+    mindspore.ops.AdaptiveMaxPool3D
     mindspore.ops.ApplyAdadelta
     mindspore.ops.ApplyAdagrad
     mindspore.ops.ApplyAdagradDA
@@ -185,6 +188,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     :nosignatures:
     :template: classtemplate.rst
     
+    mindspore.ops.AdjustHue
     mindspore.ops.BoundingBoxDecode
     mindspore.ops.BoundingBoxEncode
     mindspore.ops.CheckValid

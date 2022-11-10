@@ -132,6 +132,9 @@ Optimizer
     mindspore.ops.Adam
     mindspore.ops.AdamWeightDecay
     mindspore.ops.AdaptiveAvgPool2D
+    mindspore.ops.AdaptiveAvgPool3D
+    mindspore.ops.AdaptiveMaxPool2D
+    mindspore.ops.AdaptiveMaxPool3D
     mindspore.ops.ApplyAdadelta
     mindspore.ops.ApplyAdagrad
     mindspore.ops.ApplyAdagradDA
@@ -185,6 +188,7 @@ Image Processing
     :nosignatures:
     :template: classtemplate.rst
     
+    mindspore.ops.AdjustHue
     mindspore.ops.BoundingBoxDecode
     mindspore.ops.BoundingBoxEncode
     mindspore.ops.CheckValid
