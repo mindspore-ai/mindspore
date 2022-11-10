@@ -651,6 +651,46 @@ def sub(x, y):
     return tensor_sub(x, y)
 
 
+def subtract(x, other, *, alpha=1):
+    r"""
+    Performs the element-wise subtraction of input tensors.
+
+    .. math::
+        output[i] = x[i] - alpha * y[i]
+
+    Args:
+        other (Union[Tensor, number.Number]): The tensor or number to be subtracted.
+
+    Keyword Args:
+        alpha (Number): The multiplier for `other`. Default: 1.
+
+    Returns:
+        Tensor, has the same shape and dtype as input tensors.
+
+    Raises:
+        TypeError: `x` or `other` is neither Tensor nor number.Number.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([4, 5, 6]), mindspore.float32)
+        >>> y = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> z = subtract(x, y, alpha=1)
+        >>> print(z)
+        [3. 3. 3.]
+    """
+    return tensor_sub(x, alpha * other)
+
+
+def true_divide(dividend, divisor):
+    r"""
+    Alias for Tensor.div() with :math:`rounding\_mode=None`.
+    For details, please refer to :func:`mindspore.ops.div`.
+    """
+    return div(dividend, divisor, rounding_mode=None)
+
+
 def mul(x, y):
     r"""
     Multiplies two tensors element-wise.
@@ -7076,10 +7116,12 @@ __all__ = [
     'addr',
     'tensor_sub',
     'sub',
+    'subtract',
     'tensor_mul',
     'mul',
     'tensor_div',
     'div',
+    'true_divide',
     'tensor_floordiv',
     'floor_div',
     'floordiv',
