@@ -133,6 +133,8 @@
     mindspore.Tensor.item
     mindspore.Tensor.itemset
     mindspore.Tensor.itemsize
+    mindspore.Tensor.lcm
+    mindspore.Tensor.ldexp
     mindspore.Tensor.le
     mindspore.Tensor.lerp
     mindspore.Tensor.less

@@ -191,6 +191,8 @@ Element-by-Element Operations
     mindspore.ops.floor_mod
     mindspore.ops.inv
     mindspore.ops.invert
+    mindspore.ops.lcm
+    mindspore.ops.ldexp
     mindspore.ops.lerp
     mindspore.ops.log
     mindspore.ops.log1p
