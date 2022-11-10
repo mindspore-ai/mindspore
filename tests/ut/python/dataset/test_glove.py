@@ -138,6 +138,7 @@ def test_glove_build_from_file():
         res_array = np.array(res[ind], dtype=np.float32)
         assert np.array_equal(res_array, d["text"]), ind
         ind += 1
+    assert ind == 7
 
 
 def test_glove_build_from_file_eager():
@@ -214,10 +215,6 @@ def test_glove_invalid_input():
                        " but got <class 'str'>.", max_vectors="1")
     test_invalid_input("invalid token parameter type as a float", DATASET_ROOT_PATH + "glove.6B.test.txt",
                        error=RuntimeError, error_msg="input tensor type should be string.", token=1.0)
-    test_invalid_input("invalid lower_case_backup parameter type as a string", DATASET_ROOT_PATH + "glove.6B.test.txt",
-                       error=TypeError, error_msg="Argument lower_case_backup with value True is " \
-                       "not of type [<class 'bool'>],"
-                       " but got <class 'str'>.", lower_case_backup="True")
     test_invalid_input("invalid lower_case_backup parameter type as a string", DATASET_ROOT_PATH + "glove.6B.test.txt",
                        error=TypeError, error_msg="Argument lower_case_backup with value True is " \
                        "not of type [<class 'bool'>],"

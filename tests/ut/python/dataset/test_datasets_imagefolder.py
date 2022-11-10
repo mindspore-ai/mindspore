@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""
+Test ImageFolderDataset
+"""
 import os
 import shutil
 import numpy as np
@@ -20,6 +23,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
+from util import config_get_set_seed
 
 DATA_DIR = "../data/dataset/testPK/data"
 DATA_DIR_2 = "../data/dataset/testImageNetData2/train"
@@ -1011,90 +1015,118 @@ def test_imagefolder_decrypt():
         shutil.rmtree(DATA_DIR_3)
 
 
+def test_imagefolder_error_sample_sourceop():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with sample errors. Include just source op in pipeline.
+    Expectation: The dataset is processed as expected.
+    """
+
+    def test_config(my_seed, my_error_sample_data_file):
+        # Set configuration
+        # Note: This test depends on the seed value.  An expected exception is not raised with some other seed values.
+        original_seed = config_get_set_seed(my_seed)
+
+        # For ImageFolderDataset, use decode=False
+        data1 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1, decode=False)
+        count = 0
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            count += 1
+        assert count == 3
+
+        # For ImageFolderDataset, use decode=True
+        data2 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1, decode=True)
+        with pytest.raises(RuntimeError) as error_info:
+            for _ in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
+                pass
+        assert "Invalid image" in str(error_info.value)
+
+        # Restore configuration
+        ds.config.set_seed(original_seed)
+
+    # Test empty sample
+    test_config(2, "../data/dataset/testImageNetError/Sample1_empty/train")
+    # Test corrupt sample
+    test_config(3, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train")
+    # Test text sample, instead of image sample
+    test_config(1, "../data/dataset/testImageNetError/Sample3_text/train")
+
+
+def test_imagefolder_error_sample_mapop():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with sample errors. Include map op in pipeline.
+    Expectation: The dataset is processed as expected.
+        Note: The invalid JPEG file is detected.
+    """
+
+    def test_config(my_seed, my_error_sample_data_file):
+        # Set configuration
+        # Note: This test depends on the seed value.  An expected exception is not raised with some other seed values.
+        original_seed = config_get_set_seed(my_seed)
+
+        # For ImageFolderDataset, use decode default (of False)
+        data3 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1)
+        # Add map op to the pipeline. Use C++ implemented ops
+        data3 = data3.map(operations=[vision.Decode(),
+                                      vision.HorizontalFlip()],
+                          input_columns=["image"], num_parallel_workers=1)
+        with pytest.raises(RuntimeError) as error_info:
+            for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
+                pass
+        assert "map operation: [Decode] failed" in str(error_info.value)
+
+        # For ImageFolderDataset, use decode default (of False)
+        data4 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1)
+        # Add map op to the pipeline. Use Python implemented ops
+        data4 = data4.map(operations=[vision.Decode(to_pil=True),
+                                      vision.RandomHorizontalFlip(0.7)],
+                          input_columns=["image"], num_parallel_workers=1)
+        with pytest.raises(RuntimeError) as error_info:
+            for _ in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
+                pass
+        assert "map operation: [PyFunc] failed" in str(error_info.value)
+
+        # Restore configuration
+        ds.config.set_seed(original_seed)
+
+    # Test empty sample
+    test_config(2, "../data/dataset/testImageNetError/Sample1_empty/train")
+    # Test corrupt sample
+    test_config(3, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train")
+    # Test text sample, instead of image sample
+    test_config(1, "../data/dataset/testImageNetError/Sample3_text/train")
+
+
 if __name__ == '__main__':
     test_imagefolder_basic()
-    logger.info('test_imagefolder_basic Ended.\n')
-
     test_imagefolder_numsamples()
-    logger.info('test_imagefolder_numsamples Ended.\n')
-
     test_sequential_sampler()
-    logger.info('test_sequential_sampler Ended.\n')
-
     test_random_sampler()
-    logger.info('test_random_sampler Ended.\n')
-
     test_distributed_sampler()
-    logger.info('test_distributed_sampler Ended.\n')
-
     test_pk_sampler()
-    logger.info('test_pk_sampler Ended.\n')
-
     test_subset_random_sampler()
-    logger.info('test_subset_random_sampler Ended.\n')
-
     test_weighted_random_sampler()
-    logger.info('test_weighted_random_sampler Ended.\n')
-
     test_weighted_random_sampler_exception()
-    logger.info('test_weighted_random_sampler_exception Ended.\n')
-
     test_chained_sampler_01()
-    logger.info('test_chained_sampler_01 Ended.\n')
-
     test_chained_sampler_02()
-    logger.info('test_chained_sampler_02 Ended.\n')
-
     test_chained_sampler_03()
-    logger.info('test_chained_sampler_03 Ended.\n')
-
     test_chained_sampler_04()
-    logger.info('test_chained_sampler_04 Ended.\n')
-
     test_chained_sampler_05()
-    logger.info('test_chained_sampler_05 Ended.\n')
-
     test_chained_sampler_06()
-    logger.info('test_chained_sampler_06 Ended.\n')
-
     test_chained_sampler_07()
-    logger.info('test_chained_sampler_07 Ended.\n')
-
     test_chained_sampler_08()
-    logger.info('test_chained_sampler_08 Ended.\n')
-
     test_imagefolder_numshards()
-    logger.info('test_imagefolder_numshards Ended.\n')
-
     test_imagefolder_shardid()
-    logger.info('test_imagefolder_shardid Ended.\n')
-
     test_imagefolder_noshuffle()
-    logger.info('test_imagefolder_noshuffle Ended.\n')
-
     test_imagefolder_extrashuffle()
-    logger.info('test_imagefolder_extrashuffle Ended.\n')
-
     test_imagefolder_classindex()
-    logger.info('test_imagefolder_classindex Ended.\n')
-
     test_imagefolder_negative_classindex()
-    logger.info('test_imagefolder_negative_classindex Ended.\n')
-
     test_imagefolder_extensions()
-    logger.info('test_imagefolder_extensions Ended.\n')
-
     test_imagefolder_decode()
-    logger.info('test_imagefolder_decode Ended.\n')
-
     test_imagefolder_rename()
-    logger.info('test_imagefolder_rename Ended.\n')
-
     test_imagefolder_zip()
-    logger.info('test_imagefolder_zip Ended.\n')
-
     test_imagefolder_exception()
-    logger.info('test_imagefolder_exception Ended.\n')
-
     test_imagefolder_decrypt()
-    logger.info('test_imagefolder_decrypt Ended.\n')
+    test_imagefolder_error_sample_sourceop()
+    test_imagefolder_error_sample_mapop()
