@@ -1025,6 +1025,20 @@ class Tensor(Tensor_):
         validator.check_value_type('diagonal', diagonal, [int], 'triu')
         return tensor_operator_registry.get('triu')(diagonal)(self)
 
+    def addbmm(self, batch1, batch2, *, beta=1, alpha=1):
+        r"""
+        For details, please refer to :func:`mindspore.ops.addbmm`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('addbmm')(self, batch1, batch2, beta=beta, alpha=alpha)
+
+    def addmm(self, mat1, mat2, *, beta=1, alpha=1):
+        r"""
+        For details, please refer to :func:`mindspore.ops.addmm`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('addmm')(self, mat1, mat2, beta=beta, alpha=alpha)
+
     def addr(self, vec1, vec2, beta=1, alpha=1):
         r"""
         Executes the outer-product of `vec1` and `vec2` and adds it to the input tensor.
@@ -1071,6 +1085,13 @@ class Tensor(Tensor_):
 
         self._init_check()
         return tensor_operator_registry.get('addr')(self, vec1, vec2, beta=beta, alpha=alpha)
+
+    def adjoint(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.adjoint`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('adjoint')(self)
 
     def all(self, axis=(), keep_dims=False):
         """

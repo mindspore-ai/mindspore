@@ -2448,7 +2448,7 @@ def log_matrix_determinant(x):
     return log_matrix_determinant_(x)
 
 
-def matrix_solve(matrix, rhs, adjoint=False):
+def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer-name
     r"""
     Solves systems of linear equations.
 
@@ -3809,6 +3809,69 @@ def mv(mat, vec):
     return out
 
 
+def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
+    r"""
+    Applies batch matrix multiplication to `batch1` and `batch2`, with a reduced add step. The matrix `x` is add to
+    final result.
+
+    The optional values `alpha` and `beta` are the matrix-matrix product between `batch1` and `batch2` and the scale
+    factor for the added tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
+
+    .. math::
+        output = \beta x + \alpha (\sum_{i=0}^{b-1} {batch1 @ batch2})
+
+    Args:
+        x (Tensor): Tensor to be added.
+        batch1 (Tensor): The first batch of tensor to be multiplied.
+        batch2 (Tensor): The second batch of tensor to be multiplied.
+
+    Keyword Args:
+        beta (scalar[int, float], optional): Multiplier for `x`. Default: 1.
+        alpha (scalar[int, float], optional): Multiplier for `batch1` @ `batch2`. Default: 1.
+
+    Returns:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        ValueError: If `batch1`, `batch2` cannot apply batch matrix multiplication.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    bmm_op = _get_cache_prim(P.BatchMatMul)()
+    bmm_res = bmm_op(batch1, batch2)
+    return beta * x + alpha * (bmm_res.sum(axis=0))
+
+
+def addmm(x, mat1, mat2, *, beta=1, alpha=1):
+    r"""
+    Multiplies matrix `mat1` and matrix `mat2`. The matrix `x` is added to the final result.
+
+    Args:
+        x (Tensor): Tensor to be added.
+        mat1 (Tensor): The first tensor to be multiplied.
+        mat2 (Tensor): The second tensor to be multiplied.
+
+    Keyword Args:
+        beta (scalar[int, float], optional): Multiplier for `x`. Default: 1.
+        alpha (scalar[int, float], optional): Multiplier for `mat1` @ `mat2`. Default: 1.
+
+    .. math::
+        output = \beta x + \alpha (mat1 @ mat2)
+
+    Returns:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        ValueError: If `mat1`, `mat2` cannot apply matrix multiplication.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    matmul_op = _get_cache_prim(P.MatMul)()
+    return beta * x + alpha * (matmul_op(mat1, mat2))
+
+
 def addmv(x, mat, vec, beta=1, alpha=1):
     """
     Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
@@ -3872,6 +3935,32 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         beta = scalar_cast(beta, mstype.int32)
     out = beta * x + alpha * mv(mat, vec)
     return out
+
+
+def adjoint(x):
+    r"""
+    Returns a view of the tensor conjugated and with the last two dimensions transposed.
+
+    Args:
+        x (Tensor): Input tensor.
+
+    Returns:
+        Tensor, the calculated result.
+
+    Raises:
+        TypeError: If `x` is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    _dtype = x.dtype
+    _dim = x.ndim
+    perm = [i for i in range(_dim)]
+    perm[-2], perm[-1] = perm[-1], perm[-2]
+    t = ops.transpose(x, tuple(perm))
+    if _dtype in (mstype.complex64, mstype.complex128):
+        return t.conj()
+    return t
 
 
 def addr(x, vec1, vec2, beta=1, alpha=1):
@@ -7088,6 +7177,7 @@ __all__ = [
     'abs',
     'tensor_add',
     'add',
+    'addbmm',
     'addcdiv',
     'addcmul',
     'argmin',
@@ -7108,7 +7198,9 @@ __all__ = [
     'tensor_gt',
     'logaddexp',
     'mv',
+    'addmm',
     'addmv',
+    'adjoint',
     'outer',
     'gt',
     'tensor_ge',

@@ -30,10 +30,13 @@
     mindspore.Tensor.absolute
     mindspore.Tensor.acos
     mindspore.Tensor.add
+    mindspore.Tensor.addbmm
     mindspore.Tensor.addcdiv
     mindspore.Tensor.addcmul
+    mindspore.Tensor.addmm
     mindspore.Tensor.addmv
     mindspore.Tensor.addr
+    mindspore.Tensor.adjoint
     mindspore.Tensor.all
     mindspore.Tensor.amax
     mindspore.Tensor.amin
