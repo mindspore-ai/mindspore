@@ -89,6 +89,7 @@ const AnfNodePtr UnsortedSegmentSumReplace::Process(const FuncGraphPtr &func_gra
   }
   new_cnode->set_primal_attrs(cnode->primal_attrs());
   new_cnode->set_attrs(cnode->attrs());
+  SetInputOutputNames({"x", "segment_ids", "num_segments"}, {"y"}, new_cnode);
   MS_LOG(INFO) << "Replace unsorted_segment_sum_d op to unsorted_segment_sum op success. use tbe aicore.";
   return new_cnode;
 }

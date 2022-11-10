@@ -638,5 +638,11 @@ bool CheckAICPUSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBui
   }
   return kernel::IsSupportedByAICPU(anf_node, tmp_kernel_build_info);
 }
+
+void SetInputOutputNames(const std::vector<std::string> &input_names, const std::vector<std::string> &output_names,
+                         const AnfNodePtr &node) {
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), node);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), node);
+}
 }  // namespace opt
 }  // namespace mindspore

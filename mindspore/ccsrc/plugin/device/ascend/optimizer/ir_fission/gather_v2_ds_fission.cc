@@ -172,6 +172,7 @@ CNodePtr GatherV2DsFission::CreateSlice(const FuncGraphPtr &graph, const CNodePt
   MS_EXCEPTION_IF_NULL(slice);
   slice->set_scope(gather_v2->scope());
   slice->set_abstract(gather_v2->abstract());
+  SetInputOutputNames({"x", "offsets", "size"}, {"y"}, slice);
   return slice;
 }
 

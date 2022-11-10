@@ -92,6 +92,7 @@ CNodePtr UnsortedSegmentSumFission::CreateUnsortedSegmentSum(const FuncGraphPtr 
   if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, orig_sum)) {
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kUnsortedSegmentSumOpName), new_sum);
   }
+  SetInputOutputNames({"x", "segment_ids", "num_segments"}, {"y"}, new_sum);
   return new_sum;
 }
 
@@ -110,6 +111,7 @@ CNodePtr UnsortedSegmentSumFission::CreateSlice(const FuncGraphPtr &graph, const
   MS_EXCEPTION_IF_NULL(slice);
   slice->set_scope(orig_sum->scope());
   slice->set_abstract(orig_sum->abstract());
+  SetInputOutputNames({"x", "offsets", "size"}, {"y"}, slice);
   return slice;
 }
 
