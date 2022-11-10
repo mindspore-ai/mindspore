@@ -42,43 +42,53 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[9]->BuildShape())[kShape];
 
   const int64_t scalar_shape = 0;
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rho_shape size", rho_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", momentum_shape.size(), kEqual, scalar_shape,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("epsilon_shape size", epsilon_shape.size(), kEqual, scalar_shape, prim_name);
+  std::vector<ShapeVector> scalar_shapes = {lr_shape, rho_shape, momentum_shape, epsilon_shape};
+  auto is_dynamic_scalar = std::any_of(scalar_shapes.begin(), scalar_shapes.end(), IsDynamic);
+  if (!is_dynamic_scalar) {
+    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rho_shape size", rho_shape.size(), kEqual, scalar_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", momentum_shape.size(), kEqual, scalar_shape,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("epsilon_shape size", epsilon_shape.size(), kEqual, scalar_shape,
+                                             prim_name);
+  }
 
-  std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.emplace("shape of mg", mg_shape);
-  (void)same_shape_args_map.emplace("ms", ms_shape);
-  (void)same_shape_args_map.emplace("mom", mom_shape);
-  for (auto &elem : same_shape_args_map) {
-    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
+  std::vector<ShapeVector> tensor_shapes = {var_shape, mg_shape, ms_shape, mom_shape};
+  auto is_dynamic_tensor = std::any_of(tensor_shapes.begin(), tensor_shapes.end(), IsDynamic);
+  if (!is_dynamic_tensor) {
+    std::map<std::string, ShapeVector> same_shape_args_map;
+    (void)same_shape_args_map.emplace("shape of mg", mg_shape);
+    (void)same_shape_args_map.emplace("ms", ms_shape);
+    (void)same_shape_args_map.emplace("mom", mom_shape);
+    for (auto &elem : same_shape_args_map) {
+      CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
+    }
   }
 
   // Var dimension must be equal or greater than 1.
   (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
-
-  if (var_shape.size() != grad_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', rank(grad) should be same as rank(var), but got rank(grad): " << grad_shape.size()
-                             << ", rank(var): " << var_shape.size() << ".";
-  }
-
-  for (size_t i = 1; i < var_shape.size(); ++i) {
-    if (var_shape[i] != grad_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i
-                               << ".";
+  // Indices must be rank 1.
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
+  auto is_dynamic = IsDynamic(var_shape) || IsDynamic(grad_shape) || IsDynamic(indices_shape);
+  if (!is_dynamic) {
+    if (var_shape.size() != grad_shape.size()) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', rank(grad) should be same as rank(var), but got rank(grad): " << grad_shape.size()
+                               << ", rank(var): " << var_shape.size() << ".";
+    }
+    for (size_t i = 1; i < var_shape.size(); ++i) {
+      if (var_shape[i] != grad_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i
+                                 << ".";
+      }
+    }
+    if (indices_shape[0] != grad_shape[0]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "
+                               << grad_shape[0] << " indices_shape[0]: " << indices_shape[0] << ".";
     }
   }
 
-  // Indices must be rank 1.
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
-  if (indices_shape[0] != grad_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "
-                             << grad_shape[0] << " indices_shape[0]: " << indices_shape[0] << ".";
-  }
   return std::make_shared<abstract::Shape>(var_shape);
 }
 

@@ -37,13 +37,30 @@ constexpr size_t kSpInputValuesStart = 1;
 constexpr size_t kSpInputShapesStart = 2;
 constexpr auto kConcatDim = "concat_dim";
 
-inline void CheckSparseConcatShape(const size_t sparse_shape_size, const size_t expected_dim,
+inline void CheckSparseConcatShape(const ShapeVector &input_shape, const size_t &expected_dim,
                                    const std::string &arg_name, const std::string &prim_name) {
-  if (sparse_shape_size != expected_dim) {
+  if (!IsDynamicRank(input_shape) && input_shape.size() != expected_dim) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << ", " << arg_name << " must be a " << expected_dim
-                                        << "-dimension, but got a " << sparse_shape_size
+                                        << "-dimension, but got a " << input_shape.size()
                                         << "-dimension in SparseConcat.";
   }
+}
+
+inline bool CheckSparseConcatShapeValue(const ShapeVector &indices_shape, const ShapeVector &values_shape,
+                                        const ShapeVector &shapes_shape, const std::string &prim_name) {
+  auto is_dynamic = IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(shapes_shape);
+  if (!is_dynamic) {
+    if (indices_shape[1] != shapes_shape[0]) {
+      MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << ", the indices shape rank is " << indices_shape[1]
+                                          << ", but the shape rank is " << shapes_shape[0] << ".";
+    }
+    if (indices_shape[0] != values_shape[0]) {
+      MS_EXCEPTION(mindspore::ValueError)
+        << "For " << prim_name << ", the indices element number is " << indices_shape[0]
+        << ", but the value element number is " << values_shape[0] << ".";
+    }
+  }
+  return is_dynamic;
 }
 }  // namespace
 
@@ -105,52 +122,63 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
 
 std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto inputs_indices = input_args[kSpInputIndicesStart]->isa<abstract::AbstractTuple>()
                           ? input_args[kSpInputIndicesStart]->cast<abstract::AbstractTuplePtr>()->elements()
                           : input_args[kSpInputIndicesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto indices_element0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->BuildShape())[kShape];
-  auto indices_element0_rank = indices_element0_shape.size();
-  size_t indices_expect_rank = 2;
-  CheckSparseConcatShape(indices_element0_rank, indices_expect_rank, "indices shape", prim_name);
-
   auto inputs_values = input_args[kSpInputValuesStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSpInputValuesStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSpInputValuesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->BuildShape())[kShape];
-  auto values_element0_rank = values_element0_shape.size();
-  size_t values_expect_rank = 1;
-  CheckSparseConcatShape(values_element0_rank, values_expect_rank, "values shape", prim_name);
-
   auto inputs_shapes = input_args[kSpInputShapesStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSpInputShapesStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSpInputShapesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->BuildShape())[kShape];
-  auto shapes_element0_rank = shapes_element0_shape.size();
+  int64_t kNumOne = 1;
+  size_t indices_expect_rank = 2;
+  size_t values_expect_rank = 1;
   size_t shapes_expect_rank = 1;
-  CheckSparseConcatShape(shapes_element0_rank, shapes_expect_rank, "shape shape", prim_name);
-  if (indices_element0_shape[1] != shapes_element0_shape[0]) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << ", the indices shape rank is "
-                                        << indices_element0_shape[1] << ", but the shape rank is "
-                                        << shapes_element0_shape[0] << ".";
+  int64_t ConcatNum = SizeToLong(inputs_indices.size());
+  (void)primitive->AddAttr("N", MakeValue(ConcatNum));
+
+  (void)CheckAndConvertUtils::CheckInteger("indices' num", ConcatNum, kGreaterThan, kNumOne, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices' num and values' num", ConcatNum, kEqual,
+                                           SizeToLong(inputs_values.size()), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices' num and shapes' num", ConcatNum, kEqual,
+                                           SizeToLong(inputs_shapes.size()), prim_name);
+
+  auto indices_element0_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->BuildShape())[kShape];
+  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->BuildShape())[kShape];
+  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->BuildShape())[kShape];
+
+  CheckSparseConcatShape(indices_element0_shape, indices_expect_rank, "indices shape", prim_name);
+  CheckSparseConcatShape(values_element0_shape, values_expect_rank, "values shape", prim_name);
+  CheckSparseConcatShape(shapes_element0_shape, shapes_expect_rank, "shape shape", prim_name);
+  CheckSparseConcatShapeValue(indices_element0_shape, values_element0_shape, shapes_element0_shape, prim_name);
+
+  if (IsDynamicRank(indices_element0_shape)) {
+    abstract::ShapePtr y_indices_shape_ptr = std::make_shared<mindspore::abstract::Shape>(ShapeVector{-1, -1});
+    abstract::ShapePtr y_values_shape_ptr = std::make_shared<mindspore::abstract::Shape>(ShapeVector{-1});
+    abstract::ShapePtr y_shape_shape_ptr = std::make_shared<mindspore::abstract::Shape>(ShapeVector{-1});
+    return std::vector<abstract::ShapePtr>{y_indices_shape_ptr, y_values_shape_ptr, y_shape_shape_ptr};
   }
-  if (indices_element0_shape[0] != values_element0_shape[0]) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << ", the indices element number is "
-                                        << indices_element0_shape[0] << ", but the value element number is "
-                                        << values_element0_shape[0] << ".";
-  }
-  (void)primitive->AddAttr("N", MakeValue(SizeToLong(inputs_indices.size())));
+
   std::vector<int64_t> out_indices_shape = {};
   out_indices_shape.push_back(0);
   out_indices_shape.push_back(indices_element0_shape[1]);
   std::vector<int64_t> out_values_shape = {0};
   auto out_shape_shape = shapes_element0_shape;
-  for (unsigned int i = 0; i < inputs_indices.size(); i++) {
+  bool is_dynamic = false;
+  for (int64_t i = 0; i < ConcatNum; i++) {
     auto indices_element_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[i]->BuildShape())[kShape];
     auto values_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[i]->BuildShape())[kShape];
     auto shapes_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[i]->BuildShape())[kShape];
+    is_dynamic = is_dynamic || CheckSparseConcatShapeValue(indices_element_shape, values_element_shape,
+                                                           shapes_element_shape, prim_name);
+    if (is_dynamic) {
+      break;
+    }
     out_indices_shape[0] += indices_element_shape[0];
     out_values_shape[0] += values_element_shape[0];
     if ((out_indices_shape[1] != indices_element_shape[1]) || (out_shape_shape != shapes_element_shape)) {
@@ -159,19 +187,13 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
         << out_indices_shape[1] << ", dense shape rank is " << out_shape_shape << ". The No." << i
         << " indices number is " << indices_element_shape[1] << " dense shape rank is " << shapes_element_shape << ".";
     }
-    if (indices_element_shape[0] != values_element_shape[0]) {
-      MS_EXCEPTION(mindspore::ValueError)
-        << "For " << prim_name << ", the No." << i
-        << " indices element number is not equal with values element number. Indices number is "
-        << indices_element_shape[0] << ",but values is " << values_element_shape[0] << ".";
-    }
-    // unknown shape handle, unsupported -2 now
-    if (indices_element_shape[0] == -1) {
-      out_indices_shape[0] = -1;
-      out_values_shape[0] = -1;
-      break;
-    }
   }
+
+  if (is_dynamic) {
+    out_indices_shape[0] = -1;
+    out_values_shape[0] = -1;
+  }
+
   std::vector<abstract::ShapePtr> out_shape = {};
   out_shape.push_back(std::make_shared<mindspore::abstract::Shape>(out_indices_shape));
   out_shape.push_back(std::make_shared<mindspore::abstract::Shape>(out_values_shape));

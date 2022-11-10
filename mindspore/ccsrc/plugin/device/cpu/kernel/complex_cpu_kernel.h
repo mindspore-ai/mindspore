@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COMPLEX_CPU_KERNEL_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COMPLEX_CPU_KERNEL_H
 
+#include <map>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -32,15 +34,20 @@ class ComplexCpuKernelMod : public NativeCpuKernelMod {
             const std::vector<KernelTensorPtr> & /* outputs */) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  TypeId input1_dtype_{kTypeUnknown};
-  TypeId input2_dtype_{kTypeUnknown};
+
+  using ComplexLaunchFunc =
+    std::function<bool(ComplexCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, ComplexLaunchFunc>> func_list_;
+  ComplexLaunchFunc kernel_func_;
 };
 }  // namespace kernel
 }  // namespace mindspore

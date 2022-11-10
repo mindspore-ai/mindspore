@@ -36,6 +36,7 @@ bool UnsortedSegmentProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
 

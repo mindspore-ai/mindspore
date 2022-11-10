@@ -40,42 +40,44 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[7]->GetShapeTrack())[kShape];
   auto global_step_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[8]->GetShapeTrack())[kShape];
 
-  auto scalar_shape = 0;
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, scalar_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, scalar_shape,
-                                           prim_name);
+  std::vector<ShapeVector> scalar_shapes = {lr_shape, l1_shape, l2_shape, global_step_shape};
+  auto is_dynamic_scalar = std::any_of(scalar_shapes.begin(), scalar_shapes.end(), IsDynamic);
+  if (!is_dynamic_scalar) {
+    int64_t scalar_shape = 0;
+    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, scalar_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, scalar_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, scalar_shape,
+                                             prim_name);
+  }
 
-  std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.emplace("shape of grad_accum", grad_accum_shape);
-  (void)same_shape_args_map.emplace("shape of grad_square_accum", grad_square_accum_shape);
-  for (auto &elem : same_shape_args_map) {
-    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
+  std::vector<ShapeVector> check_tensor_shapes = {var_shape, grad_accum_shape, grad_square_accum_shape};
+  auto is_dynamic_tensor = std::any_of(check_tensor_shapes.begin(), check_tensor_shapes.end(), IsDynamic);
+  if (!is_dynamic_tensor) {
+    std::map<std::string, ShapeVector> same_shape_args_map;
+    (void)same_shape_args_map.emplace("shape of grad_accum", grad_accum_shape);
+    (void)same_shape_args_map.emplace("shape of grad_square_accum", grad_square_accum_shape);
+    for (auto &elem : same_shape_args_map) {
+      CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
+    }
   }
 
   // Var dimension must be equal or greater than 1.
   (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
-
-  if (var_shape.size() != grad_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', rank(grad) should be same as rank(var), but got rank(grad): " << grad_shape.size()
-                             << ", rank(var): " << SizeToLong(var_shape.size()) << ".";
-  }
-
-  for (size_t i = 1; i < var_shape.size(); ++i) {
-    if (var_shape[i] != grad_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i
-                               << ".";
-    }
-  }
-
   // Indices must be rank 1.
   (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
-  if (indices_shape[0] != grad_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "
-                             << grad_shape[0] << " indices_shape[0]: " << indices_shape[0] << ".";
+  auto is_dynamic = IsDynamic(var_shape) || IsDynamic(grad_shape) || IsDynamic(indices_shape);
+  if (!is_dynamic) {
+    (void)CheckAndConvertUtils::CheckInteger("rank(grad) and rank(var)", SizeToLong(grad_shape.size()), kEqual,
+                                             SizeToLong(var_shape.size()), prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("grad.shape[0] and indices.shape[0]", SizeToLong(indices_shape[0]), kEqual,
+                                             SizeToLong(grad_shape[0]), prim_name);
+    for (size_t i = 1; i < var_shape.size(); ++i) {
+      if (var_shape[i] != grad_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i
+                                 << ".";
+      }
+    }
   }
 
   return std::make_shared<abstract::Shape>(var_shape);
