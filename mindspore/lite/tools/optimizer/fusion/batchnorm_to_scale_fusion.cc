@@ -248,6 +248,8 @@ bool BatchNormToScaleFusion::CheckBNCanFused(const AnfNodePtr &node) {
 bool BatchNormToScaleFusion::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
   for (auto &node : node_list) {
     MS_ASSERT(node != nullptr);
     if (!CheckBNCanFused(node)) {
@@ -256,6 +258,18 @@ bool BatchNormToScaleFusion::Run(const FuncGraphPtr &func_graph) {
 
     auto cnode = node->cast<CNodePtr>();
     MS_ASSERT(cnode != nullptr);
+    bool can_delete = true;
+    auto node_users = manager->node_users()[cnode];
+    for (auto &node_user : node_users) {
+      auto post_node = node_user.first;
+      if (opt::CheckPrimitiveType(post_node, prim::kPrimTupleGetItem)) {
+        can_delete = false;
+        break;
+      }
+    }
+    if (!can_delete) {
+      continue;
+    }
     auto bn_mean_node =
       CheckPrimitiveType(cnode, prim::kPrimBatchNorm) ? cnode->input(kCaffeBNMeanIndex) : cnode->input(kTFBNMeanIndex);
     MS_CHECK_TRUE_RET(bn_mean_node != nullptr, false);
@@ -306,8 +320,6 @@ bool BatchNormToScaleFusion::Run(const FuncGraphPtr &func_graph) {
     new_weight_param->set_name(cnode->fullname_with_scope() + "_scale");
     new_bias_param->set_name(cnode->fullname_with_scope() + "_bias");
 
-    auto manager = func_graph->manager();
-    MS_ASSERT(manager != nullptr);
     auto scale_primitive = std::make_shared<ops::ScaleFusion>();
     if (scale_primitive == nullptr) {
       MS_LOG(ERROR) << "new scale primitive failed";
