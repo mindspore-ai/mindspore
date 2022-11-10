@@ -54,14 +54,32 @@ struct AdaptiveCalcArgs {
 };
 }  // namespace
 
-void AdaptiveMaxPool2DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_y_grad_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  input_argmax_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex2);
-  input_y_grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex0);
-  input_x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex1);
-  input_argmax_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
+bool AdaptiveMaxPool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int AdaptiveMaxPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs,
+                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_y_grad_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_x_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  input_argmax_shape = inputs.at(kIndex2)->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename SCALAR_T, typename INDICES_T>
@@ -84,38 +102,6 @@ CTask AdaptiveMaxPool2DGradOutFrame(const AdaptiveCalcArgs<SCALAR_T, INDICES_T> 
     }
   };
   return shard_frame;
-}
-
-bool AdaptiveMaxPool2DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (input_y_grad_type == kNumberTypeFloat16) {
-    return LaunchCheck<float16>(inputs, outputs);
-  } else if (input_y_grad_type == kNumberTypeFloat32) {
-    return LaunchCheck<float>(inputs, outputs);
-  } else if (input_y_grad_type == kNumberTypeFloat64) {
-    return LaunchCheck<double>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of y_grad should be "
-                      << "float16, float32, or float64, but got " << TypeIdLabel(input_y_grad_type) << ".";
-  }
-  return true;
-}
-
-template <typename T>
-bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchCheck(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  if (input_argmax_type == kNumberTypeInt32) {
-    return LaunchKernel<T, int32_t>(inputs, outputs);
-  } else if (input_argmax_type == kNumberTypeInt64) {
-    return LaunchKernel<T, int64_t>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of argmax should be int32 or int64, "
-                      << "but got " << TypeIdToType(input_argmax_type)->ToString() << ".";
-  }
-  return true;
 }
 
 template <typename SCALAR_T, typename INDICES_T>
@@ -174,14 +160,28 @@ bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   return true;
 }
 
+std::vector<std::pair<KernelAttr, AdaptiveMaxPool2DGradCpuKernelMod::AdaptiveMaxPool2DGradLaunchFunc>>
+  AdaptiveMaxPool2DGradCpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(F16).AddInputAttr(F16).AddInputAttr(I32).AddOutputAttr(F16),
+     &AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel<float16, int32_t>},
+    {KernelAttr().AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(I32).AddOutputAttr(F32),
+     &AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel<float, int32_t>},
+    {KernelAttr().AddInputAttr(F64).AddInputAttr(F64).AddInputAttr(I32).AddOutputAttr(F64),
+     &AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel<double, int32_t>},
+    {KernelAttr().AddInputAttr(F16).AddInputAttr(F16).AddInputAttr(I64).AddOutputAttr(F16),
+     &AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel<float16, int64_t>},
+    {KernelAttr().AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(I64).AddOutputAttr(F32),
+     &AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel<float, int64_t>},
+    {KernelAttr().AddInputAttr(F64).AddInputAttr(F64).AddInputAttr(I64).AddOutputAttr(F64),
+     &AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel<double, int64_t>}};
+
 std::vector<KernelAttr> AdaptiveMaxPool2DGradCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(F16).AddInputAttr(F16).AddInputAttr(I32).AddOutputAttr(F16),
-    KernelAttr().AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(I32).AddOutputAttr(F32),
-    KernelAttr().AddInputAttr(F64).AddInputAttr(F64).AddInputAttr(I32).AddOutputAttr(F64),
-    KernelAttr().AddInputAttr(F16).AddInputAttr(F16).AddInputAttr(I64).AddOutputAttr(F16),
-    KernelAttr().AddInputAttr(F32).AddInputAttr(F32).AddInputAttr(I64).AddOutputAttr(F32),
-    KernelAttr().AddInputAttr(F64).AddInputAttr(F64).AddInputAttr(I64).AddOutputAttr(F64)};
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, AdaptiveMaxPool2DGradCpuKernelMod::AdaptiveMaxPool2DGradLaunchFunc> &pair) {
+      return pair.first;
+    });
   return support_list;
 }
 

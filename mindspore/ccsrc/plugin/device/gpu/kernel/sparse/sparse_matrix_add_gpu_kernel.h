@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 #include <functional>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -82,16 +83,16 @@ CUSPARSE_GEAM_SPECIALIZE(cuDoubleComplex, Z)
 
 // SparseMatrixAdd GPU kernel.
 template <typename T>
-class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
+class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
  public:
   SparseMatrixAddGpuKernel() { handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCuSparseHandle(); }
   ~SparseMatrixAddGpuKernel() override = default;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    type_id_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, InputList::X1_VALUE);
-
-    // Create descriptor.
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    is_need_retrieve_output_shape_ = true;
+    type_id_ = inputs.at(InputList::X1_VALUE)->GetDtype();
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&x1_descr_), "Create descriptor failed.");
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&x2_descr_), "Create descriptor failed.");
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&y_descr_), "Create descriptor failed.");
@@ -101,10 +102,22 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
                                    "Set descriptor base index failed.");
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseSetMatIndexBase(y_descr_, CUSPARSE_INDEX_BASE_ZERO),
                                    "Set descriptor base index failed.");
-
-    SetInputAndOutputSizeLists(kernel_node);
-    is_need_retrieve_output_shape_ = true;
     return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
+      return ret;
+    }
+    outputs_ = outputs;
+    output_size_list_.clear();
+    output_size_list_.emplace_back(input_size_list_[InputList::X1_DENSE_SHAPE]);
+    output_size_list_.emplace_back(input_size_list_[InputList::X1_BATCH_POINTER]);
+    output_size_list_.emplace_back(input_size_list_[InputList::X1_ROW]);
+    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
+    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
+    return KRET_OK;
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -151,7 +164,6 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
 
  protected:
   void SyncData() override {
-    std::vector<TypeId> types = {kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, type_id_};
     std::vector<ShapeVector> shapes = {
       {SizeToLong(x1_dense_shape_host_.size())},                              // dense shape
       {SizeToLong(y_batch_pointer_host_.size())},                             // batch pointer
@@ -159,37 +171,13 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
       {SizeToLong(y_batch_pointer_host_[y_batch_pointer_host_.size() - 1])},  // col
       {SizeToLong(y_batch_pointer_host_[y_batch_pointer_host_.size() - 1])},  // values
     };
-
-    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, kernel_node_.lock().get());
+    for (size_t i = 0; i < outputs_.size(); ++i) {
+      outputs_[i]->SetShapeVector(shapes[i]);
+    }
   }
-
-  void ResetResource() override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-  }
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
-  void SetInputAndOutputSizeLists(const CNodePtr &kernel_node) {
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    for (size_t i = 0; i < input_num; ++i) {
-      TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
-      size_t type_size = GetTypeByte(TypeIdToType(type_id));
-      auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      size_t tensor_size =
-        shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-      tensor_size = std::max(tensor_size, type_size);
-      (void)input_size_list_.emplace_back(tensor_size);
-    }
-
-    // Suppose all of the input elements are different.
-    // The exact y_nnz will calculated after kernel launched.
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_DENSE_SHAPE]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_BATCH_POINTER]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_ROW]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
-  }
-
   void ParseKernelParam(const std::vector<AddressPtr> &inputs, cudaStream_t stream) {
     // Due to the design of primitive, dense_shape, batch_pointer, alpha, beta are on the device memory, while cusparse
     // requires it on the host. Additional memory copy between host and device will lead to significant performance
@@ -314,6 +302,8 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
                         x2_descr_, x2_nnz, x2_value, x2_row, x2_col, y_descr_, y_value, y_row, y_col, buffer);
     }
   }
+
+  std::vector<KernelTensorPtr> outputs_;
 
   TypeId type_id_{kTypeUnknown};
   cusparseHandle_t handle_{nullptr};

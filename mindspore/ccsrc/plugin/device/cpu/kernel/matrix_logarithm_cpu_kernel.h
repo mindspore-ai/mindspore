@@ -20,33 +20,43 @@
 #include <vector>
 #include <complex>
 #include <utility>
+#include <map>
+#include <algorithm>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MatrixLogarithmCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatrixLogarithmCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixLogarithmCpuKernelMod() = default;
   ~MatrixLogarithmCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
- protected:
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-      KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128)};
-    return support_list;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    kernel_func_(this, inputs, outputs);
+    return true;
   }
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
-  CNodeWeakPtr node_wpt_;
-  TypeId dtype_{kTypeUnknown};
+  using MatrixLogarithmLaunchFunc = std::function<void(MatrixLogarithmCpuKernelMod *, const std::vector<AddressPtr> &,
+                                                       const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MatrixLogarithmLaunchFunc>> func_list_;
+  MatrixLogarithmLaunchFunc kernel_func_;
+
   template <typename T>
   void LaunchMatrixLogarithm(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
+  ShapeVector shape_x_;
 };
 }  // namespace kernel
 }  // namespace mindspore

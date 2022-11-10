@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <utility>
+#include <map>
 #include "Eigen/Core"
 #include "Eigen/SparseCore"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -26,12 +27,17 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseMatrixMatMulCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseMatrixMatMulCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseMatrixMatMulCpuKernelMod() = default;
   ~SparseMatrixMatMulCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -60,9 +66,9 @@ class SparseMatrixMatMulCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     indiceT rows, indiceT cols, int64_t nnz, indiceT *row_pointers, indiceT *col_indices, valueT *values,
     bool transpose, bool adjoint);
 
-  size_t batch_size_{0};
   TypeId indice_type_{kTypeUnknown};
   TypeId value_type_{kTypeUnknown};
+  size_t batch_size_{0};
   bool transpose_x1_{false};
   bool transpose_x2_{false};
   bool adjoint_x1_{false};
@@ -70,9 +76,7 @@ class SparseMatrixMatMulCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool transpose_output_{false};
   bool conjugate_output_{false};
   size_t rank_{0};
-  size_t shift_;
   std::vector<size_t> input_shape2_;
-  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore

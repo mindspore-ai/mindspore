@@ -18,34 +18,44 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_MAX_POOL_2D_GRAD_CPU_KERNEL_H_
 #include <functional>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class AdaptiveMaxPool2DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdaptiveMaxPool2DGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   AdaptiveMaxPool2DGradCpuKernelMod() = default;
   ~AdaptiveMaxPool2DGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
-  bool LaunchCheck(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename SCALAR_T, typename INDICES_T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
+  using AdaptiveMaxPool2DGradLaunchFunc = std::function<bool(
+    AdaptiveMaxPool2DGradCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, AdaptiveMaxPool2DGradLaunchFunc>> func_list_;
+  AdaptiveMaxPool2DGradLaunchFunc kernel_func_;
+
   std::vector<int64_t> input_y_grad_shape;
   std::vector<int64_t> input_x_shape;
   std::vector<int64_t> input_argmax_shape;
-  TypeId input_y_grad_type{kTypeUnknown};
-  TypeId input_argmax_type{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -46,34 +46,72 @@ constexpr char kConjugateOutput[] = "conjugate_output";
     .AddInputAttr(kNumberType##valueT)  \
     .AddOutputAttr(kNumberType##valueT)
 }  // namespace
+bool SparseMatrixMatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
 
-void SparseMatrixMatMulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  transpose_x1_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kTransposeX1);
-  transpose_x2_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kTransposeX2);
-  adjoint_x1_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kAdjointX1);
-  adjoint_x2_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kAdjointX2);
-  transpose_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kTransposeOutput);
-  conjugate_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kConjugateOutput);
-  auto input_shape1 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  rank_ = input_shape1[0];
-  input_shape2_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex5));
-  indice_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
-  value_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex4);
-  batch_size_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1)[0] - 1;
-  shift_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0)[0];
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  PrimitivePtr primitive = base_operator->GetPrim();
+  MS_ERROR_IF_NULL(primitive);
+
+  auto transpose_x1_ptr = primitive->GetAttr(kTransposeX1);
+  MS_EXCEPTION_IF_NULL(transpose_x1_ptr);
+  transpose_x1_ = GetValue<bool>(transpose_x1_ptr);
+
+  auto transpose_x2_ptr = primitive->GetAttr(kTransposeX2);
+  MS_EXCEPTION_IF_NULL(transpose_x2_ptr);
+  transpose_x2_ = GetValue<bool>(transpose_x2_ptr);
+
+  auto adjoint_x1_ptr = primitive->GetAttr(kAdjointX1);
+  MS_EXCEPTION_IF_NULL(adjoint_x1_ptr);
+  adjoint_x1_ = GetValue<bool>(adjoint_x1_ptr);
+
+  auto adjoint_x2_ptr = primitive->GetAttr(kAdjointX2);
+  MS_EXCEPTION_IF_NULL(adjoint_x2_ptr);
+  adjoint_x2_ = GetValue<bool>(adjoint_x2_ptr);
+
+  auto transpose_output_ptr = primitive->GetAttr(kTransposeOutput);
+  MS_EXCEPTION_IF_NULL(transpose_output_ptr);
+  transpose_output_ = GetValue<bool>(transpose_output_ptr);
+
+  auto conjugate_output_ptr = primitive->GetAttr(kConjugateOutput);
+  MS_EXCEPTION_IF_NULL(conjugate_output_ptr);
+  conjugate_output_ = GetValue<bool>(conjugate_output_ptr);
+
+  indice_type_ = inputs.at(kIndex0)->GetDtype();
+  value_type_ = inputs.at(kIndex4)->GetDtype();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "SparseMatrixMatMul does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+
+  return true;
+}
+
+int SparseMatrixMatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto input_shape1 = inputs.at(kIndex0)->GetShapeVector();
+  rank_ = input_shape1[0];
+
+  input_shape2_ = Convert2SizeT(inputs.at(kIndex5)->GetShapeVector());
+
+  auto x1_batch_pointer_shape = inputs.at(kIndex1)->GetShapeVector();
+  batch_size_ = static_cast<size_t>(x1_batch_pointer_shape[0]) - 1;
+
+  return KRET_OK;
 }
 
 template <typename indiceT, typename valueT>
@@ -84,7 +122,7 @@ bool SparseMatrixMatMulCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   using Matrix = Eigen::Matrix<valueT, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   indiceT batch_size = batch_size_;
   std::vector<Matrix> results(batch_size);
-  int shift = (shift_ == 2) ? 0 : 1;
+  int shift = (rank_ == 2) ? 0 : 1;
 
   indiceT row_x1 = *(static_cast<indiceT *>(inputs[kIndex0]->addr) + shift);
   indiceT col_x1 = *(static_cast<indiceT *>(inputs[kIndex0]->addr) + shift + 1);
@@ -162,6 +200,7 @@ bool SparseMatrixMatMulCpuKernelMod::CheckMatMul(const std::vector<AddressPtr> &
   }
   return true;
 }
+
 template <typename indiceT, typename valueT>
 using SparseMatrixPtr = Eigen::Ref<const Eigen::SparseMatrix<valueT, Eigen::RowMajor, indiceT>>;
 

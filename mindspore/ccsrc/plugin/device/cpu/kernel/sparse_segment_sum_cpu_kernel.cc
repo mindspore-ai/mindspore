@@ -15,6 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/sparse_segment_sum_cpu_kernel.h"
+#include "functional"
+#include "mindspore/core/abstract/utils.h"
+#include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
