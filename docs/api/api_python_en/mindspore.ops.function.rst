@@ -281,6 +281,9 @@ Linear Algebraic Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.addbmm
+    mindspore.ops.addmm
+    mindspore.ops.adjoint
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.matmul
