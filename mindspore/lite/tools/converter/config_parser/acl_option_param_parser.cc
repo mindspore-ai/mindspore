@@ -131,7 +131,7 @@ STATUS AclOptionParamParser::ParseInputShapeVector(const std::string &input_shap
       return RET_ERROR;
     }
     std::string tmp = item.substr(1, item.size() - DIMENSION_2D);
-    if (tmp.find("[") != tmp.npos) {
+    if (tmp.find("[") != std::string::npos) {
       MS_LOG(ERROR) << "Input param is invalid, value: " << item << ", multi input shape should be split by ;.";
       return RET_ERROR;
     }
