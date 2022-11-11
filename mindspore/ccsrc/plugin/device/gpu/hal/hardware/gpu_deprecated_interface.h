@@ -35,10 +35,6 @@ class GPUDeprecatedInterface : public DeprecatedInterface {
   int GetGPUCapabilityMajor() override;
   int GetGPUCapabilityMinor() override;
   int GetGPUMultiProcessorCount() override;
-  void GPUInitCollective() override;
-  void GPUFinalizeCollective() override;
-  uint32_t GPUGetRankID(const std::string &group_name) override;
-  uint32_t GPUGetRankSize(const std::string &group_name) override;
 };
 }  // namespace gpu
 }  // namespace device

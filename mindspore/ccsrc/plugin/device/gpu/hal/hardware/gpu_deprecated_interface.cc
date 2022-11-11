@@ -18,7 +18,6 @@
 #include <cuda.h>
 #include <vector>
 #include <string>
-#include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 
 namespace mindspore {
 namespace device {
@@ -60,18 +59,6 @@ int GPUDeprecatedInterface::GetGPUMultiProcessorCount() {
     return -1;
   }
   return sm_count;
-}
-
-void GPUDeprecatedInterface::GPUInitCollective() { CollectiveInitializer::InitCollective(); }
-
-void GPUDeprecatedInterface::GPUFinalizeCollective() { CollectiveInitializer::FinalizeCollective(); }
-
-uint32_t GPUDeprecatedInterface::GPUGetRankID(const std::string &group_name) {
-  return CollectiveInitializer::GetRankID(group_name);
-}
-
-uint32_t GPUDeprecatedInterface::GPUGetRankSize(const std::string &group_name) {
-  return CollectiveInitializer::GetRankSize(group_name);
 }
 }  // namespace gpu
 }  // namespace device
