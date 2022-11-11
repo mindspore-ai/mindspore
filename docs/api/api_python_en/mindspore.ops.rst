@@ -359,8 +359,8 @@ Linear Algebraic Operator
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
 
-Tensor Operation Opertor
-------------------------
+Tensor Operation Operator
+--------------------------
 
 Tensor Construction
 ^^^^^^^^^^^^^^^^^^^
