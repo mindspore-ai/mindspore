@@ -1686,6 +1686,10 @@ bool FindPreNodes(const AnfNodePtr &node, std::vector<std::string> *unique_ids, 
   }
   bool find = false;
   for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
+    if (IsPrimitiveCNode(pre_cnode, prim::kPrimDepend) && index > 1) {
+      // For Depend, only the first input will be output.
+      break;
+    }
     auto next_node = pre_cnode->inputs()[index];
     if (!next_node->isa<CNode>() || next_node->isa<Parameter>()) {
       return false;
@@ -1694,9 +1698,8 @@ bool FindPreNodes(const AnfNodePtr &node, std::vector<std::string> *unique_ids, 
     if (!IsValueNode<Primitive>(cnode->input(0))) {
       return false;
     }
-    ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
-    PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-    if (IsParallelCareNode(cnode) && prim->name() != MAKE_TUPLE && prim->name() != MAKE_LIST) {
+    if (IsParallelCareNode(cnode) && !IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) &&
+        !IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
       unique_ids->push_back(pre_cnode->UniqueId());
       indexes->push_back(index);
       find = true;
@@ -1704,7 +1707,6 @@ bool FindPreNodes(const AnfNodePtr &node, std::vector<std::string> *unique_ids, 
     }
     if (FindPreNodes(cnode, unique_ids, indexes, ++curr_depth)) {
       find = true;
-      continue;
     }
   }
   return find;
