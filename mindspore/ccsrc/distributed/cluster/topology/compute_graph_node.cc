@@ -265,9 +265,9 @@ bool ComputeGraphNode::Heartbeat() {
             if (abnormal_callback_ != nullptr) {
               (*abnormal_callback_)();
             }
-            MS_LOG(EXCEPTION) << "Failed to connect to the meta server.";
+            MS_LOG(EXCEPTION) << "Failed to connect to the meta server. Maybe it has exited. Please check log.";
           } else {
-            MS_LOG(ERROR) << "Failed to connect to the meta server.";
+            MS_LOG(ERROR) << "Failed to connect to the meta server. Maybe it has exited. Please check log.";
           }
         }
       } else {
