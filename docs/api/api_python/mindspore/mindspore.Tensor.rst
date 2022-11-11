@@ -76,6 +76,7 @@ mindspore.Tensor
     mindspore.Tensor.cummin
     mindspore.Tensor.cumprod
     mindspore.Tensor.cumsum
+    mindspore.Tensor.deg2rad
     mindspore.Tensor.det
     mindspore.Tensor.diag
     mindspore.Tensor.diagonal
@@ -167,6 +168,7 @@ mindspore.Tensor
     mindspore.Tensor.pow
     mindspore.Tensor.prod
     mindspore.Tensor.ptp
+    mindspore.Tensor.rad2deg
     mindspore.Tensor.random_categorical
     mindspore.Tensor.ravel
     mindspore.Tensor.remainder
