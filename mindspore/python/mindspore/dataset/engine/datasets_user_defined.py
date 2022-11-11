@@ -252,6 +252,11 @@ class SamplerFn:
                 start_time = int(time.time())
                 wait_count = 1
                 while self.workers[i % self.num_worker].res_queue.empty():
+                    if self.eof.is_set():
+                        logger.warning("Generator receives a termination signal, stop waiting for data "
+                                       "from subprocess.")
+                        self._stop_subprocess()
+                        return
                     time.sleep(0.1)
                     cost_time = int(time.time()) - start_time
                     if cost_time / self.check_interval >= wait_count:
