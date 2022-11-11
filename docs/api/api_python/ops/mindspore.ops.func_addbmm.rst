@@ -22,4 +22,4 @@
         Tensor，和 `x` 具有相同的dtype。
 
     异常：
-        - **ValueError**：If `batch1`， `batch2` 不能进行批量矩阵乘法。
+        - **ValueError** - 如果 `batch1`， `batch2` 不能进行批量矩阵乘法。

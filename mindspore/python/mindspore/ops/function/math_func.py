@@ -4146,6 +4146,19 @@ def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> m = np.ones((3, 3)).astype(np.float32)
+        >>> arr1 = np.arange(24).astype(np.float32).reshape((2, 3, 4))
+        >>> arr2 = np.arange(24).astype(np.float32).reshape((2, 4, 3))
+        >>> a = Tensor(arr1)
+        >>> b = Tensor(arr2)
+        >>> c = Tensor(m)
+        >>> output = ops.addbmm(c, a, b)
+        >>> print(output)
+        [[ 949. 1009. 1069.]
+         [1285. 1377. 1469.]
+         [1621. 1745. 1869.]]
     """
     bmm_op = _get_cache_prim(P.BatchMatMul)()
     bmm_res = bmm_op(batch1, batch2)
@@ -4176,6 +4189,19 @@ def addmm(x, mat1, mat2, *, beta=1, alpha=1):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> m = np.ones((3, 3)).astype(np.float32)
+        >>> arr1 = np.arange(12).astype(np.float32).reshape((3, 4))
+        >>> arr2 = np.arange(12).astype(np.float32).reshape((4, 3))
+        >>> a = Tensor(arr1)
+        >>> b = Tensor(arr2)
+        >>> c = Tensor(m)
+        >>> output = ops.addmm(c, a, b)
+        >>> print(output)
+        [[ 43.  49.  55.]
+         [115. 137. 159.]
+         [187. 225. 263.]]
     """
     matmul_op = _get_cache_prim(P.MatMul)()
     return beta * x + alpha * (matmul_op(mat1, mat2))
@@ -4261,13 +4287,17 @@ def adjoint(x):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = Tensor(np.array([[0. + 0.j, 1. + 1.j], [2. + 2.j, 3. + 3.j]]), mindspore.complex128)
+        >>> output = ops.adjoint(a)
+        >>> print(output)
+        [[0.-0.j 2.-2.j]
+         [1.-1.j 3.-3.j]]
     """
     _dtype = x.dtype
-    _dim = x.ndim
-    perm = [i for i in range(_dim)]
-    perm[-2], perm[-1] = perm[-1], perm[-2]
-    t = ops.transpose(x, tuple(perm))
-    if _dtype in (mstype.complex64, mstype.complex128):
+    t = x.swapaxes(-1, -2)
+    if _dtype in (mstype.complex128, mstype.complex64):
         return t.conj()
     return t
 

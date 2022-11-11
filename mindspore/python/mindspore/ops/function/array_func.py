@@ -545,16 +545,17 @@ def fills(x, value):
     return fills_(x, value_)
 
 
-def ones(shape, type):
+def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
     r"""
     Creates a tensor filled with value ones.
 
-    Creates a tensor with shape described by the first argument and
-    fills it with value ones in type of the second argument.
+    Creates a tensor with shape described by the first argument and fills it with value ones in type of the second
+    argument.
 
     Args:
         shape (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
-        type (mindspore.dtype): The specified type of output tensor. Only constant value is allowed.
+        dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is None,
+            `mindspore.float32` will be used. Default: None.
 
     Returns:
         Tensor, has the same type and shape as input shape value.
@@ -570,13 +571,11 @@ def ones(shape, type):
         >>> print(output)
         [[1. 1.]
          [1. 1.]]
-        >>> output = ops.ones((3, 3), mindspore.float32)
-        >>> print(output)
-        [[1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]]
     """
-    return ones_(shape, type)
+    _dtype = mstype.float32 if dtype is None else dtype
+    ones_op = P.Ones()
+    output = ones_op(shape, _dtype)
+    return output
 
 
 def ones_like(input_x):
@@ -602,7 +601,74 @@ def ones_like(input_x):
         [[1 1]
          [1 1]]
     """
-    return ones_like_(input_x)
+    ones_like_op = P.OnesLike()
+    output = ones_like_op(input_x)
+    return output
+
+
+def zeros(shape, dtype=None):  # pylint: disable=redefined-outer-name
+    r"""
+    Creates a tensor filled with 0  with shape described by `size` and fills it with value 0 in type of `dtype`.
+
+    Args:
+        shape (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is None,
+            mindspore.float32 will be used. Default: None.
+
+    Returns:
+        Tensor, has the same dtype and shape as input.
+
+    Raises:
+        TypeError: If `shape` is neither a tuple of int nor an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = ops.zeros((2, 2), mindspore.float32)
+        >>> print(output)
+        [[0. 0.]
+         [0. 0.]]
+    """
+    zero_op = P.Zeros()
+    _dtype = mstype.float32 if dtype is None else dtype
+    output = zero_op(shape, _dtype)
+    return output
+
+
+def zeros_like(x, *, dtype=None):
+    r"""
+    Creates a tensor filled with 0, with the same size as x, and the given dtype.
+
+    If `dtype = None`, the tensor will have the same dtype as input `x`.
+
+    Args:
+        x (Tensor): Tensor of any dimension.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is None,
+            the dtype of the input tensor will be used. Default: None.
+
+    Returns:
+        Tensor, filled with 0.
+
+    Raises:
+        ValueError: If dtype is not a MindSpore dtype.
+
+    Examples:
+        >>> x = Tensor(np.arange(4).reshape(2, 2))
+        >>> output = ops.zeros_like(x, mindspore.float32)
+        >>> print(output)
+        [[0. 0.]
+         [0. 0.]]
+    """
+    _dtype = x.dtype if dtype is None else dtype
+    zeros_like_op = P.ZerosLike()
+    output = zeros_like_op(x)
+    output = cast_(output, _dtype)
+    return output
 
 
 def tile(input_x, multiples):
@@ -955,7 +1021,7 @@ def ger(x1, x2):
     return ger_(x1, x2)
 
 
-def size(input_x):
+def size(input_x):  # pylint: disable=redefined-outer-name
     r"""
     Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the
     Tensor.
@@ -5205,6 +5271,8 @@ __all__ = [
     'ger',
     'ones',
     'ones_like',
+    'zeros',
+    'zeros_like',
     'shape',
     'shape_',
     'reverse',
