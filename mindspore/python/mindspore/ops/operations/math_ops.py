@@ -1096,7 +1096,7 @@ class Bucketize(Primitive):
     Bucketizes 'input' based on 'boundaries'.
 
     Args:
-        boundaries (list_float): A sorted list of floats gives the boundary of the buckets, and no default value.
+        boundaries (list[float]): A sorted list of floats gives the boundary of the buckets, and no default value.
 
     Inputs:
         - **input** (Tensor) - A tensor containing the search value(s).
@@ -7538,14 +7538,14 @@ class Cauchy(Primitive):
         \f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
 
     Args:
-        size (list(int)): The size of tensor.
+        size (list[int]): The size of tensor.
         sigma (float): the location parameter, specifying the location
             of the peak of the distribution. Default: 1.0.
         median (float): the scale parameter which specifies the half-width
             at half-maximum. Default: 0.0.
 
     Outputs:
-        - **y** (Tensor) - Tensor with cauchy distribution data. Tensor shape is size, and data type is float32.
+        Tensor with cauchy distribution data. Tensor shape is size, and data type is float32.
 
     Raises:
         TypeError: If `sigma` is not a float.
