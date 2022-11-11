@@ -51,6 +51,11 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
       auto ascend_device_info = device_info->Cast<mindspore::AscendDeviceInfo>();
       MS_EXCEPTION_IF_NULL(ascend_device_info);
       device_id_ = ascend_device_info->GetDeviceID();
+
+      // AIPP config path is specified, DVPP mode
+      if (ascend_device_info->GetInsertOpConfigPath() != "") {
+        is_dvpp_ = true;
+      }
       return kSuccess;
     }
   }
@@ -88,6 +93,81 @@ void InitInputSizeList(const std::shared_ptr<CNode> &kernel_node, std::vector<si
   }
 }
 
+Status SingleOpInferSession::UpdateKernelGraphInputs(const std::vector<std::vector<int64_t>> &dims,
+                                                     const std::vector<TypeId> &type_ids, bool use_type_from_graph) {
+  auto graph_inputs = RuntimeUtils::GetGraphDataInputs(kernel_graph_);
+  if (graph_inputs.size() != dims.size()) {
+    MS_LOG(ERROR) << "Number of graph inputs [" << graph_inputs.size() << "] is not equal to the given dims num ["
+                  << dims.size() << "]";
+    return kLiteError;
+  }
+  if (!use_type_from_graph && (graph_inputs.size() != type_ids.size())) {
+    MS_LOG(ERROR) << "Number of graph inputs [" << graph_inputs.size() << "] is not equal to the given type ids num ["
+                  << type_ids.size() << "]";
+    return kLiteError;
+  }
+  for (size_t i = 0; i < graph_inputs.size(); ++i) {
+    auto &graph_input = graph_inputs[i];
+    if (utils::isa<mindspore::abstract::AbstractTuplePtr>(graph_input->abstract())) {
+      MS_LOG(ERROR) << "The abstract of input does not support abstract tuple.";
+      return kLiteError;
+    }
+    auto graph_input_addr = AnfAlgo::GetMutableOutputAddr(graph_input, 0);
+    if (graph_input_addr == nullptr) {
+      MS_LOG(ERROR) << "Graph input addr is nullptr.";
+      return kLiteError;
+    }
+    TypeId type_id = graph_input_addr->type_id();
+    if (!use_type_from_graph) {
+      type_id = type_ids[i];
+    }
+    size_t type_size = GetTypeByte(TypeIdToType(type_id));
+    const std::vector<int64_t> &dim = dims[i];
+    size_t tensor_size =
+      dim.empty() ? type_size : std::accumulate(dim.begin(), dim.end(), type_size, std::multiplies<size_t>());
+    // update input size
+    if (graph_input_addr->ptr_ != nullptr) {
+      free(graph_input_addr->ptr_);
+      auto new_addr = malloc(tensor_size);
+      if (new_addr == nullptr) {
+        MS_LOG(ERROR) << " malloc memory of input " << i << " failed, memory size " << tensor_size;
+        return kLiteError;
+      }
+      graph_input_addr->set_ptr(new_addr);
+      graph_input_addr->SetSize(tensor_size);
+    }
+    // update input shape
+    auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), dim);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Abstract is nullptr.";
+      return kLiteError;
+    }
+    graph_input->set_abstract(abstract);
+  }
+  return kSuccess;
+}
+
+Status SingleOpInferSession::UpdateGraphInputsForDVPP(const std::vector<kernel::KernelTensorPtr> &inputs) {
+  std::vector<std::vector<int64_t>> dims = {};
+  std::vector<TypeId> type_ids = {};
+  for (auto &input : inputs) {
+    dims.push_back(input->GetShapeVector());
+    type_ids.push_back(input->GetDtype());
+  }
+  auto ret = UpdateKernelGraphInputs(dims, type_ids, false);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  for (size_t i = 0; i < inputs.size(); i++) {
+    // update session inputs_
+    auto data_type = static_cast<enum DataType>(type_ids[i]);
+    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, dims[i]);
+    impl->SetFormat(inputs[i]->GetFormat());
+    inputs_.push_back(impl);
+  }
+  return kSuccess;
+}
+
 Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "SingleOpInferSession::CompileGraph";
   std::vector<KernelGraphPtr> all_out_graph;
@@ -102,6 +182,7 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
 
   auto &kernel_nodes = kernel_graph_->execution_order();
   bool update_flag = false;
+  std::vector<kernel::KernelTensorPtr> update_inputs;
   std::vector<kernel::KernelTensorPtr> update_outputs;
   for (const auto &kernel_node : kernel_nodes) {
     mindspore::infer::SetKernelInfo(kernel_node);
@@ -120,10 +201,6 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
     if (!ret) {
       MS_LOG(EXCEPTION) << "kernel init failed " << kernel_name;
-    }
-    if (kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
-        kernel::KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
     }
 
     std::vector<size_t> input_size_list;
@@ -145,6 +222,9 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     AnfAlgo::SetKernelMod(kernel_mod, kernel_node.get());
 
     if (kernel_name == kNameCustomAscend) {
+      if (is_dvpp_) {
+        update_inputs = kernel_mod->GetInputKernelTensor();
+      }
       update_flag = true;
       update_outputs = kernel_mod->RetrieveOutputShape();
     }
@@ -163,11 +243,19 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     MS_LOG(ERROR) << "Graph output size " << graph_outputs.size() << " != output names size " << output_names_.size();
     return kCoreFailed;
   }
-  for (size_t i = 0; i < input_names_.size(); i++) {
-    auto &input = graph_inputs[i];
-    auto data_type = static_cast<enum DataType>(input->data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
-    inputs_.push_back(impl);
+  if (is_dvpp_) {
+    MS_LOG(INFO) << "Update input kernel tensor shape, data type, and format for CustomAscend DVPP";
+    auto ret = UpdateGraphInputsForDVPP(update_inputs);
+    if (ret != kSuccess) {
+      return ret;
+    }
+  } else {
+    for (size_t i = 0; i < input_names_.size(); i++) {
+      auto &input = graph_inputs[i];
+      auto data_type = static_cast<enum DataType>(input->data_type());
+      auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
+      inputs_.push_back(impl);
+    }
   }
   for (size_t i = 0; i < output_names_.size(); i++) {
     auto &output = graph_outputs[i];
@@ -239,47 +327,13 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::Tensor>
                   << inputs.size() << "]";
     return kLiteError;
   }
-  auto graph_inputs = RuntimeUtils::GetGraphDataInputs(kernel_graph_);
-  if (graph_inputs.size() != inputs.size()) {
-    MS_LOG(ERROR) << "Graph inputs size[" << graph_inputs.size() << " is not equal with user input size["
-                  << inputs.size() << "]";
-    return kLiteError;
+  auto ret = UpdateKernelGraphInputs(dims, {}, true);
+  if (ret != kSuccess) {
+    return ret;
   }
-  for (size_t i = 0; i < graph_inputs.size(); ++i) {
-    auto graph_input = graph_inputs[i];
-    if (utils::isa<mindspore::abstract::AbstractTuplePtr>(graph_input->abstract())) {
-      MS_LOG(ERROR) << "The abstract of input is not support abstract tuple.";
-      return kLiteError;
-    }
-    auto graph_input_addr = AnfAlgo::GetMutableOutputAddr(graph_input, 0);
-    if (graph_input_addr == nullptr) {
-      MS_LOG(ERROR) << "Graph input addr is nullptr.";
-      return kLiteError;
-    }
-    TypeId type_id = graph_input_addr->type_id();
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    size_t tensor_size = dims[i].empty()
-                           ? type_size
-                           : std::accumulate(dims[i].begin(), dims[i].end(), type_size, std::multiplies<size_t>());
-    // update input size
-    if (graph_input_addr->ptr_ != nullptr) {
-      free(graph_input_addr->ptr_);
-      auto new_addr = malloc(tensor_size);
-      if (new_addr == nullptr) {
-        MS_LOG(ERROR) << " malloc memory of input " << i << " failed, memory size " << inputs[i].Size();
-        return kLiteError;
-      }
-      graph_input_addr->set_ptr(new_addr);
-      graph_input_addr->SetSize(tensor_size);
-    }
-    // update input shape
+  for (size_t i = 0; i < inputs.size(); i++) {
+    // update session inputs_
     inputs_[i]->SetShape(dims[i]);
-    auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), dims[i]);
-    if (abstract == nullptr) {
-      MS_LOG(ERROR) << "Abstract is nullptr.";
-      return kLiteError;
-    }
-    graph_input->set_abstract(abstract);
   }
   return kSuccess;
 }

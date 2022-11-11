@@ -168,5 +168,7 @@ std::set<uint64_t> ModelInfer::GetDynamicBatch() { return model_process_.GetDyna
 std::set<std::pair<uint64_t, uint64_t>> ModelInfer::GetDynamicImage() { return model_process_.GetDynamicImage(); }
 std::vector<Format> ModelInfer::GetInputFormat() { return model_process_.GetInputFormat(); }
 const std::vector<ShapeVector> ModelInfer::GetOutputShape() { return model_process_.GetOutputShape(); }
+const std::vector<ShapeVector> ModelInfer::GetInputShape() { return model_process_.GetInputShape(); }
+const std::vector<TypeId> ModelInfer::GetInputDataType() { return model_process_.GetInputDataType(); }
 }  // namespace acl
 }  // namespace mindspore::kernel

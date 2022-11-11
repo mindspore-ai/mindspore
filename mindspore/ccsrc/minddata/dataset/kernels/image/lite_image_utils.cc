@@ -310,7 +310,7 @@ Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     }
     cv::cvtColor(img_mat, img_mat, static_cast<int>(cv::COLOR_BGR2RGB));
     std::shared_ptr<CVTensor> output_cv;
-    dsize_t rank_num = 3;
+    const dsize_t rank_num = 3;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(img_mat, rank_num, &output_cv));
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
@@ -500,16 +500,16 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
                                input_cv->shape().ToString());
     }
 
-    LiteMat imIn, imOut;
+    LiteMat im_in, im_out;
     std::shared_ptr<Tensor> output_tensor;
     TensorShape new_shape = TensorShape({output_height, output_width, 3});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    imOut.Init(output_width, output_height, static_cast<int>(input_cv->shape()[kChannelIndexHWC]),
-               reinterpret_cast<void *>(buffer), LDataType::UINT8);
-    imIn.Init(static_cast<int>(input_cv->shape()[1]), static_cast<int>(input_cv->shape()[0]),
-              static_cast<int>(input_cv->shape()[kChannelIndexHWC]), input_cv->mat().data, LDataType::UINT8);
-    if (ResizeCubic(imIn, imOut, output_width, output_height) == false) {
+    im_out.Init(output_width, output_height, static_cast<int>(input_cv->shape()[kChannelIndexHWC]),
+                reinterpret_cast<void *>(buffer), LDataType::UINT8);
+    im_in.Init(static_cast<int>(input_cv->shape()[1]), static_cast<int>(input_cv->shape()[0]),
+               static_cast<int>(input_cv->shape()[kChannelIndexHWC]), input_cv->mat().data, LDataType::UINT8);
+    if (ResizeCubic(im_in, im_out, output_width, output_height) == false) {
       RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
     }
     *output = output_tensor;

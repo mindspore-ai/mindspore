@@ -178,6 +178,45 @@ std::set<std::pair<uint64_t, uint64_t>> ModelProcess::GetDynamicImage() {
   return image;
 }
 
+const std::vector<ShapeVector> ModelProcess::GetInputShape() {
+  std::vector<ShapeVector> shapes = {};
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return shapes;
+  }
+  size_t input_size = aclmdlGetNumInputs(model_desc_);
+  for (size_t i = 0; i < input_size; ++i) {
+    aclError ret;
+    aclmdlIODims dims;
+
+    // To get correct dims with static AIPP configured, same result as aclmdlGetInputDims without static AIPP
+    ret = aclmdlGetInputDimsV2(model_desc_, i, &dims);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Get input shape failed, ret = " << ret;
+      return shapes;
+    }
+
+    ShapeVector shape(dims.dims, dims.dims + dims.dimCount);
+    shapes.emplace_back(shape);
+  }
+  return shapes;
+}
+
+const std::vector<TypeId> ModelProcess::GetInputDataType() {
+  std::vector<TypeId> data_types = {};
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return data_types;
+  }
+  size_t input_size = aclmdlGetNumInputs(model_desc_);
+  for (size_t i = 0; i < input_size; ++i) {
+    aclDataType acl_data_type = aclmdlGetInputDataType(model_desc_, i);
+    TypeId data_type = TransToDataType(acl_data_type);
+    data_types.emplace_back(data_type);
+  }
+  return data_types;
+}
+
 STATUS ModelProcess::InitInputsBuffer() {
   aclError ret;
   size_t input_size = aclmdlGetNumInputs(model_desc_);
@@ -194,7 +233,9 @@ STATUS ModelProcess::InitInputsBuffer() {
     }
 
     aclmdlIODims dims;
-    ret = aclmdlGetInputDims(model_desc_, i, &dims);
+
+    // To get correct dims with static AIPP configured, same result as aclmdlGetInputDims without static AIPP
+    ret = aclmdlGetInputDimsV2(model_desc_, i, &dims);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Get input shape failed, ret = " << ret;
       if (!is_run_on_device_) {

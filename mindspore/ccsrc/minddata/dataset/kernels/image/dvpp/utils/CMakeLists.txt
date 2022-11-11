@@ -17,6 +17,11 @@ if(NOT MSLITE_ENABLE_ACL)
     ${DVPP_UTILS_SRC}
     ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.cc
     )
+else()
+    set(DVPP_UTILS_SRC
+    ${DVPP_UTILS_SRC}
+    ${CMAKE_SOURCE_DIR}/../../mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.cc
+    )
 endif()
 
 add_library(dvpp_utils SHARED ${DVPP_UTILS_SRC})
