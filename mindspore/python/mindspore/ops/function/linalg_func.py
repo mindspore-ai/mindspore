@@ -95,15 +95,13 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     """
     Computes the (Moore-Penrose) pseudo-inverse of a matrix.
 
-    Note:
-        Only `float32`, `float64` are supported Tensor dtypes.
-
     Args:
         x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions.
+            Only `float32`, `float64` are supported Tensor dtypes.
 
     Keyword args:
-        atol (float, tensor) : absolute tolerance value. Default: None.
-        rtol (float, tensor) : relative tolerance value. Default: None.
+        atol (float, Tensor) : absolute tolerance value. Default: None.
+        rtol (float, Tensor) : relative tolerance value. Default: None.
         hermitian (bool) : An optional bool. x is assumed to be symmetric if real. Default: False.
 
     Outputs:

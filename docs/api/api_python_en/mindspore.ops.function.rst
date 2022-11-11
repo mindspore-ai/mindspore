@@ -207,6 +207,7 @@ Element-by-Element Operations
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.negative
+    mindspore.ops.pinv
     mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.roll
