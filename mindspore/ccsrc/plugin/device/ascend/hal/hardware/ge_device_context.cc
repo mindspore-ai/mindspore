@@ -37,6 +37,7 @@
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
 #include "runtime/config.h"
 #include "runtime/dev.h"
+#include "distributed/init.h"
 
 namespace mindspore {
 namespace device {
@@ -408,8 +409,10 @@ void GeDeviceContext::Initialize() {
   std::string rank_id = common::GetEnv("RANK_ID");
   std::string rank_table_file = common::GetEnv("RANK_TABLE_FILE");
   if (!rank_id.empty() && !rank_table_file.empty()) {
-    (void)hccl::HcclAdapter::GetInstance().InitHccl(ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id,
-                                                    rank_table_file, hccl::HcclMode::kGraph);
+    MsContext::GetInstance()->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
+    if (!mindspore::distributed::Initialize()) {
+      MS_LOG(EXCEPTION) << "InitHccl failed.";
+    }
   }
 
   initialized_ = true;

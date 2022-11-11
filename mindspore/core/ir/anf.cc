@@ -443,7 +443,7 @@ std::string get_id(const AnfNodePtr &node) {
   // The id with offset means the user called reset_id_with_offset() and expect the operated id generated from 0 with an
   // identified offset.
   if (offset != 0) {
-    return std::to_string(offset) + "_" + base_id;
+    return base_id + '_' + std::to_string(offset);
   }
   return base_id;
 }

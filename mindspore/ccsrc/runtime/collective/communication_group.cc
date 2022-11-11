@@ -43,7 +43,7 @@ uint32_t CommunicationGroup::GetGroupRank(uint32_t global_rank) {
 }
 
 uint32_t CommunicationGroup::GetLocalGroupRank() {
-  CHECK_RET((local_group_rank_ == UINT32_MAX), true,
+  CHECK_RET((local_group_rank_ != UINT32_MAX), true,
             "Group " + name_ + " doesn't contain the global rank " + std::to_string(global_rank_));
   return local_group_rank_;
 }
