@@ -29,9 +29,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
+#include "runtime/pynative/op_task.h"
 #include "include/backend/visible.h"
-#include "runtime/pynative/async/backend_op_task.h"
-#include "runtime/pynative/async/async_queue.h"
 
 namespace mindspore::runtime {
 class BACKEND_EXPORT OpExecutor {
@@ -47,11 +46,11 @@ class BACKEND_EXPORT OpExecutor {
   // Register build callback function
   void Register(const std::function<void()> &callback);
 
-  void PushOpBuildTask(const std::shared_ptr<pynative::BackendOpBuildTask> &op_build_task);
+  void PushOpBuildTask(const std::shared_ptr<OpBuildTask> &op_build_task);
 
-  void PushOpRunTask(const std::shared_ptr<pynative::BackendOpRunTask> &op_run_task);
+  void PushOpRunTask(const std::shared_ptr<OpTask> &op_run_task);
 
-  const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &GetOpBuildTasks() const { return op_build_tasks_; }
+  const std::vector<std::shared_ptr<OpBuildTask>> &GetOpBuildTasks() const { return op_build_tasks_; }
 
   bool BuildQueueEmpty();
   bool RunQueueEmpty();
@@ -83,16 +82,20 @@ class BACKEND_EXPORT OpExecutor {
 
   void WaitForBuild();
   void WaitForRun();
+  void WorkerLoop();
+  void ClearRunOpTasks();
   void ClearResources();
 
-  pynative::AsyncQueue async_queue_;
-
-  std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> op_build_tasks_;
-
+  std::vector<std::shared_ptr<OpBuildTask>> op_build_tasks_;
+  std::queue<std::shared_ptr<OpTask>> op_run_tasks_;
   std::set<GraphId> actor_in_queue_;
   std::function<void()> batch_build_callback_{nullptr};
   inline static size_t kMaxQueueSize = 20;
   bool executing_{false};
+  bool registered_{false};
+  std::shared_ptr<std::thread> worker_;
+  std::mutex task_mutex_;
+  std::condition_variable task_cond_var_;
 };
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_OP_EXECUTOR_H_

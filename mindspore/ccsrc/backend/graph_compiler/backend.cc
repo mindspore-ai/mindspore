@@ -1059,8 +1059,7 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_ten
   graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
 }
 
-void MindRTBackend::CompileSingleOpGraphs(
-  const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &build_tasks) {
+void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks) {
   if (build_tasks.empty()) {
     return;
   }
@@ -1082,7 +1081,7 @@ void MindRTBackend::CompileSingleOpGraphs(
   pynative::OpCompiler::BatchBuild(graphs, device_context);
 }
 
-void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context) {
+void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context) {
   MS_LOG(DEBUG) << "OpRunCallback start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1173,8 +1172,8 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-  auto run_op_context = std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, output_nodes, op_run_info,
-                                                                  op_compiler_info->device_context_, infer_flag);
+  auto run_op_context = std::make_shared<runtime::OpTaskContext>(graph->graph_id(), graph, output_nodes, op_run_info,
+                                                                 op_compiler_info->device_context_, infer_flag);
 
   // Save build task and run task.
   std::promise<bool> promise;
@@ -1182,12 +1181,12 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!single_op_cache_hit) {
-    op_executor.PushOpBuildTask(std::make_shared<pynative::BackendOpBuildTask>(run_op_context, std::move(promise)));
+    op_executor.PushOpBuildTask(std::make_shared<runtime::OpBuildTask>(run_op_context, std::move(promise)));
   } else {
     promise.set_value(true);
   }
-  op_executor.PushOpRunTask(std::make_shared<pynative::BackendOpRunTask>(
-    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallback(ctx); },
+  op_executor.PushOpRunTask(std::make_shared<runtime::OpRunTask>(
+    run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallback(ctx); },
     std::move(future)));
 
   op_executor.Register([this]() { BatchBuildCallback(); });
