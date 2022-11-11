@@ -131,6 +131,11 @@ bool SliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
   if (TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_) &&
       TryGetIntValue(inputs, kSizeIndex_, kernel_name_, &size_)) {
     ProccessAttr(inputs);
@@ -145,8 +150,6 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
-  output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;
 }
