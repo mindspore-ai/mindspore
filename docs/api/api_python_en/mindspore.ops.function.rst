@@ -214,6 +214,7 @@ Element-by-Element Operations
     mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.multiply
+    mindspore.ops.mvlgamma
     mindspore.ops.neg
     mindspore.ops.negative
     mindspore.ops.positive
@@ -387,6 +388,7 @@ Array Operation
     mindspore.ops.normal
     mindspore.ops.nonzero
     mindspore.ops.numel
+    mindspore.ops.orgqr
     mindspore.ops.permute
     mindspore.ops.population_count
     mindspore.ops.range

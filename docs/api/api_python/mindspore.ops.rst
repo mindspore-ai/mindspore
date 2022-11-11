@@ -69,6 +69,8 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.MaxPoolWithArgmax
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MirrorPad
+    mindspore.ops.NthElement
+    mindspore.ops.NuclearNorm
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
@@ -91,6 +93,8 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.CTCLossV2
     mindspore.ops.KLDivLoss
     mindspore.ops.L2Loss
+    mindspore.ops.MultilabelMarginLoss
+    mindspore.ops.MultiMarginLoss
     mindspore.ops.NLLLoss
     mindspore.ops.RNNTLoss
     mindspore.ops.SigmoidCrossEntropyWithLogits
@@ -207,6 +211,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
+    mindspore.ops.NonMaxSuppressionWithOverlaps
     mindspore.ops.RGBToHSV
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2
@@ -304,6 +309,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Mul
     mindspore.ops.MulNoNan
     mindspore.ops.Neg
+    mindspore.ops.NextAfter
     mindspore.ops.Pow
     mindspore.ops.Real
     mindspore.ops.RealDiv
@@ -385,6 +391,7 @@ Reduction算子
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
+    mindspore.ops.Orgqr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
 
@@ -419,6 +426,7 @@ Tensor创建
 
     mindspore.ops.Gamma
     mindspore.ops.Multinomial
+    mindspore.ops.NonDeterministicInts
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
     mindspore.ops.Randperm
@@ -481,6 +489,8 @@ Array操作
     mindspore.ops.MatrixSolve
     mindspore.ops.MatrixTriangularSolve
     mindspore.ops.Meshgrid
+    mindspore.ops.Mvlgamma
+    mindspore.ops.Nonzero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
     mindspore.ops.Range

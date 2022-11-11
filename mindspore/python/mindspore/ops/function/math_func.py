@@ -3460,9 +3460,12 @@ def median(x, axis=-1, keepdims=False):
 
 def orgqr(x, tau):
     r"""
-    Computes the first :math:`N` columns of a product of Householder matrices. Take the case of input without batch
-    as an example. The input x is a matrix of size :math:`(M, N)` after householder transformation. When the diagonal
-    of x is set to 1, every colunm of lower triangular in x is denoted as :math:`w_j` for :math:`j` for
+    Computes the first :math:`N` columns of a product of
+    `Householder <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_
+    matrices. Take the case of input without batch
+    as an example. Suppose input `x` is a matrix of size :math:`(M, N)` after householder transformation.
+    When the diagonal of `x` is set to 1, every colunm of lower triangular in `x` is
+    denoted as :math:`w_j` for :math:`j` for
     :math:`j=1, \ldots, M`, this function returns the first :math:`N` columns of the matrix
 
     .. math::
@@ -3470,13 +3473,13 @@ def orgqr(x, tau):
 
     where :math:`\mathrm{I}_{M}` is the :math:`M`-dimensional identity matrix. And when :math:`w` is complex,
     :math:`w^{\mathrm{H}}` is the conjugate transpose, otherwise the transpose.
-    The output matrix is the same size as the input matrix :math:`x`.
+    The output matrix is the same size as the input matrix `x`.
 
     Args:
         x (Tensor): Tensor of shape :math:`(*, M, N)`, indicating 2D or 3D matrices,
-                    with float32, float64, complex64 and complex128 data type.
-        tau (Tensor) : Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N` indicating the
-                       reflecting coefficient in Householder transformation, which have the same type as x.
+            with float32, float64, complex64 and complex128 data type.
+        tau (Tensor): Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N`, indicating the
+            reflecting coefficient in Householder transformation, which have the same type as `x`.
 
     Returns:
         Tensor, has the same shape and data type as `x`.

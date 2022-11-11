@@ -69,6 +69,8 @@ Neural Network
     mindspore.ops.MaxPoolWithArgmax
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MirrorPad
+    mindspore.ops.NthElement
+    mindspore.ops.NuclearNorm
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
@@ -91,6 +93,8 @@ Loss Function
     mindspore.ops.CTCLossV2
     mindspore.ops.KLDivLoss
     mindspore.ops.L2Loss
+    mindspore.ops.MultilabelMarginLoss
+    mindspore.ops.MultiMarginLoss
     mindspore.ops.NLLLoss
     mindspore.ops.RNNTLoss
     mindspore.ops.SigmoidCrossEntropyWithLogits
@@ -206,6 +210,7 @@ Image Processing
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
+    mindspore.ops.NonMaxSuppressionWithOverlaps
     mindspore.ops.RGBToHSV
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2
@@ -303,6 +308,7 @@ Element-wise Operator
     mindspore.ops.Mul
     mindspore.ops.MulNoNan
     mindspore.ops.Neg
+    mindspore.ops.NextAfter
     mindspore.ops.Pow
     mindspore.ops.Real
     mindspore.ops.RealDiv
@@ -384,6 +390,7 @@ Linear Algebraic Operator
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
+    mindspore.ops.Orgqr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
 
@@ -418,6 +425,7 @@ Random Generation Operator
 
     mindspore.ops.Gamma
     mindspore.ops.Multinomial
+    mindspore.ops.NonDeterministicInts
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
     mindspore.ops.Randperm
@@ -480,6 +488,8 @@ Array Operation
     mindspore.ops.MatrixSolve
     mindspore.ops.MatrixTriangularSolve
     mindspore.ops.Meshgrid
+    mindspore.ops.Mvlgamma
+    mindspore.ops.Nonzero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
     mindspore.ops.Range

@@ -417,45 +417,43 @@ class NonMaxSuppressionWithOverlaps(Primitive):
     Greedily selects a subset of bounding boxes in descending order of score.
 
     Note:
-        This algorithm is agnostic to where the origin is in the coordinate system.
-        This algorithm is invariant to orthogonal transformations and translations of the coordinate system;
-        thus translating or reflections of the coordinate system result in the same boxes being
-        selected by the algorithm.
+        - This algorithm is agnostic to where the origin is in the coordinate system.
+        - This algorithm is invariant to orthogonal transformations and translations of the coordinate system;
+          thus translating or reflections of the coordinate system result in the same boxes being
+          selected by the algorithm.
 
     Inputs:
-        - **overlaps** (Tensor) - A 2-D Tensor of shape [num_boxes, num_boxes].
-          Types allowed:float32.
-        - **scores** (Tensor) - A 1-D Tensor of shape [num_boxes] representing a single score
-          corresponding to each box (each row of boxes),the num_boxes of "scores" must be equal to
-          the num_boxes of "overlaps".
+        - **overlaps** (Tensor) - A 2-D Tensor of shape :math:`(num_boxes, num_boxes)`,
+          representing the n-by-n box overlap values. Types allowed:float32.
+        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num_boxes)` representing a single score
+          corresponding to each box (each row of boxes), the num_boxes of `scores` must be equal to
+          the num_boxes of `overlaps`.
           Types allowed:float32.
         - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
           number of boxes to be selected by non max suppression, and max_output_size must be equal to or greater
           than 0.
           Types allowed:int32.
-        - **overlap_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
+        - **overlap_threshold** (Union[Tensor, Number.Float]) - A 0-D float Tensor representing the threshold for
           deciding whether boxes overlap too much.
           Types allowed:float32.
-        - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
+        - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float Tensor representing the threshold for
           deciding when to remove boxes based on score.
           Types allowed:float32.
 
     Outputs:
-        An int32 tensor. A 1-D integer Tensor of shape [M] representing the selected indices from the boxes tensor,
-        where M <= max_output_size.
+       A 1-D integer Tensor of shape :math:`(M)` representing the selected indices from the boxes Tensor,
+        where M <= max_output_size. Its data type is int32.
 
     Raises:
-        TypeError: If the dtype of `overlaps` and `scores` is not float32.
-        TypeError: If the dtype of `overlap_threshold` and `score_threshold` is not float32.
-        TypeError: If `overlaps` is not tensor or its dtype is not float32.
-        TypeError: If `scores` is not tensor or its dtype is not float32.
-        TypeError: If `max_output_size` is not tensor or scalar.If `max_output_size` is not int32.
-        TypeError: If `overlap_threshold` is not tensor or scalar. If its type is not float32.
-        TypeError: If `score_threshold` is not tensor or scalar. If its type is not float32.
+        TypeError: If the dtype of `overlaps` , `scores` `overlap_threshold` and `score_threshold` is not float32.
+        TypeError: If `overlaps` or `scores` is not Tensor。
+        TypeError: If `max_output_size` is not Tensor or Scalar.If `max_output_size` is not int32.
+        TypeError: If `overlap_threshold` is not Tensor or scalar. If its type is not float32.
+        TypeError: If `score_threshold` is not Tensor or scalar. If its type is not float32.
         ValueError: If the size of shape of `overlaps` is not 2 or the second value of its shape
                     is not equal to the first value of its shape.
         ValueError: If the size of shape of `scores` is not 1.
-        ValueError: If each of the size of shape of `max_output_size`, `overlap_threshold`, `score_threshold` is not 0.
+        ValueError: If any of the size of shape of `max_output_size`, `overlap_threshold`, `score_threshold` is not 0.
         ValueError: If `max_output_size` is negative.
         ValueError: If the shape of `scores` is not equal to the shape of the dim0 or dim1 of `overlaps`.
 

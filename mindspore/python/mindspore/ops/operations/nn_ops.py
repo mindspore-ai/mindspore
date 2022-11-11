@@ -2999,10 +2999,9 @@ class SmoothL1Loss(Primitive):
 class MultiMarginLoss(Primitive):
     r"""
     Creates a criterion that optimizes a multi-class classification hinge loss (margin-based loss)
-    between input xx (a 2D mini-batch Tensor) and output yy (which is a 1D tensor of target class
-    indices, 0 \leq y \leq \text{x.size}(1)-10≤y≤x.size(1)−1):
+    between input and output.
 
-    Refer to :func:`mindspore.ops.multi_margin_loss` for more detail.
+    Refer to :func:`mindspore.ops.multi_margin_loss` for more details.
 
     Supported Platforms:
         ``Ascend``  ``CPU``
@@ -8871,7 +8870,7 @@ class MultilabelMarginLoss(Primitive):
     hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
     and output :math:`y` (which is a 2D `Tensor` of target class indices).
 
-    Refer to :func:`mindspore.ops.multi_label_margin_loss` for more detail.
+    Refer to :func:`mindspore.ops.multi_label_margin_loss` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -9340,22 +9339,22 @@ class NthElement(Primitive):
     each row (resp. vector along the last dimension). Thus, values.shape = input.shape[:-1].
 
     Args:
-        reverse (bool): An optional bool. Defaults to False. When set to True, find the nth-largest value
-          in the vector and vice versa.
+        reverse (bool, optional): An optional bool. When set to True, find the nth-largest value
+          in the vector and vice versa. Default: False.
 
     Inputs:
-        - **input** (Tensor) - A Tensor. 1-D or higher with last dimension at least n+1.
-        - **n** (int or Tensor) -  If the n is a tensor, it should be a 0-D tensor, dtype is int32.
-          Valid range of n is [0, input.shape[-1]).
+        - **input** (Tensor) - A Tensor. 1-D or higher with last dimension at least :math:`n+1`.
+        - **n** (Union[int, Tensor]) -  If the n is a tensor, it should be a 0-D tensor, dtype is int32.
+          Valid range of n is :math:`[0, input.shape[-1])`.
 
     Outputs:
-        Tensor, values.shape = input.shape[:-1]. The dtype is same to the input.
+        - **values** (Tensor) - Its shape satisfies:  `values`.shape = `input`.shape[:-1].
+          The dtype is the same as `input`.
 
     Raises:
-        TypeError: If the type  of input is out of the valid list.
-        TypeError: If the n is not int32 or not a Tensor.
-        ValueError: If n is out of [0, input.shape[-1]).
-
+        TypeError**: If the type  of `input` is out of the valid list.
+        TypeError**: If `n` is not int32 or not a Tensor.
+        ValueError**: If n is out of :math:`[0, input.shape[-1])`.
 
     Supported Platforms:
          ``Ascend`` ``GPU`` ``CPU``
@@ -10064,49 +10063,50 @@ class SparseApplyProximalGradientDescent(Primitive):
 
 class NuclearNorm(Primitive):
     r"""
-    Returns the matrix nuclear norm of a given tensor.
+    Returns the matrix nuclear norm of a given Tensor.
 
     Attr `dim` specifies which two dimensions of the input `x` to calculate the nuclear norm across. If `dim` is None,
     the nuclear norm will be calculated across all dimensions of input. Because the nuclear norm is the sum of the
     singular values of the matrix, the input at this time should be 2-dimensional. That is, if the input is
     2-dimensional, we compute the nuclear norm of the input matrix. At this point, `dim` should be None. If you set
-    `dim`, it also needs to be in the proper range, although it doesn't work. If the input is 3-dimensional and above,
+    `dim`, it also needs to be in the proper range, otherwise it wonn't work. If the input is 3-dimensional and above,
     the attribute `dim` is required. It specifies which two dimensions of input to calculate the nuclear norm across.
 
-    According to the `dim` list, the input tensor is reordered by `dim`. The two dimensions pointed to by the attribute
+    According to the `dim` list, the input Tensor is reordered by `dim`. The two dimensions pointed to by the attribute
     `dim` are placed at the end, and the order of the other dimensions is relatively unchanged. Perform the SVD of each
-    slice of the adjusted tensor to obtain the singular value. Sum all of the singular value of each slice/matrix to
+    slice of the adjusted Tensor to obtain the singular value. Sum all of the singular value of each slice/matrix to
     obtain the nuclear norm.
 
     Args:
-        dim (Union[list(int), tuple(int)]): Specifies which two dimensions of `x` to calculate the matrix nuclear norm
+        dim (Union[list(int), tuple(int)], optional): Specifies which two
+            dimensions of `x` to calculate the matrix nuclear norm
             across. If `dim` is None, the nuclear norm will be calculated across all dimensions of `x`. The length of
             `dim` should be 2. The value in `dim` should be in this range:[-x_rank, x_rank). x_rank is the dimension of
             Tensor `x`. The value of `dim[0]` or `dim[1]` can not point to the same dimension. Default: None.
-        keepdim (bool): whether the output tensor have `dim` retained or not. Default: False.
+        keepdim (bool, optional): Whether the output Tensor have `dim` retained or not. Default: False.
 
     Inputs:
         - **x** (Tensor) - Input to compute the matrix nuclear norm. The dimension of `x` should be greater than or
           equal to 2. Data type must be float32 or float64.
 
     Outputs:
-        Tensor, output tensor with dimensions in `dim` reduced to 1 will be returned if `keepdim` is `True`;
-        otherwise a tensor with dimensions in `dim` removed is returned. The data type is same as `x`.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
+        Tensor, output Tensor with dimensions in `dim` reduced to 1 will be returned if `keepdim` is `True`;
+        otherwise a Tensor with dimensions in `dim` removed is returned. The data type is same as `x`.
 
     Raises:
-        TypeError: If `x` is not a tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float32 nor float64.
         TypeError: If dtype of `dim` is neither list(int) nor tuple(int).
         TypeError: If dtype of `keepdim` is not bool.
         ValueError: If dimension of Tensor `x` is less than 2.
         ValueError: If the length of `dim` is not 2 when `dim` is set.
-        ValueError: If the dimension of tensor `x` is not 2 when `dim` is not set.
+        ValueError: If the dimension of Tensor `x` is not 2 when `dim` is not set.
         ValueError: If `dim[0]` or `dim[1]` point to the same dimension.
         ValueError: If `dim[0]` or `dim[1]` is not in this range:[-x_rank, x_rank).
                     x_rank is the dimension of Tensor `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],

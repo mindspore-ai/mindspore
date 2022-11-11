@@ -3581,33 +3581,9 @@ class DiagPart(PrimitiveWithCheck):
 
 class Mvlgamma(Primitive):
     r"""
-    Computes the multivariate log-gamma function with dimension p element-wise.
+    Computes the multivariate log-gamma function with dimension `p` element-wise.
 
-    The following tex shows the mathematical calculation process of Mvlgamma:
-
-    .. math::
-
-        \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
-
-    where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
-
-    Args:
-        p(int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
-
-    Inputs:
-        - **x** (Tensor) - The tensor to compute the multivariate log-gamma function,
-          which must be one of the following types: float32, float64.
-          The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
-          And the value of any element in `x` must be greater than (p - 1) / 2.
-
-    Outputs:
-        Tensor, has the same shape and type as `x`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither float32 nor float64.
-        TypeError: If `p` is not an int.
-        ValueError: If `p` is not greater than or equal to 1.
-        ValueError: If all elements of `x` are not greater than (p-1)/2.
+    Refer to :func:`mindspore.ops.mvlgamma` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
