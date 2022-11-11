@@ -304,7 +304,7 @@ class MS_CORE_API ValueDictionary : public Value {
   /// \brief Constructor of ValueDictionary.
   ///
   /// \param[in] key_values Define the set of keys and values of Dictionary.
-  explicit ValueDictionary(const std::vector<std::pair<std::string, ValuePtr>> &key_values) : key_values_(key_values) {}
+  explicit ValueDictionary(const std::vector<std::pair<ValuePtr, ValuePtr>> &key_values) : key_values_(key_values) {}
   /// \brief Destructor of ValueDictionary.
   ~ValueDictionary() override = default;
   MS_DECLARE_PARENT(ValueDictionary, Value)
@@ -320,11 +320,11 @@ class MS_CORE_API ValueDictionary : public Value {
   ///
   /// \param[in] key Define the keyword.
   /// \return The value associated with the keyword.
-  const ValuePtr operator[](const std::string &key) const;
+  const ValuePtr operator[](const ValuePtr &key) const;
   /// \brief The value of ValueDictionary object.
   ///
   /// \return The value of ValueDictionary object.
-  const std::vector<std::pair<std::string, ValuePtr>> &value() const { return key_values_; }
+  const std::vector<std::pair<ValuePtr, ValuePtr>> &value() const { return key_values_; }
   /// \brief Check whether the input is the current ValueDictionary object.
   ///
   /// \param[in] other Define a Value object.
@@ -344,10 +344,11 @@ class MS_CORE_API ValueDictionary : public Value {
     size_t index = 0;
     for (const auto &kv : key_values_) {
       // Only supports the key as string type currently.
-      std::string key = kv.first;
+      ValuePtr key = kv.first;
       ValuePtr value = kv.second;
+      MS_EXCEPTION_IF_NULL(key);
       MS_EXCEPTION_IF_NULL(value);
-      buffer << "'" << key << "': " << value->ToString();
+      buffer << "'" << key->ToString() << "': " << value->ToString();
       if (index != key_values_.size() - 1) {
         buffer << ", ";
       }
@@ -366,7 +367,7 @@ class MS_CORE_API ValueDictionary : public Value {
   std::string DumpText() const override { return ToString(); }
 
  private:
-  std::vector<std::pair<std::string, ValuePtr>> key_values_;
+  std::vector<std::pair<ValuePtr, ValuePtr>> key_values_;
 };
 using ValueDictionaryPtr = std::shared_ptr<ValueDictionary>;
 

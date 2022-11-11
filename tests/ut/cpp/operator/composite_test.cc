@@ -424,7 +424,10 @@ TEST_F(TestComposite, test_UnpackCall_3args) {
   AbstractTensorPtr arr_x = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
   AbstractTensorPtr arr_y = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
   AbstractTensorPtr arr_z = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
-  std::vector<AbstractAttribute> tensor_map{{"x", arr_x}, {"y", arr_y}, {"z", arr_z}};
+  auto key_x = std::make_shared<AbstractScalar>(static_cast<std::string>("x"));
+  auto key_y = std::make_shared<AbstractScalar>(static_cast<std::string>("y"));
+  auto key_z = std::make_shared<AbstractScalar>(static_cast<std::string>("z"));
+  std::vector<AbstractAttribute> tensor_map{{key_x, arr_x}, {key_y, arr_y}, {key_z, arr_z}};
   abstract::AbstractDictionaryPtr tensor_dict = std::make_shared<abstract::AbstractDictionary>(tensor_map);
 
   AbstractBasePtrList args_spec_list = {fn_arg, tensor_tuple, tensor_dict};
@@ -452,7 +455,10 @@ TEST_F(TestComposite, test_UnpackCall_5args) {
   AbstractTensorPtr arr_x = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
   AbstractTensorPtr arr_y = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
   AbstractTensorPtr arr_z = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
-  std::vector<AbstractAttribute> tensor_map{{"x", arr_x}, {"y", arr_y}, {"z", arr_z}};
+  auto key_x = std::make_shared<AbstractScalar>(static_cast<std::string>("x"));
+  auto key_y = std::make_shared<AbstractScalar>(static_cast<std::string>("y"));
+  auto key_z = std::make_shared<AbstractScalar>(static_cast<std::string>("z"));
+  std::vector<AbstractAttribute> tensor_map{{key_x, arr_x}, {key_y, arr_y}, {key_z, arr_z}};
   abstract::AbstractDictionaryPtr tensor_dict = std::make_shared<abstract::AbstractDictionary>(tensor_map);
 
   AbstractBasePtrList args_spec_list = {fn_arg, tensor_dict, tensor_tuple, tensor_dict, tensor_tuple};

@@ -795,6 +795,25 @@ bool AbstractTuple::ContainsAllBroadenTensors() const {
   return true;
 }
 
+bool AbstractTuple::ContainsAllConstants() const {
+  for (const auto &element : elements_) {
+    auto element_value = element->BuildValue();
+    MS_EXCEPTION_IF_NULL(element_value);
+    // Check if tuple contains only constants, i.e. string, number, constant tensor and tuple.
+    if (!(element_value->isa<StringImm>() || element_value->isa<Scalar>() ||
+          (element->isa<abstract::AbstractTensor>() && element_value != kAnyValue) ||
+          element->isa<abstract::AbstractTuple>())) {
+      return false;
+    }
+    // Check if inner tuple contains only constants recursively.
+    if (element->isa<abstract::AbstractTuple>() &&
+        !element->cast_ptr<abstract::AbstractTuple>()->ContainsAllConstants()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequence::operator==(other); }
 
 bool AbstractList::operator==(const AbstractBase &other) const {
@@ -1050,11 +1069,13 @@ std::string AbstractTensor::ToString() const {
 }
 
 TypePtr AbstractDictionary::BuildType() const {
-  std::vector<std::pair<std::string, TypePtr>> key_values;
+  std::vector<std::pair<TypePtr, TypePtr>> key_values;
   for (const auto &item : key_values_) {
+    MS_EXCEPTION_IF_NULL(item.first);
     MS_EXCEPTION_IF_NULL(item.second);
-    TypePtr type = item.second->BuildType();
-    key_values.emplace_back(item.first, type);
+    TypePtr key_type = item.first->BuildType();
+    TypePtr value_type = item.second->BuildType();
+    key_values.emplace_back(key_type, value_type);
   }
   return std::make_shared<Dictionary>(key_values);
 }
@@ -1066,7 +1087,7 @@ bool AbstractDictionary::operator==(const AbstractDictionary &other) const {
   for (size_t index = 0; index < key_values_.size(); ++index) {
     auto &kv1 = key_values_[index];
     auto &kv2 = other.key_values_[index];
-    if (kv1.first != kv2.first || !IsEqual(kv1.second, kv2.second)) {
+    if (!IsEqual(kv1.first, kv2.first) || !IsEqual(kv1.second, kv2.second)) {
       return false;
     }
   }
@@ -1085,17 +1106,18 @@ bool AbstractDictionary::operator==(const AbstractBase &other) const {
 
 AbstractBasePtr AbstractDictionary::Clone() const {
   std::vector<AbstractAttribute> kv;
-  (void)std::transform(key_values_.begin(), key_values_.end(), std::back_inserter(kv),
+  (void)std::transform(key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
                        [](const AbstractAttribute &item) {
+                         MS_EXCEPTION_IF_NULL(item.first);
                          MS_EXCEPTION_IF_NULL(item.second);
-                         return std::make_pair(item.first, item.second->Clone());
+                         return std::make_pair(item.first->Clone(), item.second->Clone());
                        });
   return std::make_shared<AbstractDictionary>(kv);
 }
 
 AbstractBasePtr AbstractDictionary::Broaden() const {
   std::vector<AbstractAttribute> kv;
-  (void)std::transform(key_values_.begin(), key_values_.end(), std::back_inserter(kv),
+  (void)std::transform(key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
                        [](const AbstractAttribute &item) {
                          MS_EXCEPTION_IF_NULL(item.second);
                          return std::make_pair(item.first, item.second->Broaden());
@@ -1107,18 +1129,20 @@ std::string AbstractDictionary::ToString() const {
   std::ostringstream buffer;
   buffer << type_name() << "{ ";
   for (const auto &kv : key_values_) {
+    MS_EXCEPTION_IF_NULL(kv.first);
     MS_EXCEPTION_IF_NULL(kv.second);
-    buffer << "(" << kv.first << ": " << kv.second->ToString() << ") ";
+    buffer << "(" << kv.first->ToString() << ": " << kv.second->ToString() << ") ";
   }
   buffer << "}";
   return buffer.str();
 }
 
 std::size_t AbstractDictionary::hash() const {
-  std::size_t hash_sum = std::accumulate(key_values_.begin(), key_values_.end(), tid(),
+  std::size_t hash_sum = std::accumulate(key_values_.cbegin(), key_values_.cend(), tid(),
                                          [](std::size_t hash_sum, const AbstractAttribute &item) {
-                                           hash_sum = hash_combine(hash_sum, std::hash<std::string>()(item.first));
+                                           MS_EXCEPTION_IF_NULL(item.first);
                                            MS_EXCEPTION_IF_NULL(item.second);
+                                           hash_sum = hash_combine(hash_sum, item.first->hash());
                                            hash_sum = hash_combine(hash_sum, item.second->hash());
                                            return hash_sum;
                                          });
@@ -1126,15 +1150,18 @@ std::size_t AbstractDictionary::hash() const {
 }
 
 ValuePtr AbstractDictionary::RealBuildValue() const {
-  std::vector<std::pair<std::string, ValuePtr>> key_values;
+  std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (const auto &item : key_values_) {
+    MS_EXCEPTION_IF_NULL(item.first);
     MS_EXCEPTION_IF_NULL(item.second);
-    auto element_value = item.second->BuildValue();
-    MS_EXCEPTION_IF_NULL(element_value);
-    if (element_value->isa<AnyValue>()) {
+    auto key_element_value = item.first->BuildValue();
+    auto value_element_value = item.second->BuildValue();
+    MS_EXCEPTION_IF_NULL(key_element_value);
+    MS_EXCEPTION_IF_NULL(value_element_value);
+    if (value_element_value->isa<AnyValue>()) {
       return kAnyValue;
     }
-    key_values.emplace_back(item.first, element_value);
+    key_values.emplace_back(key_element_value, value_element_value);
   }
   return std::make_shared<ValueDictionary>(key_values);
 }

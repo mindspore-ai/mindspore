@@ -68,10 +68,11 @@ abstract::AbstractBasePtr KeywordArg::ToAbstract() {
 }
 
 abstract::AbstractBasePtr ValueDictionary::ToAbstract() {
-  std::vector<std::pair<std::string, abstract::AbstractBasePtr>> kv;
-  (void)std::transform(
-    key_values_.begin(), key_values_.end(), std::back_inserter(kv),
-    [](const std::pair<std::string, ValuePtr> &item) { return std::make_pair(item.first, item.second->ToAbstract()); });
+  std::vector<std::pair<abstract::AbstractBasePtr, abstract::AbstractBasePtr>> kv;
+  (void)std::transform(key_values_.cbegin(), key_values_.cend(), std::back_inserter(kv),
+                       [](const std::pair<ValuePtr, ValuePtr> &item) {
+                         return std::make_pair(item.first->ToAbstract(), item.second->ToAbstract());
+                       });
   return std::make_shared<abstract::AbstractDictionary>(kv);
 }
 

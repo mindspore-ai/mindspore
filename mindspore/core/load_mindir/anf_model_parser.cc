@@ -1064,13 +1064,14 @@ bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_
 }
 
 ValuePtr MSANFModelParser::ObtainValueInDictionaryForm(const mind_ir::AttributeProto &attr_proto) {
-  std::vector<std::pair<std::string, ValuePtr>> key_values;
+  std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (int i = 0; i < attr_proto.values_size(); ++i) {
     const mind_ir::AttributeProto &key_value_proto = attr_proto.values(i);
     if (!key_value_proto.has_name()) {
       MS_LOG(EXCEPTION) << "Dict type AttributeProto should has name as key of dictionary";
     }
-    auto &key = key_value_proto.name();
+    auto key = std::make_shared<abstract::AbstractScalar>(key_value_proto.name())->BuildValue();
+    MS_EXCEPTION_IF_NULL(key);
     auto &values = key_value_proto.values();
     if (values.size() != 1) {
       MS_LOG(EXCEPTION) << "Dict type AttributeProto should has exactly one value, but got " << values.size()

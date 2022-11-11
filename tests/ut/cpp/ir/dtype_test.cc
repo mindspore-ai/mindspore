@@ -55,7 +55,7 @@ void TestDType::TearDown() {
 TEST_F(TestDType, TestNumber) {
   try {
     Float f = Float(32);
-  } catch (std::range_error& e) {
+  } catch (std::range_error &e) {
     MS_LOG(ERROR) << "build float 32 failed!!! error:" << e.what();
     ASSERT_TRUE(0);
     return;
@@ -84,8 +84,8 @@ TEST_F(TestDType, TestTuple) {
 }
 
 TEST_F(TestDType, TestDictionary) {
-  std::vector<std::pair<std::string, TypePtr>> kv = {std::make_pair("key1", std::make_shared<Int>(8)),
-                                                     std::make_pair("key2", std::make_shared<Bool>())};
+  std::vector<std::pair<TypePtr, TypePtr>> kv = {std::make_pair(std::make_shared<Int>(8), std::make_shared<Int>(8)),
+                                                 std::make_pair(std::make_shared<Int>(8), std::make_shared<Bool>())};
   Dictionary d1 = Dictionary(kv);
   Dictionary d2 = Dictionary(kv);
   ASSERT_EQ(d1, d2);

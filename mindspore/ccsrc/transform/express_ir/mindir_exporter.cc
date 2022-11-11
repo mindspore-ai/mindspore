@@ -1294,7 +1294,7 @@ bool IrExportBuilder::SetDictToAttributeProto(const ValueDictionaryPtr &value_di
   for (const auto &item : values) {
     mind_ir::AttributeProto *dict_item_proto = attr_proto->add_values();
     const auto &key = item.first;
-    dict_item_proto->set_name(key);
+    dict_item_proto->set_name(GetValue<std::string>(key));
     const auto &value = item.second;
     MS_EXCEPTION_IF_NULL(value);
     mind_ir::AttributeProto *dict_item_value = dict_item_proto->add_values();

@@ -176,10 +176,14 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     return str->value();
   }
 
-  static int64_t GetAttrIndex(const std::vector<AbstractAttribute> &attrs, const std::string &name) {
+  static int64_t GetAttrIndex(const std::vector<AbstractAttribute> &attrs, const AnfNodePtr &name) {
     auto n_attrs = attrs.size();
+    auto name_abstract = GetAbstract<AbstractBase>(name);
+    MS_EXCEPTION_IF_NULL(name_abstract);
+    auto name_value = name_abstract->BuildValue();
+    MS_EXCEPTION_IF_NULL(name_value);
     for (size_t i = 0; i < n_attrs; ++i) {
-      if (attrs[i].first == name) {
+      if (*name_value == *attrs[i].first->BuildValue()) {
         return SizeToLong(i);
       }
     }
@@ -188,14 +192,14 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
 
   static CNodePtr NewTupleGetCNode(const AnfNodePtr &cnode, const AnfNodePtr &data_node,
                                    const std::vector<AbstractAttribute> &attributes, const AnfNodePtr &name_node) {
-    int64_t index = GetAttrIndex(attributes, GetStringValue(name_node));
+    int64_t index = GetAttrIndex(attributes, name_node);
     auto index_node = NewValueNode(index);
     auto prim_node = NewValueNode(prim::kPrimTupleGetItem);
     return cnode->func_graph()->NewCNode({prim_node, data_node, index_node});
   }
 
   // From:
-  //   DictGetItem(data:AbstractDictionary, cons:StringImm)
+  //   DictGetItem(data:AbstractDictionary, cons:AbstractBase)
   // To:
   //   TupleGetItem(data, index:Int64Imm)
   AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
@@ -222,7 +226,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   // From:
-  //   DictSetItem(data:AbstractDictionary, cons:StringImm, value)
+  //   DictSetItem(data:AbstractDictionary, cons:AbstractBase, value)
   // To:
   //   TupleSetItem(data, index:Int64Imm, value)
   // Or:
@@ -249,7 +253,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     if (abs_dict == nullptr) {
       return nullptr;
     }
-    int64_t index = GetAttrIndex(abs_dict->elements(), GetStringValue(cons));
+    int64_t index = GetAttrIndex(abs_dict->elements(), cons);
     if (index >= static_cast<int64_t>(abs_dict->elements().size())) {
       // For dictionary set, if the key does not exist, we should create a new item.
       std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
@@ -310,7 +314,8 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeList));
     for (size_t i = 0; i < elements.size(); ++i) {
       auto index_node = NewValueNode(static_cast<int64_t>(i));
-      auto key_node = NewValueNode(elements[i].first);
+      MS_EXCEPTION_IF_NULL(elements[i].first->BuildValue());
+      auto key_node = NewValueNode(elements[i].first->BuildValue());
       auto value_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, index_node});
       auto tuple_node = fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), key_node, value_node});
       (void)new_inputs.emplace_back(tuple_node);

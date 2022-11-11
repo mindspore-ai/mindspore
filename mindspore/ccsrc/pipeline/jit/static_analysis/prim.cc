@@ -171,14 +171,17 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_s
       MS_EXCEPTION_IF_NULL(specialize_args_before_unpack[index]);
       if (specialize_args_before_unpack[index]->isa<AbstractTuple>()) {
         auto arg_tuple = specialize_args_before_unpack[index]->cast_ptr<AbstractTuple>();
-        std::transform(arg_tuple->elements().begin(), arg_tuple->elements().end(),
+        std::transform(arg_tuple->elements().cbegin(), arg_tuple->elements().cend(),
                        std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
       } else if (specialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
         auto arg_dict = specialize_args_before_unpack[index]->cast_ptr<AbstractDictionary>();
         auto dict_elems = arg_dict->elements();
-        (void)std::transform(
-          dict_elems.begin(), dict_elems.end(), std::back_inserter(graph_specialize_args),
-          [](const AbstractAttribute &item) { return std::make_shared<AbstractKeywordArg>(item.first, item.second); });
+        (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(graph_specialize_args),
+                             [](const AbstractAttribute &item) {
+                               // Dict_elems's first element represents parameter names, which should be string type.
+                               return std::make_shared<AbstractKeywordArg>(
+                                 GetValue<std::string>(item.first->BuildValue()), item.second);
+                             });
       } else {
         MS_LOG(EXCEPTION) << "UnpackGraph require args should be tuple or dict, but got "
                           << specialize_args_before_unpack[index]->ToString();
@@ -286,11 +289,15 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
     dict_key_nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     dict_value_nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (const auto &item : items) {
+      auto key_value = item.first->BuildValue();
+      MS_EXCEPTION_IF_NULL(key_value);
+      AnfNodePtr dict_key_node = NewValueNode(key_value);
       AnfNodePtr dict_value_node =
-        func_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), source_node, NewValueNode(item.first)});
-      AnfNodePtr node = MixedPrecisionCastHelper(dict_value_node, item.second, target_type, func_graph);
-      dict_key_nodes.emplace_back(NewValueNode(item.first));
-      dict_value_nodes.emplace_back(node);
+        func_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), source_node, NewValueNode(key_value)});
+      AnfNodePtr key_node = MixedPrecisionCastHelper(dict_key_node, item.first, target_type, func_graph);
+      AnfNodePtr value_node = MixedPrecisionCastHelper(dict_value_node, item.second, target_type, func_graph);
+      (void)dict_key_nodes.emplace_back(key_node);
+      (void)dict_value_nodes.emplace_back(value_node);
     }
     target_node =
       func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(std::move(dict_key_nodes)),
@@ -489,7 +496,7 @@ py::dict AbstractDictionaryToPython(const AbstractBasePtr &abs_base) {
     py::dict cur_value_out = ConvertAbstractToPython(cur_value);
     shape_list[i] = cur_value_out[ATTR_SHAPE];
     dtype_list[i] = cur_value_out[ATTR_DTYPE];
-    value_dict[py::str(cur_key)] = cur_value_out[ATTR_VALUE];
+    value_dict[ValueToPyData(cur_key->BuildValue())] = cur_value_out[ATTR_VALUE];
   }
 
   py::dict dic = py::dict();
@@ -2197,7 +2204,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
         auto wrapper_obj = fg->python_obj();
         if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
           auto fn_py_obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
-          (*global_params_dict)[py::str(element_name)] = fn_py_obj;
+          (*global_params_dict)[ValueToPyData(element_name->BuildValue())] = fn_py_obj;
           MS_LOG(DEBUG) << "Found global python function object for " << element_name << ", add it to global dict.";
         }
       }
@@ -2254,7 +2261,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       ValuePtr element_value = key_value.second->BuildValue();
       MS_EXCEPTION_IF_NULL(element_value);
       auto py_data = ValueToPyData(element_value);
-      local_params_dict[py::str(key_value.first)] = py_data;
+      local_params_dict[ValueToPyData(key_value.first->BuildValue())] = py_data;
     }
     return local_params_dict;
   }

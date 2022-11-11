@@ -197,21 +197,3 @@ def test_dict_fromkeys_11():
     with pytest.raises(RuntimeError):
         out = dict_net_11()
         print(out)
-
-
-def test_dict_fromkeys_12():
-    """
-    Feature: dict fromkeys.
-    Description: support dict fromkeys.
-    Expectation: No exception.
-    """
-    @jit
-    def dict_net_12():
-        x = {'a': 1, 'b': 2}
-        y = ['b', 1, 'c']
-        new_dict = x.fromkeys(y, 111)
-        return str(new_dict)
-
-    with pytest.raises(RuntimeError):
-        out = dict_net_12()
-        print(out)

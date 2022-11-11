@@ -186,7 +186,7 @@ static ValueNameToConverterVector value_name_to_converter = {
      auto value_list = value->cast<ValueDictionaryPtr>()->value();
      py::dict res_dict;
      for (const auto &v : value_list) {
-       res_dict[py::str(v.first)] = ValueToPyData(v.second);
+       res_dict[ValueToPyData(v.first)] = ValueToPyData(v.second);
      }
      return res_dict;
    }},

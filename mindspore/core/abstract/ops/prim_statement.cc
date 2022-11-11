@@ -191,17 +191,15 @@ AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &pr
 bool IsInDict(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 2);
-  auto key = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
+  const auto &key = args_spec_list[0];
   auto dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 1);
 
   ValuePtr key_value = key->BuildValue();
-  if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
-  }
-  auto key_str = GetValue<std::string>(key_value);
+  MS_EXCEPTION_IF_NULL(key_value);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
-  auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
-                         [key_str](const AbstractAttribute &item) { return item.first == key_str; });
+  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractAttribute &item) {
+    return *key_value == *item.first->BuildValue();
+  });
   return it != dict_elems.end();
 }
 
