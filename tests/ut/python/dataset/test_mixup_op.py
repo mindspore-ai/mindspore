@@ -267,7 +267,7 @@ def test_mixup_batch_float_label():
     ds.config.set_seed(original_seed)
 
 
-def test_mixup_batch_twice():
+def test_mixup_batch_then_cut_mix_batch():
     """
     Feature: MixUpBatch
     Description: Test MixUpBatch called twice
@@ -279,13 +279,14 @@ def test_mixup_batch_twice():
     one_hot = transforms.OneHot(num_classes=10)
     dataset = dataset.map(operations=one_hot, input_columns=["label"])
     mix_up_batch = vision.MixUpBatch()
+    cut_mix_batch = vision.CutMixBatch(vision.ImageBatchFormat.NHWC, 2.0, 0.5)
     dataset = dataset.batch(3, drop_remainder=False)
     dataset = dataset.map(operations=mix_up_batch, input_columns=["image", "label"])
-    dataset = dataset.map(operations=mix_up_batch, input_columns=["image", "label"])
+    dataset = dataset.map(operations=cut_mix_batch, input_columns=["image", "label"])
 
-    expected_label = np.array([[0.29373336, 0.49647674, 0.20978989, 0., 0., 0., 0., 0., 0., 0.],
-                               [0.20978989, 0.29373336, 0.49647674, 0., 0., 0., 0., 0., 0., 0.],
-                               [0.49647674, 0.20978989, 0.29373336, 0., 0., 0., 0., 0., 0., 0.]])
+    expected_label = np.array([[0.2858054, 0.49770468, 0.21648991, 0., 0., 0., 0., 0., 0., 0.],
+                               [0., 0.54197174, 0.45802826, 0., 0., 0., 0., 0., 0., 0.],
+                               [0.45802826, 0., 0.54197174, 0., 0., 0., 0., 0., 0., 0.]])
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_almost_equal(item["label"], expected_label)
 
@@ -483,8 +484,11 @@ if __name__ == "__main__":
     test_mixup_batch_success3(plot=True)
     test_mixup_batch_success4(plot=True)
     test_mixup_batch_md5()
+    test_mixup_batch_float_label()
+    test_mixup_batch_then_cut_mix_batch()
     test_mixup_batch_fail1()
     test_mixup_batch_fail2()
     test_mixup_batch_fail3()
     test_mixup_batch_fail4()
     test_mixup_batch_fail5()
+    test_mix_up_batch_invalid_label_type()

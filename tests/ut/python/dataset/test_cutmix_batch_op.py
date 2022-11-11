@@ -13,14 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing the CutMixBatch op in DE
+Test CutMixBatch in DE
 """
 import numpy as np
 import pytest
+
 import mindspore.dataset as ds
-import mindspore.dataset.vision as vision
 import mindspore.dataset.transforms as transforms
-import mindspore.dataset.vision.utils as mode
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_seed, \
     config_get_set_num_parallel_workers
@@ -32,13 +32,12 @@ DATA_DIR3 = "../data/dataset/testCelebAData/"
 GENERATE_GOLDEN = False
 
 
-def test_cutmix_batch_success1(plot=False):
+def test_cut_mix_batch_specified_param_on_chw_image(plot=False):
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op with specified alpha and prob parameters on a batch of CHW images
+    Feature: CutMixBatch
+    Description: Test CutMixBatch with specified alpha and prob parameter on a batch of CHW images
     Expectation: Output is equal to the expected output
     """
-    logger.info("test_cutmix_batch_success1")
     # Original Images
     ds_original = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     ds_original = ds_original.batch(5, drop_remainder=True)
@@ -56,7 +55,7 @@ def test_cutmix_batch_success1(plot=False):
     data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
     one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NCHW, 2.0, 0.5)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NCHW, 2.0, 0.5)
     data1 = data1.batch(5, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
@@ -76,14 +75,12 @@ def test_cutmix_batch_success1(plot=False):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
 
-def test_cutmix_batch_success2(plot=False):
+def test_cut_mix_batch_on_hwc_image(plot=False):
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op with default values for alpha and prob on a batch of rescaled HWC images
-    Expectation: Output is equal to the expected output
+    Feature: CutMixBatch
+    Description: Test CutMixBatch with default params on a batch of HWC images
+    Expectation: Result is as expected
     """
-    logger.info("test_cutmix_batch_success2")
-
     # Original Images
     ds_original = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
     ds_original = ds_original.batch(5, drop_remainder=True)
@@ -101,7 +98,7 @@ def test_cutmix_batch_success2(plot=False):
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     rescale_op = vision.Rescale((1.0 / 255.0), 0.0)
     data1 = data1.map(operations=rescale_op, input_columns=["image"])
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
@@ -121,14 +118,12 @@ def test_cutmix_batch_success2(plot=False):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
 
-def test_cutmix_batch_success3(plot=False):
+def test_cut_mix_batch_on_image_folder(plot=False):
     """
-    Feature: CutMixBatch op
-    Description: Test with default values for alpha and prob on a batch of HWC images on ImagesFolderDataset
+    Feature: CutMixBatch
+    Description: Test CutMixBatch with default values for alpha and prob on a batch of HWC images on ImagesFolderDataset
     Expectation: Output is equal to the expected output
     """
-    logger.info("test_cutmix_batch_success3")
-
     ds_original = ds.ImageFolderDataset(dataset_dir=DATA_DIR2, shuffle=False)
     decode_op = vision.Decode()
     ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
@@ -155,7 +150,7 @@ def test_cutmix_batch_success3(plot=False):
     one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
 
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)
     data1 = data1.batch(4, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
@@ -175,14 +170,12 @@ def test_cutmix_batch_success3(plot=False):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
 
-def test_cutmix_batch_success4(plot=False):
+def test_cut_mix_batch_on_2d_label(plot=False):
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op on a dataset where OneHot returns a 2D vector
+    Feature: CutMixBatch
+    Description: Test CutMixBatch on a dataset where OneHot returns a 2D vector
     Expectation: Output is equal to the expected output
     """
-    logger.info("test_cutmix_batch_success4")
-
     ds_original = ds.CelebADataset(DATA_DIR3, shuffle=False)
     decode_op = vision.Decode()
     ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
@@ -209,7 +202,7 @@ def test_cutmix_batch_success4(plot=False):
     one_hot_op = transforms.OneHot(num_classes=100)
     data1 = data1.map(operations=one_hot_op, input_columns=["attr"])
 
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 0.5, 0.9)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NHWC, 0.5, 0.9)
     data1 = data1.batch(2, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "attr"])
 
@@ -229,13 +222,12 @@ def test_cutmix_batch_success4(plot=False):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
 
-def test_cutmix_batch_nhwc_md5():
+def test_cut_mix_batch_accuracy_on_hwc_image():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op on a batch of HWC images with md5 comparison check
+    Feature: CutMixBatch
+    Description: Test CutMixBatch on a batch of HWC images with md5 comparison check
     Expectation: Passes the md5 check test
     """
-    logger.info("test_cutmix_batch_nhwc_md5")
     original_seed = config_get_set_seed(0)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
@@ -244,7 +236,7 @@ def test_cutmix_batch_nhwc_md5():
 
     one_hot_op = transforms.OneHot(num_classes=10)
     data = data.map(operations=one_hot_op, input_columns=["label"])
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)
     data = data.batch(5, drop_remainder=True)
     data = data.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
@@ -256,13 +248,12 @@ def test_cutmix_batch_nhwc_md5():
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_cutmix_batch_nchw_md5():
+def test_cut_mix_batch_accuracy_on_chw_image():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op on a batch of CHW images with md5 comparison check
+    Feature: CutMixBatch
+    Description: Test CutMixBatch on a batch of CHW images with md5 comparison check
     Expectation: Passes the md5 check test
     """
-    logger.info("test_cutmix_batch_nchw_md5")
     original_seed = config_get_set_seed(0)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
@@ -272,7 +263,7 @@ def test_cutmix_batch_nchw_md5():
     data = data.map(operations=hwc2chw_op, input_columns=["image"])
     one_hot_op = transforms.OneHot(num_classes=10)
     data = data.map(operations=one_hot_op, input_columns=["label"])
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NCHW)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NCHW)
     data = data.batch(5, drop_remainder=True)
     data = data.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
@@ -284,7 +275,7 @@ def test_cutmix_batch_nchw_md5():
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_cutmix_batch_float_label():
+def test_cut_mix_batch_float_label():
     """
     Feature: CutMixBatch
     Description: Test CutMixBatch with label in type of float
@@ -296,54 +287,53 @@ def test_cutmix_batch_float_label():
     label = np.random.randint(0, 5, (3, 1))
     decode_label = transforms.OneHot(5)(label)
     float_label = transforms.TypeCast(float)(decode_label)
-    _, mix_label = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)(image, float_label)
-    expected_label = np.array([[0., 0.9285714, 0., 0., 0.0714286],
+    _, mix_label = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)(image, float_label)
+    expected_label = np.array([[0., 0.6734694, 0., 0., 0.32653058],
                                [0., 0., 0., 0., 1.],
-                               [0., 0.02040815, 0., 0., 0.97959185]])
+                               [0., 0.38137758, 0., 0., 0.6186224]])
     np.testing.assert_almost_equal(mix_label, expected_label)
 
     ds.config.set_seed(original_seed)
 
 
-def test_cutmix_batch_twice():
+def test_cut_mix_batch_then_mix_up_batch():
     """
     Feature: CutMixBatch
     Description: Test CutMixBatch called twice
     Expectation: Output is as expected
     """
-    original_seed = config_get_set_seed(5)
+    original_seed = config_get_set_seed(2)
 
     dataset = ds.Cifar10Dataset(DATA_DIR, num_samples=3, shuffle=False)
     one_hot = transforms.OneHot(num_classes=10)
     dataset = dataset.map(operations=one_hot, input_columns=["label"])
-    cut_mix_batch = vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 2.0, 0.5)
+    cut_mix_batch = vision.CutMixBatch(vision.ImageBatchFormat.NHWC, 2.0, 0.5)
+    mix_up_batch = vision.MixUpBatch()
     dataset = dataset.batch(3, drop_remainder=False)
     dataset = dataset.map(operations=cut_mix_batch, input_columns=["image", "label"])
-    dataset = dataset.map(operations=cut_mix_batch, input_columns=["image", "label"])
+    dataset = dataset.map(operations=mix_up_batch, input_columns=["image", "label"])
 
-    expected_label = np.array([[0.58618164, 0.41107178, 0.00274658, 0., 0., 0., 0., 0., 0., 0.],
-                               [0.00109863, 0.9766998, 0.02220154, 0., 0., 0., 0., 0., 0., 0.],
-                               [0.15673828, 0.02197266, 0.82128906, 0., 0., 0., 0., 0., 0., 0.]])
+    expected_label = np.array([[0.10036002, 0.02589141, 0.87374854, 0., 0., 0., 0., 0., 0., 0.],
+                               [0., 1., 0., 0., 0., 0., 0., 0., 0., 0.],
+                               [0.69456184, 0.17918672, 0.12625143, 0., 0., 0., 0., 0., 0., 0.]])
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_almost_equal(item["label"], expected_label)
 
     ds.config.set_seed(original_seed)
 
 
-def test_cutmix_batch_fail1():
+def test_cut_mix_batch_without_batch():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op where images and labels are not batched
+    Feature: CutMixBatch
+    Description: Test CutMixBatch where images and labels are not batched
     Expectation: Correct error is raised as expected
     """
-    logger.info("test_cutmix_batch_fail1")
-
     # CutMixBatch Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)
     with pytest.raises(RuntimeError) as error:
         data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
         for idx, (image, _) in enumerate(data1):
@@ -351,81 +341,58 @@ def test_cutmix_batch_fail1():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-        error_message = "You must make sure images are HWC or CHW and batch "
+        error_message = "input image is not in shape of <B,H,W,C> or <B,C,H,W>"
         assert error_message in str(error.value)
+        batch_suggestion = "You may need to perform Batch first"
+        assert batch_suggestion in str(error.value)
 
 
-def test_cutmix_batch_fail2():
+def test_cut_mix_batch_invalid_alpha():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op where alpha is negative
+    Feature: CutMixBatch
+    Description: Test CutMixBatch where alpha is invalid
     Expectation: Correct error is raised as expected
     """
-    logger.info("test_cutmix_batch_fail2")
-
-    # CutMixBatch Images
-    data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
-
-    one_hot_op = transforms.OneHot(num_classes=10)
-    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
-        vision.CutMixBatch(mode.ImageBatchFormat.NHWC, -1)
+        _ = vision.CutMixBatch(vision.ImageBatchFormat.NHWC, -1)
+        error_message = "Input is not within the required interval"
+        assert error_message in str(error.value)
+
+    with pytest.raises(ValueError) as error:
+        _ = vision.CutMixBatch(vision.ImageBatchFormat.NHWC, 0.0)
         error_message = "Input is not within the required interval"
         assert error_message in str(error.value)
 
 
-def test_cutmix_batch_fail3():
+def test_cut_mix_batch_invalid_prob():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op where prob is larger than 1
+    Feature: CutMixBatch
+    Description: Test CutMixBatch where prob is invalid
     Expectation: Correct error is raised as expected
     """
-    logger.info("test_cutmix_batch_fail3")
-
-    # CutMixBatch Images
-    data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
-
-    one_hot_op = transforms.OneHot(num_classes=10)
-    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
     with pytest.raises(ValueError) as error:
-        vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 1, 2)
+        _ = vision.CutMixBatch(vision.ImageBatchFormat.NHWC, 1, 2)
+        error_message = "Input is not within the required interval"
+        assert error_message in str(error.value)
+
+    with pytest.raises(ValueError) as error:
+        _ = vision.CutMixBatch(vision.ImageBatchFormat.NHWC, 1, -1)
         error_message = "Input is not within the required interval"
         assert error_message in str(error.value)
 
 
-def test_cutmix_batch_fail4():
+def test_cut_mix_batch_invalid_column_size():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op where prob is negative
+    Feature: CutMixBatch
+    Description: Test CutMixBatch where label column is not passed to CutMixBatch
     Expectation: Correct error is raised as expected
     """
-    logger.info("test_cutmix_batch_fail4")
-
     # CutMixBatch Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
-    with pytest.raises(ValueError) as error:
-        vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 1, -1)
-        error_message = "Input is not within the required interval"
-        assert error_message in str(error.value)
-
-
-def test_cutmix_batch_fail5():
-    """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op where label column is not passed to cutmix_batch
-    Expectation: Correct error is raised as expected
-    """
-    logger.info("test_cutmix_batch_fail5")
-
-    # CutMixBatch Images
-    data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
-
-    one_hot_op = transforms.OneHot(num_classes=10)
-    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image"])
 
@@ -436,24 +403,22 @@ def test_cutmix_batch_fail5():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "size of input should be 2 (including image and label)"
+    error_message = "input should have 2 columns (image and label)"
     assert error_message in str(error.value)
 
 
-def test_cutmix_batch_fail6():
+def test_cut_mix_batch_invalid_channel():
     """
-    Feature: CutMixBatch op
-    Description: Test op where image_batch_format passed to CutMixBatch doesn't match the format of the images
+    Feature: CutMixBatch
+    Description: Test CutMixBatch where image passed to CutMixBatch doesn't match the required format
     Expectation: Correct error is raised as expected
     """
-    logger.info("test_cutmix_batch_fail6")
-
     # CutMixBatch Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
     one_hot_op = transforms.OneHot(num_classes=10)
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NCHW)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NCHW)
     data1 = data1.batch(5, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
@@ -464,22 +429,20 @@ def test_cutmix_batch_fail6():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "image doesn't match the <N,C,H,W> format"
+    error_message = "input image is not in channel of 1 or 3"
     assert error_message in str(error.value)
 
 
-def test_cutmix_batch_fail7():
+def test_cut_mix_batch_without_one_hot():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op where labels are not in one-hot format
+    Feature: CutMixBatch
+    Description: Test CutMixBatch where labels are not in one-hot format
     Expectation: Correct error is raised as expected
     """
-    logger.info("test_cutmix_batch_fail7")
-
     # CutMixBatch Images
     data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
 
-    cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+    cutmix_batch_op = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)
     data1 = data1.batch(5, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
@@ -490,27 +453,25 @@ def test_cutmix_batch_fail7():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "wrong labels shape. The second column (labels) must have a shape of NC or NLC"
+    error_message = "input label is not in shape of <Batch,Class> or <Batch,Row,Class>"
     assert error_message in str(error.value)
+    one_hot_suggession = "You may need to perform OneHot and Batch first"
+    assert one_hot_suggession in str(error.value)
 
 
-def test_cutmix_batch_fail8():
+def test_cut_mix_batch_unequal_batch_size():
     """
-    Feature: CutMixBatch op
-    Description: Test CutMixBatch op where alpha is 0
+    Feature: CutMixBatch
+    Description: Test CutMixBatch where image and label are in different batch sizes
     Expectation: Correct error is raised as expected
     """
-    logger.info("test_cutmix_batch_fail8")
-
-    # CutMixBatch Images
-    data1 = ds.Cifar10Dataset(DATA_DIR, num_samples=10, shuffle=False)
-
-    one_hot_op = transforms.OneHot(num_classes=10)
-    data1 = data1.map(operations=one_hot_op, input_columns=["label"])
-    with pytest.raises(ValueError) as error:
-        vision.CutMixBatch(mode.ImageBatchFormat.NHWC, 0.0)
-        error_message = "Input is not within the required interval"
-        assert error_message in str(error.value)
+    image = np.random.randint(0, 255, (5, 28, 28, 1))
+    label = np.random.randint(0, 10, (4, 1))
+    decode_label = transforms.OneHot(10)(label)
+    with pytest.raises(RuntimeError) as error:
+        _ = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)(image, decode_label)
+    error_message = "batch sizes of image and label must be the same"
+    assert error_message in str(error.value)
 
 
 def test_cut_mix_batch_invalid_label_type():
@@ -522,23 +483,25 @@ def test_cut_mix_batch_invalid_label_type():
     image = np.random.randint(0, 255, (3, 28, 28, 1), dtype=np.uint8)
     label = np.array([["one"], ["two"], ["three"]])
     with pytest.raises(RuntimeError) as error:
-        _ = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)(image, label)
+        _ = vision.CutMixBatch(vision.ImageBatchFormat.NHWC)(image, label)
     error_message = "CutMixBatch: invalid label type, label must be in a numeric type"
     assert error_message in str(error.value)
 
 
 if __name__ == "__main__":
-    test_cutmix_batch_success1(plot=True)
-    test_cutmix_batch_success2(plot=True)
-    test_cutmix_batch_success3(plot=True)
-    test_cutmix_batch_success4(plot=True)
-    test_cutmix_batch_nchw_md5()
-    test_cutmix_batch_nhwc_md5()
-    test_cutmix_batch_fail1()
-    test_cutmix_batch_fail2()
-    test_cutmix_batch_fail3()
-    test_cutmix_batch_fail4()
-    test_cutmix_batch_fail5()
-    test_cutmix_batch_fail6()
-    test_cutmix_batch_fail7()
-    test_cutmix_batch_fail8()
+    test_cut_mix_batch_specified_param_on_chw_image(plot=True)
+    test_cut_mix_batch_on_hwc_image(plot=True)
+    test_cut_mix_batch_on_image_folder(plot=True)
+    test_cut_mix_batch_on_2d_label(plot=True)
+    test_cut_mix_batch_accuracy_on_hwc_image()
+    test_cut_mix_batch_accuracy_on_chw_image()
+    test_cut_mix_batch_float_label()
+    test_cut_mix_batch_then_mix_up_batch()
+    test_cut_mix_batch_without_batch()
+    test_cut_mix_batch_invalid_alpha()
+    test_cut_mix_batch_invalid_prob()
+    test_cut_mix_batch_invalid_column_size()
+    test_cut_mix_batch_invalid_channel()
+    test_cut_mix_batch_without_one_hot()
+    test_cut_mix_batch_unequal_batch_size()
+    test_cut_mix_batch_invalid_label_type()
