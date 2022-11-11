@@ -6302,27 +6302,8 @@ class CholeskyInverse(Primitive):
 class Cross(Primitive):
     """
     Returns the cross product of vectors in dimension `dim` of x1 and x2.
-    x1 and x2 must have the same shape and the same type, and the size of their `dim` dimension should be 3.
-    If `dim` is not given, it defaults to the first dimension found with the size 3.
 
-    Args:
-        dim (int): The default value is -65530.
-
-    Inputs:
-        - **x1** (Tensor) - x1 is a tensor.
-          x1 and x2 must have the same shape and the same type, and the size of their `dim` dimension should be 3.
-        - **x2** (Tensor) - x2 is a tensor.
-
-    Outputs:
-        Tensor, has the same shape and type as input.
-
-    Raises:
-        TypeError: If `x1` is not a Tensor.
-        TypeError: If `x2` is not a Tensor.
-        TypeError: If the type of `x1` is not the same as that of `x2`.
-        ValueError: If `x1` and `x2` not have the same size, and the size of their `dim` dimension not be 3.
-        ValueError: If `x1` and `x2` not have the same shape.
-        ValueError: If `dim` is out of range, `dim` should be [-len(x1.shape), len(x1.shape)-1].
+    Refer to :func:`mindspore.ops.cross` for more details.
 
     Supported Platforms:
         ``CPU``

@@ -829,7 +829,7 @@ class Transpose(Primitive):
 
 class ConjugateTranspose(Primitive):
     """
-    Permutes the dimensions of the input tensor according to input permutation.
+    Calculate the conjugate matrix of input x which has been transposed according to input perm.
 
     The type and rank of the output y is the same as the input x. And the shape and value of the input x
     and the output y satisfy:
@@ -837,8 +837,8 @@ class ConjugateTranspose(Primitive):
     y[i,j,k,...,s,t,u] == conj(x[perm[i], perm[j], perm[k],...,perm[s], perm[t], perm[u]])
 
     Inputs:
-        - x (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - perm (tuple[int]) - The permutation to be converted. The elements in `perm` are composed of
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **perm** (tuple[int]) - The permutation to be converted. The elements in `perm` are composed of
           the indexes of each dimension of `x`. The length of `perm` and the shape of `x` must be
           the same. Only constant value is allowed. Must be in the range [0, rank(x)).
 
@@ -6996,7 +6996,7 @@ class UpperBound(Primitive):
         self.init_prim_io_names(inputs=['sorted_x', 'values'], outputs=['y'])
 
 
-class Cummax(Primitive):
+class CumMax(Primitive):
     """
     Returns the cumulative maximum of elements and the index.
 
@@ -7010,7 +7010,7 @@ class Cummax(Primitive):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> import mindspore.ops as ops
-        >>> cummax = ops.Cummax(axis=0)
+        >>> cummax = ops.CumMax(axis=0)
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> output = cummax(x)
         >>> print(output[0])
@@ -7027,7 +7027,7 @@ class Cummax(Primitive):
 
     @prim_attr_register
     def __init__(self, axis):
-        """Initialize Cummax"""
+        """Initialize CumMax"""
         validator.check_value_type("axis", axis, [int], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
         self.add_prim_attr("dim", axis)

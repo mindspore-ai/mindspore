@@ -210,7 +210,14 @@ Text Processing
     mindspore.ops.NoRepeatNGram
 
 Mathematical Operators
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.Cross
 
 Element-wise Operator
 ^^^^^^^^^^^^^^^^^^^^^
@@ -399,6 +406,8 @@ Array Operation
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.Concat
+    mindspore.ops.ConjugateTranspose
+    mindspore.ops.CumMax
     mindspore.ops.CumProd
     mindspore.ops.CumSum
     mindspore.ops.DataFormatDimMap
