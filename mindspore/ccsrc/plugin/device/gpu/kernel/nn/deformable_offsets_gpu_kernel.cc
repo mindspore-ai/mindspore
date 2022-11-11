@@ -45,7 +45,9 @@ bool DeformableOffsetsGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
 bool DeformableOffsetsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsets>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it should get two inputs and one output, but got " << inputs.size()
@@ -66,6 +68,7 @@ bool DeformableOffsetsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::DeformableOffsets> &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
   data_format_ = kernel->get_data_format();
   if (data_format_ == kOpFormat_NCHW) {
     n_axis_ = 0;
@@ -124,6 +127,10 @@ int DeformableOffsetsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", it should get two inputs and one output, but got "
+                      << inputs.size() << " inputs and " << outputs.size() << "outputs.";
+  }
   if (KernelMod::Resize(base_operator, inputs, outputs) == KRET_UNKNOWN_SHAPE) {
     return KRET_UNKNOWN_SHAPE;
   }
