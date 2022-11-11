@@ -19,7 +19,7 @@ import pytest
 
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.ops.composite import core
+from mindspore.ops.composite.base import core
 from mindspore.common.api import jit
 
 from mindspore import Tensor
@@ -98,9 +98,6 @@ def test_remove_and_fv_2():
 # because of the limit of inference specialize system
 def test_conv2d_op_with_argi_1():
     class Conv2dNet(nn.Cell):
-        def __init__(self):
-            super(Conv2dNet, self).__init__()
-
         def construct(self, op, x):
             return op(x)
 
@@ -132,9 +129,6 @@ def test_conv2d_op_with_arg():
             return self.op(x, y)
 
     class OpNet(nn.Cell):
-        def __init__(self):
-            super(OpNet, self).__init__()
-
         def construct(self, op, x, y):
             return op(x, y)
 
@@ -166,9 +160,6 @@ def test_conv2d_op_with_arg_same_input():
             return self.op(x, y)
 
     class OpNet(nn.Cell):
-        def __init__(self):
-            super(OpNet, self).__init__()
-
         def construct(self, op, x, y):
             return op(x, y)
 
@@ -286,9 +277,6 @@ def test_nest_partial():
 # op and op args as network arguments
 def test_op_with_arg_as_input():
     class WithOpArgNet(nn.Cell):
-        def __init__(self):
-            super(WithOpArgNet, self).__init__()
-
         def construct(self, op, x, y):
             return op(x, y)
 
@@ -316,9 +304,6 @@ def test_op_with_arg_as_input():
 @pytest.mark.skip("poly in infer")
 def test_partial_as_arg():
     class PartialArgNet(nn.Cell):
-        def __init__(self):
-            super(PartialArgNet, self).__init__()
-
         def construct(self, partial_op, y):
             return partial_op(y)
 

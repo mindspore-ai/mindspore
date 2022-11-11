@@ -531,13 +531,3 @@ Spectral Functions
 
     mindspore.ops.bartlett_window
     mindspore.ops.blackman_window
-
-Other Functions
----------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.core
