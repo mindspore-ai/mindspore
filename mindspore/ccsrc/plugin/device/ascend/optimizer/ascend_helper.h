@@ -110,6 +110,9 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
                                            const std::string &reshape_type, const TypeId &type_id = kTypeUnknown,
                                            int64_t groups = 1);
 
+void SetInputOutputNames(const std::vector<std::string> &input_names, const std::vector<std::string> &output_names,
+                         const AnfNodePtr &node);
+
 const std::set<std::string> kCommonFormatSet = {kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NCDHW};
 }  // namespace opt
 }  // namespace mindspore
