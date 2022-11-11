@@ -98,7 +98,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
                      ApplyAdamWithAmsgrad, AdaptiveAvgPool3D, AdaptiveMaxPool2D, AdaptiveMaxPool3D)
 from .other_ops import (Assign, IOU, BartlettWindow, BlackmanWindow, BoundingBoxDecode, BoundingBoxEncode,
-                        ConfusionMatrix, UpdateState, Load,
+                        ConfusionMatrix, UpdateState, Load, StopGradient,
                         CheckValid, Partial, Depend, identity, Push, Pull, PyFunc, _DynamicLossScale)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
@@ -339,6 +339,7 @@ __all__ = [
     'Partial',
     'Depend',
     'UpdateState',
+    'StopGradient',
     'identity',
     'AvgPool',
     # Back Primitive

@@ -496,6 +496,7 @@ Parameter操作函数
 
     mindspore.ops.derivative
     mindspore.ops.jet
+    mindspore.ops.stop_gradient
 
 调试函数
 ----------------

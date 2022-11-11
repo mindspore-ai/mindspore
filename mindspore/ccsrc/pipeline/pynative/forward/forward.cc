@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace pynative {
 namespace {
-const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "HookBackward", "CellBackwardHook"};
+const std::set<std::string> kVmOperators = {"InsertGradientOf", "StopGradient", "HookBackward", "CellBackwardHook"};
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
 enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };

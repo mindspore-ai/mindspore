@@ -597,6 +597,7 @@ Frame Operators
     mindspore.ops.Map
     mindspore.ops.MultitypeFuncGraph
     mindspore.ops.Partial
+    mindspore.ops.StopGradient
 
 Operator Information Registration
 ---------------------------------

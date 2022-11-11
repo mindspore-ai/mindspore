@@ -496,6 +496,7 @@ Differential Functions
 
     mindspore.ops.derivative
     mindspore.ops.jet
+    mindspore.ops.stop_gradient
 
 Debugging Functions
 -------------------

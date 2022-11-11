@@ -176,8 +176,8 @@ def tuple_to_array(x):
     return Tensor(np.array(x))
 
 
-def stop_gradient(x):
-    """Implement `stop_gradient`."""
+def StopGradient(x):
+    """Implement `StopGradient`."""
     return x
 
 

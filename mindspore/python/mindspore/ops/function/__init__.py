@@ -446,7 +446,8 @@ from .grad import (
     jvp,
     vjp,
     custom_vjp,
-    linearize
+    linearize,
+    stop_gradient
 )
 from .debug_func import (
     print_,

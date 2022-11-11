@@ -117,8 +117,6 @@ switch_layer = Primitive('switch_layer')
 reduced_shape = Primitive("reduced_shape")
 # shape_mul:input must be shape multiply elements in tuple(shape)
 shape_mul = Primitive("shape_mul")
-# a primitive to compare between tuple.
-stop_gradient = Primitive("stop_gradient")
 
 tensor_operator_registry.register('add', P.Add)
 tensor_operator_registry.register('addr', addr)
