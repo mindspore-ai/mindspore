@@ -18,6 +18,7 @@
 #include <map>
 #include <type_traits>
 #include "cxx_api/factory.h"
+#include "cxx_api/any_utils.h"
 #include "utils/log_adapter.h"
 
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
@@ -56,24 +57,6 @@ struct DeviceInfoContext::Data {
 };
 
 Context::Context() : data_(std::make_shared<Data>()) {}
-
-template <class T, typename U = std::remove_cv_t<std::remove_reference_t<T>>>
-static const U &GetValue(const std::shared_ptr<DeviceInfoContext::Data> &data, const std::string &key) {
-  static const U empty_result{};
-  if (data == nullptr) {
-    return empty_result;
-  }
-  auto iter = data->params.find(key);
-  if (iter == data->params.end()) {
-    return empty_result;
-  }
-  const std::any &value = iter->second;
-  if (value.type() != typeid(U)) {
-    return empty_result;
-  }
-
-  return std::any_cast<const U &>(value);
-}
 
 void Context::SetThreadNum(int32_t thread_num) {
   MS_EXCEPTION_IF_NULL(data_);
@@ -135,48 +118,48 @@ void DeviceInfoContext::SetProviderDevice(const std::vector<char> &device) { (vo
 
 void CPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionCpuEnableFP16] = is_fp16;
+  SetAnyValue(&data_->params[kModelOptionCpuEnableFP16], is_fp16);
 }
 bool CPUDeviceInfo::GetEnableFP16() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<bool>(data_, kModelOptionCpuEnableFP16);
+  return GetAnyValueBool(data_->params, kModelOptionCpuEnableFP16);
 }
 
 void GPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionGPUEnableFP16] = is_fp16;
+  SetAnyValue(&data_->params[kModelOptionGPUEnableFP16], is_fp16);
 }
 bool GPUDeviceInfo::GetEnableFP16() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<bool>(data_, kModelOptionGPUEnableFP16);
+  return GetAnyValueBool(data_->params, kModelOptionGPUEnableFP16);
 }
 
 void KirinNPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionNPUEnableFP16] = is_fp16;
+  SetAnyValue(&data_->params[kModelOptionNPUEnableFP16], is_fp16);
 }
 bool KirinNPUDeviceInfo::GetEnableFP16() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<bool>(data_, kModelOptionNPUEnableFP16);
+  return GetAnyValueBool(data_->params, kModelOptionNPUEnableFP16);
 }
 
 void KirinNPUDeviceInfo::SetFrequency(int frequency) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionKirinNpuFrequency] = frequency;
+  SetAnyValue(&data_->params[kModelOptionKirinNpuFrequency], frequency);
 }
 int KirinNPUDeviceInfo::GetFrequency() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<int>(data_, kModelOptionKirinNpuFrequency);
+  return GetAnyValueI32(data_->params, kModelOptionKirinNpuFrequency);
 }
 
 void GPUDeviceInfo::SetDeviceID(uint32_t device_id) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionGPUDeviceID] = device_id;
+  SetAnyValue(&data_->params[kModelOptionGPUDeviceID], device_id);
 }
 
 uint32_t GPUDeviceInfo::GetDeviceID() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<uint32_t>(data_, kModelOptionGPUDeviceID);
+  return GetAnyValueU32(data_->params, kModelOptionGPUDeviceID);
 }
 
 int GPUDeviceInfo::GetRankID() const {
@@ -191,50 +174,50 @@ int GPUDeviceInfo::GetGroupSize() const {
 
 void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionGPUPrecisionMode] = CharToString(precision_mode);
+  SetAnyValue(&data_->params[kModelOptionGPUPrecisionMode], CharToString(precision_mode));
 }
 std::vector<char> GPUDeviceInfo::GetPrecisionModeChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionGPUPrecisionMode);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionGPUPrecisionMode);
   return StringToChar(ref);
 }
 
 void AscendDeviceInfo::SetDeviceID(uint32_t device_id) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310DeviceID] = device_id;
+  SetAnyValue(&data_->params[kModelOptionAscend310DeviceID], device_id);
 }
 uint32_t AscendDeviceInfo::GetDeviceID() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<uint32_t>(data_, kModelOptionAscend310DeviceID);
+  return GetAnyValueU32(data_->params, kModelOptionAscend310DeviceID);
 }
 
 void AscendDeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310InsertOpCfgPath] = CharToString(cfg_path);
+  SetAnyValue(&data_->params[kModelOptionAscend310InsertOpCfgPath], CharToString(cfg_path));
 }
 std::vector<char> AscendDeviceInfo::GetInsertOpConfigPathChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InsertOpCfgPath);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionAscend310InsertOpCfgPath);
   return StringToChar(ref);
 }
 
 void AscendDeviceInfo::SetInputFormat(const std::vector<char> &format) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310InputFormat] = CharToString(format);
+  SetAnyValue(&data_->params[kModelOptionAscend310InputFormat], CharToString(format));
 }
 std::vector<char> AscendDeviceInfo::GetInputFormatChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InputFormat);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionAscend310InputFormat);
   return StringToChar(ref);
 }
 
 void AscendDeviceInfo::SetInputShape(const std::vector<char> &shape) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310InputShape] = CharToString(shape);
+  SetAnyValue(&data_->params[kModelOptionAscend310InputShape], CharToString(shape));
 }
 std::vector<char> AscendDeviceInfo::GetInputShapeChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InputShape);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionAscend310InputShape);
   return StringToChar(ref);
 }
 
@@ -247,11 +230,11 @@ void AscendDeviceInfo::SetDynamicBatchSize(const std::vector<size_t> &dynamic_ba
     }
     batchs += std::to_string(dynamic_batch_size[i]);
   }
-  data_->params[kModelOptionAscend310DynamicBatchSize] = batchs;
+  SetAnyValue(&data_->params[kModelOptionAscend310DynamicBatchSize], batchs);
 }
 std::vector<char> AscendDeviceInfo::GetDynamicBatchSizeChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DynamicBatchSize);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionAscend310DynamicBatchSize);
   return StringToChar(ref);
 }
 
@@ -261,59 +244,59 @@ std::vector<char> AscendDeviceInfo::GetDynamicImageSizeChar() const { return std
 
 void AscendDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310PrecisionMode] = CharToString(precision_mode);
+  SetAnyValue(&data_->params[kModelOptionAscend310PrecisionMode], CharToString(precision_mode));
 }
 std::vector<char> AscendDeviceInfo::GetPrecisionModeChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310PrecisionMode);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionAscend310PrecisionMode);
   return StringToChar(ref);
 }
 
 void AscendDeviceInfo::SetOpSelectImplMode(const std::vector<char> &op_select_impl_mode) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310OpSelectImplMode] = CharToString(op_select_impl_mode);
+  SetAnyValue(&data_->params[kModelOptionAscend310OpSelectImplMode], CharToString(op_select_impl_mode));
 }
 std::vector<char> AscendDeviceInfo::GetOpSelectImplModeChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310OpSelectImplMode);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionAscend310OpSelectImplMode);
   return StringToChar(ref);
 }
 
 void AscendDeviceInfo::SetFusionSwitchConfigPath(const std::vector<char> &cfg_path) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[KModelOptionAscend310FusionSwitchCfgPath] = CharToString(cfg_path);
+  SetAnyValue(&data_->params[KModelOptionAscend310FusionSwitchCfgPath], CharToString(cfg_path));
 }
 std::vector<char> AscendDeviceInfo::GetFusionSwitchConfigPathChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, KModelOptionAscend310FusionSwitchCfgPath);
+  const std::string &ref = GetAnyValueStr(data_->params, KModelOptionAscend310FusionSwitchCfgPath);
   return StringToChar(ref);
 }
 
 void AscendDeviceInfo::SetInputShapeMap(const std::map<int, std::vector<int>> &shape) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310InputShapeMap] = shape;
+  SetAnyValue(&data_->params[kModelOptionAscend310InputShapeMap], shape);
 }
 std::map<int, std::vector<int>> AscendDeviceInfo::GetInputShapeMap() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<std::map<int, std::vector<int>>>(data_, kModelOptionAscend310InputShapeMap);
+  return GetAnyValueInputShape(data_->params, kModelOptionAscend310InputShapeMap);
 }
 
 void AscendDeviceInfo::SetOutputType(enum DataType output_type) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310OutputType] = output_type;
+  SetAnyValue(&data_->params[kModelOptionAscend310OutputType], output_type);
 }
 enum DataType AscendDeviceInfo::GetOutputType() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<enum DataType>(data_, kModelOptionAscend310OutputType);
+  return GetAnyValueDataType(data_->params, kModelOptionAscend310OutputType);
 }
 
 void AscendDeviceInfo::SetBufferOptimizeMode(const std::vector<char> &buffer_optimize_mode) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionAscend310BufferOptimize] = CharToString(buffer_optimize_mode);
+  SetAnyValue(&data_->params[kModelOptionAscend310BufferOptimize], CharToString(buffer_optimize_mode));
 }
 std::vector<char> AscendDeviceInfo::GetBufferOptimizeModeChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310BufferOptimize);
+  const std::string &ref = GetAnyValueStr(data_->params, kModelOptionAscend310BufferOptimize);
   return StringToChar(ref);
 }
 }  // namespace mindspore
