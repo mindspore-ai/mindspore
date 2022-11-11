@@ -189,6 +189,7 @@ Image Processing
     :template: classtemplate.rst
     
     mindspore.ops.AdjustHue
+    mindspore.ops.AdjustSaturation
     mindspore.ops.BoundingBoxDecode
     mindspore.ops.BoundingBoxEncode
     mindspore.ops.CheckValid
@@ -217,6 +218,14 @@ Mathematical Operators
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.BesselJ0
+    mindspore.ops.BesselJ1
+    mindspore.ops.BesselK0
+    mindspore.ops.BesselK0e
+    mindspore.ops.BesselK1
+    mindspore.ops.BesselK1e
+    mindspore.ops.BesselY0
+    mindspore.ops.BesselY1
     mindspore.ops.Cross
 
 Element-wise Operator
@@ -401,6 +410,7 @@ Array Operation
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.AffineGrid
     mindspore.ops.BatchToSpace
     mindspore.ops.BatchToSpaceND
     mindspore.ops.BroadcastTo
