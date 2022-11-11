@@ -29,6 +29,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kMaxAttrToInputSize = 1024;
+constexpr auto kParamDynamic = "dynamic";
 
 static const std::map<::ge::DataType, aclDataType> kMsTypeToAclType = {
   {::ge::DT_BOOL, ACL_BOOL},       {::ge::DT_INT8, ACL_INT8},     {::ge::DT_INT16, ACL_INT16},
@@ -529,11 +530,34 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
   return res;
 }
 
+std::set<std::string> AclUtils::GetUselessOutputs(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  static const std::map<std::string, std::set<std::string>> kMsUselessOutputs = {
+    {prim::kPrimApplyMomentum->name(), {"accum"}}};
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
+  auto iter = kMsUselessOutputs.find(op_name);
+  if (iter != kMsUselessOutputs.end()) {
+    return iter->second;
+  }
+  return {};
+}
+
 std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   std::vector<GeTensorDescPtr> res;
+  auto useless_outputs = GetUselessOutputs(anf_node);
+  auto out_anchor_names = GetOpOutputAnchorNames(anf_node);
   for (size_t i = 0; i < output_num; ++i) {
+    if (out_anchor_names.size() <= i) {
+      MS_LOG(EXCEPTION) << "Index [" << i
+                        << "] exceed the size of all input names, node:" << anf_node->fullname_with_scope();
+    }
+    if (useless_outputs.count(out_anchor_names[i])) {
+      MS_LOG(INFO) << "For op: [" << anf_node->fullname_with_scope() << "],current out anchor name:["
+                   << out_anchor_names[i] << "] is useless, need skip.";
+      continue;
+    }
     auto ori_shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
@@ -544,6 +568,64 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
     (void)res.emplace_back(output_desc);
   }
   return res;
+}
+
+std::shared_ptr<OpInfo> AclUtils::GetKernelOpInfo(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_name = common::AnfAlgo::GetCNodeName(node);
+  auto op_info_ptr = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE);
+  return op_info_ptr;
+}
+
+std::vector<std::string> AclUtils::GetOpInputAnchorNames(const AnfNodePtr &node) {
+  auto op_info_ptr = GetKernelOpInfo(node);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
+  auto inputs_ptr = op_info_ptr->inputs_ptr();
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  size_t dynamic_input_index = 0;
+  std::vector<int64_t> dynamic_inputs_list;
+  std::vector<std::string> input_names;
+  if (primitive->GetAttr(kAttrDynInputSizes) != nullptr) {
+    dynamic_inputs_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
+  }
+  for (const auto &item : inputs_ptr) {
+    MS_EXCEPTION_IF_NULL(item);
+    if (item->param_type() == kParamDynamic) {
+      if (dynamic_input_index > dynamic_inputs_list.size()) {
+        MS_LOG(EXCEPTION) << "Dynamic input index should be less than the dynamic input's size.";
+      }
+      auto real_inputs_num = dynamic_inputs_list[dynamic_input_index];
+      for (auto k = 0; k < real_inputs_num; k++) {
+        std::string input_name = item->name() + "_dynamic_" + std::to_string(k);
+        (void)input_names.emplace_back(input_name);
+      }
+    } else {
+      (void)input_names.emplace_back(item->name());
+    }
+    dynamic_input_index++;
+  }
+  return input_names;
+}
+
+std::vector<std::string> AclUtils::GetOpOutputAnchorNames(const AnfNodePtr &node) {
+  auto op_info_ptr = GetKernelOpInfo(node);
+  auto outputs_ptr = op_info_ptr->outputs_ptr();
+  std::vector<std::string> output_names;
+  for (const auto &out_item : outputs_ptr) {
+    MS_EXCEPTION_IF_NULL(out_item);
+    if (out_item->param_type() == kParamDynamic && outputs_ptr.size() == 1) {
+      std::string output_name;
+      auto real_outputs_size = common::AnfAlgo::GetOutputTensorNum(node);
+      for (size_t i = 0; i < real_outputs_size; i++) {
+        output_name = out_item->name() + "_dynamic_" + std::to_string(i);
+        (void)output_names.emplace_back(output_name);
+      }
+    } else {
+      (void)output_names.emplace_back(out_item->name());
+    }
+  }
+  return output_names;
 }
 }  // namespace kernel
 }  // namespace mindspore
