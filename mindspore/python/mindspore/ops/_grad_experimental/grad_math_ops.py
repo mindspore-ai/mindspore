@@ -40,6 +40,9 @@ from mindspore.ops.operations.math_ops import BesselK0e
 from mindspore.ops.operations.math_ops import BesselK1e
 from mindspore.ops.operations.math_ops import BesselY0
 from mindspore.ops.operations.math_ops import BesselY1
+from mindspore.ops.operations.math_ops import Lgamma
+from mindspore.ops.operations.math_ops import Digamma
+from mindspore.ops.operations.math_ops import Polygamma
 from mindspore.ops.operations.math_ops import NextAfter
 from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import ReduceStd
@@ -1224,6 +1227,57 @@ def get_bprop_igammac(self):
         else:
             r2 = neg_(reshape_(partial_x * dout, sx))
         return r1, r2
+
+    return bprop
+
+
+@bprop_getters.register(Lgamma)
+def get_bprop_lgamma(self):
+    """Grad definition for `Lgamma` operation."""
+    digamma = Digamma()
+
+    def bprop(x, out, dout):
+        if x.dtype in (mstype.float16,):
+            x = F.cast(x, mstype.float32)
+            dx = dout * digamma(x)
+            dx = F.cast(dx, mstype.float16)
+        else:
+            dx = dout * digamma(x)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Digamma)
+def get_bprop_digamma(self):
+    """Grad definition for `Digamma` operation."""
+    polygamma = Polygamma()
+    def bprop(x, out, dout):
+        if x.dtype in (mstype.float16,):
+            x = F.cast(x, mstype.float32)
+            dx = dout * polygamma(1, x)
+            dx = F.cast(dx, mstype.float16)
+        else:
+            dx = dout * polygamma(1, x)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Polygamma)
+def get_bprop_polygamma(self):
+    """Grad definition for `Polygamma` operation."""
+    polygamma = Polygamma()
+
+    def bprop(a, x, out, dout):
+        a = a + 1
+        if x.dtype in (mstype.float16,):
+            x = F.cast(x, mstype.float64)
+            dx = dout * polygamma(a, x)
+            dx = F.cast(dx, mstype.float16)
+        else:
+            dx = dout * polygamma(a, x)
+        return None, dx
 
     return bprop
 
