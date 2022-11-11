@@ -822,6 +822,35 @@ class Multinomial(Primitive):
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
+class MultinomialWithReplacement(Primitive):
+    r"""
+    Returns a tensor where each row contains numsamples indices sampled from the multinomial distribution.
+
+    Note:
+        The rows of input do not need to sum to one (in which case we use the values as weights),
+        but must be non-negative, finite and have a non-zero sum.
+
+    Refer to :func:`mindspore.ops.multinomial_with_replacement` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
+        >>> multinomialwithreplacement = ops.MultinomialWithReplacement(numsamples=2,replacement=True)
+        >>> output = multinomialwithreplacement(x, 2, 5)
+        >>> print(output)
+        [[1 1]]
+    """
+
+    @prim_attr_register
+    def __init__(self, numsamples, replacement=False):
+        """Initialize MultinomialWithReplacement."""
+        Validator.check_non_negative_int(numsamples, "numsamples", self.name)
+        Validator.check_value_type("replacement", replacement, [bool], self.name)
+        self.init_prim_io_names(inputs=['x', 'seed', 'offset'], outputs=['y'])
+
+
 class UniformCandidateSampler(PrimitiveWithInfer):
     r"""
     Uniform candidate sampler.

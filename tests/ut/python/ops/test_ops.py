@@ -77,6 +77,7 @@ from mindspore.ops.operations.array_ops import ScatterAddWithAxis
 from mindspore.ops.operations.array_ops import ConcatOffsetV1
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
+from mindspore.ops.operations.random_ops import MultinomialWithReplacement
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
 from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops.operations.image_ops import NonMaxSuppressionWithOverlaps
@@ -4169,6 +4170,12 @@ test_case_other_ops = [
     ('TruncatedNormal', {
         'block': TruncatedNormal(dtype=mstype.float32, seed=1, seed2=1),
         'desc_inputs': [Tensor(np.array([2, 2]), mstype.int32)],
+        'skip': ['backward']}),
+    ('MultinomialWithReplacement', {
+        'block': MultinomialWithReplacement(numsamples=3, replacement=True),
+        'desc_inputs': [Tensor(np.array([4, 4, 5, 6]), mstype.float32),
+                        Tensor(np.array([1]), mstype.int64),
+                        Tensor(np.array([1]), mstype.int64)],
         'skip': ['backward']}),
     ('ParameterizedTruncatedNormal', {
         'block': ParameterizedTruncatedNormal(seed=1, seed2=2),
