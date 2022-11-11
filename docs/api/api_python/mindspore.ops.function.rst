@@ -209,6 +209,7 @@ mindspore.ops.function
     mindspore.ops.pinv
     mindspore.ops.positive
     mindspore.ops.pow
+    mindspore.ops.remainder
     mindspore.ops.roll
     mindspore.ops.round
     mindspore.ops.sin

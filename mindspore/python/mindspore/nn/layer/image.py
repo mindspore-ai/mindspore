@@ -640,7 +640,7 @@ class PixelUnshuffle(Cell):
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
         >>> output = pixel_unshuffle(input_x)
         >>> print(output.shape)
-        >>> (1, 9, 4, 4)
+        (1, 9, 4, 4)
     """
     def __init__(self, downscale_factor):
         super(PixelUnshuffle, self).__init__()
