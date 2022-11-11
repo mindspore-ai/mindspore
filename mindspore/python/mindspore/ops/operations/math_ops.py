@@ -6248,6 +6248,133 @@ class LuUnpack(Primitive):
         validator.check_value_type("unpack_pivots", unpack_pivots, [bool], self.name)
 
 
+class Lgamma(Primitive):
+    r"""
+    Computes the natural logarithm of the absolute value of the gamma function on `input`.
+
+    .. math::
+    \text{out}_{i} = \ln \Gamma(|\text{input}_{i}|)
+
+    Args:
+        input (Tensor): the tensor to compute the lgamma function.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor, types: float16, float32, float64.
+
+    Outputs:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If x is not a Tensor.
+        TypeError: If dtype of input x is not one of: float16, float32, float64.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.5, 3.2, 8.5]), mindspore.float32)
+        >>> lgamma = ops.Lgamma()
+        >>> output = lgamma(x)
+        >>> print(output)
+        [0.5723649 0.8854049 9.549267 ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Lgamma"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
+class Digamma(Primitive):
+    r"""
+    Computes the grad of the lgamma function on input.
+
+    .. math::
+        P(x) = grad(ln(gamma(x)))
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. With type of float16 or float32 or float64.
+
+    Outputs:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If x is not a Tensor.
+        TypeError: If dtype of input x is not float16 or float32 or float64.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.5, 0.5, 9]).astype(np.float16))
+        >>> digamma = P.Digamma()
+        >>> output = digamma(x)
+        >>> print(output)
+        [ 0.0365 -1.964   2.14  ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Digamma"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
+
+
+class Polygamma(Primitive):
+    r"""
+    Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
+
+    .. math::
+    \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
+
+    Args:
+        :math:`a \geq 0`: the order of the polygamma function.
+        input (Tensor): the tensor to compute the polygamma function.
+
+    Inputs:
+        - **a** (Tensor) - The order of the polygamma function, types: int32, int64.
+        - **x** (Tensor) - The input tensor, types: float16, float32, float64.
+
+    Outputs:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If x is not a Tensor.
+        TypeError: If dtype of input x is not one of: float16, float32, float64.
+        TypeError: If dtype of input a is not one of: int32, int64.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, -0.5]), mindspore.float32)
+        >>> a = Tensor(np.array(1), mindspore.int64)
+        >>> polygamma = ops.Polygamma()
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [1.644934 8.934802]
+        >>> a = Tensor(np.array(2), mindspore.int64)
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [-2.404114  -0.8287967]
+        >>> a = Tensor(np.array(3), mindspore.int64)
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [  6.4939404 193.40909  ]
+        >>> a = Tensor(np.array(4), mindspore.int64)
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [-24.886265   -3.4742498]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Polygamma"""
+        self.init_prim_io_names(inputs=['a', 'x'], outputs=['y'])
+
+
 class CholeskyInverse(Primitive):
     """
     Returns the inverse of the positive definite matrix using cholesky matrix factorization.
