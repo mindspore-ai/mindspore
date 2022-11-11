@@ -417,7 +417,7 @@ Array操作
     mindspore.ops.Cast
     mindspore.ops.Concat
     mindspore.ops.ConjugateTranspose
-    mindspore.ops.CumMax
+    mindspore.ops.Cummax
     mindspore.ops.CumProd
     mindspore.ops.CumSum
     mindspore.ops.DataFormatDimMap
