@@ -53,10 +53,16 @@ AbstractBasePtr MakeMapTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto value_arg_tensor = value_arg->cast<tensor::TensorPtr>();
   TypeId value_dtype_id =
     ((value_arg_tensor != nullptr) ? static_cast<TypeId>(value_arg_tensor->data_type_c()) : TypeId::kNumberTypeFloat32);
+
   // value_shape
   auto shape = input_args[value_arg_index]->GetShapeTrack();
   MS_EXCEPTION_IF_NULL(shape);
-  ShapeVector value_shape = shape->cast<abstract::ShapePtr>()->shape();
+  ShapeVector input_value_shape = shape->cast<abstract::ShapePtr>()->shape();
+  if (input_value_shape.empty()) {
+    MS_LOG(EXCEPTION) << "The input value shape is empty";
+  }
+  ShapeVector value_shape(input_value_shape.begin() + 1, input_value_shape.end());
+
   // shape
   ValuePtr default_value = input_args[default_value_arg_index]->GetValueTrack();
   auto map_tensor = std::make_shared<tensor::MapTensor>(key_dtype_id, value_dtype_id, value_shape, default_value);

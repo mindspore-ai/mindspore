@@ -825,17 +825,33 @@ class Adam(Optimizer):
                                             self.use_dense_opt_flags, self.sparse_adam_opts, self.use_sparse_opt_flags)
             else:
                 if self.is_group_lr:
-                    success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                                  self.use_locking, self.use_nesterov, self.use_amsgrad,
-                                                  self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
-                                                  self.eps), lr, gradients, params, moment1, moment2, vhat,
-                                        self.ps_parameters, self.cache_enable)
+                    if self.use_lazy:
+                        success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                      self._ps_pull, self.use_locking, self.use_nesterov,
+                                                      self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
+                                                      self.eps), lr, gradients, params, moment1, moment2,
+                                            self.ps_parameters, self.cache_enable)
+
+                    else:
+                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                      self._ps_pull, self.use_locking, self.use_nesterov,
+                                                      self.use_amsgrad, self._is_device, beta1_power, beta2_power,
+                                                      self.beta1, self.beta2, self.eps), lr, gradients, params,
+                                            moment1, moment2, vhat, self.ps_parameters, self.cache_enable)
                 else:
-                    success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                                  self.use_locking, self.use_nesterov, self.use_amsgrad,
-                                                  self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
-                                                  self.eps, lr), gradients, params, moment1, moment2, vhat,
-                                        self.ps_parameters, self.cache_enable)
+                    if self.use_lazy:
+                        success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                      self._ps_pull, self.use_locking, self.use_nesterov,
+                                                      self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
+                                                      self.eps, lr), gradients, params, moment1, moment2,
+                                            self.ps_parameters, self.cache_enable)
+
+                    else:
+                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                      self._ps_pull, self.use_locking, self.use_nesterov,
+                                                      self.use_amsgrad, self._is_device, beta1_power, beta2_power,
+                                                      self.beta1, self.beta2, self.eps, lr), gradients, params,
+                                            moment1, moment2, vhat, self.ps_parameters, self.cache_enable)
         return success
 
     @Optimizer.target.setter

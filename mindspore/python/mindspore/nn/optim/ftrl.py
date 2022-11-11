@@ -91,8 +91,6 @@ def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices, values = gradient.get_data()
-    indices = gradient.indices
-    values = gradient.values
 
     linear_slice = linear.get(indices)
     moment_slice = moment.get(indices)
@@ -108,12 +106,12 @@ def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power
     moment_slice = F.depend(moment_slice, accu_pow)
     cur_accu = moment_slice + values * values
     cur_accu_pow = op_pow(cur_accu, lr_power_val)
-    sigma = (cur_accu_pow - accu_pow) / learning_rate[0]
+    sigma = (cur_accu_pow - accu_pow) / learning_rate
 
     linear_slice = linear_slice + values - sigma * weight_slice
 
     update_weight_cond = op_greater(linear_slice, l1)
-    updated_weight = (l1 * op_sign(linear_slice) - linear_slice) / (cur_accu_pow / learning_rate[0] + 2 * l2)
+    updated_weight = (l1 * op_sign(linear_slice) - linear_slice) / (cur_accu_pow / learning_rate + 2 * l2)
     zeros = zeros_like(weight_slice)
 
     weight_slice = op_select(update_weight_cond, updated_weight, zeros)

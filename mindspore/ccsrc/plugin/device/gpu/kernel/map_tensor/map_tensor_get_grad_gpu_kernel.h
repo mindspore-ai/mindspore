@@ -60,8 +60,10 @@ class MapTensorGetGradGpuKernelMod : public MapTensorGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
-  bool InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs);
+  void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &dout_shape);
+
+  size_t input_keys_type_size_{0};
+  size_t input_dout_type_size_{0};
 
   using MapTensorGetGradLaunchFunc =
     std::function<bool(MapTensorGetGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
@@ -70,7 +72,7 @@ class MapTensorGetGradGpuKernelMod : public MapTensorGpuKernelMod {
   MapTensorGetGradLaunchFunc kernel_launch_func_;
 
   std::vector<KernelTensorPtr> outputs_ = {};
-  int64_t key_size_{1};
+  int64_t keys_size_{1};
   ShapeVector value_dims_ = {};
 };
 }  // namespace kernel

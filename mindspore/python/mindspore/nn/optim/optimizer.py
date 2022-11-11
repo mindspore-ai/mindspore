@@ -907,6 +907,12 @@ def tensor_grad_scale_with_sparse(scale, grad):
     return RowTensorInner(grad.indices, grad.values * F.cast(scale, F.dtype(grad.values)), grad.dense_shape)
 
 
+@_grad_scale.register("Tensor", "MapTensor")
+def tensor_grad_scale_with_map_tensor(scale, grad):
+    """Get grad with scale."""
+    return grad
+
+
 @_indices_deduplicate.register("RowTensor")
 def rowtensor_deduplicate_indices_slices(grad):
     """Unique the indices and sums the 'values' corresponding to the duplicate indices."""

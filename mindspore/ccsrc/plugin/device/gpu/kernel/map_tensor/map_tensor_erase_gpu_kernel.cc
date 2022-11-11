@@ -62,7 +62,7 @@ bool MapTensorEraseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 
   // Get kernel launch function.
   kernel_launch_func_ = map_tensor_erase_func_list_[index].second;
-  InitSize(base_operator, inputs, outputs);
+  input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
   return true;
 }
 
@@ -70,7 +70,14 @@ int MapTensorEraseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  InitSize(base_operator, inputs, outputs);
+
+  MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));
+  const auto &keys_shape = inputs.at(kIndex1)->GetShapeVector();
+  if (IsDynamic(keys_shape)) {
+    return KRET_UNKNOWN_SHAPE;
+  }
+
+  InitSizeLists(keys_shape);
   return KRET_OK;
 }
 
@@ -97,25 +104,23 @@ bool MapTensorEraseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
       MS_LOG(EXCEPTION) << "Failed to get gpu hash table pointer with value type:" << value_type;
     }
 
-    return hash_table_ptr->Erase(static_cast<KeyType *>(inputs[kIndex1]->addr), inputs[kIndex1]->size / sizeof(KeyType),
-                                 stream_ptr);
+    return hash_table_ptr->Erase(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
+                                 inputs.at(kIndex1)->size / sizeof(KeyType), stream_ptr);
   } else {
     MS_LOG(EXCEPTION) << "GPU hash table does not support value type:" << value_type;
   }
   return false;
 }
 
-bool MapTensorEraseGpuKernelMod::InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
+void MapTensorEraseGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape) {
   // Return size 1 as the first input size and the output size for MapTensorErase. Real map tensor is assigned by
   // framework.
   input_size_list_.push_back(kSizeOne);
   output_size_list_.push_back(kSizeOne);
 
-  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
-  auto erase_key_size = inputs[kIndex1]->GetSizeInBytes();
-  input_size_list_.push_back(erase_key_size);
-  return true;
+  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
+  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
+  input_size_list_.push_back(keys_size * input_key_type_size_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MapTensorErase, MapTensorEraseGpuKernelMod);
