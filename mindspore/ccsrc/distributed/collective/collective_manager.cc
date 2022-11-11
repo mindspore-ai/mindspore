@@ -474,6 +474,9 @@ bool CollectiveManager::AssignLocalRank() {
     MsContext::GetInstance()->set_param<uint32_t>(MS_CTX_DEVICE_ID, local_rank_id_);
     MS_LOG(INFO) << "The local rank id assigned for this process is " << local_rank_id_
                  << ". device_id of ms_context is set.";
+    common::SetEnv("RANK_ID", std::to_string(global_rank_id_).c_str());
+    common::SetEnv("DEVICE_ID", std::to_string(local_rank_id_).c_str());
+    common::SetEnv("RANK_SIZE", std::to_string(global_rank_size_).c_str());
   }
 
   return true;

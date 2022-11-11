@@ -877,8 +877,7 @@ void AscendSession::InitRuntimeResource() {
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto env_rank_id = common::GetEnv("RANK_ID");
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
     // get actual rank id if it's distribution training case.
     rank_id_ = GetRankId();
   }
