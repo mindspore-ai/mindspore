@@ -175,7 +175,7 @@ static inline SIMD_F32 SIMD_ERFCCHEB@SIMD_INSTRUCTION@(SIMD_F32 src) {
 
 static inline SIMD_F32 SIMD_ERF_APPROXIMATE@SIMD_INSTRUCTION@(SIMD_F32 src) {
   SIMD_F32 abs_src = SIMD_ABS_F32(src);
-  SIMD_F32 sign = SIMD_DIV_F32(src, abs_src);
+  SIMD_F32 sign = SIMD_GETSIGN_F32(src);
   SIMD_F32 dst = SIMD_ERFCCHEB@SIMD_INSTRUCTION@(abs_src);
   return SIMD_MUL_F32(sign, SIMD_SUB_F32(SIMD_MOV_F32(1.0f), dst));
 }
