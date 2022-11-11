@@ -98,8 +98,8 @@ def test_export_update_api():
     Expectation: Export update api works as expected.
     """
     m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
-    data = m.export(full=True)
-    m.update(data)
+    data = m.export_data(full=True)
+    m.import_data(data)
 
 
 def test_map_parameter_clone():
