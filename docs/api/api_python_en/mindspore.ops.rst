@@ -230,6 +230,9 @@ Mathematical Operators
     mindspore.ops.Bincount
     mindspore.ops.Bucketize
     mindspore.ops.Cauchy
+    mindspore.ops.Cholesky
+    mindspore.ops.CholeskyInverse
+    mindspore.ops.CholeskySolve
     mindspore.ops.Cross
 
 Element-wise Operator

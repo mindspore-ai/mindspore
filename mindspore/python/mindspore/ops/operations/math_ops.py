@@ -6422,32 +6422,7 @@ class CholeskyInverse(Primitive):
     """
     Returns the inverse of the positive definite matrix using cholesky matrix factorization.
 
-    If upper is False, u is a lower triangular such that the output tensor is
-
-    .. math::
-                        inv = (uu^{T})^{{-1}}
-
-    If upper is True, u is an upper triangular such that the output tensor is
-
-    .. math::
-                        inv = (u^{T}u)^{{-1}}
-
-    Note:
-        The input must be either an upper triangular matrix or a lower triangular matrix.
-
-    Args:
-        upper(bool): Whether to return a lower or upper triangular matrix. Default: False.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. types: float32, float64.
-
-    Outputs:
-        Tensor, has the same shape and dtype as x.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not one of: float32, float64.
-        ValueError: If the dimension of `x` is not equal to 2.
+    Refer to :func::`mindspore.ops.cholesky_inverse` for more detail.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6793,33 +6768,7 @@ class Cholesky(Primitive):
     Computes the Cholesky decomposition of a symmetric positive-definite matrix `A`
     or for batches of symmetric positive-definite matrices.
 
-    If `upper` is `True`, the returned matrix `U` is upper-triangular, and the decomposition has the form:
-
-    .. math::
-        A = U^TU
-
-    If `upper` is `False`, the returned matrix `L` is lower-triangular, and the decomposition has the form:
-
-    .. math::
-        A = LL^T
-
-    Args:
-        upper (bool): Flag that indicates whether to return a upper or lower triangular matrix.
-            Default: False.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
-          consisting of symmetric positive-definite matrices, with float32 or float64 data type.
-
-    Outputs:
-        Tensor, has the same shape and data type as `input_x`.
-
-    Raises:
-        TypeError: If `upper` is not a bool.
-        TypeError: If dtype of `input_x` is not one of: float64, float32.
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If `input_x` is not batch square.
-        ValueError: If `input_x` is not symmetric positive definite.
+    Refer to :func::`mindspore.ops.cholesky` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -6904,7 +6853,7 @@ class CholeskySolve(Primitive):
         c = (uu^{T})^{{-1}}b
 
     Args:
-        upper (bool): Flag which indicates whether to consider the Cholesky factor
+        upper (bool, optional): Flag which indicates whether to consider the Cholesky factor
             as a lower or upper triangular matrix. Default: False.
 
     Inputs:
