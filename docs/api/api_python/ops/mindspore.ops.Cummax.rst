@@ -1,7 +1,7 @@
-﻿mindspore.ops.CumMax
+﻿mindspore.ops.Cummax
 =====================
 
-.. py:class:: mindspore.ops.CumMax(axis)
+.. py:class:: mindspore.ops.Cummax(axis)
 
     返回输入Tensor在指定轴上的累计最大值与其对应的索引。
     
