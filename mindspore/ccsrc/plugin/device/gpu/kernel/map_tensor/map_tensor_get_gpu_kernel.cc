@@ -20,6 +20,7 @@
 #include <string>
 #include "mindspore/core/abstract/utils.h"
 #include "kernel/common_utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,8 +47,10 @@ std::vector<KernelAttr> MapTensorGetGpuKernelMod::GetOpSupport() {
 bool MapTensorGetGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = prim->name();
+  insert_default_value_ = GetValue<bool>(prim->GetAttr(kAttrInsertDefaultValue));
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetOutputNum, kernel_name_);
@@ -92,7 +95,7 @@ bool MapTensorGetGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
   return hash_table_ptr->Find(static_cast<KeyType *>(inputs[kIndex1]->addr), inputs[kIndex1]->size / sizeof(KeyType),
-                              static_cast<ValueType *>(outputs[kIndex0]->addr), stream_ptr);
+                              insert_default_value_, static_cast<ValueType *>(outputs[kIndex0]->addr), stream_ptr);
 }
 
 bool MapTensorGetGpuKernelMod::InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,

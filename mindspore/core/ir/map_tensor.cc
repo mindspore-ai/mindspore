@@ -61,7 +61,7 @@ std::string MapTensor::ToString() const {
          ", default_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) + ")";
 }
 
-TensorPtr MapTensor::Get(const TensorPtr &key_tensor) {
+TensorPtr MapTensor::Get(const TensorPtr &key_tensor, bool insert_default_value) {
   MS_EXCEPTION_IF_NULL(key_tensor);
   // Check input.
   if (key_tensor->shape().size() != 1) {

@@ -323,4 +323,4 @@ def _map_tensor_getitem(map_tensor, key_tensor):
     Outputs:
         Tensor, value tensor according the key tensor.
     """
-    return _map_tensor_ops.get(map_tensor, key_tensor)
+    return _map_tensor_ops.MapTensorGet(True)(map_tensor, key_tensor)

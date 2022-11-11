@@ -29,12 +29,12 @@ std::vector<std::pair<KernelAttr, MapTensorGetDataGpuKernelMod::MapTensorGetData
     {KernelAttr()
        .AddInputAttr(kObjectTypeMapTensorType)
        .AddOutputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat),
+       .AddOutputAttr(kNumberTypeFloat32),
      &MapTensorGetDataGpuKernelMod::LaunchKernel<int32_t, float>},
     {KernelAttr()
        .AddInputAttr(kObjectTypeMapTensorType)
        .AddOutputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat),
+       .AddOutputAttr(kNumberTypeFloat32),
      &MapTensorGetDataGpuKernelMod::LaunchKernel<int64_t, float>}};
 
 std::vector<KernelAttr> MapTensorGetDataGpuKernelMod::GetOpSupport() {

@@ -88,9 +88,10 @@ std::tuple<py::array, py::array, py::array> MapTensorPy::ExportAsNumpy(const Map
 }
 
 // Python wrapper for MapTensor::Get.
-static tensor::TensorPtr PyMapTensorGet(const MapTensorPtr &map_tensor, const tensor::TensorPtr &key_tensor) {
+static tensor::TensorPtr PyMapTensorGet(const MapTensorPtr &map_tensor, const tensor::TensorPtr &key_tensor,
+                                        bool insert_default_value) {
   MS_EXCEPTION_IF_NULL(map_tensor);
-  return map_tensor->Get(key_tensor);
+  return map_tensor->Get(key_tensor, insert_default_value);
 }
 
 static tensor::TensorPtr PyMapTensorGetKeys(const MapTensorPtr &map_tensor) {

@@ -3542,11 +3542,11 @@ def cholesky_inverse(input_x, upper=False):
     return F.cholesky_inverse(input_x, upper=upper)
 
 
-def map_tensor_get(map_tensor, key_tensor):
+def map_tensor_get(map_tensor, key_tensor, insert_default_value=True):
     r"""
     Get or create value according the key tensor from a map tensor.
     """
-    return _map_tensor_ops.get(map_tensor, key_tensor)
+    return _map_tensor_ops.MapTensorGet(insert_default_value)(map_tensor, key_tensor)
 
 
 def map_tensor_put(map_tensor, key_tensor, value_tensor):

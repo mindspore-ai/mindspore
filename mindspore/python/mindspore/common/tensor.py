@@ -4592,18 +4592,19 @@ class MapTensor(MapTensor_):
         """
         return self.value_tensor.shape
 
-    def get(self, key_tensor):
+    def get(self, key_tensor, insert_default_value=True):
         """
         Get value tensor according the key tensor, fill and return the default value in map parameter if key is not
         existed.
 
         Args:
             key_tensor (Tensor): The key tensor.
+            insert_default_value (bool): The flag of insert default_value.
 
         Returns:
             Tensor, the value tensor for the key tensor.
         """
-        result_tensor = self.get(key_tensor)
+        result_tensor = self.get(key_tensor, insert_default_value)
         return Tensor(result_tensor, internal=True)
 
     def get_keys(self):
