@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace pynative {
 // Create a new thread to execute the tasks in the queue sequentially.
-class BACKEND_EXPORT AsyncQueue {
+class AsyncQueue {
  public:
   AsyncQueue();
   ~AsyncQueue();
