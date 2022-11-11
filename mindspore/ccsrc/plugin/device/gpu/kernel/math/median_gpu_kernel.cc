@@ -19,14 +19,33 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
+  Median, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+  MedianGpuKernelMod, uint8_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  Median, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+  MedianGpuKernelMod, int8_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  Median, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+  MedianGpuKernelMod, uint16_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(
   Median, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
   MedianGpuKernelMod, int16_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  Median, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+  MedianGpuKernelMod, uint32_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   Median, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
   MedianGpuKernelMod, int32_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(
+  Median, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+  MedianGpuKernelMod, uint64_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(
   Median, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
   MedianGpuKernelMod, int64_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  Median,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+  MedianGpuKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   Median,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),

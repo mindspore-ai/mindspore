@@ -3672,13 +3672,15 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get("sigmoid")()(self)
 
-    def median(self, global_median=False, axis=0, keep_dims=False):
+    def median(self, axis=-1, keepdims=False):
         r"""
+        Computes the median and indices of input tensor.
+
         For details, please refer to :func:`mindspore.ops.median`.
         """
         self._init_check()
         validator.check_axis_in_range(axis, self.ndim)
-        return tensor_operator_registry.get('median')(global_median, axis, keep_dims)(self)
+        return tensor_operator_registry.get('median')(False, axis, keepdims)(self)
 
     def addmv(self, mat, vec, beta=1, alpha=1):
         r"""
