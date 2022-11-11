@@ -261,6 +261,10 @@ void PackWeight::FreePackWeight(std::vector<const char *> model_bufs, bool all) 
     }
   } else {
     for (auto &item : buf_model_weight_) {
+      auto model_buf = const_cast<char *>(item.first);
+      if (!all && find(model_bufs.begin(), model_bufs.end(), model_buf) == model_bufs.end()) {
+        continue;
+      }
       if (item.second != nullptr) {
         delete item.second;
         item.second = nullptr;
