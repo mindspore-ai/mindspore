@@ -29,7 +29,7 @@ using mindspore::lite::RET_INPUT_PARAM_INVALID;
 using mindspore::lite::RET_OK;
 
 Flags::Flags() {
-  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
+  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX | PYTORCH", "");
   AddFlag(&Flags::modelFile, "modelFile",
           "Input model file. TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path.", "");

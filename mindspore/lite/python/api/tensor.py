@@ -26,7 +26,7 @@ __all__ = ['DataType', 'Format', 'Tensor']
 
 class DataType(Enum):
     """
-    The DataType class defines the data type of the Tensor in MindSpore Lite.
+    The `DataType` class defines the data type of the Tensor in MindSpore Lite.
 
     Currently, the following 'DataType' are supported:
 
@@ -50,11 +50,11 @@ class DataType(Enum):
     ===========================  ==================================================================
 
     Examples:
-        # Method 1: Import mindspore_lite package
+        >>> # Method 1: Import mindspore_lite package
         >>> import mindspore_lite as mslite
         >>> print(mslite.DataType.FLOAT32)
         DataType.FLOAT32
-        # Method 2: from mindspore_lite package import DataType
+        >>> # Method 2: from mindspore_lite package import DataType
         >>> from mindspore_lite import DataType
         >>> print(DataType.FLOAT32)
         DataType.FLOAT32
@@ -78,7 +78,7 @@ class DataType(Enum):
 
 class Format(Enum):
     """
-    The Format class defines the format of the Tensor in MindSpore Lite.
+    The `Format` class defines the format of the Tensor in MindSpore Lite.
 
     Currently, the following 'Format' are supported:
 
@@ -108,11 +108,11 @@ class Format(Enum):
     ===========================  ===================================================================================
 
     Examples:
-        # Method 1: Import mindspore_lite package
+        >>> # Method 1: Import mindspore_lite package
         >>> import mindspore_lite as mslite
         >>> print(mslite.Format.NHWC)
         Format.NHWC
-        # Method 2: from mindspore_lite package import Format
+        >>> # Method 2: from mindspore_lite package import Format
         >>> from mindspore_lite import Format
         >>> print(Format.NHWC)
         Format.NHWC
