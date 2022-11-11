@@ -3091,56 +3091,51 @@ def batch_to_space_nd(input_x, block_shape, crops):
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
     This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
-    is the corresponding number of blocks after division. The output tensor's H, W dimension is the product of
-    original H, W dimension and block_shape with given amount to crop from dimension, respectively.
+    is the corresponding number of blocks after division. The output tensor's :math:`w_1, ..., w_M` dimension is
+    the product of original :math:`w_1, ..., w_M` dimension and block_shape with given amount to crop from dimension,
+    respectively.
 
-    If the input shape is :math:`(n, c, h, w)`, the output shape is :math:`(n', c', h', w')`.
+    If the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, the output shape is
+    :math:`(n, c_1, ... c_k, w_1, ..., w_M)`.
 
-    :math:`n' = n//(block\_shape[0]*block\_shape[1])`
+    :math:`n' = n//(block\_shape[0]*...*block\_shape[M-1])`
 
-    :math:`c' = c`
-
-    :math:`h' = h*block\_shape[0]-crops[0][0]-crops[0][1]`
-
-    :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
+    :math:`w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]`
 
     Args:
-        input_x (Tensor): The input tensor. It must be greater or equal to 4-D tensor(equal to 4-D tensor on Ascend),
-            batch dimension must be divisible by product of `block_shape`. The data type is float16 or float32.
+        input_x (Tensor): The input tensor. It must be greater or equal to 2-D tensor(equal to 4-D tensor on Ascend),
+            batch dimension must be divisible by product of `block_shape`.
         block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
-            than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
-            number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
-            equal to `block_shape`. M must be 2.
-        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction list,
-            each containing 2 int value.
-            All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that
+            than or equal to 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding
+            to the number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the
+            same, equal to `block_shape`. In this case of Ascend, M must be 2.
+        crops (Union[list(int), tuple(int)]): The crops values for spatial dimensions, containing M subtraction list.
+            Each contains 2 integer values. All values must be >= 0. crops[i] specifies the crops values for spatial
+            dimension i, which corresponds to input dimension i + offset,where offset = N-M, and N is the number of
+            input dimensions. It is required that
 
-            :math:`input\_shape[i+2]*block\_shape[i] > crops[i][0]+crops[i][1]`
+            :math:`input\_shape[i+offset]*block\_shape[i] > crops[i][0]+crops[i][1]`
 
     Returns:
-        Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_shape
-        and crops. The output shape will be (n', c', h', w'), where
+        Tensor, the output tensor with the same type as input. Assume input shape is
+        :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with block_shape and crops. The output shape will be
+        :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
 
-        :math:`n' = n//(block\_shape[0]*block\_shape[1])`
+        :math:`n' = n//(block\_shape[0]*...*block\_shape[M-1])`
 
-        :math:`c' = c`
-
-        :math:`h' = h*block\_shape[0]-crops[0][0]-crops[0][1]`
-
-        :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
+        :math:`w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]`
 
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.
         TypeError: If `crops` is neither list nor tuple.
         ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
-        ValueError: If length of `block_shape` or `crops` is not equal to 2.
-        ValueError: If the element of `block_shape` is not an integer larger than 1.
+        ValueError: If the length of `block_shape` is not 2 on Ascend.
+        ValueError: If the element of `block_shape` is not an integer larger than or euqal to 1.
         ValueError: If shape of `crops` is not (M, 2), where M is the length of `block_shape`.
-        ValueError: If the element of `crops` is not an integer larger than 0.
+        ValueError: If the element of `crops` is not an integer larger than or euqal to 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> block_shape = [2, 2]

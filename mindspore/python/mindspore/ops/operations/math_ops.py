@@ -1549,7 +1549,7 @@ class Betainc(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Example:
         >>> a = Tensor(np.array([1, 1, 1]), mindspore.float32)
@@ -1563,6 +1563,7 @@ class Betainc(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Betainc"""
+        self.init_prim_io_names(inputs=['a', 'b', 'x'], outputs=['output'])
 
 
 class CumSum(Primitive):

@@ -34,6 +34,12 @@ abstract::ShapePtr BetaincInferShape(const PrimitivePtr &primitive, const std::v
   auto b_shape_ptr = b_shape->cast<abstract::ShapePtr>();
   auto x_shape = input_args[kInputIndex2]->BuildShape();
   auto x_shape_ptr = x_shape->cast<abstract::ShapePtr>();
+  auto a_rank_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto b_rank_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_rank_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  if (IsDynamic(a_rank_shape) || IsDynamic(b_rank_shape) || IsDynamic(x_rank_shape)) {
+    return a_shape_ptr;
+  }
   if (*a_shape_ptr != *b_shape_ptr) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << ", shape of b " << b_shape->ToString()
                              << " are not consistent with the shape a " << a_shape->ToString() << " .";
