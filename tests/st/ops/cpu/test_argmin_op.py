@@ -20,9 +20,8 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.common import dtype as mstype
-import mindspore.ops as ops
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -148,3 +147,53 @@ def test_argmin_vmap_basic_axis_negative():
     outputs = ops.vmap(cal_argmin_axis_negative, in_axes=0, out_axes=0)(x)
     expect = np.array([[1, 0, 1], [2, 0, 0]]).astype(np.int32)
     assert np.allclose(outputs.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmin_functional():
+    """
+    Feature: test ops.argmin.
+    Description: test ops.argmin functional api.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor([[5., 3., 4.], [2., 4., 3.], [3., 1., 4.]], mstype.int32)
+    out_dim_none = ops.argmin(x, axis=None, keepdims=False)
+    out_dim_0 = ops.argmin(x, axis=0, keepdims=False)
+    out_dim_1 = ops.argmin(x, axis=1, keepdims=False)
+    out_dim_none_keepdim = ops.argmin(x, axis=None, keepdims=True)
+    out_dim_0_keepdim = ops.argmin(x, axis=0, keepdims=True)
+    out_dim_1_keepdim = ops.argmin(x, axis=1, keepdims=True)
+
+    assert out_dim_none.asnumpy() == 7
+    assert np.all(out_dim_0.asnumpy() == np.array([1, 2, 1]))
+    assert np.all(out_dim_1.asnumpy() == np.array([1, 0, 1]))
+    assert out_dim_none_keepdim.asnumpy() == 7
+    assert np.all(out_dim_0_keepdim.asnumpy() == np.array([[1, 2, 1]]))
+    assert np.all(out_dim_1_keepdim.asnumpy() == np.array([[1], [0], [1]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmin_tensor():
+    """
+    Feature: test tensor.argmin.
+    Description: test argmin tensor api.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor([[5., 3., 4.], [2., 4., 3.], [3., 1., 4.]], mstype.int32)
+    out_dim_none = x.argmin(axis=None, keepdims=False)
+    out_dim_0 = x.argmin(axis=0, keepdims=False)
+    out_dim_1 = x.argmin(axis=1, keepdims=False)
+    out_dim_none_keepdim = x.argmin(axis=None, keepdims=True)
+    out_dim_0_keepdim = x.argmin(axis=0, keepdims=True)
+    out_dim_1_keepdim = x.argmin(axis=1, keepdims=True)
+
+    assert out_dim_none.asnumpy() == 7
+    assert np.all(out_dim_0.asnumpy() == np.array([1, 2, 1]))
+    assert np.all(out_dim_1.asnumpy() == np.array([1, 0, 1]))
+    assert out_dim_none_keepdim.asnumpy() == 7
+    assert np.all(out_dim_0_keepdim.asnumpy() == np.array([[1, 2, 1]]))
+    assert np.all(out_dim_1_keepdim.asnumpy() == np.array([[1], [0], [1]]))

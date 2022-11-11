@@ -104,3 +104,53 @@ def test_argmin_high_dims():
             ms_output = argmin(Tensor(x))
             np_output = np.argmin(x, axis=rnd_axis)
             assert (ms_output.asnumpy() == np_output).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_argmin_functional():
+    """
+    Feature: test ops.argmin.
+    Description: test ops.argmin functional api.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor([[5., 3., 4.], [2., 4., 3.], [3., 1., 4.]], mstype.float32)
+    out_dim_none = ops.argmin(x, axis=None, keepdims=False)
+    out_dim_0 = ops.argmin(x, axis=0, keepdims=False)
+    out_dim_1 = ops.argmin(x, axis=1, keepdims=False)
+    out_dim_none_keepdim = ops.argmin(x, axis=None, keepdims=True)
+    out_dim_0_keepdim = ops.argmin(x, axis=0, keepdims=True)
+    out_dim_1_keepdim = ops.argmin(x, axis=1, keepdims=True)
+
+    assert out_dim_none.asnumpy() == 7
+    assert np.all(out_dim_0.asnumpy() == np.array([1, 2, 1]))
+    assert np.all(out_dim_1.asnumpy() == np.array([1, 0, 1]))
+    assert out_dim_none_keepdim.asnumpy() == 7
+    assert np.all(out_dim_0_keepdim.asnumpy() == np.array([[1, 2, 1]]))
+    assert np.all(out_dim_1_keepdim.asnumpy() == np.array([[1], [0], [1]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_argmin_tensor():
+    """
+    Feature: test tensor.argmin.
+    Description: test argmin tensor api.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor([[5., 3., 4.], [2., 4., 3.], [3., 1., 4.]], mstype.float32)
+    out_dim_none = x.argmin(axis=None, keepdims=False)
+    out_dim_0 = x.argmin(axis=0, keepdims=False)
+    out_dim_1 = x.argmin(axis=1, keepdims=False)
+    out_dim_none_keepdim = x.argmin(axis=None, keepdims=True)
+    out_dim_0_keepdim = x.argmin(axis=0, keepdims=True)
+    out_dim_1_keepdim = x.argmin(axis=1, keepdims=True)
+
+    assert out_dim_none.asnumpy() == 7
+    assert np.all(out_dim_0.asnumpy() == np.array([1, 2, 1]))
+    assert np.all(out_dim_1.asnumpy() == np.array([1, 0, 1]))
+    assert out_dim_none_keepdim.asnumpy() == 7
+    assert np.all(out_dim_0_keepdim.asnumpy() == np.array([[1, 2, 1]]))
+    assert np.all(out_dim_1_keepdim.asnumpy() == np.array([[1], [0], [1]]))

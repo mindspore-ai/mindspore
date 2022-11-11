@@ -1954,6 +1954,8 @@ class Tensor(Tensor_):
         """
         For details, please refer to :func:`mindspore.ops.argmax`.
         """
+        if self.shape == ():
+            return Tensor(0)
         a = self
         is_axis_none = False
         if axis is None:
@@ -1965,11 +1967,14 @@ class Tensor(Tensor_):
             out = out.expand_dims(axis)
         return out
 
-    def argmin(self, axis=None):
+    def argmin(self, axis=None, keepdims=False):
         """
         For details, please refer to :func:`mindspore.ops.argmin`.
         """
+        if self.shape == ():
+            return Tensor(0)
         # P.Argmin only supports float
+        is_axis_none = False
         a = self.astype(mstype.float32)
         if axis is None:
             a = a.ravel()
@@ -1977,7 +1982,10 @@ class Tensor(Tensor_):
         else:
             axis = validator.check_axis_in_range(axis, a.ndim)
         # P.Argmin is currently not supported
-        return tensor_operator_registry.get('argmax')(axis)(tensor_operator_registry.get('__neg__')(a))
+        out = tensor_operator_registry.get('argmin')(axis)(a)
+        if keepdims and not is_axis_none:
+            out = out.expand_dims(axis)
+        return out
 
     def argmax_with_value(self, axis=0, keep_dims=False):
         """
@@ -2023,6 +2031,8 @@ class Tensor(Tensor_):
             >>> print(index, output)
             [3] [0.7]
         """
+        if self.shape == ():
+            return (Tensor(0), self)
         self._init_check()
         return tensor_operator_registry.get('argmax_with_value')(self, axis, keep_dims)
 
@@ -2068,6 +2078,8 @@ class Tensor(Tensor_):
             >>> print(index, output)
             [0] [0.0]
         """
+        if self.shape == ():
+            return (Tensor(0), self)
         self._init_check()
         return tensor_operator_registry.get('argmin_with_value')(self, axis, keep_dims)
 
