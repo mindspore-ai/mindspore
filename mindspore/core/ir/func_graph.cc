@@ -24,6 +24,7 @@
 #include "utils/convert_utils_base.h"
 #include "abstract/abstract_function.h"
 #include "ir/func_graph_cloner.h"
+#include "utils/phase.h"
 
 namespace mindspore {
 /*
@@ -49,15 +50,22 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       stub_(false),
       switch_input_(std::make_shared<bool>(false)),
       switch_layer_input_(std::make_shared<bool>(false)),
-      stage_(-1) {}
+      stage_(-1),
+      phase_(PhaseManager::GetInstance().phase()) {}
 
 void FuncGraph::DoBreakLoop() {
   if (attached_mng_cnt() > 0) {
-    MS_LOG(ERROR) << "Current Graph is holding by FuncGraphManager, can't DoBreakLoop now";
+    MS_LOG(INFO) << "Current Graph is holding by FuncGraphManager, can't DoBreakLoop now.";
     return;
   }
   ClearOrderList();
+  python_obj_ = nullptr;
+  used_forward_nodes_.clear();
+  func_graph_cache_.clear();
+  parameters_.clear();
+  paramter_obj_nodes_.clear();
   return_ = nullptr;
+  set_dropped(true);
 }
 
 abstract::AbstractBasePtr FuncGraph::ToAbstract() {

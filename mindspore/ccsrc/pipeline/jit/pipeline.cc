@@ -48,6 +48,7 @@
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #include "utils/crypto.h"
+#include "utils/phase.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/interpret_node_recorder.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -578,14 +579,18 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
   }
 #endif
 }
+
 void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
+  MS_LOG(INFO) << "Delete one net resource start";
   if (!pybind11::isinstance<py::str>(py_phase)) {
     MS_LOG(ERROR) << "Expect string phase, but got " << py::str(py_phase);
     return;
   }
   auto phase = pybind11::cast<std::string>(py_phase);
   auto iter = info_.find(phase);
+  auto clear = false;
   if (iter != info_.end()) {
+    clear = true;
     auto res = iter->second->resource;
     if (res->HasResult(kStepParallelGraph)) {
       std::string layout_graph = phase + kStepParallelGraph;
@@ -594,6 +599,11 @@ void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
     (void)info_.erase(phase);
     MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
   }
+  if (clear) {
+    // Do clear here to avoid any pointer for resource.
+    FuncGraphLoopBreaker::Inst().ClearCellGraphs(phase);
+  }
+  MS_LOG(INFO) << "Delete one net resource end.";
 }
 
 void GraphExecutorPy::ClearRes() {
@@ -841,6 +851,19 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
   parallel::AutoParallelPostProcess(root);
 }
 
+// Clean all resource not used in the future and cache generated during compiling.
+void CleanCompileRes(const ResourcePtr &resource) {
+  MS_LOG(INFO) << "Clean compile resource start";
+  abstract::AnalysisContext::ClearContext();
+  ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
+  ad::g_k_prims.clear();
+  ad::DFunctor::Clear();
+  ReclaimOptimizer();
+  resource->Clean();
+  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
+  MS_LOG(INFO) << "Clean compile resource end";
+}
+
 bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj,
                                    bool use_vm) {
   // Check if the phase is valid.
@@ -858,6 +881,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   CheckArgsValid(source_obj, args);
 
   auto phase = py::cast<std::string>(phase_obj);
+  PhaseManager::GetInstance().set_phase(phase);
   phase_ = phase;
   auto obj_desc = GetObjDesc(source_obj);
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
@@ -935,12 +959,9 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
 #endif
-  abstract::AnalysisContext::ClearContext();
-  // Reclaim all resource used by optimizer.
-  ReclaimOptimizer();
-  // Clean cache used while compile
-  resource->Clean();
+  CleanCompileRes(resource);
   EventMessage::PrintCompileEndMsg(phase, obj_desc);
+  PhaseManager::GetInstance().ClearPhase();
   MS_LOG(INFO) << "Finish compiling.";
   return true;
 }
@@ -963,20 +984,18 @@ std::vector<ActionItem> GraphExecutorPy::FilterActions(const std::vector<ActionI
 }
 
 void GraphExecutorPy::ReleaseResource(const py::object &phase) {
-  ResourcePtr res = GetResource(py::cast<std::string>(phase));
-  if (res != nullptr) {
-    res->Clean();
-    // Because executor_info is used in EliminateForwardCNode, need cache executor_info before compile
-    // and delete while compile failed.
+  bool clear = false;
+  // Be sure the pointer res destroyed before do DelOneNetRes.
+  {
+    ResourcePtr res = GetResource(py::cast<std::string>(phase));
+    if (res != nullptr) {
+      clear = true;
+      CleanCompileRes(res);
+    }
+  }
+  if (clear) {
     DelOneNetRes(phase);
   }
-  // Clean cache used for parse. As static variable is released after
-  // Python threads is released.
-  parse::data_converter::ClearObjectCache();
-  parse::Parser::CleanParserResource();
-  trace::ClearTraceStack();
-  // Reclaim all resource used by optimizer;
-  ReclaimOptimizer();
 }
 
 bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase,
@@ -1798,6 +1817,7 @@ void MemoryRecycle() {
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   ConfigManager::GetInstance().ResetConfig();
   ScopeManager::GetInstance().ClearScope();
+  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
   FuncGraphLoopBreaker::Inst().BreakLoop();
 }
 

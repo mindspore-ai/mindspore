@@ -603,6 +603,7 @@ void Resource::Clean() {
   // it should be cleaned before Python Interpreter destructed.
   MS_EXCEPTION_IF_NULL(engine_);
   engine_->ClearEvaluatorCache();
+  engine_->Clear();
   // Clean cache used for parse. As static variable is released after
   // Python threads is released.
   parse::data_converter::ClearObjectCache();
