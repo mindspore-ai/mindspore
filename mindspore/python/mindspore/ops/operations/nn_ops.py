@@ -7053,9 +7053,8 @@ class Dropout3D(PrimitiveWithInfer):
 
     Dropout3D can improve the independence between channel feature maps.
 
-
     Note:
-        The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout2d`.
+        The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout3d`.
 
     Refer to :func:`mindspore.ops.dropout3d` for more detail.
 

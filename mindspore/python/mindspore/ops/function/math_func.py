@@ -1881,8 +1881,8 @@ def bitwise_and(x, y):
 
     Args:
         x (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
-        any number of additional dimensions. The supported data types are:
-        int8, uint8, int16, uint16, int32, uint32, int64 and uint64.
+            any number of additional dimensions. The supported data types are:
+            int8, uint8, int16, uint16, int32, uint32, int64 and uint64.
         y (Tensor): The second input tensor with the same dtype as `x`.
 
     Returns:
@@ -1919,8 +1919,8 @@ def bitwise_or(x, y):
 
     Args:
         x (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
-        any number of additional dimensions. The supported data types are:
-        int8, uint8, int16, uint16, int32, uint32, int64 and uint64.
+            any number of additional dimensions. The supported data types are:
+            int8, uint8, int16, uint16, int32, uint32, int64 and uint64.
         y (Tensor): The second input tensor with the same dtype as `x`.
 
     Returns:
@@ -1957,8 +1957,8 @@ def bitwise_xor(x, y):
 
     Args:
         x (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
-        any number of additional dimensions. The supported data types are:
-        int8, uint8, int16, uint16, int32, uint32, int64 and uint64.
+            any number of additional dimensions. The supported data types are:
+            int8, uint8, int16, uint16, int32, uint32, int64 and uint64.
         y (Tensor): The second input tensor with the same dtype as `x`.
 
     Returns:
