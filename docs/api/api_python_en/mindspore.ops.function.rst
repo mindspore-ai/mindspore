@@ -154,6 +154,7 @@ Element-by-Element Operations
     mindspore.ops.addcdiv
     mindspore.ops.addcmul
     mindspore.ops.addn
+    mindspore.ops.addr
     mindspore.ops.arccos
     mindspore.ops.arccosh
     mindspore.ops.arcsin

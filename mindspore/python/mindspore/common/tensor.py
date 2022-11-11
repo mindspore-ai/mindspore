@@ -919,33 +919,8 @@ class Tensor(Tensor_):
 
     def addcdiv(self, x1, x2, value):
         r"""
-        Performs the element-wise division of tensor x1 by tensor x2,
-        multiply the result by the scalar value and add it to input_data.
-
-        .. math::
-            y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
-
-        Args:
-            x1 (Tensor): The numerator tensor.
-            x2 (Tensor): The denominator tensor.
-            value (Tensor): The multiplier for tensor x1/x2.
-
-        Returns:
-            Tensor, has the same shape and dtype as x1/x2.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
-            >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
-            >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
-            >>> value = Tensor([1], mindspore.float32)
-            >>> y = x.addcdiv(x1, x2, value)
-            >>> print(y)
-            [1.25      1.6666667 2.5       5.       ]
+        For details, please refer to :func:`mindspore.ops.addcdiv`.
         """
-
         self._init_check()
         return tensor_operator_registry.get('addcdiv')()(self, x1, x2, value)
 
@@ -1044,48 +1019,8 @@ class Tensor(Tensor_):
 
     def addr(self, vec1, vec2, beta=1, alpha=1):
         r"""
-        Executes the outer-product of `vec1` and `vec2` and adds it to the input tensor.
-
-        If `vec1` is a vector of size :math:`N` and `vec2` is a vector of size :math:`M`, then `x` must be
-        broadcastable with a matrix of size :math:`(N, M)` and `out` will be a matrix of size :math:`(N, M)`.
-
-        The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
-        and the added matrix `x` respectively. If `beta` is 0, then `x` will be ignored.
-
-        .. math::
-            output = β x + α (vec1 ⊗ vec2)
-
-        Args:
-            vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N,)`.
-            vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
-            beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
-                float or bool, Default: 1.
-            alpha (scalar[int, float, bool], optional): Multiplier for `vec1` @ `vec2` (α). The `alpha` must
-                be int or float or bool, Default: 1.
-
-        Returns:
-            Tensor, the shape of the output tensor is :math:`(N, M)`, has the same dtype as `x`.
-
-        Raises:
-            TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
-            TypeError: If inputs `x`, `vec1`, 'vec2' are not the same dtype.
-            ValueError: If `x` is not a 2-D Tensor.
-                If `vec1`, `vec2` is not a 1-D Tensor.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([[2., 2.], [3., 2.], [3., 4.]], np.float32))
-            >>> vec1 = Tensor(np.array([2., 3., 2.], np.float32))
-            >>> vec2 = Tensor(np.array([3, 4], np.float32))
-            >>> output = x.addr(vec1, vec2)
-            >>> print(output)
-            [[ 8. 10.]
-            [12. 14.]
-            [ 9. 12.]]
+        For details, please refer to :func:`mindspore.ops.addr`.
         """
-
         self._init_check()
         return tensor_operator_registry.get('addr')(self, vec1, vec2, beta=beta, alpha=alpha)
 

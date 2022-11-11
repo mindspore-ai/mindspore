@@ -4464,7 +4464,7 @@ def elu(input_x, alpha=1.0):
             x & \text{if } x \gt 0\\
         \end{array}\right.
 
-    Where :math:`x` is the element of input Tensor, :math:`\alpha` is param `alpha`,
+    Where :math:`x` is the element of input Tensor `input_x`, :math:`\alpha` is param `alpha`,
     it determines the smoothness of ELU.
     The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
     Activation_function#/media/File:Activation_elu.svg>`_ .
@@ -4733,10 +4733,10 @@ def mse_loss(input_x, target, reduction='mean'):
     Args:
         input_x (Tensor): Tensor of any dimension.
         target (Tensor): The input label. Tensor of any dimension, same shape as the `input_x` in common cases.
-          However, it supports that the shape of `input_x` is different from the shape of `target`
-          and they should be broadcasted to each other.
-        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "none" and "sum".
-            Default: "mean".
+            However, it supports that the shape of `input_x` is different from the shape of `target`
+            and they should be broadcasted to each other.
+        reduction (str, optional): Type of reduction to be applied to loss.
+            The optional values are "mean", "none" and "sum". Default: "mean".
 
     Returns:
         Tensor, loss of type float, the shape is zero if `reduction` is 'mean' or 'sum',
