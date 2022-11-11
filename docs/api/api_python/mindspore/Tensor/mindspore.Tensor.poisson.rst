@@ -10,9 +10,9 @@ mindspore.Tensor.poisson
         \text{out}_i \sim \text{Poisson}(\text{input}_i)out*i*∼Poisson(input*i*)
 
     参数：
-    - **shape** (tuple) - 要生成的随机张量的形状。只允许使用常量值。
-    - **seed** (int, option) - 设置随机种子（0到2**32）。
-    - **seed2** (int, option) - 将随机seed2设置为（0到2**32）。
+        - **shape** (tuple) - 要生成的随机张量的形状。只允许使用常量值。
+        - **seed** (int, option) - 设置随机种子（0到2**32）。
+        - **seed2** (int, option) - 将随机seed2设置为（0到2**32）。
 
     返回：
         Tensor，形状与input_Tensor相同。

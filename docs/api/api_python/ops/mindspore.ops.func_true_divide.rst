@@ -1,7 +1,7 @@
 ﻿mindspore.ops.true_divide
 ==========================
 
-.. py:class:: mindspore.ops.true_divide(dividend, divisor)
+.. py:function:: mindspore.ops.true_divide(dividend, divisor)
 
     ops.div()在 :math:`rounding\_mode=None` 时的别名。
 

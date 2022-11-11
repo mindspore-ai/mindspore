@@ -1,7 +1,7 @@
 ﻿mindspore.ops.subtract
 =======================
 
-.. py:class:: mindspore.ops.subtract(x, other, *, alpha=1)
+.. py:function:: mindspore.ops.subtract(x, other, *, alpha=1)
 
     对Tensor进行逐元素的减法。
 

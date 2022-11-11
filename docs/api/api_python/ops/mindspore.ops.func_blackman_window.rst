@@ -1,7 +1,7 @@
 mindspore.ops.blackman_window
 =============================
 
-.. py:function:: mindspore.ops.blackman_window(window_length, periodic=True, dtype=mstype.float32)
+.. py:function:: mindspore.ops.blackman_window(window_length, periodic=True, *, dtype=None)
 
     布莱克曼窗口函数。
 
@@ -15,7 +15,9 @@ mindspore.ops.blackman_window
     参数：
         - **window_length** (Tensor) - 返回窗口的大小，数据类型为int32，int64。输入数据的值为[0,1000000]的整数。
         - **periodic** (bool) - 如果为True，返回一个窗口作为周期函数使用。如果为False，返回一个对称窗口。默认值：True。
-        - **dtype** (mindspore.dtype) - 输出数据类型，目前只支持float16、float32和float64。默认值：mindspore.float32。
+
+    关键字参数：
+        - **dtype** (mindspore.dtype) - 输出数据类型，目前只支持float16、float32和float64。默认值：None。
 
     返回：
         1D Tensor，大小为 `window_length` ，数据类型与 `dtype` 一致。

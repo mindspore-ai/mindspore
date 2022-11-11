@@ -583,6 +583,7 @@ class Tensor(Tensor_):
         Args:
             seed (int, option): set the random seed (0 to 2**32)
             seed2 (int, option): set the random seed2 (0 to 2**32)
+
         Inputs:
             - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
 
@@ -638,8 +639,7 @@ class Tensor(Tensor_):
 
     def ndimension(self):
         r"""
-        Refer to `Tensor.ndim()
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.ndim.html>`_.
+        Alias for :func:`mindspore.Tensor.ndim`.
         """
         return len(self._shape)
 
@@ -1342,8 +1342,7 @@ class Tensor(Tensor_):
 
     def arccos(self):
         r"""
-        Alias for Tensor.acos().
-        For details, please refer to :func:`mindspore.ops.acos`.
+        Alias for :func:`mindspore.Tensor.acos`.
         """
         return self.acos()
 
@@ -1418,8 +1417,7 @@ class Tensor(Tensor_):
 
     def absolute(self):
         """
-        Alias for Tensor.abs().
-        For details, please refer to :func:`mindspore.ops.abs`.
+        Alias for :func:`mindspore.Tensor.abs`.
         """
         return self.abs()
 
@@ -1768,9 +1766,7 @@ class Tensor(Tensor_):
 
     def nelement(self):
         r"""
-        Alias for numel().
-
-        For details, please refer to :func:`mindspore.ops.numel`.
+        Alias for :func:`mindspore.Tensor.numel`.
         """
         self._init_check()
         return tensor_operator_registry.get('nelement')(self)
@@ -3718,8 +3714,7 @@ class Tensor(Tensor_):
 
     def arcsinh(self):
         r"""
-        Alias for Tensor.asinh().
-        For details, please refer to :func:`mindspore.ops.asinh`.
+        Alias for :func:`mindspore.Tensor.asinh`.
         """
         self._init_check()
         return tensor_operator_registry.get('asinh')(self)
@@ -3740,8 +3735,7 @@ class Tensor(Tensor_):
 
     def arctanh(self):
         r"""
-        Alias for Tensor.atanh().
-        For details, please refer to :func:`mindspore.ops.atanh`.
+        Alias for :func:`mindspore.Tensor.atanh`.
         """
         self._init_check()
         return tensor_operator_registry.get('atanh')(self)
