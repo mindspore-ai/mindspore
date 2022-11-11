@@ -522,5 +522,29 @@ AbstractBasePtr InferImplMapTensorGetDefaultValue(const AnalysisEnginePtr &, con
   }
   return std::make_shared<AbstractScalar>(abs_map_tensor->default_value());
 }
+// Infer for MapTensor.permit_filter_value.
+AbstractBasePtr InferImplMapTensorGetPermitFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                       const AbstractBasePtrList &args_spec_list) {
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  const auto &arg = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(arg);
+  auto abs_map_tensor = arg->cast_ptr<abstract::AbstractMapTensor>();
+  if (abs_map_tensor == nullptr) {
+    MS_EXCEPTION(TypeError) << "Expect MapTensor, but got " << arg->ToString();
+  }
+  return std::make_shared<AbstractScalar>(abs_map_tensor->permit_filter_value());
+}
+// Infer for MapTensor.evict_filter_value.
+AbstractBasePtr InferImplMapTensorGetEvictFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                      const AbstractBasePtrList &args_spec_list) {
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  const auto &arg = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(arg);
+  auto abs_map_tensor = arg->cast_ptr<abstract::AbstractMapTensor>();
+  if (abs_map_tensor == nullptr) {
+    MS_EXCEPTION(TypeError) << "Expect MapTensor, but got " << arg->ToString();
+  }
+  return std::make_shared<AbstractScalar>(abs_map_tensor->evict_filter_value());
+}
 }  // namespace abstract
 }  // namespace mindspore

@@ -16,6 +16,7 @@
 
 __all__ = ['Tensor', 'MapTensor']
 
+import sys
 import math
 import numbers
 import numpy as np
@@ -4525,6 +4526,8 @@ class MapTensor(MapTensor_):
         key_tensor (:class:`mindspore.tensor`): The key Tensor.
         value_tensor (:class:`mindspore.tensor`): The value Tensor.
         default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: 'normal'.
+        permit_filter_value (numbers.Number): The permit filter value number. Default: 1.
+        evict_filter_value (numbers.Number): The evict filter value number. Default: MAX_SIZE.
 
     Examples:
         >>> import mindspore as ms
@@ -4549,12 +4552,17 @@ class MapTensor(MapTensor_):
         [[11. 11. 11.]]
     """
 
-    def __new__(cls, key_tensor=None, value_tensor=None, default_value="normal", **kwargs):
-        obj = MapTensor_.__new__(cls, key_tensor.dtype, value_tensor.dtype, value_tensor.shape, default_value)
-        MapTensor_.__init__(obj, key_tensor.dtype, value_tensor.dtype, value_tensor.shape, default_value)
+    def __new__(cls, key_tensor=None, value_tensor=None, default_value="normal", permit_filter_value=1,
+                evict_filter_value=sys.maxsize, **kwargs):
+        obj = MapTensor_.__new__(cls, key_tensor.dtype, value_tensor.dtype, value_tensor.shape, default_value,
+                                 permit_filter_value, evict_filter_value)
+        MapTensor_.__init__(obj, key_tensor.dtype, value_tensor.dtype, value_tensor.shape, default_value,
+                            permit_filter_value, evict_filter_value)
         obj.key_tensor = key_tensor
         obj.value_tensor = value_tensor
         obj.default_value = default_value
+        obj.permit_filter_value = permit_filter_value
+        obj.evict_filter_value = evict_filter_value
         return obj
 
     def key_dtype(self):

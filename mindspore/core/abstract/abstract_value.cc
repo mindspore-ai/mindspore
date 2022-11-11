@@ -1673,6 +1673,8 @@ AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor)
                    std::make_shared<Shape>(map_tensor->shape())),
       ref_key_value_(kAnyValue),
       default_value_(map_tensor->default_value()),
+      permit_filter_value_(map_tensor->permit_filter_value()),
+      evict_filter_value_(map_tensor->evict_filter_value()),
       value_shape_(std::make_shared<Shape>(map_tensor->value_shape())) {}
 
 AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value)
@@ -1680,22 +1682,29 @@ AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const Value
                    std::make_shared<Shape>(map_tensor->shape())),
       ref_key_value_(ref_key_value),
       default_value_(map_tensor->default_value()),
+      permit_filter_value_(map_tensor->permit_filter_value()),
+      evict_filter_value_(map_tensor->evict_filter_value()),
       value_shape_(std::make_shared<Shape>(map_tensor->value_shape())) {}
 
 AbstractMapTensor::AbstractMapTensor(const AbstractMapTensor &other)
     : AbstractBase(other.GetValueTrack(), other.GetTypeTrack(), other.GetShapeTrack()),
       ref_key_value_(other.ref_key_value_),
       default_value_(other.default_value_),
+      permit_filter_value_(other.permit_filter_value()),
+      evict_filter_value_(other.evict_filter_value()),
       value_shape_(other.value_shape_) {
   set_shape(other.shape());
 }
 
 AbstractMapTensor::AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
-                                     const ValuePtr &ref_key_value, const ValuePtr &default_value) {
+                                     const ValuePtr &ref_key_value, const ValuePtr &default_value,
+                                     const ValuePtr &permit_filter_value, const ValuePtr &evict_filter_value) {
   set_value(value);
   set_type(type);
   ref_key_value_ = ref_key_value;
   default_value_ = default_value;
+  permit_filter_value_ = permit_filter_value;
+  evict_filter_value_ = evict_filter_value;
   ShapeVector shape = {abstract::Shape::kShapeDimAny};
   (void)shape.insert(shape.end(), value_shape->shape().begin(), value_shape->shape().end());
   set_shape(std::make_shared<mindspore::abstract::Shape>(shape));
@@ -1734,15 +1743,30 @@ AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
   // Join the ref_key_value.
   auto joined_ref_key = ValueJoin(ref_key_value_, other_abs->ref_key_value_);
 
-  // Join the ref_key_value.
+  // Join the default_value.
   auto joined_default_value = ValueJoin(default_value_, other_abs->default_value_);
   if (joined_default_value == kAnyValue) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << default_value_->ToString()
                              << " != " << other_abs->default_value_->ToString();
   }
 
+  // Join the permit_filter_value.
+  auto joined_permit_filter_value = ValueJoin(permit_filter_value_, other_abs->permit_filter_value_);
+  if (joined_permit_filter_value == kAnyValue) {
+    MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << permit_filter_value_->ToString()
+                             << " != " << other_abs->permit_filter_value_->ToString();
+  }
+
+  // Join the evict_filter_value.
+  auto joined_evict_filter_value = ValueJoin(evict_filter_value_, other_abs->evict_filter_value_);
+  if (joined_evict_filter_value == kAnyValue) {
+    MS_EXCEPTION(ValueError) << "Join evict_filter_value failed for MapTensor. " << evict_filter_value_->ToString()
+                             << " != " << other_abs->evict_filter_value_->ToString();
+  }
+
   return std::make_shared<AbstractMapTensor>(joined_type, joined_shape, joined_value, joined_ref_key,
-                                             joined_default_value);
+                                             joined_default_value, joined_permit_filter_value,
+                                             joined_evict_filter_value);
 }
 
 bool AbstractMapTensor::operator==(const AbstractBase &other) const {
