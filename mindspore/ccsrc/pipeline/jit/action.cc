@@ -48,7 +48,6 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
-#include "frontend/optimizer/py_pass_manager.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "backend/graph_compiler/transform.h"
@@ -882,9 +881,6 @@ bool OptInlineAction(const ResourcePtr &resource) {
       parallel::ParallelContext::GetInstance()->parallel_mode() == "auto_parallel") {
     return OptimizeAction(resource, kInlinePasses);
   }
-  if (opt::python_pass::PyPassManager::GetInstance()->GetPassGroup(opt::python_pass::Phase::PREAD)->size() != 0) {
-    return OptimizeAction(resource, kInlinePasses);
-  }
   return true;
 }
 
@@ -1468,63 +1464,6 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
   return true;
 }
 
-bool ActionPyStub(const ResourcePtr &resource, opt::python_pass::Phase phase) {
-  MS_EXCEPTION_IF_NULL(resource->manager());
-  MS_EXCEPTION_IF_NULL(resource->func_graph());
-  auto ppm = opt::python_pass::PyPassManager::GetInstance();
-  ppm->SetResource(resource);
-  return ppm->GetPassGroup(phase)->Run(resource->func_graph());
-}
-
-bool PreAdActionPyStub(const ResourcePtr &resource) {
-  if (!ActionPyStub(resource, opt::python_pass::Phase::PREAD)) {
-    MS_LOG(DEBUG) << "No Match.";
-  }
-  return true;
-}
-
-bool OptActionVmPyStub(const ResourcePtr &resource) {
-  if (ActionPyStub(resource, opt::python_pass::Phase::OPT)) {
-    if (opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
-      // Renomalize
-      FuncGraphPtr func_graph = resource->func_graph();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      abstract::AbstractBasePtrList args_abs;
-      auto parameters = func_graph->parameters();
-      (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_abs),
-                           [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-      FuncGraphPtr new_fg = Renormalize(resource, func_graph, args_abs);
-      resource->set_func_graph(new_fg);
-      resource->set_args_abs(args_abs);
-    }
-    if (opt::python_pass::PyPassManager::GetInstance()->ShouldReOpt()) {
-      return VmOptimizeAction(resource);
-    }
-  }
-  return true;
-}
-
-bool OptActionGePyStub(const ResourcePtr &resource) {
-  if (ActionPyStub(resource, opt::python_pass::Phase::OPT)) {
-    if (opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
-      // Renomalize
-      FuncGraphPtr func_graph = resource->func_graph();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      abstract::AbstractBasePtrList args_abs;
-      auto parameters = func_graph->parameters();
-      (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_abs),
-                           [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-      FuncGraphPtr new_fg = Renormalize(resource, func_graph, args_abs);
-      resource->set_func_graph(new_fg);
-      resource->set_args_abs(args_abs);
-    }
-    if (opt::python_pass::PyPassManager::GetInstance()->ShouldReOpt()) {
-      return GeOptimizeAction(resource);
-    }
-  }
-  return true;
-}
-
 static std::vector<ActionItem> CommonPipeline() {
   std::vector<ActionItem> actions;
 
@@ -1552,8 +1491,6 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
   // Do data structure simplifications and inline.
   (void)actions.emplace_back(std::make_pair("inline", OptInlineAction));
-  // Add pre-ad, post-inline python pass stub.
-  (void)actions.emplace_back(std::make_pair("py_pre_ad", PreAdActionPyStub));
   // Do PipelineSplit action.
   (void)actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
 
@@ -1564,8 +1501,6 @@ std::vector<ActionItem> GePipeline() {
   auto actions = CommonPipeline();
   // Optimize
   (void)actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
-  // Add opt-stage python pass stub
-  (void)actions.emplace_back(std::make_pair("py_opt", OptActionGePyStub));
   (void)actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
   (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
@@ -1589,9 +1524,6 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
 
     // Optimize
     (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
-
-    // Add opt-stage python pass stub
-    (void)actions.emplace_back(std::make_pair("py_opt", OptActionVmPyStub));
 
     (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
 

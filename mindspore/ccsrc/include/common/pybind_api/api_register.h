@@ -52,13 +52,6 @@ void RegRowTensor(py::module *m);
 void RegMapTensor(py::module *m);
 }  // namespace tensor
 
-namespace opt {
-namespace python_pass {
-void RegPattern(py::module *m);
-void RegPyPassManager(py::module *m);
-}  // namespace python_pass
-}  // namespace opt
-
 #ifndef ENABLE_SECURITY
 namespace profiler {
 void RegProfilerManager(py::module *m);
