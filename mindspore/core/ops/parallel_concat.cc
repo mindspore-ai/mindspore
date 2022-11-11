@@ -37,6 +37,14 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
                                            prim_name);
   (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
   (void)primitive->AddAttr("inputNums", MakeValue(SizeToLong(elements.size())));
+
+  for (size_t i = 0; i < elements.size(); ++i) {
+    auto shape_map_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+    auto shape_i = shape_map_i[kShape];
+    if (IsDynamicRank(shape_i)) {
+      return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    }
+  }
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
   auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
