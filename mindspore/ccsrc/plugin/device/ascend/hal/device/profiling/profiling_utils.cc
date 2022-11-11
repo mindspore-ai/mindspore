@@ -443,6 +443,7 @@ void ProfilingUtils::ReportMindSporeFrameworkData() {
   ProfilingReporter repoter(device_id, graph_id, rt_model_id, cnode_list, stream_ids, task_ids);
   MS_LOG(INFO) << "Start to report MindSpore Framework data to Ascend Profiler.";
   repoter.ReportParallelStrategy();
+  repoter.ReportMDTraceData();
   MS_LOG(INFO) << "Stop to report MindSpore Framework data to Ascend Profiler.";
 }
 }  // namespace ascend
