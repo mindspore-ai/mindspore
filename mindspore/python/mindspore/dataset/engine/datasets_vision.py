@@ -3712,7 +3712,7 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
         >>> schema = ds.Schema()
         >>> schema.add_column('image', de_type=mstype.uint8, shape=[2])
         >>> schema.add_column('label', de_type=mstype.uint8, shape=[1])
-        >>># apply dataset operations
+        >>> # apply dataset operations
         >>> ds1 = ds.RandomDataset(schema=schema, total_rows=50, num_parallel_workers=4)
     """
 
