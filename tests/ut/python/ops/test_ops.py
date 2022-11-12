@@ -100,6 +100,7 @@ from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import Median
+from mindspore.ops.operations.math_ops import SelfAdjointEig
 from mindspore.ops.operations._grad_ops import MedianGrad
 from mindspore.ops.operations._grad_ops import MinimumGradGrad
 from mindspore.ops.operations._grad_ops import CholeskyGrad
@@ -2548,8 +2549,11 @@ test_case_math_ops = [
         'block': Qr(),
         'desc_inputs': [Tensor(np.array([[12., -51, 4], [6, 167, -68], [-4, 24, -41]]).astype(np.float32))],
         'skip': ['backward']}),
+    ('SelfAdjointEig', {
+        'block': SelfAdjointEig(),
+        'desc_inputs': [Tensor(np.array([[2, 3, 4], [6, 7, 8], [4, 24, 4]]).astype(np.float64))],
+        'skip': ['backward']}),
 ]
-
 test_case_nn_ops = [
     ('FractionalMaxPoolWithFixedKsize_1', {
         'block': FractionalMaxPoolWithFixedKsize(ksize=(2, 2), output_shape=(2, 2), data_format="NCHW"),

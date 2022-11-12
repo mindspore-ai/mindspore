@@ -7393,6 +7393,52 @@ class Eig(Primitive):
         validator.check_value_type('compute_v', compute_v, [bool], self.name)
 
 
+class SelfAdjointEig(Primitive):
+    r"""
+    Computes the eigenvalues and (optionally) eigenvectors of each inner matrix in input
+    such that input[..., :, :] = v[..., :, :] * diag(e[..., :]).
+    The eigenvalues are sorted in non-decreasing order.
+
+    Args:
+         compute_v(bool): If `True` then eigenvectors will be computed and returned in v;
+              If `False`, only the eigenvalues will be computed. Default: True.
+
+    Inputs:
+         - **x** (Tensor) - Must be one of the following types:
+           float64, float32, complex64, complex128. Tensor input of shape :math:`[...,N, N]`.
+
+    Outputs:
+         - **eigen_value** (Tensor) - Has the same type as input, the shape is :math:`[...,N]`.
+         - **eigen_vector** (Tensor) - If `compute_v` is `False`, it’s an empty tensor.
+           Otherwise, it has the same type and shape as input, the shape is the same as the input.
+
+    Raises:
+         TypeError: If `compute_v` is not a bool.
+         TypeError: If dtype of `x` is not one of: float64, float32, complex64 or complex128.
+         TypeError: If `x` is not a Tensor.
+         ValueError: If `x` is not a square(batch squares).
+
+    Supported Platforms:
+         ``CPU``
+
+    Examples:
+           >>> from mindspore.ops.operations.math_ops import SelfAdjointEig
+           >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]).astype(np.float32))
+           >>> SelfAdjointEig = SelfAdjointEig()
+           >>> eigen_value, eigen_vector = SelfAdjointEig(input_x)
+           >>> print(eigen_value)
+           [1.  2.]
+           >>> print(eigen_vector)
+           [[1.  0.]
+            [0.  1.]]
+    """
+    @prim_attr_register
+    def __init__(self, compute_v=True):
+        """Initialize SelfAdjointEig."""
+        self.init_prim_io_names(inputs=['x'], outputs=['eigen_value', 'eigen_vector'])
+        validator.check_value_type("compute_v", compute_v, [bool], self.name)
+
+
 class Qr(Primitive):
     """
     Returns the QR decomposition of one or more matrices. If `full_matrices` is true, compute full-sized q and r,
