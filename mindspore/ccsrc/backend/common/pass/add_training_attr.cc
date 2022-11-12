@@ -25,32 +25,11 @@
 #include "ir/graph_utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-mindspore::HashMap<std::string, mindspore::HashSet<std::string>> MarkOp{
-  {"LSTM", {"LSTMGradWeight", "LSTMGrad", "LSTMGradData"}}};
-
-bool CheckOP(const FuncGraphManagerPtr &manager, const AnfNodePtr &cnode, const mindspore::HashSet<std::string> &set) {
-  MS_EXCEPTION_IF_NULL(manager);
-  MS_EXCEPTION_IF_NULL(cnode);
-  for (const auto &node_index : manager->node_users()[cnode]) {
-    auto output = node_index.first;
-    MS_EXCEPTION_IF_NULL(output);
-    if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimTupleGetItem)) {
-      if (CheckOP(manager, output, set)) {
-        return true;
-      }
-    } else if (output->isa<CNode>()) {
-      auto name = common::AnfAlgo::GetCNodeName(output);
-      if (set.find(name) != set.end()) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
 void AddAttrTraining(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -59,9 +38,9 @@ void AddAttrTraining(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   if (manager->node_users().find(cnode) == manager->node_users().end()) {
     return;
   }
-  auto set = MarkOp[common::AnfAlgo::GetCNodeName(cnode)];
-  if (CheckOP(manager, cnode, set)) {
-    cnode->AddAttr(kAttrIsTraining, MakeValue(true));
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim->HasAttr(kAttrIsTraining)) {
+    cnode->AddAttr(kAttrIsTraining, prim->GetAttr(kAttrIsTraining));
   } else {
     cnode->AddAttr(kAttrIsTraining, MakeValue(false));
   }
@@ -78,8 +57,7 @@ const AnfNodePtr AddTrainingAttr::Process(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
   auto name = common::AnfAlgo::GetCNodeName(node);
-  auto iter = MarkOp.find(name);
-  if (iter == MarkOp.end()) {
+  if (name != prim::kPrimLstm->name()) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();

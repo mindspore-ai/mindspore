@@ -36,7 +36,6 @@ bool BatchNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
-    return false;
   }
   execute_func_ = func_list_[index].second;
   is_training_ = op->get_is_training();

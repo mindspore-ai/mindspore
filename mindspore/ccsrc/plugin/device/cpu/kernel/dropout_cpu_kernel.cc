@@ -77,14 +77,17 @@ bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto mask_addr = reinterpret_cast<T *>(outputs[1]->addr);
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::bernoulli_distribution dis(keep_prob_);
   T scale = static_cast<T>(1.f / keep_prob_);
-  for (uint64_t i = 0; i < tensor_size_; ++i) {
-    mask_addr[i] = static_cast<T>(dis(gen));
-    output_addr[i] = mask_addr[i] * input_addr[i] * scale;
-  }
+  std::random_device rd;
+  std::default_random_engine generator(rd());
+  std::uniform_real_distribution<float> uniform(0.f, 1.f);
+  auto task = [input_addr, output_addr, mask_addr, scale, &uniform, &generator, this](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      mask_addr[i] = static_cast<T>(uniform(generator) < keep_prob_);
+      output_addr[i] = mask_addr[i] * input_addr[i] * scale;
+    }
+  };
+  ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
   return true;
 }
 

@@ -26,7 +26,6 @@
 #include "backend/common/pass/convert_tuple_input_to_dynamic_input.h"
 #include "backend/common/pass/convert_const_scalar_to_tensor.h"
 #include "backend/common/pass/convert_attr_to_unify_mindir.h"
-#include "backend/common/pass/add_training_attr.h"
 #include "backend/common/pass/optimize_updatestate.h"
 #include "backend/common/pass/conv_transpose_to_conv_bp.h"
 #include "backend/common/pass/reduce_sum_optimizer.h"
@@ -71,7 +70,6 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
-  common_pm->AddPass(std::make_shared<AddTrainingAttr>());
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
   common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
   optimizer->AddPassManager(common_pm);

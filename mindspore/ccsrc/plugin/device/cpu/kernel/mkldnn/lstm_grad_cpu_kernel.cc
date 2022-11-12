@@ -40,7 +40,6 @@ constexpr int kDstIterCIdx = 6;
 constexpr int kDiffDstLayerIdx = 7;
 constexpr int kDiffDstIterIdx = 8;
 constexpr int kDiffDstIterCIdx = 9;
-constexpr int kWorkspaceIdx = 10;
 constexpr int kNumberOne = 1;
 constexpr int kNumberTwo = 2;
 constexpr int kNumberFour = 4;
@@ -154,8 +153,7 @@ void LSTMGradCpuKernelMod::InitDnnl() {
   primitive_ = CreatePrimitive<dnnl::lstm_backward>(prim_backward_desc_);
   auto wksp_desc = GetWorkspaceDesc(prim_forward_desc);
   reserve_size_ = GetSize(wksp_desc);
-  AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
-  AddArgumentOp(src_desc, src_h_desc, src_c_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc);
+  AddArgumentOp(src_desc, src_h_desc, src_c_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc, wksp_desc);
 
   // construct fw memory
   weights_layer_desc_ = GetWeightsLayerDesc(prim_backward_desc_);
@@ -183,7 +181,7 @@ void LSTMGradCpuKernelMod::InitDnnl() {
 void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
                                          const dnnl::memory::desc &src_c_desc, const dnnl::memory::desc &bias_desc,
                                          const dnnl::memory::desc &dst_desc, const dnnl::memory::desc &dst_h_desc,
-                                         const dnnl::memory::desc &dst_c_desc) {
+                                         const dnnl::memory::desc &dst_c_desc, const dnnl::memory::desc &wksp_desc) {
   AddArgument(DNNL_ARG_SRC_LAYER, src_desc);
   AddArgument(DNNL_ARG_SRC_ITER, src_h_desc);
   AddArgument(DNNL_ARG_SRC_ITER_C, src_c_desc);
@@ -202,6 +200,7 @@ void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, con
   AddArgument(DNNL_ARG_DIFF_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DIFF_DST_ITER, dst_h_desc);
   AddArgument(DNNL_ARG_DIFF_DST_ITER_C, dst_c_desc);
+  AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
 }
 
 void LSTMGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,
@@ -215,7 +214,7 @@ void LSTMGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::Address
   SetArgumentHandle(DNNL_ARG_DST_LAYER, inputs[kDstLayerIdx]->addr);
   SetArgumentHandle(DNNL_ARG_DST_ITER, inputs[kDstIterIdx]->addr);
   SetArgumentHandle(DNNL_ARG_DST_ITER_C, inputs[kDstIterCIdx]->addr);
-  SetArgumentHandle(DNNL_ARG_WORKSPACE, inputs[kWorkspaceIdx]->addr);
+  SetArgumentHandle(DNNL_ARG_WORKSPACE, inputs[kInputWorkSpaceIndex]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_SRC_LAYER, outputs[kSrcLayerIdx]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_SRC_ITER, outputs[kSrcIterIdx]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_SRC_ITER_C, outputs[kSrcIterCIdx]->addr);

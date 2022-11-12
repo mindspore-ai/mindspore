@@ -1213,6 +1213,7 @@ def get_bprop_lstm(self):
         return dx, dhx, dcx, dw
 
     if context.get_context('device_target') == "CPU":
+        self.add_prim_attr("is_training", True)
         return bprop_cpu
 
     return bprop

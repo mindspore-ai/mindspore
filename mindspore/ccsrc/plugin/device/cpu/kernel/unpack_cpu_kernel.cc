@@ -123,10 +123,10 @@ template <typename T>
 bool UnpackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
-  const void *input = reinterpret_cast<void *>(inputs[0]->addr);
-  void **outputs_host = reinterpret_cast<void **>(workspace[0]->addr);
+  const auto *input = reinterpret_cast<unsigned char *>(inputs[0]->addr);
+  auto **outputs_host = reinterpret_cast<unsigned char **>(workspace[0]->addr);
   for (size_t i = 0; i < outputs.size(); i++) {
-    outputs_host[i] = reinterpret_cast<T *>(outputs[i]->addr);
+    outputs_host[i] = reinterpret_cast<unsigned char *>(outputs[i]->addr);
   }
 
   size_t total_size = input_size_ * sizeof(T);
@@ -135,7 +135,26 @@ bool UnpackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                       << total_size << " bytes";
   }
   int data_size = SizeToInt(sizeof(T));
-  Unstack(input, outputs_host, &unstack_param_, data_size);
+  int copy_size = unstack_param_.after_dims_ * data_size;
+  int cp_ret = EOK;
+  auto task = [this, input, outputs_host, data_size, copy_size, &cp_ret](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      int n = i / unstack_param_.axis_dim_;
+      int c = i % unstack_param_.axis_dim_;
+      int in_offset = n * unstack_param_.axis_dim_ * unstack_param_.after_dims_ + c * unstack_param_.after_dims_;
+      int out_offset = n * unstack_param_.after_dims_;
+      auto ret =
+        memcpy_s(outputs_host[c] + out_offset * data_size, copy_size, input + in_offset * data_size, copy_size);
+      if (ret != EOK && cp_ret == EOK) {
+        cp_ret = ret;
+      }
+    }
+  };
+  ParallelLaunchAutoSearch(task, IntToSize(unstack_param_.num_ * unstack_param_.pre_dims_), this,
+                           &parallel_search_info_);
+  if (cp_ret != EOK) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+  }
   return true;
 }
 

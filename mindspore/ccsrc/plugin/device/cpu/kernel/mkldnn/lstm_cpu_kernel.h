@@ -69,7 +69,7 @@ class LstmCpuKernelMod : public MKLCpuKernelMod {
   bool bidirectional_{false};
   bool has_bias_{false};
   bool is_training_{false};
-  size_t reserve_size_{0};
+  size_t reserve_size_{1};
 
   dnnl::memory::dims weights_dims_;
   dnnl::memory::dims weights_h_dims_;

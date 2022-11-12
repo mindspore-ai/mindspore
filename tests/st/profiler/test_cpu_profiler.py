@@ -48,7 +48,7 @@ def test_cpu_profiling():
     if os.path.isdir(data_path):
         shutil.rmtree(data_path)
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    device_id = context.get_context("device_id")
+    rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
     profiler = Profiler(output_path="data_cpu_profiler")
     x = np.random.randn(1, 3, 3, 4).astype(np.float32)
     y = np.random.randn(1, 3, 3, 4).astype(np.float32)
@@ -60,9 +60,9 @@ def test_cpu_profiling():
     assert len(os.listdir(data_path)) == 1
 
     profiler_dir = os.path.join(data_path, f"{os.listdir(data_path)[0]}/")
-    op_detail_file = f"{profiler_dir}cpu_op_detail_info_{device_id}.csv"
-    op_type_file = f"{profiler_dir}cpu_op_type_info_{device_id}.csv"
-    timeline_file = f"{profiler_dir}cpu_op_execute_timestamp_{device_id}.txt"
+    op_detail_file = f"{profiler_dir}cpu_op_detail_info_{rank_id}.csv"
+    op_type_file = f"{profiler_dir}cpu_op_type_info_{rank_id}.csv"
+    timeline_file = f"{profiler_dir}cpu_op_execute_timestamp_{rank_id}.txt"
     cpu_profiler_files = (op_detail_file, op_type_file, timeline_file)
     for file in cpu_profiler_files:
         assert os.path.isfile(file)
