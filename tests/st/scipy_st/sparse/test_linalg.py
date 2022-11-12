@@ -504,11 +504,9 @@ def test_gmres_grad(tensor_type, dtype, error, preconditioner, solve_method, a, 
                               solve_method=self.solve_method)
             return self.sum(x)
 
-    gmres_grad_net = ops.GradOperation(get_all=True)(GmresGradNet(solve_method))
 
     tol = float(onp.finfo(dtype=dtype).eps)
     atol = tol
-
     a = onp.array(a, dtype=dtype)
     b = onp.array(b, dtype=dtype)
     x0 = onp.zeros_like(b).astype(dtype)
@@ -519,14 +517,17 @@ def test_gmres_grad(tensor_type, dtype, error, preconditioner, solve_method, a, 
     b = Tensor(b)
     x0 = Tensor(x0)
     m = to_tensor((m, tensor_type)) if m is not None else m
+
     # PyNative Mode
     context.set_context(mode=context.PYNATIVE_MODE)
+    gmres_grad_net = ops.GradOperation(get_all=True)(GmresGradNet(solve_method))
     grad_a, grad_b = gmres_grad_net(a, b, x0, tol, m, atol)[:2]
     assert onp.allclose(expect_grad_a, to_ndarray(grad_a), rtol=error, atol=error)
     assert onp.allclose(expect_grad_b, to_ndarray(grad_b), rtol=error, atol=error)
+
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
-
+    gmres_grad_net = ops.GradOperation(get_all=True)(GmresGradNet(solve_method))
     grad_a, grad_b = gmres_grad_net(a, b, x0, tol, m, atol)[:2]
     assert onp.allclose(expect_grad_a, to_ndarray(grad_a), rtol=error, atol=error)
     assert onp.allclose(expect_grad_b, to_ndarray(grad_b), rtol=error, atol=error)

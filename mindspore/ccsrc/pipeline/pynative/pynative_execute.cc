@@ -15,6 +15,7 @@
  */
 
 #include "pipeline/pynative/pynative_execute.h"
+#include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pybind_api/pybind_patch.h"
 #include "include/common/utils/config_manager.h"
@@ -33,12 +34,12 @@ std::mutex PyNativeExecutor::instance_lock_;
 
 namespace {
 template <typename T, typename... Args>
-void PyNativeExecutorTry(const std::function<void(T *ret, const Args &...)> &method, T *ret, const Args &... args) {
-  const auto inst = PyNativeExecutor::GetInstance();
+T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &... args) {
+  const auto &inst = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
   try {
-    method(ret, args...);
+    return method(args...);
   } catch (const py::error_already_set &ex) {
     // print function call stack info before release
     std::ostringstream oss;
@@ -83,17 +84,13 @@ void PyNativeExecutorTry(const std::function<void(T *ret, const Args &...)> &met
 
 py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args);
-  py::object ret = py::none();
-  PyNativeExecutorTry(forward_executor()->RunOpS, &ret, op_run_info);
+  PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
   if (PyGILState_Check() == 0) {
-    PyGILState_Ensure();
+    py::gil_scoped_acquire acquire;
+    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
+  } else {
+    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
   }
-  op_run_info.reset();
-  return ret;
-}
-
-py::object PyNativeExecutor::GetShape(const py::args &args) const {
-  return forward_executor()->dynamic_shape()->GetDynShape(args);
 }
 
 py::object PyNativeExecutor::CallConstantFolding(const py::args &args) const {
@@ -104,7 +101,7 @@ void PyNativeExecutor::set_py_exe_path(const py::object &py_exe_path) const {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
   }
-  const auto &py_exe_path_s = py::cast<std::string>(py_exe_path);
+  const auto &py_exe_path_s = py_exe_path.cast<std::string>();
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
 }
@@ -113,13 +110,12 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
   if (!py::isinstance<py::str>(kernel_build_server_dir)) {
     MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
   }
-  const auto &kernel_build_server_dir_s = py::cast<std::string>(kernel_build_server_dir);
+  const auto &kernel_build_server_dir_s = kernel_build_server_dir.cast<std::string>();
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, kernel_build_server_dir_s);
 }
 
 void PyNativeExecutor::ClearRes() const {
-  MS_LOG(DEBUG) << "Clear all res";
   runtime::OpExecutor::GetInstance().Reset();
   pynative::OpCompiler::GetInstance().ClearAllCache();
 
@@ -137,12 +133,13 @@ void PyNativeExecutor::ClearRes() const {
   }
   ad::CleanRes();
   pipeline::ReclaimOptimizer();
+  MS_LOG(DEBUG) << "Clear all res";
 }
 
 void PyNativeExecutor::Init() {
   MS_LOG(DEBUG) << "Init PyNativeExecutor";
   forward_executor_ = std::make_shared<ForwardExecutor>();
-  grad_executor_ = std::make_shared<GradExecutor>(forward_executor_, forward_executor_->dynamic_shape());
+  grad_executor_ = std::make_shared<GradExecutor>(forward_executor_);
   forward_executor_->set_grad_executor(grad_executor_);
 }
 
@@ -163,58 +160,38 @@ bool PyNativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); 
 
 void PyNativeExecutor::set_grad_flag(bool flag) const { grad_executor()->set_grad_flag(flag); }
 
-void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) const {
-  MS_LOG(DEBUG) << "Set dynamic input for feed mode from cell";
-  forward_executor()->dynamic_shape()->SetDynamicInput(cell, args);
-  // After set input, check previous top cell can be make to dynamic shape
-  forward_executor()->dynamic_shape()->CheckPreviousTopCellCanBeDynamicShape(cell, args);
+py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
+                                             const py::args &args) const {
+  return grad_executor()->CheckAlreadyRun(grad, obj, args);
 }
 
-py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
-                                             const py::object &grad_hash_id, const py::args &args) const {
-  return grad_executor()->CheckAlreadyRun(grad, cell, grad_hash_id, args);
-}
-
-py::object PyNativeExecutor::Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) const {
-  py::object ret;
-  PyNativeExecutorTry(grad_executor()->RunGraph, &ret, cell, sens_param, args);
-  return ret;
-}
-
-void PyNativeExecutor::ClearCell(const py::object &cell) const { grad_executor()->ClearCellRes(cell); }
-
-void PyNativeExecutor::ClearGrad(const py::object &cell, const py::args &args) const {
-  MS_LOG(DEBUG) << "Clear grad";
-  return grad_executor()->ClearGrad(cell, args);
-}
-
-void PyNativeExecutor::NewGraph(const py::object &cell, const py::args &args) const {
-  forward_executor()->ProcessBeforeNewGraph(cell, args);
+void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {
+  forward_executor()->ProcessBeforeNewGraph(obj, args);
 
   if (!grad_flag()) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
-  const py::object ret;
-  PyNativeExecutorTry(grad_executor()->InitGraph, &ret, cell, args);
+  PyNativeExecutorTry(grad_executor()->InitGraph, obj, args);
 }
 
-void PyNativeExecutor::EndGraph(const py::object &cell, const py::object &out, const py::args &args) const {
-  forward_executor()->ProcessBeforeEndGraph(cell);
+void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, const py::args &args) const {
+  bool is_cell = py::isinstance<Cell>(obj);
+  forward_executor()->ProcessBeforeEndGraph(obj, is_cell);
 
   if (!grad_flag()) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
-  const py::object ret;
-  PyNativeExecutorTry(grad_executor()->LinkGraph, &ret, cell, out, args);
-  forward_executor()->ProcessAfterEndGraph(cell);
+  PyNativeExecutorTry(grad_executor()->LinkGraph, obj, out, args);
+  forward_executor()->ProcessAfterEndGraph(obj, is_cell);
 }
+
+py::object PyNativeExecutor::Run() const { return PyNativeExecutorTry(grad_executor()->RunGraph); }
 
 void PyNativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                                const py::object &grad_position, const py::args &args) const {
-  const py::object ret;
-  PyNativeExecutorTry(grad_executor()->GradGraph, &ret, grad, cell, weights, grad_position, args);
+  PyNativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, grad_position, args);
 }
 
 py::object PyNativeExecutor::GradMsFunction(const py::object &out, const py::args &args) const {
@@ -225,10 +202,6 @@ void PyNativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set
 
 bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
-void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling) const {
-  forward_executor()->set_is_ms_function_compiling(is_compiling);
-}
-
 void RegPyNativeExecutor(const py::module *m) {
   (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PyNativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
@@ -238,9 +211,7 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
     .def("grad_ms_function", &PyNativeExecutor::GradMsFunction, "pynative grad for ms_function.")
     .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
-    .def("clear_cell", &PyNativeExecutor::ClearCell, "pynative clear status.")
     .def("clear_res", &PyNativeExecutor::ClearRes, "pynative clear exception res.")
-    .def("clear_grad", &PyNativeExecutor::ClearGrad, "pynative clear grad status.")
     .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
     .def("set_lazy_build", &PyNativeExecutor::SetLazyBuild, "pynative build kernel async")
     .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
@@ -249,15 +220,11 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")
     .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
          "Executor set grad flag.")
-    .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")
     .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path, py::arg("py_exe_path") = py::str(""),
          "set python executable path.")
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
          py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.")
-    .def("set_ms_function_compile_status", &PyNativeExecutor::SetMsFunctionCompileStatus,
-         "set ms_funciton compile status.")
     .def("real_run_op", &PyNativeExecutor::RealRunOp, "Run op pynatively.")
-    .def("get_shape", &PyNativeExecutor::GetShape, "Get Dynamic Shape of Tensor")
     .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive");
 }
 }  // namespace mindspore::pynative

@@ -90,7 +90,7 @@ const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
   if (cast_prim_ == nullptr) {
     const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
-    const auto &adapter = py::cast<PrimitivePyAdapterPtr>(cast_prim);
+    const auto &adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
     MS_EXCEPTION_IF_NULL(adapter);
     cast_prim_ = adapter->attached_primitive();
     if (cast_prim_ == nullptr) {
@@ -181,10 +181,9 @@ void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
     bool has_scalar_int64 = false;
     bool has_tensor_int8 = false;
     // Find the maximum priority of the same dtype
-    size_t input_size = op_run_info->input_value.size();
     for (size_t index : indexes) {
-      if (index >= input_size) {
-        MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of py_args " << input_size;
+      if (index >= op_run_info->input_size) {
+        MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of py_args " << op_run_info->input_size;
       }
       const auto &v = op_run_info->input_value[index];
       if (v->isa<FloatImm>()) {
@@ -264,7 +263,9 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   // When step 1 does not work, creating a cast op to get destination data type value.
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
+  constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
+  cast_run_info->grad_flag = op_run_info->grad_flag;
   MS_EXCEPTION_IF_NULL(cast_prim_);
   cast_run_info->op_prim = cast_prim_;
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
@@ -274,7 +275,9 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   cast_run_info->base_op_run_info.lazy_build = op_run_info->base_op_run_info.lazy_build;
   (void)cast_run_info->input_value.emplace_back(v);
   (void)cast_run_info->input_value.emplace_back(GetDstType(type_id));
-  return PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpForward(cast_run_info);
+  cast_run_info->input_size = input_size;
+  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpForward(cast_run_info);
+  return cast_run_info->out_value;
 }
 
 ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, bool *is_cast,
@@ -378,8 +381,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
     }
     MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << i
                   << "th input, and to type " << TypeIdToType(it->second)->ToString();
-    const auto &cast_output = DoAutoCast(op_run_info, v, it->second, op_run_info->base_op_run_info.op_name, i);
-    input_args[i] = cast_output;
+    input_args[i] = DoAutoCast(op_run_info, v, it->second, op_run_info->base_op_run_info.op_name, i);
   }
 }
 
@@ -393,7 +395,7 @@ void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run
   }
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   const auto &signature = op_run_info->op_prim->signatures();
-  for (size_t i = 0; i < op_run_info->input_value.size(); i++) {
+  for (size_t i = 0; i < op_run_info->input_size; i++) {
     const auto &v = op_run_info->input_value[i];
     auto sig = SignatureEnumRW::kRWDefault;
     if (!signature.empty()) {
@@ -448,9 +450,8 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
         --sig_size;
       }
     }
-    auto size = op_run_info->input_value.size();
-    if (sig_size > 0 && sig_size != size) {
-      MS_EXCEPTION(ValueError) << op_run_info->base_op_run_info.op_name << " inputs size " << size
+    if (sig_size > 0 && sig_size != op_run_info->input_size) {
+      MS_EXCEPTION(ValueError) << op_run_info->base_op_run_info.op_name << " inputs size " << op_run_info->input_size
                                << " does not match the requires "
                                << "signature size " << sig_size;
     }

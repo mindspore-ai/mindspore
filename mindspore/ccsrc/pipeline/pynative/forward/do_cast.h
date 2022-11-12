@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_DO_CAST_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_DO_CAST_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_CAST_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_CAST_H_
 
 #include <vector>
 #include <string>
@@ -63,4 +63,4 @@ using CastOperationPtr = std::shared_ptr<CastOperation>;
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_DO_CAST_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_CAST_H_

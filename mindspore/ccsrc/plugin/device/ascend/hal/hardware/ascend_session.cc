@@ -799,11 +799,6 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     GraphInfo graph_info;
     GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info);
     BackendOpRunInfoPtr op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, nullptr);
-    if (op_run_info->base_op_run_info.has_dynamic_output) {
-      MS_LOG(INFO) << "BuildOpsInGraph stop, op " << op_run_info->base_op_run_info.op_name << " is dynamic shape.";
-      break;
-    }
-
     const auto &single_op_graph_iter = run_op_graphs_.find(graph_info);
     if (single_op_graph_iter != run_op_graphs_.end()) {
       // if graph of same single op exists, the output tensor of current op should be generated

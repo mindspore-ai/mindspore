@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_
 
 #include <memory>
 #include <string>
+#include <vector>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
 
@@ -30,12 +31,11 @@ namespace PyNativeAlgo {
 // Common function
 struct Common {
   static std::string GetIdByValue(const ValuePtr &v);
-  static TypePtr GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
-  static inline bool IsDynamicShape(const FrontendOpRunInfoPtr &op_run_info) {
-    MS_EXCEPTION_IF_NULL(op_run_info);
-    return op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.has_dynamic_input;
-  }
   static bool ValueHasDynamicShape(const ValuePtr &value);
+  static bool IsTensor(const ValuePtr &v);
+  static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
+  static void SetForwardOutputFlag(const ValuePtr &v);
+  static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
 };
 
@@ -43,19 +43,18 @@ struct Common {
 struct PyParser {
   static std::string GetPyObjId(const py::handle &obj);
   static std::string GetIdByPyObj(const py::object &obj);
-  static size_t GetTupleSize(const py::tuple &args);
-  static py::list FilterTensorArgs(const py::args &args, bool has_sens = false);
   static void SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg);
   static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs);
 };
 
 // Data convert
 struct DataConvert {
+  static py::object ValueToPyObj(const ValuePtr &v);
   static ValuePtr PyObjToValue(const py::object &obj);
   static ValuePtr BaseRefToValue(const BaseRef &value);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref);
-  static void ConvertTupleArg(py::tuple *res, size_t *const index, const py::tuple &arg);
-  static py::tuple ConvertArgs(const py::tuple &args);
+  static void FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
+  static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                            const tensor::CSRTensorPtr &csr_tensor, const PrimitivePtr &op_prim);
@@ -75,4 +74,4 @@ struct DataConvert {
 };  // namespace PyNativeAlgo
 }  // namespace pynative
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_

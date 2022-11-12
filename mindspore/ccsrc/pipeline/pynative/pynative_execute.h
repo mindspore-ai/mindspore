@@ -52,35 +52,25 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   }
 
   py::object RealRunOp(const py::args &args) const;
-  py::object GetShape(const py::args &args) const;
   py::object CallConstantFolding(const py::args &args) const;
   bool grad_flag() const;
   void set_grad_flag(bool flag) const;
-  void SetDynamicInput(const py::object &cell, const py::args &args) const;
   void set_graph_phase(const std::string &graph_phase) const;
   void set_py_exe_path(const py::object &py_exe_path) const;
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir) const;
   void SetHookChanged(const py::object &cell) const;
-  void NewGraph(const py::object &cell, const py::args &args) const;
-  void EndGraph(const py::object &cell, const py::object &out, const py::args &args) const;
+  void NewGraph(const py::object &obj, const py::args &args) const;
+  void EndGraph(const py::object &obj, const py::object &out, const py::args &args) const;
+  py::object Run() const;
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                const py::object &grad_position, const py::args &args) const;
   py::object GradMsFunction(const py::object &out, const py::args &args) const;
-  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &grad_hash_id,
-                             const py::args &args) const;
-  py::object Run(const py::object &cell, const py::object &sens_param, const py::tuple &args) const;
-
-  // Used by graph clean
-  // Cell destruct will call
-  void ClearCell(const py::object &cell) const;
-  void ClearGrad(const py::object &cell, const py::args &args) const;
-  // Abnormal existed
+  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::args &args) const;
   void ClearRes() const;
   // Sync stream
   void Sync() const;
   void SetLazyBuild(bool enable) const;
   bool IsFirstCell() const;
-  void SetMsFunctionCompileStatus(bool is_compiling) const;
 
  private:
   PyNativeExecutor() = default;

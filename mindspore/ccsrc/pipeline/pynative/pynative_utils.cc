@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "pipeline/pynative/pynative_utils.h"
-#include <set>
 #include <utility>
 #include <vector>
 #include "backend/common/optimizer/helper.h"
@@ -24,6 +23,7 @@
 #include "ir/cell.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/parse/data_converter.h"
 
 namespace mindspore {
@@ -52,28 +52,20 @@ std::string Common::GetIdByValue(const ValuePtr &v) {
     return "Ellipsis";
   } else if (v->isa<ValueSequence>()) {
     auto p_list = v->cast<ValueSequencePtr>();
-    string prefix = v->isa<ValueTuple>() ? "Tuple" : "List";
+    string prefix = v->isa<ValueTuple>() ? "Tuple<" : "List<";
     if (p_list->size() == 0) {
       prefix = "Empty:";
     } else {
       for (size_t i = 0; i < p_list->size(); ++i) {
-        prefix += ":" + GetIdByValue(p_list->value()[i]);
+        prefix += GetIdByValue(p_list->value()[i]) + ":";
       }
     }
+    prefix.pop_back();
+    prefix += ">";
     return prefix;
   }
   MS_LOG(DEBUG) << "Get type " << v->ToString();
   return v->ToString();
-}
-
-TypePtr Common::GetTypeFromAbstract(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractSequence>()) {
-    MS_LOG(EXCEPTION) << "Get tuple or list abs";
-  }
-  const auto &type = abs->BuildType();
-  MS_EXCEPTION_IF_NULL(type);
-  return type;
 }
 
 bool Common::ValueHasDynamicShape(const ValuePtr &value) {
@@ -88,10 +80,53 @@ bool Common::ValueHasDynamicShape(const ValuePtr &value) {
   return false;
 }
 
+bool Common::IsTensor(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
+}
+
+tensor::TensorPtr Common::GetTensorFromParam(const AnfNodePtr &param_node) {
+  MS_EXCEPTION_IF_NULL(param_node);
+  auto param = param_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param);
+  if (!param->has_default()) {
+    return nullptr;
+  }
+  auto default_value = param->default_param();
+  MS_EXCEPTION_IF_NULL(default_value);
+  auto tensor_value = default_value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor_value);
+  return tensor_value;
+}
+
+void Common::SetForwardOutputFlag(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor_value = v->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_value);
+    tensor_value->set_is_forward_output(true);
+  } else if (v->isa<ValueSequence>()) {
+    auto v_seq = v->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(v_seq);
+    (void)std::for_each(v_seq->value().begin(), v_seq->value().end(),
+                        [](const ValuePtr &elem) { return SetForwardOutputFlag(elem); });
+  }
+}
+
 std::shared_ptr<PyNativeExecutor> Common::GetPyNativeExecutor() {
   const auto &executor = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
   return executor;
+}
+
+void Common::DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph) {
+#ifdef ENABLE_DUMP_IR
+  const auto &ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR(filename, graph);
+  }
+#endif
 }
 
 std::string PyParser::GetPyObjId(const py::handle &obj) {
@@ -108,7 +143,7 @@ std::string PyParser::GetIdByPyObj(const py::object &obj) {
   } else if (py::isinstance<Cell>(obj)) {
     return obj.cast<CellPtr>()->id();
   } else if (py::isinstance<mindspore::Type>(obj)) {
-    auto type_ptr = py::cast<mindspore::TypePtr>(obj);
+    auto type_ptr = obj.cast<mindspore::TypePtr>();
     return "Type:" + type_ptr->ToString();
   } else if (py::isinstance<py::str>(obj)) {
     return "S" + obj.cast<std::string>();
@@ -124,14 +159,16 @@ std::string PyParser::GetIdByPyObj(const py::object &obj) {
     return "Ellipsis";
   } else if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
     auto p_list = py::cast<py::tuple>(obj);
-    string prefix = py::isinstance<py::tuple>(obj) ? "Tuple" : "List";
+    string prefix = py::isinstance<py::tuple>(obj) ? "Tuple<" : "List<";
     if (p_list.empty()) {
       prefix = "Empty:";
     } else {
       for (size_t i = 0; i < p_list.size(); ++i) {
-        prefix += ":" + PyParser::GetIdByPyObj(p_list[i]);
+        prefix += PyParser::GetIdByPyObj(p_list[i]) + ":";
       }
     }
+    prefix.pop_back();
+    prefix += ">";
     return prefix;
   }
   // For id with value and obj can be the same
@@ -142,40 +179,9 @@ std::string PyParser::GetIdByPyObj(const py::object &obj) {
   return GetPyObjId(obj);
 }
 
-size_t PyParser::GetTupleSize(const py::tuple &args) {
-  size_t count = 0;
-  for (size_t i = 0; i < args.size(); i++) {
-    if (py::isinstance<py::tuple>(args[i])) {
-      count += GetTupleSize(args[i]);
-    } else {
-      count += 1;
-    }
-  }
-  return count;
-}
-
-py::list PyParser::FilterTensorArgs(const py::args &args, bool has_sens) {
-  size_t size = args.size();
-  if (size == 0 && has_sens) {
-    MS_LOG(EXCEPTION) << "The size of args is 0, when the flag of sens is set to True";
-  }
-  py::list only_tensors;
-  size_t forward_args_size = has_sens ? size - 1 : size;
-  for (size_t i = 0; i < forward_args_size; ++i) {
-    if (py::isinstance<tensor::Tensor>(args[i]) || py::isinstance<tensor::CSRTensor>(args[i]) ||
-        py::isinstance<tensor::COOTensor>(args[i])) {
-      only_tensors.append(args[i]);
-    }
-  }
-  if (has_sens) {
-    only_tensors.append(args[forward_args_size]);
-  }
-  return only_tensors;
-}
-
 void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &adapter = py::cast<PrimitivePyAdapterPtr>(prim_arg);
+  const auto &adapter = prim_arg.cast<PrimitivePyAdapterPtr>();
   MS_EXCEPTION_IF_NULL(adapter);
   auto prim = adapter->attached_primitive();
   if (prim == nullptr) {
@@ -190,16 +196,18 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
 
 void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  op_run_info->op_inputs = op_inputs;
-  for (size_t i = 0; i < op_inputs.size(); ++i) {
-    const auto &obj = op_inputs[i];
-    (void)op_run_info->input_value.emplace_back(PyNativeAlgo::DataConvert::PyObjToValue(op_inputs[i]));
+  op_run_info->input_size = op_inputs.size();
+  op_run_info->input_value.resize(op_run_info->input_size);
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    op_run_info->input_value[i] = PyNativeAlgo::DataConvert::PyObjToValue(op_inputs[i]);
   }
 }
 
+py::object DataConvert::ValueToPyObj(const ValuePtr &v) { return ValueToPyData(v); }
+
 ValuePtr DataConvert::PyObjToValue(const py::object &obj) {
   ValuePtr converted_ret = parse::data_converter::PyDataToValue(obj);
-  if (!converted_ret) {
+  if (converted_ret == nullptr) {
     MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
   }
   return converted_ret;
@@ -239,39 +247,32 @@ ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref) {
   return std::make_shared<ValueTuple>(v_list);
 }
 
-void DataConvert::ConvertTupleArg(py::tuple *res, size_t *const index, const py::tuple &arg) {
-  MS_EXCEPTION_IF_NULL(res);
-  MS_EXCEPTION_IF_NULL(index);
-  auto res_size = res->size();
-  for (size_t i = 0; i < arg.size(); i++) {
-    if (py::isinstance<py::tuple>(arg[i])) {
-      ConvertTupleArg(res, index, arg[i]);
-    } else {
-      if (*index >= res_size) {
-        MS_LOG(EXCEPTION) << "Convert tuple error, index is greater than tuple size, index " << (*index)
-                          << ", tuple size " << res_size;
-      }
-      (*res)[(*index)++] = arg[i];
+void DataConvert::FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v) {
+  MS_EXCEPTION_IF_NULL(v);
+  MS_EXCEPTION_IF_NULL(flatten_v);
+  const auto &v_vec = v->cast<ValueSequencePtr>();
+  size_t v_vec_size = v_vec->size();
+  for (size_t i = 0; i < v_vec_size; ++i) {
+    const auto &elem_v = v_vec->value()[i];
+    if (elem_v->isa<ValueSequence>()) {
+      FlattenTupleArg(elem_v, flatten_v);
+    } else if (PyNativeAlgo::Common::IsTensor(elem_v)) {
+      (void)flatten_v->emplace_back(elem_v);
     }
   }
 }
 
-py::tuple DataConvert::ConvertArgs(const py::tuple &args) {
-  size_t tuple_size = PyParser::GetTupleSize(args);
-  py::tuple res(tuple_size);
-  size_t index = 0;
-  for (size_t i = 0; i < args.size(); i++) {
-    if (py::isinstance<py::tuple>(args[i])) {
-      ConvertTupleArg(&res, &index, args[i]);
-    } else {
-      if (index >= tuple_size) {
-        MS_LOG(EXCEPTION) << "Convert error, index is greater than tuple size, index " << index << ", tuple size "
-                          << tuple_size;
-      }
-      res[index++] = args[i];
+void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v) {
+  MS_EXCEPTION_IF_NULL(flatten_v);
+  for (size_t i = 0; i < v_vec.size(); ++i) {
+    const auto &v = v_vec[i];
+    MS_EXCEPTION_IF_NULL(v);
+    if (v->isa<ValueSequence>()) {
+      FlattenTupleArg(v, flatten_v);
+    } else if (PyNativeAlgo::Common::IsTensor(v)) {
+      (void)flatten_v->emplace_back(v);
     }
   }
-  return res;
 }
 
 bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
@@ -291,7 +292,7 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   if (input_index >= input_names_vec.size()) {
     MS_LOG(EXCEPTION) << "The input index: " << input_index << " is larger than the input names vector size!";
   }
-  auto input_name = input_names_vec[input_index];
+  const auto &input_name = input_names_vec[input_index];
   if (v->isa<tensor::Tensor>()) {
     auto tensor = v->cast<tensor::TensorPtr>();
     if (tensor->data().const_data() == nullptr) {
@@ -305,7 +306,6 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   if (op_prim->name() == "UnsortedSegmentSum" && backend == kAscendDevice) {
     op_prim->set_name("UnsortedSegmentSumD");
   }
-  (void)op_run_info->index_with_value.emplace_back(std::make_pair(input_index, v));
   return true;
 }
 
@@ -330,7 +330,7 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
   if (op_prim->HasAttr(kAttrDynInputSizes)) {
     int64_t elem_size = SizeToLong(value_seq->size());
     auto dyn_v = GetValue<const std::vector<int64_t>>(op_prim->GetAttr(kAttrDynInputSizes));
-    if (dyn_v.size() != op_run_info->input_value.size()) {
+    if (dyn_v.size() != op_run_info->input_size) {
       for (size_t i = dyn_v.size(); i < index; ++i) {
         (void)dyn_v.emplace_back(-1);
       }
@@ -374,7 +374,7 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
   MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(csr_tensor);
   constexpr int input_num = 3;
-  auto input_names = op_prim->GetAttr(kAttrInputNames);
+  const auto input_names = op_prim->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
     MS_LOG(DEBUG) << "input_names are nullptr";
     return;
@@ -453,7 +453,6 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     ConvertCSRTensorToTensorList(op_run_info, v->cast<tensor::CSRTensorPtr>(), op_prim);
     return;
   } else if (v->isa<None>() || v->isa<Monad>()) {
-    (void)op_run_info->index_with_value.emplace_back(std::make_pair(index, kNone));
     return;
   } else {
     MS_LOG(EXCEPTION) << "Run op inputs type is invalid!";
@@ -480,15 +479,10 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
   if (device_target == kAscendDevice) {
     return false;
   }
-  auto flag = false;
-  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
-  if (use_dynamic_shape_process) {
-    flag = true;
-  } else {
-    flag = PyNativeAlgo::Common::IsDynamicShape(op_run_info);
-  }
+
   auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
-    op_run_info->base_op_run_info.op_name, device_target, flag);
+    op_run_info->base_op_run_info.op_name, device_target,
+    op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process);
   if (reg_info == nullptr) {
     return false;
   } else {
@@ -516,8 +510,7 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
 
   // Get input tensors.
   op_prim->BeginRecordAddAttr();
-  size_t input_size = op_run_info->input_value.size();
-  for (size_t index = 0; index < input_size; ++index) {
+  for (size_t index = 0; index < op_run_info->input_size; ++index) {
     const ValuePtr &input_object = op_run_info->input_value[index];
     // convert const input to attr
     if (need_convert_input_to_attr &&

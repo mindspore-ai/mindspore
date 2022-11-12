@@ -513,8 +513,6 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
                   return output_index.first.first == cnode;
                 });
   pynative::BaseOpRunInfo base_op_run_info;
-  base_op_run_info.has_dynamic_input = common::AnfAlgo::IsNodeInputDynamicShape(cnode);
-  base_op_run_info.has_dynamic_output = shape->IsDynamic();
   base_op_run_info.is_mixed_precision_cast = false;
   base_op_run_info.lazy_build = !shape->IsDynamic();
   base_op_run_info.op_name = primitive->name();
@@ -1274,9 +1272,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   MS_EXCEPTION_IF_NULL(cnode);
   // set abstract,which include inferred shapes and types
   cnode->set_abstract(op_run_info->base_op_run_info.abstract);
-  // get output dynamic shape info
-  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(op_run_info->base_op_run_info.has_dynamic_input),
-                               cnode);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info->base_op_run_info.has_dynamic_output),
                                cnode);
   if (op_run_info->base_op_run_info.is_mixed_precision_cast) {

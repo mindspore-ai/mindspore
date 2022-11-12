@@ -122,12 +122,13 @@ TEST_F(TestPynativeExecute, TestInferOperator) {
   ASSERT_NE(op_run_info->op_prim, nullptr);
   (void)op_run_info->input_value.emplace_back(t1);
   (void)op_run_info->input_value.emplace_back(t2);
+  op_run_info->input_size = 2;
   // call infer operator.
   auto infer_operator = std::make_shared<InferOperation>();
-  ValuePtr infer_value = infer_operator->DoInfer(op_run_info);
+  infer_operator->DoInfer(op_run_info);
   // Check abstract.
-  ASSERT_NE(infer_value, nullptr);
-  ASSERT_EQ(infer_value->isa<AnyValue>(), true);
+  ASSERT_NE(op_run_info->out_value, nullptr);
+  ASSERT_EQ(op_run_info->out_value->isa<AnyValue>(), true);
   auto output_abs = op_run_info->base_op_run_info.abstract;
   ASSERT_NE(output_abs, nullptr);
   ASSERT_EQ(output_abs->isa<abstract::AbstractTensor>(), true);
