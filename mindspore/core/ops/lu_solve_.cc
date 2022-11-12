@@ -158,7 +158,7 @@ TypePtr LuSolveInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   std::map<std::string, TypePtr> type;
   (void)type.emplace("x", input_args[0]->BuildType());
   (void)type.emplace("lu_data", input_args[1]->BuildType());
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+  const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("lu_data", input_args[1]->BuildType(), valid_types, prim->name());
   auto out_type = CheckAndConvertUtils::CheckTensorTypeSame(type, valid_types, prim->name());
