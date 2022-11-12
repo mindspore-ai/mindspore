@@ -171,10 +171,47 @@ class AdaptiveAvgPool3D(Primitive):
     r"""
     AdaptiveAvgPool3D operation.
 
+    This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is D x H x W.
+    The number of output features is equal to the number of input planes.
+
+    Suppose the last 3 dimension size of x is inD, inH, inW, the last 3 dimension size of output is outD, outH, outW.
+
+    .. math::
+        \begin{array}{ll} \\
+            \forall \quad od \in [0,outD-1], oh \in [0,outH-1], ow \in [0,outW-1]\\
+            output[od,oh,ow] = \\
+            \qquad mean(x[istartD:iendD+1,istartH:iendH+1,istartW:iendW+1])\\
+            where,\\
+            \qquad istartD= \left\lceil \frac{od * inD}{outD} \right\rceil \\
+            \qquad iendD=\left\lfloor \frac{(od+1)* inD}{outD} \right\rfloor \\
+            \qquad istartH=\left\lceil \frac{oh * inH}{outH} \right\rceil \\
+            \qquad iendH=\left\lfloor \frac{(oh+1) * inH}{outH} \right\rfloor \\
+            \qquad istartW=\left\lceil \frac{ow * inW}{outW} \right\rceil \\
+            \qquad iendW=\left\lfloor \frac{(ow+1) * inW}{outW} \right\rfloor
+        \end{array}
+
+    Args:
+        output_size (Union[int, tuple[int]]): The last 3 dimension size of output tensor, which is int or
+            triple-int tuple. The value in output_size tuple can also be None. In this case, the particular output
+            dimesion size will be set to be the same as the according input dimension.
+
+    Inputs:
+        - **x** (Tensor) - The input of AdaptiveAvgPool3D, which is a 5D or 4D tensor.
+
+    Outputs:
+        Tensor, with the same type as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a tensor.
+        ValueError: If the dimension of `x` is not 4D or 5D.
+        ValueError: If the attr `output_size` is not int or triple-int tuple.
+        ValueError: If `output_size` value is negative.
+
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -200,7 +237,6 @@ class AdaptiveAvgPool3D(Primitive):
 
     @prim_attr_register
     def __init__(self, output_size):
-        self.add_prim_attr("cust_aicpu", self.name)
         validator.check_value_type("output_size", output_size, [int, tuple], self.name)
         self.output_size = (output_size,) * 3 if isinstance(self.output_size, int) else output_size
         for i, size in enumerate(self.output_size):

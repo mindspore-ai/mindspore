@@ -29,12 +29,15 @@ namespace {
 constexpr int64_t kOutputSizeLen = 3;
 constexpr int64_t kPyValueNone = -1;
 
-abstract::ShapePtr InferShapeAdaptiveAvgPool3D(const PrimitivePtr &primitive,
+abstract::ShapePtr AdaptiveAvgPool3DInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   const int64_t input_num_dims = SizeToLong(x_shape.size());
   CheckAndConvertUtils::CheckInRange("the rank of x", input_num_dims, kIncludeBoth, {4, 5}, op_name);
+  for (size_t i = 0; i < x_shape.size(); i++) {
+    CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1, op_name);
+  }
 
   const auto &output_size_ptr = primitive->GetAttr("output_size");
   MS_EXCEPTION_IF_NULL(output_size_ptr);
@@ -54,7 +57,7 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3D(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
-TypePtr InferTypeAdaptiveAvgPool3D(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AdaptiveAvgPool3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> x_valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kFloat64};
@@ -69,8 +72,8 @@ AbstractBasePtr AdaptiveAvgPool3DInfer(const abstract::AnalysisEnginePtr &, cons
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto types = InferTypeAdaptiveAvgPool3D(primitive, input_args);
-  auto shapes = InferShapeAdaptiveAvgPool3D(primitive, input_args);
+  auto types = AdaptiveAvgPool3DInferType(primitive, input_args);
+  auto shapes = AdaptiveAvgPool3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 
