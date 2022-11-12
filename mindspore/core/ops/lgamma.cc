@@ -42,10 +42,15 @@ abstract::ShapePtr LgammaInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr LgammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  auto input = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input, valid_types, prim_name);
-  return input;
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32};
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  TypeId tensor_type_id = x_type->cast<TensorTypePtr>()->element()->type_id();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  if (tensor_type_id == kNumberTypeInt32) {
+    return std::make_shared<TensorType>(kFloat32);
+  } else {
+    return input_args[kInputIndex0]->BuildType();
+  }
 }
 }  // namespace
 
@@ -54,8 +59,8 @@ AbstractBasePtr LgammaInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   const size_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto types = LgammaInferType(primitive, input_args);
   auto shapes = LgammaInferShape(primitive, input_args);
+  auto types = LgammaInferType(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

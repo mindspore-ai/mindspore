@@ -6425,7 +6425,7 @@ class Lgamma(Primitive):
         TypeError: If dtype of input x is not one of: float16, float32, float64.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.5, 3.2, 8.5]), mindspore.float32)
@@ -6462,7 +6462,7 @@ class Digamma(Primitive):
         TypeError: If dtype of input x is not float16 or float32 or float64.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1.5, 0.5, 9]).astype(np.float16))
@@ -6483,7 +6483,7 @@ class Polygamma(Primitive):
     Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
 
     .. math::
-    \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
+        \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
 
     Args:
         :math:`a \geq 0`: the order of the polygamma function.
@@ -6502,7 +6502,7 @@ class Polygamma(Primitive):
         TypeError: If dtype of input a is not one of: int32, int64.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1.0, -0.5]), mindspore.float32)
