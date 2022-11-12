@@ -250,27 +250,26 @@ class SampleDistortedBoundingBoxV2(Primitive):
     The latter is the generated distorted bounding box.
 
     Args:
-    seed (int): If either seed or seed2 are set to non-zero, the random number generator is seeded by the given seed.
-                Otherwise, it is seeded by a random seed. Default: 0.
-    seed2 (int): A second seed to avoid seed collision. Default: 0.
-    aspect_ratio_range (Union[list(float), tuple(float)]): The cropped area of the image must have an aspect ratio =
-                                                           width / height within this range. The value of this
-                                                           attribute should be positive. Default: (0.75, 1.33).
-    area_range (Union[list(float), tuple(float)]): The cropped area of the image must contain a fraction of the
-                                                   supplied image within this range. The value of this attribute should
-                                                   be in range (0.0, 1.0]. Default: (0.05, 1.0).
-    max_attempts (int): Number of attempts at generating a cropped region of the image of the specified constraints.
-                        After max_attempts failures, return the entire image. The value of this attribute should be
-                        positive. Default: 100.
-    use_image_if_no_bounding_boxes (bool): Controls behavior if no bounding boxes supplied. If no bounding boxes
-                                           supplied (`bounding_boxes` in shape [0, N, 4] or [batch, 0, 4]), and this
-                                           attribute is set True, then assume an implicit bounding box covering the
-                                           whole input, else if this attribute is set False, then raise an error.
-                                           Default: False.
+    seed (int, optional): If either `seed` or `seed2` is set to non-zero, the random number generator is
+        seeded by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
+    seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
+    aspect_ratio_range (Union[list(float), tuple(float)], optional): Specifying the valild range of aspect
+        ratio of cropped area. Aspect ratio of area = area_width / area_height. The value of this
+        attribute should be positive. Default: (0.75, 1.33).
+    area_range (Union[list(float), tuple(float)], optional): The cropped area of the image must contain a
+        fraction of the supplied image within this range. The value of this attribute should
+        be in range (0.0, 1.0]. Default: (0.05, 1.0).
+    max_attempts (int, optional): Number of attempts at generating a cropped region of the image
+        of the specified constraints. After max_attempts failures, return the entire image. The value of
+        this attribute should be positive. Default: 100.
+    use_image_if_no_bounding_boxes (bool, optional): Controls behavior if no bounding boxes supplied.
+        If no bounding boxes supplied (`bounding_boxes` in shape [0, N, 4] or [batch, 0, 4]), and this
+        attribute is set True, then assume an implicit bounding box covering the
+        whole input, else if this attribute is set False, then raise an error. Default: False.
 
     Inputs:
-        - **image_size** (Tensor) - 1-D, containing [height, width, channels]. The value of this input tensor should be
-          positive.
+        - **image_size** (Tensor) - 1-D, containing [height, width, channels]. The value of this input
+          tensor should be positive.
         - **bounding_boxes** (Tensor) - 3-D with shape [batch, N, 4] describing the N bounding boxes associated with
           the image. The value of this input tensor should be in range [0.0, 1.0]. The
           data type is float32.
@@ -292,17 +291,14 @@ class SampleDistortedBoundingBoxV2(Primitive):
         TypeError: If `image_size` is not a Tensor.
         TypeError: If `bounding_boxes` is not a Tensor.
         TypeError: If `min_object_covered` is not a Tensor.
-        TypeError: If `seed` is not an int.
-        TypeError: If `seed2` is not an int.
+        TypeError: If `seed` or `seed2` is not an int.
         TypeError: If `aspect_ratio_range` is not a list or a tuple with type float.
         TypeError: If `area_range` is not a list or a tuple with type float.
-        TypeError: If `max_attempts` is not an int.
         TypeError: If `use_image_if_no_bounding_boxes` is not a bool.
         ValueError: If the dimension of `image_size` is not 1.
         ValueError: If the elements of `image_size` is not 3.
         ValueError: If the dimension of `bounding_boxes` is not 3.
         ValueError: If the elements of each bounding box in `bounding_boxes` is not 4.
-        ValueError: If the dimension of `min_object_covered` is not 1.
         ValueError: If the elements of `min_object_covered` is not 1.
         ValueError: If the elements of `aspect_ratio_range` list or tuple is not 2.
         ValueError: If the values of `aspect_ratio_range` is not positive.
@@ -310,11 +306,11 @@ class SampleDistortedBoundingBoxV2(Primitive):
         ValueError: If the elements of `area_range` list or tuple is not 2.
         ValueError: If the values of `area_range` is out of range (0.0, 1.0].
         ValueError: If the second value of `area_range` is less than or equal to the first one.
-        ValueError: If the value of `max_attempts` is not positive.
+        ValueError: If the value of `max_attempts` is not positive int.
         ValueError: If `use_image_if_no_bounding_boxes` is False and no bounding boxes supplied.
         RuntimeError: If the values of `image_size` is not positive.
         RuntimeError: If the values of `bounding_boxes` is out of range [0.0, 1.0].
-        RuntimeError: If the `bounding_boxes` cannot make up a bounding boxes.
+        RuntimeError: If the `bounding_boxes` cannot make up bounding box.
         RuntimeError: If the value of `min_object_covered` is out of range [0.0, 1.0].
 
     Supported Platforms:

@@ -225,7 +225,7 @@ class ExpandDims(PrimitiveWithCheck):
     """
     Adds an additional dimension to `input_x` at the given axis.
 
-    Refer to :func:`mindspore.ops.expand_dims` for more detail.
+    Refer to :func:`mindspore.ops.expand_dims` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -636,7 +636,7 @@ class Reshape(PrimitiveWithCheck):
     """
     Rearranges the input Tensor based on the given shape.
 
-    Refer to :func:`mindspore.ops.reshape` for more detail.
+    Refer to :func:`mindspore.ops.reshape` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -703,7 +703,7 @@ class Shape(Primitive):
     """
     Returns the shape of the input tensor. And it used to be static shape.
 
-    Refer to :func:`mindspore.ops.shape` for more detail.
+    Refer to :func:`mindspore.ops.shape` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -777,7 +777,7 @@ class Squeeze(Primitive):
     """
     Return the Tensor after deleting the dimension of size 1 in the specified `axis`.
 
-    Refer to :func:`mindspore.ops.squeeze` for more detail.
+    Refer to :func:`mindspore.ops.squeeze` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -809,7 +809,7 @@ class Transpose(Primitive):
     """
     Permutes the dimensions of the input tensor according to input permutation.
 
-    Refer to :func:`mindspore.ops.transpose` for more detail.
+    Refer to :func:`mindspore.ops.transpose` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -943,7 +943,7 @@ class UniqueConsecutive(Primitive):
     """
     Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
 
-    Refer to :func:`mindspore.ops.unique_consecutive` for more detail.
+    Refer to :func:`mindspore.ops.unique_consecutive` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -985,7 +985,7 @@ class Gather(Primitive):
 
     where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
-    Refer to :func:`mindspore.ops.gather` for more detail.
+    Refer to :func:`mindspore.ops.gather` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1137,7 +1137,7 @@ class UniqueWithPad(Primitive):
     the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
     to make it have the same shape as the Tensor `idx`.
 
-    Refer to :func:`mindspore.ops.unique_with_pad` for more detail.
+    Refer to :func:`mindspore.ops.unique_with_pad` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1161,7 +1161,7 @@ class Split(Primitive):
     """
     Splits the input tensor into output_num of tensors along the given axis and output numbers.
 
-    Refer to :func:`mindspore.ops.split` for more detail.
+    Refer to :func:`mindspore.ops.split` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1208,7 +1208,7 @@ class Rank(PrimitiveWithInfer):
     """
     Returns the rank of a tensor.
 
-    Refer to :func:`mindspore.ops.rank` for more detail.
+    Refer to :func:`mindspore.ops.rank` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1245,7 +1245,7 @@ class Size(PrimitiveWithInfer):
     Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the
     Tensor.
 
-    Refer to :func:`mindspore.ops.size` for more detail.
+    Refer to :func:`mindspore.ops.size` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1280,7 +1280,7 @@ class MatrixDiagV3(Primitive):
     """
     Returns a batched diagonal tensor with given batched diagonal values.
 
-    Refer to :func:`mindspore.ops.matrix_diag` for more detail.
+    Refer to :func:`mindspore.ops.matrix_diag` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1316,7 +1316,7 @@ class MatrixDiagPartV3(Primitive):
     r"""
     Returns the diagonal part of a tensor.
 
-    Refer to :func:`mindspore.ops.matrix_diag_part` for more detail.
+    Refer to :func:`mindspore.ops.matrix_diag_part` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1460,7 +1460,7 @@ class Fill(PrimitiveWithCheck):
     """
     Create a Tensor of the specified shape and fill it with the specified value.
 
-    Refer to :func:`mindspore.ops.fill` for more detail.
+    Refer to :func:`mindspore.ops.fill` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1499,7 +1499,7 @@ class Fills(Primitive):
     """
     Create a tensor of the same shape and type as the input tensor and fill it with specified value.
 
-    Refer to :func:`mindspore.ops.fills` for more detail.
+    Refer to :func:`mindspore.ops.fills` for more details.
 
     Supported Platforms:
         ``GPU``
@@ -1528,7 +1528,7 @@ class Ones(Primitive):
     Creates a tensor with shape described by the first argument and
     fills it with value ones in type of the second argument.
 
-    Refer to :func:`mindspore.ops.ones` for more detail.
+    Refer to :func:`mindspore.ops.ones` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1591,7 +1591,7 @@ class OnesLike(Primitive):
     """
     Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
 
-    Refer to :func:`mindspore.ops.ones_like` for more detail.
+    Refer to :func:`mindspore.ops.ones_like` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1646,7 +1646,7 @@ class TupleToArray(PrimitiveWithInfer):
     """
     Converts a tuple to a tensor.
 
-    Refer to :func:`mindspore.ops.tuple_to_array` for more detail.
+    Refer to :func:`mindspore.ops.tuple_to_array` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1693,7 +1693,7 @@ class ScalarToTensor(PrimitiveWithInfer):
     """
     Converts a scalar to a `Tensor`, and converts the data type to the specified type.
 
-    Refer to :func:`mindspore.ops.scalar_to_tensor` for more detail.
+    Refer to :func:`mindspore.ops.scalar_to_tensor` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1800,7 +1800,7 @@ class Argmax(Primitive):
     """
     Returns the indices of the maximum value of a tensor across the axis.
 
-    Refer to :func:`mindspore.ops.argmax` for more detail.
+    Refer to :func:`mindspore.ops.argmax` for more details.
 
     If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
@@ -2074,7 +2074,7 @@ class Tile(PrimitiveWithInfer):
     r"""
     Replicates an input tensor with given multiples times.
 
-    Refer to :func:`mindspore.ops.tile` for more detail.
+    Refer to :func:`mindspore.ops.tile` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2193,7 +2193,7 @@ class UnsortedSegmentSum(Primitive):
     r"""
     Computes the sum of a tensor along segments.
 
-    Refer to :func:`mindspore.ops.unsorted_segment_sum` for more detail.
+    Refer to :func:`mindspore.ops.unsorted_segment_sum` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2226,7 +2226,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
     r"""
     Computes the minimum of a tensor along segments.
 
-    Refer to :func:`mindspore.ops.unsorted_segment_min` for more detail.
+    Refer to :func:`mindspore.ops.unsorted_segment_min` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2276,7 +2276,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
     r"""
     Computes the maximum along segments of a tensor.
 
-    Refer to :func:`mindspore.ops.unsorted_segment_max` for more detail.
+    Refer to :func:`mindspore.ops.unsorted_segment_max` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2384,7 +2384,7 @@ class UnsortedSegmentProd(Primitive):
     """
     Computes the product of a tensor along segments.
 
-    Refer to :func:`mindspore.ops.unsorted_segment_prod` for more detail.
+    Refer to :func:`mindspore.ops.unsorted_segment_prod` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2413,7 +2413,7 @@ class Concat(PrimitiveWithCheck):
     r"""
     Connect tensor in the specified axis.
 
-    Refer to :func:`mindspore.ops.concat` for more detail.
+    Refer to :func:`mindspore.ops.concat` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2627,7 +2627,7 @@ class Stack(PrimitiveWithInfer):
     r"""
     Stacks a list of tensors in specified axis.
 
-    Refer to :func:`mindspore.ops.stack` for more detail.
+    Refer to :func:`mindspore.ops.stack` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2779,7 +2779,7 @@ class Slice(Primitive):
     """
     Slices a tensor in the specified shape.
 
-    Refer to :func:`mindspore.ops.slice` for more detail.
+    Refer to :func:`mindspore.ops.slice` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3062,7 +3062,7 @@ class StridedSlice(PrimitiveWithInfer):
 
     Extracts a strided slice of a tensor.
 
-    Refer to :func:`mindspore.ops.strided_slice` for more detail.
+    Refer to :func:`mindspore.ops.strided_slice` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3500,7 +3500,7 @@ class Diag(PrimitiveWithCheck):
 
     Constructs a diagonal tensor with a given diagonal values.
 
-    Refer to :func:`mindspore.ops.diag` for more detail.
+    Refer to :func:`mindspore.ops.diag` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3633,7 +3633,7 @@ class Eye(Primitive):
     """
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
-    Refer to :func:`mindspore.ops.eye` for more detail.
+    Refer to :func:`mindspore.ops.eye` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3668,7 +3668,7 @@ class ScatterNd(Primitive):
 
     .. image:: ScatterNd.png
 
-    Refer to :func:`mindspore.ops.scatter_nd` for more detail.
+    Refer to :func:`mindspore.ops.scatter_nd` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3788,33 +3788,36 @@ class ResizeNearestNeighborV2(Primitive):
     r"""
     Resizes the input tensor to specific size by using the nearest neighbor algorithm.
 
-    Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
-    neighbor algorithm selects the value of the nearest point and does not consider the
+    The nearest neighbor algorithm selects the value of the nearest point and does not consider the
     values of neighboring points at all, yielding a piecewise-constant interpolant.
 
     Args:
-        align_corners: An optional `bool`. Defaults to `False`.
-            If true, the centers of the 4 corner pixels of the input and output tensors are
-            aligned, preserving the values at the corner pixels.
-        half_pixel_centers: An optional `bool`. Defaults to `False`.
-        data_format: An optional `string` that describes the format of the input `x`. Defaults to `NHWC`.
+        align_corners (bool, optional): If true, the centers of the 4 corner pixels of the input and output
+            tensors are aligned, preserving the values at the corner pixels. Defaults： False.
+        half_pixel_centers (bool, optional): Whether half pixel center. If set to True,
+            `align_corners` should be False. Default: False.
+        data_format (string, optional): An optional `string` that describes the
+            format of the input `x`. Default: `NHWC`.
 
     Inputs:
-        - **x** (Tensor) - 4-D with shape `[batch, height, width, channels]` or `[batch, channels, height, width]`
-          depending on the attr 'data_format'. Support type [`int8`, `uint8`, `int16`, `uint16`, `int32`, `int64`,
-          `float16`, `float32`, `float64`].
-        - **size** (Tensor) - A 1-D int32 Tensor of 2 elements: [`new_height, new_width`]. The new size for the images.
+        - **x** (Tensor) - 4-D with shape :math:`(batch, height, width, channels)`
+          or :math:`(batch, channels, height, width)` depending on the attr 'data_format'. Support
+          type [`int8`, `uint8`, `int16`, `uint16`, `int32`, `int64`, `float16`, `float32`, `float64`].
+        - **size** (Tensor) - The new size for the images. A 1-D int32 Tensor
+          of 2 elements: [`new_height, new_width`].
 
     Outputs:
-        Tensor `y`, has the same type as input `x` with the shape of `[batch, channels, new_height, new_width]` or
-        `[batch, new_height, new_width, channels]` depending on attr 'data_format'.
+        -  **y** (Tensor) - The resized images. A 4-D with shape
+          :math:`(batch, new\_height, new\_width, channels)`
+          or :math:`(batch, channels, new\_height, new\_width)`
+          depending on the attr `data_format`. It has the same dtype as `x`.
 
     Raises:
         TypeError: If `x` or `size` is not a Tensor.
-        TypeError: If `x` data type not in support list.
-        TypeError: If `size` data type is not int32.
-        TypeError: If `align_corners` or `half_pixel_centers` is not `bool` value.
-        TypeError: If `data_format` is not `str`.
+        TypeError: If the data type  of `x` is not in supported list.
+        TypeError: If the data type  of `size` is not int32.
+        TypeError: If `align_corners` or `half_pixel_centers` is not bool.
+        TypeError: If `data_format` is not string.
         ValueError: If `data_format` not in [`NHWC`, `NCHW`].
         ValueError: If any value of `size` is non positive.
         ValueError: If the dimension of `x` is not 4.
@@ -3855,7 +3858,7 @@ class GatherNd(Primitive):
     r"""
     Gathers slices from a tensor by indices.
 
-    Refer to :func:`mindspore.ops.gather_nd` for more detail.
+    Refer to :func:`mindspore.ops.gather_nd` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4650,7 +4653,7 @@ class ScatterNdAdd(Primitive):
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    Refer to :func:`mindspore.ops.scatter_nd_add` for more detail.
+    Refer to :func:`mindspore.ops.scatter_nd_add` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4711,7 +4714,7 @@ class ScatterNdSub(Primitive):
     Using given values to update tensor value through the subtraction operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    Refer to :func:`mindspore.ops.scatter_nd_sub` for more detail.
+    Refer to :func:`mindspore.ops.scatter_nd_sub` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4773,7 +4776,7 @@ class ScatterNdMul(_ScatterNdOp):
     Using given values to update parameter value through the multiplication operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    Refer to :func:`mindspore.ops.scatter_nd_mul` for more detail.
+    Refer to :func:`mindspore.ops.scatter_nd_mul` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -5365,7 +5368,7 @@ class BatchToSpaceND(Primitive):
     r"""
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
-    Refer to :func:`mindspore.ops.batch_to_space_nd` for more detail.
+    Refer to :func:`mindspore.ops.batch_to_space_nd` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5410,7 +5413,7 @@ class BatchToSpaceNDV2(Primitive):
     r"""
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
-    Refer to :func:`mindspore.ops.batch_to_space_nd` for more detail.
+    Refer to :func:`mindspore.ops.batch_to_space_nd` for more details.
     """
 
     @prim_attr_register
@@ -5424,7 +5427,7 @@ class BroadcastTo(Primitive):
     """
     Broadcasts input tensor to a given shape.
 
-    Refer to :func:`mindspore.ops.broadcast_to` for more detail.
+    Refer to :func:`mindspore.ops.broadcast_to` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5448,7 +5451,7 @@ class Meshgrid(PrimitiveWithInfer):
     Given N one-dimensional coordinate tensors, returns a tuple outputs of N N-D
     coordinate tensors for evaluating expressions on an N-D grid.
 
-    Refer to :func:`mindspore.ops.meshgrid` for more detail.
+    Refer to :func:`mindspore.ops.meshgrid` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -5814,7 +5817,7 @@ class GatherD(Primitive):
     """
     Gathers elements along an axis specified by dim.
 
-    Refer to :func:`mindspore.ops.gather_elements` for more detail.
+    Refer to :func:`mindspore.ops.gather_elements` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6007,7 +6010,7 @@ class MaskedFill(Primitive):
     """
     Fills elements with value where mask is True.
 
-    Refer to :func:`mindspore.ops.masked_fill` for more detail.
+    Refer to :func:`mindspore.ops.masked_fill` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6096,7 +6099,7 @@ class SearchSorted(Primitive):
     within `sorted_sequence` would be preserved when the corresponding values in `values` were inserted before the
     indices.
 
-    Refer to :func:`mindspore.ops.search_sorted` for more detail.
+    Refer to :func:`mindspore.ops.search_sorted` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -6261,7 +6264,7 @@ class TensorScatterMax(Primitive):
     By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
-    Refer to :func:`mindspore.ops.tensor_scatter_max` for more detail.
+    Refer to :func:`mindspore.ops.tensor_scatter_max` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6297,7 +6300,7 @@ class TensorScatterMin(Primitive):
     By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
-    Refer to :func:`mindspore.ops.tensor_scatter_min` for more detail.
+    Refer to :func:`mindspore.ops.tensor_scatter_min` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6335,7 +6338,7 @@ class TensorScatterSub(Primitive):
     index, the result of the update will be to subtract these values respectively. This operation is almost
     equivalent to using :class:`mindspore.ops.ScatterNdSub` , except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
-    Refer to :func:`mindspore.ops.tensor_scatter_sub` for more detail.
+    Refer to :func:`mindspore.ops.tensor_scatter_sub` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6374,7 +6377,7 @@ class TensorScatterAdd(Primitive):
     equivalent to using :class:`mindspore.ops.ScatterNdAdd`, except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
 
-    Refer to :func:`mindspore.ops.tensor_scatter_add` for more detail.
+    Refer to :func:`mindspore.ops.tensor_scatter_add` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6412,7 +6415,7 @@ class TensorScatterMul(_TensorScatterOp):
     index, the result of the update will be to multiply these values respectively.
     The updates are applied on output `Tensor` instead of input `Parameter`.
 
-    Refer to :func:`mindspore.ops.tensor_scatter_mul` for more detail.
+    Refer to :func:`mindspore.ops.tensor_scatter_mul` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6450,7 +6453,7 @@ class TensorScatterDiv(_TensorScatterOp):
     index, the result of the update will be to divided these values respectively. Except that
     the updates are applied on output `Tensor` instead of input `Parameter`.
 
-    Refer to :func:`mindspore.ops.tensor_scatter_div` for more detail.
+    Refer to :func:`mindspore.ops.tensor_scatter_div` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6622,7 +6625,7 @@ class SplitV(Primitive):
 class TensorScatterElements(Primitive):
     """
     Updates the value of the output tensor through the reduction operation.
-    Refer to :func:`mindspore.ops.tensor_scatter_elements` for more detail.
+    Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
 
     .. warning::
         The order in which updates are applied is nondeterministic, meaning that if there
@@ -6744,27 +6747,28 @@ class ExtractVolumePatches(Primitive):
 
 class ScatterAddWithAxis(Primitive):
     """
-    ScatterAddWithAxis takes three inputs input_x, updates, and indices of the same rank r >= 1
-    and an optional attribute axis that identifies an axis of input_x (default is 0).
     The output of the operation is produced by creating a copy of the input input_x, and then
-    add updating its value to values specified by updates at specific index positions specified
-    by indices.
+    add updating its value to values specified by `updates` at specific index positions specified
+    by `indices`.
+
+    Note:
+        The three inputs `input_x`, `updates` and `indices` must have the same rank r >= 1.
 
     Args:
-        axis (int): which axis to scatter, default is 0.
+        axis (int, optional): Specifies which axis to do scatter add, default: 0.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor.
+        - **input_x** (Tensor) - The target tensor to be added.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape should be equal to indices.shape.
+        - **update** (Tensor) - The Tensor to update the `input_x`, has the same type as `input_x`
+          and the same shape as `indices`.
 
     Outputs:
-        Tensor, has the same shape and type as `input_x`.
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If the shape of `indices` is not equal to the shape of `update`
+        ValueError: If the shape of `indices` is not equal to the shape of `update`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -6985,7 +6989,7 @@ class Cummax(Primitive):
     """
     Returns the cumulative maximum of elements and the index.
 
-    Refer to :func:`mindspore.ops.cummax` for more detail.
+    Refer to :func:`mindspore.ops.cummax` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7020,7 +7024,7 @@ class Cummax(Primitive):
 
 class RightShift(Primitive):
     r"""
-    Shift the value of each position of the tensor to the right several bits.
+    Shift the value of each position of Tensor `input_x` to the right by corresponding bits in Tensor `input_y`.
     The inputs are two tensors, dtypes of them must be consistent, and the
     shapes of them could be broadcast.
 
@@ -7033,10 +7037,10 @@ class RightShift(Primitive):
     Inputs:
         - **input_x** (Tensor) - The target tensor, will be shifted to the right
           by y in element-wise.
-        - **input_y** (Tensor) - The tensor must have the same type as input_x.
+        - **input_y** (Tensor) - Number of bits shifted, the tensor must have the same type as `input_x`.
 
     Outputs:
-        - **output** (Tensor) - The output tensor, has the same type as input_x.
+        - **output** (Tensor) - The output tensor, has the same type as `input_x`.
 
     Raises:
         TypeError: If `input_x` or `input_y` is not tensor.
@@ -7125,7 +7129,7 @@ class NonZero(Primitive):
     """
     Return a tensor of the positions of all non-zero values.
 
-    Refer to :func:`mindspore.ops.nonzero` for more detail.
+    Refer to :func:`mindspore.ops.nonzero` for more details.
 
     Supported Platforms:
        ``Ascend`` ``GPU`` ``CPU``
@@ -7221,7 +7225,7 @@ class IndexFill(Primitive):
     Fills the elements under the dim dimension of the input Tensor with the input value
     by selecting the indices in the order given in index.
 
-    Refer to :func:`mindspore.ops.index_fill` for more detail.
+    Refer to :func:`mindspore.ops.index_fill` for more details.
     Inputs:
         - **x** (Tensor) - Input tensor.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -7267,14 +7271,14 @@ class SegmentMax(Primitive):
     r"""
     Computes the maximum along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i=max_j(data_j)` where max is over :math:`j` such that
+    Computes a tensor such that :math:`output_i=max_j(input\_x_j)` where max is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the max is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose dtype is real number and whose rank is not less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7317,14 +7321,14 @@ class SegmentMin(Primitive):
     r"""
     Computes the minimum along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i=min_j(data_j)` where :math:`min` is over :math:`j` such that
+    Computes a tensor such that :math:`output_i=min_j(input\_x_j)` where :math:`min` is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the min is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose dtype is real number and whose rank is not less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7367,7 +7371,7 @@ class SegmentSum(Primitive):
     r"""
     Computes the sum along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i = \sum_j data_j` where sum is over :math:`j` such that
+    Computes a tensor such that :math:`output_i = \sum_j input\_x_j` where sum is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the sum is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     .. warning::
@@ -7378,7 +7382,7 @@ class SegmentSum(Primitive):
           less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7610,7 +7614,7 @@ class AffineGrid(Primitive):
     r"""
     Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.
 
-    Refer to :func:`mindspore.ops.affine_grid` for more detail.
+    Refer to :func:`mindspore.ops.affine_grid` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7640,7 +7644,7 @@ class SegmentMean(Primitive):
     r"""
     Computes the mean along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i = \mean_j data_j` where mean is over :math:`j` such that
+    Computes a tensor such that :math:`output_i = \mean_j input\_x_j` where mean is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the mean is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     .. warning::
@@ -7651,7 +7655,7 @@ class SegmentMean(Primitive):
           less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7694,7 +7698,7 @@ class SegmentProd(Primitive):
     r"""
     Computes the prod along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i = \prod_j data_j` where prod is over :math:`j` such that
+    Computes a tensor such that :math:`output_i = \prod_j input\_x_j` where prod is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the prod is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     .. warning::
@@ -7705,7 +7709,7 @@ class SegmentProd(Primitive):
           less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7748,7 +7752,7 @@ class PopulationCount(Primitive):
     r"""
     Computes element-wise population count(a.k.a bitsum, bitcount).
 
-    Refer to :func:`mindspore.ops.population_count` for more detail.
+    Refer to :func:`mindspore.ops.population_count` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7764,7 +7768,7 @@ class TopK(Primitive):
     """
     Finds values and indices of the `k` largest entries along the last dimension.
 
-    Refer to :func:`mindspore.ops.top_k` for more detail.
+    Refer to :func:`mindspore.ops.top_k` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

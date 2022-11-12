@@ -1,0 +1,21 @@
+mindspore.ops.RGBToHSV
+=======================
+
+.. py:class:: mindspore.ops.RGBToHSV
+
+    将一张或多张图片由RGB格式转换为HSV格式。
+    输出与输入有相同shape的Tensor，含有每个像素的HSV值。输出值仅在[0,1]范围内才是被有效定义的。
+
+    .. warning::
+        输入图片的最后一维长度必须为3。
+
+    输入：
+        - **images** (Tensor) - 输入的需要转换格式的一维或者多维RGB数据Tensor，最后一维的长度必须为3。支持的数据类型有：float16、float32或float64。
+
+    输出：
+        Tensor，数据类型和shape与 `images` 相同。
+
+    异常：
+        - **TypeError** - `images` 不是Tensor或者其数据类型不是float或double。
+        - **ValueError** - `images` 的rank小于1。
+        - **ValueError** - `images` shape的最后一维长度不等于3。
