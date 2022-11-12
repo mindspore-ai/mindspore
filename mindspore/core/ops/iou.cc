@@ -60,11 +60,11 @@ class IOUInfer : public abstract::OpInferBase {
                                << "', input x, y must have the same dimension size and must be 2. But got x size = "
                                << x_shp.size() << ", y size = " << y_shp.size() << ".";
     }
-    if (x_shp[kCoordinatesIndex] != -1) {
+    if (x_shp[kCoordinatesIndex] != abstract::Shape::kShapeDimAny) {
       (void)CheckAndConvertUtils::CheckInteger("anchor_boxes.shape[1]", x_shp[kCoordinatesIndex], kEqual,
                                                kCoordinatesSize, prim_name);
     }
-    if (y_shp[kCoordinatesIndex] != -1) {
+    if (y_shp[kCoordinatesIndex] != abstract::Shape::kShapeDimAny) {
       (void)CheckAndConvertUtils::CheckInteger("gt_boxes.shape[1]", y_shp[kCoordinatesIndex], kEqual, kCoordinatesSize,
                                                prim_name);
     }
