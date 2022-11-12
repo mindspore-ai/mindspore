@@ -16,7 +16,7 @@ import os
 import pytest
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_single_ref_split():
@@ -36,7 +36,7 @@ def test_single_ref_split():
     assert return_code == 0
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_multi_chain_ref_split():
