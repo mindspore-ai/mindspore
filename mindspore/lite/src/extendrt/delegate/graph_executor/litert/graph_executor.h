@@ -36,9 +36,10 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
   LiteRTGraphExecutor() = default;
   LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos);
   ~LiteRTGraphExecutor() {
-    if (lite_model_buf_ != nullptr) {
-      free(lite_model_buf_);
-      lite_model_buf_ = nullptr;
+    if (!is_shared_fb_buf_) {
+      // if it is shared, the memory is released during the model impl destruction
+      free(fb_model_buf_);
+      fb_model_buf_ = nullptr;
     }
   }
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
@@ -50,7 +51,8 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
   std::vector<tensor::Tensor> GetInputInfos(const FuncGraphPtr &) override;
   std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
 
-  std::shared_ptr<lite::LiteSession> CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context);
+  std::shared_ptr<lite::LiteSession> CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context,
+                                                       const ConfigInfos &config_infos);
   std::vector<MSTensor> GetLiteSessionOutputs();
   void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors);
   std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
@@ -67,6 +69,8 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
   std::shared_ptr<lite::LiteSession> lite_session_;
   void *lite_model_buf_ = nullptr;
   std::shared_ptr<mindspore::infer::helper::InferHelpers> helpers_ = nullptr;
+  bool is_shared_fb_buf_ = false;
+  void *fb_model_buf_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_GRAPH_EXECUTOR_LITERT_GRAPH_EXECUTOR_H_

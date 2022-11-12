@@ -316,6 +316,7 @@ endif()
 set(MSLITE_GE_LITERT_SRC
     ${MSLITE_GE_LITERT_SRC}
     ${LITE_DIR}/src/extendrt/delegate/graph_executor/litert/graph_executor.cc
+    ${LITE_DIR}/src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.cc
     )
 
 set(LITE_SRC ${LITE_SRC} ${MSLITE_GE_LITERT_SRC})

@@ -36,7 +36,7 @@
 #endif
 #include "src/common/config_file.h"
 #include "src/litert/cpu_info.h"
-
+#include "src/litert/pack_weight_manager.h"
 namespace mindspore {
 namespace {
 const char *const kExecutionPlan = "execution_plan";
@@ -231,11 +231,31 @@ Status ModelImpl::Build() {
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
   }
+  std::string model_id;
+  auto model_buf = model->buf;
+  auto model_size = model->buf_size_;
+  auto is_shared_weight = false;
+  auto status =
+    lite::PackWeightManager::GetInstance()->InitPackWeightManager(model_buf, model_size, &model_id, &config_info_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "InitPackWeightByBuf failed.";
+    return kLiteError;
+  }
+  // free in PackWeight
+  auto new_model_buf =
+    lite::PackWeightManager::GetInstance()->GetSharedModelBuf(model_buf, model_id, &config_info_, &is_shared_weight);
+  if (new_model_buf == nullptr) {
+    MS_LOG(ERROR) << "get shared model buf is nullptr.";
+    return kLiteNullptr;
+  }
+  model->buf = new_model_buf;
+  session->SetModelId(model_id);
   auto ret = session->CompileGraph(model.get());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Build model failed.";
     return static_cast<StatusCode>(ret);
   }
+  model->buf = model_buf;
   session_.swap(session);
   MS_LOG(DEBUG) << "Build model success.";
   return kSuccess;

@@ -15,11 +15,45 @@
  */
 #include "src/litert/pack_weight_manager.h"
 #include <vector>
+#include <map>
+#include <string>
 #include "src/common/graph_util.h"
 namespace mindspore::lite {
 namespace {
 #ifndef __ANDROID__
 constexpr size_t kMemAlignSize = 64;
+#endif
+
+#ifdef SHARING_MODEL_WEIGHT
+std::string ParseNumaId(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
+  std::string numa_id = "-1";
+  if (config_info == nullptr) {
+    return numa_id;
+  }
+  auto it_id = config_info->find(kInnerIDs);
+  if (it_id != config_info->end()) {
+    auto item_numa = it_id->second.find(kInnerNumaID);
+    if (item_numa != it_id->second.end()) {
+      numa_id = it_id->second.at(kInnerNumaID);
+    }
+  }
+  return numa_id;
+}
+
+std::string ParseRunnerId(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
+  std::string runner_id;
+  if (config_info == nullptr) {
+    return runner_id;
+  }
+  auto it_id = config_info->find(kInnerIDs);
+  if (it_id != config_info->end()) {
+    auto item_runner = it_id->second.find(kInnerRunnerID);
+    if (item_runner != it_id->second.end()) {
+      runner_id = it_id->second.at(kInnerRunnerID);
+    }
+  }
+  return runner_id;
+}
 #endif
 }  // namespace
 PackWeightManager *PackWeightManager::GetInstance() {
@@ -27,11 +61,26 @@ PackWeightManager *PackWeightManager::GetInstance() {
   return &instance;
 }
 
+std::string PackWeightManager::GenRunnerID() {
+  std::unique_lock<std::mutex> l(manager_mutex_);
+  std::string runner_id = "runner_" + std::to_string(runner_id_);
+  runner_ids_.push_back(runner_id);
+  runner_id_++;
+  MS_LOG(INFO) << "generate runner id: " << runner_id;
+  return runner_id;
+}
+
+std::string PackWeightManager::GenModelID() {
+  std::string model_id = "model_" + std::to_string(model_id_);
+  model_ids_.push_back(model_id);
+  model_id_++;
+  MS_LOG(INFO) << "generate model id: " << model_id;
+  return model_id;
+}
+
 bool PackWeightManager::IsCopyTensor(int op_type) {
 #ifdef SHARING_MODEL_WEIGHT
-  if (is_parallel_) {
-    return true;
-  }
+  return true;
 #endif
   if (IsPackedOp(op_type)) {
     return true;
@@ -39,22 +88,11 @@ bool PackWeightManager::IsCopyTensor(int op_type) {
   return false;
 }
 
-STATUS PackWeightManager::InitPackWeightByBuf(const char *model_buf, size_t model_size) {
-  if (is_parallel_) {
-    return RET_OK;
-  }
+STATUS PackWeightManager::InitPackWeightManager(
+  const char *model_buf, size_t model_size, std::string *model_id,
+  const std::map<std::string, std::map<std::string, std::string>> *config_info) {
 #ifdef SHARING_MODEL_WEIGHT
-  if (pack_weight_ == nullptr) {
-    pack_weight_ = std::make_shared<PackWeight>();
-    MS_CHECK_FALSE_MSG(pack_weight_ == nullptr, kLiteError, "pack_weight_ is nullptr.");
-  }
-  return pack_weight_->InitWeightManagerByBuf(model_buf, model_size, -1, false);
-#endif
-  return RET_OK;
-}
-
-STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_size, int numa_id) {
-#ifdef SHARING_MODEL_WEIGHT
+  std::unique_lock<std::mutex> l(manager_mutex_);
   if (pack_weight_ == nullptr) {
     pack_weight_ = std::make_shared<PackWeight>();
     if (pack_weight_ == nullptr) {
@@ -62,20 +100,35 @@ STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_siz
       return RET_ERROR;
     }
   }
-  auto status = pack_weight_->InitWeightManagerByBuf(model_buf, model_size, numa_id, true);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
-    return RET_ERROR;
+  auto numa_id = std::atoi(ParseNumaId(config_info).c_str());
+  *model_id = GenModelID();
+  std::string id = ParseRunnerId(config_info);
+  if (id.empty()) {
+    MS_LOG(INFO) << "model use share pack weight.";
+    id = *model_id;
   }
+  return pack_weight_->InitPackWeight(static_cast<const void *>(model_buf), model_size, id, numa_id);
 #endif
-  is_parallel_ = true;
   return RET_OK;
 }
 
-char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
+char *PackWeightManager::GetSharedModelBuf(const char *model_buf, std::string model_id,
+                                           const std::map<std::string, std::map<std::string, std::string>> *config_info,
+                                           bool *is_shared) {
 #ifdef SHARING_MODEL_WEIGHT
-  return pack_weight_->GetNumaModelBuf(model_buf, numa_id);
+  std::unique_lock<std::mutex> l(manager_mutex_);
+  std::string id = ParseRunnerId(config_info);
+  int numa_id = std::atoi(ParseNumaId(config_info).c_str());
+  if (id.empty()) {
+    MS_LOG(INFO) << "model use share pack weight.";
+    id = model_id;
+  }
+  auto new_model_buf = pack_weight_->GetSharedModelBuf(id, numa_id);
+  *is_shared = true;
+  return new_model_buf;
 #endif
+  MS_LOG(INFO) << "model buf not shared.";
+  *is_shared = false;
   return const_cast<char *>(model_buf);
 }
 
@@ -189,18 +242,20 @@ void PackWeightManager::Free(void *tensor_data) {
   FreeData(tensor_data);
 }
 
-void PackWeightManager::FreePackWeight(std::vector<char *> model_bufs) {
+void PackWeightManager::FreePackWeight(std::string id) {
 #ifdef SHARING_MODEL_WEIGHT
+  std::unique_lock<std::mutex> l(manager_mutex_);
   if (pack_weight_ != nullptr) {
-    pack_weight_->FreePackWeight(model_bufs, false);
-  }
-#endif
-  return;
-}
-void PackWeightManager::DeleteOriginModelBufInfo(const char *model_buf) {
-#ifdef SHARING_MODEL_WEIGHT
-  if (pack_weight_ != nullptr) {
-    pack_weight_->DeleteOriginModelBufInfo(model_buf);
+    MS_LOG(INFO) << "free pack weight of " << id;
+    pack_weight_->FreePackWeight(id);
+    auto it = find(model_ids_.begin(), model_ids_.end(), id);
+    if (it != model_ids_.end()) {
+      model_ids_.erase(it);
+    }
+    it = find(runner_ids_.begin(), runner_ids_.end(), id);
+    if (it != runner_ids_.end()) {
+      runner_ids_.erase(it);
+    }
   }
 #endif
   return;

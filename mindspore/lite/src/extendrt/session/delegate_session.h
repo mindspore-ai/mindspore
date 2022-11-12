@@ -54,6 +54,7 @@ class GraphSinkSession : public InferSession {
   std::vector<std::string> GetInputNames() override;
   MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) override;
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
+  void SetConfigInfo(ConfigInfos config_infos) { config_infos_ = config_infos; }
 
  private:
   Status GeDeviceContextInit();
@@ -73,6 +74,7 @@ class GraphSinkSession : public InferSession {
   std::shared_ptr<GeDeviceContext> ge_context_ = nullptr;
 #endif
   Status InitGraphInputsOutputs();
+  ConfigInfos config_infos_;
 };
 }  // namespace mindspore
 

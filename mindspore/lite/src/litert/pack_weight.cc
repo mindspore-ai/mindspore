@@ -17,17 +17,16 @@
 #include "src/litert/pack_weight.h"
 #include "src/extendrt/dynamic_mem_allocator.h"
 namespace mindspore::lite {
-STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id, bool copy_buf) {
+STATUS PackWeight::InitPackWeight(const void *model_buf, size_t model_size, std::string id, int numa_id) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
-  MS_CHECK_TRUE_MSG(model_buf != nullptr, RET_ERROR, "model buf is nullptr in pack weight manager.");
-  copy_buf_ = copy_buf;
-  if (model_buf_map_.find(model_buf) != model_buf_map_.end() &&
-      find(numa_model_buf_[model_buf].begin(), numa_model_buf_[model_buf].end(), numa_id) !=
-        numa_model_buf_[model_buf].end()) {
-    MS_LOG(DEBUG) << "same numa id, use same model buf.";
+  if (model_buf == nullptr || model_weights_.size() != shared_bufs_.size()) {
+    MS_LOG(ERROR) << "model buf is nullptr in pack weight manager.";
+    return RET_ERROR;
+  }
+  if (model_weights_.find(id) != model_weights_.end() && model_weights_[id].find(numa_id) != model_weights_[id].end()) {
+    MS_LOG(INFO) << "same numa id, use same model buf.";
     return RET_OK;
   }
-  // model buf and weight use same allocator, create in weight pack manager
   std::shared_ptr<Allocator> allocator = nullptr;
 #ifdef BFC_MEMORY
   allocator = std::make_shared<DynamicMemAllocator>(numa_id);
@@ -43,57 +42,57 @@ STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_si
     MS_LOG(ERROR) << "model const weight is nullptr.";
     return RET_ERROR;
   }
-  if (copy_buf_) {
-    auto new_model_buf = static_cast<char *>(allocator->Malloc(model_size));
-    if (new_model_buf == nullptr) {
-      MS_LOG(ERROR) << "new model buf is nullptr in pack weight manager.";
-      return RET_ERROR;
-    }
-    memcpy(new_model_buf, model_buf, model_size);
-    if (numa_model_buf_.find(model_buf) == numa_model_buf_.end()) {
-      numa_model_buf_[model_buf] = {numa_id};
-      model_buf_map_[model_buf] = {new_model_buf};
-    } else {
-      numa_model_buf_[model_buf].push_back(numa_id);
-      model_buf_map_[model_buf].push_back(new_model_buf);
-    }
-    buf_model_weight_[new_model_buf] = model_const_weight;
-    buf_model_weight_[new_model_buf]->allocator = allocator;
-    model_const_weight->numa_id = numa_id;
-  } else {
-    buf_model_weight_[model_buf] = model_const_weight;
-    buf_model_weight_[model_buf]->allocator = allocator;
-  }
-  return RET_OK;
-}
-
-char *PackWeight::GetNumaModelBuf(const char *model_buf, int numa_id) {
-  std::lock_guard<std::mutex> lock(mtx_weight_);
-  if (model_buf_map_.find(model_buf) == model_buf_map_.end() ||
-      find(numa_model_buf_[model_buf].begin(), numa_model_buf_[model_buf].end(), numa_id) ==
-        numa_model_buf_[model_buf].end()) {
-    MS_LOG(ERROR) << "can not find numa id in saved model buf.";
-    return nullptr;
-  }
-  auto numa_id_list = numa_model_buf_[model_buf];
-  auto it = find(numa_id_list.begin(), numa_id_list.end(), numa_id) - numa_id_list.begin();
-  return model_buf_map_[model_buf][it];
-}
-
-STATUS PackWeight::StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data) {
-  std::lock_guard<std::mutex> lock(mtx_weight_);
-  if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
-    MS_LOG(ERROR) << "can not find model buf in store origin Tensor";
+  auto new_model_buf = static_cast<char *>(allocator->Malloc(model_size));
+  if (new_model_buf == nullptr) {
+    MS_LOG(ERROR) << "new model buf is nullptr in pack weight manager.";
     return RET_ERROR;
   }
-  auto &model_weight = buf_model_weight_[model_buf];
-  auto &packed_pair = model_weight->origin_and_packed_pair;
-  if (packed_pair.find(origin_tensor_data) != packed_pair.end()) {
-    MS_LOG(DEBUG) << "origin tensor data already store by other model.";
-    return RET_OK;
+  memcpy(new_model_buf, model_buf, model_size);
+  model_const_weight->allocator = allocator;
+  model_const_weight->numa_id = numa_id;
+  if (model_weights_.find(id) != model_weights_.end()) {
+    model_weights_[id][numa_id] = model_const_weight;
+    shared_bufs_[id][numa_id] = new_model_buf;
+  } else {
+    std::unordered_map<int, ModelConstWeight *> numa_model_weight;
+    numa_model_weight[numa_id] = model_const_weight;
+    model_weights_[id] = numa_model_weight;
+    std::unordered_map<int, void *> numa_model_buf;
+    numa_model_buf[numa_id] = new_model_buf;
+    shared_bufs_[id] = numa_model_buf;
   }
-  packed_pair.insert(std::make_pair(origin_tensor_data, nullptr));
   return RET_OK;
+}
+
+char *PackWeight::GetSharedModelBuf(std::string id, int numa_id) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
+  if (shared_bufs_.find(id) == shared_bufs_.end() || shared_bufs_[id].find(numa_id) == shared_bufs_[id].end()) {
+    MS_LOG(ERROR) << "can not find numa id in saved model buf, id: " << id << ", numa id: " << numa_id;
+    return nullptr;
+  }
+  return static_cast<char *>(shared_bufs_[id][numa_id]);
+}
+
+STATUS PackWeight::StoreOriginTensorData(const void *model_buf, const void *origin_tensor_data) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
+  for (auto &item : shared_bufs_) {
+    for (auto &numa_item : item.second) {
+      if (numa_item.second == model_buf) {
+        std::string id = item.first;
+        int numa_id = numa_item.first;
+        auto &model_weight = model_weights_[id][numa_id];
+        auto &packed_pair = model_weight->origin_and_packed_pair;
+        if (packed_pair.find(origin_tensor_data) != packed_pair.end()) {
+          MS_LOG(DEBUG) << "origin tensor data already store by other model.";
+          return RET_OK;
+        }
+        packed_pair.insert(std::make_pair(origin_tensor_data, nullptr));
+        return RET_OK;
+      }
+    }
+  }
+  MS_LOG(ERROR) << "can not find model buf in store origin Tensor";
+  return RET_ERROR;
 }
 
 void *PackWeight::ReplaceFp16Data(void *origin_fp16_data, size_t size) {
@@ -101,25 +100,27 @@ void *PackWeight::ReplaceFp16Data(void *origin_fp16_data, size_t size) {
   if (fp16_fp32_data_pair_.find(origin_fp16_data) != fp16_fp32_data_pair_.end()) {
     return fp16_fp32_data_pair_[origin_fp16_data];
   } else {
-    for (auto &item : buf_model_weight_) {
-      if (item.second->origin_and_packed_pair.find(origin_fp16_data) != item.second->origin_and_packed_pair.end()) {
-        auto &model_weight = item.second;
-        auto &origin_and_packed_pair = model_weight->origin_and_packed_pair;
-        if (origin_and_packed_pair.find(origin_fp16_data) == origin_and_packed_pair.end()) {
-          MS_LOG(ERROR) << "origin fp16 data not find.";
-          return nullptr;
+    for (auto &numa_item : model_weights_) {
+      for (auto &item : numa_item.second) {
+        if (item.second->origin_and_packed_pair.find(origin_fp16_data) != item.second->origin_and_packed_pair.end()) {
+          auto &model_weight = item.second;
+          auto &origin_and_packed_pair = model_weight->origin_and_packed_pair;
+          if (origin_and_packed_pair.find(origin_fp16_data) == origin_and_packed_pair.end()) {
+            MS_LOG(ERROR) << "origin fp16 data not find.";
+            return nullptr;
+          }
+          auto allocator = model_weight->allocator;
+          void *data = allocator->Malloc(size);
+          if (data == nullptr) {
+            MS_LOG(ERROR) << "malloc failed.";
+            return nullptr;
+          }
+          origin_and_packed_pair.insert(std::make_pair(data, nullptr));
+          model_weight->fp16_fp32_data.insert(data);
+          origin_and_packed_pair.erase(origin_fp16_data);
+          fp16_fp32_data_pair_.insert(std::make_pair(origin_fp16_data, data));
+          return data;
         }
-        auto allocator = model_weight->allocator;
-        void *data = allocator->Malloc(size);
-        if (data == nullptr) {
-          MS_LOG(ERROR) << "malloc failed.";
-          return nullptr;
-        }
-        origin_and_packed_pair.insert(std::make_pair(data, nullptr));
-        model_weight->fp16_fp32_data.insert(data);
-        origin_and_packed_pair.erase(origin_fp16_data);
-        fp16_fp32_data_pair_.insert(std::make_pair(origin_fp16_data, data));
-        return data;
       }
     }
   }
@@ -127,59 +128,67 @@ void *PackWeight::ReplaceFp16Data(void *origin_fp16_data, size_t size) {
   return nullptr;
 }
 
-STATUS PackWeight::ReplaceOriginTensorData(const char *model_buf, std::vector<Tensor *> *tensors, int tensor_index) {
+STATUS PackWeight::ReplaceOriginTensorData(const void *model_buf, std::vector<Tensor *> *tensors, int tensor_index) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
-  if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
-    MS_LOG(ERROR) << "can not find model buf in store origin Tensor";
-    return RET_ERROR;
-  }
-  auto &tensor = tensors->at(tensor_index);
-  auto &model_weight = buf_model_weight_[model_buf];
-  if (model_weight->tensors_data.find(tensor_index) == model_weight->tensors_data.end()) {
-    auto allocator = model_weight->allocator;
-    void *new_data = allocator->Malloc(tensor->Size());
-    if (new_data == nullptr) {
-      MS_LOG(ERROR) << "allocator malloc data failed.";
-      return RET_ERROR;
+  for (auto &item : shared_bufs_) {
+    for (auto &numa_item : item.second) {
+      if (numa_item.second == model_buf) {
+        std::string id = item.first;
+        int numa_id = numa_item.first;
+        auto &tensor = tensors->at(tensor_index);
+        auto &model_weight = model_weights_[id][numa_id];
+        if (model_weight->tensors_data.find(tensor_index) == model_weight->tensors_data.end()) {
+          auto allocator = model_weight->allocator;
+          void *new_data = allocator->Malloc(tensor->Size());
+          if (new_data == nullptr) {
+            MS_LOG(ERROR) << "allocator malloc data failed.";
+            return RET_ERROR;
+          }
+          memcpy(new_data, tensor->data(), tensor->Size());
+          MS_CHECK_TRUE_MSG(tensor->own_data(), RET_ERROR, "tensor data is not own data.");
+          tensor->FreeData();
+          tensor->set_data(new_data);
+          tensor->set_own_data(false);
+          model_weight->tensors_data.insert(std::make_pair(tensor_index, new_data));
+        } else {
+          auto new_data = model_weight->tensors_data[tensor_index];
+          tensor->FreeData();
+          tensor->set_data(new_data);
+          tensor->set_own_data(false);
+        }
+        return RET_OK;
+      }
     }
-    memcpy(new_data, tensor->data(), tensor->Size());
-    MS_CHECK_TRUE_MSG(tensor->own_data(), RET_ERROR, "tensor data is not own data.");
-    tensor->FreeData();
-    tensor->set_data(new_data);
-    tensor->set_own_data(false);
-    model_weight->tensors_data.insert(std::make_pair(tensor_index, new_data));
-  } else {
-    auto new_data = model_weight->tensors_data[tensor_index];
-    tensor->FreeData();
-    tensor->set_data(new_data);
-    tensor->set_own_data(false);
   }
-  return RET_OK;
+  MS_LOG(ERROR) << "can not find model buf in store origin Tensor";
+  return RET_ERROR;
 }
 
 void *PackWeight::GetPackData(const void *tensor_data, const size_t size, bool *is_packed) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   MS_CHECK_TRUE_RET(tensor_data != nullptr, nullptr);
-  for (auto &item : buf_model_weight_) {
-    auto &model_weight = item.second;
-    auto &origin_packed_weight = model_weight->origin_and_packed_pair;
-    if (origin_packed_weight.find(tensor_data) == origin_packed_weight.end()) {
-      continue;
-    }
-    auto packed_tensor_data = origin_packed_weight[tensor_data];
-    if (packed_tensor_data != nullptr) {
-      *is_packed = true;
-      return packed_tensor_data;
-    } else {
-      auto weight_allocator = model_weight->allocator;
-      packed_tensor_data = weight_allocator->Malloc(size);
-      if (packed_tensor_data == nullptr) {
-        MS_LOG(ERROR) << "malloc failed.";
-        return nullptr;
+  for (auto &numa_item : model_weights_) {
+    for (auto &item : numa_item.second) {
+      auto &model_weight = item.second;
+      auto &origin_packed_weight = model_weight->origin_and_packed_pair;
+      if (origin_packed_weight.find(tensor_data) == origin_packed_weight.end()) {
+        continue;
       }
-      origin_packed_weight[tensor_data] = packed_tensor_data;
-      *is_packed = false;
-      return packed_tensor_data;
+      auto packed_tensor_data = origin_packed_weight[tensor_data];
+      if (packed_tensor_data != nullptr) {
+        *is_packed = true;
+        return packed_tensor_data;
+      } else {
+        auto weight_allocator = model_weight->allocator;
+        packed_tensor_data = weight_allocator->Malloc(size);
+        if (packed_tensor_data == nullptr) {
+          MS_LOG(ERROR) << "malloc failed.";
+          return nullptr;
+        }
+        origin_packed_weight[tensor_data] = packed_tensor_data;
+        *is_packed = false;
+        return packed_tensor_data;
+      }
     }
   }
   *is_packed = false;
@@ -227,47 +236,41 @@ void PackWeight::FreeFp16ToFp32Data(ModelConstWeight *weight) {
   weight->fp16_fp32_data.clear();
 }
 
-void PackWeight::DeleteOriginModelBufInfo(const char *model_buf) {
+void PackWeight::FreePackWeight(std::string id) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
-  numa_model_buf_.erase(model_buf);
-  model_buf_map_.erase(model_buf);
+  MS_LOG(INFO) << "model weight size: " << model_weights_.size() << " | shared buf size: " << shared_bufs_.size();
+  if (model_weights_.find(id) == model_weights_.end() || shared_bufs_.find(id) == shared_bufs_.end()) {
+    MS_LOG(INFO) << "can not find id in shared bufs or model weights.";
+    return;
+  }
+  for (auto &item : model_weights_[id]) {
+    auto numa_id = item.first;
+    ModelConstWeight *model_weight = model_weights_[id][numa_id];
+    void *model_buf = shared_bufs_[id][numa_id];
+    if (model_buf == nullptr || model_weight == nullptr) {
+      MS_LOG(ERROR) << "model buf or model weight is nullptr.";
+      return;
+    }
+    FreePackedWeight(model_weight);
+    FreeFp16ToFp32Data(model_weight);
+    FreeTensorData(model_weight);
+    auto &allocator = model_weight->allocator;
+    allocator->Free(model_buf);
+    model_buf = nullptr;
+    delete model_weight;
+    model_weight = nullptr;
+  }
+  model_weights_.erase(id);
+  shared_bufs_.erase(id);
 }
 
-void PackWeight::FreePackWeight(std::vector<char *> model_bufs, bool all) {
-  std::lock_guard<std::mutex> lock(mtx_weight_);
-  for (auto &item : buf_model_weight_) {
-    auto model_buf = const_cast<char *>(item.first);
-    if (!all && find(model_bufs.begin(), model_bufs.end(), model_buf) == model_bufs.end()) {
-      continue;
-    }
-    FreePackedWeight(item.second);
-    FreeFp16ToFp32Data(item.second);
-    FreeTensorData(item.second);
+PackWeight::~PackWeight() {
+  if (model_weights_.empty()) {
+    return;
   }
-  // free model buf
-  if (copy_buf_) {
-    for (auto &item : buf_model_weight_) {
-      auto model_buf = const_cast<char *>(item.first);
-      if (!all && find(model_bufs.begin(), model_bufs.end(), model_buf) == model_bufs.end()) {
-        continue;
-      }
-      if (item.second != nullptr) {
-        auto &allocator = item.second->allocator;
-        allocator->Free(model_buf);
-        delete item.second;
-        item.second = nullptr;
-      }
-    }
-  }
-  for (auto &buf : model_bufs) {
-    buf_model_weight_.erase(buf);
-  }
-  if (all) {
-    buf_model_weight_.clear();
-    numa_model_buf_.clear();
-    model_buf_map_.clear();
+  for (auto &numa_item : model_weights_) {
+    std::string id = numa_item.first;
+    FreePackWeight(id);
   }
 }
-
-PackWeight::~PackWeight() { FreePackWeight({}, true); }
 }  // namespace mindspore::lite

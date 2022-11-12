@@ -34,6 +34,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "src/common/helper/external_tensor/memory_helper.h"
 #include "src/litert/kernel_exec.h"
+#include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 
 namespace mindspore {
 namespace {
@@ -77,13 +78,13 @@ const char litert_provider[] = "litert";
 LiteRTGraphExecutor::LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context,
                                          const ConfigInfos &config_infos)
     : context_(context), config_infos_(config_infos) {
-  lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()));
+  lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()), config_infos_);
 }
 
 bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
   MS_EXCEPTION_IF_NULL(graph);
   if (graph->isa<mindspore::session::KernelGraph>()) {
-    MS_LOG(WARNING) << "LiteRTGraphExecutor not support kernel garph, please pass func graph instead";
+    MS_LOG(INFO) << "LiteRTGraphExecutor not support kernel garph, please pass func graph instead";
     return false;
   }
 
@@ -91,36 +92,38 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     MS_LOG(ERROR) << "The platform exist don't support's instruction.";
     return false;
   }
-
-  auto converter = std::make_shared<mindspore::lite::ConverterImpl>();
-  auto param = std::make_shared<ConverterPara>();
-  param->fmk_type = converter::kFmkTypeMs;
-  auto mutable_graph = std::const_pointer_cast<FuncGraph>(graph);
-  schema::MetaGraphT *meta_graph_t = nullptr;
-  converter->Convert(param, &meta_graph_t, mutable_graph);
-  if (this->IsNeedExtractTensorData(meta_graph_t)) {
-    if (!this->ExtractTensorData(meta_graph_t)) {
-      MS_LOG(ERROR) << "Compile Large Graph failed, extract tensor data error.";
-      return false;
-    }
-  }
-  flatbuffers::FlatBufferBuilder builder(kBufferSize);
   size_t data_size;
-  auto buffer = lite::MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph_t, &data_size);
-  if (lite_model_buf_ != nullptr) {
-    free(lite_model_buf_);
-    lite_model_buf_ = nullptr;
+  fb_model_buf_ = FuncGraphReuseManager::GetInstance()->GetFbModelBuf(&data_size, &is_shared_fb_buf_, config_infos_);
+  schema::MetaGraphT *meta_graph_t = nullptr;
+  if (fb_model_buf_ == nullptr) {
+    auto converter = std::make_shared<mindspore::lite::ConverterImpl>();
+    auto param = std::make_shared<ConverterPara>();
+    param->fmk_type = converter::kFmkTypeMs;
+    auto mutable_graph = std::const_pointer_cast<FuncGraph>(graph);
+    converter->Convert(param, &meta_graph_t, mutable_graph);
+    if (this->IsNeedExtractTensorData(meta_graph_t)) {
+      if (!this->ExtractTensorData(meta_graph_t)) {
+        MS_LOG(ERROR) << "Compile Large Graph failed, extract tensor data error.";
+        return false;
+      }
+    }
+    flatbuffers::FlatBufferBuilder builder(kBufferSize);
+    auto buffer = lite::MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph_t, &data_size);
+    fb_model_buf_ = malloc(data_size);
+    memcpy(fb_model_buf_, buffer, data_size);
+    FuncGraphReuseManager::GetInstance()->StoreFbModelBuf(fb_model_buf_, data_size, config_infos_);
+  } else {
+    MS_LOG(INFO) << "the graph is the same as the last time. We do not need to convert, and we can directly use the "
+                    "cached model buf.";
   }
-  lite_model_buf_ = malloc(data_size);
-  memcpy(lite_model_buf_, buffer, data_size);
-  int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(lite_model_buf_), kMindIR_Lite, data_size,
+  int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(fb_model_buf_), kMindIR_Lite, data_size,
                                                     helpers_.get());
+  delete meta_graph_t;
+  meta_graph_t = nullptr;
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Load model by meta graph failed";
-    delete meta_graph_t;
     return false;
   }
-  delete meta_graph_t;
   return true;
 }
 
@@ -345,12 +348,13 @@ std::vector<int32_t> LiteRTGraphExecutor::TruncateShape(const std::vector<int64_
 }
 
 std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(
-  const std::shared_ptr<lite::InnerContext> &context) {
+  const std::shared_ptr<lite::InnerContext> &context, const ConfigInfos &config_infos) {
   auto session = std::make_shared<lite::LiteSession>();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
+  session->SetConfigInfo(&config_infos);
 
   session->SetKeepModelBuf(true);
   auto ret = session->Init(context);

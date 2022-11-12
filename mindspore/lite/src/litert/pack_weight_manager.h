@@ -18,6 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_MANAGER_H_
 #include <memory>
 #include <vector>
+#include <unordered_map>
+#include <map>
+#include <string>
 #include "include/model.h"
 #include "include/errorcode.h"
 #include "src/tensor.h"
@@ -29,16 +32,19 @@ class PackWeightManager {
  public:
   static PackWeightManager *GetInstance();
   ~PackWeightManager() = default;
-  STATUS InitPackWeight(const char *model_buf, size_t model_size, int numa_id = -1);
-  STATUS InitPackWeightByBuf(const char *model_buf, size_t model_size);
-  char *GetNumaModelBuf(const char *model_buf, int numa_id);
+  STATUS InitPackWeightManager(const char *model_buf, size_t model_size, std::string *model_id,
+                               const std::map<std::string, std::map<std::string, std::string>> *config_info);
+  char *GetSharedModelBuf(const char *model_buf, std::string model_id,
+                          const std::map<std::string, std::map<std::string, std::string>> *config_info,
+                          bool *is_shared);
   STATUS StoreOriginTensorData(Model *model, std::vector<Tensor *> *all_tensors);
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
   void Free(void *tensor_data);
   bool IsCopyTensor(int op_type);
   void *ReplaceFp16Data(void *origin_fp16_data, size_t size, bool *replace);
-  void FreePackWeight(std::vector<char *> model_bufs);
-  void DeleteOriginModelBufInfo(const char *model_buf);
+  void FreePackWeight(std::string id);
+  std::string GenRunnerID();
+  std::string GenModelID();
 
  private:
   void *MallocData(size_t size);
@@ -48,6 +54,11 @@ class PackWeightManager {
 #ifdef SHARING_MODEL_WEIGHT
   std::shared_ptr<PackWeight> pack_weight_ = nullptr;
 #endif
+  std::mutex manager_mutex_;
+  std::vector<std::string> runner_ids_;
+  std::vector<std::string> model_ids_;
+  size_t runner_id_ = 1;
+  size_t model_id_ = 1;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_MANAGER_H_

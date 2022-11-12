@@ -62,6 +62,11 @@ static const char *const kMSCacheSerializePath = "serialize_path";
 static const char *const kWeight = "weight";
 static const char *const kWeightPath = "weight_path";
 
+// model parallel runner id
+static const char *const kInnerIDs = "inner_ids";
+static const char *const kInnerRunnerID = "inner_runner_id";
+static const char *const kInnerNumaID = "inner_numa_id";
+
 static const char *const kIsOptimized = "isOptimized";
 // gpu context
 static const char *const kGPUContext = "gpu_context";
