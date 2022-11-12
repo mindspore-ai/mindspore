@@ -163,6 +163,50 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     return random_categorical_(logits, num_sample, seed)
 
 
+def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False):
+    r"""
+    Returns a tensor where each row contains `numsamples` elements sampled from the multinomial distribution.
+
+    Note:
+        The rows of input do not need to sum to one (in which case we use the values as weights),
+        but must be non-negative, finite and have a non-zero sum.
+
+    Args:
+        x (Tensor): the input tensor containing the cumsum of probabilities, must be 1 or 2
+          dimensions. Must be one of the following types: float16, float32, float64.
+        seed (int): If seed is set to be -1, and offset is set to be 0, the random number
+          generator is seeded by a random seed. Otherwise, it is seeded by the given seed.
+        offset (int): To avoid seed collision.
+        numsamples (int): the number of samples to draw.
+        replacement (bool): Whether to draw with replacement or not. Defaults to false.
+
+    Returns:
+        Tensor with the same rows as `x`, each row has numsamples sampled indices.
+
+    Raises:
+        TypeError: If `x` is not a Tensor whose dtype is float16, float32, float64.
+        TypeError: If `numsamples` is not an int.
+        TypeError: If `replacement` is not a bool.
+        ValueError: If `x` rank is not 1 or 2.
+        ValueError: If the value of `numsamples` must larger than x_shape[-1], when `replacement` is false.
+        ValueError: If the sum of one row of `x` less than 0.
+        ValueError: If one of the element of each row of `x` less than 0.
+        ValueError: If `numsamples` equal or less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
+        >>> output = multinomialwithreplacement(x, 2, 5, 2, True)
+        >>> print(output)
+        [[1 1]]
+    """
+    multinomial_with_replacement_ = _get_cache_prim(P.MultinomialWithReplacement) \
+        (numsamples=numsamples, replacement=replacement)
+    return multinomial_with_replacement_(x, seed, offset)
+
+
 def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     """
     Generates random numbers according to the Uniform random number distribution.

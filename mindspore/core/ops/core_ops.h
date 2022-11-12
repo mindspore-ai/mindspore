@@ -1572,6 +1572,7 @@ GVAR_DEF(PrimitivePtr, kPrimRandperm, std::make_shared<Primitive>("Randperm"));
 GVAR_DEF(PrimitivePtr, kPrimUniformCandidateSampler, std::make_shared<Primitive>("UniformCandidateSampler"));
 GVAR_DEF(PrimitivePtr, kPrimLogUniformCandidateSampler, std::make_shared<Primitive>("LogUniformCandidateSampler"));
 GVAR_DEF(PrimitivePtr, kPrimMultinomial, std::make_shared<Primitive>("Multinomial"));
+GVAR_DEF(PrimitivePtr, kPrimMultinomialWithReplacement, std::make_shared<Primitive>("MultinomialWithReplacement"));
 GVAR_DEF(PrimitivePtr, kPrimRandomChoiceWithMask, std::make_shared<Primitive>("RandomChoiceWithMask"));
 
 // RL Ops
