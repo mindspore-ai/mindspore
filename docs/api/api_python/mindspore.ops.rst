@@ -214,7 +214,11 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
     mindspore.ops.NonMaxSuppressionWithOverlaps
+    mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
+    mindspore.ops.ResizeArea
+    mindspore.ops.ResizeBicubic
+    mindspore.ops.ResizeBilinearV2
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2
     mindspore.ops.ScaleAndTranslate
@@ -397,6 +401,7 @@ Reduction算子
     mindspore.ops.Orgqr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
+    mindspore.ops.Qr
 
 Tensor操作算子
 ----------------
@@ -431,8 +436,11 @@ Tensor创建
     mindspore.ops.LogNormalReverse
     mindspore.ops.Multinomial
     mindspore.ops.NonDeterministicInts
+    mindspore.ops.ParameterizedTruncatedNormal
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
+    mindspore.ops.RandomGamma
+    mindspore.ops.RandomPoisson
     mindspore.ops.Randperm
     mindspore.ops.StandardLaplace
     mindspore.ops.StandardNormal
@@ -509,8 +517,10 @@ Array操作
     mindspore.ops.Nonzero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
+    mindspore.ops.RaggedRange
     mindspore.ops.Range
     mindspore.ops.Rank
+    mindspore.ops.Renorm
     mindspore.ops.Reshape
     mindspore.ops.ResizeNearestNeighborV2
     mindspore.ops.ReverseSequence

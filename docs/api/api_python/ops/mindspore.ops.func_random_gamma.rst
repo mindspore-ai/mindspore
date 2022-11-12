@@ -3,19 +3,19 @@ mindspore.ops.random_gamma
 
 .. py:function:: mindspore.ops.random_gamma(shape, alpha, seed=0, seed2=0)
 
-    ¸ù¾İÙ¤Âí·Ö²¼²úÉú³ÉËæ»úÊı¡£
+    æ ¹æ®ä¼½é©¬åˆ†å¸ƒäº§ç”Ÿæˆéšæœºæ•°ã€‚
 
-    ²ÎÊı£º
-        - **shape** (Tensor) - Ö¸¶¨Éú³ÉËæ»úÊıµÄshape¡£ÈÎÒâÎ¬¶ÈµÄTensor¡£
-        - **alpha** (Tensor) - :math:`\alpha` ·Ö²¼µÄ²ÎÊı¡£Ó¦¸Ã´óÓÚ0ÇÒÊı¾İÀàĞÍÎªhalf¡¢float32»òÕßfloat64¡£
-        - **seed** (int) - Ëæ»úÊıÉú³ÉÆ÷µÄÖÖ×Ó£¬±ØĞëÊÇ·Ç¸ºÊı£¬Ä¬ÈÏÎª0¡£
-        - **seed2** (int) - Ëæ»úÊıÉú³ÉÆ÷µÄÖÖ×Ó£¬±ØĞëÊÇ·Ç¸ºÊı£¬Ä¬ÈÏÎª0¡£
+    å‚æ•°ï¼š
+        - **shape** (Tensor) - æŒ‡å®šç”Ÿæˆéšæœºæ•°çš„shapeã€‚ä»»æ„ç»´åº¦çš„Tensorã€‚
+        - **alpha** (Tensor) - :math:`\alpha` åˆ†å¸ƒçš„å‚æ•°ã€‚åº”è¯¥å¤§äº0ä¸”æ•°æ®ç±»å‹ä¸ºhalfã€float32æˆ–è€…float64ã€‚
+        - **seed** (int) - éšæœºæ•°ç”Ÿæˆå™¨çš„ç§å­ï¼Œå¿…é¡»æ˜¯éè´Ÿæ•°ï¼Œé»˜è®¤ä¸º0ã€‚
+        - **seed2** (int) - éšæœºæ•°ç”Ÿæˆå™¨çš„ç§å­ï¼Œå¿…é¡»æ˜¯éè´Ÿæ•°ï¼Œé»˜è®¤ä¸º0ã€‚
 
-    ·µ»Ø£º
-        Tensor¡£shapeÊÇÊäÈë `shape` ¡¢ `alpha` Æ´½ÓºóµÄshape¡£Êı¾İÀàĞÍºÍalphaÒ»ÖÂ¡£
+    è¿”å›ï¼š
+        Tensorã€‚shapeæ˜¯è¾“å…¥ `shape` ã€ `alpha` æ‹¼æ¥åçš„shapeã€‚æ•°æ®ç±»å‹å’Œalphaä¸€è‡´ã€‚
 
-    Òì³££º
-        - **TypeError** ¨C `shape` ²»ÊÇTensor¡£
-        - **TypeError** ¨C `alpha` ²»ÊÇTensor¡£
-        - **TypeError** ¨C `seed` µÄÊı¾İÀàĞÍ²»ÊÇint¡£
-        - **TypeError** ¨C `alpha` µÄÊı¾İÀàĞÍ²»ÊÇhalf¡¢float32»òÕßfloat64¡£
+    å¼‚å¸¸ï¼š
+        - **TypeError** â€“ `shape` ä¸æ˜¯Tensorã€‚
+        - **TypeError** â€“ `alpha` ä¸æ˜¯Tensorã€‚
+        - **TypeError** â€“ `seed` çš„æ•°æ®ç±»å‹ä¸æ˜¯intã€‚
+        - **TypeError** â€“ `alpha` çš„æ•°æ®ç±»å‹ä¸æ˜¯halfã€float32æˆ–è€…float64ã€‚

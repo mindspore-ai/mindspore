@@ -9379,7 +9379,7 @@ class NthElement(Primitive):
 
 class PSROIPooling(Primitive):
     r"""
-    Position Sensitive ROI-Pooling
+    Applies Position Sensitive ROI-Pooling on input Tensor.
 
     Args:
         spatial_scale (float): a scaling factor that maps the box coordinates to the input coordinates.
@@ -9400,7 +9400,16 @@ class PSROIPooling(Primitive):
           0 <= x1 < x2 and 0 <= y1 < y2.
 
     Outputs:
-        - out (rois.shape[0] * rois.shape[2], output_dim, group_size, group_size), the result after pooling.
+        - **out** (Tensor) - The result after pooling. Its shape
+          is :math:`(rois.shape[0] * rois.shape[2], output\_dim, group\_size, group\_size)`.
+
+    Raises:
+        TypeError: If `spatial_scale` is not a float.
+        TypeError: If `group_size` or `output_dim` is not an int.
+        TypeError: If `features` or `rois` is not a Tensor.
+        TypeError: If dtype of `rois` is not float16 or float32.
+        ValueError: If shape of `features` does not satisfy :math:`(C == output_dim * group_size * group_size)`.
+        ValueError: If `spatial_scale` is negative.
 
     Supported Platforms:
         ``Ascend``

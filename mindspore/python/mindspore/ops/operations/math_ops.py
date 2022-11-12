@@ -6626,12 +6626,12 @@ class RaggedRange(Primitive):
         - **rt_dense_values**  (Tensor) - The dense values of the return `RaggedTensor`,
           and type of the tensor should be same as input `starts`.
           Let size of input `starts`, input `limits` and input `deltas` are i,
-          if type of the input `starts`, input `limits` and input `deltas`
-          are int32 or int64, shape of the output `rt_dense_values` is equal to
-          sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
-          if type of the input `starts`, input `limits` and input `deltas`
-          are float32 or float64, shape of the output `rt_dense_values` is equal to
-          sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
+          - if type of the input `starts`, input `limits` and input `deltas`
+            are int32 or int64, shape of the output `rt_dense_values` is equal to
+            sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
+          - if type of the input `starts`, input `limits` and input `deltas`
+            are float32 or float64, shape of the output `rt_dense_values` is equal to
+            sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
     Raises:
         TypeError: If any input is not Tensor.
         TypeError: If the type of `starts` is not one of the following dtype: int32, int64, float32, float64.
@@ -6921,7 +6921,7 @@ class Renorm(Primitive):
     `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
     divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
-    Refer to :func::`mindspore.ops.renorm` for more detail.
+    Refer to :func::`mindspore.ops.renorm` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -7650,7 +7650,7 @@ class Qr(Primitive):
     If False (the default), compute the P columns of q where P is minimum of the 2 innermost dimensions of x.
 
     Args:
-        full_matrices (bool): The default value is Fasle.
+        - **full_matrices** (bool, optional) - Whether compute full-sized QR decomposition. Default: False.
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions.
@@ -7659,10 +7659,10 @@ class Qr(Primitive):
 
     Outputs:
         - **q** (Tensor) - The orthonormal matrices of x.
-        If `full_matrices` is true, the shape is (m, m), else the shape is (m, p).
+        If `full_matrices` is true, the shape is :math:`(m, m)`, else the shape is :math:`(m, p)`.
         The dtype of `q` is same as `x`.
         - **r** (Tensor) - The upper triangular matrices of x.
-        If `full_matrices` is true, the shape is (m, n), else the shape is (p, n).
+        If `full_matrices` is true, the shape is :math:`(m, n)`, else the shape is :math:`(p, n)`.
         The dtype of `r` is same as `x`.
 
     Raises:

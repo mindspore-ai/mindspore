@@ -686,6 +686,9 @@ class ResizeBilinearV2(Primitive):
 
     The resizing only affects the lower two dimensions which represent the height and width.
 
+    .. warning::
+        On CPU, setting `half_pixel_centers` to True is currently not supported.
+
     Args:
         align_corners (bool, optional): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
                        which exactly aligns the 4 corners of images and resized images. If false,
@@ -708,6 +711,9 @@ class ResizeBilinearV2(Primitive):
         TypeError: If `half_pixel_centers` is not a bool.
         TypeError: If `align_corners` and `half_pixel_centers` are all True.
         ValueError: If `half_pixel_centers` is True and device_target is CPU.
+        ValueError: If dim of `x` is not 4.
+        ValueError: If `size` is Tensor and its dim is not 1.
+        ValueError: If `size` contains other than 2 elements.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -739,37 +745,39 @@ class ResizeBilinearV2(Primitive):
 
 
 class ResizeBicubic(Primitive):
-    """
+    r"""
     Resize images to size using bicubic interpolation.
 
     .. warning::
         The max output length is 1000000.
 
     Args:
-        align_corners (bool):If true, the centers of the 4 corner pixels of the input
+        align_corners (bool, optional):If true, the centers of the 4 corner pixels of the input
             and output tensors are aligned, preserving the values at the corner pixels.Default: False.
-        half_pixel_centers (bool): An optional bool. Default: False.
+        half_pixel_centers (bool): Whether to use half-pixel center alignment. If set to True,
+            `align_corners` should be False. Default: False.
+
 
     Inputs:
-        - **images** (Tensor) - The input image must be a 4-D tensor of shape [batch, height, width, channels].
+        - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, height, width, channels)`.
           The format must be NHWC.
           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - A 1-D tensor of shape [2], with 2 elements: new_height, new_width.
           Types allowed: int32.
 
     Outputs:
-        A 4-D tensor of shape [batch, new_height, new_width, channels] with type: float32.
+        A 4-D tensor of shape :math:`(batch, new\_height, new\_width, channels)` with type float32.
 
     Raises:
         TypeError: If `images` type is not allowed.
-        TypeError: If `size` type is not allowed.
-        TypeError: If `align_corners` type is not allowed.
-        TypeError: If `half_pixel_centers` type is not allowed.
+        TypeError: If `size` type is not int32.
+        TypeError: If `align_corners` type is not bool.
+        TypeError: If `half_pixel_centers` type is not bool.
         ValueError: If `images` dim is not 4.
         ValueError: If `size` dim is not 1.
         ValueError: If `size` size is not 2.
-        ValueError: If `size` value is not positive.
-        ValueError: If `align_corners` and `half_pixel_centers` value are both true.
+        ValueError: If any `size` value is not positive.
+        ValueError: If `align_corners` and `half_pixel_centers` value are both True.
 
 
     Supported Platforms:
@@ -848,32 +856,32 @@ class ResizeArea(Primitive):
     The resizing process only changes the two dimensions of images, which represent the width and height of images.
 
     .. warning::
-        The values of "size" must be greater than zero.
+        The values of `size` must be greater than zero.
 
     Args:
         align_corners (bool, optional): If true, the centers of the 4 corner pixels of the input and output
           tensors are aligned, preserving the values at the corner pixels. Defaults: False.
 
     Inputs:
-        - **images** (Tensor) -  Input images must be a 4-D tensor with shape which is [batch, height, width, channels].
-          The format must be NHWC.
+        - **images** (Tensor) -  Input images must be a 4-D tensor with shape
+          which is :math:`(batch, channels, height, width)`. The format must be NHWC.
           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - Input size must be a 1-D tensor of 2 elements: new_height, new_width.
           The new size of output image.
           Types allowed: int32.
 
     Outputs:
-        A 4-D tensor of shape [batch, new_height, new_width, channels] with type: float32.
+        A 4-D tensor of shape :math:`(batch, new_height, new_width, channels)` with type float32.
 
     Raises:
         TypeError: If dtype of `images` is not supported.
         TypeError: If dtype of `size` is not int32.
         TypeError: If dtype of `align_corners` is not bool.
         ValueError: If the num of inputs is not 2.
-        ValueError: If the dimension of `images` shape is not 4.
-        ValueError: If the dimension of `size` shape is not 1.
-        ValueError: If the element num of `size` is not [new_height, new_width].
-        ValueError: The size is not positive.
+        ValueError: If the dimension of `images` is not 4.
+        ValueError: If the dimension of `size` is not 1.
+        ValueError: If the element num of `size` is not 2.
+        ValueError: If any value of `size` is not positive.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
