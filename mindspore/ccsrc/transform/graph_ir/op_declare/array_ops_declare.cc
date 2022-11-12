@@ -106,6 +106,11 @@ ATTR_MAP(Squeeze) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>(), AnyTraits<st
 OUTPUT_MAP(Squeeze) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Squeeze, prim::kPrimSqueeze->name(), ADPT_DESC(Squeeze))
 
+INPUT_MAP(SqueezeV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_MAP(SqueezeV3) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SqueezeV3) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SqueezeV3, prim::kPrimSqueezeV3->name(), ADPT_DESC(SqueezeV3))
+
 // ReverseSequence
 INPUT_MAP(ReverseSequence) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(seq_lengths)}};
 ATTR_MAP(ReverseSequence) = {{"seq_dim", ATTR_DESC(seq_dim, AnyTraits<int64_t>())},

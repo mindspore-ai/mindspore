@@ -64,33 +64,30 @@ tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node) {
       value = parameter->default_param();
     }
   }
-  if (value != nullptr) {
-    if (value->isa<tensor::Tensor>()) {
-      auto tensor = value->cast<tensor::TensorPtr>();
-      if (tensor == nullptr || tensor->data().const_data() == nullptr) {
-        return nullptr;
-      }
-      return tensor;
-    } else if (value->isa<Scalar>()) {
-      return ScalarToTensor(value->cast<ScalarPtr>());
-    } else if (value->isa<ValueTuple>()) {
-      return opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-    } else if (value->isa<Int64Imm>()) {
-      auto int64imm = value->cast<Int64ImmPtr>();
-      if (int64imm == nullptr) {
-        return nullptr;
-      }
-      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(int64imm->value()), int64imm->type());
-    } else if (value->isa<Float>() || value->isa<Int>()) {
-      auto type_ptr = value->cast<TypePtr>();
-      if (type_ptr == nullptr) {
-        return nullptr;
-      }
-      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(type_ptr->type_id()), type_ptr->type());
-    } else {
-      MS_LOG(WARNING) << "Unexpected value type " << value->type_name() << " for " << input_node->fullname_with_scope();
-    }
+  if (value == nullptr) {
+    return nullptr;
   }
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    if (tensor == nullptr || tensor->data().const_data() == nullptr) {
+      return nullptr;
+    }
+    return tensor;
+  }
+  if (value->isa<Scalar>()) {
+    return ScalarToTensor(value->cast<ScalarPtr>());
+  }
+  if (value->isa<ValueTuple>()) {
+    return opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
+  }
+  if (value->isa<Type>()) {
+    auto type_ptr = value->cast<TypePtr>();
+    if (type_ptr == nullptr) {
+      return nullptr;
+    }
+    return std::make_shared<tensor::Tensor>(static_cast<int64_t>(type_ptr->type_id()), type_ptr->type());
+  }
+  MS_LOG(WARNING) << "Unexpected value type " << value->type_name() << " for " << input_node->fullname_with_scope();
   return nullptr;
 }
 
