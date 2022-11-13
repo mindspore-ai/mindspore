@@ -25,6 +25,7 @@ from . import (
     math_func,
     nn_func,
     linalg_func,
+    clip_func,
 )
 from .array_func import (
     unique,
@@ -534,6 +535,9 @@ from .sparse_unary_func import (
     coo_sigmoid,
     coo_sin
 )
+from .clip_func import (
+    clip_by_value,
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -549,4 +553,5 @@ __all__.extend(image_func.__all__)
 __all__.extend(spectral_func.__all__)
 __all__.extend(vmap_func.__all__)
 __all__.extend(sparse_unary_func.__all__)
+__all__.extend(clip_func.__all__)
 __all__.sort()

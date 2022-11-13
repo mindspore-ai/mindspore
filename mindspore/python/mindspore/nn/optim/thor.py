@@ -21,6 +21,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
+import mindspore.ops as ops
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 import mindspore.log as logger
@@ -87,8 +88,8 @@ def _clip_grad(clip_type, clip_value, grad):
         return grad
     dt = F.dtype(grad)
     if clip_type == 0:
-        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
-                                   F.cast(F.tuple_to_array((clip_value,)), dt))
+        new_grad = ops.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
+                                     F.cast(F.tuple_to_array((clip_value,)), dt))
     else:
         new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad

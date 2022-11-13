@@ -20,6 +20,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.functional import stop_gradient
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore._checkparam import Validator
+import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
@@ -141,7 +142,7 @@ class Categorical(Distribution):
         self.argmax = P.ArgMaxWithValue(axis=-1)
         self.broadcast = broadcast_to
         self.cast = P.Cast()
-        self.clip_by_value = C.clip_by_value
+        self.clip_by_value = ops.clip_by_value
         self.concat = P.Concat(-1)
         self.cumsum = P.CumSum()
         self.dtypeop = P.DType()

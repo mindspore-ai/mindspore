@@ -24,6 +24,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
+import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore.train import Model
 from mindspore.context import ParallelMode
@@ -48,8 +49,8 @@ update_cell = DynamicLossScaleUpdateCell(loss_scale_value=65536, scale_factor=2,
 def _clip_grad(clip_type, clip_value, grad):
     dt = F.dtype(grad)
     if clip_type == 0:
-        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
-                                   F.cast(F.tuple_to_array((clip_value,)), dt))
+        new_grad = ops.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
+                                     F.cast(F.tuple_to_array((clip_value,)), dt))
     else:
         new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad

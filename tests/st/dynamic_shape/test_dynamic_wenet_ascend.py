@@ -123,7 +123,7 @@ def _clip_grad(clip_type, clip_value, grad):
         return grad
     dt = F.dtype(grad)
     if clip_type == 0:
-        new_grad = C.clip_by_value(
+        new_grad = ops.clip_by_value(
             grad, F.cast(F.tuple_to_array((-clip_value,)),
                          dt), F.cast(F.tuple_to_array((clip_value,)), dt)
         )

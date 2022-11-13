@@ -17,13 +17,19 @@
 
     .. note::
         - `clip_value_min` 必须小于或等于 `clip_value_max` ；
-        -  :math:`x` ， `clip_value_min` 和 `clip_value_max` 的数据类型需支持隐式类型转换，且不能同时为布尔型。
+        -  :math:`x` ， `clip_value_min` 和 `clip_value_max` 的数据类型需支持隐式类型转换，且不能为布尔型。
         
 
     参数：
-        - **x** (Tensor) - `clip_by_value` 的输入，任意维度的Tensor。
-        - **clip_value_min** (Tensor) - 指定最小值。
-        - **clip_value_max** (Tensor) - 指定最大值。
+        - **x** (Union(Tensor, list[Tensor], tuple[Tensor])) - `clip_by_value` 的输入，类型为Tensor、Tensor的列表或元组。支持任意维度的Tensor。
+        - **clip_value_min** (Union(Tensor, float, int)) - 指定最小值。
+        - **clip_value_max** (Union(Tensor, float, int)) - 指定最大值。
 
     返回：
-        Tensor，表示裁剪后的Tensor。其shape和数据类型和 `x` 相同。
+        Tensor、Tensor的列表或元组，表示裁剪后的Tensor。其shape和数据类型和 `x` 相同。
+    
+    异常：
+        - **ValueError** - 如果 `clip_value_min` 和 `clip_value_max` 都为None。
+        - **TypeError** - 如果 `x` 的数据类型不在Tensor、list[Tensor]或tuple[Tensor]中。
+        - **TypeError** - 如果 `clip_value_min` 的数据类型不为None、Tensor、float或int。
+        - **TypeError** - 如果 `clip_value_max` 的数据类型不为None、Tensor、float或int。

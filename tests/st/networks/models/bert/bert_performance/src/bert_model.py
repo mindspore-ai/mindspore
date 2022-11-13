@@ -18,12 +18,12 @@ import copy
 import math
 import numpy as np
 import mindspore.common.dtype as mstype
+import mindspore.ops as ops
 import mindspore.nn as nn
 import mindspore.ops.functional as F
 from mindspore.common.initializer import TruncatedNormal, initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
@@ -274,9 +274,9 @@ class RelaPosMatrixGenerator(nn.Cell):
         transpose_out = self.range_mat(tile_col_out, (length, length))
         distance_mat = self.sub(range_mat_out, transpose_out)
 
-        distance_mat_clipped = C.clip_by_value(distance_mat,
-                                               self._min_relative_position,
-                                               self._max_relative_position)
+        distance_mat_clipped = ops.clip_by_value(distance_mat,
+                                                 self._min_relative_position,
+                                                 self._max_relative_position)
 
         # Shift values to be >=0. Each integer still uniquely identifies a
         # relative position difference.
