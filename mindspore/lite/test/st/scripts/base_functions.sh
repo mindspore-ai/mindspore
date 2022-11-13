@@ -71,6 +71,7 @@ function Convert() {
         export_mindir="MINDIR_LITE"
         target_device=""
         encryption_flag="false"
+        no_fusion="false"
         if [[ ${cfg_file_name} =~ "weightquant" ]]; then
           # models_weightquant_${suffix}.cfg
           suffix=${cfg_file_name: 19: -4}
@@ -131,13 +132,16 @@ function Convert() {
         if [[ ${extra_info} =~ "fp16_weight" ]]; then
           fp16_weight="on"
         fi
+        if [[ ${extra_info} =~ "online_convert" ]]; then
+          no_fusion="true"
+        fi
         # start running converter
         echo "Convert ${model_name} ${quant_type} ......"
         echo ${model_name} >> "$4"
         echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
              ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'" --fp16='${fp16_weight}\
              ' --configFile='${config_file}' --trainModel='${train_model}' --exportMindIR='${export_mindir} ' --device='${target_device}\
-             ' --encryption='${encryption_flag} ' --inputDataFormat='${input_format}
+             ' --encryption='${encryption_flag} ' --inputDataFormat='${input_format} '--NoFusion='${no_fusion}
         if [[ ${cfg_file_name} =~ "_ascend" ]]; then
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
@@ -146,7 +150,8 @@ function Convert() {
         elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
-              --configFile=${config_file} --exportMindIR=${export_mindir} --NoFusion=true --encryption=${encryption_flag} --trainModel=${train_model} >> "$4" 
+              --configFile=${config_file} --exportMindIR=${export_mindir} --NoFusion=${no_fusion} --encryption=${encryption_flag}\
+              --trainModel=${train_model} >> "$4" 
         else
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
