@@ -218,7 +218,7 @@ class AdaFactor(Optimizer):
         learning_rate (Union[float, Tensor]): A value or a graph for the learning rate.
             When the learning_rate is a Tensor in a 1D dimension.
             If the type of `learning_rate` is int, it will be converted to float. Default: None.
-        eps (float): The regularization constans for square gradient and parameter scale respectively.
+        eps (tuple): The regularization constans for square gradient and parameter scale respectively.
             default: (1e-30, 1e-3)
         clip_threshold (Union[float, Tensor]): The threshold of root mean square of final gradient update. default: 1.0
         decay_rate (Union[float, Tensor]): The coefficient used to compute running averages of square gradient.

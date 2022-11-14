@@ -95,7 +95,7 @@ class LossMonitor(Callback):
 
     def on_train_epoch_end(self, run_context):
         """
-        When LossMoniter used in `model.fit`, print eval metrics at the end of epoch if current epoch
+        When LossMonitor used in `model.fit`, print eval metrics at the end of epoch if current epoch
         should do evaluation.
 
         Args:

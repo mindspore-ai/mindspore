@@ -253,7 +253,7 @@ class Optimizer(Cell):
         chunk_tensors = Tensor._get_flattened_tensors(parameters)  # pylint: disable=W0212
         if not chunk_tensors:
             # Failed to get chunk tensors.
-            logger.warning("Parameters are not properly falttened, fallback to not flattened parameters.")
+            logger.warning("Parameters are not properly flattened, fallback to not flattened parameters.")
             return parameters
         # Convert chunk tensors to parameters.
         self._use_flattened_params = True
@@ -546,7 +546,7 @@ class Optimizer(Cell):
             parameters = self._parameters_base_check(group_param['params'], "group `params`")
             for index, param in enumerate(parameters):
                 if not isinstance(param, Parameter):
-                    raise TypeError(f"For 'Optimizer', the elemeter in group parameters must be Parameter type, "
+                    raise TypeError(f"For 'Optimizer', the element in group parameters must be Parameter type, "
                                     f"but got {type(param)} at index {index}.")
 
     def _parse_group_params(self, parameters, learning_rate):
