@@ -37,6 +37,7 @@ class Conv1DInOutAdjust {
   CNodePtr NewSqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
                             const std::vector<int64_t> &axis);
   lite::STATUS ExpandFilterShape(const AnfNodePtr &weight_node, const schema::Format &format);
+  CNodePtr getOutputNode(const FuncGraphPtr &func_graph, const CNodePtr input_node, const PrimitivePtr &primitive_type);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CONV1D_INOUT_ADJUST_H_
