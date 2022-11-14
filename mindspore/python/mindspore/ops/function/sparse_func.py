@@ -232,7 +232,7 @@ def csr_mv(csr_tensor: CSRTensor, dense: Tensor) -> Tensor:
 def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = False,
            adjoint_a: bool = False, adjoint_b: bool = False):
     """
-    Return the matrix multiplication result of the right-multiply matrix（dense or CSRTensor） of the CSRTensor.
+    Return the matrix multiplication result of the right-multiply matrix (dense or CSRTensor) of the CSRTensor.
     The CSRTensor with shape `[M, N]` needs to adapt the right matrix with shape `[N, K]`
     to get the dense matrix or CSRTensor with result `[M, K]`.
 
@@ -242,10 +242,10 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
     Args:
         a (CSRTensor): Sparse CSR Tensor, rank should be 2.
         b (CSRTensor): Sparse CSR Tensor, rank should be 2.
-        trans_a (bool): whether to transpose CSRTensor a.
-        trans_b (bool): whether to transpose CSRTensor b.
-        adjoint_a (bool): whether to adjoint CSRTensor a.
-        adjoint_b (bool): whether to adjoint CSRTensor b.
+        trans_a (bool): whether to transpose CSRTensor a. Default: False.
+        trans_b (bool): whether to transpose CSRTensor b. Default: False.
+        adjoint_a (bool): whether to adjoint CSRTensor a. Default: False.
+        adjoint_b (bool): whether to adjoint CSRTensor b. Default: False.
 
     Returns:
         CSRTensor.

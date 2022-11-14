@@ -759,7 +759,7 @@ def argmax(x, axis=None, keepdims=False):
         axis (Union[int, None], optional): The dimension to reduce.
           If `axis` is None, the indices of the maximum value within the
           flattened input will be returned. Default: None.
-        keepdims (boolean, optional): Whether the output tensor retains the
+        keepdims (bool, optional): Whether the output tensor retains the
           specified dimension. Ignored if `axis` is None. Default: False.
 
     Returns:
@@ -968,14 +968,14 @@ def max(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disa
             axes along which to operate. By default, flattened input is used. If
             this is a tuple of ints, the maximum is selected over multiple axes,
             instead of a single axis or all the axes as before.
-        keepdims (boolean, optional): defaults to False.
+        keepdims (bool, optional): defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
         initial (scalar, optional):
             The minimum value of an output element. Must be present to allow
             computation on empty slice.
-        where (boolean Tensor, optional): defaults to True.
+        where (bool Tensor, optional): defaults to True.
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
@@ -1013,14 +1013,14 @@ def min(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disa
             axes along which to operate. By default, flattened input is used. If
             this is a tuple of ints, the minimum is selected over multiple axes,
             instead of a single axis or all the axes as before.
-        keepdims (boolean, optional): defaults to False.
+        keepdims (bool, optional): defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
         initial (scalar, optional):
             The maximum value of an output element. Must be present to allow
             computation on empty slice.
-        where (boolean Tensor, optional): defaults to True.
+        where (bool Tensor, optional): defaults to True.
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
