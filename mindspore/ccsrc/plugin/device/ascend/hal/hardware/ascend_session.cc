@@ -797,8 +797,9 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     GetOpInputStubTensors(kernel, parameter_index, graph_inputs, op_output_info, &input_tensor_info);
     // Get OpRunInfo and GraphInfo
     GraphInfo graph_info;
-    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info);
     BackendOpRunInfoPtr op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, nullptr);
+    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info, op_run_info);
+    op_run_info->base_op_run_info.graph_info = graph_info;
     const auto &single_op_graph_iter = run_op_graphs_.find(graph_info);
     if (single_op_graph_iter != run_op_graphs_.end()) {
       // if graph of same single op exists, the output tensor of current op should be generated
@@ -812,7 +813,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     opt::HideNopNode(single_op_graph.get());
     // The graph info could have been changed in PreBuildOp
     GraphInfo new_graph_info;
-    GetSingleOpGraphInfo(kernel, input_tensor_info, &new_graph_info);
+    GetSingleOpGraphInfo(kernel, input_tensor_info, &new_graph_info, op_run_info);
     single_op_graphs.emplace(single_op_graph, new_graph_info);
     const auto &execution_order = single_op_graph->execution_order();
     std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));
