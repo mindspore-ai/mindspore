@@ -712,7 +712,8 @@ def subtract(x, other, *, alpha=1):
         output[i] = x[i] - alpha * y[i]
 
     Args:
-        other (Union[Tensor, number.Number]): The tensor or number to be subtracted.
+        x (Union[Tensor, number.Number]): The tensor or number to be subtracted.
+        other (Union[Tensor, number.Number]): The tensor or number to subtract.
 
     Keyword Args:
         alpha (Number): The multiplier for `other`. Default: 1.

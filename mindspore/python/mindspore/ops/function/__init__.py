@@ -105,6 +105,7 @@ from .array_func import (
     matrix_set_diag,
     diag,
     masked_select,
+    where,
     meshgrid,
     affine_grid,
     fills,

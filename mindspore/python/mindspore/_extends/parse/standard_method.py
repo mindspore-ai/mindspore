@@ -1001,7 +1001,8 @@ def copy(x):
     return x
 
 
-def max(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disable=redefined-builtin
+def max(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined-builtin
+        where=True):  # pylint: disable=redefined-outer-name
     """
     Returns the maximum of a tensor or maximum along an axis.
 
@@ -1046,7 +1047,8 @@ def max(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disa
                                  axis=axis, keepdims=keepdims, initial=initial, where=where)
 
 
-def min(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disable=redefined-builtin
+def min(x, axis=None, keepdims=False, initial=None,  # pylint: disable=redefined-builtin
+        where=True):  # pylint: disable=redefined-outer-name
     """
     Returns the minimum of a tensor or minimum along an axis.
 
@@ -3975,6 +3977,14 @@ def trunc(input):
     Returns a new tensor with the truncated integer values of the elements of input.
     """
     return F.trunc(input)
+
+
+def where(x, condition, y):
+    r"""
+    Returns a tensor whose elements are selected from either `x` or `y` depending on `condition`.
+    Please refer to :func:`mindspore.ops.where`.
+    """
+    return F.where(condition, x, y)
 
 
 def imag(input):

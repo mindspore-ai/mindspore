@@ -4488,6 +4488,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('trunc')(self)
 
+    def where(self, condition, y):
+        r"""
+        For details, please refer to :func:`mindspore.ops.where`
+        """
+        self._init_check()
+        return tensor_operator_registry.get('where')(condition, self, y)
+
     def imag(self):
         r"""
         Returns a new tensor containing imaginary value of the input tensor.
