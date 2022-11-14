@@ -467,7 +467,8 @@ void ResizeNodeInput(const CNodePtr &kernel) {
 }
 
 // kernel_mode launch
-void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
+void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
+                          bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start";
@@ -485,10 +486,12 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     }
     auto inputs = CreateKernelInputAddress(runtime_info);
 
-    auto args = kernel::GetArgsFromCNode(node);
-    if (args == nullptr) {
-      InferNodeRealShape(node);
-    }
+    InferNodeRealShape(node);
+
+    runtime::DeviceAddressUtils::CreateKernelOutputDeviceAddress(device_context, graph, is_gradient_out);
+    runtime::DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(graph);
+    runtime::DeviceAddressUtils::UpdateDeviceAddressForRefNode(graph);
+
     ResizeNodeInput(node);
 
     runtime::DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context, graph);
@@ -600,10 +603,10 @@ void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::Ten
 }
 
 void RunSingleOpGraphDynamic(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
-                             const device::DeviceContext *device_context) {
+                             const device::DeviceContext *device_context, bool is_gradient_out) {
   WaitCommunicationFinish(input_tensors);
   CopyDataToDevice(graph, input_tensors, device_context);
-  LaunchKernelsDynamic(graph, device_context);
+  LaunchKernelsDynamic(graph, device_context, is_gradient_out);
   ReleaseKernelResource(graph);
 }
 }  // namespace mindspore::runtime
