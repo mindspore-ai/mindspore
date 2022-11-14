@@ -7800,12 +7800,12 @@ class Bincount(Primitive):
         A Tensor. Has the same type as weights.
 
     Raises:
-        TypeError: If dtype of array is not int32.
-        TypeError: If dtype of size is not int32.
-        ValueError: If size is negative.
-        ValueError: If weights are empty.
-        ValueError: If size of weights and arr are different.
-        TypeError: If dtype of weights is not in int32,int64,float32,float64
+        TypeError: If dtype of `array` is not int32.
+        TypeError: If dtype of `size` is not int32.
+        ValueError: If `size` is negative.
+        ValueError: If `weights` are empty.
+        ValueError: If size of `weights` is not zero and the shape of `weights` is different with the shape of `array`.
+        TypeError: If dtype of `weights` is not in int32,int64,float32,float64
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

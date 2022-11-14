@@ -100,30 +100,7 @@ class CeLU(Primitive):
     r"""
     Computes CeLU (Continuously differentiable exponential linear units) of input tensors element-wise.
 
-    .. math::
-
-        \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
-
-    It returns :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))` element-wise.
-
-    The picture about CeLU looks like this `CeLU <https://arxiv.org/abs/1704.07483>`_.
-
-
-    Args:
-        alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with dtype of float16 and float32.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If `alpha` is not a float.
-        ValueError: If `alpha` has the value of 0.
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If the dtype of 'input_x' is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.celu` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

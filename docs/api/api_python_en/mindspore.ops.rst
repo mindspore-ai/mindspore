@@ -102,6 +102,7 @@ Activation Function
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.CeLU
     mindspore.ops.Elu
     mindspore.ops.FastGeLU
     mindspore.ops.GeLU
@@ -226,6 +227,9 @@ Mathematical Operators
     mindspore.ops.BesselK1e
     mindspore.ops.BesselY0
     mindspore.ops.BesselY1
+    mindspore.ops.Bincount
+    mindspore.ops.Bucketize
+    mindspore.ops.Cauchy
     mindspore.ops.Cross
 
 Element-wise Operator
@@ -415,6 +419,7 @@ Array Operation
     mindspore.ops.BatchToSpaceND
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
+    mindspore.ops.CheckNumerics
     mindspore.ops.Concat
     mindspore.ops.ConjugateTranspose
     mindspore.ops.Cummax
