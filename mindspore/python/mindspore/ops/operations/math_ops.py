@@ -5461,7 +5461,7 @@ class MatrixPower(Primitive):
         TypeError: If the data type of `x` is neither float32 nor float16.
         TypeError: If x is not a Tensor.
         ValueError: If `x` is not a 3-D tensor.
-        ValueError: If sizes of dim[1] and dim[2] of `x` are not the same.
+        ValueError: If shape[1] and shape[2] of `x` are not the same.
         ValueError: If n is negative but got input x has singular matrices.
 
     Supported Platforms:
@@ -5542,7 +5542,7 @@ class MatrixLogarithm(Primitive):
 
     Inputs:
         - **x** (Tensor) - x is a tensor. The shape of tensor is :math:`[..., M, M]`.
-          Must be one of the following types:complex64, complex128. And shape is 2D-7D.
+          Must be one of the following types:complex64, complex128. And shape must be 2D-7D.
 
     Outputs:
         - **y** (Tensor), has the same shape and type as input.
@@ -6100,7 +6100,7 @@ class MatrixExp(Primitive):
     r"""
     Computes the matrix exponential of a square matrix. Supports batched inputs.
 
-    Refer to :func:`mindspore.ops.matrix_exp` for more detail.
+    Refer to :func:`mindspore.ops.matrix_exp` for more details.
 
     .. math::
 
@@ -6142,19 +6142,25 @@ class MatrixSolve(Primitive):
     Solves systems of linear equations.
 
     Args:
-        adjoint(bool): Indicating whether to solve with matrix or its (block-wise) adjoint. Default: False.
+        adjoint (bool, optional): Indicating whether to solve with matrix or
+            its (block-wise) adjoint. Default: False.
 
     Inputs:
-        - **matrix** (Tensor) - The shape of tensor is :math:`[..., M, M]`.
-        - **rhs** (Tensor) - The shape of tensor is :math:`[..., M, K]`. 'rhs' must have the same type as `matrix`.
+        - **matrix** (Tensor) - A tensor of shape :math:`[..., M, M]`,
+          is a matrix of coefficients for a system of linear equations.
+        - **rhs** (Tensor) - A tensor of shape :math:`[..., M, K]`,
+          is a matrix of the resulting values of a system of linear equations.
+          'rhs' must have the same type as `matrix`.
 
     Outputs:
-        A Tensor. Has the same type and shape as 'rhs'.
+        Tensor, a matrix composed of solutions to a system of linear equations,
+        which has the same type and shape as 'rhs'.
 
     Raises:
-        TypeError: If adjoint is not the type of bool.
-        TypeError: If the type of matrix is not one of the following dtype:
-                   mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128.
+        TypeError: If `adjoint` is not the type of bool.
+        TypeError: If the type of `matrix` is not one of the following dtype:
+                   mstype.float16, mstype.float32, mstype.float64, mstype.complex64,
+                   mstype.complex128.
         TypeError: If the type of `matrix` is not the same as that of `rhs`.
         ValueError: If the rank of `matrix` less than 2.
         ValueError: If the dimension of `matrix` is not the same as `rhs`.
@@ -6799,15 +6805,13 @@ class STFT(Primitive):
 
     Args:
         n_fft (int): The size of Fourier transform.
-        hop_length (int): The distance between neighboring sliding window
-            frames.
+        hop_length (int): The distance between neighboring sliding window frames.
         win_length (int): the size of window frame and STFT filter.
-        normalized (bool): controls whether to return the normalized STFT results
+        normalized (bool): controls whether to return the normalized STFT results.
         onesided (bool): controls whether to return half of results to
             avoid redundancy for real inputs.
-        return_complex (bool, optional): whether to return a complex tensor, or
-            a real tensor with an extra last dimension for the real and
-            imaginary components.
+        return_complex (bool): If True, return a complex tensor. If False, return
+            a real tensor with an extra last dimension for the real and imaginary components.
 
     input:
         - **x** (Tensor) - Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
@@ -7147,11 +7151,14 @@ class TrilIndices(Primitive):
 
 class MatrixTriangularSolve(Primitive):
     r"""
-    Returns a new tensor with the solotion of a linear equation system with an upper or lower triangular matrix.
+    Returns a new tensor with the solotion of a linear equation system with an
+    upper or lower triangular matrix.
 
     Args:
-        lower (bool): If true, the innermost matrices in `matrix` is are lower triangular. Default: True.
-        adjoint (bool): If true, solve with the adjoint of `matrix`. Default: False.
+        lower (bool, optional): If True, the innermost matrices in `matrix` is
+            are lower triangular. Default: True.
+        adjoint (bool, optional): If True, solve with the adjoint of `matrix`.
+            Default: False.
 
     Inputs:
         - **matrix** (Tensor) - Tensor of shape :math:`(*, M, M)`,
@@ -7160,7 +7167,7 @@ class MatrixTriangularSolve(Primitive):
           with float32, float64, complex64 and complex128 data type.
 
     Outputs:
-        Tensor, has the shape of math:`(*, M, N)` and the same data type as `matrix`.
+        Tensor, has the shape of :math:`(*, M, N)` and the same data type as `matrix`.
 
     Raises:
         TypeError: If `matrix` or `rhs` is not a Tensor.
