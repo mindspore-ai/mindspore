@@ -4590,7 +4590,10 @@ def _check_fold_param(param, param_name):
     validator.check_value_type(param_name, param, [int, list, tuple], 'fold')
     param = (param, param) if isinstance(param, int) else param
     validator.check(param_name + " size", len(param), "", 2, Rel.EQ, 'fold')
-    validator.check_positive_int_sequence(param, param_name, 'fold')
+    if param_name == "padding":
+        validator.check_non_negative_int_sequence(param, param_name, 'fold')
+    else:
+        validator.check_positive_int_sequence(param, param_name, 'fold')
     return param
 
 
@@ -4648,7 +4651,10 @@ def _check_unfold_params(param, param_name, param_size):
     validator.check_value_type(param_name, param, [int, tuple, list], 'unfold')
     param = (param, param) if isinstance(param, int) else param
     validator.check(param_name + " size", len(param), "", param_size, Rel.IN, 'unfold')
-    validator.check_positive_int_sequence(param, param_name, 'unfold')
+    if param_name == "padding":
+        validator.check_non_negative_int_sequence(param, param_name, 'unfold')
+    else:
+        validator.check_positive_int_sequence(param, param_name, 'unfold')
     return param
 
 
@@ -4682,7 +4688,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         TypeError: If any data type of `kernel_size`, `stride`, `dilation`, `kernel_size` is not int, tuple or list.
         ValueError: If `kernel_size`, `dilation`, `stride` value is not
             greater than zero or elements number more than `2`.
-        ValueError: If `padding` value is not greater than zero.
+        ValueError: If `padding` value is less than zero.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
