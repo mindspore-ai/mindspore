@@ -20,6 +20,8 @@
 
 namespace mindspore::expander::bprop {
 namespace {
+const auto diag_max_length = 200000000;
+
 NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params, const NodePtr &ids,
                                 const NodePtr &zero_clipped_indices_param = nullptr,
                                 const NodePtr &is_positive_param = nullptr) {
@@ -298,8 +300,8 @@ REG_BPROP_BUILDER("StridedSlice").SetBody([](const BpropIRBuilder *ib) -> NodePt
                       {"new_axis_mask", ib->GetAttr("new_axis_mask")},
                       {"shrink_axis_mask", ib->GetAttr("shrink_axis_mask")}});
   auto dbegin = ib->ZerosLike(begin);
-  auto dend = ib->ZerosLike(begin);
-  auto dstrides = ib->ZerosLike(begin);
+  auto dend = ib->ZerosLike(end);
+  auto dstrides = ib->ZerosLike(strides);
   return {dx, dbegin, dend, dstrides};
 });
 
@@ -871,7 +873,6 @@ REG_BPROP_BUILDER("Fill").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {ib->ZerosLike(dtype), ib->ZerosLike(dims), ib->ZerosLike(x)};
 });
 
-const auto diag_max_length = 200000000;
 REG_BPROP_BUILDER("MatrixDiagV3").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto k = ib->GetInput(kIndex1);
   auto num_rows = ib->GetInput(kIndex2);
@@ -903,11 +904,13 @@ REG_BPROP_BUILDER("MatrixSetDiagV3").SetBody([](const BpropIRBuilder *ib) -> Nod
   auto diagonal = ib->GetInput(kIndex1);
   auto k = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
+  auto max_length = MakeValue<int64_t>(diag_max_length);
   auto diagonal_cal = ib->Emit("MatrixDiagPartV3", {dout, k, ib->Tensor(0, ib->GetDtype(dout))},
-                               {{"align", align}, {"max_length", MakeValue<int64_t>(diag_max_length)}});
+                               {{"align", align}, {"max_length", max_length}});
   auto diagonal_shape = ib->GetShape(diagonal);
-  auto x_cal = ib->Emit("MatrixSetDiagV3", {dout, ib->Tensor(0, ib->GetDtype(dout)), k},
-                        {{"align", align}, {"max_length", MakeValue<int64_t>(diag_max_length)}});
+  auto x_cal =
+    ib->Emit("MatrixSetDiagV3", {dout, ib->Fill(static_cast<int64_t>(0), diagonal_shape, ib->GetDtypeId(dout)), k},
+             {{"align", align}, {"max_length", max_length}});
   return {x_cal, diagonal_cal, ib->ZerosLike(k)};
 });
 

@@ -133,6 +133,8 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
       return Emit(prim::kZerosLike, {Tensor(sh)});
     } else if (v->isa<Scalar>() || v->isa<Type>()) {
       return Emit(prim::kZerosLike, {Tensor(0, v->type())});
+    } else if (v->isa<Monad>()) {
+      return Emit(prim::kZerosLike, {Tensor(0)});
     }
   }
   return Emit(prim::kZerosLike, {node});

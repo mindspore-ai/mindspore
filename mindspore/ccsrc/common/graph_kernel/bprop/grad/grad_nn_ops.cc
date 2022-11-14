@@ -111,12 +111,12 @@ REG_BPROP_BUILDER(kTopKOpName).SetBody([](const BpropIRBuilder *builder) -> Node
 
   // [0, outerdim, 2*outerdim, ..., (k-1)*outerdim]
   auto indices_dtype = builder->GetDtype(indices);
-  std::vector<int64_t> range_flatten_index_vec(outerdim);
+  std::vector<int64_t> range_flatten_index_vec(LongToSize(outerdim));
   for (int64_t i = 0; i < outerdim; i++) {
     range_flatten_index_vec[i] = i * in_lastdim;
   }
   auto range_flatten_index = builder->Tensor(range_flatten_index_vec, indices_dtype);
-  auto ind = builder->Reshape(ind_2d + range_flatten_index, {-1, 1});
+  auto ind = builder->Reshape(ind_2d + builder->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
   auto in_shape_1d = ShapeVector(1, std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>()));
   auto out_grad = builder->Emit("ScatterNd", {ind, builder->Reshape(dout0, {-1}), builder->Value(in_shape_1d)});
   out_grad = builder->Reshape(out_grad, in_shape);
