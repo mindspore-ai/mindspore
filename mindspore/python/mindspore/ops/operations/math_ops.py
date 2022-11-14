@@ -1578,11 +1578,11 @@ class Betainc(Primitive):
 
     Inputs:
         - **a** (Tensor) - A Tensor of types: float32, float64.
-        - **b** (Tensor) - A Tensor, must have the same dtype and shape as a.
-        - **x** (Tensor) - A Tensor, must have the same dtype and shape as a.
+        - **b** (Tensor) - A Tensor, must have the same dtype and shape as `a` .
+        - **x** (Tensor) - A Tensor, must have the same dtype and shape as `a` .
 
     Outputs:
-        A Tensor, has the same dtype and shape as a.
+        A Tensor, has the same dtype and shape as `a` .
 
     Raises:
         TypeError: If dtype of `a` is not float32 nor float64.
