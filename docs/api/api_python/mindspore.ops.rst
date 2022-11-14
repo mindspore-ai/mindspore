@@ -427,6 +427,7 @@ Array操作
     mindspore.ops.CumSum
     mindspore.ops.DataFormatDimMap
     mindspore.ops.DepthToSpace
+    mindspore.ops.DiagPart
     mindspore.ops.DType
     mindspore.ops.ExpandDims
     mindspore.ops.FloatStatus
