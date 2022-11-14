@@ -28,6 +28,7 @@
 #include "runtime/dev.h"
 #include "include/common/utils/python_adapter.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "distributed/init.h"
 
 namespace mindspore {
 API_GRAPH_REG(kAscendDevice, AscendGraphImpl);
@@ -39,6 +40,10 @@ void InitHccl() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   mindspore::python_adapter::set_python_env_flag(true);
+  // init hccl from distributed
+  if (!mindspore::distributed::Initialize()) {
+    MS_LOG(EXCEPTION) << "InitHccl failed.";
+  }
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   if (ms_context->backend_policy() == "ms") {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
