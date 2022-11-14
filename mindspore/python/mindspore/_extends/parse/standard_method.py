@@ -1076,6 +1076,28 @@ def log2(x):
     return F.log2(x)
 
 
+def logaddexp(x, other):
+    """
+    Computes the logarithm of the sum of exponentiations of the inputs.
+    """
+    return F.logaddexp(x, other)
+
+
+def logaddexp2(x, other):
+    """
+    Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
+    """
+    return F.logaddexp2(x, other)
+
+
+def logsumexp(x, dim, keepdim=False):
+    """
+    Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
+    then calculate logarithm of the sum.
+    """
+    return F.logsumexp(x, dim, keepdim)
+
+
 def round_(x):
     """
     Returns half to even of a tensor element-wise.

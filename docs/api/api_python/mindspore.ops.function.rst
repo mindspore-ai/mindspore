@@ -203,6 +203,8 @@ mindspore.ops.function
     mindspore.ops.log2
     mindspore.ops.log10
     mindspore.ops.log1p
+    mindspore.ops.logaddexp
+    mindspore.ops.logaddexp2
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or

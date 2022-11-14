@@ -1419,6 +1419,24 @@ class Tensor(Tensor_):
         validator.check_value_type('eps', eps, (float,), 'Tensor.logit')
         return tensor_operator_registry.get('logit')(self, eps)
 
+    def logaddexp(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.logaddexp`.
+        """
+        return tensor_operator_registry.get('logaddexp')(self, other)
+
+    def logaddexp2(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.logaddexp2`.
+        """
+        return tensor_operator_registry.get('logaddexp2')(self, other)
+
+    def logsumexp(self, dim, keepdim=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.logsumexp`.
+        """
+        return tensor_operator_registry.get('logsumexp')(self, dim, keepdim)
+
     def log_matrix_determinant(self):
         r"""
         For details, please refer to :func:`mindspore.ops.log_matrix_determinant`.
