@@ -81,6 +81,8 @@ class LiteSession : public session::LiteSession {
 #endif
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
              const std::vector<std::vector<int>> &dims) override;
+
+  int ResetBatch(int batch_size) override;
   void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
   void set_model(Model *model) { this->model_ = model; }
   const std::vector<kernel::LiteKernel *> &get_kernels() const { return this->kernels_; }
@@ -114,7 +116,8 @@ class LiteSession : public session::LiteSession {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   int SetNonTaiCallSubgraphOutputInitRefCount(const std::vector<kernel::LiteKernel *> &non_tail_call_kernels);
 #endif
-  static int ReSizeKernels(
+
+  int ReSizeKernels(
     const std::vector<kernel::LiteKernel *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> &isolate_input_map = std::unordered_map<Tensor *, Tensor *>());
   static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
@@ -184,6 +187,9 @@ class LiteSession : public session::LiteSession {
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
   std::vector<kernel::LiteKernel *> non_tail_call_kernels_;
+  bool set_batch_flg_{false};
+  int origin_batch_{0};
+  int new_batch_{0};
 };
 }  // namespace lite
 }  // namespace mindspore

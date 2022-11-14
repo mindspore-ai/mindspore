@@ -145,6 +145,13 @@ class MS_API LiteSession {
   /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
   virtual int Resize(const Vector<tensor::MSTensor *> &inputs, const Vector<Vector<int>> &dims) = 0;
 
+  /// \brief Reset batch size, It will try to reset batch even match const tensor;
+  ///
+  /// \param[in] batch_size Define the inputs new batch size.
+  ///
+  /// \return STATUS as an error code of ResetBatch, STATUS is defined in errorcode.h.
+  virtual int ResetBatch(int batch_size) = 0;
+
   /// \brief Set model to train mode
   /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h
   virtual int Train() { return mindspore::lite::RET_ERROR; }

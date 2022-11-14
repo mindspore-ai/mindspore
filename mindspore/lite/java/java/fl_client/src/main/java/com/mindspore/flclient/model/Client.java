@@ -62,6 +62,19 @@ public abstract class Client {
     private final List<ByteBuffer> inputsBuffer = new ArrayList<>();
 
     private float uploadLoss = 0.0f;
+
+    /**
+     * BatchSize record in model file
+     */
+    private int modelBatchSize = 0;
+    /**
+     * BatchSize getted from FL Server
+     */
+    private int serverBatchSize = 0;
+    /**
+     * whether bach size changed, if Batch changed must recovery it before export ms
+     */
+    private boolean batch_changed = false;
     /**
      * Get callback.
      *
@@ -113,27 +126,24 @@ public abstract class Client {
             return Status.FAILED;
         }
         trainSession = optTrainSession.get();
-        inputsBuffer.clear();
-        if (inputShapes == null) {
-            List<MSTensor> inputs = trainSession.getInputs();
-            for (MSTensor input : inputs) {
-                ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
-                inputBuffer.order(ByteOrder.nativeOrder());
-                inputsBuffer.add(inputBuffer);
-            }
-        } else {
+        if (inputShapes != null) {
             boolean isSuccess = trainSession.resize(trainSession.getInputs(), inputShapes);
             if (!isSuccess) {
                 logger.severe("session resize failed");
                 return Status.FAILED;
             }
-            for (int[] shapes : inputShapes) {
-                int size = IntStream.of(shapes).reduce((a, b) -> a * b).getAsInt() * Integer.BYTES;
-                ByteBuffer inputBuffer = ByteBuffer.allocateDirect(size);
-                inputBuffer.order(ByteOrder.nativeOrder());
-                inputsBuffer.add(inputBuffer);
-            }
         }
+        inputsBuffer.clear();
+        List<MSTensor> inputs = trainSession.getInputs();
+        for (MSTensor input : inputs) {
+            if (input.getShape().length > 0) {
+                modelBatchSize = input.getShape()[0];
+            }
+            ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
+            inputBuffer.order(ByteOrder.nativeOrder());
+            inputsBuffer.add(inputBuffer);
+        }
+        batch_changed = false;
         return Status.SUCCESS;
     }
 
@@ -143,6 +153,29 @@ public abstract class Client {
         for (int i = 0; i < inputs.size(); i++) {
             inputs.get(i).setData(inputsBuffer.get(i));
         }
+    }
+
+    private boolean ResetModelBatch() {
+        if (modelBatchSize == serverBatchSize || batch_changed) {
+            return true;
+        }
+        boolean ret = trainSession.resetBatchSize(serverBatchSize);
+        if (!ret) {
+            logger.severe("Reset batch size from " + modelBatchSize + " to " + serverBatchSize + " failed.");
+            return ret;
+        } else {
+            logger.severe("Reset batch size from " + modelBatchSize + " to " + serverBatchSize + " success.");
+        }
+
+        List<MSTensor> inputs = trainSession.getInputs();
+        inputsBuffer.clear();
+        for (MSTensor input : inputs) {
+            ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
+            inputBuffer.order(ByteOrder.nativeOrder());
+            inputsBuffer.add(inputBuffer);
+        }
+        batch_changed = true;
+        return true;
     }
 
     /**
@@ -160,6 +193,10 @@ public abstract class Client {
         if (epochs <= 0) {
             logger.severe("epochs cannot smaller than 0");
             return Status.INVALID;
+        }
+
+        if (!ResetModelBatch()) {
+            return Status.FAILED;
         }
 
         DataSet trainDataSet = dataSets.getOrDefault(RunType.TRAINMODE, null);
@@ -186,6 +223,9 @@ public abstract class Client {
         boolean isSuccess = trainSession.eval();
         if (!isSuccess) {
             logger.severe("train session switch eval mode failed");
+            return Float.NaN;
+        }
+        if (!ResetModelBatch()) {
             return Float.NaN;
         }
         DataSet evalDataSet = dataSets.getOrDefault(RunType.EVALMODE, null);
@@ -265,6 +305,18 @@ public abstract class Client {
             logger.severe("model path cannot be empty");
             return Status.NULLPTR;
         }
+
+        // do batch size recover
+        if (batch_changed) {
+            boolean ret = trainSession.resetBatchSize(modelBatchSize);
+            if (!ret) {
+                logger.severe("Reset batch size from " + serverBatchSize + " to " + modelBatchSize + " failed.");
+            } else {
+                logger.severe("Reset batch size from " + serverBatchSize + " to " + modelBatchSize + " success.");
+                batch_changed = false;
+            }
+        }
+
         boolean isSuccess = trainSession.export(modelPath, 0, 1);
         if (!isSuccess) {
             logger.severe("save model failed");
@@ -451,6 +503,7 @@ public abstract class Client {
         for (DataSet dataset : dataSets.values()) {
             dataset.batchSize = batchSize;
         }
+        this.serverBatchSize = batchSize;
     }
 
     public float getUploadLoss() {

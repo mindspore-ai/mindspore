@@ -56,14 +56,10 @@ public class LossCallback extends Callback {
             return Status.NULLPTR;
         }
         float loss = tensor.get().getFloatData()[0];
-        if (Float.isNaN(loss)) {
-            logger.severe("loss is nan");
-            return Status.FAILED;
-        }
         logger.info("batch:" + steps + ",loss:" + loss);
         lossSum += loss;
         steps++;
-        return Status.SUCCESS;
+        return Float.isNaN(loss) ? Status.FAILED : Status.SUCCESS;
     }
 
     @Override
