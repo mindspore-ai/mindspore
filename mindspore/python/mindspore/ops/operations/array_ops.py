@@ -3533,7 +3533,7 @@ class DiagPart(PrimitiveWithCheck):
     :math:`output[i_1,..., i_k] = input[i_1,..., i_k, i_1,..., i_k]`.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor of rank 2k, k is not zero.
+        - **input_x** (Tensor) - The rank of input tensor is 2k(k > 0).
 
     Outputs:
         Tensor, the extracted diagonal has the same dtype as the `input_x`.
