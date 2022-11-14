@@ -57,6 +57,7 @@ TypePtr LowerBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
   (void)input_types.emplace("values", values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, input_valid_types, primitive->name());
   auto dtype_attr = primitive->GetAttr("out_type");
+  MS_EXCEPTION_IF_NULL(dtype_attr);
   auto out_type = dtype_attr->cast<TypePtr>();
   auto out_type_id = out_type->type_id();
   MS_EXCEPTION_IF_NULL(out_type);

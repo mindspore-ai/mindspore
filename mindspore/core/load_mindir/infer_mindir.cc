@@ -66,7 +66,7 @@ class MindIREngine {
 
   FuncGraphPtr func_graph_;
   std::map<AnfNodePtr, int> node_input_depends_;
-  std::map<AnfNodePtr, AbstractBasePtr> infer_resut_;
+  std::map<AnfNodePtr, AbstractBasePtr> infer_result_;
   std::map<std::string, AbstractBasePtr> func_graph_result_;
   std::map<std::string, std::set<AnfNodePtr>> func_graph_visited_;
   std::deque<AnfNodePtr> ready_;
@@ -94,7 +94,7 @@ bool MindIREngine::InferShape(const AbstractBasePtrList &args) {
   }
 
   // Set abstract of node.
-  for (const auto &item : infer_resut_) {
+  for (const auto &item : infer_result_) {
     item.first->set_abstract(item.second);
   }
 
@@ -125,7 +125,9 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
       MS_EXCEPTION_IF_NULL(param);
       if (param->has_default()) {
         node_input_depends_[node] = 0;
-        infer_resut_[node] = param->default_param()->ToAbstract();
+        auto default_param = param->default_param();
+        MS_EXCEPTION_IF_NULL(default_param);
+        infer_result_[node] = default_param->ToAbstract();
         ready_.push_back(node);
       } else {
         node_input_depends_[node] = 1;
@@ -140,8 +142,10 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
 
   auto inputs = func_graph_->get_inputs();
   if (inputs.size() != args.size()) {
-    MS_LOG(EXCEPTION) << "The input parameters is not Compatible. mindir:" << inputs.size()
-                      << " inputs: " << args.size() << " FuncGraph:" << func_graph_->ToString();
+    MS_LOG(EXCEPTION) << "The input number of parameters is not Compatible.\n"
+                      << "Mindir:" << inputs.size() << " inputs: " << args.size()
+                      << " FuncGraph:" << func_graph_->ToString() << "\n"
+                      << "For more details, please refer to the FAQ at https://www.mindspore.cn.";
   }
   // Root Func Parameters
   for (size_t i = 0; i < args.size(); ++i) {
@@ -208,7 +212,7 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
     (void)args_spec_list.insert(args_spec_list.end(), args->begin(), args->end());
   } else {
     (void)std::transform(node->inputs().begin() + 1, node->inputs().end(), std::back_inserter(args_spec_list),
-                         [this](const AnfNodePtr &arg) { return infer_resut_[arg]; });
+                         [this](const AnfNodePtr &arg) { return infer_result_[arg]; });
   }
 
   // Call C++ infer
@@ -225,7 +229,7 @@ void MindIREngine::EvalReturnPrimitive(const CNodePtr &node) {
   if (node->inputs().size() < 2) {
     MS_LOG(EXCEPTION) << node->DebugString() << " input size < 2";
   }
-  auto result = infer_resut_[node->inputs()[1]];
+  auto result = infer_result_[node->inputs()[1]];
   auto funcName = node->func_graph()->ToString();
   auto it = func_graph_result_.find(funcName);
   if (it != func_graph_result_.end()) {
@@ -267,14 +271,14 @@ void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBase
   if (node->inputs().size() < kSizeTwo) {
     MS_LOG(EXCEPTION) << node->DebugString() << " input size < " << kSizeTwo;
   }
-  auto &func = infer_resut_[node->inputs()[1]];
+  auto &func = infer_result_[node->inputs()[1]];
   auto real_func = func->cast<abstract::AbstractFuncAtomPtr>();
   if (real_func == nullptr) {
     MS_LOG(EXCEPTION) << func->ToString() << " is not a function abstract.";
   }
   AbstractBasePtrList partial_args_list;
   (void)std::transform(node->inputs().begin() + 2, node->inputs().end(), std::back_inserter(partial_args_list),
-                       [this](const AnfNodePtr &arg) { return infer_resut_[arg]; });
+                       [this](const AnfNodePtr &arg) { return infer_result_[arg]; });
   auto partial_func = std::make_shared<abstract::PartialAbstractClosure>(real_func, partial_args_list, node);
   SaveNodeInferResult(node, partial_func);
 }
@@ -288,7 +292,7 @@ void MindIREngine::EvalPartialAbastract(const abstract::PartialAbstractClosurePt
   if (args == nullptr) {
     // Not Recursive
     (void)std::transform(node->inputs().begin() + 1, node->inputs().end(), std::back_inserter(*partial_args_list),
-                         [this](const AnfNodePtr &arg) { return infer_resut_[arg]; });
+                         [this](const AnfNodePtr &arg) { return infer_result_[arg]; });
   } else {
     // Recursive
     (void)partial_args_list->insert(partial_args_list->end(), args->begin(), args->end());
@@ -309,8 +313,8 @@ void MindIREngine::SaveNodeInferResult(const AnfNodePtr &node, const AbstractBas
   auto answer = result;
   try {
     MS_LOG_TRY_CATCH_SCOPE;
-    auto it = infer_resut_.find(node);
-    if (it != infer_resut_.end()) {
+    auto it = infer_result_.find(node);
+    if (it != infer_result_.end()) {
       MS_LOG(DEBUG) << node->ToString() << " result: " << it->second->ToString();
       answer = result->Join(it->second);
       if (*answer == *(it->second)) {
@@ -324,7 +328,7 @@ void MindIREngine::SaveNodeInferResult(const AnfNodePtr &node, const AbstractBas
   }
 
   MS_LOG(DEBUG) << node->ToString() << " result: " << answer->ToString();
-  infer_resut_[node] = answer;
+  infer_result_[node] = answer;
   UpdateReady(node);
 }
 
@@ -348,7 +352,7 @@ void MindIREngine::EvalPrimitiveAbastract(const abstract::PrimitiveAbstractClosu
 bool MindIREngine::CheckCNodeNotReady(const CNodePtr &node) {
   int depend = 0;
   for (const auto &input : node->inputs()) {
-    depend += infer_resut_.find(input) != infer_resut_.end() ? 0 : 1;
+    depend += infer_result_.find(input) != infer_result_.end() ? 0 : 1;
   }
   this->node_input_depends_[node] = depend;
   return depend != 0;
@@ -376,7 +380,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
                           << " CNode:" << node->DebugString() << " input size:" << args->size();
       }
       for (size_t i = 0; i < func_inputs.size(); ++i) {
-        infer_resut_[func_inputs[i]] =
+        infer_result_[func_inputs[i]] =
           (*args)[i];  // Not use SaveNodeInferResult because this function has been evaluated.
         (void)todo_.erase(func_inputs[i]);
       }
@@ -389,7 +393,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
                         << " CNode:" << node->DebugString() << " input size:" << cnode_inputs.size();
     }
     for (size_t i = 0; i < func_inputs.size(); ++i) {
-      infer_resut_[func_inputs[i]] = infer_resut_[cnode_inputs[i + 1]];
+      infer_result_[func_inputs[i]] = infer_result_[cnode_inputs[i + 1]];
       (void)todo_.erase(func_inputs[i]);
     }
     return;
@@ -427,7 +431,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
   }
 
   for (size_t i = 0; i < func_inputs.size(); ++i) {
-    SaveNodeInferResult(func_inputs[i], infer_resut_[cnode_inputs[i + 1]]);
+    SaveNodeInferResult(func_inputs[i], infer_result_[cnode_inputs[i + 1]]);
   }
 }
 
@@ -462,8 +466,8 @@ AbstractBasePtr MindIREngine::GetCNodeOperatorAbstract(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto op = cnode->inputs()[0];
-  auto it = infer_resut_.find(op);
-  if (it != infer_resut_.end()) {
+  auto it = infer_result_.find(op);
+  if (it != infer_result_.end()) {
     return it->second;
   }
   MS_LOG(EXCEPTION) << "Can't get the abstract of Node:" << op->DebugString();
@@ -519,7 +523,10 @@ void MindIREngine::InferCNode(const AnfNodePtr &node) {
     return;
   }
   AbstractBasePtr possible_func = GetCNodeOperatorAbstract(cnode);
-  if (possible_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+  MS_EXCEPTION_IF_NULL(possible_func);
+  auto type = possible_func->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->type_id() == kObjectTypeUndeterminedType) {
     MS_LOG(EXCEPTION) << "EvalCNode eval Undetermined";
   }
   abstract::AbstractFunctionPtr func = dyn_cast<abstract::AbstractFunction>(possible_func);
