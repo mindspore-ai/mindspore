@@ -771,6 +771,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
                 op_name = name if name else fn.__name__
                 PrimitiveWithInfer.__init__(self, op_name)
                 self.set_const_prim(True)
+                self.fn = fn
                 if not reuse_result:
                     self.add_prim_attr('forbid_reuse_result', True)
 

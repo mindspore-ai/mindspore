@@ -18,7 +18,6 @@ import os
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import context
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 import mindspore.ops.functional as F
@@ -28,6 +27,7 @@ from mindspore.common.initializer import initializer
 import mindspore.ops._grad as g
 from mindspore.ops._grad.grad_base import bprop_getters, bprops
 from mindspore._c_expression import _check_bprop_mindir
+from mindspore import mutable
 
 
 class Net(nn.Cell):
@@ -506,7 +506,6 @@ def test_switch():
     Description: Compile the backward graph for the switch op.
     Expectation: Load the bprop mindir successfully.
     """
-    context.set_context(mode=context.PYNATIVE_MODE)
 
     class SwitchNet(nn.Cell):
         def construct(self, x, y):
@@ -652,3 +651,242 @@ def test_relu_v2():
     relu_v2 = Net(P.ReLUV2())
     grad = GradNet(relu_v2)
     grad.compile(x)
+
+
+def test_cast():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the cast op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([1.0]), mstype.float32)
+    cast = Net(P.Cast())
+    grad = GradNet(cast)
+    grad.compile(x, mstype.int32)
+
+
+def test_split():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the split op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mstype.int32)
+    split = Net(P.Split(1, 2))
+    grad = GradNet(split)
+    grad.compile(x)
+
+
+def test_reshape():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the reshape op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
+    reshape = Net(P.Reshape())
+    grad = GradNet(reshape)
+    grad.compile(x, (3, 2))
+
+
+def test_expand_dims():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the expand_dims op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[2, 2], [2, 2]]), mstype.float32)
+    expand_dims = Net(P.ExpandDims())
+    grad = GradNet(expand_dims)
+    grad.compile(x, 0)
+
+
+def test_squeeze():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the squeeze op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.ones(shape=[3, 2, 1]), mstype.float32)
+    squeeze = Net(P.Squeeze(2))
+    grad = GradNet(squeeze)
+    grad.compile(x)
+
+
+def test_flatten():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the flatten op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.ones(shape=[1, 2, 3, 4]), mstype.float32)
+    flatten = Net(P.Flatten())
+    grad = GradNet(flatten)
+    grad.compile(x)
+
+
+def test_tile():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the tile op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]), mstype.float32)
+    tile = Net(P.Tile())
+    grad = GradNet(tile)
+    grad.compile(x, (2, 3))
+
+
+def test_embedding_lookup():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the embedding_lookup op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
+    input_indices = Tensor(np.array([[5, 2], [8, 5]]), mstype.int32)
+    offset = 4
+    embedding_lookup = Net(P.EmbeddingLookup())
+    grad = GradNet(embedding_lookup)
+    grad.compile(input_params, input_indices, offset)
+
+
+def test_padding():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the padding op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[8], [10]]), mstype.float32)
+    padding = Net(P.Padding(4))
+    grad = GradNet(padding)
+    grad.compile(x)
+
+
+def test_transpose():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the transpose op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mstype.float32)
+    perm = (0, 2, 1)
+    transpose = Net(P.Transpose())
+    grad = GradNet(transpose)
+    grad.compile(x, perm)
+
+
+def test_concat():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the concat op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    concat = Net(P.Concat())
+    grad = GradNet(concat)
+    grad.compile(mutable((x1, x2)))
+
+
+def test_slice():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the slice op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
+                         [[3, 3, 3], [4, 4, 4]],
+                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
+    slice_net = Net(P.Slice())
+    grad = GradNet(slice_net)
+    grad.compile(x, (1, 0, 0), (1, 1, 3))
+
+
+def test_gather():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the gather op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    input_params = Tensor(np.array([1, 2, 3, 4, 5, 6, 7]), mstype.float32)
+    input_indices = Tensor(np.array([0, 2, 4, 2, 6]), mstype.int32)
+    gather = Net(P.Gather())
+    grad = GradNet(gather)
+    grad.compile(input_params, input_indices, 0)
+
+
+def test_gather_d():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the gather_d op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]), mstype.int32)
+    index = Tensor(np.array([[0, 0], [1, 0]]), mstype.int32)
+    gather_d = Net(P.GatherD())
+    grad = GradNet(gather_d)
+    grad.compile(x, 1, index)
+
+
+def test_sort():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the sort op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mstype.float16)
+    sort = Net(P.Sort())
+    grad = GradNet(sort)
+    grad.compile(x)
+
+
+def test_reverse_v2():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the reverse_v2 op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mstype.int32)
+    reverse_v2 = Net(P.ReverseV2(axis=[1]))
+    grad = GradNet(reverse_v2)
+    grad.compile(x)
+
+
+def test_unstack():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the unstack op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
+    unstack = Net(P.Unstack())
+    grad = GradNet(unstack)
+    grad.compile(x)
+
+
+def test_strided_slice():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the strided_slice op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
+                [[5, 5, 5], [6, 6, 6]]], mstype.float32)
+    strided_slice = Net(P.StridedSlice())
+    grad = GradNet(strided_slice)
+    grad.compile(x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
+
+
+def test_strided_slice_grad():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the strided_slice_grad op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
+                [[5, 5, 5], [6, 6, 6]]], mstype.float32)
+    strided_slice = Net(P.StridedSlice())
+    grad = GradNet(strided_slice)
+    second_grad = GradNet(grad)
+    second_grad.compile(x, (1, 0, 2), (3, 1, 3), (1, 1, 1))

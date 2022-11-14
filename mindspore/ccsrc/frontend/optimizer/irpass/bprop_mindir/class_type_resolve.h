@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_META_FG_H
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_META_FG_H
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_CLASS_TYPE_RESOLVE_H
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_CLASS_TYPE_RESOLVE_H
 
 #include <string>
 #include <memory>
@@ -26,23 +26,17 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-class BpropGetMetaFg : public AnfVisitor {
+class ClassTypeResolve : public AnfVisitor {
+ public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsValueNode<MindIRMetaFuncGraph>(node)) {
+    if (!IsValueNode<parse::ClassType>(node)) {
       return nullptr;
     }
-    static mindspore::HashMap<std::string, MetaFuncGraphPtr> meta_fgs{
-      {"unpack_call", std::make_shared<prim::UnpackCall>("unpack_call")},
-    };
-    auto meta_fg_name = GetValueNode<MindIRMetaFuncGraphPtr>(node)->name();
-    auto iter = meta_fgs.find(meta_fg_name);
-    if (iter == meta_fgs.end()) {
-      return nullptr;
-    }
-    return NewValueNode(iter->second);
+    auto class_type = GetValueNode<parse::ClassTypePtr>(node)->name();
+    return NewValueNode(std::make_shared<MindIRClassType>(class_type));
   }
 };
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_META_FG_H
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_CLASS_TYPE_RESOLVE_H

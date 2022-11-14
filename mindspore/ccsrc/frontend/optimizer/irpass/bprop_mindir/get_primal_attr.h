@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_PRIMAL_ATTR_H
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_PRIMAL_ATTR_H
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_PRIMAL_ATTR_H
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_PRIMAL_ATTR_H
 
 #include <string>
 #include "frontend/optimizer/optimizer.h"
@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-class BpropGetPrimalAttr : public AnfVisitor {
+class GetPrimalAttr : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
@@ -72,4 +72,4 @@ class BpropGetPrimalAttr : public AnfVisitor {
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_PRIMAL_ATTR_H
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_PRIMAL_ATTR_H

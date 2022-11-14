@@ -138,6 +138,7 @@ class IrExportBuilder {
   bool SetAbstractToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetAbstractToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetNamedValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
   bool SetScalarToAttributeProtoForInt_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
@@ -713,7 +714,13 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
   if (IsValueNode<Primitive>(node)) {
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
     MS_EXCEPTION_IF_NULL(prim);
-    type_name = "REF::" + GetPrimitiveUniqueName(prim);
+    auto do_sign_prim = prim->cast_ptr<prim::DoSignaturePrimitive>();
+    if (do_sign_prim != nullptr && do_sign_prim->function() != nullptr &&
+        do_sign_prim->function()->isa<MetaFuncGraph>()) {
+      type_name = "REF::MetaFuncGraph::" + do_sign_prim->function()->cast_ptr<MetaFuncGraph>()->name();
+    } else {
+      type_name = "REF::" + GetPrimitiveUniqueName(prim);
+    }
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
     MS_EXCEPTION_IF_NULL(fg);
@@ -1023,6 +1030,30 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
   return true;
 }
 
+bool IrExportBuilder::SetNamedValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
+  if (value->isa<None>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_NONE);
+    MS_LOG(DEBUG) << "Attr string: " << value->type_name();
+  } else if (value->isa<MindIRClassType>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_CLASS_TYPE);
+    auto class_type = GetValue<MindIRClassTypePtr>(value)->name();
+    // class 'XXX' -> XXX
+    constexpr int64_t path_begin_index = 7;
+    auto str = std::string(class_type.begin() + path_begin_index, class_type.end() - 1);
+    attr_proto->set_s(str);
+  } else if (value->isa<MindIRNameSpace>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_NAME_SPACE);
+    attr_proto->set_s(GetValue<MindIRNameSpacePtr>(value)->name_space());
+  } else if (value->isa<MindIRSymbol>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_SYMBOL);
+    attr_proto->set_s(GetValue<MindIRSymbolPtr>(value)->symbol());
+  } else {
+    MS_LOG(ERROR) << "Unsupported named type: " << value->type_name();
+    return false;
+  }
+  return true;
+}
+
 bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
   if (value == nullptr || attr_proto == nullptr) {
     MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
@@ -1045,8 +1076,10 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
     MS_LOG(DEBUG) << "Attr string: " << value->type_name();
   } else if (value->isa<tensor::Tensor>()) {
     return SetTensorToAttributeProto(value, attr_proto);
-  } else if (value->isa<None>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_NONE);
+  } else if (value->isa<Named>()) {
+    return SetNamedValueToAttributeProto(value, attr_proto);
+  } else if (value->isa<TypeNull>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TYPE_NULL);
     MS_LOG(DEBUG) << "Attr string: " << value->type_name();
   } else if (value->isa<Monad>()) {
     if (value->isa<UMonad>()) {
@@ -1057,13 +1090,6 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
       MS_LOG(ERROR) << "Unsupported Monad type: " << value->type_name();
       return false;
     }
-  } else if (value->isa<MindIRClassType>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_CLASS_TYPE);
-    auto class_type = GetValue<MindIRClassTypePtr>(value)->name();
-    // class 'XXX' -> XXX
-    constexpr int64_t path_begin_index = 7;
-    auto str = std::string(class_type.begin() + path_begin_index, class_type.end() - 1);
-    attr_proto->set_s(str);
   } else {
     MS_LOG(ERROR) << "Unsupported type: " << value->type_name();
     return false;

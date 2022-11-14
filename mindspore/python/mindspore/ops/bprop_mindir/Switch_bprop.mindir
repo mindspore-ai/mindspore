@@ -1,33 +1,29 @@
 
-0.1.1	MindSpore*2.0.0:ú
-
-°
-bprop_switch.473:condbprop_switch.473:[CNode]474:1bprop_switch.473:[CNode]474:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:/Default/S-Prim-hyper_map[zeros_like_leaf]-op200
-®
-bprop_switch.473:tbbprop_switch.473:[CNode]475:3bprop_switch.473:[CNode]475:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:4:/Default/S-Prim-hyper_map[zeros_like_leaf]-op201
-¾
-bprop_switch.473:cond
-bprop_switch.473:dout
-bprop_switch.473:[CNode]475:3bprop_switch.473:[CNode]476:5bprop_switch.473:[CNode]476:5"REF::S-Prim-Switch:6:Default/S-Prim-Switch-op202
-®
-bprop_switch.473:fbbprop_switch.473:[CNode]477:7bprop_switch.473:[CNode]477:7"(REF::S-Prim-hyper_map[zeros_like_leaf]:8:/Default/S-Prim-hyper_map[zeros_like_leaf]-op203
-¿
-bprop_switch.473:cond
-bprop_switch.473:[CNode]477:7
-bprop_switch.473:doutbprop_switch.473:[CNode]478:9bprop_switch.473:[CNode]478:9"REF::S-Prim-Switch:10:Default/S-Prim-Switch-op204
-×
-bprop_switch.473:[CNode]474:1
-bprop_switch.473:[CNode]476:5
-bprop_switch.473:[CNode]478:9bprop_switch.473:[CNode]479:11bprop_switch.473:[CNode]479:11"REF::S-Prim-MakeTuple:12:Default/S-Prim-MakeTuple-op205bprop_switch.473*
-bprop_switch.473:cond*
-bprop_switch.473:tb*
-bprop_switch.473:fb*
-bprop_switch.473:out*
-bprop_switch.473:dout2 
-bprop_switch.473:[CNode]479:11:@d3264eca4875ab1cf6668a10d5327962d377f004f7da2be28a63703caa149c45J/grad_implementations.pyPb!
-S-Prim-Switch:10S-Prim-Switchb 
-S-Prim-Switch:6S-Prim-Switchb'
-S-Prim-MakeTuple:12S-Prim-MakeTuplebH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]bH
-#S-Prim-hyper_map[zeros_like_leaf]:8!S-Prim-hyper_map[zeros_like_leaf]bH
-#S-Prim-hyper_map[zeros_like_leaf]:4!S-Prim-hyper_map[zeros_like_leaf]h
+0.1.1	MindSpore*2.0.0:¾
+¼
+bprop_switch.1324:condbprop_switch.1324:[CNode]1325:1bprop_switch.1324:[CNode]1325:1".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:0Default/S-Prim-hyper_map[zeros_like_leaf]-op1026
+º
+bprop_switch.1324:tbbprop_switch.1324:[CNode]1326:2bprop_switch.1324:[CNode]1326:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:0Default/S-Prim-hyper_map[zeros_like_leaf]-op1027
+Ç
+bprop_switch.1324:cond
+bprop_switch.1324:dout
+bprop_switch.1324:[CNode]1326:2bprop_switch.1324:[CNode]1327:3bprop_switch.1324:[CNode]1327:3"REF::S-Prim-Switch:4:Default/S-Prim-Switch-op1028
+º
+bprop_switch.1324:fbbprop_switch.1324:[CNode]1328:5bprop_switch.1324:[CNode]1328:5".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:0Default/S-Prim-hyper_map[zeros_like_leaf]-op1029
+Ç
+bprop_switch.1324:cond
+bprop_switch.1324:[CNode]1328:5
+bprop_switch.1324:doutbprop_switch.1324:[CNode]1329:6bprop_switch.1324:[CNode]1329:6"REF::S-Prim-Switch:7:Default/S-Prim-Switch-op1030
+ß
+bprop_switch.1324:[CNode]1325:1
+bprop_switch.1324:[CNode]1327:3
+bprop_switch.1324:[CNode]1329:6bprop_switch.1324:[CNode]1330:8bprop_switch.1324:[CNode]1330:8"REF::S-Prim-MakeTuple:9:Default/S-Prim-MakeTuple-op1031bprop_switch.1324*
+bprop_switch.1324:cond*
+bprop_switch.1324:tb*
+bprop_switch.1324:fb*
+bprop_switch.1324:out*
+bprop_switch.1324:dout2!
+bprop_switch.1324:[CNode]1330:8:@d3264eca4875ab1cf6668a10d5327962d377f004f7da2be28a63703caa149c45J/grad_implementations.pyPb 
+S-Prim-Switch:7S-Prim-Switchb&
+S-Prim-MakeTuple:9S-Prim-MakeTupleb 
+S-Prim-Switch:4S-Prim-Switchh

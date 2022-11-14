@@ -278,7 +278,6 @@ def vm_impl_sum(self):
 
 
 @vm_impl_getters.register(P.Select)
-@vm_impl_getters.register(P.Select.__name__)
 def vm_impl_select(self):
     """Generate vm_impl function for Select"""
 
@@ -332,15 +331,6 @@ def vm_impl_depend(self):
     """Generate vm_impl function for Depend"""
     def vm_impl(value, expr):
         return value
-
-    return vm_impl
-
-
-@vm_impl_getters.register(P.UpdateState)
-def vm_impl_updatestate(self):
-    """Generate vm_impl function for UpdateState"""
-    def vm_impl(monad, expr):
-        return monad
 
     return vm_impl
 

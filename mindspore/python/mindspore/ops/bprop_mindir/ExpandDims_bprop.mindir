@@ -1,0 +1,60 @@
+
+0.1.1	MindSpore*2.0.0:±
+r$get_bprop_expand_dims.54:[CNode]55:1$get_bprop_expand_dims.54:[CNode]55:1"REF::bprop.56:Default/bprop.56-op38get_bprop_expand_dims.54*
+get_bprop_expand_dims.54:self*
+get_bprop_expand_dims.54:x*!
+get_bprop_expand_dims.54:Ñ„axis*
+get_bprop_expand_dims.54:out*!
+get_bprop_expand_dims.54:Ñ„dout2&
+$get_bprop_expand_dims.54:[CNode]55:1:@00d0022c94fe11f40233eef241df1b2a18e6c066a343dc8b3b09893ac000b6f0J/grad_array_ops.pyBË
+r
+get_bprop_expand_dims.54:xbprop.56:shapex:2bprop.56:shapex:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op39
+…
+bprop.56:shapex:2bprop.56:[CNode]57:4bprop.56:[CNode]57:4"REF::S-Prim-is_shape_unknown:5:$Default/S-Prim-is_shape_unknown-op40
+h
+bprop.56:[CNode]57:4bprop.56:[CNode]58:6bprop.56:[CNode]58:6"REF::bool_.59:Default/bool_.59-op41
+€
+bprop.56:[CNode]58:6
+âœ“bprop.60
+âœ—bprop.61bprop.56:[CNode]62:7bprop.56:[CNode]62:7"REF::Switch:8:Default/Switch-op42
+Kbprop.56:[CNode]63:9bprop.56:[CNode]63:9"REF::bprop.56:[CNode]62:7:43
+p
+bprop.56:[CNode]63:9bprop.56:[CNode]64:10bprop.56:[CNode]64:10"REF::â†“bprop.65:Default/â†“bprop.65-op44bprop.562
+bprop.56:[CNode]64:10BË
+£â†“bprop.65:66:11â†“bprop.65:66:11":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:?Default/class 'mindspore.ops.operations.array_ops.Reshape'-op45
+y
+get_bprop_expand_dims.54:Ñ„dout
+â†“bprop.65:Ñ„shapexâ†“bprop.65:66:12â†“bprop.65:66:12"REF::â†“bprop.65:66:11:46
+µ
+get_bprop_expand_dims.54:Ñ„axisâ†“bprop.65:[CNode]67:13â†“bprop.65:[CNode]67:13".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op47
+š
+â†“bprop.65:66:12
+â†“bprop.65:[CNode]67:13â†“bprop.65:[CNode]68:14â†“bprop.65:[CNode]68:14"REF::S-Prim-MakeTuple:15:Default/S-Prim-MakeTuple-op48â†“bprop.65*
+â†“bprop.65:Ñ„shapex2
+â†“bprop.65:[CNode]68:14B
+after_block€	B"âœ—bprop.612
+bprop.56:shapex:2B°
+‡
+get_bprop_expand_dims.54:xâœ“bprop.60:shapex:16âœ“bprop.60:shapex:16"REF::S-Prim-TensorShape:17:Default/S-Prim-TensorShape-op49âœ“bprop.602
+âœ“bprop.60:shapex:16B³
+>[ValueNode]69[ValueNode]69"Constant*
+value*__bool__€
+p
+
+bool_.59:x
+[ValueNode]69bool_.59:[CNode]70:18bool_.59:[CNode]70:18"REF::getattr:19:Default/getattr-op50
+Nbool_.59:[CNode]71:20bool_.59:[CNode]71:20"REF::bool_.59:[CNode]70:18:51bool_.59*
+
+bool_.59:x2
+bool_.59:[CNode]71:20Pb
+Switch:8Switchb
+
+getattr:19getattrbŽ
+S-Prim-is_shape_unknown:5S-Prim-is_shape_unknown1
+constexpr_module*mindspore.ops._utils.utils€%
+constexpr_name*is_shape_unknown€b'
+S-Prim-MakeTuple:15S-Prim-MakeTupleb
+S-Prim-Shape:3S-Prim-Shapebm
+S-Prim-TensorShape:17S-Prim-TensorShape
+output_names€ŠZoutput€
+input_names€ŠZinput_x€h

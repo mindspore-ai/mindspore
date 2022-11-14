@@ -152,26 +152,44 @@ class MS_CORE_API Ellipsis final : public Named {
 };
 GVAR_DEF(NamedPtr, kEllipsis, std::make_shared<Ellipsis>());
 
-/// \brief MindIRClassType defines the class type loaded from MindIR.
-class MS_CORE_API MindIRClassType final : public Named {
+class MindIRClassType final : public Named {
  public:
-  /// \brief The default constructor for MindIRClassType.
   explicit MindIRClassType(const std::string &class_type) : Named(class_type) {}
-  /// \brief The destructor of MindIRClassType.
   ~MindIRClassType() override = default;
   MS_DECLARE_PARENT(MindIRClassType, Named);
 };
 using MindIRClassTypePtr = std::shared_ptr<MindIRClassType>;
 
-/// \brief MindIRMetaFuncGraph defines the meta func_graph loaded from MindIR.
-class MS_CORE_API MindIRMetaFuncGraph final : public Named {
+class MindIRMetaFuncGraph final : public Named {
  public:
-  /// \brief The default constructor for MindIRMetaFuncGraph.
   explicit MindIRMetaFuncGraph(const std::string &name) : Named(name) {}
-  /// \brief The destructor of MindIRMetaFuncGraph.
   ~MindIRMetaFuncGraph() override = default;
   MS_DECLARE_PARENT(MindIRMetaFuncGraph, Named);
 };
 using MindIRMetaFuncGraphPtr = std::shared_ptr<MindIRMetaFuncGraph>;
+
+class MindIRNameSpace final : public Named {
+ public:
+  explicit MindIRNameSpace(const std::string &name_space) : Named(name_space), name_space_(name_space) {}
+  ~MindIRNameSpace() override = default;
+  MS_DECLARE_PARENT(MindIRNameSpace, Named);
+  const std::string &name_space() const { return name_space_; }
+
+ private:
+  std::string name_space_;
+};
+using MindIRNameSpacePtr = std::shared_ptr<MindIRNameSpace>;
+
+class MindIRSymbol final : public Named {
+ public:
+  explicit MindIRSymbol(const std::string &symbol) : Named(symbol), symbol_(symbol) {}
+  ~MindIRSymbol() override = default;
+  MS_DECLARE_PARENT(MindIRSymbol, Named);
+  const std::string &symbol() const { return symbol_; }
+
+ private:
+  std::string symbol_;
+};
+using MindIRSymbolPtr = std::shared_ptr<MindIRSymbol>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_NAMED_H_

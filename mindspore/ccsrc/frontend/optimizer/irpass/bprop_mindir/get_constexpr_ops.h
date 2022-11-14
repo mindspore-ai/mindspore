@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_CLASS_TYPE_H
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_CLASS_TYPE_H
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_CONSTEXPR_OPS_H
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_CONSTEXPR_OPS_H
 
+#include <utility>
 #include <string>
+#include <vector>
+#include <algorithm>
 #include <memory>
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
@@ -26,26 +29,35 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-class BpropGetClassType : public AnfVisitor {
+class GetConstexprOps : public AnfVisitor {
+ public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsValueNode<MindIRClassType>(node)) {
+    auto prim = dyn_cast_ptr<Primitive>(GetValueWithoutDoSignature(node));
+    if (prim == nullptr) {
       return nullptr;
     }
-    auto class_path = GetValueNode<MindIRClassTypePtr>(node)->name();
-    std::string sub_str = ".";
-    auto class_name_pos =
-      std::find_end(class_path.begin(), class_path.end(), sub_str.begin(), sub_str.end()) - class_path.begin();
-    auto package = std::string(class_path.begin(), class_path.begin() + class_name_pos);
-    auto class_name = std::string(class_path.begin() + class_name_pos + 1, class_path.end());
+    auto module_value = prim->GetAttr("constexpr_module");
+    if (module_value == nullptr) {
+      return nullptr;
+    }
+    auto package = GetValue<std::string>(module_value);
+    auto class_name = GetValue<std::string>(prim->GetAttr("constexpr_name"));
     auto module = python_adapter::GetPyModule(package);
     if (!module || py::isinstance<py::none>(module)) {
       MS_LOG(EXCEPTION) << "Can not get python module: " << package;
     }
     auto attr = module.attr(class_name.c_str());
-    return NewValueNode(std::make_shared<parse::ClassType>(attr, class_path));
+    auto prim_adapter = attr.cast<PrimitivePyAdapterPtr>();
+    MS_EXCEPTION_IF_NULL(prim_adapter);
+    auto new_prim = prim_adapter->attached_primitive();
+    if (new_prim == nullptr) {
+      new_prim = std::make_shared<PrimitivePy>(attr, prim_adapter);
+      prim_adapter->set_attached_primitive(new_prim);
+    }
+    return NewValueNode(std::make_shared<prim::DoSignaturePrimitive>(new_prim->name(), new_prim));
   }
 };
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_GET_CLASS_TYPE_H
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_CONSTEXPR_OPS_H

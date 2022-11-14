@@ -220,7 +220,6 @@ def vm_impl_fused_batch_norm_grad(self):
 
 
 @vm_impl_getters.register(G.ReluGrad)
-@vm_impl_getters.register(G.ReluGrad.__name__)
 def vm_impl_relu_grad(self):
     """Generate vm_impl function for ReluGrad"""
 

@@ -278,6 +278,17 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     MS_LOG(ERROR) << "Convert data failed";
     return nullptr;
   }
+  // For the bprop which is loaded from mindir file, the sub function should be resolved after loading.
+  if (common::GetEnv("MS_DEV_EXPORT_BPROP_MINDIR") == "1" && IsPrimitiveCNode(origin_node, prim::kPrimResolve)) {
+    auto name_space = GetValueNode<NameSpacePtr>(origin_node->cast<CNodePtr>()->input(1));
+    MS_EXCEPTION_IF_NULL(name_space);
+    auto obj_type = data_converter::GetObjType(obj);
+    if (obj_type == RESOLVE_TYPE_FUNCTION && convert_result->isa<FuncGraph>() &&
+        name_space->module() != RESOLVE_NAMESPACE_NAME_COMMON_OPS) {
+      return origin_node;
+    }
+  }
+
   bool interpret_without_internal =
     (IsPrimitiveCNode(origin_node, prim::kPrimPyInterpret) && !origin_node->interpret_internal_type()) ||
     origin_node->interpret();

@@ -1,0 +1,60 @@
+
+0.1.1	MindSpore*2.0.0:Œ
+j get_bprop_reshape.36:[CNode]37:1 get_bprop_reshape.36:[CNode]37:1"REF::bprop.38:Default/bprop.38-op24get_bprop_reshape.36*
+get_bprop_reshape.36:self*
+get_bprop_reshape.36:x*
+get_bprop_reshape.36:Ñ„shp*
+get_bprop_reshape.36:out*
+get_bprop_reshape.36:Ñ„dout2"
+ get_bprop_reshape.36:[CNode]37:1:@5b9d6f44f1957006db698bb115f6bf0d8c30f8e0535879c474b7722b550d4b99J/grad_array_ops.pyBÇ
+n
+get_bprop_reshape.36:xbprop.38:shapex:2bprop.38:shapex:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op25
+…
+bprop.38:shapex:2bprop.38:[CNode]39:4bprop.38:[CNode]39:4"REF::S-Prim-is_shape_unknown:5:$Default/S-Prim-is_shape_unknown-op26
+h
+bprop.38:[CNode]39:4bprop.38:[CNode]40:6bprop.38:[CNode]40:6"REF::bool_.41:Default/bool_.41-op27
+€
+bprop.38:[CNode]40:6
+âœ“bprop.42
+âœ—bprop.43bprop.38:[CNode]44:7bprop.38:[CNode]44:7"REF::Switch:8:Default/Switch-op28
+Kbprop.38:[CNode]45:9bprop.38:[CNode]45:9"REF::bprop.38:[CNode]44:7:29
+p
+bprop.38:[CNode]45:9bprop.38:[CNode]46:10bprop.38:[CNode]46:10"REF::â†“bprop.47:Default/â†“bprop.47-op30bprop.382
+bprop.38:[CNode]46:10BÂ
+£â†“bprop.47:48:11â†“bprop.47:48:11":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:?Default/class 'mindspore.ops.operations.array_ops.Reshape'-op31
+u
+get_bprop_reshape.36:Ñ„dout
+â†“bprop.47:Ñ„shapexâ†“bprop.47:48:12â†“bprop.47:48:12"REF::â†“bprop.47:48:11:32
+°
+get_bprop_reshape.36:Ñ„shpâ†“bprop.47:[CNode]49:13â†“bprop.47:[CNode]49:13".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op33
+š
+â†“bprop.47:48:12
+â†“bprop.47:[CNode]49:13â†“bprop.47:[CNode]50:14â†“bprop.47:[CNode]50:14"REF::S-Prim-MakeTuple:15:Default/S-Prim-MakeTuple-op34â†“bprop.47*
+â†“bprop.47:Ñ„shapex2
+â†“bprop.47:[CNode]50:14B
+after_block€	B"âœ—bprop.432
+bprop.38:shapex:2B¬
+ƒ
+get_bprop_reshape.36:xâœ“bprop.42:shapex:16âœ“bprop.42:shapex:16"REF::S-Prim-TensorShape:17:Default/S-Prim-TensorShape-op35âœ“bprop.422
+âœ“bprop.42:shapex:16B³
+>[ValueNode]51[ValueNode]51"Constant*
+value*__bool__€
+p
+
+bool_.41:x
+[ValueNode]51bool_.41:[CNode]52:18bool_.41:[CNode]52:18"REF::getattr:19:Default/getattr-op36
+Nbool_.41:[CNode]53:20bool_.41:[CNode]53:20"REF::bool_.41:[CNode]52:18:37bool_.41*
+
+bool_.41:x2
+bool_.41:[CNode]53:20Pb
+Switch:8Switchb
+
+getattr:19getattrbm
+S-Prim-TensorShape:17S-Prim-TensorShape
+output_names€ŠZoutput€
+input_names€ŠZinput_x€b'
+S-Prim-MakeTuple:15S-Prim-MakeTupleb
+S-Prim-Shape:3S-Prim-ShapebŽ
+S-Prim-is_shape_unknown:5S-Prim-is_shape_unknown1
+constexpr_module*mindspore.ops._utils.utils€%
+constexpr_name*is_shape_unknown€h
