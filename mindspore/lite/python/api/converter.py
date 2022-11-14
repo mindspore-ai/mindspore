@@ -45,11 +45,11 @@ class FmkType(Enum):
     ===========================  ============================================================================
 
     Examples:
-        # Method 1: Import mindspore_lite package
+        >>> # Method 1: Import mindspore_lite package
         >>> import mindspore_lite as mslite
         >>> print(mslite.FmkType.TF)
         FmkType.TF
-        # Method 2: from mindspore_lite package import FmkType
+        >>> # Method 2: from mindspore_lite package import FmkType
         >>> from mindspore_lite import FmkType
         >>> print(FmkType.TF)
         FmkType.TF
@@ -81,8 +81,8 @@ class Converter:
         of MindSpore Lite's encryption exported models in version 1.6 and earlier.
 
     Args:
-        fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
-            FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH. For details, see
+        fmk_type (:class:`mindspore_lite.FmkType`): Input model framework type. Options: FmkType.TF | FmkType.CAFFE |
+            FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH. For details, see
             `FmkType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.FmkType.html>`_ .
         model_file (str): Set the path of the input model when converter. For example, "/home/user/model.prototxt".
             Options:TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" |
@@ -203,7 +203,7 @@ class Converter:
         >>> import mindspore_lite as mslite
         >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
         ...                              "mobilenet_v2_1.0_224.tflite")
-        # The ms model may be generated only after converter.converter() is executed after the class is constructed.
+        >>> # The ms model may be generated only after converter.converter() is executed after the class is constructed.
         >>> print(converter)
         config_file: ,
         config_info: {},

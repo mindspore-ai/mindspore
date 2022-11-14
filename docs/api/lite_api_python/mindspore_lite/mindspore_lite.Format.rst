@@ -3,7 +3,7 @@ mindspore_lite.Format
 
 .. py:class:: mindspore_lite.Format
 
-    定义MindSpore Lite中Tensor的格式。
+    `Format` 类定义MindSpore Lite中Tensor的格式。
 
     目前，支持以下 `Format` ：
 

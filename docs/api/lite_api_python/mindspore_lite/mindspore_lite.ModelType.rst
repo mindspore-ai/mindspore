@@ -3,6 +3,8 @@ mindspore_lite.ModelType
 
 .. py:class:: mindspore_lite.ModelType
 
+    `ModelType` 类定义MindSpore Lite中导出或导入的模型类型。
+
     适用于以下场景：
 
     1. Converter时，设置 `export_mindir` 参数， `ModelType` 用于定义转换生成的模型类型。
