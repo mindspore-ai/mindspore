@@ -952,12 +952,15 @@ AbstractBasePtr InferImplVmap(const AnalysisEnginePtr &, const PrimitivePtr &pri
   AbstractFuncAtomPtrList vmap_v;
   ValuePtr in_axes = primitive->GetAttr("in_axes");
   ValuePtr out_axes = primitive->GetAttr("out_axes");
+  ValuePtr cell_size_value = primitive->GetAttr("cell_size");
+  MS_EXCEPTION_IF_NULL(cell_size_value);
+  auto cell_size = cell_size_value->isa<UInt64Imm>() ? dyn_cast<UInt64Imm>(cell_size_value)->value() : 0;
 
-  auto traverse_fn = [&vmap_v, &in_axes, &out_axes](const AbstractBasePtr &fn_arg) {
+  auto traverse_fn = [&vmap_v, &in_axes, &out_axes, &cell_size](const AbstractBasePtr &fn_arg) {
     AbstractFunctionPtr x = dyn_cast<AbstractFunction>(fn_arg);
     MS_EXCEPTION_IF_NULL(x);
-    auto build_vmap_v = [&vmap_v, &in_axes, &out_axes](const AbstractFuncAtomPtr &func) {
-      auto vmap_closure = std::make_shared<VmapTransformedAbstractClosure>(func, in_axes, out_axes);
+    auto build_vmap_v = [&vmap_v, &in_axes, &out_axes, &cell_size](const AbstractFuncAtomPtr &func) {
+      auto vmap_closure = std::make_shared<VmapTransformedAbstractClosure>(func, in_axes, out_axes, cell_size);
       vmap_v.push_back(vmap_closure);
     };
     x->Visit(build_vmap_v);

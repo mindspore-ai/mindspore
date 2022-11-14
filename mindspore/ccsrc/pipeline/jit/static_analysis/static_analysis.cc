@@ -640,8 +640,9 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<VmapTransfor
   const auto &primal_func = func->fn();
   const auto &in_axes = func->in_axes();
   const auto &out_axes = func->out_axes();
+  size_t cell_size = func->cell_size();
   auto primal_evaluator = GetEvaluatorFor(primal_func);
-  return std::make_shared<VmapEvaluator>(primal_evaluator, primal_func, in_axes, out_axes);
+  return std::make_shared<VmapEvaluator>(primal_evaluator, primal_func, in_axes, out_axes, cell_size);
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &func) {

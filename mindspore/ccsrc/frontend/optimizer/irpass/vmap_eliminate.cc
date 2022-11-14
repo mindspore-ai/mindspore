@@ -610,7 +610,8 @@ void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBa
       (void)visited_node->insert(replace_node);
       (void)manager->Replace(node, replace_node);
     } else if (IsValueNode<Scalar>(node) || IsValueNode<tensor::Tensor>(node) || IsValueNode<None>(node) ||
-               IsValueNode<ValueTuple>(node) || IsValueNode<Type>(node) || IsValueNode<StringImm>(node)) {
+               IsValueNode<ValueTuple>(node) || IsValueNode<ValueList>(node) || IsValueNode<Type>(node) ||
+               IsValueNode<StringImm>(node)) {
       auto value_node_ptr = node->cast<ValueNodePtr>();
       ValuePtr node_value = value_node_ptr->value();
       std::vector<ValuePtr> elements;

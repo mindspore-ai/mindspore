@@ -431,8 +431,8 @@ class MS_CORE_API VmapTransformedAbstractClosure final : public AbstractFuncAtom
   ///
   /// \param[in] fn The AbstractFuncAtom transformed through the application of Vmap.
   explicit VmapTransformedAbstractClosure(const AbstractFuncAtomPtr &fn, const ValuePtr &in_axes,
-                                          const ValuePtr &out_axes)
-      : fn_(fn), in_axes_(in_axes), out_axes_(out_axes) {}
+                                          const ValuePtr &out_axes, size_t cell_size)
+      : fn_(fn), in_axes_(in_axes), out_axes_(out_axes), cell_size_(cell_size) {}
 
   /// \brief Destructor of VmapTransformedAbstractClosure
   ~VmapTransformedAbstractClosure() override = default;
@@ -447,8 +447,10 @@ class MS_CORE_API VmapTransformedAbstractClosure final : public AbstractFuncAtom
 
   const ValuePtr &out_axes() const { return out_axes_; }
 
+  size_t cell_size() const { return cell_size_; }
+
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<VmapTransformedAbstractClosure>(fn_, in_axes_, out_axes_);
+    return std::make_shared<VmapTransformedAbstractClosure>(fn_, in_axes_, out_axes_, cell_size_);
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -461,6 +463,7 @@ class MS_CORE_API VmapTransformedAbstractClosure final : public AbstractFuncAtom
   AbstractFuncAtomPtr fn_;
   ValuePtr in_axes_;
   ValuePtr out_axes_;
+  size_t cell_size_;
 };
 
 /// \brief VirtualAbstractClosure defines interface for function with an explicitly

@@ -303,4 +303,7 @@ def test_celllist_with_inconsistent_params():
 
     with pytest.raises(ValueError) as ex:
         vmap(mm, in_axes=0)(replace_tensor)
-    assert "Parameter size of each cell should be consistent, but get 1 and 2." in str(ex.value)
+    assert "If you want to execute the model ensembling parallel training, please make sure "\
+           "the 'axis_size' in the scope of vmap consistent with the cell size of the input "\
+           "'CellList', otherwise, please do not enter 'CellList' as the first argument, "\
+           "but we get axis_size: 3 and the cell size: 2." in str(ex.value)
