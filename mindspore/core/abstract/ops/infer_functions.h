@@ -95,10 +95,8 @@ AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const Primitiv
                                        const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list);
-AbstractBasePtr InferImplTupleLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list);
-AbstractBasePtr InferImplListLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplSequenceLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -190,6 +188,10 @@ AbstractBasePtr InferImplDivNoNan(const AnalysisEnginePtr &engine_ptr, const Pri
                                   const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplMapUniform(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -238,8 +240,14 @@ AbstractBasePtr InferImplMapTensorGetEvictFilterValue(const AnalysisEnginePtr &,
 template <typename T>
 AbstractBasePtr InferTupleOrListOrDictLen(const std::string &op_name, const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tuple or list or dict.
-  CheckArgsSize(op_name, args_spec_list, 1);
+  constexpr size_t len_input_size = 1;
+  CheckArgsSize(op_name, args_spec_list, len_input_size);
   auto arg = CheckArg<T>(op_name, args_spec_list, 0);
+  auto abs = dyn_cast<AbstractSequence>(args_spec_list[0]);
+  if (abs != nullptr && abs->dynamic_len()) {
+    // If the sequence is dynamic length, return any value scalar.
+    return std::make_shared<AbstractScalar>();
+  }
   return std::make_shared<AbstractScalar>(SizeToLong(arg->size()));
 }
 }  // namespace abstract

@@ -160,6 +160,9 @@ std::string AbstractBase::ToString(bool verbose) const {
 }
 
 AbstractBasePtr AbstractScalar::Broaden() const {
+  if (is_variable_) {
+    return AbstractBase::Broaden();
+  }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
@@ -671,26 +674,24 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence() {
     MS_EXCEPTION_IF_NULL(first_element);
     auto first_element_shape = first_element->BuildShape();
     MS_EXCEPTION_IF_NULL(first_element_shape);
-    auto first_element_type = first_element->BuildType();
-    MS_EXCEPTION_IF_NULL(first_element_type);
+    auto first_element_type_id = first_element->BuildType()->generic_type_id();
     for (size_t i = 0; i < input_len; ++i) {
       auto cur_element = elements()[i];
       MS_EXCEPTION_IF_NULL(cur_element);
+      auto cur_element_type_id = cur_element->BuildType()->generic_type_id();
+      if (first_element_type_id != cur_element_type_id) {
+        MS_EXCEPTION(ValueError) << "In graph mode, the element type of dynamic length array must be the same."
+                                 << "The element type do not match, can not convert to dynamic length sequence. "
+                                 << "The first element type is: " << TypeIdToString(first_element_type_id) << "The "
+                                 << i << "th element type is: " << TypeIdToString(cur_element_type_id);
+      }
       auto cur_element_shape = cur_element->BuildShape();
       MS_EXCEPTION_IF_NULL(cur_element_shape);
       if (*first_element_shape != *cur_element_shape) {
         MS_EXCEPTION(ValueError) << "In graph mode, the element shape of dynamic length array must be the same."
-                                 << "The Element shape do not match, can not convert to dynamic length sequence. "
+                                 << "The element shape do not match, can not convert to dynamic length sequence. "
                                  << "The first element shape is: " << first_element_shape->ToString() << "The " << i
                                  << "th element shape is: " << cur_element_shape->ToString();
-      }
-      auto cur_element_type = cur_element->BuildType();
-      MS_EXCEPTION_IF_NULL(cur_element_type);
-      if (*first_element_type != *cur_element_type) {
-        MS_EXCEPTION(ValueError) << "In graph mode, the element type of dynamic length array must be the same."
-                                 << "The Element type do not match, can not convert to dynamic length sequence. "
-                                 << "The first element type is: " << first_element_type->ToString() << "The " << i
-                                 << "th element type is: " << cur_element_type->ToString();
       }
     }
     set_dynamic_len_element_abs(first_element);
@@ -822,15 +823,15 @@ bool AbstractSequence::empty() const {
 }
 
 void AbstractSequence::set_dynamic_len_element_abs(const AbstractBasePtr &dynamic_len_element_abs) {
+  if (dynamic_len_element_abs == nullptr) {
+    return;
+  }
   if (dynamic_len_element_abs_ != nullptr) {
     MS_EXCEPTION(TypeError) << "The abstract of element for variable length sequence " << ToString()
                             << " is already set, this can not be reset.";
   }
-  dynamic_len_element_abs_ = dynamic_len_element_abs;
   // dynamic_len_element_abs should ignore value.
-  if (dynamic_len_element_abs_ != nullptr && dynamic_len_element_abs_->BuildValue() != kAnyValue) {
-    dynamic_len_element_abs_->set_value(kAnyValue);
-  }
+  dynamic_len_element_abs_ = BroadenAllValues(dynamic_len_element_abs);
 }
 
 bool AbstractSequence::operator==(const AbstractSequence &other) const {

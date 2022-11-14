@@ -301,6 +301,36 @@ void CheckAndConvertUtils::GetFormatStringVal(const PrimitivePtr &prim, std::str
   }
 }
 
+void CheckAndConvertUtils::CheckAbstractShapeSame(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2,
+                                                  const std::string &prim_name, const std::string &name1,
+                                                  const std::string &name2) {
+  MS_EXCEPTION_IF_NULL(abs1);
+  MS_EXCEPTION_IF_NULL(abs2);
+  auto abs1_shape = abs1->BuildShape();
+  auto abs2_shape = abs2->BuildShape();
+  if (*abs1_shape != *abs2_shape) {
+    MS_EXCEPTION(ValueError) << "For primitive " << prim_name << " the abstrcat of " << name1 << " and the abstract of"
+                             << name2 << " should have the same shape but got the shape of " << name1 << ": "
+                             << abs1_shape->ToString() << " and the shape of " << name2 << ": "
+                             << abs2_shape->ToString();
+  }
+}
+
+void CheckAndConvertUtils::CheckAbstractTypeIdSame(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2,
+                                                   const std::string &prim_name, const std::string &name1,
+                                                   const std::string &name2) {
+  MS_EXCEPTION_IF_NULL(abs1);
+  MS_EXCEPTION_IF_NULL(abs2);
+  auto abs1_type_id = abs1->BuildType()->generic_type_id();
+  auto abs2_type_id = abs2->BuildType()->generic_type_id();
+  if (abs1_type_id != abs2_type_id) {
+    MS_EXCEPTION(ValueError) << "For primitive " << prim_name << " the abstrcat of " << name1 << " and the abstract of"
+                             << name2 << " should have the same type but got the type of " << name1 << ": "
+                             << TypeIdToString(abs1_type_id) << " and the type of " << name2 << ": "
+                             << TypeIdToString(abs2_type_id);
+  }
+}
+
 void CheckAndConvertUtils::ConvertAttrValueInExport(const std::string &op_type, const std::string &attr_name,
                                                     ValuePtr *const value) {
   if (value == nullptr || *value == nullptr) {

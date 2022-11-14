@@ -132,7 +132,7 @@ size_t List::hash() const {
 
 std::string List::DumpContent(bool is_dumptext) const {
   std::ostringstream buffer;
-  auto type_name = dynamic_len_ ? "DynamicList" : "List";
+  auto type_name = dynamic_len_ ? "Dynamic List " : "List ";
   if (IsGeneric()) {
     buffer << type_name;
   } else {
@@ -218,7 +218,7 @@ const TypePtr Tuple::operator[](std::size_t dim) const {
 
 std::string Tuple::DumpContent(bool is_dumptext) const {
   std::ostringstream buffer;
-  auto type_name = dynamic_len_ ? "DynamicTuple" : "Tuple";
+  auto type_name = dynamic_len_ ? "Dynamic Tuple " : "Tuple ";
   if (IsGeneric()) {
     buffer << type_name;
   } else {

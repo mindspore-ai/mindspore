@@ -967,7 +967,7 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   return true;
 }
 
-bool EliminateAdRelatedSpecialOpNode(const ResourcePtr &resource) {
+bool EliminateSpecialOpNode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
@@ -975,7 +975,7 @@ bool EliminateAdRelatedSpecialOpNode(const ResourcePtr &resource) {
   if (resource->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "PynativeElimOpt error, graph is null.";
   }
-  return EliminateAdRelatedSpecialOpOptPass(resource);
+  return EliminateSpecialOpOptPass(resource);
 }
 
 bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
@@ -1505,7 +1505,7 @@ std::vector<ActionItem> GePipeline() {
   (void)actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
   (void)actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
-  (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
+  (void)actions.emplace_back(std::make_pair("eliminate_special_op_node", EliminateSpecialOpNode));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
 #ifdef WITH_BACKEND
   // Compile the ANF graph
@@ -1533,7 +1533,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
 
     // Eliminate the virtual mirror node
-    (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
+    (void)actions.emplace_back(std::make_pair("eliminate_special_op_node", EliminateSpecialOpNode));
     (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   }
 
@@ -1583,7 +1583,7 @@ std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) {
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
   (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
-  (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
+  (void)actions.emplace_back(std::make_pair("eliminate_special_op_node", EliminateSpecialOpNode));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   (void)actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
   return actions;

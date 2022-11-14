@@ -75,7 +75,8 @@ AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list) {
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
   MS_EXCEPTION_IF_NULL(arg);
   auto new_sequence = dyn_cast_ptr<AbstractSequence>(arg);
-  if (new_sequence != nullptr && new_sequence->sequence_nodes() != nullptr && new_sequence->size() != 0) {
+  if (new_sequence != nullptr && !new_sequence->dynamic_len() && new_sequence->sequence_nodes() != nullptr &&
+      new_sequence->size() != 0) {
     const auto &prev_result = ObtainEvalResultFromCache(conf);
     if (prev_result == nullptr) {
       return false;

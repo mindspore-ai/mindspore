@@ -112,6 +112,38 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
   return std::make_shared<Shape>(dims, min_dims, max_dims);
 }
 
+// Broaden all values within the input abstract. Since for AbstractScalar, calling Broaden() can not set
+// the value directly to kAnyValue, this function can not be replaced by calling abs->Broaden().
+AbstractBasePtr BroadenAllValues(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  AbstractBasePtr ret = nullptr;
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    MS_EXCEPTION(TypeError) << "BroadenAllValues does not support dictionary yet";
+  }
+  if (abs->isa<abstract::AbstractScalar>()) {
+    ret = abs->Clone();
+    ret->cast<abstract::AbstractScalarPtr>()->set_is_variable(true);
+    return ret->Broaden();
+  }
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    if (abs_seq->dynamic_len()) {
+      // The value of elements for dynamic length sequence should all be kAnyValue.
+      return abs->Clone();
+    }
+    AbstractBasePtrList elements = abs_seq->elements();
+    AbstractBasePtrList new_elements;
+    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(new_elements), BroadenAllValues);
+    if (abs->isa<abstract::AbstractList>()) {
+      ret = std::make_shared<abstract::AbstractList>(new_elements, abs_seq->sequence_nodes());
+    } else {
+      ret = std::make_shared<abstract::AbstractTuple>(new_elements, abs_seq->sequence_nodes());
+    }
+    return ret;
+  }
+  return abs->Broaden();
+}
+
 bool IsShapesDynamicRank(const std::vector<ShapeVector> &shapes) {
   return std::any_of(shapes.begin(), shapes.end(), [](const ShapeVector &shape) {
     return std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::kShapeRankAny; });

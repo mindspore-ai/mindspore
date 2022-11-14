@@ -214,7 +214,7 @@ TEST_F(TestOps, ArraySetItemTest) {
 }
 
 TEST_F(TestOps, ListAppendTest) {
-  auto prim = std::make_shared<Primitive>("list_append");
+  auto prim = std::make_shared<Primitive>("ListAppend");
   ASSERT_EQ(prim->name(), kPrimListAppend->name());
 }
 
@@ -223,14 +223,12 @@ TEST_F(TestOps, GetAttrTest) {
   ASSERT_EQ(prim->name(), kPrimGetAttr->name());
 }
 
-TEST_F(TestOps, TupleLenTest) {
-  auto prim = std::make_shared<Primitive>("tuple_len");
-  ASSERT_EQ(prim->name(), kPrimTupleLen->name());
-}
-
-TEST_F(TestOps, ListLenTest) {
-  auto prim = std::make_shared<Primitive>("list_len");
-  ASSERT_EQ(prim->name(), kPrimListLen->name());
+/// Feature: Generate primitive.
+/// Description: Generate primitive.
+/// Expectation: No exception.
+TEST_F(TestOps, SequenceLenTest) {
+  auto prim = std::make_shared<Primitive>("sequence_len");
+  ASSERT_EQ(prim->name(), kPrimSequenceLen->name());
 }
 
 TEST_F(TestOps, ArrayLenTest) {

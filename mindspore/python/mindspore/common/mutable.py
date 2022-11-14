@@ -31,22 +31,22 @@ class _Dict(dict):
     pass
 
 
-def _check_all_tensor(value):
+def _check_element_type(value):
     """Check if all the elements are Tensor."""
     if isinstance(value, (tuple, list)):
         for element in value:
-            if not _check_all_tensor(element):
+            if not _check_element_type(element):
                 return False
         return True
     if isinstance(value, dict):
         for element in value.values():
-            if not _check_all_tensor(element):
+            if not _check_element_type(element):
                 return False
         return True
     return isinstance(value, Tensor_)
 
 
-def mutable(input_data):
+def mutable(input_data, dynamic_len=False):
     """
     Make a constant value mutable.
 
@@ -120,7 +120,7 @@ def mutable(input_data):
          [ 1.50000000e+00, 1.50000000e+00, 1.50000000e+00]]))
     """
 
-    if not _check_all_tensor(input_data):
+    if not dynamic_len and not _check_element_type(input_data):
         raise TypeError(
             f"For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) "
             f"or their nested structures, but got {input_data}.")
@@ -139,4 +139,5 @@ def mutable(input_data):
         ret.set_const_arg(False)
 
     setattr(ret, "__ms_mutable__", True)
+    setattr(ret, "__ms_dynamic_len__", dynamic_len)
     return ret

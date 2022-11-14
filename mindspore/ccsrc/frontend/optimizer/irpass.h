@@ -37,6 +37,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr special_op_eliminate_;
   SubstitutionPtr ad_related_special_op_eliminate_;
   SubstitutionPtr zero_like_fill_zero_;
+  SubstitutionPtr mutable_op_eliminate_;
   SubstitutionPtr adjust_all_reduce_mul_add_;
   SubstitutionPtr float_depend_g_call_;
   //  ops eliminate

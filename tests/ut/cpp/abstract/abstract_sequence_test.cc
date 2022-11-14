@@ -77,7 +77,7 @@ TEST_F(DynamicSequenceTestUtils, test_generate_dynamic_length_list_error) {
     BuildDynamicAbstractList(elements);
     FAIL();
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("The Element type do not match") != std::string::npos);
+    ASSERT_TRUE(std::string(err.what()).find("The element type do not match") != std::string::npos);
   }
 }
 
@@ -183,7 +183,7 @@ TEST_F(DynamicSequenceTestUtils, test_generate_dynamic_length_tuple_error) {
     BuildDynamicAbstractTuple(elements);
     FAIL();
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("The Element type do not match") != std::string::npos);
+    ASSERT_TRUE(std::string(err.what()).find("The element type do not match") != std::string::npos);
   }
 }
 

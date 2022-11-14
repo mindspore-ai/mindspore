@@ -40,6 +40,7 @@ from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
 from ...ops.primitive import constexpr
 from ...common import dtype as mstype
+from ...ops.operations._sequence_ops import ListAppend
 
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
 
@@ -3167,6 +3168,8 @@ def array_hasnext(xs):
 
 def list_append(self_, list_item):
     """Append into list"""
+    if F.is_sequence_shape_unknown(self_):
+        return ListAppend()(self_, list_item)
     return _append(self_, list_item)
 
 

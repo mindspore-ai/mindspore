@@ -218,7 +218,10 @@ def _restore_mutable_attr(args_list, compile_args):
     for idx, arg in enumerate(args_list):
         if hasattr(arg, "__ms_mutable__") and getattr(arg, "__ms_mutable__") and \
                 not (hasattr(arg, "const_arg") and getattr(arg, "const_arg")):
-            new_compile_args += (mutable(compile_args[idx]),)
+            if hasattr(arg, "__ms_dynamic_len__"):
+                new_compile_args += (mutable(compile_args[idx], getattr(arg, "__ms_dynamic_len__")),)
+            else:
+                new_compile_args += (mutable(compile_args[idx], False),)
         else:
             new_compile_args += (compile_args[idx],)
     return new_compile_args
