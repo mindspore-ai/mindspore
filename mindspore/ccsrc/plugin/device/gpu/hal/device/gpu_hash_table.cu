@@ -29,38 +29,6 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-#define CHECK_CUDA_RET(expression, message)                                                \
-  {                                                                                        \
-    cudaError_t cuda_ret = (expression);                                                   \
-    if (cuda_ret != cudaSuccess) {                                                         \
-      MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << cuda_ret << " " \
-                    << cudaGetErrorString(cuda_ret);                                       \
-    }                                                                                      \
-  }
-
-#define CHECK_CUDA_RET_WITH_RETURN_FALSE(expression, message)                              \
-  {                                                                                        \
-    cudaError_t cuda_ret = (expression);                                                   \
-    if (cuda_ret != cudaSuccess) {                                                         \
-      MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << cuda_ret << " " \
-                    << cudaGetErrorString(cuda_ret);                                       \
-      return false;                                                                        \
-    }                                                                                      \
-  }
-
-#define ASSERT_EQUAL(lhs, rhs, message) \
-  {                                     \
-    if ((lhs) != (rhs)) {               \
-      MS_LOG(ERROR) << message;         \
-      return false;                     \
-    }                                   \
-  }
-
-// The empty key, empty value(index) and erased key of CucoDynamicMap.
-constexpr static int kEmptyKey = -1;
-constexpr static int kEmptyValue = -1;
-constexpr static int kErasedKey = -2;
-
 template <typename Key, typename Value, typename Allocator>
 using CucoDynamicMap = cuco::dynamic_map<Key, Value, cuda::thread_scope_device, Allocator>;
 
@@ -144,6 +112,7 @@ void GPUHashTable<Key, Value, Allocator>::Finalize() {
   for (size_t i = 0; i < blocks_.size(); i++) {
     FreeMemory(blocks_[i]);
     FreeMemory(idle_flags_[i]);
+    FreeMemory(statuses_[i]);
     FreeMemory(lookup_cnts_[i]);
     FreeMemory(update_timestamps_[i]);
   }
@@ -270,8 +239,9 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *keys, size_t key_num
   size_t total_insert_size = value_dim_ * key_num;
   InsertValues<<<GET_BLOCKS(total_insert_size), GET_THREADS, 0, cuda_stream>>>(
     value_dim_, total_insert_size, indices, value, elements_per_block_, lookup_cnts_ptr_, min_lookup_cnt_before_permit_,
-    global_timestamp_, update_timestamps_ptr_, idle_flags_ptr_, blocks_ptr_);
+    global_timestamp_, update_timestamps_ptr_, statuses_ptr_, idle_flags_ptr_, blocks_ptr_);
 
+  is_dirty_ = true;
   FreeMemory(indices);
 
   return true;
@@ -327,7 +297,13 @@ bool GPUHashTable<Key, Value, Allocator>::Clear() {
       "cudaMemcpyAsync");
   }
 
-  // 4. Reset lookup counter.
+  // 4. Reset status.
+  for (size_t i = 0; i < statuses_.size(); i++) {
+    CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemsetAsync(statuses_[i], 0, elements_per_block_ * sizeof(Status), stream),
+                                     "cudaMemsetAsync");
+  }
+
+  // 5. Reset lookup counter.
   for (size_t i = 0; i < lookup_cnts_.size(); i++) {
     CHECK_CUDA_RET_WITH_RETURN_FALSE(
       cudaMemcpyAsync(lookup_cnts_[i], lookup_counter_initializer_.data(),
@@ -380,6 +356,12 @@ bool GPUHashTable<Key, Value, Allocator>::AddNewBlock(cudaStream_t stream) {
   MS_ERROR_IF_NULL(new_block_idle_flag);
   idle_flags_.push_back(new_block_idle_flag);
 
+  // Allocate new status recorder memory for new block.
+  Status *new_block_status = nullptr;
+  AllocateMemory(elements_per_block_ * sizeof(Status), &new_block_status);
+  MS_ERROR_IF_NULL(new_block_status);
+  statuses_.push_back(new_block_status);
+
   // Allocate new lookup counter memory for new block.
   size_t *new_lookup_cnt = nullptr;
   AllocateMemory(elements_per_block_ * sizeof(size_t), &new_lookup_cnt);
@@ -397,6 +379,10 @@ bool GPUHashTable<Key, Value, Allocator>::AddNewBlock(cudaStream_t stream) {
     cudaMemcpyAsync(new_block_idle_flag, idle_flags_initializer_.data(), idle_flags_initializer_.size() * sizeof(bool),
                     cudaMemcpyHostToDevice, stream),
     "cudaMemcpyAsync");
+
+  // Set initialized value for status.
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemsetAsync(new_block_status, 0, elements_per_block_ * sizeof(Status), stream),
+                                   "cudaMemsetAsync");
 
   // Set initialized value for lookup counter.
   CHECK_CUDA_RET_WITH_RETURN_FALSE(
@@ -435,6 +421,17 @@ bool GPUHashTable<Key, Value, Allocator>::ResetAllBlockRecorders(cudaStream_t cu
                                                    cudaMemcpyHostToDevice, cuda_stream),
                                    "cudaMemcpyAsync");
 
+  // 3. Allocate new GPU memory for statuses_ptr_.
+  Status *new_status_ptr = nullptr;
+  AllocateMemory(cur_blocks_num * sizeof(Status *), &new_status_ptr);
+  statuses_ptr_ = reinterpret_cast<Status **>(new_status_ptr);
+  MS_ERROR_IF_NULL(statuses_ptr_);
+
+  // Update the content for status pointer recorder.
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemcpyAsync(statuses_ptr_, statuses_.data(), cur_blocks_num * sizeof(Status *),
+                                                   cudaMemcpyHostToDevice, cuda_stream),
+                                   "cudaMemcpyAsync");
+
   // 4. Allocate new GPU memory for lookup_cnts_ptr_.
   bool *new_lookup_cnts_ptr = nullptr;
   AllocateMemory(cur_blocks_num * sizeof(size_t *), &new_lookup_cnts_ptr);
@@ -468,6 +465,9 @@ void GPUHashTable<Key, Value, Allocator>::FreeAllBlockRecorders() {
   }
   if (idle_flags_ptr_) {
     FreeMemory(idle_flags_ptr_);
+  }
+  if (statuses_ptr_) {
+    FreeMemory(statuses_ptr_);
   }
   if (lookup_cnts_ptr_) {
     FreeMemory(lookup_cnts_ptr_);
@@ -554,7 +554,7 @@ bool GPUHashTable<Key, Value, Allocator>::CountExpiredElements(cudaStream_t stre
     return false;
   }
   uint32_t device_id = GET_CTX_DEVICE_ID;
-  const uint32_t grid_size = IntToUint(CUDA_BLOCKS_CAL(device_id, size_, block_size));
+  const uint32_t grid_size = IntToUint(CUDA_BLOCKS_CAL(device_id, elements_per_block_, block_size));
 
   // 2. Count the number for expired elements.
   CountExpiredNum<block_size><<<grid_size, block_size, 0, stream>>>(
@@ -646,7 +646,7 @@ bool GPUHashTable<Key, Value, Allocator>::EraseElements(const Key *keys, size_t 
 
   // 2. Update idle status for erased slot.
   EraseElementsByIndices<<<GET_BLOCKS(key_num), GET_THREADS, 0, stream>>>(key_num, elements_per_block_, kEmptyValue,
-                                                                          indices, idle_flags_ptr_);
+                                                                          indices, idle_flags_ptr_, statuses_ptr_);
 
   // 3. Erase all keys in dynamic map.
   MS_ERROR_IF_NULL(cuda_dynamic_map_);
@@ -722,59 +722,260 @@ bool GPUHashTable<Key, Value, Allocator>::Import(const DataLenPair &input_data) 
 }
 
 template <typename Key, typename Value, typename Allocator>
-bool GPUHashTable<Key, Value, Allocator>::Export(const DataLenPair &keys, const DataLenPair &values,
-                                                 const DataLenPair &status) {
-  MS_ERROR_IF_NULL(keys.first);
-  MS_ERROR_IF_NULL(values.first);
-  MS_ERROR_IF_NULL(status.first);
-
+HashTableExportData GPUHashTable<Key, Value, Allocator>::Export(bool incremental) {
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
-  RETURN_IF_FALSE_WITH_LOG(EvictExpiredElements(stream), "Evict expired elements failed.");
+  // Evict expired element before export.
+  MS_EXCEPTION_IF_CHECK_FAIL(EvictExpiredElements(stream), "Evict expired elements failed.");
 
-  size_t keys_len = size_ * sizeof(Key);
-  size_t values_len = size_ * value_dim_ * sizeof(Value);
-  size_t status_len = size_ * sizeof(Status);
-  // 1. Check length for output tensor.
-  ASSERT_EQUAL(
-    keys_len, keys.second,
-    std::string("Need keys len[") + std::to_string(keys_len) + "], but got:[" + std::to_string(keys.second) + "].");
-  ASSERT_EQUAL(values_len, values.second,
-               std::string("Need values len[") + std::to_string(values_len) + "], but got:[" +
-                 std::to_string(values.second) + "].");
-  ASSERT_EQUAL(status_len, status.second,
-               std::string("Need status len[") + std::to_string(status_len) + "], but got:[" +
-                 std::to_string(status.second) + "].");
+  // Update is_dirty_ to false because host side will get latest content after export.
+  is_dirty_ = false;
 
-  // 2. Allocate temp buffer to keys, values and status.
+  if (incremental) {
+    return ExportIncrementally(stream);
+  }
+  return ExportFully(stream);
+}
+
+template <typename Key, typename Value, typename Allocator>
+HashTableExportData GPUHashTable<Key, Value, Allocator>::ExportFully(cudaStream_t stream) {
+  if (size_ == 0) {
+    return {std::make_shared<std::vector<char>>(), std::make_shared<std::vector<char>>(),
+            std::make_shared<std::vector<char>>()};
+  }
+  MS_EXCEPTION_IF_NULL(stream);
+
+  // 1. Allocate temp buffer to keys, values and statuses.
   Key *device_keys = nullptr;
   Value *device_values = nullptr;
-  Status *device_status = nullptr;
-  AllocateMemory(keys_len, &device_keys);
-  AllocateMemory(values_len, &device_values);
-  AllocateMemory(status_len, &device_status);
-  MS_ERROR_IF_NULL(device_keys);
-  MS_ERROR_IF_NULL(device_values);
-  MS_ERROR_IF_NULL(device_status);
+  AllocateMemory(size_ * sizeof(Key), &device_keys);
+  AllocateMemory(size_ * value_dim_ * sizeof(Value), &device_values);
+  MS_EXCEPTION_IF_NULL(device_keys);
+  MS_EXCEPTION_IF_NULL(device_values);
 
-  // 3. Export all keys and indices and store into temp buffer.
-  RETURN_IF_FALSE_WITH_LOG(GetKeysAndValues(device_keys, device_values, stream), "Get keys and values failed.");
+  // 2. Get all keys and values and store into temp buffer.
+  auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
+  if (size_ != dynamic_map.get_size()) {
+    MS_LOG(EXCEPTION) << "The gpu hash table's size[" << size_ << "] is not equal to cuda dynamic map size["
+                      << dynamic_map.get_size() << "]";
+  }
+  int *indices = nullptr;
+  AllocateMemory(dynamic_map.get_size() * sizeof(int), &indices);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_CHECK_FAIL(dynamic_map.get_keys_values(device_keys, indices, stream),
+                             "Get keys and values from cuda dynamic map failed.");
+  size_t total_size = value_dim_ * size_;
+  GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, stream>>>(value_dim_, total_size, indices, elements_per_block_,
+                                                                blocks_ptr_, device_values);
 
-  // Note: Get all status.
-  // 4. Copy keys, values and status from device temp buffer to host.
-  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemcpyAsync(keys.first, device_keys, keys_len, cudaMemcpyDeviceToHost, stream),
-                                   "cudaMemcpyAsync");
-  CHECK_CUDA_RET_WITH_RETURN_FALSE(
-    cudaMemcpyAsync(values.first, device_values, values_len, cudaMemcpyDeviceToHost, stream), "cudaMemcpyAsync");
-  CHECK_CUDA_RET_WITH_RETURN_FALSE(
-    cudaMemcpyAsync(status.first, device_status, status_len, cudaMemcpyDeviceToHost, stream), "cudaMemcpyAsync");
-  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+  // 3. Export keys, values and statuses.
+  auto host_keys = std::make_shared<std::vector<char>>(size_ * sizeof(Key));
+  auto host_values = std::make_shared<std::vector<char>>(size_ * value_dim_ * sizeof(Value));
+  auto host_statuses = std::make_shared<std::vector<char>>(size_ * sizeof(Status));
+  // Copy keys.
+  CHECK_CUDA_RET_WITH_EXCEPTION(
+    cudaMemcpyAsync(host_keys->data(), device_keys, size_ * sizeof(Key), cudaMemcpyDeviceToHost, stream),
+    "cudaMemcpyAsync");
+  // Copy values.
+  CHECK_CUDA_RET_WITH_EXCEPTION(cudaMemcpyAsync(host_values->data(), device_values, size_ * value_dim_ * sizeof(Value),
+                                                cudaMemcpyDeviceToHost, stream),
+                                "cudaMemcpyAsync");
+  // Copy statuses.
+  std::vector<Status> modified_status(size_, Status::kModified);
+  auto ret = memcpy_s(host_statuses->data(), host_statuses->size(), modified_status.data(), size_ * sizeof(Status));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "Memcpy for gpu hash table status failed, errno[" << ret << "]";
+  }
 
-  // 5. Free temp buffer to keys, values and status.
+  // 4. Update status to unchanged after export.
+  UpdateStatus<<<GET_BLOCKS(size_), GET_THREADS, 0, stream>>>(size_, elements_per_block_, kEmptyValue, indices,
+                                                              Status::kUnchanged, statuses_ptr_);
+
+  CHECK_CUDA_RET_WITH_EXCEPTION(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+  FreeMemory(indices);
   FreeMemory(device_keys);
   FreeMemory(device_values);
-  FreeMemory(device_status);
+  return {host_keys, host_values, host_statuses};
+}
+
+template <typename Key, typename Value, typename Allocator>
+HashTableExportData GPUHashTable<Key, Value, Allocator>::ExportIncrementally(cudaStream_t stream) {
+  MS_EXCEPTION_IF_NULL(stream);
+
+  // 1. Count the number of element whose statuses are Status::kModified,
+  // which means these elements are modified since last export.
+  size_t modified_num = 0;
+  MS_EXCEPTION_IF_CHECK_FAIL(CountModifiedElements(stream, &modified_num), " Count modified elements failed.");
+  if (modified_num == 0) {
+    return {std::make_shared<std::vector<char>>(), std::make_shared<std::vector<char>>(),
+            std::make_shared<std::vector<char>>()};
+  }
+
+  // 2. Allocate device temp buffer to modified keys, indices and values.
+  Key *device_modified_keys = nullptr;
+  int *device_modified_indices = nullptr;
+  Value *device_modified_values = nullptr;
+  AllocateMemory(modified_num * sizeof(Key), &device_modified_keys);
+  AllocateMemory(modified_num * sizeof(int), &device_modified_indices);
+  AllocateMemory(modified_num * value_dim_ * sizeof(Value), &device_modified_values);
+  MS_EXCEPTION_IF_NULL(device_modified_keys);
+  MS_EXCEPTION_IF_NULL(device_modified_indices);
+  MS_EXCEPTION_IF_NULL(device_modified_values);
+
+  // 3. Get the keys and values for elements which are modified.
+  MS_EXCEPTION_IF_CHECK_FAIL(FindModifiedElements(device_modified_keys, device_modified_indices, stream),
+                             "Find modified elements failed");
+  size_t total_size = value_dim_ * modified_num;
+  GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, stream>>>(
+    value_dim_, total_size, device_modified_indices, elements_per_block_, blocks_ptr_, device_modified_values);
+
+  // 4. Export the keys, values and statuses for elements which are modified or erased.
+  HashTableExportData export_data =
+    ExportModifiedAndErasedElements(modified_num, device_modified_keys, device_modified_values, stream);
+
+  // 5. Update status to unchanged after export.
+  UpdateStatus<<<GET_BLOCKS(modified_num), GET_THREADS, 0, stream>>>(
+    modified_num, elements_per_block_, kEmptyValue, device_modified_indices, Status::kUnchanged, statuses_ptr_);
+
+  CHECK_CUDA_RET_WITH_EXCEPTION(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+
+  FreeMemory(device_modified_keys);
+  FreeMemory(device_modified_indices);
+  FreeMemory(device_modified_values);
+  return export_data;
+}
+
+template <typename Key, typename Value, typename Allocator>
+bool GPUHashTable<Key, Value, Allocator>::CountModifiedElements(cudaStream_t stream, size_t *modified_num) {
+  MS_ERROR_IF_NULL(stream);
+  MS_ERROR_IF_NULL(modified_num);
+
+  // 1. Initialize device modified counter.
+  CudaAtomicSize host_modified_counter(0);
+  CudaAtomicSize *device_modified_counter = nullptr;
+  AllocateMemory(sizeof(CudaAtomicSize), &device_modified_counter);
+  MS_ERROR_IF_NULL(device_modified_counter);
+
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemcpyAsync(device_modified_counter, &host_modified_counter,
+                                                   sizeof(CudaAtomicSize), cudaMemcpyHostToDevice, stream),
+                                   "cudaMemcpyAsync");
+
+  const uint32_t block_size = kBlockSize;
+  if (IntToUint(GET_THREADS) < block_size) {
+    MS_LOG(ERROR) << "The max thread per block is less than: " << block_size << " of this GPU";
+    return false;
+  }
+  uint32_t device_id = GET_CTX_DEVICE_ID;
+  const uint32_t grid_size = IntToUint(CUDA_BLOCKS_CAL(device_id, elements_per_block_, block_size));
+
+  // 2. Count the number for modified elements.
+  CountModifiedNum<block_size>
+    <<<grid_size, block_size, 0, stream>>>(blocks_.size(), elements_per_block_, statuses_ptr_, device_modified_counter);
+
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemcpyAsync(&host_modified_counter, device_modified_counter,
+                                                   sizeof(CudaAtomicSize), cudaMemcpyDeviceToHost, stream),
+                                   "cudaMemcpyAsync");
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+  *modified_num = host_modified_counter;
+
+  FreeMemory(device_modified_counter);
+  return true;
+}
+
+template <typename Key, typename Value, typename Allocator>
+bool GPUHashTable<Key, Value, Allocator>::FindModifiedElements(Key *modified_keys, int *modified_indices,
+                                                               cudaStream_t stream) {
+  MS_ERROR_IF_NULL(modified_keys);
+  MS_ERROR_IF_NULL(modified_indices);
+  MS_ERROR_IF_NULL(stream);
+
+  // 1. Initialize device modified counter.
+  CudaAtomicSize host_modified_counter(0);
+  CudaAtomicSize *device_modified_counter = nullptr;
+  AllocateMemory(sizeof(CudaAtomicSize), &device_modified_counter);
+  MS_ERROR_IF_NULL(device_modified_counter);
+
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemcpyAsync(device_modified_counter, &host_modified_counter,
+                                                   sizeof(CudaAtomicSize), cudaMemcpyHostToDevice, stream),
+                                   "cudaMemcpyAsync");
+
+  MS_ERROR_IF_NULL(cuda_dynamic_map_);
+  auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
+  // Note: size of dynamic_map maybe greater than size_.
+  auto size = dynamic_map.get_size();
+  Key *all_keys = nullptr;
+  int *all_indices = nullptr;
+  AllocateMemory(size * sizeof(Key), &all_keys);
+  AllocateMemory(size * sizeof(int), &all_indices);
+  MS_ERROR_IF_NULL(all_keys);
+  MS_ERROR_IF_NULL(all_indices);
+
+  // 2. Export all keys and indices from dynamic map.
+  RETURN_IF_FALSE_WITH_LOG(dynamic_map.get_keys_values(all_keys, all_indices, stream),
+                           "Get keys and values from cuda dynamic map failed.");
+
+  // 3. Find all keys and indices for modified elememts in hash table.
+  FindModifiedKeysAndIndices<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(
+    size, elements_per_block_, all_keys, all_indices, statuses_ptr_, device_modified_counter, modified_keys,
+    modified_indices);
+
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+  FreeMemory(all_keys);
+  FreeMemory(all_indices);
+  FreeMemory(device_modified_counter);
 
   return true;
+}
+
+template <typename Key, typename Value, typename Allocator>
+HashTableExportData GPUHashTable<Key, Value, Allocator>::ExportModifiedAndErasedElements(
+  size_t modified_num, const Key *device_modified_keys, const Value *device_modified_values, cudaStream_t stream) {
+  MS_EXCEPTION_IF_NULL(stream);
+
+  // 1. Export the keys, values and statuses for elements which are modified.
+  // The host buffer for modified keys, values and statuses.
+  size_t modified_and_erased_num = modified_num + erased_keys_.size();
+  auto host_keys = std::make_shared<std::vector<char>>(modified_and_erased_num * sizeof(Key));
+  auto host_values = std::make_shared<std::vector<char>>(modified_num * value_dim_ * sizeof(Value));
+  auto host_statuses = std::make_shared<std::vector<char>>(modified_and_erased_num * sizeof(Status));
+
+  // Copy keys.
+  CHECK_CUDA_RET_WITH_EXCEPTION(cudaMemcpyAsync(host_keys->data(), device_modified_keys, modified_num * sizeof(Key),
+                                                cudaMemcpyDeviceToHost, stream),
+                                "cudaMemcpyAsync");
+  // Copy values.
+  CHECK_CUDA_RET_WITH_EXCEPTION(
+    cudaMemcpyAsync(host_values->data(), device_modified_values, modified_num * value_dim_ * sizeof(Value),
+                    cudaMemcpyDeviceToHost, stream),
+    "cudaMemcpyAsync");
+  // Copy statuses.
+  std::vector<Status> modified_status(modified_num, Status::kModified);
+  auto ret =
+    memcpy_s(host_statuses->data(), host_statuses->size(), modified_status.data(), modified_num * sizeof(Status));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "Memcpy for gpu hash table status failed, errno[" << ret << "]";
+  }
+
+  // 2. Export the keys and statuses for elements which are erased.
+  if (!erased_keys_.empty()) {
+    ret = memcpy_s(host_keys->data() + modified_num * sizeof(Key), host_keys->size() - modified_num * sizeof(Key),
+                   erased_keys_.data(), erased_keys_.size() * sizeof(Key));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy for gpu hash table erased keys failed, errno[" << ret << "]";
+    }
+
+    std::vector<Status> erased_status(erased_keys_.size(), Status::kErased);
+    ret = memcpy_s(host_statuses->data() + modified_num * sizeof(Status),
+                   host_statuses->size() - modified_num * sizeof(Status), erased_status.data(),
+                   erased_status.size() * sizeof(Status));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy for gpu hash table erased status failed, errno[" << ret << "]";
+    }
+
+    erased_keys_.clear();
+  }
+
+  CHECK_CUDA_RET_WITH_EXCEPTION(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
+  return {host_keys, host_values, host_statuses};
 }
 
 template <typename Key, typename Value, typename Allocator>
@@ -844,11 +1045,15 @@ bool GPUHashTable<Key, Value, Allocator>::GetIndicesByKeys(const Key *key, size_
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::UpdateSize(size_t key_num, const int *indices, cudaStream_t stream,
                                                      bool update_lookup_count) {
+  size_t old_size = size_;
   if (min_lookup_cnt_before_permit_ == 1) {
     // Elements permission is disable.
     MS_EXCEPTION_IF_NULL(cuda_dynamic_map_);
     auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
     size_ = dynamic_map.get_size();
+    if (size_ != old_size) {
+      is_dirty_ = true;
+    }
     return true;
   }
 
@@ -879,6 +1084,9 @@ bool GPUHashTable<Key, Value, Allocator>::UpdateSize(size_t key_num, const int *
   // Update hash table size.
   size_t insert_success_num = insert_success_number_->load(cuda::std::memory_order_relaxed);
   size_ += insert_success_num;
+  if (size_ != old_size) {
+    is_dirty_ = true;
+  }
 
   return true;
 }

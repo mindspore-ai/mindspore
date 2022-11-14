@@ -19,13 +19,12 @@
 #if CUDA_VERSION > 11000
 #include <cuco/dynamic_map.cuh>
 #include <curand_kernel.h>
+#include "plugin/device/gpu/hal/device/gpu_hash_table_common.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
 namespace cg = cooperative_groups;
-using CudaAtomicSize = cuda::atomic<std::size_t, cuda::thread_scope_device>;
-using CudaAtomicInt = cuda::atomic<int32_t, cuda::thread_scope_device>;
 
 // Check whether the key exist in map already.
 template <typename CG, typename Key, typename View>
@@ -231,9 +230,9 @@ __global__ void GetValues(size_t value_dim, size_t total_size, const int *indice
 // Insert values into map by indices in blocks.
 template <typename Value>
 __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const int *indices, const Value *insert_values,
-                             const size_t elements_per_block, size_t *const *lookup_cnts_ptr, size_t min_lookup_cnt,
-                             size_t global_timestamp, size_t *const *update_timestamps_ptr, bool *const *idle_flags_ptr,
-                             Value *const *blocks_ptr) {
+                             const size_t elements_per_block, const size_t *const *lookup_cnts_ptr,
+                             size_t min_lookup_cnt, size_t global_timestamp, size_t *const *update_timestamps_ptr,
+                             Status *const *statuses_ptr, bool *const *idle_flags_ptr, Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / value_dim;
     const size_t offset = pos % value_dim;
@@ -254,6 +253,11 @@ __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const i
     // Update idle status.
     if (pos % value_dim == 0 && idle_flags_ptr[block_idx][offset_in_block]) {
       idle_flags_ptr[block_idx][offset_in_block] = false;
+    }
+
+    // Update status to kModified.
+    if (pos % value_dim == 0) {
+      statuses_ptr[block_idx][offset_in_block] = Status::kModified;
     }
 
     // Update timestamp.
@@ -349,7 +353,8 @@ __global__ void FindExpiredKeysAndIndices(size_t key_num, size_t elements_per_bl
 
 // Erase elements in hash map, update idle status for erased slots.
 __global__ void EraseElementsByIndices(size_t erase_num, size_t elements_per_block, int empty_index,
-                                       const int *erased_indices, bool *const *idle_flags_ptr) {
+                                       const int *erased_indices, bool *const *idle_flags_ptr,
+                                       Status *const *statuses_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < erase_num; pos += blockDim.x * gridDim.x) {
     // Elements which do not exist in hash map.
     if (erased_indices[pos] == empty_index) {
@@ -359,6 +364,8 @@ __global__ void EraseElementsByIndices(size_t erase_num, size_t elements_per_blo
     const size_t block_idx = erased_indices[pos] / elements_per_block;
     const size_t offset_in_block = erased_indices[pos] % elements_per_block;
     idle_flags_ptr[block_idx][offset_in_block] = true;
+
+    statuses_ptr[block_idx][offset_in_block] = Status::kErased;
   }
 }
 
@@ -371,6 +378,67 @@ __global__ void AddErasedSlots(size_t erased_num, int empty_index, const int *er
     }
 
     erased_slot[erased_counter->fetch_add(1, cuda::std::memory_order_relaxed)] = erased_indices[pos];
+  }
+}
+
+// Update status of element in hash table.
+__global__ void UpdateStatus(size_t key_num, size_t elements_per_block, int empty_index, const int *indices,
+                             Status new_status, Status *const *statuses_ptr) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < key_num; pos += blockDim.x * gridDim.x) {
+    // Ignore Elements which do not exist in hash map.
+    if (indices[pos] == empty_index) {
+      continue;
+    }
+
+    const size_t block_idx = indices[pos] / elements_per_block;
+    const size_t offset_in_block = indices[pos] % elements_per_block;
+
+    statuses_ptr[block_idx][offset_in_block] = new_status;
+  }
+}
+
+// Count the number of element whose statuses are modified.
+template <uint32_t block_size>
+__global__ void CountModifiedNum(size_t blocks_num, size_t elements_per_block, const Status *const *statuses_ptr,
+                                 CudaAtomicSize *modified_counter) {
+  typedef cub::BlockReduce<size_t, block_size> BlockReduce;
+  __shared__ typename BlockReduce::TempStorage temp_storage;
+  size_t local_modified_counter = 0;
+
+  for (size_t i = 0; i < blocks_num; i++) {
+    for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < elements_per_block; pos += blockDim.x * gridDim.x) {
+      // Counter modified element.
+      if (statuses_ptr[i][pos] == Status::kModified) {
+        local_modified_counter++;
+      }
+    }
+  }
+
+  size_t modified_num_per_block = BlockReduce(temp_storage).Sum(local_modified_counter);
+  if (threadIdx.x == 0) {
+    *modified_counter += modified_num_per_block;
+  }
+}
+
+// Find all keys and indices for elememts whose statuses are modified.
+template <typename Key>
+__global__ void FindModifiedKeysAndIndices(size_t key_num, size_t elements_per_block, const Key *all_keys,
+                                           const int *all_indices, const Status *const *statuses_ptr,
+                                           CudaAtomicSize *modified_counter, Key *modified_keys,
+                                           int *modified_indices) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < key_num; pos += blockDim.x * gridDim.x) {
+    Key key = all_keys[pos];
+    int index = all_indices[pos];
+
+    const size_t block_idx = index / elements_per_block;
+    const size_t offset_in_block = index % elements_per_block;
+
+    // Record modified keys and indices.
+    if (statuses_ptr[block_idx][offset_in_block] == Status::kModified) {
+      size_t modified_index = modified_counter->fetch_add(1, cuda::std::memory_order_relaxed);
+      modified_keys[modified_index] = key;
+      modified_indices[modified_index] = index;
+    }
   }
 }
 }  // namespace gpu

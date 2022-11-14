@@ -28,6 +28,10 @@ using device::HashTable;
 namespace tensor {
 using tensor::Tensor;
 using tensor::TensorPtr;
+constexpr size_t kKeyTensorIndex = 0;
+constexpr size_t kValueTensorIndex = 1;
+constexpr size_t kStatusTensorIndex = 2;
+constexpr size_t kExportTensorNum = 3;
 
 static ShapeVector ConcatShape(const ShapeVector &a, const ShapeVector &b) {
   ShapeVector result_shape = a;
@@ -94,51 +98,86 @@ void MapTensor::Update(const MapTensor::ExportData &data) {
   status_tensor_ = data.status_tensor;
 }
 
-std::tuple<DataLenPair, DataLenPair, DataLenPair> MapTensor::GetTensorDataLen(size_t data_size) {
-  // key length
-  auto key_length = data_size * abstract::TypeIdSize(key_dtype());
-  // value length
-  std::vector<size_t> value_shape_tmp{data_size};
-  (void)std::transform(value_shape().cbegin(), value_shape().cend(), std::back_inserter(value_shape_tmp), IntToSize);
-  auto value_length = abstract::ShapeSize(value_shape_tmp) * abstract::TypeIdSize(value_dtype());
-  // status length: status shape is same as the shape of key
-  auto status_length = data_size * abstract::TypeIdSize(kNumberTypeInt);
+void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) {
+  if (export_data.size() != kExportTensorNum) {
+    MS_LOG(EXCEPTION) << "Invalid MapTensor export data.";
+  }
 
-  ShapeVector new_shape{SizeToInt(data_size)};
-  (void)key_tensor()->set_shape(new_shape);
-  (void)status_tensor()->set_shape(new_shape);
-  (void)std::copy(value_shape().cbegin(), value_shape().cend(), std::back_inserter(new_shape));
-  (void)value_tensor()->set_shape(new_shape);
-  (void)status_tensor()->set_data_type(kNumberTypeInt);
-  DataLenPair keys_pair = {key_tensor()->data_c(), key_length};
-  DataLenPair values_pair = {value_tensor()->data_c(), value_length};
-  DataLenPair status_pair = {status_tensor()->data_c(), status_length};
-  return {keys_pair, values_pair, status_pair};
+  auto keys = export_data.at(kKeyTensorIndex);
+  auto values = export_data.at(kValueTensorIndex);
+  auto statuses = export_data.at(kStatusTensorIndex);
+  MS_EXCEPTION_IF_NULL(keys);
+  MS_EXCEPTION_IF_NULL(values);
+  MS_EXCEPTION_IF_NULL(statuses);
+
+  // The key tensor.
+  auto keys_length = keys->size();
+  auto keys_num = keys_length / abstract::TypeIdSize(key_dtype());
+  ShapeVector key_tensor_shape{SizeToLong(keys_num)};
+  (void)key_tensor()->set_shape(key_tensor_shape);
+  if (keys_length > 0) {
+    auto ret = memcpy_s(key_tensor()->data_c(), key_tensor()->Size(), keys->data(), keys_length);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy for key tensor failed, errno[" << ret << "]";
+    }
+  }
+
+  // The value tensor.
+  auto values_length = values->size();
+  auto element_length = abstract::ShapeSize(value_shape()) * abstract::TypeIdSize(value_dtype());
+  MS_EXCEPTION_IF_ZERO("element_length", element_length);
+  auto values_num = values_length / element_length;
+  ShapeVector value_tensor_shape{SizeToLong(values_num)};
+  (void)std::copy(value_shape().cbegin(), value_shape().cend(), std::back_inserter(value_tensor_shape));
+  (void)value_tensor()->set_shape(value_tensor_shape);
+  if (values_length > 0) {
+    auto ret = memcpy_s(value_tensor()->data_c(), value_tensor()->Size(), values->data(), values_length);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy for value tensor failed, errno[" << ret << "]";
+    }
+  }
+
+  // The status tensor
+  auto statuses_length = statuses->size();
+  auto statuses_num = statuses_length / abstract::TypeIdSize(kNumberTypeInt);
+  // The status tensor shape is same as the shape of key tensor.
+  if (statuses_num != keys_num) {
+    MS_LOG(EXCEPTION) << "Invalid export data: keys num: " << keys_num << ", statuses num: " << statuses_num;
+  }
+  ShapeVector status_tensor_shape{SizeToLong(statuses_num)};
+  (void)status_tensor()->set_shape(status_tensor_shape);
+  if (statuses_length > 0) {
+    auto ret = memcpy_s(status_tensor()->data_c(), status_tensor()->Size(), statuses->data(), statuses_length);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy for status tensor failed, errno[" << ret << "]";
+    }
+  }
 }
 
-MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &device_sync) {
+MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental) {
   auto user_data = device_sync->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
-  bool export_res = false;
+  HashTableExportData export_data;
   if (key_dtype() == TypeId::kNumberTypeInt32 && value_dtype() == TypeId::kNumberTypeFloat32) {
-    const auto &user_data_data = user_data->get<HashTable<int, float>>(kUserDataData);
-    MS_EXCEPTION_IF_NULL(user_data_data);
-    auto data_size = user_data_data->size();
-    auto [keys_pair, values_pair, status_pair] = GetTensorDataLen(data_size);
-    export_res = user_data_data->Export(keys_pair, values_pair, status_pair);
+    const auto &hash_table = user_data->get<HashTable<int, float>>(kUserDataData);
+    MS_EXCEPTION_IF_NULL(hash_table);
+    if (!hash_table->is_dirty()) {
+      return {key_tensor(), value_tensor(), status_tensor()};
+    }
+    export_data = hash_table->Export(incremental);
   } else if (key_dtype() == TypeId::kNumberTypeInt64 && value_dtype() == TypeId::kNumberTypeFloat32) {
-    const auto &user_data_data = user_data->get<HashTable<int64_t, float>>(kUserDataData);
-    MS_EXCEPTION_IF_NULL(user_data_data);
-    auto data_size = user_data_data->size();
-    auto [keys_pair, values_pair, status_pair] = GetTensorDataLen(data_size);
-    export_res = user_data_data->Export(keys_pair, values_pair, status_pair);
+    const auto &hash_table = user_data->get<HashTable<int64_t, float>>(kUserDataData);
+    MS_EXCEPTION_IF_NULL(hash_table);
+    if (!hash_table->is_dirty()) {
+      return {key_tensor(), value_tensor(), status_tensor()};
+    }
+    export_data = hash_table->Export(incremental);
   } else {
     MS_LOG(EXCEPTION) << "UnSupported Map Tensor type: key type is " << TypeIdToType(key_dtype()) << ", value type is "
                       << TypeIdToType(value_dtype()) << ".";
   }
-  if (!export_res) {
-    MS_LOG(EXCEPTION) << "Export MapTensor data failed.";
-  }
+  TransExportDataToTensor(export_data);
+
   return {key_tensor(), value_tensor(), status_tensor()};
 }
 
@@ -170,7 +209,7 @@ MapTensor::ExportData MapTensor::Export(bool incremental) {
   // Check device
   DeviceSyncPtr device_sync = device_address();
   if (device_sync != nullptr) {
-    return ExportDataFromDevice(device_sync);
+    return ExportDataFromDevice(device_sync, incremental);
   }
   if (CheckData()) {
     return {key_tensor(), value_tensor(), status_tensor()};
