@@ -29,6 +29,7 @@
 
 namespace mindspore {
 constexpr char BROADCAST_GRAPH_NAME[] = "broadcast_subgraph";
+
 namespace transform {
 using OpAdapterPtr = std::shared_ptr<transform::BaseOpAdapter>;
 using GraphRunnerPtr = std::shared_ptr<transform::GraphRunner>;

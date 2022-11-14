@@ -932,6 +932,7 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     SetInputNodeUsage(graph, manager);
     graph->SetOptimizerFlag();
   }
+  graph->set_parameters(graph->inputs());
   return graph;
 }
 
@@ -1000,6 +1001,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGrap
 #endif
 
   all_out_graph->push_back(graph);
+  graph->set_parameters(graph->inputs());
   return graph;
 }
 

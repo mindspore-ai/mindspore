@@ -53,6 +53,8 @@ using HcomBroadcast = ::ge::op::HcomBroadcast;
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
+constexpr char kFuncGraphTypeName[] = "FuncGraph";
+constexpr char kKernelGraphTypeName[] = "KernelGraph";
 
 class GeOpConvertor {
  public:
