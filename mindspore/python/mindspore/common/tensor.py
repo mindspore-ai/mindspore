@@ -1171,8 +1171,6 @@ class Tensor(Tensor_):
 
     def baddbmm(self, batch1, batch2, beta=1, alpha=1):
         r"""
-        Calculate the sum of the product of the three-dimensional matrix batch1, batch2 and the Tensor.
-
         For details, please refer to :func:`mindspore.ops.baddbmm`.
         """
         self._init_check()
