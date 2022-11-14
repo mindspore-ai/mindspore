@@ -2076,20 +2076,35 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
   if (graph->is_graph_run_mode()) {
     return;
   }
+
   auto &execution_order = graph->execution_order();
+  if (execution_order.size() <= 1) {
+    return;
+  }
+  auto first_kernel = execution_order[0];
+  const auto first_kernel_type = FetchKernelTransformType(first_kernel, graph, {}, GraphExecutionStrategy::kPipeline);
+  auto last_actor = FetchActor(first_kernel_type, graph_compiler_info.name_, first_kernel, graph);
   for (size_t i = 1; i < execution_order.size(); ++i) {
-    // Rpc op is not available in the execution order.
-    if (IsRpcActor(execution_order[i - 1]) || IsRpcActor(execution_order[i])) {
-      continue;
-    }
-    const auto &from_kernel = execution_order[i - 1];
-    const auto from_kernel_type = FetchKernelTransformType(from_kernel, graph, {}, GraphExecutionStrategy::kPipeline);
-    auto from_actor = FetchActor(from_kernel_type, graph_compiler_info.name_, from_kernel, graph);
     const auto &to_kernel = execution_order[i];
     const auto to_kernel_type = FetchKernelTransformType(to_kernel, graph, {}, GraphExecutionStrategy::kPipeline);
     auto to_actor = FetchActor(to_kernel_type, graph_compiler_info.name_, to_kernel, graph);
-    if ((from_actor != nullptr) && (to_actor != nullptr)) {
-      SchedulerHelper::AddControlArrow(from_actor, to_actor);
+    if (IsRpcActor(execution_order[i - 1]) || IsRpcActor(execution_order[i])) {
+      MS_LOG(INFO) << "Rpc op is not available in the execution order, from kernel: "
+                   << execution_order[i - 1]->fullname_with_scope()
+                   << ", to kernel:" << execution_order[i]->fullname_with_scope();
+      if (to_actor != nullptr) {
+        last_actor = to_actor;
+      }
+      continue;
+    }
+    if ((last_actor != nullptr) && (to_actor != nullptr)) {
+      SchedulerHelper::AddControlArrow(last_actor, to_actor);
+    } else {
+      MS_LOG(INFO) << "Skip add control arrow, from kernel: " << execution_order[i - 1]->fullname_with_scope()
+                   << ", to kernel: " << to_kernel->fullname_with_scope();
+    }
+    if (to_actor != nullptr) {
+      last_actor = to_actor;
     }
   }
 }
