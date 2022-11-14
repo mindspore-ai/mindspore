@@ -80,6 +80,26 @@ class MS_CORE_API List final : public Object {
   std::string ToString() const override { return DumpContent(false); }
   std::string DumpText() const override { return DumpContent(true); };
 
+  /// \brief Determine whether the list is dynamic length.
+  ///
+  /// \return Whether the list is dynamic length.
+  bool dynamic_len() const { return dynamic_len_; }
+
+  /// \brief Set whether the list is dynamic length.
+  ///
+  /// \param[in] dynamic_len bool value indicate whether the sequence is dynamic length.
+  void set_dynamic_len(bool dynamic_len) { dynamic_len_ = dynamic_len; }
+
+  /// \brief Get the element type when the list is dynamic length.
+  ///
+  /// \return Whether the list is dynamic length.
+  TypePtr dynamic_element_type() const;
+
+  /// \brief Set the element type when the list is dynamic length.
+  ///
+  /// \param[in] dynamic_element_type type of element for dynamic length list.
+  void set_dynamic_element_type(TypePtr dynamic_element_type);
+
  private:
   /// \brief Show each element.
   ///
@@ -87,6 +107,8 @@ class MS_CORE_API List final : public Object {
   /// \return The description of the List object.
   std::string DumpContent(bool is_dumptext) const;
   TypePtrList elements_;
+  bool dynamic_len_ = false;
+  TypePtr dynamic_element_type_ = nullptr;
 };
 using ListPtr = std::shared_ptr<List>;
 
@@ -137,6 +159,26 @@ class MS_CORE_API Tuple final : public Object {
   /// \return The number of elements in the Tuple object.
   std::size_t size() const { return elements_.size(); }
 
+  /// \brief Determine whether the tuple is dynamic length.
+  ///
+  /// \return Whether the tuple is dynamic length.
+  bool dynamic_len() const { return dynamic_len_; }
+
+  /// \brief Set whether the tuple is dynamic length.
+  ///
+  /// \param[in] dynamic_len bool value indicate whether the sequence is dynamic length.
+  void set_dynamic_len(bool dynamic_len) { dynamic_len_ = dynamic_len; }
+
+  /// \brief Get the element type when the tuple is dynamic length.
+  ///
+  /// \return Whether the tuple is dynamic length.
+  TypePtr dynamic_element_type() const;
+
+  /// \brief Set the element type when the tuple is dynamic length.
+  ///
+  /// \param[in] dynamic_element_type type of element for dynamic length tuple.
+  void set_dynamic_element_type(TypePtr dynamic_element_type);
+
  private:
   /// \brief Show each element.
   ///
@@ -144,6 +186,8 @@ class MS_CORE_API Tuple final : public Object {
   /// \return The description of the Tuple object.
   std::string DumpContent(bool is_dumptext) const;
   TypePtrList elements_;
+  bool dynamic_len_ = false;
+  TypePtr dynamic_element_type_ = nullptr;
 };
 using TuplePtr = std::shared_ptr<Tuple>;
 

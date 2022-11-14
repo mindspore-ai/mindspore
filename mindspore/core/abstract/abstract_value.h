@@ -798,11 +798,13 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Get the size of the stored elements.
   ///
   /// \return A size_t.
-  std::size_t size() const { return elements_.size(); }
+  std::size_t size() const;
+
   /// \brief Get the size of the stored elements.
   ///
   /// \return A size_t.
-  bool empty() const { return elements_.empty(); }
+  bool empty() const;
+
   /// \brief Get the stored elements.
   ///
   /// \return A vector of elements.
@@ -860,10 +862,39 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \return A boolean, which indicates whether the other abstract is same.
   virtual bool operator==(const AbstractSequence &other) const;
 
+  /// \brief Indicate whether the sequence is dynamic length.
+  ///
+  /// \return Boolean value indicates whether the sequence is dynamic length.
+  bool dynamic_len() const { return dynamic_len_; }
+
+  /// \brief Set the sequence to be dynamic length or not.
+  ///
+  /// \param[in] dynamic_len Boolean value to decide whether the sequence is dynamic length.
+  void set_dynamic_len(bool dynamic_len) { dynamic_len_ = dynamic_len; }
+
+  /// \brief Return the abstract of element for variable len sequence.
+  ///
+  /// \return Abstract for element for variable len sequence.
+  AbstractBasePtr dynamic_len_element_abs() const { return dynamic_len_element_abs_; }
+
+  /// \brief Set the abstract of element for variable len sequence.
+  ///
+  /// \param[in] dynamic_len_element_abs Abstract of element for variable len sequence.
+  void set_dynamic_len_element_abs(const AbstractBasePtr &dynamic_len_element_abs);
+
+  /// \brief Check and convert the sequence to dynamic length sequence.
+  void CheckAndConvertToDynamicLenSequence();
+
  protected:
   AbstractBasePtrList elements_;
   // Since there're not too many nodes, we just use vector here.
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes_;
+  // Dynamic len sequence related.
+  bool dynamic_len_ = false;
+  AbstractBasePtr dynamic_len_element_abs_ = nullptr;
+
+  template <typename T>
+  AbstractBasePtr DynamicLenSequenceJoin(const AbstractBasePtr &other);
 };
 using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 
@@ -895,26 +926,17 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   /// \param[in] shape The shape that will be set to the AbstractTuple.
   void set_shape(const BaseShapePtr &shape) override;
 
-  TypePtr BuildType() const override { return std::make_shared<Tuple>(ElementsType()); }
+  TypePtr BuildType() const override;
 
-  BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShape()); }
+  BaseShapePtr BuildShape() const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractTuple>(ElementsClone(), sequence_nodes()); }
+  AbstractBasePtr Clone() const override;
 
-  AbstractBasePtr Broaden() const override {
-    return std::make_shared<AbstractTuple>(ElementsBroaden(), sequence_nodes());
-  }
+  AbstractBasePtr Broaden() const override;
 
-  AbstractBasePtr PartialBroaden() const override {
-    return std::make_shared<AbstractTuple>(ElementsPartialBroaden(), sequence_nodes());
-  }
+  AbstractBasePtr PartialBroaden() const override;
 
-  AbstractBasePtr Join(const AbstractBasePtr &other) override {
-    auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractTuple>(other));
-    MS_EXCEPTION_IF_NULL(res);
-    res->InsertSequenceNodes(SequenceNodesJoin(other));
-    return res;
-  }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
   /// \brief Check whether all elements of the tuple are tensors.
   ///
@@ -936,7 +958,7 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   bool operator==(const AbstractBase &other) const override;
 
  protected:
-  ValuePtr RealBuildValue() const override { return ElementsBuildValue<ValueTuple>(); }
+  ValuePtr RealBuildValue() const override;
 };
 using AbstractTuplePtr = std::shared_ptr<AbstractTuple>;
 
@@ -962,26 +984,17 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   ~AbstractList() override = default;
   MS_DECLARE_PARENT(AbstractList, AbstractSequence)
 
-  TypePtr BuildType() const override { return std::make_shared<List>(ElementsType()); }
+  TypePtr BuildType() const override;
 
-  BaseShapePtr BuildShape() const override { return std::make_shared<ListShape>(ElementsShape()); }
+  BaseShapePtr BuildShape() const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractList>(ElementsClone(), sequence_nodes()); }
+  AbstractBasePtr Clone() const override;
 
-  AbstractBasePtr Broaden() const override {
-    return std::make_shared<AbstractList>(ElementsBroaden(), sequence_nodes());
-  }
+  AbstractBasePtr Broaden() const override;
 
-  AbstractBasePtr PartialBroaden() const override {
-    return std::make_shared<AbstractList>(ElementsPartialBroaden(), sequence_nodes());
-  }
+  AbstractBasePtr PartialBroaden() const override;
 
-  AbstractBasePtr Join(const AbstractBasePtr &other) override {
-    auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractList>(other));
-    MS_EXCEPTION_IF_NULL(res);
-    res->InsertSequenceNodes(SequenceNodesJoin(other));
-    return res;
-  }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
   /// \brief Overwrite the operator '==' to compare other abstract list.
   ///
@@ -993,7 +1006,7 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   bool operator==(const AbstractBase &other) const override;
 
  protected:
-  ValuePtr RealBuildValue() const override { return ElementsBuildValue<ValueList>(); }
+  ValuePtr RealBuildValue() const override;
 };
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 

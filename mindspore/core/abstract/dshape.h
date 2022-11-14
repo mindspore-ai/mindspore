@@ -206,6 +206,31 @@ class MS_CORE_API Shape final : public BaseShape {
 using ShapePtr = std::shared_ptr<Shape>;
 using ShapePtrList = std::vector<ShapePtr>;
 
+/// \brief DynamicSequenceShape defines shape of dynamic sequence.
+class MS_CORE_API DynamicSequenceShape : public BaseShape {
+ public:
+  /// \brief Constructor of DynamicSequenceShape.
+  DynamicSequenceShape() {}
+
+  /// \brief Destructor of DynamicSequenceShape.
+  ~DynamicSequenceShape() override = default;
+  MS_DECLARE_PARENT(DynamicSequenceShape, BaseShape);
+
+  /// \brief Get the description string about the DynamicSequenceShape object.
+  ///
+  /// \return The description string about the DynamicSequenceShape object.
+  std::string ToString() const override { return type_name(); }
+
+  bool IsDynamic() const override { return true; }
+
+  bool IsDimZero() const override { return false; };
+
+  bool IsDimUnknown() const override { return true; }
+
+  BaseShapePtr Clone() const override { return std::make_shared<DynamicSequenceShape>(); }
+};
+GVAR_DEF(std::shared_ptr<DynamicSequenceShape>, kDynamicSequenceShape, std::make_shared<DynamicSequenceShape>());
+
 /// \brief SequequeShape defines base class of multiple-shape classes.
 class MS_CORE_API SequenceShape : public BaseShape {
  public:
