@@ -177,8 +177,9 @@ build_python_wheel_package() {
   local python_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'` || true
   if [[ "${python_version}" == "3" ]]; then
     cd ${BASEPATH}/mindspore/lite/build/
-    local lite_wrapper_so=`ls python/*.so` || true
+    local lite_wrapper_so=`ls python/_c_lite_wrapper*.so` || true
     if [ ! -f "${lite_wrapper_so}" ]; then
+      echo "error: can not find python so."
       return 0
     fi
     mkdir -pv package/mindspore_lite/lib/
