@@ -76,7 +76,7 @@ KernelExec *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::
     MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(OpParameter));
+  (void)memset(param, 0, sizeof(OpParameter));
   param->type_ = PrimType::PrimType_Inner_Identity;
   auto lite_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
   MS_CHECK_TRUE_MSG(lite_kernel != nullptr, nullptr, "new inner kernel failed.");

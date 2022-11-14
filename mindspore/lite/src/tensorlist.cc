@@ -270,11 +270,11 @@ STATUS TensorList::Decode(const int *data, size_t length) {
 
 bool TensorList::IsConst() const { return this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR; }
 
-TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, AllocatorPtr allocator) {
+TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, const AllocatorPtr &allocator) {
   auto *result = new TensorList;
   if (result == nullptr) {
     MS_LOG(ERROR) << "New tensor failed";
-    return nullptr;
+    return result;
   }
   result->data_type_ = src.data_type_;
   result->shape_ = src.shape_;
@@ -299,7 +299,6 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, Al
   result->MallocTensorListData(src_tensor_dtype, tensor_shape);
   if (copy_data) {
     for (size_t i = 1; i < src.tensors_.size(); ++i) {
-      auto src_tensor = src.tensors_;
       auto ret = Tensor::CopyTensorData(*(src.tensors_[i]), result->tensors_[i]);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "CopyTensorData error";

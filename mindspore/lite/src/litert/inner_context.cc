@@ -305,7 +305,7 @@ void InnerContext::ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *o
     auto iter = receivers.find(old_receiver);
     if (iter != receivers.end()) {
       (void)receivers.erase(iter);
-      receivers.insert(new_receiver);
+      (void)receivers.insert(new_receiver);
     }
   }
 }

@@ -140,7 +140,7 @@ class LiteSession {
   int ResizeInputs(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
   int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);
   int PrepareKernels(const Model *model);
-  int SetTensorInitRefCount(const Model *model);
+  int SetTensorInitRefCount();
   int SetNonTaiCallSubgraphOutputInitRefCount();
   static int ReSizeKernels(
     const std::vector<kernel::KernelExec *> &kernels,

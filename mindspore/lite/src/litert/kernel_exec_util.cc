@@ -69,7 +69,7 @@ std::vector<KernelExec *> KernelExecUtil::SubgraphInputNodes(const std::vector<K
 std::vector<KernelExec *> KernelExecUtil::SubgraphOutputNodes(const std::vector<KernelExec *> &kernels) {
   std::set<KernelExec *> all_kernels{};
   for (const auto &kernel : kernels) {
-    all_kernels.insert(kernel);
+    (void)all_kernels.insert(kernel);
   }
   std::vector<KernelExec *> output_nodes;
   // if kernel has no post-kernel, kernel is a graph output, it must be a subgraph output
@@ -484,8 +484,16 @@ bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) {
 }
 
 bool KernelExecUtil::IsNonTailCall(const KernelExec *node) {
-  return node->type() == schema::PrimitiveType_Call &&
-         !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "node is nullptr";
+    return false;
+  }
+  auto parameter = reinterpret_cast<CallParameter *>(node->op_parameter());
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "Parameter is nullptr";
+    return false;
+  }
+  return node->type() == schema::PrimitiveType_Call && !(parameter->is_tail_call);
 }
 
 bool KernelExecUtil::IsTailCall(const KernelExec *node) {

@@ -39,6 +39,7 @@ STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
   CHECK_NULL_RETURN(graph);
   bool if_changed = false;
   for (auto &tensor : graph->allTensors) {
+    CHECK_NULL_RETURN(tensor);
     if (tensor->dataType != kNumberTypeFloat32 || tensor->data.empty()) {
       continue;
     }

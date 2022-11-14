@@ -577,7 +577,7 @@ int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
 int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
                                     const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
   FuncGraphPtr final_fg = nullptr;
-  if (meta_graphT->fmkType == converter::kFmkTypeMs) {
+  if (meta_graphT->fmkType == static_cast<int32_t>(converter::kFmkTypeMs)) {
     final_fg = func_graph;
   } else {
     int i = 0;
