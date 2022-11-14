@@ -262,7 +262,7 @@ int ThreadPool::TaskQueuesInit(size_t thread_num) {
       return THREAD_ERROR;
     }
   }
-  THREAD_ERROR("init task queues success.");
+  THREAD_INFO("init task queues success.");
   return THREAD_OK;
 }
 

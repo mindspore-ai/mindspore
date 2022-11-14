@@ -391,8 +391,8 @@ int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) {
   return THREAD_OK;
 #elif defined(BIND_CORE)
   if (bind_id_.empty()) {
-    THREAD_ERROR("bind id is empty");
-    return THREAD_ERROR;
+    THREAD_INFO("bind id is empty, it will not bind thread");
+    return THREAD_OK;
   }
   size_t window = bind_id_.size();
   size_t thread_num = workers.size();
