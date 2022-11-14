@@ -64,7 +64,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   int ResizeGraphInput(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
 
  public:
-  void AddResultIndex(size_t index);
+  void AddResultIndex(size_t index, size_t tensor_index);
   const kernel::KernelExec *GetKernel() { return kernel_; }
   // call this function after CompileArrow
   virtual std::set<kernel::KernelExec *> GetPartialKernels() const {
@@ -90,6 +90,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
   kernel::KernelExec *kernel_;
   std::vector<size_t> results_index_{};
+  std::vector<size_t> results_tensor_index_{};
   std::vector<OpDataPtr<Tensor>> outputs_data_{};
   std::vector<Tensor *> inputs_data_{};
   std::unordered_map<Tensor *, Tensor *> *isolate_input_map_ = nullptr; /* real obj in session */
