@@ -5924,7 +5924,7 @@ class Range(PrimitiveWithCheck):
     Refer to :func:`mindspore.ops.range` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> start = Tensor(0, mstype.int32)

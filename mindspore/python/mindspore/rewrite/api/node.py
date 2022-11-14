@@ -107,24 +107,6 @@ class Node:
         """
         return self._node
 
-    def get_prev(self) -> 'Node':
-        """
-        Get previous node of current node in source code order.
-
-        Returns:
-            An instance of `Node` as previous node.
-        """
-        return Node(self._node.get_prev())
-
-    def get_next(self) -> 'Node':
-        """
-        Get next node of current node in source code order.
-
-        Returns:
-            An instance of `Node` as next node.
-        """
-        return Node(self._node.get_next())
-
     def get_inputs(self) -> ['Node']:
         """
         Get input nodes of current node in topological order.

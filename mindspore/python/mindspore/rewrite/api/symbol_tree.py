@@ -182,19 +182,6 @@ class SymbolTree:
         return Node(node_impl)
 
     def get_inputs(self) -> [Node]:
-        """
-        Get input nodes of current `SymbolTree`.
-
-        Returns:
-            [Node], the node list of the current `Symboltree`.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> inputs = stree.get_inputs()
-        """
         return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
 
     def before(self, node: Node):
@@ -360,28 +347,6 @@ class SymbolTree:
         return Node(self._symbol_tree.replace(old_node.get_handler(), nodes_impl))
 
     def set_output(self, index: int, return_value: str) -> Node:
-        """
-        Set return value of network.
-
-        Args:
-            index (int): Indicate which output being modified.
-            return_value (str): New return value to been set.
-
-        Returns:
-            Return node of current rewrite.
-
-        Raises:
-            RuntimeError: If `index` is out of range.
-            TypeError: If `index` is not a `int` number.
-            TypeError: If `return_value` is not a `str`.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> stree.set_output(0, "x_10")
-        """
         Validator.check_value_type("index", index, [int], "SymbolTree")
         Validator.check_value_type("return_value", return_value, [str], "SymbolTree")
         return Node(self._symbol_tree.set_output(return_value, index))
@@ -439,45 +404,11 @@ class SymbolTree:
         return self._symbol_tree.get_network()
 
     def set_saved_file_name(self, file_name: str):
-        """
-        Set the name of the file used to save the network.
-
-        Args:
-            file_name (str): filename to be set.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> stree.set_saved_file_name("new_net")
-        """
         Validator.check_value_type("file_name", file_name, [str], "Saving network")
         self._symbol_tree.set_saved_file_name(file_name)
 
     def get_saved_file_name(self):
-        """
-        Gets the filename used to save the network.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)x
-            >>> stree.set_saved_file_name("new_net")
-            >>> stree.get_saved_file_name()
-        """
         return self._symbol_tree.get_saved_file_name()
 
     def save_network_to_file(self):
-        """
-        Save the modified network to a file. Default file name is `network_define.py`.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> stree.save_network_to_file()
-        """
         self._symbol_tree.save_network_to_file()

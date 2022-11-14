@@ -1,6 +1,6 @@
 mindspore.rewrite
 =================
-`MindSpore` 的 `ReWrite` 包。该包目前处于开发调试阶段，可能会更改或删除。
+MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进行插入、删除和替换语句。该功能目前处于开发调试阶段，可能会更改或删除。
 
 .. py:class:: mindspore.rewrite.SymbolTree(handler: SymbolTreeImpl)
 
@@ -105,13 +105,6 @@ mindspore.rewrite
         返回：
             SymbolTree对象。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.get_inputs()
-
-        获取SymbolTree的输入节点。
-
-        返回：
-            Node对象的列表。
-
     .. py:method:: mindspore.rewrite.SymbolTree.get_network()
 
         获取SymbolTree所对应的生成的网络对象。源码会保存到文件中，默认的文件名为 `network_define.py`。
@@ -131,10 +124,6 @@ mindspore.rewrite
 
         异常：
             - **TypeError** - 如果 `node_name` 不是Node类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.get_saved_file_name()
-
-        获取SymbolTree中保存源代码的文件名。
 
     .. py:method:: mindspore.rewrite.SymbolTree.insert(position, node: Node)
 
@@ -186,33 +175,6 @@ mindspore.rewrite
             - **RuntimeError** - 如果 `old_node` 仍然被其他节点依赖。
             - **TypeError** - 如果参数 `new_nodes` 不是list，或者列表中的成员不是Node类型。
             - **TypeError** - 如果参数 `old_node` 不是Node类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.save_network_to_file()
-
-        将SymbolTree对应的网络保存到文件中。默认文件名为 `network_define.py`。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.set_output(index: int, return_value: str)
-
-        设置网络的返回值。
-
-        参数：
-            - **index** (int) - 指定要设置的输出索引。
-            - **return_value** (str) - 要设置的新输出值。
-
-        返回：
-            当前SymbolTree的Retutn节点。
-
-        异常：
-            - **RuntimeError** - 如果 `index` 超出了网络输出数量。
-            - **TypeError** - 如果参数 `index` 不是int类型。
-            - **TypeError** - 如果参数 `return_value` 不是str类型。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.set_saved_file_name(file_name: str)
-
-        设置保存网络源码的文件名。
-
-        参数：
-            - **file_name** (str) - 文件名称。
 
 .. py:class:: mindspore.rewrite.Node(node: NodeImpl)
 
@@ -334,26 +296,12 @@ mindspore.rewrite
         返回：
             节点的名称，类型为str。
 
-    .. py:method:: mindspore.rewrite.Node.get_next()
-
-        获取当前节点代码序上的下一个节点。
-
-        返回：
-            下一个节点的Node实例。
-
     .. py:method:: mindspore.rewrite.Node.get_node_type()
 
         获取当前节点节点的类型。
 
         返回：
             NodeType，当前节点的类型。
-
-    .. py:method:: mindspore.rewrite.Node.get_prev()
-
-        获取当前节点代码序上的前一个节点。
-
-        返回：
-            前一个节点的Node实例。
 
     .. py:method:: mindspore.rewrite.Node.get_targets()
 
@@ -458,7 +406,7 @@ mindspore.rewrite
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_naming_value(name: str, scope: str = "")
 
-        创建一个 `nameing ScopedValue`。NamingValue表示对另一个变量的引用。
+        创建一个使用变量名称命名的ScopedValue。NamingValue表示对另一个变量的引用。
 
         参数：
             - **name** (str) – 表示变量的字符串。

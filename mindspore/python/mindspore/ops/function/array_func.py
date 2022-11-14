@@ -549,7 +549,7 @@ def range(start, limit, delta):
         ValueError: If `start` <= `limit` when `delta` < 0.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> start = Tensor(0, mstype.int32)
