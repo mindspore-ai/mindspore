@@ -73,7 +73,9 @@ class Tensor(Tensor_):
             as the `input_data`. Default: None.
         shape (Union[tuple, list, int]): Used to indicate the shape of the output Tensor. The argument should be
             a list of integers, a tuple of integers or an integer. If `input_data` is available,
-            `shape` doesn't need to be set. Default: None.
+            `shape` doesn't need to be set. If None in shape, a tensor of dynamic shape is created, `input_data`
+            doesn't need to be set; if None not in shape, a tensor of static shape is created, `input_data` or `init`
+            must be set. Default: None.
         init (Initializer): The information of init data.
             'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
             'init' interface to initialize Tensor in the other conditions. If 'init' interface is used to initialize
