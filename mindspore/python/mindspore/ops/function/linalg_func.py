@@ -100,9 +100,9 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
             Only `float32`, `float64` are supported Tensor dtypes.
 
     Keyword args:
-        atol (float, Tensor) : absolute tolerance value. Default: None.
-        rtol (float, Tensor) : relative tolerance value. Default: None.
-        hermitian (bool) : An optional bool. x is assumed to be symmetric if real. Default: False.
+        atol (float, Tensor): absolute tolerance value. Default: None.
+        rtol (float, Tensor): relative tolerance value. Default: None.
+        hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: False.
 
     Outputs:
         Tensor.

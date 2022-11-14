@@ -1,7 +1,7 @@
 mindspore.ops.gaussian_nll_loss
 ================================
 
-.. py:class:: mindspore.ops.gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean')
+.. py:function:: mindspore.ops.gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean')
 
     服从高斯分布的负对数似然损失。
 
