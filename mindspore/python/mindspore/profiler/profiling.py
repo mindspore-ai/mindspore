@@ -847,20 +847,20 @@ class Profiler:
         points = None
         is_training_mode_flag = False
 
+        try:
+            if self._is_support_step_info_collect() and not self._dynamic_status:
+                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
         # analyse timeline info
         try:
             logger.info("Profiling: analyzing the timeline data.")
             self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
-        finally:
-            pass
-
-        try:
-            if self._is_support_step_info_collect() and not self._dynamic_status:
-                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
-        except ProfilerException as err:
-            logger.warning(err.message)
         finally:
             pass
 
