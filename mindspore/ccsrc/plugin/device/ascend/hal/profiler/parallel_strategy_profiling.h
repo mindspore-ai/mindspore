@@ -41,10 +41,10 @@ class ParallelStrategy {
   bool StringToInt(const std::string *str, int32_t *value) const;
 
   static std::shared_ptr<ParallelStrategy> parallel_strategy_inst_;
-  bool has_save_parallel_strategy = false;
-  bool has_got_parallel_strategy_data = false;
-  irpb::ProfilingParallel cache_profiling_parallel_pb;
-  std::string graph_proto_str;
+  bool has_save_parallel_strategy_ = false;
+  bool has_got_parallel_strategy_data_ = false;
+  irpb::ProfilingParallel cache_profiling_parallel_pb_;
+  std::string graph_proto_str_;
 };
 }  // namespace ascend
 }  // namespace profiler

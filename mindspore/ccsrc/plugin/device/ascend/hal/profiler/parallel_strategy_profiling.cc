@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "sys/stat.h"
 #include "include/common/debug/dump_proto.h"
 #include "include/common/utils/parallel_context.h"
@@ -21,7 +21,6 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "mindspore/core/utils/file_utils.h"
-#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 
 #include "google/protobuf/util/json_util.h"
 
@@ -128,19 +127,19 @@ irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel() {
     config->set_rank_id(static_cast<uint32_t>(rank_id_int));
   }
 
-  has_got_parallel_strategy_data = true;
+  has_got_parallel_strategy_data_ = true;
   return profiling_parallel;
 }
 
 void ParallelStrategy::DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
-  if (has_save_parallel_strategy || !IsProfilingParallelStrategyEnabled()) {
+  if (has_save_parallel_strategy_ || !IsProfilingParallelStrategyEnabled()) {
     return;
   }
 
   MS_LOG(INFO) << "Start to DumpProfileParallelStrategy.";
 
-  cache_profiling_parallel_pb = GetProfilingParallel();
-  graph_proto_str = GetFuncGraphProtoJsonString(func_graph);
+  cache_profiling_parallel_pb_ = GetProfilingParallel();
+  graph_proto_str_ = GetFuncGraphProtoJsonString(func_graph);
 
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
@@ -153,7 +152,7 @@ void ParallelStrategy::DumpProfileParallelStrategy(const FuncGraphPtr &func_grap
 }
 
 void ParallelStrategy::SaveParallelStrategyToFile() {
-  if (has_save_parallel_strategy || !has_got_parallel_strategy_data) {
+  if (has_save_parallel_strategy_ || !has_got_parallel_strategy_data_) {
     return;
   }
 
@@ -166,7 +165,7 @@ void ParallelStrategy::SaveParallelStrategyToFile() {
     rank_id = "0";
   }
   std::string parallel_str;
-  (void)google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb, &parallel_str);
+  (void)google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb_, &parallel_str);
   std::string parallel_file = std::string("parallel_strategy_") + std::string(rank_id) + std::string(".json");
   std::string parallel_path = dir + "/" + parallel_file;
   MS_LOG(INFO) << "Start to write parallel strategy string, file path is " << parallel_path;
@@ -177,12 +176,12 @@ void ParallelStrategy::SaveParallelStrategyToFile() {
     return;
   }
 
-  ofs << parallel_str.substr(0, parallel_str.length() - 1) << ",\"graph\":" << graph_proto_str << "}";
+  ofs << parallel_str.substr(0, parallel_str.length() - 1) << ",\"graph\":" << graph_proto_str_ << "}";
   ofs.close();
 
   ChangeFileMode(parallel_path, S_IRUSR | S_IWUSR);
 
-  has_save_parallel_strategy = true;
+  has_save_parallel_strategy_ = true;
 
   MS_LOG(INFO) << "Save profile parallel strategy success.";
 }

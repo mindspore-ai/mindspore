@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "plugin/device/ascend/hal/profiler/pynative_profiling.h"
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -21,7 +21,6 @@
 
 #include "include/common/utils/utils.h"
 #include "profiler/device/profiling.h"
-#include "plugin/device/ascend/hal/profiler/pynative_profiling.h"
 #include "include/common/pybind_api/api_register.h"
 #include "mindspore/core/utils/file_utils.h"
 
@@ -89,7 +88,7 @@ void PynativeProfiler::OpDataProducerEnd() {}
 void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream,
                                            const std::thread::id thread_id, const std::string &op_name,
                                            bool is_dynamic_shape) {
-  if (enable_flag_ == false) {
+  if (!enable_flag_) {
     return;
   }
   if (is_dynamic_shape) {

@@ -748,6 +748,15 @@ class Profiler:
         points = None
         is_training_mode_flag = False
 
+        if not self._dynamic_status:
+            try:
+                logger.info("Profiling: analyzing the step trace data.")
+                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
+            except ProfilerException as err:
+                logger.warning(err.message)
+            finally:
+                pass
+
         # analyse timeline info
         try:
             logger.info("Profiling: analyzing the timeline data.")
@@ -758,20 +767,12 @@ class Profiler:
             pass
 
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
-        if not self._dynamic_status:
-            try:
-                logger.info("Profiling: analyzing the step trace data.")
-                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
-            except ProfilerException as err:
-                logger.warning(err.message)
-            finally:
-                pass
+        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
+                                   self._dev_id, self._rank_id, is_training_mode_flag)
+        logger.info("Profiling: analyzing the operation FLOPs.")
+        flops_parser.execute()
 
-            flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
-                                       self._dev_id, self._rank_id, is_training_mode_flag)
-            logger.info("Profiling: analyzing the operation FLOPs.")
-            flops_parser.execute()
-        else:
+        if self._dynamic_status:
             dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
             dynamic_parser.write_dynamic_shape_data()
 

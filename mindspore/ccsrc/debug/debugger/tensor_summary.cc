@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "debug/debugger/tensor_summary.h"
 #include <cmath>
 #include <algorithm>
 #include <future>
@@ -22,7 +22,6 @@
 #include <bitset>
 #include <tuple>
 #include <type_traits>
-#include "debug/debugger/tensor_summary.h"
 
 #ifdef OFFLINE_DBG_MODE
 #include "base/float16.h"
