@@ -134,6 +134,7 @@ mindspore.ops.function
     mindspore.ops.igammac
     mindspore.ops.is_floating_point
     mindspore.ops.is_signed
+    mindspore.ops.pinv
 
 逐元素运算
 ^^^^^^^^^^^^^
@@ -207,7 +208,6 @@ mindspore.ops.function
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.negative
-    mindspore.ops.pinv
     mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.rad2deg

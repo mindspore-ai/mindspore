@@ -135,6 +135,7 @@ Mathematical Functions
     mindspore.ops.igammac
     mindspore.ops.is_floating_point
     mindspore.ops.is_signed
+    mindspore.ops.pinv
 
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -208,7 +209,6 @@ Element-by-Element Operations
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.negative
-    mindspore.ops.pinv
     mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.rad2deg
