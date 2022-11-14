@@ -195,6 +195,13 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     auto status = model_->Resize(model_->GetInputs(), dims);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model pool resize failed.";
+      std::vector<std::vector<int64_t>> old_dims;
+      auto ins = model_->GetInputs();
+      (void)std::transform(ins.begin(), ins.end(), std::back_inserter(old_dims),
+                           [&](auto &tensor) { return tensor.Shape(); });
+      MS_LOG(INFO) << "Fallback wrong shape, resize shape: " << old_dims;
+      (void)model_->Resize(model_->GetInputs(), old_dims);
+      MS_LOG(INFO) << "Fallback wrong shape end.";
       available_ = true;
       return kLiteError;
     }
@@ -214,13 +221,13 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     model_input[i].SetShape(inputs[i].Shape());
   }
   auto status = model_->Predict(model_input, &model_output, before, after);
+  for (size_t i = 0; i < model_input.size(); i++) {
+    model_input[i].SetData(nullptr);
+  }
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model predict failed.";
     available_ = true;
     return status;
-  }
-  for (size_t i = 0; i < model_input.size(); i++) {
-    model_input[i].SetData(nullptr);
   }
   if (need_copy_output) {
     status = CopyOutputTensor(model_output, outputs);
