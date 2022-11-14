@@ -316,6 +316,7 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.updatestate_pure_node_eliminater_,
     irpass.load_eliminater_,
     irpass.stopgrad_eliminater_,
+    irpass.print_const_string_wrapper_,
   });
 }
 

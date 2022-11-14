@@ -129,6 +129,9 @@ class OptimizeIRPassLib {
   // Convert
   SubstitutionPtr print_tuple_wrapper_;
 
+  // Print const Convert string
+  SubstitutionPtr print_const_string_wrapper_;
+
   // tuple parameter graph transform
   SubstitutionPtr call_graph_tuple_transform_;
 

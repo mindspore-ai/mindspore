@@ -64,6 +64,10 @@ def check_output(output, patterns):
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_np_print_1():
     """
     Feature: JIT Fallback
@@ -80,6 +84,7 @@ def test_np_print_1():
     with capture(cap):
         res = np_print()
         assert np.all(res.asnumpy() == np.array([1, 2, 3, 4, 5]))
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'x:  [1 2 3 4 5]'}
@@ -87,6 +92,10 @@ def test_np_print_1():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_np_print_2():
     """
     Feature: JIT Fallback
@@ -104,6 +113,7 @@ def test_np_print_2():
         net = PrintNet()
         res = net()
         assert np.all(res.asnumpy() == np.array([1, 2, 3, 4, 5]))
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'x:  [1 2 3 4 5]'}
@@ -111,6 +121,10 @@ def test_np_print_2():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_tensor_print_1():
     """
     Feature: JIT Fallback
@@ -127,6 +141,7 @@ def test_tensor_print_1():
     with capture(cap):
         res = np_print()
         assert np.all(res.asnumpy() == np.array([1, 2, 3, 4, 5]))
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'Tensor(x): \nTensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])\n\n'}
@@ -134,6 +149,10 @@ def test_tensor_print_1():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_cnode_1():
     """
     Feature: JIT Fallback
@@ -152,6 +171,7 @@ def test_print_cnode_1():
         y = Tensor(np.array([1, 2, 3, 4, 5]))
         res = print_func(x, y)
         assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'res_sum: \nTensor(shape=[5], dtype=Int64, value=[ 2  4  6  8 10])\n\n'}
@@ -159,6 +179,10 @@ def test_print_cnode_1():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_cnode_2():
     """
     Feature: JIT Fallback
@@ -177,6 +201,7 @@ def test_print_cnode_2():
     with capture(cap):
         res = print_func()
         assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'res_sum: \nTensor(shape=[5], dtype=Int64, value=[ 2  4  6  8 10])\n'}
@@ -184,6 +209,10 @@ def test_print_cnode_2():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_cnode_3():
     """
     Feature: JIT Fallback
@@ -202,6 +231,7 @@ def test_print_cnode_3():
     with capture(cap):
         res = print_func()
         assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'res_sum:  [ 2  4  6  8 10]'}
@@ -209,6 +239,10 @@ def test_print_cnode_3():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_validate_tuple():
     """
     Feature: JIT Fallback
@@ -235,6 +269,10 @@ def test_print_validate_tuple():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_validate():
     """
     Feature: JIT Fallback
@@ -256,6 +294,10 @@ def test_print_validate():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_format_np():
     """
     Feature: JIT Fallback
@@ -274,6 +316,7 @@ def test_print_format_np():
     with capture(cap):
         res = print_func()
         assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'np_sum: [ 2  4  6  8 10]'}
@@ -281,6 +324,10 @@ def test_print_format_np():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_format_tensor():
     """
     Feature: JIT Fallback
@@ -299,6 +346,7 @@ def test_print_format_tensor():
     with capture(cap):
         res = print_func()
         assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'tensor_sum: Tensor(shape=[5], dtype=Int64, value=[ 2  4  6  8 10])\n'}
@@ -306,6 +354,10 @@ def test_print_format_tensor():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_string_format():
     """
     Feature: JIT Fallback
@@ -321,6 +373,7 @@ def test_print_string_format():
     with capture(cap):
         res = print_func()
         assert res == 0
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {"I'm MindSpore. I'm 3 years old.\n"}
@@ -328,6 +381,10 @@ def test_print_string_format():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_string_add_string():
     """
     Feature: JIT Fallback
@@ -346,6 +403,7 @@ def test_print_string_add_string():
     with capture(cap):
         res = print_func()
         assert res == 0
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {"I'm MindSpore. I'm 3 years old.\n"}
@@ -353,6 +411,10 @@ def test_print_string_add_string():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_list():
     """
     Feature: JIT Fallback
@@ -369,6 +431,7 @@ def test_print_list():
     with capture(cap):
         res = print_func()
         assert res == 0
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {"list_x:\nTensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])\n"}
@@ -376,6 +439,10 @@ def test_print_list():
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_tuple():
     """
     Feature: JIT Fallback
@@ -392,13 +459,18 @@ def test_print_tuple():
     with capture(cap):
         res = print_func()
         assert res == 0
+        sys.stdout.flush()
         time.sleep(0.1)
 
-    patterns = {"tuple_x:\nTensor(shape=[5], dtype=Int64, value=[ 6,  7,  8,  9, 10])\n"}
+    patterns = {"tuple_x:\nTensor(shape=[5], dtype=Int64, value=[ 6  7  8  9 10])\n"}
     check_output(cap.output, patterns)
 
 
 @security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_dict():
     """
     Feature: JIT Fallback
@@ -417,6 +489,7 @@ def test_print_dict():
     with capture(cap):
         res = print_func()
         assert res == 0
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {"dict_x1: {'one': 1, 'two': 2, 'three': 3}\n"
@@ -424,6 +497,7 @@ def test_print_dict():
     check_output(cap.output, patterns)
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -452,6 +526,11 @@ def test_print_exception():
         net(x, y)
 
 
+@security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_print_joinedstr():
     """
     Feature: graph print joinedstr.
@@ -470,6 +549,7 @@ def test_print_joinedstr():
     with capture(cap):
         res = np_print()
         assert np.all(res.asnumpy() == np.array([1, 2, 3, 4, 5]))
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {"Tensor(x): [1 2 3 4 5], dict_input: {'a': 1, 'b': 2, 'x:(1, 2, 3, 4, 5)': 3}"}
