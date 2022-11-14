@@ -223,7 +223,7 @@ void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t grap
     MS_LOG(EXCEPTION) << "Profiling get task_id and stream_id failed.";
   }
   ProfilingReporter reporter(device_id, graph_id, rt_model_id, cnode_list, stream_ids, task_ids);
-  if (task_id <= last_tid[t_id] && stream_id == last_streamid[t_id]) {
+  if (task_id <= last_tid_[t_id] && stream_id == last_streamid_[t_id]) {
     MS_LOG(INFO) << "No task id is allocated to the node <" << kernel->fullname_with_scope() << ">.";
   } else {
     if (task_id >= max_op_taskid_limit_ && (uint32_t)kernel_type == aicpu_kernel_type_) {
@@ -233,8 +233,8 @@ void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t grap
       reporter.DynamicNodeReport(kernel, stream_id, task_id, kernel_type);
     }
   }
-  last_tid[t_id] = task_id;
-  last_streamid[t_id] = stream_id;
+  last_tid_[t_id] = task_id;
+  last_streamid_[t_id] = stream_id;
 }
 }  // namespace ascend
 }  // namespace profiler
