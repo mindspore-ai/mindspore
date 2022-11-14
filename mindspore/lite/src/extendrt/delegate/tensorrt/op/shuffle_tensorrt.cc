@@ -76,16 +76,12 @@ int ShuffleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
       return RET_ERROR;
     }
   } else if (type_ == ops::kNameBroadcastTo) {
-    if (in_tensors.size() != INPUT_SIZE2) {
+    if (in_tensors.size() > INPUT_SIZE2) {
       MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
       return RET_ERROR;
     }
   } else {
     MS_LOG(ERROR) << "Unsupported op type:" << type_;
-    return RET_ERROR;
-  }
-  if (out_tensors.size() != 1) {
-    MS_LOG(ERROR) << "invalid output tensort size: " << out_tensors.size();
     return RET_ERROR;
   }
   return RET_OK;
@@ -312,11 +308,18 @@ int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer) {
-  if (!in_tensors_[1].IsConst()) {
+  if (in_tensors_.size() > 1 && !in_tensors_[1].IsConst()) {
     auto input_shape_tensor = input(ctx_, 1).trt_tensor_;
     shuffler_output_ = Broadcast(ctx_, shuffler_input_, input_shape_tensor);
   } else {
-    std::vector<int> input_shape = ConvertTensorAsIntVector(in_tensors_[1]);
+    std::vector<int> input_shape;
+    if (in_tensors_.size() == 1) {
+      auto broadcast_op = AsOps<ops::BroadcastTo>();
+      auto shape_64 = broadcast_op->get_shape();
+      std::transform(shape_64.begin(), shape_64.end(), std::back_inserter(input_shape), [](auto x) { return x; });
+    } else {
+      input_shape = ConvertTensorAsIntVector(in_tensors_[1]);
+    }
     if (input_shape.empty()) {
       MS_LOG(ERROR) << "Failed to get input shape from const input 1, node: " << op_name_;
       return RET_ERROR;

@@ -105,8 +105,8 @@ DynamicShapeParams TensorRTOp::GetDynamicShapeParams() const { return this->dyna
 int TensorRTOp::SetInt8DynamicRange(TensorRTContext *ctx) {
   // setting param layer_ forcely
   if (this->layer_ == nullptr) {
-    MS_LOG(ERROR) << op_name_ << " layer is nullptr.";
-    return RET_ERROR;
+    MS_LOG(WARNING) << op_name_ << " layer is nullptr.";
+    return RET_OK;
   }
   if (in_tensors_.empty() || out_tensors_.empty()) {
     MS_LOG(ERROR) << "input or output tensor empty.";

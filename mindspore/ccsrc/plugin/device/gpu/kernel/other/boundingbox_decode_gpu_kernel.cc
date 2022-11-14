@@ -114,7 +114,7 @@ bool BoundingBoxDecodeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   }
   BoundingBoxDecode(block_size / coordinate, rois_addr, deltas_addr, bboxes_addr, means_[0], means_[1], means_[2],
                     means_[3], stds_[0], stds_[1], stds_[2], stds_[3], max_shape_[0], max_shape_[1], wh_ratio_clip_,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+                    device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 

@@ -71,29 +71,16 @@ int TileTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RunAsConcat(ctx, tile_input);
 }
 int TileTensorRT::RunAsConcat(TensorRTContext *ctx, const ITensorHelper &tile_input) {
-  int axis = -1;
-  float tile_times = 0.0f;
-  for (size_t i = 0; i < repeats_.size(); i++) {
-    if (repeats_[i] > 1) {
-      if (axis != -1) {
-        MS_LOG(ERROR) << op_name_ << " has more than one axis to tile";
-        return RET_ERROR;
-      }
-      axis = i;
-      tile_times = repeats_[i];
-    }
+  std::vector<int> repeats(repeats_.size());
+  for (size_t i = 0; i != repeats_.size(); ++i) {
+    repeats[i] = static_cast<int>(repeats_[i]) * tile_input.trt_tensor_->getDimensions().d[i];
   }
-  // concat
-  nvinfer1::ITensor *concat_inputs[1024];
-  for (int i = 0; i < tile_times; i++) {
-    concat_inputs[i] = tile_input.trt_tensor_;
-  }
-  nvinfer1::IConcatenationLayer *concat_layer = ctx->network()->addConcatenation(concat_inputs, tile_times);
-  CHECK_NULL_RETURN(concat_layer);
-  concat_layer->setAxis(axis);
-  concat_layer->setName(op_name_.c_str());
-  nvinfer1::ITensor *tile_out = concat_layer->getOutput(0);
-  layer_ = concat_layer;
+  auto shape = ctx->ConvertTo1DTensor(repeats);
+  auto output = Broadcast(ctx, tile_input.trt_tensor_, shape);
+  auto layer = ctx->network()->addIdentity(*output);
+  layer_ = layer;
+  auto tile_out = layer->getOutput(0);
+
   ctx->RegisterTensor(ITensorHelper{tile_out, tile_input.format_, true}, out_tensors_[0].Name());
   return RET_OK;
 }

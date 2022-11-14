@@ -41,6 +41,11 @@ constexpr int INPUT_SIZE2 = 2;
 constexpr int INPUT_SIZE3 = 3;
 constexpr int INPUT_SIZE4 = 4;
 constexpr int INPUT_SIZE5 = 5;
+constexpr int INPUT_SIZE6 = 6;
+constexpr int INPUT_SIZE7 = 7;
+constexpr int INPUT_SIZE8 = 8;
+constexpr int INPUT_SIZE9 = 9;
+constexpr int INPUT_SIZE10 = 10;
 
 struct BindingHelper {
   std::string name_;

@@ -299,25 +299,7 @@ nvinfer1::Dims TensorRTSubGraph::SetInputDimsProfile(const TensorInfo &in_tensor
 
 nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const TensorInfo &in_tensor, int index) {
   nvinfer1::Dims input_dims = ConvertCudaDims(in_tensor.Shape());
-  if (input_batchsize_index_ != -1 && input_dims.d[0] != 1) {
-    input_dims.d[0] = -1;
-  }
-  // only support NHWC HW dim resize
-  if (input_hw_index_ != -1) {
-    MS_LOG(INFO) << "input tensor format is (NHWC:1, NCHW:0): " << in_tensor.format();
-    input_hw_index_ = in_tensor.format() == Format::NHWC ? 1 : 2;  // NCHW is 2
-    input_dims.d[input_hw_index_] = -1;
-    input_dims.d[input_hw_index_ + 1] = -1;
-  }
-  // We do not need to check the return of setDimension and addOptimizationProfile here as all dims are explicitly set
   nvinfer1::Dims input_dims_min = ConvertCudaDims(in_tensor.Shape());
-  if (input_batchsize_index_ != -1) {
-    input_dims_min.d[0] = 1;
-    if (input_hw_index_ != -1) {
-      input_dims_min.d[input_hw_index_] = 1;
-      input_dims_min.d[input_hw_index_ + 1] = 1;
-    }
-  }
   if (!profiles_.front()->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
     MS_LOG(ERROR) << "setDimensions of kMIN failed for " << in_tensor.Name();
     return input_dims;
@@ -453,8 +435,10 @@ int TensorRTSubGraph::MarkOutputs() {
       MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
       auto output_helper = ctx_->MsName2Tensor(out_tensor.Name());
       if (output_helper.trt_tensor_ == nullptr) {
-        MS_LOG(ERROR) << "output_helper.trt_tensor_ == nullptr";
-        return RET_ERROR;
+        output_helper.trt_tensor_ = lite::ConvertConstantTensor(ctx_, out_tensor, out_tensor.Name());
+        output_helper.format_ = Format::NCHW;
+        MS_LOG(INFO) << "auto convert constant tensor for: " << out_tensor.Name();
+        ctx_->RegisterTensor(output_helper, out_tensor.Name());
       }
       nvinfer1::ITensor *out_trt_tensor = output_helper.trt_tensor_;
       out_trt_tensor->setName(("__" + out_tensor.Name()).c_str());
@@ -475,7 +459,12 @@ int TensorRTSubGraph::MarkOutputs() {
           auto output_helper = out_op->output(ctx_, index);
           nvinfer1::ITensor *out_trt_tensor = output_helper.trt_tensor_;
           out_trt_tensor->setName(("__" + out_tensor.Name()).c_str());
-          out_trt_tensor = ctx_->network()->addIdentity(*out_trt_tensor)->getOutput(0);
+          auto out_layer = ctx_->network()->addIdentity(*out_trt_tensor);
+          if (out_tensor.DataType() == DataType::kNumberTypeFloat16) {
+            MS_LOG(WARNING) << "Cast output tensor " << out_tensor.Name() << " to fp16";
+            out_layer->setOutputType(0, nvinfer1::DataType::kHALF);
+          }
+          out_trt_tensor = out_layer->getOutput(0);
           out_trt_tensor->setName(out_tensor.Name().c_str());
           ctx_->network()->markOutput(*out_trt_tensor);
           for (int n = 0; n < out_trt_tensor->getDimensions().nbDims; n++) {
@@ -560,15 +549,14 @@ int TensorRTSubGraph::Prepare() {
   for (auto &tensor : outputs_) {
     int max_index = GetProfileBindingIndex(tensor.Name(), profile_index_);
     auto out_dims = trt_context_->getBindingDimensions(max_index);
-    if (out_dims.nbDims < 0) {
-      MS_LOG(ERROR) << "Output dims number " << out_dims.nbDims << " cannot less than 0";
-      return RET_ERROR;
-    }
     int elem_num = std::accumulate(out_dims.d, out_dims.d + out_dims.nbDims, 1, std::multiplies<int>());
     DebugDims("out dims", out_dims);
     MS_LOG(INFO) << "Set output shape by tensorrt binding output";
     tensor.SetShape(lite::ConvertMSShape(out_dims));
     auto type_size = lite::DataTypeSize(static_cast<enum TypeId>(tensor.DataType()));
+    if (tensor.DataType() == DataType::kNumberTypeBool) {
+      type_size = lite::DataTypeSize(static_cast<enum TypeId>(DataType::kNumberTypeInt32));
+    }
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, elem_num * type_size);
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";

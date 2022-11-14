@@ -174,23 +174,24 @@ __global__ void ROIAlignKernel(size_t size, const T *input, const T *roi_boxes, 
 template <typename T>
 void ROIAlign(const T *x, const T *roi_boxes, int roi_rows, int roi_cols, T *out_data, const T spatial_scale,
               const int sample_num, int roi_end_mode, const int channels, const int height, const int width,
-              const int pooled_height, const int pooled_width, cudaStream_t cuda_stream) {
+              const int pooled_height, const int pooled_width, const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t size = roi_rows * channels * pooled_height * pooled_width;
-  ROIAlignKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, x, roi_boxes, roi_cols, out_data,
-                                                                    spatial_scale, sample_num, roi_end_mode, channels,
-                                                                    height, width, pooled_height, pooled_width);
+  ROIAlignKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, x, roi_boxes, roi_cols, out_data, spatial_scale, sample_num, roi_end_mode, channels, height, width,
+    pooled_height, pooled_width);
 }
 
 template CUDA_LIB_EXPORT void ROIAlign<float>(const float *x, const float *roi_boxes, int roi_rows, int roi_cols,
                                               float *out_data, const float spatial_scale, const int sample_num,
                                               int roi_end_mode, const int channels, const int height, const int width,
                                               const int pooled_height, const int pooled_width,
-                                              cudaStream_t cuda_stream);
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void ROIAlign<half>(const half *x, const half *roi_boxes, int roi_rows, int roi_cols,
                                              half *out_data, const half spatial_scale, const int sample_num,
                                              int roi_end_mode, const int channels, const int height, const int width,
-                                             const int pooled_height, const int pooled_width, cudaStream_t cuda_stream);
+                                             const int pooled_height, const int pooled_width, const uint32_t &device_id,
+                                             cudaStream_t cuda_stream);
 
 template <typename T>
 __global__ void ROIAlignGradInitKernel(size_t size_init, T *dx) {
@@ -265,12 +266,13 @@ __global__ void ROIAlignGradKernel(size_t size, const T *dy, const T *roi_boxes,
 template <typename T>
 void ROIAlignGrad(const T *dy, const T *roi_boxes, int batch_size, int roi_rows, int roi_cols, T *dx,
                   const T spatial_scale, const int sample_num, int roi_end_mode, const int channels, const int height,
-                  const int width, const int pooled_height, const int pooled_width, cudaStream_t cuda_stream) {
+                  const int width, const int pooled_height, const int pooled_width, const uint32_t &device_id,
+                  cudaStream_t cuda_stream) {
   size_t size_init = batch_size * channels * height * width;
-  ROIAlignGradInitKernel<<<GET_BLOCKS(size_init), GET_THREADS, 0, cuda_stream>>>(size_init, dx);
+  ROIAlignGradInitKernel<<<CUDA_BLOCKS(device_id, size_init), CUDA_THREADS(0), 0, cuda_stream>>>(size_init, dx);
 
   size_t size = roi_rows * channels * pooled_height * pooled_width;
-  ROIAlignGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
+  ROIAlignGradKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(0), 0, cuda_stream>>>(
     size, dy, roi_boxes, roi_cols, dx, spatial_scale, sample_num, roi_end_mode, channels, height, width, pooled_height,
     pooled_width);
 }
@@ -279,10 +281,11 @@ template CUDA_LIB_EXPORT void ROIAlignGrad<float>(const float *dy, const float *
                                                   int roi_cols, float *dx, const float spatial_scale,
                                                   const int sample_num, int roi_end_mode, const int channels,
                                                   const int height, const int width, const int pooled_height,
-                                                  const int pooled_width, cudaStream_t cuda_stream);
+                                                  const int pooled_width, const uint32_t &device_id,
+                                                  cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void ROIAlignGrad<half>(const half *dy, const half *roi_boxes, int batch_size, int roi_rows,
                                                  int roi_cols, half *dx, const half spatial_scale, const int sample_num,
                                                  int roi_end_mode, const int channels, const int height,
                                                  const int width, const int pooled_height, const int pooled_width,
-                                                 cudaStream_t cuda_stream);
+                                                 const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -45,7 +45,7 @@ struct NodeWithOutputIndex {
   TensorInfo tensor_info;
 };
 
-tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node) {
+ValuePtr GetNodeValuePtr(AnfNodePtr input_node) {
   if (input_node == nullptr) {
     return nullptr;
   }
@@ -64,6 +64,11 @@ tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node) {
       value = parameter->default_param();
     }
   }
+  return value;
+}
+
+tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node) {
+  ValuePtr value = GetNodeValuePtr(input_node);
   if (value == nullptr) {
     return nullptr;
   }
@@ -131,7 +136,10 @@ Status GetAbstractArgsFromCNode(const CNodePtr &cnode, std::vector<NodeWithOutpu
     primc_ptr = primc_fns[kernel_name]();
     (void)primc_ptr->SetAttrs(prim->attrs());
   }
-  MS_EXCEPTION_IF_NULL(primc_ptr);
+  if (primc_ptr == nullptr) {
+    MS_LOG(ERROR) << "OpPrimCRegister can not find " << kernel_name;
+    return mindspore::kLiteError;
+  }
 
   *base_operator = nullptr;
   static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
@@ -238,8 +246,9 @@ Status GetModelOutputsInfo(KernelGraphPtr kernel_graph, std::vector<NodeWithOutp
       if (it != tensor_info_list.end()) {
         output_tensors->push_back(it->tensor_info);
       } else {
-        MS_LOG_ERROR << "Cannot find output tensor info " << tensor_id.first->fullname_with_scope();
-        return mindspore::kLiteError;
+        auto tensor_info = KernelTensorAsTensorInfo(tensor_id);
+        output_tensors->push_back(tensor_info);
+        tensor_info_list.push_back(NodeWithOutputIndex(tensor_id, tensor_info));
       }
     }
   }

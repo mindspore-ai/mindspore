@@ -23,10 +23,6 @@ constexpr int AXIS_INDEX = 2;
 
 int GatherTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                               const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "invalid input tensor size: " << in_tensors.size();
     return RET_ERROR;
@@ -58,11 +54,12 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  if (ReadyInputsNumber(ctx) == 1) {
-    int const_index = in_tensors_[0].IsConst() ? 0 : 1;
-    auto const_input = ConvertConstantTensor(ctx, in_tensors_[const_index], op_name_);
-    auto is_scalar = in_tensors_[const_index].Shape().empty();
-    ctx->RegisterTensor(ITensorHelper{const_input, NCHW, true, !is_scalar}, in_tensors_[const_index].Name());
+  for (size_t i = 0; i != AXIS_INDEX; ++i) {
+    if (input(ctx, i).trt_tensor_ == nullptr) {
+      auto const_input = ConvertConstantTensor(ctx, in_tensors_[i], op_name_);
+      auto is_scalar = in_tensors_[i].Shape().empty();
+      ctx->RegisterTensor(ITensorHelper{const_input, NCHW, true, !is_scalar}, in_tensors_[i].Name());
+    }
   }
 
   ITensorHelper gather_input = input(ctx, 0);

@@ -74,6 +74,11 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
   axis_ = 1 << axis_value_;
   MS_LOG(DEBUG) << "addTopK input " << GetTensorFormat(topk_input);
   MS_LOG(DEBUG) << op_name_ << " has k: " << top_k_ << ", axis: " << axis_value_;
+  bool need_expand = (topk_input.trt_tensor_->getDimensions().nbDims == 1);
+  if (need_expand == true) {
+    topk_input.trt_tensor_ = ExpandDim(ctx, topk_input.trt_tensor_, 0);
+    axis_ = INPUT_SIZE2;
+  }
 
   nvinfer1::ITopKLayer *topk_layer;
   if (topk_input.trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
@@ -94,6 +99,12 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
   topk_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *value_out_tensor = topk_layer->getOutput(0);
   nvinfer1::ITensor *index_out_tensor = topk_layer->getOutput(1);
+  if (need_expand == true) {
+    auto shape = ConvertMSShape(value_out_tensor->getDimensions());
+    shape.erase(shape.begin());
+    value_out_tensor = Reshape(ctx, value_out_tensor, shape);
+    index_out_tensor = Reshape(ctx, index_out_tensor, shape);
+  }
   // output 0 is data value, output 1 is index
 
   if (top_k_ == 1 && type_ != ops::kNameTopKFusion) {
@@ -109,10 +120,13 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
     }
   }
   if (out_tensors_.size() == INPUT_SIZE2) {
-    ctx->RegisterTensor(ITensorHelper{value_out_tensor, topk_input.format_, true}, out_tensors_[0].Name());
+    auto out_tensor = (out_tensors_[1].DataType() == DataType::kNumberTypeInt32) ? index_out_tensor : value_out_tensor;
+    auto output_helper = ITensorHelper{out_tensor, topk_input.format_, true};
+    ctx->RegisterTensor(output_helper, out_tensors_[1].Name());
   }
-  ctx->RegisterTensor(ITensorHelper{index_out_tensor, topk_input.format_, true},
-                      out_tensors_[out_tensors_.size() == INPUT_SIZE2].Name());
+  auto out_tensor = (out_tensors_[0].DataType() == DataType::kNumberTypeInt32) ? index_out_tensor : value_out_tensor;
+  auto output_helper = ITensorHelper{out_tensor, topk_input.format_, true};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
   return RET_OK;
 }
 
@@ -123,7 +137,7 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
     auto max_prim = AsOps<ops::ArgMaxFusion>();
     CHECK_NULL_RETURN(max_prim);
     axis_value_ = max_prim->get_axis();
-    axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
+    axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
     if (max_prim->HasAttr(ops::kTopK)) {
       top_k_ = max_prim->get_top_k();
     } else {
@@ -134,7 +148,7 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
     auto mim_prim = AsOps<ops::ArgMaxFusion>();
     CHECK_NULL_RETURN(mim_prim);
     axis_value_ = mim_prim->get_axis();
-    axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
+    axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
     if (mim_prim->HasAttr(ops::kTopK)) {
       top_k_ = mim_prim->get_top_k();
     } else {
@@ -156,7 +170,23 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
       MS_LOG(INFO) << "No attribute Axis for TopKFusion, use Default: input dims - 1";
       axis_value_ = input_nbDims - 1;
     }
-    axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
+    axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
+    if (in_tensors_.size() < INPUT_SIZE2) {
+      MS_LOG(ERROR) << "invalid input size " << in_tensors_.size() << "for " << op_name_;
+      return RET_ERROR;
+    }
+    std::vector<float> tmp(1);
+    int ret_k = ParseData2Vector(in_tensors_[1], &tmp);
+    if (ret_k != RET_OK) {
+      return ret_k;
+    }
+    top_k_ = tmp[0];
+  } else if (type_ == ops::kNameTopK) {
+    auto topk_prim = AsOps<ops::TopK>();
+    CHECK_NULL_RETURN(topk_prim);
+    topk_op_ = nvinfer1::TopKOperation::kMAX;
+
+    axis_value_ = input_nbDims - 1;
     if (in_tensors_.size() < INPUT_SIZE2) {
       MS_LOG(ERROR) << "invalid input size " << in_tensors_.size() << "for " << op_name_;
       return RET_ERROR;
@@ -192,4 +222,5 @@ int TopKTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *topk_inp
 REGISTER_TENSORRT_CREATOR(ops::kNameArgMaxFusion, TopKTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameArgMinFusion, TopKTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameTopKFusion, TopKTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameTopK, TopKTensorRT)
 }  // namespace mindspore::lite

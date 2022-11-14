@@ -83,10 +83,12 @@ bool NMSWithMaskFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   int *sel_idx = GetDeviceAddress<int>(outputs, kIndex1);
   bool *sel_boxes = GetDeviceAddress<bool>(outputs, kIndex2);
 
-  CalSort(num_input_, input, output, index_buff, data_buff, box_size_, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  CalPreprocess(num_input_, sel_idx, sel_boxes, input, output, index_buff, box_size_, row_mask,
+  CalSort(num_input_, input, output, index_buff, data_buff, box_size_, device_id_,
+          reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CalPreprocess(num_input_, sel_idx, sel_boxes, input, output, index_buff, box_size_, row_mask, device_id_,
                 reinterpret_cast<cudaStream_t>(stream_ptr_));
-  CalNms(num_input_, iou_value_, output, sel_boxes, box_size_, row_mask, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CalNms(num_input_, iou_value_, output, sel_boxes, box_size_, row_mask, device_id_,
+         reinterpret_cast<cudaStream_t>(stream_ptr_));
   return true;
 }
 
