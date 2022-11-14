@@ -246,8 +246,8 @@ Status ShardWriter::SetHeaderSize(const uint64_t &header_size) {
   // header_size [16KB, 128MB]
   CHECK_FAIL_RETURN_UNEXPECTED_MR(header_size >= kMinHeaderSize && header_size <= kMaxHeaderSize,
                                   "Invalid data, header size: " + std::to_string(header_size) +
-                                    " should be in range [" + std::to_string(kMinHeaderSize) + "MB, " +
-                                    std::to_string(kMaxHeaderSize) + "MB].");
+                                    " should be in range [" + std::to_string(kMinHeaderSize) + " bytes, " +
+                                    std::to_string(kMaxHeaderSize) + " bytes].");
   CHECK_FAIL_RETURN_UNEXPECTED_MR(
     header_size % 4 == 0, "Invalid data, header size " + std::to_string(header_size) + " should be divided by four.");
   header_size_ = header_size;
@@ -258,7 +258,8 @@ Status ShardWriter::SetPageSize(const uint64_t &page_size) {
   // PageSize [32KB, 256MB]
   CHECK_FAIL_RETURN_UNEXPECTED_MR(page_size >= kMinPageSize && page_size <= kMaxPageSize,
                                   "Invalid data, page size: " + std::to_string(page_size) + " should be in range [" +
-                                    std::to_string(kMinPageSize) + "MB, " + std::to_string(kMaxPageSize) + "MB].");
+                                    std::to_string(kMinPageSize) + " bytes, " + std::to_string(kMaxPageSize) +
+                                    " bytes].");
   CHECK_FAIL_RETURN_UNEXPECTED_MR(
     page_size % 4 == 0, "Invalid data, page size " + std::to_string(page_size) + " should be divided by four.");
   page_size_ = page_size;
@@ -1135,7 +1136,9 @@ Status ShardWriter::SetRawDataSize(const std::vector<std::vector<uint8_t>> &bin_
   CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(*std::max_element(raw_data_size_.begin(), raw_data_size_.end()) <= page_size_,
                                     "Invalid data, Page size: " + std::to_string(page_size_) +
                                       " is too small to save a raw row. Please try to use the mindrecord api "
-                                      "'set_page_size(1<<25)' to enable 64MB page size.");
+                                      "'set_page_size(value)' to enable larger page size, and the value range is in [" +
+                                      std::to_string(kMinPageSize) + " bytes, " + std::to_string(kMaxPageSize) +
+                                      " bytes].");
   return Status::OK();
 }
 
@@ -1146,7 +1149,9 @@ Status ShardWriter::SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blo
   CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(*std::max_element(blob_data_size_.begin(), blob_data_size_.end()) <= page_size_,
                                     "Invalid data, Page size: " + std::to_string(page_size_) +
                                       " is too small to save a blob row. Please try to use the mindrecord api "
-                                      "'set_page_size(1<<25)' to enable 64MB page size.");
+                                      "'set_page_size(value)' to enable larger page size, and the value range is in [" +
+                                      std::to_string(kMinPageSize) + " bytes, " + std::to_string(kMaxPageSize) +
+                                      " bytes].");
   return Status::OK();
 }
 

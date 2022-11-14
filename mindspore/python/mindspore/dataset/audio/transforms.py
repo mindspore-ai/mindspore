@@ -1395,7 +1395,7 @@ class MelScale(AudioTensorOperation):
     Args:
         n_mels (int, optional): Number of mel filterbanks. Default: 128.
         sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
-        f_min (float, optional): Minimum frequency. Default: 0.
+        f_min (float, optional): Minimum frequency. Default: 0.0.
         f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2` .
         n_stft (int, optional): Number of bins in STFT. Default: 201.
         norm (NormType, optional): Type of norm, value should be NormType.SLANEY or NormType::NONE.
@@ -1414,7 +1414,7 @@ class MelScale(AudioTensorOperation):
     """
 
     @check_mel_scale
-    def __init__(self, n_mels=128, sample_rate=16000, f_min=0, f_max=None, n_stft=201, norm=NormType.NONE,
+    def __init__(self, n_mels=128, sample_rate=16000, f_min=0.0, f_max=None, n_stft=201, norm=NormType.NONE,
                  mel_type=MelType.HTK):
         super().__init__()
         self.n_mels = n_mels

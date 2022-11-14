@@ -322,7 +322,7 @@ class FileWriter:
         Examples:
             >>> from mindspore.mindrecord import FileWriter
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
-            >>> status = writer.set_page_size(1 << 26) # 128MB
+            >>> status = writer.set_page_size(1 << 26)  # 64MB
         """
         return self._writer.set_page_size(page_size)
 
