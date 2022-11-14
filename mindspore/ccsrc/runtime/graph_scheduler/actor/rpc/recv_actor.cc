@@ -105,7 +105,7 @@ void RecvActor::StopRpcAtException() {
 }
 
 void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTensor> *const context) {
-  // Once recv actor is launched, reset the op_context so that the next step's recv will not be launched in advance.
+  // Once recv actor is launched, lock the context so that the next step's recv will not be launched in advance.
   ResetOpcontext();
 
   MS_ERROR_IF_NULL_WO_RET_VAL(msg);

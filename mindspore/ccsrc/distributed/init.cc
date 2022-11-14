@@ -20,6 +20,7 @@
 #include <memory>
 #include "distributed/recovery/recovery_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
+#include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 
 namespace mindspore {
 namespace distributed {
@@ -74,6 +75,7 @@ bool InitializeCluster() {
     if (graph_scheduler.initialized() && graph_scheduler.rpc_node_scheduler() != nullptr) {
       graph_scheduler.rpc_node_scheduler()->Abort();
     }
+    runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
   });
   node->set_abnormal_callback(callback);
 
