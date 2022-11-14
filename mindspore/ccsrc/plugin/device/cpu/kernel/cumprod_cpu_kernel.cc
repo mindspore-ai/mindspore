@@ -254,33 +254,6 @@ bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 using cumProdPair = std::pair<KernelAttr, CumProdCpuKernelMod::KernelRunFunc>;
 const std::vector<cumProdPair> &CumProdCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, CumProdCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &CumProdCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &CumProdCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &CumProdCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-     &CumProdCpuKernelMod::LaunchKernel<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &CumProdCpuKernelMod::LaunchKernel<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-     &CumProdCpuKernelMod::LaunchKernel<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-     &CumProdCpuKernelMod::LaunchKernel<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-     &CumProdCpuKernelMod::LaunchKernel<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-     &CumProdCpuKernelMod::LaunchKernel<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-     &CumProdCpuKernelMod::LaunchKernel<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-     &CumProdCpuKernelMod::LaunchKernel<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-     &CumProdCpuKernelMod::LaunchKernel<complex64>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-     &CumProdCpuKernelMod::LaunchKernel<complex128>},
-    // Dynamic shape related.
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
      &CumProdCpuKernelMod::LaunchKernel<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
@@ -303,6 +276,13 @@ const std::vector<cumProdPair> &CumProdCpuKernelMod::GetFuncList() const {
      &CumProdCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
      &CumProdCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+     &CumProdCpuKernelMod::LaunchKernel<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &CumProdCpuKernelMod::LaunchKernel<complex128>},
   };
   return func_list;
 }
