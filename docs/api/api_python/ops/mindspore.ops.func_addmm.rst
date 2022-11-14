@@ -1,7 +1,7 @@
 ﻿mindspore.ops.addmm
 ====================
 
-.. py:class:: mindspore.ops.addmm(x, mat1, mat2, *, beta=1, alpha=1)
+.. py:function:: mindspore.ops.addmm(x, mat1, mat2, *, beta=1, alpha=1)
 
     对 `mat1` 和 `mat2` 应用矩阵乘法。矩阵 `x` 和最终的结果相加。 `alpha` 和 `beta` 分别是 `mat1` 和 `mat2` 矩阵乘法和 `x` 的乘数。如果 `beta` 是0，那么 `x` 将会被忽略。
 

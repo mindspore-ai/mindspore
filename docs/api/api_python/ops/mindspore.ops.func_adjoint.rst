@@ -1,7 +1,7 @@
 ﻿mindspore.ops.adjoint
 ======================
 
-.. py:class:: mindspore.ops.adjoint(x)
+.. py:function:: mindspore.ops.adjoint(x)
 
     计算张量的共轭，并转置最后两个维度。
 
