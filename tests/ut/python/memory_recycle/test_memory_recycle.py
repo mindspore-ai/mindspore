@@ -56,6 +56,7 @@ def test_single_cell_memory_auto_recycle():
     assert not cells_compile_cache, "cells_compile_cache size should be 0"
 
 
+@pytest.mark.skip(reason="random failures")
 def test_control_flow_cell_memory_auto_recycle():
     """
     Feature: Memory recycle.
