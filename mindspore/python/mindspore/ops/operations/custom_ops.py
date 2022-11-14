@@ -102,7 +102,7 @@ def _compile_aot(file):
         elif file.endswith("cu"):
             cmd = ["nvcc"]
             cmd += ["--shared", "-Xcompiler", "-fPIC", "-O3", "-gencode", "arch=compute_70, code=sm_70"]
-            cmd += ["--use_fast_math", "--expt-relaxed-constexpr", "--expt-extended-lambda"]
+            cmd += ["--use_fast_math", "--expt-relaxed-constexpr"]
             cmd += ["-D_GLIBCXX_USE_CXX11_ABI=0"]
 
             def _get_cuda_bare_metal_version():
@@ -116,7 +116,7 @@ def _compile_aot(file):
                 return int(version_major)
 
             if _get_cuda_bare_metal_version() >= 11:
-                cmd += ["-gencode", "arch=compute_80,code=sm_80"]
+                cmd += ["-gencode", "arch=compute_80,code=sm_80", "--expt-extended-lambda"]
             cmd += [include_file, "-o", func_path, file]
         else:
             raise ValueError("The source file must be a cc/cpp/cu file, but get: {}".format(file))
