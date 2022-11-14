@@ -3670,8 +3670,6 @@ class Tensor(Tensor_):
 
     def median(self, axis=-1, keepdims=False):
         r"""
-        Computes the median and indices of input tensor.
-
         For details, please refer to :func:`mindspore.ops.median`.
         """
         self._init_check()
