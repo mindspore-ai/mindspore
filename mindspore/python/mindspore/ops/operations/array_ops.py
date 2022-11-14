@@ -6524,7 +6524,7 @@ class ListDiff(Primitive):
         TypeError: If attr `out_idx` not in [mstype.int32, mstype.int64].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(1, 7, 1), dtype=mstype.int32) # [1, 2, 3, 4, 5, 6]

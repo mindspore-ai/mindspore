@@ -33,6 +33,10 @@ namespace {
 abstract::TupleShapePtr ListDiffInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    abstract::ShapePtr rank_shape = std::make_shared<abstract::Shape>(ShapeVector({-2}));
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{rank_shape, rank_shape});
+  }
   bool shape_check_pass = x_shape.size() == kDim1 && y_shape.size() == kDim1;
   if (!shape_check_pass) {
     MS_EXCEPTION(ValueError) << "For ListDiff, input x, y should be 1D, but get x dims = " << x_shape.size()
