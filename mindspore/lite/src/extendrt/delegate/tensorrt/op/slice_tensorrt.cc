@@ -244,8 +244,8 @@ class CropTensorRTUtil final : public SliceTensorRTUtil {
       size[i] = in_tensors.at(1).Shape().at(i);
     }
 
-    auto start_dims = lite::ConvertCudaDims(&begin[0], begin.size());
-    auto size_dims = lite::ConvertCudaDims(&size[0], size.size());
+    auto start_dims = lite::ConvertCudaDims(begin);
+    auto size_dims = lite::ConvertCudaDims(size);
     auto stride_dims = lite::ConvertCudaDims(1, begin.size());
 
     return std::make_tuple(start_dims, size_dims, stride_dims);

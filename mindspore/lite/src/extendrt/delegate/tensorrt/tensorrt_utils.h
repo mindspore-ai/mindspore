@@ -58,7 +58,7 @@ typedef union float32_bits {
 } float32_bits;
 
 // Convert Tensor data to Cuda dims.
-nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size);
+nvinfer1::Dims ConvertCudaDims(const std::vector<int> &data);
 
 nvinfer1::Dims ConvertCudaDims(int data, size_t size);
 

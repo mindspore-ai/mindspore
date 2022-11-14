@@ -55,8 +55,8 @@ nvinfer1::Dims ConvertCudaDimsWithType(const void *data, int64_t size) {
   return dims;
 }
 
-nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
-  auto dims = ConvertCudaDimsWithType<int>(data, size);
+nvinfer1::Dims ConvertCudaDims(const std::vector<int> &data) {
+  auto dims = ConvertCudaDimsWithType<int>(data.data(), data.size());
   return dims;
 }
 
