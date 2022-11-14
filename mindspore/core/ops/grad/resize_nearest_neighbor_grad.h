@@ -28,7 +28,7 @@ constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 class MIND_API ResizeNearestNeighborGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ResizeNearestNeighborGrad);
-  ResizeNearestNeighborGrad() : BaseOperator(kNameResizeNearestNeighborGrad) {}
+  ResizeNearestNeighborGrad() : BaseOperator(kNameResizeNearestNeighborGrad) { InitIOName({"grads", "size"}, {"y"}); }
 
   void set_align_corners(const bool align_corners);
   bool get_align_corners() const;

@@ -585,8 +585,7 @@ NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
   auto lanczos_gamma_plus_one_half = k_lanczos_gamma + 0.5;
   auto log_lanczos_gamma_plus_one_half = log(lanczos_gamma_plus_one_half);
   auto inf = std::numeric_limits<double>::infinity();
-  auto infinity = ib->Emit(
-    "Fill", {ib->EmitValue(input_dtype), ib->Value<ShapeVector>(ib->GetShape(x)), ib->Tensor(inf, input_dtype)});
+  auto infinity = ib->Fill(inf, ib->GetShape(x), input_dtype->type_id());
   auto need_to_reflect = ib->Emit("Less", {x, one_half});
   auto neg_input = ib->Neg(x);
   auto z = ib->Emit("Select", {need_to_reflect, neg_input, ib->Sub(x, one)});

@@ -304,9 +304,7 @@ REG_BPROP_BUILDER("Pow").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
     ib->Mul((ib->Mul(power, (ib->Emit("Pow", {x, ib->Sub(power, ib->Tensor(1.0, ib->GetDtype(x)))})))), dout);
   auto shape_x = ib->GetShape(x);
   x = ib->Emit("Select", {ib->Emit("Less", {x, ib->Tensor(0, ib->GetDtype(x))}),
-                          ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(x)), ib->Value<ShapeVector>(ib->GetShape(x)),
-                                            ib->Tensor(1, ib->GetDtype(x))}),
-                          x});
+                          ib->Fill(1.0, ib->GetShape(x), ib->GetDtype(x)->type_id()), x});
   auto bc_dpower = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
   return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
 });
@@ -389,8 +387,7 @@ REG_BPROP_BUILDER("BesselI1").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto dout = ib->GetInput(kIndex2);
   auto bessel_i0 = ib->Emit("BesselI0", {x});
   auto zero = ib->ZerosLike(x);
-  auto one = ib->Emit(
-    "Fill", {ib->EmitValue(ib->GetDtype(x)), ib->Value<ShapeVector>(ib->GetShape(x)), ib->Tensor(1, ib->GetDtype(x))});
+  auto one = ib->Fill(1.0, ib->GetShape(x), ib->GetDtype(x)->type_id());
   auto dout_dx =
     ib->Emit("Select", {ib->Emit("Equal", {x, zero}), one, ib->Sub(bessel_i0, (ib->Emit("Div", {out, x})))});
   auto dx = ib->Mul(dout, dout_dx);
@@ -411,8 +408,7 @@ REG_BPROP_BUILDER("BesselJ1").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto dout = ib->GetInput(kIndex2);
   auto bessel_j0 = ib->Emit("BesselJ0", {x});
   auto zero = ib->ZerosLike(x);
-  auto zero_p5 = ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(x)), ib->Value<ShapeVector>(ib->GetShape(x)),
-                                   ib->Tensor(0.5, ib->GetDtype(x))});
+  auto zero_p5 = ib->Fill(0.5, ib->GetShape(x), ib->GetDtype(x)->type_id());
   auto dout_dx =
     ib->Emit("Select", {ib->Emit("Equal", {x, zero}), zero_p5, ib->Sub(bessel_j0, (ib->Emit("Div", {out, x})))});
   auto dx = ib->Mul(dout, dout_dx);
@@ -1258,7 +1254,7 @@ REG_BPROP_BUILDER("NextAfter").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
     dout = ib->Cast(dout, kFloat32);
   }
   auto s_x1 = ib->GetShape(x1);
-  auto partial_x1 = ib->Emit("Fill", {ib->EmitValue(x1_type), ib->Value<ShapeVector>(s_x1), ib->Tensor(1, x1_type)});
+  auto partial_x1 = ib->Fill(1.0, s_x1, x1_type->type_id());
   auto s_x2 = ib->GetShape(x2);
   auto partial_x2 = ib->ZerosLike(x2);
   auto dx1 = ib->Reshape(ib->Mul(partial_x1, dout), s_x1);
