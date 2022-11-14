@@ -62,6 +62,8 @@ class AclPassImpl {
   void SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
   void SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
 
+  STATUS MapperForOrgMindIR(const FuncGraphPtr &func_graph);
+
  private: /* create custom node */
   CNodePtr CreateCustomNode(const FuncGraphPtr &func_graph);
   void SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim);

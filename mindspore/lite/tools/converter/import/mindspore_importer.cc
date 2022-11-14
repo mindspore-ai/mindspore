@@ -338,7 +338,8 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
     is_optimized = GetValue<bool>(value);
   }
   if (!is_optimized && !param->is_runtime_converter) {
-    auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
+    auto unify_format =
+      std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->export_mindir);
     MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
     if (!unify_format->Run(func_graph)) {
       MS_LOG(ERROR) << "Run insert transpose failed.";

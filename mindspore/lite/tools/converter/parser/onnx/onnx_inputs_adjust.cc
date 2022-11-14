@@ -464,7 +464,7 @@ STATUS AdjustIdentity(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
 }
 }  // namespace
 
-bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph) {
+bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::ConverterParameters &flag) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
@@ -495,7 +495,7 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph) {
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimConstant)) {
       status = ReplaceConstant(func_graph, cnode);
-    } else if (opt::CheckPrimitiveType(node, prim::kPrimTranspose)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimTranspose) && flag.export_mindir != kMindIR) {
       status = ReplaceTransposeWithGraphInput(func_graph, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimStridedSlice)) {
       status = AdjustStridedSlice(func_graph, cnode);

@@ -145,7 +145,7 @@ function Convert() {
         if [[ ${cfg_file_name} =~ "_ascend" ]]; then
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
               --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
-              --configFile=${config_file} --trainModel=${train_model} --exportMindIR=${export_mindir} --device=${target_device}\
+              --trainModel=${train_model} --exportMindIR=${export_mindir} --device=${target_device}\
               --encryption=${encryption_flag} --inputDataFormat=${input_format} >> "$4"
         elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
             ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\

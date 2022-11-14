@@ -23,8 +23,9 @@ namespace mindspore {
 namespace opt {
 class ToNHWCFormat : public ToFormatBase {
  public:
-  explicit ToNHWCFormat(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
-      : ToFormatBase(fmk_type, train_flag, "ToNHWCFormat") {}
+  explicit ToNHWCFormat(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
+                        ModelType export_mindir = kMindIR_Lite)
+      : ToFormatBase(fmk_type, train_flag, export_mindir, "ToNHWCFormat") {}
   ~ToNHWCFormat() = default;
 
  protected:

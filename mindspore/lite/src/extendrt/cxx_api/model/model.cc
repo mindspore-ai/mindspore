@@ -24,6 +24,8 @@ extern "C" {
 extern void mindspore_log_init();
 }
 #endif
+
+std::mutex g_build_mutex;
 }  // namespace
 std::mutex g_impl_init_lock;
 
@@ -43,6 +45,7 @@ Model::~Model() {}
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
+  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
     impl_ = std::make_shared<ModelImpl>();
@@ -65,6 +68,7 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
+  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
     impl_ = std::make_shared<ModelImpl>();
