@@ -93,13 +93,17 @@
 #define MS_GET_MIN512_F32(src) _mm512_reduce_min_ps(src)
 #define MS_GET_SUM512_F32(src) _mm512_reduce_add_ps(src)
 #define MS_AND512_MASK(src1, src2) _mm512_kand(src1, src2)
+#define MS_AND512_F32(src1, src2) \
+  _mm512_castsi512_ps(_mm512_and_si512(_mm512_castps_si512(src1), _mm512_castps_si512(src2)))
+
+#define MS512_CASTPS_EPI32(src) _mm512_castps_si512(src)
+#define MS_OR512_EPI32(src1, src2) _mm512_or_epi32(src1, src2)
+#define MS_AND512_EPI32(src1, src2) _mm512_and_epi32(src1, src2)
+#define MS_AND512_F32(src1, src2) \
+  _mm512_castsi512_ps(_mm512_and_si512(_mm512_castps_si512(src1), _mm512_castps_si512(src2)))
 
 static inline MS_FLOAT512_F32 MS_OR512_F32(MS_FLOAT512_F32 src1, MS_FLOAT512_F32 src2) {
-  /* _mm512_or_ps valid in avx512dq */
-  MS_FLOAT512_F32 result;
-  for (int i = 0; i < 16; i++) {
-    result[i] = (MS512_F32_GETI(src1, i) == 0) ? MS512_F32_GETI(src2, i) : MS512_F32_GETI(src1, i);
-  }
+  MS_FLOAT512_F32 result = MS_CAST512_F32_S32(MS_OR512_EPI32(MS512_CASTPS_EPI32(src1), MS512_CASTPS_EPI32(src2)));
   return result;
 }
 

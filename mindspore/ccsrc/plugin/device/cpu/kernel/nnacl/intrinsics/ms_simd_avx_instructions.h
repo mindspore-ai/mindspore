@@ -81,6 +81,7 @@
 #define MS_AND256_MASK(src1, src2) _mm256_and_ps(src1, src2)
 #define MS_OR256_F32(src1, src2) _mm256_or_ps(src1, src2)
 #define MS_AND256_MASK_F32(src1, src2) _mm256_and_ps(src1, src2)
+#define MS_AND256_F32(src1, src2) _mm256_and_ps(src1, src2)
 
 static inline MS_FLOAT32X8 MS_POW256_F32(MS_FLOAT32X8 src1, MS_FLOAT32X8 src2) {
   MS_FLOAT32X8 dst;
