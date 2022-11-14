@@ -5844,18 +5844,19 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
         x (Tensor): The tensor to be added.
         batch1 (Tensor): The first batch of matrices to be multiplied.
         batch2 (Tensor): The second batch of matrices to be multiplied.
-        alpha: multiplier for `batch1 @ batch2`.
-        beta: multiplier for input.
+        beta (Union[float, int], optional): multiplier for input. The default is 1.
+        alpha (Union[float, int], optional): multiplier for `batch1 @ batch2`. The default is 1.
 
     Returns:
         Tensor, the output tensor.
 
     Raises:
-        TypeError: For Baddbmm, inputs are not tensors.
-        ValueError: If `batch1` and `batch2` are not 3-D tensors.
+        TypeError: The type of `x`, `batch1`, `batch2` is not Tensor.
+        TypeError: The types of `x`, `batch1`, `batch2` are different.
         TypeError: For inputs of type FloatTensor or DoubleTensor, \
                     arguments beta and alpha not be real numbers, otherwise not be integers.
-        ValueError: For Baddbmm, attributes alpha and beta are not real numbers
+        TypeError: For Baddbmm, attributes alpha and beta are not real numbers
+        ValueError: If `batch1` and `batch2` are not 3-D tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
