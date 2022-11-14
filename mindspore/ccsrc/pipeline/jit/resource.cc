@@ -352,6 +352,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"atan", std::string("atan")},                                      // atan()
        {"atanh", std::string("atanh")},                                    // atanh()
        {"arctanh", std::string("atanh")},                                  // arctanh()
+       {"baddbmm", std::string("baddbmm")},                                // baddbmm
        {"bmm", std::string("bmm")},                                        // bmm()
        {"value", std::string("value_")},                                   // P.Load(param, U)
        {"to", std::string("to")},                                          // to()

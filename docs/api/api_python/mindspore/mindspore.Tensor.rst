@@ -55,6 +55,7 @@ mindspore.Tensor
     mindspore.Tensor.atan
     mindspore.Tensor.atan2
     mindspore.Tensor.atanh
+    mindspore.Tensor.baddbmm
     mindspore.Tensor.bernoulli
     mindspore.Tensor.bitwise_and
     mindspore.Tensor.bitwise_or

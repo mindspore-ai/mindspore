@@ -1167,6 +1167,15 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('atan2')(self, y)
 
+    def baddbmm(self, batch1, batch2, beta=1, alpha=1):
+        r"""
+        Calculate the sum of the product of the three-dimensional matrix batch1, batch2 and the Tensor.
+
+        For details, please refer to :func:`mindspore.ops.baddbmm`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('baddbmm')(self, batch1, batch2, beta=beta, alpha=alpha)
+
     def view(self, *shape):
         """
         Reshape the tensor according to the input shape. It's the same as :func:`mindspore.Tensor.reshape`,
