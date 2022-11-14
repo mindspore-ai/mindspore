@@ -211,7 +211,7 @@ Text Processing
     mindspore.ops.NoRepeatNGram
 
 Mathematical Operators
-^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 .. msplatformautosummary::
     :toctree: ops

@@ -409,7 +409,7 @@ class ReduceScatter(Primitive):
     r"""
     Reduces and scatters tensors from the specified communication group.
     For more details about it, please refer to `ReduceScatter \
-    <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_ .
+    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#reducescatter>`_ .
 
     Note:
         The tensors must have the same shape and format in all processes of the collection.
