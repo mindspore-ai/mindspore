@@ -84,6 +84,7 @@ Loss Function
     mindspore.ops.BCEWithLogitsLoss
     mindspore.ops.BinaryCrossEntropy
     mindspore.ops.CTCLoss
+    mindspore.ops.CTCLossV2
     mindspore.ops.KLDivLoss
     mindspore.ops.L2Loss
     mindspore.ops.NLLLoss
