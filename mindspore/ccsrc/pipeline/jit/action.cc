@@ -1580,6 +1580,8 @@ std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) {
   auto actions = CommonPipeline();
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
+  (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
+  (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   (void)actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
   return actions;
