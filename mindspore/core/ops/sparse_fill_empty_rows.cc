@@ -30,92 +30,77 @@
 namespace mindspore {
 namespace ops {
 namespace {
-void CheckSparseFillEmptyRowsInputs(const std::vector<AbstractBasePtr> &input_args, const std::string &op_name) {
-  auto indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  auto values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  auto dense_shape = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
-  auto default_value = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 3);
+bool CheckSparseFillEmptyRowsInputs(const std::vector<AbstractBasePtr> &input_args, const std::string &op_name) {
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto dense_shape_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto default_value_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
 
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values->BuildShape())[kShape];
-  auto dense_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dense_shape->BuildShape())[kShape];
-  auto default_value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(default_value->BuildShape())[kShape];
+  if (IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(dense_shape_shape)) {
+    return false;
+  }
 
-  const int64_t indice_size = 2;
-  const int64_t indice_last_dim = 2;
-  const int64_t values_size = 1;
-  const int64_t dense_shape_size = 1;
-  const int64_t default_value_size = 0;
+  const int64_t indice_rank = 2;
+  const int64_t values_rank = 1;
+  const int64_t dense_shape_rank = 1;
+  const int64_t default_value_rank = 0;
+  const int64_t dense_rank = 2;
 
-  (void)CheckAndConvertUtils::CheckInteger("indices rank", SizeToLong(indices_shape.size()), kEqual, indice_size,
+  (void)CheckAndConvertUtils::CheckInteger("indices rank", SizeToLong(indices_shape.size()), kEqual, indice_rank,
                                            op_name);
-  (void)CheckAndConvertUtils::CheckInteger("values rank", SizeToLong(values_shape.size()), kEqual, values_size,
+  (void)CheckAndConvertUtils::CheckInteger("values rank", SizeToLong(values_shape.size()), kEqual, values_rank,
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("dense_shape rank", SizeToLong(dense_shape_shape.size()), kEqual,
-                                           dense_shape_size, op_name);
+                                           dense_shape_rank, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("dense_shape size", dense_shape_shape[0], kEqual, dense_rank, op_name);
   (void)CheckAndConvertUtils::CheckInteger("default_value rank", SizeToLong(default_value_shape.size()), kEqual,
-                                           default_value_size, op_name);
-  if (indices_shape[1] != indice_last_dim) {
+                                           default_value_rank, op_name);
+  if (indices_shape[1] != dense_rank) {
     MS_EXCEPTION(ValueError) << "For SparseFillEmptyRows, "
-                             << "the last dim of the indices must be 2, but got " << indices_shape[1];
+                             << "the last dim of the indices must be 2, but got " << indices_shape[1] << ".";
   }
   if (indices_shape[0] != values_shape[0]) {
     MS_EXCEPTION(ValueError) << "For SparseFillEmptyRows, "
-                             << "the indices size must be equal to values first dimension size " << values_shape[0]
-                             << ", but got " << indices_shape[0];
+                             << "the size of indices must be equal to values, but got " << indices_shape[0] << " and "
+                             << values_shape[0] << ".";
   }
+  return true;
 }
 
 abstract::TupleShapePtr SparseFillEmptyRowsInferShape(const PrimitivePtr &primitive,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  CheckSparseFillEmptyRowsInputs(input_args, op_name);
-  auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   abstract::ShapePtr output_indices_shape;
   abstract::ShapePtr output_values_shape;
   abstract::ShapePtr output_empty_row_indicator_shape;
   abstract::ShapePtr output_reverse_index_map_shape;
 
-  auto input_shape = input_args[2]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
+  const int64_t rank = 2;
+  auto input_shape_value = input_args[kInputIndex2]->BuildValue();
+  MS_EXCEPTION_IF_NULL(input_shape_value);
 
-  auto input_type = input_args[2]->BuildType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  auto input_type_id = input_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input_type_id);
-  auto input_type_element = input_type_id->element();
-  MS_EXCEPTION_IF_NULL(input_type_element);
-  auto shape_zero = 1;
-  if (!input_args[kInputIndex2]->BuildValue()->isa<AnyValue>() &&
-      !input_args[kInputIndex2]->BuildValue()->isa<None>()) {
-    auto input_shape_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value_ptr, op_name);
-    shape_zero = input_shape_value_ptr_tensor[0];
+  if (CheckSparseFillEmptyRowsInputs(input_args, op_name) && !input_shape_value->isa<AnyValue>() &&
+      !input_shape_value->isa<None>()) {
+    auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    const int64_t input_nnz = indice_shape[0];
+
+    auto dense_row = CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value, op_name)[0];
+    output_indices_shape =
+      std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}),
+                                        ShapeVector({input_nnz, rank}), ShapeVector({input_nnz + dense_row, rank}));
+    output_values_shape = std::make_shared<abstract::Shape>(
+      ShapeVector({abstract::Shape::kShapeDimAny}), ShapeVector({input_nnz}), ShapeVector({input_nnz + dense_row}));
+    output_empty_row_indicator_shape = std::make_shared<abstract::Shape>(ShapeVector({dense_row}));
+    output_reverse_index_map_shape = std::make_shared<abstract::Shape>(ShapeVector({input_nnz}));
+  } else {
+    output_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}));
+    output_values_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    output_empty_row_indicator_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    output_reverse_index_map_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
   }
-  ShapeVector out_indices_shape = {-1, 2};
-  ShapeVector out_values_shape = {-1};
-  ShapeVector out_reverse_index_map_shape = {indice_shape[0]};
-  ShapeVector min_out_indices_shape = {};
-  ShapeVector max_out_indices_shape = {};
-  ShapeVector min_out_values_shape = {};
-  ShapeVector max_out_values_shape = {};
-  ShapeVector out_empty_row_indicator_shape = {shape_zero};
 
-  min_out_indices_shape.push_back(indice_shape[0]);
-  min_out_indices_shape.push_back(indice_shape[1]);
-  min_out_values_shape.push_back(indice_shape[0]);
-
-  max_out_indices_shape.push_back(indice_shape[0] + shape_zero);
-  max_out_indices_shape.push_back(indice_shape[1]);
-  max_out_values_shape.push_back(indice_shape[0] + shape_zero);
-
-  output_indices_shape =
-    std::make_shared<abstract::Shape>(out_indices_shape, min_out_indices_shape, max_out_indices_shape);
-  output_values_shape = std::make_shared<abstract::Shape>(out_values_shape, min_out_values_shape, max_out_values_shape);
-  output_empty_row_indicator_shape = std::make_shared<abstract::Shape>(out_empty_row_indicator_shape);
-  output_reverse_index_map_shape = std::make_shared<abstract::Shape>(out_reverse_index_map_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
     output_indices_shape, output_values_shape, output_empty_row_indicator_shape, output_reverse_index_map_shape});
 }

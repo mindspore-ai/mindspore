@@ -179,6 +179,7 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSlice
+from mindspore.ops.operations.sparse_ops import SparseFillEmptyRows
 from mindspore.ops.operations._grad_ops import SparseSliceGrad
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
@@ -4621,6 +4622,12 @@ test_case_other_ops = [
                         Tensor([3, 3], mstype.int64), Tensor([[0, 0], [1, 1]], mstype.int64),
                         Tensor([2, 100], mstype.int64), Tensor([3, 3], mstype.int64)],
         'skip': ['backward']}),
+    ('SparseFillEmptyRows', {
+        'block': SparseFillEmptyRows(),
+        'desc_inputs': [Tensor([[1, 0]], mstype.int64), Tensor([4], mstype.int64),
+                        Tensor([2, 3], mstype.int64), Tensor(5, mstype.int64)],
+        'desc_bprop': [Tensor([[0, 0], [1, 0]], mstype.int64), Tensor([2, 3], mstype.int64),
+                       Tensor([False, False], mstype.bool_), Tensor([1], mstype.int64)]}),
     ('SparseReshape', {
         'block': SparseReshape(),
         'desc_inputs': [Tensor(np.array([[0, 0, 0],

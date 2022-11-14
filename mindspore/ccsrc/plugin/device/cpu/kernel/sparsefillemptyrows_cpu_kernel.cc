@@ -70,6 +70,13 @@ constexpr char kKernelName[] = "SparseFillEmptyRows";
 void SparseFillEmptyRowsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_ptr = kernel_node;
   MS_EXCEPTION_IF_NULL(kernel_node);
+
+  // for DeprecatedNativeCpuKernelMod
+  auto output_empty_row_indicator_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex2);
+  if (IsDynamic(output_empty_row_indicator_shape)) {
+    return;
+  }
+
   output_indices_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   output_values_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 1);
   output_empty_row_indicator_type_ = kNumberTypeBool;
