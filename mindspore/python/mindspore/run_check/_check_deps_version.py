@@ -17,7 +17,6 @@ from __future__ import absolute_import
 
 from argparse import ArgumentParser
 import sys
-from mindspore import log as logger
 
 
 def parse_args():
@@ -54,24 +53,24 @@ def check_deps_version(mindspore_version, supported_version):
         from hccl import sys_version as hccl_version
         v = '.'.join(hccl_version.__sys_version__.split('.')[0:2])
         if v not in supported_version:
-            logger.info(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
-                        "match, reference to the match info on: https://www.mindspore.cn/install")
-        import te
-        v = '.'.join(te.__version__.split('.')[0:2])
+            print(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
+                  "match, reference to the match info on: https://www.mindspore.cn/install")
+        from te import version as tever
+        v = '.'.join(tever.version.split('.')[0:2])
         if v not in supported_version:
-            logger.info(f"MindSpore version {mindspore_version} and \"te\" wheel package version {v} does not "
-                        "match, reference to the match info on: https://www.mindspore.cn/install")
-        import topi
-        v = '.'.join(topi.__version__.split('.')[0:2])
+            print(f"MindSpore version {mindspore_version} and \"te\" wheel package version {v} does not "
+                  "match, reference to the match info on: https://www.mindspore.cn/install")
+        from topi import version as topiver
+        v = '.'.join(topiver.version.split('.')[0:2])
         if v not in supported_version:
-            logger.info(f"MindSpore version {mindspore_version} and \"topi\" wheel package version {v} does not "
-                        "match, reference to the match info on: https://www.mindspore.cn/install")
+            print(f"MindSpore version {mindspore_version} and \"topi\" wheel package version {v} does not "
+                  "match, reference to the match info on: https://www.mindspore.cn/install")
 
     except ImportError as e:
-        logger.info("CheckFailed: ", e.args)
-        logger.info("MindSpore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"latest\" "
-                    "folder of the Ascend AI software package (Ascend Data Center Solution), please check whether they "
-                    "are installed correctly or not, reference to the match info on: https://www.mindspore.cn/install")
+        print("CheckFailed: ", e.args)
+        print("MindSpore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"latest\" "
+              "folder of the Ascend AI software package (Ascend Data Center Solution), please check whether they "
+              "are installed correctly or not, reference to the match info on: https://www.mindspore.cn/install")
 
 
 def main():

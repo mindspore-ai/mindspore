@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from packaging import version
+import os
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context, Tensor, Parameter
 from mindspore.experimental import MapParameter
 from mindspore.common.initializer import initializer
-from mindspore.run_check._check_version import GPUEnvChecker
 
 
 @pytest.mark.level0
@@ -43,10 +42,7 @@ def test_simple_graph_compile_export():
             return self.p, self.m
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    env_checker = GPUEnvChecker()
-    v = env_checker.get_cudart_version()
-    env_version = version.parse(v)
-    if env_version.major >= 11:
+    if not 'SAULT_ENV_TYPE' in os.environ or not "CUDA10" in os.environ['SAULT_ENV_TYPE']:
         net = MyNet()
         out = net()
         print("out:", out)
@@ -80,10 +76,7 @@ def test_maptensor_put_get_export():
             return value1, value2, self.m
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    env_checker = GPUEnvChecker()
-    v = env_checker.get_cudart_version()
-    env_version = version.parse(v)
-    if env_version.major >= 11:
+    if not 'SAULT_ENV_TYPE' in os.environ or not "CUDA10" in os.environ['SAULT_ENV_TYPE']:
         net = MyNet()
         out1, out2, out3 = net()
         print("out1:", out1)

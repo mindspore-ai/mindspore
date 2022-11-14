@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <functional>
+#include <mutex>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
@@ -146,7 +147,9 @@ class MS_CORE_API MsContext {
   MsContext(const MsContext &) = delete;
   MsContext &operator=(const MsContext &) = delete;
   using DeviceSeter = void (*)(const std::string &device_target);
-  using DeviceTypeSeter = void (*)(std::shared_ptr<MsContext> &);
+  using InitDeviceTargetAndPolicy = void (*)(MsContext *);
+  using LoadPluginError = std::string (*)();
+  using EnvFunc = std::function<void(const std::string &, const std::string &)>;  // device name, library path
   static std::shared_ptr<MsContext> GetInstance();
 
   void Refresh();
@@ -154,9 +157,23 @@ class MS_CORE_API MsContext {
   bool enable_dump_ir() const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
+  // _comm_helper.py will try to dlopen libhccl.so, and minddata will try to dlopen libdvpp_utils.so. if load ascend
+  // plugin failed on ascend environment, loading above libraries will crush the process.
+  bool IsAscendPluginLoaded() const;
+  void SetDefaultDeviceTarget();
+  void SetDeviceTargetFromInner(const std::string &device_target);
+  void SetDeviceTargetFromUser(const std::string &device_target);
+  bool IsDefaultDeviceTarget() const;
+
+  void RegisterSetEnv(const EnvFunc &func);
+  void RegisterCheckEnv(const EnvFunc &func);
+
+  void SetEnv(const std::string &device);
+  void CheckEnv(const std::string &device);
 
   static void device_seter(const DeviceSeter &device) { seter_ = device; }
-  static void device_type_seter(const DeviceTypeSeter &device_type) { device_type_seter_ = device_type; }
+  static void RegisterInitFunc(const std::string &name, InitDeviceTargetAndPolicy func);
+  static void ResisterLoadPluginErrorFunc(LoadPluginError func);
 
   template <typename T>
   void set_param(MsCtxParam, const T &) {
@@ -184,9 +201,9 @@ class MS_CORE_API MsContext {
 
  private:
   static DeviceSeter seter_;
-  static DeviceTypeSeter device_type_seter_;
-  static std::shared_ptr<MsContext> inst_context_;
-  static std::map<std::string, MsBackendPolicy> policy_map_;
+  inline static std::once_flag inst_context_init_flag_ = {};
+  inline static std::shared_ptr<MsContext> inst_context_ = nullptr;
+  inline static LoadPluginError load_plugin_error_ = nullptr;
 
   bool bool_params_[MsCtxParam::NUM_BOOL_PARAMS];
   int int_params_[MsCtxParam::NUM_INT_PARAMS];
@@ -194,6 +211,13 @@ class MS_CORE_API MsContext {
   float float_params_[MsCtxParam::NUM_FLOAT_PARAMS];
   std::string string_params_[MsCtxParam::NUM_STRING_PARAMS];
   MsBackendPolicy backend_policy_;
+  bool default_device_target_ = true;
+
+  EnvFunc set_env_ = nullptr;
+  EnvFunc check_env_ = nullptr;
+
+  static std::map<std::string, InitDeviceTargetAndPolicy> &InitFuncMap();
+  static std::map<std::string, std::string> &PluginPathMap();
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string
@@ -229,11 +253,11 @@ inline void MsContext::set_param<std::string>(MsCtxParam param, const std::strin
     MS_EXCEPTION(ValueError) << "The save_graphs is not supported, please without '-s on' and recompile source.";
   }
 #endif
-  if (seter_ != nullptr && param == MS_CTX_DEVICE_TARGET) {
-    MS_LOG(INFO) << "ms set context device target:" << value;
-    seter_(value);
+  if (param == MS_CTX_DEVICE_TARGET) {
+    SetDeviceTargetFromUser(value);
+  } else {
+    string_params_[param - MS_CTX_TYPE_STRING_BEGIN] = value;
   }
-  string_params_[param - MS_CTX_TYPE_STRING_BEGIN] = value;
 }
 
 // get method implementation for type bool/int/uint32_t/float/std::string
@@ -273,6 +297,12 @@ template <>
 inline void MsContext::decrease_param<uint32_t>(MsCtxParam param) {
   uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN]--;
 }
+
+#define MSCONTEXT_REGISTER_INIT_FUNC(name, func)                          \
+  class name##InitFuncRegister {                                          \
+   public:                                                                \
+    name##InitFuncRegister() { MsContext::RegisterInitFunc(name, func); } \
+  } g_##name##_init_func_register;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_MS_CONTEXT_H_

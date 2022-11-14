@@ -32,7 +32,6 @@ from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context
     _reset_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \
     _need_reset_device_target_for_ps
-from mindspore.default_config import __device_target__, __package_name__
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
            'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode', 'set_ps_context',
@@ -469,7 +468,7 @@ def _context():
         if default_backend == 'debug':
             K_CONTEXT.enable_debug_runtime = True
             default_backend = 'vm'
-        K_CONTEXT.set_backend_policy(default_backend)
+            K_CONTEXT.set_backend_policy(default_backend)
     return K_CONTEXT
 
 
@@ -984,10 +983,6 @@ def set_context(**kwargs):
     # set device target first
     if 'device_target' in kwargs:
         ctx.set_device_target(kwargs['device_target'])
-        device = ctx.get_param(ms_ctx_param.device_target)
-        if not device.lower() in __device_target__:
-            raise ValueError(f"For 'context.set_context', package type {__package_name__} support 'device_target' "
-                             f"type {__device_target__}, but got {device}.")
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
         if key == 'enable_sparse':
@@ -1168,9 +1163,6 @@ _hccl_connect_timeout = '600'
 
 def _init_parallel_env():
     """Set hccl connect timeout."""
-    if 'ascend' not in __device_target__:
-        return
-
     if 'HCCL_CONNECT_TIMEOUT' not in os.environ:
         os.environ['HCCL_CONNECT_TIMEOUT'] = _hccl_connect_timeout
 

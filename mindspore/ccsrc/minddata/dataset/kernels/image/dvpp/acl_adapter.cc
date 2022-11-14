@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
 #include <algorithm>
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace dataset {
@@ -32,6 +33,12 @@ void AclAdapter::InitPlugin() {
   if (plugin_handle_ != nullptr) {
     return;
   }
+#if !defined(ENABLE_ACL) || defined(ENABLE_D)
+  // 310.tar.gz skip this check
+  if (MsContext::GetInstance() != nullptr && !MsContext::GetInstance()->IsAscendPluginLoaded()) {
+    return;
+  }
+#endif
 #if !defined(_WIN32) && !defined(_WIN64)
   plugin_handle_ = dlopen(kAclPluginFileName, RTLD_LAZY | RTLD_LOCAL);
   if (plugin_handle_ == nullptr) {

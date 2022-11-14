@@ -551,12 +551,6 @@ bool InferMindir(const FuncGraphPtr &root, const AbstractBasePtrList &args, bool
 }
 
 bool ValidMindir(const FuncGraphPtr &root) {
-  if (MsContext::GetInstance() == nullptr) {
-    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
-    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
-      device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
-    });
-  }
   MS_EXCEPTION_IF_NULL(root);
   auto manager = root->manager();
   if (manager == nullptr) {

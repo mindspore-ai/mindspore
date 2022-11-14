@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-from packaging import version
+import os
 import numpy as np
 import pytest
 import mindspore as ms
@@ -26,7 +26,6 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
-from mindspore.run_check._check_version import GPUEnvChecker
 
 
 class BatchMatMulNet(nn.Cell):
@@ -407,10 +406,7 @@ def test_batchmatmul_type_int8():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    env_checker = GPUEnvChecker()
-    v = env_checker.get_cudart_version()
-    env_version = version.parse(v)
-    if env_version.major >= 11:
+    if not 'SAULT_ENV_TYPE' in os.environ or not "CUDA10" in os.environ['SAULT_ENV_TYPE']:
         input_list = []
         input_x1 = Tensor(np.ones(shape=[4, 1, 4]), ms.int8)
         input_x2 = Tensor(np.ones(shape=[4, 4, 4]), ms.int8)
@@ -436,10 +432,7 @@ def test_batchmatmul_type_complex64():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    env_checker = GPUEnvChecker()
-    v = env_checker.get_cudart_version()
-    env_version = version.parse(v)
-    if env_version.major >= 11:
+    if not 'SAULT_ENV_TYPE' in os.environ or not "CUDA10" in os.environ['SAULT_ENV_TYPE']:
         input_list = []
         input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
                                     [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
@@ -483,10 +476,7 @@ def test_batchmatmul_type_complex128():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    env_checker = GPUEnvChecker()
-    v = env_checker.get_cudart_version()
-    env_version = version.parse(v)
-    if env_version.major >= 11:
+    if not 'SAULT_ENV_TYPE' in os.environ or not "CUDA10" in os.environ['SAULT_ENV_TYPE']:
         input_list = []
         input_x1 = Tensor(np.array([[[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],
                                     [[1 + 1j, 1 + 1j, 1 + 1j, 1 + 1j]],

@@ -21,6 +21,7 @@
 #include <dirent.h>
 #include <algorithm>
 #include <string>
+#include <set>
 #include <fstream>
 #include "utils/ms_context.h"
 #include "utils/dlopen_macro.h"
@@ -28,32 +29,27 @@
 
 namespace mindspore {
 namespace plugin_loader {
-void PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles) {
+bool PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles,
+                                  std::stringstream *err_msg) {
   MS_EXCEPTION_IF_NULL(all_handles);
+  MS_EXCEPTION_IF_NULL(err_msg);
   void *handle = nullptr;
-  std::string err_msg;
-#ifndef _WIN32
-  if (plugin_file.find("libmindspore_") == std::string::npos) {
-    return;
-  }
-#else
-  if (plugin_file.find("mindspore_") == std::string::npos) {
-    return;
-  }
-#endif
+  std::string err_msg_str;
   auto so_name = GetDynamicLibName(plugin_file);
 #if defined(_WIN32) || defined(_WIN64)
   handle = LoadLibraryEx(plugin_file.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
-  err_msg = std::to_string(GetLastError());
+  err_msg_str = std::to_string(GetLastError());
 #else
-  handle = dlopen(plugin_file.c_str(), RTLD_NOW | RTLD_LOCAL);
-  err_msg = GetDlErrorMsg();
+  handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  err_msg_str = GetDlErrorMsg();
 #endif
   if (handle == nullptr) {
-    MS_LOG(ERROR) << "Load dynamic library " << so_name << " failed, returns [" << err_msg << "].";
-    return;
+    MS_LOG(INFO) << "Load dynamic library: " << so_name << " failed. " << err_msg_str;
+    *err_msg << "Load dynamic library: " << so_name << " failed. " << err_msg_str << std::endl;
+    return false;
   }
   (*all_handles)[so_name] = handle;
+  return true;
 }
 
 void PluginLoader::CloseDynamicLib(const std::string &dl_name, void *handle) {
@@ -72,12 +68,7 @@ void PluginLoader::CloseDynamicLib(const std::string &dl_name, void *handle) {
 std::string PluginLoader::GetDynamicLibName(const std::string &plugin_file) {
   auto p1 = plugin_file.find_last_of(PATH_SEPARATOR) + 1;
   auto target_so = plugin_file.substr(p1);
-  auto pos = target_so.rfind('.');
-  if (pos == std::string::npos) {
-    MS_LOG(WARNING) << "Invalid plugin file " << target_so;
-    return "unknown_name";
-  }
-  return target_so.substr(0, pos);
+  return target_so;
 }
 
 bool PluginLoader::GetPluginPath(std::string *file_path) {
@@ -152,37 +143,71 @@ void DeviceContextManager::LoadPlugin() {
   if (load_init_) {
     return;
   }
+  load_init_ = true;
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  MsContext::GetInstance()->ResisterLoadPluginErrorFunc(
+    []() -> std::string { return DeviceContextManager::GetInstance().GetErrorMsg(); });
   if (plugin_path_.empty() && !plugin_loader::PluginLoader::GetPluginPath(&plugin_path_)) {
     MS_LOG(INFO) << "Plugin path is invalid, skip!";
     load_init_ = true;
+    dlopen_error_msg_ << "Plugin path is invalid, skip!" << std::endl;
     return;
   }
 #ifdef _WIN32
   auto plugin_file = plugin_path_ + "\\mindspore_gpu.dll";
   if (access(plugin_file.c_str(), F_OK) != -1) {
-    plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
+    (void)plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_, &dlopen_error_msg_);
   }
 #else
   DIR *dir = opendir(plugin_path_.c_str());
   if (dir == nullptr) {
     MS_LOG(ERROR) << "Open plugin dir failed, plugin path:" << plugin_path_;
     load_init_ = true;
+    dlopen_error_msg_ << "Open plugin dir failed, plugin path:" << plugin_path_ << std::endl;
     return;
   }
   struct dirent *entry;
+  std::map<std::string, std::set<std::string> > multi_version_plugin_map;  // key: plugin name, value: so file name
   while ((entry = readdir(dir)) != nullptr) {
     auto plugin_file = plugin_path_ + PATH_SEPARATOR + entry->d_name;
-    plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
+#ifndef _WIN32
+    if (plugin_file.find("libmindspore_") == std::string::npos) {
+      continue;
+    }
+#else
+    if (plugin_file.find("mindspore_") == std::string::npos) {
+      continue;
+    }
+#endif
+    std::string file_name = entry->d_name;
+    auto dot = file_name.find_first_of(".");
+    if (dot == std::string::npos) {
+      continue;
+    }
+    multi_version_plugin_map[file_name.substr(0, dot)].insert(plugin_file);
+  }
+  for (const auto &[plugin_name, file_names] : multi_version_plugin_map) {
+    for (auto iter = file_names.rbegin(); iter != file_names.rend();) {
+      const auto &file_name = *(iter++);
+      auto ret = plugin_loader::PluginLoader::LoadDynamicLib(file_name, &plugin_maps_, &dlopen_error_msg_);
+      if (ret) {
+        if (iter != file_names.rend()) {
+          MS_LOG(INFO) << "Load " << plugin_name << " plugin file " << file_name
+                       << " success, skip loading other version.";
+        }
+        break;
+      }
+    }
   }
   (void)closedir(dir);
 #endif
-  load_init_ = true;
 }
 
 void DeviceContextManager::UnloadPlugin() {
   if (plugin_maps_.empty()) {
     return;
   }
+  device_context_creators_.clear();
   auto iter = plugin_maps_.begin();
   while (iter != plugin_maps_.end()) {
     plugin_loader::PluginLoader::CloseDynamicLib(iter->first, iter->second);
@@ -216,6 +241,9 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
     return device_context_iter->second.get();
   }
 
+  if (ms_context->IsDefaultDeviceTarget()) {
+    MS_LOG(INFO) << "No context.device_target set, use " << name << " as default.";
+  }
   std::shared_ptr<DeviceContext> device_context;
   auto creator_iter = device_context_creators_.find(name);
   if (creator_iter != device_context_creators_.end()) {
@@ -223,7 +251,9 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
     MS_EXCEPTION_IF_NULL(device_context);
     device_contexts_[device_context_key_str] = device_context;
   } else {
-    MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:" << name << " is available.";
+    MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:" << name
+                      << " is available, error message of loading plugins: " << std::endl
+                      << GetErrorMsg();
   }
   return device_context.get();
 }
@@ -255,5 +285,7 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
     }
   }
 }
+
+std::string DeviceContextManager::GetErrorMsg() const { return dlopen_error_msg_.str(); }
 }  // namespace device
 }  // namespace mindspore

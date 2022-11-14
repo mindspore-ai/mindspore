@@ -462,6 +462,14 @@ bool CPUKernelExecutor::DoLaunchKernel(KernelMod *const kernel_mod, const std::v
 }
 
 MS_REGISTER_DEVICE(kCPUDevice, CPUDeviceContext);
+#ifdef WITH_BACKEND
+MSCONTEXT_REGISTER_INIT_FUNC(kCPUDevice, [](MsContext *ctx) -> void {
+  MS_EXCEPTION_IF_NULL(ctx);
+  if (ctx->backend_policy() != "ms") {
+    ctx->set_backend_policy("ms");
+  }
+});
+#endif
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
