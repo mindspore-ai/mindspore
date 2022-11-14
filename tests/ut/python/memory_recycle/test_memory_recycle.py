@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import os
+import pytest
 import psutil
 import numpy as np
 import mindspore as ms
