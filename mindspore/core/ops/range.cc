@@ -16,6 +16,7 @@
 #include "ops/range.h"
 #include <string>
 #include <memory>
+#include <set>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -33,6 +34,8 @@ int64_t Range::get_d_type() const {
 void Range::set_start(const int64_t start) { (void)this->AddAttr(kStart, api::MakeValue(start)); }
 
 int64_t Range::get_start() const { return GetValue<int64_t>(GetAttr(kStart)); }
+
+int64_t Range::get_maxlen() const { return GetValue<int64_t>(GetAttr(kMaxLen)); }
 
 void Range::set_limit(const int64_t limit) { (void)this->AddAttr(kLimit, api::MakeValue(limit)); }
 

@@ -20,18 +20,22 @@
 #include <cuda_runtime.h>
 
 #include <vector>
-
+#include <memory>
+#include <map>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dynamic_range_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "mindspore/core/ops/range.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputSize = 3;
+
 template <typename T>
-class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class RangeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  DynamicRangeGpuKernelMod() { ResetResource(); }
-  ~DynamicRangeGpuKernelMod() = default;
+  RangeGpuKernelMod() { ResetResource(); }
+  ~RangeGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -50,18 +54,18 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     DynamicRangeErrorCode error_code = DynamicRangeErrorCode::kOk;
 
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(&error_code, error_code_device_address, sizeof(DynamicRangeErrorCode),
-                                              cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Failed to copy error code to host.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(&error_code, error_code_device_address, sizeof(DynamicRangeErrorCode), cudaMemcpyDeviceToHost,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Failed to copy error code to host.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
 
     // use workspace[0] for actual output shape, we know it must be 1d
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(&output_shape_, output_shape_device_address, sizeof(int64_t),
-                                              cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Failed to copy output_shape to host.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(&output_shape_, output_shape_device_address, sizeof(int64_t), cudaMemcpyDeviceToHost,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Failed to copy output_shape to host.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
 
     LogExceptionIfNotOk(error_code);
 
@@ -92,7 +96,7 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     stream_ptr_ = nullptr;
     output_shape_ = 0;
     max_output_length_ = 0;
@@ -101,46 +105,50 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_count != 3) {
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    auto kernel_name = base_operator->GetPrim()->name();
+    size_t input_count = inputs.size();
+    if (input_count != kInputSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_count;
     }
 
-    max_output_length_ = GetAttr<int64_t>(kernel_node, "maxlen");
-    kernel_node_ = kernel_node;
-    InitSizeLists();
+    auto kernel_ptr = std::make_shared<ops::Range>(base_operator->GetPrim());
+
+    max_output_length_ = kernel_ptr->get_maxlen();
+    outputs_ = outputs;
     is_need_retrieve_output_shape_ = true;
     return true;
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    output_size_list_.push_back(max_output_length_ * sizeof(T));
-
-    // this op outputs a 1d tensor, size of one int64_t is enough space to hold the shape.
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
+    }
     workspace_size_list_.push_back(sizeof(int64_t));
     workspace_size_list_.push_back(sizeof(DynamicRangeErrorCode));
-    return;
+    return KRET_OK;
   }
+
+ protected:
   void SyncData() override {
     // required synchronize for UpdateOp
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
-                               "cudaStreamSynchronize failed");
-
-    std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
-    std::vector<ShapeVector> output_shape = {{output_shape_}};
-    common::AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, kernel_node_.lock().get());
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                       "cudaStreamSynchronize failed");
+    std::vector<int64_t> output_shape = {output_shape_};
+    outputs_[0]->SetShapeVector(output_shape);
   }
+
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   void *stream_ptr_;
   int64_t output_shape_;
   int64_t max_output_length_;
+  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

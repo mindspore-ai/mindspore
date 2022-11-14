@@ -15,7 +15,7 @@
  */
 #include <cstdint>
 
-#include "plugin/device/gpu/kernel/arrays/dynamic_range_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/arrays/range_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,7 +25,7 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      DynamicRangeGpuKernelMod, float)
+                      RangeGpuKernelMod, float)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
@@ -33,7 +33,7 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      DynamicRangeGpuKernelMod, double)
+                      RangeGpuKernelMod, double)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
@@ -41,7 +41,7 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      DynamicRangeGpuKernelMod, int32_t)
+                      RangeGpuKernelMod, int32_t)
 
 MS_REG_GPU_KERNEL_ONE(Range,
                       KernelAttr()
@@ -49,6 +49,6 @@ MS_REG_GPU_KERNEL_ONE(Range,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      DynamicRangeGpuKernelMod, int64_t)
+                      RangeGpuKernelMod, int64_t)
 }  // namespace kernel
 }  // namespace mindspore
