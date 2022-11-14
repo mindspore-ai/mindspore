@@ -33,6 +33,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/trace_base.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {
 namespace device {
@@ -873,6 +874,14 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     MS_EXCEPTION_IF_NULL(func_graph);
     SelectGraphKernelInfo(kernel_node, func_graph);
     return result;
+  }
+
+  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, kernel_node)) {
+    std::stringstream ss;
+    ss << common::AnfAlgo::GetCNodeName(kernel_node)
+       << " does not support 'batch_rank' on Ascend, which means that 'vmap' cannot support "
+       << common::AnfAlgo::GetCNodeName(kernel_node) << " on Ascend currently.";
+    return std::make_tuple(kNoMatched, ss.str(), NotSupportError);
   }
 
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {

@@ -35,6 +35,7 @@
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "ir/func_graph_cloner.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
@@ -81,6 +82,10 @@ bool CanExpandFallback(const AnfNodePtr &node) {
     return false;
   }
   if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") {
+    return false;
+  }
+  // Operators with 'batch_rank' attribute, which only appears in the vmap scenario, are not supported currently.
+  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, node->cast<CNodePtr>())) {
     return false;
   }
   static const std::vector<OpWithLevel> expander_fallback_ops_with_level = {

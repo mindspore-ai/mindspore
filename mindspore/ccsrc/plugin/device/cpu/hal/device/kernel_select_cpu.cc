@@ -27,6 +27,9 @@
 #include "plugin/device/cpu/kernel/custom/custom_julia_cpu_kernel.h"
 #include "utils/trace_base.h"
 #include "include/common/utils/convert_utils.h"
+#include "include/common/utils/utils.h"
+#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {
 namespace device {
@@ -35,6 +38,41 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
 constexpr auto kParamDynamic = "dynamic";
+
+static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpName,
+                                                        kUnsortedSegmentMaxOpName,
+                                                        kUnsortedSegmentSumOpName,
+                                                        kUniqueWithPadOpName,
+                                                        kMaskedFillOpName,
+                                                        kDataFormatDimMapOpName,
+                                                        kSTFTOpName,
+                                                        kRandomChoiceWithMaskOpName,
+                                                        kApplyAdamOpName,
+                                                        kUniformCandidateSamplerOpName,
+                                                        kSplitOpName,
+                                                        kLinSpaceOpName,
+                                                        kSquareSumAllOpName,
+                                                        kApplyAdaMaxOpName,
+                                                        kApplyAdadeltaOpName,
+                                                        kApplyProximalAdagradOpName,
+                                                        kApplyGradientDescentOpName,
+                                                        kApplyProximalGradientDescentOpName,
+                                                        kApplyPowerSignOpName,
+                                                        kApplyAdagradV2OpName,
+                                                        kApplyAdagradDAOpName,
+                                                        kApplyRMSPropOpName,
+                                                        kApplyCenteredRMSPropOpName,
+                                                        kSparseApplyAdagradOpName,
+                                                        kSparseApplyAdagradV2OpName,
+                                                        kSparseApplyFtrlOpName,
+                                                        kRandomShuffleOpName,
+                                                        kApplyAdamWithAmsgradOpName,
+                                                        kApplyFtrlOpName,
+                                                        prim::kMatrixBandPart,
+                                                        prim::kGer,
+                                                        prim::kCdist,
+                                                        prim::kCdistGrad,
+                                                        prim::kSparseSegmentMean};
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -491,9 +529,32 @@ kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const
   return attr;
 }
 
+void SetCustomOpKernelInfo(const std::string &custom_op_type, const std::string &op_name) {
+  if (custom_op_type == kCustomTypePyfunc) {
+    kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
+      op_name, []() { return std::make_shared<kernel::PyFuncCpuKernelMod>(); });
+  } else if (custom_op_type == kCustomTypeAOT) {
+    kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
+      op_name, []() { return std::make_shared<kernel::CustomAOTCpuKernelMod>(); });
+  } else if (custom_op_type == kCustomTypeJULIA) {
+    kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
+      op_name, []() { return std::make_shared<kernel::CustomJULIACpuKernelMod>(); });
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported func type for Custom operator on CPU, it should be "
+                      << "'hybrid', 'akg', 'pyfunc' or 'aot' or 'julia', "
+                      << "but got [" << custom_op_type << "] for Custom operator [" << op_name << "]";
+  }
+}
+
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, kernel_node) && !kVmapCPUWhiteList.count(op_name)) {
+    std::stringstream ss;
+    ss << op_name << " does not support 'batch_rank' on CPU, which means that 'vmap' cannot support " << op_name
+       << " on CPU currently.";
+    return {ss.str(), NotSupportError};
+  }
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     auto tp = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
     if (IsOneOfCustomAkgType(tp)) {
@@ -501,20 +562,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
       return {};
     }
     if (!kernel::Factory<kernel::NativeCpuKernelMod>::Instance().IsRegistered(op_name)) {
-      if (tp == kCustomTypePyfunc) {
-        kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
-          op_name, []() { return std::make_shared<kernel::PyFuncCpuKernelMod>(); });
-      } else if (tp == kCustomTypeAOT) {
-        kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
-          op_name, []() { return std::make_shared<kernel::CustomAOTCpuKernelMod>(); });
-      } else if (tp == kCustomTypeJULIA) {
-        kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
-          op_name, []() { return std::make_shared<kernel::CustomJULIACpuKernelMod>(); });
-      } else {
-        MS_LOG(EXCEPTION) << "Unsupported func type for Custom operator on CPU, it should be "
-                          << "'hybrid', 'akg', 'pyfunc' or 'aot' or 'julia', "
-                          << "but got [" << tp << "] for Custom operator [" << op_name << "]";
-      }
+      SetCustomOpKernelInfo(tp, op_name);
     }
     // If Custom op has not set reg info,
     // or the no info about inputs in reg info(the case of undetermined input size),
