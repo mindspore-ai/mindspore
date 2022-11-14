@@ -95,7 +95,7 @@ abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx0]->BuildShape())[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx1]->BuildShape())[kShape];
   std::vector<ValuePtr> placeholder_index = {MakeValue((int64_t)3)};
-  primitive->set_attr("placeholder_index", MakeValue(placeholder_index));
+  primitive->AddAttr("placeholder_index", MakeValue(placeholder_index));
   if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
       std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny}),
@@ -115,8 +115,8 @@ abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
   int64_t batch_size = x_shape[kDynRnnIdx1];
   int64_t input_size = x_shape[kDynRnnIdx2];
   int64_t hidden_size = w_shape[w_shape.size() - 1] / kDynRnnNum4;
-  primitive->set_attr("input_size", MakeValue(input_size));
-  primitive->set_attr("hidden_size", MakeValue(hidden_size));
+  primitive->AddAttr("input_size", MakeValue(input_size));
+  primitive->AddAttr("hidden_size", MakeValue(hidden_size));
   std::vector<int64_t> y_shape{num_step, batch_size, hidden_size};
   abstract::ShapePtr y_shape_ptr = std::make_shared<abstract::Shape>(y_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
@@ -148,7 +148,7 @@ TuplePtr DynamicRNNInferType(const PrimitivePtr &primitive, const std::vector<Ab
   const std::set<TypePtr> valid_b_types = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("b", b_dtype, valid_b_types, op_name);
   return std::make_shared<Tuple>(
-    std::vector<TypePtr>{x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype});
+    std::vector<TypePtr>{b_dtype, x_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype});
 }
 }  // namespace
 
