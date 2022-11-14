@@ -14,20 +14,19 @@
 # ============================================================================
 """Normal Distribution"""
 import numpy as np
-from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
+from mindspore.common import Tensor
 from .distribution import Distribution
 from ._utils.utils import check_greater_zero, check_distribution_name
-from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Normal(Distribution):
     r"""
     Normal distribution.
-    A Normal distributio is a continuous distribution with the range :math:`(-\inf, \inf)`
+    A Normal distribution is a continuous distribution with the range :math:`(-\inf, \inf)`
     and the probability density function:
 
     .. math::
@@ -166,11 +165,9 @@ class Normal(Distribution):
             check_greater_zero(self._sd_value, "Standard deviation")
 
         # ops needed for the class
-        self.exp = exp_generic
+        self.exp = self.exp_base
+        self.log = self.log_base
         self.expm1 = P.Expm1()
-        # when the graph kernel mode is enable
-        # use Log directly as akg will handle the corner cases
-        self.log = P.Log() if context.get_context("enable_graph_kernel") else log_generic
         self.erf = P.Erf()
         self.squeeze = P.Squeeze(0)
         self.cast = P.Cast()
@@ -178,6 +175,7 @@ class Normal(Distribution):
         self.shape = P.Shape()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
+        self.coff = Tensor(-0.5 * np.log(2. * np.pi), dtype=dtype)
 
     def extend_repr(self):
         """Display instance object as string."""
@@ -262,10 +260,8 @@ class Normal(Distribution):
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
         mean, sd = self._check_param_type(mean, sd)
-        unnormalized_log_prob = -1. * \
-            (self.sq(value - mean)) / (2. * self.sq(sd))
-        neg_normalization = -1. * \
-            self.log(self.const(2. * np.pi, mstype.float32)) / 2. - self.log(sd)
+        unnormalized_log_prob = -0.5 * (self.sq((value - mean) / sd))
+        neg_normalization = self.coff - self.log(sd)
         return unnormalized_log_prob + neg_normalization
 
     def _cdf(self, value, mean=None, sd=None):
