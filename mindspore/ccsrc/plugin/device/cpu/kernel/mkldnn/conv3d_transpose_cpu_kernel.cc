@@ -19,6 +19,7 @@
 #include <string>
 #include <algorithm>
 #include "utils/ms_utils.h"
+#include "ops/conv3d_transpose.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,27 +29,40 @@ constexpr size_t kConv3DTransposeInputsNum = 2;
 constexpr size_t kConv3DTransposeOutputsNum = 1;
 }  // namespace
 
-void Conv3DTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<int64_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  std::vector<int64_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<int64_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+bool Conv3DTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  PrimitivePtr prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  group = LongToSize(GetValue<int64_t>(prim->GetAttr(GROUP)));
+  format = GetValue<std::string>(prim->GetAttr(FORMAT));
+  pad_mode = GetValue<std::string>(prim->GetAttr(PAD_MODE));
+  strides_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
+  dilation_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(DILATIONS));
+  return true;
+}
 
+int Conv3DTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  std::vector<int64_t> src_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  std::vector<int64_t> weight_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  std::vector<int64_t> dst_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
   size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "Conv3DTranspose only supports 5D input, but got " << src_dim << "D!";
   }
-  const auto format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, FORMAT);
 
   if (src_dim == SHAPE_5D && format != NCDHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with format NCDHW, but got format " << format;
   }
-  if (AnfAlgo::IsShapesDynamic({src_shape, weight_shape, dst_shape})) {
-    return;
-  }
+
   dnnl::memory::dims kernel_size(weight_shape.begin() + NC_LEN, weight_shape.end());
-  const size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << kernel_name_ << " requires channels must be divided by group!";
@@ -56,13 +70,9 @@ void Conv3DTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     (void)weight_shape.insert(weight_shape.begin(), group);
     weight_shape[1] = weight_shape[1] / group;
   }
-
   const dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   const dnnl::memory::desc weights_desc = GetDefaultMemDesc(weight_shape);
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
-  const auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
-  const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-  const auto dilation_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, DILATIONS);
   if (strides_include_nc.size() != src_dim) {
     MS_LOG(EXCEPTION) << kernel_name_ << "requires strides must be " << src_dim << "D, but got "
                       << strides_include_nc.size() << "D!";
@@ -79,7 +89,7 @@ void Conv3DTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(dilation.begin(), dilation.end(), std::back_inserter(dilates),
                        [](const int64_t &value) { return value - 1; });
   PaddingInfo padding_info{pad_mode, kernel_size, strides, dilation, &padding_l, &padding_r};
-  GetPadding(kernel_node, src_shape, padding_info);
+  GetPadding(base_operator, src_shape, padding_info);
 
   const auto forward_desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
@@ -93,6 +103,7 @@ void Conv3DTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc);
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);
   AddArgument(DNNL_ARG_DIFF_DST, dst_desc);
+  return KRET_OK;
 }
 
 bool Conv3DTransposeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -113,7 +124,6 @@ std::vector<KernelAttr> Conv3DTransposeCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conv3DTranspose,
-                                 []() { return std::make_shared<Conv3DTransposeCpuKernelMod>(kConv3DTranspose); });
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Conv3DTranspose, Conv3DTransposeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
