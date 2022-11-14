@@ -119,20 +119,11 @@ class CachedInterpolationCalculator {
         cached_values_hand++;
       }
     }
-    switch (new_indices_hand) {
-      case 0:
-        indexes_[0] = x_0;
-        break;
-      case 1:
-        indexes_[1] = x_1;
-        break;
-      case caseid2:
-        indexes_[kIndex2] = x_2;
-        break;
-      case caseid3:
-        indexes_[kIndex3] = x_3;
-        break;
+    std::vector<int64_t> x_values = {x_0, x_1, x_2, x_3};
+    for (size_t i = new_indices_hand; i < x_values.size(); ++i) {
+      indexes_[i] = x_values[i];
     }
+
     return new_indices_hand;
   }
 
