@@ -4121,6 +4121,23 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('lstsq')(self, A)
 
+    @property
+    def mH(self):
+        r"""
+        Accessing this property is equivalent to Calling self.adjoint().
+        For details, please refer to :func:`mindspore.ops.adjoint`.
+        """
+        return self.adjoint()
+
+    @property
+    def mT(self):
+        r"""
+        Returns a view of this tensor with the last two dimensions transposed.
+        x.mT is equivalent to x.swapaxes(-2, -1).
+        For details, please refer to :func:`mindspore.Tensor.swapaxes`.
+        """
+        return self.swapaxes(-2, -1)
+
     def mvlgamma(self, p):
         r"""
         Computes the multivariate log-gamma function with dimension p element-wise.
@@ -4243,6 +4260,20 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('maximum')(self, other)
 
+    def mm(self, mat2):
+        r"""
+        For details, please refer to :func:`mindspore.ops.mm`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('mm')(self, mat2)
+
+    def msort(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.msort`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('msort')(self)
+
     def mul(self, value):
         r"""
         Multiplies two tensors element-wise.
@@ -4281,6 +4312,12 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('mul')(self, value)
+
+    def nan_to_num(self, nan=0.0, posinf=None, neginf=None):
+        """
+        For details, please refer to :func:`mindspore.ops.nan_to_num`.
+        """
+        return tensor_operator_registry.get('nan_to_num')(self, nan, posinf, neginf)
 
     def neg(self):
         r"""

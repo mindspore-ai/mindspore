@@ -731,6 +731,48 @@ def matmul(x1, x2, dtype=None):
     return res
 
 
+def mm(mat1, mat2):
+    r"""
+    Returns the matrix product of two arrays.
+    If `mat1` is a :math:`(n \times m)` Tensor, `mat2` is a
+    :math:`(m \times p)` Tensor, `out` will be a :math:`(n \times p)` Tensor.
+
+    Note:
+        This function does not broadcast. For broadcasting matrix products, see :func:`mindspore.ops.matmul`.
+
+    Args:
+        mat1 (Tensor): The first matrix to be matrix multiplied.
+          The last dimension of `mat1` must be the same size as the first dimension of `mat2`.
+        mat2 (Tensor): The second matrix to be matrix multiplied.
+          The last dimension of `mat1` must be the same size as the first dimension of `mat2`.
+
+    Returns:
+        Tensor or scalar, the matrix product of the inputs.
+
+    Raises:
+        ValueError: If the last dimension of `mat1` is not the same size as the
+            second-to-last dimension of `mat2`.
+        ValueError: If `mat1` or `mat2` is not a matrix.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x1 = ms.Tensor(np.random.rand(2, 3))
+        >>> x2 = ms.Tensor(np.random.rand(3, 4))
+        >>> out = ops.mm(x1, x2)
+        >>> print(out.shape)
+        (2, 4)
+    """
+    if mat1.ndim != 2 or mat2.ndim != 2:
+        raise ValueError(f"For mm, the input tensor must be a matrix, "
+                         f"but got mat1.ndim:{mat1.ndim}, mat2.ndim:{mat2.ndim}")
+    return matmul(mat1, mat2)
+
+
 def cummin(x, axis):
     r"""
     Returns a tuple (values,indices) where 'values' is the cumulative minimum value of input Tensor `x`

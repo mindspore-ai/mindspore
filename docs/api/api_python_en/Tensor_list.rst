@@ -165,9 +165,14 @@
     mindspore.Tensor.max
     mindspore.Tensor.mean
     mindspore.Tensor.median
+    mindspore.Tensor.mH
     mindspore.Tensor.min
     mindspore.Tensor.minimum
+    mindspore.Tensor.mm
+    mindspore.Tensor.msort
+    mindspore.Tensor.mT
     mindspore.Tensor.multiply
+    mindspore.Tensor.nan_to_num
     mindspore.Tensor.narrow
     mindspore.Tensor.nbytes
     mindspore.Tensor.ndim

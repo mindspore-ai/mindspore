@@ -856,6 +856,35 @@ def median(x, global_median, axis=0, keep_dims=False):
     return median_(x)
 
 
+def msort(x):
+    """
+    For details, please refer to :func:`mindspore.ops.msort`.
+    """
+    return F.msort(x)
+
+
+def mm(mat1, mat2):
+    """
+    For details, please refer to :func:`mindspore.ops.mm`.
+    """
+    return F.mm(mat1, mat2)
+
+
+def mT(x):
+    """
+    Returns a view of this tensor with the last two dimensions transposed.
+    x.mT is equivalent to x.transpose(-2, -1).
+    """
+    return swapaxes(x, -2, -1)
+
+
+def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
+    """
+    For details, please refer to :func:`mindspore.ops.nan_to_num`.
+    """
+    return F.nan_to_num(x, nan, posinf, neginf)
+
+
 def cumsum(x, axis=None, dtype=None):
     """
     Returns the cumulative sum of the elements along a given axis.

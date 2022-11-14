@@ -304,6 +304,7 @@ Reduction函数
     mindspore.ops.dot
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
+    mindspore.ops.mm
     mindspore.ops.ger
     mindspore.ops.renorm
     mindspore.ops.tensor_dot
@@ -389,6 +390,8 @@ Array操作
     mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag
     mindspore.ops.meshgrid
+    mindspore.ops.msort
+    mindspore.ops.nan_to_num
     mindspore.ops.normal
     mindspore.ops.nonzero
     mindspore.ops.numel

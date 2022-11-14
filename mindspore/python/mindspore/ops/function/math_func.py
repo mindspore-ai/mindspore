@@ -7346,6 +7346,7 @@ __all__ = [
     'tensor_mul',
     'mul',
     'multiply',
+    'nan_to_num',
     'tensor_div',
     'div',
     'divide',

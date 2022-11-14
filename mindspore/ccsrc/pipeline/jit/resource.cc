@@ -398,8 +398,11 @@ BuiltInTypeMap &GetMethodMap() {
        {"mvlgamma", std::string("mvlgamma")},                              // mvlgamma()
        {"matmul", std::string("matmul")},                                  // matmul()
        {"maximum", std::string("maximum")},                                // maximum()
+       {"msort", std::string("msort")},                                    // msort()
+       {"mm", std::string("mm")},                                          // mm()
        {"mul", std::string("mul")},                                        // mul()
        {"multiply", std::string("multiply")},                              // multiply()
+       {"nan_to_num", std::string("nan_to_num")},                          // nan_to_num()
        {"neg", std::string("neg")},                                        // neg()
        {"ne", std::string("ne")},                                          // ne()
        {"sinh", std::string("sinh")},                                      // sinh()
@@ -461,6 +464,8 @@ BuiltInTypeMap &GetAttrMap() {
        {"itemsize", std::string("itemsize_")},  // C.itemsize_
        {"nbytes", std::string("nbytes_")},      // C.nbytes_
        {"strides", std::string("strides_")},    // C.strides_
+       {"mH", std::string("adjoint")},          // C.adjoint
+       {"mT", std::string("mT")},               // C.mT_
      }},
     {kObjectTypeRowTensorType,
      {

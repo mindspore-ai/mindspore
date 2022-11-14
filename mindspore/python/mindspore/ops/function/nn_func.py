@@ -4965,6 +4965,38 @@ def mse_loss(input_x, target, reduction='mean'):
     return _get_cache_prim(P.Cast)()(x, input_dtype)
 
 
+def msort(x):
+    r"""
+    Sorts the elements of the input tensor along its first dimension in ascending order by value.
+
+    ops.msort(t) is equivalent to ops.Sort(axis=0)(t)[0]. See also :class:`mindspore.ops.Sort()`.
+
+    Args:
+        x (Tensor): The input to sort, with float16 or float32 data type.
+
+    Returns:
+        A tensor whose values are the sorted values, with the same shape and data type as input.
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), ms.float16)
+        >>> output = ops.msort(x)
+        >>> print(output)
+        [[4. 2. 1.]
+         [5. 6. 3.]
+         [8. 9. 7.]]
+    """
+    return ops.Sort(axis=0)(x)[0]
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -5037,5 +5069,6 @@ __all__ = [
     'max_unpool2d',
     'max_unpool3d',
     'mse_loss',
+    'msort',
 ]
 __all__.sort()
