@@ -205,7 +205,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     return mnist_ds
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

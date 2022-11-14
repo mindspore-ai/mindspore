@@ -31,14 +31,14 @@ def test_train_and_eval():
         test_train_and_eval_lenet()
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_with_GPU():
     test_train("GPU")
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_and_eval_with_GPU():
