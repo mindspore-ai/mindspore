@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MAKE_MAP_TENSOR_H_
-#define MINDSPORE_CORE_OPS_MAKE_MAP_TENSOR_H_
+#ifndef MINDSPORE_CORE_OPS_MAKE_MAP_PARAMETER_H_
+#define MINDSPORE_CORE_OPS_MAKE_MAP_PARAMETER_H_
 
 #include <vector>
 #include "ops/base_operator.h"
@@ -23,20 +23,22 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMakeMapTensor = "MakeMapTensor";
-/// \brief Make a MapTensor.
-/// Refer to Python API @ref mindspore.ops.MakeMapTensor for more details.
-class MIND_API MakeMapTensor : public BaseOperator {
+constexpr auto kNameMakeMapParameter = "MakeMapParameter";
+/// \brief Make a MapParameter, its data is MapTensor.
+/// Refer to Python API @ref mindspore.ops.MakeMapParameter for more details.
+class MIND_API MakeMapParameter : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(MakeMapTensor);
+  MIND_API_BASE_MEMBER(MakeMapParameter);
   /// \brief Constructor.
-  MakeMapTensor() : BaseOperator(kNameMakeMapTensor) { InitIOName({"keys", "values", "default_value"}, {"output"}); }
+  MakeMapParameter() : BaseOperator(kNameMakeMapParameter) {
+    InitIOName({"keys", "values", "default_value"}, {"output"});
+  }
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr MakeMapTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MakeMapParameterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MAKE_MAP_TENSOR_H_
+#endif  // MINDSPORE_CORE_OPS_MAKE_MAP_PARAMETER_H_

@@ -55,18 +55,6 @@ static ValuePtr ConvertMapTensorFilterValue(const py::object &filter_value_obj) 
   return filter_value;
 }
 
-MapTensorPtr MapTensorPy::MakeMapTensor(const TypePtr &key_dtype, const TypePtr &value_dtype,
-                                        const ShapeVector &value_shape, const py::object &default_value_obj,
-                                        const py::object &permit_filter_obj, const py::object &evict_filter_obj) {
-  TypeId key_dtype_id = ((key_dtype != nullptr) ? key_dtype->type_id() : TypeId::kNumberTypeInt32);
-  TypeId value_dtype_id = ((value_dtype != nullptr) ? value_dtype->type_id() : TypeId::kNumberTypeFloat32);
-  ValuePtr default_value = ConvertMapTensorDefaultValue(default_value_obj, value_dtype);
-  ValuePtr permit_filter_value = ConvertMapTensorFilterValue(permit_filter_obj);
-  ValuePtr evict_filter_value = ConvertMapTensorFilterValue(evict_filter_obj);
-  return std::make_shared<MapTensor>(key_dtype_id, value_dtype_id, value_shape, default_value, permit_filter_value,
-                                     evict_filter_value);
-}
-
 void MapTensorPy::UpdateFromNumpy(const MapTensorPtr &map_tensor,
                                   const std::tuple<py::array, py::array, py::array> &numpy_data) {
   MS_EXCEPTION_IF_NULL(map_tensor);
@@ -115,8 +103,35 @@ namespace tensor {
 void RegMapTensor(py::module *m) {
   // Define python MapTensor class.
   (void)py::class_<MapTensor, MapTensorPtr>(*m, "MapTensor_")
-    .def(py::init(&MapTensorPy::MakeMapTensor), py::arg("key_dtype"), py::arg("value_dtype"), py::arg("value_shape"),
-         py::arg("default_value"), py::arg("permit_filter_value"), py::arg("evict_filter_value"))
+    .def(py::init([](const TypePtr &key_dtype, const TypePtr &value_dtype, const ShapeVector &value_shape,
+                     const py::object &default_value_obj, const py::object &permit_filter_obj,
+                     const py::object &evict_filter_obj) {
+           TypeId key_dtype_id = ((key_dtype != nullptr) ? key_dtype->type_id() : TypeId::kNumberTypeInt32);
+           TypeId value_dtype_id = ((value_dtype != nullptr) ? value_dtype->type_id() : TypeId::kNumberTypeFloat32);
+           ValuePtr default_value = ConvertMapTensorDefaultValue(default_value_obj, value_dtype);
+           ValuePtr permit_filter_value = ConvertMapTensorFilterValue(permit_filter_obj);
+           ValuePtr evict_filter_value = ConvertMapTensorFilterValue(evict_filter_obj);
+           return std::make_shared<MapTensor>(key_dtype_id, value_dtype_id, value_shape, default_value,
+                                              permit_filter_value, evict_filter_value);
+         }),
+         py::arg("key_dtype"), py::arg("value_dtype"), py::arg("value_shape"), py::arg("default_value"),
+         py::arg("permit_filter_value"), py::arg("evict_filter_value"))
+    .def(py::init([](const Tensor &key_tensor, const Tensor &value_tensor, const py::object &default_value_obj,
+                     const py::object &permit_filter_obj, const py::object &evict_filter_obj) {
+           auto key_tensor_ptr = std::make_shared<tensor::Tensor>(key_tensor);
+           auto value_tensor_ptr = std::make_shared<tensor::Tensor>(value_tensor);
+           auto key_dtype_id = key_tensor_ptr->Dtype()->type_id();
+           auto value_dtype = key_tensor_ptr->Dtype();
+           auto value_dtype_id = value_tensor_ptr->Dtype()->type_id();
+           auto value_shape = value_tensor_ptr->shape();
+           ValuePtr default_value = ConvertMapTensorDefaultValue(default_value_obj, value_dtype);
+           ValuePtr permit_filter_value = ConvertMapTensorFilterValue(permit_filter_obj);
+           ValuePtr evict_filter_value = ConvertMapTensorFilterValue(evict_filter_obj);
+           return std::make_shared<MapTensor>(key_dtype_id, value_dtype_id, value_shape, default_value,
+                                              permit_filter_value, evict_filter_value);
+         }),
+         py::arg("key_tensor"), py::arg("value_tensor"), py::arg("default_value"), py::arg("permit_filter_value"),
+         py::arg("evict_filter_value"))
     .def_property_readonly("key_dtype", &MapTensor::KeyDtype)
     .def_property_readonly("value_dtype", &MapTensor::ValueDtype)
     .def_property_readonly("value_shape", &MapTensor::value_shape)
