@@ -51,6 +51,10 @@ bool NonZeroCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
 int NonZeroCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+    return ret;
+  }
   ResetResource();
   outputs_ = outputs;
   auto input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();

@@ -28,6 +28,9 @@ abstract::ShapePtr MultilabelMarginLossGradInferShape(const PrimitivePtr &primit
   auto op_name = primitive->name();
   auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  if (IsDynamic(x) || IsDynamic(target)) {
+    return std::make_shared<abstract::Shape>(x);
+  }
   if ((x.size() != kDim1 && x.size() != kDim2) || (target.size() != kDim1 && target.size() != kDim2)) {
     MS_EXCEPTION(ValueError) << "For " << op_name << ", the rank of input x and target should be 1 or 2, "
                              << "while rank of x is : " << x.size() << ", rank of target is : " << target.size() << ".";
@@ -36,8 +39,6 @@ abstract::ShapePtr MultilabelMarginLossGradInferShape(const PrimitivePtr &primit
     MS_EXCEPTION(ValueError) << "For " << op_name << ", x_shape and target_shape should be the same, "
                              << "while x_shape is : " << x << ", target_shape is : " << target << ".";
   }
-  int64_t reduction;
-  CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   return std::make_shared<abstract::Shape>(x);
 }
 

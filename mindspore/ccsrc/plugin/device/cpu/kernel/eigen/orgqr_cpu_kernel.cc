@@ -31,11 +31,30 @@ constexpr size_t kOutputIndex0 = 0;
 
 bool OrgqrCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  std::vector<int64_t> x_shape = inputs[0]->GetShapeVector();
-  std::vector<int64_t> tau_shape = inputs[1]->GetShapeVector();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int OrgqrCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs,
+                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  std::vector<int64_t> x_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> tau_shape = inputs[kIndex1]->GetShapeVector();
   int64_t shape_size = static_cast<int64_t>(x_shape.size());
   m_ = *(x_shape.end() - kTwo);
   n_ = *(x_shape.end() - 1);
@@ -46,14 +65,7 @@ bool OrgqrCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     num_elements *= x_shape[static_cast<size_t>(i)];
   }
   martrix_num_ = num_elements / size_mn;
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(ERROR) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
-    return false;
-  }
-  kernel_func_ = func_list_[index].second;
-  return true;
+  return KRET_OK;
 }
 
 template <typename T>

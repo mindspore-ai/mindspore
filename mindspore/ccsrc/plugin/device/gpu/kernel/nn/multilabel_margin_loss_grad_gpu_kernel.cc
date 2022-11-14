@@ -92,6 +92,10 @@ int MultilabelMarginLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_ope
                                                  const std::vector<KernelTensorPtr> &inputs,
                                                  const std::vector<KernelTensorPtr> &outputs,
                                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
   const int64_t kInputGradIndex = 0;
   const int64_t kInputXIndex = 1;
   const int64_t kInputTargetIndex = 2;

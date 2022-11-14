@@ -35,25 +35,6 @@ bool BetaincCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(ERROR) << "cast Betainc ops failed!";
     return false;
   }
-  input0_shape_ = inputs[kIndex0]->GetShapeVector();
-  input1_shape_ = inputs[kIndex1]->GetShapeVector();
-  input2_shape_ = inputs[kIndex2]->GetShapeVector();
-  output_shape_ = outputs[kIndex0]->GetShapeVector();
-  if (!IsSameShape(input0_shape_, input1_shape_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'b' should be same with the shape of 'a', "
-                      << "but got the shape of 'b': " << Vector2Str(input1_shape_)
-                      << " and 'a': " << Vector2Str(input0_shape_);
-  }
-  if (!IsSameShape(input0_shape_, input2_shape_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'x' should be same with the shape of 'a', "
-                      << "but got the shape of 'x': " << Vector2Str(input2_shape_)
-                      << " and 'a': " << Vector2Str(input0_shape_);
-  }
-  if (!IsSameShape(input0_shape_, output_shape_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of output should be same with the shape of the 'a', "
-                      << "but got the shape of the output: " << Vector2Str(output_shape_)
-                      << " and 'a': " << Vector2Str(input0_shape_);
-  }
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -62,8 +43,29 @@ int BetaincCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
   int ret = 0;
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
+  }
+  input0_shape_ = inputs[kIndex0]->GetShapeVector();
+  input1_shape_ = inputs[kIndex1]->GetShapeVector();
+  input2_shape_ = inputs[kIndex2]->GetShapeVector();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+  if (!IsSameShape(input0_shape_, input1_shape_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'b' should be same with the shape of 'a', "
+                  << "but got the shape of 'b': " << Vector2Str(input1_shape_)
+                  << " and 'a': " << Vector2Str(input0_shape_);
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(input0_shape_, input2_shape_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'x' should be same with the shape of 'a', "
+                  << "but got the shape of 'x': " << Vector2Str(input2_shape_)
+                  << " and 'a': " << Vector2Str(input0_shape_);
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(input0_shape_, output_shape_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of output should be same with the shape of the 'a', "
+                  << "but got the shape of the output: " << Vector2Str(output_shape_)
+                  << " and 'a': " << Vector2Str(input0_shape_);
+    return KRET_RESIZE_FAILED;
   }
   return 0;
 }

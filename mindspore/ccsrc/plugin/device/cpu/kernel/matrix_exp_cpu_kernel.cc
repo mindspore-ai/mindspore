@@ -56,25 +56,6 @@ array2d<double, num_prods_18, num_prods_18> b18 = {
    {0., 0., -9.23364619367118555360e-02, -1.69364939002081722752e-02, -1.40086798182036094347e-05}}};
 }  // namespace
 
-bool MatrixExpCpuKernelMod::CheckInputShape() const {
-  static constexpr int kNumber1 = 1;
-  static constexpr int kNumber2 = 2;
-  size_t shape_size_x = input_shape_.size();
-  if (shape_size_x < kNumber2) {
-    MS_LOG(ERROR) << "For MatrixExp, the input x must be at least rank 2.";
-    return false;
-  }
-  if (input_shape_.at(shape_size_x - kNumber1) < kNumber1) {
-    MS_LOG(ERROR) << "For MatrixExp, the input x's last dimension must be at least 1.";
-    return false;
-  }
-  if (input_shape_.at(shape_size_x - kNumber2) != input_shape_.at(shape_size_x - kNumber1)) {
-    MS_LOG(ERROR) << "For MatrixExp, the last two dimensions of input x must be equal.";
-    return false;
-  }
-  return true;
-}
-
 bool MatrixExpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixExp>(base_operator);
@@ -92,15 +73,10 @@ int MatrixExpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::map<uint32_t, tensor::TensorPtr> &others) {
   int ret = 0;
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  if (!CheckInputShape()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input shape is invalid";
-    return KRET_RESIZE_FAILED;
-  }
   return 0;
 }
 

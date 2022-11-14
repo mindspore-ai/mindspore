@@ -29,14 +29,15 @@ constexpr size_t kDiagPartOutputsNum = 1;
 
 bool DiagPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagPartInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagPartOutputsNum, kernel_name_);
   MS_ERROR_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagPartInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagPartOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "DiagPart does not support this kernel data type: " << kernel_attr << ".";
+    MS_LOG(ERROR) << "DiagPart does not support this kernel data type: " << kernel_attr << ".";
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;

@@ -15,6 +15,7 @@
  */
 
 #include "ops/non_zero.h"
+#include <set>
 #include <functional>
 #include <iostream>
 #include "abstract/ops/primitive_infer_map.h"
@@ -43,7 +44,7 @@ abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_rank, kGreaterEqual, kNonZeroInputMinDim, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_rank, kLessEqual, kNonZeroInputMaxDim, prim_name);
 
-  auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies{});
+  auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies<int64_t>());
   ShapeVector output_shape = {abstract::Shape::kShapeDimAny, x_rank};
   ShapeVector min_shape = {0, x_rank};
   ShapeVector max_shape = {x_num, x_rank};
@@ -51,8 +52,8 @@ abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::v
 }
 
 TypePtr NonZeroInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64, kUInt8,
-                                kUInt16, kUInt32, kUInt64, kFloat16, kFloat, kFloat64};
+  const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64, kUInt8,
+                                         kUInt16, kUInt32, kUInt64, kFloat16, kFloat, kFloat64};
   auto x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return std::make_shared<TensorType>(kInt64);

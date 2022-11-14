@@ -65,7 +65,6 @@ bool HistogramFixedWidthGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   attr_ptr_->nbins = kernel_ptr->get_nbins();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
-  Resize(base_operator, inputs, outputs);
   return true;
 }
 
@@ -73,14 +72,10 @@ int HistogramFixedWidthGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs,
                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_x_shape = inputs.at(kIndex0)->GetShapeVector();

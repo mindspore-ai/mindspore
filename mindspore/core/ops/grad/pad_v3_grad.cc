@@ -35,7 +35,7 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   constexpr size_t paddings_pos_3 = 3;
   constexpr size_t paddings_pos_4 = 4;
   constexpr size_t paddings_pos_5 = 5;
-  auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   // support dynamic rank
   if (x_shape_ptr->IsDimUnknown()) {

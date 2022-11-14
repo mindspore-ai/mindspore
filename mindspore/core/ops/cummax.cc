@@ -29,12 +29,14 @@ abstract::TupleShapePtr CummaxInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
-  auto x_rank = SizeToLong(x_shape.size());
-  constexpr int64_t min_dim = 0;
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterThan, min_dim, prim_name);
-  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  CheckAndConvertUtils::CheckInRange<int64_t>(kAxis, axis, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
+  if (!x_shape_ptr->IsDynamic()) {
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+    auto x_rank = SizeToLong(x_shape.size());
+    constexpr int64_t min_dim = 0;
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterThan, min_dim, prim_name);
+    auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+    CheckAndConvertUtils::CheckInRange<int64_t>(kAxis, axis, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
+  }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
 }
 
