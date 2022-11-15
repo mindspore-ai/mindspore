@@ -1,12 +1,12 @@
-.. py:method:: log_prob(value, mean, sd)
+.. py:method:: log_prob(value, mean=None, sd=None)
 
     the log value of the probability.
 
     **Parameters**
 
     - **value** (Tensor) - the value to compute.
-    - **mean** (Tensor) - the mean of the distribution. Default value: None.
-    - **sd** (Tensor) - the standard deviation of the distribution. Default value: None.
+    - **mean** (Tensor) - the mean of the distribution. Default: None.
+    - **sd** (Tensor) - the standard deviation of the distribution. Default: None.
 
     **Returns**
 

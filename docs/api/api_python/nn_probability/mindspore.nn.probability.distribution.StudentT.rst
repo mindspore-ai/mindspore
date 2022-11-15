@@ -30,7 +30,7 @@ mindspore.nn.probability.distribution.StudentT
         - **ValueError** - `sd` 中元素不大于0。
         - **TypeError** - `dtype` 不是float的子类。
 
-    .. py:method:: log_prob(value, df, mean, sd)
+    .. py:method:: log_prob(value, df=None, mean=None, sd=None)
 
         计算给定值对应的概率的对数。
 
