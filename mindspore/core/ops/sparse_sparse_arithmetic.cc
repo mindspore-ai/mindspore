@@ -48,13 +48,18 @@ void CheckSparseSparseArithmeticInputs(const std::vector<AbstractBasePtr> &input
   auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values->BuildShape())[kShape];
   auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_shape->BuildShape())[kShape];
 
+  std::vector<ShapeVector> all_shapes = {x1_indices_shape, x1_values_shape, x1_shape_shape,
+                                         x2_indices_shape, x2_values_shape, x2_shape_shape};
+  auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
+  auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
+
+  if (is_dynamic_rank) {
+    return;
+  }
+
   const int64_t indice_size = 2;
   const int64_t values_size = 1;
   const int64_t shape_size = 1;
-  if (IsDynamicRank(x1_indices_shape) || IsDynamicRank(x1_values_shape) || IsDynamicRank(x1_shape_shape) ||
-      IsDynamicRank(x2_indices_shape) || IsDynamicRank(x2_values_shape) || IsDynamicRank(x2_shape_shape)) {
-    return;
-  }
   (void)CheckAndConvertUtils::CheckInteger("x1_indices rank", SizeToLong(x1_indices_shape.size()), kEqual, indice_size,
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("x2_indices rank", SizeToLong(x2_indices_shape.size()), kEqual, indice_size,
@@ -67,6 +72,10 @@ void CheckSparseSparseArithmeticInputs(const std::vector<AbstractBasePtr> &input
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("x2_shape rank", SizeToLong(x2_shape_shape.size()), kEqual, shape_size,
                                            op_name);
+
+  if (is_dynamic) {
+    return;
+  }
 
   if (x1_indices_shape[1] != x1_shape_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
@@ -108,7 +117,7 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
   ShapeVector max_out_value_shape = {};
   abstract::ShapePtr y_indices_shape;
   abstract::ShapePtr y_values_shape;
-  if (IsDynamicRank(x1_indice_shape)) {
+  if (IsDynamic(x1_indice_shape) || IsDynamic(x2_indice_shape)) {
     min_out_indice_shape.push_back(-1);
     min_out_indice_shape.push_back(-1);
     max_out_indice_shape.push_back(-1);
@@ -123,8 +132,8 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
       min_out_indice_shape.push_back(x2_indice_shape[0]);
       min_out_value_shape.push_back(x2_indice_shape[0]);
     }
-    max_out_indice_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);
     min_out_indice_shape.push_back(x1_indice_shape[1]);
+    max_out_indice_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);
     max_out_indice_shape.push_back(x1_indice_shape[1]);
     out_indice_shape[1] = x1_indice_shape[1];
     max_out_value_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);

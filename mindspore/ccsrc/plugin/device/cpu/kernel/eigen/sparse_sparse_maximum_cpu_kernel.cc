@@ -117,6 +117,7 @@ void UnionSparseIndicesAndValues(
 bool SparseSparseMaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   is_need_retrieve_output_shape_ = true;
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
@@ -139,6 +140,9 @@ int SparseSparseMaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs,
                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+    return ret;
+  }
   outputs_ = outputs;
   input_size_list_.clear();
   output_size_list_.clear();
@@ -206,8 +210,8 @@ void SparseSparseMaximumCpuKernelMod::CheckShapeMatch(const std::vector<AddressP
   auto b_shape_ptr = reinterpret_cast<int64_t *>(inputs[kInputb_shapes]->addr);
   for (int64_t i = 0; i < num_dims_; ++i) {
     if (a_shape_ptr[i] != b_shape_ptr[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', operand's shapes do not match at index " << i
-                        << ", got value: " << a_shape_ptr[i] << ", and " << b_shape_ptr[i];
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', operand's shapes do not match at index " << i
+                               << ", got value: " << a_shape_ptr[i] << ", and " << b_shape_ptr[i];
     }
   }
 }
