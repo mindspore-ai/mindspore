@@ -41,6 +41,7 @@ class StrideSliceTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
+  nvinfer1::ITensor *GetDynamicAxisSliceStart(TensorRTContext *ctx, nvinfer1::ITensor *input, int axis, int nbdims);
   nvinfer1::ITensor *GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input,
                                          const nvinfer1::Dims &size_dims, const nvinfer1::Dims &start_dims);
   nvinfer1::ITensor *GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *slice_input, size_t end_mask);
@@ -50,12 +51,19 @@ class StrideSliceTensorRT : public TensorRTOp {
   int ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_input, const mindspore::MSTensor &begin,
                   const mindspore::MSTensor &stride, const mindspore::MSTensor &end, size_t start_mask, size_t end_mask,
                   size_t axis_index);
+  int ComputeDimsSingle(TensorRTContext *ctx, ITensorHelper *slice_input, const mindspore::MSTensor &begin,
+                        const mindspore::MSTensor &stride, const mindspore::MSTensor &end, size_t start_mask,
+                        size_t end_mask, size_t axis_index);
+  int ComputeDimsMulti(TensorRTContext *ctx, ITensorHelper *slice_input, const mindspore::MSTensor &begin,
+                       const mindspore::MSTensor &stride, const mindspore::MSTensor &end, size_t start_mask,
+                       size_t end_mask, size_t axis_index);
   size_t shrink_axis_;
   size_t start_axis_;
   size_t end_axis_;
   nvinfer1::Dims start_dims_;
   nvinfer1::Dims size_dims_;
   nvinfer1::Dims stride_dims_;
+  nvinfer1::ITensor *start_tensor_{nullptr};
   nvinfer1::ITensor *size_tensor_{nullptr};
 };
 }  // namespace mindspore::lite
