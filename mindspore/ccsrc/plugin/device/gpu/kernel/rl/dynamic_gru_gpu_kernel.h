@@ -49,6 +49,7 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
         x_desc_max_(nullptr),
         hx_desc_(nullptr),
         cx_desc_(nullptr),
+        w_desc_(nullptr),
         dropout_desc_(nullptr),
         y_desc_(nullptr),
         hy_desc_(nullptr),
@@ -71,20 +72,31 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   void DestroyResource() noexcept override {
-#if CUDNN_VERSION >= 8000
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDescriptor(rnn_desc_), "destroy rnn_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyDropoutDescriptor(dropout_desc_), "destroy dropout_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(hx_desc_), "destroy hx_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(cx_desc_), "destroy cx_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDescriptor(rnn_desc_), "Destroy rnn_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyDropoutDescriptor(dropout_desc_), "Destroy dropout_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(hx_desc_), "Destroy hx_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(cx_desc_), "Destroy cx_desc failed");
     if (y_desc_.get() != nullptr) {
-      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDataDescriptor(*(y_desc_.get())), "destroy y_desc failed");
+      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDataDescriptor(*(y_desc_.get())), "Destroy y_desc failed");
     }
     if (x_desc_.get() != nullptr) {
-      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDataDescriptor(*(x_desc_.get())), "destroy x_desc failed");
+      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDataDescriptor(*(x_desc_.get())), "Destroy x_desc failed");
     }
+#if CUDNN_VERSION < 8000
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(hy_desc_), "Destroy hy_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(cy_desc_), "Destroy cy_desc failed");
+    if (w_desc_ != nullptr) {
+      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyFilterDescriptor(w_desc_), "Destroy w_desc_failed");
+    }
+    if (x_desc_max_ != nullptr) {
+      for (size_t i = 0; i < IntToSize(max_seq_len_); ++i) {
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_max_[i]), "destroy x_desc_max failed");
+      }
+    }
+#else
     if (x_desc_max_.get() != nullptr) {
       CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDataDescriptor(*(x_desc_max_.get())),
-                                         "destroy x_desc_max_ failed");
+                                         "Destroy x_desc_max_ failed");
     }
 #endif
   }
@@ -93,19 +105,27 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitResource() override {
-#if CUDNN_VERSION >= 8000
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&hx_desc_), "create hx_desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&cx_desc_), "create cx_desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateDropoutDescriptor(&dropout_desc_), "create dropout_desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateRNNDescriptor(&rnn_desc_), "create rnn_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&hx_desc_), "Create hx_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&cx_desc_), "Create cx_desc failed");
+#if CUDNN_VERSION < 8000
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&hy_desc_), "Create hy_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&cy_desc_), "Create cy_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnCreateFilterDescriptor(&w_desc_), "Create w_desc failed");
 #endif
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateDropoutDescriptor(&dropout_desc_), "Create dropout_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateRNNDescriptor(&rnn_desc_), "Create rnn_desc failed");
   }
 
  private:
   void ResetResource() noexcept;
   void CreateRNNDataDescGrp();
-  void CreateTensorNdDesc(const std::vector<KernelTensorPtr> &inputs);
+#if CUDNN_VERSION < 8000
+  void CreateFilterDesc();
+#endif
+  void CreateTensorNdDesc();
+  void SetRNNDesc();
+  void CheckWeightSize(const std::vector<KernelTensorPtr> &inputs);
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
@@ -138,15 +158,19 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
 
   // input desc
   std::unique_ptr<cudnnRNNDataDescriptor_t> x_desc_;
+#if CUDNN_VERSION < 8000
+  std::unique_ptr<cudnnTensorDescriptor_t[]> x_desc_max_;
+#else
   std::unique_ptr<cudnnRNNDataDescriptor_t> x_desc_max_;
+#endif
   cudnnTensorDescriptor_t hx_desc_;
   cudnnTensorDescriptor_t cx_desc_;
+  cudnnFilterDescriptor_t w_desc_;
   cudnnDropoutDescriptor_t dropout_desc_;
   std::unique_ptr<cudnnRNNDataDescriptor_t> y_desc_;
   cudnnTensorDescriptor_t hy_desc_;
   cudnnTensorDescriptor_t cy_desc_;
   cudnnRNNDescriptor_t rnn_desc_;
-
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
 };

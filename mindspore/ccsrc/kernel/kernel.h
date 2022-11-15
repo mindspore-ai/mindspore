@@ -384,7 +384,6 @@ inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t inde
                     << ", and the length of 'addr_list' is " << addr_list.size();
     return nullptr;
   }
-
   return reinterpret_cast<T *>(addr_list[index]->addr);
 }
 
