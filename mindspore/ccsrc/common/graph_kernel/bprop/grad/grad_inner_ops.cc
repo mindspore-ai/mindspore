@@ -111,7 +111,7 @@ REG_BPROP_BUILDER("MatmulDDS").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   auto dq = ib->TupleGetItem(tmp, kIndex0);
   auto dk = ib->TupleGetItem(tmp, kIndex1);
   ShapeVector shape = {1, 0, 3, 2};
-  dk = ib->Emit("Transpose", {dk, ib->EmitValue(MakeValue(shape))});
+  dk = ib->Transpose(dk, shape);
   return {dq, dk, ib->ZerosLike(local_mask), ib->ZerosLike(global_mask)};
 });
 

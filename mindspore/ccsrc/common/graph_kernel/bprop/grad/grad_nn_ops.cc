@@ -373,7 +373,7 @@ REG_BPROP_BUILDER("SoftmaxCrossEntropyWithLogits").SetBody([](const BpropIRBuild
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
   auto grad = ib->TupleGetItem(out, 1);
-  grad = ib->Mul(grad, (ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 0), ib->Tensor(-1)})));
+  grad = ib->Mul(grad, (ib->ExpandDims(ib->TupleGetItem(dout, 0), -1)));
   return {grad, ib->ZerosLike(labels)};
 });
 
@@ -642,7 +642,7 @@ REG_BPROP_BUILDER("CTCLoss").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto out = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex5);
   auto grad_loss = ib->TupleGetItem(out, 1);
-  auto grad = ib->Mul(grad_loss, (ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 0), ib->Tensor(-1)})));
+  auto grad = ib->Mul(grad_loss, (ib->ExpandDims(ib->TupleGetItem(dout, 0), -1)));
   return {grad, ib->ZerosLike(labels_indices), ib->ZerosLike(labels_values), ib->ZerosLike(sequence_length)};
 });
 
@@ -803,16 +803,14 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetBody([](const BpropIRBuilder *ib) ->
                                         {"rates", ib->GetAttr("rates")},
                                         {"padding", ib->GetAttr("padding")}}),
                               kInt32);
-  x_idx_patch = ib->Emit("Transpose", {x_idx_patch, ib->Value<ShapeVector>({0, 2, 3, 1})});
+  x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
   auto out_shape = ib->GetShape(out);
   auto out_row = out_shape[2];
   auto out_col = out_shape[3];
   auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
   auto out_idx = ib->Tensor(Range(out_indices_num), kInt32);
   out_idx = ib->Reshape(out_idx, {1, out_row, out_col, ksizes_row * ksizes_col});
-  auto idx_tensor = ib->Emit("Concat",
-                             {ib->MakeTuple({ib->Emit("ExpandDims", {x_idx_patch, ib->Value<int64_t>(-1)}),
-                                             ib->Emit("ExpandDims", {out_idx, ib->Value<int64_t>(-1)})})},
+  auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)})},
                              {{"axis", MakeValue<int64_t>(-1)}});
   idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
@@ -821,13 +819,13 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetBody([](const BpropIRBuilder *ib) ->
     ib->Emit("ScatterNd", {idx_tensor, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape)});
   sp_tensor = ib->Emit(
     "Slice", {sp_tensor, ib->Value<ShapeVector>({1, 0}), ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num})});
-  auto grad = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>({0, 2, 3, 1})});
+  auto grad = ib->Transpose(dout, {0, 2, 3, 1});
   grad = ib->Reshape(grad, {x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth});
-  grad = ib->Emit("Transpose", {grad, ib->Value<ShapeVector>({1, 2, 3, 4, 0, 5})});
+  grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
   grad = ib->Reshape(grad, {-1, x_batch * x_depth});
   auto jac = ib->MatMul(sp_tensor, grad, false, false);
   auto dx = ib->Reshape(jac, {x_row, x_col, x_batch, x_depth});
-  dx = ib->Emit("Transpose", {dx, ib->Value<ShapeVector>({2, 3, 0, 1})});
+  dx = ib->Transpose(dx, {2, 3, 0, 1});
   return {dx};
 });
 
@@ -1070,8 +1068,8 @@ REG_BPROP_BUILDER("DynamicRNN").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto dx = ib->TupleGetItem(tmp, kIndex2);
   auto dh_prev = ib->TupleGetItem(tmp, kIndex3);
   auto dc_prev = ib->TupleGetItem(tmp, kIndex4);
-  dh_prev = ib->Emit("ExpandDims", {dh_prev, 0});
-  dc_prev = ib->Emit("ExpandDims", {dc_prev, 0});
+  dh_prev = ib->ExpandDims(dh_prev, 0);
+  dc_prev = ib->ExpandDims(dc_prev, 0);
   constexpr int64_t zero = 0;
   return {dx, dw, db, ib->ZerosLike(ib->Tensor(zero)), dh_prev, dc_prev};
 });
@@ -1428,10 +1426,9 @@ REG_BPROP_BUILDER("NthElement").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto n = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto indicators = ib->Cast(ib->Emit("Equal", {ib->Emit("ExpandDims", {out, ib->Value<int64_t>(-1)}), input_x}),
-                             ib->GetDtype(input_x));
-  dout = ib->Emit("ExpandDims", {dout, ib->Value<int64_t>(-1)});
-  auto num_select = ib->Emit("ExpandDims", {ib->ReduceSum(indicators, {-1}), ib->Value<int64_t>(-1)});
+  auto indicators = ib->Cast(ib->Emit("Equal", {ib->ExpandDims(out, -1), input_x}), ib->GetDtype(input_x));
+  dout = ib->ExpandDims(dout, -1);
+  auto num_select = ib->ExpandDims(ib->ReduceSum(indicators, {-1}), -1);
   return {ib->Mul(ib->Emit("Div", {indicators, num_select}), dout), ib->ZerosLike(n)};
 });
 
@@ -1599,13 +1596,13 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetBody([](const Bpro
   auto dout = ib->GetInput(kIndex3);
   auto grad_loss = ib->TupleGetItem(dout, 0);
   auto softmax_grad = ib->TupleGetItem(out, 1);
-  grad_loss = ib->Emit("ExpandDims", {grad_loss, ib->Value<int64_t>(-1)});
+  grad_loss = ib->ExpandDims(grad_loss, -1);
   auto grad = ib->Mul(grad_loss, softmax_grad);
   auto btmp = ib->TupleGetItem(dout, 1);
   if (ib->TupleGetItem(dout, 1) != nullptr) {
     auto softmax = ib->Emit("Softmax", {logits}, {{"axis", MakeValue(ShapeVector{1})}});
-    auto x = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(1)});
-    auto y = ib->Emit("ExpandDims", {softmax, ib->Value<int64_t>(2)});
+    auto x = ib->ExpandDims(ib->TupleGetItem(dout, 1), 1);
+    auto y = ib->ExpandDims(softmax, 2);
     auto matmul_tmp = ib->BatchMatMul(x, y);
     grad =
       grad +
