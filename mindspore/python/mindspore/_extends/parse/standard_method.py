@@ -20,7 +20,6 @@ from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore.ops.function.sparse_func import sparse_add
 import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
@@ -3295,7 +3294,7 @@ def coo_abs(x):
 
 def coo_add(x, y, thresh):
     """Implementation of `add` for COOTensor."""
-    return sparse_add(x, y, thresh)
+    return F.coo_add(x, y, thresh)
 
 
 ################

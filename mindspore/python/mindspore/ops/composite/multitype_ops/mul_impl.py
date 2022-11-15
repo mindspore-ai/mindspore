@@ -18,7 +18,7 @@ from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import check_equal
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
-from mindspore.common import CSRTensor, COOTensor
+from mindspore.common import COOTensor
 
 mul = base.MultitypeFuncGraph("mul", True)
 """
@@ -229,8 +229,7 @@ def _csrtensor_mul_tensor(x, y):
     Outputs:
        CSRTensor, equal to x * y.
     """
-    data = F.csr_mul(x, y)
-    return CSRTensor(x.indptr, x.indices, data, x.shape)
+    return F.csr_mul(x, y)
 
 
 @mul.register("Tensor", "CSRTensor")
@@ -241,8 +240,7 @@ def _tensor_mul_csrtensor(x, y):
     Outputs:
        CSRTensor, equal to x * y.
     """
-    data = F.csr_mul(y, x)
-    return CSRTensor(y.indptr, y.indices, data, y.shape)
+    return F.csr_mul(y, x)
 
 
 @mul.register("COOTensor", "Tensor")

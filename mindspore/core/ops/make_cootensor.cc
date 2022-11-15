@@ -47,9 +47,14 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   CheckSparseIndicesDtype(indices_dtype, "Indices");
 
   auto indices_shp = indices->shape()->shape();
-  CheckSparseShape(indices_shp.size(), kSizeTwo, "Indices");
-
   auto values_shp = values->shape()->shape();
+  if (IsShapeEmpty(indices_shp) && IsShapeEmpty(values_shp)) {
+    MS_LOG(DEBUG) << "Constructing empty COOTensor! Ignore further shape check.";
+    std::vector<abstract::AbstractBasePtr> element_list{indices, values, dense_shape};
+    return std::make_shared<abstract::AbstractCOOTensor>(element_list);
+  }
+
+  CheckSparseShape(indices_shp.size(), kSizeTwo, "Indices");
   CheckSparseShape(values_shp.size(), kSizeOne, "Values");
 
   // Convert dense_shape from tuple to shapevector(dense_shape_vec)

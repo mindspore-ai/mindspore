@@ -92,7 +92,7 @@ def _sub_csrtensor(x, y):
 def _sub_cootensor(x, y):
     """Returns x - y where x and y are all COO tensors."""
     check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
-    return F.sparse_add(x, -y, make_tensor(0, x.values.dtype))
+    return F.coo_add(x, -y, make_tensor(0, x.values.dtype))
 
 
 @sub.register("Tensor", "COOTensor")

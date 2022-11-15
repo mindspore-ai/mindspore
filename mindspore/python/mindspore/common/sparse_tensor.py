@@ -614,13 +614,11 @@ class CSRTensor(CSRTensor_):
         return ''
 
     def __mul__(self, other):
-        res = tensor_operator_registry.get('csr_mul')(self, other)
-        return CSRTensor(self.indptr, self.indices, res, self.shape)
+        return tensor_operator_registry.get('csr_mul')(self, other)
 
     def __div__(self, other):
         logger.warning("For CSR divide, zero values in the dense tensor are ignored.")
-        res = tensor_operator_registry.get('csr_div')(self, other)
-        return CSRTensor(self.indptr, self.indices, res, self.shape)
+        return tensor_operator_registry.get('csr_div')(self, other)
 
     def __truediv__(self, other):
         return self.__div__(other)

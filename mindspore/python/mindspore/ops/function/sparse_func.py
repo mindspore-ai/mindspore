@@ -57,6 +57,12 @@ def _make_tensor(data):
     return Tensor(data)
 
 
+@constexpr
+def _make_tensor_with_dtype(data, dtype):
+    """Make Tensor with specific datatype"""
+    return Tensor(data, dtype=dtype)
+
+
 def is_scalar(tensor):
     """Determine whether tensor input is a scalar tensor."""
     if tensor.size != 1:
@@ -175,28 +181,23 @@ def csr_div(x: CSRTensor, y: Tensor) -> Tensor:
             raise_value_error("dense tensor cannot broadcast to the sparse tensor.")
         return (x.values / y).reshape(x.values.shape)
     x_values, y = promote_tensor(x.values, y)
-    return _csr_ops.CSRDiv()(x.indptr, x.indices, x_values, x.shape, y)
+    res_values = _csr_ops.CSRDiv()(x.indptr, x.indices, x_values, x.shape, y)
+    return CSRTensor(x.indptr, x.indices, res_values, x.shape)
 
 
 csr_gather = _csr_ops.CSRGather()
 
 
-def csr_mul(x: CSRTensor, y: Tensor) -> Tensor:
+def csr_mul(x: CSRTensor, y: Tensor) -> CSRTensor:
     """
     Returns x * y where x is CSRTensor and y is Tensor.
-
-    Note:
-        This function returns the results of dense Tensor, represents the non-zero
-        values of the CSRTensor. If user expects a CSRTensor as output, please directly
-        use `*` operator instead. Only support dense tensor broadcast to sparse tensor
-        at the moment.
 
     Args:
         x (CSRTensor): Sparse CSR Tensor.
         y (Tensor): Dense Tensor, its shape must be able to broadcast to x.
 
     Returns:
-        Dense Tensor, represents the non-zero values of the result.
+        CSRTensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -208,7 +209,8 @@ def csr_mul(x: CSRTensor, y: Tensor) -> Tensor:
             raise_value_error("dense tensor cannot broadcast to the sparse tensor.")
         return (x.values * y).reshape(x.values.shape)
     x_values, y = promote_tensor(x.values, y)
-    return _csr_ops.CSRMul()(x.indptr, x.indices, x_values, x.shape, y)
+    res_values = _csr_ops.CSRMul()(x.indptr, x.indices, x_values, x.shape, y)
+    return CSRTensor(x.indptr, x.indices, res_values, x.shape)
 
 
 def csr_mv(csr_tensor: CSRTensor, dense: Tensor) -> Tensor:
@@ -552,7 +554,7 @@ row_tensor_add = Primitive('RowTensorAdd')
 
 @constexpr
 def _calc_out_shape(sp_input, concat_dim):
-    "calculating the COOTensor output shape in sparse_concat"
+    "calculating the COOTensor output shape in coo_concat"
     if isinstance(sp_input[0], tuple):
         out_shape_list = list(sp_input[0][2])
     else:
@@ -566,10 +568,10 @@ def _calc_out_shape(sp_input, concat_dim):
 
 
 @constexpr
-def _set_sparse_concat_input(sp_input):
+def _set_coo_concat_input(sp_input):
     "split COOTensor to normal tensor"
     if len(sp_input) < 2:
-        raise_value_error("For sparse_concat, not support COOTensor input number < 2.")
+        raise_value_error("For coo_concat, not support COOTensor input number < 2.")
     in_indices = []
     in_values = []
     in_shapes = []
@@ -585,7 +587,7 @@ def _set_sparse_concat_input(sp_input):
     return in_indices, in_values, in_shapes
 
 
-def sparse_concat(sp_input, concat_dim=0):
+def coo_concat(sp_input, concat_dim=0):
     """
     concatenates the input SparseTensor(COO format) along the specified dimension.
 
@@ -621,7 +623,7 @@ def sparse_concat(sp_input, concat_dim=0):
         >>> shape1 = (3, 4)
         >>> input1 = COOTensor(indices1, values1, shape1)
         >>> concat_dim = 1
-        >>> out = F.sparse_concat((input0, input1), concat_dim)
+        >>> out = F.coo_concat((input0, input1), concat_dim)
         >>> print(out)
         COOTensor(shape=[3, 8], dtype=Int32, indices=Tensor(shape=[4, 2], dtype=Int32, value=
         [[0 1]
@@ -629,14 +631,14 @@ def sparse_concat(sp_input, concat_dim=0):
          [1 2]
          [1 5]]), values=Tensor(shape=[4], dtype=Int32, value=[1 3 2 4]))
     """
-    sparse_concat_op = SparseConcat(concat_dim)
-    in_indices, in_values, in_shapes = _set_sparse_concat_input(sp_input)
-    indices, values, _ = sparse_concat_op(in_indices, in_values, in_shapes)
+    coo_concat_op = SparseConcat(concat_dim)
+    in_indices, in_values, in_shapes = _set_coo_concat_input(sp_input)
+    indices, values, _ = coo_concat_op(in_indices, in_values, in_shapes)
     out_shape = _calc_out_shape(sp_input, concat_dim)
     return COOTensor(indices, values, out_shape)
 
 
-def sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
+def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
     """
     Computes the sum of x1(COOTensor) and x2(COOTensor), and return a new COOTensor
     based on the computed result and `thresh`.
@@ -687,7 +689,7 @@ def sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         >>> shape1 = (3, 4)
         >>> input1 = COOTensor(indics1, values1, shape1)
         >>> thres = Tensor(0, dtype=mstype.int32)
-        >>> out = ops.sparse_add(input0, input1, thres)
+        >>> out = ops.coo_add(input0, input1, thres)
         >>> print(out)
         COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[4, 2],
         dtype = Int64, value=[[0 0], [0 1], [1 1], [1 2]]),  values=Tensor(shape[4],
@@ -827,6 +829,7 @@ __all__ = [
     'coo_tensor_get_values',
     'csr_div',
     'csr_gather',
+    'csr_mm',
     'csr_mul',
     'csr_mv',
     'csr_reduce_sum',
@@ -848,8 +851,8 @@ __all__ = [
     'row_tensor_get_indices',
     'row_tensor_get_dense_shape',
     'row_tensor_add',
-    'sparse_add',
-    'sparse_concat',
+    'coo_add',
+    'coo_concat',
     'csr_add',
     'csr_softmax',
     'csr_to_dense'

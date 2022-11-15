@@ -223,7 +223,7 @@ def get_bprop_csr_mul(self):
     to index the dense input.
     """
     def bprop(indptr, indices, values, shape, dense, out, dout):
-        csr_tensor_grad_value = F.csr_mul(F.make_csr_tensor(indptr, indices, dout, shape), dense)
+        csr_tensor_grad_value = F.csr_mul(F.make_csr_tensor(indptr, indices, dout, shape), dense).values
         dense_grad_value = F.mul(dout, values)
         dense_grad = F.make_csr_tensor(indptr, indices, dense_grad_value, shape)
         if len(dense.shape) == 1 or dense.shape[0] == 1:
@@ -261,9 +261,11 @@ def get_bprop_csr_div(self):
         shape_y = feature_dim + shape[batch_dim_dense_start:]
         reduce_x, reduce_y = F.broadcast_gradient_args(shape_x, shape_y)
 
-        csr_tensor_grad_value = F.csr_div(F.make_csr_tensor(indptr, indices, dout, shape), dense)
+        csr_tensor_grad = F.csr_div(F.make_csr_tensor(indptr, indices, dout, shape), dense)
         if reduce_x:
-            csr_tensor_grad_value = P.ReduceSum(True)(csr_tensor_grad_value, reduce_x)
+            csr_tensor_grad_value = P.ReduceSum(True)(csr_tensor_grad.values, reduce_x)
+        else:
+            csr_tensor_grad_value = csr_tensor_grad.values
         dense_grad_value = F.neg_tensor(F.mul(out, csr_tensor_grad_value))
         dense_grad = F.make_csr_tensor(indptr, indices, dense_grad_value, shape)
         if len(dense.shape) == 1 or dense.shape[0] == 1:

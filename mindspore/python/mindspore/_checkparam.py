@@ -944,6 +944,9 @@ class Validator:
     @staticmethod
     def check_csr_tensor_shape(indptr_shp, indices_shp, values_shp, csr_shp):
         """Checks input tensors' shapes for CSRTensor."""
+        # Support empty sparse tensor
+        if (indptr_shp == (0,)) and (indices_shp == (0,)) and (values_shp == (0,)):
+            return
         shape_size = 1
         val_shp_size = 1
         for item in csr_shp:
@@ -1000,6 +1003,8 @@ class Validator:
         """Checks input tensors' shapes for COOTensor."""
         if len(coo_shp) != 2:
             raise ValueError(f"For COOTensor, the length of 'shape' must be 2, but got {coo_shp}.")
+        if (indices_shp == (0,)) and (values_shp == (0,)):
+            return
         shp_mul = 1
         for sh in coo_shp:
             if sh <= 0:
