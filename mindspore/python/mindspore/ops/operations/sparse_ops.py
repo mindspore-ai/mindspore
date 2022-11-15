@@ -1484,9 +1484,12 @@ class SparseSegmentMeanWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> import mindspore as ms
+        >>> import mindspore.ops.operations.sparse_ops as ops
         >>> x = Tensor([[0, 2, 0, 0], [0, 1, 1, 0], [2, 0, 2, 0]], dtype=ms.float16)
         >>> indices = Tensor([0, 2, 1], dtype=ms.int32)
         >>> segment_ids = Tensor([0, 0, 2], dtype=ms.int32)
