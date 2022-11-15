@@ -549,7 +549,7 @@ class EuclideanNorm(Primitive):
         - **x** (Tensor) - The input tensor. Must be one of the following types :float16, float32, float64, int8, int16,
           int32, int64, complex64, complex128, uint8, uint16, uint32, uint64. The tensor to reduce.
         - **axes** (Tensor) - The dimensions to reduce. Must be one of the following types: int32, int64.
-          Must be in the range [-rank(input), rank(input)).
+          Must be in the range [-rank(x), rank(x)).
 
     Outputs:
         Tensor, has the same type as the 'x'.
