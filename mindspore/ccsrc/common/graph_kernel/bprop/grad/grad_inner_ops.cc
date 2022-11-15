@@ -25,7 +25,7 @@ static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &
                               ib->EmitValue(x_dtype)});
   auto base_eye = ib->Reshape(eye, {-1});
   ShapeVector shape2(x_shape.begin(), x_shape.end() - 1);
-  auto tile = ib->Emit("Tile", {base_eye, ib->EmitValue(MakeValue(shape2))});
+  auto tile = ib->Tile(base_eye, shape2);
   auto shape3 = x_shape;
   shape3.push_back(x_shape.back());
   return ib->Reshape(tile, shape3);
@@ -36,7 +36,7 @@ static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVect
                               ib->EmitValue(MakeValue(x_shape.back())), ib->EmitValue(x_dtype)});
   auto base_eye = ib->Reshape(eye, {-1});
   ShapeVector shape2(x_shape.begin(), x_shape.end() - kDim2);
-  auto tile = ib->Emit("Tile", {base_eye, ib->EmitValue(MakeValue(shape2))});
+  auto tile = ib->Tile(base_eye, shape2);
   return ib->Reshape(tile, x_shape);
 }
 

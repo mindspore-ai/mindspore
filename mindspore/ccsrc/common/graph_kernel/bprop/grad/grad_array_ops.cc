@@ -76,8 +76,7 @@ REG_BPROP_BUILDER("GatherD").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto index = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto dx = ib->Emit("GatherDGradV2", {x, dim, index, dout});
-  auto ddim = ib->Emit("ZerosLike", {dim});
-  return {dx, ddim, ib->ZerosLike(index)};
+  return {dx, ib->ZerosLike(dim), ib->ZerosLike(index)};
 });
 
 REG_BPROP_BUILDER("GatherDGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -966,6 +965,7 @@ REG_BPROP_BUILDER("MaskedFill").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   mask = ib->Cast(mask, kFloat32);
+  auto dout_type = ib->GetDtype(dout);
   auto dinput = ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask));
   auto dvalue = ib->Mul(dout, mask);
   auto bout = BinopGradCommon(ib, input_data, mask, dinput, dvalue);
@@ -981,7 +981,10 @@ REG_BPROP_BUILDER("MaskedFill").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
 
 REG_BPROP_BUILDER("Coalesce").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex4);
-  return {dout};
+  auto d1 = ib->TupleGetItem(dout, 0);
+  auto d2 = ib->TupleGetItem(dout, 1);
+  auto d3 = ib->TupleGetItem(dout, 2);
+  return {d1, d2, d3};
 });
 
 REG_BPROP_BUILDER("ConjugateTranspose").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -1167,9 +1170,9 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto dout = ib->GetInput(kIndex3);
   auto dtype = ib->GetDtype(theta);
 
-  auto start = ib->Tensor(-1, dtype);
-  auto stop = ib->Tensor(1, dtype);
-  auto zero = ib->Tensor(0, dtype);
+  auto start = ib->Tensor(-1, kFloat32);
+  auto stop = ib->Tensor(1, kFloat32);
+  auto zero = ib->Tensor(0, kFloat32);
   auto perm1 = ib->Value<ShapeVector>({1, 0});
   auto perm2 = ib->Value<ShapeVector>({0, 2, 1});
   if (output_size.size() == 5) {
@@ -1181,9 +1184,9 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     auto vecy = (h_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(h_value)}) : zero;
     auto vecz = (d_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(d_value)}) : zero;
     if (!align_corners) {
-      vecx = (vecx * ib->Tensor(w_value - 1, dtype)) / ib->Tensor(w_value, dtype);
-      vecy = (vecy * ib->Tensor(h_value - 1, dtype)) / ib->Tensor(h_value, dtype);
-      vecz = (vecz * ib->Tensor(d_value - 1, dtype)) / ib->Tensor(d_value, dtype);
+      vecx = (vecx * ib->Tensor(w_value - 1, kFloat32)) / ib->Tensor(w_value, kFloat32);
+      vecy = (vecy * ib->Tensor(h_value - 1, kFloat32)) / ib->Tensor(h_value, kFloat32);
+      vecz = (vecz * ib->Tensor(d_value - 1, kFloat32)) / ib->Tensor(d_value, kFloat32);
     }
     auto out = (h_value * d_value != 1) ? ib->Tile(vecx, {h_value * d_value, 1}) : vecx;
     auto one = ib->Reshape(out, {h_value * w_value * d_value, 1});
@@ -1204,6 +1207,7 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     }
     output = ib->Reshape(output, {n_value, 4, h_value * w_value * d_value});
     dout = ib->Reshape(dout, {n_value, d_value * h_value * w_value, 3});
+    dout = ib->Cast(dout, kFloat32);
     auto dtheta = ib->BatchMatMul(output, dout);
     dtheta = ib->Emit("Transpose", {dtheta, perm2});
     return {dtheta, tre};
@@ -1216,8 +1220,8 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     auto vecx = (w_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(w_value)}) : zero;
     auto vecy = (h_value != 1) ? ib->Emit("LinSpace", {start, stop, ib->Value(h_value)}) : zero;
     if (!align_corners) {
-      vecx = (vecx * ib->Tensor(w_value - 1, dtype)) / ib->Tensor(w_value, dtype);
-      vecy = (vecy * ib->Tensor(h_value - 1, dtype)) / ib->Tensor(h_value, dtype);
+      vecx = (vecx * ib->Tensor(w_value - 1, kFloat32)) / ib->Tensor(w_value, kFloat32);
+      vecy = (vecy * ib->Tensor(h_value - 1, kFloat32)) / ib->Tensor(h_value, kFloat32);
     }
     auto out = (h_value != 1) ? ib->Tile(vecx, {h_value, 1}) : vecx;
     auto one = ib->Reshape(out, {h_value * w_value, 1});
@@ -1230,6 +1234,7 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     output = ib->Tile(output, {n_value, 1});
     output = ib->Reshape(output, {n_value, 3, h_value * w_value});
     dout = ib->Reshape(dout, {n_value, h_value * w_value, 2});
+    dout = ib->Cast(dout, kFloat32);
     auto dtheta = ib->BatchMatMul(output, dout);
     dtheta = ib->Emit("Transpose", {dtheta, perm2});
     return {dtheta, tre};

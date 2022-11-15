@@ -123,6 +123,9 @@ NodePtr Emitter::Transpose(const NodePtr &node, const ShapeVector &perm) const {
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {
+  if (node->dtype()->type_id() == kMetaTypeNone) {
+    return Emit(prim::kZerosLike, {Tensor(0)});
+  }
   if (node->isa<ValueNode>()) {
     auto value_node = node->get<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
