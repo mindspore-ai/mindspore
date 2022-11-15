@@ -68,14 +68,20 @@ HcclKernelFactory &HcclKernelFactory::Get() {
 }
 
 HcclKernel::HcclKernel()
-    : hccl_count_(0), op_type_(::HcclReduceOp::HCCL_REDUCE_SUM), root_id_(0), src_rank_(0), dest_rank_(0) {}
+    : hccl_count_(0),
+      op_type_(::HcclReduceOp::HCCL_REDUCE_SUM),
+      root_id_(0),
+      src_rank_(0),
+      dest_rank_(0),
+      comm_(nullptr) {}
 HcclKernel::HcclKernel(const AnfNodePtr &anf_node)
     : AscendKernelMod(),
       hccl_count_(0),
       op_type_(::HcclReduceOp::HCCL_REDUCE_SUM),
       root_id_(0),
       src_rank_(0),
-      dest_rank_(0) {}
+      dest_rank_(0),
+      comm_(nullptr) {}
 HcclKernel::~HcclKernel() {
   hccl_kernel_input_shape_list_.clear();
   hccl_kernel_output_shape_list_.clear();
