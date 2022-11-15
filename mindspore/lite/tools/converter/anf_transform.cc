@@ -783,9 +783,18 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
         MS_LOG(ERROR) << "Run format trans failed";
         return nullptr;
       }
-    } else if (!is_ascend) {  // new MindIR
-      UnifyFormatToNHWC unify_format(converter::kFmkTypeMs, param->train_model, param->export_mindir);
-      if (!unify_format.Run(old_graph)) {
+    } else if (!is_ascend) {
+      auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(param->train_model, true);
+      MS_CHECK_TRUE_MSG(redundant_op_remove_pass != nullptr, nullptr, "redundant_op_remove_pass is nullptr.");
+      if (!redundant_op_remove_pass->Run(old_graph)) {
+        MS_LOG(ERROR) << "Run remove redundant op failed";
+        return nullptr;
+      }
+
+      auto unify_format =
+        std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->export_mindir);
+      MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
+      if (!unify_format->Run(old_graph)) {
         MS_LOG(ERROR) << "Run insert transpose failed.";
         return nullptr;
       }

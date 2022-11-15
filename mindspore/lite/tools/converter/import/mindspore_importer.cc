@@ -33,6 +33,7 @@
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/parser/lstm_adjust_pass.h"
+#include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "nnacl/op_base.h"
 #include "src/common/common.h"
 
@@ -338,6 +339,15 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
     is_optimized = GetValue<bool>(value);
   }
   if (!is_optimized && !param->is_runtime_converter) {
+    if (!param->train_model) {
+      auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(param->train_model, true);
+      MS_CHECK_TRUE_MSG(redundant_op_remove_pass != nullptr, nullptr, "redundant_op_remove_pass is nullptr.");
+      if (!redundant_op_remove_pass->Run(func_graph)) {
+        MS_LOG(ERROR) << "Run remove redundant op failed";
+        return nullptr;
+      }
+    }
+
     auto unify_format =
       std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->export_mindir);
     MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
