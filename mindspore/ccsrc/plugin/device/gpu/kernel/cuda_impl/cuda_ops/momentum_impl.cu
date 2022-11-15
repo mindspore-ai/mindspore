@@ -16,6 +16,8 @@
 
 #include "momentum_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
 template <typename T, typename S, typename G>
 __global__ void MomentumUpdateVariableKernel(const size_t size, T *variable, T *accumulation, const S *learning_rate,
                                              const G *gradient, const S *momentum, bool use_nesterov) {
@@ -194,6 +196,36 @@ template CUDA_LIB_EXPORT void MomentumUpdateVariable<float, float, half>(const s
                                                                          const float *learning_rate,
                                                                          const half *gradient, const float *momentum,
                                                                          bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<int8_t, int8_t, int8_t>(
+  const size_t size, int8_t *variable, int8_t *accumulation, const int8_t *learning_rate, const int8_t *gradient,
+  const int8_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<uint8_t, uint8_t, uint8_t>(
+  const size_t size, uint8_t *variable, uint8_t *accumulation, const uint8_t *learning_rate, const uint8_t *gradient,
+  const uint8_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<int16_t, int16_t, int16_t>(
+  const size_t size, int16_t *variable, int16_t *accumulation, const int16_t *learning_rate, const int16_t *gradient,
+  const int16_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<uint16_t, uint16_t, uint16_t>(
+  const size_t size, uint16_t *variable, uint16_t *accumulation, const uint16_t *learning_rate,
+  const uint16_t *gradient, const uint16_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<uint32_t, uint32_t, uint32_t>(
+  const size_t size, uint32_t *variable, uint32_t *accumulation, const uint32_t *learning_rate,
+  const uint32_t *gradient, const uint32_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<int64_t, int64_t, int64_t>(
+  const size_t size, int64_t *variable, int64_t *accumulation, const int64_t *learning_rate, const int64_t *gradient,
+  const int64_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<uint64_t, uint64_t, uint64_t>(
+  const size_t size, uint64_t *variable, uint64_t *accumulation, const uint64_t *learning_rate,
+  const uint64_t *gradient, const uint64_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<double, double, double>(
+  const size_t size, double *variable, double *accumulation, const double *learning_rate, const double *gradient,
+  const double *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<Complex<float>, Complex<float>, Complex<float>>(
+  const size_t size, Complex<float> *variable, Complex<float> *accumulation, const Complex<float> *learning_rate,
+  const Complex<float> *gradient, const Complex<float> *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MomentumUpdateVariable<Complex<double>, Complex<double>, Complex<double>>(
+  const size_t size, Complex<double> *variable, Complex<double> *accumulation, const Complex<double> *learning_rate,
+  const Complex<double> *gradient, const Complex<double> *momentum, bool use_nesterov, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void FusedWeightDecayScaleMomentum(const size_t element_num, float *weight_decay, float *scale,
                                                             float *variable, float *accumulation,
@@ -217,18 +249,12 @@ template CUDA_LIB_EXPORT void FusedScaleMomentum(const size_t element_num, float
 template CUDA_LIB_EXPORT void FusedScaleMomentum(const size_t element_num, float *scale, float *variable,
                                                  float *accumulation, const float *learning_rate, const half *gradient,
                                                  const float *momentum, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CombineFusedWeightDecayScaleMomentum(const size_t max, const size_t num,
-                                                                   const size_t *elements, float **weight_decay,
-                                                                   float **scale, float **variable,
-                                                                   float **accumulation, float **learning_rate,
-                                                                   float **gradient, float **momentum,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CombineFusedWeightDecayScaleMomentum(const size_t max, const size_t num,
-                                                                   const size_t *elements, float **weight_decay,
-                                                                   float **scale, float **variable,
-                                                                   float **accumulation, float **learning_rate,
-                                                                   half **gradient, float **momentum,
-                                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CombineFusedWeightDecayScaleMomentum(
+  const size_t max, const size_t num, const size_t *elements, float **weight_decay, float **scale, float **variable,
+  float **accumulation, float **learning_rate, float **gradient, float **momentum, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CombineFusedWeightDecayScaleMomentum(
+  const size_t max, const size_t num, const size_t *elements, float **weight_decay, float **scale, float **variable,
+  float **accumulation, float **learning_rate, half **gradient, float **momentum, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CombineFusedScaleMomentum(const size_t max, const size_t num, const size_t *elements,
                                                         float **scale, float **variable, float **accumulation,
                                                         float **learning_rate, float **gradient, float **momentum,

@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/momentum_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -65,7 +66,100 @@ std::vector<std::pair<KernelAttr, MomentumGpuKernelMod::LaunchFunc>> MomentumGpu
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutInRef(0, 0),
-   &MomentumGpuKernelMod::LaunchKernel<float, float, half>}};
+   &MomentumGpuKernelMod::LaunchKernel<float, float, half>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddOutputAttr(kNumberTypeInt8)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<int8_t, int8_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddOutputAttr(kNumberTypeUInt8)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<uint8_t, uint8_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddOutputAttr(kNumberTypeInt16)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<int16_t, int16_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddOutputAttr(kNumberTypeUInt16)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<uint16_t, uint16_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddOutputAttr(kNumberTypeUInt32)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<uint32_t, uint32_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<int64_t, int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddOutputAttr(kNumberTypeUInt64)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<uint64_t, uint64_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<double, double, double>},
+#ifndef _MSC_VER
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<utils::Complex<float>, utils::Complex<float>, utils::Complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutInRef(0, 0),
+   &MomentumGpuKernelMod::LaunchKernel<utils::Complex<double>, utils::Complex<double>, utils::Complex<double>>}
+#endif
+};
 
 std::vector<KernelAttr> MomentumGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
