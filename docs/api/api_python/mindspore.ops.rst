@@ -625,3 +625,14 @@ Parameter操作算子
 
     mindspore.ops.Custom
 
+光谱算子
+----------
+
+.. mscnautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.BartlettWindow
+    mindspore.ops.BlackmanWindow
+
