@@ -1400,20 +1400,21 @@ class SparseFillEmptyRows(Primitive):
           Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
         - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
           The shape should be :math:`(n,)`.
-        - **dense_shape** (Tensor) - A 1-D Tensor, represents the shape of SparseTensor. Support int64.
+        - **dense_shape** (Tensor) - A 1-D Tensor with only two elements, represents the shape of SparseTensor.
+          Support int64.
         - **default_value** (Tensor) - A 0-D Tensor of the same type as `values`, scalar value to
           fill the blank lines in the input 2D SparseTensor.
 
     Outputs:
         - **output_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor
           after being filled. Support int64, each element value should be a non-negative int number.
-          The shape is :math:`(n, 2)`.
+          The shape is :math:`(m, 2)`, because of being filled, m>=n.
         - **output_values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
-          in the `output_indices`, the shape of which should be :math:`(n,)`.
+          in the `output_indices`, the shape of which should be :math:`(m,)`, because of being filled, m>=n.
         - **empty_row_indicator** (Tensor) - A 1-D Tensor. It indicates whether each row is empty.
-          Support bool. The shape is :math:`(n,)`.
-        - **reverse_index_map** (Tensor) - A 1-D Tensor. It is the index which position are not filled.
-          Support bool. The shape is :math:`(n,)`.
+          Support bool. The shape is :math:`(dense_shape[0],)`.
+        - **reverse_index_map** (Tensor) - A 1-D Tensor. It is the index that means the value here is original
+          rather than filled. Support bool. The shape is :math:`(n, 2)`.
 
     Raises:
         TypeError: If the dtype of `indices` is not int64.
