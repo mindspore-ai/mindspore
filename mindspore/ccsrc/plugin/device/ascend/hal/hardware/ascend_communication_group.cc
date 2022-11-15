@@ -34,8 +34,10 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
 
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
   uint32_t group_rank = GetGroupRank(global_rank_);
-  CHECK_RET(HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_),
-            static_cast<int32_t>(HCCL_SUCCESS), "Initializing HCCL communicator failed.");
+  RETURN_IF_FALSE_WITH_LOG(
+    HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) ==
+      static_cast<int32_t>(HCCL_SUCCESS),
+    "Initializing HCCL communicator failed.");
   initialized_ = true;
   return true;
 }
