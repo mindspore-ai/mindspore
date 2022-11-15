@@ -160,6 +160,7 @@ int ArgMinWithValueCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   num_before_axis_ = 1;
   num_after_axis_ = 1;
+  dim_axis_ = 0;
   if (shape_len > 0) {
     axis = axis % SizeToLong(shape_len);
     for (size_t i = 0; i < shape_len; i++) {
@@ -171,7 +172,6 @@ int ArgMinWithValueCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
     dim_axis_ = shape_[LongToSize(axis)];
   }
-  dim_axis_ = shape_[axis];
 
   return KRET_OK;
 }
