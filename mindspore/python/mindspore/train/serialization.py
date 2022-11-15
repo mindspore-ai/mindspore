@@ -18,7 +18,6 @@ from __future__ import absolute_import
 from __future__ import division
 
 import copy
-import functools
 import json
 import os
 import shutil
@@ -26,6 +25,7 @@ import stat
 import threading
 from threading import Thread, Lock
 from collections import defaultdict, OrderedDict
+from functools import wraps
 from io import BytesIO
 
 import math
@@ -1475,8 +1475,8 @@ def _save_dataset_to_mindir(model, dataset):
 def quant_mode_manage(func):
     """Inherit the quant_mode in old version."""
 
-    @functools.wraps(func)
-    def warpper(network, *inputs, file_format, **kwargs):
+    @wraps(func)
+    def wrapper(network, *inputs, file_format, **kwargs):
         if 'quant_mode' not in kwargs:
             return network
         quant_mode = kwargs.get('quant_mode')
@@ -1487,7 +1487,7 @@ def quant_mode_manage(func):
             kwargs['quant_mode'] = 'QUANT'
         return func(network, *inputs, file_format=file_format, **kwargs)
 
-    return warpper
+    return wrapper
 
 
 @quant_mode_manage
