@@ -21,7 +21,8 @@
 namespace mindspore {
 namespace pynative {
 namespace {
-const mindspore::HashSet<std::string> kForceInferPrim = {prim::kTopK, prim::kDropoutGenMask};
+const mindspore::HashSet<std::string> kForceInferPrim = {prim::kTopK, prim::kDropoutGenMask,
+                                                         prim::kStatelessDropOutGenMask};
 
 void SetAnyValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);

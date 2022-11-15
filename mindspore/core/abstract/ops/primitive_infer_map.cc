@@ -151,6 +151,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kCol2Im, ShapeSet{1}},
                                          {kOneHot, ShapeSet{1, 3}},
                                          {kDropoutGenMask, ShapeSet{0}},
+                                         {prim::kStatelessDropOutGenMask, ShapeSet{0}},
                                          {kStridedSlice, ShapeSet{1, 2, 3}},
                                          {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
                                          {kTensorCopySlices, ShapeSet{2, 3, 4}},
