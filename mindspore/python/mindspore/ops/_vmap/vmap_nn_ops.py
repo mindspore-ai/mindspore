@@ -1101,7 +1101,7 @@ def get_pad_v3_vmap_rule(prim, axis_size):
                 out = prim(x, paddings, values)
             else:
                 out = prim(x, paddings)
-        elif x_ndim > input_max_dim:
+        elif x_ndim >= input_max_dim:
             # reshape to 4 dims
             x_shape = F.shape(x)
             diff_dim = x_ndim - input_max_dim
