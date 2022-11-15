@@ -26,12 +26,6 @@ ATTR_MAP(CumsumD) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
 OUTPUT_MAP(CumsumD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumsumD, kNameCumSum, ADPT_DESC(CumsumD))
 
-// GatherV2
-INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
-ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
-
 // CumprodD
 INPUT_MAP(CumprodD) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(CumprodD) = {{2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
@@ -41,9 +35,10 @@ OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumProd, ADPT_DESC(CumprodD))
 
 INPUT_MAP(Tile) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(multiples)}};
+ATTR_INPUT_MAP(Tile) = {{"multiples", 2}};
 ATTR_MAP(Tile) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Tile) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Tile, "TileV1", ADPT_DESC(Tile))
+REG_ADPT_DESC(Tile, kNameTile, ADPT_DESC(Tile))
 
 INPUT_MAP(Slice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(offsets)}, {3, INPUT_DESC(size)}};
 ATTR_MAP(Slice) = EMPTY_ATTR_MAP;
@@ -62,26 +57,19 @@ ATTR_MAP(InTopKD) = {{"k", ATTR_DESC(k, AnyTraits<int64_t>())}};
 OUTPUT_MAP(InTopKD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InTopKD, kNameInTopKD, ADPT_DESC(InTopKD))
 
-// TileD
-INPUT_MAP(TileD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(TileD) = {{2, ATTR_DESC(multiples, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(TileD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(TileD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(TileD, kNameTile, ADPT_DESC(TileD))
-
 // OneHot
 INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(on_value)}, {4, INPUT_DESC(off_value)}};
 ATTR_MAP(OneHot) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(OneHot) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(OneHot, prim::kPrimOneHot->name(), ADPT_DESC(OneHot))
 
-// GatherV2D
-INPUT_MAP(GatherV2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}};
-INPUT_ATTR_MAP(GatherV2D) = {{3, ATTR_DESC(axis, AnyTraits<int64_t>())}};
-ATTR_MAP(GatherV2D) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(GatherV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2D, prim::kPrimGather->name(), ADPT_DESC(GatherV2D))
-REG_ADPT_DESC(Gather, kNameGather, ADPT_DESC(GatherV2D))
+// GatherV2
+INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
+ATTR_INPUT_MAP(GatherV2) = {{"axis", 3}};
+ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GatherV2, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
+REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
 
 // ScatterNd
 INPUT_MAP(ScatterNd) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(shape)}};
@@ -158,6 +146,7 @@ REG_ADPT_DESC(StridedSliceGrad, kNameStridedSliceGrad, ADPT_DESC(StridedSliceGra
 
 // StridedSlice
 INPUT_MAP(StridedSlice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(begin)}, {3, INPUT_DESC(end)}, {4, INPUT_DESC(strides)}};
+ATTR_INPUT_MAP(StridedSlice) = {{"begin", 2}, {"end", 3}, {"strides", 4}};
 ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
                           {"end_mask", ATTR_DESC(end_mask, AnyTraits<int64_t>())},
                           {"ellipsis_mask", ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},

@@ -176,4 +176,10 @@ INPUT_MAP(MultilabelMarginLoss) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}};
 ATTR_MAP(MultilabelMarginLoss) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(MultilabelMarginLoss) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(is_target)}};
 REG_ADPT_DESC(MultilabelMarginLoss, prim::kPrimMultilabelMarginLoss->name(), ADPT_DESC(MultilabelMarginLoss))
+
+// Roll
+INPUT_MAP(Roll) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Roll) = {{"shift", ATTR_DESC(shifts, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(Roll) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Roll, prim::kRoll, ADPT_DESC(Roll))
 }  // namespace mindspore::transform

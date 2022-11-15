@@ -19,17 +19,12 @@
 #include <string>
 
 namespace mindspore::transform {
-// PadD
-INPUT_MAP(PadD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(PadD) = {{"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>())}};
-OUTPUT_MAP(PadD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(PadD, kNamePadD, ADPT_DESC(PadD))
-
 // Pad
 INPUT_MAP(Pad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_INPUT_MAP(Pad) = {{"paddings", 2}};
 ATTR_MAP(Pad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Pad) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Pad, kNamePadV1, ADPT_DESC(Pad))
+REG_ADPT_DESC(Pad, kNamePadD, ADPT_DESC(Pad))
 
 // BroadcastToD
 INPUT_MAP(BroadcastToD) = {{1, INPUT_DESC(x)}};

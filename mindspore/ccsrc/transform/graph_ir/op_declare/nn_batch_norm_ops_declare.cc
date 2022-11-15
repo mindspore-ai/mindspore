@@ -45,6 +45,22 @@ REG_ADPT_DESC(BNInference, kNameBNInference, ADPT_DESC(BNInference))
 REG_ADPT_DESC(BatchNorm, kNameBatchNorm, ADPT_DESC(BatchNorm))
 REG_ADPT_DESC(FusedBatchNorm, kNameFusedBatchNorm, ADPT_DESC(BatchNorm))
 
+// BNInfer
+INPUT_MAP(BNInfer) = {{1, INPUT_DESC(x)},
+                      {2, INPUT_DESC(scale)},
+                      {3, INPUT_DESC(offset)},
+                      {4, INPUT_DESC(mean)},
+                      {5, INPUT_DESC(variance)}};
+ATTR_MAP(BNInfer) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(BNInfer) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BNInfer, kBNInferOpName, ADPT_DESC(BNInfer))
+
+// BNInferGrad
+INPUT_MAP(BNInferGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(batch_variance)}};
+ATTR_MAP(BNInferGrad) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(BNInferGrad) = {{0, OUTPUT_DESC(x_backprop)}};
+REG_ADPT_DESC(BNInferGrad, kBNInferGradOpName, ADPT_DESC(BNInferGrad))
+
 // BatchNormGrad
 INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},
                             {2, INPUT_DESC(x)},

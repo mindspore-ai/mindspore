@@ -68,6 +68,18 @@ ATTR_MAP(AvgPool) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyT
 OUTPUT_MAP(AvgPool) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AvgPool, kNameAvgPool, ADPT_DESC(AvgPool))
 
+// AvgPool3D
+INPUT_MAP(AvgPool3D) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(AvgPool3D) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"pad", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                       {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                       {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+                       {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
+                       {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int>())}};
+OUTPUT_MAP(AvgPool3D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AvgPool3D, kAvgPool3DOpName, ADPT_DESC(AvgPool3D))
+
 // MaxPoolGrad
 INPUT_MAP(MaxPoolGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grad)}};
 ATTR_MAP(MaxPoolGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
@@ -173,4 +185,10 @@ ATTR_MAP(Upsample) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
                       {"stride_w", ATTR_DESC(stride_w, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Upsample) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Upsample, kNameUpsample, ADPT_DESC(Upsample))
+
+// AdaptiveMaxPool2d
+INPUT_MAP(AdaptiveMaxPool2d) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(AdaptiveMaxPool2d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(AdaptiveMaxPool2d) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
+REG_ADPT_DESC(AdaptiveMaxPool2d, kNameAdaptiveMaxPool2d, ADPT_DESC(AdaptiveMaxPool2d))
 }  // namespace mindspore::transform

@@ -55,6 +55,7 @@ namespace transform {
 using CusOperatorPtr = std::shared_ptr<::ge::CustomOperator>;
 using CustomOperator = ::ge::CustomOperator;
 using AttrFunc = std::function<void(OperatorPtr, ValuePtr)>;
+using GetAttrFunc = std::function<void(ValuePtr *)>;
 using OutputFunc = std::function<OutHandler(OperatorPtr)>;
 using InputOpFunc = std::function<void(OperatorPtr, OperatorPtr)>;
 using InputHandleFunc = std::function<void(OperatorPtr, OutHandler)>;
@@ -72,6 +73,7 @@ using DynSubGraphFunc = std::function<void(OperatorPtr, unsigned int, DfGraphPtr
 struct AttrDesc {
   std::string name;
   AttrFunc set_attr;
+  GetAttrFunc get_attr;
 };
 
 struct InputDesc {

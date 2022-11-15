@@ -550,7 +550,9 @@ REG_ADPT_DESC(NotEqual, kNameNotEqual, ADPT_DESC(NotEqual))
 
 // Log
 INPUT_MAP(Log) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Log) = EMPTY_ATTR_MAP;
+ATTR_MAP(Log) = {{"base", ATTR_DESC(base, AnyTraits<float>())},
+                 {"scale", ATTR_DESC(scale, AnyTraits<float>())},
+                 {"shift", ATTR_DESC(shift, AnyTraits<float>())}};
 OUTPUT_MAP(Log) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Log, kNameLog, ADPT_DESC(Log))
 

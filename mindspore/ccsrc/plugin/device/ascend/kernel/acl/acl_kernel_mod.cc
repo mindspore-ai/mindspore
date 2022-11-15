@@ -21,9 +21,13 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "runtime/device/kernel_runtime.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+const char kNAttrName[] = "N";
+}
 int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                          const std::vector<KernelTensorPtr> &outputs,
                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -36,6 +40,7 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
 
+  std::vector<size_t> useless_input_lists;
   // Update input size list
   for (size_t i = 0; i < input_size_list_.size(); ++i) {
     auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
@@ -50,7 +55,17 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
       return 1;
     }
     input_size_list_[i] = type_size * SizeOf(shape);
+    if (input_size_list_[i] == 0) {
+      if (type_size == 0) {
+        input_size_list_[i] = SIZE_MAX;
+        MS_LOG(INFO) << "Useless optional input" << i << " with node " << node->DebugString();
+      } else {
+        MS_LOG(INFO) << "Useless dynamic zero input" << i << " with node " << node->DebugString();
+      }
+      (void)useless_input_lists.emplace_back(i);
+    }
   }
+  common::AnfAlgo::SetNodeAttr(kAttrUselessInput, MakeValue(useless_input_lists), node);
 
   // Update output size list
   AscendKernelMod::UpdateOutputSizeList();
@@ -59,6 +74,42 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
     MS_LOG(EXCEPTION) << "Fail to update op desc: " << node->fullname_with_scope();
   }
   return 0;
+}
+
+bool AclKernelMod::SkipUnRunNode(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+                                 void *stream_ptr, const size_t input_size) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  for (auto &[attr_name, value] : attr_list_) {
+    // Special process of dynamic input number.
+    if (attr_name == kNAttrName && value->isa<Int64Imm>()) {
+      auto long_input_size = SizeToLong(input_size);
+      if (GetValue<int64_t>(value) != long_input_size) {
+        value = MakeValue(long_input_size);
+      }
+      if (input_size <= 1 && op_type_ == kConcatDOpName) {
+        // cppcheck-suppress unreadVariable
+        auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
+        auto iter = std::find_if(input_size_list_.begin(), input_size_list_.end(),
+                                 [](const size_t size) { return size != 0 && size != SIZE_MAX; });
+        if (iter == input_size_list_.end()) {
+          return true;
+        }
+        size_t index = iter - input_size_list_.begin();
+        if (index >= inputs.size()) {
+          return true;
+        }
+        auto status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[index]->addr, inputs[index]->size,
+                                       ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+        if (status != ACL_SUCCESS) {
+          MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << anf_node_.lock()->fullname_with_scope();
+        }
+
+        MS_LOG(INFO) << "Execute node:" << anf_node_.lock()->fullname_with_scope() << " success.";
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -71,11 +122,15 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   MS_EXCEPTION_IF_NULL(op_desc_ptr);
   op_desc_ptr->AddTensorDesc(input_desc_list_, output_desc_list_);
   op_desc_ptr->AddDataBuf(inputs, input_size_list_, outputs, output_size_list_);
-  for (const auto &[attr_name, value] : attr_list_) {
-    op_desc_ptr->AddTensorAttr(attr_name, value);
+  if (SkipUnRunNode(inputs, outputs, stream_ptr, op_desc_ptr->input_tensor_desc().size())) {
+    return true;
+  }
+  for (auto &[attr_name, value] : attr_list_) {
+    op_desc_ptr->ProcessAclAttrs(attr_name, value, SET_ACL_ATTR);
   }
   op_desc_ptr->AddConstInputTensor(anf_node_.lock());
-
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   // Current enable binary->fuzz->stable mode.
   auto set_compile_flag = ACL_SUCCESS;
   if (is_dynamic_) {
