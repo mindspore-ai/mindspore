@@ -80,14 +80,14 @@ class TruncatedNormal(Primitive):
     The generated values follow a normal distribution.
 
     .. warning::
-        The value of "shape" must be greater than zero. The output length must be less than 1000000.
+        The value of `shape` must be greater than zero. The output length can not exceed 1000000.
 
     Args:
         seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
             the seed is set by the given seed. Otherwise, it is seeded by a random seed.
         seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
-        dtype (mindspore.dtype): Must be one of the following types: mindspore.float16, mindspore.float32 and
-            mindspore.float64. Default: mindspore.float32.
+        dtype (mindspore.dtype): Specified output data type. Must be one of the following types:
+            mindspore.float16, mindspore.float32 and mindspore.float64. Default: mindspore.float32.
 
     Inputs
         - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
@@ -99,8 +99,8 @@ class TruncatedNormal(Primitive):
 
     Raises:
         TypeError: If `shape` is not a Tensor.
-        TypeError: If `dtype` and input tensor type are not allowed.
-        TypeError: If `Seed` is not an integer.
+        TypeError: If data type of `dtype` and `shape` are not allowed.
+        TypeError: If `seed` is not an integer.
         ValueError: If `shape` elements are not positive.
         ValueError: If `shape` is not a 1-D tensor.
         ValueError: If the number of elements of output is more than 1000000.

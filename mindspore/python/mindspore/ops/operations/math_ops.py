@@ -5976,24 +5976,20 @@ class TridiagonalMatMul(Primitive):
     Return the result of a multiplication of two matrices, where the left one is a Tridiagonal Matrix.
 
     Inputs:
-        - **superdiag** (Tensor) - The input tensor.
+        - **superdiag** (Tensor) - Superdiagonals of Tridiagonal Matrices to the left of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
           The shape is [..., 1, M].
-          Representing superdiagonals of Tridiagonal Matrices to the left of multiplication.
           Last element is ignored.
-        - **maindiag** (Tensor) - The input tensor.
+        - **maindiag** (Tensor) - Maindiagonals of Tridiagonal Matrices to the left of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
           The shape is [..., 1, M].
-          Representing maindiagonals of Tridiagonal Matrices to the left of multiplication.
-        - **subdiag** (Tensor) - The input tensor.
+        - **subdiag** (Tensor) - Subdiagonals of Tridiagonal Matrices to the left of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
           The shape is [..., 1, M].
-          Representing subdiagonals of Tridiagonal Matrices to the left of multiplication.
           First element is ignored.
-        - **rhs** (Tensor) - The input tensor.
+        - **rhs** (Tensor) - MxN Matrices to the right of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
           The shape is [..., M, N].
-          Representing MxN Matrices to the right of multiplication.
 
     Outputs:
         Tensor, with the same shape and data type as the `rhs`.
@@ -6675,13 +6671,13 @@ class Trace(Primitive):
     Returns a new tensor that is the sum of the input trace.
 
     Note:
-        Input must be matrix, and complex number is nor supported at present.
+        Input must be matrix, and complex number is not supported at present.
 
     Inputs:
         - **x**(Tensor) - A matrix to be calculated. The matrix must be two dimensional.
 
     Output:
-        Tensor, with the same data type as input 'x', and size equals to 1.
+        Tensor, with the same data type as input `x`, and size equals to 1.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -6798,7 +6794,7 @@ class SparseSegmentMean(Primitive):
 
 class Zeta(Primitive):
     """
-    Compute the Hurwitz zeta function ζ(x,q).
+    Compute the Hurwitz zeta function ζ(x,q) of input Tensor.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -6809,7 +6805,7 @@ class Zeta(Primitive):
 
     Inputs:
         - **x** (Tensor) - A Tensor, types: float32, float64.
-        - **q** (Tensor) - A Tensor, must have the same shape and type as x.
+        - **q** (Tensor) - A Tensor, must have the same shape and type as `x`.
 
     Outputs:
         Tensor, has the same dtype and shape as the x.
@@ -7278,8 +7274,10 @@ class NextAfter(Primitive):
 
 class TrilIndices(Primitive):
     r"""
-    Returns the indices of the lower triangular part of a row-by- col matrix in a 2-by-N Tensor,
-    where the first row contains row coordinates of all indices and the second row contains column coordinates.
+    Returns the indices of the lower triangular part of a `row` -by- `col` matrix in a Tensor.
+    The Tensor has a shape :math:`(2, tril_size)` where :math:`tril_size` is the number of
+    elements in the lower triangular matrix. The first row contains row coordinates of
+    all indices and the second row contains column coordinates.
     Indices are ordered based on rows and then columns.
 
     The lower triangular part of the matrix is defined as the elements on and below the diagonal.
@@ -7290,8 +7288,8 @@ class TrilIndices(Primitive):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`): The specified type of output tensor.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
 
     Outputs:
@@ -7526,8 +7524,10 @@ class Orgqr(Primitive):
 
 class TriuIndices(Primitive):
     r"""
-    Returns the indices of the upper triangular part of a row by col matrix in a 2-by-N Tensor,
-    where the first row contains row coordinates of all indices and the second row contains column coordinates.
+    Returns the indices of the upper triangular part of a `row` -by- `col` matrix in a Tensor.
+    The Tensor has a shape :math:`(2, tril_size)` where :math:`tril_size` is the number of
+    elements in the upper triangular matrix. The first row contains row coordinates of
+    all indices and the second row contains column coordinates.
     Indices are ordered based on rows and then columns.
 
     The upper triangular part of the matrix is defined as the elements on and above the diagonal.
@@ -7538,12 +7538,14 @@ class TriuIndices(Primitive):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int): diagonal offset from the main diagonal. Default: 0.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
         dtype (:class:`mindspore.dtype`): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
 
     Outputs:
-        - **y** (Tensor) - indices of the elements in upper triangular part of matrix. The type specified by `dtype`.
+        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
+          The shape of output is :math:`(2, tril_size)`, where :math:`tril_size` is the number of elements in the
+          lower triangular matrix.
 
     Raises:
         TypeError: If `row`, `col` or `offset` is not an int.
