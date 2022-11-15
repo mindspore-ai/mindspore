@@ -29,18 +29,14 @@ REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
   auto format = GetValue<std::string>(ib->GetAttr("format"));
   auto dilation = GetValue<ShapeVector>(ib->GetAttr("dilation"));
   auto stride = GetValue<ShapeVector>(ib->GetAttr("stride"));
-  if (format == "NHWC") {
-    dilation = ConvToNHWC(dilation);
-    stride = ConvToNHWC(stride);
-  }
   auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, ib->Value<ShapeVector>(x_shape)},
                      {{"mode", ib->GetAttr("mode")},
-                      {"dilation", MakeValue(dilation)},
-                      {"stride", MakeValue(stride)},
+                      {"dilation", MakeValue(format == "NHWC" ? ConvToNHWC(dilation) : dilation)},
+                      {"stride", MakeValue(format == "NHWC" ? ConvToNHWC(stride) : stride)},
                       {"group", ib->GetAttr("group")},
                       {"groups", ib->GetAttr("group")},
                       {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("data_format")},
+                      {"data_format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
                       {"pad_mode", ib->GetAttr("pad_mode")},
@@ -53,7 +49,7 @@ REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
                       {"group", ib->GetAttr("group")},
                       {"groups", ib->GetAttr("group")},
                       {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("data_format")},
+                      {"data_format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
                       {"pad_mode", ib->GetAttr("pad_mode")},
@@ -76,7 +72,7 @@ REG_BPROP_BUILDER(kMaxPoolOpName).SetBody([](const BpropIRBuilder *ib) -> NodePt
                      {{"kernel_size", MakeValue(kernel_size)},
                       {"strides", MakeValue(strides)},
                       {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"data_format", ib->GetAttr("data_format")},
+                      {"data_format", ib->GetAttr("format")},
                       {"format", ib->GetAttr("format")}});
   return {dx};
 });
@@ -168,6 +164,7 @@ REG_BPROP_BUILDER("ROIAlign").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto dx = ib->Emit("ROIAlignGrad", {dout, rois, ib->EmitValue(MakeValue(inputs_shape))},
                      {{"pooled_height", ib->GetAttr("pooled_height")},
                       {"pooled_width", ib->GetAttr("pooled_width")},
+                      {"xdiff_shape", MakeValue(inputs_shape)},
                       {"spatial_scale", ib->GetAttr("spatial_scale")},
                       {"sample_num", ib->GetAttr("sample_num")}});
   return {dx, ib->ZerosLike(rois)};
@@ -678,12 +675,13 @@ REG_BPROP_BUILDER("MaxPool3DGradGrad").SetBody([](const BpropIRBuilder *ib) -> N
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex4);
+  ShapeVector pad_list(kDim6);
   auto dgrad = ib->Emit("MaxPool3DGrad", {x, y, dout},
                         {{"kernel_size", ib->GetAttr("kernel_size")},
                          {"strides", ib->GetAttr("strides")},
                          {"pad_mode", ib->GetAttr("pad_mode")},
                          {"format", ib->GetAttr("format")},
-                         {"pad_list", MakeValue(0)}});
+                         {"pad_list", MakeValue(pad_list)}});
   return {ib->ZerosLike(x), ib->ZerosLike(y), dgrad};
 });
 
@@ -702,7 +700,7 @@ REG_BPROP_BUILDER("AvgPool").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
                      {{"kernel_size", MakeValue(kernel_size)},
                       {"strides", MakeValue(strides)},
                       {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"data_format", ib->GetAttr("data_format")},
+                      {"data_format", ib->GetAttr("format")},
                       {"format", ib->GetAttr("format")}});
   return {dx};
 });
@@ -713,8 +711,9 @@ REG_BPROP_BUILDER("AvgPool3D").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   auto x_shape = ib->GetShape(x);
   auto dx = ib->Emit("AvgPool3DGrad", {ib->Value<ShapeVector>(x_shape), dout},
                      {{"kernel_size", ib->GetAttr("kernel_size")},
+                      {"origin_input_shape", MakeValue(x_shape)},
                       {"strides", ib->GetAttr("strides")},
-                      {"pads", ib->GetAttr("pad_list")},
+                      {"pad_list", ib->GetAttr("pad_list")},
                       {"ceil_mode", ib->GetAttr("ceil_mode")},
                       {"count_include_pad", ib->GetAttr("count_include_pad")},
                       {"divisor_override", ib->GetAttr("divisor_override")},
@@ -1135,7 +1134,9 @@ NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
                       {"dilation", ib->GetAttr("dilation")},
                       {"stride", ib->GetAttr("stride")},
                       {"group", ib->GetAttr("group")},
+                      {"groups", ib->GetAttr("group")},
                       {"format", ib->GetAttr("format")},
+                      {"data_format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
                       {"mode", MakeValue(1)}});
@@ -1144,7 +1145,9 @@ NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
                       {"dilation", ib->GetAttr("dilation")},
                       {"stride", ib->GetAttr("stride")},
                       {"group", ib->GetAttr("group")},
+                      {"groups", ib->GetAttr("group")},
                       {"format", ib->GetAttr("format")},
+                      {"data_format", ib->GetAttr("format")},
                       {"out_channel", ib->GetAttr("out_channel")},
                       {"kernel_size", ib->GetAttr("kernel_size")},
                       {"pad_mode", ib->GetAttr("pad_mode")},
@@ -1166,7 +1169,9 @@ REG_BPROP_BUILDER(kConv2DBackpropFilterOpName).SetBody([](const BpropIRBuilder *
                          {"dilation", ib->GetAttr("dilation")},
                          {"stride", ib->GetAttr("stride")},
                          {"group", ib->GetAttr("group")},
+                         {"groups", ib->GetAttr("group")},
                          {"format", ib->GetAttr("format")},
+                         {"data_format", ib->GetAttr("format")},
                          {"out_channel", ib->GetAttr("out_channel")},
                          {"kernel_size", ib->GetAttr("kernel_size")},
                          {"pad_mode", ib->GetAttr("pad_mode")},
@@ -1178,7 +1183,9 @@ REG_BPROP_BUILDER(kConv2DBackpropFilterOpName).SetBody([](const BpropIRBuilder *
                          {"dilation", ib->GetAttr("dilation")},
                          {"stride", ib->GetAttr("stride")},
                          {"group", ib->GetAttr("group")},
+                         {"groups", ib->GetAttr("group")},
                          {"format", ib->GetAttr("format")},
+                         {"data_format", ib->GetAttr("format")},
                          {"out_channel", ib->GetAttr("out_channel")},
                          {"kernel_size", ib->GetAttr("kernel_size")},
                          {"mode", MakeValue(1)}});

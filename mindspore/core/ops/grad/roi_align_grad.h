@@ -30,7 +30,7 @@ constexpr auto kNameROIAlignGrad = "ROIAlignGrad";
 class MIND_API ROIAlignGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ROIAlignGrad);
-  ROIAlignGrad() : BaseOperator(kNameROIAlignGrad) {}
+  ROIAlignGrad() : BaseOperator(kNameROIAlignGrad) { InitIOName({"dy", "rois", "xdiff_shape"}, {"dx"}); }
 
   /// \brief Method to init the op's attributes.
   ///

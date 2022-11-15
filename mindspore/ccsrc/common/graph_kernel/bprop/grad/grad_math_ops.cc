@@ -1537,9 +1537,11 @@ REG_BPROP_BUILDER("Renorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
       dims.push_back(i);
     }
   }
-  auto norm = ib->Emit(
-    "LpNorm", {input_x},
-    {{"keep_dims", MakeValue(true)}, {"axis", MakeValue(dims)}, {"p", MakeValue(p)}, {"epsilon", MakeValue(1e-12)}});
+  auto norm = ib->Emit("LpNorm", {input_x},
+                       {{"keep_dims", MakeValue(true)},
+                        {"axis", MakeValue(dims)},
+                        {"p", MakeValue(p)},
+                        {"epsilon", MakeValue<float>(1e-12)}});
   norm = ib->Emit("BroadcastTo", {norm}, {{"shape", MakeValue(shape)}});
   auto grad_out = ib->Mul(input_x, dout);
   grad_out = ib->ReduceSum(grad_out, dims, true);
