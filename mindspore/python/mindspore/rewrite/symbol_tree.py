@@ -18,9 +18,9 @@ from typing import Optional, Union, Tuple, Any
 import os
 import sys
 import ast
-import tempfile
 import importlib
 import types
+import time
 
 import astunparse
 
@@ -1316,16 +1316,12 @@ class SymbolTree(Observer, Observable):
         Returns:
             A class handle.
         """
-        source = self.get_code()
-        tmp_file = tempfile.NamedTemporaryFile(suffix='.py')
-        tmp_file.write(source.encode('utf8'))
-        tmp_file.flush()
-        tmp_file_name = tmp_file.name
-        if len(self._tmp_files) >= self._tmp_file_limits:
-            raise RuntimeError(f"Too many tmp file generated, it may caused by calling get_network method too much "
-                               f"times. Only support open {self._tmp_file_limits} tmp file at most now!")
-        self._tmp_files.append(tmp_file)
-        tmp_module_path, tmp_module_file = os.path.split(tmp_file_name)
+        file_name = "new_network_{0}.py".format(int(time.time() * 10000))
+        with os.fdopen(os.open(file_name, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:
+            source = self.get_code()
+            f.write(source.encode('utf-8'))
+            f.flush()
+        tmp_module_path, tmp_module_file = os.path.split(file_name)
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)
         tmp_module = importlib.import_module(tmp_module_name)
