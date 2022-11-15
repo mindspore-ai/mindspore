@@ -1,4 +1,7 @@
 file(GLOB_RECURSE CUDA_OPS_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cu")
+if(${CUDA_VERSION} VERSION_GREATER 11.3)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-non-abstract-non-virtual-dtor -Wno-overloaded-virtual")
