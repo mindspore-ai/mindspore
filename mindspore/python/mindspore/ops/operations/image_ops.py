@@ -184,15 +184,15 @@ class ExtractGlimpse(Primitive):
         If the window and input image tensor not overlap, random noise is filled.
 
     Args:
-        centered (bool): An optional `bool`. Defaults to `True`. Indicates if the offset coordinates
+        centered (bool): An optional `bool`. Indicates if the offset coordinates
             are centered relative to the image, in which case the (0, 0) offset is relative to the center of
             the center of the input images. If false, the (0, 0) offset corresponds to the upper left corner
-            of the input images.
-        normalized (bool): An optional `bool`. Defaults to `True`. indicates if the offset
-            coordinates are normalized.
-        uniform_noise (bool): An optional `bool`. Defaults to `True`. indicates if the noise should be
-            generated using a uniform distribution or a Gaussian distribution.
-        noise (str): An optional string that defaults to `uniform`. The value can be 'uniform', 'gaussian'
+            of the input images. Defaults to `True`.
+        normalized (bool): An optional `bool`. indicates if the offset
+            coordinates are normalized. Defaults to `True`.
+        uniform_noise (bool): An optional `bool`. indicates if the noise should be
+            generated using a uniform distribution or a Gaussian distribution. Defaults to `True`.
+        noise (str): An optional string. The value can be 'uniform', 'gaussian'
             and 'zero'. The window is determined by size and offsets.
             When the window and input image tensor not overlap, random noise is filled.
             The result is variable when noise is equal to 'uniform' and 'gaussian'.
@@ -200,6 +200,7 @@ class ExtractGlimpse(Primitive):
             filling noise will be zero so that the result is fixed.
             When uniform_noise is 'True', the value of noise only can be 'uniform'.
             When uniform_noise is 'False', the value of noise can be 'uniform', 'gaussian' and 'zero'.
+            Defaults to `uniform`.
 
     Inputs:
         - **x** (Tensor) - A 4-D float tensor of shape [batch_size, height, width, channels].

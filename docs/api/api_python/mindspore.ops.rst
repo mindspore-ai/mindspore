@@ -54,6 +54,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Conv3D
     mindspore.ops.Conv3DTranspose
     mindspore.ops.CTCGreedyDecoder
+    mindspore.ops.Dilation2D
     mindspore.ops.Dropout
     mindspore.ops.Dropout2D
     mindspore.ops.Dropout3D
@@ -196,6 +197,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.BoundingBoxEncode
     mindspore.ops.CheckValid
     mindspore.ops.CropAndResize
+    mindspore.ops.ExtractGlimpse
     mindspore.ops.ExtractVolumePatches
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
@@ -267,6 +269,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Conj
     mindspore.ops.Cos
     mindspore.ops.Cosh
+    mindspore.ops.Digamma
     mindspore.ops.Div
     mindspore.ops.DivNoNan
     mindspore.ops.Einsum
@@ -326,6 +329,7 @@ Reduction算子
     mindspore.ops.ArgMaxWithValue
     mindspore.ops.Argmin
     mindspore.ops.ArgMinWithValue
+    mindspore.ops.EuclideanNorm
     mindspore.ops.ReduceAll
     mindspore.ops.ReduceAny
     mindspore.ops.ReduceMax
@@ -434,6 +438,8 @@ Array操作
     mindspore.ops.DepthToSpace
     mindspore.ops.DiagPart
     mindspore.ops.DType
+    mindspore.ops.Eig
+    mindspore.ops.Expand
     mindspore.ops.ExpandDims
     mindspore.ops.FloatStatus
     mindspore.ops.Gather

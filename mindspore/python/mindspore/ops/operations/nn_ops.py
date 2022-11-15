@@ -8250,7 +8250,7 @@ class Dilation2D(Primitive):
         \text{input}(N_i, C_j, s_0 \times h + d_0 \times m, s_1 \times w + d_1 \times n) + \text{filter}(C_j, m, n)
 
     .. warning::
-        This operator is an experimental operator, which has some accuracy problems for some inputs.
+        This operator is an experimental operator.
         If the input data type is float32, this operator is still executed in float16 mode.
 
     Args:
