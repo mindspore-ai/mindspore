@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ANF_IR_DUMP_H_
 
 #include <string>
+#include <memory>
 #include "ir/dtype/type.h"
 #include "ir/anf.h"
 #include "include/common/debug/common.h"
@@ -36,6 +37,18 @@ struct DumpConfig {
   bool enable_dump_pass_ir = false;
 };
 
+struct SubGraphIRInfo {
+  int32_t local_var;
+  std::ostringstream buffer;
+  OrderedMap<AnfNodePtr, int32_t> local_var_map;
+};
+COMMON_EXPORT void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph,
+                             const OrderedMap<AnfNodePtr, int32_t> &para_map,
+                             const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false,
+                             LocDumpMode dump_location = kOff);
+COMMON_EXPORT int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer,
+                                 OrderedMap<AnfNodePtr, int32_t> *para_map);
+COMMON_EXPORT void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss);
 constexpr char PARALLEL_STRATEGY[] = "strategy";
 COMMON_EXPORT void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
                           LocDumpMode dump_location = kOff, const std::string &target_file = "");
