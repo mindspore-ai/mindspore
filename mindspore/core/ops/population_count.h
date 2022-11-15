@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNamePopulationCount = "Populationcount";
+constexpr auto kNamePopulationCount = "PopulationCount";
 /// \brief Returns a new tensor with the truncated integer values of the elements of input.
 class MIND_API PopulationCount : public BaseOperator {
  public:
