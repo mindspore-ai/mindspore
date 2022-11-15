@@ -63,7 +63,6 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
                       << "', the third input type should be tensor or scalar, but got invalid abstract type:"
                       << input_args[kInputIndex2]->type_name() << ".";
   }
-  return num_segments_v;
 }
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,

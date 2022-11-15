@@ -223,33 +223,6 @@ bool CumSumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
 }
 
 std::vector<std::pair<KernelAttr, CumSumCpuKernelMod::CumSumLaunchFunc>> CumSumCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   &CumSumCpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &CumSumCpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &CumSumCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &CumSumCpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &CumSumCpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   &CumSumCpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   &CumSumCpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &CumSumCpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &CumSumCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &CumSumCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &CumSumCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &CumSumCpuKernelMod::LaunchKernel<std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &CumSumCpuKernelMod::LaunchKernel<std::complex<double>>},
-  // Dynamic shape related.
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
    &CumSumCpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
@@ -294,6 +267,10 @@ std::vector<std::pair<KernelAttr, CumSumCpuKernelMod::CumSumLaunchFunc>> CumSumC
    &CumSumCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
    &CumSumCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+   &CumSumCpuKernelMod::LaunchKernel<std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
+   &CumSumCpuKernelMod::LaunchKernel<std::complex<double>>},
 };
 
 std::vector<KernelAttr> CumSumCpuKernelMod::GetOpSupport() {
