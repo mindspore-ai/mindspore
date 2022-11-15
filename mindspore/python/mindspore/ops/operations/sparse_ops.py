@@ -1402,7 +1402,7 @@ class SparseFillEmptyRows(Primitive):
         ValueError: If `sparse_shape`, shape of `indices` and shape of `values` don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[1, 0]], dtype=mstype.int64)
