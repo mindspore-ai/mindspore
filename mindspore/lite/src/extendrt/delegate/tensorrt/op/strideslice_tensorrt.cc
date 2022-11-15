@@ -109,6 +109,37 @@ int StrideSliceTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const s
   return RET_OK;
 }
 
+bool StrideSliceTensorRT::GetConstInputValue(int *axis_val, int *start_val, int *stride_val) {
+  int64_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
+  const auto &begin = in_tensors_.at(BEGINS_INDEX);
+  const auto &stride = in_tensors_.back();
+
+  if (begin.ElementNum() != 1 || stride.ElementNum() != 1) {
+    MS_LOG(ERROR)
+      << "Only support element number of begin and stride to be 1 when this number < input dims number, op: "
+      << op_name_;
+    return false;
+  }
+  *axis_val = 0;
+  if (axis_index != -1) {
+    auto axis_vec = ConvertTensorAsIntVector(in_tensors_[axis_index]);
+    if (axis_vec.size() != 1) {
+      MS_LOG(ERROR) << "Failed to get axis input, node: " << op_name_ << ", axis count: " << axis_vec.size();
+      return false;
+    }
+    *axis_val = axis_vec[0];
+  }
+  auto start_vec = ConvertTensorAsIntVector(begin);
+  auto stride_vec = ConvertTensorAsIntVector(stride);
+  if (start_vec.size() != 1 || stride_vec.size() != 1) {
+    MS_LOG(ERROR) << "Failed to get start or stride input, node: " << op_name_;
+    return {};
+  }
+  *start_val = start_vec[0];
+  *stride_val = stride_vec[0];
+  return true;
+}
+
 int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *slice_input) {
   auto op = AsOps<ops::StridedSlice>();
   shrink_axis_ = op->get_shrink_axis_mask();
@@ -121,10 +152,9 @@ int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *s
 
   auto input_dims = slice_input->trt_tensor_->getDimensions();
 
-  int64_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
   if (begin.ElementNum() == slice_input->trt_tensor_->getDimensions().nbDims) {
-    start_dims_ = lite::ConvertCudaDims(begin.Data(), begin.ElementNum());
-    auto end_dims = lite::ConvertCudaDims(end.Data(), end.ElementNum());
+    start_dims_ = lite::ConvertCudaDims(begin);
+    auto end_dims = lite::ConvertCudaDims(end);
     size_dims_.nbDims = input_dims.nbDims;
     for (int i = 0; i < size_dims_.nbDims; i++) {
       size_t mask = 1 << i;
@@ -135,22 +165,21 @@ int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *s
       end_dims.d[i] = ((end_mask & mask) == 0 ? end_dims.d[i] : slice_input->trt_tensor_->getDimensions().d[i]);
       size_dims_.d[i] = end_dims.d[i] - start_dims_.d[i];
     }
-    stride_dims_ = lite::ConvertCudaDims(stride.Data(), stride.ElementNum());
+    stride_dims_ = lite::ConvertCudaDims(stride);
     if (IsDynamicInput(ctx, 0)) {
       size_tensor_ = GetDynamicSliceSize(ctx, slice_input->trt_tensor_, size_dims_);
       size_dims_ = nvinfer1::Dims{-1};
     }
   } else {
-    if (axis_index == -1 || in_tensors_.at(axis_index).ElementNum() != 1) {
-      MS_LOG(ERROR) << "invalid input params for " << op_name_;
+    int axis_value = 0;
+    int start_value = 0;
+    int stride_value = 0;
+    if (!GetConstInputValue(&axis_value, &start_value, &stride_value)) {
       return RET_ERROR;
     }
-    int axis_value = *(static_cast<const int *>(in_tensors_.at(axis_index).Data()));
     if (axis_value < 0) {
       axis_value += input_dims.nbDims;
     }
-    int start_value = *(static_cast<const int *>(begin.Data()));
-    int stride_value = *(static_cast<const int *>(stride.Data()));
     start_dims_.nbDims = input_dims.nbDims;
     std::fill(start_dims_.d, start_dims_.d + start_dims_.nbDims, 0);
     stride_dims_.nbDims = input_dims.nbDims;
@@ -164,7 +193,12 @@ int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *s
         start_dims_.d[i] = start_value;
         stride_dims_.d[i] = stride_value;
         if (end.IsConst()) {
-          int end_value = *(static_cast<const int *>(end.Data()));
+          auto end_vec = ConvertTensorAsIntVector(end);
+          if (end_vec.size() != 1) {
+            MS_LOG(ERROR) << "Failed to get constant end value, end size " << end_vec.size() << ", op: " << op_name_;
+            return false;
+          }
+          int end_value = end_vec[0];
           if (end_value >= 0) {
             size_dims_.d[i] = std::min(end_value, input_dims.d[i]) - start_dims_.d[i];
           } else if (end_value >= -input_dims.d[i]) {

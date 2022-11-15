@@ -45,6 +45,7 @@ class StrideSliceTensorRT : public TensorRTOp {
   nvinfer1::ITensor *GetDynamicAxisSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input, int size_dim, int axis,
                                              nvinfer1::ITensor *size_tensor);
   int ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *slice_input);
+  bool GetConstInputValue(int *axis_val, int *start_val, int *stride_val);
   size_t shrink_axis_;
   size_t start_axis_;
   size_t end_axis_;
