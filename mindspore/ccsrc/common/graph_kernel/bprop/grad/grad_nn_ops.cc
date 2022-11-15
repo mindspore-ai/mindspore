@@ -82,7 +82,12 @@ REG_BPROP_BUILDER(kBiasAddOpName).SetBody([](const BpropIRBuilder *ib) -> NodePt
   auto w = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  return {dout, ib->Emit(kBiasAddGradOpName, {dout}, {{"format", ib->GetAttr("data_format")}})};
+  auto format = GetValue<std::string>(ib->GetAttr("data_format"));
+  if (format == "NCDHW") {
+    format = "NCHW";
+  }
+  return {dout,
+          ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}, {"data_format", MakeValue(format)}})};
 });
 
 REG_BPROP_BUILDER(kReLUOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
