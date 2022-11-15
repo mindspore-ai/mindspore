@@ -106,6 +106,8 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Run op or dispatch  build task and run task.
   void RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                  const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
+  void RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
+                        const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
 
   // Dispatch task and execute the task in another thread.
   void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,

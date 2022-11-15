@@ -1102,7 +1102,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
   bool use_dynamic_shape_process = context->op_run_info()->base_op_run_info.use_dynamic_shape_process;
   if (use_dynamic_shape_process) {
     runtime::RunSingleOpGraphDynamic(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
-                                     context->device_context());
+                                     context->device_context(), context->op_run_info()->is_gradient_out);
   } else {
     runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
                               context->device_context());
@@ -1238,24 +1238,56 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   }
   const auto &tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
-  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
-  if (use_dynamic_shape_process) {
-    runtime::RunSingleOpGraphDynamic(graph, tensors_without_value_mask, device_context);
-  } else {
-    runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
-  }
+
+  runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
 
   if (!op_run_info->is_infer) {
     ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
   }
   UpdateOutput(output_nodes, outputs);
-  if (use_dynamic_shape_process) {
-    ClearGraphDeviceAddressDynamic(graph, device_context, op_run_info->is_gradient_out);
-    ClearInputDeviceAddressDynamic(graph, device_context);
-  } else {
-    ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
-    ClearInputDeviceAddress(graph, device_context);
+
+  ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
+  ClearInputDeviceAddress(graph, device_context);
+
+  if (is_dynamic_shape) {
+    UpdateOutputAbstract(graph, op_run_info);
   }
+  if (op_compiler_info->need_erase_) {
+    EraseSingleOpCache(op_run_info->base_op_run_info.graph_info);
+  }
+}
+
+void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
+                                     const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  // Fetch outputs.
+  const auto &graph = op_compiler_info->graph_;
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
+  MS_EXCEPTION_IF_NULL(outputs);
+
+  auto device_context = op_compiler_info->device_context_;
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
+  MS_LOG(DEBUG) << "Async exec disabled, op: " << op_run_info->base_op_run_info.op_name;
+  if (!op_executor.RunQueueEmpty()) {
+    WaitTaskFinish();
+  }
+  if (!single_op_cache_hit) {
+    CompileSingleOpGraph(graph, device_context);
+  }
+  const auto &tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
+  runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
+  runtime::RunSingleOpGraphDynamic(graph, tensors_without_value_mask, device_context, op_run_info->is_gradient_out);
+
+  if (!op_run_info->is_infer) {
+    ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
+  }
+  UpdateOutput(output_nodes, outputs);
+  ClearGraphDeviceAddressDynamic(graph, device_context, op_run_info->is_gradient_out);
+  ClearInputDeviceAddressDynamic(graph, device_context);
   if (is_dynamic_shape) {
     UpdateOutputAbstract(graph, op_run_info);
   }
@@ -1334,22 +1366,12 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
       input_nodes[i]->set_abstract(abstract);
     }
 
-    // Update the Output shape
-    const auto &execution_order = graph->execution_order();
-    for (auto const &node : execution_order) {
-      MS_EXCEPTION_IF_NULL(node);
-      opt::dynamic_shape::InferOp(node);
-    }
-
     // Create input address before infer
     runtime::DeviceAddressUtils::CreateParameterDeviceAddress(device_context, graph);
     runtime::DeviceAddressUtils::CreateValueNodeDeviceAddress(device_context, graph);
-    runtime::DeviceAddressUtils::CreateKernelOutputDeviceAddress(device_context, graph, op_run_info->is_gradient_out);
-    runtime::DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(graph);
-    runtime::DeviceAddressUtils::UpdateDeviceAddressForRefNode(graph);
   }
 
-  RunOpImpl(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
+  RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
 void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
