@@ -227,6 +227,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.BesselK1e
     mindspore.ops.BesselY0
     mindspore.ops.BesselY1
+    mindspore.ops.Betainc
     mindspore.ops.Bincount
     mindspore.ops.Bucketize
     mindspore.ops.Cauchy

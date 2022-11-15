@@ -227,6 +227,7 @@ Mathematical Operators
     mindspore.ops.BesselK1e
     mindspore.ops.BesselY0
     mindspore.ops.BesselY1
+    mindspore.ops.Betainc
     mindspore.ops.Bincount
     mindspore.ops.Bucketize
     mindspore.ops.Cauchy
