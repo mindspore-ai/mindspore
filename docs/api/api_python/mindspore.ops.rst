@@ -230,6 +230,9 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Bincount
     mindspore.ops.Bucketize
     mindspore.ops.Cauchy
+    mindspore.ops.Cholesky
+    mindspore.ops.CholeskyInverse
+    mindspore.ops.CholeskySolve
     mindspore.ops.Cross
 
 逐元素运算
