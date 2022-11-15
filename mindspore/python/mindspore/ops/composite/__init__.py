@@ -21,7 +21,7 @@ Pre-defined combination of operators.
 
 from __future__ import absolute_import
 from mindspore.ops.composite.base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
-    core, tail, zip_operation, _Vmap, _TaylorOperation
+    tail, zip_operation, _Vmap, _TaylorOperation
 from mindspore.ops.composite.env_ops import env_get
 from mindspore.ops.composite.clip_ops import clip_by_value, clip_by_global_norm
 from mindspore.ops.composite.multitype_ops.add_impl import hyper_add
@@ -35,7 +35,6 @@ from mindspore.ops.composite.vmap_ops import _VmapGeneralPreprocess, _VmapGenera
 
 __all__ = [
     'env_get',
-    'core',
     'add_flags',
     'tail',
     'Map',

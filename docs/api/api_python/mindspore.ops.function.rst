@@ -532,13 +532,3 @@ Parameter操作函数
 
     mindspore.ops.bartlett_window
     mindspore.ops.blackman_window
-
-其他函数
-----------------
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.core
