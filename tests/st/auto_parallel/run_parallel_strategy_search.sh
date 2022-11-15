@@ -21,8 +21,8 @@ export RANK_SIZE=$DEVICE_NUM
 source ${BASE_PATH}/env.sh
 unset SLOG_PRINT_TO_STDOUT
 export MINDSPORE_HCCL_CONFIG_PATH=$CONFIG_PATH/hccl/rank_table_${DEVICE_NUM}p.json
-export LD_LIBRARY_PATH=/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling:${LD_LIBRARY_PATH}
-export ASCEND_OPP_PATH=/usr/local/Ascend/opp/
+export LD_LIBRARY_PATH=/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling:${LD_LIBRARY_PATH}
+export ASCEND_OPP_PATH=/usr/local/Ascend/latest/opp/
 
 process_pid=()
 for((i=0; i<$DEVICE_NUM; i++)); do

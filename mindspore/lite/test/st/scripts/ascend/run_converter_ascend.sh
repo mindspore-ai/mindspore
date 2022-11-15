@@ -20,7 +20,7 @@ export ASCEND_HOME=/usr/local/Ascend/latest
 export PATH=${ASCEND_HOME}/compiler/ccec_compiler/bin:${PATH}
 export LD_LIBRARY_PATH=${ASCEND_HOME}/lib64:${ASCEND_HOME}/../driver/lib64:${LD_LIBRARY_PATH}
 export ASCEND_OPP_PATH=${ASCEND_HOME}/opp
-export TBE_IMPL_PATH=${ASCEND_HOME}/opp/op_impl/built-in/ai_core/tbe
+export TBE_IMPL_PATH=${ASCEND_HOME}/opp/built-in/op_impl/ai_core/tbe
 export PYTHONPATH=${TBE_IMPL_PATH}:${PYTHONPATH}
 
 backend=$1

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 LOCAL_HIAI=/usr/local/Ascend
-export TBE_IMPL_PATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/impl/:${TBE_IMPL_PATH}
-export LD_LIBRARY_PATH=${LOCAL_HIAI}/runtime/lib64/:${LOCAL_HIAI}/add-ons/:${LD_LIBRARY_PATH}
-export PATH=${LOCAL_HIAI}/runtime/ccec_compiler/bin/:${PATH}
-export PYTHONPATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/:${PYTHONPATH}
+export TBE_IMPL_PATH=${LOCAL_HIAI}/latest/opp/built-in/op_impl/ai_core/tbe/impl/:${TBE_IMPL_PATH}
+export LD_LIBRARY_PATH=${LOCAL_HIAI}/latest/lib64/:${LOCAL_HIAI}/add-ons/:${LD_LIBRARY_PATH}
+export PATH=${LOCAL_HIAI}/latest/compiler/ccec_compiler/bin/:${PATH}
+export PYTHONPATH=${LOCAL_HIAI}/latest/opp/built-in/op_impl/ai_core/tbe/:${PYTHONPATH}
 export DEVICE_MEMORY_CAPACITY=1073741824000
 export NOT_FULLY_USE_DEVICES=off

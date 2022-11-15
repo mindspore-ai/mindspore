@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-LOCAL_HIAI=/usr/local/HiAI
-export TBE_IMPL_PATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/impl/
-export LD_LIBRARY_PATH=${LOCAL_HIAI}/runtime/lib64/:${LD_LIBRARY_PATH}
-export PATH=${LOCAL_HIAI}/runtime/ccec_compiler/bin/:${PATH}
-export PYTHONPATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/:${PYTHONPATH}
+LOCAL_HIAI=/usr/local/Ascend
+export TBE_IMPL_PATH=${LOCAL_HIAI}/latest/opp/built-in/op_impl/ai_core/tbe/impl/
+export LD_LIBRARY_PATH=${LOCAL_HIAI}/latest/lib64/:${LD_LIBRARY_PATH}
+export PATH=${LOCAL_HIAI}/latest/compiler/ccec_compiler/bin/:${PATH}
+export PYTHONPATH=${LOCAL_HIAI}/latest/opp/built-in/op_impl/ai_core/tbe/:${PYTHONPATH}
 export DEVICE_MEMORY_CAPACITY=1073741824000
 export NOT_FULLY_USE_DEVICES=off
