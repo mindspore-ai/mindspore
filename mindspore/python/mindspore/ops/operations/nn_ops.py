@@ -8002,34 +8002,38 @@ class CTCLossV2(Primitive):
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
 
     Args:
-        blank (int): The blank label. Default: 0.
-        reduction (string): Apply specific reduction method to the output. Currently only support 'none',
+        blank (int, optional): The blank label. Default: 0.
+        reduction (string, optional): Apply specific reduction method to the output. Currently only support 'none',
             not case sensitive. Default: "none".
-        zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
+        zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to zero. Default: False.
 
     Inputs:
-        - **log_probs** (Tensor) - A tensor of shape (T, N, C), where T is input length, N is batch size and C is number
-          of classes (including blank).
-        - **targets** (Tensor) - A tensor of shape (N, S), where S is max target length, means the target sequences.
-        - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the input.
-        - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the target.
+        - **log_probs** (Tensor) - A tensor of shape :math:`(T, C, N)`, where :math:`T` is input length, :math:`N` is
+        batch size and :math:`C` is number of classes (including blank).
+        - **targets** (Tensor) - A tensor of shape :math:`(N, S)`, where :math:`S` is max target length,
+        means the target sequences.
+        - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape :math:`(N)`.
+        It means the lengths of the input.
+        - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape :math:`(N)`.
+        It means the lengths of the target.
 
     Outputs:
         - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.
         - **log_alpha** (Tensor) - The probability of possible trace of input to target.
 
     Raises:
-        TypeError: If `zero_infinity` is not a bool, reduction is not string.
+        TypeError: If `zero_infinity` is not a bool.
+        TypeError: If `reduction` is not string.
         TypeError: If the dtype of `log_probs` is not float or double.
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
         ValueError: If the rank of `log_probs` is not 3.
         ValueError: If the rank of `targets` is not 2.
         ValueError: If the shape of `input_lengths` does not match {batch_size|N}.
         ValueError: If the shape of `target_lengths` does not match {batch_size|N}.
-        TypeError: If the types of `targets`, `input_lengths`, `grad_out` or `target_lengths` are different.
+        TypeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         ValueError: If the value of `blank` is not in range [0, num_labels|C).
         RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
-        RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
+        RuntimeError: If any `target_lengths[i]` is not in range [0, `input_length[i]` ].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
