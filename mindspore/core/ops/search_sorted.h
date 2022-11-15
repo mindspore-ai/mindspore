@@ -24,20 +24,20 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kSearchSorted = "SearchSorted";
-/// \brief Updates tensor values by using input indices and value.
-/// Refer to Python API @ref mindspore.ops.SearchSorted for more details.
+constexpr auto kNameSearchSorted = "SearchSorted";
 class MIND_API SearchSorted : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SearchSorted);
-  /// \brief Constructor.
-  SearchSorted() : BaseOperator(kSearchSorted) { InitIOName({"sequence", "values"}, {"positions"}); }
+  SearchSorted() : BaseOperator(kNameSearchSorted) { InitIOName({"sorted_sequence", "values"}, {"out"}); }
 
   /// \brief Set right.
   void set_right(const bool right);
   /// \brief Get right.
   bool get_right() const;
 };
+
+abstract::AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

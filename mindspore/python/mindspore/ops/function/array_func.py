@@ -23,6 +23,7 @@ from mindspore.ops.primitive import constexpr
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
+    SearchSorted,
     NonZero,
     MatrixDiagV3,
     MatrixDiagPartV3,
@@ -103,6 +104,11 @@ def get_x_shape(x_shape):
     for i in x_shape:
         s = s * i
     return (s,)
+
+
+@constexpr
+def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
+    validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
 
 
 ##############################
@@ -722,6 +728,48 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
     if return_counts:
         return output, counts
     return output
+
+
+def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
+    """
+    Find the indices from the innermost dimension of `sorted_sequence` such that the order of the innermost dimension
+    within `sorted_sequence` would be preserved when the corresponding values in `values` were inserted before the
+    indices.
+
+    Args:
+        sorted_sequence (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
+            It must contain a monotonically increasing sequence on the innermost dimension.
+        values (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
+        out_int32 (bool, optional): Output datatype. If True, the output datatype will be int32;
+            if False, the output datatype will be int64. Default: False.
+        right (bool, optional): Search Strategy. If True, return the last suitable index found;
+            if False, return the first such index. Default: False.
+
+    Returns:
+        Tensor containing the indices from the innermost dimension of the input sequence such that,
+        if insert the corresponding value in the values tensor, the order of the tensor sequence would be preserved,
+        whose datatype is int32 if out_int32 is True, otherwise int64, and shape is the same as the shape of values.
+
+    Raises:
+        ValueError: If the dimension of `sorted_sequence` isn't 1 and all dimensions except the last dimension of
+        `sorted_sequence` and `values` are different.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> sorted_sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
+        >>> values = Tensor(np.array([[3, 6, 9], [3, 6, 9]]), mindspore.float32)
+        >>> output = ops.SearchSorted()(sorted_sequence, values)
+        >>> print(output)
+        [[2 4 5]
+         [1 2 4]]
+    """
+
+    _check_attr_dtype("out_int32", out_int32, [bool], "search_sorted")
+    dtype = mstype.int64 if not out_int32 else mstype.int32
+    search_sorted_ = SearchSorted(dtype, right)
+    return search_sorted_(sorted_sequence, values)
 
 
 def ger(x1, x2):
