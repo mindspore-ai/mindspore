@@ -8,18 +8,19 @@ mindspore.ops.elu
     对输入的每个元素计算ELU。该激活函数定义如下：
 
     .. math::
+
         \text{ELU}(x)= \left\{
         \begin{array}{align}
             \alpha(e^{x}  - 1) & \text{if } x \le 0\\
             x & \text{if } x \gt 0\\
         \end{array}\right.
 
-    其中，:math:`x` 表示输入的元素，:math:`\alpha` 表示 `alpha` 参数， `alpha` 决定ELU的平滑度。
+    其中，:math:`x` 表示输入Tensor `input_x` ，:math:`\alpha` 表示 `alpha` 参数， `alpha` 决定ELU的平滑度。
     ELU相关图参见 `ELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_elu.svg>`_  。
 
     参数：
         - **input_x** (Tensor) - ELU的输入，为任意维度的Tensor，数据类型为float16或float32。
-        - **alpha** (float) - ELU的alpha值，数据类型为浮点数，目前仅支持1.0。默认值：1.0。
+        - **alpha** (float) - ELU的alpha值，数据类型为float，目前仅支持1.0。默认值：1.0。
 
     返回：
         Tensor，输出的shape、数据类型与 `input_x` 相同。

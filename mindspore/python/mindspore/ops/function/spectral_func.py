@@ -43,7 +43,7 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
         periodic (bool, optional): If True, returns a window to be used as periodic function.
             If False, return a symmetric window. Default: True.
 
-    Keyword args:
+    Keyword Args:
         dtype (mindspore.dtype, optional): the desired data type of returned tensor.
             Only float16, float32 and float64 is allowed. Default: None.
 
@@ -56,7 +56,7 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
         TypeError: If `periodic` is not a bool.
         TypeError: If `dtype` is not one of: float16, float32, float64.
         TypeError: If the type of `window_length` is not one of: int32, int64.
-        ValueError: If the value range of `window_length` is not [0,1000000].
+        ValueError: If the value range of `window_length` is not [0, 1000000].
         ValueError: If the dimension of `window_length` is not 0.
 
     Supported Platforms:
@@ -103,7 +103,7 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         periodic (bool, optional): If True, returns a window to be used as periodic function.
             If False, return a symmetric window. Default: True.
 
-    Keyword args:
+    Keyword Args:
         dtype (mindspore.dtype, optional): The desired datatype of returned tensor.
             Only float16, float32 and float64 are allowed. Default: None.
 
@@ -116,7 +116,7 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         TypeError: If the type of `window_length` is not one of: int32, int64.
         TypeError: If `periodic` is not a bool.
         TypeError: If `dtype` is not one of: float16, float32, float64.
-        ValueError: If the value range of `window_length` is not [0,1000000].
+        ValueError: If the value range of `window_length` is not [0, 1000000].
         ValueError: If the dimension of `window_length` is not 0.
 
     Supported Platforms:

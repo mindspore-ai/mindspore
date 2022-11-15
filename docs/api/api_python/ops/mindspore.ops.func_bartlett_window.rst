@@ -1,7 +1,7 @@
 mindspore.ops.bartlett_window
 =============================
 
-.. py:function:: mindspore.ops.bartlett_window(window_length, periodic=True, *, dtype=mstype.float32)
+.. py:function:: mindspore.ops.bartlett_window(window_length, periodic=True, *, dtype=None)
 
     巴特利特窗口函数。
 
@@ -14,19 +14,17 @@ mindspore.ops.bartlett_window
         2 - \frac{2n}{N - 1} & \text{if } \frac{N - 1}{2} < n < N \\
         \end{cases},
 
-        \text{where : N is the full window size.}
-
-    其中，N是总的窗口长度 `window_length` ，n为小于N的自然数 [0, 1, ..., N-1]。
+    其中，N是总的窗口长度 `window_length` 。
 
     参数：
-        - **window_length** (Tensor) - 返回窗口的大小，数据类型为int32，int64。输入数据的值为[0,1000000]的整数。
+        - **window_length** (Tensor) - 返回窗口的大小，数据类型为int32，int64。输入数据的值为[0, 1000000]的整数。
         - **periodic** (bool，可选) - 如果为True，返回一个窗口作为周期函数使用。如果为False，返回一个对称窗口。默认值：True。
 
     关键字参数：
-        - **dtype** (mindspore.dtype，可选) - 输出数据类型，目前只支持float16、float32和float64。默认值：mindspore.float32。
+        - **dtype** (mindspore.dtype，可选) - 输出数据类型，目前只支持float16、float32和float64。默认值：None。
 
     返回：
-        1D Tensor，大小为 `window_length` ，数据类型与 `dtype` 一致。
+        1D Tensor，大小为 `window_length` ，数据类型与 `dtype` 一致。如果 `dtype` 为None，则数据类型为float32。
 
     异常：
         - **TypeError** - `window_length` 不是Tensor。

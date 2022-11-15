@@ -3961,13 +3961,13 @@ def adjoint(x):
 
 def addr(x, vec1, vec2, beta=1, alpha=1):
     """
-    Executes the outer-product of `vec1` and `vec2` and adds it to the vec1rix `x`.
+    Executes the outer-product of `vec1` and `vec2` and adds it to the matrix `x`.
 
     If `vec1` is a vector of size :vec1:`N` and `vec2` is a vector of size :vec1:`M`, then `x` must be broadcastable
-    with a vec1rix of size :vec1:`(N, M)` and `out` will be a vec1rix of size :vec1:`(N, M)`.
+    with a matrix of size :vec1:`(N, M)` and `out` will be a matrix of size :vec1:`(N, M)`.
 
     The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
-    and the added vec1rix `x` respectively. If `beta` is 0, then `x` will be ignored.
+    and the added matrix `x` respectively. If `beta` is 0, then `x` will be ignored.
 
     .. vec1::
         output = β x + α (vec1 ⊗ vec2)
@@ -3978,7 +3978,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :vec1:`(M,)`.
         beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
             float or bool, Default: 1.
-        alpha (scalar[int, float, bool], optional): Multiplier for `vec1` @ `vec2` (α). The `alpha` must
+        alpha (scalar[int, float, bool], optional): Multiplier for `vec1` ⊗ `vec2` (α). The `alpha` must
             be int or float or bool, Default: 1.
 
     Outputs:
@@ -7029,15 +7029,16 @@ def greater_equal(input, other):
 def igamma(input, other):
     r"""
     Calculates lower regularized incomplete Gamma function.
+
     If we define `input` as `a` and `other` as `x`, the lower regularized incomplete Gamma function is defined as:
 
     .. math::
-        P(a, x) = gamma(a, x) / Gamma(a) = 1 - Q(a, x)
+        \(P(a, x) = Gamma(a, x) / Gamma(a) = 1 - Q(a, x)\)
 
     where
 
     .. math::
-        gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
+        \(Gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt\)
 
     is the lower incomplete Gamma function.
 
@@ -7051,7 +7052,7 @@ def igamma(input, other):
         other (Tensor): The second input tensor. With float32 or float64 type. `other` should have
           the same dtype with `input`.
 
-    Outputs:
+    Returns:
         Tensor, has the same dtype as `input` and `other`.
 
     Raises:
@@ -7079,12 +7080,18 @@ def igammac(input, other):
     Calculates upper regularized incomplete Gamma function.
 
     If we define `input` as `a` and `other` as `x`, the upper regularized incomplete Gamma function is defined as:
-    \(Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)\)
+
+    .. math::
+        \(Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)\)
+
     where
-    \(Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt\)
+
+    .. math::
+        \(Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt\)
+
     is the upper incomplete Gama function.
 
-    Note, above P(a, x) (Igamma) is the lower regularized complete Gamma function.
+    Above :math:`P(a, x)` is the lower regularized complete Gamma function.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -7094,7 +7101,7 @@ def igammac(input, other):
         other (Tensor): The second input tensor. With float32 or float64 type. `other` should have
             the same dtype with `input`.
 
-    Outputs:
+    Returns:
         Tensor, has the same dtype as `input` and `other`.
 
     Raises:
@@ -7163,7 +7170,7 @@ def logical_xor(input, other):
 
     Args:
         input (Tensor): The first input is a tensor whose data type is bool.
-        other (Tensor): The second input is a the tensor to compute XOR with the first input.
+        other (Tensor): The second input is a tensor to compute XOR with the first input.
           Datatype must be bool.
 
     Returns:

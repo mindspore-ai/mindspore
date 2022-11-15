@@ -13,8 +13,6 @@ mindspore.Tensor.sigmoid
 
     其中 :math:`x_i` 是原Tensor的元素。
 
-    关于Sigmoid的图例见 `Sigmoid <https://en.wikipedia.org/wiki/Sigmoid_function#/media/File:Logistic-curve.svg>`_ 。
-
     返回：
         Tensor，数据类型和shape与原Tensor的相同。
 
