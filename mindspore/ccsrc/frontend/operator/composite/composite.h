@@ -274,7 +274,6 @@ class Shard : public MetaFuncGraph {
       std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"in_axes", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"out_axes", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
-                              {"parameter_plan", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"device", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"level", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault}});
     kShardInputSize = signatures_.size();

@@ -42,6 +42,7 @@ void RegParamInfo(py::module *m) {
     .def_property("cache_enable", &ParamInfo::cache_enable, &ParamInfo::set_cache_enable)
     .def_property("cache_shape", &ParamInfo::cache_shape, &ParamInfo::set_cache_shape)
     .def_property("requires_aggr", &ParamInfo::requires_aggr, &ParamInfo::set_requires_aggr)
+    .def_property("param_strategy", &ParamInfo::param_strategy, &ParamInfo::set_param_strategy)
     .def(py::pickle(
       [](const ParamInfo &p) {  // __getstate__
         return py::make_tuple(p.name(), p.requires_grad(), p.layerwise_parallel());

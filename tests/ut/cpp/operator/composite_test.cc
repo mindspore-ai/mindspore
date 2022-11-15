@@ -516,7 +516,7 @@ TEST_F(TestComposite, test_shard) {
   inputs.clear();
   inputs.push_back(NewValueNode(shard_op));
   inputs.push_back(NewValueNode(origin_func_graph));
-  for (size_t i = 0; i < 5; ++i) {
+  for (size_t i = 0; i < 4; ++i) {
     inputs.push_back(NewValueNode(MakeValue(0)));
   }
   CNodePtr shard = shard_func_graph->NewCNode(inputs);

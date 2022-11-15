@@ -554,7 +554,11 @@ class Cell(Cell_):
             ...     x = self.block2(x)
             ...     return x
         """
-        # Transfer parameter_plan from dict to tuple
+        if context.get_context("mode") != context.PYNATIVE_MODE or \
+                context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
+            raise AssertionError(f"Cell shard only supports auto parallel under PyNative mode. "
+                                 f"Please check if you call Cell.shard in the script.")
+
         shard_fn = Shard()
         fn = shard_fn(self, in_strategy, out_strategy, parameter_plan, device, level)
         object.__setattr__(self, "_shard_fn", fn)
