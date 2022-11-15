@@ -49,6 +49,12 @@ class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
+  bool LaunchKernelComplex64(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                             const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  bool LaunchKernelComplex128(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                              const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
   using ZerosLikeLaunchFunc =
     std::function<bool(ZerosLikeGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
