@@ -108,7 +108,7 @@ class ConstTensorNode : public Node {
   ~ConstTensorNode() = default;
 
   NType NodeType() override { return NType::Value; }
-  std::string ToString() const override { return data_->data().ToString(this->type, this->shape, false); }
+  std::string ToString() const override { return data_->data().ToString(data_->data_type(), data_->shape(), false); }
   const tensor::TensorPtr data() const { return data_; }
   abstract::AbstractBasePtr ToAbstract() const override { return data_->ToAbstract(); }
 
