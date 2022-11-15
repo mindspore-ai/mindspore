@@ -271,6 +271,7 @@ constexpr auto kTripletMarginLoss = "TripletMarginLoss";
 constexpr auto kDataFormatVecPermute = "DataFormatVecPermute";
 constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kDropoutGenMaskV3 = "DropoutGenMaskV3";
+constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
 constexpr auto kDropoutDoMask = "DropoutDoMask";
 constexpr auto kDropoutDoMaskV3 = "DropoutDoMaskV3";
 constexpr auto kDropout = "Dropout";
@@ -897,6 +898,7 @@ GVAR_DEF(PrimitivePtr, kPrimLayerNormBetaGammaBackpropV2, std::make_shared<Primi
 GVAR_DEF(PrimitivePtr, kPrimLog1p, std::make_shared<Primitive>("Log1p"));
 GVAR_DEF(PrimitivePtr, kPrimDropoutGenMask, std::make_shared<Primitive>(kDropoutGenMask));
 GVAR_DEF(PrimitivePtr, kPrimDropoutGenMaskV3, std::make_shared<Primitive>(kDropoutGenMaskV3));
+GVAR_DEF(PrimitivePtr, kPrimStatelessDropOutGenMask, std::make_shared<Primitive>(kStatelessDropOutGenMask));
 GVAR_DEF(PrimitivePtr, kPrimDropoutDoMask, std::make_shared<Primitive>(kDropoutDoMask));
 GVAR_DEF(PrimitivePtr, kPrimDropoutDoMaskV3, std::make_shared<Primitive>(kDropoutDoMaskV3));
 GVAR_DEF(PrimitivePtr, kPrimDropoutGrad, std::make_shared<Primitive>(kDropoutGrad));

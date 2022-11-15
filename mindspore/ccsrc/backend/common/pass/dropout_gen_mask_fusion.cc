@@ -66,7 +66,8 @@ bool DropoutGenMaskFusion::Run(const FuncGraphPtr &func_graph) {
 
   // Get all GenMasks with fusion attr
   for (auto &node : node_list) {
-    if (IsPrimitiveCNode(node, prim::kPrimDropoutGenMask) || IsPrimitiveCNode(node, prim::kPrimDropoutGenMaskV3)) {
+    if (IsOneOfPrimitiveCNode(
+          node, {prim::kPrimDropoutGenMask, prim::kPrimDropoutGenMaskV3, prim::kPrimStatelessDropOutGenMask})) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (cnode->HasPrimalAttr(kAttrFusion)) {

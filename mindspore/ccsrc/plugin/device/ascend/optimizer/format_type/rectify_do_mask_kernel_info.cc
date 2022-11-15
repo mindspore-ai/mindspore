@@ -41,7 +41,8 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return RectifyKernelInfoInPynativeProcess(node);
   }
-  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutGenMask->name()) {
+  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (node_name != prim::kDropoutGenMask || node_name != prim::kStatelessDropOutGenMask) {
     return nullptr;
   }
   std::vector<CNodePtr> do_mask_node_list;

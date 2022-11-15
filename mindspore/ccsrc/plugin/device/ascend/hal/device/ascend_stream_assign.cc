@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <unordered_set>
 
 #include "ir/manager.h"
 #include "utils/ms_context.h"
@@ -56,6 +57,9 @@ constexpr uint32_t kTaskNumPerCommonNode = 3;
 constexpr size_t kHcomNum = 2;
 constexpr size_t kLastGradHcomOffset = 2;
 constexpr size_t kLastGradAndStatusNum = 2;
+
+const std::unordered_set<std::string> kDropoutGenMaskOps = {kDropoutGenMaskOpName, kDropoutGenMaskV3OpName,
+                                                            kStatelessDropOutGenMaskOpName};
 
 bool IsSameServer(const std::vector<uint32_t> &rank_ids) {
   auto min_iter = min_element(rank_ids.begin(), rank_ids.end());
@@ -2938,8 +2942,7 @@ CNodePtr FindNextGenMask(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePt
   auto iter = std::find(exec_order.begin(), exec_order.end(), do_mask_cnode);
   for (; iter != exec_order.end(); ++iter) {
     auto cnode = *iter;
-    if ((common::AnfAlgo::GetCNodeName(cnode) != kDropoutGenMaskOpName &&
-         common::AnfAlgo::GetCNodeName(cnode) != kDropoutGenMaskV3OpName) ||
+    if (kDropoutGenMaskOps.find(common::AnfAlgo::GetCNodeName(cnode)) != kDropoutGenMaskOps.end() ||
         !cnode->HasPrimalAttr(kAttrMicro)) {
       continue;
     }
@@ -3006,7 +3009,7 @@ void AscendStreamAssign::InsertEventForMicroBatchIndependent(const NotNull<Kerne
         continue;
       }
     }
-    if (cnode_name == kDropoutGenMaskOpName || cnode_name == kDropoutGenMaskV3OpName) {
+    if (kDropoutGenMaskOps.find(cnode_name) != kDropoutGenMaskOps.end()) {
       auto recv_iter = node_recv_map.find(cnode);
       if (recv_iter != node_recv_map.end()) {
         new_exec_order.push_back((*recv_iter).second);

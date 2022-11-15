@@ -75,6 +75,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_grad_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/stateless_dropout_genmask_replace.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/momentum_lossscale_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mul_add_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mul_addn_fusion.h"
@@ -360,6 +361,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<StatelessDropOutGenMaskReplace>());
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
@@ -540,7 +543,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
   other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
-  other_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
   other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());

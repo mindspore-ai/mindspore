@@ -158,6 +158,7 @@ constexpr auto kDropoutDoMaskOpName = "DropoutDoMask";
 constexpr auto kDropoutDoMaskV3OpName = "DropoutDoMaskV3";
 constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kDropoutGenMaskV3OpName = "DropoutGenMaskV3";
+constexpr auto kStatelessDropOutGenMaskOpName = "StatelessDropOutGenMask";
 constexpr auto kDropoutGradOpName = "DropoutGrad";
 constexpr auto kDropoutOpName = "Dropout";
 constexpr auto kDynamicAtomicAddrCleanOpName = "DynamicAtomicAddrClean";
