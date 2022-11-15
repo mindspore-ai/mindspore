@@ -347,7 +347,8 @@ bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Ad
   aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
                                      ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
   if (status != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size
+                  << " count:" << inputs[0]->size;
     return false;
   }
   return true;
@@ -414,7 +415,10 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
 
   // launch kernel
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
-    (void)MemoryCopyAsync(kernel, real_inputs, outputs);
+    if (!MemoryCopyAsync(kernel, real_inputs, outputs)) {
+      MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
+      return false;
+    }
   } else {
 #ifndef ENABLE_SECURITY
     auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();
