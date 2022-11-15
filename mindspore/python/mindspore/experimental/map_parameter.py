@@ -205,7 +205,7 @@ class MapParameter(Parameter):
         self._map_tensor.erase(key_tensor)
         return self
 
-    def export(self, full=False):
+    def export_data(self, full=False):
         """
         Export data from this map parameter.
 
@@ -215,13 +215,13 @@ class MapParameter(Parameter):
         Returns:
             Tuple(key_array, value_array, status_array), The exported data as a tuple.
         """
-        return self._map_tensor.export(full)
+        return self._map_tensor.export_data(full)
 
-    def update(self, data):
+    def import_data(self, data):
         """
-        Update this map parameter from exported data.
+        Import this map parameter from exported data.
 
         Args:
             data (Tuple): The data tuple with key_array, value_array and status_array.
         """
-        self._map_tensor.update(data)
+        self._map_tensor.import_data(data)

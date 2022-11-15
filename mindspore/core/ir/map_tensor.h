@@ -20,6 +20,7 @@
 #include <tuple>
 #include <memory>
 #include <string>
+#include <utility>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
@@ -29,6 +30,7 @@
 #include "utils/shape_utils.h"
 
 namespace mindspore {
+using DataLenPair = std::pair<void *, size_t>;
 namespace tensor {
 class MapTensor;
 // Smart pointer for MapTensor.
@@ -73,7 +75,7 @@ class MS_CORE_API MapTensor final : public Tensor {
     value_tensor_ = std::make_shared<Tensor>(value_dtype, value_shape);
     status_tensor_ = std::make_shared<Tensor>(kNumberTypeUInt8, key_shape);
     permit_filter_value_ = (permit_filter_value == nullptr) ? std::make_shared<Int32Imm>(1) : permit_filter_value;
-    evict_filter_value_ = (evict_filter_value == nullptr) ? std::make_shared<Int32Imm>(SIZE_MAX) : permit_filter_value;
+    evict_filter_value_ = (evict_filter_value == nullptr) ? std::make_shared<Int32Imm>(SIZE_MAX) : evict_filter_value;
   }
 
   /// \brief Create a new MapTensor.
@@ -92,13 +94,12 @@ class MS_CORE_API MapTensor final : public Tensor {
     data_type_ = value_tensor->data_type();
     value_shape_ = value_tensor->shape();
     key_shape_ = key_tensor->shape();
-    shape_ = key_shape_;
-    (void)shape_.insert(shape_.cend(), value_shape_.cbegin(), value_shape_.cend());
+    shape_ = value_shape_;
     key_tensor_ = key_tensor;
     value_tensor_ = value_tensor;
     status_tensor_ = status_tensor;
     permit_filter_value_ = (permit_filter_value == nullptr) ? std::make_shared<Int32Imm>(1) : permit_filter_value;
-    evict_filter_value_ = (evict_filter_value == nullptr) ? std::make_shared<Int32Imm>(SIZE_MAX) : permit_filter_value;
+    evict_filter_value_ = (evict_filter_value == nullptr) ? std::make_shared<Int32Imm>(SIZE_MAX) : evict_filter_value;
   }
 
   ~MapTensor() override = default;
@@ -175,7 +176,13 @@ class MS_CORE_API MapTensor final : public Tensor {
   ///
   /// \param[in] full [bool] True for full export, false for incremental export.
   /// \return The exported data.
-  ExportData ExportDataFromDevice(DeviceSyncPtr device_sync);
+  ExportData ExportDataFromDevice(const DeviceSyncPtr &device_sync);
+
+  /// \brief Get three tensor length from device data with tensor shape and type.
+  ///
+  /// \param[in] data_size [size_t] The size of device data.
+  /// \return The length of tensor data.
+  std::tuple<DataLenPair, DataLenPair, DataLenPair> GetTensorDataLen(size_t data_size);
 
   /// \brief Get the key tensor of MapTensor data.
   ///
@@ -209,7 +216,7 @@ class MS_CORE_API MapTensor final : public Tensor {
   ValuePtr default_value_;
 
   // Permission threshold: When an element is accessed more than the threshold, it will be actually inserted into map.
-  ValuePtr permit_filter_value_{};
+  ValuePtr permit_filter_value_;
 
   //  If the elements in the map are not used or updated within the time interval indicated by the threshold,
   //  these elements will be removed from the map.

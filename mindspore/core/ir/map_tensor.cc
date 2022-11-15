@@ -15,7 +15,6 @@
  */
 
 #include "ir/map_tensor.h"
-#include <utility>
 #include <vector>
 #include <algorithm>
 #include "abstract/abstract_value.h"
@@ -26,14 +25,13 @@
 
 namespace mindspore {
 using device::HashTable;
-using DataLenPair = std::pair<void *, size_t>;
 namespace tensor {
 using tensor::Tensor;
 using tensor::TensorPtr;
 
 static ShapeVector ConcatShape(const ShapeVector &a, const ShapeVector &b) {
   ShapeVector result_shape = a;
-  result_shape.insert(result_shape.end(), b.cbegin(), b.cend());
+  (void)result_shape.insert(result_shape.end(), b.cbegin(), b.cend());
   return result_shape;
 }
 
@@ -58,7 +56,9 @@ std::string MapTensor::ToString() const {
   return "MapTensor(key_dtype=" + (key_dtype == nullptr ? "<null>" : key_dtype->ToString()) +
          ", value_dtype=" + (value_dtype == nullptr ? "<null>" : value_dtype->ToString()) +
          ", value_shape=" + tensor::ShapeToString(shape_) +
-         ", default_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) + ")";
+         ", default_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) +
+         ", permit_filter=" + (permit_filter_value_ == nullptr ? "<null>" : permit_filter_value_->ToString()) +
+         ", evict_filter=" + (evict_filter_value_ == nullptr ? "<null>" : evict_filter_value_->ToString()) + ")";
 }
 
 TensorPtr MapTensor::Get(const TensorPtr &key_tensor, bool insert_default_value) {
@@ -94,35 +94,52 @@ void MapTensor::Update(const MapTensor::ExportData &data) {
   status_tensor_ = data.status_tensor;
 }
 
-MapTensor::ExportData MapTensor::ExportDataFromDevice(DeviceSyncPtr device_sync) {
+std::tuple<DataLenPair, DataLenPair, DataLenPair> MapTensor::GetTensorDataLen(size_t data_size) {
+  // key length
+  auto key_length = data_size * abstract::TypeIdSize(key_dtype());
+  // value length
+  std::vector<size_t> value_shape_tmp{data_size};
+  (void)std::transform(value_shape().cbegin(), value_shape().cend(), std::back_inserter(value_shape_tmp), IntToSize);
+  auto value_length = abstract::ShapeSize(value_shape_tmp) * abstract::TypeIdSize(value_dtype());
+  // status length: status shape is same as the shape of key
+  auto status_length = data_size * abstract::TypeIdSize(kNumberTypeInt);
+
+  ShapeVector new_shape{SizeToInt(data_size)};
+  (void)key_tensor()->set_shape(new_shape);
+  (void)status_tensor()->set_shape(new_shape);
+  (void)std::copy(value_shape().cbegin(), value_shape().cend(), std::back_inserter(new_shape));
+  (void)value_tensor()->set_shape(new_shape);
+  (void)status_tensor()->set_data_type(kNumberTypeInt);
+  DataLenPair keys_pair = {key_tensor()->data_c(), key_length};
+  DataLenPair values_pair = {value_tensor()->data_c(), value_length};
+  DataLenPair status_pair = {status_tensor()->data_c(), status_length};
+  return {keys_pair, values_pair, status_pair};
+}
+
+MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &device_sync) {
   auto user_data = device_sync->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
+  bool export_res = false;
   if (key_dtype() == TypeId::kNumberTypeInt32 && value_dtype() == TypeId::kNumberTypeFloat32) {
     const auto &user_data_data = user_data->get<HashTable<int, float>>(kUserDataData);
     MS_EXCEPTION_IF_NULL(user_data_data);
-    size_t data_size = user_data_data->size();
-    // key length
-    auto key_length = data_size * abstract::TypeIdSize(key_dtype());
-    // value length
-    std::vector<size_t> value_shape_tmp{data_size};
-    (void)std::transform(value_shape().cbegin(), value_shape().cend(), std::back_inserter(value_shape_tmp), IntToSize);
-    auto value_length = abstract::ShapeSize(value_shape_tmp) * abstract::TypeIdSize(value_dtype());
-    // status length: status shape is same as the shape of key
-    auto status_length = data_size * abstract::TypeIdSize(kNumberTypeInt);
-
-    ShapeVector new_shape{SizeToInt(data_size)};
-    key_tensor()->set_shape(new_shape);
-    status_tensor()->set_shape(new_shape);
-    (void)std::copy(value_shape().cbegin(), value_shape().cend(), std::back_inserter(new_shape));
-    value_tensor()->set_shape(new_shape);
-    status_tensor()->set_data_type(kNumberTypeInt);
-    DataLenPair keys_pair = {key_tensor()->data_c(), key_length};
-    DataLenPair values_pair = {value_tensor()->data_c(), value_length};
-    DataLenPair status_pair = {status_tensor()->data_c(), status_length};
-    user_data_data->Export(keys_pair, values_pair, status_pair);
-    return {key_tensor(), value_tensor(), status_tensor()};
+    auto data_size = user_data_data->size();
+    auto [keys_pair, values_pair, status_pair] = GetTensorDataLen(data_size);
+    export_res = user_data_data->Export(keys_pair, values_pair, status_pair);
+  } else if (key_dtype() == TypeId::kNumberTypeInt64 && value_dtype() == TypeId::kNumberTypeFloat32) {
+    const auto &user_data_data = user_data->get<HashTable<int64_t, float>>(kUserDataData);
+    MS_EXCEPTION_IF_NULL(user_data_data);
+    auto data_size = user_data_data->size();
+    auto [keys_pair, values_pair, status_pair] = GetTensorDataLen(data_size);
+    export_res = user_data_data->Export(keys_pair, values_pair, status_pair);
+  } else {
+    MS_LOG(EXCEPTION) << "UnSupported Map Tensor type: key type is " << TypeIdToType(key_dtype()) << ", value type is "
+                      << TypeIdToType(value_dtype()) << ".";
   }
-  MS_LOG(EXCEPTION) << "Invalid Map Tensor:" << ToString();
+  if (!export_res) {
+    MS_LOG(EXCEPTION) << "Export MapTensor data failed.";
+  }
+  return {key_tensor(), value_tensor(), status_tensor()};
 }
 
 MapTensor::ExportData MapTensor::Export(bool full) {
