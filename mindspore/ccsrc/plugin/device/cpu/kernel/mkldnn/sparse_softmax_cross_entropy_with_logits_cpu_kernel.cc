@@ -33,6 +33,7 @@ constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                                            const std::vector<KernelTensorPtr> &inputs,
                                                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -51,28 +52,28 @@ int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPt
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto shape = inputs.at(kIndex0)->GetShapeVector();
-  auto label_shape = inputs.at(kIndex1)->GetShapeVector();
-  if (IsDynamic(shape) || IsDynamic(label_shape)) {
-    return KRET_OK;
-  }
+
+  auto shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  auto label_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
   size_t tensor_size = std::accumulate(shape.begin(), shape.end(), sizeof(float), std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
   if (label_shape.size() > 1) {
     MS_LOG(EXCEPTION) << "Labels shape length must be equal to Logits shape length minus 1";
   }
+
   dnnl::memory::dims mem_dims;
   (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
   if (mem_dims.size() != 2) {
     MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
   }
+
   batch_size_ = static_cast<size_t>(shape[0]);
   class_num_ = static_cast<size_t>(shape[1]);
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
-  auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
 
+  auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
   auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, mem_desc, 1);
   auto prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(desc, engine_);
   primitive_ = CreatePrimitive<dnnl::softmax_forward>(prim_desc);
