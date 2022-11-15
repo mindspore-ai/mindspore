@@ -614,7 +614,7 @@ Parameter操作算子
 自定义算子
 -------------
 
-.. mscnautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

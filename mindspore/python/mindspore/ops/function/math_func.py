@@ -3822,8 +3822,8 @@ def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
         batch2 (Tensor): The second batch of tensor to be multiplied.
 
     Keyword Args:
-        beta (scalar[int, float], optional): Multiplier for `x`. Default: 1.
-        alpha (scalar[int, float], optional): Multiplier for `batch1` @ `batch2`. Default: 1.
+        beta (Union[int, float], optional): Multiplier for `x`. Default: 1.
+        alpha (Union[int, float], optional): Multiplier for `batch1` @ `batch2`. Default: 1.
 
     Returns:
         Tensor, has the same dtype as `x`.
@@ -3849,8 +3849,8 @@ def addmm(x, mat1, mat2, *, beta=1, alpha=1):
         mat2 (Tensor): The second tensor to be multiplied.
 
     Keyword Args:
-        beta (scalar[int, float], optional): Multiplier for `x`. Default: 1.
-        alpha (scalar[int, float], optional): Multiplier for `mat1` @ `mat2`. Default: 1.
+        beta (Union[int, float], optional): Multiplier for `x`. Default: 1.
+        alpha (Union[int, float], optional): Multiplier for `mat1` @ `mat2`. Default: 1.
 
     .. math::
         output = \beta x + \alpha (mat1 @ mat2)

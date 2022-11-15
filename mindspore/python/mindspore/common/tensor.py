@@ -919,31 +919,7 @@ class Tensor(Tensor_):
 
     def addcdiv(self, x1, x2, value):
         r"""
-        Performs the element-wise division of tensor x1 by tensor x2,
-        multiply the result by the scalar value and add it to input_data.
-
-        .. math::
-            y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
-
-        Args:
-            x1 (Tensor): The numerator tensor.
-            x2 (Tensor): The denominator tensor.
-            value (Tensor): The multiplier for tensor x1/x2.
-
-        Returns:
-            Tensor, has the same shape and dtype as x1/x2.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
-            >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
-            >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
-            >>> value = Tensor([1], mindspore.float32)
-            >>> y = x.addcdiv(x1, x2, value)
-            >>> print(y)
-            [1.25      1.6666667 2.5       5.       ]
+        For details, please refer to :func:`mindspore.ops.addcdiv`.
         """
 
         self._init_check()
@@ -951,33 +927,7 @@ class Tensor(Tensor_):
 
     def addcmul(self, x1, x2, value):
         r"""
-        Performs the element-wise product of tensor x1 and tensor x2,
-        multiply the result by the scalar value and add it to input_data.
-
-        .. math::
-            y[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
-
-        Args:
-            x1 (Tensor): The tensor to be multiplied.
-            x2 (Tensor): The tensor to be multiplied.
-            value (Tensor): The multiplier for tensor x1*x2.
-
-        Returns:
-            Tensor, has the same shape and dtype as x1*x2.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([1, 1, 1]), mindspore.float32)
-            >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
-            >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
-            >>> value = Tensor([1], mindspore.float32)
-            >>> y = x.addcmul(x1, x2, value)
-            >>> print(y)
-            [[ 2.  3.  4.]
-            [ 3.  5.  7.]
-            [ 4.  7. 10.]]
+        For details, please refer to :func:`mindspore.ops.addcmul`.
         """
 
         self._init_check()
@@ -1454,19 +1404,7 @@ class Tensor(Tensor_):
 
     def negative(self):
         r"""
-        Return a new tensor with the negative of the elements of input.
-
-        Returns:
-            Tensor, with the negative of the elements of the self Tensor.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
-            >>> output = x.negative()
-            >>> print(output)
-            [-1.  -2.   1.  -2.   0.   3.5]
+        For details, please refer to :func:`mindspore.ops.negative`.
         """
         self._init_check()
         return tensor_operator_registry.get("negative")(self)
@@ -3524,31 +3462,7 @@ class Tensor(Tensor_):
 
     def unbind(self, dim=0):
         r"""
-        Removes a tensor dimension in specified axis.
-
-        Unstack a tensor of rank `R` along axis dimension, and output tensors will have rank `(R-1)`.
-
-        Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
-        the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
-
-        Args:
-            dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: 0.
-
-        Returns:
-            A tuple of tensors, the shape of each objects is the same.
-
-        Raises:
-            ValueError: If `dim` is out of the range [-R, R).
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
-            >>> output = x.unbind()
-            >>> print(output)
-            (Tensor(shape=[3], dtype=Int64, value=[1, 2, 3]), Tensor(shape=[3], dtype=Int64, value=[4, 5, 6]),
-            Tensor(shape=[3], dtype=Int64, value=[7, 8, 9]))
+        For details, please refer to :func:`mindspore.ops.unbind`.
         """
         self._init_check()
         return tensor_operator_registry.get('unbind')(dim)(self)
@@ -3947,26 +3861,7 @@ class Tensor(Tensor_):
 
     def erfinv(self):
         r"""
-        Computes the inverse error function of input. The inverse error function is defined in the range `(-1, 1)` as:
-
-        .. math::
-
-            erfinv(erf(x)) = x
-
-        Returns:
-            Tensor, has the same shape and dtype as input tensor.
-
-        Raises:
-            TypeError: If dtype of input tensor is not float16, float32 or float64.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU``
-
-        Examples:
-            >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
-            >>> output = x.erfinv()
-            >>> print(output)
-            [ 0.          0.47695306 -1.1630805 ]
+        For details, please refer to :func:`mindspore.ops.erfinv`.
         """
         self._init_check()
         return tensor_operator_registry.get('erfinv')(self)
