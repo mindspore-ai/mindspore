@@ -96,8 +96,13 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_BLENDQ_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
 #define MS_BLEND128_F32(src1, src2, src3) vbslq_f32(src3, src2, src1)
 #define MS_BLEND128_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
-#define MS_CAST_F32_S32(src) vreinterpretq_f32_s32(src)
+#define MS_CAST128_F32_S32(src) vreinterpretq_f32_s32(src)
 #define MS_AND128_MASK(src1, src2) vandq_u32(src1, src2)
+#define MS_AND128_F32(src1, src2) \
+  vreinterpretq_f32_u32(vandq_u32(vreinterpretq_u32_f32(src1), vreinterpretq_u32_f32(src2)))
+
+#define MS_OR128_F32(src1, src2) \
+  vreinterpretq_f32_u32(vorrq_u32(vreinterpretq_u32_f32(src1), vreinterpretq_u32_f32(src2)))
 
 #ifdef ENABLE_ARM64
 #define MS_GET_MAX128_F32 vmaxvq_f32
@@ -119,15 +124,6 @@ static inline float MS_GET_SUM128_F32(MS_FLOAT32X4 src) {
   return result;
 }
 #endif
-
-static inline MS_FLOAT32X4 MS_OR128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
-  MS_FLOAT32X4 result;
-  result[0] = (src1[0] == 0) ? src2[0] : src1[0];
-  result[1] = (src1[1] == 0) ? src2[1] : src1[1];
-  result[2] = (src1[2] == 0) ? src2[2] : src1[2];
-  result[3] = (src1[3] == 0) ? src2[3] : src1[3];
-  return result;
-}
 
 static inline MS_FLOAT32X4 MS_AND128_MASK_F32(MS_UINT32X4 src1, MS_FLOAT32X4 src2) {
   MS_FLOAT32X4 result;
@@ -229,7 +225,7 @@ static inline MS_FLOAT32X4 VexpFp32(MS_FLOAT32X4 input) {
   MS_FLOAT32X4 tmp = MS_MULQ_F32(decimal, (MS_ADDQ_F32(param[2], MS_MULQ_F32(decimal, param[1]))));
   tmp = MS_MULQ_F32(decimal, MS_ADDQ_F32(param[4], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[3], tmp))));
   MS_FLOAT32X4 decimal_exp = MS_ADDQ_F32(param[5], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[5], tmp)));
-  return MS_MULQ_F32(decimal_exp, MS_CAST_F32_S32(int_exp));
+  return MS_MULQ_F32(decimal_exp, MS_CAST128_F32_S32(int_exp));
 }
 
 static inline void simd_exp128(MS_FLOAT32X4 input, float *dst) {

@@ -100,6 +100,8 @@
 #define MS512_CASTPS_EPI32(src) _mm512_castps_si512(src)
 #define MS_OR512_EPI32(src1, src2) _mm512_or_epi32(src1, src2)
 #define MS_AND512_EPI32(src1, src2) _mm512_and_epi32(src1, src2)
+#define MS_AND512_F32(src1, src2) \
+  _mm512_castsi512_ps(_mm512_and_si512(_mm512_castps_si512(src1), _mm512_castps_si512(src2)))
 
 static inline MS_FLOAT512_F32 SIMD_SIGN512_F32(MS_FLOAT512_F32 src) {
   MS_FLOAT512_F32 abs_src = MS_ABS512_F32(src);
