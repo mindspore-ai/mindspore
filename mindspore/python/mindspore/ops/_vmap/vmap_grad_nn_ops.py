@@ -226,11 +226,15 @@ def get_cdist_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.AdaptiveMaxPool3DGrad)
 @vmap_rules_getters.register(G.AdaptiveMaxPool2DGrad)
 def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
-    """VmapRule for `AdaptiveMaxPool2DGrad` operation."""
+    """VmapRule for `AdaptiveMaxPool2DGrad` and `AdaptiveMaxPool3DGrad` operation."""
     chw_reverse_index = -3
-    hw_reverse_index = -2
+    if prim.name == "AdaptiveMaxPool2DGrad":
+        hw_reverse_index = -2
+    else:
+        hw_reverse_index = -3
 
     def vmap_rule(ygrad_bdim, x_bdim, max_index_bdim):
         is_all_none, result = vmap_general_preprocess(prim, ygrad_bdim, x_bdim, max_index_bdim)
@@ -353,7 +357,7 @@ def get_batchnorm_grad_vmap_rule(prim, axis_size):
         if is_all_none:
             return result
         if data_format == "NHWC":
-            #BatchNormGrad with NHWC format is a GPU backend operation and not supported for now.
+            # BatchNormGrad with NHWC format is a GPU backend operation and not supported for now.
             return batchnorm_grad_nhwc_vmap(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
         grad, grad_dim = grad_bdim
         input_x, input_x_dim = x_bdim
