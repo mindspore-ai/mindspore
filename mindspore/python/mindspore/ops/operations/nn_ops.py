@@ -10299,7 +10299,7 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
         ValueError: If the third dimension size of `random_samples` is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> # the ksize is an int number and the output_shape is a tuple.

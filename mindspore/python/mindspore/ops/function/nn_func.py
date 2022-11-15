@@ -33,6 +33,7 @@ from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error
 from mindspore.ops.operations.nn_ops import MaxUnpool2D, MaxUnpool3D
+from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, FractionalMaxPool3DWithFixedKsize
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -1326,6 +1327,217 @@ def fast_gelu(x):
          [ 1.9375000e+00 -1.0052517e-03  8.9824219e+00]]
     """
     return fast_gelu_(x)
+
+
+@constexpr
+def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
+    """
+    Method for checking whether input value is in float range inc right.
+    """
+    return validator.check_float_range(arg_value, lower_limit, upper_limit, Rel.INC_RIGHT, arg_name, prim_name)
+
+
+def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
+                          _random_samples=None):
+    r"""
+    2D fractional max pooling operation for temporal data.
+
+    Applies a 2D fractional max pooling to an input signal composed of multiple input planes.
+    The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
+    the target output size. For any input size, the size of the specified output is H x W. The number
+    of output features is equal to the number of input planes.
+
+    Fractional MaxPooling is described in the paper `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_.
+
+    Args:
+        input_x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
+            with float16, float32, float64, int32, int64 data type.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width of the kernel, or a tuple
+            of two int numbers that represent height and width respectively.
+            The value must be a positive integer.
+        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
+            is an int number that represents height and width, or a tuple
+            of two int numbers that represent height and width respectively.
+            The value must be a positive integer.
+            Default: None.
+        output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
+            Specifying the size of the output tensor by using a ratio of the input size.
+            Data type : float16, float32, double, and value is between (0, 1).
+            Default: None.
+        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
+            Default: False.
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
+            Tensor of data type : float16, float32, double, and value is between (0, 1).
+            Supported shape :math:`(N, C, 2)`.
+            Default: None.
+
+    Returns:
+        - **y** (Tensor) - Has the same type as the `input_x`.
+          Has the shape :math:`(N, C, H, W)`.
+
+        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
+          `y` and int64 data type. It will output only when `return_indices` is True.
+
+    Raises:
+        TypeError: If data type of `input_x` is not one of the following: float16, float32, float64, int32, int64.
+        TypeError: If data type of `_random_samples` is not one of the following: float16, float32, float64.
+        ValueError: If `kernel_size` is not a number and `kernel_size` is not a tuple of length 2.
+        ValueError: If `output_size` is not a number and `output_size` is not a tuple of length 2.
+        ValueError: If the sum of `kernel_size` , `output_size` and -1 is larger than the corresponding
+                    dimension of `input_x`.
+        ValueError: If the dimension of `_random_samples` is not 3.
+        ValueError: if `output_size` and `output_ratio` are None at the same time.
+        ValueError: If the first dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the second dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the third dimension size of `_random_samples` is not 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
+        ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,
+        ...                            0.9581, 0.4760, 0.9014, 0.8522, 0.3664,
+        ...                            0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
+        ...                            0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([1, 1, 5, 5]), mstype.float32)
+        >>> _random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
+        >>> y, argmax = ops.fractional_max_pool2d(input_x, kernel_size=2, output_size=(2, 2),
+        ...                                       _random_samples=_random_samples, return_indices=True)
+        >>> print(y)
+        [[[[0.9545 0.8764]
+           [0.9673 0.9852]]]]
+        >>> print(argmax)
+        [[[[ 1  9]
+           [16 24]]]]
+        >>> y, argmax = ops.fractional_max_pool2d(input_x, kernel_size=2, output_ratio=(0.5, 0.5),
+        ...                                       _random_samples=_random_samples, return_indices=True)
+        >>> print(y)
+        [[[[0.9545 0.8764]
+           [0.9673 0.9852]]]]
+        >>> print(argmax)
+        [[[[ 1  9]
+           [16 24]]]]
+    """
+    if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
+        raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
+                         f"at the same time, but got {output_ratio} and {output_size} .")
+    if len(input_x.shape) == 3:
+        input_x.expend_dims(axis=0)
+    if _random_samples is None:
+        _random_samples = Tensor([[[0, 0]]], mstype.float32)
+    if output_ratio is not None:
+        if isinstance(output_ratio, float):
+            output_ratio = (output_ratio, output_ratio)
+        _check_float_range_inc_right(output_ratio[0], 0.0, 1.0)
+        _check_float_range_inc_right(output_ratio[1], 0.0, 1.0)
+        output_size = (int(input_x.shape[-2] * output_ratio[0]), int(input_x.shape[-1] * output_ratio[1]))
+    fractional_max_pool = FractionalMaxPoolWithFixedKsize(kernel_size, output_size)
+    output = fractional_max_pool(input_x, _random_samples)
+    if return_indices:
+        return output
+    return output[0]
+
+
+def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
+                          _random_samples=None):
+    r"""
+    3D fractional max pooling operation for temporal data.
+
+    This operator applies a 3D fractional max pooling over an input signal composed of several input planes.
+    The max-pooling operation is applied in kD x kH x kW regions by a stochastic step size determined
+    by the target output size.The number of output features is equal to the number of input planes.
+
+    Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
+
+    The input and output data format can be "NCDHW". N is the batch size, C is the number of channels,
+    D the feature depth, H is the feature height, and W is the feature width.
+
+    Args:
+        input_x (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
+            Tensor of data type : float16, float32, double, int32, int64.
+            Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` .
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents depth, height and width of the kernel, or a tuple
+            of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer.
+        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
+            is an int number that represents depth, height and width, or a tuple
+            of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer.
+            Default: None.
+        output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
+            Specifying the size of the output tensor by using a ratio of the input size.
+            Data type : float16, float32, double, and value is between (0, 1).
+            Default: None.
+        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
+            Default: False.
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
+            Tensor of data type : float16, float32, double, and value is between (0, 1).
+            Supported shape :math:`(N, C, 3)`
+
+    Returns:
+        - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
+          Has the same data type with `imput_x`.
+          Tensor of shape :math:`(N, C, D, H, W)` .
+
+        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
+          `y` and int32 data type. It will output only when `return_indices` is True.
+
+    Raises:
+        TypeError: If `input_x` is not a 4D or 5D tensor.
+        TypeError: If `_random_samples` is not a 3D tensor.
+        TypeError: If data type of `imput_x` is not float16, float32, double, int32, int64.
+        TypeError: If dtype of `_random_samples` is not float16, float32, double.
+        TypeError: If dtype of `argmax` is not int32, int64.
+        ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
+        ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
+        ValueError: If numbers in `output_size` or `kernel_size` is not positive.
+        ValueError: if `output_size` and `output_ratio` are None at the same time.
+        ValueError: If the first dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the second dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the third dimension size of `_random_samples` is not 3.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+        ...            .reshape([1, 1, 2, 2, 4]), mstype.float32)
+        >>> _random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
+        >>> output, argmax = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_size=(1, 1, 3),
+        ...                                            _random_samples=_random_samples, return_indices=True)
+        >>> print(output)
+        [[[[[13. 14. 16.]]]]]
+        >>> print(argmax)
+        [[[[[12 13 15]]]]]
+        >>> output, argmax = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
+        ...                                            _random_samples=_random_samples, return_indices=True)
+        >>> print(output)
+        [[[[[13. 16.]]]]]
+        >>> print(argmax)
+        [[[[[12 15]]]]]
+    """
+    if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
+        raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
+                         f"at the same time, but got {output_ratio} and {output_size} .")
+    if len(input_x.shape) == 4:
+        input_x.expend_dims(axis=0)
+    if _random_samples is None:
+        _random_samples = Tensor([[[0, 0, 0]]], mstype.float32)
+    if output_ratio is not None:
+        if isinstance(output_ratio, float):
+            output_ratio = (output_ratio, output_ratio, output_ratio)
+        _check_float_range_inc_right(output_ratio[0], 0.0, 1.0)
+        _check_float_range_inc_right(output_ratio[1], 0.0, 1.0)
+        _check_float_range_inc_right(output_ratio[2], 0.0, 1.0)
+        output_size = (int(input_x.shape[-3] * output_ratio[0]), int(input_x.shape[-2] * output_ratio[1]),
+                       int(input_x.shape[-1] * output_ratio[2]))
+    fractional_max_pool = FractionalMaxPool3DWithFixedKsize(kernel_size, output_size)
+    output = fractional_max_pool(input_x, _random_samples)
+    if return_indices:
+        return output
+    return output[0]
 
 
 def kl_div(logits, labels, reduction='mean'):
@@ -4810,6 +5022,8 @@ __all__ = [
     'dropout2d',
     'dropout3d',
     'fast_gelu',
+    'fractional_max_pool2d',
+    'fractional_max_pool3d',
     'pixel_shuffle',
     'pixel_unshuffle',
     'hardshrink',

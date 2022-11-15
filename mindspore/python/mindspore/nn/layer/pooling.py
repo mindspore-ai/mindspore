@@ -25,7 +25,6 @@ import mindspore.context as context
 from mindspore.common import dtype as mstype
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D, AdaptiveAvgPool3D
-from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations.nn_ops import MaxPool3DWithArgmax
 from mindspore.nn.cell import Cell
 
@@ -1328,59 +1327,35 @@ class FractionalMaxPool2d(Cell):
         >>> net = nn.FractionalMaxPool2d(kernel_size=2, output_size=(2, 2), _random_samples=_random_samples,
         ...                              return_indices=True)
         >>> y, argmax = net(input_x)
-        >>> print(y)
-        Tensor(shape=[1, 1, 2, 2], dtype=Float32, value=
-        [[[[9.54500020e-001, 8.76399994e-001],
-           [9.67299998e-001, 9.85199988e-001]]]])
-        >>> print(argmax)
-        Tensor(shape=[1, 1, 2, 2], dtype=Int64, value=
-        [[[[ 1,  9],
-           [16, 24]]]])
+        >>> y
+        [[[[0.9545 0.8764]
+           [0.9673 0.9852]]]]
+        >>> argmax
+        [[[[ 1  9]
+           [16 24]]]]
         >>> net = nn.FractionalMaxPool2d(kernel_size=2, output_ratio=(0.5, 0.5), _random_samples=_random_samples,
         ...                              return_indices=True)
         >>> y, argmax = net(input_x)
         >>> print(y)
-        Tensor(shape=[1, 1, 2, 2], dtype=Float32, value=
-        [[[[9.54500020e-001, 8.76399994e-001],
-           [9.67299998e-001, 9.85199988e-001]]]])
+        [[[[0.9545 0.8764]
+           [0.9673 0.9852]]]]
         >>> print(argmax)
-        Tensor(shape=[1, 1, 2, 2], dtype=Int64, value=
-        [[[[ 1,  9],
-           [16, 24]]]])
+        [[[[ 1  9]
+           [16 24]]]]
     """
 
     def __init__(self, kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None):
         """Initialize FractionalMaxPool2d."""
         super(FractionalMaxPool2d, self).__init__()
+        self.kernel_size = kernel_size
+        self.output_size = output_size
+        self.output_ratio = output_ratio
         self.return_indices = return_indices
-        self.output_ratio = None
-        if _random_samples is None:
-            _random_samples = Tensor(np.array([[[0, 0]]]), mstype.float32)
-        self.random_samples = _random_samples
-        if output_ratio is not None:
-            if isinstance(output_ratio, float):
-                output_ratio = (output_ratio, output_ratio)
-            validator.check_float_range(output_ratio[0], 0.0, 1.0, Rel.INC_RIGHT)
-            validator.check_float_range(output_ratio[1], 0.0, 1.0, Rel.INC_RIGHT)
-            self.kernel_size = kernel_size
-            self.output_ratio = output_ratio
-        elif output_size is not None:
-            self.fractional_max_pool2d = FractionalMaxPoolWithFixedKsize(kernel_size, output_size)
-        else:
-            raise ValueError("'output_size' and 'output_ratio' can not be None at the same time.")
+        self._random_samples = _random_samples
 
     def construct(self, x):
-        if self.output_ratio is not None:
-            output_size = (int(x.shape[-2] * self.output_ratio[0]), int(x.shape[-1] * self.output_ratio[1]))
-            fractional_max_pool2d = FractionalMaxPoolWithFixedKsize(self.kernel_size, output_size)
-            output = fractional_max_pool2d(x, self.random_samples)
-            if self.return_indices:
-                return output
-            return output[0]
-        output = self.fractional_max_pool2d(x, self.random_samples)
-        if self.return_indices:
-            return output
-        return output[0]
+        return ops.fractional_max_pool2d(x, self.kernel_size, self.output_size, self.output_ratio, self.return_indices,
+                                         self._random_samples)
 
 
 class FractionalMaxPool3d(Cell):
@@ -1458,56 +1433,30 @@ class FractionalMaxPool3d(Cell):
         ...                              _random_samples=_random_samples, return_indices=True)
         >>> output, argmax = net(x)
         >>> print(output)
-        Tensor(shape=[1, 1, 1, 1, 3], dtype=Float32, value=
-        [[[[[1.30000000e+001, 1.40000000e+001, 1.60000000e+001]]]]])
+        [[[[[13. 14. 16.]]]]]
         >>> print(argmax)
-        Tensor(shape=[1, 1, 1, 1, 3], dtype=Int64, value=
-        [[[[[12, 13, 15]]]]])
+        [[[[[12 13 15]]]]]
         >>> net = nn.FractionalMaxPool3d(kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
         ...                              _random_samples=_random_samples, return_indices=True)
         >>> output, argmax = net(x)
         >>> print(output)
-        Tensor(shape=[1, 1, 1, 1, 2], dtype=Float32, value=
-        [[[[[1.30000000e+001, 1.60000000e+001]]]]])
+        [[[[[13. 16.]]]]]
         >>> print(argmax)
-        Tensor(shape=[1, 1, 1, 1, 2], dtype=Int64, value=
-        [[[[[12, 15]]]]])
+        [[[[[12 15]]]]]
     """
 
     def __init__(self, kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None):
         """Initialize FractionalMaxPool3d."""
         super(FractionalMaxPool3d, self).__init__()
+        self.kernel_size = kernel_size
+        self.output_size = output_size
+        self.output_ratio = output_ratio
         self.return_indices = return_indices
-        self.output_ratio = None
-        if _random_samples is None:
-            _random_samples = Tensor(np.array([0, 0, 0]).reshape([1, 1, 3]), mstype.float32)
-        self.random_samples = _random_samples
-        if output_ratio is not None:
-            if isinstance(output_ratio, float):
-                output_ratio = (output_ratio, output_ratio, output_ratio)
-            validator.check_float_range(output_ratio[0], 0.0, 1.0, Rel.INC_RIGHT)
-            validator.check_float_range(output_ratio[1], 0.0, 1.0, Rel.INC_RIGHT)
-            validator.check_float_range(output_ratio[2], 0.0, 1.0, Rel.INC_RIGHT)
-            self.kernel_size = kernel_size
-            self.output_ratio = output_ratio
-        elif output_size is not None:
-            self.fractional_max_pool3d = FractionalMaxPool3DWithFixedKsize(kernel_size, output_size)
-        else:
-            raise ValueError("'output_size' and 'output_ratio' can not be None at the same time.")
+        self._random_samples = _random_samples
 
     def construct(self, x):
-        if self.output_ratio:
-            output_size = (int(x.shape[-3] * self.output_ratio[0]), int(x.shape[-2] * self.output_ratio[1]),
-                           int(x.shape[-1] * self.output_ratio[2]))
-            fractional_max_pool3d = FractionalMaxPool3DWithFixedKsize(self.kernel_size, output_size)
-            output = fractional_max_pool3d(x, self.random_samples)
-            if self.return_indices:
-                return output
-            return output[0]
-        output = self.fractional_max_pool3d(x, self.random_samples)
-        if self.return_indices:
-            return output
-        return output[0]
+        return ops.fractional_max_pool3d(x, self.kernel_size, self.output_size, self.output_ratio, self.return_indices,
+                                         self._random_samples)
 
 
 class MaxUnpool1d(Cell):
