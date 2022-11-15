@@ -16,9 +16,12 @@
 
 #include "tools/common/flag_parser.h"
 #include "src/common/log_adapter.h"
+#include "tools/converter/converter_context.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 namespace lite {
+constexpr auto kConverterLite = "converter_lite";
 // parse flags read from command line
 Option<std::string> FlagParser::ParseFlags(int argc, const char *const *argv, bool supportUnknown,
                                            bool supportDuplicate) {
@@ -29,6 +32,16 @@ Option<std::string> FlagParser::ParseFlags(int argc, const char *const *argv, bo
     return Option<std::string>("Failed: flags is not valid");
   }
   binName = GetFileName(argv[0]);
+  if (binName == kConverterLite) {
+    std::map<std::string, std::string> flag_argv_maps;
+    auto real_path = RealPath(argv[0]);
+    if (real_path.empty()) {
+      MS_LOG(WARNING) << kConverterLite << " path is not exist.";
+    }
+    flag_argv_maps["converter_lite_path"] = real_path;
+    ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(mindspore::converter::KConverterParam,
+                                                                     flag_argv_maps);
+  }
 
   std::multimap<std::string, Option<std::string>> keyValues{};
   for (int i = 1; i < argc; i++) {
