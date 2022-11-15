@@ -17,10 +17,25 @@
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 #include "nnacl/custom_parameter.h"
+#include "nnacl/split_parameter.h"
 using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore {
 namespace lite {
+bool GetDataFromPrim(void *dst, size_t len, const schema::Custom *custom_prim, size_t index) {
+  auto data_bytes = custom_prim->attr()->Get(index)->data();
+  auto data_size = data_bytes->size();
+  if (len < data_size) {
+    return false;
+  }
+  std::vector<uint8_t> buf(data_size, 0);
+  for (size_t i = 0; i < data_size; ++i) {
+    buf[i] = static_cast<char>(data_bytes->Get(i));
+  }
+  (void)memcpy(dst, buf.data(), data_size);
+  return true;
+}
+
 OpParameter *PopulateCustomParameter(const void *prim) {
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
@@ -50,6 +65,37 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     param->op_parameter_.type_ = PrimType_Inner_GraphKernel;
     // Just use the attr_data pointer to save the prim directly, the inner value is parsed as necessary.
     param->attr_data[0] = static_cast<char *>(const_cast<void *>(prim));
+    return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "SplitReduceConcatFusion") {
+    if (value->attr()->size() < 1) {
+      return nullptr;
+    }
+    SplitParameter *param = static_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "malloc SplitParameter failed.";
+      return nullptr;
+    }
+    if (!GetDataFromPrim(param, sizeof(SplitParameter), value, 0)) {
+      MS_LOG(ERROR) << "Get SplitParameter value From prim fail.";
+      free(param);
+      return nullptr;
+    }
+
+    auto split_sizes_size = static_cast<size_t>(param->num_split_) * sizeof(int);
+    param->split_sizes_ = reinterpret_cast<int *>(malloc(split_sizes_size));
+    if (param->split_sizes_ == nullptr) {
+      MS_LOG(ERROR) << "malloc split_sizes_ failed.";
+      free(param);
+      return nullptr;
+    }
+    if (!GetDataFromPrim(param->split_sizes_, split_sizes_size, value, 1)) {
+      MS_LOG(ERROR) << "Get split value From prim fail.";
+      free(param->split_sizes_);
+      free(param);
+      return nullptr;
+    }
+
+    param->op_parameter_.type_ = PrimType_Inner_SplitReduceConcatFusion;
     return reinterpret_cast<OpParameter *>(param);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
