@@ -51,7 +51,7 @@ struct ConverterPara {
   DataType output_data_type = DataType::kNumberTypeFloat32;
   ModelType export_mindir = kMindIR_Lite;
   std::string decrypt_key;
-  std::string decrypt_mode;
+  std::string decrypt_mode = "AES-GCM";
   std::string encrypt_key;
   std::string encrypt_mode = "AES-GCM";  // inner
   bool enable_encryption = false;
