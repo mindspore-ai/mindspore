@@ -195,7 +195,7 @@ bool SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel(const std::vector<kern
   }
   size_t copy_size = var_first_dim_size_ * var_outer_dim_size_ * sizeof(T);
   auto ret = memcpy_s(output, copy_size, var, copy_size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, memcpy_s error, errorno" << ret;
   }
   return true;

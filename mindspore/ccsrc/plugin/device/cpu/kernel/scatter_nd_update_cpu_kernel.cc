@@ -110,7 +110,7 @@ bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel:
   } else {
     x = reinterpret_cast<T *>(outputs[0]->addr);
     auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', memcpy_s error. Error no: " << ret;
     }
   }
@@ -140,7 +140,7 @@ bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel:
       return false;
     }
     auto ret = memcpy_s(x + offset, x_mem_size - offset * sizeof(T), updates + unit_size_ * i, unit_size_ * sizeof(T));
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "For '" << kernel_type_ << "', memcpy_s error. Error no: " << ret;
       return false;
     }

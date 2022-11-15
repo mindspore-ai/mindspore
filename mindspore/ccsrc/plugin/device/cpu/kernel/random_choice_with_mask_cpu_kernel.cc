@@ -150,8 +150,12 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
     int32_t output_length = 0;
     int32_t output_non_zero_length = 0;
     GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count_, non_zero_num);
-    (void)memset_s(mask_dim, IntToSize(output_length), 0X00, IntToSize(output_length));
-    (void)memset_s(tmp_output, IntToSize(output_length), 0X00, IntToSize(output_length));
+    if (memset_s(mask_dim, IntToSize(output_length), 0X00, IntToSize(output_length)) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to init mask_dim memory.";
+    }
+    if (memset_s(tmp_output, IntToSize(output_length), 0X00, IntToSize(output_length)) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to init output memory.";
+    }
 
     std::vector<int32_t> all_nums(non_zero_num);
     std::iota(begin(all_nums), end(all_nums), 0);
@@ -176,7 +180,9 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
     }
 
     int32_t copy_output_length = output_length * input_dim_size_;
-    (void)memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length));
+    if (memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length)) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to init output memory.";
+    }
     ParseOutputCoordinate(dims_, output_length, input_dim_size_, input_total_count_, tmp_output, output);
 
     int32_t actual_output_length = count_ * SizeToInt(dims_.size());

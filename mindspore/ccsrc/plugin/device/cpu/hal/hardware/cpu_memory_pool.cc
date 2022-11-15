@@ -53,8 +53,11 @@ size_t GetSystemMemorySize(const std::string &key) {
       }
       break;
     }
-
-    (void)memset_s(buf, kLineMaxSize, 0, kLineMaxSize);
+    if (memset_s(buf, kLineMaxSize, 0, kLineMaxSize) != EOK) {
+      MS_LOG(ERROR) << "Set system meminfo failed.";
+      (void)fclose(file);
+      return 0;
+    }
   }
   (void)fclose(file);
 

@@ -91,14 +91,14 @@ bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   size_t data_nums = outputs[0]->size / sizeof(T);
   if (SizeToLong(data_nums) <= kParallelDataNums) {
     auto ret_code = memcpy_s(output_ptr, data_nums * sizeof(T), input_ptr, data_nums * sizeof(T));
-    if (ret_code != 0) {
+    if (ret_code != EOK) {
       MS_LOG(EXCEPTION) << "Failed to copy data, memcpy_s errorno: " << ret_code;
     }
   } else {
     auto task = [this, input_ptr, output_ptr](size_t start, size_t end) {
       auto ret_code =
         memcpy_s(output_ptr + start, (end - start) * sizeof(T), input_ptr + start, (end - start) * sizeof(T));
-      if (ret_code != 0) {
+      if (ret_code != EOK) {
         MS_LOG(EXCEPTION) << "Failed to copy data, memcpy_s errorno: " << ret_code;
       }
     };

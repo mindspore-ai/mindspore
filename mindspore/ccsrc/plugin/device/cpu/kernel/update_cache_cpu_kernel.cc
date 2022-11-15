@@ -94,7 +94,7 @@ void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     }
     int ret = memcpy_s(input_x + static_cast<size_t>(indices[i]) * one_length_size,
                        max_size - static_cast<size_t>(indices[i]) * one_length_size, tmp, one_length_size);
-    if (ret != 0) {
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
     }
   }

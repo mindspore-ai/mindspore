@@ -1504,7 +1504,7 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
         int64_t num_bytes = type_size * num_channels * (max_width - w_start);
         for (int x = h_start; x < max_height; x++) {
           auto ret = memset_s(buffer + (x * image_w + w_start) * num_channels * type_size, num_bytes, 0, num_bytes);
-          if (ret != 0) {
+          if (ret != EOK) {
             RETURN_STATUS_UNEXPECTED("CutOut: memset_s failed for HWC scenario.");
           }
         }
@@ -1514,7 +1514,7 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
           uchar *buffer = GetPtr(input_cv) + (type_size * c * image_h * image_w);
           for (int x = h_start; x < max_height; x++) {
             auto ret = memset_s(buffer + (x * image_w + w_start) * type_size, num_bytes, 0, num_bytes);
-            if (ret != 0) {
+            if (ret != EOK) {
               RETURN_STATUS_UNEXPECTED("CutOut: memset_s failed for CHW scenario.");
             }
           }

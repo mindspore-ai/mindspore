@@ -155,7 +155,7 @@ std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPt
 
     private_def.resize(task.private_def.size());
     auto sec_ret = memcpy_s(private_def.data(), private_def.size(), task.private_def.data(), task.private_def.size());
-    if (sec_ret != 0) {
+    if (sec_ret != EOK) {
       MS_LOG(EXCEPTION) << "Set data memcpy_s failed, ret = " << sec_ret;
     }
 

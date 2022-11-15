@@ -25,7 +25,11 @@ namespace device {
 namespace cpu {
 void *CPUTensorArray::AllocateMemory(const size_t size) { return CPUMemoryPool::GetInstance().AllocTensorMem(size); }
 
-void CPUTensorArray::ClearMemory(void *addr, const size_t size) { (void)memset_s(addr, size, 0, size); }
+void CPUTensorArray::ClearMemory(void *addr, const size_t size) {
+  if (memset_s(addr, size, 0, size) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to clear memory.";
+  }
+}
 
 void CPUTensorArray::FreeMemory(const DeviceMemPtr addr) { CPUMemoryPool::GetInstance().FreeTensorMem(addr); }
 
@@ -40,7 +44,11 @@ void CPUTensorsQueue::CopyTensor(const mindspore::kernel::AddressPtr &dst, const
 }
 void *CPUTensorsQueue::AllocateMemory(const size_t size) { return CPUMemoryPool::GetInstance().AllocTensorMem(size); }
 
-void CPUTensorsQueue::ClearMemory(void *addr, const size_t size) { (void)memset_s(addr, size, 0, size); }
+void CPUTensorsQueue::ClearMemory(void *addr, const size_t size) {
+  if (memset_s(addr, size, 0, size) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to clear memory.";
+  }
+}
 
 void CPUTensorsQueue::FreeMemory(const DeviceMemPtr addr) { CPUMemoryPool::GetInstance().FreeTensorMem(addr); }
 }  // namespace cpu

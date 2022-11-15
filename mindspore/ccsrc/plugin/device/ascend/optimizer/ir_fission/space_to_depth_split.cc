@@ -64,7 +64,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   auto elem_num = LongToSize(dest_size) * kFloat16Len;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()),
                            static_cast<void *>(half_data.data()), elem_num);
-  if (ret_code != 0) {
+  if (ret_code != EOK) {
     MS_LOG(ERROR)
       << "Failed to copy data into Tensor while creating assist input for SpaceToDepth op, memcpy_s errorno: "
       << ret_code;

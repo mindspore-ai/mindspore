@@ -74,7 +74,7 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
     for (auto j = 0; j < shape_size; ++j) {
       auto ret = memcpy_s(merged + indice[j] * slice_size, slice_bytes, data + j * slice_size, slice_bytes);
-      if (ret != 0) {
+      if (ret != EOK) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
       }
     }

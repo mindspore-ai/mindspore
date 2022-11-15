@@ -63,7 +63,7 @@ std::string Services::GetUniqueID() {
     std::unique_lock<std::mutex> lock(unique_id_mutex_);
     while (true) {
       auto ret = memset_s(buffer, UNIQUEID_LEN, 0, UNIQUEID_LEN);
-      if (ret != 0) {
+      if (ret != EOK) {
         MS_LOG(ERROR) << "memset_s error, errorno(" << ret << ")";
         return std::string("");
       }

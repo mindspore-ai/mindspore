@@ -53,7 +53,10 @@ uint8_t *CPUMemoryManager::MallocDynamicMem(size_t size, bool) {
     }
   }
   if (ptr != nullptr) {
-    memset_s(ptr, size, 0, size);
+    if (memset_s(ptr, size, 0, size) != EOK) {
+      free(ptr);
+      MS_LOG(EXCEPTION) << "Failed to init memory.";
+    }
     dynamic_mem_[ptr] = min_size;
     (void)cached_mem_.erase(ptr);
     return reinterpret_cast<uint8_t *>(ptr);

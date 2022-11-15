@@ -303,7 +303,10 @@ class ZeroLikeFillZero : public AnfVisitor {
     tensor::TensorPtr new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
     char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-    (void)memset_s(data, mem_size, 0, mem_size);
+    if (memset_s(data, mem_size, 0, mem_size) != EOK) {
+      MS_LOG(ERROR) << "Failed to init data memory.";
+      return nullptr;
+    }
 
     auto new_cnode = NewValueNode(new_tensor_ptr);
     new_cnode->set_abstract(new_tensor_ptr->ToAbstract());

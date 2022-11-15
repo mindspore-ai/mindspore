@@ -152,7 +152,7 @@ void MemCopyFromHostToCache(void *hashmap_addr, void *host_addr, void *cache_add
       if (host_offset + single_col_bytes <= host_max) {
         auto ret =
           memcpy_s(cache_data + cache_offset, cache_max - cache_offset, host_data + host_offset, single_col_bytes);
-        if (ret != 0) {
+        if (ret != EOK) {
           MS_LOG(EXCEPTION) << "Memcpy failed.";
         }
       }
@@ -208,7 +208,7 @@ void InitHashMapData(void *data, const int64_t host_size, const int64_t cache_si
   HashmapEntry<T> *hashmap_data = static_cast<HashmapEntry<T> *>(data);
   MS_EXCEPTION_IF_NULL(hashmap_data);
   int ret = memset_s(hashmap_data, byte_size, 0, byte_size);
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Memset failed.";
   }
   std::vector<T> host_range;

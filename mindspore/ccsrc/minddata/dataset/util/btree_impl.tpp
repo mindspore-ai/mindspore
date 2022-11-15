@@ -100,7 +100,7 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::InnerNode::
     auto destMax = sizeof(slot_dir_) - sizeof(slot_type) * (slot + 1);
     auto amt = sizeof(slot_type) * num_keys_to_move;
     errno_t err = memmove_s(dest, destMax, src, amt);
-    if (err) {
+    if (err != EOK) {
       return IndexRc::kUnexpectedError;
     }
   }
@@ -161,7 +161,7 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafNode::S
   slot_type mid = slotuse_ >> 1;
   slot_type num_keys_to_move = slotuse_ - mid;
   errno_t err = memmove_s(to->keys_, sizeof(to->keys_), keys_ + mid, num_keys_to_move * sizeof(key_type));
-  if (err) {
+  if (err != EOK) {
     return IndexRc::kUnexpectedError;
   }
   for (slot_type i = 0; i < num_keys_to_move; i++) {
@@ -200,7 +200,7 @@ typename BPlusTree<K, V, A, C, T>::IndexRc BPlusTree<K, V, A, C, T>::LeafNode::I
     auto destMax = sizeof(slot_dir_) - sizeof(slot_type) * (slot + 1);
     auto amt = sizeof(slot_type) * num_keys_to_move;
     errno_t err = memmove_s(dest, destMax, src, amt);
-    if (err) {
+    if (err != EOK) {
       return IndexRc::kUnexpectedError;
     }
   }

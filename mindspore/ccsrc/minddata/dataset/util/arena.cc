@@ -159,7 +159,7 @@ Status ArenaImpl::FreeAndAlloc(void **pp, size_t old_sz, size_t new_sz) {
   void *q = *pp;
   RETURN_IF_NOT_OK(Allocate(new_sz, &p));
   errno_t err = memmove_s(p, new_sz, q, old_sz);
-  if (err) {
+  if (err != EOK) {
     RETURN_STATUS_UNEXPECTED("Error from memmove: " + std::to_string(err));
   }
   *pp = p;
@@ -201,7 +201,7 @@ Status ArenaImpl::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
       if (addr != hdr.addr) {
         errno_t err =
           memmove_s(get_user_addr(newHdr), (req_blk * ARENA_BLK_SZ) - ARENA_WALL_OVERHEAD_SZ, oldAddr, old_sz);
-        if (err) {
+        if (err != EOK) {
           RETURN_STATUS_UNEXPECTED("Error from memmove: " + std::to_string(err));
         }
       }

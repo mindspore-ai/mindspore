@@ -130,7 +130,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
       "https://www.mindspore.cn/docs/en/master/faq/data_processing.html.";
     if (byte_size < SECUREC_MEM_MAX_LEN) {
       int ret_code = memcpy_s((*out)->data_, byte_size, src, byte_size);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, err_msg);
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, err_msg);
     } else {
       auto ret_code = std::memcpy((*out)->data_, src, byte_size);
       CHECK_FAIL_RETURN_UNEXPECTED(ret_code == (*out)->data_, err_msg);
@@ -162,7 +162,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
   }
   if (length < SECUREC_MEM_MAX_LEN) {
     int ret_code = memcpy_s((*out)->data_, length, src, length);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "Failed to copy data into tensor.");
   } else {
     auto ret_code = std::memcpy((*out)->data_, src, length);
     CHECK_FAIL_RETURN_UNEXPECTED(ret_code == (*out)->data_, "Failed to copy data into tensor.");
@@ -260,7 +260,7 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
     num_bytes -= kOffsetSize;
     // insert actual string
     int ret_code = memcpy_s((*out)->data_ + offset, num_bytes, common::SafeCStr(str), str.length() + 1);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Cannot copy string into Tensor");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "Cannot copy string into Tensor");
     //  next string will be stored right after the current one.
     offset = offset + str.length() + 1;
     // total bytes are reduced by the length of the string
@@ -316,7 +316,7 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
     int return_code =
       memcpy_s(current_tensor_addr, tensor_bytes_remaining, common::SafeCStr(current_element), current_element.size());
 
-    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed when reading bytesList element into Tensor");
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == EOK, "memcpy_s failed when reading bytesList element into Tensor");
 
     current_tensor_addr += current_element.size();
     tensor_bytes_remaining -= current_element.size();
@@ -324,7 +324,7 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
     // pad
     int64_t chars_to_pad = pad_size - current_element.size();
     return_code = memset_s(current_tensor_addr, tensor_bytes_remaining, static_cast<int>(' '), chars_to_pad);
-    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed when padding Tensor");
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == EOK, "memcpy_s failed when padding Tensor");
 
     current_tensor_addr += chars_to_pad;
     tensor_bytes_remaining -= chars_to_pad;
@@ -361,7 +361,7 @@ Status Tensor::CopyStridedArray(unsigned char *dst, unsigned char *src, std::vec
     // strides already consider byte size of the data type, but dst doesn't.
     // dst[i] = dst + i * type_size = src + offset
     int ret_code = memcpy_s(dst + i * type_size, type_size, src + offset, type_size);
-    if (ret_code != 0) {
+    if (ret_code != EOK) {
       RETURN_STATUS_UNEXPECTED("Failed to copy data into Tensor.");
     }
   }
@@ -611,7 +611,7 @@ Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_p
     if (start_addr_of_ind != nullptr) {
       int ret_code =
         memcpy_s(start_addr_of_ind, tensor->SizeInBytes(), tensor->GetMutableBuffer(), tensor->SizeInBytes());
-      if (ret_code == 0) {
+      if (ret_code == EOK) {
         return Status::OK();
       } else {
         err_msg += "[Tensor] error in memcpy_s when inserting tensor\n";
@@ -1003,7 +1003,7 @@ Status Tensor::CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vect
 
   const unsigned char *src_addr = src->GetBuffer() + src_flat_ind * type_size;
   unsigned char *dst_addr = GetMutableBuffer() + dst_flat_ind * type_size;
-  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
+  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == EOK, "memcpy error");
   return Status::OK();
 }
 
@@ -1158,7 +1158,7 @@ Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<std:
 
     int return_code = memcpy_s(dst_addr + out_index * type_size, (*out)->SizeInBytes(),
                                data_ + src_start_index * type_size, count * type_size * current_stride);
-    CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed in SliceNumeric");
+    CHECK_FAIL_RETURN_UNEXPECTED(return_code == EOK, "memcpy_s failed in SliceNumeric");
     out_index += count * current_stride;
     if (i < indices_size - 1) {
       src_start = HandleNegIndices(indices[i + 1], dim_length);  // next index

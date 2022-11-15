@@ -200,7 +200,7 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
   uint16_t port = 0;
 
   size_t len = sizeof(*addr);
-  if (memset_s(addr, len, 0, len) > 0) {
+  if (memset_s(addr, len, 0, len) != EOK) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     return false;
   }

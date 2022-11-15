@@ -251,7 +251,7 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
   MS_EXCEPTION_IF_NULL(data_ptr);
   auto elem_num = values.size() * data_length;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), values.data(), elem_num);
-  if (ret_code != 0) {
+  if (ret_code != EOK) {
     MS_LOG(EXCEPTION) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
   }
   return tensor;
@@ -590,7 +590,7 @@ ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vec
     MS_EXCEPTION_IF_NULL(data_ptr);
     auto elem_num = shape.size() * kType64Len;
     auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(shape_tensor->data().nbytes()), &shape[0], elem_num);
-    if (ret_code != 0) {
+    if (ret_code != EOK) {
       MS_LOG(EXCEPTION) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
     }
     shape_value = shape_tensor;
