@@ -4087,11 +4087,11 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
         dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
-            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
-            Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
+            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
+            on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
             Its value must be greater than or equal to 1 and bounded by the height and width of the input. Default: 1.
-        group (int, optional): Splits filter into groups. Default: 1. Only 1 is currently supported.
+        group (int, optional): Splits filter into groups. Default: 1.
 
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
