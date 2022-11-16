@@ -145,6 +145,8 @@
     mindspore.Tensor.less
     mindspore.Tensor.less_equal
     mindspore.Tensor.log
+    mindspore.Tensor.log10
+    mindspore.Tensor.log2
     mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.log1p
     mindspore.Tensor.logical_and
@@ -161,6 +163,7 @@
     mindspore.Tensor.median
     mindspore.Tensor.min
     mindspore.Tensor.minimum
+    mindspore.Tensor.multiply
     mindspore.Tensor.narrow
     mindspore.Tensor.nbytes
     mindspore.Tensor.ndim

@@ -1470,6 +1470,20 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('log')(self)
 
+    def log10(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.log10`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('log10')(self)
+
+    def log2(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.log2`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('log2')(self)
+
     def mean(self, axis=(), keep_dims=False):
         """
         For details, please refer to :func:`mindspore.ops.mean`.
@@ -3847,6 +3861,13 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('cumprod')(self, dim, dtype)
+
+    def multiply(self, value):
+        r"""
+        Refer to :func:`mindspore.ops.multiply` for more details.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('multiply')(self, value)
 
     def div(self, other, rounding_mode=None):
         r"""

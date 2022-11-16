@@ -160,6 +160,7 @@ from .math_func import (
     square,
     tensor_mul,
     mul,
+    multiply,
     tensor_div,
     div,
     true_divide,

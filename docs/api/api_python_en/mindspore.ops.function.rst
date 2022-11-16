@@ -201,6 +201,8 @@ Element-by-Element Operations
     mindspore.ops.ldexp
     mindspore.ops.lerp
     mindspore.ops.log
+    mindspore.ops.log2
+    mindspore.ops.log10
     mindspore.ops.log1p
     mindspore.ops.logical_and
     mindspore.ops.logical_not
@@ -210,6 +212,7 @@ Element-by-Element Operations
     mindspore.ops.log_matrix_determinant
     mindspore.ops.matrix_determinant
     mindspore.ops.mul
+    mindspore.ops.multiply
     mindspore.ops.neg
     mindspore.ops.negative
     mindspore.ops.positive
