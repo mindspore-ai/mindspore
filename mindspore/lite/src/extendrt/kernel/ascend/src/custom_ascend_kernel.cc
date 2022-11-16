@@ -172,6 +172,52 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return lite::RET_OK;
 }
 
+template <typename T, typename U>
+static int UpdateCheckInputNums(const std::vector<T> &update_info, const std::vector<U> &inputs,
+                                size_t input_weight = 0) {
+  if (update_info.empty()) {
+    MS_LOG(ERROR) << "check update info size empty";
+    return lite::RET_ERROR;
+  }
+  if (update_info.size() + input_weight != inputs.size()) {
+    MS_LOG(ERROR) << "update info size and inputs size check failed. update info size: " << update_info.size()
+                  << ". inputs' size: " << inputs.size() << ". input weight: " << input_weight;
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+// In DVPP, model input shape and data type get modified
+void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
+  if (model_infer_ == nullptr) {
+    MS_LOG(ERROR) << "update input shape fail because model_infer_ is nullptr";
+    return;
+  }
+  const std::vector<ShapeVector> shapes = model_infer_->GetInputShape();
+  const std::vector<TypeId> types = model_infer_->GetInputDataType();
+  const std::vector<Format> formats = model_infer_->GetInputFormat();
+  MS_LOG(INFO) << "check input kernel tensor info nums";
+  if ((UpdateCheckInputNums(shapes, inputs_) != lite::RET_OK) ||
+      (UpdateCheckInputNums(types, inputs_) != lite::RET_OK) ||
+      (UpdateCheckInputNums(formats, inputs_) != lite::RET_OK)) {
+    return;
+  }
+
+  for (size_t i = 0; i < inputs_.size(); ++i) {
+    auto &input = inputs_[i];
+    input->SetShapeVector(shapes[i]);
+    auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), input->GetBaseShape());
+    TensorInfo tensor_info{formats[i], new_abstract, input->GetDeviceShapeAdaptively()};
+    input->SetTensorInfo(tensor_info);
+  }
+}
+
+// In DVPP, model input data size gets modified, get updated inputs
+std::vector<KernelTensorPtr> CustomAscendKernelMod::GetInputKernelTensor() {
+  UpdateInputKernelTensorInfo();
+  return inputs_;
+}
+
 int CustomAscendKernelMod::SetInputAndOutputAddr(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &outputs) {
   if ((inputs_.size() + 1) != inputs.size()) {

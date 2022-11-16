@@ -312,6 +312,10 @@ class BACKEND_EXPORT KernelMod {
     SyncData();
     return GetOutputs();
   }
+
+  // Get input kernel tensor.
+  virtual std::vector<KernelTensorPtr> GetInputKernelTensor() { return {}; }
+
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }

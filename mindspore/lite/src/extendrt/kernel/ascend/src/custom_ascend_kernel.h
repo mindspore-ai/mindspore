@@ -50,6 +50,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
 
   std::vector<KernelTensorPtr> RetrieveOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
+  std::vector<KernelTensorPtr> GetInputKernelTensor() override;
 
  private:
   void RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs);
@@ -59,6 +60,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   int LoadModel();
   bool IsDynamicInput();
   void UpdateOutputAddr(const std::vector<AddressPtr> &outputs);
+  void UpdateInputKernelTensorInfo();
 
   bool load_model_;
   std::vector<KernelTensorPtr> original_data_;

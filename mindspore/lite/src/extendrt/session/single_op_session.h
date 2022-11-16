@@ -43,6 +43,9 @@ class SingleOpInferSession : public InferSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
+  Status UpdateKernelGraphInputs(const std::vector<std::vector<int64_t>> &dims, const std::vector<TypeId> &type_ids,
+                                 bool use_type_from_graph);
+  Status UpdateGraphInputsForDVPP(const std::vector<kernel::KernelTensorPtr> &inputs);
   Status ResizeGraphInputs(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
   KernelGraphUtilsPtr kernel_graph_utils_;
@@ -52,6 +55,7 @@ class SingleOpInferSession : public InferSession {
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
   uint32_t device_id_ = 0;
+  bool is_dvpp_ = false;
 };
 }  // namespace mindspore
 

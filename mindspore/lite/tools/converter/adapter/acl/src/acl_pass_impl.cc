@@ -135,7 +135,7 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     return lite::RET_ERROR;
   }
   if (IsDynamicInput()) {
-    MS_LOG(INFO) << "Dynamic input or online infer no need to run const fold pass.";
+    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
     return lite::RET_OK;
   }
   if (fmk_type_ == converter::kFmkTypeMs) {

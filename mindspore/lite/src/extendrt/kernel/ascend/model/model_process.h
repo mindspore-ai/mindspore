@@ -68,6 +68,8 @@ class ModelProcess {
   std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
   std::vector<Format> GetInputFormat();
   const std::vector<ShapeVector> GetOutputShape();
+  const std::vector<ShapeVector> GetInputShape();
+  const std::vector<TypeId> GetInputDataType();
 
  private:
   STATUS CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
