@@ -158,6 +158,37 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
+int ElementWiseTensorRT::BroadcastInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input) {
+  if (GetDimsVolume(x_input->trt_tensor_->getDimensions()) == GetDimsVolume(y_input->trt_tensor_->getDimensions()) &&
+      x_input->trt_tensor_->getDimensions().nbDims != y_input->trt_tensor_->getDimensions().nbDims) {
+    bool x_large = x_input->trt_tensor_->getDimensions().nbDims > y_input->trt_tensor_->getDimensions().nbDims;
+    auto input_tensor = x_large ? y_input : x_input;
+    auto output_dim = x_large ? x_input->trt_tensor_->getDimensions() : y_input->trt_tensor_->getDimensions();
+    auto reshape_layer = ctx->network()->addShuffle(*input_tensor->trt_tensor_);
+    if (reshape_layer == nullptr) {
+      MS_LOG(ERROR) << "add reshape failed for " << op_name_;
+      return RET_ERROR;
+    }
+    reshape_layer->setReshapeDimensions(output_dim);
+    input_tensor->trt_tensor_ = reshape_layer->getOutput(0);
+    return RET_OK;
+  } else if (GetDimsVolume(x_input->trt_tensor_->getDimensions()) !=
+               GetDimsVolume(y_input->trt_tensor_->getDimensions()) &&
+             x_input->trt_tensor_->getDimensions().nbDims != y_input->trt_tensor_->getDimensions().nbDims) {
+    bool x_large = x_input->trt_tensor_->getDimensions().nbDims > y_input->trt_tensor_->getDimensions().nbDims;
+    auto input_tensor = x_large ? y_input : x_input;
+    auto output_dim = x_large ? x_input->trt_tensor_->getDimensions() : y_input->trt_tensor_->getDimensions();
+    nvinfer1::Dims in_tensor_dims = input_tensor->trt_tensor_->getDimensions();
+    while (in_tensor_dims.nbDims < output_dim.nbDims) {
+      input_tensor->trt_tensor_ = ExpandDim(ctx, input_tensor->trt_tensor_, 0);
+      in_tensor_dims = input_tensor->trt_tensor_->getDimensions();
+    }
+    return RET_OK;
+  } else {
+    return RET_OK;
+  }
+}
+
 int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input) {
   if (HasConst()) {
     int ret = AddConstTensor(ctx);
@@ -189,20 +220,8 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
   }
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*x_input);
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*y_input);
-  if (GetDimsVolume(x_input->trt_tensor_->getDimensions()) == GetDimsVolume(y_input->trt_tensor_->getDimensions()) &&
-      x_input->trt_tensor_->getDimensions().nbDims != y_input->trt_tensor_->getDimensions().nbDims) {
-    bool x_large = x_input->trt_tensor_->getDimensions().nbDims > y_input->trt_tensor_->getDimensions().nbDims;
-    auto input_tensor = x_large ? y_input : x_input;
-    auto output_dim = x_large ? x_input->trt_tensor_->getDimensions() : y_input->trt_tensor_->getDimensions();
-    auto reshape_layer = ctx->network()->addShuffle(*input_tensor->trt_tensor_);
-    if (reshape_layer == nullptr) {
-      MS_LOG(ERROR) << "add reshape failed for " << op_name_;
-      return RET_ERROR;
-    }
-    reshape_layer->setReshapeDimensions(output_dim);
-    input_tensor->trt_tensor_ = reshape_layer->getOutput(0);
-  }
-  return RET_OK;
+  int ret = BroadcastInputTensors(ctx, x_input, y_input);
+  return ret;
 }
 
 nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor) {
@@ -287,5 +306,6 @@ REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BiasAdd, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Equal, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Less, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Greater, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_FloorDiv, ElementWiseTensorRT)
 #endif
 }  // namespace mindspore::lite

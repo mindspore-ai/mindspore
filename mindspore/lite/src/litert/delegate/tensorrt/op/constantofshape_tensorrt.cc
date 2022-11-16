@@ -43,7 +43,15 @@ int ConstantOfShapeTensorRT::IsSupport(const mindspore::schema::Primitive *primi
 int ConstantOfShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto constofshape_op = op_primitive_->value_as_ConstantOfShape();
   auto &&value_vector = constofshape_op->value();
-  auto value_tensor = ctx->ConvertTo1DTensor(*value_vector->begin());
+  CHECK_NULL_RETURN(value_vector);
+  nvinfer1::ITensor *value_tensor;
+  if (static_cast<DataType>(constofshape_op->data_type()) == DataType::kNumberTypeInt32) {
+    auto value = static_cast<int>(*value_vector->begin());
+    value_tensor = ctx->ConvertTo1DTensor(value);
+  } else {
+    auto value = *value_vector->begin();
+    value_tensor = ctx->ConvertTo1DTensor(value);
+  }
   CHECK_NULL_RETURN(value_tensor);
 
   auto unsqueeze_layer = ctx->network()->addShuffle(*value_tensor);
