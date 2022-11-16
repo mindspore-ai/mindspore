@@ -12,39 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-import pytest
-
+import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
+from mindspore import Tensor
+from mindspore.common.api import _cell_graph_executor
 
 
-class Net(nn.Cell):
+class RepeatInterleave(nn.Cell):
     def construct(self, x):
-        output = ops.is_signed(x)
-        return output
+        return ops.repeat_interleave(x, repeats=2, dim=0)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_is_signed_normal(mode):
+def test_repeat_interleave():
     """
-    Feature: is_signed
-    Description: Verify the result of is_signed
+    Feature: tensor.repeat_interleave
+    Description: Test the functionality of repeat_interleave
     Expectation: success
     """
-    ms.set_context(mode=mode)
-    net = Net()
-    x = ms.Tensor([1, 2, 3], ms.int64)
-    y = ms.Tensor([1, 2, 3], ms.uint64)
-    out1 = net(x)
-    out2 = net(y)
-    assert out1
-    assert not out2
+    x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), ms.int32)
+    net = RepeatInterleave()
+    _cell_graph_executor.compile(net, x)

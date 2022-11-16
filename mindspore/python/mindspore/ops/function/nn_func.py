@@ -42,9 +42,6 @@ hardswish_ = P.HSwish()
 mish_ = NN_OPS.Mish()
 selu_ = NN_OPS.SeLU()
 sigmoid_ = NN_OPS.Sigmoid()
-signed_type = [mstype.int8, mstype.byte, mstype.int16, mstype.short, mstype.int32, mstype.intc, mstype.int64,
-               mstype.intp, mstype.float16, mstype.half, mstype.float32, mstype.single, mstype.float64,
-               mstype.double, mstype.complex64, mstype.complex128]
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -1855,35 +1852,6 @@ def is_floating_point(x):
         False
     """
     return x.dtype in [mstype.float32, mstype.float16, mstype.float64]
-
-
-def is_signed(x):
-    """
-    Judge whether the data type of `x` is a signed data type.
-
-    Args:
-        x (Tensor): The input tensor.
-
-    Returns:
-        Bool. If the dtype of `x` is a signed data type, return True. Otherwise, return False.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore as ms
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
-        >>> x = ms.Tensor([1, 2, 3], ms.int64)
-        >>> y = ms.Tensor([1, 2, 3], ms.uint64)
-        >>> output = ops.is_signed(x)
-        >>> output2 = ops.is_signed(y)
-        >>> print(output)
-        True
-        >>> print(output2)
-        False
-    """
-    return x.dtype in signed_type
 
 
 def hardswish(x):
@@ -5030,7 +4998,6 @@ __all__ = [
     'hardshrink',
     'soft_shrink',
     'is_floating_point',
-    'is_signed',
     'flip',
     'fliplr',
     'flipud',

@@ -1313,7 +1313,7 @@ def is_signed(x):
     """
     For details, please refer to :func:`mindspore.ops.is_signed`.
     """
-    return F.is_signed(x)
+    return x.dtype in mstype.signed_type
 
 
 def inv(x):
@@ -1951,12 +1951,12 @@ def repeat(x, repeats, axis=None):
     return P.Concat(axis)(repeated_subs)
 
 
-def repeat_interleave(x, repeats, dims=None):
+def repeat_interleave(x, repeats, dim=None):
     """
-    Repeat elements of a tensor along an axis, like `np.repeat`.
+    For details, please refer to :func:`mindspore.ops.repeat_interleave`.
     """
-    dims = dims if dims is not None else 0
-    return F.repeat_elements(x, repeats, dims)
+    dim = dim if dim is not None else 0
+    return F.repeat_interleave(x, repeats, dim)
 
 
 def hardshrink(x, lambd=0.5):
@@ -3458,13 +3458,6 @@ def asinh(x):
     return F.asinh(x)
 
 
-def arcsinh(x):
-    r"""
-    Computes inverse hyperbolic sine of the input element-wise.
-    """
-    return F.asinh(x)
-
-
 def atan(x):
     r"""
     Computes inverse tangent of the input element-wise.
@@ -3473,13 +3466,6 @@ def atan(x):
 
 
 def atanh(x):
-    r"""
-    Computes inverse hyperbolic tangent of the input element-wise.
-    """
-    return F.atanh(x)
-
-
-def arctanh(x):
     r"""
     Computes inverse hyperbolic tangent of the input element-wise.
     """

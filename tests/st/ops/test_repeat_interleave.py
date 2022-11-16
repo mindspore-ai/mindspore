@@ -16,12 +16,13 @@ import numpy as np
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 
 
 class RepeatInterleave(nn.Cell):
     def construct(self, x):
-        return x.repeat_interleave(repeats=2, dim=0)
+        return ops.repeat_interleave(x, repeats=2, dim=0)
 
 
 @pytest.mark.level0
@@ -32,7 +33,7 @@ class RepeatInterleave(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tensor_repeat_interleave(mode):
+def test_repeat_interleave(mode):
     """
     Feature: tensor.repeat_interleave
     Description: Verify the result of repeat_interleave

@@ -29,8 +29,7 @@ from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive, Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations._inner_ops import Roll
-from mindspore.ops.composite.array_ops import repeat_elements
-
+from mindspore.ops.composite.array_ops import repeat_interleave
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -168,7 +167,6 @@ tensor_operator_registry.register('index_fill', index_fill)
 tensor_operator_registry.register('flip', flip)
 tensor_operator_registry.register('fliplr', fliplr)
 tensor_operator_registry.register('flipud', flipud)
-tensor_operator_registry.register('is_signed', is_signed)
 tensor_operator_registry.register('is_floating_point', is_floating_point)
 tensor_operator_registry.register('bitwise_and', bitwise_and)
 tensor_operator_registry.register('bitwise_or', bitwise_or)
@@ -342,7 +340,7 @@ tensor_operator_registry.register('sinh', sinh)
 tensor_operator_registry.register('sort', P.Sort)
 tensor_operator_registry.register('trunc', trunc)
 tensor_operator_registry.register('imag', imag)
-tensor_operator_registry.register('repeat_interleave', repeat_elements)
+tensor_operator_registry.register('repeat_interleave', repeat_interleave)
 tensor_operator_registry.register('rad2deg', rad2deg)
 tensor_operator_registry.register('deg2rad', deg2rad)
 tensor_operator_registry.register('roll', Roll)
