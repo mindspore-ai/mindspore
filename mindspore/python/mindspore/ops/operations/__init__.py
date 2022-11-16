@@ -45,7 +45,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         UniqueWithPad, Unpack, UnsortedSegmentMax, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, Unstack, UpperBound, Zeros, ZerosLike, AffineGrid, Bincount, CheckNumerics,
                         HammingWindow, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
-                        MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3)
+                        MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
                        Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
@@ -56,7 +56,8 @@ from .control_ops import GeSwitch, Merge
 from .custom_ops import (Custom)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Print, Assert)
-from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation)
+from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
+                        NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBicubic, ResizeBilinearV2)
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
                         FusedAdaFactorWithGlobalNorm)
@@ -78,7 +79,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        CholeskyInverse, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselK1, BesselK1e, BesselY0,
                        BesselY1, Bucketize, Cauchy, Cholesky, CholeskySolve, Betainc,
                        FFTWithSize, Heaviside, Histogram, Hypot, Lcm, LuUnpack, MatrixExp,
-                       MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT)
+                       MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT,
+                       NextAfter, Orgqr, Qr, RaggedRange)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -102,13 +104,15 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
                      ApplyAdamWithAmsgrad, AdaptiveAvgPool3D, AdaptiveMaxPool2D, AdaptiveMaxPool3D,
-                     GridSampler3D, MaxPool3DWithArgmax, MaxUnpool2D)
+                     GridSampler3D, MaxPool3DWithArgmax, MaxUnpool2D, NuclearNorm, NthElement, MultilabelMarginLoss,
+                     PSROIPooling)
 from .other_ops import (Assign, IOU, BartlettWindow, BlackmanWindow, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load,
                         CheckValid, Partial, Depend, identity, Push, Pull, PyFunc, _DynamicLossScale)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
-                         LogUniformCandidateSampler, TruncatedNormal, LogNormalReverse)
+                         LogUniformCandidateSampler, TruncatedNormal, LogNormalReverse, NonDeterministicInts,
+                         ParameterizedTruncatedNormal, RandomPoisson)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd)
 
@@ -558,7 +562,25 @@ __all__ = [
     "ReduceStd",
     "STFT",
     "SubAndFilter",
-    "Svd"
+    "Svd",
+    "NuclearNorm",
+    "NthElement",
+    "MultilabelMarginLoss",
+    "NonMaxSuppressionWithOverlaps",
+    "NextAfter",
+    "Orgqr",
+    "NonDeterministicInts",
+    "NonZero",
+    "PSROIPooling",
+    "ResizeArea",
+    "ResizeBicubic",
+    "ResizeBilinearV2",
+    "Qr",
+    "ParameterizedTruncatedNormal",
+    "RandomGamma",
+    "RandomPoisson",
+    "PadAndShift",
+    "RaggedRange",
 ]
 
 __custom__ = [
