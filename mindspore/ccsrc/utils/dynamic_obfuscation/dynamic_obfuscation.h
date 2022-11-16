@@ -21,10 +21,13 @@
 #include <string>
 #include <map>
 #include <stack>
+#include <set>
 #include "load_mindir/load_model.h"
 #include "include/common/visible.h"
+#include "ops/core_ops.h"
 
 namespace mindspore {
+enum struct ObfCase : unsigned int { NotObfNode, OneInputNoWeightNode, OneInputWithWeightNode };
 class COMMON_EXPORT DynamicObfuscator {
  public:
   DynamicObfuscator(const float obf_ratio, const int obf_password, const int append_password)
@@ -37,6 +40,7 @@ class COMMON_EXPORT DynamicObfuscator {
  private:
   void SubGraphFakeBranch(FuncGraphPtr func_graph);
   std::string ObfuscateOpType(const AnfNodePtr &node);
+  ObfCase ObfuscateOpCase(std::string obf_type);
   CNodePtr GetControlNode(const FuncGraphPtr &func_graph, const AnfNodePtr &prev_node);
   CNodePtr PasswordModeControl(FuncGraphPtr func_graph);
   CNodePtr CustomOpModeControl(FuncGraphPtr func_graph, const AnfNodePtr &prev_node);
@@ -50,12 +54,12 @@ class COMMON_EXPORT DynamicObfuscator {
                              const AnfNodePtr &parent_node);
   FuncGraphPtr BuildFakeGraph(const FuncGraphPtr &fg, const std::vector<CNodePtr> &node_arr,
                               const AnfNodePtr &parent_node);
-  CNodePtr BuildReluNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node);
-  CNodePtr BuildSigmoidNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node);
+  CNodePtr BuildOneInputNoWeightNode(const FuncGraphPtr &fg, const mindspore::AnfNodePtr &input_node,
+                                     const mindspore::PrimitivePtr prim_node);
   CNodePtr BuildOneInputWithWeightNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node, const CNodePtr &conv_node,
                                        const AnfNodePtr &weights);
   CNodePtr AddPartialBranch(FuncGraphPtr fg, FuncGraphPtr fg_sub, const std::vector<mindspore::CNodePtr> &nodes);
-
+  PrimitivePtr get_random_prim(std::string obf_type);
   const float obf_ratio_ = 0.01;
   const int obf_password_;
   const int append_password_;
@@ -67,7 +71,15 @@ class COMMON_EXPORT DynamicObfuscator {
   int used_control_node_ = 0;
   int subgraph_obf_num_ = 0;
   bool switch_branch_ = true;
-  const std::vector<std::string> subgraph_target_op_ = {"Conv2D-op", "ReLU-op", "Sigmoid-op", "MatMul-op"};
+  const std::vector<std::string> single_input_target_op_ = {"ReLU-op",     "Sigmoid-op",  "ReLU6-op",  "Softplus-op",
+                                                            "HSigmoid-op", "FastGeLU-op", "HSwish-op", "Softsign-op",
+                                                            "SeLU-op",     "Tanh-op",     "Square-op"};
+  const std::vector<std::string> single_input_with_weight_target_op_ = {"Conv2D-op", "MatMul-op"};
+  const std::vector<PrimitivePtr> one_input_prim_ = {
+    mindspore::prim::kPrimReLU,     mindspore::prim::kPrimSigmoid,  mindspore::prim::kPrimReLU6,
+    mindspore::prim::kPrimSoftplus, mindspore::prim::kPrimHSigmoid, mindspore::prim::kPrimFastGeLU,
+    mindspore::prim::kPrimHSwish,   mindspore::prim::kPrimSoftsign, mindspore::prim::kPrimSeLU,
+    mindspore::prim::kPrimTanh,     mindspore::prim::kPrimSquare};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_DYNAMIC_OBFUSCATION_H
