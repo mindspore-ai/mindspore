@@ -31,10 +31,6 @@ using tensor::MapTensorPtr;
 //
 class MapTensorPy {
  public:
-  static MapTensorPtr MakeMapTensor(const TypePtr &key_dtype, const TypePtr &value_dtype,
-                                    const ShapeVector &value_shape, const py::object &default_value_obj,
-                                    const py::object &permit_filter_obj, const py::object &evict_filter_obj);
-
   static void UpdateFromNumpy(const MapTensorPtr &map_tensor,
                               const std::tuple<py::array, py::array, py::array> &numpy_data);
 

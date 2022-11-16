@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/make_map_tensor.h"
+#include "ops/make_map_parameter.h"
 #include <vector>
 #include <memory>
 #include "ops/op_utils.h"
@@ -23,21 +23,21 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(MakeMapTensor, BaseOperator);
-AbstractBasePtr MakeMapTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
+MIND_API_OPERATOR_IMPL(MakeMapParameter, BaseOperator);
+AbstractBasePtr MakeMapParameterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // Check number of arguments.
   constexpr int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMakeMapTensor);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMakeMapParameter);
 
-  // MakeMapTensor(key_tensor, value_tensor, default_value)
+  // MakeMapParameter(key_tensor, value_tensor, default_value)
   constexpr int64_t key_arg_index = 0;
   constexpr int64_t value_arg_index = 1;
   constexpr int64_t default_value_arg_index = 2;
   if (!input_args[key_arg_index]->isa<abstract::AbstractTensor>() ||
       !input_args[value_arg_index]->isa<abstract::AbstractTensor>()) {
-    MS_LOG(EXCEPTION) << "The args of MakeMapTensor is invalid, they must be tensor. Please check:"
+    MS_LOG(EXCEPTION) << "The args of MakeMapParameter is invalid, they must be tensor. Please check:"
                       << input_args[key_arg_index]->ToString() << ", " << input_args[value_arg_index]->ToString();
   }
   // key_arg
@@ -68,6 +68,6 @@ AbstractBasePtr MakeMapTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto map_tensor = std::make_shared<tensor::MapTensor>(key_dtype_id, value_dtype_id, value_shape, default_value);
   return std::make_shared<abstract::AbstractMapTensor>(map_tensor);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MakeMapTensor, prim::kPrimMakeMapTensor, MakeMapTensorInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(MakeMapParameter, prim::kPrimMakeMapParameter, MakeMapParameterInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

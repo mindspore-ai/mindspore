@@ -40,6 +40,8 @@ class MapParameter(Parameter):
             be defined in `mindspore.dtype`. Default: float32.
         value_shape (Union[tuple, list, int]): Used to indicate the shape of the value Tensor. The argument should be
             a list of integers, a tuple of integers or an integer. Default: 1.
+        key_tensor (:class:`mindspore.tensor`): The key Tensor.
+        value_tensor (:class:`mindspore.tensor`): The value Tensor.
         default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: 'normal'.
         permit_filter_value (numbers.Number): The permit filter value number. Default: 1.
         evict_filter_value (numbers.Number): The evict filter value number. Default: MAX_SIZE.
@@ -66,13 +68,20 @@ class MapParameter(Parameter):
         >>> m.erase(Tensor([2, 3], dtype=ms.int32))
         >>> print(t)
         [[1. 1. 1.]]
+
     """
 
-    def __new__(cls, key_dtype=ms.int32, value_dtype=ms.float32, value_shape=1, default_value='normal',
-                permit_filter_value=1, evict_filter_value=sys.maxsize, **kwargs):
-        if isinstance(value_shape, numbers.Number):
-            value_shape = (value_shape,)
-        data = Tensor_(value_dtype, value_shape)
+    def __new__(cls, key_dtype=None, value_dtype=None, value_shape=None, key_tensor=None, value_tensor=None,
+                default_value='normal', permit_filter_value=1, evict_filter_value=sys.maxsize, **kwargs):
+        if value_dtype is not None:
+            if isinstance(value_shape, numbers.Number):
+                value_shape = (value_shape,)
+            data = Tensor_(value_dtype, value_shape)
+        elif value_tensor is not None:
+            data = Tensor_(value_tensor.dtype, value_tensor.shape)
+        else:
+            # default
+            data = Tensor_(ms.float32, (1,))
         obj = Tensor_.__new__(cls)
         Tensor_.__init__(obj, data)
         # Compatible attributes with Parameter.
@@ -80,18 +89,45 @@ class MapParameter(Parameter):
         obj.init_mode = None
         obj.is_default_input_init = False
         # MapParameter added attributes.
-        obj.key_dtype = key_dtype
-        obj.value_dtype = value_dtype
-        obj.value_shape = value_shape
+        if key_dtype is not None and key_tensor is not None and key_dtype != key_tensor.dtype:
+            raise ValueError(f"When initializing a MapParameter, 'key_dtype' and 'key_tensor.dtype' should be set the"
+                             f" same.")
+        if key_tensor is not None:
+            obj.key_dtype = key_tensor.dtype
+        else:
+            obj.key_dtype = key_dtype if key_dtype is not None else ms.int32
+
+        if value_dtype is not None and value_tensor is not None and value_dtype != value_tensor.dtype:
+            raise ValueError(f"When initializing a MapParameter, 'value_dtype' and 'value_tensor.dtype' should be set "
+                             f"the same.")
+        if value_tensor is not None:
+            obj.value_dtype = value_tensor.dtype
+        else:
+            obj.value_dtype = value_dtype if value_dtype is not None else ms.float32
+
+        if value_shape is not None and value_tensor is not None and value_shape != value_tensor.shape:
+            raise ValueError(f"When initializing a map_parameter, 'value_shape' and 'value_tensor.shape' should be set "
+                             f"the same.")
+        if value_tensor is not None:
+            obj.value_shape = value_tensor.shape
+        else:
+            obj.value_shape = value_shape if value_shape is not None else (1,)
+
         obj.default_value = default_value
         obj.permit_filter_value = permit_filter_value
         obj.evict_filter_value = evict_filter_value
+        obj.key_tensor = key_tensor
+        obj.value_tensor = value_tensor
         return obj
 
     def __init__(self, name=None, requires_grad=True, **kwargs):
         Parameter.__init__(self, self, name=name, requires_grad=requires_grad)
-        self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape, self.default_value,
-                                      self.permit_filter_value, self.evict_filter_value)
+        if self.key_tensor is not None and self.value_tensor is not None:
+            self._map_tensor = MapTensor_(self.key_tensor, self.value_tensor, self.default_value,
+                                          self.permit_filter_value, self.evict_filter_value)
+        else:
+            self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape, self.default_value,
+                                          self.permit_filter_value, self.evict_filter_value)
 
     def __getitem__(self, key_tensor):
         return self.get(key_tensor, True)
@@ -157,7 +193,7 @@ class MapParameter(Parameter):
         Returns:
             Tensor, the tensor contains all keys.
         """
-        return None
+        return self.key_tensor
 
     def get_values(self):
         """
@@ -166,7 +202,7 @@ class MapParameter(Parameter):
         Returns:
             Tensor, the tensor contains all values.
         """
-        return None
+        return self.value_tensor
 
     def get_data(self):
         """
@@ -175,7 +211,7 @@ class MapParameter(Parameter):
         Returns:
             Tensor, the tensor contains all keys and values.
         """
-        return None
+        return self.key_tensor, self.value_tensor
 
 
     def put(self, key_tensor, value_tensor):

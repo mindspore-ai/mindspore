@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, Tensor, Parameter, ParameterTuple, MapTensor
+from mindspore import context, Tensor, Parameter, ParameterTuple
 from mindspore.experimental import MapParameter
 from mindspore.common.initializer import initializer
 from mindspore.ops import composite as C
@@ -51,7 +51,7 @@ def test_basic_operations():
     m.erase(Tensor([1, 2, 3], dtype=ms.int32))
 
     data = m.get_data()
-    assert data is None
+    assert data == (None, None)
 
     print(m)
 
@@ -171,24 +171,28 @@ def test_grad_net():
     grad(t)
 
 
-def test_map_tensor():
+def test_map_parameter_in_init_and_construct():
     """
-    Feature: MapTensor
-    Description: Test new MapTensor in construct.
+    Feature: MapParameter
+    Description: Test new MapParameter in construct.
     Expectation: New MapTensor in construct without exceptions.
     """
     class MapTensorNet(nn.Cell):
         def __init__(self):
             super().__init__()
             self.default_value = 'zeros'
-            self.map_param = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+            self.map_param_1 = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+            self.key_tensor = Tensor([1, 2], dtype=ms.int32)
+            self.value_tensor = Tensor([[1, 2], [1, 2]], dtype=ms.float32)
+            self.map_param_2 = MapParameter(key_tensor=self.key_tensor, value_tensor=self.value_tensor,
+                                            default_value=self.default_value)
 
         def construct(self):
-            keys = self.map_param.get_keys()
-            values = self.map_param.get_values()
-            new_map_tensor = MapTensor(keys, values, self.default_value)
+            keys = self.map_param_2.get_keys()
+            values = self.map_param_2.get_values()
+            new_map_tensor = MapParameter(keys, values, self.default_value)
             new_data = new_map_tensor.get_data()
-            return new_map_tensor, new_data
+            return self.map_param_1, new_map_tensor, new_data
 
     context.set_context(mode=context.GRAPH_MODE)
     net = MapTensorNet()
@@ -196,37 +200,15 @@ def test_map_tensor():
     print("out:", out)
 
 
-def test_map_tensor_with_keys_values():
+def test_map_parameter_get_data_api():
     """
-    Feature: MapTensor
-    Description: Test new MapTensor in construct.
-    Expectation: New MapTensor in construct without exceptions.
-    """
-    class MapTensorNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.default_value = 'zeros'
-
-        def construct(self):
-            keys = Tensor([1, 2], dtype=ms.int32)
-            values = Tensor([[1, 2], [1, 2]], dtype=ms.float32)
-            return MapTensor(keys, values, self.default_value)
-
-    context.set_context(mode=context.GRAPH_MODE)
-    net = MapTensorNet()
-    out = net()
-    print("out:", out)
-
-
-def test_map_tensor_get_data_api():
-    """
-    Feature: MapTensor
-    Description: Test get_data api for MapTensor.
+    Feature: MapParameter
+    Description: Test get_data api for MapParameter.
     Expectation: get_data api works as expected.
     """
     keys = Tensor([1, 2], dtype=ms.int32)
     values = Tensor([[1, 2], [1, 2]], dtype=ms.float32)
-    map_tensor = MapTensor(keys, values, 'zeros')
+    map_tensor = MapParameter(key_tensor=keys, value_tensor=values, default_value='zeros')
     get_keys = map_tensor.get_keys()
     print("get_keys:", get_keys)
     get_values = map_tensor.get_values()
@@ -236,7 +218,7 @@ def test_map_tensor_get_data_api():
     print("the_values:", the_values)
 
 
-def test_maptensor_filter():
+def test_map_parameter_filter():
     """
     Feature: MapParameter
     Description: Test IR graph compiled with MapParameter, test with filter.
