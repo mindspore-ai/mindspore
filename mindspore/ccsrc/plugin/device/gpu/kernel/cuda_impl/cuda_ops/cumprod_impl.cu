@@ -16,6 +16,7 @@
 
 #include "cumprod_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
 __global__ void Copy(T *input, T *output, size_t size) {
@@ -169,4 +170,12 @@ template CUDA_LIB_EXPORT void CumProd<float>(const float *input, float *output, 
                                              bool reverse_, cudaStream_t stream);
 template CUDA_LIB_EXPORT void CumProd<half>(const half *input, half *output, half *workspace, size_t dim0, size_t dim1,
                                             size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void CumProd<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                             Complex<float> *workspace, size_t dim0, size_t dim1, size_t dim2,
+                                             size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+                                             cudaStream_t stream);
+template CUDA_LIB_EXPORT void CumProd<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                            Complex<double> *workspace, size_t dim0, size_t dim1, size_t dim2,
+                                            size_t stride, size_t stride2, bool exclusive_, bool reverse_,
                                             cudaStream_t stream);

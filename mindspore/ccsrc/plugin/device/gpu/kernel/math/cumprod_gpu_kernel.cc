@@ -25,8 +25,6 @@ constexpr size_t kCumProdOutputsNum = 1;
 constexpr size_t kDimSize0 = 0;
 constexpr size_t kDimSize1 = 1;
 constexpr size_t kDimSize2 = 2;
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
 }  // namespace
 
 template <typename T>
@@ -144,6 +142,10 @@ const std::vector<cumProdPair> &CumProdGpuKernelMod::GetFuncList() const {
      &CumProdGpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &CumProdGpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CumProdGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CumProdGpuKernelMod::LaunchKernel<utils::Complex<double>>},
     // Dynamic shape related.
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
      &CumProdGpuKernelMod::LaunchKernel<int8_t>},
@@ -167,6 +169,13 @@ const std::vector<cumProdPair> &CumProdGpuKernelMod::GetFuncList() const {
      &CumProdGpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
      &CumProdGpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+     &CumProdGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &CumProdGpuKernelMod::LaunchKernel<utils::Complex<double>>},
   };
   return func_list;
 }

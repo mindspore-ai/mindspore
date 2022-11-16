@@ -17,6 +17,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 #include "cumsum_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
 __global__ void Copy(T *input, T *output, size_t size) {
