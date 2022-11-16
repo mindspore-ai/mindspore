@@ -7710,8 +7710,13 @@ class Conv3D(Primitive):
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False, ret_five=True)
         self.add_prim_attr('strides', self.stride)
-        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=False,
-                                               ret_five=True, third_one=False)
+        target = context.get_context("device_target")
+        if target.lower() == "ascend":
+            self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=False,
+                                                   ret_five=True, third_one=True)
+        else:
+            self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=False,
+                                                   ret_five=True, third_one=False)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
