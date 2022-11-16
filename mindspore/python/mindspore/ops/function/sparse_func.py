@@ -256,6 +256,7 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
     Examples:
         >>> from mindspore import Tensor, CSRTensor
         >>> from mindspore import dtype as mstype
+        >>> from mindspore.ops.function import csr_mm
         >>> a_shape = (4, 5)
         >>> a_indptr = Tensor([0, 1, 1, 3, 4], dtype=mstype.int32)
         >>> a_indices = Tensor([0, 3, 4, 0],dtype=mstype.int32)
