@@ -100,9 +100,8 @@ REG_BPROP_BUILDER("Svd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto s2 = ib->Square(s);
   constexpr int64_t max_length = 200000000;
   auto f = ib->Emit("MatrixSetDiagV3",
-                    {SafeReciprocal(ib, ib->Sub(ib->Emit("ExpandDims", {s2, ib->Value<int64_t>(-2)}),
-                                                ib->Emit("ExpandDims", {s2, ib->Value<int64_t>(-1)}))),
-                     ib->ZerosLike(s), ib->Tensor(0, kInt32)},
+                    {SafeReciprocal(ib, ib->Sub(ib->ExpandDims(s2, -2), ib->ExpandDims(s2, -1))), ib->ZerosLike(s),
+                     ib->Tensor(0, kInt32)},
                     {{"align", MakeValue("RIGHT_LEFT")}, {"max_length", MakeValue(max_length)}});
   auto s_inv_mat = MatrixDiag(ib, SafeReciprocal(ib, s));
   std::map<int64_t, std::vector<int64_t>> slices;

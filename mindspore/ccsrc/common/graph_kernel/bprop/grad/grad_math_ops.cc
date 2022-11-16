@@ -844,12 +844,12 @@ REG_BPROP_BUILDER("Ger").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto input_x = ib->GetInput(kIndex0);
   auto input_y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto m1 = ib->Emit("ExpandDims", {input_y, ib->Value<int64_t>(1)});
-  auto m2 = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(1)});
+  auto m1 = ib->ExpandDims(input_y, 1);
+  auto m2 = ib->ExpandDims(input_x, 1);
   ShapeVector axis = {1};
   auto dx = ib->Emit("Squeeze", {ib->MatMul(dout, m1, false, false)}, {{"axis", MakeValue(axis)}});
   ShapeVector perm = {1, 0};
-  auto transpose = ib->Emit("Transpose", {dout, ib->EmitValue(MakeValue(perm))});
+  auto transpose = ib->Transpose(dout, perm);
   auto dy = ib->Emit("Squeeze", {ib->MatMul(transpose, m2, false, false)}, {{"axis", MakeValue(axis)}});
   return {dx, dy};
 });
@@ -1209,18 +1209,16 @@ REG_BPROP_BUILDER("CholeskySolve").SetBody([](const BpropIRBuilder *ib) -> NodeP
   };
   auto dx1 = ib->Emit("CholeskySolve", {dout, x2}, {{"upper", ib->GetAttr("upper")}});
   if (len_x1 == 2) {
-    auto common_term =
-      ib->MatMul(dx1, ib->Emit("Transpose", {out, ib->EmitValue(MakeValue(input_perm))}), false, false);
-    common_term = ib->Add(common_term, (ib->Emit("Transpose", {common_term, ib->EmitValue(MakeValue(input_perm))})));
+    auto common_term = ib->MatMul(dx1, ib->Transpose(out, input_perm), false, false);
+    common_term = ib->Add(common_term, (ib->Transpose(common_term, input_perm)));
     DealWithUpper(common_term);
   } else {
     auto x2_dim_size = static_cast<int64_t>(ib->GetShape(x2).size());
     auto target_order = Range(x2_dim_size - 2);
     target_order.push_back(x2_dim_size - 1);
     target_order.push_back(x2_dim_size - 2);
-    auto common_term =
-      ib->BatchMatMul(dx1, ib->Emit("Transpose", {out, ib->EmitValue(MakeValue(target_order))}), false, false);
-    common_term = ib->Add(common_term, (ib->Emit("Transpose", {common_term, ib->EmitValue(MakeValue(target_order))})));
+    auto common_term = ib->BatchMatMul(dx1, ib->Transpose(out, target_order), false, false);
+    common_term = ib->Add(common_term, (ib->Transpose(common_term, target_order)));
     DealWithUpper(common_term);
   }
   if (flag == 1) {
@@ -1394,9 +1392,9 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetBody([](const BpropIRBuilder *ib) -> N
   auto maindiag_grad = ib->ReduceSum(rhs_conj * grad, ShapeVector{-1LL});
   auto subdiag_grad = ib->ReduceSum(RightShift(ib, rhs_conj) * grad, ShapeVector{-1LL});
   auto rhs_grad = RightShift(ib, superdiag_conj * grad) + maindiag_conj * grad + LeftShift(ib, subdiag_conj * grad);
-  superdiag_grad = ib->Emit("ExpandDims", {superdiag_grad, ib->Value<int64_t>(-2)});
-  maindiag_grad = ib->Emit("ExpandDims", {maindiag_grad, ib->Value<int64_t>(-2)});
-  subdiag_grad = ib->Emit("ExpandDims", {subdiag_grad, ib->Value<int64_t>(-2)});
+  superdiag_grad = ib->ExpandDims(superdiag_grad, -2);
+  maindiag_grad = ib->ExpandDims(maindiag_grad, -2);
+  subdiag_grad = ib->ExpandDims(subdiag_grad, -2);
   return {superdiag_grad, maindiag_grad, subdiag_grad, rhs_grad};
 });
 
@@ -1495,8 +1493,8 @@ REG_BPROP_BUILDER("LpNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   auto input_x_shape = ib->GetShape(input_x);
   if ((!keep_dims) && (!input_x_shape.empty())) {
     for (const auto &i : axis) {
-      dout = ib->Emit("ExpandDims", {dout, ib->Value(i)});
-      out = ib->Emit("ExpandDims", {out, ib->Value(i)});
+      dout = ib->ExpandDims(dout, i);
+      out = ib->ExpandDims(out, i);
     }
   }
   if (p == 0) {
@@ -1598,10 +1596,10 @@ REG_BPROP_BUILDER("ReduceStd").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   }
   if (!keep_dims && !x_shape.empty()) {
     for (const auto &i : axis) {
-      std_d = ib->Emit("ExpandDims", {std_d, ib->Value(i)});
-      std = ib->Emit("ExpandDims", {std, ib->Value(i)});
-      mean_d = ib->Emit("ExpandDims", {mean_d, ib->Value(i)});
-      mean = ib->Emit("ExpandDims", {mean, ib->Value(i)});
+      std_d = ib->ExpandDims(std_d, i);
+      std = ib->ExpandDims(std, i);
+      mean_d = ib->ExpandDims(mean_d, i);
+      mean = ib->ExpandDims(mean, i);
     }
   }
   auto dx = ib->Sub(x, mean);

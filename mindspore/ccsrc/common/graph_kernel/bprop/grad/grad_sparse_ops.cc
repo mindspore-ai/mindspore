@@ -138,9 +138,9 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetBody([](const BpropIRBuilder *ib
   auto dout = ib->GetInput(kIndex5);
   auto dense_grad = ib->Emit("SparseTensorDenseMatmul", {indices, values, dense_shape, dout},
                              {{"adjoint_st", MakeValue(!adj_s)}, {"adjoint_dt", MakeValue(false)}});
-  auto perm = ib->Value<ShapeVector>({1, 0});
+  ShapeVector perm = {1, 0};
   if (adj_d) {
-    dense_grad = ib->Emit("Transpose", {dense_grad, perm});
+    dense_grad = ib->Transpose(dense_grad, perm);
   }
   bool is_half = false;
   auto dense_type = ib->GetDtype(dense);
@@ -165,7 +165,7 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetBody([](const BpropIRBuilder *ib
   } else {
     parts_a = ib->Emit("Gather", {dout, rows, zero});
   }
-  NodePtr tmp1 = adj_d ? ib->Emit("Transpose", {dense, perm}) : dense;
+  NodePtr tmp1 = adj_d ? ib->Transpose(dense, perm) : dense;
   NodePtr tmp2 = adj_s ? rows : cols;
   auto parts_b = ib->Emit("Gather", {tmp1, tmp2, zero});
   auto values_grad = ib->ReduceSum(parts_a * parts_b, {axis});

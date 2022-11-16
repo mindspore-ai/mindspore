@@ -171,10 +171,10 @@ REG_BPROP_BUILDER("SparseGatherV2").SetBody([](const BpropIRBuilder *ib) -> Node
   auto out_shp = ib->GetShape(dout);
   auto ind_shp = ib->GetShape(indices);
   if (out_shp.size() == 0) {
-    dout = ib->Emit("ExpandDims", {dout, ib->Value<int64_t>(-1)});
+    dout = ib->ExpandDims(dout, -1);
   }
   if (ind_shp.size() == 0) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Value<int64_t>(-1)});
+    indices = ib->ExpandDims(indices, -1);
   }
   out_shp = ib->GetShape(dout);
   ind_shp = ib->GetShape(indices);
@@ -218,7 +218,7 @@ REG_BPROP_BUILDER("Sort").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto outer_dim = ib->GetShape(ind_2d)[0];
   auto indices_dtype = ib->GetDtype(indices);
   auto range_flatten_index = ib->Tensor(Range(0, outer_dim * in_lastdim, in_lastdim), indices_dtype);
-  range_flatten_index = ib->Emit("ExpandDims", {range_flatten_index, ib->Value<int64_t>(-1)});
+  range_flatten_index = ib->ExpandDims(range_flatten_index, -1);
   auto ind = ib->Reshape(ib->Add(ind_2d, range_flatten_index), {-1});
   auto x_size = 1;
   for (size_t i = 0; i < top_k_input_shape.size(); ++i) {
@@ -229,12 +229,12 @@ REG_BPROP_BUILDER("Sort").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   if (!transposition.empty()) {
     auto invert_perm = InvertPermutation(transposition);
     dvalue = ib->Transpose(dvalue, invert_perm);
-    auto ind_expand = ib->Emit("ExpandDims", {ind, ib->Value<int64_t>(-1)});
+    auto ind_expand = ib->ExpandDims(ind, -1);
     auto scatter = ib->Emit("ScatterNd", {ind_expand, ib->Reshape(dvalue, {-1}), x_shape_1d});
     auto out_grad = ib->Reshape(scatter, top_k_input_shape);
     dx = ib->Transpose(out_grad, invert_perm);
   } else {
-    auto ind_expand = ib->Emit("ExpandDims", {ind, ib->Value<int64_t>(-1)});
+    auto ind_expand = ib->ExpandDims(ind, -1);
     auto scatter = ib->Emit("ScatterNd", {ind_expand, ib->Reshape(dvalue, {-1}), x_shape_1d});
     dx = ib->Reshape(scatter, top_k_input_shape);
   }
@@ -1133,7 +1133,7 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetBody([](const BpropIRBuilder *ib) -
                                 {{"kernel_size", ib->GetAttr("kernel_size")},
                                  {"strides", ib->GetAttr("strides")},
                                  {"padding", ib->GetAttr("padding")}});
-  x_idx_patched = ib->Emit("Transpose", {x_idx_patched, ib->Value<ShapeVector>({0, 2, 3, 4, 1})});
+  x_idx_patched = ib->Transpose(x_idx_patched, {0, 2, 3, 4, 1});
   x_idx_patched = ib->Cast(x_idx_patched, kInt32);
   auto out_shape = ib->GetShape(out);
   auto out_d = out_shape.at(2);
@@ -1142,10 +1142,9 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetBody([](const BpropIRBuilder *ib) -
   auto out_indices_num = ((((out_d * out_h) * out_w) * ksize_d) * ksize_h) * ksize_w;
   auto out_idx = ib->Tensor(Range(0, out_indices_num), kInt32);
   out_idx = ib->Reshape(out_idx, {1, out_d, out_h, out_w, (ksize_d * ksize_h) * ksize_w});
-  auto idx_tensor = ib->Emit("Concat",
-                             {ib->MakeTuple({ib->Emit("ExpandDims", {x_idx_patched, ib->Value<int64_t>(-1)}),
-                                             ib->Emit("ExpandDims", {out_idx, ib->Value<int64_t>(-1)})})},
-                             {{"axis", MakeValue<int64_t>(-1)}});
+  auto idx_tensor =
+    ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)})},
+             {{"axis", MakeValue<int64_t>(-1)}});
   auto idx_map = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
   std::vector<int64_t> ones(out_indices_num, 1);
@@ -1153,13 +1152,13 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetBody([](const BpropIRBuilder *ib) -
     ib->Emit("ScatterNd", {idx_map, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape)});
   auto sp_tensor = ib->Emit("Slice", {sp_mat_full, ib->Value<ShapeVector>({1, 0}),
                                       ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num})});
-  auto grad = ib->Emit("Transpose", {dout, ib->Value<ShapeVector>({0, 2, 3, 4, 1})});
+  auto grad = ib->Transpose(dout, {0, 2, 3, 4, 1});
   grad = ib->Reshape(grad, {x_n, out_d, out_h, out_w, ksize_d, ksize_h, ksize_w, x_c});
-  auto grad_expended = ib->Emit("Transpose", {grad, ib->Value<ShapeVector>({1, 2, 3, 4, 5, 6, 0, 7})});
+  auto grad_expended = ib->Transpose(grad, {1, 2, 3, 4, 5, 6, 0, 7});
   auto grad_flat = ib->Reshape(grad_expended, {-1, x_n * x_c});
   auto jac = ib->MatMul(sp_tensor, grad_flat, false, false);
   auto dx = ib->Reshape(jac, {x_d, x_h, x_w, x_n, x_c});
-  dx = ib->Emit("Transpose", {dx, ib->Value<ShapeVector>({3, 4, 0, 1, 2})});
+  dx = ib->Transpose(dx, {3, 4, 0, 1, 2});
   return {dx};
 });
 
@@ -1173,8 +1172,8 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto start = ib->Tensor(-1, kFloat32);
   auto stop = ib->Tensor(1, kFloat32);
   auto zero = ib->Tensor(0, kFloat32);
-  auto perm1 = ib->Value<ShapeVector>({1, 0});
-  auto perm2 = ib->Value<ShapeVector>({0, 2, 1});
+  ShapeVector perm1 = {1, 0};
+  ShapeVector perm2 = {0, 2, 1};
   if (output_size.size() == 5) {
     const auto n_value = output_size[kIndex0];
     const auto d_value = output_size[kIndex2];
@@ -1191,17 +1190,17 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     auto out = (h_value * d_value != 1) ? ib->Tile(vecx, {h_value * d_value, 1}) : vecx;
     auto one = ib->Reshape(out, {h_value * w_value * d_value, 1});
     out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
-    out = ib->Emit("Transpose", {out, perm1});
+    out = ib->Transpose(out, perm1);
     if (d_value != 1) {
       out = ib->Tile(out, {d_value, 1});
     }
     auto two = ib->Reshape(out, {h_value * w_value * d_value, 1});
     out = (w_value * h_value != 1) ? ib->Tile(vecz, {w_value * h_value, 1}) : ib->ExpandDims(vecz, 0);
-    out = ib->Emit("Transpose", {out, perm1});
+    out = ib->Transpose(out, perm1);
     auto tre = ib->Reshape(out, {h_value * w_value * d_value, 1});
     auto fou = ib->Emit("OnesLike", {tre});
     auto output = ib->Concat({one, two, tre, fou}, 1);
-    output = ib->Emit("Transpose", {output, perm1});
+    output = ib->Transpose(output, perm1);
     if (n_value != 1) {
       output = ib->Tile(output, {n_value, 1});
     }
@@ -1209,7 +1208,7 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     dout = ib->Reshape(dout, {n_value, d_value * h_value * w_value, 3});
     dout = ib->Cast(dout, kFloat32);
     auto dtheta = ib->BatchMatMul(output, dout);
-    dtheta = ib->Emit("Transpose", {dtheta, perm2});
+    dtheta = ib->Transpose(dtheta, perm2);
     return {dtheta, tre};
   }
   if (output_size.size() == 4) {
@@ -1226,17 +1225,17 @@ REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
     auto out = (h_value != 1) ? ib->Tile(vecx, {h_value, 1}) : vecx;
     auto one = ib->Reshape(out, {h_value * w_value, 1});
     out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
-    out = ib->Emit("Transpose", {out, perm1});
+    out = ib->Transpose(out, perm1);
     auto two = ib->Reshape(out, {h_value * w_value, 1});
     auto tre = ib->Emit("OnesLike", {two});
     auto output = ib->Concat({one, two, tre}, 1);
-    output = ib->Emit("Transpose", {output, perm1});
+    output = ib->Transpose(output, perm1);
     output = ib->Tile(output, {n_value, 1});
     output = ib->Reshape(output, {n_value, 3, h_value * w_value});
     dout = ib->Reshape(dout, {n_value, h_value * w_value, 2});
     dout = ib->Cast(dout, kFloat32);
     auto dtheta = ib->BatchMatMul(output, dout);
-    dtheta = ib->Emit("Transpose", {dtheta, perm2});
+    dtheta = ib->Transpose(dtheta, perm2);
     return {dtheta, tre};
   }
   MS_LOG(EXCEPTION) << "For op[" << ib->name() << "], the length of output_size should be 4 or 5, but got "
