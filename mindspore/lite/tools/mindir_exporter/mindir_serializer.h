@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include <unordered_map>
 #include <fstream>
 #include <set>
@@ -48,6 +49,9 @@ class MindIRSerializer {
   int SaveMindIRTogether();
   int SplitSave();
   int SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file);
+  int ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &func_graph);
+  std::shared_ptr<mindspore::QuantizationParam> ConvertQuantParamTToQuantizationParam(
+    std::vector<schema::QuantParamT> quant_param);
 
  private:
   int ParamDict(const FuncGraphPtr &func_graph);

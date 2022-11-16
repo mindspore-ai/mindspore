@@ -18,7 +18,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fstream>
-#include <vector>
 #include <set>
 #include "mindspore/ccsrc/include/common/debug/dump_proto.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
@@ -26,6 +25,10 @@
 #include "src/common/common.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "mindspore/core/ir/quantization_param.h"
+#include "mindspore/lite/tools/converter/quantizer/quant_param_holder.h"
+#include "mindspore/lite/tools/converter/quantizer/quant_params.h"
+#include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite {
 // unit is byte. model size more than 1G need split.
@@ -112,6 +115,13 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
     MS_LOG(ERROR) << "parse path failed.";
     return ret;
   }
+
+  ret = ConvertQuantHolderToQuantizationParam(func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "add quant parameter holder failed.";
+    return ret;
+  }
+
   ret = RemoveQuantParameterHolder(func_graph);
   if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "remove quant parameter holder failed.";
@@ -151,6 +161,101 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
     return ret;
   }
   return RET_OK;
+}
+
+int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &func_graph) {
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(func_graph, &all_func_graphs);
+  for (auto &graph : all_func_graphs) {
+    auto node_list = TopoSort(graph->get_return());
+    for (auto &node : node_list) {
+      if (!utils::isa<CNodePtr>(node)) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      if (cnode->inputs().empty() || cnode->input(0) == nullptr) {
+        MS_LOG(ERROR) << "the cnode is invalid.";
+        return lite::RET_NULL_PTR;
+      }
+      auto primitive = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
+      if (primitive == nullptr) {
+        MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
+        return RET_OK;
+      }
+      auto quant_params_holder = quant::GetCNodeQuantHolder(primitive);
+      if (quant_params_holder == nullptr ||
+          quant_params_holder->quant_type() == mindspore::schema::QuantType_QUANT_NONE) {
+        continue;
+      }
+
+      auto quant_type = MakeValue(static_cast<int>(quant_params_holder->quant_type()));
+      MS_CHECK_TRUE_MSG(quant_type != nullptr, RET_ERROR, "quant_type is nullptr.");
+
+      primitive->AddAttr(quant::kQuantType, quant_type);
+      auto input_quant_params = quant_params_holder->get_input_quant_params();
+      for (unsigned int index = 0; index < input_quant_params.size(); index++) {
+        auto input = cnode->input(index + quant::kPrimOffset);
+        if (!input->isa<Parameter>()) {
+          continue;
+        }
+        auto parameter_ptr = input->cast<ParameterPtr>();
+        auto tensor = parameter_ptr->default_param()->cast<tensor::TensorPtr>();
+        auto quant_cluster = quant_params_holder->GetQuantClusters(index);
+        if (!quant_cluster.empty()) {
+          QuantizationParam quantization(quant::kClusterQuant);
+          quantization.AddAttr(quant::kClusterCentroidList, MakeValue(quant_cluster));
+          tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{
+            std::make_shared<mindspore::QuantizationParam>(quantization)});
+          continue;
+        }
+        if (quant_params_holder->CheckInit(index, true)) {
+          auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params[index]);
+          tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{quantization_ptr});
+        }
+      }
+
+      auto output_quant_params = quant_params_holder->get_output_quant_params();
+      for (unsigned int index = 0; index < output_quant_params.size(); index++) {
+        if (quant_params_holder->CheckInit(index, false)) {
+          auto quantization_ptr = ConvertQuantParamTToQuantizationParam(output_quant_params[index]);
+          primitive->AddAttr(quant::kQuantParam, quantization_ptr);
+        }
+      }
+    }
+  }
+  return RET_OK;
+}
+
+std::shared_ptr<mindspore::QuantizationParam> MindIRSerializer::ConvertQuantParamTToQuantizationParam(
+  std::vector<schema::QuantParamT> quant_param) {
+  QuantizationParam quantization(quant::kLinearQuant);
+  std::vector<ValuePtr> scale_list;
+  std::vector<ValuePtr> zeroPoint_list;
+  std::vector<ValuePtr> min_list;
+  std::vector<ValuePtr> max_list;
+  std::vector<ValuePtr> varCorr_list;
+  std::vector<ValuePtr> meanCorr_list;
+  std::vector<ValuePtr> numBits_list;
+  std::vector<ValuePtr> narrowRange_list;
+  for (auto quantparamt : quant_param) {
+    scale_list.push_back(MakeValue(quantparamt.scale));
+    zeroPoint_list.push_back(MakeValue(quantparamt.zeroPoint));
+    min_list.push_back(MakeValue(quantparamt.min));
+    max_list.push_back(MakeValue(quantparamt.max));
+    varCorr_list.push_back(MakeValue(quantparamt.varCorr));
+    meanCorr_list.push_back(MakeValue(quantparamt.meanCorr));
+    numBits_list.push_back(MakeValue(quantparamt.numBits));
+    narrowRange_list.push_back(MakeValue(quantparamt.narrowRange));
+  }
+  quantization.AddAttr(quant::kScaleList, std::make_shared<ValueList>(scale_list));
+  quantization.AddAttr(quant::kZeroPointList, std::make_shared<ValueList>(zeroPoint_list));
+  quantization.AddAttr(quant::kMinList, std::make_shared<ValueList>(min_list));
+  quantization.AddAttr(quant::kMaxList, std::make_shared<ValueList>(max_list));
+  quantization.AddAttr(quant::kVarCorrList, std::make_shared<ValueList>(varCorr_list));
+  quantization.AddAttr(quant::kMeanCorrList, std::make_shared<ValueList>(meanCorr_list));
+  quantization.AddAttr(quant::kNumBitList, std::make_shared<ValueList>(numBits_list));
+  quantization.AddAttr(quant::kNarrowRangeList, std::make_shared<ValueList>(narrowRange_list));
+  return std::make_shared<mindspore::QuantizationParam>(quantization);
 }
 
 int MindIRSerializer::SaveMindIRTogether() {

@@ -47,6 +47,19 @@ constexpr int kQuantRange = 127;
 constexpr int kInt8LeftRange = -128;
 constexpr int kInt8RightRange = 127;
 constexpr int kMinIterations = 40;
+constexpr auto kQuantParam = "quant_param";
+constexpr auto kQuantType = "quant_type";
+constexpr auto kClusterQuant = "cluster_quant";
+constexpr auto kClusterCentroidList = "cluster_centroid_list";
+constexpr auto kLinearQuant = "linear_quant";
+constexpr auto kScaleList = "scale_list";
+constexpr auto kZeroPointList = "zero_point_list";
+constexpr auto kMinList = "min_list";
+constexpr auto kMaxList = "max_list";
+constexpr auto kVarCorrList = "var_corr_list";
+constexpr auto kMeanCorrList = "mean_corr_list";
+constexpr auto kNumBitList = "num_bit_list";
+constexpr auto kNarrowRangeList = "narrow_range_list";
 
 const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
                                                  prim::kPrimMatMulFusion, prim::kPrimFullConnection,
