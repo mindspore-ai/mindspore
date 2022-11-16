@@ -32,6 +32,46 @@
 namespace mindspore::opt {
 namespace {
 const size_t kIndexNum = 2;
+int ReplaceUpdateStateWithMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool remove_side_effect) {
+  if (!remove_side_effect) {
+    return lite::RET_NO_CHANGE;
+  }
+  // only solve UpdateState with at lease one Monad input
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  AnfNodePtr monad_input = nullptr;
+  auto first_input = cnode->input(kInputIndexOne);
+  if (CheckPrimitiveType(first_input, prim::kPrimTranspose)) {
+    first_input = first_input->cast<CNodePtr>()->input(kInputIndexOne);
+    MS_CHECK_TRUE_MSG(first_input != nullptr, RET_ERROR, "first_input is nullptr");
+  }
+  auto second_input = cnode->input(kInputIndexTwo);
+  if (CheckPrimitiveType(second_input, prim::kPrimTranspose)) {
+    second_input = second_input->cast<CNodePtr>()->input(kInputIndexOne);
+    MS_CHECK_TRUE_MSG(second_input != nullptr, RET_ERROR, "second_input is nullptr");
+  }
+  if (utils::isa<ValueNode>(first_input)) {
+    auto value_node = first_input->cast<ValueNodePtr>();
+    MS_ASSERT(value_node->value() != nullptr);
+    if (utils::isa<Monad>(value_node->value())) {
+      monad_input = first_input;
+    }
+  }
+  if (utils::isa<ValueNode>(second_input)) {
+    auto value_node = second_input->cast<ValueNodePtr>();
+    MS_ASSERT(value_node->value() != nullptr);
+    if (utils::isa<Monad>(value_node->value())) {
+      monad_input = second_input;
+    }
+  }
+  MS_CHECK_TRUE_MSG(monad_input != nullptr, lite::RET_NO_CHANGE, "not find monad input");
+
+  // find monad input node, using monad node replace UpdateState node
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  manager->Replace(cnode, monad_input);
+  return lite::RET_OK;
+}
+
 int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto first_input = cnode->input(1);
@@ -189,6 +229,10 @@ int RemoveRedundantOpPass::ReplaceUpdateStateOp(const FuncGraphPtr &func_graph, 
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_ASSERT(cnode != nullptr);
+  if (ReplaceUpdateStateWithMonad(func_graph, cnode, remove_side_effect_) == lite::RET_OK) {
+    return lite::RET_OK;
+  }
+
   if (ProcessInputIsMonad(func_graph, cnode) == lite::RET_OK) {
     return lite::RET_OK;
   }
@@ -437,7 +481,7 @@ int RemoveRedundantOpPass::RemoveUmonad(const FuncGraphPtr &func_graph, const Fu
 
 bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  auto manager = func_graph->manager();
+  auto manager = Manage(func_graph, true);
   MS_ASSERT(manager != nullptr);
   if (!is_train_model_) {
     RemoveUmonad(func_graph, manager);
