@@ -61,6 +61,7 @@ from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
+from mindspore.ops.operations.math_ops import TridiagonalSolve
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import Diagonal
 from mindspore.ops.operations.array_ops import Transpose, MatrixSetDiagV3
@@ -1172,6 +1173,29 @@ def get_bprop_bernoulli(self):
 
     def bprop(x, p, out, dout):
         return zeros_like(x), zeros_like(p)
+
+    return bprop
+
+
+@bprop_getters.register(TridiagonalSolve)
+def get_bprop_tridiagonalsolve(self):
+    """Grad definition for 'TridiagonalSolve' operation"""
+    tridiagonalsolve = TridiagonalSolve()
+    def bprop(diagonals, rhs, out, dout):
+        diags = diagonals
+        diag1 = diags[..., 1, :]
+        zeros1 = P.Zeros()(diags.shape[:-2] + (1,), diags.dtype)
+        superdiag1 = P.Concat(-1)((diags[..., 2, 1:], zeros1))
+        subdiag1 = P.Concat(-1)((zeros1, diags[..., 0, :-1]))
+        diags_transposed = P.Stack(-2)([superdiag1, diag1, subdiag1])
+        grad_rhs = tridiagonalsolve(diags_transposed, dout)
+        diag2 = P.ReduceSum()(grad_rhs * out, -1)
+        zeros2 = P.Zeros()(grad_rhs.shape[:-2] + (1, grad_rhs.shape[-1]), grad_rhs.dtype)
+        superdiag2 = P.ReduceSum()(grad_rhs * P.Concat(-2)((out[..., 1:, :], zeros2)), -1)
+        subdiag2 = P.ReduceSum()(grad_rhs * P.Concat(-2)((zeros2, out[..., :-1, :])), -1)
+        a = (P.Stack(-2)([superdiag2, diag2, subdiag2]))
+        grad_diags = 0 - a
+        return grad_diags, grad_rhs
 
     return bprop
 

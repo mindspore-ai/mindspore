@@ -110,6 +110,7 @@ from mindspore.ops.operations._grad_ops import MinimumGradGrad
 from mindspore.ops.operations._grad_ops import CholeskyGrad
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
+from mindspore.ops.operations.math_ops import TridiagonalSolve
 from mindspore.ops.operations.image_ops import ResizeBicubic
 from mindspore.ops.operations._grad_ops import ResizeBicubicGrad
 from mindspore.ops.operations._grad_ops import MaximumGradGrad
@@ -2550,6 +2551,11 @@ test_case_math_ops = [
                         Tensor(np.array([[1, 2, 3]]).astype(np.float32)),
                         Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))]}),
+    ('TridiagonalSolve', {
+        'block': TridiagonalSolve(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0], [3.0, 4.0, 5.0]]).astype(np.float32)),
+                        Tensor(np.array([[1.0], [2.0], [3.0]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[0.], [1.], [-0.5]]).astype(np.float32))]}),
     ('Trace', {
         'block': Trace(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]).astype(np.float32))],
