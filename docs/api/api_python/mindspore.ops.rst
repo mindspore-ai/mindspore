@@ -195,6 +195,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.BoundingBoxDecode
     mindspore.ops.BoundingBoxEncode
     mindspore.ops.CheckValid
+    mindspore.ops.CombinedNonMaxSuppression
     mindspore.ops.CropAndResize
     mindspore.ops.ExtractVolumePatches
     mindspore.ops.IOU
@@ -235,6 +236,9 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Cholesky
     mindspore.ops.CholeskyInverse
     mindspore.ops.CholeskySolve
+    mindspore.ops.CompareAndBitpack
+    mindspore.ops.Complex
+    mindspore.ops.ComplexAbs
     mindspore.ops.Cross
 
 逐元素运算
@@ -425,6 +429,8 @@ Array操作
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.CheckNumerics
+    mindspore.ops.Coalesce
+    mindspore.ops.Col2Im
     mindspore.ops.Concat
     mindspore.ops.ConjugateTranspose
     mindspore.ops.Cummax

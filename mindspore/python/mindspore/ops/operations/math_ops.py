@@ -5712,7 +5712,7 @@ class Conj(Primitive):
 
 class ComplexAbs(Primitive):
     r"""
-    Returns a Tensor that is the absolute value part of the input.
+    Returns a Tensor that contains the magnitudes of the input.
 
     The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
 

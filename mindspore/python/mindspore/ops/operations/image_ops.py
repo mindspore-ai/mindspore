@@ -1077,14 +1077,14 @@ class CombinedNonMaxSuppression(Primitive):
           if q is equal to number of classes, class-specific boxes are used.
         - **scores** (Tensor) - A Tensor of type float32 and shape (batch_size, num_boxes, num_classes)
           representing a single score corresponding to each box (each row of boxes).
-        - **max_output_size_per_class** - A 0D Tensor of type int32, representing the max number of boxes to be
+        - **max_output_size_per_class** (Tensor) - A 0D Tensor of type int32, representing the max number of boxes to be
           selected by non max suppression per class.
-        - **max_total_size** - A 0D Tensor of type int32, representing the maximum number of boxes retained over all
-          classes.
-        - **iou_threshold** - A 0-D float32 tensor representing the threshold for deciding whether
+        - **max_total_size** (Tensor) - A 0D Tensor of type int32, representing the maximum number of boxes retained
+          over all classes.
+        - **iou_threshold** (Tensor) - A 0D float32 tensor representing the threshold for deciding whether
           boxes overlap too much with respect to IOU, and iou_threshold must be equal or greater
           than 0 and be equal or smaller than 1.
-        - **score_threshold** - A 0-D float32 tensor representing the threshold for deciding when to remove
+        - **score_threshold** (Tensor) - A 0D float32 tensor representing the threshold for deciding when to remove
           boxes based on score.
 
     Outputs:

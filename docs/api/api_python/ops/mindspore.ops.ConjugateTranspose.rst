@@ -1,7 +1,7 @@
 ﻿mindspore.ops.ConjugateTranspose
 =================================
 
-.. py:class:: mindspore.ops.ConjugateTranspose()
+.. py:class:: mindspore.ops.ConjugateTranspose
 
     计算 `x` 按 `perm` 进行行列变换后的共轭矩阵。
 
