@@ -139,7 +139,7 @@ class NoRepeatNGram(PrimitiveWithInfer):
         ValueError: If the beam_width of `state_seq` and `log_probs` are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> no_repeat_ngram = ops.NoRepeatNGram(ngram_size=3)

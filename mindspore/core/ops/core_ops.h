@@ -239,6 +239,7 @@ constexpr auto kUnsortedSegmentSum = "UnsortedSegmentSum";
 constexpr auto kUnsortedSegmentSumD = "UnsortedSegmentSumD";
 constexpr auto kUnsortedSegmentProd = "UnsortedSegmentProd";
 constexpr auto kBincount = "Bincount";
+constexpr auto kNoRepeatNGram = "NoRepeatNGram";
 
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";

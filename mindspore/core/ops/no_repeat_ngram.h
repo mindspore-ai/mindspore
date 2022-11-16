@@ -35,6 +35,12 @@ class MIND_API NoRepeatNGram : public BaseOperator {
   NoRepeatNGram() : BaseOperator(kNameNoRepeatNGram) { InitIOName({"state_seq", "log_probs"}, {"out"}); }
   /// \brief Init.
   void Init() const {}
+  /// \brief Set axis.
+  void set_ngram(const int64_t ngram);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
+  int64_t get_ngram() const;
 };
 
 abstract::AbstractBasePtr NoRepeatNGramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
