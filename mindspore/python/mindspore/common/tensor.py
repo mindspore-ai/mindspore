@@ -54,9 +54,17 @@ def _check_input_data_type(input_data):
                     np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
     if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
             input_data.dtype.kind != 'U' and input_data.dtype.kind != 'S':  # Support dtype np.str_
-        raise TypeError(f"For Tensor, the input_data is a numpy array, "
-                        f"but it's data type: {input_data.dtype} is not in supported list: "
-                        f"{list(i.__name__ for i in valid_dtypes)}.")
+        for index, x in np.ndenumerate(input_data):
+            new_line = '\n'
+            if np.array(x).dtype not in valid_dtypes:
+                raise TypeError(f"initializing tensor by numpy array failed, because the "
+                                f"element type '{type(x)}' of array is not supported.\n"
+                                f"The element index in array: {index}, numpy array: {input_data}.\n"
+                                f"The supported element type of ndarray as follow: "
+                                f"{new_line}{new_line.join(map(str, valid_dtypes))}")
+        raise TypeError(f"initializing tensor by numpy array failed, numpy array: {input_data}, "
+                        f"data type: {input_data.dtype}.\nThe supported element type of ndarray "
+                        f"as follow: {new_line}{new_line.join(map(str, valid_dtypes))}")
     if isinstance(input_data, np.ndarray) and input_data.dtype.kind == "S" and \
             input_data.shape and context.get_context("enable_ge"):
         raise TypeError("For binary string input in GE mode, the shape of the data must be ()")
