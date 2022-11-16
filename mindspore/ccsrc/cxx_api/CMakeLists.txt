@@ -54,7 +54,7 @@ if(ENABLE_D OR ENABLE_GPU)
     list(APPEND MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc)
 endif()
 
-if(ENABLE_ACL AND NOT BUILD_LITE)
+if(NOT BUILD_LITE)
     list(APPEND MSLIB_SRC_DEPEND
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc)
     list(APPEND MSLIB_SRC_DEPEND ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc)
@@ -108,33 +108,34 @@ elseif(MODE_ASCEND_ACL)
     if(MS_BUILD_GRPC)
         target_link_libraries(mindspore_shared_lib PRIVATE mindspore::grpc++)
     endif()
+    set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
+else()
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        # wheel package and ut
+        add_library(api_lib SHARED ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
+            ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc
+            )
+        target_link_libraries(api_lib PRIVATE mindspore_shared_lib -Wl,--no-as-needed ${PYTHON_LIBRARIES})
+        set_target_properties(api_lib PROPERTIES OUTPUT_NAME mindspore)
+        set_target_properties(api_lib PROPERTIES INSTALL_RPATH "$ORIGIN")
+    endif()
 endif()
 
 if(ENABLE_D OR ENABLE_GPU)
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${SECUREC_LIBRARY}
             mindspore_backend mindspore_core mindspore_common proto_input mindspore::protobuf)
-
-    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        add_library(api_lib SHARED ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
-                ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc
-                )
-        target_link_libraries(api_lib PRIVATE mindspore_shared_lib -Wl,--no-as-needed ${PYTHON_LIBRARIES})
-        set_target_properties(api_lib PROPERTIES OUTPUT_NAME mindspore)
-        set_target_properties(api_lib PROPERTIES INSTALL_RPATH "$ORIGIN")
-    endif()
 else()
     if(BUILD_LITE)
         target_link_libraries(mindspore_shared_lib PRIVATE mindspore_core ${SECUREC_LIBRARY})
     else()
         target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIBG} ${SECUREC_LIBRARY}
                 mindspore_backend mindspore mindspore_core mindspore_common proto_input mindspore::protobuf)
-        set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
     endif()
 endif()
 
@@ -175,20 +176,23 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 # duplicate, should be remove after backend decoupling is done
-    set(MINDSPORE_RPATH $ORIGIN)
+    set(MINDSPORE_SHARED_LIB_RPATH $ORIGIN)
     if(MODE_ASCEND_ACL)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH
-            ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH
-            ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH
-            ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
+        set(MINDSPORE_SHARED_LIB_RPATH ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
+        set(MINDSPORE_SHARED_LIB_RPATH ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
+        set(MINDSPORE_SHARED_LIB_RPATH ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/latest/lib64)
+        set(MINDSPORE_SHARED_LIB_RPATH
+            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+        set(MINDSPORE_SHARED_LIB_RPATH
+            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+        set(MINDSPORE_SHARED_LIB_RPATH "${MINDSPORE_SHARED_LIB_RPATH}\
+            :/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling")
+        set(MINDSPORE_SHARED_LIB_RPATH
+            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+        set(MINDSPORE_SHARED_LIB_RPATH "${MINDSPORE_SHARED_LIB_RPATH}\
+            :/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling")
+        set(MINDSPORE_SHARED_LIB_RPATH
+            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
     endif()
-    set_target_properties(mindspore_shared_lib PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+    set_target_properties(mindspore_shared_lib PROPERTIES INSTALL_RPATH ${MINDSPORE_SHARED_LIB_RPATH})
 endif()

@@ -68,6 +68,21 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+namespace {
+std::string GetCurrentDir() {
+#ifndef _WIN32
+  Dl_info dl_info;
+  if (dladdr(reinterpret_cast<void *>(GetCurrentDir), &dl_info) == 0) {
+    MS_LOG(WARNING) << "Get dladdr error";
+    return "";
+  }
+  std::string cur_so_path = dl_info.dli_fname;
+  return dirname(cur_so_path.data());
+#else
+  return "";
+#endif
+}
+}  // namespace
 using KernelGraph = mindspore::session::KernelGraph;
 
 static thread_local bool cur_thread_device_inited{false};
@@ -759,7 +774,8 @@ uint32_t GPUKernelExecutor::GetRankID() const {
 
 bool GPUDeviceResManager::LoadCollectiveCommLib() {
 #ifdef ENABLE_MPI
-  std::string nvidia_comm_lib_name = "libnvidia_collective.so";
+  std::string nvidia_comm_lib_name = GetCurrentDir() + "/gpu" + std::to_string(CUDA_VERSION / 1000) + "." +
+                                     std::to_string(CUDA_VERSION / 10 % 10) + "/libnvidia_collective.so";
   auto loader = std::make_shared<CollectiveCommLibLoader>(nvidia_comm_lib_name);
   MS_EXCEPTION_IF_NULL(loader);
   if (!loader->Initialize()) {

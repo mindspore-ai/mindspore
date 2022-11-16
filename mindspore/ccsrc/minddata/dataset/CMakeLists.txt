@@ -70,10 +70,6 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-abstract-non-virtual-dtor")
-else()
-    if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
-    endif()
 endif()
 
 set(MINDDATA_LOG_ADAPTER_SRC ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/util/md_log_adapter.cc)
@@ -295,7 +291,8 @@ if(MS_BUILD_GRPC)
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin" AND NOT MSLITE_ENABLE_CLOUD_MIND_DATA)
-    set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+    set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH
+        ${ORIGIN_PATH}:${ORIGIN_PATH}/lib:${ORIGIN_PATH}/lib/plugin)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")

@@ -20,7 +20,7 @@ from mindspore import context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode,\
                                            _get_ps_context
 from mindspore import log as logger
-from mindspore._c_expression import CollectiveManager, set_cluster_exit_with_exception
+from mindspore._c_expression import CollectiveManager, set_cluster_exit_with_exception, MSContext
 
 HCCL_LIB = 'libhccl_plugin.so'
 
@@ -29,7 +29,7 @@ def hccl_load_lib():
     """load hccl lib"""
     try:
         base_dir = os.path.dirname(os.path.realpath(__file__))
-        lib_path = os.path.join(base_dir, "../lib", HCCL_LIB)
+        lib_path = os.path.join(base_dir, "../lib/plugin", HCCL_LIB)
         ctypes.CDLL(lib_path)
     except Exception:
         raise RuntimeError('Get hccl lib error.')
@@ -37,7 +37,8 @@ def hccl_load_lib():
 _HCCL_TEST_AVAILABLE = False
 
 try:
-    hccl_load_lib()
+    if MSContext.get_instance().is_ascend_plugin_loaded():
+        hccl_load_lib()
 except RuntimeError:
     _HCCL_TEST_AVAILABLE = True
 

@@ -2,11 +2,11 @@ add_library(hccl_plugin SHARED hccl_plugin.cc)
 target_include_directories(hccl_plugin PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
 add_dependencies(hccl_plugin graph)
 
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64/plugin/opskernel)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64/plugin/opskernel)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64/plugin/opskernel)
+set(HCCL_RPATH ${HCCL_RPATH}:/usr/local/Ascend/nnae/latest/lib64/plugin/opskernel)
+set(HCCL_RPATH ${HCCL_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64/plugin/opskernel)
+set(HCCL_RPATH ${HCCL_RPATH}:/usr/local/Ascend/latest/lib64/plugin/opskernel)
 
-set_target_properties(hccl_plugin PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+set_target_properties(hccl_plugin PROPERTIES INSTALL_RPATH ${HCCL_RPATH})
 
 find_library(HCCL hccl ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(REGISTER register ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})

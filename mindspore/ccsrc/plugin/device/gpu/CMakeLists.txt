@@ -37,6 +37,7 @@ add_library(mindspore_axx_api_gpu_obj OBJECT ${API_INFER_GPU})
 list(APPEND GPU_SUB_OBJECTS_SRC $<TARGET_OBJECTS:mindspore_axx_api_gpu_obj>)
 
 add_library(mindspore_gpu SHARED ${GPU_SUB_OBJECTS_SRC})
+set_target_properties(mindspore_gpu PROPERTIES SOVERSION ${CUDA_VERSION})
 if(MSVC)
 target_link_options(mindspore_gpu PRIVATE /FORCE:UNRESOLVED)
 endif()
@@ -44,7 +45,8 @@ target_link_libraries(mindspore_gpu PRIVATE mindspore_backend mindspore_core min
 target_link_libraries(mindspore_gpu PRIVATE mindspore_shared_lib)
 target_link_libraries(mindspore_gpu PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_gpu PRIVATE securec)
-set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH
+        ${ORIGIN_PATH}:${ORIGIN_PATH}/gpu${CUDA_VERSION}:${ORIGIN_PATH}/../:/usr/local/cuda/lib64)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
 if(NOT WIN32)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::ssl mindspore::crypto)
@@ -63,7 +65,9 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib/x64/cuda.lib
             ${CUDA_PATH}/lib/x64/cusolver.lib
             ${CUDA_PATH}/lib/x64/cufft.lib
-            ${CUDA_PATH}/lib/x64/cusparse.lib)
+            ${CUDA_PATH}/lib/x64/cusparse.lib
+            ${CUDA_PATH}/lib/x64/libnvrtc.so
+            )
     else()
     target_link_libraries(mindspore_gpu PRIVATE cuda_ops
             ${CUBLAS_LIBRARY_PATH}
@@ -73,7 +77,9 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib64/stubs/libcuda.so
             ${CUDA_PATH}/lib64/libcusolver.so
             ${CUDA_PATH}/lib64/libcufft.so
-            ${CUDA_PATH}/lib64/libcusparse.so)
+            ${CUDA_PATH}/lib64/libcusparse.so
+            ${CUDA_PATH}/lib64/libnvrtc.so
+            )
     endif()
 
     if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND ${CUDA_VERSION} VERSION_GREATER "11.0")

@@ -73,10 +73,10 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         -pthread
     )
 
-    set(INSTALL_LIBRARY_DIR lib)
+    set(INSTALL_LIBRARY_DIR lib/plugin)
     install(TARGETS mindspore_aicpu_kernels OPTIONAL
         EXPORT mindspore_aicpu_kernels-targets
-        LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}
+        LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}/ascend
     )
 
 endif()

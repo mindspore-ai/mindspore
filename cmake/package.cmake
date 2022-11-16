@@ -19,45 +19,18 @@ set(CPACK_PYTHON_VERSION ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR})
 
 if(ENABLE_GPU)
     set(CPACK_MS_BACKEND "ms")
-    set(CPACK_MS_TARGET "gpu or cpu")
-    if(BUILD_DEV_MODE)
-        # providing cuda11 version of dev package only
-        set(CPACK_MS_PACKAGE_NAME "mindspore-cuda11-dev")
-    else()
-        set(CPACK_MS_PACKAGE_NAME "mindspore-gpu")
-    endif()
 elseif(ENABLE_D)
     set(CPACK_MS_BACKEND "ms")
-    set(CPACK_MS_TARGET "ascend or cpu")
-    if(BUILD_DEV_MODE)
-        set(CPACK_MS_PACKAGE_NAME "mindspore-ascend-dev")
-    else()
-        set(CPACK_MS_PACKAGE_NAME "mindspore-ascend")
-    endif()
 elseif(ENABLE_CPU)
     set(CPACK_MS_BACKEND "ms")
-    set(CPACK_MS_TARGET "cpu")
-    if(BUILD_DEV_MODE)
-        set(CPACK_MS_PACKAGE_NAME "mindspore-dev")
-    else()
-        set(CPACK_MS_PACKAGE_NAME "mindspore")
-    endif()
-elseif(ENABLE_ACL)
-    set(CPACK_MS_BACKEND "debug")
-    set(CPACK_MS_TARGET "ascend or gpu or cpu")
-    if(BUILD_DEV_MODE)
-        set(CPACK_MS_PACKAGE_NAME "mindspore-ascend-dev")
-    else()
-        set(CPACK_MS_PACKAGE_NAME "mindspore-ascend")
-    endif()
 else()
     set(CPACK_MS_BACKEND "debug")
-    set(CPACK_MS_TARGET "ascend or gpu or cpu")
-    if(BUILD_DEV_MODE)
-        set(CPACK_MS_PACKAGE_NAME "mindspore-dev")
-    else()
-        set(CPACK_MS_PACKAGE_NAME "mindspore")
-    endif()
+endif()
+if(BUILD_DEV_MODE)
+    # providing cuda11 version of dev package only
+    set(CPACK_MS_PACKAGE_NAME "mindspore-dev")
+else()
+    set(CPACK_MS_PACKAGE_NAME "mindspore")
 endif()
 include(CPack)
 
@@ -114,9 +87,10 @@ endif()
 
 if(ENABLE_GPU)
     install(
-            TARGETS mindspore_gpu
+            TARGETS mindspore_gpu LIBRARY
             DESTINATION ${INSTALL_PLUGIN_DIR}
             COMPONENT mindspore
+            NAMELINK_SKIP
     )
 endif()
 
@@ -201,17 +175,17 @@ if(ENABLE_GPU)
     if(ENABLE_MPI)
         install(
           TARGETS nvidia_collective
-          DESTINATION ${INSTALL_LIB_DIR}
+          DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
           COMPONENT mindspore
         )
         if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND GPU_BACKEND_CUDA)
-            install(FILES ${nccl_LIBPATH}/libnccl.so.2.7.6 DESTINATION ${INSTALL_LIB_DIR}
+            install(FILES ${nccl_LIBPATH}/libnccl.so.2.7.6 DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
                     RENAME libnccl.so.2 COMPONENT mindspore)
         endif()
     endif()
     install(
             TARGETS cuda_ops
-            DESTINATION ${INSTALL_LIB_DIR}
+            DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
             COMPONENT mindspore
     )
 endif()
@@ -220,7 +194,7 @@ if(ENABLE_D)
     if(ENABLE_MPI)
         install(
                 TARGETS ascend_collective
-                DESTINATION ${INSTALL_LIB_DIR}
+                DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
         )
     endif()
@@ -245,14 +219,14 @@ if(ENABLE_D OR ENABLE_ACL)
     if(ENABLE_D)
         install(
           TARGETS hccl_plugin
-          DESTINATION ${INSTALL_LIB_DIR}
+          DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
           COMPONENT mindspore
         )
     endif()
     if(ENABLE_ACL)
         install(
                 TARGETS dvpp_utils
-                DESTINATION ${INSTALL_LIB_DIR}
+                DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
         )
     endif()
@@ -329,6 +303,29 @@ if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
         DESTINATION ${INSTALL_PY_DIR}/
         COMPONENT mindspore
     )
+    if(ENABLE_CPU AND NOT ENABLE_GPU AND NOT ENABLE_D)
+        install(
+                TARGETS akg
+                DESTINATION ${INSTALL_PLUGIN_DIR}/cpu
+                COMPONENT mindspore
+        )
+    endif()
+
+    if(ENABLE_GPU)
+        install(
+                TARGETS akg
+                DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
+                COMPONENT mindspore
+        )
+    endif()
+
+    if(ENABLE_D)
+        install(
+                TARGETS akg
+                DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+                COMPONENT mindspore
+        )
+    endif()
 endif()
 
 if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset)

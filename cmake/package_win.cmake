@@ -17,29 +17,15 @@ set(CPACK_PYTHON_VERSION ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR})
 
 if(ENABLE_GPU)
   set(CPACK_MS_BACKEND "ms")
-  set(CPACK_MS_TARGET "gpu or cpu")
-  if(BUILD_DEV_MODE)
-    # providing cuda11 version of dev package only
-    set(CPACK_MS_PACKAGE_NAME "mindspore_cuda11_dev")
-  else()
-    set(CPACK_MS_PACKAGE_NAME "mindspore_gpu")
-  endif()
 elseif(ENABLE_CPU)
   set(CPACK_MS_BACKEND "ms")
-  set(CPACK_MS_TARGET "cpu")
-  if(BUILD_DEV_MODE)
-    set(CPACK_MS_PACKAGE_NAME "mindspore_dev")
-  else()
-    set(CPACK_MS_PACKAGE_NAME "mindspore")
-  endif()
 else()
   set(CPACK_MS_BACKEND "debug")
-  set(CPACK_MS_TARGET "ascend or gpu or cpu")
-  if(BUILD_DEV_MODE)
-    set(CPACK_MS_PACKAGE_NAME "mindspore_dev")
-  else()
-    set(CPACK_MS_PACKAGE_NAME "mindspore")
-  endif()
+endif()
+if(BUILD_DEV_MODE)
+  set(CPACK_MS_PACKAGE_NAME "mindspore_dev")
+else()
+  set(CPACK_MS_PACKAGE_NAME "mindspore")
 endif()
 include(CPack)
 
@@ -213,9 +199,10 @@ if(ENABLE_GPU)
     COMPONENT mindspore
   )
   install(
-    TARGETS mindspore_gpu
+    TARGETS mindspore_gpu LIBRARY
     DESTINATION ${INSTALL_PLUGIN_DIR}
     COMPONENT mindspore
+    NAMELINK_SKIP
   )
 endif()
 
