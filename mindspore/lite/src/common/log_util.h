@@ -61,6 +61,14 @@
     }                                                                 \
   } while (0)
 
+#define CHECK_LARGE_RETURN(size1, size2)                               \
+  do {                                                                 \
+    if ((size1) > (size2)) {                                           \
+      MS_LOG(ERROR) << #size1 << " must not be large than " << #size2; \
+      return mindspore::lite::RET_ERROR;                               \
+    }                                                                  \
+  } while (0)
+
 #define CHECK_NOT_EQUAL_RETURN(size1, size2)                     \
   do {                                                           \
     if ((size1) != (size2)) {                                    \
