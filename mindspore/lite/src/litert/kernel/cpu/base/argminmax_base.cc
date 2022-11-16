@@ -28,8 +28,8 @@ using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
 int ArgMinMaxCPUKernel::Prepare() {
-  CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
-  CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), C1NUM);
+  CHECK_LARGE_RETURN(out_tensors_.size(), C2NUM);
   CHECK_NULL_RETURN(arg_param_);
   arg_param_->data_type_ = kNumberTypeFloat32;
   if (!InferShapeDone()) {
@@ -74,7 +74,7 @@ int ArgMinMaxCPUKernel::Run() {
   }
   CHECK_NULL_RETURN(shape.data());
   void *output_value = nullptr;
-  if (out_tensors_.size() == 2) {
+  if (out_tensors_.size() == C2NUM) {
     output_value = out_tensors_.at(1)->data();
     if (output_value == nullptr) {
       return RET_NULL_PTR;
@@ -82,7 +82,7 @@ int ArgMinMaxCPUKernel::Run() {
   }
 
   CHECK_NULL_RETURN(ms_context_->allocator);
-  if (arg_param_->topk_ > 1 || arg_param_->keep_dims_) {
+  if (arg_param_->topk_ > C1NUM || arg_param_->keep_dims_) {
     MS_CHECK_FALSE(INT_MUL_OVERFLOW(static_cast<int>(sizeof(ArgElement)), shape[arg_param_->axis_]), RET_ERROR);
     arg_param_->arg_elements_ =
       reinterpret_cast<ArgElement *>(ms_context_->allocator->Malloc(sizeof(ArgElement) * shape[arg_param_->axis_]));
