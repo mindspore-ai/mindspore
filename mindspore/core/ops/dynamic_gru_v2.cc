@@ -54,7 +54,6 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
     num_proj = GetValue<int64_t>(primitive->GetAttr(kNumProj));
   }
 
-  const size_t kNumOne = 1;
   const size_t kNumTwo = 2;
   const size_t kNumThree = 3;
   if (!is_dynamic_rank) {
@@ -83,7 +82,9 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
     if (input_args[kInputIndex3]->BuildType()->type_id() != kMetaTypeNone) {
       auto binput_shape =
         CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-      if (!IsDynamic(binput_shape) && binput_shape.size() == kNumOne && binput_shape[0] == valid_shape[0]) {
+      auto binput_shape_ptr = input_args[kInputIndex3]->BuildShape();
+      if (!IsDynamic(binput_shape)) {
+        (void)CheckAndConvertUtils::CheckTensorShapeSame({{"binput_shape", binput_shape_ptr}}, valid_shape, prim_name);
         placeholder_map[kInputIndex3] = false;
       }
     }
@@ -91,15 +92,18 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
     if (input_args[kInputIndex4]->BuildType()->type_id() != kMetaTypeNone) {
       auto bhidden_shape =
         CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-      if (!IsDynamic(bhidden_shape) && bhidden_shape.size() == kNumOne && bhidden_shape[0] == valid_shape[0]) {
+      auto bhidden_shape_ptr = input_args[kInputIndex4]->BuildShape();
+      if (!IsDynamic(bhidden_shape)) {
+        (void)CheckAndConvertUtils::CheckTensorShapeSame({{"bhidden_shape", bhidden_shape_ptr}}, valid_shape,
+                                                         prim_name);
         placeholder_map[kInputIndex4] = false;
       }
     }
 
     if (input_args[kInputIndex5]->BuildType()->type_id() != kMetaTypeNone) {
       auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', the dimension of 'seq_length' must be None, but got "
-                        << seq_shape << ".";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of 'seq_length' must be None, but got "
+                               << seq_shape << ".";
     }
   }
 
