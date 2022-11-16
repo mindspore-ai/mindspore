@@ -16,6 +16,7 @@
 
 #include "src/litert/kernel/ascend/src/custom_kernel.h"
 #include <utility>
+#include <map>
 #include "include/registry/register_kernel.h"
 #include "include/api/types.h"
 #include "include/api/data_type.h"
@@ -33,12 +34,14 @@ constexpr auto kNHWCWidthIdx = 2;
 constexpr auto kNCHWHeightIdx = 2;
 constexpr auto kNCHWWidthIdx = 3;
 constexpr auto kImageSizeHwNum = 2;
+constexpr auto kSharingWorkspaceSection = "inner_common";
 }  // namespace
 CustomAscendKernel::CustomAscendKernel(const std::vector<mindspore::MSTensor> &inputs,
                                        const std::vector<mindspore::MSTensor> &outputs,
                                        const schema::Primitive *primitive, const mindspore::Context *ctx)
     : Kernel(inputs, outputs, primitive, ctx),
       load_model_(false),
+      prepare_flag_(false),
       acl_options_({}),
       model_infer_(nullptr),
       InputDataIndex_(0) {}
@@ -66,7 +69,7 @@ STATUS CustomAscendKernel::PrepareModelInfer() {
       MS_LOG(ERROR) << "Parse acl options failed.";
       return lite::RET_ERROR;
     }
-    model_infer_ = std::make_shared<ModelInfer>(om_data, acl_options_);
+    model_infer_ = std::make_shared<ModelInfer>(om_data, acl_options_, this->GetConfig(kSharingWorkspaceSection));
     CHECK_NULL_RETURN(model_infer_);
   }
   int ret = model_infer_->Init();
@@ -79,6 +82,10 @@ STATUS CustomAscendKernel::PrepareModelInfer() {
     MS_LOG(ERROR) << "Load om data failed.";
     return lite::RET_ERROR;
   }
+  if (prepare_flag_) {
+    MS_LOG(INFO) << "Update workspace success.";
+    return lite::RET_OK;
+  }
   acl_options_.batch_size = model_infer_->GetDynamicBatch();
   acl_options_.image_size = model_infer_->GetDynamicImage();
   MS_LOG(INFO) << "Load om data success.";
@@ -90,9 +97,17 @@ STATUS CustomAscendKernel::Prepare() {
     MS_LOG(INFO) << "Custom kernel has been prepared.";
     return lite::RET_OK;
   }
+  const std::string calc_workspace_size = "inner_calc_workspace_size";
+  const std::map<std::string, std::string> &config_comm = this->GetConfig(kSharingWorkspaceSection);
+  if (config_comm.find(calc_workspace_size) != config_comm.end()) {
+    prepare_flag_ = true;
+  }
   if (PrepareModelInfer() != lite::RET_OK) {
     MS_LOG(ERROR) << "Model infer prepare is not ok.";
     return lite::RET_ERROR;
+  }
+  if (prepare_flag_) {
+    return lite::RET_OK;
   }
   RecordInputDataIndex();
 
@@ -225,8 +240,8 @@ STATUS CustomAscendKernel::GetRealImageSize(std::vector<mindspore::MSTensor> *in
 
 STATUS CustomAscendKernel::Execute() {
   if (!load_model_) {
-    MS_LOG(WARNING) << "Custom kernel has not been prepared.";
-    return lite::RET_OK;
+    MS_LOG(ERROR) << "Custom kernel has not been prepared.";
+    return lite::RET_ERROR;
   }
   std::vector<mindspore::MSTensor> inputs(inputs_.begin(), inputs_.end() - 1);
   if (ProcDynamicInput(&inputs) != lite::RET_OK) {

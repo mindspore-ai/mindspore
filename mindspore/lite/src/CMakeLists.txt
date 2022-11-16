@@ -136,6 +136,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/sub_graph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/lite_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/litert/model_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cpu_info.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/pack_weight_manager.cc

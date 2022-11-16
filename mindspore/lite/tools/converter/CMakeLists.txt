@@ -157,6 +157,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/lite_session.cc
         ${SRC_DIR}/litert/executor.cc
         ${SRC_DIR}/litert/lite_model.cc
+        ${SRC_DIR}/litert/model_manager.cc
         ${SRC_DIR}/errorcode.cc
         ${SRC_DIR}/litert/weight_decoder.cc
         ${SRC_DIR}/litert/pack_weight_manager.cc

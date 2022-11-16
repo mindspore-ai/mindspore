@@ -46,6 +46,7 @@ class ModelProcess {
   explicit ModelProcess(const AclModelOptions &options)
       : options_(options),
         model_id_(0xffffffff),
+        is_sharing_workspace_(false),
         is_run_on_device_(false),
         model_desc_(nullptr),
         inputs_(nullptr),
@@ -63,6 +64,7 @@ class ModelProcess {
 
   void set_model_id(uint32_t model_id) { model_id_ = model_id; }
   uint32_t model_id() const { return model_id_; }
+  void SetSharingWorkspaceFlag(bool is_sharing_workspace) { is_sharing_workspace_ = is_sharing_workspace; }
   std::set<uint64_t> GetDynamicBatch();
   std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
 
@@ -92,6 +94,7 @@ class ModelProcess {
 
   AclModelOptions options_;
   uint32_t model_id_;
+  bool is_sharing_workspace_;
   // if run one device(AICPU), there is no need to alloc device memory and copy inputs to(/outputs from) device
   bool is_run_on_device_;
   aclmdlDesc *model_desc_;

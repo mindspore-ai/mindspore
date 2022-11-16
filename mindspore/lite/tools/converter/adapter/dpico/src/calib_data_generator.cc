@@ -20,12 +20,15 @@
 #include <set>
 #include <string>
 #include <numeric>
+#include <algorithm>
 #include "ops/tuple_get_item.h"
 #include "common/anf_util.h"
 #include "common/string_util.h"
 #include "common/file_util.h"
 #include "src/mapper_config_parser.h"
 #include "src/data_preprocessor.h"
+#include "adapter/utils.h"
+
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 namespace mindspore {
@@ -33,44 +36,17 @@ namespace dpico {
 namespace {
 constexpr size_t kMaxSize = 1024;
 }  // namespace
-int CalibDataGenerator::GenerateDumpConfig(const std::string &dump_cfg_path,
-                                           const std::vector<DumpOpInfo> &dump_op_infos) {
-  auto output_path = MapperConfigParser::GetInstance()->GetOutputPath();
-  auto kernels_str = std::accumulate(dump_op_infos.begin(), dump_op_infos.end(), std::string("["),
-                                     [](const std::string &cur_str, const DumpOpInfo &dump_op_info) {
-                                       return cur_str + "\"" + dump_op_info.dump_op_name + "\",";
-                                     });
-  kernels_str.replace(kernels_str.size() - 1, 1, "]");
-  std::ofstream dump_ofs;
-  dump_ofs.open(dump_cfg_path, std::ios::out);
-  if (!dump_ofs.is_open()) {
-    MS_LOG(ERROR) << "file open failed." << dump_cfg_path;
-    return RET_ERROR;
-  }
-  dump_ofs << "{" << std::endl;
-  dump_ofs << "\"common_dump_settings\": {" << std::endl;
-  dump_ofs << "\"dump_mode\": 1," << std::endl;
-  dump_ofs << R"("path": ")" << output_path << "\"," << std::endl;
-  dump_ofs << R"("net_name": "dump_data",)" << std::endl;
-  dump_ofs << "\"input_output\": " << dump_level_ << "," << std::endl;
-  dump_ofs << "\"kernels\":" << kernels_str << std::endl;
-  dump_ofs << "}" << std::endl;  // end of common_dump_setting
-  dump_ofs << "}" << std::endl;  // end of dump oss
-  dump_ofs.close();
-  return RET_OK;
-}
-
-std::string CalibDataGenerator::GetInputShapesStr(const api::AnfNodePtrList &graph_inputs) {
-  std::string input_shapes_str;
+std::vector<std::vector<int64_t>> CalibDataGenerator::GetInputShapes(const api::AnfNodePtrList &graph_inputs) {
+  std::vector<std::vector<int64_t>> input_shapes;
   for (const auto &input : graph_inputs) {
     ShapeVector shape_vector;
     if (GetShapeVectorFromParameter(input, &shape_vector) != RET_OK) {
       MS_LOG(ERROR) << "get graph input shape failed. " << input->fullname_with_scope();
-      return "";
+      return std::vector<std::vector<int64_t>>();
     }
     if (shape_vector.empty()) {
       MS_LOG(ERROR) << input->fullname_with_scope() << " input shape is empty.";
-      return "";
+      return std::vector<std::vector<int64_t>>();
     }
     if (shape_vector.size() == kDims4) {  // transform nchw to nhwc
       shape_vector = std::vector<int64_t>{shape_vector[kNCHW_N], shape_vector[kNCHW_H], shape_vector[kNCHW_W],
@@ -84,20 +60,13 @@ std::string CalibDataGenerator::GetInputShapesStr(const api::AnfNodePtrList &gra
         } else {
           MS_LOG(ERROR) << input->fullname_with_scope() << "'s input shape[" << i << "] is " << dim
                         << ", which is unsupported by dpico.";
-          return "";
+          return std::vector<std::vector<int64_t>>();
         }
       }
-      input_shapes_str += std::to_string(dim);
-      if (i != shape_vector.size() - 1) {
-        input_shapes_str += ',';
-      }
     }
-    input_shapes_str += ':';
+    input_shapes.emplace_back(shape_vector);
   }
-  if (!input_shapes_str.empty() && input_shapes_str.at(input_shapes_str.size() - 1) == ':') {
-    input_shapes_str.pop_back();
-  }
-  return input_shapes_str;
+  return input_shapes;
 }
 
 std::vector<std::string> CalibDataGenerator::GetInDataFileList(const api::AnfNodePtrList &graph_inputs) {
@@ -125,57 +94,20 @@ std::vector<std::string> CalibDataGenerator::GetInDataFileList(const api::AnfNod
         return {};
       }
     }
-    in_data_files_list.emplace_back(in_data_files);
+    (void)in_data_files_list.emplace_back(in_data_files);
   }
   return in_data_files_list;
 }
 
-int CalibDataGenerator::DumpKernelsData(const std::string &dump_cfg_path,
+int CalibDataGenerator::DumpKernelsData(const std::string &current_path,
                                         const std::vector<std::string> &in_data_file_list,
-                                        const std::string &input_shapes_str) {
-  if (setenv("MINDSPORE_DUMP_CONFIG", dump_cfg_path.c_str(), 1)) {
-    MS_LOG(ERROR) << "set env for dump config failed.";
-    return RET_ERROR;
-  }
-  std::string benchmark_path = "../../benchmark/benchmark";
-  bool use_default_benchmark = true;
-  auto config_info = converter::ConverterContext::GetConfigInfo("dpico");
-  if (!config_info.empty()) {
-    if (config_info.find("benchmark_path") != config_info.end()) {
-      benchmark_path = config_info.at("benchmark_path");
-      use_default_benchmark = false;
-    }
-  }
-  if (use_default_benchmark) {
-    MS_LOG(WARNING) << R"(there is no "benchmark_path" in the converter config file,
-                          will use the default value: "../../benchmark/benchmark")";
-  }
-  if (AccessFile(benchmark_path, F_OK) != 0) {
-    MS_LOG(ERROR) << "File not exist: " << benchmark_path;
-    return RET_ERROR;
-  }
-  std::string current_path;
-  auto benchmark_file = RealPath(benchmark_path.c_str());
-  if (benchmark_file.empty()) {
-    MS_LOG(ERROR) << "Get realpath failed, benchmark path is " << benchmark_path;
-    return RET_ERROR;
-  }
-  std::string model_file = current_path + "model.ms";
-  char buf[kMaxSize] = {0};
-  for (const auto &in_data_file : in_data_file_list) {
-    std::string result;
-    std::string cmd = benchmark_file + " --modelFile=" + model_file + " --inDataFile=" + in_data_file +
-                      " --inputShapes=" + input_shapes_str + " --loopCount=1 --warmUpLoopCount=0";
-    MS_LOG(INFO) << "begin to run benchmark: " << cmd;
-    auto fp = popen(cmd.c_str(), "r");
-    if (fp != nullptr) {
-      while (fgets(buf, kMaxSize, fp) != nullptr) {
-        result += buf;
-      }
-    }
-    pclose(fp);
-    if (result.find("Success") == std::string::npos) {
-      MS_LOG(ERROR) << "Run benchmark failed. " << result;
+                                        const std::vector<std::string> kernel_names,
+                                        const std::vector<std::vector<int64_t>> &input_shapes) {
+  std::string model_file = "model.ms";
+  for (auto in_data_file : in_data_file_list) {
+    auto ret = lite::converter::InnerPredict(model_file, in_data_file, kernel_names, current_path, input_shapes);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Execute InnerPredict failed.";
       return RET_ERROR;
     }
   }
@@ -237,7 +169,7 @@ int CalibDataGenerator::TransBinsToTxt(const std::vector<DumpOpInfo> &dump_op_in
       MS_LOG(ERROR) << "file open failed. " << dump_op_txt_path;
       return RET_ERROR;
     }
-    ofs.precision(kNumPrecision);
+    (void)ofs.precision(kNumPrecision);
     bool is_input = dump_op_info.input_index >= 0;
     auto del_special_character = ReplaceSpecifiedChar(dump_op_info.dump_op_name, '/', '.');
     auto pattern = is_input
@@ -310,7 +242,7 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
     if (has_visited.find(node) != has_visited.end()) {
       continue;
     }
-    has_visited.insert(node);
+    (void)has_visited.insert(node);
     DumpOpInfo dump_op_info = {node->fullname_with_scope(), node->fullname_with_scope(), -1, -1};
     if (control_flow_inputs_.find(node) != control_flow_inputs_.end()) {
       dump_op_info.dump_op_name = control_flow_inputs_[node].first->fullname_with_scope();
@@ -328,17 +260,11 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
       }
     }
     if (image_lists.find(dump_op_info.dump_op_name) == image_lists.end()) {
-      dump_op_infos.emplace_back(dump_op_info);
+      (void)dump_op_infos.emplace_back(dump_op_info);
     }
   }
   if (dump_op_infos.empty()) {
     MS_LOG(ERROR) << "dumped ops shouldn't be empty when network is segmented";
-    return RET_ERROR;
-  }
-
-  std::string dump_cfg_path = MapperConfigParser::GetInstance()->GetOutputPath() + "generated_dump.cfg";
-  if (GenerateDumpConfig(dump_cfg_path, dump_op_infos) != RET_OK) {
-    MS_LOG(ERROR) << "generate dump config failed.";
     return RET_ERROR;
   }
 
@@ -348,13 +274,17 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
     return RET_ERROR;
   }
 
-  auto input_shapes_str = GetInputShapesStr(graph_inputs);
-  if (input_shapes_str.empty()) {
+  auto input_shapes = GetInputShapes(graph_inputs);
+  if (input_shapes.empty()) {
     MS_LOG(ERROR) << "get input shapes for benchmark failed.";
     return RET_ERROR;
   }
 
-  if (DumpKernelsData(dump_cfg_path, in_data_file_list, input_shapes_str) != RET_OK) {
+  std::vector<std::string> kernel_names;
+  (void)std::transform(dump_op_infos.begin(), dump_op_infos.end(), std::back_inserter(kernel_names),
+                       [](DumpOpInfo const &op_info) { return op_info.dump_op_name; });
+  auto output_path = MapperConfigParser::GetInstance()->GetOutputPath();
+  if (DumpKernelsData(output_path, in_data_file_list, kernel_names, input_shapes) != RET_OK) {
     MS_LOG(ERROR) << "dump kernels data failed.";
     return RET_ERROR;
   }
@@ -363,6 +293,7 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
     MS_LOG(ERROR) << "transform dumped files to txt failed.";
     return RET_ERROR;
   }
+
   return RET_OK;
 }
 }  // namespace dpico

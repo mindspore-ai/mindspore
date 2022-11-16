@@ -18,6 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,6 +31,7 @@
 #include "src/litert/cxx_api/tensor_utils.h"
 #include "src/common/log_adapter.h"
 #include "src/litert/lite_session.h"
+#include "src/litert/model_manager.h"
 #include "src/common/file_utils.h"
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
 #include "src/common/random_data_generator.h"
@@ -42,9 +44,22 @@ namespace {
 const char *const kExecutionPlan = "execution_plan";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
+constexpr auto kSharingWorkspaceSection = "inner_common";
+constexpr auto kSharingWorkspaceKey = "inner_sharing_workspace";
+constexpr auto kSharingWorkspaceValue = "true";
 }  // namespace
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+
+bool ModelImpl::IsEnableModelSharing(const std::string &model_path) {
+  const std::set<std::string> &model_path_set = ModelManager::GetInstance().GetModelPath();
+  return (model_path_set.find(model_path) != model_path_set.end());
+}
+
+bool ModelImpl::IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff) {
+  const std::set<std::pair<const void *, size_t>> &model_buff_set = ModelManager::GetInstance().GetModelBuff();
+  return (model_buff_set.find(model_buff) != model_buff_set.end());
+}
 
 CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto) {
   static CreateTrainSessionProto *proto_ = nullptr;
@@ -145,7 +160,16 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     MS_LOG(ERROR) << "The platform exist don't support's instruction.";
     return kLiteNotSupport;
   }
+
   context_ = ms_context;
+  bool model_sharing_flag = IsEnableModelSharing(std::make_pair(model_data, data_size));
+  if (model_sharing_flag) {
+    auto ret = UpdateConfig(kSharingWorkspaceSection, std::make_pair(kSharingWorkspaceKey, kSharingWorkspaceValue));
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "UpdateConfig " << kSharingWorkspaceKey << " failed.";
+      return ret;
+    }
+  }
   auto session = std::shared_ptr<lite::LiteSession>(CreateLiteSession(ContextUtils::Convert(ms_context.get())));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
@@ -170,6 +194,14 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
     return kLiteNotSupport;
   }
 
+  bool model_sharing_flag = IsEnableModelSharing(model_path);
+  if (model_sharing_flag) {
+    auto ret = UpdateConfig(kSharingWorkspaceSection, std::make_pair(kSharingWorkspaceKey, kSharingWorkspaceValue));
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "UpdateConfig " << kSharingWorkspaceKey << " failed.";
+      return ret;
+    }
+  }
   auto session = std::shared_ptr<lite::LiteSession>(CreateLiteSession(ContextUtils::Convert(ms_context.get())));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";

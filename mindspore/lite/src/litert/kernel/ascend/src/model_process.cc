@@ -22,6 +22,7 @@
 #include "common/log_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/log_util.h"
+#include "src/litert/kernel/ascend/src/acl_mem_manager.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -600,7 +601,15 @@ STATUS ModelProcess::PredictFromHost(const std::vector<mindspore::MSTensor> &inp
     struct timeval start_time;
     struct timeval end_time;
     (void)gettimeofday(&start_time, nullptr);
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
+      AclMemManager::GetInstance().Lock();
+    }
     acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to unlock after aclmdlExecute.";
+      AclMemManager::GetInstance().Unlock();
+    }
     (void)gettimeofday(&end_time, nullptr);
     constexpr uint64_t kUSecondInSecond = 1000000;
     uint64_t cost =
@@ -608,7 +617,15 @@ STATUS ModelProcess::PredictFromHost(const std::vector<mindspore::MSTensor> &inp
       (kUSecondInSecond * static_cast<uint64_t>(start_time.tv_sec) + static_cast<uint64_t>(start_time.tv_usec));
     MS_LOG(INFO) << "Model execute in " << cost << " us";
   } else {
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
+      AclMemManager::GetInstance().Lock();
+    }
     acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to unlock after aclmdlExecute.";
+      AclMemManager::GetInstance().Unlock();
+    }
   }
 
   DestroyInputsDataset();

@@ -68,6 +68,7 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         -Wl,--no-whole-archive
         -Wl,-Bsymbolic
         -rdynamic
+        -s
         mindspore::protobuf_arm
         -pthread
     )

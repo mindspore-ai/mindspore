@@ -27,6 +27,7 @@ file(GLOB_RECURSE DPICO_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/checker/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
+        ${TOOLS_DIR}/converter/adapter/utils.cc
         )
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -34,6 +35,7 @@ include_directories(BEFORE ${OPENCV_PATH}include/opencv4)
 include_directories(BEFORE ${PROTOBUF_PATH}/include)
 include_directories(${PICO_MAPPER_PATH}/include)
 include_directories(${PROTO_OUTPUT_PATH})
+include_directories(${TOOLS_DIR}/converter)
 
 link_directories(${pico_mapper_SOURCE_DIR}/lib)
 set_property(SOURCE ${DPICO_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
