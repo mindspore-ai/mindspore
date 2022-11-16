@@ -58,6 +58,7 @@ from mindspore.ops.operations.math_ops import (
     NanToNum,
     SparseSegmentMean,
     TriuIndices,
+    InplaceIndexAdd,
     InplaceUpdateV2,
     Igamma,
     Igammac,
@@ -1174,6 +1175,51 @@ def inplace_add(x, v, indices):
     """
     inplace_add_inner = _get_cache_prim(P.InplaceAdd)(indices)
     return inplace_add_inner(x, v)
+
+
+def inplace_index_add(var, indices, updates, axis):
+    """
+    Adds tensor `updates` to specified axis and indices of tensor `var`. The axis should be in [0,  len(var.dim) - 1],
+    and indices should be in [0, the size of `var` - 1] at the axis dimension.
+
+    Args:
+        var (Parameter): The input Parameter to add to, with data type uint8, int8, int16, int32,
+            float16, float32, float64.
+        indices (Tensor): Add the value of `var` and `updates` along the dimension of the `axis` according to the
+            specified index value, with data type int32.
+            The `indices` must be 1D with the same size as the size of `updates` in the `axis` dimension. The values
+            of `indices` should be in [0, b), where the b is the size of `var` in the `axis` dimension.
+        updates (Tensor): The input tensor with the value to add. Must have same data type as `var`.
+            The shape must be the same as `var` except the `axis` th dimension.
+        axis (int): The dimension along which to index.
+
+    Outputs:
+        Tensor, has the same shape and dtype as `var`.
+
+    Raises:
+        TypeError: If `var` is not a Parameter.
+        TypeError: If neither `indices` nor `updates` is a Tensor.
+        ValueError: If axis is out of `var` rank's range.
+        ValueError: If `var` rank is not the same as `updates` rank.
+        ValueError: If shape of `indices` is not 1D or size of `indices` is not equal to dimension of updates[axis].
+        ValueError: If `updates`'s shape is not the same as `var` except the `axis` th dimension.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> var = Parameter(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> updates = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> var = ops.inplace_index_add(var, indices, updates, axis=0)
+        >>> print(var)
+        [[1.5 3. ]
+         [4.  5.5]
+         [5.  6. ]]
+    """
+
+    inplace_index_add_ = InplaceIndexAdd(axis)
+    return inplace_index_add_(var, indices, updates)
 
 
 def inplace_sub(x, v, indices):

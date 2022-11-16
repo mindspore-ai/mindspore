@@ -1943,6 +1943,42 @@ class InplaceAdd(PrimitiveWithInfer):
         return x_shape
 
 
+class InplaceIndexAdd(Primitive):
+    """
+    Adds tensor `updates` to specified axis and indices of tensor `var`. The axis should be in [0,  len(var.dim) - 1],
+    and indices should be in [0, the size of `var` - 1] at the axis dimension.
+
+    Refer to :func:`mindspore.ops.inplace_index_add` for more detail.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> var = Parameter(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> updates = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplaceIndexAdd = ops.InplaceIndexAdd(axis=0)
+        >>> var = inplaceIndexAdd(var, indices, updates)
+        >>> print(var)
+        [[1.5 3. ]
+         [4.  5.5]
+         [5.  6. ]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, axis):
+        """Initialize InplaceIndexAdd"""
+        self.init_prim_io_names(inputs=['var', 'indices', 'updates'], outputs=['var'])
+        self.axis = axis
+        validator.check_value_type('axis', axis, [int], self.name)
+
+
 class InplaceSub(PrimitiveWithInfer):
     """
     Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.

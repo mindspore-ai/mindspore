@@ -53,6 +53,7 @@ from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixLogarithm
 from mindspore.ops.operations.math_ops import CholeskySolve
+from mindspore.ops.operations.math_ops import InplaceIndexAdd
 from mindspore.ops.operations.math_ops import NextAfter
 from mindspore.ops.operations.math_ops import ComplexAbs
 from mindspore.ops.operations.math_ops import Orgqr
@@ -1075,6 +1076,18 @@ class InplaceAddNet(nn.Cell):
         return out
 
 
+class InplaceIndexAddNet(nn.Cell):
+    """InplaceIndexAdd net definition"""
+
+    def __init__(self, axis):
+        super(InplaceIndexAddNet, self).__init__()
+        self.inplace_index_add = InplaceIndexAdd(axis)
+        self.var = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)))
+
+    def construct(self, indices, updates):
+        return self.inplace_index_add(self.var, indices, updates)
+
+
 class InplaceSubNet(nn.Cell):
     def __init__(self):
         super(InplaceSubNet, self).__init__()
@@ -1661,6 +1674,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)),
                         Tensor(np.array([[0.5, 1], [1, 1.5]]).astype(np.float32))],
         'skip': ['backward']}),
+    ('InplaceIndexAdd', {
+        'block': InplaceIndexAddNet(1),
+        'desc_inputs': (Tensor(np.array([0, 1, 2]).astype(np.int32)),
+                        Tensor(np.array([[0.5, 1.0, 1.5], [1.0, 1.5, 2.0], [2.0, 2.5, 3.0]]).astype(np.float32))),
+        'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]).astype(np.float32))]}),
     ('InplaceSub', {
         'block': InplaceSubNet(),
         'desc_inputs': [Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)),

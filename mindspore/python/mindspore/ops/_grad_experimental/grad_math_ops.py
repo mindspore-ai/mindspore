@@ -59,6 +59,7 @@ from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
+from mindspore.ops.operations.math_ops import InplaceIndexAdd
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.math_ops import Logit
@@ -1524,6 +1525,18 @@ def get_bprop_cholesky(self):
         dout = cholesky_transpose(dout) if upper else dout
         dx = choleskygrad(out, dout)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(InplaceIndexAdd)
+def get_bprop_inplace_index_add(self):
+    """Generate bprop for InplaceIndexAdd"""
+    gather = P.Gather()
+    _axis = self.axis
+
+    def bprop(var, indices, updates, out, dout):
+        return dout, zeros_like(indices), gather(dout, indices, _axis)
 
     return bprop
 
