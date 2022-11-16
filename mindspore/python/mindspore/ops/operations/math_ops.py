@@ -2369,7 +2369,7 @@ class Logit(Primitive):
     Refer to :func:`mindspore.ops.logit` for more detail.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
