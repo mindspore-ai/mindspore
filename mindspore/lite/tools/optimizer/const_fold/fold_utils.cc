@@ -82,6 +82,7 @@ kernel::KernelExec *GetKernelExec(std::vector<Tensor *> inputs, std::vector<Tens
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " FetchOpParameterFromNode failed. ";
     return nullptr;
   }
+  MS_CHECK_TRUE_MSG(parameter != nullptr, nullptr, "parameter is nullptr");
   parameter->thread_num_ = 1;
   ret = KernelInferShape(inputs, *outputs, parameter);
   if (ret != lite::RET_OK && (ret != lite::RET_INFER_INVALID || !IsInferInRunning(cnode))) {

@@ -472,6 +472,10 @@ STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType
 }
 
 void SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT) {
+  if (meta_graphT == nullptr) {
+    MS_LOG(ERROR) << "meta_graphT is nullptr.";
+    return;
+  }
   for (auto &subgraph : meta_graphT->subGraph) {
     std::vector<uint32_t> subgraph_indices{};
     subgraph_indices.assign(subgraph->inputIndices.begin(), subgraph->inputIndices.end());
@@ -535,6 +539,7 @@ TypeId GetAbstractTensorDtype(const abstract::AbstractTensorPtr &tensor) {
     return kTypeUnknown;
   }
   auto type_ptr = tensor->element()->GetTypeTrack();
+  MS_CHECK_TRUE_MSG(type_ptr != nullptr, kTypeUnknown, "type_ptr is nullptr");
   return type_ptr->type_id();
 }
 
@@ -545,6 +550,7 @@ TypeId GetParameterDtype(const ParameterPtr &param_node) {
   auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
   MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, kTypeUnknown, "Cast to abstract tensor failed!");
   auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+  MS_CHECK_TRUE_MSG(type_ptr != nullptr, kTypeUnknown, "type_ptr is nullptr");
   return type_ptr->type_id();
 }
 

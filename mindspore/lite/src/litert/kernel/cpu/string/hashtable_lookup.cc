@@ -57,6 +57,10 @@ int HashtableLookupCPUKernel::Run() {
     MS_LOG(ERROR) << "get string cnt fail!";
     return RET_ERROR;
   }
+  if (input_tensor->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "input0 data_type should be " << kNumberTypeInt32 << " ,but got: " << input_tensor->data_type();
+    return RET_ERROR;
+  }
   int32_t *input_data = reinterpret_cast<int32_t *>(input_tensor->MutableData());
   uint8_t *hits_data = reinterpret_cast<uint8_t *>(hits_tensor->MutableData());
   std::vector<lite::StringPack> output_string_pack(input_tensor->ElementsNum());

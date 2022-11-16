@@ -89,12 +89,14 @@ int SplitWithOverlapBaseCPUKernel::ReSize() {
 
   for (int i = 0; i < static_cast<int>(input_shape.size()); i++) {
     if (i < param_->split_dim_) {
+      MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->outer_total_dim_, input_shape[i]), RET_ERROR, "Mul overflow!");
       param_->outer_total_dim_ *= input_shape[i];
     }
     if (i == param_->split_dim_) {
       param_->split_dim_size_ = input_shape[param_->split_dim_];
     }
     if (i > param_->split_dim_) {
+      MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->inner_stride_, input_shape[i]), RET_ERROR, "Mul overflow!");
       param_->inner_stride_ *= input_shape[i];
     }
   }

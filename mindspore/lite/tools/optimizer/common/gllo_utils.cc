@@ -103,9 +103,11 @@ void TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_shape
     int64_t new_pos = 0;
     for (const auto &pair_y : position_map) {
       if (INT_MUL_OVERFLOW(post_multiply[dim_map[pair_y.first]], pair_y.second)) {
+        MS_LOG(ERROR) << "int multiply overflow";
         return;
       }
       if (INT_ADD_OVERFLOW(new_pos, post_multiply[dim_map[pair_y.first]] * pair_y.second)) {
+        MS_LOG(ERROR) << "int add overflow";
         return;
       }
       new_pos += post_multiply[dim_map[pair_y.first]] * pair_y.second;
@@ -210,6 +212,7 @@ int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
       return RET_ERROR;
     }
     auto *origin_data = reinterpret_cast<int64_t *>(tensor_info->data_c());
+    MS_CHECK_TRUE_MSG(origin_data != nullptr, lite::RET_NULL_PTR, "origin_data is nullptr");
     for (size_t i = 0; i < data_count; ++i) {
       if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
         MS_LOG(WARNING) << "int64 data " << origin_data[i] << " cannot fit into int32";
@@ -414,6 +417,7 @@ bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
 bool IsRealCNodeKernel(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    MS_LOG(ERROR) << "node is nullptr";
     return false;
   }
   // parameter and value node is not a real cnode kernel
@@ -439,6 +443,7 @@ bool IsGraphKernel(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    MS_LOG(ERROR) << "node is nullptr";
     return false;
   }
   auto input = cnode->input(kAnfPrimitiveIndex);
@@ -627,6 +632,7 @@ bool IsParallelSplitConvNode(const BaseRef &n) {
       prim = GetValueNode<PrimitivePtr>(anf_node);
     }
     if (prim == nullptr) {
+      MS_LOG(ERROR) << "prim is nullptr";
       return false;
     }
     int device_type =
@@ -650,6 +656,7 @@ bool IsConvNode(const BaseRef &n) {
       prim = GetValueNode<PrimitivePtr>(anf_node);
     }
     if (prim == nullptr) {
+      MS_LOG(ERROR) << "prim is nullptr";
       return false;
     }
 
@@ -669,6 +676,7 @@ bool IsConvNode(const BaseRef &n) {
 bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    MS_LOG(ERROR) << "node is nullptr";
     return false;
   }
   if (utils::isa<CNode>(node)) {
@@ -686,6 +694,7 @@ bool CheckIsAllInputsParam(const AnfNodePtr &node) {
 size_t GetOutputTensorNum(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    MS_LOG(ERROR) << "node is nullptr";
     return 0;
   }
   auto type = node->Type();
@@ -696,6 +705,7 @@ size_t GetOutputTensorNum(const AnfNodePtr &node) {
     auto tuple_type = type->cast<TuplePtr>();
     if (tuple_type == nullptr) {
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+      MS_LOG(ERROR) << "typle_type is nullptr";
       return 0;
     }
     return tuple_type->size();

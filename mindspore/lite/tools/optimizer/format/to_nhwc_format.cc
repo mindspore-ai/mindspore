@@ -65,6 +65,7 @@ STATUS ToNHWCFormat::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, sche
   if (status == lite::RET_NO_CHANGE) {
     return lite::RET_OK;
   } else if (status == lite::RET_ERROR) {
+    MS_LOG(ERROR) << "CheckKFormat Error.";
     return lite::RET_ERROR;
   }
   *src_format = schema::Format_KCHW;

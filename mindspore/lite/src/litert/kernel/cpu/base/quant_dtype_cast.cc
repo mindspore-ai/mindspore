@@ -67,6 +67,7 @@ int QuantDTypeCastCPUKernel::Prepare() {
 
 int QuantDTypeCastCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
+  MS_CHECK_TRUE_MSG(in_tensor != nullptr, RET_NULL_PTR, "in_tensor is nullptr.");
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
   MS_CHECK_GT(thread_n_num_, 0, RET_ERROR);

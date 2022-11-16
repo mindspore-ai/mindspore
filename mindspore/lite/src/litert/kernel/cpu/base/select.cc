@@ -158,9 +158,32 @@ int SelectCPUKernel::Run() {
     if (condition == nullptr || input1 == nullptr || input2 == nullptr || output == nullptr) {
       return RET_NULL_PTR;
     }
+    auto ret = CheckTensor();
+    if (ret != RET_OK) {
+      return ret;
+    }
     for (int i = 0; i < size; i++) {
       output[i] = condition[i] ? input1[i] : input2[i];
     }
+  }
+  return RET_OK;
+}
+
+int SelectCPUKernel::CheckTensor() {
+  auto condition = in_tensors_.at(FIRST_INPUT);
+  if (condition->data_type() != kNumberTypeBool) {
+    MS_LOG(ERROR) << "wrong data type!";
+    return RET_ERROR;
+  }
+  auto input1_tensor = in_tensors_.at(SECOND_INPUT);
+  if (input1_tensor->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "wrong data type!";
+    return RET_ERROR;
+  }
+  auto input2_tensor = in_tensors_.at(THIRD_INPUT);
+  if (input2_tensor->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "wrong data type!";
+    return RET_ERROR;
   }
   return RET_OK;
 }

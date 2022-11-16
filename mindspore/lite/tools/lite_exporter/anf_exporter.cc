@@ -107,6 +107,9 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
 int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                               const std::shared_ptr<mindspore::Primitive> &primitive,
                                               const std::unique_ptr<schema::CNodeT> &dst_node) {
+  MS_CHECK_TRUE_MSG(meta_graph != nullptr, RET_NULL_PTR, "meta_graph is nullptr");
+  MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr");
+  MS_CHECK_TRUE_MSG(dst_node != nullptr, RET_NULL_PTR, "dst_node is nullptr");
   MS_CHECK_TRUE_MSG(dst_node->outputIndex.size() > 0, RET_ERROR, "dst_node->outputIndex is empty.");
   auto first_output_index = dst_node->outputIndex[0];
   MS_CHECK_TRUE_MSG(meta_graph->allTensors.size() > first_output_index, RET_ERROR, "allTensors size is wrong.");
@@ -199,6 +202,8 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
 
 int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                              const AnfNodePtr &input) {
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
+  MS_CHECK_TRUE_MSG(input != nullptr, RET_NULL_PTR, "input is nullptr");
   lite::DataInfo data_info;
   auto param_node = input->cast<ParameterPtr>();
   MS_CHECK_TRUE_MSG(param_node != nullptr, RET_NULL_PTR, "cast ptr failed");
@@ -224,6 +229,7 @@ int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaG
 
 int AnfExporter::SetSubGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                        const size_t &subgraph_index) {
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
   auto &subgraph = meta_graphT->subGraph.at(subgraph_index);
   FuncGraphPtr fg = nullptr;
   std::for_each(fg_subgraph_map_.begin(), fg_subgraph_map_.end(),
@@ -299,6 +305,9 @@ bool AnfExporter::HasExported(const FuncGraphPtr &func_graph) {
 int AnfExporter::ExportPartialNode(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const bool &keep_graph,
                                    const bool &copy_primitive, const CNodePtr &partial_cnode,
                                    const std::unique_ptr<schema::CNodeT> &schema_cnode) {
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
+  MS_CHECK_TRUE_MSG(partial_cnode != nullptr, RET_NULL_PTR, "partial_cnode is nullptr");
+  MS_CHECK_TRUE_MSG(schema_cnode != nullptr, RET_NULL_PTR, "schema_cnode is nullptr");
   auto prim = GetValueNode<std::shared_ptr<mindspore::Primitive>>(partial_cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_NULL_PTR, "GetValueNode failed");
   if (prim->name() != mindspore::ops::kNamePartialFusion) {
@@ -327,6 +336,7 @@ int AnfExporter::ExportPartialNode(const std::unique_ptr<schema::MetaGraphT> &me
 }
 
 std::list<CNodePtr> AnfExporter::InsertCallNode(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, {}, "func_graph is nullptr");
   auto cnodes = GetOrderedCNodes(func_graph);
   for (auto it = cnodes.begin(); it != cnodes.end();) {
     auto prim = GetValueNode<std::shared_ptr<mindspore::Primitive>>((*it)->input(kPrimIndex));
@@ -351,6 +361,10 @@ std::list<CNodePtr> AnfExporter::InsertCallNode(const FuncGraphPtr &func_graph) 
 }
 
 void AnfExporter::SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node) {
+  if (cnode == nullptr || node == nullptr) {
+    MS_LOG(ERROR) << "conde or node is nullptr";
+    return;
+  }
   if (!opt::CheckPrimitiveType(cnode, prim::kPrimCall)) {
     return;
   }
@@ -360,6 +374,7 @@ void AnfExporter::SetNonTailCall(const CNodePtr &cnode, schema::CNodeT *node) {
 }
 
 int AnfExporter::SetTailCallForReturn(const CNodePtr &return_cnode) {
+  MS_CHECK_TRUE_MSG(return_cnode != nullptr, RET_NULL_PTR, "return_cnode is nullptr");
   auto return_cnode_input_size = return_cnode->inputs().size();
   for (size_t i = 1; i < return_cnode_input_size; ++i) {
     if (!utils::isa<CNodePtr>(return_cnode->input(i))) {
@@ -401,6 +416,8 @@ bool AnfExporter::CaseToContinue(const string &prim_name) {
 
 int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                         const size_t &subgraph_index, const bool &keep_graph, const bool &copy_primitive) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_NULL_PTR, "func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
   int ret = RET_OK;
   auto cnodes = InsertCallNode(func_graph);
   for (const auto &cnode : cnodes) {
@@ -489,6 +506,8 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
 
 int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                 bool keep_graph, bool copy_primitive, const std::shared_ptr<AnfNode> &partial_anode) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_NULL_PTR, "func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
   if (HasExported(func_graph)) {
     MS_LOG(INFO) << "Has been exported.";
     return RET_OK;
@@ -524,6 +543,7 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
 }
 
 FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph, int i) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "func_graph is nullptr");
   if (i > kMaxDepth) {
     MS_LOG(ERROR) << "exceed max depth 2048, i " << i;
     return nullptr;
@@ -561,6 +581,8 @@ FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph, int i) {
 
 int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
                                    const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_NULL_PTR, "func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
   MS_ASSERT(func_graph != nullptr);
   meta_graphT->inputIndex.clear();
   for (const auto &input : func_graph->get_inputs()) {
@@ -576,6 +598,8 @@ int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
 
 int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
                                     const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_NULL_PTR, "func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
   FuncGraphPtr final_fg = nullptr;
   if (meta_graphT->fmkType == converter::kFmkTypeMs) {
     final_fg = func_graph;
@@ -598,6 +622,7 @@ int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
 
 schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph, bool copy_primitive,
                                         bool train_flag) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "func_graph is nullptr");
   this->train_flag_ = train_flag;
   // hardcode for nnie and train
   this->graph_inputs_map_.clear();
@@ -728,6 +753,10 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, 
 int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                        schema::CNodeT *op_node) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "cnode is nullptr");
+  MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr");
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
+  MS_CHECK_TRUE_MSG(op_node != nullptr, RET_NULL_PTR, "op_node is nullptr");
   auto param_node = cnode->input(index)->cast<ParameterPtr>();
   MS_ASSERT(param_node != nullptr);
   auto key = std::make_pair(param_node, 0);
@@ -764,6 +793,10 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
 int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                        schema::CNodeT *op_node) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "cnode is nullptr");
+  MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr");
+  MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
+  MS_CHECK_TRUE_MSG(op_node != nullptr, RET_NULL_PTR, "op_node is nullptr");
   DataInfo data_info;
   auto status =
     FetchDataFromValueNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info, true);
