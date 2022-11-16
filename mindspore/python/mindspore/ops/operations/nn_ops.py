@@ -2832,7 +2832,7 @@ class SoftmaxCrossEntropyWithLogits(Primitive):
         pass
 
 
-class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
+class SparseSoftmaxCrossEntropyWithLogits(Primitive):
     r"""
     Computes the softmax cross-entropy value between logits and sparse encoding labels.
 
@@ -2887,19 +2887,6 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['features', 'labels'], outputs=['output'])
         self.is_grad = is_grad
         self.add_prim_attr('sens', 1.0)
-
-    def infer_shape(self, logits_shape, labels_shape):
-        validator.check("logits_shape[0]", logits_shape[0], "labels_shape[0]", labels_shape[0], Rel.EQ, self.name)
-        loss_shape = []
-        if self.is_grad:
-            return logits_shape
-        return loss_shape
-
-    def infer_dtype(self, logits_type, labels_type):
-        validator.check_tensor_dtype_valid("logits", logits_type, (mstype.float16, mstype.float32),
-                                           self.name)
-        validator.check_tensor_dtype_valid("labels", labels_type, (mstype.int32, mstype.int64), self.name)
-        return logits_type
 
 
 class SparseSoftmaxCrossEntropyWithLogitsV2(Primitive):

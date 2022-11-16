@@ -31,16 +31,10 @@ abstract::ShapePtr SparseSoftmaxCrossEntropyWithLogitsInferShape(const Primitive
   auto op_name = primitive->name();
   auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto labels_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  const int64_t features_rank = 2;
-  const int64_t labels_rank = 1;
   if (!IsDynamic(features_shape) && !IsDynamic(labels_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("batch of logits(features)", features_shape[kInputIndex0], kEqual,
                                              labels_shape[kInputIndex0], op_name);
-    (void)CheckAndConvertUtils::CheckInteger("dimension of logits(features)", SizeToLong(features_shape.size()), kEqual,
-                                             features_rank, op_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(labels_shape.size()), kEqual, labels_rank,
-                                           op_name);
   auto is_grad = false;
   if (primitive->HasAttr(kIsGrad)) {
     is_grad = GetValue<bool>(primitive->GetAttr(kIsGrad));
@@ -77,6 +71,9 @@ AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::Analysi
                                                          const PrimitivePtr &primitive,
                                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto &input : input_args) {
+    MS_EXCEPTION_IF_NULL(input);
+  }
   const int64_t kInputsNum = 2;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = SparseSoftmaxCrossEntropyWithLogitsInferType(primitive, input_args);
