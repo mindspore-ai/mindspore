@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ACL_ACL_UTILS_H_
 #include <memory>
 #include <string>
+#include <set>
 #include <vector>
 #include <map>
 #include "kernel/kernel.h"
@@ -24,6 +25,7 @@
 #include "acl/acl_op_compiler.h"
 #include "acl/acl_base.h"
 #include "transform/graph_ir/convert.h"
+#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace kernel {
@@ -104,6 +106,10 @@ class AclUtils {
   static std::vector<GeTensorDescPtr> GetInputTensorDesc(const AnfNodePtr &anf_node);
 
   static std::vector<GeTensorDescPtr> GetOutputTensorDesc(const AnfNodePtr &anf_node);
+  static std::shared_ptr<OpInfo> GetKernelOpInfo(const AnfNodePtr &node);
+  static std::vector<std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
+  static std::vector<std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
+  static std::set<std::string> GetUselessOutputs(const AnfNodePtr &node);
 };
 }  // namespace kernel
 }  // namespace mindspore

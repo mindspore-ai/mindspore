@@ -2926,5 +2926,15 @@ std::map<std::string, unsigned int> GeOpConvertor::GetNeedAddInput(const AnfNode
 
   return adpt->getAttrInputMap();
 }
+
+bool GeOpConvertor::IsDynamicInput(const AnfNodePtr &node, const size_t idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  if (adapterPtr == nullptr) {
+    MS_LOG(INFO) << "Can't find a adapter for op:" << node->DebugString();
+    return false;
+  }
+  return adapterPtr->IsDynInputOp(idx);
+}
 }  // namespace transform
 }  // namespace mindspore

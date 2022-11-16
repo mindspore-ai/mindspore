@@ -31,6 +31,7 @@
 #include "graph/utils/op_desc_utils.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "graph/utils/tensor_utils.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -410,48 +411,8 @@ void OpTilingCalculateAdapter::AddEdge(const ::ge::NodePtr &ge_node,
 void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Get the every input name of " << op_name_;
-  auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name_, node);
-  MS_EXCEPTION_IF_NULL(op_info_ptr);
-  auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto inputs_ptr = op_info_ptr->inputs_ptr();
-  size_t dynamic_input_index = 0;
-  std::vector<int64_t> dynamic_inputs_list;
-  if (primitive->GetAttr(kAttrDynInputSizes) != nullptr) {
-    dynamic_inputs_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
-  }
-  for (const auto &item : inputs_ptr) {
-    MS_EXCEPTION_IF_NULL(item);
-    if (item->param_type() == PARAM_DYNAMIC) {
-      if (dynamic_input_index > dynamic_inputs_list.size()) {
-        MS_LOG(EXCEPTION) << "Dynamic input index should be less than the dynamic input's size.";
-      }
-      auto real_inputs_num = dynamic_inputs_list[dynamic_input_index];
-      for (auto k = 0; k < real_inputs_num; k++) {
-        std::string input_name = item->name() + "_dynamic_" + std::to_string(k);
-        input_names_.emplace_back(input_name);
-      }
-    } else {
-      input_names_.emplace_back(item->name());
-    }
-    dynamic_input_index++;
-  }
-
-  // output io names
-  auto outputs_ptr = op_info_ptr->outputs_ptr();
-  for (const auto &out_item : outputs_ptr) {
-    MS_EXCEPTION_IF_NULL(out_item);
-    if (out_item->param_type() == PARAM_DYNAMIC && outputs_ptr.size() == 1) {
-      std::string output_name;
-      auto real_outputs_size = common::AnfAlgo::GetOutputTensorNum(node);
-      for (size_t i = 0; i < real_outputs_size; i++) {
-        output_name = out_item->name() + "_dynamic_" + std::to_string(i);
-        output_names_.emplace_back(output_name);
-      }
-    } else {
-      output_names_.emplace_back(out_item->name());
-    }
-  }
+  input_names_ = kernel::AclUtils::GetOpInputAnchorNames(node);
+  output_names_ = kernel::AclUtils::GetOpOutputAnchorNames(node);
 }
 
 ::ge::NodePtr OpTilingCalculateAdapter::CreateGeNode(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
