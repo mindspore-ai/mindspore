@@ -33,7 +33,6 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
-#include "runtime/collective/gpu_collective_init.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #endif
@@ -457,15 +456,6 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<OpLib, std::shared_ptr<OpLib>>(m, "Oplib")
     .def(py::init())
     .def_static("reg_op", &OpLib::RegOp, "Register op info.");
-
-  (void)m.def("init_gpu_collective", &mindspore::device::gpu::GPUCollectiveInitializer::InitCollective,
-              "Init gpu collective communication mode.");
-  (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::GPUCollectiveInitializer::FinalizeCollective,
-              "Finalize gpu collective communication mode.");
-  (void)m.def("get_rank_id", &mindspore::device::gpu::GPUCollectiveInitializer::GetRankID,
-              "Finalize gpu collective communication mode.");
-  (void)m.def("get_rank_size", &mindspore::device::gpu::GPUCollectiveInitializer::GetRankSize,
-              "Finalize gpu collective communication mode.");
 
   (void)py::class_<CollectiveManager, std::shared_ptr<CollectiveManager>>(m, "CollectiveManager")
     .def_static("get_instance", &CollectiveManager::instance, "Get collective manager instance.")

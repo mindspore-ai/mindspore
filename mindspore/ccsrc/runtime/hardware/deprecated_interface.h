@@ -61,10 +61,6 @@ class DeprecatedInterface {
   virtual int GetGPUCapabilityMajor() { return -1; }
   virtual int GetGPUCapabilityMinor() { return -1; }
   virtual int GetGPUMultiProcessorCount() { return -1; }
-  virtual void GPUInitCollective() {}
-  virtual void GPUFinalizeCollective() {}
-  virtual uint32_t GPUGetRankID(const std::string &group_name) { return 0; }
-  virtual uint32_t GPUGetRankSize(const std::string &group_name) { return 0; }
 };
 }  // namespace device
 }  // namespace mindspore
