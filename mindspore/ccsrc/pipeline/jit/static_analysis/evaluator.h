@@ -443,12 +443,13 @@ class ShardEvaluator : public Evaluator {
 class VmapEvaluator : public Evaluator {
  public:
   VmapEvaluator(const EvaluatorPtr &evaluator, const AbstractFunctionPtr &orig_func, const ValuePtr &in_axes,
-                const ValuePtr &out_axes)
+                const ValuePtr &out_axes, size_t cell_size)
       : Evaluator("VmapEvaluator"),
         evaluator_(evaluator),
         primal_func_(orig_func),
         in_axes_(in_axes),
-        out_axes_(out_axes) {}
+        out_axes_(out_axes),
+        cell_size_(cell_size) {}
   ~VmapEvaluator() override = default;
   MS_DECLARE_PARENT(VmapEvaluator, Evaluator);
   AnfNodePtr bound_node() const override {
@@ -476,6 +477,7 @@ class VmapEvaluator : public Evaluator {
   AbstractFunctionPtr primal_func_;
   ValuePtr in_axes_;
   ValuePtr out_axes_;
+  size_t cell_size_;
 };
 
 void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args);

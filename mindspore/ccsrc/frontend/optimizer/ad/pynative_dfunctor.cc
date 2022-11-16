@@ -55,6 +55,9 @@ ValuePtr PynativeDFunctor::NewValue(const TypePtr &type_elem, const BaseShapePtr
       return GenNewTensorInner(type_elem, shape_elem);
     } else if (shape_elem->isa<abstract::NoShape>()) {
       ShapeVector NoShape;
+      if (type_elem->type_id() == kMetaTypeNone) {
+        return kNone;
+      }
       return std::make_shared<tensor::Tensor>(type_elem->type_id(), NoShape);
     }
   }

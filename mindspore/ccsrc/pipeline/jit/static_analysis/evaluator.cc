@@ -828,6 +828,15 @@ EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &
   // If the primal func graph's output is sequence, set its elements use flags all true.
   SetSequenceElementsUseFlagsRecursively(result->abstract(), true);
 
+  if (axis_size == -1 && cell_size_ != 0) {
+    axis_size = SizeToInt(cell_size_);
+  } else if (axis_size != -1 && cell_size_ != 0 && axis_size != SizeToInt(cell_size_)) {
+    MS_EXCEPTION(ValueError) << "If you want to execute the model ensembling parallel training, please make sure "
+                             << "the 'axis_size' in the scope of vmap consistent with the cell size of the input "
+                             << "'CellList', otherwise, please do not enter 'CellList' as the first argument, "
+                             << "but we get axis_size: " << axis_size << " and the cell size: " << cell_size_ << ".";
+  }
+
   AbstractBasePtr result_abs = result->abstract();
   AbstractBasePtr after_vmap = GetPhysicalViewAbs(result_abs, out_axes_, axis_size);
 
