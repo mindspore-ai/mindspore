@@ -48,6 +48,7 @@ from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import Eig
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import MatrixExp
+from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixLogarithm
@@ -4283,6 +4284,10 @@ test_case_other_ops = [
                         Tensor(np.array([[0, 1], [1, 2]], np.int32)),
                         Tensor(np.ones([2, 5], np.float32) * 99)),
         'desc_bprop': [([3, 4, 5], {'dtype': np.float32})]}),
+    ('FFTWithSize', {
+        'block': FFTWithSize(signal_ndim=1, inverse=False, real=False),
+        'desc_inputs': [Tensor(np.array([2, 1, 2]).astype(np.complex64))],
+        'desc_bprop': [Tensor(np.array([2, 1, 2]).astype(np.complex64))]}),
     ('ScatterMaxUseLocking', {
         'block': ScatterMax(use_locking=True),
         'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
