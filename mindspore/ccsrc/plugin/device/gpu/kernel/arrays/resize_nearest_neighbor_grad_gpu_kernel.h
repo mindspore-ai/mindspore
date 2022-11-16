@@ -67,6 +67,9 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = base_operator->name();
     (void)CheckAndConvertUtils::CheckInteger(kInputNum, SizeToLong(inputs.size()), kLessEqual, kNumTwo, kernel_name_);
     (void)CheckAndConvertUtils::CheckInteger(kInputNum, SizeToLong(outputs.size()), kEqual, kNumOne, kernel_name_);
+    auto prim = base_operator->GetPrim();
+    MS_EXCEPTION_IF_NULL(prim);
+    align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
     return true;
   }
 
@@ -109,9 +112,6 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       output_shape_.push_back(LongToInt(output_shape[i]));
     }
     output_size_ = sizeof(T) * SizeOf(output_shape);
-    auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborGrad>(base_operator);
-    MS_ERROR_IF_NULL_W_RET_VAL(op_prim, KRET_RESIZE_FAILED);
-    align_corners_ = op_prim->get_align_corners();
     return KRET_OK;
   }
 

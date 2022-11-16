@@ -63,9 +63,9 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
       return false;
     }
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeNearestNeighbor>(base_operator);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
-    align_corners_ = kernel_ptr->get_align_corners();
+    auto prim = base_operator->GetPrim();
+    MS_EXCEPTION_IF_NULL(prim);
+    align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
     return true;
   }
 
