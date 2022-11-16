@@ -113,7 +113,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      PSROIPooling, Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
                      GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D)
-from .other_ops import (Assign, IOU, BartlettWindow, BlackmanWindow, BoundingBoxDecode, BoundingBoxEncode,
+from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load, StopGradient,
                         CheckValid, Partial, Depend, identity, Push, Pull, PyFunc, _DynamicLossScale,
                         SampleDistortedBoundingBoxV2)
@@ -123,6 +123,7 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamm
                          ParameterizedTruncatedNormal, RandomPoisson)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd)
+from .spectral_ops import (BartlettWindow, BlackmanWindow)
 
 __all__ = [
     'HSVToRGB',

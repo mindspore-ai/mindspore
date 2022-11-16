@@ -140,7 +140,7 @@ from mindspore.nn.loss.loss import MultiMarginLoss
 from mindspore.nn.loss.loss import MultilabelMarginLoss
 from mindspore.nn.loss.loss import TripletMarginLoss
 from mindspore.ops.operations.array_ops import Mvlgamma
-from mindspore.ops.operations.other_ops import BartlettWindow
+from mindspore.ops.operations.spectral_ops import BartlettWindow
 from mindspore.ops.operations.nn_ops import SparseSoftmaxCrossEntropyWithLogitsV2
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import Pdist
@@ -188,7 +188,7 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSlice
 from mindspore.ops.operations.sparse_ops import SparseFillEmptyRows
 from mindspore.ops.operations._grad_ops import SparseSliceGrad
-from mindspore.ops.operations.other_ops import BlackmanWindow
+from mindspore.ops.operations.spectral_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
 from mindspore.ops.operations.sparse_ops import SparseReshape
