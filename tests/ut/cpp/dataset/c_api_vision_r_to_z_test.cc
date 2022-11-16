@@ -1184,6 +1184,123 @@ TEST_F(MindDataTestPipeline, TestRandAugmentMagGreNMBError) {
   EXPECT_EQ(iter, nullptr);
 }
     
+/// Feature: ReadFile
+/// Description: Test ReadFile with the an example file
+/// Expectation: Output is equal to the expected data
+TEST_F(MindDataTestPipeline, TestReadFileNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadFileNormal.";
+  mindspore::MSTensor output;
+  const UINT8 *data;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("./data/dataset/apple.jpg", &output));
+  EXPECT_EQ(output.Shape()[0], 159109);
+  EXPECT_EQ(output.DataType(), mindspore::DataType::kNumberTypeUInt8);
+  data = (const UINT8 *) (output.Data().get());
+  EXPECT_EQ(data[0], 255);
+  EXPECT_EQ(data[1], 216);
+  EXPECT_EQ(data[2], 255);
+  EXPECT_EQ(data[50000], 0);
+  EXPECT_EQ(data[100000], 132);
+  EXPECT_EQ(data[150000], 64);
+  EXPECT_EQ(data[159106], 63);
+  EXPECT_EQ(data[159107], 255);
+  EXPECT_EQ(data[159108], 217);
+}
+
+/// Feature: ReadFile
+/// Description: Test ReadFile with invalid filename
+/// Expectation: Error is caught when the filename is invalid
+TEST_F(MindDataTestPipeline, TestReadFileException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadFileException.";
+  mindspore::MSTensor output;
+
+  // Test with a not exist filename
+  ASSERT_ERROR(mindspore::dataset::vision::ReadFile("this_file_is_not_exist", &output));
+
+  // Test with a directory name
+  ASSERT_ERROR(mindspore::dataset::vision::ReadFile("./data/dataset/", &output));
+}
+
+/// Feature: ReadImage
+/// Description: Test ReadImage with JPEG, PNG, BMP, TIFF file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadImageNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadImage.";
+  mindspore::MSTensor output;
+  std::string folder_path = "./data/dataset/testFormats/";
+  std::string filename;
+  const UINT8 *data;
+
+  filename = folder_path + "apple.jpg";
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 3);
+  data = (const UINT8 *) (output.Data().get());
+  EXPECT_EQ(data[0], 221);
+  EXPECT_EQ(data[1], 221);
+  EXPECT_EQ(data[2], 221);
+  EXPECT_EQ(data[100 * 403 * 3 + 200 * 3 + 0], 195);
+  EXPECT_EQ(data[100 * 403 * 3 + 200 * 3 + 1], 60);
+  EXPECT_EQ(data[100 * 403 * 3 + 200 * 3 + 2], 31);
+  EXPECT_EQ(data[225 * 403 * 3 + 402 * 3 + 0], 181);
+  EXPECT_EQ(data[225 * 403 * 3 + 402 * 3 + 1], 181);
+  EXPECT_EQ(data[225 * 403 * 3 + 402 * 3 + 2], 173);
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output, ImageReadMode::kUNCHANGED));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 3);
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output, ImageReadMode::kGRAYSCALE));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 1);
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output, ImageReadMode::kCOLOR));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 3);
+
+  filename = folder_path + "apple.png";
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 3);
+
+  filename = folder_path + "apple_4_channels.png";
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 3);
+
+  filename = folder_path + "apple.bmp";
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 3);
+
+  filename = folder_path + "apple.tiff";
+  ASSERT_OK(mindspore::dataset::vision::ReadImage(filename, &output));
+  EXPECT_EQ(output.Shape()[0], 226);
+  EXPECT_EQ(output.Shape()[1], 403);
+  EXPECT_EQ(output.Shape()[2], 3);
+}
+
+/// Feature: ReadImage
+/// Description: Test ReadImage with invalid filename or not supported image file
+/// Expectation: Error is caught when the filename is invalid or it is a not supported image file
+TEST_F(MindDataTestPipeline, TestReadImageException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadImageException.";
+  std::string folder_path = "./data/dataset/testFormats/";
+  mindspore::MSTensor output;
+
+  // Test with a not exist filename
+  ASSERT_ERROR(mindspore::dataset::vision::ReadImage("this_file_is_not_exist", &output));
+
+  // Test with a directory name
+  ASSERT_ERROR(mindspore::dataset::vision::ReadImage("./data/dataset/", &output));
+
+  // Test with a not supported gif file
+  ASSERT_ERROR(mindspore::dataset::vision::ReadImage(folder_path + "apple.gif", &output));
+}
+
 /// Feature: WriteFile
 /// Description: Test WriteFile by writing the data into a file using binary mode
 /// Expectation: The file should be writeen and removed successfully
@@ -1230,40 +1347,4 @@ TEST_F(MindDataTestPipeline, TestWriteFileException) {
   Tensor::CreateFromVector(float_vector, TensorShape({12}), &input);
   data_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
   ASSERT_ERROR(mindspore::dataset::vision::WriteFile(filename_2, data_tensor));
-}
-
-/// Feature: ReadFile
-/// Description: Test ReadFile with the an example file
-/// Expectation: Output is equal to the expected data
-TEST_F(MindDataTestPipeline, TestReadFileNormal) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadFileNormal.";
-  mindspore::MSTensor output;
-  const UINT8 *data;
-  ASSERT_OK(mindspore::dataset::vision::ReadFile("./data/dataset/apple.jpg", &output));
-  EXPECT_EQ(output.Shape()[0], 159109);
-  EXPECT_EQ(output.DataType(), mindspore::DataType::kNumberTypeUInt8);
-  data = (const UINT8 *) (output.Data().get());
-  EXPECT_EQ(data[0], 255);
-  EXPECT_EQ(data[1], 216);
-  EXPECT_EQ(data[2], 255);
-  EXPECT_EQ(data[50000], 0);
-  EXPECT_EQ(data[100000], 132);
-  EXPECT_EQ(data[150000], 64);
-  EXPECT_EQ(data[159106], 63);
-  EXPECT_EQ(data[159107], 255);
-  EXPECT_EQ(data[159108], 217);
-}
-
-/// Feature: ReadFile
-/// Description: Test ReadFile with invalid filename
-/// Expectation: Error is caught when the filename is invalid
-TEST_F(MindDataTestPipeline, TestReadFileException) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadFileException.";
-  mindspore::MSTensor output;
-
-  // Test with a not exist filename
-  ASSERT_ERROR(mindspore::dataset::vision::ReadFile("this_file_is_not_exist", &output));
-
-  // Test with a directory name
-  ASSERT_ERROR(mindspore::dataset::vision::ReadFile("./data/dataset/", &output));
 }

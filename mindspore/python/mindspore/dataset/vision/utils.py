@@ -275,6 +275,31 @@ class ImageBatchFormat(IntEnum):
         return c_values.get(image_batch_format)
 
 
+class ImageReadMode(IntEnum):
+    """
+    The read mode used for the image file.
+
+    Possible enumeration values are: ImageReadMode.UNCHANGED, ImageReadMode.GRAYSCALE, ImageReadMode.COLOR.
+
+    - ImageReadMode.UNCHANGED: remain the output in the original format.
+    - ImageReadMode.GRAYSCALE: convert the output into one channel grayscale data.
+    - ImageReadMode.COLOR: convert the output into three channels RGB color data.
+    """
+    UNCHANGED = 0
+    GRAYSCALE = 1
+    COLOR = 2
+
+    @staticmethod
+    def to_c_type(image_read_mode):
+        """
+        Function to return C type for ImageReadMode.
+        """
+        c_values = {ImageReadMode.UNCHANGED: cde.ImageReadMode.DE_IMAGE_READ_MODE_UNCHANGED,
+                    ImageReadMode.GRAYSCALE: cde.ImageReadMode.DE_IMAGE_READ_MODE_GRAYSCALE,
+                    ImageReadMode.COLOR: cde.ImageReadMode.DE_IMAGE_READ_MODE_COLOR}
+        return c_values.get(image_read_mode)
+
+
 class Inter(IntEnum):
     """
     Interpolation Modes.
@@ -365,6 +390,9 @@ def encode_jpeg(image, quality=75):
         RuntimeError: If the data type of `image` is not uint8.
         RuntimeError: If the shape of `image` is not <H, W> or <H, W, 1> or <H, W, 3>.
         RuntimeError: If `quality` is less than 1 or greater than 100.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -468,12 +496,53 @@ def read_file(filename):
         TypeError: If `filename` is not of type str.
         RuntimeError: If `filename` does not exist or is not a common file.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> output = vision.read_file("/path/to/file")
     """
     if isinstance(filename, str):
         return cde.read_file(filename).as_array()
     raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+
+
+def read_image(filename, mode=ImageReadMode.UNCHANGED):
+    """
+    Read a image file and decode it into one channel grayscale data or RGB color data.
+    Supported file types are JPEG, PNG, BMP, TIFF.
+
+    Args:
+        filename(str): The path to the image file to be read.
+        mode(int, optional): The mode used for decoding the image. It can be any of
+            [ImageReadMode.UNCHANGED, ImageReadMode.GRAYSCALE, IMageReadMode.COLOR]. Default: ImageReadMode.UNCHANGED.
+
+            - ImageReadMode.UNCHANGED, remain the output in the original format.
+
+            - ImageReadMode.GRAYSCALE, convert the output into one channel grayscale data.
+
+            - IMageReadMode.COLOR, convert the output into three channels RGB color data.
+
+    Returns:
+        numpy.ndarray, three dimensions uint8 data in the shape of (Height, Width, Channels).
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        TypeError: If `mode` is not of type :class:`mindspore.dataset.vision.ImageReadMode` .
+        RuntimeError: If `filename` does not exist, or not a regular file, or not a supported image file.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.vision import ImageReadMode
+        >>> output = vision.read_image("/path/to/image_file", ImageReadMode.UNCHANGED)
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+    if not isinstance(mode, ImageReadMode):
+        raise TypeError("Input mode is not of type {0}, but got: {1}.".format(ImageReadMode, type(mode)))
+    return cde.read_image(filename, ImageReadMode.to_c_type(mode)).as_array()
 
 
 def write_file(filename, data):
@@ -490,6 +559,9 @@ def write_file(filename, data):
         RuntimeError: If the `filename` is not a common file.
         RuntimeError: If the data type of `data` is not uint8.
         RuntimeError: If the shape of `data` is not a one-dimensional array.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> vision.write_file("/path/to/file", data)
