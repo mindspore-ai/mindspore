@@ -837,6 +837,9 @@ bool AbstractSequence::operator==(const AbstractSequence &other) const {
   if (this == &other) {
     return true;
   }
+  if (tid() != other.tid()) {
+    return false;
+  }
   if (dynamic_len_ != other.dynamic_len()) {
     // Variable length sequence and constant length sequence can not be the same.
     return false;
