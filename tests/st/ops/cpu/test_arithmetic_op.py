@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
+import stat
 import numpy as np
 import pytest
 
@@ -20,6 +22,7 @@ import mindspore.nn as nn
 import mindspore
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.train.serialization import export
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -573,3 +576,61 @@ def test_dynamic_sub(dtype):
     context.set_context(mode=context.PYNATIVE_MODE)
     ms_result = sub_net(real_x, real_y)
     np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_floordiv_cpu_onnx():
+    """
+    Feature: test FloorDiv op in cpu.
+    Description: test the ops export onnx.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = FloorDivNet()
+    x = np.array([[1, -22], [-3, 4]], dtype=np.float32)
+    y = np.array([[3, -2], [1, -4]], dtype=np.float32)
+    out_ms = net(Tensor(x), Tensor(y)).asnumpy()
+    filename = 'floordiv.onnx'
+    export(net, Tensor(x), Tensor(y), file_name=filename, file_format="ONNX")
+    assert os.path.exists(filename)
+
+    import onnxruntime
+    sess = onnxruntime.InferenceSession(filename)
+    input_x = sess.get_inputs()[0].name
+    input_y = sess.get_inputs()[1].name
+    result = sess.run([], {input_x: x, input_y: y})[0]
+    assert np.all(out_ms == result)
+
+    os.chmod(filename, stat.S_IWRITE)
+    os.remove(filename)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_floormod_cpu_onnx():
+    """
+    Feature: test FloorMod op in cpu.
+    Description: test the ops export onnx.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = FloorModNet()
+    x = np.array([[1, -22], [-3, 4]], dtype=np.float32)
+    y = np.array([[3, -2], [1, -4]], dtype=np.float32)
+    out_ms = net(Tensor(x), Tensor(y)).asnumpy()
+    filename = 'floormod.onnx'
+    export(net, Tensor(x), Tensor(y), file_name=filename, file_format="ONNX")
+    assert os.path.exists(filename)
+
+    import onnxruntime
+    sess = onnxruntime.InferenceSession(filename)
+    input_x = sess.get_inputs()[0].name
+    input_y = sess.get_inputs()[1].name
+    result = sess.run([], {input_x: x, input_y: y})[0]
+    assert np.all(out_ms == result)
+
+    os.chmod(filename, stat.S_IWRITE)
+    os.remove(filename)

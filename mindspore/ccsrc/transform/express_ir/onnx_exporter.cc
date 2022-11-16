@@ -1243,6 +1243,10 @@ class OnnxExporter {
                        onnx::GraphProto *graph_proto);
   void ExportPrimAtan2(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
                        onnx::GraphProto *graph_proto);
+  void ExportPrimFloorDiv(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                          onnx::GraphProto *graph_proto);
+  void ExportPrimFloorMod(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                          onnx::GraphProto *graph_proto);
   void ExportMergeConv(const FuncGraphPtr &func_graph, const CNodePtr &node,
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeGemm(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -3407,6 +3411,66 @@ void OnnxExporter::ExportPrimAtan2(const FuncGraphPtr &, const CNodePtr &node,
   AddOp("Add", {less_where_node1, atan_node}, {node_name}, graph_proto);
 }
 
+void OnnxExporter::ExportPrimFloorDiv(const FuncGraphPtr &, const CNodePtr &node,
+                                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto out_name = node_name;
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_y_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto onnx_type = GetOutputType(node->input(kOneNum));
+  bool is_float = onnx_type == onnx::TensorProto_DataType_FLOAT;
+
+  if (!is_float) {
+    auto input_x_name_cast = input_x_name + "_cast";
+    auto input_y_name_cast = input_y_name + "_cast";
+    AddCastOp(input_x_name, input_x_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    AddCastOp(input_y_name, input_y_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    input_x_name = input_x_name_cast;
+    input_y_name = input_y_name_cast;
+    node_name = node_name + "_floor";
+  }
+
+  auto div_name = node_name + "_div";
+  AddOp("Div", {input_x_name, input_y_name}, {div_name}, graph_proto);
+  AddOp("Floor", {div_name}, {node_name}, graph_proto);
+
+  if (!is_float) {
+    AddCastOp(node_name, out_name, onnx_type, graph_proto);
+  }
+}
+
+void OnnxExporter::ExportPrimFloorMod(const FuncGraphPtr &, const CNodePtr &node,
+                                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto out_name = node_name;
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_y_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto onnx_type = GetOutputType(node->input(kOneNum));
+  bool is_float = onnx_type == onnx::TensorProto_DataType_FLOAT;
+
+  if (!is_float) {
+    auto input_x_name_cast = input_x_name + "_cast";
+    auto input_y_name_cast = input_y_name + "_cast";
+    AddCastOp(input_x_name, input_x_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    AddCastOp(input_y_name, input_y_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    input_x_name = input_x_name_cast;
+    input_y_name = input_y_name_cast;
+    node_name = node_name + "_sub";
+  }
+
+  auto div_name = node_name + "_div";
+  auto mul_name = node_name + "_mul";
+  auto floor_name = node_name + "_floor";
+  AddOp("Div", {input_x_name, input_y_name}, {div_name}, graph_proto);
+  AddOp("Floor", {div_name}, {floor_name}, graph_proto);
+  AddOp("Mul", {floor_name, input_y_name}, {mul_name}, graph_proto);
+  AddOp("Sub", {input_x_name, mul_name}, {node_name}, graph_proto);
+
+  if (!is_float) {
+    AddCastOp(node_name, out_name, onnx_type, graph_proto);
+  }
+}
+
 void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   using ExportFunc = std::function<void(OnnxExporter *, const FuncGraphPtr &, const CNodePtr &,
@@ -3455,6 +3519,8 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimTensorCopySlices, &OnnxExporter::ExportPrimTensorCopySlices},
     {prim::kPrimStack, &OnnxExporter::ExportPrimStack},
     {prim::kPrimAtan2, &OnnxExporter::ExportPrimAtan2},
+    {prim::kPrimFloorDiv, &OnnxExporter::ExportPrimFloorDiv},
+    {prim::kPrimFloorMod, &OnnxExporter::ExportPrimFloorMod},
   };
 
   auto iter = std::find_if(export_table.begin(), export_table.end(),
