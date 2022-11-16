@@ -156,6 +156,8 @@ class DfGraphConvertor {
 
   bool is_training() const { return training_; }
   void set_training(bool is_training) { training_ = is_training; }
+  bool dynamic_shape_inputs() const { return dynamic_shape_inputs_; }
+  std::vector<ShapeVector> input_shapes() { return input_shapes_; }
 
  protected:
   void InitLoopVar(std::vector<::ge::Operator> *init_input);
@@ -178,15 +180,16 @@ class DfGraphConvertor {
   OperatorPtr ConvertValueNode(ValueNodePtr node);
   void SaveParamFormat(CNodePtr node);
   void GetBranchNodeInput(const CNodePtr node);
-  void ConvertTopK(const CNodePtr node);
+  void ConvertTopK(const CNodePtr &node);
   void ConvertResizeBilinear(const FuncGraphPtr anf_graph) const;
   void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const;
   void ConvertTile(const FuncGraphPtr anf_graph) const;
   AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const;
-  void ConvertReshape(const CNodePtr node);
-  void ConvertAllReduce(const CNodePtr node);
-  void ConvertOCRRecPreHandle(const CNodePtr node);
-  void ConvertConv2D(const CNodePtr node);
+  void ConvertReshape(const CNodePtr &node);
+  void ConvertAllReduce(const CNodePtr &node);
+  void ConvertOCRRecPreHandle(const CNodePtr &node);
+  void ConvertConv2D(const CNodePtr &node);
+  void ConvertDynamicStitch(const CNodePtr &node);
   std::vector<int64_t> CastToInt(const ValuePtr &value) const;
   bool CheckCNode(const std::string &name, const CNodePtr node);
   void SetNodeInput(AnfNodePtr node);
@@ -198,6 +201,7 @@ class DfGraphConvertor {
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
+  void AddGraphDynamicInput(const ParameterPtr &param);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
   void SetGraphInputs(std::vector<Operator> *inputs);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
@@ -264,6 +268,7 @@ class DfGraphConvertor {
   std::vector<OperatorPtr> init_ops_;
   std::vector<OperatorPtr> broadcast_ops_;
   std::vector<AnfNodePtr> inputs_;
+  ShapeArray input_shapes_;
   OperatorPtr dataset_iter_getnext_;
   OperatorPtr queue_data_;
   OperatorPtr get_next_from_queue_;
@@ -271,6 +276,7 @@ class DfGraphConvertor {
   bool training_ = false;
   bool distribute_ = false;
   bool use_inputs_ = false;
+  bool dynamic_shape_inputs_ = false;
 
   AnfNodePtr while_cond_node_ = nullptr;
   mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<DfGraph>>> while_dfgraph_cache_;

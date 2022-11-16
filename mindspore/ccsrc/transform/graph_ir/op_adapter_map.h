@@ -396,6 +396,9 @@ constexpr const char kNameTransData[] = "TransData";
 constexpr const char kNameSend[] = "Send";
 constexpr const char kNameReceive[] = "Receive";
 constexpr const char kNameIndexAdd[] = "IndexAdd";
+constexpr const char kNameUnique[] = "Unique";
+constexpr const char kNameDynamicBroadcastGradientArgs[] = "DynamicBroadcastGradientArgs";
+constexpr const char kNameDynamicStitch[] = "DynamicStitch";
 
 class OpAdapterDesc;
 

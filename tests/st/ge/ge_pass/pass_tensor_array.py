@@ -15,7 +15,7 @@
 """ test ge frontend pass and op `TensorArray`"""
 import numpy as np
 
-import ge_infer_env  # pylint: disable=unused-import
+from tests.st.ge import ge_infer_env  # pylint: disable=unused-import
 import mindspore.context as context
 from mindspore import nn
 from mindspore import Tensor

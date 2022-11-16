@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import inspect
 import os
 import sys
 
 
 def run_testcase(file_name, case_name=""):
+    caller_working_dir = os.path.dirname(inspect.stack()[1][1])
+    os.chdir(caller_working_dir)
     log_file = file_name + "_" + case_name + '.log'
     if case_name == "":
         ret = os.system(f'{sys.executable} {file_name}.py &> {log_file}')

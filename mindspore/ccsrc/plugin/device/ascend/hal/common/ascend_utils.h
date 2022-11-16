@@ -25,6 +25,20 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+template <typename Map, typename K = typename Map::key_type, typename V = typename Map::mapped_type>
+std::string MapToString(const Map &value) {
+  std::stringstream buffer;
+  buffer << "{";
+  for (auto it = value.begin(); it != value.end(); it++) {
+    if (it != value.begin()) {
+      buffer << ", ";
+    }
+    buffer << it->first << ": " << it->second;
+  }
+  buffer << "}";
+  return buffer.str();
+}
+
 std::string GetErrorMessage(bool add_title = false);
 std::string GetWarningMessage();
 void SetErrorManagerContext();

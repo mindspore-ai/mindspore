@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <queue>
 #include <stack>
+#include <unordered_set>
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "utils/anf_utils.h"
@@ -392,14 +393,16 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
     return *this;
   }
 
-  // Processing input with MakeDatasetHandler
+  // Processing input with MakeDatasetHandler and check whether input is dynamic
   for (auto &it : anf_graph_->inputs()) {
     auto op_itor = op_cache_.find(it.get());  // converted node
     if (it->isa<Parameter>() && op_itor != op_cache_.end()) {
-      string name = std::static_pointer_cast<Parameter>(it)->name();
+      const auto &param = std::static_pointer_cast<Parameter>(it);
+      string name = param->name();
       auto tensor_itor = tensors.find(name);  // in init value map
       if (tensor_itor == tensors.end()) {
-        DfGraphConvertor::MakeDatasetHandler(name, input_idx, it);
+        MakeDatasetHandler(name, input_idx, it);
+        AddGraphDynamicInput(param);
         input_idx++;
       }
     }
@@ -1941,6 +1944,19 @@ void DfGraphConvertor::SetNodeInput(const AnfNodePtr node) {
   DfGraphConvertor::SetOpInput(adpt, cnode);
 }
 
+void DfGraphConvertor::AddGraphDynamicInput(const ParameterPtr &param) {
+  MS_EXCEPTION_IF_NULL(param);
+  const auto &base_shape = param->Shape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  const auto &shape = base_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape);
+  const auto &sv = shape->shape();
+  if (std::any_of(sv.cbegin(), sv.cend(), [](const auto e) { return e == -1; })) {
+    dynamic_shape_inputs_ = true;
+  }
+  (void)input_shapes_.emplace_back(sv);
+}
+
 std::string DfGraphConvertor::GetGNodeName(const ::ge::GNode &node) const {
   ::ge::AscendString name;
   auto ret = node.GetName(name);
@@ -2224,7 +2240,7 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
   return nullptr;
 }
 
-void DfGraphConvertor::ConvertTopK(const CNodePtr node) {
+void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
   auto value_ptr = node->input(2)->cast<ValueNodePtr>();
@@ -2372,7 +2388,7 @@ std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) const {
   return cur_value;
 }
 
-void DfGraphConvertor::ConvertReshape(const CNodePtr node) {
+void DfGraphConvertor::ConvertReshape(const CNodePtr &node) {
   MS_LOG(INFO) << "Convert the second input of reshape to op attr.";
   const auto kInputNum = 3;
   if (node->size() < kInputNum) {
@@ -2386,10 +2402,7 @@ void DfGraphConvertor::ConvertReshape(const CNodePtr node) {
   auto op = adpt->generate(node);
   MS_EXCEPTION_IF_NULL(op);
   // get shape form attr
-  auto value_node = node->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  MS_EXCEPTION_IF_NULL(value_node->value());
-  auto primitive = value_node->value()->cast<PrimitivePtr>();
+  auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   auto value = primitive->GetAttr("shape");
   std::vector<int64_t> list;
@@ -2399,7 +2412,34 @@ void DfGraphConvertor::ConvertReshape(const CNodePtr node) {
   op_cache_[node.get()] = op;
 }
 
-void DfGraphConvertor::ConvertAllReduce(const CNodePtr node) {
+void DfGraphConvertor::ConvertDynamicStitch(const CNodePtr &node) {
+  MS_LOG(INFO) << "Convert and set 'N' attr of DynamicStitch.";
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  int64_t input_length = 0;
+  auto indices = node->input(1);
+  MS_EXCEPTION_IF_NULL(indices);
+  if (indices->isa<CNode>()) {
+    input_length = SizeToLong(indices->cast<CNodePtr>()->size()) - 1;
+  } else if (IsValueNode<ValueSequence>(indices)) {
+    const auto tuple = GetValueNode<ValueSequencePtr>(indices);
+    MS_EXCEPTION_IF_NULL(tuple);
+    input_length = SizeToLong(tuple->size());
+  } else {
+    MS_LOG(EXCEPTION) << "Input 1 of DynamicStitch is neither CNode nor ValueNode contains ValueSequence, but "
+                      << indices->ToString() << ", can not set 'N' attr.";
+  }
+
+  (void)op->SetAttr("N", input_length);
+  MS_LOG(INFO) << "Set 'N' attr of DynamicStitch to " << input_length;
+  op_cache_[node.get()] = op;
+}
+
+void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
   MS_LOG(INFO) << "Add AllReduce fusion_id";
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
@@ -2408,10 +2448,7 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr node) {
   auto op = adpt->generate(node);
   MS_EXCEPTION_IF_NULL(op);
   // get shape form attr
-  auto value_node = node->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  MS_EXCEPTION_IF_NULL(value_node->value());
-  auto primitive = value_node->value()->cast<PrimitivePtr>();
+  auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   auto fusion_value = primitive->GetAttr("fusion");
   auto fusion = GetValue<int64_t>(fusion_value);
@@ -2425,7 +2462,8 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr node) {
   op_cache_[node.get()] = op;
 }
 
-void DfGraphConvertor::ConvertConv2D(const CNodePtr node) {
+void DfGraphConvertor::ConvertConv2D(const CNodePtr &node) {
+  MS_LOG(INFO) << "Convert and set 'padding' attr for Conv2D-like op.";
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
@@ -2433,20 +2471,33 @@ void DfGraphConvertor::ConvertConv2D(const CNodePtr node) {
   }
   auto op = adpt->generate(node);
   MS_EXCEPTION_IF_NULL(op);
-  auto value_node = node->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  MS_EXCEPTION_IF_NULL(value_node->value());
-  auto primitive = value_node->value()->cast<PrimitivePtr>();
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto value = primitive->GetAttr("padding");
-  if (value != nullptr) {
-    std::string pad_mode = GetValue<std::string>(value);
-    (void)op->SetAttr("padding", pad_mode);
-  }
   op_cache_[node.get()] = op;
+  auto primitive = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  std::string pad_mode;
+  if (auto value = primitive->GetAttr("padding"); value != nullptr) {
+    pad_mode = GetValue<std::string>(value);
+  } else if (auto value = primitive->GetAttr("pad_mode"); value != nullptr) {
+    // Get 'pad_mode' attr and set it to 'padding' attr for ge
+    const mindspore::HashMap<int64_t, std::string> pad_mode_map{{1, "SAME"}, {2, "VALID"}};
+    if (value->isa<StringImm>()) {
+      pad_mode = GetValue<std::string>(value);
+      (void)std::transform(pad_mode.cbegin(), pad_mode.cend(), pad_mode.begin(), toupper);
+    } else if (auto it = pad_mode_map.find(GetValue<int64_t>(value)); it != pad_mode_map.cend()) {
+      // 'pad_mode' attr could be an enumeration
+      pad_mode = it->second;
+    } else {
+      return;
+    }
+  } else {
+    MS_LOG(INFO) << "Node: " << node->fullname_with_scope() << " has no 'padding' or 'pad_mode' attr";
+    return;
+  }
+  MS_LOG(INFO) << "Set 'padding' attr of node: " << node->fullname_with_scope() << " to " << pad_mode;
+  (void)op->SetAttr("padding", pad_mode);
 }
 
-void DfGraphConvertor::ConvertOCRRecPreHandle(const CNodePtr node) {
+void DfGraphConvertor::ConvertOCRRecPreHandle(const CNodePtr &node) {
   MS_LOG(INFO) << "Add OCRRecognitionPreHandle _op_max_shape attr";
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
@@ -2455,10 +2506,7 @@ void DfGraphConvertor::ConvertOCRRecPreHandle(const CNodePtr node) {
   auto op = adpt->generate(node);
   MS_EXCEPTION_IF_NULL(op);
   // get shape form attr
-  auto value_node = node->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  MS_EXCEPTION_IF_NULL(value_node->value());
-  auto primitive = value_node->value()->cast<PrimitivePtr>();
+  auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   auto value = primitive->GetAttr("_op_max_shape");
   if (value == nullptr) {
@@ -2517,33 +2565,26 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
     return false;
   }
 
-  // Convert TopK second input from int64 to int32.
-  if (name == prim::kPrimTopK->name()) {
-    ConvertTopK(node);
-    return true;
-  }
+  const mindspore::HashMap<std::string, std::function<void(decltype(this), const CNodePtr &)>>
+    auxiliary_node_converters{
+      // Convert TopK second input from int64 to int32.
+      {prim::kPrimTopK->name(), &DfGraphConvertor::ConvertTopK},
+      // Convert Reshape add const input to attr(shape)
+      {prim::kPrimReshape->name(), &DfGraphConvertor::ConvertReshape},
+      {prim::kPrimOCRRecognitionPreHandle->name(), &DfGraphConvertor::ConvertOCRRecPreHandle},
+      // Add attr 'pad_mode' to Conv2D-like op
+      {prim::kPrimConv2D->name(), &DfGraphConvertor::ConvertConv2D},
+      {prim::kPrimDepthwiseConv2dNative->name(), &DfGraphConvertor::ConvertConv2D},
+      {kNameConv2DBackpropInputV2, &DfGraphConvertor::ConvertConv2D},
+      {prim::kPrimConv2DBackpropInput->name(), &DfGraphConvertor::ConvertConv2D},
+      {prim::kPrimConv2DBackpropFilter->name(), &DfGraphConvertor::ConvertConv2D},
+      // Add attr 'N' to DynamicStitch
+      {prim::kPrimDynamicStitch->name(), &DfGraphConvertor::ConvertDynamicStitch},
+      {prim::kPrimAllReduce->name(), &DfGraphConvertor::ConvertAllReduce},
+    };
 
-  // Convert Reshape add const input to attr(shape)
-  if (name == prim::kPrimReshape->name()) {
-    ConvertReshape(node);
-    return true;
-  }
-
-  if (name == prim::kPrimOCRRecognitionPreHandle->name()) {
-    ConvertOCRRecPreHandle(node);
-    return true;
-  }
-
-  // Add attr pad mode to Conv2D
-  if (name == prim::kPrimConv2D->name() || name == prim::kPrimDepthwiseConv2dNative->name() ||
-      name == kNameConv2DBackpropInputV2) {
-    ConvertConv2D(node);
-    return true;
-  }
-
-  if (name == prim::kPrimAllReduce->name()) {
-    ConvertAllReduce(node);
-    return true;
+  if (const auto it = auxiliary_node_converters.find(name); it != auxiliary_node_converters.cend()) {
+    it->second(this, node);
   }
 
   return true;

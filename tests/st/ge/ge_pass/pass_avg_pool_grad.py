@@ -15,7 +15,7 @@
 """ test ge frontend pass `AvgPoolGradForGE` """
 import numpy as np
 
-import ge_infer_env  # pylint: disable=unused-import
+from tests.st.ge import ge_infer_env  # pylint: disable=unused-import
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops import operations as op
