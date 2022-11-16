@@ -17,6 +17,9 @@
 #include "plugin/device/gpu/kernel/arrays/spacetodepth_gpu_kernel.h"
 #include <map>
 #include <utility>
+#include "mindspore/core/abstract/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "kernel/common_utils.h"
 namespace mindspore {
 namespace kernel {
 using KernelRunFunc = SpaceToDepthGpuKernelMod::KernelRunFunc;
@@ -102,7 +105,10 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SpaceToDepthGpuKernelMo
     DTYPE_REGISTER_ATTR(kNumberTypeInt16, kNumberTypeInt16, int16_t),
     DTYPE_REGISTER_ATTR(kNumberTypeUInt16, kNumberTypeUInt16, uint16_t),
     DTYPE_REGISTER_ATTR(kNumberTypeInt8, kNumberTypeInt8, int8_t),
-    DTYPE_REGISTER_ATTR(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t)};
+    DTYPE_REGISTER_ATTR(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
+    DTYPE_REGISTER_ATTR(kNumberTypeComplex64, kNumberTypeComplex64, utils::Complex<float>),
+    DTYPE_REGISTER_ATTR(kNumberTypeComplex128, kNumberTypeComplex128, utils::Complex<double>),
+    DTYPE_REGISTER_ATTR(kNumberTypeFloat64, kNumberTypeFloat64, double)};
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, SpaceToDepth, SpaceToDepthGpuKernelMod);

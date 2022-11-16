@@ -18,6 +18,10 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include "mindspore/core/abstract/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "kernel/common_utils.h"
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -42,7 +46,13 @@ const std::vector<std::pair<KernelAttr, DepthToSpacePtrCreatorFunc>> kernel_attr
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
    CreateDepthToSpaceKernelPtr<uint32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   CreateDepthToSpaceKernelPtr<uint64_t>}};
+   CreateDepthToSpaceKernelPtr<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   CreateDepthToSpaceKernelPtr<utils::Complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   CreateDepthToSpaceKernelPtr<utils::Complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   CreateDepthToSpaceKernelPtr<double>}};
 }  // namespace
 
 bool DepthToSpaceFwdKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

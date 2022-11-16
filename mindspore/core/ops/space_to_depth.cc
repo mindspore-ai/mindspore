@@ -67,7 +67,8 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For SpaceToDepth, block_size must greater than 2, but got the block_size is "
                              << block_size;
   }
-  if (IsDynamicRank(x_shape)) {
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  if (IsDynamicRank(x_shape) || x_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
   const int64_t x_rank = 4;
