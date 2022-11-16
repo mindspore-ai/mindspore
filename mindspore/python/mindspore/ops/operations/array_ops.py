@@ -5987,6 +5987,13 @@ class MaskedFill(Primitive):
     """
     Fills elements with value where mask is True.
 
+    Note:
+        If `value` is a floating-point number of Python, it will be converted to float32 later by default.
+        In this case, if `input_x` is a float16 Tensor, it will be converted to float32 for calculation,
+        and the result type will be converted back to float16 on the CPU and Ascend platforms, which may
+        cause the performance penalty. A TypeError may be raised on the GPU platform. Therefore,
+        it is recommended that 'value' should use a Tensor with the same dtype as `input_x`.
+
     Refer to :func:`mindspore.ops.masked_fill` for more details.
 
     Supported Platforms:
