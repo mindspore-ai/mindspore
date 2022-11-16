@@ -33,6 +33,10 @@
 namespace mindspore::lite {
 namespace {
 bool TensorNeedQuant(const std::unique_ptr<TensorT> &tensor) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is nullptr";
+    return false;
+  }
   if (!quant::TensorQuantParamsInited(*tensor)) {
     return false;
   }
@@ -114,6 +118,7 @@ STATUS ComputeDataToInt32(const std::unique_ptr<TensorT> &tensor) {
 }
 
 STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, const schema::MetaGraphT &graph) {
+  MS_ASSERT(tensor != nullptr);
   bool channel_at_first = true;
   int channel_cnt = -1;
   auto used_nodes_idx = GetLinkedPostIdx(graph, tensor_index);

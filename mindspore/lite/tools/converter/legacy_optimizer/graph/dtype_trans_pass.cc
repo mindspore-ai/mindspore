@@ -57,6 +57,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
     size_t graph_in_idx = graph_in_idxes.at(i);
     MS_ASSERT(graph_in_idx < graph->allTensors.size());
     auto &tensor = graph->allTensors.at(graph_in_idx);
+    CHECK_NULL_RETURN(tensor);
     if (!quant::TensorQuantParamsInited(*tensor)) {
       continue;
     }
@@ -72,6 +73,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
 
     int32_t tensor_data_type = this->input_data_dtype;
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
+      CHECK_NULL_RETURN(*iter);
       auto node_name = (*iter)->name;
       for (size_t input_indexidx = 0; input_indexidx < (*iter)->inputIndex.size(); input_indexidx++) {
         if ((*iter)->inputIndex.at(input_indexidx) == graph_in_idx) {
@@ -106,6 +108,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
     size_t graph_out_idx = graph_out_idxes.at(i);
     MS_ASSERT(graph_out_idx < graph->allTensors.size());
     auto &tensor = graph->allTensors.at(graph_out_idx);
+    CHECK_NULL_RETURN(tensor);
     if (!quant::TensorQuantParamsInited(*tensor)) {
       continue;
     }
@@ -121,6 +124,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
 
     int32_t tensor_data_type = this->output_data_dtype;
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
+      CHECK_NULL_RETURN(*iter);
       auto node_name = (*iter)->name;
       MS_ASSERT(node != nullptr);
       for (size_t outputIndexIdx = 0; outputIndexIdx < (*iter)->outputIndex.size(); outputIndexIdx++) {
@@ -144,11 +148,14 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
 }
 
 STATUS DTypeTransPass::InsetDTypeTransNodeForWrongDtypeQuantOp(schema::MetaGraphT *graph, NodeIter *iter) {
+  CHECK_NULL_RETURN(graph);
+  CHECK_NULL_RETURN(iter);
   auto node_name = (**iter)->name;
   auto status = RET_OK;
   // insert fp32/uint8 to int8 before
   for (size_t i = 0; i < (**iter)->inputIndex.size(); i++) {
     auto &pre_tensor = graph->allTensors.at((**iter)->inputIndex.at(i));
+    CHECK_NULL_RETURN(pre_tensor);
     // insert quant cast op for tensor which should be int8
     if ((pre_tensor->dataType == kNumberTypeFloat32 || pre_tensor->dataType == kNumberTypeUInt8) &&
         quant::TensorQuantParamsInited(*pre_tensor)) {
@@ -182,6 +189,8 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForWrongDtypeQuantOp(schema::MetaGraph
 }
 
 STATUS DTypeTransPass::InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraphT *graph, NodeIter *iter) {
+  CHECK_NULL_RETURN(graph);
+  CHECK_NULL_RETURN(iter);
   auto node_name = (**iter)->name;
   auto status = RET_OK;
   // insert int8 to fp32 before
@@ -199,6 +208,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraph
   // insert fp32 to int8 after
   for (size_t i = 0; i < (**iter)->outputIndex.size(); i++) {
     auto &post_tensor = graph->allTensors.at((**iter)->outputIndex.at(i));
+    CHECK_NULL_RETURN(post_tensor);
     if (post_tensor->dataType == kNumberTypeInt8 && quant::TensorQuantParamsInited(*post_tensor)) {
       *iter = InsertDTypeTransNode(graph, *iter, kAfter, i, kNumberTypeInt8, kNumberTypeFloat32, &status);
       if (status != RET_OK) {
@@ -213,6 +223,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraph
 STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
+    CHECK_NULL_RETURN(*iter);
     auto node_name = (*iter)->name;
     if ((*iter)->inputIndex.empty()) {
       MS_LOG(WARNING) << "Op " << node_name.c_str() << " should have " << kMinInputNum << " input tensor at least";

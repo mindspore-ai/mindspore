@@ -90,7 +90,6 @@ class ControlFlowScheduler {
   int RecordAllNonTailCallLinkInfo(std::vector<kernel::KernelExec *> *dst_kernels);
   int RecordNonTailCallLinkInfo(kernel::KernelExec *non_tail_call);
 
- private:
   InnerContext *context_ = nullptr;
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::vector<Tensor *> *src_tensors_ = nullptr;

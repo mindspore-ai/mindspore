@@ -632,7 +632,7 @@ int LiteSession::PrepareKernels(const Model *model) {
   kernel::KernelExecUtil::FindAllInoutKernels(this->kernels_);
 
   // init init_ref_count for subgraphs and kernels
-  auto ret = SetTensorInitRefCount(model);
+  auto ret = SetTensorInitRefCount();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SetTensorInitRefCount failed.";
     return ret;
@@ -670,7 +670,7 @@ int LiteSession::PrepareKernels(const Model *model) {
   return RET_OK;
 }
 
-int LiteSession::SetTensorInitRefCount(const Model *model) {
+int LiteSession::SetTensorInitRefCount() {
   for (auto *kernel : this->kernels_) {
     kernel->InitOutTensorInitRefCount();
     if (kernel->desc().arch == kernel::kDelegate) {
@@ -699,7 +699,7 @@ int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount() {
         auto output = subgraph->out_tensors()[i];
         if (subgraph_outputs_set.find(output) == subgraph_outputs_set.end()) {
           output->set_init_ref_count(1);
-          subgraph_outputs_set.insert(output);
+          (void)subgraph_outputs_set.insert(output);
         } else {
           output->set_init_ref_count(output->init_ref_count() + 1);
         }

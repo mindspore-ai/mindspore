@@ -84,6 +84,10 @@ constexpr int kBytesPerInt = 4;
 
 void ConvertTensorList(const MetaGraphT *graph, uint32_t index, bool *convert_succ,
                        std::vector<Tensor *> *lite_tensors) {
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "graph is nullptr";
+    return;
+  }
   std::unique_ptr<Tensor> lite_tensor = nullptr;
   auto &tensorT = graph->allTensors.at(index);
   std::vector<int32_t> tensor_shape{};
@@ -164,6 +168,10 @@ void ConvertTensorList(const MetaGraphT *graph, uint32_t index, bool *convert_su
 
 namespace {
 std::unique_ptr<Tensor> CreateRuntimeTensor(const std::unique_ptr<TensorT> &src_tensor) {
+  if (src_tensor == nullptr) {
+    MS_LOG(ERROR) << "src tensor is nullptr";
+    return nullptr;
+  }
   std::unique_ptr<Tensor> runtime_tensor = nullptr;
   auto tensor_shape = src_tensor->dims;
   runtime_tensor = std::make_unique<Tensor>(TypeId(src_tensor->dataType), tensor_shape,
@@ -202,6 +210,7 @@ void ConvertString(const MetaGraphT *graph, uint32_t index, bool *convert_succ, 
 
 void ConvertOtherTensor(const MetaGraphT *graph, uint32_t index, bool *convert_succ,
                         std::vector<Tensor *> *lite_tensors) {
+  CHECK_NULL_RETURN_VOID(graph);
   auto &tensorT = graph->allTensors.at(index);
   auto runtime_tensor = CreateRuntimeTensor(tensorT);
   if (runtime_tensor == nullptr) {
@@ -309,6 +318,7 @@ int SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
   output_tensor->dataType = output_tensors[i]->data_type();
   if (output_tensors[i]->data_type() == kObjectTypeTensorType) {
     auto tensor_list = reinterpret_cast<TensorList *>(output_tensors[i]);
+    MSLITE_CHECK_PTR(tensor_list);
     int tensor_shape_dims = 0;
     if (!tensor_list->tensors().empty()) {
       tensor_shape_dims = static_cast<int>(tensor_list->tensors().front()->shape().size());
@@ -356,6 +366,7 @@ int CopyOutputInfoToTensorT(MetaGraphT *graph, const std::vector<Tensor *> &outp
   for (uint32_t i = 0; i < output_tensors.size(); i++) {
     auto output_dims = output_tensors[i]->shape();
     auto &output_tensorT = graph->allTensors.at(node->outputIndex[i]);
+    MSLITE_CHECK_PTR(output_tensorT);
     output_tensorT->dims.swap(output_dims);
     if (SetDataType(graph, output_tensors, node, tensors, i) != RET_OK) {
       MS_LOG(ERROR) << "SetDataType failed.";
@@ -366,6 +377,7 @@ int CopyOutputInfoToTensorT(MetaGraphT *graph, const std::vector<Tensor *> &outp
 }
 
 int64_t PartialGraphIndex(const CNodeT *partial_node) {
+  MSLITE_CHECK_PTR(partial_node);
   return partial_node->primitive->value.AsPartialFusion()->sub_graph_index;
 }
 }  // namespace
@@ -383,7 +395,9 @@ int InferShapePass::CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaG
 
   for (size_t i = 0; i < partial_node->inputIndex.size(); ++i) {
     auto &subgraph_input = graph->allTensors.at(subgraph->inputIndices[i]);
+    MSLITE_CHECK_PTR(subgraph_input);
     auto &partial_input = graph->allTensors.at(partial_node->inputIndex[i]);
+    MSLITE_CHECK_PTR(partial_input);
     subgraph_input->dataType = partial_input->dataType;
     subgraph_input->dims = partial_input->dims;
     subgraph_input->format = partial_input->format;
@@ -477,6 +491,7 @@ void InferShapePass::InitInferTensor(MetaGraphT *graph) {
 
   for (auto input_idx : graph->inputIndex) {
     auto input_tensor = graph->allTensors[input_idx].get();
+    CHECK_NULL_RETURN_VOID(input_tensor);
     for (auto &dim : input_tensor->dims) {
       if (dim == 0) {
         MS_LOG(WARNING) << "One dimension of the input shape is 0, which would be set to -1 as a default value.";
@@ -502,6 +517,7 @@ int InferShapePass::InferSwitchOrSwitchLayerNode(const bool &is_tail_call, const
   std::vector<CNodeT *> all_partial_nodes{};
   for (auto &partial_index : all_partial_index) {
     for (auto &node : graph->nodes) {
+      MSLITE_CHECK_PTR(node);
       if (node->primitive->value.type != PrimitiveType_PartialFusion) {
         continue;
       }
@@ -534,6 +550,7 @@ int InferShapePass::InferSwitchOrSwitchLayerNode(const bool &is_tail_call, const
 }
 
 int InferShapePass::InferCallNode(const std::unique_ptr<CNodeT> &call_node, MetaGraphT *graph) {
+  MSLITE_CHECK_PTR(call_node);
   if (call_node->inputIndex.size() < kCallInputMinSize) {
     MS_LOG(ERROR) << "call node input size: " << call_node->inputIndex.size() << " is less than one.";
     return RET_PARAM_INVALID;
@@ -573,6 +590,7 @@ int InferShapePass::InferSubgraph(const int64_t &subgraph_index, MetaGraphT *gra
   while (!infer_node_indexes.empty()) {
     auto infer_node_index = infer_node_indexes.front();
     auto &node = graph->nodes.at(infer_node_index);
+    MSLITE_CHECK_PTR(node);
     infer_node_indexes.erase(infer_node_indexes.begin());
     auto node_type = node->primitive->value.type;
     if (node_type == PrimitiveType_Call) {

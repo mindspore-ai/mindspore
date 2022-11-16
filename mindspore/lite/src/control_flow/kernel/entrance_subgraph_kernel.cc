@@ -24,7 +24,6 @@ SubGraphKernel *EntranceSubGraphKernel::Create(Kernel *kernel) {
   auto sub_kernel = new kernel::EntranceSubGraphKernel(kernel);
   if (sub_kernel == nullptr) {
     MS_LOG(ERROR) << "create entrance subgraph failed!";
-    return nullptr;
   }
   return sub_kernel;
 }

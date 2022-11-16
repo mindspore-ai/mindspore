@@ -68,7 +68,9 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
   auto mul_index = mul_path->nodeIdx;
   auto bias_index = bias_path->nodeIdx;
   auto &mul_node = graph->nodes.at(mul_index);
+  MS_ASSERT(mul_node != nullptr);
   auto &bias_node = graph->nodes.at(bias_index);
+  MS_ASSERT(bias_node != nullptr);
   auto bias_tensor_index = bias_node->inputIndex.at(1);
   if (mul_node->inputIndex.size() != 2) {
     MS_LOG(DEBUG) << "cat not fusion.";

@@ -347,9 +347,9 @@ int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
     return RET_PARAM_INVALID;
   }
   auto src_data = src->MutableData();
-  auto src_nums_size = src->ElementsNum();
-  auto dst_data_type = static_cast<int>(dst->data_type());
-  auto src_data_type = static_cast<int>(src->data_type());
+  size_t src_nums_size = static_cast<size_t>(src->ElementsNum());
+  auto dst_data_type = dst->data_type();
+  auto src_data_type = src->data_type();
   // Some case dst data type is unknown, we will set to float32. In this case, need case is true, but actually no need
   // cast data
   if (dst_data_type == src_data_type) {
@@ -371,9 +371,11 @@ int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
     return RET_NOT_SUPPORT;
 #endif
   } else if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeInt32) {
-    Int32ToFloat32(static_cast<const int32_t *>(src_data), static_cast<float *>(dst_data), src_nums_size);
+    Int32ToFloat32(static_cast<const int32_t *>(src_data), static_cast<float *>(dst_data),
+                   static_cast<int>(src_nums_size));
   } else if (dst_data_type == kNumberTypeInt32 && src_data_type == kNumberTypeFloat32) {
-    Float32ToInt32(static_cast<const float *>(src_data), static_cast<int32_t *>(dst_data), src_nums_size);
+    Float32ToInt32(static_cast<const float *>(src_data), static_cast<int32_t *>(dst_data),
+                   static_cast<int>(src_nums_size));
   } else {
     MS_LOG(ERROR) << "not support dst_data_type: " << dst_data_type << " src_data_type: " << src_data_type;
     return RET_NOT_SUPPORT;
@@ -539,7 +541,7 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst, std::shared_ptr<Al
   }
   memset(dst->tensors_, 0, dst->element_num_ * sizeof(TensorC));
   for (size_t i = 0; i < dst->element_num_; i++) {
-    auto ret = Tensor2TensorC(src->tensors().at(i), &dst->tensors_[i]);
+    auto ret = Tensor2TensorC(src->tensors()[i], &dst->tensors_[i]);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Tensor to TensorC failed.";
       return ret;

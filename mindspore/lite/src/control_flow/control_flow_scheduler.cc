@@ -70,7 +70,7 @@ int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::KernelEx
       return ret;
     }
     // append dst_kernels
-    std::copy(new_subgraphs.begin(), new_subgraphs.end(), std::back_inserter(*dst_kernels));
+    (void)std::copy(new_subgraphs.begin(), new_subgraphs.end(), std::back_inserter(*dst_kernels));
     // update partial_kernel_map
     for (auto &item : *partial_kernel_subgraph_index_map_) {
       auto &partial_node = item.first;
@@ -81,9 +81,9 @@ int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::KernelEx
       if (iter == subgraphs.end()) {
         continue;
       }
-      subgraphs.erase(iter);
+      (void)subgraphs.erase(iter);
       for (auto &new_subgraph : new_subgraphs) {
-        subgraphs.insert(iter, new_subgraph);
+        (void)subgraphs.insert(iter, new_subgraph);
       }
       partial_kernel->set_subgraph_kernels(subgraphs);
     }
@@ -120,12 +120,15 @@ int ControlFlowScheduler::AdjustNodesForTailCallSubGraph(std::vector<kernel::Ker
                                                          std::vector<kernel::KernelExec *> *second_part_nodes) {
   auto tail_call = second_part_nodes->back();
   std::vector<kernel::KernelExec *> all_need_nodes{};
-  std::copy(tail_call->in_kernels().begin(), tail_call->in_kernels().end(), std::back_inserter(all_need_nodes));
+  (void)std::copy(tail_call->in_kernels().begin(), tail_call->in_kernels().end(), std::back_inserter(all_need_nodes));
   auto partials = kernel::KernelExecUtil::GetCallInputPartials(tail_call);
-  std::copy(partials.begin(), partials.end(), std::back_inserter(all_need_nodes));
+  (void)std::copy(partials.begin(), partials.end(), std::back_inserter(all_need_nodes));
   for (auto partial : partials) {
     for (auto input : partial->in_kernels()) {
-      if (input->op_parameter()->type_ == static_cast<int>(PRIM_IDENTITY)) {
+      MS_CHECK_TRUE_MSG(input != nullptr, RET_ERROR, "input is nullptr");
+      auto parameter = input->op_parameter();
+      MS_CHECK_TRUE_MSG(parameter != nullptr, RET_ERROR, "parameter is nullptr");
+      if (parameter->type_ == static_cast<int>(PRIM_IDENTITY)) {
         all_need_nodes.push_back(input);
       }
     }
@@ -138,8 +141,8 @@ int ControlFlowScheduler::AdjustNodesForTailCallSubGraph(std::vector<kernel::Ker
     auto is_need = [&need](const kernel::KernelExec *node) { return node == need; };
     auto iter = std::find_if(first_part_nodes->begin(), first_part_nodes->end(), is_need);
     MS_CHECK_TRUE_MSG(iter != first_part_nodes->end(), RET_ERROR, "graph is not right");
-    second_part_nodes->insert(second_part_nodes->begin(), *iter);
-    first_part_nodes->erase(iter);
+    (void)second_part_nodes->insert(second_part_nodes->begin(), *iter);
+    (void)first_part_nodes->erase(iter);
   }
   return RET_OK;
 }
@@ -159,7 +162,13 @@ int ControlFlowScheduler::SplitSubGraphNodesIntoTwoParts(kernel::SubGraphKernel 
   }
 
   // change last non-tail call property as is tail call
-  reinterpret_cast<CallParameter *>((*last_non_tail_call_iter)->op_parameter())->is_tail_call = true;
+  MS_CHECK_TRUE_MSG(*last_non_tail_call_iter != nullptr, RET_ERROR, "last_non_tail_call_iter is nullptr");
+  auto parameter = reinterpret_cast<CallParameter *>((*last_non_tail_call_iter)->op_parameter());
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "parameter is nullptr";
+    return RET_ERROR;
+  }
+  parameter->is_tail_call = true;
 
   for (auto iter = nodes.begin(); iter != nodes.begin() + distance; ++iter) {
     first_part_nodes->push_back(*iter);
@@ -290,7 +299,7 @@ void ControlFlowScheduler::RecordSubgraphCaller(const size_t &subgraph_index, ke
     (void)more_than_once_called_partial_nodes_.insert(
       std::pair<size_t, std::set<kernel::KernelExec *>>{subgraph_index, tmp_set});
   } else {
-    more_than_once_called_partial_nodes_[subgraph_index].insert(partial_node);
+    (void)more_than_once_called_partial_nodes_[subgraph_index].insert(partial_node);
   }
 }
 
@@ -431,7 +440,7 @@ int ControlFlowScheduler::GetSubGraphsWhichNeedBoundary() {
       continue;
     }
     for (auto partial_node : item.second) {
-      subgraphs_need_boundary_[subgraph].insert(partial_node);
+      (void)subgraphs_need_boundary_[subgraph].insert(partial_node);
     }
   }
   return RET_OK;
@@ -532,7 +541,7 @@ int ControlFlowScheduler::GetTailCallFinalSubgraphs(std::queue<kernel::KernelExe
     } else {
       final_graphs->push_back(subgraph);
     }
-    reviewed_graphs.insert(subgraph);
+    (void)reviewed_graphs.insert(subgraph);
   }
   return GetTailCallFinalSubgraphs(tail_call_q, final_graphs, reviewed_graphs);
 }
@@ -633,10 +642,10 @@ std::set<kernel::KernelExec *> ControlFlowScheduler::GetSameInputPartials() {
     for (auto input : item.first->in_tensors()) {
       if (input_partial_pairs.find(input) == input_partial_pairs.end()) {
         std::set<kernel::KernelExec *> partials{};
-        partials.insert(item.first);
+        (void)partials.insert(item.first);
         input_partial_pairs[input] = partials;
       } else {
-        input_partial_pairs[input].insert(item.first);
+        (void)input_partial_pairs[input].insert(item.first);
       }
     }
   }
@@ -645,7 +654,7 @@ std::set<kernel::KernelExec *> ControlFlowScheduler::GetSameInputPartials() {
   for (auto item : input_partial_pairs) {
     if (item.second.size() > 1) {
       for (auto partial : item.second) {
-        same_input_partials.insert(partial);
+        (void)same_input_partials.insert(partial);
       }
     }
   }
@@ -712,7 +721,7 @@ int ControlFlowScheduler::IsolateInputOfMultipleCalledGraph(std::vector<kernel::
       auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel());
       MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
       partial_kernel->set_subgraph_kernels({new_subgraph});
-      subgraphs_need_boundary_[new_subgraph].insert(partial_node);
+      (void)subgraphs_need_boundary_[new_subgraph].insert(partial_node);
     }
   }
 
