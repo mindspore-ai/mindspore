@@ -14,4 +14,5 @@ mindspore.dataset.audio.BorderType
     - **BorderType.SYMMETRIC** - 以各边的边界为轴进行对称填充，包括边界像素值。
       例如，向 [1, 2, 3, 4] 的两边分别填充2个元素，结果为 [2, 1, 1, 2, 3, 4, 4, 3]。
 
-    .. note:: 该类派生自 :class:`str` 以支持 JSON 可序列化。
+    .. note::
+        该类派生自 `str` 以支持 JSON 可序列化。

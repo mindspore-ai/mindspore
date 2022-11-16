@@ -3988,7 +3988,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         alpha (scalar[int, float, bool], optional): Multiplier for `vec1` ⊗ `vec2` (α). The `alpha` must
             be int or float or bool, Default: 1.
 
-    Outputs:
+    Returns:
         Tensor, the shape of the output tensor is :vec1:`(N, M)`, has the same dtype as `x`.
 
     Raises:
@@ -5925,7 +5925,7 @@ def log2(x):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU, if dtype of `x` is not float16
-        or float32 on Ascend.
+            or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6137,7 +6137,7 @@ def log10(x):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU, if dtype of `x` is not float16
-        or float32 on Ascend.
+            or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

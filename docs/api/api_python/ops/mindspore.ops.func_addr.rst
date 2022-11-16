@@ -1,7 +1,7 @@
 mindspore.ops.addr
 ==================
 
-.. py:function:: mindspore.ops.addr(x, vec1, vec2, beta=1, alpha=1)
+.. py:function:: mindspore.ops.addr(vec1, vec2, beta=1, alpha=1)
 
     计算 `vec1` 和 `vec2` 的外积，并将其添加到 `x` 中。
 
