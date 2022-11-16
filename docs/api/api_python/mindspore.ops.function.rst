@@ -194,6 +194,9 @@ mindspore.ops.function
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
+    mindspore.ops.heaviside
+    mindspore.ops.hypot
+    mindspore.ops.i0
     mindspore.ops.inv
     mindspore.ops.invert
     mindspore.ops.lcm

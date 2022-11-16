@@ -1428,6 +1428,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('log_matrix_determinant')(self)
 
+    def i0(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.i0`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('i0')(self)
+
     def isclose(self, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
         """
         For details, please refer to :func:`mindspore.ops.isclose`.
@@ -3334,6 +3341,21 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('hardshrink')(lambd)(self)
+
+    def heaviside(self, values):
+        r"""
+        For details, please refer to :func:`mindspore.ops.heaviside`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('heaviside')(self, values)
+
+
+    def hypot(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.hypot`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('hypot')(self, other)
 
     def soft_shrink(self, lambd=0.5):
         r"""
