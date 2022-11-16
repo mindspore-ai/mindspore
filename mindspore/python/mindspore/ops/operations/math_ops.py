@@ -6733,6 +6733,57 @@ class Bernoulli(Primitive):
             raise ValueError(f"Seed must be -1 or a non-negative integer, but got {seed}.")
 
 
+class TridiagonalSolve(Primitive):
+    """
+    Return the results of tridiagonal systems of equations.
+
+    Solve the tridiagonal systems of equations like:AX = B.
+    and only the main diagonal, superdiagonal and subdiagonal has values.
+    The type of diagonals and rhs should be the same.
+    The penultimate dimension of diagonals must be 3.
+
+    Args:
+        partial_pivoting (bool): decide if use the method of partial_pivoting. Default: True.
+
+    Inputs:
+        - **diagonals** [Tensor] - The input tensor A of the equation AX = B, with data type of float32,
+          float64, complex64, complex128.
+          The penultimate dimension of diagonals must be 3.
+          Diagonals and rhs must have the same rank and the same type.
+        - **rhs** [Tensor] - The input tensor B of the equation AX = B, with data type of float32,
+          float64, complex64, complex128.
+          The penultimate dimension of rhs should be the same to the last dimension of diagonals.
+          Diagonals and rhs must have the same rank and the same type.
+
+    Outputs:
+        Tensor, has the same type and shape as the input "rhs".
+
+    Raises:
+        TypeError: If `diagonals` and "rhs" are not a float32, float64, complex64 or complex128.
+        TypeError: If the args `partial_pivoting` is not bool.
+        ValueError: If the last second value of the "diagonals" is not "3".
+        ValueError: If the last value of the "diagonals" is not equal to the last second value of the "rhs".
+        ValueError: If diagonals and rhs have different rank of shape.
+
+    Supported Platforms:
+        ``CPU``
+    Examples:
+        >>> diagonals = Tensor(np.array([[1.0,2.0,3.0],[2.0,3.0,4.0],[3.0,4.0,5.0]]).astype(np.float32))
+        >>> rhs = Tensor(np.array([[1.0],[2.0],[3.0]]).astype(np.float32))
+        >>> y = P.TridiagonalSolve()(diagonals,rhs)
+        >>> print(output)
+        [[ 0. ]
+         [ 1. ]
+         [-0.5]]
+    """
+
+    @prim_attr_register
+    def __init__(self, partial_pivoting=True):
+        self.init_prim_io_names(inputs=['diagonals', 'rhs'], outputs=['y'])
+        self.partial_pivoting = validator.check_value_type(
+            "partial_pivoting", partial_pivoting, [bool], self.name)
+
+
 class Renorm(Primitive):
     """
     Renormalizes the sub-tensors along dimension `dim`, and each sub-tensor's p-norm should not exceed the
