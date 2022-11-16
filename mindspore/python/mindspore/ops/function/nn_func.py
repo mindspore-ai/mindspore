@@ -1352,19 +1352,19 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
             is an int number that represents height and width of the kernel, or a tuple
             of two int numbers that represent height and width respectively.
             The value must be a positive integer.
-        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
+        output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`,
             is an int number that represents height and width, or a tuple
             of two int numbers that represent height and width respectively.
             The value must be a positive integer.
             Default: None.
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
-            Data type : float16, float32, double, and value is between (0, 1).
+            Data type: float16, float32, double, and value is between (0, 1).
             Default: None.
         return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
             Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
-            Tensor of data type : float16, float32, double, and value is between (0, 1).
+            Tensor of data type: float16, float32, double, and value is between (0, 1).
             Supported shape :math:`(N, C, 2)`.
             Default: None.
 
@@ -1451,8 +1451,8 @@ def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=N
 
     Args:
         input_x (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
-            Tensor of data type : float16, float32, double, int32, int64.
-            Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` .
+            Tensor of data type: float16, float32, double, int32, int64.
+            Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
@@ -1464,13 +1464,13 @@ def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=N
             Default: None.
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
-            Data type : float16, float32, double, and value is between (0, 1).
+            Data type: float16, float32, double, and value is between (0, 1).
             Default: None.
         return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
             Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
-            Tensor of data type : float16, float32, double, and value is between (0, 1).
-            Supported shape :math:`(N, C, 3)`
+            Tensor of data type: float16, float32, double, and value is between (0, 1).
+            Supported shape :math:`(N, C, 3)`.
 
     Returns:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
