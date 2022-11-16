@@ -196,6 +196,7 @@ from mindspore.ops.operations.array_ops import Expand
 from mindspore.ops.operations.array_ops import HammingWindow
 from mindspore.ops.operations.nn_ops import SparseApplyMomentum
 from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
+from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from mindspore._c_expression import security
 from mindspore.ops.operations.array_ops import Bincount
 from tests.security_utils import security_off_wrap
@@ -3531,6 +3532,12 @@ test_case_nn_ops = [
         'block': NuclearNormNet(dim=[1, 2], keepdim=True),
         'desc_inputs': [[2, 3, 4]],
         'skip': ['backward']}),
+    ('AdaptiveMaxPool3D', {
+        'block': AdaptiveMaxPool3D(),
+        'desc_inputs': [Tensor(np.random.rand(2, 4, 5, 6), mstype.float32),
+                        Tensor(np.array([2, 2, 2]), mstype.int32)],
+        'desc_bprop': [Tensor(np.random.rand(2, 2, 2, 2), mstype.float32),
+                       Tensor(np.zeros((2, 2, 2, 2)), mstype.int32)]}),
 ]
 test_case_array_ops = [
     ('LeftShift', {

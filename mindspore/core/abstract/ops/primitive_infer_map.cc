@@ -66,7 +66,6 @@ PrimShapeDependMap &GetHostDependsMap() {
   // should be registered by the REGISTER_HOST_DEPENDS
   using ShapeSet = std::set<int64_t>;
   static const auto &kMirrorPad = prim::kPrimMirrorPad->name();
-  static const auto &kAdaptiveMaxPool3DGrad = prim::kPrimAdaptiveMaxPool3DGrad->name();
   static const auto &kAdaptiveAvgPool3D = prim::kPrimAdaptiveAvgPool3D->name();
   static const auto &kAdaptiveAvgPool3DGrad = prim::kPrimAdaptiveAvgPool3DGrad->name();
   static const auto &kOneHot = prim::kPrimOneHot->name();
@@ -205,7 +204,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kStandardLaplace, ShapeSet{0}},
                                          {kCropAndResizeGradImage, ShapeSet{3}},
                                          {prim::kPrimCumSum->name(), ShapeSet{1}},
-                                         {kAdaptiveMaxPool3DGrad, ShapeSet{1}},
                                          {kSetSize, ShapeSet{2}},
                                          {kDynamicStitch, ShapeSet{0}},
                                          {kSparseTensorDenseMatmul, ShapeSet{2}},
