@@ -487,12 +487,14 @@ class NonMaxSuppressionWithOverlaps(Primitive):
 
 class HSVToRGB(Primitive):
     """
-    Convert one or more images from HSV to RGB. The format of the image(s) should be NHWC.
+    Convert one or more images from HSV to RGB.
+    Outputs a tensor of the same shape as the images tensor, containing the HSV value of the pixels.
+    The output is only well defined if the value in images are in [0,1].
 
     Inputs:
-        - **x** (Tensor) - The input image must be a 4-D tensor of shape [batch, image_height, image_width, channel].
-          Number of channel must be 3.
-          Types allowed: float16, float32, float64.
+        **x** (Tensor) - The input image must be a 4-D tensor of shape [batch, image_height, image_width, channel].
+        Number of channel must be 3.
+        Types allowed: float16, float32, float64.
     Outputs:
         A 4-D tensor of shape [batch, image_height, image_width, channel] with same type of input.
 
@@ -503,7 +505,7 @@ class HSVToRGB(Primitive):
         ValueError: If the last dimension of `x` is not equal to 3.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> image = np.array([0.5, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])
@@ -611,7 +613,7 @@ class RGBToHSV(Primitive):
         ValueError: If the last value of shape of `images` is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> images =  np.array([0.25, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])

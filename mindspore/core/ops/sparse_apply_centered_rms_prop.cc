@@ -21,6 +21,8 @@
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/tensor_construct_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -42,16 +44,15 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[9]->BuildShape())[kShape];
 
   const int64_t scalar_shape = 0;
-  std::vector<ShapeVector> scalar_shapes = {lr_shape, rho_shape, momentum_shape, epsilon_shape};
-  auto is_dynamic_scalar = std::any_of(scalar_shapes.begin(), scalar_shapes.end(), IsDynamic);
-  if (!is_dynamic_scalar) {
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("rho_shape size", rho_shape.size(), kEqual, scalar_shape, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", momentum_shape.size(), kEqual, scalar_shape,
-                                             prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("epsilon_shape size", epsilon_shape.size(), kEqual, scalar_shape,
-                                             prim_name);
+  if (IsDynamicRank(var_shape) || IsDynamicRank(mg_shape) || IsDynamicRank(ms_shape) || IsDynamicRank(mom_shape) ||
+      IsDynamicRank(grad_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rho_shape size", rho_shape.size(), kEqual, scalar_shape, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", momentum_shape.size(), kEqual, scalar_shape,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("epsilon_shape size", epsilon_shape.size(), kEqual, scalar_shape, prim_name);
 
   std::vector<ShapeVector> tensor_shapes = {var_shape, mg_shape, ms_shape, mom_shape};
   auto is_dynamic_tensor = std::any_of(tensor_shapes.begin(), tensor_shapes.end(), IsDynamic);
@@ -64,7 +65,6 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
       CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
     }
   }
-
   // Var dimension must be equal or greater than 1.
   (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
   // Indices must be rank 1.
@@ -106,7 +106,6 @@ TypePtr SparseApplyCenteredRMSPropInferType(const PrimitivePtr &primitive,
   auto epsilon = input_args[7]->BuildType();
   auto grad = input_args[8]->BuildType();
   auto indices = input_args[9]->BuildType();
-
   std::map<std::string, TypePtr> args;
   (void)args.emplace("var", var);
   (void)args.emplace("ms", mg);
@@ -125,6 +124,13 @@ TypePtr SparseApplyCenteredRMSPropInferType(const PrimitivePtr &primitive,
 }
 }  // namespace
 
+void SparseApplyCenteredRMSProp::Init(bool use_locking) { set_use_locking(use_locking); }
+
+void SparseApplyCenteredRMSProp::set_use_locking(bool use_locking) {
+  (void)AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+bool SparseApplyCenteredRMSProp::get_use_locking() { return GetValue<bool>(GetAttr(kUseLocking)); }
+
 AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -134,7 +140,9 @@ AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePt
   auto infer_shape = SparseApplyCenteredRMSPropInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
 MIND_API_OPERATOR_IMPL(SparseApplyCenteredRMSProp, BaseOperator);
+
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyCenteredRMSProp, prim::kPrimSparseApplyCenteredRMSProp,
                              SparseApplyCenteredRMSPropInfer, nullptr, true);
 }  // namespace ops

@@ -34,6 +34,7 @@
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
+constexpr auto kSparseApplyCenteredRMSPropOpName = "SparseApplyCenteredRMSProp";
 constexpr auto kAbsOpName = "Abs";
 constexpr auto kAdamApplyOneAssignOpName = "AdamApplyOneAssign";
 constexpr auto kAdamApplyOneOpName = "AdamApplyOne";
