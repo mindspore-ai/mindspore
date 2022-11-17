@@ -110,6 +110,7 @@ constexpr auto kMatrixSolve = "MatrixSolve";
 constexpr auto kMatrixPower = "MatrixPower";
 constexpr auto kMatrixDeterminant = "MatrixDeterminant";
 constexpr auto kLogMatrixDeterminant = "LogMatrixDeterminant";
+constexpr auto kSinc = "Sinc";
 constexpr auto kCos = "Cos";
 constexpr auto kAsinh = "Asinh";
 constexpr auto kAsinhGrad = "AsinhGrad";

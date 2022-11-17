@@ -29,7 +29,7 @@ class MIND_API Sinc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Sinc);
   Sinc() : BaseOperator(kNameSinc) { InitIOName({"x"}, {"y"}); }
-  void Init() const {}
+  void Init() {}
 };
 abstract::AbstractBasePtr SincInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<abstract::AbstractBasePtr> &input_args);
