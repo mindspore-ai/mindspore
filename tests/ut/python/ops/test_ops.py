@@ -43,6 +43,7 @@ from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import Sinc
 from mindspore.ops.operations.math_ops import NanToNum
+from mindspore.ops.operations.math_ops import Bernoulli
 from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
@@ -3213,6 +3214,12 @@ test_case_nn_ops = [
     ('ApplyProximalAdagrad', {
         'block': ApplyProximalAdagradNet(),
         'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('Bernoulli', {
+        'block': Bernoulli(seed=1),
+        'desc_inputs': [
+            Tensor(np.array([1, 2, 3]).astype(np.float32)),
+            Tensor(np.array([0.0, 1.0, 1.0]).astype(np.float32))],
         'skip': ['backward']}),
     ('SparseDenseCwiseAdd', {
         'block': SparseDenseCwiseAdd(),
