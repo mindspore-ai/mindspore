@@ -73,6 +73,7 @@ REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
 
 // ScatterNd
 INPUT_MAP(ScatterNd) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(shape)}};
+ATTR_INPUT_MAP(ScatterNd) = {{"shape", 3}};
 ATTR_MAP(ScatterNd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ScatterNd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ScatterNd, kNameScatterNd, ADPT_DESC(ScatterNd))
@@ -109,23 +110,26 @@ ATTR_MAP(Range) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Range) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RangeV2, kNameRangeV2, ADPT_DESC(Range))
 
-// InplaceAddD
-INPUT_MAP(InplaceAddD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
-ATTR_MAP(InplaceAddD) = {{"indices", ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(InplaceAddD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(InplaceAddD, kNameInplaceAddD, ADPT_DESC(InplaceAddD))
+// InplaceAdd
+INPUT_MAP(InplaceAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
+ATTR_MAP(InplaceAdd) = EMPTY_ATTR_MAP;
+ATTR_INPUT_MAP(InplaceAdd) = {{"indices", 2}};
+OUTPUT_MAP(InplaceAdd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceAdd, kNameInplaceAddD, ADPT_DESC(InplaceAdd))
 
-// InplaceSubD
-INPUT_MAP(InplaceSubD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
-ATTR_MAP(InplaceSubD) = {{"indices", ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(InplaceSubD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(InplaceSubD, kNameInplaceSubD, ADPT_DESC(InplaceSubD))
+// InplaceSub
+INPUT_MAP(InplaceSub) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
+ATTR_MAP(InplaceSub) = EMPTY_ATTR_MAP;
+ATTR_INPUT_MAP(InplaceSub) = {{"indices", 2}};
+OUTPUT_MAP(InplaceSub) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceSub, kNameInplaceSubD, ADPT_DESC(InplaceSub))
 
-// InplaceUpdateD
-INPUT_MAP(InplaceUpdateD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
-ATTR_MAP(InplaceUpdateD) = {{"indices", ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(InplaceUpdateD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(InplaceUpdateD, kNameInplaceUpdateD, ADPT_DESC(InplaceUpdateD))
+// InplaceUpdate
+INPUT_MAP(InplaceUpdate) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
+ATTR_MAP(InplaceUpdate) = EMPTY_ATTR_MAP;
+ATTR_INPUT_MAP(InplaceUpdate) = {{"indices", 2}};
+OUTPUT_MAP(InplaceUpdate) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceUpdate, kNameInplaceUpdateD, ADPT_DESC(InplaceUpdate))
 
 // Select
 INPUT_MAP(Select) = {{1, INPUT_DESC(condition)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}};

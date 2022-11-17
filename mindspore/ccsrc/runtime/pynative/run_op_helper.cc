@@ -275,7 +275,9 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
   auto input_size = runtime_info->GetInputSize();
   for (size_t i = 0; i < input_size; ++i) {
     auto input_address = runtime_info->GetInputDeviceAddress(i);
-    MS_EXCEPTION_IF_NULL(input_address);
+    if (input_address == nullptr) {
+      continue;
+    }
     if (input_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(input_address.get())) {
       return false;
@@ -332,7 +334,10 @@ kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeI
   kernel::AddressPtrList inputs;
   for (size_t i = 0; i < input_size; ++i) {
     auto device_address = runtime_info->GetInputDeviceAddress(i);
-    MS_EXCEPTION_IF_NULL(device_address);
+    if (device_address == nullptr) {
+      (void)inputs.emplace_back(nullptr);
+      continue;
+    }
     (void)inputs.emplace_back(
       std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     MS_LOG(DEBUG) << "input[" << i << "]:" << inputs.back()->addr << " size:" << inputs.back()->size;

@@ -29,6 +29,7 @@ namespace mindspore {
 namespace ops {
 void ResizeNearestNeighbor::Init(const std::vector<int64_t> &size, const bool align_corners) {
   this->set_align_corners(align_corners);
+  (void)this->AddAttr(kHalfPixelCenters, api::MakeValue(false));
 }
 void ResizeNearestNeighbor::set_align_corners(const bool align_corners) {
   (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));

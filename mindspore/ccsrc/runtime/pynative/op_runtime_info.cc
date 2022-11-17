@@ -44,8 +44,12 @@ void CacheForExecutionOrder(const KernelGraphPtr &graph) {
     for (size_t i = 0; i < input_size; ++i) {
       session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, true);
       MS_EXCEPTION_IF_NULL(kernel_with_index.first);
-      input_kernel_infos.emplace_back(dynamic_cast<device::KernelInfo *>(kernel_with_index.first->kernel_info()),
-                                      kernel_with_index.second);
+      if (mindspore::IsValueNode<None>(kernel_with_index.first)) {
+        input_kernel_infos.emplace_back(nullptr, 0);
+      } else {
+        input_kernel_infos.emplace_back(dynamic_cast<device::KernelInfo *>(kernel_with_index.first->kernel_info()),
+                                        kernel_with_index.second);
+      }
     }
 
     // For workspace and output
@@ -119,12 +123,13 @@ device::DeviceAddressPtr OpRuntimeInfo::GetWorkspaceDeviceAddress(size_t index) 
 
 device::DeviceAddressPtr OpRuntimeInfo::GetInputDeviceAddress(size_t index) const {
   if (index >= input_kernel_infos_.size()) {
-    MS_LOG(ERROR) << "Output range! index:" << index << " input size:" << input_kernel_infos_.size();
-    return nullptr;
+    MS_LOG(EXCEPTION) << "Output range! index:" << index << " input size:" << input_kernel_infos_.size();
   }
 
   auto kernel_info_pair = input_kernel_infos_[index];
-  MS_EXCEPTION_IF_NULL(kernel_info_pair.first);
+  if (kernel_info_pair.first == nullptr) {
+    return nullptr;
+  }
   return kernel_info_pair.first->GetMutableOutputAddr(kernel_info_pair.second);
 }
 

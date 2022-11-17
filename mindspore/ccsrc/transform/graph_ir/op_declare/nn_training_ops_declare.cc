@@ -167,19 +167,14 @@ ATTR_MAP(SparseApplyProximalAdagradD) = {{"use_locking", ATTR_DESC(use_locking, 
 OUTPUT_MAP(SparseApplyProximalAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 REG_ADPT_DESC(SparseApplyProximalAdagradD, kNameSparseApplyProximalAdagradD, ADPT_DESC(SparseApplyProximalAdagradD))
 
-// SparseApplyFtrlD
-INPUT_MAP(SparseApplyFtrlD) = {{1, INPUT_DESC(var)},
-                               {2, INPUT_DESC(accum)},
-                               {3, INPUT_DESC(linear)},
-                               {4, INPUT_DESC(grad)},
-                               {5, INPUT_DESC(indices)}};
-ATTR_MAP(SparseApplyFtrlD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
-                              {"lr", ATTR_DESC(lr, AnyTraits<float>())},
-                              {"l1", ATTR_DESC(l1, AnyTraits<float>())},
-                              {"l2", ATTR_DESC(l2, AnyTraits<float>())},
-                              {"lr_power", ATTR_DESC(lr_power, AnyTraits<float>())}};
-OUTPUT_MAP(SparseApplyFtrlD) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(SparseApplyFtrlD, kNameSparseApplyFtrlD, ADPT_DESC(SparseApplyFtrlD))
+// SparseApplyFtrl
+INPUT_MAP(SparseApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
+                              {4, INPUT_DESC(grad)}, {5, INPUT_DESC(indices)}, {6, INPUT_DESC(lr)},
+                              {7, INPUT_DESC(l1)},   {8, INPUT_DESC(l2)},      {9, INPUT_DESC(lr_power)}};
+ATTR_MAP(SparseApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+ATTR_INPUT_MAP(SparseApplyFtrl) = {{"lr", 6}, {"l1", 7}, {"l2", 8}, {"lr_power", 9}};
+OUTPUT_MAP(SparseApplyFtrl) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(SparseApplyFtrl, prim::kPrimSparseApplyFtrl->name(), ADPT_DESC(SparseApplyFtrl))
 
 // SparseApplyFtrlV2D
 INPUT_MAP(SparseApplyFtrlV2D) = {{1, INPUT_DESC(var)},

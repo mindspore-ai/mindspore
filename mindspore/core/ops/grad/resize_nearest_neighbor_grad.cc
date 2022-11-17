@@ -34,6 +34,7 @@ constexpr auto kResizeIdx = 1;
 abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  (void)primitive->AddAttr(kHalfPixelCenters, MakeValue(false));
   auto prim_name = primitive->name();
   if (input_args.size() != kResizeNearestNeighborGradInputNum) {
     MS_LOG(EXCEPTION) << "ResizeNearsetNeighborGrad's input num should be " << kResizeNearestNeighborGradInputNum

@@ -33,7 +33,7 @@ depthwise_conv2d_op_info = TBERegOp("DepthwiseConv2dNative") \
     .input(2, "bias", False, "optional", "all") \
     .input(3, "offset_w", False, "optional", "all") \
     .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.F16_5HD, DataType.F16_C1HWNCoC0, DataType.F16_Default, DataType.F16_Default,
+    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_Default, DataType.F16_Default,
                   DataType.F16_5HD) \
     .get_op_info()
 
