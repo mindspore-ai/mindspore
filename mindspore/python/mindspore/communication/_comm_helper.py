@@ -15,11 +15,14 @@
 """comm_helper"""
 
 import os
+import ctypes
 from mindspore import context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode,\
                                            _get_ps_context
 from mindspore import log as logger
 from mindspore._c_expression import CollectiveManager, set_cluster_exit_with_exception
+
+HCCL_LIB = 'libhccl_plugin.so'
 
 
 def hccl_load_lib():
@@ -328,7 +331,7 @@ def _create_group_helper(group, rank_ids):
         ValueError: If rank_ids size is not larger than 1 or rank_ids has duplicate data or backend is invalid.
     """
     if group in _ExistingGroup.ITEMS.keys():
-        if rank_ids != _ExistingGroup.ITEMS[group]:
+        if rank_ids != _ExistingGroup.ITEMS.get(group):
             raise ValueError("The group {} has been created, the rank_list is {}, "
                              "but current rank_list for the group is {}".
                              format(group, _ExistingGroup.ITEMS[group], rank_ids))
