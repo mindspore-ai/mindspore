@@ -68,6 +68,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     outputC_descriptor_ = nullptr;
     need_skip_execute_ = false;
     keep_dims_ = false;
+    skip_mode_ = false;
     all_match_ = false;
     is_null_input_ = false;
     complex_op_type = 0;
@@ -120,6 +121,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<int> axis_;
   bool keep_dims_;
+  bool skip_mode_;
   bool need_skip_execute_;
   bool all_match_;
   bool is_null_input_;

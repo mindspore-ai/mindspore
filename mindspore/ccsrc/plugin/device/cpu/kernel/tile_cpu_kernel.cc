@@ -17,13 +17,14 @@
 #include "plugin/device/cpu/kernel/tile_cpu_kernel.h"
 #include <algorithm>
 #include <map>
+#include <numeric>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kTileInputsNum = 1;
-constexpr size_t kTileDynamicInputsNum = 2;
+constexpr size_t kTileInputsNum = 2;
 constexpr size_t kTileOutputsNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
@@ -84,18 +85,14 @@ void TileCpuKernelMod::TileMultipleCompute() {
 bool TileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
   kernel_name_ = base_operator->name();
-  input_num = inputs.size();
-  dtype_ = inputs[kIndex0]->GetDtype();
-  multiples_.clear();
-  if (input_num == kTileInputsNum) {
-    std::vector<int64_t> multiples_me = GetValue<std::vector<int64_t>>(prim->GetAttr("multiples"));
-    (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+  input_num_ = inputs.size();
+  if (input_num_ != kTileInputsNum) {
+    MS_LOG(EXCEPTION) << "Tile's inputs number should be " << kTileInputsNum << ", but got " << input_num_;
   }
 
+  multiples_.clear();
+  dtype_ = inputs[kIndex0]->GetDtype();
   launch_map_[kNumberTypeInt8] = &TileCpuKernelMod::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TileCpuKernelMod::LaunchKernel<int16_t>;
   launch_map_[kNumberTypeInt32] = &TileCpuKernelMod::LaunchKernel<int>;
@@ -129,20 +126,20 @@ int TileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = outputs[kIndex0]->GetShapeVector();
-  if (input_num == kTileDynamicInputsNum) {
-    multiple_shape = inputs[kIndex1]->GetShapeVector();
-    multiple_dtype_ = inputs[kIndex1]->GetDtype();
-  }
+  multiple_shape_ = inputs[kIndex1]->GetShapeVector();
+  multiple_dtype_ = inputs[kIndex1]->GetDtype();
+
   return KRET_OK;
 }
 
 bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != kTileInputsNum && inputs.size() != kTileDynamicInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input must be " << kTileInputsNum << " or "
-                      << kTileDynamicInputsNum << ", but got " << inputs.size();
+  if (inputs.size() != kTileInputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input must be " << kTileInputsNum << ", but got "
+                      << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTileOutputsNum, kernel_name_);
   launch_func_(this, inputs, outputs);
@@ -153,28 +150,20 @@ template <typename T>
 void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  if (input_num == kTileInputsNum) {
-    TileMultipleCompute();
-  }
-  if (input_num == kTileDynamicInputsNum) {
-    multiples_.clear();
-    int64_t multiple_nums = 1;
-    for (size_t i = 0; i < multiple_shape.size(); ++i) {
-      multiple_nums *= multiple_shape[i];
+  multiples_.clear();
+  auto multiple_nums = std::accumulate(multiple_shape_.begin(), multiple_shape_.end(), 1, std::multiplies<int64_t>());
+  if (multiple_dtype_ == kNumberTypeInt32) {
+    auto multiples_addr = GetDeviceAddress<int32_t>(inputs, 1);
+    for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
+      (void)multiples_.emplace_back(multiples_addr[i]);
     }
-    if (multiple_dtype_ == kNumberTypeInt32) {
-      auto multiples_addr = GetDeviceAddress<int32_t>(inputs, 1);
-      for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
-        (void)multiples_.emplace_back(multiples_addr[i]);
-      }
-    } else {
-      auto multiples_addr = GetDeviceAddress<int64_t>(inputs, 1);
-      for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
-        (void)multiples_.emplace_back(multiples_addr[i]);
-      }
+  } else {
+    auto multiples_addr = GetDeviceAddress<int64_t>(inputs, 1);
+    for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
+      (void)multiples_.emplace_back(multiples_addr[i]);
     }
-    TileMultipleCompute();
   }
+  TileMultipleCompute();
 
   tile_parameter_.data_size_ = sizeof(T);
   if (one_dim_tile_) {

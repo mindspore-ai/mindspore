@@ -24,12 +24,14 @@
 #include "utils/hash_map.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "utils/file_utils.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "common/graph_kernel/core/convert_op_input_attr.h"
 #include "common/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
@@ -430,12 +432,41 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-
+void GraphKernelCluster::ConvertInputToAttrForClusterGraph(const AnfNodePtr &graph_kernel_node) {
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(graph_kernel_node);
+  MS_EXCEPTION_IF_NULL(gk_graph);
+  auto todos = TopoSort(gk_graph->get_return());
+  for (const auto &n : todos) {
+    if (n == nullptr) {
+      continue;
+    }
+    auto node = n->cast<CNodePtr>();
+    if (node != nullptr) {
+      auto all_op_index_info = ConvertOpUtils::GetOpIndexInfo();
+      auto primitive = GetCNodePrimitive(node);
+      if (primitive == nullptr) {
+        continue;
+      }
+      auto iter = all_op_index_info.find(primitive->name());
+      if (iter != all_op_index_info.end()) {
+        (void)ConvertOpUtils::ConstInputToAttr(node, iter->second);
+      }
+    }
+  }
+  // Redcuce nouesr inputs for new node
+  auto cnode = graph_kernel_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inputs = cnode->inputs();
+  AnfNodePtrList fn_inputs{inputs};
+  EliminateRedundantParameters(gk_graph, &fn_inputs);
+  cnode->set_inputs(fn_inputs);
+}
 void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const std::vector<size_t> &nodes_id) {
   AnfNodePtrList old_nodes;
   (void)std::transform(nodes_id.begin(), nodes_id.end(), std::back_inserter(old_nodes),
                        [this](size_t id) { return this->nodes_[id]; });
   auto new_node = ReplaceNodesWithGraphKernelNode(old_nodes, func_graph, "fusion");
+  ConvertInputToAttrForClusterGraph(new_node);
   if (GraphKernelFlags::GetInstance().dump_as_text) {
     DumpClusterInfo(old_nodes, new_node);
   }

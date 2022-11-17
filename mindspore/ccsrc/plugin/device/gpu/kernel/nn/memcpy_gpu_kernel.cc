@@ -120,16 +120,9 @@ std::vector<KernelAttr> MemcpyGpuKernelMod::GetOpSupport() {
       .AddInputAttr(kNumberTypeInt32)
       .AddOutputAttr(kNumberTypeComplex128)};
 
-  std::vector<KernelAttr> reshape_valid_types;
-  reshape_valid_types.insert(reshape_valid_types.end(), common_valid_types_with_single_input.begin(),
-                             common_valid_types_with_single_input.end());
-  reshape_valid_types.insert(reshape_valid_types.end(), common_valid_types_with_double_input.begin(),
-                             common_valid_types_with_double_input.end());
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
-    {kReshape, reshape_valid_types},
-    {kFlatten, common_valid_types_with_single_input},
-    {kFlattenGrad, common_valid_types_with_single_input},
-    {kExpandDims, common_valid_types_with_double_input},
+    {kReshape, common_valid_types_with_double_input},     {kFlatten, common_valid_types_with_single_input},
+    {kFlattenGrad, common_valid_types_with_single_input}, {kExpandDims, common_valid_types_with_double_input},
     {kSqueeze, common_valid_types_with_single_input},
   };
 

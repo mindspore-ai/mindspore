@@ -27,8 +27,10 @@ namespace mindspore {
 namespace opt {
 const BaseRef RemoveRedundantFormatTransform::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
+  VarPtr Y = std::make_shared<Var>();
   MS_EXCEPTION_IF_NULL(X);
-  VectorRef transpose = VectorRef({prim::kPrimTranspose, X});
+  MS_EXCEPTION_IF_NULL(Y);
+  VectorRef transpose = VectorRef({prim::kPrimTranspose, X, Y});
   return transpose;
 }
 
@@ -49,8 +51,9 @@ const AnfNodePtr RemoveRedundantFormatTransform::Process(const FuncGraphPtr &gra
       break;
     }
   }
-  auto first_transpose_perm = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(first_transpose, "perm");
-  auto node_perm = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "perm");
+  const int64_t perm_param_idx = 1;
+  auto first_transpose_perm = AnfAlgo::GetInputDeviceShape(first_transpose, perm_param_idx);
+  auto node_perm = AnfAlgo::GetInputDeviceShape(node, perm_param_idx);
   if ((first_transpose != node) && (first_transpose_perm == node_perm)) {
     return first_transpose;
   }

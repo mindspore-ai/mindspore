@@ -63,7 +63,7 @@ class MIND_API OperatorRegister {
 
   static OperatorRegister &GetInstance();
 
-  std::map<std::string, OperatorDefineFunc> GetOperatorMap();
+  const std::map<std::string, OperatorDefineFunc> &GetOperatorMap();
 
   void SetOperatorMap(const std::string &kname, const OperatorDefineFunc &fn);
 

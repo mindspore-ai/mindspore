@@ -35,6 +35,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace kernel {
@@ -76,6 +77,7 @@ class CNodeDecoder {
     }
     CreateKernelInfo(processor);
     CreateAbstract();
+    InitIOName(cnode_);
     return cnode_;
   }
 
@@ -106,6 +108,21 @@ class CNodeDecoder {
       MS_LOG(ERROR) << "Fail to parse attr " << attr_json[kJsonKeyName] << " in json, because its type: " << type
                     << " is not in supported list: [str, int, bool, float, listInt, listStr]. json is: " << attr_json;
       return nullptr;
+    }
+  }
+
+  void InitIOName(const CNodePtr &cnode) {
+    auto primitive = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(primitive);
+    const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+    auto const iter = op_primc_fns.find(primitive->name());
+    if (iter == op_primc_fns.end()) {
+      return;
+    }
+    auto prim = iter->second();
+    if (prim != nullptr) {
+      (void)primitive->AddAttr(kAttrInputNames, prim->GetAttr(kAttrInputNames));
+      (void)primitive->AddAttr(kAttrOutputNames, prim->GetAttr(kAttrOutputNames));
     }
   }
 

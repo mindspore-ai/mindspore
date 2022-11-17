@@ -25,8 +25,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kSliceInputsNum = 1;
-constexpr size_t kSliceDynamicInputNum = 3;
+constexpr size_t kSliceInputsNum = 3;
 constexpr size_t kSliceOutputsNum = 1;
 constexpr size_t kSliceInputIndex2 = 2;
 constexpr size_t kSliceTwoDims = 2;
@@ -59,12 +58,23 @@ bool SliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
                                                                 {kNumberTypeFloat16, sizeof(float16)},
                                                                 {kNumberTypeComplex64, sizeof(std::complex<float>)},
                                                                 {kNumberTypeComplex128, sizeof(std::complex<double>)}};
+
+  size_t input_num = inputs.size();
+  if (input_num != kSliceInputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "input size should be " << kSliceInputsNum;
+  }
+
   TypeId dtype = inputs[0]->GetDtype();
   auto size_pair = type_size_map.find(dtype);
   if (size_pair == type_size_map.end()) {
     MS_LOG(EXCEPTION) << "Slice supports type in type_size_map, but got " << TypeIdToType(dtype)->ToString();
   }
   data_size_ = size_pair->second;
+
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.at(1)->GetDtype() == inputs[kSliceInputIndex2]->GetDtype(),
+                             "Begin and size dtype should be same.");
+  param_dtype_ = inputs.at(1)->GetDtype();
+
   return true;
 }
 
@@ -103,11 +113,17 @@ void SliceCpuKernelMod::InitSliceParam(const ShapeVector &input_shape, const std
 int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs,
                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Slice>(base_operator);
+  is_got_value_ = false;
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
+
+  size_t input_num = inputs.size();
+  if (input_num != kSliceInputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "input size should be " << kSliceInputsNum;
+  }
+
   auto input_shape = inputs[0]->GetShapeVector();
   if (input_shape.size() > DIMENSION_8D || input_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -115,23 +131,26 @@ int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
                       << "D.";
   }
 
-  size_t input_num = inputs.size();
-  // begin and size are const input
-  if (input_num == 1) {
-    auto size = kernel_ptr->get_size();
-    auto begin = kernel_ptr->get_begin();
+  std::vector<int64_t> begin;
+  std::vector<int64_t> size;
+  auto got_begin = TryGetIntValue(inputs, 1, kernel_name_, &begin, false);
+  auto got_size = TryGetIntValue(inputs, kSliceInputIndex2, kernel_name_, &size, false);
+  if (got_begin && got_size) {
     if (begin.size() != input_shape.size() || size.size() != input_shape.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the lengths of 'begin' and 'size' must be equal to "
-                           "the dimension of input tensor, but got the length of 'begin' "
-                        << begin.size() << ", the length of 'size' " << size.size()
-                        << "and the dimension of input tensor " << input_shape.size();
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the lengths of 'begin' and 'size' must be equal to "
+                       "the dimension of input tensor, but got the length of 'begin' "
+                    << begin.size() << ", the length of 'size' " << size.size() << "and the dimension of input tensor "
+                    << input_shape.size();
+      return KRET_RESIZE_FAILED;
     }
     InitSliceParam(input_shape, begin, size);
-  } else if (input_num == kSliceDynamicInputNum) {
+    is_got_value_ = true;
+  } else {
     input_shape_ = inputs[0]->GetShapeVector();
     begin_shape_ = inputs[1]->GetShapeVector();
     size_shape_ = inputs[kSliceInputIndex2]->GetShapeVector();
+    is_got_value_ = false;
   }
   return KRET_OK;
 }
@@ -150,45 +169,63 @@ void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceParameter *
 
 bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != kSliceInputsNum && inputs.size() != kSliceDynamicInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kSliceInputsNum << " or "
-                      << kSliceDynamicInputNum << ", but got " << inputs.size() << " input(s).";
+  if (inputs.size() != kSliceInputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kSliceInputsNum
+                      << ", but got " << inputs.size() << " input(s).";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSliceOutputsNum, kernel_name_);
 
-  auto input_addr = inputs[0]->addr;
-  auto output_addr = outputs[0]->addr;
-  if (inputs.size() == kSliceDynamicInputNum) {
+  if (!is_got_value_) {
+    // Get begin and size value.
     auto input_shape = input_shape_;
     auto begin_shape = begin_shape_;
     auto size_shape = size_shape_;
     if (begin_shape.size() != 1 || size_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimensions of 'begin' and 'size' must be 1, but got the dimension of 'begin': "
-                        << begin_shape.size() << " and the dimension of 'size': " << size_shape.size();
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the dimensions of 'begin' and 'size' must be 1, but got the dimension of 'begin': "
+                    << begin_shape.size() << " and the dimension of 'size': " << size_shape.size();
+      return false;
     }
     if (begin_shape[0] != SizeToLong(input_shape.size()) || size_shape[0] != SizeToLong(input_shape.size())) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the lengths of 'begin' and 'size' must be equal to "
-                           "the dimension of input tensor, but got the length of 'begin' "
-                        << begin_shape[0] << ", the length of 'size' " << size_shape[0]
-                        << "and the dimension of input tensor " << input_shape.size();
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the lengths of 'begin' and 'size' must be equal to "
+                       "the dimension of input tensor, but got the length of 'begin' "
+                    << begin_shape[0] << ", the length of 'size' " << size_shape[0]
+                    << "and the dimension of input tensor " << input_shape.size();
+      return false;
     }
-    auto begin_ptr = reinterpret_cast<int32_t *>(inputs[1]->addr);
-    auto size_ptr = reinterpret_cast<int32_t *>(inputs[kSliceInputIndex2]->addr);
-    std::vector<int64_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
-    std::vector<int64_t> size{size_ptr, size_ptr + size_shape[0]};
+
+    std::vector<int64_t> begin;
+    std::vector<int64_t> size;
+    if (param_dtype_ == kNumberTypeInt32) {
+      auto begin_ptr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+      auto size_ptr = reinterpret_cast<int32_t *>(inputs[kSliceInputIndex2]->addr);
+      begin.assign(begin_ptr, begin_ptr + begin_shape[0]);
+      size.assign(size_ptr, size_ptr + size_shape[0]);
+    } else if (param_dtype_ == kNumberTypeInt64) {
+      auto begin_ptr = reinterpret_cast<int64_t *>(inputs[1]->addr);
+      auto size_ptr = reinterpret_cast<int64_t *>(inputs[kSliceInputIndex2]->addr);
+      begin.assign(begin_ptr, begin_ptr + begin_shape[0]);
+      size.assign(size_ptr, size_ptr + size_shape[0]);
+    } else {
+      MS_LOG(ERROR) << "Invalid dtype: " << TypeIdLabel(param_dtype_);
+      return false;
+    }
+
     for (size_t i = 0; i < begin.size(); ++i) {
       if (input_shape[i] < begin[i] + size[i]) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                          << "', slice shape should be not greater than origin shape. But in dimension i=" << i
-                          << ", origin shape 'input_shape[i]' is " << input_shape[i]
-                          << " and slice shape 'LongToSize(begin[i] + size[i])' is " << LongToSize(begin[i] + size[i]);
+        MS_LOG(ERROR) << "For '" << kernel_name_
+                      << "', slice shape should be not greater than origin shape. But in dimension i=" << i
+                      << ", origin shape 'input_shape[i]' is " << input_shape[i]
+                      << " and slice shape 'LongToSize(begin[i] + size[i])' is " << LongToSize(begin[i] + size[i]);
+        return false;
       }
     }
     InitSliceParam(input_shape, begin, size);
   }
 
+  auto input_addr = inputs[0]->addr;
+  auto output_addr = outputs[0]->addr;
   if (origin_dim_size_ == kSliceTwoDims) {
     auto task = [this, &input_addr, &output_addr](size_t start, size_t end) {
       auto src =
@@ -202,6 +239,22 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   DoSliceNoParallel(input_addr, output_addr, &slice_param_, data_size_);
 
   return true;
+}
+
+#define SLICE_CPU_REGISTER_KERNEL_ATTR(DT)                                                                       \
+  KernelAttr().AddInputAttr(DT).AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(DT), \
+    KernelAttr().AddInputAttr(DT).AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(DT)
+
+std::vector<KernelAttr> SliceCpuKernelMod::GetOpSupport() {
+  static const std::vector<KernelAttr> support_list = {
+    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeBool),      SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeInt8),
+    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeInt16),     SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeInt32),
+    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeInt64),     SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeUInt8),
+    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeUInt16),    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeUInt32),
+    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeUInt64),    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeFloat16),
+    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeFloat32),   SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeFloat64),
+    SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeComplex64), SLICE_CPU_REGISTER_KERNEL_ATTR(kNumberTypeComplex128)};
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Slice, SliceCpuKernelMod);

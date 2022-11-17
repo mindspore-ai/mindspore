@@ -70,9 +70,6 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
     ResetResource();
-    if (inputs.size() == DynamicInputNum) {
-      is_dynamic_attr_ = true;
-    }
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OutputNum, kernel_name_);
     auto shape_signed = inputs.at(kIndex0)->GetShapeVector();
     input_shape_ = Convert2SizeTClipNeg(shape_signed);
@@ -87,17 +84,9 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << kMaxDims
                         << ", but got " << input_shape_.size();
     }
-    if (is_dynamic_attr_) {
-      TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_, false);
-      TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_, false);
-      TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_, false);
-    } else {
-      auto prim = base_operator->GetPrim();
-      MS_EXCEPTION_IF_NULL(prim);
-      begin_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrBegin));
-      end_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrEnd));
-      strides_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrStrides));
-    }
+    TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_, false);
+    TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_, false);
+    TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_, false);
     if (begin_.size() > input_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the size of 'begin' cannot be greater than the dimension of input, but got the "
@@ -118,7 +107,6 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
     output_size_ = 1;
     update_size_ = 1;
     is_null_input_ = false;
-    is_dynamic_attr_ = false;
     input_shape_.clear();
     output_shape_.clear();
     update_shape_.clear();
@@ -224,7 +212,7 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
   size_t output_size_;
   inline static size_t kMaxDims = 8;
   bool is_null_input_;
-  bool is_dynamic_attr_{false};
+  std::string kernel_name_;
   static constexpr size_t kBeginIndex_{2};
   static constexpr size_t kEndIndex_{3};
   static constexpr size_t kStrideIndex_{4};

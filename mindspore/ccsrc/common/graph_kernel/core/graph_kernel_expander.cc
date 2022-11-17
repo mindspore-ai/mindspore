@@ -23,6 +23,7 @@
 #include "utils/anf_utils.h"
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "common/graph_kernel/core/convert_op_input_attr.h"
 
 namespace mindspore::graphkernel {
 AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const std::string &name) const {
@@ -51,7 +52,11 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
         !AnfUtils::IsRealKernel(node) || !CanExpand(node)) {
       continue;
     }
-
+    auto all_op_index_info = ConvertOpUtils::GetOpIndexInfo();
+    auto iter = all_op_index_info.find(GetCNodePrimitive(node)->name());
+    if (iter != all_op_index_info.end()) {
+      (void)ConvertOpUtils::ConstInputToAttr(node, iter->second);
+    }
     MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope();
     auto newnode = InitExpander(node)->Run(node);
     if (newnode == nullptr) {

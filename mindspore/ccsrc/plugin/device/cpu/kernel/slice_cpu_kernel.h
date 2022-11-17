@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SLICE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SLICE_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -39,39 +39,7 @@ class SliceCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  std::vector<KernelAttr> GetOpSupport() override {
-    static const std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-      KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-      KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-      KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-      KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-      KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddOutputAttr(kNumberTypeInt32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeBool)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt32)
-        .AddOutputAttr(kNumberTypeBool)};
-    return support_list;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   void InitSliceParam(const ShapeVector &input_shape, const std::vector<int64_t> &begin,
@@ -80,10 +48,12 @@ class SliceCpuKernelMod : public NativeCpuKernelMod {
   int data_size_{4};
   SliceParameter slice_param_;
   size_t output_num_{1};
+  TypeId param_dtype_{kNumberTypeInt32};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> begin_shape_;
   std::vector<int64_t> size_shape_;
+  bool is_got_value_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SLICE_CPU_KERNEL_H_

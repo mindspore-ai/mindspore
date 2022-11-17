@@ -55,7 +55,6 @@ class OneHotGpuKernelMod : public NativeGpuKernelMod {
 
   static std::vector<std::pair<KernelAttr, OneHotLaunchFunc>> func_list_;
   OneHotLaunchFunc kernel_func_;
-  bool is_dynamic_shape_ = false;
   size_t depth_{0};
   size_t left_dim_size_{1};
   size_t right_dim_size_{1};

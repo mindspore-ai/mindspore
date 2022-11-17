@@ -34,13 +34,7 @@ class StridedSliceGpuCommon {
   StridedSliceGpuCommon() : null_output_(false) {}
   ~StridedSliceGpuCommon() = default;
 
-  void CollectInfo(const BaseOperatorPtr &base_operator, bool is_dynamic_attr_ = false) {
-    if (!is_dynamic_attr_) {
-      auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
-      begin_ = kernel_ptr->get_begin();
-      end_ = kernel_ptr->get_end();
-      strides_ = kernel_ptr->get_strides();
-    }
+  void CollectInfo(const BaseOperatorPtr &base_operator) {
     auto shape_tmp = Convert2Long(input_shape_);
     FillEmptyDims(base_operator, &begin_, &end_, &strides_, &shape_tmp);
     input_shape_ = Convert2SizeT(shape_tmp);

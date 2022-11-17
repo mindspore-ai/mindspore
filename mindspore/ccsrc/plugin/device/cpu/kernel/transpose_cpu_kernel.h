@@ -80,6 +80,7 @@ class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
   size_t data_num_{0};
   std::vector<int64_t> strides_;
   std::vector<int64_t> out_strides_;
+  bool got_perm_value_{false};
 
   using TypeKernel =
     std::function<void(TransposeFwdCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;

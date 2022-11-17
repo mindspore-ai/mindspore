@@ -31,6 +31,23 @@ namespace opt {
 namespace {
 const int kFakeTransposeShapeOneNum = 2;
 
+AnfNodePtr ConvertValueToTensor(const KernelGraphPtr &kernel_graph, const ValueNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto value_node = input_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  tensor::TensorPtr tensor_ptr = CreateTupleTensor(value->cast<ValueTuplePtr>());
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  auto tensor_input = std::make_shared<ValueNode>(tensor_ptr);
+  MS_EXCEPTION_IF_NULL(tensor_input);
+  tensor_input->set_abstract(tensor_ptr->ToAbstract());
+  tensor_input = kernel_graph->NewValueNode(tensor_input);
+  kernel_graph->AddValueNodeToGraph(tensor_input);
+  tensor_input->set_scope(input_node->scope());
+  return tensor_input;
+}
+
 std::vector<int64_t> TransposeAxis(const std::string &src_format, const std::string &dst_format) {
   if ((src_format == kOpFormat_NCHW) && (dst_format == kOpFormat_NHWC)) {
     return {0, 2, 3, 1};
@@ -66,8 +83,8 @@ void SetTransposeOpBuildInfo(const std::string &input_format, const std::string 
   auto input_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
   auto output_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  builder.SetInputsFormat({input_format});
-  builder.SetInputsDeviceType({input_type});
+  builder.SetInputsFormat({input_format, kOpFormat_DEFAULT});
+  builder.SetInputsDeviceType({input_type, kNumberTypeInt64});
   builder.SetOutputsFormat({output_format});
   builder.SetOutputsDeviceType({output_type});
   builder.SetKernelType(UNKNOWN_KERNEL_TYPE);
@@ -81,6 +98,8 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(used_node);
+  auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
 
   MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << ", used node: " << used_node->fullname_with_scope()
                 << ", index: " << used_node_index;
@@ -97,18 +116,23 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   MS_EXCEPTION_IF_NULL(transpose_prim);
   // 2.Set the input of transpose.
   std::vector<AnfNodePtr> transpose_input = {NewValueNode(transpose_prim), node};
+  if (is_fake) {
+    auto reshape_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index);
+    auto shape_node = NewValueNode(MakeValue<std::vector<int64_t>>(reshape_shape));
+    auto shape_tensor = ConvertValueToTensor(kernel_graph, shape_node);
+    transpose_input.push_back(shape_tensor);
+  } else {
+    auto perm_node = NewValueNode(MakeValue<std::vector<int64_t>>(transpose_perm));
+    auto perm_tensor = ConvertValueToTensor(kernel_graph, perm_node);
+    transpose_input.push_back(perm_tensor);
+  }
   auto transpose_op = graph->NewCNode(transpose_input);
   MS_EXCEPTION_IF_NULL(transpose_op);
   // 3.Set the output info of transpose.
   auto transpose_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(used_node, used_node_index)};
-  auto transpose_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index);
   auto base_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(used_node, used_node_index);
   common::AnfAlgo::SetOutputTypeAndDetailShape(transpose_type, {base_shape}, transpose_op.get());
-  if (is_fake) {
-    common::AnfAlgo::SetNodeAttr("shape", MakeValue(transpose_shape), transpose_op);
-  } else {
-    common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
-  }
+
   // 4. Set the new edge of transpose op.
   FuncGraphManagerPtr manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

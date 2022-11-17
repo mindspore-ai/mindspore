@@ -26,9 +26,13 @@ namespace mindspore {
 namespace opt {
 const BaseRef RemoveFormatTransformPair::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
+  VarPtr Y = std::make_shared<Var>();
+  VarPtr Z = std::make_shared<Var>();
   MS_EXCEPTION_IF_NULL(X);
-  VectorRef transpose1 = VectorRef({prim::kPrimTranspose, X});
-  VectorRef transpose2 = VectorRef({prim::kPrimTranspose, transpose1});
+  MS_EXCEPTION_IF_NULL(Y);
+  MS_EXCEPTION_IF_NULL(Z);
+  VectorRef transpose1 = VectorRef({prim::kPrimTranspose, X, Y});
+  VectorRef transpose2 = VectorRef({prim::kPrimTranspose, transpose1, Z});
   return transpose2;
 }
 

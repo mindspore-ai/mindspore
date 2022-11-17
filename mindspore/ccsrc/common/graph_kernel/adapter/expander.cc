@@ -30,6 +30,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/adapter/callback_impl.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
@@ -65,7 +66,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     {prim::kPrimArgMinWithValue->name(), {ArgWithValueDeco::Creator}},
     {prim::kPrimSolveTriangular->name(), {ProcessCustomOpDeco::Creator}},
     {prim::kPrimLU->name(), {ProcessCustomOpDeco::Creator}},
-    {prim::kPrimVmapUnstackAssign->name(), {AttrToInputDeco::GetCreator(true)}},
+    {prim::kPrimVmapUnstackAssign->name(), {AttrToInputDeco::Creator}},
   };
   const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
@@ -178,7 +179,7 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
     return nullptr;
   }
   auto expander = GetExpander(node);
-  expander = AttrToInputDeco::GetCreator(true)(expander);
+  expander = AttrToInputDeco::Creator(expander);
   auto res = expander->Run(node);
   auto expand_fg = GetCNodeFuncGraph(res);
   if (expand_fg != nullptr) {
@@ -240,49 +241,6 @@ AnfNodePtr SetDynamicShapeAttrDeco::Run(const AnfNodePtr &node) {
   return new_cnode;
 }
 
-void AttrToInputDeco::ConvertAttrToInput(const FuncGraphPtr &graph) {
-  auto todos = TopoSort(graph->get_return());
-  for (const auto &node : todos) {
-    auto primitive = GetCNodePrimitive(node);
-    if (primitive == nullptr) {
-      continue;
-    }
-    std::map<std::string, std::set<size_t>> attr2input_map;
-    if (is_backend_) {
-      attr2input_map = std::map<std::string, std::set<size_t>>{{prim::kPrimTupleGetItem->name(), {1}}};
-    } else {
-      attr2input_map = std::map<std::string, std::set<size_t>>{
-        {prim::kPrimCast->name(), {1}},        {prim::kPrimReshape->name(), {1}},   {prim::kPrimReduceMax->name(), {1}},
-        {prim::kPrimReduceMin->name(), {1}},   {prim::kPrimReduceSum->name(), {1}}, {prim::kPrimTranspose->name(), {1}},
-        {prim::kPrimTupleGetItem->name(), {1}}};
-    }
-    if (attr2input_map.count(primitive->name()) != 0) {
-      auto input_names = primitive->GetAttr(kAttrInputNames);
-      auto cnode = dyn_cast<CNode>(node);
-      AnfNodePtrList inputs = cnode->inputs();
-      AnfNodePtrList new_inputs{inputs[0]};
-      auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
-      auto attrs_map = attr2input_map[primitive->name()];
-      size_t j = 1;
-      for (size_t i = 0; i < input_names_vec.size(); ++i) {
-        if (attrs_map.count(i) != 0) {
-          auto value = primitive->GetAttr(input_names_vec[i]);
-          auto value_node = std::make_shared<ValueNode>(value);
-          value_node->set_abstract(value->ToAbstract());
-          new_inputs.push_back(value_node);
-        } else {
-          if (j >= inputs.size()) {
-            MS_LOG(EXCEPTION) << "Index " << j << " is larger than input size [" << inputs.size() << "]";
-          }
-          new_inputs.push_back(inputs[j]);
-          j++;
-        }
-      }
-      cnode->set_inputs(new_inputs);
-    }
-  }
-}
-
 AnfNodePtr AttrToInputDeco::Run(const AnfNodePtr &node) {
   auto new_node = decorated_->Run(node);
   if (new_node == nullptr) {
@@ -290,7 +248,10 @@ AnfNodePtr AttrToInputDeco::Run(const AnfNodePtr &node) {
   }
   auto new_cnode = dyn_cast<CNode>(new_node);
   auto expand_fg = GetCNodeFuncGraph(new_cnode);
-  ConvertAttrToInput(expand_fg);
+  auto todos = TopoSort(expand_fg->get_return());
+  for (const auto &node : todos) {
+    ConvertOpUtils::ConvertAttrToInput(node);
+  }
   new_cnode->set_input(0, NewValueNode(expand_fg));
   return new_cnode;
 }

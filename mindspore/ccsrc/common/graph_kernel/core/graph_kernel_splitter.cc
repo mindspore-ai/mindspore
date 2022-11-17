@@ -27,6 +27,7 @@
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "common/graph_kernel/core/convert_op_input_attr.h"
 #include "common/graph_kernel/split_model/split_model_factory.h"
 
 namespace mindspore::graphkernel {
@@ -367,6 +368,7 @@ class Splitter {
  private:
   void ResetInlinedNodesKernelInfo() const {
     for (const auto &node : inlined_nodes_) {
+      ConvertOpUtils::ConvertAttrToInput(node);
       Callback::Instance()->ResetKernelInfo(node);
     }
   }

@@ -37,6 +37,8 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   (void)node_inputs.insert(node_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
   CNodePtr new_cnode = func_graph->NewCNode(node_inputs);
   MS_EXCEPTION_IF_NULL(new_cnode);
+  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto predict_input = cnode->inputs()[1];
   auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
   auto new_node_shape = {common::AnfAlgo::GetOutputDetailShape(predict_input, 0)};
@@ -46,10 +48,20 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   string reduction = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrReduction);
   MS_LOG(INFO) << "Create reduce node for BCEWithLogitsLoss, reduction attr is: " << reduction;
   std::vector<AnfNodePtr> reduce_inputs;
+  std::vector<int64_t> axis_shp = {0};
+  auto axis_tensor = std::make_shared<tensor::Tensor>(kInt64->type_id(), axis_shp);
+  MS_EXCEPTION_IF_NULL(axis_tensor);
+  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, kInt64};
+  axis_tensor->set_device_info(device_info);
+  ValueNodePtr axis_node = std::make_shared<ValueNode>(axis_tensor);
+  MS_EXCEPTION_IF_NULL(axis_node);
+  axis_node->set_abstract(axis_tensor->ToAbstract());
+  axis_node = kernel_graph->NewValueNode(axis_node);
+  kernel_graph->AddValueNode(axis_node);
   if (reduction == "sum") {
-    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), new_cnode};
+    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), new_cnode, axis_node};
   } else if (reduction == "mean") {
-    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMean->name())), new_cnode};
+    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMean->name())), new_cnode, axis_node};
   } else {
     MS_LOG(INFO) << "Reduction is none, no optimization on current BCEWithLogitsLoss.";
     return nullptr;
@@ -59,7 +71,6 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   auto shape = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape({type}, shape, reduce_node.get());
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{}), reduce_node);
   common::AnfAlgo::SetNodeAttr("keep_dims", MakeValue(false), reduce_node);
   reduce_node->set_scope(cnode->scope());
   return reduce_node;

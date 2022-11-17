@@ -24,7 +24,7 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
-constexpr size_t kDynamicPermInputNum = 2;
+constexpr size_t kPermInputNum = 2;
 constexpr size_t kDimSize4 = 4;
 constexpr size_t kAxisZero = 0;
 constexpr size_t kAxis1st = 1;
@@ -35,10 +35,7 @@ constexpr size_t kAxisIndex1st = 1;
 constexpr size_t kAxisIndex2nd = 2;
 constexpr size_t kAxisIndex3rd = 3;
 
-#define STATIC_REGISTER(INPUTX, OUTPUT, T) \
-  { KernelAttr().AddInputAttr(INPUTX).AddOutputAttr(OUTPUT), &TransposeGpuKernelMod::LaunchKernel<T> }
-
-#define DYN_REGISTER(INPUTX, PERM, OUTPUT, T)                                   \
+#define OP_REGISTER(INPUTX, PERM, OUTPUT, T)                                    \
   {                                                                             \
     KernelAttr().AddInputAttr(INPUTX).AddInputAttr(PERM).AddOutputAttr(OUTPUT), \
       &TransposeGpuKernelMod::LaunchKernel<T>                                   \
@@ -47,48 +44,34 @@ constexpr size_t kAxisIndex3rd = 3;
 const std::vector<std::pair<KernelAttr, TransposeGpuKernelMod::KernelRunFunc>> &TransposeGpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, TransposeGpuKernelMod::KernelRunFunc>> func_list = {
-    STATIC_REGISTER(kNumberTypeComplex64, kNumberTypeComplex64, Complex<float>),
-    STATIC_REGISTER(kNumberTypeComplex128, kNumberTypeComplex128, Complex<double>),
-    STATIC_REGISTER(kNumberTypeBool, kNumberTypeBool, bool),
-    STATIC_REGISTER(kNumberTypeFloat64, kNumberTypeFloat64, double),
-    STATIC_REGISTER(kNumberTypeFloat32, kNumberTypeFloat32, float),
-    STATIC_REGISTER(kNumberTypeFloat16, kNumberTypeFloat16, half),
-    STATIC_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t),
-    STATIC_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t),
-    STATIC_REGISTER(kNumberTypeInt16, kNumberTypeInt16, int16_t),
-    STATIC_REGISTER(kNumberTypeInt8, kNumberTypeInt8, int8_t),
-    STATIC_REGISTER(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
-    STATIC_REGISTER(kNumberTypeUInt16, kNumberTypeUInt16, uint16_t),
-    STATIC_REGISTER(kNumberTypeUInt32, kNumberTypeUInt32, uint32_t),
-    STATIC_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, uint64_t),
-    DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeComplex64, Complex<float>),
-    DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeComplex128, Complex<double>),
-    DYN_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeBool, bool),
-    DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, double),
-    DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, float),
-    DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, half),
-    DYN_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t),
-    DYN_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
-    DYN_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt16, int16_t),
-    DYN_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, int8_t),
-    DYN_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, uint8_t),
-    DYN_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeUInt16, uint16_t),
-    DYN_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeUInt32, uint32_t),
-    DYN_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeUInt64, uint64_t),
-    DYN_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, Complex<float>),
-    DYN_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128, Complex<double>),
-    DYN_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool),
-    DYN_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double),
-    DYN_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float),
-    DYN_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half),
-    DYN_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
-    DYN_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t),
-    DYN_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t),
-    DYN_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, int8_t),
-    DYN_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t),
-    DYN_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, uint16_t),
-    DYN_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t),
-    DYN_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t),
+    OP_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeComplex64, Complex<float>),
+    OP_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeComplex128, Complex<double>),
+    OP_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeBool, bool),
+    OP_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, double),
+    OP_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, float),
+    OP_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, half),
+    OP_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t),
+    OP_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
+    OP_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt16, int16_t),
+    OP_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, int8_t),
+    OP_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, uint8_t),
+    OP_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeUInt16, uint16_t),
+    OP_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeUInt32, uint32_t),
+    OP_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeUInt64, uint64_t),
+    OP_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, Complex<float>),
+    OP_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128, Complex<double>),
+    OP_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool),
+    OP_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double),
+    OP_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float),
+    OP_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half),
+    OP_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
+    OP_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t),
+    OP_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t),
+    OP_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, int8_t),
+    OP_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t),
+    OP_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, uint16_t),
+    OP_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t),
+    OP_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t),
   };
   return func_list;
 }
@@ -101,10 +84,6 @@ bool TransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T *output = GetDeviceAddress<T>(outputs, 0);
   size_t *input_shape = GetDeviceAddress<size_t>(workspace, 0);
   size_t *input_axis = GetDeviceAddress<size_t>(workspace, 1);
-
-  if (is_dynamic_perm_ && !get_dynamic_perm_value_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of the dynamic perm!";
-  }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
@@ -155,26 +134,13 @@ bool TransposeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   size_t input_num = inputs.size();
   size_t output_num = outputs.size();
   kernel_name_ = base_operator->name();
-  if (input_num != 1 && input_num != kDynamicPermInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kDynamicPermInputNum
-                      << ", but got " << input_num;
+  if (input_num != kPermInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kPermInputNum << ", but got "
+                      << input_num;
   }
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  if (input_num == kDynamicPermInputNum) {
-    is_dynamic_perm_ = true;
-    return true;
-  }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Transpose>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "For primitive[Transpose], cast op from BaseOperator to Transpose failed.";
-    return false;
-  }
-  std::vector<int64_t> perm;
-  perm = kernel_ptr->get_perm();
-  GetPermValue(perm);
   return true;
 }
 
