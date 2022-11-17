@@ -42,7 +42,8 @@ namespace gpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
-static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentProdOpName,
+static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentSumOpName,
+                                                        kUnsortedSegmentProdOpName,
                                                         kUniqueWithPadOpName,
                                                         kMaskedFillOpName,
                                                         kDataFormatDimMapOpName,
@@ -57,6 +58,7 @@ static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentProdOpNa
                                                         kApplyCenteredRMSPropOpName,
                                                         kRandomShuffleOpName,
                                                         kApplyAdamWithAmsgradOpName,
+                                                        kApplyProximalAdagradOpName,
                                                         prim::kMatrixBandPart,
                                                         prim::kDiag,
                                                         prim::kSparseSegmentMean};
