@@ -498,6 +498,7 @@ table Depend {
 table DepthToSpace {
     block_size: long;
     format: Format = 0;
+    mode: string;
 }
 
 table DetectionPostProcess {

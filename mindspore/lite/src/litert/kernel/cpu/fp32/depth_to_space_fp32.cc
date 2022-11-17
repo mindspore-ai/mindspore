@@ -80,7 +80,16 @@ int DepthToSpaceCPUKernel::Run() {
   auto in_shape = input->shape();
   MS_CHECK_TRUE_MSG(in_shape.size() == DIMENSION_4D, RET_ERROR, "input shape should be 4!");
   if (input->format() == mindspore::NHWC) {
-    DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param_);
+    if (param_->mode_ == 0) {
+      // RCD
+      DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param_);
+    } else if (param_->mode_ == 1) {
+      // CRD
+      DepthToSpaceCRDForNHWC(input_data, output_data, in_shape.data(), param_);
+    } else {
+      MS_LOG(ERROR) << "Depth_to_space only support mode 0(DCR) and mode 1(CRD)";
+      return RET_ERROR;
+    }
     return RET_OK;
   } else {
     MS_LOG(ERROR) << "Depth_to_space only support NHWC now!";

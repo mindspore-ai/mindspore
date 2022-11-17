@@ -23,6 +23,7 @@
 extern "C" {
 #endif
 void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param);
+void DepthToSpaceCRDForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param);
 #ifdef __cplusplus
 }
 #endif

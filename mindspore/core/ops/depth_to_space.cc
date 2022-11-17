@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <set>
 #include "ops/depth_to_space.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -33,6 +34,11 @@ void DepthToSpace::set_format(const Format &format) {
 }
 
 Format DepthToSpace::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
+
+std::string DepthToSpace::get_mode() const {
+  auto mode_ptr = GetAttr(kMode);
+  return GetValue<std::string>(mode_ptr);
+}
 
 void DepthToSpace::Init(const int64_t block_size, const Format &format) {
   this->set_block_size(block_size);

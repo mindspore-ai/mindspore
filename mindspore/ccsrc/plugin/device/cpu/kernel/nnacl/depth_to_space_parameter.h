@@ -17,10 +17,13 @@
 #define MINDSPORE_NNACL_DEPTH_TO_SPACE_PARAMETER_H_
 #include "nnacl/op_base.h"
 
+#define MAX_MODE_STR_LENS 8
+
 typedef struct DepthToSpaceParameter {
   OpParameter op_parameter_;
   // primitive parameter
   int32_t block_size_;
+  int32_t mode_;
   // shape correlative
   int32_t in_stride_dim0_;
   int32_t in_stride_dim1_;
