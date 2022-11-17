@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore
 from mindspore import context
 from mindspore.common.tensor import Tensor
@@ -34,10 +33,6 @@ class Net(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_batchmatmul_acl_dynamic_shape():
     """
     Feature: Test acl call with pynative mode and dynamic shape.
