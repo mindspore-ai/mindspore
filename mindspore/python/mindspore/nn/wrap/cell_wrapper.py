@@ -1,3 +1,4 @@
+
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -459,11 +460,10 @@ class _VirtualDatasetCell(Cell):
 
 
 @constexpr
-def _check_shape_value_on_axis_divided_by_target_value(input_shape, dim, param_name, cls_name, target_value):
-    if input_shape[dim] % target_value != 0:
-        raise ValueError(f"For MicroBatchInterleaved initialization, "
-                         f"{cls_name} {param_name} at {dim} shape must be divided by {target_value},"
-                         f"but got {input_shape[dim]}")
+def _check_shape_value_on_axis_divided_by_target_value(input_shape, micro_size):
+    if input_shape[0] % micro_size != 0:
+        raise ValueError(f"For micro batch initialization, the 0th dimension shape of input({input_shape[0]}) must be "
+                         f"divided by micro size({micro_size})")
     return True
 
 
@@ -485,8 +485,7 @@ class _MicroBatch(Cell):
         micro_inputs = ()
         for each_input in inputs:
             input_shape = self.shape(each_input)
-            _check_shape_value_on_axis_divided_by_target_value(input_shape, 0, "inputs",
-                                                               self.cls_name, self.micro_size)
+            _check_shape_value_on_axis_divided_by_target_value(input_shape, self.micro_size)
             micro_batch_begin = i * input_shape[0] // self.micro_size
             micro_batch_end = (i + 1) * input_shape[0] // self.micro_size
             strided_slice_begin = (micro_batch_begin,)
