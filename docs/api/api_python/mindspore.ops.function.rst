@@ -187,6 +187,7 @@ mindspore.ops.function
     mindspore.ops.cosh
     mindspore.ops.deg2rad
     mindspore.ops.div
+    mindspore.ops.divide
     mindspore.ops.erf
     mindspore.ops.erfc
     mindspore.ops.exp
