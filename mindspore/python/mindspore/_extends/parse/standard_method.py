@@ -789,7 +789,7 @@ def argmax(x, axis=None, keepdims=False):
     return out
 
 
-def argmin(x, axis=None):
+def argmin(x, axis=None, keepdims=False):
     """
     Returns the indices of the minimum values along an axis.
 
@@ -798,6 +798,8 @@ def argmin(x, axis=None):
         axis (int, optional): By default, the index is into
             the flattened array, otherwise along the specified axis.
             Defaults to None.
+        keepdims (boolean, optional): Whether the output tensor retains the specified
+            dimension. Ignored if `axis` is None. Default: False.
 
     Returns:
         Tensor, array of indices into the array. It has the same
@@ -816,15 +818,19 @@ def argmin(x, axis=None):
         >>> print(a.argmin())
         0
     """
-    # P.Argmax only supports float
+    # P.Argmin only supports float
     x = x.astype(mstype.float32)
+    is_axis_none = False
     if axis is None:
         x = ravel(x)
         axis = 0
+        is_axis_none = True
     else:
         axis = check_axis_in_range_const(axis, F.rank(x))
-    # P.Argmin is currently not supported
-    return P.Argmax(axis)(F.neg_tensor(x))
+    out = P.Argmin(axis)(x)
+    if keepdims and not is_axis_none:
+        out = expand_dims(out, axis)
+    return out
 
 
 def argmax_with_value(x, axis=0, keep_dims=False):

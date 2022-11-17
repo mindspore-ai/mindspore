@@ -406,7 +406,7 @@ def exp2(x):
     return exp2_(tensor_2, x)
 
 
-def argmin(x, axis=-1):
+def argmin(x, axis=-1, keepdims=False):
     """
     Returns the indices of the minimum value of a tensor across the axis.
 
@@ -416,6 +416,8 @@ def argmin(x, axis=-1):
     Args:
         x (Tensor): Input tensor. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         axis (int): Axis where the Argmin operation applies to. Default: -1.
+        keepdims (boolean, optional): Whether the output tensor retains the specified
+            dimension. Ignored if `axis` is None. Default: False.
 
     Returns:
         Tensor, indices of the min value of input tensor across the axis.
@@ -432,8 +434,17 @@ def argmin(x, axis=-1):
         >>> print(index)
         2
     """
-    _argmin = _get_cache_prim(P.Argmin)(axis)
-    return _argmin(x)
+    if x.shape == ():
+        return Tensor(0)
+    is_axis_none = False
+    if axis is None:
+        x = P.Reshape()(x, (-1,))
+        axis = 0
+        is_axis_none = True
+    out = _get_cache_prim(P.Argmin)(axis)(x)
+    if keepdims and not is_axis_none:
+        out = P.ExpandDims()(out, axis)
+    return out
 
 
 neg_tensor = P.Neg()
