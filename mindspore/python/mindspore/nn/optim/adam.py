@@ -713,8 +713,8 @@ class Adam(Optimizer):
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
-        self.beta1_power = Parameter(initializer(1, [1], mstype.float32), name="beta1_power")
-        self.beta2_power = Parameter(initializer(1, [1], mstype.float32), name="beta2_power")
+        self.beta1_power = Parameter(initializer(1, (), mstype.float32), name="beta1_power")
+        self.beta2_power = Parameter(initializer(1, (), mstype.float32), name="beta2_power")
         self.eps = Tensor(eps, mstype.float32)
         self.use_nesterov = use_nesterov
         self.use_locking = use_locking
