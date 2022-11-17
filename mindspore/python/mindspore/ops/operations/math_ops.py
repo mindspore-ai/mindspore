@@ -1518,9 +1518,8 @@ class MatMul(PrimitiveWithCheck):
 
     def check_dtype(self, x1, x2):
         args = {"x1": x1, "x2": x2}
-        validator.check_tensors_dtypes_same_and_valid(args,
-                                                      mstype.float_type + mstype.int_type + (mstype.complex64,),
-                                                      self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.float_type + mstype.int_type
+                                                      + (mstype.complex64, mstype.complex128), self.name)
 
 
 class BatchMatMul(Primitive):
@@ -6216,6 +6215,57 @@ class MatrixSolve(Primitive):
     def __init__(self, adjoint=False):
         super().__init__(name="MatrixSolve")
         self.adjoint = validator.check_value_type("adjoint", adjoint, [bool], self.name)
+
+
+class MatrixSolveLs(Primitive):
+    r"""
+    Solves one or more linear least-squares problems.
+
+    If `fast` is `True`,then the solution is computed by solving the normal equations using Cholesky decomposition.
+    If `fast` is `False` an algorithm based on the numerically robust complete orthogonal decomposition is used. This
+    path is typically 6-7 times slower than the fast path. If `fast` is `False` then `l2_regularizer` is ignored.
+
+    Args:
+        fast (bool): An optional bool. Defaults to True.
+
+    Inputs:
+        - **matrix** (Tensor) -  A Tensor. Must be one of the following data types: float64, float32, complex64,
+          complex128. Shape is :math:`(*, M, N)`.
+        - **rhs** (Tensor) -  A Tensor. Must have the same data type as matrix. Shape is :math:`(*, M, K)`.
+          `matrix` and `rhs` should have the same dimensions except the last one.
+        - **l2_regularizer** (Tensor) - A Tensor of type float64. Scalar tensor.
+
+    Outputs:
+        Tensor of shape :math:`(*, N, K)` with the same data type as `matrix`.
+
+    Raises:
+        TypeError: If `matrix`, `rhs` or `l2_regularizer` is not tensor.
+        TypeError: If either of `matrix` and `rhs` is not float32, float64, complex64 or complex128.
+        TypeError: If `l2_regularizer` is not float64.
+        TypeError: If `fast` is not bool.
+        ValueError: If dimensions of `matrix` or `rhs` is less than 2.
+        ValueError: If shape of `matrix` dose not match the shape of `rhs`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> matrix_solve_ls = ops.MatrixSolveLs(fast=True)
+        >>> matrix = Tensor([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], mstype.float32)
+        >>> rhs = Tensor(np.array([[4], [2], [4], [2]]), mstype.float32)
+        >>> l2 = Tensor(0.0, mstype.float64)
+        >>> output = matrix_solve_ls(matrix, rhs, l2)
+        >>> print(output)
+        [[ 1.3333334]
+        [-0.6666667]
+        [ 2.6666665]
+        [-1.3333333]]
+    """
+
+    @prim_attr_register
+    def __init__(self, fast=True):
+        """Initialize MatrixSolveLs"""
+        validator.check_value_type('fast', fast, [bool], self.name)
 
 
 class LuSolve(Primitive):
