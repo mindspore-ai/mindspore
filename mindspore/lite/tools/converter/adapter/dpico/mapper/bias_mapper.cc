@@ -86,9 +86,9 @@ STATUS BiasMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
     bias_operator->SetAxis(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(ops::kAxis))));
   } else if (CheckPrimitiveType(cnode, api::MakeShared<ops::BiasAdd>())) {
     auto format = api::GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-    if (format == mindspore::NCHW) {
+    if (format == static_cast<int64_t>(mindspore::NCHW)) {
       bias_operator->SetAxis(1);
-    } else if (format == mindspore::NHWC) {
+    } else if (format == static_cast<int64_t>(mindspore::NHWC)) {
       bias_operator->SetAxis(-1);
     } else {
       MS_LOG(ERROR) << "invalid format: " << format;

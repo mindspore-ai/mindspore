@@ -125,12 +125,6 @@ STATUS ReductionMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperator
     reduction_operator->SetReduceKeepDims(
       static_cast<int32_t>(api::GetValue<bool>(reduction_prim->GetAttr(ops::kKeepDims))));
   }
-  if (reduction_prim->GetAttr(ops::kFmkType) != nullptr) {
-    auto fmk_type = static_cast<converter::FmkType>(api::GetValue<int64_t>(reduction_prim->GetAttr(ops::kFmkType)));
-    if (fmk_type == converter::kFmkTypeCaffe) {
-      reduction_operator->SetReduceIsFromCaffe(true);
-    }
-  }
   if (PushOfflineArgs(cnode, reduction_operator.get(), 1) != RET_OK) {
     MS_LOG(ERROR) << "push offline args failed. " << cnode->fullname_with_scope();
     return RET_ERROR;

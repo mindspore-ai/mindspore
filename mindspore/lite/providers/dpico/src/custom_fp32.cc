@@ -68,7 +68,8 @@ int CustomCPUKernel::Prepare() {
   }
 
   // init model manager
-  if (acl_model_manager_->Init(this->GetConfig(kDpico), primitive_, inputs_, outputs_) != RET_OK) {
+  if (acl_model_manager_->Init(this->GetConfig(kDpico), this->GetConfig(kModelSharingSection), primitive_, inputs_,
+                               outputs_) != RET_OK) {
     MS_LOG(ERROR) << "init acl model manager failed.";
     return RET_ERROR;
   }
@@ -100,7 +101,7 @@ int CustomCPUKernel::Execute() {
   auto ret = PreProcess();
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "kernel preprocess failed." + this->name());
 
-  if (acl_model_manager_->Execute(inputs_, outputs_) != RET_OK) {
+  if (acl_model_manager_->Execute(inputs_, outputs_, this->GetConfig(kModelSharingSection)) != RET_OK) {
     MS_LOG(ERROR) << "acl model manager execute failed.";
     return RET_ERROR;
   }

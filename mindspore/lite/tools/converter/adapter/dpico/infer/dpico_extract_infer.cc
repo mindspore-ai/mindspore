@@ -62,12 +62,12 @@ Status DpicoExtractInterface::Infer(std::vector<mindspore::MSTensor> *inputs, st
     MS_LOG(ERROR) << "param->attr() is nullptr";
     return kLiteError;
   }
-  for (size_t i = 0; i < param->attr()->size(); i++) {
+  for (uint16_t i = 0; i < static_cast<uint32_t>(param->attr()->size()); i++) {
     if (param->attr()->Get(i) == nullptr || param->attr()->Get(i)->name() == nullptr) {
       MS_LOG(ERROR) << "param->attr()->Get(i) is nullptr or param->attr()->Get(i)->name() is nullptr";
       return kLiteError;
     }
-    custom_attrs.insert({param->attr()->Get(i)->name()->str(), param->attr()->Get(i)->data()});
+    (void)custom_attrs.emplace(std::pair(param->attr()->Get(i)->name()->str(), param->attr()->Get(i)->data()));
   }
   if (custom_attrs.count(ops::kAxis) == 1) {
     if (memcpy_s(&raw_axis, sizeof(int32_t), custom_attrs[ops::kAxis]->data(), custom_attrs[ops::kAxis]->size()) !=
@@ -99,7 +99,7 @@ Status DpicoExtractInterface::Infer(std::vector<mindspore::MSTensor> *inputs, st
     MS_LOG(ERROR) << "input shape is empty.";
     return kLiteError;
   }
-  auto axis = (raw_axis + input_shape.size()) % input_shape.size();
+  size_t axis = (raw_axis + static_cast<int32_t>(input_shape.size())) % input_shape.size();
   if (input_shape.size() <= axis) {
     MS_LOG(ERROR) << "input_shape size: " << input_shape.size() << " is less than axis: " << axis;
     return kLiteError;

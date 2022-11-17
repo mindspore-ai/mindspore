@@ -30,18 +30,17 @@ BaseOperatorPtr CaffeMatmulParser::Parse(const caffe::LayerParameter &proto, con
   if (proto.has_matmul_param()) {
     const caffe::MatMulParameter &matmul_param = proto.matmul_param();
     if (matmul_param.has_dim_1()) {
-      prim->AddAttr(dpico::kDim1, api::MakeValue<int64_t>(matmul_param.dim_1()));
+      (void)prim->AddAttr(dpico::kDim1, api::MakeValue<int64_t>(matmul_param.dim_1()));
     }
     if (matmul_param.has_dim_2()) {
-      prim->AddAttr(dpico::kDim2, api::MakeValue<int64_t>(matmul_param.dim_2()));
+      (void)prim->AddAttr(dpico::kDim2, api::MakeValue<int64_t>(matmul_param.dim_2()));
     }
     if (matmul_param.has_dim_3()) {
-      prim->AddAttr(dpico::kDim3, api::MakeValue<int64_t>(matmul_param.dim_3()));
+      (void)prim->AddAttr(dpico::kDim3, api::MakeValue<int64_t>(matmul_param.dim_3()));
     }
   }
   prim->set_transpose_a(false);
   prim->set_transpose_b(true);
-  prim->set_activation_type(mindspore::NO_ACTIVATION);
   return prim;
 }
 

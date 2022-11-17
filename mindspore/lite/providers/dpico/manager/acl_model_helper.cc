@@ -101,6 +101,7 @@ int GetAclDataInfo(struct AclDataInfo *acl_data_info, svp_acl_mdl_desc *acl_mdl_
 
 int AddDatasetBuffer(svp_acl_mdl_dataset *acl_mdl_dataset, size_t data_buffer_size, size_t stride, void *data) {
   MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
+  MS_CHECK_TRUE_MSG(acl_mdl_dataset != nullptr, RET_ERROR, "acl_mdl_dataset is nullptr.");
   auto *data_buffer = svp_acl_create_data_buffer(data, data_buffer_size, stride);
   MS_CHECK_TRUE_MSG(data_buffer != nullptr, RET_ERROR, "create data buffer failed.");
   int ret = svp_acl_mdl_add_dataset_buffer(acl_mdl_dataset, data_buffer);
@@ -132,7 +133,9 @@ int DestroyAclDataset(svp_acl_mdl_dataset **acl_mdl_dataset,
     MS_CHECK_TRUE_MSG(acl_data_buffer != nullptr, RET_ERROR, "get acl data buffer failed.");
     if (!mem_managed_by_tensor.at(i)) {
       void *tmp = svp_acl_get_data_buffer_addr(acl_data_buffer);
-      allocator->Free(tmp);
+      ret = AclFree(&tmp);
+      MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "AclFree tmp failed");
+      tmp = nullptr;
     }
     ret = svp_acl_destroy_data_buffer(acl_data_buffer);
     MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "acl destroy data buffer failed.");
@@ -181,6 +184,7 @@ int ComputeValidDetectBoxes(svp_acl_mdl_desc *acl_mdl_desc, svp_acl_mdl_dataset 
   data_buffer = svp_acl_mdl_get_dataset_buffer(acl_outputs, kOutputBboxId);
   MS_CHECK_TRUE_MSG(data_buffer != nullptr, RET_ERROR, "get data buffer failed.");
   output_data = reinterpret_cast<float *>(svp_acl_get_data_buffer_addr(data_buffer));
+  MS_CHECK_TRUE_MSG(output_data != nullptr, RET_ERROR, "output_data is nullptr.");
   svp_acl_mdl_get_output_dims(acl_mdl_desc, kOutputBboxId, &acl_dims);
   size_t w_stride_offset = svp_acl_mdl_get_output_default_stride(acl_mdl_desc, kOutputBboxId) / sizeof(float);
 
@@ -209,6 +213,7 @@ int WriteDetBoxesToTensorData(const std::vector<std::vector<float>> &det_boxes,
                     RET_ERROR, "detect box tensor element num is too few");
   auto *bbox_tensor_data = reinterpret_cast<float *>(detect_boxes_tensor->MutableData());
   MS_CHECK_TRUE_MSG(bbox_tensor_data != nullptr, RET_ERROR, "bbox_tensor_data is nullptr");
+  MS_CHECK_TRUE_MSG(total_box_num != 0, RET_ERROR, "total_box_num is 0");
   for (size_t i = 0; i < total_box_num; i++) {
     for (size_t bbox_param_idx = 0; bbox_param_idx < bbox_pararm_size; bbox_param_idx++) {
       bbox_tensor_data[bbox_param_idx * total_box_num + i] = det_boxes[i][bbox_param_idx];
@@ -220,6 +225,12 @@ int WriteDetBoxesToTensorData(const std::vector<std::vector<float>> &det_boxes,
 
 int AclMalloc(void **buf, size_t size) {
   int ret = svp_acl_rt_malloc(buf, size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+  return ret;
+}
+int AclFree(void **buf) {
+  int ret = svp_acl_rt_free(*buf);
+  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp_acl_rt_free failed");
+  *buf = nullptr;
   return ret;
 }
 }  // namespace lite

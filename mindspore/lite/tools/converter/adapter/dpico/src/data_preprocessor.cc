@@ -171,7 +171,7 @@ int DataPreprocessor::WriteCvMatToBin(const cv::Mat &image, const std::string &o
     return RET_ERROR;
   }
   for (int i = 0; i < image.rows; i++) {
-    ofs.write(reinterpret_cast<const char *>(image.ptr(i)), image.cols * image.elemSize());
+    (void)ofs.write(reinterpret_cast<const char *>(image.ptr(i)), static_cast<size_t>(image.cols) * image.elemSize());
   }
   ofs.close();
   return RET_OK;
@@ -260,16 +260,16 @@ int DataPreprocessor::GenerateInputBinFromImages(const std::string &raw_data_pat
   for (const auto &img_path : img_paths) {  // preprocess input image
     cv::Mat image;
     if (kRgbInputFormats.find(aipp_module.input_format) != kRgbInputFormats.end()) {
-      image = cv::imread(img_path, cv::IMREAD_COLOR);
+      image = cv::imread(img_path, static_cast<int>(cv::IMREAD_COLOR));
     } else if (kGrayInputFormats.find(aipp_module.input_format) != kGrayInputFormats.end()) {
-      image = cv::imread(img_path, cv::IMREAD_GRAYSCALE);
+      image = cv::imread(img_path, static_cast<int>(cv::IMREAD_GRAYSCALE));
     }
     if (image.empty() || image.data == nullptr) {
       MS_LOG(ERROR) << "missing file, improper permissions, unsupported or invalid format.";
       return RET_ERROR;
     }
     if (aipp_module.model_format == "RGB") {
-      cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+      cv::cvtColor(image, image, static_cast<int>(cv::COLOR_BGR2RGB));
     }
     if (image.cols != op_shape[kAxis3] || image.rows != op_shape[kAxis2]) {
       MS_LOG(INFO) << "input image shape don't match op shape, and it will be resized.";

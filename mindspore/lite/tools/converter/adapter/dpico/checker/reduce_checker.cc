@@ -35,7 +35,7 @@ STATUS GetAxesSet(const api::CNodePtr &op, const ShapeVector &input_shape, const
   }
   DataInfo data_info;
   if (op->inputs().size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
-    if (data_info.data_type_ != kNumberTypeInt32) {
+    if (data_info.data_type_ != static_cast<int>(kNumberTypeInt32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;
     }
@@ -49,13 +49,14 @@ STATUS GetAxesSet(const api::CNodePtr &op, const ShapeVector &input_shape, const
       MS_LOG(ERROR) << "get data size from tensor failed.";
       return RET_ERROR;
     }
-    (void)std::transform(data, data + data_size, std::inserter(*axes_set, axes_set->begin()),
-                         [input_shape](int32_t value) { return (value + input_shape.size()) % input_shape.size(); });
+    (void)std::transform(
+      data, data + data_size, std::inserter(*axes_set, axes_set->begin()),
+      [input_shape](int32_t value) { return (value + static_cast<int32_t>(input_shape.size())) % input_shape.size(); });
   } else if (primitive->GetAttr(ops::kAxes) != nullptr) {
     auto axes = api::GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kAxes));
     (void)std::transform(
       axes.begin(), axes.end(), std::inserter(*axes_set, axes_set->begin()),
-      [input_shape](int64_t value) { return (static_cast<size_t>(value) + input_shape.size()) % input_shape.size(); });
+      [input_shape](int64_t value) { return (value + static_cast<int64_t>(input_shape.size())) % input_shape.size(); });
   }
   return RET_OK;
 }
@@ -85,7 +86,7 @@ bool CheckAttr(const api::CNodePtr &op, mindspore::Format format, const api::Pri
   } else if (input_shape.size() == kDims3 && axes_set == std::set<int32_t>{kAxis2}) {
     return ((!keep_dims && input_shape.at(0) == 1) || keep_dims);
   }
-  return true;
+  return false;
 }
 }  // namespace
 bool ReduceChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
@@ -108,6 +109,10 @@ bool ReduceChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Forma
     int64_t input_w;
     if (GetWidth(input_shape, format, &input_w) != RET_OK) {
       MS_LOG(ERROR) << "get input_w failed " << op->fullname_with_scope();
+      return false;
+    }
+    if (input_shape.size() <= kDims2) {
+      MS_LOG(WARNING) << "reduce op input_shape size need to be greater than 2";
       return false;
     }
     if (input_shape.size() == kDims4 && input_w > kMaxInputWOf4Dims) {

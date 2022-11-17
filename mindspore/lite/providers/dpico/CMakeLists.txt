@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(DPICO_Custom)
 
 if(DEFINED ENV{HISI_SDK_PATH})
-    set(SD3403_SDK_PATH $ENV{HISI_SDK_PATH}/sd3403_sdk/dpico_acl_adapter/3403_sdk)
+    set(SD3403_SDK_PATH $ENV{HISI_SDK_PATH}/sd3403_sdk/dpico_acl_adapter/3403_sdk_0924)
 else()
     message(FATAL_ERROR "error, no sdk found")
 endif()

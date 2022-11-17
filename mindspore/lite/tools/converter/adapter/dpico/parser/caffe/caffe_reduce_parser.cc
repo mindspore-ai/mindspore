@@ -56,13 +56,13 @@ BaseOperatorPtr CaffeReduceParser::Parse(const caffe::LayerParameter &proto, con
   } else {
     axes = std::vector<int>(1, 0);
   }
-  prim->AddAttr(ops::kAxes, api::MakeValue(axes));
+  (void)prim->AddAttr(ops::kAxes, api::MakeValue(axes));
 
   if (reduce_param.has_coeff()) {
-    prim->AddAttr(ops::kCoeff, api::MakeValue<float>(reduce_param.coeff()));
+    (void)prim->AddAttr(ops::kCoeff, api::MakeValue<float>(reduce_param.coeff()));
   }
-  int fmk_type = converter::FmkType::kFmkTypeCaffe;
-  prim->AddAttr(ops::kFmkType, api::MakeValue(static_cast<int64_t>(fmk_type)));
+  int fmk_type = static_cast<int>(converter::FmkType::kFmkTypeCaffe);
+  (void)prim->AddAttr(ops::kFmkType, api::MakeValue(static_cast<int64_t>(fmk_type)));
   return prim;
 }
 

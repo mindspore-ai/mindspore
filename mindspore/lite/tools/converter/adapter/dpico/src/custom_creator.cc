@@ -218,7 +218,7 @@ STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::Func
     }
   }
   std::vector<uint8_t> input_dims_attr_value(input_dims_attr_value_str.begin(), input_dims_attr_value_str.end());
-  custom_attrs.insert(std::make_pair(kInputsShape, input_dims_attr_value));
+  (void)custom_attrs.insert(std::make_pair(kInputsShape, input_dims_attr_value));
 
   // add "output_shape " attr
   std::string output_dims_attr_value_str;
@@ -229,7 +229,7 @@ STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::Func
     }
   }
   std::vector<uint8_t> output_dims_attr_value(output_dims_attr_value_str.begin(), output_dims_attr_value_str.end());
-  custom_attrs.insert(std::make_pair(kOutputsShape, output_dims_attr_value));
+  (void)custom_attrs.insert(std::make_pair(kOutputsShape, output_dims_attr_value));
 
   // add "outputs_format" attr
   std::string output_format_attr_str;
@@ -237,18 +237,18 @@ STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::Func
     output_format_attr_str += std::to_string(item) + ",";
   }
   std::vector<uint8_t> output_format_attr_value(output_format_attr_str.begin(), output_format_attr_str.end());
-  custom_attrs.insert(std::make_pair(kOutputsFormat, output_format_attr_value));
+  (void)custom_attrs.insert(std::make_pair(kOutputsFormat, output_format_attr_value));
 
   // add om net type attr
-  auto om_net_type_str = std::to_string(subgraph.om_net_type);
+  auto om_net_type_str = std::to_string(static_cast<int>(subgraph.om_net_type));
   std::vector<uint8_t> om_net_type_value(om_net_type_str.begin(), om_net_type_str.end());
-  custom_attrs.insert(std::make_pair(kNetType, om_net_type_value));
+  (void)custom_attrs.insert(std::make_pair(kNetType, om_net_type_value));
 
   // add max_roi_fram_cnt attr
   if (subgraph.om_net_type == OmNetType::kRoi) {
     auto max_roi_frame_cnt_str = std::to_string(kMaxRoiFrameCnt);
     std::vector<uint8_t> max_roi_frame_cnt_value(max_roi_frame_cnt_str.begin(), max_roi_frame_cnt_str.end());
-    custom_attrs.insert(std::make_pair("max_roi_frame_cnt", max_roi_frame_cnt_value));
+    (void)custom_attrs.insert(std::make_pair("max_roi_frame_cnt", max_roi_frame_cnt_value));
   }
   prim->set_attr(custom_attrs);
   return RET_OK;
@@ -311,7 +311,7 @@ STATUS CustomOpCreator::SetCustomSingleOutput(const api::FuncGraphPtr &func_grap
   auto origin_node_name = subgraph_outputs.at(0)->fullname_with_scope();
   if (image_lists.find(origin_node_name) != image_lists.end() &&
       origin_node_name != output_name) {  // custom op could be a supported subgraph's input
-    MapperConfigParser::GetInstance()->AddImageList(output_name, image_lists.at(origin_node_name));
+    (void)MapperConfigParser::GetInstance()->AddImageList(output_name, image_lists.at(origin_node_name));
   }
   return RET_OK;
 }
@@ -328,7 +328,7 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
   api::AbstractBasePtrList abstract_list;
   api::CNodePtrList subgraph_new_cnodes = {custom_cnode};
   auto output_formats = subgraph->outputs_format;
-  subgraph->outputs_format.resize(om_model_info->outputInfos.size(), NCHW);
+  subgraph->outputs_format.resize(om_model_info->outputInfos.size(), static_cast<int>(NCHW));
   size_t has_replace_num = 0;
   for (size_t i = 0; i < om_model_info->outputInfos.size(); i++) {
     auto output_info = om_model_info->outputInfos.at(i);
@@ -339,7 +339,7 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
     ShapeVector shape_vector(output_info.shape.begin(), output_info.shape.end());
     auto abstract_tensor = CreateTensorAbstract(shape_vector, kDataTypeMap.at(output_info.type));
     MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "abstract_tensor is nullptr.");
-    abstract_list.emplace_back(abstract_tensor);
+    (void)abstract_list.emplace_back(abstract_tensor);
     auto tuple_get_item_prim_ptr = api::MakeShared<ops::TupleGetItem>();
     MS_CHECK_TRUE_MSG(tuple_get_item_prim_ptr != nullptr, RET_ERROR, "tuple_get_item_prim_ptr is nullptr.");
     auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);

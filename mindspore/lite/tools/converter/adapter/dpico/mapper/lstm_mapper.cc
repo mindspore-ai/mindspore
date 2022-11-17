@@ -47,33 +47,6 @@ STATUS LstmMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
   if (prim->GetAttr(kExposeHidden) != nullptr) {
     lstm_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
   }
-  if (prim->GetAttr(kOutputLastFrameFlag) != nullptr) {
-    lstm_operator->SetOutputLastFrameFlag(api::GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
-  }
-  if (prim->GetAttr(kInitialHOnlineFlag) != nullptr) {
-    lstm_operator->SetInitialHOnlineFlag(api::GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
-  }
-  if (prim->GetAttr(kUseDefaultInitialHFlag) != nullptr) {
-    lstm_operator->SetUseDefaultInitialHFlag(api::GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
-  }
-  if (prim->GetAttr(kInitialCOnlineFlag) != nullptr) {
-    lstm_operator->SetInitialCOnlineFlag(api::GetValue<bool>(prim->GetAttr(kInitialCOnlineFlag)));
-  }
-  if (prim->GetAttr(kUseDefaultInitialCFlag) != nullptr) {
-    lstm_operator->SetUseDefaultInitialCFlag(api::GetValue<bool>(prim->GetAttr(kUseDefaultInitialCFlag)));
-  }
-  if (prim->GetAttr(kKeepDirectionDimFlag) != nullptr) {
-    lstm_operator->SetKeepDirectionDimFlag(api::GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
-  }
-  if (prim->GetAttr(kPeepHoleFlag) != nullptr) {
-    lstm_operator->SetPeepholeFlag(api::GetValue<bool>(prim->GetAttr(kPeepHoleFlag)));
-  }
-  if (prim->GetAttr(kLstmWeightOrderIofcFlag) != nullptr) {
-    lstm_operator->SetLstmWeightOrderIofcFlag(api::GetValue<bool>(prim->GetAttr(kLstmWeightOrderIofcFlag)));
-  }
-  if (prim->GetAttr(kSequenceLensOnlineFlag) != nullptr) {
-    lstm_operator->SetSequenceLensOnlineFlag(api::GetValue<bool>(prim->GetAttr(kSequenceLensOnlineFlag)));
-  }
 
   if (SetRecurrentDataInfo(cnode, lstm_operator.get()) != RET_OK) {
     MS_LOG(ERROR) << "set lstm data info failed.";

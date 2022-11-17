@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::BaseOperatorPtr OnnxRoiAlignParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+ops::BaseOperatorPtr OnnxRoiAlignParser::Parse(const onnx::GraphProto &onnx_proto, const onnx::NodeProto &onnx_node) {
   auto prim = api::MakeShared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "new Custom prim failed.";
@@ -55,11 +55,11 @@ ops::BaseOperatorPtr OnnxRoiAlignParser::Parse(const onnx::GraphProto &onnx_grap
     }
   }
   // set attr for mapper
-  prim->AddAttr(ops::kMode, api::MakeValue(pool_mode));
-  prim->AddAttr(dpico::kOutputHeight, api::MakeValue(output_height));
-  prim->AddAttr(dpico::kOutputWidth, api::MakeValue(output_width));
-  prim->AddAttr(dpico::kSamplingRatio, api::MakeValue(sampling_ratio));
-  prim->AddAttr(dpico::kSpatialScale, api::MakeValue(spatial_scale));
+  (void)prim->AddAttr(ops::kMode, api::MakeValue(pool_mode));
+  (void)prim->AddAttr(dpico::kOutputHeight, api::MakeValue(output_height));
+  (void)prim->AddAttr(dpico::kOutputWidth, api::MakeValue(output_width));
+  (void)prim->AddAttr(dpico::kSamplingRatio, api::MakeValue(sampling_ratio));
+  (void)prim->AddAttr(dpico::kSpatialScale, api::MakeValue(spatial_scale));
 
   // set attr for infershape
   std::map<std::string, std::vector<uint8_t>> custom_attrs;

@@ -33,11 +33,11 @@ BaseOperatorPtr CaffeBiLstmParser::Parse(const caffe::LayerParameter &proto, con
   if (proto.has_recurrent_param()) {
     const auto &bi_lstm_param = proto.recurrent_param();
     if (bi_lstm_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(bi_lstm_param.num_output()));
-      prim->AddAttr(dpico::kOutputChannel, api::MakeValue<int64_t>(bi_lstm_param.num_output()));
+      (void)prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(bi_lstm_param.num_output()));
+      (void)prim->AddAttr(dpico::kOutputChannel, api::MakeValue<int64_t>(bi_lstm_param.num_output()));
     }
     if (bi_lstm_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(bi_lstm_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(bi_lstm_param.expose_hidden()));
     }
   }
 

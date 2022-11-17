@@ -47,14 +47,14 @@ void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int blob_index, std
   if (layer.type() == "InnerProduct") {
     if (blob_index == 0) {
       if (shape->size() == dpico::kDims4 && shape->at(0) == 1 && shape->at(1) == 1) {
-        shape->erase(shape->begin());
-        shape->erase(shape->begin());
+        (void)shape->erase(shape->begin());
+        (void)shape->erase(shape->begin());
       }
     } else if (blob_index == 1) {
       if (shape->size() == dpico::kDims4 && shape->at(0) == 1 && shape->at(1) == 1 && shape->at(dpico::kAxis2) == 1) {
-        shape->erase(shape->begin());
-        shape->erase(shape->begin());
-        shape->erase(shape->begin());
+        (void)shape->erase(shape->begin());
+        (void)shape->erase(shape->begin());
+        (void)shape->erase(shape->begin());
       }
     }
   }
@@ -129,7 +129,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     auto pos = layer_name->rfind(suffix);
     if (pos != std::string::npos && pos == layer_name->size() - suffix.length()) {
       MS_LOG(WARNING) << "Don't support \"_cpu\" mark for now, this mark will be eliminated.";
-      layer_name->replace(pos, suffix.length(), "");
+      (void)layer_name->replace(pos, suffix.length(), "");
     }
 
     // save caffe layers
@@ -184,8 +184,8 @@ STATUS CaffeModelParser::ConvertLayers() {
     // build cnode
     api::SharedPtr<ops::BaseOperator> primitive(std::move(base_operator_ptr));
     std::vector<api::AnfNodePtr> op_inputs = {api::NewValueNode(primitive)};
-    op_inputs.insert(op_inputs.end(), input_nodes.begin(), input_nodes.end());
-    op_inputs.insert(op_inputs.end(), const_parameters.begin(), const_parameters.end());
+    (void)op_inputs.insert(op_inputs.end(), input_nodes.begin(), input_nodes.end());
+    (void)op_inputs.insert(op_inputs.end(), const_parameters.begin(), const_parameters.end());
     auto new_cnode = res_graph_->NewCNode(op_inputs);
     new_cnode->set_fullname_with_scope(layer.name());
 
@@ -247,7 +247,7 @@ STATUS CaffeModelParser::ConvertInputLayers() {
       }
       parameter->set_abstract(abstract);
       parameter->set_name(layer.name());
-      nodes_.insert(std::pair(layer.top(0), parameter));
+      (void)nodes_.emplace(std::pair(layer.top(0), parameter));
     }
   }
   return RET_OK;
@@ -280,7 +280,7 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       }
       parameter->set_abstract(abstract);
       parameter->set_name(caffe_model_.input(i));
-      nodes_.insert(std::pair(caffe_model_.input(i), parameter));
+      (void)nodes_.emplace(std::pair(caffe_model_.input(i), parameter));
     }
   } else {
     for (int i = 0; i < caffe_model_.input_shape_size(); i++) {
@@ -302,7 +302,7 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       }
       parameter->set_abstract(abstract);
       parameter->set_name(caffe_model_.input(i));
-      nodes_.insert(std::pair(caffe_model_.input(i), parameter));
+      (void)nodes_.emplace(std::pair(caffe_model_.input(i), parameter));
     }
   }
   return RET_OK;
@@ -310,7 +310,7 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
 
 STATUS CaffeModelParser::ConvertGraphOutputs() {
   CaffeInspector caffeInspector;
-  caffeInspector.InspectModel(caffe_model_);
+  (void)caffeInspector.InspectModel(caffe_model_);
   if (caffeInspector.GetGraphOutput().size() > 1) {
     std::vector<api::AnfNodePtr> make_tuple_inputs;
     auto make_tuple_prim_ptr = api::MakeShared<ops::MakeTuple>();
@@ -319,14 +319,14 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
       return RET_NULL_PTR;
     }
     auto make_tuple_prim = api::NewValueNode(make_tuple_prim_ptr);
-    make_tuple_inputs.emplace_back(make_tuple_prim);
+    (void)make_tuple_inputs.emplace_back(make_tuple_prim);
     for (const auto &output_node : caffeInspector.GetGraphOutput()) {
       if (nodes_.find(output_node) == nodes_.end()) {
         MS_LOG(ERROR) << "Can't find input node.";
         return RET_NOT_FIND_OP;
       }
       auto cnode = nodes_.find(output_node)->second;
-      make_tuple_inputs.emplace_back(cnode);
+      (void)make_tuple_inputs.emplace_back(cnode);
     }
     auto make_tuple_cnode = res_graph_->NewCNode(make_tuple_inputs);
     make_tuple_cnode->set_fullname_with_scope("return tuple");
@@ -338,8 +338,8 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
       return RET_NULL_PTR;
     }
     auto value_node = api::NewValueNode(return_prim_ptr);
-    op_inputs.emplace_back(value_node);
-    op_inputs.emplace_back(make_tuple_cnode);
+    (void)op_inputs.emplace_back(value_node);
+    (void)op_inputs.emplace_back(make_tuple_cnode);
     auto cnode = res_graph_->NewCNode(op_inputs);
     cnode->set_fullname_with_scope("Return");
     res_graph_->set_return(cnode);
@@ -360,7 +360,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }
-    opInputs.emplace_back(cnode);
+    (void)opInputs.emplace_back(cnode);
     auto returnCnode = res_graph_->NewCNode(opInputs);
     returnCnode->set_fullname_with_scope("Return");
     res_graph_->set_return(returnCnode);
@@ -382,7 +382,7 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer,
   }
   for (int i = 0; i < layer.blobs_size(); i++) {
     std::vector<int32_t> shape;
-    ConvertShape(layer.blobs(i), &shape);
+    (void)ConvertShape(layer.blobs(i), &shape);
 
     FcSqueezeWeightBias(layer, i, &shape);
 
@@ -413,7 +413,8 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer,
       for (int j = 0; j < count; ++j) {
         buf[j] = layer.blobs(j).double_data(j);
       }
-      tensor_info = dpico::CreateTensorInfo(buf.get(), count * sizeof(float), shape_vector, TypeId::kNumberTypeFloat32);
+      tensor_info = dpico::CreateTensorInfo(buf.get(), static_cast<size_t>(count) * sizeof(float), shape_vector,
+                                            TypeId::kNumberTypeFloat32);
     } else {
       count = layer.blobs(i).data_size();
       const float *data_ptr = layer.blobs(i).data().data();
@@ -421,7 +422,8 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer,
         MS_LOG(INFO) << "data of origin layer is nullptr";
         return RET_NULL_PTR;
       }
-      tensor_info = dpico::CreateTensorInfo(data_ptr, count * sizeof(float), shape_vector, TypeId::kNumberTypeFloat32);
+      tensor_info = dpico::CreateTensorInfo(data_ptr, static_cast<size_t>(count) * sizeof(float), shape_vector,
+                                            TypeId::kNumberTypeFloat32);
     }
     if (tensor_info == nullptr) {
       MS_LOG(ERROR) << "create tensor info failed";
@@ -432,7 +434,7 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer,
       MS_LOG(ERROR) << "init parameter from tensor info failed";
       return RET_ERROR;
     }
-    const_parameters->emplace_back(parameter);
+    (void)const_parameters->emplace_back(parameter);
   }
   return RET_OK;
 }
@@ -454,10 +456,10 @@ STATUS CaffeModelParser::ConvertBottom(const caffe::LayerParameter &layer, std::
         MS_LOG(ERROR) << "layer bottom " << layer.bottom(i) << " is not found";
         return RET_NOT_FIND_OP;
       } else {
-        input_nodes->emplace_back(nodes_.find(origin_layer + "_report")->second);
+        (void)input_nodes->emplace_back(nodes_.find(origin_layer + "_report")->second);
       }
     } else {
-      input_nodes->emplace_back(nodes_.find(origin_layer)->second);
+      (void)input_nodes->emplace_back(nodes_.find(origin_layer)->second);
     }
   }
   return RET_OK;
@@ -482,7 +484,7 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const ap
       MS_LOG(ERROR) << "Create tensor abstarct failed";
       return RET_ERROR;
     }
-    abstract_list.emplace_back(abstract);
+    (void)abstract_list.emplace_back(abstract);
     auto tuple_get_item_prim_ptr = api::MakeShared<ops::TupleGetItem>();
     if (tuple_get_item_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new TupleGetItem failed";

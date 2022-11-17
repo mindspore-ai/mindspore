@@ -48,7 +48,7 @@ STATUS SetNumOutput(const api::CNodePtr &cnode, const api::PrimitivePtr &prim, m
     }
     fc_operator->SetNumOutput(num_output);
   } else {
-    fc_operator->SetNumOutput(output_shape.back());
+    fc_operator->SetNumOutput(static_cast<uint32_t>(output_shape.back()));
   }
   return RET_OK;
 }

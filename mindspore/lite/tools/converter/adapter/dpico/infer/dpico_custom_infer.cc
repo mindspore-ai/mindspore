@@ -54,7 +54,7 @@ Status FetchAttrs(const schema::Primitive &primitive, std::map<std::string, std:
     MS_LOG(ERROR) << "There are at least 1 attribute of Custom";
     return kLiteError;
   }
-  for (size_t i = 0; i < param->attr()->size(); i++) {
+  for (uint32_t i = 0; i < static_cast<uint32_t>(param->attr()->size()); i++) {
     if (param->attr()->Get(i) == nullptr || param->attr()->Get(i)->name() == nullptr) {
       MS_LOG(ERROR) << "param->attr()->Get(i) is nullptr or param->attr()->Get(i)->name() is nullptr";
       return kLiteError;
@@ -69,7 +69,7 @@ Status FetchAttrs(const schema::Primitive &primitive, std::map<std::string, std:
       attr.push_back(static_cast<char>(output_info->Get(j)));
     }
     auto attr_name = param->attr()->Get(i)->name()->str();
-    attrs->emplace(attr_name, attr);
+    (void)attrs->emplace(attr_name, attr);
   }
   return kSuccess;
 }
@@ -133,7 +133,7 @@ Status SetOutputFormat(const std::map<std::string, std::string> &attrs, std::vec
       return kLiteError;
     }
     auto format = std::stoi(output_format[i]);
-    if (format != NHWC && format != NCHW) {
+    if (format != static_cast<int64_t>(NHWC) && format != static_cast<int64_t>(NCHW)) {
       MS_LOG(ERROR) << "output format is invalid, which should be NHWC or NCHW.";
       return kLiteError;
     }
@@ -209,7 +209,7 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
     if (inputs_shape[0][i] != (*inputs)[0].Shape()[i]) {
       if (i == 0) {
         resize_flag = true;
-        resize_num = (*inputs)[0].Shape()[i];
+        resize_num = static_cast<int>((*inputs)[0].Shape()[i]);
       } else {
         MS_LOG(ERROR) << "Custom of DPICO only support batch_num resize.";
         return kLiteError;

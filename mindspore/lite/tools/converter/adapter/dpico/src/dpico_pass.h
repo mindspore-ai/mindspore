@@ -50,7 +50,6 @@ class DpicoPass : public registry::PassBase {
   STATUS WriteOmBufferToFile(const std::shared_ptr<mapper::ModelCoreInfo> &om_model_info, size_t custom_id);
   STATUS RemoveTemporaryFiles();
 
- private:
   std::vector<api::FuncGraphPtr> func_graphs_;
   std::shared_ptr<CustomOpCreator> custom_op_creator_{nullptr};
   struct GraphSplitInfo graph_split_info_;

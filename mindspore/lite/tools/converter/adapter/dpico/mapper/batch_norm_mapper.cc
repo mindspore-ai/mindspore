@@ -19,7 +19,6 @@
 #include <utility>
 #include <limits>
 #include <vector>
-#include <cmath>
 #include "ops/batch_norm.h"
 #include "common/anf_util.h"
 #include "common/op_enum.h"

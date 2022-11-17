@@ -34,7 +34,7 @@ BaseOperatorPtr CaffePermuteParser::Parse(const caffe::LayerParameter &proto, co
   for (int i = 0; i < num_order_dims; ++i) {
     perm[i] = permuteParam.order()[i];
   }
-  prim->AddAttr(dpico::kPerm, api::MakeValue(perm));
+  (void)prim->AddAttr(dpico::kPerm, api::MakeValue(perm));
 
   return prim;
 }

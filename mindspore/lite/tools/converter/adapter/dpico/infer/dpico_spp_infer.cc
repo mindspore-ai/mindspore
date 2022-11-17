@@ -63,7 +63,7 @@ Status DpicoSppInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::v
   }
   bool has_pyramid_height = false;
   uint32_t pyramid_height = 0;
-  for (size_t i = 0; i < param->attr()->size(); i++) {
+  for (uint32_t i = 0; i < static_cast<uint32_t>(param->attr()->size()); i++) {
     if (param->attr()->Get(i) == nullptr || param->attr()->Get(i)->name() == nullptr) {
       MS_LOG(ERROR) << "param->attr()->Get(i) is nullptr or param->attr()->Get(i)->name() is nullptr";
       return kLiteError;

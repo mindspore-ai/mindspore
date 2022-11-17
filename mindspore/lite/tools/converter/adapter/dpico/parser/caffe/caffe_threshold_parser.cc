@@ -33,7 +33,7 @@ BaseOperatorPtr CaffeThresholdParser::Parse(const caffe::LayerParameter &proto, 
   if (proto.has_threshold_param()) {
     const caffe::ThresholdParameter &threshold_param = proto.threshold_param();
     if (threshold_param.has_threshold()) {
-      prim->AddAttr(dpico::kThreshold, api::MakeValue<float>(threshold_param.threshold()));
+      (void)prim->AddAttr(dpico::kThreshold, api::MakeValue<float>(threshold_param.threshold()));
     }
   }
 

@@ -50,7 +50,7 @@
               : ((x) > 0 ? (((y) >= 0) ? ((threshold) / (x)) < (y) : ((threshold) / (x)) < (-1 * (y))) \
                          : (((y) >= 0) ? ((threshold) / (x)) > (-1 * (y)) : ((threshold) / (x)) > (y))))
 
-#define INT_ADD_OVERFLOW(x, y) (INT_MAX - (x)) < (y)
+#define INT_ADD_OVERFLOW(x, y) ((INT_MAX - (x)) < (y))
 
 // Check whether value is true, if not return 'errcode'
 // and print error string msg

@@ -33,4 +33,4 @@ class DpicoSppInterface : public KernelInterface {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // DPICO_INFER_DPICO_UPSAMPLE_INFER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_INFER_DPICO_UPSAMPLE_INFER_H_

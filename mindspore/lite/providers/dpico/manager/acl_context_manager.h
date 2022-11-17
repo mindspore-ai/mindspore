@@ -33,7 +33,7 @@ class AclContextManager {
 
  private:
   /** acl related variables */
-  int32_t acl_device_id_{0};
+  bool acl_init_flag_{false};
   svp_acl_rt_context acl_rt_context_{nullptr};
   svp_acl_rt_stream acl_rt_stream_{nullptr};
 };

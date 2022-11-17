@@ -50,7 +50,7 @@ STATUS CropMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
   }
   if (prim->GetAttr(ops::kOffsets) != nullptr) {
     auto offsets = crop_prim->get_offsets();
-    std::vector<int32_t> offset_vec{};
+    std::vector<uint32_t> offset_vec{};
     (void)std::transform(offsets.begin(), offsets.end(), std::back_inserter(offset_vec),
                          [](const int64_t offset) { return static_cast<int32_t>(offset); });
     crop_operator->SetOrigOffsetVec(offset_vec);

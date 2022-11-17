@@ -35,17 +35,17 @@ BaseOperatorPtr CaffeDecBBoxParser::Parse(const caffe::LayerParameter &proto, co
   prim->set_type("DecBBox");
 
   if (proto.has_num_anchors()) {
-    prim->AddAttr(dpico::kNumAnchors, api::MakeValue<int64_t>(proto.num_anchors()));
+    (void)prim->AddAttr(dpico::kNumAnchors, api::MakeValue<int64_t>(proto.num_anchors()));
   }
   if (proto.has_num_bboxes_per_grid()) {
-    prim->AddAttr(dpico::kNumBboxesPerGrid, api::MakeValue<int64_t>(proto.num_bboxes_per_grid()));
+    (void)prim->AddAttr(dpico::kNumBboxesPerGrid, api::MakeValue<int64_t>(proto.num_bboxes_per_grid()));
   }
   if (proto.has_num_coords()) {
-    prim->AddAttr(dpico::kNumCoords, api::MakeValue<int64_t>(proto.num_coords()));
+    (void)prim->AddAttr(dpico::kNumCoords, api::MakeValue<int64_t>(proto.num_coords()));
   }
   if (proto.has_num_classes()) {
     uint32_t num_classes = proto.num_classes();
-    prim->AddAttr(dpico::kNumClasses, api::MakeValue<int64_t>(num_classes));
+    (void)prim->AddAttr(dpico::kNumClasses, api::MakeValue<int64_t>(num_classes));
     std::map<std::string, std::vector<uint8_t>> custom_attrs;
     std::vector<uint8_t> num_classes_attr(sizeof(uint32_t));
     if (memcpy_s(num_classes_attr.data(), num_classes_attr.size() * sizeof(uint8_t), &num_classes, sizeof(uint32_t)) !=
@@ -57,10 +57,10 @@ BaseOperatorPtr CaffeDecBBoxParser::Parse(const caffe::LayerParameter &proto, co
     prim->set_attr(custom_attrs);
   }
   if (proto.has_num_grids_height()) {
-    prim->AddAttr(dpico::kNumGridsHeight, api::MakeValue<int64_t>(proto.num_grids_height()));
+    (void)prim->AddAttr(dpico::kNumGridsHeight, api::MakeValue<int64_t>(proto.num_grids_height()));
   }
   if (proto.has_num_grids_width()) {
-    prim->AddAttr(dpico::kNumGridsWidth, api::MakeValue<int64_t>(proto.num_grids_width()));
+    (void)prim->AddAttr(dpico::kNumGridsWidth, api::MakeValue<int64_t>(proto.num_grids_width()));
   }
 
   if (dpico::SetAttrsByDecBboxParam(prim, proto) != RET_OK) {

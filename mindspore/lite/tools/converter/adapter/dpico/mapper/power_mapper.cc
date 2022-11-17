@@ -32,8 +32,6 @@ STATUS PowerMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr>
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto power_prim = api::utils::cast<api::SharedPtr<ops::PowFusion>>(prim);
-  MS_ASSERT(power_prim != nullptr);
 
   auto power_operator = std::make_unique<mapper::PowerOperator>();
   if (power_operator == nullptr) {
@@ -50,7 +48,7 @@ STATUS PowerMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr>
   DataInfo data_info;
   if (cnode->inputs().size() > kInputIndex2 &&
       FetchDataFromParameterNode(cnode, kInputIndex2, &data_info) == lite::RET_OK) {
-    if (data_info.data_type_ != kNumberTypeFloat32) {
+    if (data_info.data_type_ != static_cast<int>(kNumberTypeFloat32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;
     }

@@ -23,6 +23,10 @@
 namespace mindspore {
 namespace lite {
 STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *pad) {
+  if (pad == nullptr) {
+    MS_LOG(ERROR) << "pad is nullptr.";
+    return RET_ERROR;
+  }
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
     if (poolingParam.has_pad()) {
       MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
@@ -42,6 +46,10 @@ STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam
 }
 
 STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *strides) {
+  if (strides == nullptr) {
+    MS_LOG(ERROR) << "strides is nullptr.";
+    return RET_ERROR;
+  }
   if (poolingParam.has_stride_h() && poolingParam.has_stride_w()) {
     if (poolingParam.has_stride()) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
@@ -57,6 +65,10 @@ STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingPa
 }
 
 STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *windows) {
+  if (windows == nullptr) {
+    MS_LOG(ERROR) << "windows is nullptr.";
+    return RET_ERROR;
+  }
   if (poolingParam.has_global_pooling() && poolingParam.global_pooling()) {
     if (poolingParam.has_kernel_size() || poolingParam.has_kernel_h() || poolingParam.has_kernel_w()) {
       MS_LOG(ERROR) << "With Global_pooling: true Filter size cannot specified";
@@ -93,8 +105,6 @@ mindspore::RoundMode CaffePoolingParser::ParseRoundMode(const caffe::PoolingPara
     } else if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_CEIL) {
       roundMode = mindspore::RoundMode::CEIL;
     }
-  } else if (poolingParam.has_ceil_mode()) {
-    roundMode = poolingParam.ceil_mode() ? mindspore::RoundMode::CEIL : mindspore::RoundMode::FLOOR;
   }
   return roundMode;
 }

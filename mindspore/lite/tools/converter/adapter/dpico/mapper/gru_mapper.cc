@@ -42,46 +42,6 @@ STATUS GruMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *
   if (prim->GetAttr(kExposeHidden) != nullptr) {
     gru_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
   }
-  if (prim->GetAttr(kHasSplitBiasFlag) != nullptr) {
-    gru_operator->SetHasSplitBiasFlag(api::GetValue<bool>(prim->GetAttr(kHasSplitBiasFlag)));
-  }
-  if (prim->GetAttr(kHasSplitHWeightFlag) != nullptr) {
-    gru_operator->SetHasSplitHWeightFlag(api::GetValue<bool>(prim->GetAttr(kHasSplitHWeightFlag)));
-  }
-  if (prim->GetAttr(kGruWeightOrderZrhFlag) != nullptr) {
-    gru_operator->SetGruWeightOrderZrhFlag(api::GetValue<bool>(prim->GetAttr(kGruWeightOrderZrhFlag)));
-  }
-  if (prim->GetAttr(kOnnxModeOutFlag) != nullptr) {
-    gru_operator->SetOnnxModeOutFlag(api::GetValue<bool>(prim->GetAttr(kOnnxModeOutFlag)));
-  }
-  if (prim->GetAttr(kOutputLastFrameFlag) != nullptr) {
-    gru_operator->SetOutputLastFrameFlag(api::GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
-  }
-  if (prim->GetAttr(kKeepDirectionDimFlag) != nullptr) {
-    gru_operator->SetKeepDirectionDimFlag(api::GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
-  }
-  if (prim->GetAttr(kInitialHOnlineFlag) != nullptr) {
-    gru_operator->SetInitialHOnlineFlag(api::GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
-  }
-  if (prim->GetAttr(kUseDefaultInitialHFlag) != nullptr) {
-    gru_operator->SetUseDefaultInitialHFlag(api::GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
-  }
-  if (prim->GetAttr(kActivateType) != nullptr) {
-    gru_operator->PushActivateType(api::GetValue<std::string>(prim->GetAttr(kActivateType)));
-  }
-  if (prim->GetAttr(kActivateAlpha) != nullptr) {
-    gru_operator->PushActivateAlpha(api::GetValue<float>(prim->GetAttr(kActivateAlpha)));
-  }
-  if (prim->GetAttr(kActivateBeta) != nullptr) {
-    gru_operator->PushActivateBeta(api::GetValue<float>(prim->GetAttr(kActivateBeta)));
-  }
-  if (prim->GetAttr(kAfClip) != nullptr) {
-    gru_operator->SetAfClip(api::GetValue<float>(prim->GetAttr(kAfClip)));
-  }
-  if (prim->GetAttr(kRecurrentDirection) != nullptr) {
-    gru_operator->SetRecurrentDirection(static_cast<mapper::RecurrentDirection>(
-      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kRecurrentDirection)))));
-  }
   if (SetRecurrentDataInfo(cnode, gru_operator.get()) != RET_OK) {
     MS_LOG(ERROR) << "set gru data info failed.";
     return RET_ERROR;

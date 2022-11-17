@@ -57,8 +57,8 @@ STATUS InsertTransposeBeforeBiasAdd(const api::FuncGraphPtr &func_graph, const a
   pre_trans_cnode->set_abstract(pre_trans_abstract);
   auto pre_trans_prim = api::GetValueNode<api::PrimitivePtr>(pre_trans_cnode->input(0));
   MS_ASSERT(pre_trans_prim != nullptr);
-  pre_trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NCHW));
-  pre_trans_prim->AddAttr(kInferDone, api::MakeValue<bool>(true));
+  (void)pre_trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NCHW));
+  (void)pre_trans_prim->AddAttr(kInferDone, api::MakeValue<bool>(true));
   manager->SetEdge(cnode, kInputIndex1, pre_trans_cnode);
   return RET_OK;
 }
@@ -74,8 +74,8 @@ STATUS ReplaceBiasAddWithAdd(const api::FuncGraphPtr &func_graph, const api::CNo
     MS_LOG(ERROR) << "new AddFusion failed." << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  prim->SetAttrs(primitive->attrs());
-  prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
+  (void)prim->SetAttrs(primitive->attrs());
+  (void)prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
   auto add_value_node = api::NewValueNode(prim);
   if (add_value_node == nullptr) {
     MS_LOG(ERROR) << "new value node failed.";
@@ -114,8 +114,8 @@ STATUS InsertTransposeAfterBiasAdd(const api::FuncGraphPtr &func_graph, const ap
   post_trans_cnode->set_abstract(post_trans_abstract->Clone());
   auto post_trans_prim = api::GetValueNode<api::PrimitivePtr>(post_trans_cnode->input(0));
   MS_ASSERT(post_trans_prim != nullptr);
-  post_trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
-  post_trans_prim->AddAttr(kInferDone, api::MakeValue<bool>(true));
+  (void)post_trans_prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(NHWC));
+  (void)post_trans_prim->AddAttr(kInferDone, api::MakeValue<bool>(true));
   if (!manager->Replace(cnode, post_trans_cnode)) {
     MS_LOG(ERROR) << "replace biasadd with add failed." << cnode->fullname_with_scope();
     return RET_ERROR;

@@ -43,9 +43,9 @@ bool CheckInputShapeForMatrix(const api::CNodePtr &cnode, const api::PrimitivePt
         }
       }
     }
-    primitive->AddAttr(kDim1, api::MakeValue<int64_t>(input_1_shape.at(input_1_shape.size() - kInputIndex2)));
-    primitive->AddAttr(kDim2, api::MakeValue<int64_t>(input_1_shape.at(input_1_shape.size() - 1)));
-    primitive->AddAttr(kDim3, api::MakeValue<int64_t>(input_2_shape.at(input_2_shape.size() - kInputIndex2)));
+    (void)primitive->AddAttr(kDim1, api::MakeValue<int64_t>(input_1_shape.at(input_1_shape.size() - kInputIndex2)));
+    (void)primitive->AddAttr(kDim2, api::MakeValue<int64_t>(input_1_shape.at(input_1_shape.size() - 1)));
+    (void)primitive->AddAttr(kDim3, api::MakeValue<int64_t>(input_2_shape.at(input_2_shape.size() - kInputIndex2)));
   }
   return true;
 }
@@ -81,7 +81,7 @@ bool MatMulChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Forma
   if (primitive->GetAttr(ops::kTransposeB) != nullptr) {
     transpose_b = api::GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
   } else {
-    primitive->AddAttr(ops::kTransposeB, api::MakeValue<bool>(false));
+    (void)primitive->AddAttr(ops::kTransposeB, api::MakeValue<bool>(false));
   }
   if (!HasOfflineData(op->input(kInputIndex1))) {
     if (!HasOfflineData(op->input(kInputIndex2))) {
@@ -89,14 +89,14 @@ bool MatMulChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Forma
         if (!CheckInputShapeForMatrix(op, primitive)) {
           return false;
         }
-        primitive->AddAttr(kOperatorType, api::MakeValue("Matrix"));
+        (void)primitive->AddAttr(kOperatorType, api::MakeValue("Matrix"));
         return true;
       } else {
         return false;
       }
     } else {
       if (CheckInputShapeForFc(op)) {
-        primitive->AddAttr(kOperatorType, api::MakeValue("FullConnection"));
+        (void)primitive->AddAttr(kOperatorType, api::MakeValue("FullConnection"));
         return true;
       } else {
         MS_LOG(WARNING) << "only supports input N = 1 by dpico. " << op->fullname_with_scope();

@@ -46,7 +46,7 @@ STATUS ArgMaxMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr
 
   argmax_operator->SetOpType(mapper::OpType::ARGMAX);
   if (prim->GetAttr(ops::kAxis) != nullptr) {
-    argmax_operator->SetAxis(static_cast<int64_t>(argmax_prim->get_axis()));
+    argmax_operator->SetAxis(static_cast<int>(argmax_prim->get_axis()));
     argmax_operator->SetArgMaxHasAxis(true);
   }
   if (prim->GetAttr(ops::kTopK) != nullptr) {

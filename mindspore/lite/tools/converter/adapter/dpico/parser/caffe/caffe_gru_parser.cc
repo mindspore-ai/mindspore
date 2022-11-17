@@ -34,24 +34,24 @@ BaseOperatorPtr CaffeGruParser::Parse(const caffe::LayerParameter &proto, const 
   if (proto.has_recurrent_param()) {
     const auto &gru_param = proto.recurrent_param();
     if (gru_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(gru_param.num_output()));
+      (void)prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(gru_param.num_output()));
     }
     if (gru_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(gru_param.expose_hidden()));
-      prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(gru_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(gru_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!gru_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(gru_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(gru_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(gru_param.expose_hidden()));
+      (void)prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!gru_param.expose_hidden()));
     } else {
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(true));
+      (void)prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(true));
     }
   }
 
   // set default value
-  prim->AddAttr(dpico::kHasSplitHWeightFlag, api::MakeValue<bool>(true));
-  prim->AddAttr(dpico::kHasSplitBiasFlag, api::MakeValue<bool>(false));
-  prim->AddAttr(dpico::kGruWeightOrderZrhFlag, api::MakeValue<bool>(false));
-  prim->AddAttr(dpico::kOnnxModeOutFlag, api::MakeValue<bool>(false));
-  prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kHasSplitHWeightFlag, api::MakeValue<bool>(true));
+  (void)prim->AddAttr(dpico::kHasSplitBiasFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kGruWeightOrderZrhFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kOnnxModeOutFlag, api::MakeValue<bool>(false));
+  (void)prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
 
   return prim;
 }

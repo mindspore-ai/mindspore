@@ -34,13 +34,13 @@ BaseOperatorPtr CaffeMvnParser::Parse(const caffe::LayerParameter &proto, const 
   if (proto.has_mvn_param()) {
     const caffe::MVNParameter &mvn_parameter = proto.mvn_param();
     if (mvn_parameter.has_eps()) {
-      prim->AddAttr(ops::kEps, api::MakeValue<float>(mvn_parameter.eps()));
+      (void)prim->AddAttr(ops::kEps, api::MakeValue<float>(mvn_parameter.eps()));
     }
     if (mvn_parameter.has_across_channels()) {
-      prim->AddAttr(dpico::kAcrossChannels, api::MakeValue<bool>(mvn_parameter.across_channels()));
+      (void)prim->AddAttr(dpico::kAcrossChannels, api::MakeValue<bool>(mvn_parameter.across_channels()));
     }
     if (mvn_parameter.has_normalize_variance()) {
-      prim->AddAttr(dpico::kNormalizeVariance, api::MakeValue<bool>(mvn_parameter.normalize_variance()));
+      (void)prim->AddAttr(dpico::kNormalizeVariance, api::MakeValue<bool>(mvn_parameter.normalize_variance()));
     }
   }
 

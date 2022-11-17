@@ -73,7 +73,7 @@ std::string FormatEnumToString(mindspore::Format format) {
   if (format < mindspore::NCHW || format > mindspore::NCW) {
     return "";
   }
-  return names[format];
+  return names[static_cast<size_t>(format)];
 }
 }  // namespace dpico
 }  // namespace mindspore

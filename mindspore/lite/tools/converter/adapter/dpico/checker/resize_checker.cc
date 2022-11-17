@@ -46,10 +46,10 @@ bool CheckInterpOp(const api::CNodePtr &op, const ShapeVector &input_shape, cons
                     << " and output_w should be less than " << kMaxOutputWOf4Dims;
     return false;
   }
-  int pad_beg = 0;
-  int pad_end = 0;
+  int64_t pad_beg = 0;
+  int64_t pad_end = 0;
   if (prim->GetAttr(dpico::kPadBeg) != nullptr) {
-    pad_beg = api::GetValue<int64_t>(prim->GetAttr(dpico::kPadBeg));
+    pad_beg = static_cast<int>(api::GetValue<int64_t>(prim->GetAttr(dpico::kPadBeg)));
   }
   if (prim->GetAttr(dpico::kPadEnd) != nullptr) {
     pad_end = api::GetValue<int64_t>(prim->GetAttr(dpico::kPadEnd));
@@ -58,11 +58,23 @@ bool CheckInterpOp(const api::CNodePtr &op, const ShapeVector &input_shape, cons
     MS_LOG(WARNING) << "pad_beg or pad_end only supports non-negative integer by dpico. " << op->fullname_with_scope();
     return false;
   }
-  // dimension of h,w should both be 1 or not 1
-  return ((input_shape.at(index_h) + pad_beg + pad_end == 1) ^ (input_shape.at(index_w) + pad_beg + pad_end != 1)) &&
-         ((output_shape.at(index_h) == 1) ^ (output_shape.at(index_w) != 1));
+  int64_t valid_input_h = input_shape.at(index_h) + pad_beg + pad_end;
+  int64_t valid_input_w = input_shape.at(index_w) + pad_beg + pad_end;
+  int64_t output_h = output_shape.at(index_h);
+  int64_t output_w = output_shape.at(index_w);
+  if (output_h == 0) {
+    MS_LOG(WARNING) << "output_h should not be 0";
+    return false;
+  }
+  if (output_w == 0) {
+    MS_LOG(WARNING) << "output_w should not be 0";
+    return false;
+  }
+  auto ratio_h = valid_input_h / output_h;
+  auto ratio_w = valid_input_w / output_w;
+  return ((ratio_h == 1) && (ratio_w == 1)) || ((ratio_h != 1) && (ratio_w != 1));
 }
-bool IsDoubleResize(const api::CNodePtr &cnode, const ShapeVector &input_shape, const ShapeVector &output_shape,
+bool IsDoubleResize(const api::CNodePtr &, const ShapeVector &input_shape, const ShapeVector &output_shape,
                     size_t index_h, size_t index_w) {
   const int64_t nums2 = 2;
   return input_shape.at(index_h) * nums2 == output_shape.at(index_h) &&
@@ -105,7 +117,7 @@ bool CheckResizeOp(const api::CNodePtr &op, const ShapeVector &input_shape, cons
   return true;
 }
 }  // namespace
-bool ResizeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool ResizeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format) {
   auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   MS_CHECK_TRUE_MSG(primitive != nullptr, false, "prim is nullptr.");
   ShapeVector input_shape;

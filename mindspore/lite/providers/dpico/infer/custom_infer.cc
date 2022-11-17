@@ -62,6 +62,7 @@ Status FetchAttrs(const schema::Primitive &primitive, std::map<std::string, std:
     }
     auto output_info = param->attr()->Get(i)->data();
     if (output_info == nullptr) {
+      MS_LOG(ERROR) << "output_info is nullptr";
       return kLiteError;
     }
     int buf_size = static_cast<int>(output_info->size());
@@ -103,7 +104,7 @@ Status GetCustomShape(const std::map<std::string, std::string> &attrs, const std
       shape.push_back(std::stoul(split_shape_str.at(j)));
     }
     i += dim_size;
-    if (tensor_num < index) {
+    if (tensor_num <= index) {
       MS_LOG(ERROR) << "shape index " << index << " is greater than custom tensor_num " << tensor_num;
       return kLiteError;
     }
@@ -124,6 +125,10 @@ Status SetOutputFormat(const std::map<std::string, std::string> &attrs, std::vec
   }
   auto output_format_str = attrs.at(kOutputsFormat);
   auto output_format = lite::SplitString(output_format_str, ',');
+  if (output_format.size() == 0) {
+    MS_LOG(ERROR) << "output format size is 0.";
+    return kLiteError;
+  }
   if (output_format.size() > outputs->size()) {
     MS_LOG(ERROR) << "output format attr is invalid, the number of which is out of range.";
     return kLiteError;
@@ -234,7 +239,7 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
   return kSuccess;
 }
 
-std::shared_ptr<KernelInterface> CustomInferCreater() {
+std::shared_ptr<KernelInterface> CustomInferCreator() {
   std::shared_ptr<KernelInterface> infer = std::make_shared<CustomInterface>();
   if (infer == nullptr) {
     MS_LOG(ERROR) << "make shared failed, infer is nullptr.";
@@ -246,6 +251,6 @@ std::shared_ptr<KernelInterface> CustomInferCreater() {
 }  // namespace mindspore
 namespace mindspore {
 namespace kernel {
-REGISTER_CUSTOM_KERNEL_INTERFACE(DPICO, DPICO, dpico::CustomInferCreater);
+REGISTER_CUSTOM_KERNEL_INTERFACE(DPICO, DPICO, dpico::CustomInferCreator);
 }  // namespace kernel
 }  // namespace mindspore

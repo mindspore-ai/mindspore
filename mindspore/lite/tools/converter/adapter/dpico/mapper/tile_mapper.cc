@@ -52,7 +52,7 @@ STATUS TileMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
   if (tile_prim->GetAttr(ops::kDims) != nullptr) {
     auto dims = api::GetValue<std::vector<int64_t>>(tile_prim->GetAttr(ops::kDims));
     if (dims.size() == 1) {  // tf tile has multiple axis
-      tile_operator->SetAxis(dims.at(0));
+      tile_operator->SetAxis(static_cast<int32_t>(dims.at(0)));
     }
   }
 
@@ -60,7 +60,7 @@ STATUS TileMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
   vector<int64_t> tiles;
   if (cnode->inputs().size() > kInputIndex2 &&
       FetchDataFromParameterNode(cnode, kInputIndex2, &data_info) == lite::RET_OK) {
-    if (data_info.data_type_ != kNumberTypeInt32) {
+    if (data_info.data_type_ != static_cast<int>(kNumberTypeInt32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;
     }

@@ -32,10 +32,10 @@ BaseOperatorPtr CaffeBiasParser::Parse(const caffe::LayerParameter &proto, const
   prim->set_type("Bias");
   const caffe::BiasParameter &biasParam = proto.bias_param();
   if (biasParam.has_axis()) {
-    prim->AddAttr(ops::kAxis, api::MakeValue<int64_t>(biasParam.axis()));
+    (void)prim->AddAttr(ops::kAxis, api::MakeValue<int64_t>(biasParam.axis()));
   }
   if (biasParam.has_num_axes()) {
-    prim->AddAttr(dpico::kNumAxes, api::MakeValue<int64_t>(biasParam.num_axes()));
+    (void)prim->AddAttr(dpico::kNumAxes, api::MakeValue<int64_t>(biasParam.num_axes()));
   }
 
   return prim;

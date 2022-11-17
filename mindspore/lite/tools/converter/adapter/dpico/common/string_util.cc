@@ -32,7 +32,7 @@ int EraseBlankSpace(std::string *input_string) {
     std::string::size_type pos = 0;
     pos = input_string->find(' ', pos);
     while (pos != std::string::npos) {
-      input_string->erase(pos, 1);
+      (void)input_string->erase(pos, 1);
       pos = input_string->find(' ', pos);
     }
   }
@@ -45,8 +45,8 @@ int EraseHeadTailSpace(std::string *input_string) {
     return RET_ERROR;
   }
   if (!input_string->empty()) {
-    input_string->erase(0, input_string->find_first_not_of(' '));
-    input_string->erase(input_string->find_last_not_of(' ') + 1);
+    (void)input_string->erase(0, input_string->find_first_not_of(' '));
+    (void)input_string->erase(input_string->find_last_not_of(' ') + 1);
   }
   return RET_OK;
 }
@@ -73,7 +73,7 @@ std::vector<std::string> SplitString(const std::string &raw_str, char delimiter)
 
 std::string RemoveSpecifiedChar(const std::string &origin_str, char specified_ch) {
   std::string res = origin_str;
-  res.erase(std::remove(res.begin(), res.end(), specified_ch), res.end());
+  (void)res.erase(std::remove(res.begin(), res.end(), specified_ch), res.end());
   return res;
 }
 

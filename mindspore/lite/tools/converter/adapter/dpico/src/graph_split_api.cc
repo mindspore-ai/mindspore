@@ -127,11 +127,11 @@ STATUS GenerateSegmentInfos(const api::CNodePtrList &graph_total_cnodes, std::ve
         MS_LOG(ERROR) << "last cnode should be return node.";
         return RET_ERROR;
       }
-      segment_infos->emplace_back(SegmentInfo{start, pos, false});
+      (void)segment_infos->emplace_back(SegmentInfo{start, pos, false});
     } else {
       auto is_supported = GetBoolAttr(graph_total_cnodes[pos], kIsMapperSupported);
       if (is_supported != GetBoolAttr(graph_total_cnodes[pos + 1], kIsMapperSupported)) {
-        segment_infos->emplace_back(SegmentInfo{start, pos, is_supported});
+        (void)segment_infos->emplace_back(SegmentInfo{start, pos, is_supported});
         start = pos + 1;
       }
     }
@@ -170,7 +170,7 @@ std::vector<Subgraph> GenerateSubgraphs(const api::FuncGraphPtr &func_graph,
       MS_LOG(ERROR) << "get subgraph net type failed.";
       return {};
     }
-    subgraphs.emplace_back(*subgraph_cnt, segment_info.is_supported, net_type, subgraph_total_cnodes);
+    (void)subgraphs.emplace_back(*subgraph_cnt, segment_info.is_supported, net_type, subgraph_total_cnodes);
     *subgraph_cnt += 1;
   }
   return subgraphs;
@@ -207,7 +207,7 @@ bool IsSubgraphCNodeInput(const api::AnfNodePtr &front_node, const Subgraph &sub
 int DetermineOutputFormat(const api::AnfNodePtr &output_node, Format *format) {
   MS_CHECK_TRUE_MSG(output_node != nullptr && output_node->isa<api::CNode>(), RET_ERROR, "output node is invalid.");
   auto output_cnode = output_node->cast<api::CNodePtr>();
-  int64_t local_format = NCHW;
+  int64_t local_format = static_cast<int64_t>(NCHW);
   auto search_cnode = output_cnode;
   const int max_search_depth = 10;
   int loop = 0;
@@ -228,7 +228,7 @@ int DetermineOutputFormat(const api::AnfNodePtr &output_node, Format *format) {
     search_cnode = input_node->cast<api::CNodePtr>();
     loop++;
   }
-  if (local_format < NCHW || local_format > NCW) {
+  if (local_format < static_cast<int64_t>(NCHW) || local_format > static_cast<int64_t>(NCW)) {
     MS_LOG(ERROR) << "obtained format is out of range, which is invalid.";
     return RET_ERROR;
   }
@@ -369,7 +369,7 @@ int FillSubgraphOutputsFormat(Subgraph *subgraph, const api::FuncGraphPtr &func_
       MS_LOG(ERROR) << "obtain output format failed.";
       return RET_ERROR;
     }
-    subgraph->outputs_format.push_back(output_format);
+    subgraph->outputs_format.push_back(static_cast<int>(output_format));
   }
   return RET_OK;
 }

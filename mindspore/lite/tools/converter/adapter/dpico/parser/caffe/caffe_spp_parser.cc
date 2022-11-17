@@ -41,7 +41,7 @@ BaseOperatorPtr CaffeSppParser::Parse(const caffe::LayerParameter &proto, const 
     }
     if (spp_param.has_pyramid_height()) {
       uint32_t pyramid_height = spp_param.pyramid_height();
-      prim->AddAttr(dpico::kPyramidHeight, api::MakeValue<int64_t>(static_cast<int64_t>(pyramid_height)));
+      (void)prim->AddAttr(dpico::kPyramidHeight, api::MakeValue<int64_t>(static_cast<int64_t>(pyramid_height)));
       std::map<std::string, std::vector<uint8_t>> custom_attrs;
       std::vector<uint8_t> pyramid_height_attr(sizeof(uint32_t));
       if (memcpy_s(pyramid_height_attr.data(), pyramid_height_attr.size() * sizeof(uint8_t), &pyramid_height,
@@ -56,7 +56,7 @@ BaseOperatorPtr CaffeSppParser::Parse(const caffe::LayerParameter &proto, const 
       return nullptr;
     }
   }
-  prim->AddAttr(dpico::kPoolMethod, api::MakeValue(pool_method));
+  (void)prim->AddAttr(dpico::kPoolMethod, api::MakeValue(pool_method));
 
   return prim;
 }

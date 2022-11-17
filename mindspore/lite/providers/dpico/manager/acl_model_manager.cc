@@ -18,15 +18,18 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <mutex>
 #include "include/errorcode.h"
 #include "common/check_base.h"
 #include "src/custom_allocator.h"
 #include "manager/acl_model_helper.h"
+#include "manager/acl_buf_manager.h"
 namespace mindspore {
 namespace lite {
 AllocatorPtr AclModelManager::custom_allocator_ = std::make_shared<CustomAllocator>();
 CustomConfigManagerPtr AclModelManager::custom_config_manager_ptr_ = std::make_shared<CustomConfigManager>();
 AclContextManagerPtr AclModelManager::acl_context_manager_ = std::make_shared<AclContextManager>();
+static std::mutex acl_run_mutex;
 namespace {
 constexpr size_t kNumOfInputOm = 1;     // om parameter is the last input of MS Input tensor
 constexpr size_t kMinAclInputSize = 2;  // {work_buf, task_buf}
@@ -55,7 +58,8 @@ int AclModelManager::LoadModel(const std::vector<mindspore::MSTensor> &input_ten
   ret = svp_acl_mdl_load_from_mem(acl_model_ptr_, acl_model_tensor.DataSize(), &acl_model_id_);
   if (ret != SVP_ACL_SUCCESS) {
     MS_LOG(ERROR) << "svp acl mdl load from mem failed.";
-    custom_allocator_->Free(acl_model_ptr_);
+    ret = AclFree(&acl_model_ptr_);
+    MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "AclFree acl_model_ptr_ failed");
     return RET_ERROR;
   }
   return RET_OK;
@@ -67,6 +71,22 @@ int AclModelManager::CreateModelDesc() {
   MS_CHECK_TRUE_MSG(acl_model_desc_ != nullptr, RET_ERROR, "create model desc failed.");
   int ret = svp_acl_mdl_get_desc(acl_model_desc_, acl_model_id_);
   MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "get model desc failed.");
+  return RET_OK;
+}
+
+int AclModelManager::GetMaxTaskAndWorkBufSize() {
+  size_t input_size = svp_acl_mdl_get_num_inputs(acl_model_desc_);
+  MS_CHECK_TRUE_MSG(input_size > kMinAclInputSize, RET_ERROR,
+                    "acl model input size should be greater than " << kMinAclInputSize);
+  AclDataInfo acl_data_info(AclDataInfo::Input);
+  int ret = GetAclDataInfo(&acl_data_info, acl_model_desc_, input_size - 2);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "get acl data info failed.");
+  ret = AclBufManager::GetInstance()->UpdateTaskBufSize(acl_data_info.data_size);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "update task buf max size failed.");
+  ret = GetAclDataInfo(&acl_data_info, acl_model_desc_, input_size - 1);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "get acl data info failed.");
+  ret = AclBufManager::GetInstance()->UpdateWorkBufSize(acl_data_info.data_size);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "update work buf max size failed.");
   return RET_OK;
 }
 
@@ -92,7 +112,8 @@ int AclModelManager::AddDetectParamInput() {
   ret = AddDatasetBuffer(acl_inputs_, acl_data_info.data_size, acl_data_info.stride, data);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "add dataset buffer failed.";
-    custom_allocator_->Free(data);
+    ret = AclFree(&data);
+    MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "AclFree data failed");
     return RET_ERROR;
   }
   size_t cur_num_buffers = svp_acl_mdl_get_dataset_num_buffers(acl_inputs_);
@@ -119,6 +140,36 @@ int AclModelManager::CreateTaskBufAndWorkBuf() {
   size_t cur_num_buffers = svp_acl_mdl_get_dataset_num_buffers(acl_inputs_);
   MS_CHECK_TRUE_MSG(cur_num_buffers > 0, RET_ERROR, "acl model input size should be greater than 0");
   for (size_t i = cur_num_buffers; i < input_size; i++) {
+    AclDataInfo acl_data_info(AclDataInfo::Input);
+    int ret = GetAclDataInfo(&acl_data_info, acl_model_desc_, i);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "get acl data info failed.");
+    if (i == cur_num_buffers) {
+      ret = AddDatasetBuffer(acl_inputs_, acl_data_info.data_size, acl_data_info.stride,
+                             AclBufManager::GetInstance()->GetTaskBufPtr());
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "add dataset buffer failed.";
+        return RET_ERROR;
+      }
+    } else {
+      ret = AddDatasetBuffer(acl_inputs_, acl_data_info.data_size, acl_data_info.stride,
+                             AclBufManager::GetInstance()->GetWorkBufPtr());
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "add dataset buffer failed.";
+        return RET_ERROR;
+      }
+    }
+    inputs_mem_managed_by_tensor[i] = true;
+  }
+  return RET_OK;
+}
+
+int AclModelManager::CreateNoShareTaskBufAndWorkBuf() {
+  size_t input_size = svp_acl_mdl_get_num_inputs(acl_model_desc_);
+  MS_CHECK_TRUE_MSG(input_size > kMinAclInputSize, RET_ERROR,
+                    "acl model input size should be greater than " << kMinAclInputSize);
+  size_t cur_num_buffers = svp_acl_mdl_get_dataset_num_buffers(acl_inputs_);
+  MS_CHECK_TRUE_MSG(cur_num_buffers > 0, RET_ERROR, "acl model input size should be greater than 0");
+  for (size_t i = cur_num_buffers; i < input_size; i++) {
     void *data = nullptr;
     AclDataInfo acl_data_info(AclDataInfo::Input);
     int ret = GetAclDataInfo(&acl_data_info, acl_model_desc_, i);
@@ -128,7 +179,8 @@ int AclModelManager::CreateTaskBufAndWorkBuf() {
     ret = AddDatasetBuffer(acl_inputs_, acl_data_info.data_size, acl_data_info.stride, data);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "add dataset buffer failed.";
-      custom_allocator_->Free(data);
+      ret = AclFree(&data);
+      MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "AclFree data failed");
       return RET_ERROR;
     }
     inputs_mem_managed_by_tensor[i] = false;
@@ -137,7 +189,7 @@ int AclModelManager::CreateTaskBufAndWorkBuf() {
 }
 
 int AclModelManager::CopyTensorDataToAclInputs(const std::vector<mindspore::MSTensor> &input_tensors) {
-  for (size_t i = 0; i < input_tensors.size() - kNumOfInputOm; i++) {
+  for (size_t i = 0; i + kNumOfInputOm < input_tensors.size(); i++) {
     MS_CHECK_TRUE_MSG(inputs_mem_managed_by_tensor.find(i) != inputs_mem_managed_by_tensor.end(), RET_ERROR,
                       "invalid input index");
     if (inputs_mem_managed_by_tensor[i]) {
@@ -165,9 +217,9 @@ int AclModelManager::CopyTensorDataToAclInputs(const std::vector<mindspore::MSTe
     MS_CHECK_TRUE_MSG(acl_data_info.stride != 0, RET_ERROR, "acl stride cannot be 0");
     int64_t loop_times = acl_data_info.data_size * actual_batch_size_ / acl_data_info.stride;
     if (acl_model_type_ == AclModelType::kRecurrent) {
-      if (i == 0) {  // e.g: tensor shape is (3, 1, 29), acl dims is (1, 1, 1024)
+      if (i == 0) {  // e.g: tensor shape is (3, 1, 29), acl dims is (1024, 1, 29)
         loop_times = loop_times / acl_data_info.dim_info.dims[0] * custom_config_manager_ptr_->GTotalT();
-      } else if (i == 1) {  // e.g: tensor shape is (3, 1, 1), acl dims is (1024, 1, 1)
+      } else if (i == 1) {  // e.g: tensor shape is (3, 1, 1), acl dims is (1, 1, 1024)
         input_tensor_stride = custom_config_manager_ptr_->GTotalT() * type_size;
       }
     }
@@ -263,7 +315,10 @@ int AclModelManager::FlushAclInputsAndOutputs() {
 }
 
 int AclModelManager::AclModelRun(const std::vector<mindspore::MSTensor> &input_tensors) {
+  std::unique_lock<std::mutex> lock(acl_run_mutex);
   int ret;
+  ret = svp_acl_rt_set_device(acl_device_id_);
+  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp acl rt set device failed.");
   if (acl_model_type_ != AclModelType::kRecurrent) {
     size_t index;
     ret = svp_acl_mdl_get_input_index_by_name(acl_model_desc_, SVP_ACL_DYNAMIC_TENSOR_NAME, &index);
@@ -275,11 +330,10 @@ int AclModelManager::AclModelRun(const std::vector<mindspore::MSTensor> &input_t
     ret = svp_acl_mdl_set_total_t(acl_model_id_, acl_inputs_, custom_config_manager_ptr_->GTotalT());
     MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "acl set total t failed.");
   }
-  ret = svp_acl_rt_set_current_context(acl_context_manager_->GetAclRuntimeContext());
-  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "acl set current context failed.");
-
   ret = svp_acl_mdl_execute(acl_model_id_, acl_inputs_, acl_outputs_);
   MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp acl execute failed.");
+  ret = svp_acl_rt_reset_device(acl_device_id_);
+  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "acl reset device failed.");
   return RET_OK;
 }
 
@@ -292,13 +346,15 @@ int AclModelManager::UnloadModel() {
     acl_model_desc_ = nullptr;
   }
   if (acl_model_ptr_ != nullptr) {
-    custom_allocator_->Free(acl_model_ptr_);
+    ret = AclFree(&acl_model_ptr_);
+    MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "AclFree acl_model_ptr_ failed");
   }
   return RET_OK;
 }
 
-int AclModelManager::Init(const std::map<std::string, std::string> &dpico_config, const schema::Primitive *primitive,
-                          const std::vector<mindspore::MSTensor> &input_tensors,
+int AclModelManager::Init(const std::map<std::string, std::string> &dpico_config,
+                          const std::map<std::string, std::string> &model_share_config,
+                          const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &input_tensors,
                           const std::vector<mindspore::MSTensor> &output_tensors) {
   MS_CHECK_TRUE_MSG(acl_context_manager_ != nullptr, RET_ERROR, "acl_context_manager_ is nullptr.");
   MS_CHECK_TRUE_MSG(custom_config_manager_ptr_ != nullptr, RET_ERROR, "custom_config_manager_ptr_ is nullptr.");
@@ -322,6 +378,15 @@ int AclModelManager::Init(const std::map<std::string, std::string> &dpico_config
     MS_LOG(ERROR) << "create model desc failed.";
     return RET_ERROR;
   }
+  if (!custom_config_manager_ptr_->IsEnableMultiModelSharingMemPrepare(model_share_config)) {
+    MS_LOG(INFO) << "MultiModelSharingMemPrepare function not open, do not need to model share.";
+  } else {
+    if (GetMaxTaskAndWorkBufSize() != RET_OK) {
+      MS_LOG(ERROR) << "get max task and work buffer size failed.";
+      return RET_ERROR;
+    }
+  }
+
   return RET_OK;
 }
 
@@ -332,11 +397,17 @@ int AclModelManager::UpdateBatchSize(const std::vector<mindspore::MSTensor> &inp
     MS_LOG(ERROR) << "input shape is empty. " << input_tensor.Name();
     return RET_ERROR;
   }
-  auto new_batch = static_cast<size_t>(input_shape.front());
+
+  svp_acl_mdl_io_dims acl_mdl_input_0_dims;
+  int ret = svp_acl_mdl_get_input_dims(acl_model_desc_, 0, &acl_mdl_input_0_dims);
+  MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "acl get input dims failed.");
+  auto ms_input_batch = static_cast<size_t>(input_shape.front());
   if (acl_model_type_ == AclModelType::kRecurrent) {
-    custom_config_manager_ptr_->SetGTotalT(new_batch);
+    custom_config_manager_ptr_->SetGTotalT(ms_input_batch);
   } else {
-    actual_batch_size_ = new_batch;
+    MS_CHECK_TRUE_MSG(acl_mdl_input_0_dims.dim_count > 0 && acl_mdl_input_0_dims.dims[0] != 0, RET_ERROR,
+                      "acl input 0 dims is invalid.");
+    actual_batch_size_ = ms_input_batch / acl_mdl_input_0_dims.dims[0];
   }
   return RET_OK;
 }
@@ -360,10 +431,12 @@ int AclModelManager::PrepareAclInputs(std::vector<mindspore::MSTensor> *input_te
     void *data = nullptr;
     if (acl_data_info.data_size * actual_batch_size_ != input_tensors->at(i).DataSize()) {
       inputs_mem_managed_by_tensor[i] = false;
+      MS_LOG(INFO) << "input 16 bytes not align, will memcpy";
       ret = AclMalloc(&data, acl_data_info.data_size * actual_batch_size_);
       MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc acl input buffer failed.");
     } else {
       inputs_mem_managed_by_tensor[i] = true;
+      MS_LOG(INFO) << "input 16 bytes has aligned, not memcpy";
       input_tensors->at(i).SetAllocator(custom_allocator_);
       data = input_tensors->at(i).MutableData();  // svp malloc memory for ms tensor
     }
@@ -375,8 +448,6 @@ int AclModelManager::PrepareAclInputs(std::vector<mindspore::MSTensor> *input_te
     ret = AddDetectParamInput();
     MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "add detect param input failed.");
   }
-  ret = CreateTaskBufAndWorkBuf();
-  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "create task buf and work buf failed.");
   return RET_OK;
 }
 
@@ -402,10 +473,12 @@ int AclModelManager::PrepareAclOutputs(std::vector<mindspore::MSTensor> *output_
     void *data = nullptr;
     if (acl_data_info.data_size * actual_batch_size_ != output_tensors->at(i).DataSize()) {
       outputs_mem_managed_by_tensor[i] = false;
+      MS_LOG(INFO) << "output 16 bytes not align, will memcpy";
       ret = AclMalloc(&data, acl_data_info.data_size * actual_batch_size_);
       MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc acl output buffer failed.");
     } else {
       outputs_mem_managed_by_tensor[i] = true;
+      MS_LOG(INFO) << "output 16 bytes has aligned, not memcpy";
       output_tensors->at(i).SetAllocator(custom_allocator_);
       data = output_tensors->at(i).MutableData();  // svp malloc memory for ms tensor
     }
@@ -435,7 +508,6 @@ int AclModelManager::UpdateAclInputs(std::vector<mindspore::MSTensor> *input_ten
       continue;
     }
     auto data_buffer = svp_acl_mdl_get_dataset_buffer(acl_inputs_, i);
-    svp_acl_get_data_buffer_size(data_buffer);
     MS_CHECK_TRUE_MSG(data_buffer != nullptr, RET_ERROR, "data_buffer is nullptr.");
     auto stride = svp_acl_mdl_get_input_default_stride(acl_model_desc_, i);
     auto ret = svp_acl_update_data_buffer(data_buffer, input_tensors->at(i).MutableData(),
@@ -444,7 +516,7 @@ int AclModelManager::UpdateAclInputs(std::vector<mindspore::MSTensor> *input_ten
   }
 
   if (acl_model_type_ == AclModelType::kRoi) {
-    size_t detect_param_index = input_tensors->size();
+    size_t detect_param_index = input_tensors->size() - kNumOfInputOm;
     auto data_buffer = svp_acl_mdl_get_dataset_buffer(acl_inputs_, detect_param_index);
     MS_CHECK_TRUE_MSG(data_buffer != nullptr, RET_ERROR, "data_buffer is nullptr.");
     void *data = svp_acl_get_data_buffer_addr(data_buffer);
@@ -477,8 +549,17 @@ int AclModelManager::UpdateAclOutputs(std::vector<mindspore::MSTensor> *output_t
 }
 
 int AclModelManager::Execute(const std::vector<mindspore::MSTensor> &input_tensors,
-                             const std::vector<mindspore::MSTensor> &output_tensors) {
-  int ret = CopyTensorDataToAclInputs(input_tensors);
+                             const std::vector<mindspore::MSTensor> &output_tensors,
+                             const std::map<std::string, std::string> &model_share_config) {
+  int ret;
+  if (custom_config_manager_ptr_->IsEnableMultiModelSharingMem(model_share_config)) {
+    ret = CreateTaskBufAndWorkBuf();
+  } else {
+    ret = CreateNoShareTaskBufAndWorkBuf();
+  }
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "create task buf and work buf failed.");
+
+  ret = CopyTensorDataToAclInputs(input_tensors);
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "copy input tensor data to acl inputs failed.");
 
   ret = FlushAclInputsAndOutputs();

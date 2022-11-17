@@ -45,7 +45,7 @@ api::CNodePtrList GetOutputCNodes(const api::FuncGraphManagerPtr &manager, const
   if (node_users.size() == 1) {
     auto output_cnode = node_users.begin()->first->cast<api::CNodePtr>();
     if (output_cnode != nullptr) {
-      output_cnodes.emplace_back(output_cnode);
+      (void)output_cnodes.emplace_back(output_cnode);
     }
   } else {
     std::map<int, api::CNodePtr> output_cnode_ptr_map;
@@ -69,7 +69,7 @@ api::CNodePtrList GetOutputCNodes(const api::FuncGraphManagerPtr &manager, const
           MS_CHECK_TRUE_MSG(index >= 0, {}, "tuple_get_item index is invalid. " << index);
           output_cnode_ptr_map[index] = output_cnode;
         } else {
-          output_cnodes.emplace_back(output_cnode);
+          (void)output_cnodes.emplace_back(output_cnode);
         }
       }
     }
@@ -184,7 +184,7 @@ int OmGenerator::GenerateAippConfig(const std::string &aipp_cfg_path, const api:
   std::ofstream aipp_ofs;
   aipp_ofs.open(aipp_cfg_path, std::ios::out);
   MS_CHECK_TRUE_MSG(aipp_ofs.is_open(), RET_ERROR, "open file failed.");
-  aipp_ofs.precision(kNumPrecision);
+  (void)aipp_ofs.precision(kNumPrecision);
   aipp_ofs << "aipp_op {" << std::endl;
   for (size_t i = 0; i < subgraph_inputs.size(); i++) {
     auto input = subgraph_inputs.at(i);
@@ -231,7 +231,7 @@ int OmGenerator::GenerateMapperConfig(const api::FuncGraphPtr &func_graph, const
   MS_CHECK_TRUE_MSG(mapper_ofs.is_open(), RET_ERROR, "open file failed.");
   for (const auto &iter : mapper_config) {
     if (iter.first == kImageList || iter.first == kInsertOpConf || iter.first == kInstructionName ||
-        iter.first == kOutNodes || iter.first == kInputType) {
+        iter.first == kOutNodes || iter.first == kInputType || iter.first == kInputShape || iter.first == kOutputType) {
       continue;
     }
     mapper_ofs << iter.first << " " << iter.second << std::endl;
@@ -281,7 +281,6 @@ int OmGenerator::TransformSubGraphInputs(const api::AnfNodePtrList &inputs,
     auto preprocess_operator = std::make_unique<mapper::PreprocessOperator>();
     MS_CHECK_TRUE_MSG(preprocess_operator != nullptr, RET_ERROR, "preprocess_operator is nullptr.");
     preprocess_operator->SetOpType(mapper::OpType::PREPROCESS);
-    preprocess_operator->SetDimOrderFormat(mapper::DimOrderFormat::NCHW_FORMAT);
 
     auto op_name = input->fullname_with_scope();
     if (CheckPrimitiveType(input, api::MakeShared<ops::Custom>())) {

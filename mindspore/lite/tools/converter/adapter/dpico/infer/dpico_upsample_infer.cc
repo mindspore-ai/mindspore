@@ -67,12 +67,12 @@ Status DpicoUpsampleInterface::Infer(std::vector<mindspore::MSTensor> *inputs,
     MS_LOG(ERROR) << "param->attr() is nullptr";
     return kLiteError;
   }
-  for (size_t i = 0; i < param->attr()->size(); i++) {
+  for (uint32_t i = 0; i < static_cast<uint32_t>(param->attr()->size()); i++) {
     if (param->attr()->Get(i) == nullptr || param->attr()->Get(i)->name() == nullptr) {
       MS_LOG(ERROR) << "param->attr()->Get(i) is nullptr or param->attr()->Get(i)->name() is nullptr";
       return kLiteError;
     }
-    custom_attrs.insert({param->attr()->Get(i)->name()->str(), param->attr()->Get(i)->data()});
+    (void)custom_attrs.emplace(std::pair(param->attr()->Get(i)->name()->str(), param->attr()->Get(i)->data()));
   }
   if (custom_attrs.count(ops::kScale) == 1) {
     if (memcpy_s(&scale, sizeof(float), custom_attrs[ops::kScale]->data(), custom_attrs[ops::kScale]->size()) != EOK) {

@@ -43,7 +43,7 @@ BaseOperatorPtr CaffePowerParser::Parse(const caffe::LayerParameter &proto, cons
       shift = powerParam.shift();
     }
   }
-  prim->AddAttr(ops::kPower, api::MakeValue(power));
+  (void)prim->AddAttr(ops::kPower, api::MakeValue(power));
   prim->set_scale(scale);
   prim->set_shift(shift);
 

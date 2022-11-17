@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mapper/bi_lstm_mapper.h"
+#include "legacy_ops/bi_lstm_mapper.h"
 #include <memory>
 #include <utility>
 #include <vector>

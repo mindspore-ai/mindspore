@@ -21,6 +21,7 @@
 #include <vector>
 #include "common/anf_util.h"
 #include "common/op_enum.h"
+#include "common/check_base.h"
 #include "ops/split.h"
 #include "op/slice_operator.h"
 
@@ -36,10 +37,7 @@ STATUS SliceMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr>
   MS_ASSERT(split_prim != nullptr);
 
   auto slice_operator = std::make_unique<mapper::SliceOperator>();
-  if (slice_operator == nullptr) {
-    MS_LOG(ERROR) << "slice_operator is nullptr.";
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(slice_operator != nullptr, RET_ERROR, "slice_operator is nullptr.");
 
   if (SetCommonAttr(cnode, slice_operator.get(), output_cnodes) != RET_OK) {
     MS_LOG(ERROR) << "set common attr failed. " << cnode->fullname_with_scope();
@@ -99,8 +97,9 @@ STATUS SliceMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr>
       return RET_ERROR;
     }
     auto output_num = api::GetValue<int64_t>(split_prim->GetAttr(ops::kOutputNum));
+    MS_CHECK_TRUE_MSG(output_num != 0, RET_ERROR, "output_num is 0.");
     if (shape[split_axis] % output_num != 0) {
-      MS_LOG(ERROR) << "split op is invalid, which input shape cannot be splited.";
+      MS_LOG(ERROR) << "output_num is 0 or split op is invalid, which input shape cannot be splited.";
       return RET_ERROR;
     }
     uint32_t size_of_each_out = static_cast<uint32_t>(shape[split_axis] / output_num);

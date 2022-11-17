@@ -39,7 +39,7 @@ STATUS SetOpInputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operat
     if (api::utils::isa<api::ParameterPtr>(input_anode)) {
       auto param_node = input_anode->cast<api::ParameterPtr>();
       if (param_node != nullptr && !param_node->has_default()) {  // graph input
-        input_names.emplace_back(input_anode->fullname_with_scope());
+        (void)input_names.emplace_back(input_anode->fullname_with_scope());
       }
     } else if (api::utils::isa<api::CNodePtr>(input_anode)) {
       auto input_cnode = input_anode->cast<api::CNodePtr>();
@@ -54,7 +54,7 @@ STATUS SetOpInputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operat
           node_name = output_names.at(0);
         }
       }
-      input_names.emplace_back(node_name);
+      (void)input_names.emplace_back(node_name);
     }
   }
   base_operator->SetInputNamesVec(input_names);
@@ -85,7 +85,7 @@ STATUS FillMultiOutOpOutputs(const api::CNodePtr &cnode, mapper::BaseOperator *b
   std::vector<std::string> output_names;
   // pre-fill the output names, because maybe there are unused outputs.
   for (size_t i = 0; i < output_num; ++i) {
-    output_names.emplace_back(cnode->fullname_with_scope() + "_unused_" + std::to_string(i));
+    (void)output_names.emplace_back(cnode->fullname_with_scope() + "_unused_" + std::to_string(i));
   }
   for (const auto &output_cnode : output_cnodes) {
     if (output_cnode->size() != kInputIndex3) {
@@ -120,7 +120,7 @@ STATUS SetOpOutputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_opera
       })) {
     // single output op
     std::vector<std::string> output_names;
-    output_names.emplace_back(cnode->fullname_with_scope());
+    (void)output_names.emplace_back(cnode->fullname_with_scope());
     base_operator->SetOutputNamesVec(output_names);
     return RET_OK;
   }
@@ -141,7 +141,6 @@ STATUS SetCommonAttr(const api::CNodePtr &cnode, mapper::BaseOperator *base_oper
     return RET_ERROR;
   }
   base_operator->SetOpName(cnode->fullname_with_scope());
-  base_operator->SetDimOrderFormat(mapper::DimOrderFormat::NCHW_FORMAT);
   if (SetOpInputs(cnode, base_operator) != RET_OK) {
     MS_LOG(ERROR) << "set op inputs failed. " << cnode->fullname_with_scope();
     return RET_ERROR;
@@ -214,8 +213,8 @@ STATUS SetRecurrentDataInfo(const api::CNodePtr &cnode, mapper::RecurrentOperato
           MS_LOG(ERROR) << "new float[] failed.";
           return RET_ERROR;
         }
-        if (memcpy_s(weight_data, tensor_info->DataSize() * sizeof(float), raw_datas,
-                     tensor_info->DataSize() * sizeof(float)) != EOK) {
+        if (memcpy_s(weight_data, static_cast<size_t>(tensor_info->DataSize()) * sizeof(float), raw_datas,
+                     static_cast<size_t>(tensor_info->DataSize()) * sizeof(float)) != EOK) {
           MS_LOG(ERROR) << "memcpy_s failed.";
           delete[] weight_data;
           return RET_ERROR;
@@ -248,14 +247,14 @@ STATUS PushOfflineArgs(const api::CNodePtr &cnode, mapper::BaseOperator *base_op
     auto input_node = cnode->input(i);
     if (api::utils::isa<api::CNode>(input_node)) {
       MS_LOG(INFO) << "cnode don't have blobs";
-      offline_args.emplace_back();
+      (void)offline_args.emplace_back();
       continue;
     }
     if (api::utils::isa<api::ParameterPtr>(input_node)) {
       auto input_param_node = input_node->cast<api::ParameterPtr>();
       if (!input_param_node->has_default()) {
         MS_LOG(INFO) << "graph input don't have blobs";
-        offline_args.emplace_back();
+        (void)offline_args.emplace_back();
         continue;
       }
       auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
@@ -281,7 +280,7 @@ STATUS PushOfflineArgs(const api::CNodePtr &cnode, mapper::BaseOperator *base_op
         }
         (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(offline_shape),
                              [](const int64_t dim) { return static_cast<int32_t>(dim); });
-        offline_args.emplace_back(std::make_pair(offline_data, offline_shape));
+        (void)offline_args.emplace_back(std::make_pair(offline_data, offline_shape));
       } else {
         MS_LOG(ERROR) << "tensor_info is nullptr, or DataSize equals zero. " << cnode->fullname_with_scope();
         return RET_ERROR;

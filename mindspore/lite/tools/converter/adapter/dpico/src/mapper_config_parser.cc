@@ -79,7 +79,7 @@ int ParseMeanChn(AippModule *aipp_module, const std::string &content) {
   }
   auto mean_val = std::stod(content);
   if (mean_val < 0 || mean_val > kMaxPixelVal) {
-    MS_LOG(ERROR) << "input mecn_chn_" << n << "should be in range [1, 255]";
+    MS_LOG(ERROR) << "input mecn_chn_" << n << "should be in range [0, 255]";
     return RET_ERROR;
   }
   if (aipp_module->mean_map.find(n) != aipp_module->mean_map.end()) {

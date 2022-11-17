@@ -57,7 +57,7 @@ void CaffeInspector::FindGraphInputsAndOutputs() {
       std::string suffix = "_report";
       auto pos = top_name.rfind(suffix);
       if (pos != std::string::npos && pos == top_name.size() - suffix.length()) {
-        top_name.replace(pos, suffix.length(), "");
+        (void)top_name.replace(pos, suffix.length(), "");
         if (layerBottoms.find(top_name) != layerBottoms.end()) {
           continue;
         }

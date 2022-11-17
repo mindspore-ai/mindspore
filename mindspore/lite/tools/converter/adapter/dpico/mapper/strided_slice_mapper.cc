@@ -69,8 +69,6 @@ STATUS StridedSliceMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOpera
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto strided_slice_prim = api::utils::cast<api::SharedPtr<ops::StridedSlice>>(prim);
-  MS_ASSERT(strided_slice_prim != nullptr);
 
   auto extract_slice_operator = std::make_unique<mapper::ExtractSliceOperator>();
   if (extract_slice_operator == nullptr) {

@@ -70,47 +70,53 @@ int GetCodeType(mapper::DecBboxCodeType *dec_bbox_code_type, const caffe::CodeTy
 
 int SetAttrsByParam(const std::shared_ptr<ops::Custom> &custom_prim,
                     const caffe::DetectionOutputParameter &detection_param, int index) {
+  if (custom_prim == nullptr) {
+    MS_LOG(ERROR) << "custom_prim is nullptr.";
+    return RET_ERROR;
+  }
   if (detection_param.has_top_k()) {
-    custom_prim->AddAttr(kDetectionTopK + std::to_string(index), api::MakeValue(detection_param.top_k()));
+    (void)custom_prim->AddAttr(kDetectionTopK + std::to_string(index), api::MakeValue(detection_param.top_k()));
   }
   if (detection_param.has_background_label_id()) {
-    custom_prim->AddAttr(kDetectionBackgroundLabelId + std::to_string(index),
-                         api::MakeValue(detection_param.background_label_id()));
+    (void)custom_prim->AddAttr(kDetectionBackgroundLabelId + std::to_string(index),
+                               api::MakeValue(detection_param.background_label_id()));
   }
   if (detection_param.has_multi_class_sorting()) {
-    custom_prim->AddAttr(kDetectionMultiClassSorting + std::to_string(index),
-                         api::MakeValue<bool>(detection_param.multi_class_sorting()));
+    (void)custom_prim->AddAttr(kDetectionMultiClassSorting + std::to_string(index),
+                               api::MakeValue<bool>(detection_param.multi_class_sorting()));
   }
   if (detection_param.has_share_location()) {
-    custom_prim->AddAttr(kDetectionShareLocation + std::to_string(index),
-                         api::MakeValue<bool>(detection_param.share_location()));
+    (void)custom_prim->AddAttr(kDetectionShareLocation + std::to_string(index),
+                               api::MakeValue<bool>(detection_param.share_location()));
   }
   if (detection_param.has_clip_bbox()) {
-    custom_prim->AddAttr(kDetectionClipBbox + std::to_string(index), api::MakeValue<bool>(detection_param.clip_bbox()));
+    (void)custom_prim->AddAttr(kDetectionClipBbox + std::to_string(index),
+                               api::MakeValue<bool>(detection_param.clip_bbox()));
   }
   if (detection_param.has_calc_mode()) {
-    custom_prim->AddAttr(kDetectionCalcMode + std::to_string(index), api::MakeValue(detection_param.calc_mode()));
+    (void)custom_prim->AddAttr(kDetectionCalcMode + std::to_string(index), api::MakeValue(detection_param.calc_mode()));
   }
   if (detection_param.has_report_flag()) {
-    custom_prim->AddAttr(kDetectionReportFlag + std::to_string(index),
-                         api::MakeValue<bool>(detection_param.report_flag()));
+    (void)custom_prim->AddAttr(kDetectionReportFlag + std::to_string(index),
+                               api::MakeValue<bool>(detection_param.report_flag()));
   }
   if (detection_param.has_top()) {
-    custom_prim->AddAttr(kDetectionTop + std::to_string(index), api::MakeValue<std::string>(detection_param.top()));
+    (void)custom_prim->AddAttr(kDetectionTop + std::to_string(index),
+                               api::MakeValue<std::string>(detection_param.top()));
   }
   if (detection_param.has_share_variance()) {
-    custom_prim->AddAttr(kDetectionShareVariance + std::to_string(index),
-                         api::MakeValue(detection_param.share_variance()));
+    (void)custom_prim->AddAttr(kDetectionShareVariance + std::to_string(index),
+                               api::MakeValue(detection_param.share_variance()));
   }
   if (!detection_param.variance().empty()) {
-    custom_prim->AddAttr(kDetectionVarianceVec + std::to_string(index),
-                         api::MakeValue<std::vector<float>>(
-                           std::vector<float>(detection_param.variance().begin(), detection_param.variance().end())));
+    (void)custom_prim->AddAttr(kDetectionVarianceVec + std::to_string(index),
+                               api::MakeValue<std::vector<float>>(std::vector<float>(
+                                 detection_param.variance().begin(), detection_param.variance().end())));
   }
   if (!detection_param.bias().empty()) {
-    custom_prim->AddAttr(kDetectionBiasVec + std::to_string(index),
-                         api::MakeValue<std::vector<float>>(
-                           std::vector<float>(detection_param.bias().begin(), detection_param.bias().end())));
+    (void)custom_prim->AddAttr(kDetectionBiasVec + std::to_string(index),
+                               api::MakeValue<std::vector<float>>(
+                                 std::vector<float>(detection_param.bias().begin(), detection_param.bias().end())));
   }
 
   if (detection_param.has_param_type()) {
@@ -119,8 +125,8 @@ int SetAttrsByParam(const std::shared_ptr<ops::Custom> &custom_prim,
       MS_LOG(ERROR) << "get detection proposal param type failed.";
       return RET_ERROR;
     }
-    custom_prim->AddAttr(kDetectionProposalParamType + std::to_string(index),
-                         api::MakeValue(static_cast<int64_t>(proposal_param_type)));
+    (void)custom_prim->AddAttr(kDetectionProposalParamType + std::to_string(index),
+                               api::MakeValue(static_cast<int64_t>(proposal_param_type)));
   }
 
   if (detection_param.has_code_type()) {
@@ -129,13 +135,17 @@ int SetAttrsByParam(const std::shared_ptr<ops::Custom> &custom_prim,
       MS_LOG(ERROR) << "get detection code type failed.";
       return RET_ERROR;
     }
-    custom_prim->AddAttr(kDetectionCodeType + std::to_string(index),
-                         api::MakeValue(static_cast<int64_t>(dec_bbox_code_type)));
+    (void)custom_prim->AddAttr(kDetectionCodeType + std::to_string(index),
+                               api::MakeValue(static_cast<int64_t>(dec_bbox_code_type)));
   }
   return RET_OK;
 }
 mapper::DetectionOutputParam GetParamFromAttrs(const api::SharedPtr<ops::Custom> &custom_prim, int index) {
   mapper::DetectionOutputParam detection_output_param;
+  if (custom_prim == nullptr) {
+    MS_LOG(ERROR) << "custom_prim is nullptr.";
+    return detection_output_param;
+  }
   auto top_k_ptr = custom_prim->GetAttr(kDetectionTopK + std::to_string(index));
   if (top_k_ptr != nullptr) {
     detection_output_param.topK = static_cast<uint32_t>(api::GetValue<int64_t>(top_k_ptr));
@@ -195,7 +205,11 @@ mapper::DetectionOutputParam GetParamFromAttrs(const api::SharedPtr<ops::Custom>
 int SetAttrsByDetectionOutputParam(const std::shared_ptr<ops::Custom> &custom_prim,
                                    const caffe::LayerParameter &proto) {
   int detection_output_param_size = proto.detection_output_param_size();
-  custom_prim->AddAttr(kDetectionOutputParamSize, api::MakeValue(detection_output_param_size));
+  if (custom_prim == nullptr) {
+    MS_LOG(ERROR) << "custom_prim is nullptr.";
+    return RET_ERROR;
+  }
+  (void)custom_prim->AddAttr(kDetectionOutputParamSize, api::MakeValue(detection_output_param_size));
   if (detection_output_param_size == 0) {
     MS_LOG(INFO) << "no detection param found";
     return RET_OK;
@@ -210,11 +224,15 @@ int SetAttrsByDetectionOutputParam(const std::shared_ptr<ops::Custom> &custom_pr
   return RET_OK;
 }
 int SetAttrsByDecBboxParam(const std::shared_ptr<ops::Custom> &custom_prim, const caffe::LayerParameter &proto) {
+  if (custom_prim == nullptr) {
+    MS_LOG(ERROR) << "custom_prim is nullptr.";
+    return RET_ERROR;
+  }
   if (!proto.has_decbbox_param()) {
     MS_LOG(INFO) << "no decbbox param found";
     return RET_OK;
   }
-  custom_prim->AddAttr(kDetectionOutputParamSize, api::MakeValue(1));
+  (void)custom_prim->AddAttr(kDetectionOutputParamSize, api::MakeValue(1));
   const auto &detect_param = proto.decbbox_param();
   if (SetAttrsByParam(custom_prim, detect_param, 0) != RET_OK) {
     MS_LOG(ERROR) << "set prim attrs from decbbox param failed.";
@@ -238,7 +256,7 @@ int GetDetectionOutputParamFromAttrs(std::vector<mapper::DetectionOutputParam> *
     return RET_OK;
   }
   for (int i = 0; i < detection_output_param_size; i++) {
-    detection_params->emplace_back(GetParamFromAttrs(custom_prim, i));
+    (void)detection_params->emplace_back(GetParamFromAttrs(custom_prim, i));
   }
   return RET_OK;
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mapper/spp_mapper.h"
+#include "legacy_ops/spp_mapper.h"
 #include <memory>
 #include <utility>
 #include <vector>

@@ -35,8 +35,8 @@ BaseOperatorPtr CaffeInterpParser::Parse(const caffe::LayerParameter &proto, con
   const caffe::InterpParameter &interp_param = proto.interp_param();
   if (interp_param.has_height()) {
     int64_t height = interp_param.height();
-    if (height < 0) {
-      MS_LOG(ERROR) << "Interp height must be > 0";
+    if (height <= 0) {
+      MS_LOG(ERROR) << "Interp height can not <= 0";
       return nullptr;
     }
     prim->set_new_height(height);
@@ -44,30 +44,30 @@ BaseOperatorPtr CaffeInterpParser::Parse(const caffe::LayerParameter &proto, con
 
   if (interp_param.has_width()) {
     int64_t width = interp_param.width();
-    if (width < 0) {
-      MS_LOG(ERROR) << "Interp width must be > 0";
+    if (width <= 0) {
+      MS_LOG(ERROR) << "Interp width can not <= 0";
       return nullptr;
     }
     prim->set_new_width(width);
   }
 
   if (interp_param.has_zoom_factor()) {
-    prim->AddAttr(dpico::kZoomFactor, api::MakeValue<int64_t>(interp_param.zoom_factor()));
+    (void)prim->AddAttr(dpico::kZoomFactor, api::MakeValue<int64_t>(interp_param.zoom_factor()));
   }
 
   if (interp_param.has_shrink_factor()) {
-    prim->AddAttr(dpico::kShrinkFactor, api::MakeValue<int64_t>(interp_param.shrink_factor()));
+    (void)prim->AddAttr(dpico::kShrinkFactor, api::MakeValue<int64_t>(interp_param.shrink_factor()));
   }
 
   if (interp_param.has_pad_beg()) {
-    prim->AddAttr(dpico::kPadBeg, api::MakeValue<int64_t>(interp_param.pad_beg()));
+    (void)prim->AddAttr(dpico::kPadBeg, api::MakeValue<int64_t>(interp_param.pad_beg()));
   }
 
   if (interp_param.has_pad_end()) {
-    prim->AddAttr(dpico::kPadEnd, api::MakeValue<int64_t>(interp_param.pad_end()));
+    (void)prim->AddAttr(dpico::kPadEnd, api::MakeValue<int64_t>(interp_param.pad_end()));
   }
-  int fmk_type = converter::FmkType::kFmkTypeCaffe;
-  prim->AddAttr(ops::kFmkType, api::MakeValue(static_cast<int64_t>(fmk_type)));
+  int fmk_type = static_cast<int>(converter::FmkType::kFmkTypeCaffe);
+  (void)prim->AddAttr(ops::kFmkType, api::MakeValue(static_cast<int64_t>(fmk_type)));
   return prim;
 }
 

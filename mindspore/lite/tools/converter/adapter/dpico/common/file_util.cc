@@ -123,7 +123,7 @@ int RemoveDir(const std::string &path) {
 #ifdef _WIN32
   struct _finddata_t fb;
   if (str_path.at(str_path.length() - 1) != '\\') {
-    str_path.append("\\");
+    (void)str_path.append("\\");
   }
   std::string find_path = str_path + "*";
   intptr_t handle = _findfirst(find_path.c_str(), &fb);
@@ -134,7 +134,7 @@ int RemoveDir(const std::string &path) {
         tmp_path.clear();
         tmp_path = str_path + std::string(fb.name);
         if (fb.attrib == _A_SUBDIR) {
-          RemoveDir(tmp_path.c_str());
+          (void)RemoveDir(tmp_path.c_str());
         } else {
           remove(tmp_path.c_str());
         }
@@ -146,7 +146,7 @@ int RemoveDir(const std::string &path) {
 
 #else
   if (str_path.at(str_path.length() - 1) != '/') {
-    str_path.append("/");
+    (void)str_path.append("/");
   }
   DIR *d = opendir(str_path.c_str());
   if (d != nullptr) {
@@ -156,16 +156,16 @@ int RemoveDir(const std::string &path) {
       if (std::strcmp(dt->d_name, "..") != 0 && std::strcmp(dt->d_name, ".") != 0) {
         struct stat st {};
         auto file_name = str_path + std::string(dt->d_name);
-        stat(file_name.c_str(), &st);
+        (void)stat(file_name.c_str(), &st);
         if (S_ISDIR(st.st_mode)) {
-          RemoveDir(file_name);
+          (void)RemoveDir(file_name);
         } else {
-          remove(file_name.c_str());
+          (void)remove(file_name.c_str());
         }
       }
       dt = readdir(d);
     }
-    closedir(d);
+    (void)closedir(d);
   }
   return rmdir(str_path.c_str()) == 0 ? RET_OK : RET_ERROR;
 #endif

@@ -71,7 +71,7 @@ int DeduceDimConvertion(mindspore::Format src_format, mindspore::Format dst_form
   perm->clear();
   std::unordered_map<char, int> dim_map;
   for (size_t i = 0; i < src_format_str.size(); ++i) {
-    dim_map[src_format_str[i]] = i;
+    dim_map[src_format_str[i]] = static_cast<int>(i);
   }
   for (size_t i = 0; i < dst_format_str.size(); ++i) {
     if (dim_map.find(dst_format_str[i]) == dim_map.end()) {
@@ -90,15 +90,15 @@ STATUS TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_sha
   MS_ASSERT(origin_shape.size() == cur_shape.size() && cur_shape.size() == perm.size());
   int count = 1;
   for (size_t i = 0; i < origin_shape.size(); i++) {
-    if (INT_MUL_OVERFLOW(count, origin_shape.at(i))) {
+    if (INT_MUL_OVERFLOW(count, static_cast<int>(origin_shape.at(i)))) {
       MS_LOG(ERROR) << "int mul overflow.";
       return RET_ERROR;
     }
-    count *= origin_shape.at(i);
+    count *= static_cast<int>(origin_shape.at(i));
   }
   ShapeVector post_multiply(cur_shape.size());
   std::unordered_map<int, int> dim_map;
-  for (int i = cur_shape.size() - 1; i >= 0; --i) {
+  for (int i = static_cast<int>(cur_shape.size()) - 1; i >= 0; --i) {
     if (i == static_cast<int>(cur_shape.size() - 1)) {
       post_multiply[i] = 1;
     } else {
@@ -112,7 +112,7 @@ STATUS TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_sha
     for (int j = static_cast<int>(origin_shape.size()) - 1; j >= 0; --j) {
       MS_ASSERT(origin_shape[j] > 0);
       position_map[j] = temp % origin_shape[j];
-      temp /= origin_shape[j];
+      temp /= static_cast<int>(origin_shape[j]);
     }
     int64_t new_pos = std::accumulate(position_map.begin(), position_map.end(), 0,
                                       [&post_multiply, &dim_map](int64_t res, const std::pair<int, int> &pair_y) {
@@ -176,7 +176,7 @@ STATUS DoTransposeData(const api::TensorPtr &tensor, mindspore::Format src_forma
     MS_LOG(ERROR) << "tensor size shouldn't be 0";
     return RET_ERROR;
   }
-  if (memcpy_s(tensor->data(), tensor->Size(), buf.data(), count * sizeof(T)) != EOK) {
+  if (memcpy_s(tensor->data(), tensor->Size(), buf.data(), static_cast<size_t>(count) * sizeof(T)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
     return RET_ERROR;
   }
