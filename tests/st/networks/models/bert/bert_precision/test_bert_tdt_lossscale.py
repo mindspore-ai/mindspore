@@ -229,18 +229,19 @@ def test_bert_precision(enable_graph_kernel=False):
                              12.185522, 12.386192]
     else:
         assert np.allclose(loss_value[0], 12.2066, 0, 0.0005)
-        expect_loss_value = [12.206557, 11.941042, 11.931373, 11.938049, 11.932574, 12.556715, 12.130486, 12.7836895,
-                             12.360162, 12.578404]
+        expect_loss_value = [12.206556, 11.9409492, 11.9313538, 11.9378898, 11.931268, 12.5562848, 12.1305126,
+                             12.7837258, 12.3600269, 12.5784592]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
     overflow = np.array(callback.overflow_list)
-    expect_overflow = [False, False, False, True, False, False, False, True, False, False]
+    expect_overflow = [False, False, False, False, False, False, False, False, False, True]
     print("overflow: {}".format(overflow))
     assert (overflow == expect_overflow).all()
 
     loss_scale = np.array(callback.lossscale_list)
-    expect_loss_scale = [65536.0, 65536.0, 131072.0, 65536.0, 65536.0, 65536.0, 131072.0, 65536.0, 65536.0, 65536.0]
+    expect_loss_scale = [65536.0, 65536.0, 131072.0, 131072.0, 131072.0, 262144.0, 262144.0, 262144.0, 524288.0,
+                         262144.0]
     print("loss scale: {}".format(loss_scale))
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 

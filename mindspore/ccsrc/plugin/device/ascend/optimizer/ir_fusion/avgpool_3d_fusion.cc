@@ -239,7 +239,7 @@ AnfNodePtr ConstructFilterValueNode(const FuncGraphPtr &func_graph, float val, c
 
 const BaseRef AvgPool3DFusion::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimAvgPool3D, Xs});
+  return VectorRef({prim::kPrimAvgPool3DD, Xs});
 }
 
 const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -295,7 +295,7 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
     MS_LOG(INFO) << "No need fusion";
     return nullptr;
   }
-  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3D->name()))};
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3DD->name()))};
   (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_node->inputs().cbegin() + 1,
                           avg_pool_3d_node->inputs().cend());
   // assist node 1

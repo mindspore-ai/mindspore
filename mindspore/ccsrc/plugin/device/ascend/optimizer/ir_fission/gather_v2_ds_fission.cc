@@ -59,7 +59,7 @@ CNodePtr GatherV2DsFission::CreatePad(const FuncGraphPtr &graph, const CNodePtr 
                                       const size_t &pad_dim_size) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(origin_node);
-  std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadOpName)), origin_node->input(1)};
+  std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadDOpName)), origin_node->input(1)};
   auto pad = NewCNode(pad_inputs, graph);
   MS_EXCEPTION_IF_NULL(pad);
   pad->set_scope(origin_node->scope());

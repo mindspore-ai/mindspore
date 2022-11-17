@@ -59,7 +59,7 @@ bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &name) {
   const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
     kCastOpName,      kExpandDimsOpName, kReshapeOpName,    kEmbeddingLookupOpName, kTransposeOpName,
     kReduceSumOpName, kReduceMinOpName,  kReduceMeanOpName, kReduceMaxOpName,       kReduceAllOpName,
-    kReduceAnyOpName, kConcatOpName,     kScatterNdOpName,  kGatherV2OpName,        kAvgPool3DGradOpName};
+    kReduceAnyOpName, kConcatOpName,     kScatterNdOpName,  kGatherOpName,          kAvgPool3DGradOpName};
 
   auto iter = DynamicShapeConstInputToAttrGPU.find(name);
   return iter != DynamicShapeConstInputToAttrGPU.end();
@@ -75,20 +75,33 @@ bool IsOneOfCustomAkgType(const std::string &name) {
 bool IsOneOfOperator(const std::string &name) {
   const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                  kApplyMomentumOpName,
+                                                 kApplyMomentumDOpName,
                                                  kApplyAdadeltaOpName,
+                                                 kApplyAdadeltaDOpName,
                                                  kApplyAdagradOpName,
+                                                 kApplyAdagradDOpName,
                                                  kApplyAdagradDAOpName,
+                                                 kApplyAdagradDADOpName,
+                                                 kAdamOpName,
+                                                 kApplyAdamDOpName,
                                                  kApplyAdamOpName,
                                                  kApplyAdaMaxOpName,
+                                                 kApplyAdaMaxDOpName,
                                                  kApplyAddSignOpName,
+                                                 kApplyAddSignDOpName,
                                                  kApplyCenteredRMSPOpName,
                                                  kApplyFtrlOpName,
+                                                 kApplyFtrlDOpName,
                                                  kApplyFtrlV2OpName,
+                                                 kApplyFtrlV2DOpName,
                                                  kApplyGradientDescentOpName,
                                                  kApplyPowerSignOpName,
+                                                 kApplyPowerSignDOpName,
                                                  kApplyProximalAdagradOpName,
+                                                 kApplyProximalAdagradDOpName,
                                                  kApplyProximalGradientDescentOpName,
                                                  kApplyRMSPropOpName,
+                                                 kApplyRMSPropDOpname,
                                                  kAdamApplyOneWithDecayOpName,
                                                  kAdamApplyOneWithDecayAssignOpName,
                                                  kFusedAdamWeightDecayName,
@@ -102,21 +115,33 @@ bool IsOneOfOperator(const std::string &name) {
                                                  kFusedWeightScaleApplyMomentum,
                                                  kFusedScaleApplyMomentum,
                                                  kApplyCenteredRMSPropOpName,
+                                                 kApplyCenteredRMSPropDOpName,
                                                  kFusedSparseFtrlName,
                                                  kFusedSparseProximalAdagradName,
                                                  kFusedSparseLazyAdamName,
                                                  kSparseApplyFtrlOpName,
+                                                 kSparseApplyFtrlDOpName,
                                                  kSparseApplyFtrlV2OpName,
+                                                 kSparseApplyFtrlV2DOpName,
                                                  kSGDName,
                                                  kLARSUpdateOpName,
+                                                 kLarsV2UpdateOpName,
                                                  kCombineMomentumWeightOpName,
                                                  kCombineMomentumOpName,
                                                  kScatterAddOpName,
                                                  kScatterUpdateOpName,
-                                                 kSparseApplyProximalAdagradOpName};
+                                                 kSparseApplyProximalAdagradOpName,
+                                                 kSparseApplyProximalAdagradDOpName,
+                                                 kAdaptiveMaxPool2dOpName,
+                                                 kApplyKerasMomentumDOpName};
 
   auto iter = kOptOperatorSet.find(name);
   return iter != kOptOperatorSet.end();
+}
+
+bool IsOneOfNotSupportedTransFormat(const std::string &format) {
+  const std::set<std::string> kNotSupportedFormat = {kOpFormat_DHWCN, kOpFormat_NDHWC, kOpFormat_CHWN};
+  return (kNotSupportedFormat.find(format) != kNotSupportedFormat.end());
 }
 
 bool IsOneOfComputeDepend(const std::string &name) {

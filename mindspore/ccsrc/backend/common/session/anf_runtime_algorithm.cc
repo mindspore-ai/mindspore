@@ -38,6 +38,7 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "kernel/oplib/oplib.h"
+#include "kernel/oplib/super_bar.h"
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
@@ -49,32 +50,6 @@ using kernel::KernelModPtr;
 namespace {
 constexpr size_t kReturnDataIndex = 1;
 constexpr size_t kSwitchTrueBranchIndex = 2;
-
-// ops pair that dynamic input order is differ from the fixed shape ops
-// pair: <input_index_in_kernel->input_index_in_graph, input_index_in_graph->input_index_in_kernel>
-std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {
-  {kStridedSliceGradOpName, {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}},
-  {kConv2DBackpropInputOpName, {{{0, 2}, {1, 1}, {2, 0}}, {{0, 2}, {1, 1}, {2, 0}}}},
-  {kConv2DBackpropFilterOpName, {{{0, 1}, {1, 2}, {2, 0}}, {{1, 0}, {2, 1}, {0, 2}}}}};
-
-// pair: <input_index_in_kernel->input_index_in_graph, input_index_in_graph->input_index_in_kernel>
-std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_node_list = {
-  {kConv2DBackpropInputOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
-  {kFusionOpConv2DBackpropInputReluGradV2Name, {{{0, 1}, {1, 0}, {2, 2}}, {{0, 1}, {1, 0}, {2, 2}}}},
-  {kFusionOpConv2DBackpropInputAddNReluGradV2Name,
-   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}}},
-  {kConv2DBackpropFilterOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
-  {kLogSoftmaxGradOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
-  {kLayerNormGradOpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
-  {kLayerNormBetaGammaBackpropOpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}}},
-  {kLayerNormXBackpropOpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
-  {kLayerNormXBackpropV2OpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
-  {kMinimumGradOpName, {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
-  {kMaximumGradOpName, {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
-  {kApplyCenteredRMSPropOpName,
-   {{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 5}, {5, 6}, {6, 7}, {7, 8}, {8, 4}},
-    {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {5, 4}, {6, 5}, {7, 6}, {8, 7}, {4, 8}}}},
-  {kStridedSliceGradOpName, {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}}};
 
 std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<int64_t> &shape) {
   std::ostringstream buffer;
@@ -318,7 +293,8 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   auto format = build_info->GetInputFormat(input_idx);
   if (format == kernel::KernelBuildInfo::kInvalidFormat) {
     MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
-                      << " has a invalid input format" << trace::DumpSourceLines(node);
+                      << " has a invalid input format\n"
+                      << trace::DumpSourceLines(node);
   }
   return format;
 }
@@ -856,85 +832,41 @@ bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input
 size_t AnfRuntimeAlgorithm::GetInputGraphIdxByKernelIdx(const mindspore::AnfNodePtr &anf_node,
                                                         size_t input_index_in_kernel) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t ret = input_index_in_kernel;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
-  if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL || AnfAlgo::GetKernelType(anf_node) == ACL_KERNEL) {
-    if (common::AnfAlgo::IsDynamicShape(anf_node)) {
-      auto find_dynamic = spec_dynamic_node_list.find(node_name);
-      if (find_dynamic != spec_dynamic_node_list.cend()) {
-        auto dyn_index_converter = find_dynamic->second;
-        ret = dyn_index_converter.first[input_index_in_kernel];
-        MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
-        return ret;
-      }
-      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE, true);
-      if (op_info != nullptr) {
-        auto real_input_index = op_info->real_input_index();
-        if (!real_input_index.first.empty()) {
-          ret = real_input_index.first[input_index_in_kernel];
-          return ret;
-        }
-      }
-    }
-    auto find = spec_node_list.find(node_name);
-    if (find != spec_node_list.cend()) {
-      auto index_converter = find->second;
-      ret = index_converter.first[input_index_in_kernel];
-      MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
-      return ret;
-    }
-    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE);
-    if (op_info != nullptr) {
-      auto real_input_index = op_info->real_input_index();
-      if (!real_input_index.first.empty()) {
-        ret = real_input_index.first[input_index_in_kernel];
-        return ret;
-      }
-    }
+  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
+  if (kernel_type != TBE_KERNEL && kernel_type != ACL_KERNEL) {
+    return input_index_in_kernel;
   }
-  return ret;
+  auto orders = kernel::SuperBar::GetKernelIdxToGraphIdx(node_name);
+  if (!orders.has_value()) {
+    return input_index_in_kernel;
+  }
+  auto input_orders = orders.value();
+  auto find_iter = input_orders.find(input_index_in_kernel);
+  if (find_iter == input_orders.end()) {
+    MS_LOG(EXCEPTION) << "Get input order failed. input_idx: " << input_index_in_kernel << ", op_name: " << node_name;
+  }
+  return find_iter->second;
 }
 
 size_t AnfRuntimeAlgorithm::GetInputKernelIdxByGraphIdx(const mindspore::AnfNodePtr &anf_node,
                                                         size_t input_index_in_graph) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t ret = input_index_in_graph;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
-  if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
-    if (common::AnfAlgo::IsDynamicShape(anf_node)) {
-      auto find_dynamic = spec_dynamic_node_list.find(node_name);
-      if (find_dynamic != spec_dynamic_node_list.cend()) {
-        auto dyn_index_converter = find_dynamic->second;
-        ret = dyn_index_converter.second[input_index_in_graph];
-        MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
-        return ret;
-      }
-      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE, true);
-      if (op_info != nullptr) {
-        auto real_input_index = op_info->real_input_index();
-        if (!real_input_index.second.empty()) {
-          ret = real_input_index.second[input_index_in_graph];
-          return ret;
-        }
-      }
-    }
-    auto find = spec_node_list.find(node_name);
-    if (find != spec_node_list.cend()) {
-      auto index_converter = find->second;
-      ret = index_converter.second[input_index_in_graph];
-      MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
-      return ret;
-    }
-    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE);
-    if (op_info != nullptr) {
-      auto real_input_index = op_info->real_input_index();
-      if (!real_input_index.second.empty()) {
-        ret = real_input_index.second[input_index_in_graph];
-        return ret;
-      }
-    }
+  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
+  if (kernel_type != TBE_KERNEL && kernel_type != ACL_KERNEL) {
+    return input_index_in_graph;
   }
-  return ret;
+  auto orders = kernel::SuperBar::GetGraphIdxToKernelIdx(node_name);
+  if (!orders.has_value()) {
+    return input_index_in_graph;
+  }
+  auto input_orders = orders.value();
+  auto find_iter = input_orders.find(input_index_in_graph);
+  if (find_iter == input_orders.end()) {
+    MS_LOG(EXCEPTION) << "Get input order failed. input_idx: " << input_index_in_graph << ", op_name: " << node_name;
+  }
+  return find_iter->second;
 }
 
 std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const CNodePtr &cnode) {
@@ -1367,7 +1299,7 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
   // Skip run ReduceSum when axis is a Empty Tensor
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (op_name != kReduceSumOpName) {
+  if ((op_name != kReduceSumOpName) && (op_name != kReduceSumDOpName)) {
     return false;
   }
 

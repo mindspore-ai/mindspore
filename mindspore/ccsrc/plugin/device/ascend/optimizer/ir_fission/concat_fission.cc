@@ -26,7 +26,7 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
                                           size_t begin_index, size_t offset) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(origin_concat_cnode);
-  std::vector<AnfNodePtr> new_concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  std::vector<AnfNodePtr> new_concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
     new_concat_inputs.emplace_back(origin_concat_cnode->input(i));
   }
@@ -94,7 +94,7 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
 
 const BaseRef ConcatFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimConcat, Xs});
+  return VectorRef({prim::kPrimConcatD, Xs});
 }
 
 const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -111,7 +111,7 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
   CNodePtr new_cnode = cnode;
   while (origin_input_size > inputs_divisor_) {
     MS_EXCEPTION_IF_NULL(new_cnode);
-    std::vector<AnfNodePtr> base_concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+    std::vector<AnfNodePtr> base_concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
     size_t cur_input_index = 1;
     // Divide the inputs of concat by inputs_divisor_.
     while (origin_input_size - cur_input_index + 1 >= inputs_divisor_) {

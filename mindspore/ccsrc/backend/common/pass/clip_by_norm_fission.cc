@@ -91,7 +91,7 @@ AnfNodePtr ClipByNormFission::CreateSquareNode(const FuncGraphPtr &func_graph, c
 AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square,
                                                   const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
                                                   const TypeId &type_id) const {
-  auto reduce_sum = CreateCNodeBase(func_graph, {square}, kReduceSumOpName, square);
+  auto reduce_sum = CreateCNodeBase(func_graph, {square}, kReduceSumDOpName, square);
   MS_EXCEPTION_IF_NULL(reduce_sum);
   // Sync the attribute of `ClipByNorm` to `ReduceSum`
   auto clip_by_norm_prim = common::AnfAlgo::GetCNodePrimitive(clip_by_norm);
@@ -210,7 +210,7 @@ AnfNodePtr ClipByNormFission::CreateMulNode(const FuncGraphPtr &func_graph, cons
 AnfNodePtr ClipByNormFission::CreateDivNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dividend,
                                             const AnfNodePtr &divisor, const ShapeVector &shape_vec,
                                             const TypeId &type_id) const {
-  auto div = CreateCNodeBase(func_graph, {dividend, divisor}, kDivOpName, divisor);
+  auto div = CreateCNodeBase(func_graph, {dividend, divisor}, kTruncateDivOpName, divisor);
   MS_EXCEPTION_IF_NULL(div);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
   div->set_abstract(abs);

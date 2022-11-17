@@ -23,11 +23,9 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/helper.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::opt {
 namespace {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 constexpr auto kTupleGetItemName = "TupleGetItem";
@@ -37,12 +35,15 @@ constexpr auto kDependName = "Depend";
 constexpr auto kLoadName = "Load";
 constexpr size_t kAvgpoolInputSize = 2;
 const std::set<std::string> kInOutOperatorSet = {kAllReduceOpName, kBroadcastOpName, kMakeTupleName};
+const std::set<std::string> kNeedSetGroupNodes = {kConv2DOpName, kConv2DBackpropInputOpName,
+                                                  kConv2DBackpropFilterOpName, kConv2DBackpropInputDOpName,
+                                                  kConv2DBackpropFilterDOpName};
 
 int64_t GetAvgpoolGroups(const AnfNodePtr &node, const std::string &node_name) {
   if (node_name == kAvgPoolOpName && common::AnfAlgo::GetInputTensorNum(node) == kAvgpoolInputSize &&
       AnfAlgo::GetInputFormat(node, 1) == kOpFormat_FRAC_Z) {
     auto filter_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-    if (filter_shape.size() > 0 && filter_shape[0] > 0) {
+    if (!filter_shape.empty() && filter_shape[0] > 0) {
       return filter_shape[0];
     }
   }
@@ -277,8 +278,7 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
         continue;
       }
       auto node_name = common::AnfAlgo::GetCNodeName(cnode);
-      if (node_name == kConv2DOpName || node_name == kConv2DBackpropInputOpName ||
-          node_name == kConv2DBackpropFilterOpName) {
+      if (kNeedSetGroupNodes.count(node_name) != 0) {
         changed = SetAttrFraczGroup(func_graph, cnode) || changed;
       }
       if (int64_t avgpool_group = GetAvgpoolGroups(node, node_name); avgpool_group != 1) {
@@ -289,5 +289,4 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::opt

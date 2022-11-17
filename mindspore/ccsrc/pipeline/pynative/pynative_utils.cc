@@ -295,17 +295,11 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   const auto &input_name = input_names_vec[input_index];
   if (v->isa<tensor::Tensor>()) {
     auto tensor = v->cast<tensor::TensorPtr>();
-    if (tensor->data().const_data() == nullptr) {
+    if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {
       return false;
     }
   }
   (void)op_prim->AddAttr(input_name, v);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (op_prim->name() == "UnsortedSegmentSum" && backend == kAscendDevice) {
-    op_prim->set_name("UnsortedSegmentSumD");
-  }
   return true;
 }
 
@@ -486,8 +480,8 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
   if (reg_info == nullptr) {
     return false;
   } else {
-    for (auto &iter : reg_info->GetInputAttrInfoMap()) {
-      (void)input_to_attr_ptr->insert(iter.second.GetInputIndex());
+    for (auto &iter : reg_info->input_attr_map()) {
+      (void)input_to_attr_ptr->insert(iter.first);
     }
   }
   return !input_to_attr_ptr->empty();

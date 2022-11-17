@@ -106,7 +106,7 @@ def test_ascend_cell_dump():
         # make sure 2 relu dump files are generated with correct name prefix
         time.sleep(5)
         assert len(os.listdir(dump_file_path)) == 3
-        relu_file_name = "ReLU.Default_network-WithLossCell__backbone-ReluReduceMeanDenseRelu_ReLU-op*.*.*.*"
+        relu_file_name = "Relu.Default_network-WithLossCell__backbone-ReluReduceMeanDenseRelu_Relu-op*.*.*.*"
         relu_file1 = glob.glob(os.path.join(dump_file_path, relu_file_name))[0]
         relu_file2 = glob.glob(os.path.join(dump_file_path, relu_file_name))[1]
         assert relu_file1
@@ -213,7 +213,8 @@ def test_ascend_cell_dump_set_enable_false():
 
         # make sure directory has dumped files with enabled=True
         assert len(os.listdir(dump_file_path)) == 1
-        mean_file_name = "ReduceMean.Default_network-WithLossCell__backbone-ReluReduceMeanDenseRelu_ReduceMean-*.*.*.*"
+        mean_file_name = "ReduceMeanD.Default_network-WithLossCell__backbone" \
+                         "-ReluReduceMeanDenseRelu_ReduceMeanD-*.*.*.*"
         mean_file = glob.glob(os.path.join(dump_file_path, mean_file_name))[0]
         assert mean_file
         del os.environ['MINDSPORE_DUMP_CONFIG']

@@ -121,6 +121,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/kernel/kernel.cc
         ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
         ${CCSRC_DIR}/kernel/oplib/oplib.cc
+        ${CCSRC_DIR}/kernel/oplib/super_bar.cc
         ${CCSRC_DIR}/common/debug/anf_dump_utils.cc
         ${CCSRC_DIR}/common/debug/anf_ir_dump.cc
         ${CCSRC_DIR}/common/debug/common.cc

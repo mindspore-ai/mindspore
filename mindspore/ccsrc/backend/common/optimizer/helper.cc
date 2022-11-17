@@ -257,12 +257,13 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
   return tensor;
 }
 
-tensor::TensorPtr CreateEmptyTupleTensor() {
+tensor::TensorPtr CreateEmptyTupleTensor(const ValueTuplePtr &value_tuple) {
   std::vector<int64_t> tensor_shape = {0};
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kInt64->type_id(), tensor_shape);
   MS_EXCEPTION_IF_NULL(tensor);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, kInt64};
   tensor->set_device_info(device_info);
+  tensor->set_user_data(kTensorValueIsEmpty, value_tuple);
   return tensor;
 }
 
@@ -270,7 +271,7 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
   MS_EXCEPTION_IF_NULL(value_tuple);
   tensor::TensorPtr tensor = nullptr;
   if (value_tuple->value().empty()) {
-    tensor = CreateEmptyTupleTensor();
+    tensor = CreateEmptyTupleTensor(value_tuple);
     return tensor;
   }
   ValuePtr v = *(value_tuple->value().begin());

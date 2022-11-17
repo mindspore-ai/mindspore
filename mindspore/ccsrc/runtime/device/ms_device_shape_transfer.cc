@@ -141,12 +141,12 @@ RangePair PaddingRangeTo5dDefault(const RangePair &ori_range) {
 RangePair PaddingRangeTo5D(const RangePair &ori_range, const std::string &padding_str = {""}) {
   std::vector<Axis5D> padding_axis;
   StringToAxisVector5D(padding_str, &padding_axis);
-  if (padding_axis.empty() || ori_range.size() != padding_axis.size()) {
+  if (padding_axis.empty() || ori_range.size() > padding_axis.size()) {
     return PaddingRangeTo5dDefault(ori_range);
   }
 
   RangePair dst_range(kNcdhw, std::pair<int64_t, int64_t>(1, 1));
-  for (size_t index = 0; index < padding_axis.size(); index++) {
+  for (size_t index = 0; index < ori_range.size(); index++) {
     dst_range[padding_axis[index]] = ori_range[index];
   }
   return dst_range;
@@ -180,12 +180,12 @@ RangePair PaddingRangeTo4dDefault(const RangePair &ori_range) {
 RangePair PaddingRangeTo4D(const RangePair &ori_range, const std::string &padding_str = {""}) {
   std::vector<Axis> padding_axis;
   StringToAxisVector4D(padding_str, &padding_axis);
-  if (padding_axis.empty() || ori_range.size() != padding_axis.size()) {
+  if (padding_axis.empty() || ori_range.size() > padding_axis.size()) {
     return PaddingRangeTo4dDefault(ori_range);
   }
 
   RangePair dst_range(kNchwDims, std::pair<int64_t, int64_t>(1, 1));
-  for (size_t index = 0; index < padding_axis.size(); index++) {
+  for (size_t index = 0; index < ori_range.size(); index++) {
     dst_range[padding_axis[index]] = ori_range[index];
   }
   return dst_range;

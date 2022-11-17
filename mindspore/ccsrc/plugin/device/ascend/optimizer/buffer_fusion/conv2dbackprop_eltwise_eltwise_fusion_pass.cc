@@ -46,7 +46,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   if (!double_in_eltwise_input->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(double_in_eltwise_input)) {
     return;
   }
-  if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input, prim::kPrimConv2DBackpropInput) &&
+  if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input, prim::kPrimConv2DBackpropInputD) &&
       !fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input)) {
     (void)record.insert(double_in_eltwise_input);
     candidate_fusion->push_back(record);
@@ -57,7 +57,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
     if (!double_in_eltwise_input_1->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(double_in_eltwise_input_1)) {
       return;
     }
-    if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input_1, prim::kPrimConv2DBackpropInput) &&
+    if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input_1, prim::kPrimConv2DBackpropInputD) &&
         !fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input_1)) {
       (void)record.insert(double_in_eltwise_input_1);
       candidate_fusion->push_back(record);

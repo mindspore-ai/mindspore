@@ -120,7 +120,7 @@ CNodePtr ConfusionMulGradFusion::CreateFusionNode(const FuncGraphPtr &graph, con
 
 const BaseRef ConfusionMulGradFusion::DefinePattern() const {
   VectorRef mul1({prim::kPrimMul, input3_, input2_});
-  VectorRef reduce_sum({prim::kPrimReduceSum, mul1});
+  VectorRef reduce_sum({prim::kPrimReduceSumD, mul1});
   return reduce_sum;
 }
 

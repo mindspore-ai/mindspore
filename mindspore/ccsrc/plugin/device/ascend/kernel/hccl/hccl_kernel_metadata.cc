@@ -40,11 +40,11 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   if (parallel_context_instance->enable_parallel_optimizer() && op_name == kBroadcast) {
     return kOpFormat_DEFAULT;
   }
-  if (op_name == kReceive || op_name == kHcomSend || op_name == kAllToAllv) {
+  if (op_name == kReceiveOpName || op_name == kHcomSendOpName || op_name == kAllToAllvOpName) {
     return kOpFormat_DEFAULT;
   }
   auto format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, index);
-  if (op_name != kReduceScatter && op_name != kAllGatherOpName) {
+  if (op_name != kReduceScatterOpName && op_name != kAllGatherOpName) {
     return format;
   }
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
@@ -69,13 +69,14 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (op_name != kAllGather && op_name != kAllReduce && op_name != kBroadcast && op_name != kReduceScatter &&
-      op_name != kHcomSend && op_name != kReceive && op_name != kAllToAllv) {
+  if (op_name != kAllGatherOpName && op_name != kAllReduceOpName && op_name != kBroadcastOpName &&
+      op_name != kReduceScatterOpName && op_name != kHcomSendOpName && op_name != kReceiveOpName &&
+      op_name != kAllToAllvOpName) {
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;
   }
   TypeId recv_type;
-  if (op_name == kReceive) {
+  if (op_name == kReceiveOpName) {
     if (!HcomUtil::GetHcomReceiveType(kernel_node, &recv_type)) {
       MS_LOG(EXCEPTION) << "GetHcomReceiveType fail!";
     }
@@ -97,7 +98,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_format.emplace_back(GetKernelFormat(kernel_node, output_index));
-      if (op_name == kReceive) {
+      if (op_name == kReceiveOpName) {
         outputs_type.push_back(recv_type);
       } else {
         outputs_type.push_back(type);

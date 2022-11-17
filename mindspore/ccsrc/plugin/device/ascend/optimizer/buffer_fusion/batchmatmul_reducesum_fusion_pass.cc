@@ -85,7 +85,7 @@ void BatchMatmulReduceSumFusionPass::MatchSingleFusionPattern(const session::Ker
 
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::COMMREDUCE &&
-        common::AnfAlgo::GetCNodeName(cnode) == kReduceSumOpName) {
+        common::AnfAlgo::GetCNodeName(cnode) == kReduceSumDOpName) {
       MatchBatchMatmulReduceSum(cnode, kernel_graph, candidate_fusion);
     }
   }

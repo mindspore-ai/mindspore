@@ -68,7 +68,7 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
                       << "] of node " + slice_grad->DebugString() + " is not equal to " << kSliceGradInputTensorNum
                       << " or " << kSliceGradCangjieInputTensorNum << trace::DumpSourceLines(node);
   }
-  std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadOpName)),
+  std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadDOpName)),
                                         slice_grad->input(kIndex1)};
   auto pad = NewCNode(pad_inputs, graph);
   MS_EXCEPTION_IF_NULL(pad);

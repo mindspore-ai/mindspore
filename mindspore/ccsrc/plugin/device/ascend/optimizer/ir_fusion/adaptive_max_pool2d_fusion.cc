@@ -87,7 +87,7 @@ void SetNodeAttr(const AnfNodePtr &node, const std::vector<int64_t> &height_attr
 
 const BaseRef AdaptiveMaxPool2DFusion::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
-  return VectorRef({prim::kPrimAdaptiveMaxPool2D, X});
+  return VectorRef({prim::kPrimAdaptiveMaxPool2d, X});
 }
 
 const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,

@@ -27,7 +27,7 @@ class ConfusionSoftmaxGradRule : public PatternProcessPass {
       : PatternProcessPass("confusion_softmax_grad_rule", multigraph) {
     input0_ = std::make_shared<Var>();
     input1_ = std::make_shared<Var>();
-    reduce_sum_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimReduceSum->name()));
+    reduce_sum_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimReduceSumD->name()));
   }
   ~ConfusionSoftmaxGradRule() override = default;
   const BaseRef DefinePattern() const override;

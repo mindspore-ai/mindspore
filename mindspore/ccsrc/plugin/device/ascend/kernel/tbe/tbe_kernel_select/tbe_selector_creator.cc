@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_selector_creator.h"
 
 #include <map>
+#include <algorithm>
 #include "kernel/oplib/opinfo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/agnostic_selector/tbe_kernel_agnostic_selector.h"
@@ -62,7 +63,26 @@ const std::map<OpPattern, GetSupportedFormatDTypeFunc> selector_funcs = {
   {kBroadcastPattern, GetBroadcastSupportedFormatDType},
   {kReducePattern, GetReduceSupportedFormatDType},
   {kDynamicFormatPattern, GetDynamicSupportedFormatDType}};
+
+bool IsOpKernelEnable(const OpInfoPtr &op_info, bool is_dynamic_impl) {
+  MS_EXCEPTION_IF_NULL(op_info);
+  for (const auto &op_input_info : op_info->inputs_ptr()) {
+    auto &unknown_shape_formats = op_input_info->unknown_shape_formats();
+    if (is_dynamic_impl && !unknown_shape_formats.empty() &&
+        !std::any_of(unknown_shape_formats.begin(), unknown_shape_formats.end(),
+                     [](const std::string &format) { return format.empty(); })) {
+      return true;
+    }
+    auto formats = op_input_info->formats();
+    if (!is_dynamic_impl && !formats.empty() &&
+        !std::any_of(formats.begin(), formats.end(), [](const std::string &format) { return format.empty(); })) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
+
 GetSupportedFormatDTypeFunc GetSelectorFunc(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(cnode);
@@ -70,6 +90,10 @@ GetSupportedFormatDTypeFunc GetSelectorFunc(const CNodePtr &cnode) {
     return nullptr;
   }
   auto pattern = op_info->op_pattern();
+  auto is_dynamic_impl = IsKernelDynamicImpl(cnode);
+  if (IsOpKernelEnable(op_info, is_dynamic_impl)) {
+    pattern = kCommonPattern;
+  }
   auto iter = selector_funcs.find(pattern);
   return iter == selector_funcs.end() ? nullptr : iter->second;
 }

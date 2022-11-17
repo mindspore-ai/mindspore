@@ -374,7 +374,11 @@ void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
-  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format, d_type);
+  auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, real_input_index);
+  MS_EXCEPTION_IF_NULL(input_node_with_index.first);
+  if (!input_node_with_index.first->isa<ValueNode>()) {
+    (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format, d_type);
+  }
 }
 bool SelectTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
                                                    nlohmann::json *attrs_json) {

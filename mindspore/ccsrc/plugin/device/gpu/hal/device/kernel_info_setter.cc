@@ -19,6 +19,7 @@
 #include <memory>
 #include <tuple>
 #include <string>
+#include <set>
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -51,7 +52,7 @@ static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentSumOpNam
                                                         kInstanceNormGradOpName,
                                                         kRandomChoiceWithMaskOpName,
                                                         kUniformCandidateSamplerOpName,
-                                                        kApplyAdamOpName,
+                                                        kAdamOpName,
                                                         kSplitOpName,
                                                         kApplyAdagradDAOpName,
                                                         kApplyRMSPropOpName,

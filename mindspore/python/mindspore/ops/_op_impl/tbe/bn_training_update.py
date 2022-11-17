@@ -25,7 +25,6 @@ bn_training_update_op_info = TBERegOp("BNTrainingUpdate") \
     .partial_flag(True) \
     .attr("factor", "optional", "float", "all") \
     .attr("epsilon", "optional", "float", "all") \
-    .attr("isRef", "optional", "bool", "all", "true") \
     .input(0, "x", False, "required", "all", reshape_type="NC") \
     .input(1, "sum", False, "required", "all") \
     .input(2, "square_sum", False, "required", "all") \

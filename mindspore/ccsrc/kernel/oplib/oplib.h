@@ -32,24 +32,26 @@ class BACKEND_EXPORT OpLib {
   OpLib() = default;
   virtual ~OpLib() = default;
   static bool RegOp(const std::string &json_string, const std::string &impl_path);
+  static bool LoadSuperBarConfig(const std::string &suber_bar_config);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type,
                                         bool is_dynamic_shape = false);
 
  private:
-  static std::multimap<std::string, std::shared_ptr<OpInfo>> &GetOpInfoMap();
+  static std::map<mindspore::kernel::OpImplyType, std::map<std::string, std::shared_ptr<OpInfo>>> &GetOpInfoMap();
 
   static bool RegOpFromLocalInfo();
-  static bool DecodeOpInfo(const nlohmann::json &obj, const OpImplyType &imply_type, const std::string &impl_path);
+  static std::shared_ptr<OpInfo> DecodeOpInfo(const nlohmann::json &obj, const OpImplyType &imply_type,
+                                              const std::string &impl_path);
   static bool DecodeAttr(const nlohmann::json &obj, const OpImplyType &imply_type,
                          const std::shared_ptr<OpInfo> &op_info);
   static bool DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::shared_ptr<OpIOInfo> &op_io,
                                 size_t index);
   static void DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info);
-  static void DecodeAKGSpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info);
-  static bool DecodeInputOutput(const nlohmann::json &obj, const OpImplyType &imply_type, const OpIOType &io_type,
+  static bool DecodeInputOutput(const nlohmann::json &obj, OpImplyType imply_type, bool is_input,
                                 const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format);
   static bool GetRefInfo(const std::shared_ptr<OpInfo> &op_info);
-  static bool CheckRepetition(const std::shared_ptr<OpInfo> &op_info);
+
+  friend class OpInfoUtils;
 };
 }  // namespace kernel
 }  // namespace mindspore

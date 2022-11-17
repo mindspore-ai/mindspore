@@ -19,6 +19,7 @@
 #include <vector>
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "plugin/device/ascend/optimizer/create_node_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
@@ -42,6 +43,8 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
   std::vector<AnfNodePtr> transpose_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimTranspose->name());
   transpose_inputs.push_back(NewValueNode(prim));
+  auto perm = std::vector<int64_t>{1, 0};
+  auto perm_value_input = CreatePermValueNode(func_graph, perm);
 
   if (op_name == kBasicLSTMCellInputGradOpName) {
     auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 1);
@@ -49,10 +52,13 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
     if (origin_shape.size() > 1) {
       auto dst_shape = {origin_shape[1], origin_shape[0]};
       auto is_dynamic = IsDynamic(dst_shape);
-
       transpose_inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 1));
+      transpose_inputs.push_back(perm_value_input);
       CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
       MS_EXCEPTION_IF_NULL(transpose);
+      std::vector<std::string> transpose_input_names{"x", "perm"};
+      common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(transpose_input_names), transpose);
+
       if (is_dynamic) {
         auto shape = {origin_shape[1], origin_shape[0]};
         auto max_shape = common::AnfAlgo::GetInputMaxShape(cnode, 1);
@@ -69,7 +75,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
       } else {
         common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
       }
-      common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
+      transpose = CreateNodeHelper::CreateNodeWithCheck(transpose)->cast<CNodePtr>();
       common::AnfAlgo::SetNodeInput(cnode, transpose, 1);
     }
     if (kernel_graph == nullptr) {
@@ -86,8 +92,11 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
       if (origin_shape.size() > 1 && output_idx == 0) {
         auto dtype = common::AnfAlgo::GetOutputInferDataType(cnode, output_idx);
         transpose_inputs.push_back(tuple_getitem);
+        transpose_inputs.push_back(perm_value_input);
         CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
         MS_EXCEPTION_IF_NULL(transpose);
+        std::vector<std::string> transpose_input_names{"x", "perm"};
+        common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(transpose_input_names), transpose);
         if (IsDynamic(origin_shape)) {
           auto dst_shape = {origin_shape[0], origin_shape[1]};
           auto min_shape = common::AnfAlgo::GetOutputMinShape(cnode, output_idx);
@@ -105,7 +114,6 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
           auto dst_shape = {origin_shape[0], origin_shape[1]};
           common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {dst_shape}, transpose.get());
         }
-        common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
         make_tuple_inputs.push_back(transpose);
       } else {
         make_tuple_inputs.push_back(tuple_getitem);

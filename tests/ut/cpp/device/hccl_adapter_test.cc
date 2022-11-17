@@ -29,7 +29,7 @@ class TestHcclAdapter : public UT::Common {
   CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> inputs,
                                const std::vector<int64_t> &send_rank_ids, const std::vector<int64_t> &recv_rank_ids) {
     MS_EXCEPTION_IF_NULL(graph);
-    std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
+    std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
     all_to_all_v_input.insert(all_to_all_v_input.end(), inputs.begin(), inputs.end());
     auto all_to_all_v = graph->NewCNode(all_to_all_v_input);
     MS_EXCEPTION_IF_NULL(all_to_all_v);

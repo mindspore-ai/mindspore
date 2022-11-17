@@ -37,6 +37,8 @@ class MIND_API ReduceSum : public Reduce {
   /// \brief Init.
   void Init() const {}
 };
+abstract::AbstractBasePtr ReduceArithmeticInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

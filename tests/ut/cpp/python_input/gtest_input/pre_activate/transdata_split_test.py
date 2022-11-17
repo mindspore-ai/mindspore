@@ -24,6 +24,7 @@ four2five = Primitive('Four2Five')
 five2four = Primitive('Five2Four')
 transdata = Primitive("TransData")
 transpose = Primitive("Transpose")
+transposeD = Primitive("TransposeD")
 Transpose = P.Transpose()
 
 
@@ -48,9 +49,9 @@ def test_transdata_split_fraz_nchw(tag):
 
     @fns
     def after(x):
-        res = transpose(x)
+        res = transposeD(x)
         output = transdata(res)
-        output = transpose(output)
+        output = transposeD(output)
         res = make_tuple(output)
         return res
 
@@ -67,9 +68,9 @@ def test_transdata_split_nchw_fraz(tag):
 
     @fns
     def after(x):
-        res = transpose(x)
+        res = transposeD(x)
         output = transdata(res)
-        output = transpose(output)
+        output = transposeD(output)
         res = make_tuple(output)
         return res
 

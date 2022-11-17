@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <set>
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -48,7 +49,7 @@ static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpNam
                                                         kDataFormatDimMapOpName,
                                                         kSTFTOpName,
                                                         kRandomChoiceWithMaskOpName,
-                                                        kApplyAdamOpName,
+                                                        kAdamOpName,
                                                         kUniformCandidateSamplerOpName,
                                                         kSplitOpName,
                                                         kLinSpaceOpName,

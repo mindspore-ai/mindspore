@@ -99,7 +99,7 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
 CNodePtr SplitFission::CreateSplitVNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
-  std::vector<AnfNodePtr> splitv_inputs{NewValueNode(std::make_shared<Primitive>(kSplitVOpName)), input_node};
+  std::vector<AnfNodePtr> splitv_inputs{NewValueNode(std::make_shared<Primitive>(kSplitVDOpName)), input_node};
   CNodePtr splitv = NewCNode(splitv_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(splitv);
   splitv->set_scope(input_node->scope());
@@ -182,7 +182,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
 
 const BaseRef SplitFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  auto split_prim = std::make_shared<Primitive>(kSplitOpName);
+  auto split_prim = std::make_shared<Primitive>(kSplitDOpName);
   return VectorRef({split_prim, Xs});
 }
 

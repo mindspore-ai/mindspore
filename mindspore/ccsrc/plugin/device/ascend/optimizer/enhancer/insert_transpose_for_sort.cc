@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/enhancer/insert_transpose_for_sort.h"
 #include <algorithm>
 #include <string>
+#include "plugin/device/ascend/optimizer/create_node_helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,8 +42,8 @@ abstract::BaseShapePtr InferTransposeOutputShape(const abstract::BaseShapePtr &s
   ShapeVector out_shape;
   ShapeVector out_shape_max;
   ShapeVector out_shape_min;
-  for (size_t i = 0; i < perm.size(); i++) {
-    auto idx = LongToSize(perm[i]);
+  for (int64_t i : perm) {
+    auto idx = LongToSize(i);
     out_shape.push_back(in_shape[idx]);
     if (!in_shape_min.empty() && !in_shape_max.empty()) {
       out_shape_max.push_back(in_shape_max[idx]);
@@ -65,15 +66,16 @@ CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, co
   auto transpose_out_shape = InferTransposeOutputShape(in_shape, perm);
 
   auto ori_out_types = common::AnfAlgo::GetAllOutputInferDataTypes(node);
-
+  auto perm_value_input = CreatePermValueNode(func_graph, perm);
   std::vector<AnfNodePtr> trans_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimTranspose->name()))};
-  trans_inputs.push_back(in_node);
+  (void)trans_inputs.push_back(in_node);
+  (void)trans_inputs.push_back(perm_value_input);
   auto transpose = func_graph->NewCNode(trans_inputs);
   MS_EXCEPTION_IF_NULL(transpose);
-  common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), transpose);
   common::AnfAlgo::SetOutputTypeAndDetailShape({type}, {transpose_out_shape}, transpose.get());
-  std::vector<std::string> transpose_input_names{"input_x", "input_perm"};
+  std::vector<std::string> transpose_input_names{"x", "perm"};
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(transpose_input_names), transpose);
+  transpose = CreateNodeHelper::CreateNodeWithCheck(transpose)->cast<CNodePtr>();
   new_inputs.push_back(transpose);
 
   CNodePtr new_cnode = nullptr;
@@ -113,8 +115,10 @@ AnfNodePtr InsertForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);
     std::vector<AnfNodePtr> transpose_inputs;
     auto prim = std::make_shared<Primitive>(prim::kPrimTranspose->name());
-    transpose_inputs.push_back(NewValueNode(prim));
-    transpose_inputs.push_back(tuple_getitem);
+    auto perm_value_input = CreatePermValueNode(func_graph, perm);
+    (void)transpose_inputs.push_back(NewValueNode(prim));
+    (void)transpose_inputs.push_back(tuple_getitem);
+    (void)transpose_inputs.push_back(perm_value_input);
 
     auto shape = common::AnfAlgo::GetOutputDetailShape(node, output_idx);
     auto type = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
@@ -122,10 +126,10 @@ AnfNodePtr InsertForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_
 
     CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
     MS_EXCEPTION_IF_NULL(transpose);
-    common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), transpose);
     common::AnfAlgo::SetOutputTypeAndDetailShape({type}, {transpose_out_shape}, transpose.get());
-    std::vector<std::string> transpose_input_names{"input_x", "input_perm"};
+    std::vector<std::string> transpose_input_names{"x", "perm"};
     common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(transpose_input_names), transpose);
+    transpose = CreateNodeHelper::CreateNodeWithCheck(transpose)->cast<CNodePtr>();
     tuple_inputs.push_back(transpose);
   }
   auto make_tuple = func_graph->NewCNode(tuple_inputs);

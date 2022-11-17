@@ -79,7 +79,7 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
 
 const BaseRef DiagFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  auto diag_prim = std::make_shared<Primitive>(prim::kPrimDiag->name());
+  auto diag_prim = std::make_shared<Primitive>(prim::kPrimDiagD->name());
   return VectorRef({diag_prim, Xs});
 }
 
@@ -106,7 +106,7 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   if (input_shape.size() > kDiagInputMaxDim) {
     MS_EXCEPTION(ValueError) << "For Diag, rank of input should be less than 5, but got: " << input_shape.size();
   }
-  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiag->name()))};
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiagD->name()))};
   auto assist_const = CreateAssistNode(graph, diag_cnode, input_shape);
   (void)new_inputs.insert(new_inputs.cend(), diag_cnode->inputs().cbegin() + 1, diag_cnode->inputs().cend());
   new_inputs.push_back(assist_const);

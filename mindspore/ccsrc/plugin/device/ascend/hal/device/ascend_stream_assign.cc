@@ -2962,8 +2962,9 @@ void AscendStreamAssign::InsertEventForMicroBatchIndependent(const NotNull<Kerne
 
   auto &exec_order = graph_ptr->execution_order();
   for (auto &cnode : exec_order) {
-    if (common::AnfAlgo::GetCNodeName(cnode) != kDropoutDoMaskOpName &&
-        common::AnfAlgo::GetCNodeName(cnode) != kDropoutDoMaskV3OpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) != kDropOutDoMaskOpName &&
+        common::AnfAlgo::GetCNodeName(cnode) != kDropOutDoMaskV3OpName &&
+        common::AnfAlgo::GetCNodeName(cnode) != kDropOutDoMaskV3DOpName) {
       continue;
     }
     if (!cnode->HasPrimalAttr(kAttrMicro)) {
@@ -3001,7 +3002,8 @@ void AscendStreamAssign::InsertEventForMicroBatchIndependent(const NotNull<Kerne
   std::vector<CNodePtr> new_exec_order;
   for (auto &cnode : exec_order) {
     auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
-    if (cnode_name == kDropoutDoMaskOpName || cnode_name == kDropoutDoMaskV3OpName) {
+    if (cnode_name == kDropOutDoMaskOpName || cnode_name == kDropOutDoMaskV3OpName ||
+        cnode_name == kDropOutDoMaskV3DOpName) {
       auto send_iter = node_send_map.find(cnode);
       if (send_iter != node_send_map.end()) {
         new_exec_order.push_back(cnode);

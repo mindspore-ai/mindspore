@@ -97,6 +97,8 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
   {FusionType::BATCH_MATMUL, "BatchMatmul"},
   {FusionType::CONFUSION_TRANSPOSE, "confusiontranspose"},
   {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
+  {FusionType::TRANSDATA, "Transdata"},
+  {FusionType::NORM, "Norm"},
   {FusionType::UNKNOWN_FUSION_TYPE, ""}};
 
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
@@ -507,10 +509,6 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
 
   auto imply_type = op_info_ptr->imply_type();
   builder->SetProcessor(processor);
-  std::string fusion_name = op_info_ptr->fusion_type();
-  auto fusion_type = GetFusionTypeByName(fusion_name);
-  builder->SetFusionType(fusion_type);
-
   if (imply_type == kImplyAKG) {
     builder->SetKernelType(AKG_KERNEL);
   } else if (imply_type == kImplyGPU) {

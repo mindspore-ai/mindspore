@@ -56,6 +56,40 @@
 #include "ops/max_pool_with_argmax.h"
 #include "ops/mirror_pad.h"
 #include "ops/opaquePredicate.h"
+#include "ops/arg_min_v2.h"
+#include "ops/celu.h"
+#include "ops/cumsum.h"
+#include "ops/dropout_do_mask.h"
+#include "ops/grad/hswish_grad.h"
+#include "ops/index_add.h"
+#include "ops/prelu.h"
+#include "ops/reduce_sum.h"
+#include "ops/relu.h"
+#include "ops/grad/resize_bilinear_grad.h"
+#include "ops/bce_with_logits_loss.h"
+#include "ops/softmax.h"
+#include "ops/split_v.h"
+#include "ops/sparse_apply_ftrl.h"
+#include "ops/adam.h"
+#include "ops/grad/acos_grad.h"
+#include "ops/apply_adadelta.h"
+#include "ops/apply_adagrad.h"
+#include "ops/apply_adagrad_v2.h"
+#include "ops/apply_ada_max.h"
+#include "ops/apply_add_sign.h"
+#include "ops/apply_power_sign_d.h"
+#include "ops/fast_gelu.h"
+#include "ops/grad/fast_gelu_grad.h"
+#include "ops/gelu.h"
+#include "ops/hswish.h"
+#include "ops/lars_v2_update.h"
+#include "ops/log_softmax.h"
+#include "ops/grad/relu6_grad.h"
+#include "ops/selu.h"
+#include "ops/gather.h"
+#include "ops/split.h"
+#include "ops/grad/gelu_grad.h"
+#include "ops/iou.h"
 
 namespace mindspore {
 namespace abstract {
@@ -106,7 +140,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kAffineGrid = prim::kPrimAffineGrid->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
-  static const auto &kTransposeNOD = prim::kPrimTransposeNOD->name();
+  static const auto &kTranspose = prim::kPrimTranspose->name();
   static const auto &kResizeLinear1D = prim::kPrimResizeLinear1D->name();
   static const auto &kSegmentMax = prim::kPrimSegmentMax->name();
   static const auto &kSegmentMin = prim::kPrimSegmentMin->name();
@@ -184,11 +218,12 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kDynamicBroadcastTo, ShapeSet{1}},
                                          {kNonDeterministicInts, ShapeSet{0}},
                                          {prim::kPrimArgminV2->name(), ShapeSet{1}},
+                                         {prim::kPrimArgMin->name(), ShapeSet{1}},
                                          {kAffineGrid, ShapeSet{1}},
                                          {prim::kPrimInplaceUpdateV2->name(), ShapeSet{1}},
                                          {kTruncatedNormal, ShapeSet{0}},
                                          {kRaggedRange, ShapeSet{0, 1, 2}},
-                                         {kTransposeNOD, ShapeSet{1}},
+                                         {kTranspose, ShapeSet{1}},
                                          {kAdaptiveAvgPool3D, ShapeSet{1}},
                                          {kAdaptiveAvgPool3DGrad, ShapeSet{1}},
                                          {kResizeLinear1D, ShapeSet{1}},
@@ -204,6 +239,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kStandardLaplace, ShapeSet{0}},
                                          {kCropAndResizeGradImage, ShapeSet{3}},
                                          {prim::kPrimCumSum->name(), ShapeSet{1}},
+                                         {prim::kPrimCumsum->name(), ShapeSet{1}},
                                          {kSetSize, ShapeSet{2}},
                                          {kDynamicStitch, ShapeSet{0}},
                                          {kSparseTensorDenseMatmul, ShapeSet{2}},
@@ -368,6 +404,44 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
   using R = PrimitiveEvalImplMap::mapped_type;
   static PrimitiveEvalImplMap prim_backend_eval_implement_map = {
+    {prim::kPrimAcosGrad, R{ops::ACosGradInfer, nullptr, true}},
+    {prim::kPrimApplyAdadeltaD, R{ops::ApplyAdadeltaInfer, nullptr, true}},
+    {prim::kPrimApplyAdagradD, R{ops::ApplyAdagradInferFunc, nullptr, true}},
+    {prim::kPrimApplyAdagradV2D, R{ops::ApplyAdagradV2Infer, nullptr, true}},
+    {prim::kPrimApplyAdaMaxD, R{ops::ApplyAdaMaxInfer, nullptr, true}},
+    {prim::kPrimApplyAddSignD, R{ops::ApplyAddSignInfer, nullptr, true}},
+    {prim::kPrimApplyPowerSignD, R{ops::ApplyPowerSignDInfer, nullptr, true}},
+    {prim::kPrimFastGelu, R{ops::FastGeLUInfer, nullptr, true}},
+    {prim::kPrimFastGeluGrad, R{ops::FastGeLUGradInfer, nullptr, true}},
+    {prim::kPrimGelu, R{ops::GeLUInfer, nullptr, true}},
+    {prim::kPrimHardSwish, R{ops::HSwishInfer, nullptr, true}},
+    {prim::kPrimLarsV2Update, R{ops::LARSUpdateInfer, nullptr, true}},
+    {prim::kPrimLogSoftmaxV2, R{ops::LogSoftmaxInfer, nullptr, true}},
+    {prim::kPrimRelu6Grad, R{ops::ReLU6GradInferFunc, nullptr, true}},
+    {prim::kPrimSelu, R{ops::SeLUInfer, nullptr, true}},
+    {prim::kPrimGeluGrad, R{ops::GeLUGradInfer, nullptr, true}},
+    {prim::kPrimIou, R{ops::IouInferFunc, nullptr, true}},
+    {prim::kPrimSplitD, R{ops::SplitInfer, nullptr, true}},
+    {prim::kPrimArgMin, R{ops::ArgminV2Infer, nullptr, true}},
+    {prim::kPrimCeluV2, R{ops::CeLUInfer, nullptr, true}},
+    {prim::kPrimCumsum, R{ops::CumSumInfer, nullptr, true}},
+    {prim::kPrimDropOutDoMask, R{ops::DropoutDoMaskInfer, nullptr, true}},
+    {prim::kPrimGatherV2, R{ops::GatherInfer, nullptr, true}},
+    {prim::kPrimHardSwishGrad, R{ops::HSwishGradInfer, nullptr, true}},
+    {prim::kPrimInplaceIndexAdd, R{ops::IndexAddInfer, nullptr, true}},
+    {prim::kPrimPRelu, R{ops::PReLUInfer, nullptr, true}},
+    {prim::kPrimReduceSumD, R{ops::ReduceArithmeticInferFunc, nullptr, true}},
+    {prim::kPrimReduceMeanD, R{ops::ReduceArithmeticInferFunc, nullptr, true}},
+    {prim::kPrimRelu, R{ops::ReLUInferFunc, nullptr, true}},
+    {prim::kPrimResizeBilinearV2Grad, R{ops::ResizeBilinearGradInfer, nullptr, true}},
+    {prim::kPrimSigmoidCrossEntropyWithLogitsV2, R{ops::BCEWithLogitsLossInfer, nullptr, true}},
+    {prim::kPrimSplitVD, R{ops::SplitVInfer, nullptr, true}},
+    {prim::kPrimSparseApplyFtrlD, R{ops::SparseApplyFtrlInfer, nullptr, true}},
+    {prim::kPrimSoftmaxV2, R{ops::SoftmaxInfer, nullptr, true}},
+    {prim::kPrimPadD, R{InferImplPad, nullptr, true}},
+    {prim::kPrimConcatD, R{InferImplConcat, nullptr, true}},
+    {prim::kPrimPack, R{ops::StackInfer, nullptr, true}},
+    {prim::kPrimApplyAdamD, R{ops::ApplyAdamDInfer, nullptr, true}},
     {prim::kPrimMul, R{ops::MulInfer, nullptr, true}},
     {prim::kPrimMod, R{ops::ModInfer, nullptr, true}},
     {prim::kPrimAdd, R{ops::AddInfer, nullptr, false}},
@@ -398,7 +472,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimDiv, R{InferImplDiv, nullptr, true}},
     {prim::kPrimRealDiv, R{ops::RealDivInfer, nullptr, false}},
     {prim::kPrimTranspose, R{InferImplTranspose, nullptr, true}},
-    {prim::kPrimTransposeNOD, R{InferImplTranspose, nullptr, true}},
     {prim::kPrimStridedSlice, R{ops::StridedSliceInfer, nullptr, true}},
     {prim::kPrimSlice, R{ops::SliceInfer, nullptr, true}},
     {prim::kPrimSliceGrad, R{ops::SliceGradInfer, nullptr, true}},

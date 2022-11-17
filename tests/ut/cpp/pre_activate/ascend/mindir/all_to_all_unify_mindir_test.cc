@@ -70,10 +70,10 @@ TEST_F(TestAllToAllUnifyMindIr, test_all_to_all) {
     if (IsPrimitiveCNode(n, prim::kPrimAllToAllv)) {
       has_all_to_all_v_node = true;
     }
-    if (IsPrimitiveCNode(n, prim::kPrimConcat)) {
+    if (IsPrimitiveCNode(n, prim::kPrimConcatD)) {
       has_concat_node = true;
     }
-    if (IsPrimitiveCNode(n, prim::kPrimSplitV)) {
+    if (IsPrimitiveCNode(n, prim::kPrimSplitVD)) {
       has_split_v_node = true;
     }
   }

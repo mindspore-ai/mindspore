@@ -42,7 +42,6 @@ TEST_F(TestHWUnsortedSegmentSumFission, test_fission) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
   pm->AddPass(std::make_shared<opt::UnsortedSegmentSumDFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
@@ -63,7 +62,6 @@ TEST_F(TestHWUnsortedSegmentSumFission, test_no_fission) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
   pm->AddPass(std::make_shared<opt::UnsortedSegmentSumDFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);

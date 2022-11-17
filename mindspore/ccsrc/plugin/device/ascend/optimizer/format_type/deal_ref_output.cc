@@ -53,7 +53,8 @@ session::KernelWithIndex DealRefOutput::FindRefOriginNode(const AnfNodePtr &node
 
     // deal special (trans,cast,reshape) op and nop-node
     if (op_name == prim::kPrimCast->name() || op_name == prim::kPrimTranspose->name() ||
-        op_name == prim::kPrimReshape->name() || op_name == kTransDataOpName || common::AnfAlgo::IsNopNode(cnode)) {
+        op_name == prim::kPrimTransposeD->name() || op_name == prim::kPrimReshape->name() ||
+        op_name == kTransDataOpName || common::AnfAlgo::IsNopNode(cnode)) {
       AnfNodePtr next_node = cnode->input(1);
       return FindRefOriginNode(next_node);
     }

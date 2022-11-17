@@ -22,7 +22,7 @@
 namespace mindspore::opt {
 const BaseRef DiagPartFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  auto diag_apart_prim = std::make_shared<Primitive>(prim::kPrimDiagPart->name());
+  auto diag_apart_prim = std::make_shared<Primitive>(prim::kPrimDiagPartD->name());
   return VectorRef({diag_apart_prim, Xs});
 }
 
@@ -51,7 +51,7 @@ const AnfNodePtr DiagPartFission::Process(const FuncGraphPtr &func_graph, const 
   if (input_shape.size() > kDiagPartInputMaxDim) {
     MS_EXCEPTION(ValueError) << "For DiagPart, rank of input should be 2, 4, 6 or 8, but got: " << input_shape.size();
   }
-  std::vector<AnfNodePtr> new_node_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiagPart->name()))};
+  std::vector<AnfNodePtr> new_node_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiagPartD->name()))};
   auto assist_node = CreateAssistNode(func_graph, diag_part_cnode, out_shape);
   (void)new_node_inputs.insert(new_node_inputs.cend(), diag_part_cnode->inputs().cbegin() + 1,
                                diag_part_cnode->inputs().cend());

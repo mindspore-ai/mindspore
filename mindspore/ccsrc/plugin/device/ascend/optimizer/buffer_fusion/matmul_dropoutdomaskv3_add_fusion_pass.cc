@@ -30,7 +30,7 @@ void MatmulDropoutDoMaskV3AddFusionPass::MatchMatmulDropoutDoMaskV3Add(const CNo
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto add_input = cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(add_input);
-  if (!add_input->isa<CNode>() || !common::AnfAlgo::CheckPrimitiveType(add_input, prim::kPrimDropoutDoMaskV3)) {
+  if (!add_input->isa<CNode>() || !(common::AnfAlgo::CheckPrimitiveType(add_input, prim::kPrimDropOutDoMaskV3D))) {
     return;
   }
   auto dropout_do_mask_v3 = add_input->cast<CNodePtr>();

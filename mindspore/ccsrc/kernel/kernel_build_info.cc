@@ -106,18 +106,6 @@ std::string KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
   }
   return input_reshape_type_[input_index];
 }
-
-std::string KernelBuildInfo::GetInputValueDepend(size_t input_index) const {
-  if (input_value_depend_.empty()) {
-    return "";
-  }
-  if (input_index >= input_value_depend_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node size "
-                      << input_value_depend_.size();
-  }
-  return input_value_depend_[input_index];
-}
-
 std::string KernelBuildInfo::GetOutputReshapeType(size_t output_index) const {
   if (output_reshape_type_.empty()) {
     return "";
@@ -162,7 +150,7 @@ bool KernelBuildInfo::IsSimilarityKernelBuildInfo(const KernelBuildInfo &other) 
 }
 
 bool KernelBuildInfo::operator==(const KernelBuildInfo &other) const {
-  if (kernel_type_ != other.kernel_type_ || fusion_type_ != other.fusion_type_ || processor_ != other.processor_) {
+  if (kernel_type_ != other.kernel_type_ || processor_ != other.processor_) {
     return false;
   }
   return IsSimilarityKernelBuildInfo(other);
@@ -229,11 +217,6 @@ std::shared_ptr<KernelBuildInfo> KernelBuildInfo::KernelBuildInfoBuilder::Build(
 void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsReshapeType(const std::vector<std::string> &input_reshape_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->input_reshape_type_ = input_reshape_type;
-}
-
-void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsValueDepend(const std::vector<std::string> &input_value_depend) {
-  MS_EXCEPTION_IF_NULL(kernel_build_info_);
-  kernel_build_info_->input_value_depend_ = input_value_depend;
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputsReshapeType(

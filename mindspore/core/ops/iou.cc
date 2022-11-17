@@ -89,6 +89,15 @@ class IOUInfer : public abstract::OpInferBase {
   }
 };
 
+abstract::AbstractBasePtr IouInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  IOUInfer io_infer;
+  auto type = io_infer.InferType(primitive, input_args);
+  auto shape = io_infer.InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
 REGISTER_PRIMITIVE_OP_INFER_IMPL(IOU, prim::kPrimIOU, IOUInfer, false);
 }  // namespace ops
 }  // namespace mindspore

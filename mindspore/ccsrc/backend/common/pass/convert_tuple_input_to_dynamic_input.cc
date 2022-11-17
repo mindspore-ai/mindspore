@@ -70,7 +70,13 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     MS_EXCEPTION_IF_NULL(input_node);
     bool skip = (is_bprop_cut && input_node->abstract()->isa<abstract::AbstractSparseTensor>());
     if (common::AnfAlgo::IsTupleOutput(input_node) && !skip) {
-      (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
+      auto dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
+      if (dyn_input_size == 0) {
+        dyn_input_sizes.push_back(-1);
+        plant_inputs.push_back(input_node);
+      } else {
+        (void)dyn_input_sizes.emplace_back(dyn_input_size);
+      }
     } else {
       dyn_input_sizes.push_back(-1);
       plant_inputs.push_back(input_node);

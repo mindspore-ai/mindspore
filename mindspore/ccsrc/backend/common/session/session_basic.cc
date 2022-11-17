@@ -777,6 +777,11 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
     return value->cast<tensor::CSRTensorPtr>()->GetTensorAt(output_index);
   } else if (value->isa<tensor::COOTensor>()) {
     return value->cast<tensor::COOTensorPtr>()->GetTensorAt(output_index);
+  } else if (value->isa<Type>()) {
+    int64_t type_id = value->cast<TypePtr>()->type_id();
+    auto tensor = std::make_shared<tensor::Tensor>(type_id, kInt64);
+    tensor->set_user_data(kTensorValueIsType, value);
+    return tensor;
   }
   return nullptr;
 }

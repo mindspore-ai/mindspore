@@ -237,7 +237,7 @@ std::vector<ShapeVector> CalAllToAllvOutputShape(const ShapeVector &base_shape, 
 
 std::vector<AnfNodePtr> CreateAllToAllvInput(const std::vector<std::vector<AnfNodePtr>> &split_outputs,
                                              const std::vector<int64_t> &send_rank_ids) {
-  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
+  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
   const std::vector<size_t> split_idx = {0, 2, 1, 3, 0, 3, 1, 2};
   const std::vector<bool> is_begin = {true, false, false, false, false, true, true, true};
   for (size_t idx = 0; idx < send_rank_ids.size(); ++idx) {
@@ -299,7 +299,7 @@ std::vector<AnfNodePtr> CreateAllToAllvInputForGrad(const std::vector<int64_t> &
   if (split_nodes.size() != kSizeFour) {
     MS_LOG(EXCEPTION) << "Wrong split_nodes size: " << split_nodes.size() << ", expect size: 4.";
   }
-  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
+  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
   // only have top-bottom split
   std::vector<size_t> side_idx = {1, 2, 3, 5, 6, 7};
   bool no_send_side = std::all_of(side_idx.begin(), side_idx.end(),

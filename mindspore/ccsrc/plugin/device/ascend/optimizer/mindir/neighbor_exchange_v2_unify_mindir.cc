@@ -193,7 +193,7 @@ std::vector<ShapeVector> CalAllToAllvOutputShape(const ShapeVector &base_shape, 
 
 std::vector<AnfNodePtr> CreateAllToAllvInput(const std::vector<std::vector<AnfNodePtr>> &split_outputs,
                                              const std::vector<int64_t> &send_rank_ids) {
-  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
+  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
   std::vector<size_t> split_idx = {0, 5, 3, 7, 1, 6, 2, 4};
   std::vector<bool> is_begin = {true, false, false, false, false, true, true, true};
   for (size_t idx = 0; idx < send_rank_ids.size(); ++idx) {
@@ -255,7 +255,7 @@ std::vector<AnfNodePtr> CreateAllToAllvInputForGrad(const std::vector<int64_t> &
   if (split_nodes.size() != kSizeFour) {
     MS_LOG(EXCEPTION) << "Wrong split_nodes size: " << split_nodes.size() << ", expect size: 4.";
   }
-  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
+  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
   // only have top-bottom split
   std::vector<size_t> side_idx = {1, 2, 3, 5, 6, 7};
   bool no_send_side = std::all_of(side_idx.begin(), side_idx.end(),
@@ -463,7 +463,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
     int64_t num_split = 0;
     CNodePtr split_v = nullptr;
     if (splitvs_is_exist[i]) {
-      std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
+      std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name())),
                                              neighbor_exchange_v2_input};
 
       split_v = CreateSplitNode(graph, split_input, shape, splitvs_is_first[i], !splitvs_is_first[i], splitvs_dim[i],
@@ -500,7 +500,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
     CNodePtr split_v = nullptr;
     if (corner_splitvs_is_exist[i]) {
       auto shape_tmp = shape;
-      std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
+      std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name()))};
       if (corner_splitvs_is_input_top[i]) {
         (void)split_input.insert(split_input.end(), split_outputs_top.begin(), split_outputs_top.begin() + 1);
         shape_tmp[kHDim] = send_lens[0];
@@ -808,7 +808,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
   CNodePtr split_v_top_bottom = nullptr;
   int64_t num_split_h = 0;
   if (is_top || is_bottom) {
-    std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
+    std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name())),
                                            neighbor_exchange_v2_grad_input};
     auto pair_tmp = std::make_pair(min_shape, max_shape);
     split_v_top_bottom = CreateSplitNode(graph, split_input, shape, is_top, is_bottom, kHDim, send_lens, dtype,
@@ -845,7 +845,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
       split_num->push_back(0);
     }
     for (size_t i = 0; i < split_outputs_top_bottom.size(); ++i) {
-      std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
+      std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name())),
                                              split_outputs_top_bottom[i]};
 
       int64_t num_split_w = 0;
@@ -886,7 +886,7 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreatePadNode(const FuncGraphPtr &gr
   auto shape = shape_info.first;
   auto shape_base = shape_info.second;
   MS_EXCEPTION_IF_NULL(shape_base);
-  std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadOpName)), input};
+  std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadDOpName)), input};
   auto pad = NewCNode(pad_inputs, graph);
   std::vector<std::vector<int64_t>> paddings;
   for (size_t i = 0; i < shape.size(); ++i) {

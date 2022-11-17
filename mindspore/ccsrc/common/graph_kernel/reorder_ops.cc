@@ -32,8 +32,8 @@ namespace {
 bool IsTypeInsensitive(const CNodePtr &node) {
   // Nodes that will change the input data type will not seen as type insensitive nodes.
   static mindspore::HashSet<PrimitivePtr> type_insensitive_op_list{
-    prim::kPrimTransData, prim::kPrimTranspose, prim::kPrimExpandDims, prim::kPrimReshape,
-    prim::kPrimSqueeze,   prim::kPrimTile,      prim::kPrimNeg,        prim::kPrimReLU,
+    prim::kPrimTransData, prim::kPrimTranspose, prim::kPrimTransposeD, prim::kPrimExpandDims, prim::kPrimReshape,
+    prim::kPrimSqueeze,   prim::kPrimTile,      prim::kPrimNeg,        prim::kPrimReLU,       prim::kPrimRelu,
     prim::kPrimMaximum,   prim::kPrimMinimum,   prim::kPrimSelect};
 
   return std::any_of(type_insensitive_op_list.begin(), type_insensitive_op_list.end(),

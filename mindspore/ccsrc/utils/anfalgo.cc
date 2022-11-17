@@ -943,7 +943,7 @@ bool AnfAlgo::IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &t
 bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
   static const std::set<std::string> kCommunicationOpNames = {kAllReduceOpName,     kAllGatherOpName,  kBroadcastOpName,
                                                               kReduceScatterOpName, kHcomSendOpName,   kReceiveOpName,
-                                                              kAllToAllVOpName,     kMuxReceiveOpName, kMuxSendOpName};
+                                                              kAllToAllvOpName,     kMuxReceiveOpName, kMuxSendOpName};
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
@@ -1271,17 +1271,6 @@ bool AnfAlgo::HasDynamicShapeFlag(const PrimitivePtr &prim) {
   return get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape);
 }
 
-bool AnfAlgo::IsKernelDynamicImpl(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(DEBUG) << "Node is not a cnode.";
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  return GetBooleanAttr(node, kAttrIsKernelDynamicImpl);
-}
-
 bool AnfAlgo::IsDynamicShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
@@ -1538,7 +1527,8 @@ bool AnfAlgo::IsNodeInputContainMonad(const AnfNodePtr &node) {
 
 bool AnfAlgo::IsNonTaskOp(const CNodePtr &node) {
   auto op_name = GetCNodeName(node);
-  return (op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, node);
+  return (op_name == kSplitOpName || op_name == kSplitDOpName || op_name == kSplitVDOpName) &&
+         AnfAlgo::HasNodeAttr(kAttrNonTask, node);
 }
 
 bool AnfAlgo::IsNoneInput(const AnfNodePtr &node, size_t index) {

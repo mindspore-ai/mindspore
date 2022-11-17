@@ -15,8 +15,10 @@
  */
 
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
+
 #include <string>
 #include <memory>
+#include <set>
 #include <functional>
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
@@ -57,7 +59,8 @@ void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
-    if (kernel_name != kGatherV2OpName && kernel_name != kSparseGatherV2OpName) {
+    if (kernel_name != kGatherOpName && kernel_name != kSparseGatherV2OpName && kernel_name != kGatherV2OpName &&
+        kernel_name != kGatherV2DOpName) {
       continue;
     }
     auto input_param = common::AnfAlgo::GetPrevNodeOutput(kernel, 0, true);
@@ -138,7 +141,9 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
-    if (kernel_name != kGatherV2OpName && kernel_name != kSparseGatherV2OpName) {
+    const std::set<std::string> kNeedCacheNodes = {kGatherOpName, kSparseGatherV2OpName, kGatherV2OpName,
+                                                   kGatherV2DOpName};
+    if (kNeedCacheNodes.count(kernel_name) == 0) {
       continue;
     }
     auto input_param = common::AnfAlgo::GetPrevNodeOutput(kernel, 0, true);
@@ -149,7 +154,13 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
       continue;
     }
     auto param_name = input_param.first->fullname_with_scope();
-    if (embedding_cache_table_manager.IsEmbeddingCacheTable(param_name) && (kernel_name == kSparseGatherV2OpName)) {
+    // In ascend, change kSparseGatherV2OpName to kGatherV2OpName & set attr sparse: true
+    bool is_sparse_gather = false;
+    if (kernel_name == kGatherV2OpName && common::AnfAlgo::HasNodeAttr(kAttrIsSparse, kernel)) {
+      is_sparse_gather = common::AnfAlgo::GetNodeAttr<bool>(kernel, kAttrIsSparse);
+    }
+    if (embedding_cache_table_manager.IsEmbeddingCacheTable(param_name) &&
+        (kernel_name == kSparseGatherV2OpName || is_sparse_gather)) {
       CheckSparseModeForEmbeddingCache(kernel);
     }
     while (input_index.first->isa<CNode>() &&

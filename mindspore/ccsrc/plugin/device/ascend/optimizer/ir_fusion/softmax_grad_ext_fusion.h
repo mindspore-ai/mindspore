@@ -29,7 +29,7 @@ class SoftmaxGradExtFusion : public PatternProcessPass {
     input0_ = std::make_shared<Var>();
     input1_ = std::make_shared<Var>();
     input2_ = std::make_shared<Var>();
-    sum_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimReduceSum->name()));
+    sum_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimReduceSumD->name()));
   }
   ~SoftmaxGradExtFusion() override = default;
   const BaseRef DefinePattern() const override;

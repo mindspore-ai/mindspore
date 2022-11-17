@@ -108,6 +108,16 @@ bool ApplyAdagrad::get_update_slots() const {
 void ApplyAdagrad::set_update_slots(const bool update_slots) {
   (void)this->AddAttr(kUpdateSlots, api::MakeValue(update_slots));
 }
+
+abstract::AbstractBasePtr ApplyAdagradInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  ApplyAdagradInfer apply_ada_grad;
+  auto type = apply_ada_grad.InferType(primitive, input_args);
+  auto shape = apply_ada_grad.InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyAdagrad, prim::kPrimApplyAdagrad, ApplyAdagradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

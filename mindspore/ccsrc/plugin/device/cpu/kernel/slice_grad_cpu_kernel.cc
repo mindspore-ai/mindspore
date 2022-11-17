@@ -299,7 +299,7 @@ bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<kernel::AddressPtr> &i
           }
           size_t in_4_offset = 0;
           size_t out_4_offset = out_start_offset[4];
-          for (int m = begin_[kIndex]; stride_signs[kIndex] * m < stride_signs[kIndex] * end_[kIndex];
+          for (int m = begin_[kIndex4]; stride_signs[kIndex4] * m < stride_signs[kIndex4] * end_[kIndex4];
                m += strides_[4], in_4_offset += input_element_num_[4], out_4_offset += out_step_size[4]) {
             if (can_copy_memory[4]) {
               CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset + in_w_offset + in_4_offset, outputs,

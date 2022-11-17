@@ -104,10 +104,10 @@ enum FusionType {
   BATCH_MATMUL,
   CONFUSION_TRANSPOSE,
   DROPOUT_DOMASKV3D,
+  TRANSDATA,
+  NORM,
   UNKNOWN_FUSION_TYPE = -1,
 };
-
-enum OpPattern { kCommonPattern = 0, kFormatAgnosticPattern, kBroadcastPattern, kReducePattern, kDynamicFormatPattern };
 
 // Backend processor
 enum Processor {

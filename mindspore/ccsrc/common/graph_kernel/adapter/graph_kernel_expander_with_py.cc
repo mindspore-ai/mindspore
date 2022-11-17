@@ -33,6 +33,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::GetExpanderOps() {
     {kAllTarget, OpLevel_0, prim::kPrimErfc},
     {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
     {kAllTarget, OpLevel_0, prim::kPrimGeLU},
+    {kAllTarget, OpLevel_0, prim::kPrimGelu},
     {kAllTarget, OpLevel_0, prim::kPrimGeLUGrad},
     {kAllTarget, OpLevel_0, prim::kPrimSqrtGrad},
     {kAllTarget, OpLevel_0, prim::kPrimSquare},

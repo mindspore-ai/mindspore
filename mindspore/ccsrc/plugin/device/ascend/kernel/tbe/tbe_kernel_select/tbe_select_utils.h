@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/oplib/opinfo.h"
@@ -41,7 +42,6 @@ struct KernelBuildInfoItem {
   std::vector<std::string> formats;
   std::vector<TypeId> device_types;
   std::vector<std::string> reshape_types;
-  std::vector<std::string> value_depends;
 };
 class HostCheck {
  public:
@@ -55,6 +55,9 @@ class HostCheck {
   static std::vector<int64_t> GetFinalInferShape(const AnfNodePtr &node, size_t index, bool is_output,
                                                  const std::string &format);
 };
+bool IsOpSupportDynamicImpl(const CNodePtr &cnode);
+
+bool IsKernelDynamicImpl(const AnfNodePtr &node);
 
 void GetSupportOriFormat(const CNodePtr &cnode, SupportFormat *support_format);
 
@@ -71,6 +74,10 @@ void ConstructSupportFormats(size_t put_size, const std::vector<SupportFormatIte
 
 void GenerateSupportFormatDType(const CNodePtr &cnode, const SupportFormat &support_format,
                                 SupportFormatDType *support_format_dtype);
+
+std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecisionMatchedKernelInfo(
+  const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list,
+  bool *precision_reduce);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_SELECT_TBE_KERNEL_TBE_SELECT_UTILS_H_

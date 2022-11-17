@@ -57,7 +57,7 @@ void AscendLaunchAtomicClean::LaunchOpKernel() {
   MS_EXCEPTION_IF_NULL(input);
   input->addr = input_addr_;
   MS_EXCEPTION_IF_NULL(input->addr);
-  input->size = total_size_;
+  input->size = IntToSize(total_size_);
   kernel_inputs.push_back(input);
   // obtain kernel outputs
   auto kernel_outputs = ObtainKernelOutputs(kernel_mod_->GetOutputSizeList());
@@ -109,7 +109,7 @@ void AscendLaunchAtomicClean::ConstructKernelGraphAndSetAttr() {
     builder->SetKernelType(KernelType::TBE_KERNEL);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clean_node.get());
     // set attr
-    std::vector<size_t> clean_size = {total_size_};
+    std::vector<int32_t> clean_size = {total_size_};
     common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clean_node);
   }
 }

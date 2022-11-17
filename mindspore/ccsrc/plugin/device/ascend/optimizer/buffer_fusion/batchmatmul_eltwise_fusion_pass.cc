@@ -45,7 +45,7 @@ CNodePtr FindInputNode(const CNodePtr &cnode, const string &node_type, const ker
 bool BatchMatmulEltwiseFusionPass::MatchPattern1(const CNodePtr &eltwise1,
                                                  mindspore::HashSet<AnfNodePtr> *record) const {
   // bmm - eltwise - eltwise1
-  const std::set<string> kElem1TypeList = {kAddOpName, kReLUOpName, kFusedMulAddOpName};
+  const std::set<string> kElem1TypeList = {kAddOpName, kReluOpName, kFusedMulAddOpName};
   if (kElem1TypeList.find(common::AnfAlgo::GetCNodeName(eltwise1)) == kElem1TypeList.end()) {
     return false;
   }
@@ -65,8 +65,8 @@ bool BatchMatmulEltwiseFusionPass::MatchPattern1(const CNodePtr &eltwise1,
 bool BatchMatmulEltwiseFusionPass::MatchPattern2(const CNodePtr &eltwise,
                                                  mindspore::HashSet<AnfNodePtr> *record) const {
   // bmm - eltwise
-  const std::set<string> kElemTypeList = {kFusedMulAddOpName, kAddOpName,  kDivOpName,
-                                          kRealDivOpName,     kReLUOpName, kReluGradOpName};
+  const std::set<string> kElemTypeList = {kFusedMulAddOpName, kAddOpName,  kTruncateDivOpName,
+                                          kRealDivOpName,     kReluOpName, kReluGradOpName};
   if (kElemTypeList.find(common::AnfAlgo::GetCNodeName(eltwise)) == kElemTypeList.end()) {
     return false;
   }
@@ -124,7 +124,8 @@ void BatchMatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::Kerne
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE) {
+        (AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE ||
+         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::BROAD_CAST)) {
       mindspore::HashSet<AnfNodePtr> record;
       if (MatchPattern1(cnode, &record) || MatchPattern2(cnode, &record) || MatchPattern3(cnode, &record)) {
         candidate_fusion->push_back(record);

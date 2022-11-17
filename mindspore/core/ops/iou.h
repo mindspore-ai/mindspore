@@ -32,6 +32,9 @@ class MIND_API IOU : public BaseOperator {
   IOU() : BaseOperator(kNameIOU) { InitIOName({"x,y"}, {"output"}); }
   void Init() const {}
 };
+
+abstract::AbstractBasePtr IouInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_IOU_H_

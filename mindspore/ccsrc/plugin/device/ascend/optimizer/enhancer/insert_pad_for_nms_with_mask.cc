@@ -40,7 +40,7 @@ AnfNodePtr InsertPadForNMSWithMask::InsertPadToGraph(const FuncGraphPtr &func_gr
                                                      const abstract::BaseShapePtr &origin_shape) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_pad_inputs;
-  auto prim = std::make_shared<Primitive>(prim::kPrimPad->name());
+  auto prim = std::make_shared<Primitive>(prim::kPrimPadD->name());
   new_pad_inputs.push_back(NewValueNode(prim));
   new_pad_inputs.push_back(input);
   CNodePtr pad = NewCNode(new_pad_inputs, func_graph);

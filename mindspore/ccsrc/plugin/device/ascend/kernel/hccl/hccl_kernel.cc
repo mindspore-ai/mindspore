@@ -97,13 +97,13 @@ HcclKernel::~HcclKernel() {
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   op_name_ = common::AnfAlgo::GetCNodeName(anf_node);
-  if (op_name_ == kHcomSend) {
+  if (op_name_ == kHcomSendOpName) {
     if (!HcomUtil::GetHcomDestRank(anf_node, &dest_rank_)) {
       MS_LOG(ERROR) << "GetHcomDestRank fail!";
       return false;
     }
   }
-  if (op_name_ == kReceive) {
+  if (op_name_ == kReceiveOpName) {
     if (!HcomUtil::GetHcomSrcRank(anf_node, &src_rank_)) {
       MS_LOG(ERROR) << "GetHcomSrcRank fail!";
       return false;
@@ -121,7 +121,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
     MS_LOG(ERROR) << "GetHcomDataType fail!";
     return false;
   }
-  if (op_name_ == kReceive) {
+  if (op_name_ == kReceiveOpName) {
     if (!HcomUtil::GetHcomCount(anf_node, hccl_data_type_list_, hccl_kernel_output_shape_list_, &hccl_count_)) {
       MS_LOG(ERROR) << "GetHcomCount fail!";
       return false;
@@ -132,7 +132,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
       return false;
     }
   }
-  if (op_name_ == kAllReduce || op_name_ == kReduceScatter) {
+  if (op_name_ == kAllReduceOpName || op_name_ == kReduceScatterOpName) {
     if (!HcomUtil::GetHcomOperationType(anf_node, &op_type_)) {
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;
@@ -256,7 +256,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
     MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
   }
   std::string hccl_type = common::AnfAlgo::GetCNodeName(anf_node);
-  if (hccl_type == kReceive) {
+  if (hccl_type == kReceiveOpName) {
     if (outputs.empty()) {
       MS_LOG(EXCEPTION) << "Outputs is empty";
     }
@@ -265,7 +265,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   }
   stream_id_ = stream_id;
   void *input_data_addr = nullptr;
-  if (hccl_type != kReceive) {
+  if (hccl_type != kReceiveOpName) {
     MS_EXCEPTION_IF_NULL(inputs.at(0));
     input_data_addr = inputs.at(0)->addr;
   }
