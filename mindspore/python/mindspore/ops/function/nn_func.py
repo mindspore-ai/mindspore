@@ -175,7 +175,7 @@ def adaptive_avg_pool3d(input_x, output_size):
         ValueError: If `output_size` value is not positive.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(3, 3, 4)

@@ -7622,13 +7622,13 @@ class Cauchy(Primitive):
     Create a tensor of shape `size` with random numbers drawn from Cauchy distribution
 
     .. math::
-        \f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
+        f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
 
     Args:
         size (list[int]): The size of tensor.
-        sigma (float): the location parameter, specifying the location
+        sigma (float, optional): the location parameter, specifying the location
             of the peak of the distribution. Default: 1.0.
-        median (float): the scale parameter which specifies the half-width
+        median (float, optional): the scale parameter which specifies the half-width
             at half-maximum. Default: 0.0.
 
     Outputs:
