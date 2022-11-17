@@ -27,13 +27,13 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
                                 const NodePtr &is_positive_param = nullptr) {
   NodePtr zero_clipped_indices = zero_clipped_indices_param;
   if (zero_clipped_indices_param == nullptr) {
-    zero_clipped_indices = ib->Emit("Maximum", {ids, ib->ZerosLike(ids)});
+    zero_clipped_indices = ib->Maximum(ids, ib->ZerosLike(ids));
   }
   auto gathered = ib->Emit("Gather", {params, zero_clipped_indices, ib->Tensor(0, kInt64)});
 
   NodePtr is_positive = is_positive_param;
   if (is_positive_param == nullptr) {
-    is_positive = ib->Emit("GreaterEqual", {ids, ib->Tensor(0, ib->GetDtype(ids))});
+    is_positive = ib->GreaterEqual(ids, ib->Tensor(0, ib->GetDtype(ids)));
     auto broadcastable_shape = ib->GetShape(is_positive);
     auto back_size = ib->GetShape(gathered).size() - ib->GetShape(is_positive).size();
     for (size_t i = 0; i < back_size; ++i) {
@@ -44,7 +44,7 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
     is_positive = ib->Emit("LogicalAnd", {is_positive, ib->Fill(1.0, gathered_shape, TypeId::kNumberTypeBool)});
   }
   auto zero_slice = ib->ZerosLike(gathered);
-  return {ib->Emit("Select", {is_positive, gathered, zero_slice}), zero_clipped_indices, is_positive};
+  return {ib->Select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive};
 }
 
 NodePtrList UnsortedSegmentMinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &segment_ids,
@@ -56,17 +56,16 @@ NodePtrList UnsortedSegmentMinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr 
   auto zero_clipped_indices = temp_outs[1];
   auto is_positive = temp_outs[2];
 
-  auto tmp = ib->Emit("Equal", {x, gathered_outputs});
+  auto tmp = ib->Equal(x, gathered_outputs);
   auto is_selected = ib->Emit("LogicalAnd", {tmp, is_positive});
   auto num_selected =
     ib->Emit("UnsortedSegmentSum", {ib->Cast(is_selected, ib->GetDtype(dout)), segment_ids, num_segments});
-  auto weighted_grads = ib->Emit("RealDiv", {dout, num_selected});
+  auto weighted_grads = ib->RealDiv(dout, num_selected);
   auto temp_outs_2 = GatherDropNegatives(ib, weighted_grads, nullptr, zero_clipped_indices, is_positive);
   MS_EXCEPTION_IF_CHECK_FAIL(temp_outs.size() > 0, "Outputs should not be empty.");
   auto gathered_grads = temp_outs_2[0];
   auto zeros = ib->ZerosLike(gathered_grads);
-  return {ib->Emit("Select", {is_selected, gathered_grads, zeros}), ib->ZerosLike(segment_ids),
-          ib->ZerosLike(num_segments)};
+  return {ib->Select(is_selected, gathered_grads, zeros), ib->ZerosLike(segment_ids), ib->ZerosLike(num_segments)};
 }
 }  // namespace
 
@@ -101,7 +100,7 @@ REG_BPROP_BUILDER("GatherDGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   auto id = ib->Tensor(Range(element), index_type);
   auto i = ib->Emit("FloorDiv", {id, ib->Tensor((dim_at_axis_index * dim_after_axis), index_type)});
   auto k = ib->Emit("FloorMod", {id, ib->Tensor(dim_after_axis, index_type)});
-  auto less = ib->Emit("Less", {index, ib->Tensor(0, index_type)});
+  auto less = ib->Less(index, ib->Tensor(0, index_type));
   auto j = ib->Cast(less, index_type);
   auto j_read = ib->Add((ib->Mul(ib->Tensor(dim_at_axis_index, index_type), j)), index);
   auto j_read_reshape = ib->Reshape(j_read, {-1});
@@ -139,7 +138,7 @@ REG_BPROP_BUILDER("GatherDGradV2").SetBody([](const BpropIRBuilder *ib) -> NodeP
   auto id = ib->Tensor(ranges, index_type);
   auto i = ib->RealDiv(id, ib->Tensor((dim_at_axis_index * dim_after_axis), index_type));
   auto k = ib->Emit("Mod", {id, ib->Tensor(dim_after_axis)});
-  auto less = ib->Emit("Less", {index, ib->Tensor(0, index_type)});
+  auto less = ib->Less(index, ib->Tensor(0, index_type));
   auto j = ib->Cast(less, ib->GetDtype(index));
   auto j_read = ib->Add((ib->Mul(ib->Tensor(dim_at_axis_index, index_type), j)), index);
   j_read = ib->Reshape(j_read, {-1});
@@ -331,8 +330,7 @@ REG_BPROP_BUILDER("Select").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   auto x = ib->GetInput(kIndex1);
   auto y = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {ib->ZerosLike(cond), ib->Emit("Select", {cond, dout, ib->ZerosLike(x)}),
-          ib->Emit("Select", {cond, ib->ZerosLike(y), dout})};
+  return {ib->ZerosLike(cond), ib->Select(cond, dout, ib->ZerosLike(x)), ib->Select(cond, ib->ZerosLike(y), dout)};
 });
 
 REG_BPROP_BUILDER("OnesLike").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -556,7 +554,7 @@ REG_BPROP_BUILDER("TensorScatterDiv").SetBody([](const BpropIRBuilder *ib) -> No
   auto gather_x = ib->Emit("GatherNd", {x, indices});
   auto mul_result = ib->Mul(update, update);
   auto neg_result = ib->Emit("Neg", {mul_result});
-  auto update_grad = ib->Mul(gather_update, (ib->Emit("Div", {gather_x, neg_result})));
+  auto update_grad = ib->Mul(gather_update, (ib->Div(gather_x, neg_result)));
   return {in_grad, ib->ZerosLike(indices), update_grad};
 });
 
@@ -585,9 +583,9 @@ NodePtrList TensorScatterPossibleReplacement(const BpropIRBuilder *ib) {
   auto updates = ib->GetInput(kIndex2);
   auto out = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex4);
-  auto x_indicators = ib->Cast(ib->Emit("Equal", {x, out}), kInt32);
+  auto x_indicators = ib->Cast(ib->Equal(x, out), kInt32);
   auto possibly_updated = ib->Emit("GatherNd", {out, indices});
-  auto out_indicators = ib->Cast(ib->Emit("Equal", {updates, possibly_updated}), kInt32);
+  auto out_indicators = ib->Cast(ib->Equal(updates, possibly_updated), kInt32);
   auto input_shape = ib->GetShape(x);
   auto scattered_out_indicators = ib->Emit("ScatterNd", {indices, out_indicators, ib->Tensor(input_shape)});
   auto indicators = ib->Add(x_indicators, scattered_out_indicators);
@@ -658,44 +656,43 @@ REG_BPROP_BUILDER("UnsortedSegmentProd").SetBody([](const BpropIRBuilder *ib) ->
   MS_EXCEPTION_IF_NULL(x_dtype);
   auto x_dtype_id = x_dtype->type_id();
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    is_zero = ib->Emit("Equal", {x, ib->Tensor(0, x_dtype)});
+    is_zero = ib->Equal(x, ib->Tensor(0, x_dtype));
   } else {
-    is_zero = ib->Emit("Equal", {ib->Cast(x, kFloat32), ib->Tensor(0, kFloat32)});
+    is_zero = ib->Equal(ib->Cast(x, kFloat32), ib->Tensor(0, kFloat32));
   }
 
   auto num_zero = ib->Emit("UnsortedSegmentSum", {ib->Cast(is_zero, kInt32), segment_ids, num_segments});
-  auto grad = ib->Emit(
-    "Select", {ib->Emit("Greater", {num_zero, ib->Tensor(1, ib->GetDtype(num_zero))}), ib->ZerosLike(dout), dout});
+  auto grad = ib->Select(ib->Greater(num_zero, ib->Tensor(1, ib->GetDtype(num_zero))), ib->ZerosLike(dout), dout);
   NodePtr non_zero_data = nullptr;
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    non_zero_data = ib->Emit("Select", {is_zero, ib->Emit("OnesLike", {x}), x});
+    non_zero_data = ib->Select(is_zero, ib->Emit("OnesLike", {x}), x);
   } else {
     auto temp_var = ib->Emit("OnesLike", {ib->Cast(x, kFloat32)});
-    non_zero_data = ib->Emit("Select", {is_zero, ib->Cast(temp_var, x_dtype_id), x});
+    non_zero_data = ib->Select(is_zero, ib->Cast(temp_var, x_dtype_id), x);
   }
   auto non_zero_prod = ib->Emit("UnsortedSegmentProd", {non_zero_data, segment_ids, num_segments});
-  auto zero_clipped_indices = ib->Emit("Maximum", {segment_ids, ib->ZerosLike(segment_ids)});
+  auto zero_clipped_indices = ib->Maximum(segment_ids, ib->ZerosLike(segment_ids));
   auto gathered_prod = ib->Emit("Gather", {out, zero_clipped_indices, ib->Tensor(0, kInt64)});
   auto gathered_non_zero_prod = ib->Emit("Gather", {non_zero_prod, zero_clipped_indices, ib->Tensor(0, kInt64)});
 
   NodePtr prod_divided_by_x = nullptr;
   if (x_dtype_id == kNumberTypeUInt32 || x_dtype_id == kNumberTypeUInt64) {
-    prod_divided_by_x = ib->Emit("RealDiv", {ib->Cast(gathered_prod, kFloat32), ib->Cast(x, kFloat32)});
+    prod_divided_by_x = ib->RealDiv(ib->Cast(gathered_prod, kFloat32), ib->Cast(x, kFloat32));
   } else {
-    prod_divided_by_x = ib->Emit("RealDiv", {gathered_prod, x});
+    prod_divided_by_x = ib->RealDiv(gathered_prod, x);
   }
-  auto partial_derivative = ib->Emit(
-    "Select", {is_zero, gathered_non_zero_prod, ib->Cast(prod_divided_by_x, ib->GetDtype(gathered_non_zero_prod))});
+  auto partial_derivative =
+    ib->Select(is_zero, gathered_non_zero_prod, ib->Cast(prod_divided_by_x, ib->GetDtype(gathered_non_zero_prod)));
 
   auto temp_outs = GatherDropNegatives(ib, grad, segment_ids, zero_clipped_indices, nullptr);
   MS_EXCEPTION_IF_CHECK_FAIL(temp_outs.size() > 0, "Outputs should not be empty.");
   auto gathered_grad = temp_outs[0];
   NodePtr dx = nullptr;
   if (x_dtype_id == kNumberTypeUInt32 || x_dtype_id == kNumberTypeUInt64) {
-    auto temp_dx = ib->Emit("Mul", {ib->Cast(gathered_grad, kFloat32), ib->Cast(partial_derivative, kFloat32)});
+    auto temp_dx = ib->Mul(ib->Cast(gathered_grad, kFloat32), ib->Cast(partial_derivative, kFloat32));
     dx = ib->Cast(temp_dx, x_dtype);
   } else {
-    dx = ib->Emit("Mul", {gathered_grad, partial_derivative});
+    dx = ib->Mul(gathered_grad, partial_derivative);
   }
 
   return {dx, ib->ZerosLike(segment_ids), ib->ZerosLike(num_segments)};

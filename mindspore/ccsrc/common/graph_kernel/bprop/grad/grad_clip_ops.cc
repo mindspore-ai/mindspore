@@ -30,9 +30,9 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto reduce_sum_out =
     ib->Emit("ReduceSum", {square_out, ib->EmitValue(reduce_sum_axis)}, {{"keep_dims", MakeValue(true)}});
   auto sqrt_out = ib->Emit("Sqrt", {reduce_sum_out});
-  auto max_out = ib->Emit("Maximum", {sqrt_out, cast_clip_norm});
+  auto max_out = ib->Maximum(sqrt_out, cast_clip_norm);
   auto mul_out = ib->Mul(cast_x, cast_clip_norm);
-  auto div_bc_x = ib->Emit("Div", {dout, max_out});
+  auto div_bc_x = ib->Div(dout, max_out);
   auto div_bc_y = ib->Emit("Neg", {ib->Mul(div_bc_x, out)});
   auto tmp_div_out = BinopGradCommon(ib, mul_out, max_out, div_bc_x, div_bc_y);
   auto div_dout_x = tmp_div_out[0];

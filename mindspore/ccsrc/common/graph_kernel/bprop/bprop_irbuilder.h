@@ -32,7 +32,7 @@ namespace bprop {
 class BpropIRBuilder : public Emitter {
  public:
   BpropIRBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
-      : Emitter(func_graph, infer), name_(name) {}
+      : Emitter(func_graph, infer, std::make_shared<Scope>(std::string("Bprop/grad") + name)), name_(name) {}
 
   /// \brief Run irbuilder to generate a graph
   bool Run(const NodePtrList &inputs, const DAttr &attrs, CNodePtrList *outputs);
