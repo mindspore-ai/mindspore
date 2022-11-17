@@ -54,23 +54,7 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-    if (is_null_input_) {
-      return true;
-    }
-    VARIABLE_NOT_USED(workspace);
-
-    auto input_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-    auto index_addr = reinterpret_cast<S *>(inputs.at(index_idx_)->addr);
-    auto output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-    auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-
-    const size_t k2Idx = 2;
-    const size_t k3Idx = 3;
-    Gather(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[k2Idx], dims_[k3Idx], cuda_stream,
-           GET_CTX_DEVICE_ID);
-    return true;
-  }
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
   bool SetDimParam(int64_t dim_value);
 
@@ -86,9 +70,9 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
   ShapeVector output_shapes_;
 
   size_t dims_[4] = {};
+  TypeId dim_type_{0};
   bool is_null_input_{false};
-  bool is_dynamic_case_{false};
-  size_t index_idx_{1};
+  bool is_get_dim_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

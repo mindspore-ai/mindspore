@@ -36,6 +36,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
+#include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -410,6 +411,26 @@ bool GetCudaDataType(const std::string &Type, cudaDataType_t *out_type);
 
 bool ShapeEqual(const ShapeVector &s1, const ShapeVector &s2);
 
+template <typename T>
+T GetDimValue(const std::vector<AddressPtr> &inputs, const int index, const string kernel_name,
+              const TypeId &dim_type) {
+  size_t size = abstract::TypeIdSize(dim_type);
+  auto dim_gpu_addr =
+    std::make_shared<device::gpu::GPUDeviceAddress>(inputs[index]->addr, size, kOpFormat_DEFAULT, dim_type);
+  int res = 0;
+  if (dim_type == kNumberTypeInt32) {
+    int32_t host_dim = 0;
+    dim_gpu_addr->SyncDeviceToHost(size, &host_dim);
+    res = static_cast<T>(host_dim);
+  } else if (dim_type == kNumberTypeInt64) {
+    int64_t host_dim = 0;
+    dim_gpu_addr->SyncDeviceToHost(size, &host_dim);
+    res = static_cast<T>(host_dim);
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', got unsupported data type of dim: " << dim_type;
+  }
+  return res;
+}
 // This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,
 // 8 bit integral type is represented by an unsigned char, but the MS_REG_GPU_KERNEL
 // macros defined below will create compilation errors when datatype T contains a space,
