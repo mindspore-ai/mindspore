@@ -74,6 +74,8 @@ Neural Network
     mindspore.ops.Padding
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
+    mindspore.ops.UpsampleNearest3D
+    mindspore.ops.UpsampleTrilinear3D
 
 Loss Function
 ^^^^^^^^^^^^^
@@ -96,6 +98,7 @@ Loss Function
     mindspore.ops.SoftMarginLoss
     mindspore.ops.SoftmaxCrossEntropyWithLogits
     mindspore.ops.SparseSoftmaxCrossEntropyWithLogits
+    mindspore.ops.TripletMarginLoss
 
 Activation Function
 ^^^^^^^^^^^^^^^^^^^
@@ -202,7 +205,10 @@ Image Processing
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
+    mindspore.ops.RGBToHSV
     mindspore.ops.ROIAlign
+    mindspore.ops.SampleDistortedBoundingBoxV2
+    mindspore.ops.ScaleAndTranslate
     
 Text Processing
 ^^^^^^^^^^^^^^^
@@ -314,6 +320,7 @@ Element-wise Operator
     mindspore.ops.TruncateMod
     mindspore.ops.Xdivy
     mindspore.ops.Xlogy
+    mindspore.ops.Zeta
     
 
 Reduction Operator
@@ -374,6 +381,7 @@ Linear Algebraic Operator
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
     mindspore.ops.Svd
+    mindspore.ops.TridiagonalMatMul
 
 Tensor Operation Operator
 --------------------------
@@ -411,6 +419,7 @@ Random Generation Operator
     mindspore.ops.Randperm
     mindspore.ops.StandardLaplace
     mindspore.ops.StandardNormal
+    mindspore.ops.TruncatedNormal
     mindspore.ops.UniformInt
     mindspore.ops.UniformReal
 
@@ -465,9 +474,22 @@ Array Operation
     mindspore.ops.Range
     mindspore.ops.Rank
     mindspore.ops.Reshape
+    mindspore.ops.ResizeNearestNeighborV2
     mindspore.ops.ReverseSequence
     mindspore.ops.ReverseV2
+    mindspore.ops.RightShift
+    mindspore.ops.ScatterAddWithAxis
     mindspore.ops.ScatterNd
+    mindspore.ops.ScatterNdDiv
+    mindspore.ops.ScatterNdMax
+    mindspore.ops.ScatterNdMin
+    mindspore.ops.ScatterNdMul
+    mindspore.ops.SearchSorted
+    mindspore.ops.SegmentMax
+    mindspore.ops.SegmentMean
+    mindspore.ops.SegmentMin
+    mindspore.ops.SegmentProd
+    mindspore.ops.SegmentSum
     mindspore.ops.Select
     mindspore.ops.Shape
     mindspore.ops.Size
@@ -477,8 +499,10 @@ Array Operation
     mindspore.ops.SpaceToDepth
     mindspore.ops.SparseGatherV2
     mindspore.ops.Split
+    mindspore.ops.SplitV
     mindspore.ops.Squeeze
     mindspore.ops.Stack
+    mindspore.ops.STFT
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
     mindspore.ops.TensorScatterDiv
@@ -489,16 +513,22 @@ Array Operation
     mindspore.ops.TensorScatterUpdate
     mindspore.ops.TensorShape
     mindspore.ops.Tile
+    mindspore.ops.Trace
     mindspore.ops.Transpose
+    mindspore.ops.Tril
+    mindspore.ops.TrilIndices
+    mindspore.ops.Triu
+    mindspore.ops.TriuIndices
     mindspore.ops.Unique
+    mindspore.ops.UniqueConsecutive
     mindspore.ops.UniqueWithPad
+    mindspore.ops.UnravelIndex
     mindspore.ops.UnsortedSegmentMax
     mindspore.ops.UnsortedSegmentMin
     mindspore.ops.UnsortedSegmentProd
     mindspore.ops.UnsortedSegmentSum
     mindspore.ops.Unstack
-    mindspore.ops.SplitV
-    mindspore.ops.STFT
+    mindspore.ops.UpperBound
 
 Type Conversion
 ^^^^^^^^^^^^^^^

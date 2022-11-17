@@ -46,7 +46,9 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         UnsortedSegmentSum, Unstack, UpperBound, Zeros, ZerosLike, AffineGrid, Bincount, CheckNumerics,
                         HammingWindow, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
                         MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero, Expand, Col2Im, ConjugateTranspose,
-                        FillDiagonal, Fills)
+                        FillDiagonal, Fills, ResizeNearestNeighborV2, RightShift, ScatterAddWithAxis,
+                        ScatterNdMul, SegmentMean, SegmentProd, SegmentSum, SegmentMax, SegmentMin, Tril, Triu,
+                        UniqueConsecutive, UnravelIndex)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
                        Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
@@ -59,7 +61,7 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
                         TensorSummary, HistogramSummary, Print, Assert)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
                         NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBicubic, ResizeBilinearV2, ExtractGlimpse,
-                        CombinedNonMaxSuppression)
+                        CombinedNonMaxSuppression, RGBToHSV, ScaleAndTranslate)
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
                         FusedAdaFactorWithGlobalNorm)
@@ -83,7 +85,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        FFTWithSize, Heaviside, Histogram, Hypot, Lcm, LuUnpack, MatrixExp,
                        MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT,
                        NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
-                       CumulativeLogsumexp, Gcd)
+                       CumulativeLogsumexp, Gcd, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -110,10 +112,11 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      GridSampler3D, MaxPool3DWithArgmax, MaxUnpool2D, NuclearNorm, NthElement, MultilabelMarginLoss,
                      PSROIPooling, Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
-                     GridSampler2D)
+                     GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D)
 from .other_ops import (Assign, IOU, BartlettWindow, BlackmanWindow, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load, StopGradient,
-                        CheckValid, Partial, Depend, identity, Push, Pull, PyFunc, _DynamicLossScale)
+                        CheckValid, Partial, Depend, identity, Push, Pull, PyFunc, _DynamicLossScale,
+                        SampleDistortedBoundingBoxV2)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler, TruncatedNormal, LogNormalReverse, NonDeterministicInts,
@@ -586,7 +589,6 @@ __all__ = [
     "ParameterizedTruncatedNormal",
     "RandomGamma",
     "RandomPoisson",
-    "PadAndShift",
     "RaggedRange",
     "Digamma",
     "Dilation2D",
@@ -614,6 +616,30 @@ __all__ = [
     "FractionalMaxPool",
     "FractionalMaxPool3DWithFixedKsize",
     "FractionalMaxPoolWithFixedKsize",
+    "RGBToHSV",
+    "ResizeNearestNeighborV2",
+    "RightShift",
+    "SampleDistortedBoundingBoxV2",
+    "ScaleAndTranslate",
+    "ScatterAddWithAxis",
+    "ScatterNdMul",
+    "SegmentMean",
+    "SegmentProd",
+    "SegmentSum",
+    "SegmentMax",
+    "SegmentMin",
+    "TripletMarginLoss",
+    "UpsampleNearest3D",
+    "UpsampleTrilinear3D",
+    "Trace",
+    "TridiagonalMatMul",
+    "Tril",
+    "TrilIndices",
+    "Triu",
+    "TriuIndices",
+    "UniqueConsecutive",
+    "UnravelIndex",
+    "Zeta",
 ]
 
 __custom__ = [
