@@ -51,9 +51,6 @@
 #endif
 #include "src/litert/runtime_convert.h"
 #include "extendrt/mindir_loader/model_loader.h"
-#ifndef __ANDROID__
-#include "kernel/ascend/plugin/ascend_kernel_plugin.h"
-#endif
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
@@ -750,18 +747,6 @@ int LiteSession::ContextInit(InnerContext *context) {
   return RET_OK;
 }
 
-int LiteSession::AscendInit(InnerContext *context) {
-#ifndef __ANDROID__
-  if (!context->IsDeviceTypeEnabled(DT_ASCEND)) {
-    MS_LOG(INFO) << "There is no Ascend device type.";
-    return RET_OK;
-  }
-  return mindspore::AscendKernelPlugin::GetInstance().Register();
-#else
-  return RET_OK;
-#endif
-}
-
 int LiteSession::CreateTensorRTDelegate() {
 #if GPU_TENSORRT
   std::string cache_model_path;
@@ -881,12 +866,6 @@ int LiteSession::Init(InnerContext *context) {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
     is_running_.store(false);
-    return ret;
-  }
-
-  ret = AscendInit(context);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Open Ascend kernel plugin failed";
     return ret;
   }
 

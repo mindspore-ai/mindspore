@@ -323,6 +323,10 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
     return nullptr;
   }
   ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
+#if defined(ENABLE_LITE_ACL) && !defined(ENABLE_CLOUD_FUSION_INFERENCE)
+  MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
+  return func_graph;
+#endif
   if (param->device.find("Ascend") != std::string::npos) {
     MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
     return func_graph;

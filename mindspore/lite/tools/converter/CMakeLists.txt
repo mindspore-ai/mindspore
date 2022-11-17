@@ -168,15 +168,7 @@ set(LITE_SRC ${API_SRC}
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/populate/base_operator_populate_register.cc
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
-        ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
         )
-
-if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
-            )
-endif()
 
 if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
     set(LITE_SRC
@@ -246,6 +238,10 @@ if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
         ${LITE_SRC}
         ${SRC_DIR}/litert/thread_cost_model.cc
         )
+endif()
+
+if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    set(LITE_SRC ${LITE_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/acl_pass.cc)
 endif()
 
 if(MSLITE_ENABLE_CONTROLFLOW)
@@ -394,6 +390,11 @@ endif()
 
 if(ENABLE_CONVERT_PYTORCH_MODEL)
     target_link_libraries(mindspore_converter pytorch_parser_mid)
+endif()
+
+if(MSLITE_ENABLE_ACL AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    target_link_libraries(mindspore_converter
+            lite_acl_mid)
 endif()
 
 target_link_libraries(mindspore_converter

@@ -433,10 +433,6 @@ if(PLATFORM_ARM64)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(MSLITE_ENABLE_ACL)
-            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
-                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        endif()
     endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch64/libmsdeobfuscator-lite.so
@@ -551,8 +547,10 @@ if(PLATFORM_ARM64)
                     install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
-                install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+                    install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                endif()
             endif()
 
             if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)
@@ -678,10 +676,6 @@ elseif(PLATFORM_ARM32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(MSLITE_ENABLE_ACL)
-            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
-                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        endif()
     endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch32/libmsdeobfuscator-lite.so
@@ -878,10 +872,6 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(MSLITE_ENABLE_ACL)
-            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
-                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        endif()
     endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/bin/linux-x64/msobfuscator
@@ -959,8 +949,10 @@ else()
                         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
-            install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+                install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
         endif()
 
         if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)

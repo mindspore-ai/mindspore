@@ -79,7 +79,7 @@ function Convert() {
           model_path=$2
           option_file="${model_path}/model_option/${model_name}.txt"
           if [ -f "$option_file" ]; then
-            config_file=${option_file}
+            config_file=""
           fi
         elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
           quant_type="PostTraining"
