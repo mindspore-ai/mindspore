@@ -311,6 +311,7 @@ from .math_func import (
     logical_xor,
     imag,
     roll,
+    orgqr,
 )
 from .nn_func import (
     adaptive_avg_pool1d,
