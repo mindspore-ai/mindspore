@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include <unordered_map>
 #include <unordered_set>
-#include "src/extendrt/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
 #include "ops/fusion/sub_fusion.h"
@@ -34,6 +34,7 @@
 #include "ops/equal.h"
 #include "ops/less.h"
 #include "ops/greater.h"
+#include "ops/floor_mod.h"
 
 namespace mindspore::lite {
 namespace {
@@ -118,8 +119,12 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "PreprocessInputTensors failed.";
     return RET_ERROR;
   }
-  nvinfer1::IElementWiseLayer *cal_layer =
-    ctx->network()->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
+  nvinfer1::IElementWiseLayer *cal_layer;
+  if (type_ == ops::kNameFloorMod) {
+    cal_layer = AddFoorMod(ctx, x_input.trt_tensor_, y_input.trt_tensor_);
+  } else {
+    cal_layer = ctx->network()->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
+  }
 
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addElementWise failed for TensorRT.";
@@ -164,7 +169,8 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(INFO) << "bool result cast to int32" << op_name_;
   }
 #endif
-  auto output_helper = ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_};
+  auto is_tensor = x_input.is_tensor || y_input.is_tensor;
+  auto output_helper = ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_, is_tensor};
   ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
@@ -179,6 +185,25 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
   }
   *x_input = input(ctx, 0);
   *y_input = input(ctx, 1);
+  if (x_input->trt_tensor_->getType() != y_input->trt_tensor_->getType()) {
+    MS_LOG(INFO) << "trt op elementwise layer not support different input data type, cast to higher one";
+    auto higher_index = in_tensors_[0].DataType() > in_tensors_[1].DataType() ? 0 : 1;
+    auto highter_trt_tensor = input(ctx, higher_index).trt_tensor_;
+    auto cast_layer = ctx->network()->addIdentity(*input(ctx, 1 - higher_index).trt_tensor_);
+    CHECK_NULL_RETURN(cast_layer);
+    cast_layer->setOutputType(0, highter_trt_tensor->getType());
+    auto cast_output = cast_layer->getOutput(0);
+    CHECK_NULL_RETURN(cast_output);
+    ctx->RegisterTensor(
+      ITensorHelper{cast_output, input(ctx, higher_index).format_, input(ctx, higher_index).same_format_},
+      out_tensors_[0].Name());
+    cast_layer->setName((op_name_ + "_cast").c_str());
+    if (higher_index != 0) {
+      x_input->trt_tensor_ = cast_output;
+    } else {
+      y_input->trt_tensor_ = cast_output;
+    }
+  }
 
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*x_input);
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(*y_input);
@@ -196,6 +221,25 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
     input_tensor->trt_tensor_ = reshape_layer->getOutput(0);
   }
   return RET_OK;
+}
+
+nvinfer1::IElementWiseLayer *ElementWiseTensorRT::AddFoorMod(TensorRTContext *ctx, nvinfer1::ITensor *x0_trt,
+                                                             nvinfer1::ITensor *x1_trt) {
+  nvinfer1::IElementWiseLayer *layer_0 =
+    ctx->network()->addElementWise(*x0_trt, *x1_trt, nvinfer1::ElementWiseOperation::kFLOOR_DIV);
+  layer_0->setName((op_name_ + "_floor_div").c_str());
+  auto result_0 = layer_0->getOutput(0);
+
+  nvinfer1::IElementWiseLayer *layer_1 =
+    ctx->network()->addElementWise(*result_0, *x1_trt, nvinfer1::ElementWiseOperation::kPROD);
+  layer_1->setName((op_name_ + "_prod").c_str());
+  auto result_1 = layer_1->getOutput(0);
+
+  nvinfer1::IElementWiseLayer *layer_2 =
+    ctx->network()->addElementWise(*x0_trt, *result_1, nvinfer1::ElementWiseOperation::kSUB);
+  layer_2->setName((op_name_ + "_sub").c_str());
+
+  return layer_2;
 }
 
 nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor) {
@@ -241,7 +285,8 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
   if (activation != ActivationType::NO_ACTIVATION) {
-    auto activation_layer = ActivationTensorRT::AddActivation(ctx, activation, 0, 0, 0, in_tensor, device_id_);
+    auto activation_layer =
+      ActivationTensorRT::AddActivation(ctx, activation, 0, 0, 0, in_tensor, op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for element wise failed";
       return nullptr;
@@ -254,12 +299,18 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
 
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
+  if (in_tensors_[0].IsConst() && in_tensors_[1].IsConst()) {
+    auto large_size_index = in_tensors_[0].ElementNum() >= in_tensors_[1].ElementNum() ? 0 : 1;
+    const_tensor_index = 1 - large_size_index;
+  }
   auto expect_shape = ConvertMSShape(input(ctx, 1 - const_tensor_index).trt_tensor_->getDimensions());
-  nvinfer1::ITensor *constant_input =
-    ConvertConstantTensorWithDims(ctx, in_tensors_[const_tensor_index], expect_shape, op_name_);
+  auto &const_tensor = in_tensors_[const_tensor_index];
+  nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(ctx, const_tensor, expect_shape, op_name_);
   CHECK_NULL_RETURN(constant_input);
-  auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true};
-  ctx->RegisterTensor(const_helper, in_tensors_[const_tensor_index].Name());
+  auto const_shape = const_tensor.Shape();
+  auto is_scalar = const_shape.empty();
+  auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true, !is_scalar};
+  ctx->RegisterTensor(const_helper, const_tensor.Name());
   return RET_OK;
 }
 
@@ -273,6 +324,7 @@ REGISTER_TENSORRT_CREATOR(ops::kNameEltwise, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameMinimum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameMaximum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameBiasAdd, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameFloorMod, ElementWiseTensorRT)
 #if TRT_VERSION_GE(7, 2)
 REGISTER_TENSORRT_CREATOR(ops::kNameEqual, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameLess, ElementWiseTensorRT)

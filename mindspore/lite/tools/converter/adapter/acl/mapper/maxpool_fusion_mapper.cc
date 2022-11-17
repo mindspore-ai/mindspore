@@ -16,6 +16,8 @@
 
 #include "tools/converter/adapter/acl/mapper/maxpool_fusion_mapper.h"
 #include <memory>
+#include <string>
+#include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
@@ -24,6 +26,11 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr auto kCommonAttrValueNum = 2;
+constexpr auto kMaxKernelSize = 20;
+constexpr auto kMaxKernelSize_H_Mul_W = 255;
+}  // namespace
 STATUS MaxPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
@@ -35,22 +42,44 @@ STATUS MaxPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   auto attr_val = src_prim->GetAttr(ops::kFmkType);
   int fmk_type = attr_val != nullptr ? GetValue<int>(attr_val) : converter::kFmkTypeTf;
   PrimitivePtr dst_prim = nullptr;
+  std::string max_pool_name;
   if (fmk_type == converter::kFmkTypeCaffe) {
     dst_prim = std::make_shared<acl::Pooling>();
-  } else if (fmk_type == converter::kFmkTypeOnnx) {
+    max_pool_name = acl::kNamePooling;
+  } else if (fmk_type == converter::kFmkTypeOnnx && IsKernelSizeValid(src_prim)) {
     dst_prim = std::make_shared<acl::MaxPoolV3>();
+    max_pool_name = acl::kNameMaxPoolV3;
   } else {
     ops::MaxPool max_pool_op;
     dst_prim = max_pool_op.GetPrim();
+    max_pool_name = ops::kNameMaxPool;
   }
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "Get primitive by fmk type failed.");
   dst_prim->SetAttrs(src_prim->attrs());
-  if (AdjustPoolAttr(fmk_type, kNameMaxPoolFusion, dst_prim) != lite::RET_OK) {
+  if (AdjustPoolAttr(fmk_type, max_pool_name, dst_prim) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust pool attr failed.";
     return lite::RET_ERROR;
   }
   value_node->set_value(dst_prim);
   return lite::RET_OK;
+}
+
+bool MaxPoolFusionMapper::IsKernelSizeValid(const PrimitivePtr &prim) const {
+  auto attr_val = prim->GetAttr(ops::kKernelSize);
+  if (attr_val == nullptr) {
+    return true;
+  }
+  auto kernel_value = opt::CastToInt(attr_val);
+  if (kernel_value.size() != kCommonAttrValueNum) {
+    MS_LOG(ERROR) << " Kernel size value num must be two, but size is " << kernel_value.size();
+    return false;
+  }
+  int64_t kernel_h = kernel_value[0];
+  int64_t kernel_w = kernel_value[1];
+  if ((kernel_h <= kMaxKernelSize && kernel_w <= kMaxKernelSize) || (kernel_h * kernel_w <= kMaxKernelSize_H_Mul_W)) {
+    return true;
+  }
+  return false;
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNameMaxPoolFusion, MaxPoolFusionMapper)

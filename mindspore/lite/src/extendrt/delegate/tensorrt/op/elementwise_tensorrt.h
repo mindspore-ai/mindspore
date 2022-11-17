@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ class ElementWiseTensorRT : public TensorRTOp {
 
  private:
   nvinfer1::ITensor *AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor);
+
+  nvinfer1::IElementWiseLayer *AddFoorMod(TensorRTContext *ctx, nvinfer1::ITensor *x0_trt, nvinfer1::ITensor *x1_trt);
 
   int AddConstTensor(TensorRTContext *ctx);
 

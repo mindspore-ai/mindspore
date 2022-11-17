@@ -48,7 +48,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  std::vector<KernelTensorPtr> RetrieveOutputShape() { return outputs_; }
+  std::vector<KernelTensorPtr> RetrieveOutputShape() override;
 
  private:
   void RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs);
@@ -60,6 +60,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   void UpdateOutputAddr(const std::vector<AddressPtr> &outputs);
 
   bool load_model_;
+  std::vector<KernelTensorPtr> original_data_;
   std::vector<KernelTensorPtr> inputs_;
   std::vector<KernelTensorPtr> outputs_;
   AclModelOptionsPtr acl_options_;

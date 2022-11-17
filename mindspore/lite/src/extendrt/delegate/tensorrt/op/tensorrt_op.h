@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ namespace mindspore::lite {
 constexpr int INPUT_SIZE2 = 2;
 constexpr int INPUT_SIZE3 = 3;
 constexpr int INPUT_SIZE4 = 4;
+constexpr int INPUT_SIZE5 = 5;
 
 struct BindingHelper {
   std::string name_;
@@ -80,7 +81,7 @@ class TensorRTOp {
 
   const BaseOperatorPtr &GetBaseOperator();
 
-  bool HasConst() const;
+  virtual bool HasConst() const;
 
   int ReadyInputsNumber(TensorRTContext *ctx) const;
 
@@ -115,6 +116,7 @@ class TensorRTOp {
   nvinfer1::ILayer *layer() { return layer_; }
 
   bool GetSupportInputBool();
+  bool IsDynamicInput(TensorRTContext *ctx, size_t k);
 
   void SetSupportInputBool(bool support_input_bool);
   template <class OpsT>
@@ -126,6 +128,8 @@ class TensorRTOp {
   static std::shared_ptr<OpsT> AsOps(const BaseOperatorPtr &base_operator) {
     return std::make_shared<OpsT>(base_operator->GetPrim());
   }
+  void PrintTrtInputs(TensorRTContext *ctx);
+  void PrintTrtOutputs(TensorRTContext *ctx);
 
  private:
   int SetTransposeDynamicRange();

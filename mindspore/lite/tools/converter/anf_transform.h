@@ -53,6 +53,7 @@ class AnfTransform {
 
   static int DoQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
+  static int SpecInputFormat(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
   static int DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
   static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
@@ -72,6 +73,8 @@ class AnfTransform {
   static bool CheckExternalExtension(const std::shared_ptr<ConverterPara> &param);
 
   static STATUS ProcOnlineTransform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+
+  FuncGraphManagerPtr manager_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

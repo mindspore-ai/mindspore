@@ -21,6 +21,7 @@
 #include <functional>
 #include <string>
 #include <set>
+#include <fstream>
 #include "base/float16.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/transpose.h"
@@ -36,6 +37,8 @@
 #include "tools/optimizer/common/helper.h"
 #include "ops/op_utils.h"
 #include "ops/custom.h"
+#include "include/common/utils/anfalgo.h"
+#include "tools/optimizer/common/format_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -722,6 +725,14 @@ bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   return false;
 }
 
+AnfNodePtr GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
+  if (tuple_get_item == nullptr || tuple_get_item->size() != kInputSizeThree) {
+    MS_LOG(ERROR) << "The node tuple_get_item must have 2 inputs!";
+    return nullptr;
+  }
+  return tuple_get_item->input(kRealInputNodeIndexInTupleGetItem);
+}
+
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   if (tuple_get_item == nullptr || tuple_get_item->size() != kInputSizeThree) {
     MS_LOG(ERROR) << "The node tuple_get_item is invalid.";
@@ -1080,6 +1091,62 @@ size_t GetOutputSize(const AnfNodePtr &anf_node) {
   return 1;
 }
 
+ShapeVector GetAnfNodeOutputShape(const AnfNodePtr &node, size_t output_idx) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "anf_node is nullptr.";
+    return {};
+  }
+  auto as_value_node = node->cast<ValueNodePtr>();
+  if (as_value_node) {
+    auto value = as_value_node->value();
+    auto tensor = value->cast<tensor::TensorPtr>();
+    if (tensor) {
+      return tensor->shape_c();
+    }
+    return {};
+  }
+  auto base_shape = node->Shape();
+  if (base_shape == nullptr) {
+    MS_LOG(INFO) << "Failed to get shape from node " << node->fullname_with_scope();
+    return {};
+  }
+  if (base_shape->isa<abstract::Shape>()) {
+    if (output_idx != 0) {
+      MS_LOG(EXCEPTION) << "The node " << node->fullname_with_scope() << "is a single output node but got index ["
+                        << output_idx;
+    }
+    auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    return shape_ptr->shape();
+  } else if (base_shape->isa<abstract::NoShape>()) {
+    return ShapeVector();
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (output_idx >= tuple_shape->size()) {
+      MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
+                        << node->fullname_with_scope();
+    }
+    auto b_shp = (*tuple_shape)[output_idx];
+    if (b_shp->isa<abstract::Shape>()) {
+      auto shape_ptr = b_shp->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      return shape_ptr->shape();
+    } else if (b_shp->isa<abstract::NoShape>()) {
+      return ShapeVector();
+    } else if (b_shp->isa<abstract::TupleShape>()) {
+      MS_LOG(INFO) << "The output shape of node:" << node->fullname_with_scope() << " index:" << output_idx
+                   << " is a TupleShape:" << base_shape->ToString();
+      return ShapeVector();
+    } else {
+      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
+                        << "node :" << node->fullname_with_scope() << ".";
+    }
+  }
+  return ShapeVector();
+}
+
 int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
   if (anf_node == nullptr || type_id == nullptr) {
     MS_LOG(ERROR) << "anf_node or type_id is nullptr.";
@@ -1229,5 +1296,83 @@ bool CheckAndGetCnodeIndex(const CNodePtr &cnode, size_t *index, const Primitive
   *index = dst_index;
   return true;
 }
+
+void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_file) {
+  if (func_graph == nullptr) {
+    MS_LOG_WARNING << "input func_graph is nullptr";
+    return;
+  }
+  static int index = 0;
+  auto real_file = std::to_string(index++) + "_" + output_file + ".txt";
+  std::ofstream fp(real_file);
+  if (!fp.is_open()) {
+    MS_LOG(ERROR) << "Failed to create file " << real_file;
+    return;
+  }
+  auto nodes = func_graph->TopoSort(func_graph->get_return());
+  auto type_name = [](const AnfNodePtr &anf_node) -> std::string {
+    if (anf_node->cast<CNodePtr>()) {
+      return GetCNodeFuncName(anf_node->cast<CNodePtr>());
+    } else if (anf_node->cast<ParameterPtr>()) {
+      return "Parameter";
+    } else if (anf_node->cast<ValueNodePtr>()) {
+      return "ValueNode";
+    }
+    return anf_node->ToString();
+  };
+  for (auto &node : nodes) {
+    if (IsValueNode<Primitive>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      fp << node->fullname_with_scope() << ", type: " << type_name(node)
+         << ", shape: " << GetAnfNodeOutputShape(node, 0) << std::endl;
+      fp << std::endl;
+      continue;
+    }
+    fp << node->fullname_with_scope() << ", type: " << type_name(node) << ", shape: " << GetAnfNodeOutputShape(node, 0)
+       << std::endl;
+    auto inputs = cnode->inputs();
+    for (auto &input : inputs) {
+      if (IsValueNode<Primitive>(input)) {
+        continue;
+      }
+      fp << "---input " << input->fullname_with_scope() << ", type: " << type_name(input)
+         << ", shape: " << GetAnfNodeOutputShape(input, 0) << std::endl;
+    }
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    for (auto &attr : prim->attrs()) {
+      fp << "---attr " << attr.first << ": " << attr.second->ToString() << std::endl;
+    }
+    fp << std::endl;
+  }
+}
+
+#if !defined(_WIN32) && !defined(_WIN64)
+std::vector<KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node) {
+  if (!anf_node) {
+    return {};
+  }
+  if (!anf_node->isa<CNode>()) {
+    return {{anf_node, 0}};
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  std::vector<common::KernelWithIndex> inputs;
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
+    const auto &pre_node_output = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
+    auto pre_node = pre_node_output.first;
+    if (opt::CheckPrimitiveType(pre_node, prim::kPrimMakeTuple) ||
+        opt::CheckPrimitiveType(pre_node, opt::kPrimMakeTupleV2)) {
+      auto tuple_inputs = GetNodeInputs(pre_node);
+      std::copy(tuple_inputs.begin(), tuple_inputs.end(), std::back_inserter(inputs));
+    } else {
+      inputs.push_back(pre_node_output);
+    }
+  }
+  return inputs;
+}
+#endif
 }  // namespace opt
 }  // namespace mindspore

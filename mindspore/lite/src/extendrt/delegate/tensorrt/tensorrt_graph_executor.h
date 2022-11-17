@@ -32,6 +32,7 @@
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/lite_graph_executor.h"
 #include "ccsrc/backend/common/session/kernel_graph.h"
+#include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore::lite {
 struct TrtGraphContext {
@@ -43,13 +44,11 @@ struct TrtGraphContext {
 
 class TensorRTExecutor : public LiteGraphExecutor {
  public:
-  TensorRTExecutor(const std::shared_ptr<mindspore::Context> &context, const std::string &cache_model_path,
-                   size_t vocab_size, size_t device_cache_size, const std::map<std::string, std::string> &ms_cache);
-  explicit TensorRTExecutor(const std::shared_ptr<mindspore::Context> &context);
+  TensorRTExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos);
 
   ~TensorRTExecutor() override;
 
-  Status Init();
+  bool Init();
 
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
@@ -61,8 +60,9 @@ class TensorRTExecutor : public LiteGraphExecutor {
   std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
 
  private:
+  int ParseOptimizationProfile();
+
   Status BuildSubGraph(const KernelGraphPtr &graph);
-  Status UpdateTrtSubGraphInputsDepend();
 
   TensorRTOp *FindTensorRTOp(const CNodePtr &cnode, const BaseOperatorPtr &base_operator,
                              const std::vector<TensorInfo> &input_tensors,
@@ -72,8 +72,10 @@ class TensorRTExecutor : public LiteGraphExecutor {
                                                         const KernelGraphPtr &graph, int index,
                                                         const std::vector<TensorInfo> &inputs,
                                                         const std::vector<TensorInfo> &outputs);
+  int ParseDumpOptions(const std::map<std::string, std::string> &gpu_context);
 
   std::shared_ptr<mindspore::Context> context_{nullptr};
+  ConfigInfos config_infos_;
   std::shared_ptr<GPUDeviceInfo> device_info_{nullptr};
   TensorRTRuntime *runtime_{nullptr};
   bool support_hw_resize_{true};
@@ -88,14 +90,17 @@ class TensorRTExecutor : public LiteGraphExecutor {
 
   std::vector<kernel::Kernel> kernel_list_;
 
-  std::vector<TrtGraphContext> tensorrt_graph_list_;
+  ProfileConfigs trt_profile_configs_;
 
-  std::vector<nvinfer1::Dims> min_dims_;
-  std::vector<nvinfer1::Dims> opt_dims_;
-  std::vector<nvinfer1::Dims> max_dims_;
-
+  std::shared_ptr<TensorRTSubGraph> tensorrt_graph_ = nullptr;
   std::vector<TensorInfo> inputs_;
   std::vector<TensorInfo> outputs_;
+  std::vector<TensorInfo> dump_outputs_;
+  std::vector<std::string> dump_ops_;
+  std::string dump_dir_;
+  bool has_dumped_ = false;
+
+  KernelGraphUtilsPtr kernel_graph_utils_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

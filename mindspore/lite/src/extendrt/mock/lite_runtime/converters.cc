@@ -23,6 +23,7 @@ constexpr static int kMaxNumOfDevices = 3;
 constexpr static int kDefaultThreadNumTwo = 2;
 constexpr static int kDefaultThreadNumFour = 4;
 constexpr static int kCoreNumThreshold = 32;
+constexpr static int kDefaultInterOpParallelNum = 1;
 
 void ContextUtils::SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
                                   const std::vector<int32_t> &affinity_core_list,
@@ -78,6 +79,9 @@ Status ContextUtils::AddAscendDevice(lite::InnerContext *inner_context, DeviceIn
 }
 
 void ContextUtils::ResetDefaultThreadNum(Context *context) {
+  if (context->GetInterOpParallelNum() == 0) {
+    context->SetInterOpParallelNum(kDefaultInterOpParallelNum);
+  }
   if (context->GetThreadNum() != 0) {
     return;
   }

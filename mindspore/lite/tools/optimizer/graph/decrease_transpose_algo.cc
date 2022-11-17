@@ -686,10 +686,17 @@ int DecreaseTransposeAlgo::ModifyCNodeFormat(const CNodePtr &cnode, FormatTransN
   }
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(primitive != nullptr, lite::RET_ERROR, "GetValueNode Failed");
+  mindspore::Format new_format;
   if (pre_trans_type == kNHWC2NCHW) {
-    primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
+    new_format = mindspore::NCHW;
   } else {
-    primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NHWC));
+    new_format = mindspore::NHWC;
+  }
+  primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(new_format));
+  if (primitive->HasAttr(opt::kOutputsFormat)) {
+    auto org_format = CastToInt(primitive->GetAttr(opt::kOutputsFormat));
+    std::vector<int64_t> outputs_format(org_format.size(), new_format);
+    (void)primitive->AddAttr(kOutputsFormat, MakeValue(outputs_format));
   }
   return lite::RET_OK;
 }

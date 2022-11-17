@@ -19,6 +19,7 @@
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "include/registry/converter_context.h"
 #include "nnacl/op_base.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
@@ -74,6 +75,10 @@ PrimitiveCPtr CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto
     return nullptr;
   }
   prim->set_out_channel((int64_t)channelOut);
+
+  if (convParam.bias_term()) {
+    prim->AddAttr(ops::kHasBias, api::MakeValue<bool>(true));
+  }
 
   // parse channelIN
   auto &weightBlob = weight.blobs(0);

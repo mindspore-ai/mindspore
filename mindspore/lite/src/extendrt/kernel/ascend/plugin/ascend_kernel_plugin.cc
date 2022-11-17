@@ -32,14 +32,30 @@ AscendKernelPlugin &AscendKernelPlugin::GetInstance() {
 
 AscendKernelPlugin::AscendKernelPlugin() : handle_(nullptr), create_kernel_map_(nullptr), is_registered_(false) {}
 
+void AscendKernelPlugin::UpdateRegisterStatus(bool status) { is_registered_ = status; }
+
 void AscendKernelPlugin::Register() {
 #if !defined(_WIN32)
   if (is_registered_) {
     MS_LOG(INFO) << "Create kernel map has been created.";
     return;
   }
+  Dl_info dl_info;
+  dladdr(reinterpret_cast<void *>(this), &dl_info);
+  std::string cur_so_path = dl_info.dli_fname;
+  auto pos = cur_so_path.find("libmindspore-lite.so");
+  if (pos == std::string::npos) {
+    MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
+    auto c_lite_pos = cur_so_path.find("_c_lite");
+    if (c_lite_pos == std::string::npos) {
+      MS_LOG(ERROR) << "Could not find _c_lite so, cur so path: " << cur_so_path;
+      return;
+    }
+    pos = c_lite_pos;
+  }
+  std::string parent_dir = cur_so_path.substr(0, pos);
   std::string ascend_kernel_plugin_path;
-  auto ret = DLSoPath("libmindspore-lite.so", "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
+  auto ret = FindSoPath(parent_dir, "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of libascend_kernel_plugin.so failed.";
     return;
@@ -63,7 +79,9 @@ void AscendKernelPlugin::Register() {
   }
   // register
   for (auto &kernel : *create_kernel_map_) {
-    static KernelRegistrar<kernel::KernelMod> ascend_kernel_reg(kernel.first, kernel.second);
+    if (!kernel::Factory<kernel::KernelMod>::Instance().IsRegistered(kernel.first)) {
+      KernelRegistrar<kernel::KernelMod> ascend_kernel_reg(kernel.first, kernel.second);
+    }
   }
   is_registered_ = true;
   MS_LOG(INFO) << "Register ascend kernel plugin success.";

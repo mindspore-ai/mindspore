@@ -40,6 +40,22 @@ int WhereTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
   return RET_OK;
 }
 
+nvinfer1::ITensor *WhereTensorRT::GetBroadcastTensor(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor) {
+  auto input_cond_dims = input(ctx, 0).trt_tensor_->getDimensions();
+  nvinfer1::Dims in_tensor_dims = input_tensor->getDimensions();
+  while (in_tensor_dims.nbDims < input_cond_dims.nbDims) {
+    input_tensor = ExpandDim(ctx, input_tensor, 0);
+    if (input_tensor->getDimensions().nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+    }
+    nvinfer1::IShuffleLayer *shuffle_layer = ctx->network()->addShuffle(*input_tensor);
+    shuffle_layer->setReshapeDimensions(input_tensor->getDimensions());
+    input_tensor = shuffle_layer->getOutput(0);
+    in_tensor_dims = input_tensor->getDimensions();
+  }
+  return input_tensor;
+}
+
 int WhereTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
@@ -61,40 +77,16 @@ int WhereTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // broadcast to same shape
   if (input_x_dims.nbDims != input_y_dims.nbDims) {
     if (input_x_dims.nbDims > input_y_dims.nbDims) {
-      auto inputy = input(ctx, INPUT_Y_INDEX).trt_tensor_;
-      nvinfer1::Dims in_tensor_dims = input_y_dims;
       auto input_shape_tensor = ctx->network()->addShape(*input(ctx, INPUT_X_INDEX).trt_tensor_)->getOutput(0);
-      while (in_tensor_dims.nbDims < input_x_dims.nbDims) {
-        inputy = ExpandDim(ctx, inputy, 0);
-        if (inputy->getDimensions().nbDims == -1) {
-          MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-          return RET_ERROR;
-        }
-        nvinfer1::IShuffleLayer *shuffle_layer = ctx->network()->addShuffle(*inputy);
-        shuffle_layer->setReshapeDimensions(inputy->getDimensions());
-        inputy = shuffle_layer->getOutput(0);
-        in_tensor_dims = inputy->getDimensions();
-      }
+      auto inputy = GetBroadcastTensor(ctx, input(ctx, INPUT_Y_INDEX).trt_tensor_);
       auto size_tensor = ctx->network()->addShape(*inputy)->getOutput(0);
       size_tensor = ctx->network()
                       ->addElementWise(*input_shape_tensor, *size_tensor, nvinfer1::ElementWiseOperation::kMAX)
                       ->getOutput(0);
       inputTensors[INPUT_Y_INDEX] = Broadcast(ctx, inputy, size_tensor);
     } else {
-      auto inputx = input(ctx, INPUT_X_INDEX).trt_tensor_;
-      nvinfer1::Dims in_tensor_dims = input_x_dims;
       auto input_shape_tensor = ctx->network()->addShape(*input(ctx, INPUT_Y_INDEX).trt_tensor_)->getOutput(0);
-      while (in_tensor_dims.nbDims < input_y_dims.nbDims) {
-        inputx = ExpandDim(ctx, inputx, 0);
-        if (inputx->getDimensions().nbDims == -1) {
-          MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-          return RET_ERROR;
-        }
-        nvinfer1::IShuffleLayer *shuffle_layer = ctx->network()->addShuffle(*inputx);
-        shuffle_layer->setReshapeDimensions(inputx->getDimensions());
-        inputx = shuffle_layer->getOutput(0);
-        in_tensor_dims = inputx->getDimensions();
-      }
+      auto inputx = GetBroadcastTensor(ctx, input(ctx, INPUT_X_INDEX).trt_tensor_);
       auto size_tensor = ctx->network()->addShape(*inputx)->getOutput(0);
       size_tensor = ctx->network()
                       ->addElementWise(*input_shape_tensor, *size_tensor, nvinfer1::ElementWiseOperation::kMAX)

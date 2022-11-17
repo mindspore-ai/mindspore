@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // add activation
   if (activation_ != ActivationType::NO_ACTIVATION) {
     nvinfer1::ILayer *activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_, 0, 0, 0, out_tensor, device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_, 0, 0, 0, out_tensor, op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for matmul failed";
       return RET_ERROR;
@@ -87,6 +87,8 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor, out_format_, true);
   return RET_OK;
 }
+
+bool MatMulTensorRT::HasConst() const { return in_tensors_[0].IsConst() || in_tensors_[1].IsConst(); }
 
 int MatMulTensorRT::PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b) {
   if (!HasConst()) {
@@ -104,6 +106,15 @@ int MatMulTensorRT::PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *
       out_format_ = Format::NCHW;
     }
   } else {
+    for (size_t i = 0; i < in_tensors_.size(); i++) {
+      auto in_tensor = input(ctx, i);
+      if (in_tensors_[i].IsConst() || in_tensor.trt_tensor_ == nullptr) {
+        in_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx, in_tensors_[i], op_name_);
+        in_tensor.format_ = Format::NCHW;
+        ctx->RegisterTensor(in_tensor, in_tensors_[i].Name());
+      }
+    }
+
     auto weight = ProcessWeightTensor(ctx);
     *matmul_a = input(ctx, 0);
     *matmul_b = input(ctx, 1);
@@ -235,8 +246,8 @@ nvinfer1::ITensor *MatMulTensorRT::AddBias(TensorRTContext *ctx, nvinfer1::ITens
   if (in_tensors_.size() == kBiasIndex + 1) {
     nvinfer1::ITensor *bias = nullptr;
     if (in_tensors_[kBiasIndex].Shape().size() < static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
-      std::vector<int64_t> expect_dims(out_tensors_[0].Shape());
-      expect_dims[0] = out_tensor->getDimensions().d[0];
+      std::vector<int64_t> expect_dims(input_tensor->getDimensions().nbDims, 1);
+      expect_dims[expect_dims.size() - 1] = in_tensors_[kBiasIndex].Shape().back();
       bias = ConvertTensorWithExpandDims(ctx, in_tensors_[kBiasIndex], expect_dims, op_name_);
     } else if (in_tensors_[kBiasIndex].Shape().size() == static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
       bias = ConvertConstantTensor(ctx, in_tensors_[kBiasIndex], op_name_);

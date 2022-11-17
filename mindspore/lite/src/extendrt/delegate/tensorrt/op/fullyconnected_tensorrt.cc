@@ -73,7 +73,7 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // add activation
   if (activation_ != ActivationType::NO_ACTIVATION) {
     nvinfer1::ILayer *activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_, 0, 0, 0, out_tensor, device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_, 0, 0, 0, out_tensor, op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for matmul failed";
       return RET_ERROR;
@@ -88,7 +88,7 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int FullyConnectedTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *fc_input) {
-  auto ret = PreprocessInputs2SameDim(ctx, input(ctx, !in_tensors_[1].IsConst()), fc_input);
+  auto ret = PreprocessInputs2SameDim(ctx, input(ctx, in_tensors_[1].IsConst() ? 0 : 1), fc_input);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim failed for " << op_name_;
     return ret;

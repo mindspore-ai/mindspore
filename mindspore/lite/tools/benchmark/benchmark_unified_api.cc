@@ -23,7 +23,6 @@
 #include <functional>
 #include <iomanip>
 #include <limits>
-#include "schema/model_generated.h"
 #include "src/common/common.h"
 #include "src/tensor.h"
 #include "tools/common/string_util.h"
@@ -442,7 +441,17 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   if (flags_->device_ == "GPU") {
     std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
     gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
-
+    uint32_t device_id = 0;
+    auto device_id_env = std::getenv("GPU_DEVICE_ID");
+    if (device_id_env != nullptr) {
+      try {
+        device_id = static_cast<uint32_t>(std::stoul(device_id_env));
+      } catch (std::invalid_argument &e) {
+        MS_LOG(WARNING) << "Invalid device id env:" << device_id_env << ". Set default device id 0.";
+      }
+      MS_LOG(INFO) << "GPU device_id = " << device_id;
+    }
+    gpu_device_info->SetDeviceID(device_id);
     if (flags_->enable_gl_texture_) {
       gpu_device_info->SetEnableGLTexture(flags_->enable_gl_texture_);
 
@@ -477,12 +486,17 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
     }
     std::shared_ptr<AscendDeviceInfo> ascend_device_info = std::make_shared<AscendDeviceInfo>();
     ascend_device_info->SetDeviceID(device_id);
+    auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
+    if (back_policy_env != nullptr) {
+      ascend_device_info->SetProvider(back_policy_env);
+    }
     device_list.push_back(ascend_device_info);
   }
 
   // CPU priority is behind GPU and NPU
   std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
   device_info->SetEnableFP16(flags_->enable_fp16_);
+  device_info->SetProvider(flags_->provider_);
   device_list.push_back(device_info);
 
   return RET_OK;
@@ -530,6 +544,27 @@ int BenchmarkUnifiedApi::CompareOutputForModelPool(std::vector<mindspore::MSTens
   return RET_OK;
 }
 #endif
+
+void Convert2Float32(float *__restrict out, const uint16_t in) {
+  uint32_t t1;
+  uint32_t t2;
+  uint32_t t3;
+
+  t1 = in & 0x7fffu;
+  t2 = in & 0x8000u;
+  t3 = in & 0x7c00u;
+
+  t1 <<= 13u;
+  t2 <<= 16u;
+
+  t1 += 0x38000000;
+
+  t1 = (t3 == 0 ? 0 : t1);
+
+  t1 |= t2;
+
+  *(out) = static_cast<float>(t1);
+}
 
 int BenchmarkUnifiedApi::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
@@ -725,6 +760,26 @@ int BenchmarkUnifiedApi::CompareDataGetTotalCosineDistanceAndSize(const std::str
       res = CompareDatabyCosineDistance<float>(name, tensor->Shape(), mutableData, &bias);
       break;
     }
+    case TypeId::kNumberTypeFloat16: {
+      size_t shapeSize = 1;
+      for (int64_t dim : tensor->Shape()) {
+        if (dim <= 0) {
+          MS_LOG(ERROR) << "Invalid shape.";
+          return RET_ERROR;
+        }
+        MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(shapeSize, static_cast<size_t>(dim)), RET_ERROR, "mul overflow");
+        shapeSize *= static_cast<size_t>(dim);
+      }
+      float *floatArr = new float[shapeSize];
+      for (size_t i = 0; i < shapeSize; ++i) {
+        uint16_t tmpInt = reinterpret_cast<uint16_t *>(mutableData)[i];
+        Convert2Float32(&floatArr[i], tmpInt);
+        reinterpret_cast<float *>(mutableData)[i] = floatArr[i];
+      }
+      delete[] floatArr;
+      bias = CompareData<float, int64_t>(name, tensor->Shape(), mutableData);
+      break;
+    }
     case TypeId::kNumberTypeInt8: {
       res = CompareDatabyCosineDistance<int8_t>(name, tensor->Shape(), mutableData, &bias);
       break;
@@ -894,6 +949,10 @@ int BenchmarkUnifiedApi::PrintInputData() {
     auto tensor_data_type = static_cast<int>(input.DataType());
 
     std::cout << "InData " << i << ": ";
+    if (tensor_data_type == TypeId::kNumberTypeFloat16) {
+      MS_LOG(INFO) << "DataType: " << TypeId::kNumberTypeFloat16;
+      continue;
+    }
     if (tensor_data_type == TypeId::kObjectTypeString) {
       std::vector<std::string> output_strings = MSTensor::TensorToStrings(input);
       size_t print_num = std::min(output_strings.size(), static_cast<size_t>(20));

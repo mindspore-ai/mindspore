@@ -6,6 +6,10 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
     ${MODEL_LOADER_FRAMEWORK_SRC})
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    if(PLATFORM_ARM64)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions")
+    endif()
     set(ENABLE_CPU on)
     set(LOAD_PLUGIN_STATIC on)
     add_compile_definitions(USE_GLOG)
@@ -36,9 +40,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
@@ -50,24 +51,27 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/serialization.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/convert/runtime_convert.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
         )
-    # when cpu kernel is need
-    #if(NOT MSLITE_ENABLE_ACL)
-    #    set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-    #        ${MINDIR_KERNEL_SRC}
-    #        ${MINDIR_MODEL_SRC}
-    #        ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
-    #        )
-    #endif()
-
+    if(MSLITE_ENABLE_BFC_MEMORY)
+        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
+            )
+    endif()
+    if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
+        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
+            )
+    endif()
     include_directories("${CCSRC_DIR}/ps/core")
     file(GLOB_RECURSE COMM_PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CCSRC_DIR}/ps/core/protos/*.proto")
     ms_protobuf_generate(COMM_PROTO_SRCS COMM_PROTO_HDRS ${COMM_PROTO_IN})
@@ -123,10 +127,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/common/debug/anf_ir_dump.cc
         ${CCSRC_DIR}/common/debug/common.cc
         ${CCSRC_DIR}/common/debug/env_config_parser.cc
+        ${CCSRC_DIR}/common/mem_reuse/mem_dynamic_allocator.cc
         ${CCSRC_DIR}/common/thread_pool.cc
         ${CCSRC_DIR}/utils/scoped_long_running.cc
         ${CCSRC_DIR}/utils/cse.cc
         ${CCSRC_DIR}/utils/comm_manager.cc
+        ${CCSRC_DIR}/utils/signal_util.cc
         ${CORE_DIR}/utils/status.cc
         )
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
@@ -139,13 +145,11 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
     add_subdirectory(delegate/graph_executor/litert)
-
-    # when cpu kernel is need
-    #if(NOT MSLITE_ENABLE_ACL)
-    #    add_subdirectory(mock/lite_runtime)
-    #    add_dependencies(mindspore-extendrt mindspore-infer-lite)
-    #    target_link_libraries(mindspore-extendrt mindspore-infer-lite)
-    #endif()
+    add_library(mindspore-extendrt_static STATIC ${MSLITE_EXTEND_RUNTIME_SRC})
+    add_dependencies(mindspore-extendrt_static fbs_inner_src)
+    add_dependencies(mindspore-extendrt_static mindspore-lite-proto)
+    add_dependencies(mindspore-extendrt_static mindspore-infer-anfalgo)
+    add_dependencies(mindspore-extendrt_static mindspore-kernel-graph)
 
     add_subdirectory(${CCSRC_DIR}/backend/common/pass common_pass)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
@@ -153,17 +157,28 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     target_link_libraries(mindspore-extendrt mindspore-infer-anfalgo
         mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
         _mindspore_backend_common_pass_obj)
-    target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf mindspore::pybind11_module)
+    target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf)
     add_dependencies(mindspore-extendrt msplugin-ge-litert)
     target_link_libraries(mindspore-extendrt msplugin-ge-litert)
+    target_link_libraries(mindspore-extendrt_static mindspore_infer_shared_lib_obj)
+    target_link_libraries(mindspore-extendrt_static mindspore-infer-anfalgo
+            mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
+            _mindspore_backend_common_pass_obj)
+    target_link_libraries(mindspore-extendrt_static mindspore_core mindspore::protobuf)
+    add_dependencies(mindspore-extendrt_static msplugin-ge-litert)
+    target_link_libraries(mindspore-extendrt_static msplugin-ge-litert)
 
     if(NOT WIN32)
         target_link_libraries(mindspore-extendrt dl)
+        target_link_libraries(mindspore-extendrt_static dl)
     endif()
 
     if(MSLITE_ENABLE_ACL)
         include_directories(${TOP_DIR}/graphengine/inc/external)
         add_subdirectory(kernel/ascend)
+        if(MSLITE_ENABLE_HELPER)
+            add_subdirectory(delegate/ascend_ge)
+        endif()
     endif()
 
     if(SUPPORT_CUDA)
@@ -179,6 +194,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
         add_subdirectory(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops cuda_ops)
         target_link_libraries(mindspore-extendrt cuda_lite_kernel_mid cuda_ops)
+        target_link_libraries(mindspore-extendrt_static cuda_lite_kernel_mid cuda_ops)
     endif()
 
     if(SUPPORT_TENSORRT)
@@ -205,6 +221,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 else()
     add_library(mindspore-extendrt OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
+    add_library(mindspore-extendrt_static OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
+    add_dependencies(mindspore-extendrt_static fbs_inner_src)
 endif()
 
+if(MSLITE_ENABLE_HELPER)
+    target_link_libraries(mindspore-extendrt ascend_ge_plugin)
+endif()
 set_target_properties(mindspore-extendrt PROPERTIES OUTPUT_NAME "mindspore-lite")
+

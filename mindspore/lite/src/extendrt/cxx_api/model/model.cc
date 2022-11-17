@@ -24,6 +24,8 @@ extern "C" {
 extern void mindspore_log_init();
 }
 #endif
+
+std::mutex g_build_mutex;
 }  // namespace
 std::mutex g_impl_init_lock;
 
@@ -43,6 +45,7 @@ Model::~Model() {}
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
+  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
     impl_ = std::make_shared<ModelImpl>();
@@ -65,6 +68,7 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
+  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
     impl_ = std::make_shared<ModelImpl>();
@@ -119,7 +123,7 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
     return kMCFailed;
   }
   try {
-    return impl_->Predict(inputs, outputs);
+    return impl_->Predict(inputs, outputs, before, after);
   } catch (const std::exception &exe) {
     MS_LOG_ERROR << "Catch exception: " << exe.what();
     return kCoreFailed;
@@ -216,10 +220,37 @@ Status Model::BindGLTexture2DMemory(const std::map<std::string, unsigned int> &i
   return kSuccess;
 }
 
-Status Model::LoadConfig(const std::vector<char> &config_path) { return kSuccess; }
+Status Model::LoadConfig(const std::vector<char> &config_path) {
+  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+  if (impl_ != nullptr) {
+    MS_LOG(ERROR) << "impl_ illegal in LoadConfig.";
+    return Status(kLiteFileError, "Illegal operation.");
+  }
+
+  impl_ = std::make_shared<ModelImpl>();
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return Status(kLiteFileError, "Fail to load config file.");
+  }
+
+  auto ret = impl_->LoadConfig(CharToString(config_path));
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "impl_ LoadConfig failed,";
+    return Status(kLiteFileError, "Invalid config file.");
+  }
+  return kSuccess;
+}
 
 Status Model::UpdateConfig(const std::vector<char> &section,
                            const std::pair<std::vector<char>, std::vector<char>> &config) {
-  return kSuccess;
+  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+  if (impl_ == nullptr) {
+    impl_ = std::make_shared<ModelImpl>();
+  }
+  if (impl_ != nullptr) {
+    return impl_->UpdateConfig(CharToString(section), {CharToString(config.first), CharToString(config.second)});
+  }
+  MS_LOG(ERROR) << "Model implement is null!";
+  return kLiteFileError;
 }
 }  // namespace mindspore

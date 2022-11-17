@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ int ConvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
     activation_layer = conv_layer;
   } else {
     activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, conv_layer->getOutput(0), device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, conv_layer->getOutput(0), op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for conv failed";
       return RET_ERROR;
@@ -163,9 +163,9 @@ void ConvolutionTensorRT::SetAttributes(const std::shared_ptr<ops::Conv2DFusion>
       auto padding_val = std::vector<int64_t>(padding.begin(), padding.end());
       if (padding_val[0] != padding_val[1] || padding_val[DIMENSION_2D] != padding_val[DIMENSION_3D]) {
         MS_LOG(WARNING) << op_name_ << " has different up and down padding value";
-        nvinfer1::Dims2 pre_dims(padding_val[0], padding_val[1]);
+        nvinfer1::Dims2 pre_dims(padding_val[0], padding_val[DIMENSION_2D]);
         conv_layer->setPrePadding(pre_dims);
-        nvinfer1::Dims2 post_dims(padding_val[DIMENSION_2D], padding_val[DIMENSION_3D]);
+        nvinfer1::Dims2 post_dims(padding_val[1], padding_val[DIMENSION_3D]);
         conv_layer->setPostPadding(post_dims);
       } else {
         nvinfer1::Dims2 dims(padding_val[0], padding_val[DIMENSION_2D]);

@@ -163,4 +163,11 @@ ATTR_MAP(KlDivLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::str
                            {"log_target", ATTR_DESC(log_target, AnyTraits<bool>())}};
 OUTPUT_MAP(KlDivLossGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(KlDivLossGrad, kNameKlDivLossGrad, ADPT_DESC(KlDivLossGrad))
+
+// InstanceNorm
+INPUT_MAP(InstanceNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
+ATTR_MAP(InstanceNorm) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                          {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(InstanceNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
+REG_ADPT_DESC(InstanceNorm, prim::kPrimInstanceNorm->name(), ADPT_DESC(InstanceNorm))
 }  // namespace mindspore::transform

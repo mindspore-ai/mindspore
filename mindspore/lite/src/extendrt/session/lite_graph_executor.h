@@ -20,9 +20,11 @@
 #include <string>
 #include <memory>
 
+#include "include/api/types.h"
 #include "runtime/hardware/device_context.h"
 
 namespace mindspore {
+/// \brief Adaptive Graph Executor for cloud Graph Executor to solve interface conflicts.
 class LiteGraphExecutor : public device::GraphExecutor {
  public:
   LiteGraphExecutor() = default;
@@ -36,6 +38,14 @@ class LiteGraphExecutor : public device::GraphExecutor {
   }
   virtual std::vector<tensor::Tensor> GetInputInfos(const FuncGraphPtr &) { return {}; }
   virtual std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) { return {}; }
+
+  void SetBefore(const MSKernelCallBack &before) { before_ = before; }
+
+  void SetAfter(const MSKernelCallBack &after) { after_ = after; }
+
+ protected:
+  MSKernelCallBack before_;
+  MSKernelCallBack after_;
 };
 }  // namespace mindspore
 

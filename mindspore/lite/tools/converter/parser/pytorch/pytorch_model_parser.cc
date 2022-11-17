@@ -74,7 +74,7 @@ api::FuncGraphPtr PytorchModelParser::Parse(const converter::ConverterParameters
     return nullptr;
   }
 
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypePytorch, false);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypePytorch, false, flag.export_mindir);
   MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "create unify_format return nullptr");
   if (!unify_format->Run(anf_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";

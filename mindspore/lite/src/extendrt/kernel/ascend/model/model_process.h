@@ -67,6 +67,7 @@ class ModelProcess {
   std::set<uint64_t> GetDynamicBatch();
   std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
   std::vector<Format> GetInputFormat();
+  const std::vector<ShapeVector> GetOutputShape();
 
  private:
   STATUS CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
@@ -90,6 +91,7 @@ class ModelProcess {
   void DestroyInputsDataMem();
   void DestroyInputsBuffer();
   void DestroyOutputsBuffer();
+  void UpdateBufferSize(const std::vector<KernelTensorPtr> &inputs);
 
   AclModelOptionsPtr options_;
   uint32_t model_id_;

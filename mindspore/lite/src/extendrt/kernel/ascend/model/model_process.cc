@@ -134,6 +134,28 @@ std::vector<Format> ModelProcess::GetInputFormat() {
   return input_formats;
 }
 
+const std::vector<ShapeVector> ModelProcess::GetOutputShape() {
+  std::vector<ShapeVector> shapes;
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return shapes;
+  }
+  size_t output_size = aclmdlGetNumOutputs(model_desc_);
+  for (size_t i = 0; i < output_size; ++i) {
+    aclError ret;
+    aclmdlIODims dims;
+    ret = aclmdlGetCurOutputDims(model_desc_, i, &dims);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Get index: " << i << " output shape failed, ret = " << ret;
+      return shapes;
+    }
+
+    ShapeVector shape(dims.dims, dims.dims + dims.dimCount);
+    shapes.emplace_back(shape);
+  }
+  return shapes;
+}
+
 std::set<std::pair<uint64_t, uint64_t>> ModelProcess::GetDynamicImage() {
   if (model_desc_ == nullptr) {
     MS_LOG(ERROR) << " Model desc is nullptr.";
@@ -350,9 +372,6 @@ STATUS ModelProcess::UnLoad() {
 }
 
 STATUS ModelProcess::SetBatchSize(const std::vector<KernelTensorPtr> &inputs) {
-  for (size_t i = 0; i < inputs.size(); i++) {
-    input_infos_[i].buffer_size = inputs[i]->GetData()->size;
-  }
   auto batch_size_tensor = inputs[inputs.size() - 1];
   size_t data_type_size = lite::DataTypeSize(batch_size_tensor->GetDtype());
   size_t num = 0;
@@ -383,9 +402,6 @@ STATUS ModelProcess::SetBatchSize(const std::vector<KernelTensorPtr> &inputs) {
 }
 
 STATUS ModelProcess::SetImageSize(const std::vector<KernelTensorPtr> &inputs) {
-  for (size_t i = 0; i < inputs.size(); i++) {
-    input_infos_[i].buffer_size = inputs[i]->GetData()->size;
-  }
   auto image_size_tensor = inputs[inputs.size() - 1];
   size_t data_type_size = lite::DataTypeSize(image_size_tensor->GetDtype());
   size_t num = 0;
@@ -471,6 +487,14 @@ bool ModelProcess::IsDynamicBatchSize() { return !GetDynamicBatch().empty(); }
 
 bool ModelProcess::IsDynamicImageSize() { return !GetDynamicImage().empty(); }
 
+void ModelProcess::UpdateBufferSize(const std::vector<KernelTensorPtr> &inputs) {
+  if (IsDynamicShape()) {
+    for (size_t i = 0; i < inputs.size(); i++) {
+      input_infos_[i].buffer_size = inputs[i]->GetData()->size;
+    }
+  }
+}
+
 STATUS ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs) {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
@@ -479,6 +503,7 @@ STATUS ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &input
     MS_LOG(ERROR) << "Check input tensor failed.";
     return lite::RET_ERROR;
   }
+  UpdateBufferSize(inputs);
   // copy inputs
   for (size_t i = 0; i < input_infos_.size(); ++i) {
     auto &info = input_infos_[i];

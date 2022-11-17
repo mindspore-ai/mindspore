@@ -29,6 +29,7 @@
 #include "ops/concat.h"
 #include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"
+#include "ops/instance_norm.h"
 #include "ops/stack.h"
 #include "ops/tuple_get_item.h"
 
@@ -38,7 +39,8 @@ namespace {
 constexpr size_t kCnodeInputMinNum = 2;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
-const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm, ops::kNameFusedBatchNorm};
+const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm, ops::kNameFusedBatchNorm,
+                                                      ops::kNameInstanceNorm};
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,
                                                       acl::kNameConcatV2};
 }  // namespace
@@ -63,6 +65,9 @@ CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &
   }
   TypeId type = acl::GetTypeFromNode(input_cnode);
   auto tensor_abstract = CreateTensorAbstract(shape, type);
+  MS_CHECK_TRUE_MSG(input_cnode->abstract() != nullptr, nullptr, "input_cnode->abstract() is nullptr.");
+  std::string abstract_name = input_cnode->abstract()->name();
+  tensor_abstract->set_name(abstract_name);
   MS_CHECK_TRUE_MSG(tensor_abstract != nullptr, nullptr, "Create tensor abstract failed.");
   get_item_cnode->set_abstract(tensor_abstract);
   get_item_cnode->set_fullname_with_scope(input_cnode->fullname_with_scope() + "_getitem");
@@ -126,6 +131,10 @@ static STATUS AdapteNodeWithDynamicInput(const FuncGraphPtr &func_graph, const C
   }
   auto make_tuple_cnode = func_graph->NewCNode(new_inputs);
   MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, lite::RET_ERROR, "New make tuple cnode failed.");
+  AbstractBasePtrList elem;
+  std::transform(new_inputs.begin() + 1, new_inputs.end(), std::back_inserter(elem),
+                 [](const AnfNodePtr &node) { return node->abstract(); });
+  make_tuple_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
 
   std::vector<AnfNodePtr> replace_node;
   if (cnode_func_name == acl::kNameConcatV2) {

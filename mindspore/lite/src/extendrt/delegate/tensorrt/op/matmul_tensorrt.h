@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ class MatMulTensorRT : public TensorRTOp {
   int AddInnerOp(TensorRTContext *ctx) override;
 
   bool IsWeightInputHanledInner() const override { return true; }
+
+  bool HasConst() const override;
 
  private:
   int PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b);

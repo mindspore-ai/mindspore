@@ -23,16 +23,78 @@
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
+#include "extendrt/session/optimizer/tensorrt_optimizer.h"
+#include "extendrt/delegate/ascend_ge/ge_utils.h"
+
 namespace mindspore {
+namespace {
+constexpr auto kAscendProviderGe = "ge";
+}  // namespace
+
+GraphSinkSession::~GraphSinkSession() {
+#ifdef ENABLE_HELPER
+  if (ge_context_ != nullptr) {
+    DelegateRegistry::GetInstance().UnRegDelegate(kAscend, kAscendProviderGe);
+    ge_context_->Destroy();
+  }
+#endif
+}
+
+Status GraphSinkSession::GeDeviceContextInit() {
+#ifdef ENABLE_HELPER
+  ge_context_ = std::make_shared<GeDeviceContext>();
+  if (ge_context_ == nullptr) {
+    MS_LOG(ERROR) << "Create GeDeviceContext failed.";
+    return kLiteUninitializedObj;
+  }
+  ge_context_->Initialize();
+#endif
+  return kSuccess;
+}
+
 Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "GraphSinkSession::Init";
+  if (graph_executor_ == nullptr) {
+    MS_LOG(ERROR) << "GraphSinkSession::Init failed, graph executor is nullptr.";
+    return kLiteUninitializedObj;
+  }
+  auto device_list = context->MutableDeviceInfo();
+  for (const auto &device_info : device_list) {
+    if (device_info == nullptr) {
+      MS_LOG(ERROR) << "GraphSinkSession::Init failed, device info is nullptr.";
+      return kLiteUninitializedObj;
+    }
+    if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == kAscendProviderGe) {
+      MS_LOG(INFO) << "GraphSinkSession::Init ascend helper";
+      GeDeviceContextInit();
+      break;
+    }
+  }
   kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
+  context_ = context;
   return kSuccess;
 }
 
 Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
+  // kernel graph will be removed from GraphSinkSession, and this code will be moved to TensorRT plugin
+  if (context_ && !context_->MutableDeviceInfo().empty()) {
+    auto device_info = context_->MutableDeviceInfo()[0];
+    if (device_info && device_info->GetDeviceType() == DeviceType::kGPU && device_info->GetProvider() == "tensorrt") {
+      TensorRtOptimizer optimizer;
+      optimizer.RunOptimizer(graph);
+    }
+    if (device_info && device_info->GetDeviceType() == DeviceType::kAscend &&
+        device_info->GetProvider() == kAscendProviderGe) {
+#ifdef ENABLE_HELPER
+      GeUtils::AdaptGraph(graph);
+#endif
+    }
+  }
   func_graph_ = graph;
+#ifdef ENABLE_HELPER
+  AdaptGraph(func_graph_);
+#endif
   std::vector<KernelGraphPtr> all_out_graph;
   kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
@@ -115,10 +177,12 @@ Status GraphSinkSession::InitGraphInputsOutputs() {
   return kSuccess;
 }
 
-Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                                  const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_LOG(INFO) << "GraphSinkSession::RunGraph";
-  MS_EXCEPTION_IF_NULL(graph_executor_);
   MS_EXCEPTION_IF_NULL(outputs);
+  graph_executor_->SetBefore(before);
+  graph_executor_->SetAfter(after);
   bool ret = true;
   if (is_use_kernel_graph_) {
     ret = graph_executor_->RunGraph(kernel_graph_, inputs, outputs, options_);
@@ -130,6 +194,10 @@ Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
     return kCoreFailed;
   }
   return kSuccess;
+}
+
+Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+  return RunGraph(inputs, outputs, nullptr, nullptr);
 }
 
 Status GraphSinkSession::Resize(const std::vector<tensor::Tensor> &inputs,
@@ -181,7 +249,8 @@ MutableTensorImplPtr GraphSinkSession::GetInputByTensorName(const std::string &n
   }
   return nullptr;
 }
-static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_ptr<Context> &ctx) {
+static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_ptr<Context> &ctx,
+                                                            const ConfigInfos &config_infos) {
   auto &device_contexts = ctx->MutableDeviceInfo();
   if (device_contexts.empty()) {
     return nullptr;
@@ -189,9 +258,14 @@ static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_pt
   auto device_type = device_contexts.at(0)->GetDeviceType();
   auto provider = device_contexts.at(0)->GetProvider();
 
-  auto delegate = DelegateRegistry::GetInstance().GetDelegate(device_type, provider, ctx);
+  auto delegate = DelegateRegistry::GetInstance().GetDelegate(device_type, provider, ctx, config_infos);
+  if (delegate == nullptr) {
+    return nullptr;
+  }
   auto session = std::make_shared<GraphSinkSession>(delegate);
-  session->Init(ctx);
+  if (provider != kAscendProviderGe) {
+    session->Init(ctx);
+  }
   return session;
 }
 REG_SESSION(kDelegateSession, DelegateSessionCreator);

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include <cuda_runtime_api.h>
 #include <map>
 #include <unordered_set>
 #include <numeric>
 #include <functional>
-#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
@@ -38,7 +38,8 @@ nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   return dims;
 }
 
-nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
+template <typename T>
+nvinfer1::Dims ConvertCudaDimsWithType(const void *data, int64_t size) {
   nvinfer1::Dims dims{};
   dims.nbDims = -1;
   if (size > static_cast<int64_t>(dims.MAX_DIMS)) {
@@ -46,11 +47,77 @@ nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
     return dims;
   }
   dims.nbDims = size;
-  const int *dims_data = static_cast<const int *>(data);
+
+  auto *dims_data = static_cast<const T *>(data);
   for (int i = 0; i < size; i++) {
-    dims.d[i] = *(dims_data + i);
+    dims.d[i] = static_cast<const int>(*(dims_data + i));
   }
   return dims;
+}
+
+nvinfer1::Dims ConvertCudaDims(const std::vector<int> &data) {
+  auto dims = ConvertCudaDimsWithType<int>(data.data(), data.size());
+  return dims;
+}
+
+nvinfer1::Dims ConvertCudaDims(const TensorInfo &ms_tensor) {
+  auto data = ms_tensor.Data();
+  auto size = ms_tensor.ElementNum();
+  auto ms_dtype = ms_tensor.DataType();
+
+  nvinfer1::Dims dims{};
+  if (ms_dtype == DataType::kNumberTypeInt32) {
+    dims = ConvertCudaDimsWithType<int>(data, size);
+  } else if (ms_dtype == DataType::kNumberTypeInt64) {
+    dims = ConvertCudaDimsWithType<int64_t>(data, size);
+  } else {
+    MS_LOG(ERROR) << "invalid DataType: " << ms_dtype;
+  }
+  return dims;
+}
+
+std::string CudaDimsAsString(const nvinfer1::Dims &dims) {
+  std::stringstream str_stream;
+  str_stream << "[" << dims.nbDims << ":";
+  if (dims.nbDims > 0) {
+    for (int i = 0; i < dims.nbDims; i++) {
+      str_stream << dims.d[i];
+      if (i + 1 != dims.nbDims) {
+        str_stream << ",";
+      }
+    }
+  }
+  str_stream << "]";
+  return str_stream.str();
+}
+
+std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor) {
+  if (!ms_tensor.IsConst()) {
+    MS_LOG(ERROR) << "Expect tensor to be const tensor, but got var tensor";
+    return {};
+  }
+  auto data = ms_tensor.Data();
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "Const data cannot be nullptr";
+    return {};
+  }
+  std::vector<int32_t> vals;
+  auto ms_dtype = ms_tensor.DataType();
+  auto size = ms_tensor.ElementNum();
+  if (ms_dtype == DataType::kNumberTypeInt32) {
+    auto int_data = reinterpret_cast<const int32_t *>(data);
+    for (int64_t i = 0; i < size; i++) {
+      vals.push_back(int_data[i]);
+    }
+  } else if (ms_dtype == DataType::kNumberTypeInt64) {
+    auto int_data = reinterpret_cast<const int64_t *>(data);
+    for (int64_t i = 0; i < size; i++) {
+      vals.push_back((int32_t)int_data[i]);
+    }
+  } else {
+    MS_LOG(ERROR) << "invalid DataType: " << ms_dtype;
+  }
+  return vals;
 }
 
 bool SameDims(nvinfer1::Dims dims, const std::vector<int64_t> &shape) {
@@ -169,6 +236,20 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const TensorInfo 
     return nullptr;
   }
   nvinfer1::Weights weights{data_type, ms_tensor.Data(), ms_tensor.ElementNum()};
+  if (data_type == nvinfer1::DataType::kBOOL) {
+    weights.type = nvinfer1::DataType::kINT32;
+    void *data_int32 = malloc(ms_tensor.ElementNum() * sizeof(int32_t));
+    if (data_int32 == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return nullptr;
+    }
+    auto src = static_cast<const bool *>(ms_tensor.Data());
+    auto dst = static_cast<int32_t *>(data_int32);
+    for (int i = 0; i < ms_tensor.ElementNum(); i++) {
+      dst[i] = (int32_t)src[i];
+    }
+    weights.values = data_int32;
+  }
   nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -217,9 +298,9 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(Activatio
     {ActivationType::RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
     {ActivationType::RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
     {ActivationType::HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
-    {ActivationType::SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
     // using plugin
-    {ActivationType::GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}}};
+    {ActivationType::GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
+    {ActivationType::SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}}};
   return action_map.find(activation_type) != action_map.end()
            ? std::experimental::optional<ActivationParams>(action_map[activation_type])
            : std::experimental::nullopt;
@@ -247,6 +328,10 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const Tenso
     MS_LOG(ERROR) << "network is null for ConvertTensorWithExpandDims";
     return nullptr;
   }
+  if (!ms_tensor.IsConst()) {
+    MS_LOG(ERROR) << "ConvertTensorWithExpandDims from a MSTensor with nullptr data";
+    return nullptr;
+  }
   auto origin_shape = ms_tensor.Shape();
   std::vector<int64_t> convert_shape(expect_shape);
   AlignShapeRank(&origin_shape, convert_shape);
@@ -272,10 +357,6 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const Tenso
     return nullptr;
   }
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
-  if (!ms_tensor.IsConst()) {
-    MS_LOG(ERROR) << "ConvertTensorWithExpandDims from a MSTensor with nullptr data";
-    return nullptr;
-  }
   nvinfer1::Weights weights{data_type, ms_tensor.Data(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
@@ -583,6 +664,10 @@ std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(R
 }
 int PreprocessInputs2SameDim(TensorRTContext *ctx, ITensorHelper input_tensor_helper,
                              ITensorHelper *out_tensor_helper) {
+  if (input_tensor_helper.trt_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "input trt tensor is nullptr";
+    return RET_ERROR;
+  }
   out_tensor_helper->trt_tensor_ = input_tensor_helper.trt_tensor_;
   out_tensor_helper->format_ = input_tensor_helper.format_;
   out_tensor_helper->same_format_ = true;
@@ -686,6 +771,87 @@ int ParseData2Vector(const TensorInfo &ms_tensor, std::vector<float> *dst) {
   return RET_OK;
 }
 
+nvinfer1::ITensor *ExpandDim(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor, int axis) {
+  // input has to prepocess to nchw
+  auto input_dims = input_tensor->getDimensions();
+  nvinfer1::IShuffleLayer *shuffle_layer = ctx->network()->addShuffle(*input_tensor);
+  // if expand dim not at last dim and shape is dynamic, change to expanddim at last dim and transpose
+  bool special_expand = false;
+  for (int i = 0; i < input_dims.nbDims; i++) {
+    special_expand = special_expand || input_dims.d[i] == -1;
+  }
+  special_expand = special_expand && (axis != -1 && axis != input_dims.nbDims);
+
+  if (special_expand) {
+    std::vector<int64_t> new_shape;
+    for (int i = 0; i < input_dims.nbDims; i++) {
+      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
+    }
+    new_shape.push_back(1);
+    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      return nullptr;
+    }
+
+    shuffle_layer->setReshapeDimensions(new_dims);
+    // transpose
+    nvinfer1::Permutation perm{};
+    for (int i = 0; i < new_dims.nbDims; i++) {
+      if (i < axis) {
+        perm.order[i] = i;
+      } else if (i == axis) {
+        perm.order[i] = new_dims.nbDims - 1;
+      } else {
+        perm.order[i] = i - 1;
+      }
+    }
+    nvinfer1::IShuffleLayer *trans_layer = ctx->network()->addShuffle(*shuffle_layer->getOutput(0));
+    if (trans_layer == nullptr) {
+      MS_LOG(ERROR) << "add transpose layer failed for special expand dims op ";
+      return nullptr;
+    }
+    trans_layer->setFirstTranspose(perm);
+    return trans_layer->getOutput(0);
+  } else {
+    std::vector<int64_t> new_shape;
+    for (int i = 0; i < input_dims.nbDims; i++) {
+      if (axis == i) {
+        new_shape.push_back(1);
+      }
+      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
+    }
+    if (axis == -1 || axis == input_dims.nbDims) {
+      new_shape.push_back(1);
+    }
+    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      return nullptr;
+    }
+    shuffle_layer->setReshapeDimensions(new_dims);
+    return shuffle_layer->getOutput(0);
+  }
+}
+
+nvinfer1::ITensor *Broadcast(TensorRTContext *ctx, nvinfer1::ITensor *input, nvinfer1::ITensor *shape) {
+  int rank = shape->getDimensions().d[0];
+
+  nvinfer1::Dims starts{rank};
+  std::fill(starts.d, starts.d + rank, 0);
+  nvinfer1::Dims strides{rank};
+  std::fill(strides.d, strides.d + rank, 1);
+
+  auto slice_layer = ctx->network()->addSlice(*input, starts, {}, strides);
+  slice_layer->setMode(nvinfer1::SliceMode::kWRAP);
+  const int INPUT2 = 2;
+  slice_layer->setInput(INPUT2, *shape);
+
+  auto shuffler_output = slice_layer->getOutput(0);
+  if (shuffler_output == nullptr) {
+    MS_LOG(ERROR) << "add slice layer failed";
+  }
+  return shuffler_output;
+}
+
 nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const std::vector<int64_t> &shape) {
   return Reshape(ctx, input, ConvertCudaDims(shape));
 }
@@ -700,10 +866,23 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
   return reshape_layer->getOutput(0);
 }
 
-void DebugDims(const nvinfer1::Dims &dims) {
-  MS_LOG(DEBUG) << "nbdim : " << dims.nbDims;
+void DebugDims(const std::string &key, const nvinfer1::Dims &dims) {
+  MS_LOG(DEBUG) << key << ":" << dims.nbDims;
   for (int i = 0; i != dims.nbDims; ++i) {
     MS_LOG(DEBUG) << dims.d[i];
   }
 }
+
+template <>
+nvinfer1::DataType GetNvinferDataType<float>() {
+  return nvinfer1::DataType::kFLOAT;
+}
+
+template <>
+nvinfer1::DataType GetNvinferDataType<int>() {
+  return nvinfer1::DataType::kINT32;
+}
+
+template nvinfer1::DataType GetNvinferDataType<float>();
+template nvinfer1::DataType GetNvinferDataType<int>();
 }  // namespace mindspore::lite

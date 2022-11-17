@@ -34,8 +34,17 @@ AclPassPlugin::AclPassPlugin() : handle_(nullptr), pass_ptr_(nullptr) {}
 
 bool AclPassPlugin::HasPluginSo() {
 #if !defined(_WIN32)
+  Dl_info dl_info;
+  dladdr(reinterpret_cast<void *>(this), &dl_info);
+  std::string cur_so_path = dl_info.dli_fname;
+  auto pos = cur_so_path.find("libmindspore_converter.so");
+  if (pos == std::string::npos) {
+    MS_LOG(ERROR) << "Could not find libmindspore_converter so, cur so path: " << cur_so_path;
+    return false;
+  }
+  std::string parent_dir = cur_so_path.substr(0, pos);
   std::string ascend_pass_plugin_path;
-  auto ret = DLSoPath("libmindspore_converter.so", "libascend_pass_plugin.so", &ascend_pass_plugin_path);
+  auto ret = FindSoPath(parent_dir, "libascend_pass_plugin.so", &ascend_pass_plugin_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of libascend_pass_plugin.so failed.";
     return false;

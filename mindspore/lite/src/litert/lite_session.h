@@ -31,11 +31,16 @@
 #include "src/litert/executor.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
+#include "src/common/dynamic_library_loader.h"
 #include "include/api/delegate.h"
 #if GPU_OPENCL
 #include "src/litert/kernel/gpu/opencl/opencl_runtime.h"
 #endif
 #include "src/litert/scheduler_cb.h"
+
+#ifdef ENABLE_LITE_HELPER
+#include "src/common/helper/infer_helpers.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -46,7 +51,12 @@ class LiteSession {
   static LiteSession *CreateSession(const lite::Context *context);
   static LiteSession *CreateSession(const char *model_buf, size_t size, const lite::Context *context);
   static LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
+#ifdef ENABLE_LITE_HELPER
+  int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size,
+                               mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
+#else
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size);
+#endif
   int LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type);
   mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf, size_t *size,
                                        mindspore::ModelType model_type);
@@ -108,6 +118,10 @@ class LiteSession {
   }
   virtual int SetOptimizerParams(const std::vector<lite::Tensor *> &params) { return mindspore::lite::RET_ERROR; }
 
+  bool GetKeepModelBuf() { return keep_model_buf_; }
+
+  void SetKeepModelBuf(bool keep_model_buf) { keep_model_buf_ = keep_model_buf; }
+
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
   int CheckTensorValid(lite::Tensor *dst_tensor);
@@ -161,6 +175,9 @@ class LiteSession {
   virtual int RuntimeAllocatorValid();
   RuntimeAllocatorPtr runtime_allocator_ = nullptr;
 
+ private:
+  int AscendInit(InnerContext *context);
+
  protected:
   InnerContext *context_ = nullptr;
   mindspore::Context *ms_context_ = nullptr;
@@ -193,6 +210,7 @@ class LiteSession {
 #endif
   int is_infershape_{RET_ERROR};
   bool is_control_flow_ = false;
+  bool keep_model_buf_ = false;
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
   int delegate_device_type_ = -1;  // -1: not specified; 0: CPU; 1: GPU; 2: NPU

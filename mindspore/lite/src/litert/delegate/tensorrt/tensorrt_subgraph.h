@@ -57,10 +57,10 @@ class TensorRTSubGraph : public kernel::Kernel {
     trt_specific_weight_nodes_ = {
       schema::PrimitiveType_Conv2DFusion,   schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
       schema::PrimitiveType_Gather,         schema::PrimitiveType_Reshape,      schema::PrimitiveType_MatMulFusion,
-      schema::PrimitiveType_ScaleFusion,    schema::PrimitiveType_StridedSlice, schema::PrimitiveType_PadFusion,
+      schema::PrimitiveType_ScaleFusion,    schema::PrimitiveType_PadFusion,    schema::PrimitiveType_BroadcastTo,
       schema::PrimitiveType_FullConnection, schema::PrimitiveType_Cast,         schema::PrimitiveType_ExpandDims,
       schema::PrimitiveType_Resize,         schema::PrimitiveType_LSTM,         schema::PrimitiveType_LayerNormFusion,
-      schema::PrimitiveType_TopKFusion,     schema::PrimitiveType_TileFusion,   schema::PrimitiveType_BroadcastTo,
+      schema::PrimitiveType_TopKFusion,     schema::PrimitiveType_TileFusion,
     };
     if (!support_resize) {
       input_batchsize_index_ = -1;

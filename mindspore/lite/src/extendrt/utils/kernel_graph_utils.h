@@ -24,11 +24,12 @@
 #include <string>
 
 #include "backend/common/session/kernel_graph.h"
+#include "include/api/visible.h"
 
 namespace mindspore {
 using GraphId = uint32_t;
 using KernelGraph = mindspore::session::KernelGraph;
-class KernelGraphUtils : public std::enable_shared_from_this<KernelGraphUtils> {
+class MS_API KernelGraphUtils : public std::enable_shared_from_this<KernelGraphUtils> {
  public:
   KernelGraphUtils() = default;
   virtual ~KernelGraphUtils() = default;
@@ -37,6 +38,7 @@ class KernelGraphUtils : public std::enable_shared_from_this<KernelGraphUtils> {
     static KernelGraphUtils instance;
     return instance;
   }
+  static std::vector<AnfNodePtr> GetKernelGraphOutputs(const KernelGraphPtr &func_graph);
 
   KernelGraphPtr ConstructKernelGraph(const FuncGraphPtr &func_graph, std::vector<KernelGraphPtr> *all_out_graph,
                                       mindspore::device::DeviceType device_target);

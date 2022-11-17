@@ -177,20 +177,32 @@ build_python_wheel_package() {
   local python_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'` || true
   if [[ "${python_version}" == "3" ]]; then
     cd ${BASEPATH}/mindspore/lite/build/
-    local lite_wrapper_so=`ls python/*.so` || true
+    local lite_wrapper_so=`ls python/_c_lite_wrapper*.so` || true
     if [ ! -f "${lite_wrapper_so}" ]; then
+      echo "error: can not find python so."
       return 0
     fi
     mkdir -pv package/mindspore_lite/lib/
     cp ../python/api/* package/mindspore_lite/
-    if [[ "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on" ]]; then
-      cp src/extendrt/*.so package/mindspore_lite/lib/
-    else
-      cp src/*.so package/mindspore_lite/lib/
-    fi
     local pkg_name=mindspore-lite-${VERSION_STR}-linux-$1
     if [[ "$1" == "x86_64" ]]; then
       local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
+    fi
+    if [[ "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on" ]]; then
+      cp src/extendrt/*.so package/mindspore_lite/lib/
+      find src/extendrt/delegate/graph_executor/litert/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;
+      find src/extendrt/convert/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;
+      if [[ "${MSLITE_ENABLE_ACL}" ]]; then
+        cp src/extendrt/kernel/ascend/*.so package/mindspore_lite/lib/
+      fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtransformer-shared.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtransformer-shared.so package/mindspore_lite/lib/
+      fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtensorrt_plugin.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtensorrt_plugin.so package/mindspore_lite/lib/
+      fi
+    else
+      cp src/*.so package/mindspore_lite/lib/
     fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog/*.so* package/mindspore_lite/lib/
@@ -261,7 +273,7 @@ build_lite() {
       CMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake
     fi
 
-    BRANCH_NAME=nnie_3516_master_dev5
+    BRANCH_NAME=nnie_3516_master_dev1
     if [[ ("${MSLITE_REGISTRY_DEVICE}" == "Hi3516D" || "${TOOLCHAIN_NAME}" == "himix200") && "${local_lite_platform}" == "arm32" ]]; then
       TOOLCHAIN_NAME="himix200"
       MSLITE_REGISTRY_DEVICE=Hi3516D

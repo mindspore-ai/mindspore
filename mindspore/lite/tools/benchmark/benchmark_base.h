@@ -122,6 +122,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
     AddFlag(&BenchmarkFlags::config_file_, "configFile", "Config file", "");
     AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU | Ascend310 | Ascend310P", "CPU");
+    AddFlag(&BenchmarkFlags::provider_, "provider", "device provider litert | tensorrt", "litert");
     AddFlag(&BenchmarkFlags::cpu_bind_mode_, "cpuBindMode", "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU.", 1);
     // MarkPerformance
     AddFlag(&BenchmarkFlags::loop_count_, "loopCount", "Run loop count", 10);
@@ -131,7 +132,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::warm_up_loop_count_, "warmUpLoopCount", "Run warm up loop", 3);
     AddFlag(&BenchmarkFlags::time_profiling_, "timeProfiling", "Run time profiling", false);
     AddFlag(&BenchmarkFlags::perf_profiling_, "perfProfiling",
-            "Perf event profiling(only instructions statics enabled currently)", false);
+            "Perf event profiling(only instructions statistics enabled currently)", false);
     AddFlag(&BenchmarkFlags::perf_event_, "perfEvent", "CYCLE|CACHE|STALL", "CYCLE");
     // MarkAccuracy
     AddFlag(&BenchmarkFlags::benchmark_data_file_, "benchmarkDataFile", "Benchmark data file path", "");
@@ -200,6 +201,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::vector<std::vector<int>> resize_dims_;
 
   std::string device_ = "CPU";
+  std::string provider_ = "litert";
   bool time_profiling_ = false;
   bool perf_profiling_ = false;
   std::string perf_event_ = "CYCLE";

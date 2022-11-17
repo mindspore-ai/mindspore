@@ -59,6 +59,8 @@ inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_t
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
 inline const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>("Conv2DBackpropInputFusion");
 
+using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+
 std::vector<int> CastToInt(const ValuePtr &value);
 
 std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value);
@@ -92,6 +94,8 @@ bool CheckIsAllInputsParam(const AnfNodePtr &node);
 size_t GetOutputTensorNum(const AnfNodePtr &node);
 
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node);
+
+AnfNodePtr GetTupleGetItemRealInput(const CNodePtr &tuple_get_item);
 
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 
@@ -135,6 +139,8 @@ bool IsTrainOp(const CNodePtr &cnode);
 
 bool IsMarkedTrainOp(const CNodePtr &cnode);
 
+ShapeVector GetAnfNodeOutputShape(const AnfNodePtr &node, size_t output_idx);
+
 int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
 
 size_t GetOutputSize(const AnfNodePtr &anf_node);
@@ -148,6 +154,10 @@ std::pair<CNodePtr, int> GetRealCertainVarInput(const CNodePtr &cnode, size_t in
 int DetermineCertainVarInputHasInferred(const CNodePtr &cnode, size_t index, bool *infer_succ);
 
 bool CheckAndGetCnodeIndex(const CNodePtr &cnode, size_t *index, const PrimitivePtr &primitive_type);
+
+void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_file);
+
+std::vector<KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node);
 
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {

@@ -100,6 +100,10 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
     MS_LOG(ERROR) << "func_graph is nullptr.";
     return RET_NULL_PTR;
   }
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr.";
+    return RET_NULL_PTR;
+  }
   auto output_file = param->output_file;
   auto ret = ParserPath(output_file);
   if (ret != RET_OK) {
@@ -213,6 +217,10 @@ int MindIRSerializer::ChangeParaDataFile(const std::string &file) {
   }
   ChangeFileMode(real_path, S_IWUSR);
   data_fs_ = OpenFile(real_path, std::ios::app);
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "data_fs_ is nullptr.";
+    return RET_NULL_PTR;
+  }
   char front_info[OFFSET]{0};
   front_info[0] = IsSystemLittleEndidan();
   data_fs_->write(front_info, OFFSET);
@@ -227,6 +235,10 @@ bool MindIRSerializer::IsSystemLittleEndidan() {
 
 int MindIRSerializer::GetDataFile(const std::string &data_file_name, std::ofstream *fout, int64_t *parameter_size,
                                   int64_t *offset) {
+  if (offset == nullptr) {
+    MS_LOG(ERROR) << "offset is nullptr.";
+    return RET_NULL_PTR;
+  }
   *offset = OFFSET;
   std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
   if (fs == nullptr) {
@@ -383,15 +395,15 @@ int MindIRSerializer::IfSaveTogether(bool *save_together) {
 }
 
 int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file) {
-  if (isRuntimeConvert_) {
-    return RET_OK;
-  }
   mind_ir::GraphProto *graph_proto = model_proto->mutable_graph();
   mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
   if (attr_proto != nullptr) {
     attr_proto->set_name(kIsOptimized);
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
     attr_proto->set_i(is_fusion_);
+  }
+  if (isRuntimeConvert_) {
+    return RET_OK;
   }
 
   auto realpath = Common::CreatePrefixPath(output_file, true);

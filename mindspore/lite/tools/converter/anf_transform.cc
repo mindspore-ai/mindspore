@@ -61,9 +61,9 @@
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include "tools/optimizer/fusion/scale_activation_fusion.h"
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
+#include "tools/optimizer/fusion/resize_fusion.h"
 #include "tools/optimizer/fusion/fullconnected_fusion.h"
 #include "tools/optimizer/fusion/fullconnected_add_fusion.h"
-#include "tools/optimizer/fusion/resize_fusion.h"
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "tools/optimizer/fusion/matmul_activation_fusion.h"
 #include "tools/optimizer/fusion/mul_activation_fusion.h"
@@ -99,6 +99,8 @@
 #include "tools/converter/adapter/acl/acl_pass.h"
 #endif
 #include "src/common/log_util.h"
+#include "src/common/string_utils.h"
+#include "src/common/config_infos.h"
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
 #include "tools/optimizer/fusion/reshape_like_operator_ablation.h"
@@ -111,11 +113,62 @@
 #include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
+#include "tools/converter/parser/conv2d_transpose_input_adjust.h"
+#include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/parser/unify_format.h"
 
 using std::string;
 namespace mindspore::lite {
 namespace {
 constexpr auto kOriginalFmkType = "original_fmk_type";
+constexpr auto kConverterInputShape = "converter_input_shape";
+
+std::string TransInputShapesToString(const std::map<std::string, std::vector<int64_t>> &shapes) {
+  std::stringstream str_stream;
+  size_t shape_index = 0;
+  for (auto &item : shapes) {
+    str_stream << item.first << ":";
+    auto &shape = item.second;
+    for (size_t d = 0; d < shape.size(); d++) {
+      str_stream << shape[d];
+      if (d + 1 != shape.size()) {
+        str_stream << ",";
+      }
+    }
+    if (shape_index + 1 != shapes.size()) {
+      str_stream << ";";
+    }
+    shape_index++;
+  }
+  return str_stream.str();
+}
+
+std::map<std::string, std::vector<int64_t>> TransStringToInputShapes(const std::string &shapes_str) {
+  std::map<std::string, std::vector<int64_t>> shapes;
+  auto shapes_pairs = lite::SplitStringToVector(shapes_str, ';');
+  for (auto &kv_str : shapes_pairs) {
+    auto pos = kv_str.rfind(':');
+    if (pos == std::string::npos || pos + 1 == kv_str.size()) {
+      MS_LOG_ERROR << "Invalid input shapes string: " << shapes_str;
+      return {};
+    }
+    auto name = kv_str.substr(0, pos);
+    auto shape_str = kv_str.substr(pos + 1);
+    auto shape_dims_str = lite::SplitStringToVector(shape_str, ',');
+    std::vector<int64_t> shape;
+    shape.reserve(shape_dims_str.size());
+    for (auto &dim_str : shape_dims_str) {
+      int dim = 0;
+      if (!lite::ConvertIntNum(dim_str, &dim)) {
+        MS_LOG_ERROR << "Invalid input shapes string: " << shapes_str;
+        return {};
+      }
+      shape.push_back(dim);
+    }
+    shapes[name] = shape;
+  }
+  return shapes;
+}
 }  // namespace
 
 AnfTransform::AnfTransform() = default;
@@ -365,19 +418,15 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_
 }
 
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-#ifndef ENABLE_CLOUD_FUSION_INFERENCE
-  auto acl_pass = std::make_shared<opt::AclPass>(param);
-  CHECK_NULL_RETURN(acl_pass);
-  if (!acl_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Acl pass failed.";
-    return RET_ERROR;
-  }
-#endif
   if (param->device.find("Ascend") != std::string::npos) {
     if (opt::AclPassPlugin::GetInstance().HasPluginSo()) {
       auto acl_pass_ptr = opt::AclPassPlugin::GetInstance().CreateAclPass(param);
       if (acl_pass_ptr == nullptr) {
         MS_LOG(ERROR) << "Acl pass ptr is nullptr.";
+        return RET_ERROR;
+      }
+      if (SpecInputFormat(old_graph, param) != RET_OK) {
+        MS_LOG(ERROR) << "Failed to specify input format, spec input format: " << param->spec_input_format;
         return RET_ERROR;
       }
       if (!acl_pass_ptr->Run(old_graph)) {
@@ -386,6 +435,19 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
         return RET_ERROR;
       }
       opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
+    }
+  }
+  // adjust for conv2d_transpose
+  if (!(param->no_fusion && param->export_mindir == kMindIR)) {
+    std::set<FuncGraphPtr> all_func_graphs = {};
+    GetAllFuncGraph(old_graph, &all_func_graphs);
+    auto conv2d_transpose_adjust = std::make_shared<Conv2DTransposeInputAdjust>();
+    MS_CHECK_TRUE_MSG(conv2d_transpose_adjust != nullptr, RET_NULL_PTR, "conv2d_transpose_adjust is nullptr.");
+    for (auto sub_graph : all_func_graphs) {
+      if (!conv2d_transpose_adjust->Run(old_graph)) {
+        MS_LOG(ERROR) << "adjust conv2d_transpose failed";
+        return RET_ERROR;
+      }
     }
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -534,6 +596,23 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const std::shared_pt
   return RET_OK;
 }
 
+int AnfTransform::SpecInputFormat(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  auto spec_input_format = param->spec_input_format;
+  if (spec_input_format == Format::DEFAULT_FORMAT) {
+    return RET_OK;
+  }
+  Format cur_input_format = DEFAULT_FORMAT;
+  if (!opt::SpecifyGraphInputFormat::GetCurGraphInputFormat(old_graph, param->fmk_type, &cur_input_format)) {
+    MS_LOG(ERROR) << "Failed to get current format of graph input";
+    return RET_ERROR;
+  }
+  opt::SpecifyGraphInputFormat pass(true, spec_input_format, cur_input_format);
+  if (!pass.Run(old_graph)) {
+    MS_LOG(ERROR) << "Failed to Specify graph input format to " << spec_input_format;
+  }
+  return RET_OK;
+}
+
 int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   if (param->export_mindir == kMindIR) {
     MS_LOG(INFO) << "export MindIR, run pass ToNCHWFormat";
@@ -541,10 +620,17 @@ int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::sh
       MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
       return RET_ERROR;
     }
-    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormatMindIR", "DecreaseTransposeAlgo"})) {
-      MS_LOG(ERROR) << "Run SpecifyGraphInputFormatMindIR pass failed";
+    if (param->device.find("Ascend") == std::string::npos) {
+      if (SpecInputFormat(old_graph, param) != RET_OK) {
+        MS_LOG(ERROR) << "Failed to specify input format, spec input format: " << param->spec_input_format;
+        return RET_ERROR;
+      }
+    }
+    if (!RunOptimizerPass(old_graph, {"DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "Run ToNCHWFormat pass failed";
       return RET_ERROR;
     }
+    old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
   }
   return RET_OK;
 }
@@ -603,7 +689,17 @@ STATUS AnfTransform::ProcOnlineTransform(const FuncGraphPtr &old_graph, const st
     MS_LOG(ERROR) << "Do format for mindir failed.";
     return lite::RET_ERROR;
   }
-  old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
+  if (!param->input_shape.empty()) {
+    auto graph_inputs = old_graph->get_inputs();
+    std::map<std::string, std::vector<int64_t>> input_shape;
+    for (auto &input : graph_inputs) {
+      auto abstract = input->abstract();
+      if (abstract) {
+        input_shape[abstract->name()] = opt::GetAnfNodeOutputShape(input, 0);
+      }
+    }
+    old_graph->set_attr(kConverterInputShape, MakeValue(TransInputShapesToString(input_shape)));
+  }
   return lite::RET_OK;
 }
 
@@ -674,12 +770,28 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
                                               const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(old_graph != nullptr);
   MS_ASSERT(param != nullptr);
-  if (param->no_fusion && param->export_mindir == kMindIR) {
+  if (param->no_fusion && param->export_mindir == kMindIR) {  // converter, online
     if (ProcOnlineTransform(old_graph, param) != lite::RET_OK) {
       MS_LOG(ERROR) << "Proc online transform failed.";
       return nullptr;
     }
     return old_graph;
+  }
+  auto value = old_graph->get_attr(kIsOptimized);
+  auto is_ascend = (param->device.find("Ascend") != std::string::npos);
+  if (param->is_runtime_converter) {  // load online
+    if (value != nullptr) {           // other models converted to MindIR
+      if (RunFormatTrans(old_graph) != RET_OK) {
+        MS_LOG(ERROR) << "Run format trans failed";
+        return nullptr;
+      }
+    } else if (!is_ascend) {  // new MindIR
+      UnifyFormatToNHWC unify_format(converter::kFmkTypeMs, param->train_model, param->export_mindir);
+      if (!unify_format.Run(old_graph)) {
+        MS_LOG(ERROR) << "Run insert transpose failed.";
+        return nullptr;
+      }
+    }
   }
 
   if (RunPass(old_graph, param) != RET_OK) {
@@ -717,32 +829,21 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
   }
   auto fmk = param->fmk_type;
   auto is_train = param->train_model;
-  auto spec_input_format = param->spec_input_format;
-  if (spec_input_format == Format::DEFAULT_FORMAT) {
-    if (param->export_mindir == kMindIR) {
-      if (fmk == converter::FmkType::kFmkTypeTf || fmk == converter::FmkType::kFmkTypeTflite) {
-        spec_input_format = Format::NHWC;
-      } else {
-        spec_input_format = Format::NCHW;
-      }
-    } else {
-      spec_input_format = Format::NHWC;
-    }
-  }
+  auto export_mindir = param->export_mindir;
+
   // pass_name, pass and boolean value to indicate whether can be called by external extension,
   std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
     {"DumpGraph", std::make_shared<opt::DumpGraph>(param), true},
     {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(param->train_model), false},
-    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train), true},
-    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train), true},
+    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train, export_mindir), true},
+    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train, export_mindir), true},
     {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train), true},
     {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train), false},
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
-    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(param->input_format), false},
-    {"SpecifyGraphInputFormatMindIR", std::make_shared<opt::SpecifyGraphInputFormat>(spec_input_format, Format::NCHW),
-     false}};
+    {"SpecifyGraphInputFormat",
+     std::make_shared<opt::SpecifyGraphInputFormat>(export_mindir != kMindIR, param->input_format), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
@@ -756,10 +857,20 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_CHECK_TRUE_MSG(main_graph != nullptr, nullptr, "Input func_graph is nullptr");
   MS_CHECK_TRUE_MSG(param != nullptr, nullptr, "Input converter param is nullptr");
+  manager_ = Manage(main_graph, true);
+
   if (main_graph->has_attr(kOriginalFmkType)) {
     auto val_ptr = main_graph->get_attr(kOriginalFmkType);
     MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");
     param->fmk_type = static_cast<converter::FmkType>(GetValue<int32_t>(val_ptr));
+  }
+  if (main_graph->has_attr(kConverterInputShape)) {
+    auto val_ptr = main_graph->get_attr(kConverterInputShape);
+    MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");
+    param->input_shape = TransStringToInputShapes(GetValue<std::string>(val_ptr));
+    for (auto &kv : param->input_shape) {
+      lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(kv.first, kv.second);
+    }
   }
   if (!StoreBuiltinPass(param)) {
     MS_LOG(ERROR) << "store pass failed.";
@@ -767,7 +878,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::
   }
   auto value = main_graph->get_attr(kIsOptimized);
   if (value != nullptr) {
-    if (GetValue<bool>(value)) {
+    if (GetValue<bool>(value)) {  // offline optimized, only CPU backend during loading
       auto ret = RunFormatTrans(main_graph);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Run Format trans pass failed.";
@@ -776,7 +887,6 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::
       return main_graph;
     }
   }
-  MS_LOG(DEBUG) << "Graph do not have isOptimized attr";
   auto new_graph = TransformFuncGraph(main_graph, param);
   if (new_graph == nullptr) {
     MS_LOG(ERROR) << "optimizer failed.";

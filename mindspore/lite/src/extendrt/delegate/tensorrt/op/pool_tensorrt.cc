@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,11 @@ int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
       MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
       return RET_ERROR;
     }
-    AddParams(pooling_layer);
+    ret = AddParams(pooling_layer);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "AddParams failed for : " << op_name_;
+      return RET_ERROR;
+    }
     pooling_layer->setName(op_name_.c_str());
     this->layer_ = pooling_layer;
   }
@@ -84,8 +88,8 @@ int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (activation_type_ == ActivationType::NO_ACTIVATION) {
     activation_layer = this->layer_;
   } else {
-    activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_type_, 0, 0, 0, this->layer_->getOutput(0), device_id_);
+    activation_layer = ActivationTensorRT::AddActivation(ctx, activation_type_, 0, 0, 0, this->layer_->getOutput(0),
+                                                         op_name_, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for pool failed";
       return RET_ERROR;
@@ -121,7 +125,7 @@ int PoolTensorRT::ParseParams(TensorRTContext *ctx) {
       kernel_size_ = std::vector<int64_t>(kernel_size.begin(), kernel_size.end());
     }
     auto padding = pool_primitive->get_pad();
-    if (padding.size() != DIMENSION_4D) {
+    if (!padding.empty() && padding.size() != DIMENSION_4D) {
       MS_LOG(ERROR) << op_name_ << "has invalid pad dims: " << padding.size();
       return RET_ERROR;
     } else if (padding.empty()) {
@@ -174,22 +178,33 @@ int PoolTensorRT::ParseParams(TensorRTContext *ctx) {
   return RET_OK;
 }
 
-void PoolTensorRT::AddParams(nvinfer1::IPoolingLayer *pooling_layer) {
+int PoolTensorRT::AddParams(nvinfer1::IPoolingLayer *pooling_layer) {
   nvinfer1::Dims stride_dims = ConvertCudaDims(stride_);
   if (stride_dims.nbDims == -1) {
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-    return;
+    return RET_ERROR;
   }
   pooling_layer->setStrideNd(stride_dims);
   if (pad_mode_ == PadMode::SAME) {
     pooling_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
   } else {
-    nvinfer1::Dims dims{};
-    dims.nbDims = DIMENSION_2D;
-    dims.d[0] = padding_[0];
-    dims.d[1] = padding_[DIMENSION_2D];
-    pooling_layer->setPaddingNd(dims);
+    if (padding_.size() != DIMENSION_4D) {
+      MS_LOG(ERROR) << "Invalid padding " << padding_ << ", op: " << op_name_;
+      return RET_ERROR;
+    }
+    nvinfer1::Dims pre_dims{};
+    pre_dims.nbDims = DIMENSION_2D;
+    pre_dims.d[0] = padding_[kDim0];
+    pre_dims.d[1] = padding_[kDim2];
+    pooling_layer->setPrePadding(pre_dims);
+
+    nvinfer1::Dims post_dims{};
+    post_dims.nbDims = DIMENSION_2D;
+    post_dims.d[0] = padding_[kDim1];
+    post_dims.d[1] = padding_[kDim3];
+    pooling_layer->setPostPadding(post_dims);
   }
+  return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameAvgPoolFusion, PoolTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameMaxPoolFusion, PoolTensorRT)

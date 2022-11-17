@@ -31,6 +31,44 @@
 namespace mindspore {
 const size_t max_depth = 128;
 GraphId KernelGraphUtils::graph_sum_ = 0;
+
+std::vector<AnfNodePtr> KernelGraphUtils::GetKernelGraphOutputs(const KernelGraphPtr &func_graph) {
+  if (!func_graph) {
+    return {};
+  }
+  std::vector<AnfNodePtr> outputs = func_graph->outputs();
+  while (true) {
+    auto has_replace = false;
+    for (auto it = outputs.begin(); it != outputs.end(); ++it) {
+      auto output = *it;
+      std::vector<AnfNodePtr> one_outputs;
+      if (IsPrimitiveCNode(output, prim::kPrimDepend)) {
+        auto depend = output->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(depend);
+        output = depend->input(kRealInputIndexInDepend);
+      }
+      if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+        auto make_tuple = output->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(make_tuple);
+        auto &inputs = make_tuple->inputs();
+        one_outputs = std::vector<AnfNodePtr>(inputs.begin() + 1, inputs.end());
+      } else {
+        one_outputs = {output};
+      }
+      if (one_outputs.size() != 1 || one_outputs[0] != output) {
+        it = outputs.erase(it);
+        outputs.insert(it, one_outputs.begin(), one_outputs.end());
+        has_replace = true;
+        break;
+      }
+    }
+    if (!has_replace) {
+      break;
+    }
+  }
+  return outputs;
+}
+
 KernelGraphPtr KernelGraphUtils::ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                       std::vector<KernelGraphPtr> *all_out_graph,
                                                       mindspore::device::DeviceType device_target) {
@@ -916,7 +954,11 @@ void KernelGraphUtils::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor:
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
       auto abstract = parameter->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      ms_tensor->set_name(abstract->name());
+      if (!abstract->name().empty()) {
+        ms_tensor->set_name(abstract->name());
+      } else {
+        ms_tensor->set_name(parameter->fullname_with_scope());
+      }
       inputs->push_back(ms_tensor);
       inputs_name->push_back(abstract->name());
     }
@@ -932,9 +974,8 @@ void KernelGraphUtils::GetOutputNames(const std::vector<AnfNodePtr> &outputs,
     auto idx = real_output_with_index.second;
     MS_EXCEPTION_IF_NULL(real_output);
     MS_LOG(DEBUG) << " Real output info: " << real_output->DebugString();
-    auto cnode = real_output->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    AbstractBasePtr abstract = cnode->abstract();
+    AbstractBasePtr abstract = real_output->abstract();
+    std::string output_idx;
     if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
       auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
       MS_EXCEPTION_IF_NULL(abstract_tuple);
@@ -945,9 +986,16 @@ void KernelGraphUtils::GetOutputNames(const std::vector<AnfNodePtr> &outputs,
         return;
       }
       abstract = abstract_list[idx];
+      output_idx = std::to_string(idx);
     }
     MS_EXCEPTION_IF_NULL(abstract);
-    output_names->emplace_back(abstract->name());
+    std::string output_name;
+    if (abstract->name().empty()) {
+      output_name = real_output->fullname_with_scope() + output_idx;
+    } else {
+      output_name = abstract->name();
+    }
+    output_names->emplace_back(output_name);
   }
 }
 
@@ -965,7 +1013,7 @@ void KernelGraphUtils::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor
   VectorRef vector_outputs;
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   session::KernelMapTensor node_to_tensor;
-  auto anf_outputs = kernel_graph->outputs();
+  auto anf_outputs = KernelGraphUtils::GetKernelGraphOutputs(kernel_graph);
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";

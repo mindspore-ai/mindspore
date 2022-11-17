@@ -106,7 +106,7 @@ bool ConvertStrToInt(const std::string &str, int *value) {
   }
   char *ptr = nullptr;
   constexpr int kBase = 10;
-  *value = strtol(str.c_str(), &ptr, kBase);
+  *value = static_cast<int32_t>(strtol(str.c_str(), &ptr, kBase));
   return ptr == (str.c_str() + str.size());
 }
 

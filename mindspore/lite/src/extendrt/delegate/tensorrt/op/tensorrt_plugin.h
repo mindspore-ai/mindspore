@@ -87,12 +87,12 @@ class TensorRTPluginCreater : public nvinfer1::IPluginCreator {
 
   const char *getPluginNamespace() const noexcept override { return name_space_.c_str(); }
 
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept {
+  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override {
     return new (std::nothrow) T(name, fc);
   }
 
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData, size_t serialLength) noexcept {
-    return new (std::nothrow) T(name, serialData, serialLength);
+  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *data, size_t len) noexcept override {
+    return new (std::nothrow) T(name, data, len);
   }
 
  protected:

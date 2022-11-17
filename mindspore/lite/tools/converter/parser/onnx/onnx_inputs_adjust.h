@@ -25,7 +25,7 @@ using mindspore::converter::FmkType;
 namespace mindspore::lite {
 class OnnxInputAdjust {
  public:
-  static bool Adjust(const FuncGraphPtr &func_graph);
+  static bool Adjust(const FuncGraphPtr &func_graph, const converter::ConverterParameters &flag);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_INPUTS_ADJUST_H_

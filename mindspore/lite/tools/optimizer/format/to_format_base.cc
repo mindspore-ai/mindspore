@@ -76,6 +76,11 @@ STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
   auto insert_pos = sensitive_ops_[prim->name()];
   if (insert_pos.empty() || std::find(insert_pos.begin(), insert_pos.end(), 1) != insert_pos.end()) {
     prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format_));
+    if (prim->HasAttr(opt::kOutputsFormat)) {
+      auto org_format = CastToInt(prim->GetAttr(opt::kOutputsFormat));
+      std::vector<int64_t> outputs_format(org_format.size(), format_);
+      (void)prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
+    }
   }
   auto abstract_base = cnode->abstract();
   MS_ASSERT(abstract_base != nullptr);
@@ -326,7 +331,7 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
       return false;
     }
   }
-  if (main_graph) {
+  if (main_graph && export_mindir_ != kMindIR) {
     status = HandleGraphInput(func_graph);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "handle graph input failed.";

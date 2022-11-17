@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <numeric>
 #include "src/extendrt/delegate/tensorrt/op/scatternd_tensorrt.h"
+#include <numeric>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/scatter_nd_update.h"
 

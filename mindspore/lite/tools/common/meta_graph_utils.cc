@@ -152,7 +152,7 @@ STATUS UpdateNodeIndex(schema::CNodeT *node, uint32_t deleteIdx) {
 }
 
 STATUS RemoveTensor(schema::MetaGraphT *graphT, std::vector<uint32_t> toDeleteTensorIdxes, bool forceDelete) {
-  MS_ASSERT(graphT != nullptr);
+  MS_CHECK_TRUE_MSG(graphT != nullptr, RET_NULL_PTR, "graphT is nullptr");
   for (auto iter = toDeleteTensorIdxes.begin(); iter != toDeleteTensorIdxes.end();) {
     uint32_t deleteIdx = *iter;
     if (!forceDelete) {
@@ -213,8 +213,8 @@ STATUS RemoveTensor(schema::MetaGraphT *graphT, std::vector<uint32_t> toDeleteTe
 }
 
 STATUS IsolateNode(schema::MetaGraphT *graphT, schema::CNodeT *node) {
-  MS_ASSERT(graphT != nullptr);
-  MS_ASSERT(node != nullptr);
+  MS_CHECK_TRUE_MSG(graphT != nullptr, RET_NULL_PTR, "graphT is nullptr");
+  MS_CHECK_TRUE_MSG(node != nullptr, RET_NULL_PTR, "node is nullptr");
   size_t nodeIdx = 0;
   for (size_t i = 0; i < graphT->nodes.size(); i++) {
     auto &inNode = graphT->nodes.at(i);
@@ -261,7 +261,7 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, schema::CNodeT *node) {
 }
 
 STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool removeTensor) {
-  MS_ASSERT(graphT != nullptr);
+  MS_CHECK_TRUE_MSG(graphT != nullptr, RET_NULL_PTR, "graphT is nullptr");
   if (graphT->nodes.size() <= nodeIdx) {
     MS_LOG(ERROR) << "nodeIdx out of range: " << nodeIdx;
     return RET_PARAM_INVALID;
@@ -318,13 +318,13 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
 }
 
 STATUS IsolateOneWayNode(schema::MetaGraphT *graph, size_t subGraphIdx, size_t nodeIdx, bool removeTensor) {
-  MS_ASSERT(graph != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr");
   return IsolateOneWayNode(graph, nodeIdx, removeTensor);
 }
 
 STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, schema::CNodeT *node, bool removeTensor) {
-  MS_ASSERT(graphT != nullptr);
-  MS_ASSERT(node != nullptr);
+  MS_CHECK_TRUE_MSG(graphT != nullptr, RET_NULL_PTR, "graphT is nullptr");
+  MS_CHECK_TRUE_MSG(node != nullptr, RET_NULL_PTR, "node is nullptr");
   bool isSubNode = false;
   size_t nodeIdx = 0;
   for (size_t i = 0; i < graphT->nodes.size(); i++) {

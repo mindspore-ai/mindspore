@@ -23,8 +23,13 @@ namespace mindspore {
 namespace lite {
 // don't check data_size and shape_size: bit_pack or huffman_code
 // don't check tensor category: variable-tensor-list may have data
+#ifdef ENABLE_LITE_HELPER
+bool SchemaTensorWrapper::Init(const schema::Tensor &tensor, const SCHEMA_VERSION schema_version,
+                               const std::string &base_path, mindspore::infer::helper::InferHelpers *infer_helpers) {
+#else
 bool SchemaTensorWrapper::Init(const schema::Tensor &tensor, const SCHEMA_VERSION schema_version,
                                const std::string &base_path) {
+#endif
   // add magic-num-check and checksum-check here
   this->handler_ = &tensor;
   if (tensor.data() != nullptr && tensor.data()->data() != nullptr) {
@@ -47,9 +52,20 @@ bool SchemaTensorWrapper::Init(const schema::Tensor &tensor, const SCHEMA_VERSIO
   }
   auto external_data = tensor.externalData()->Get(0);
   this->length_ = static_cast<size_t>(external_data->length());
+#ifdef ENABLE_LITE_HELPER
+  if (infer_helpers != nullptr && infer_helpers->GetExternalTensorHelper() != nullptr) {
+    this->data_ = infer_helpers->GetExternalTensorHelper()->GetExternalTensorData(external_data);
+    this->if_own_data_ = false;
+  } else {
+    this->data_ =
+      ReadFileSegment(base_path + external_data->location()->str(), external_data->offset(), external_data->length());
+    this->if_own_data_ = true;
+  }
+#else
   this->data_ =
     ReadFileSegment(base_path + external_data->location()->str(), external_data->offset(), external_data->length());
   this->if_own_data_ = true;
+#endif
   return true;
 }
 }  // namespace lite

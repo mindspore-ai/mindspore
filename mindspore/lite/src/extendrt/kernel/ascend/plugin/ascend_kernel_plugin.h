@@ -30,6 +30,7 @@ class AscendKernelPlugin {
   static AscendKernelPlugin &GetInstance();
 
   void Register();
+  void UpdateRegisterStatus(bool status);
   void DestroyAscendKernelMap();
 
  private:

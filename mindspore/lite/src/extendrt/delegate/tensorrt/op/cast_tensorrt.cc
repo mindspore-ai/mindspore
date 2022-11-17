@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/cast_tensorrt.h"
-#include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
 #include <functional>
+#include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
 #include "ops/cast.h"
 
 namespace mindspore::lite {
@@ -47,9 +47,13 @@ int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "unknown cast type of " << op_name_;
     return RET_ERROR;
   }
-  auto type_data = static_cast<const int *>(type_tensor.Data());
-  DataType data_type = static_cast<DataType>(type_data[0]);
-  MS_LOG(DEBUG) << op_name_ << " cast to data type(43 float): " << type_data[0];
+  auto type_vec = ConvertTensorAsIntVector(type_tensor);
+  if (type_vec.size() != 1) {
+    MS_LOG(ERROR) << "Failed to get type input, type size " << type_vec.size() << ", node: " << op_name_;
+    return RET_ERROR;
+  }
+  DataType data_type = static_cast<DataType>(type_vec[0]);
+  MS_LOG(DEBUG) << op_name_ << " cast to data type(43 float): " << type_vec[0];
   nvinfer1::DataType dest_datatype = ConvertDataType(data_type);
   auto trt_tensor = input(ctx, 0).trt_tensor_;
 

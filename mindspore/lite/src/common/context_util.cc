@@ -121,7 +121,9 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
   ms_context->SetThreadNum(context->thread_num_);
   ms_context->SetThreadAffinity(context->affinity_core_list_);
   ms_context->SetEnableParallel(context->enable_parallel_);
-  ms_context->SetDelegate(context->delegate);
+  if (context->delegate) {
+    ms_context->SetDelegate(context->delegate);
+  }
   auto &device_infos = ms_context->MutableDeviceInfo();
   std::map<DeviceType, std::function<std::shared_ptr<mindspore::DeviceInfoContext>(const lite::DeviceContext &)>>
     transfer_funcs = {{DT_CPU, CPUDeviceInfoFromCPUDeviceContext},

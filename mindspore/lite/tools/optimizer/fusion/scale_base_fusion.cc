@@ -140,10 +140,10 @@ bool ScaleBaseFusion::CheckCurrCnodeProper(const CNodePtr &scale_cnode) const {
 
   auto curr_weight_node = scale_cnode->input(kInputIndexTwo);
   std::shared_ptr<tensor::Tensor> curr_weight_tensor = GetTensorInfo(curr_weight_node);
-  MS_CHECK_TRUE_RET(curr_weight_tensor != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(curr_weight_tensor != nullptr, false);
   std::vector<int64_t> curr_weight_shape = curr_weight_tensor->shape();
   std::shared_ptr<tensor::Tensor> curr_bias_tensor = GetTensorInfo(curr_weight_node);
-  MS_CHECK_TRUE_RET(curr_bias_tensor != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(curr_bias_tensor != nullptr, false);
   std::vector<int64_t> curr_bias_shape = curr_bias_tensor->shape();
   if (curr_weight_shape != curr_bias_shape) {
     MS_LOG(INFO) << "scale fusion only support 1 dims";

@@ -28,6 +28,7 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/parameter_cache/embedding_cache_manager.h"
 #include "include/api/context.h"
+#include "common/config_infos.h"
 
 namespace mindspore::lite {
 using mindspore::lite::RET_ERROR;
@@ -42,8 +43,7 @@ class TensorRTSubGraph {
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<TensorInfo> &inputs,
                    const std::vector<TensorInfo> &outputs, const mindspore::Context *ctx,
                    std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime, bool support_resize,
-                   bool support_hw_resize, const std::vector<nvinfer1::Dims> &min_dims,
-                   const std::vector<nvinfer1::Dims> &opt_dims, const std::vector<nvinfer1::Dims> &max_dims);
+                   bool support_hw_resize, const ProfileConfigs &trt_profile_config);
   ~TensorRTSubGraph();
 
   int Prepare();
@@ -63,6 +63,7 @@ class TensorRTSubGraph {
   std::vector<TensorInfo> &outputs() { return outputs_; }
 
  private:
+  int GetInputIndexByName(const std::string &name);
   int BuildEngine();
 
   int SetDeviceConfig(cudaStream_t stream, cublasHandle_t cublas_handle, cublasLtHandle_t cublaslt_handle);
@@ -71,7 +72,7 @@ class TensorRTSubGraph {
 
   bool SupportFP16();
 
-  nvinfer1::ITensor *SetTensorRTNetworkInput(const TensorInfo &in_tensor, size_t index);
+  nvinfer1::ITensor *SetTensorRTNetworkInput(const TensorInfo &in_tensor, int index);
 
   ITensorHelper FindTensorRTInputs(TensorRTOp *cur_op, const TensorInfo &in_tensor);
 
@@ -85,16 +86,20 @@ class TensorRTSubGraph {
 
   int HandleCacheTensor(TensorRTOp *cur_op, const TensorInfo &in_tensor);
 
-  nvinfer1::Dims ParseInputDimsProfile(const TensorInfo &in_tensor);
-  nvinfer1::Dims SetInputDimsProfile(const TensorInfo &in_tensor, size_t index);
+  nvinfer1::Dims ParseInputDimsProfile(const TensorInfo &in_tensor, int index);
+  nvinfer1::Dims SetInputDimsProfile(const TensorInfo &in_tensor, int index);
   int ParseInputsProfile();
-
-  bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
 
   int PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs);
   int PostExecute(std::vector<tensor::Tensor> *outputs);
 
   int OnNewInputShapes(const std::vector<ShapeVector> &inputs);
+
+  size_t MaxVolumnProfileIndex() const;
+  int SelectProfile(const std::vector<ShapeVector> &new_shapes) const;
+  int GetProfileBindingIndex(const std::string &name, size_t profile_index);
+  bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
+  bool IsValidProfileDims() const;
 
   std::string name_;
   std::vector<TensorInfo> inputs_;
@@ -122,7 +127,6 @@ class TensorRTSubGraph {
   nvinfer1::IBuilderConfig *config_{nullptr};
   nvinfer1::ICudaEngine *engine_{nullptr};
   nvinfer1::IExecutionContext *trt_context_{nullptr};
-  nvinfer1::IOptimizationProfile *profile_{nullptr};
 
   TensorRTContext *ctx_;
 
@@ -138,9 +142,10 @@ class TensorRTSubGraph {
   std::string serialize_file_path_;
   cudaStream_t stream_{nullptr};
 
-  std::vector<nvinfer1::Dims> min_dims_;
-  std::vector<nvinfer1::Dims> opt_dims_;
-  std::vector<nvinfer1::Dims> max_dims_;
+  std::vector<nvinfer1::IOptimizationProfile *> profiles_{};
+  bool using_input_ranges_{false};
+  ProfileConfigs trt_profile_config_;
+  size_t profile_index_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_

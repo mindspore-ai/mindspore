@@ -537,6 +537,12 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   MS_EXCEPTION_IF_NULL(data);
+
+  if (tensor_info->data().nbytes() == 0 || tensor_proto.external_data().length() == 0) {
+    // no need to copy data
+    return true;
+  }
+
   auto ret =
     common::huge_memcpy(tensor_data_buf, tensor_info->data().nbytes(), data + tensor_proto.external_data().offset(),
                         LongToSize(tensor_proto.external_data().length()));

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,6 @@ class LSTMTensorRT : public TensorRTOp {
                           int *state_weight_offset, int *bias_offset, LstmWeights *lstm_weights,
                           const LstmState &next_state);
 
-  // nvinfer1::INetworkDefinition *network_{nullptr};
   nvinfer1::ITensor *input_data_{nullptr};
   nvinfer1::ITensor *sequence_size_input_{nullptr};
   nvinfer1::ITensor *op_data_out_{nullptr};

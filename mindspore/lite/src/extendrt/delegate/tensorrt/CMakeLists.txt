@@ -6,6 +6,7 @@ include_directories(${CUDA_PATH})
 include_directories(${CUDA_PATH}/include)
 find_package(CUDA)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN/")
 add_compile_definitions(GPU_TENSORRT)
 set(TENSORRT_PATH $ENV{TENSORRT_PATH})
 set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
@@ -72,7 +73,6 @@ file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
 #    )
 
 link_libraries(${CUDA_LIB_PATH}/libcudnn.so)
-link_libraries(${CUDA_LIB_PATH}/libnvrtc.so)
 link_libraries(${CUDA_LIB_PATH}/libcublasLt.so)
 
 add_library(libcudart SHARED IMPORTED)

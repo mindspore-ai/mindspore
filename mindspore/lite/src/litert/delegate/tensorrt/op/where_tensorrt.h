@@ -36,6 +36,9 @@ class WhereTensorRT : public TensorRTOp {
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
+
+ private:
+  nvinfer1::ITensor *GetBroadcastTensor(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor);
 };
 
 constexpr char *WHERE_PLUGIN_NAME{"WherePlugin"};

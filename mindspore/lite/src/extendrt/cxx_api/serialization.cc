@@ -132,8 +132,8 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
         }
         anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(plain_data.get()), plain_data_size, true);
       }
-    } catch (const std::exception &) {
-      err_msg << "Load model failed. Please check the valid of dec_key and dec_mode.";
+    } catch (const std::exception &e) {
+      err_msg << "Load model failed. Please check the valid of dec_key and dec_mode." << e.what();
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
@@ -194,7 +194,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     std::vector<std::string> preprocessor = mindir_loader.LoadPreprocess(file_path);
     if (!preprocessor.empty()) {
       std::string dataengine_so_path;
-      Status dlret = DLSoPath("libmindspore.so", "_c_dataengine", &dataengine_so_path);
+      Status dlret = DLSoPath({"libmindspore.so"}, "_c_dataengine", &dataengine_so_path);
       CHECK_FAIL_AND_RELEASE(dlret, nullptr, "Parse dataengine_so failed: " + dlret.GetErrDescription());
 
       void *handle = nullptr;
@@ -275,7 +275,7 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
 #if !defined(_WIN32) && !defined(_WIN64)
     // Dataset so loading
     std::string dataengine_so_path;
-    Status dlret = DLSoPath("libmindspore.so", "_c_dataengine", &dataengine_so_path);
+    Status dlret = DLSoPath({"libmindspore.so"}, "_c_dataengine", &dataengine_so_path);
     CHECK_FAIL_AND_RELEASE(dlret, nullptr, "Parse dataengine_so failed: " + dlret.GetErrDescription());
 
     void *handle = nullptr;

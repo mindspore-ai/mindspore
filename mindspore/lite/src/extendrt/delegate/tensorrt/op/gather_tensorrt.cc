@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,12 @@ int GatherTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::v
     return RET_ERROR;
   }
   if (in_tensors[AXIS_INDEX].ElementNum() == 1) {
-    MS_ASSERT(in_tensors[AXIS_INDEX].IsConst());
-    axis_ = static_cast<const int *>(in_tensors[AXIS_INDEX].Data())[0];
+    auto axis_vec = ConvertTensorAsIntVector(in_tensors_[AXIS_INDEX]);
+    if (axis_vec.size() != 1) {
+      MS_LOG(ERROR) << "Failed to get axis input, dim count " << axis_vec.size() << ", node: " << op_name_;
+      return RET_ERROR;
+    }
+    axis_ = axis_vec[0];
   } else {
     MS_LOG(ERROR) << "TensorRT axis is attribute.";
     return RET_ERROR;
@@ -57,7 +61,8 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (ReadyInputsNumber(ctx) == 1) {
     int const_index = in_tensors_[0].IsConst() ? 0 : 1;
     auto const_input = ConvertConstantTensor(ctx, in_tensors_[const_index], op_name_);
-    ctx->RegisterTensor(ITensorHelper{const_input}, in_tensors_[const_index].Name());
+    auto is_scalar = in_tensors_[const_index].Shape().empty();
+    ctx->RegisterTensor(ITensorHelper{const_input, NCHW, true, !is_scalar}, in_tensors_[const_index].Name());
   }
 
   ITensorHelper gather_input = input(ctx, 0);
@@ -85,7 +90,7 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);
   auto old_shape = ConvertMSShape(op_output->getDimensions());
   // keep shape
-  if (in_tensors_[1].Shape().empty() && old_shape.size() > 1) {
+  if (!indices_tensor.is_tensor && old_shape.size() > 1) {
     auto squeeze = ctx->network()->addShuffle(*op_output);
     if (squeeze == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed for " << op_name_;

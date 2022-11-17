@@ -293,7 +293,5 @@ int SliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "slice output : " << GetTensorFormat(helper);
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_StridedSlice, SliceTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_SliceFusion, SliceTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Crop, SliceTensorRT)
 }  // namespace mindspore::lite

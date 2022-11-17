@@ -128,8 +128,8 @@ std::experimental::optional<bool> TensorRTSubGraph::IsValidProfileDims() const {
   auto it = tensor_name2profile_num.begin();
   if (std::any_of(tensor_name2profile_num.begin(), tensor_name2profile_num.end(),
                   [=](const std::pair<std::string, int> &p) { return p.second != it->second; })) {
-    MS_LOG(WARNING) << "different tensor profile num not equal!";
-    return false;
+    MS_LOG(ERROR) << "different tensor profile num not equal!";
+    return {};
   }
   return true;
 }
@@ -521,6 +521,7 @@ int TensorRTSubGraph::MarkOutputs() {
             out_trt_tensor = transpose_layer_out->getOutput(0);
           }
           if (DynamicSizeOutputNeedTranspose(output_helper, out_tensor)) {
+            MS_LOG(INFO) << "dynamic size output need transpose !";
             if (output_helper.format_ == Format::NHWC) {
               nvinfer1::IShuffleLayer *transpose_layer_out = NHWC2NCHW(ctx_, *output_helper.trt_tensor_);
               if (transpose_layer_out == nullptr) {

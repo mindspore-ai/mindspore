@@ -1029,7 +1029,11 @@ OP_SCHEMA_DEF_END(TileFusion)
 
 OP_SCHEMA_DEF(TopKFusion)
 OP_ATTR_WITH_VALUE(sorted, bool, true)
+#ifdef GEN_SCHEMA_DEF
 OP_ATTR(axis, long)
+#else
+OP_ATTR_WITH_VALUE(axis, long, -1)
+#endif
 OP_ATTR(largest, long)
 OP_SCHEMA_DEF_END(TopKFusion)
 

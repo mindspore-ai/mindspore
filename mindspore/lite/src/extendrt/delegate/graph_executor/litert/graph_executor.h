@@ -22,16 +22,25 @@
 #include <map>
 
 #include "extendrt/session/lite_graph_executor.h"
+#include "schema/inner/model_generated.h"
+#include "runtime/hardware/device_context.h"
 #include "include/api/context.h"
 #include "include/model.h"
 #include "src/litert/lite_session.h"
+#include "src/common/helper/infer_helpers.h"
+#include "src/common/config_infos.h"
 
 namespace mindspore {
 class LiteRTGraphExecutor : public LiteGraphExecutor {
  public:
   LiteRTGraphExecutor() = default;
-  explicit LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context);
-  ~LiteRTGraphExecutor() = default;
+  LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos);
+  ~LiteRTGraphExecutor() {
+    if (lite_model_buf_ != nullptr) {
+      free(lite_model_buf_);
+      lite_model_buf_ = nullptr;
+    }
+  }
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
@@ -48,9 +57,16 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
                                      bool verify_size);
 
  private:
+  bool ExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t);
+  bool IsNeedExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t);
+
+ private:
   const std::shared_ptr<mindspore::Context> context_;
+  ConfigInfos config_infos_;
   lite::LiteGraph lite_graph_;
   std::shared_ptr<lite::LiteSession> lite_session_;
+  void *lite_model_buf_ = nullptr;
+  std::shared_ptr<mindspore::infer::helper::InferHelpers> helpers_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_GRAPH_EXECUTOR_LITERT_GRAPH_EXECUTOR_H_
