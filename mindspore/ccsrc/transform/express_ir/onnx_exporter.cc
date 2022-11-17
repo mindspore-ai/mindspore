@@ -883,6 +883,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Pow, Pow, OpNameInfo())
 
 OPERATOR_ONNX_CONVERT_DEFINE(ReLU, Relu, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Sigmoid, Sigmoid, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Sin, Sin, OpNameInfo())
 
 OPERATOR_ONNX_CONVERT_DEFINE(Flatten, Flatten, OpNameInfo())
 
@@ -1073,6 +1074,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(LogicalAnd)());
   fn(OP_CONVERT_FUNCTION_NAME(ReverseSequence)());
   fn(OP_CONVERT_FUNCTION_NAME(TensorScatterUpdate)());
+  fn(OP_CONVERT_FUNCTION_NAME(Sin)());
 }
 
 class OpConvertRegistry {
