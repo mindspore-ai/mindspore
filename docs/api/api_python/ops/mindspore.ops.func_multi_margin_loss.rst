@@ -3,6 +3,8 @@ mindspore.ops.multi_margin_loss
 
 .. py:function:: mindspore.ops.multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mean')
 
+    用于优化多类分类问题的铰链损失。
+
     创建一个标准，用于优化输入 :math:`x` （一个2D小批量Tensor）
     和输出 :math:`y` （一个目标类索引的1DTensor :math:`0 \leq y \leq \text{x.size}(1)-1`）
     之间的多类分类铰链损失（基于边距的损失）：

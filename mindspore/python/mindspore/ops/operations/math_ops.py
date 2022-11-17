@@ -7619,7 +7619,7 @@ class Qr(Primitive):
 
 class Cauchy(Primitive):
     r"""
-    Create a tensor of shape `size` with random numbers drawn from Cauchy distribution
+    Create a tensor of shape `size` with random numbers drawn from Cauchy distribution.
 
     .. math::
         \f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}

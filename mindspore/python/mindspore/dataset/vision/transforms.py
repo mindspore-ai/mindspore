@@ -701,7 +701,7 @@ class ConvertColor(ImageTensorOperation):
             - ConvertMode.COLOR_RGBA2GRAY, Convert RGBA image to GRAY image.
 
     Raises:
-        TypeError: If `convert_mode` is not of type :class:`mindspore.dataset.vision.transforms.ConvertMode` .
+        TypeError: If `convert_mode` is not of type :class:`mindspore.dataset.vision.ConvertMode` .
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:

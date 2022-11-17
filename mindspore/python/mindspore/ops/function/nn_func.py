@@ -4501,6 +4501,8 @@ def glu(x, axis=-1):
 
 def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mean'):
     r"""
+    Hinge loss for optimizing a multi-class classification.
+
     Creates a criterion that optimizes a multi-class classification hinge
     loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`) and
     output :math:`y` (which is a 1D tensor of target class indices,
@@ -4569,7 +4571,9 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
 
 def multi_label_margin_loss(inputs, target, reduction='mean'):
     r"""
-    Creates a criterion that optimizes a multi-class multi-classification
+    Hinge loss for optimizing a multi-label classification.
+
+    Creates a criterion that optimizes a multi-label multi-classification
     hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
     and output :math:`y` (which is a 2D `Tensor` of target class indices).
     For each sample in the mini-batch:

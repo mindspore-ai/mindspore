@@ -7977,19 +7977,19 @@ class CTCLossV2(Primitive):
 
     Args:
         blank (int, optional): The blank label. Default: 0.
-        reduction (string, optional): Apply specific reduction method to the output. Currently only support 'none',
+        reduction (str, optional): Apply specific reduction method to the output. Currently only support 'none',
             not case sensitive. Default: "none".
         zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to zero. Default: False.
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape :math:`(T, C, N)`, where :math:`T` is input length, :math:`N` is
-        batch size and :math:`C` is number of classes (including blank).
+          batch size and :math:`C` is number of classes (including blank).
         - **targets** (Tensor) - A tensor of shape :math:`(N, S)`, where :math:`S` is max target length,
-        means the target sequences.
+          means the target sequences.
         - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape :math:`(N)`.
-        It means the lengths of the input.
+          It means the lengths of the input.
         - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape :math:`(N)`.
-        It means the lengths of the target.
+          It means the lengths of the target.
 
     Outputs:
         - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.

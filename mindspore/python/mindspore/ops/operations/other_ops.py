@@ -850,15 +850,16 @@ class BlackmanWindow(Primitive):
     Args:
         periodic (bool): If True, returns a window to be used as periodic function.
             If False, return a symmetric window. Default: True.
-        dtype (mindspore.dtype): the desired data type of returned tensor. Only float16, float32 and float64 is allowed.
-            Default: mindspore.float32.
+        dtype (mindspore.dtype): the desired data type of returned tensor.
+            Only float16, float32 and float64 is allowed. Default: mindspore.float32.
 
     Inputs:
         - **window_length** (Tensor) - the size of returned window, with data type int32, int64.
           The input data should be an integer with a value of [0, 1000000].
 
     Outputs:
-        A 1-D tensor of size "window_length" containing the window. Its datatype is set by the attr 'dtype'
+        A 1-D tensor of size "window_length" containing the window. Its datatype is set by the attr 'dtype'.
+
     Raises:
         TypeError: If "window_length" is not a Tensor.
         TypeError: If "periodic" is not a bool.
