@@ -32,10 +32,8 @@ class MIND_API CumProd : public BaseOperator {
   void Init(const bool exclusive, const bool reverse);
   void SetExclusive(const bool exclusive);
   void SetReverse(const bool reverse);
-  void SetAxis(const int64_t axis);
   bool GetExclusive() const;
   bool GetReverse() const;
-  int64_t GetAxis() const;
 };
 abstract::AbstractBasePtr CumProdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<abstract::AbstractBasePtr> &input_args);

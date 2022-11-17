@@ -38,8 +38,6 @@ class MIND_API CumSum : public BaseOperator {
   void set_exclusive(const bool exclusive);
   /// \brief Set reverse.
   void set_reverse(const bool reverse);
-  /// \brief Set axis.
-  void set_axis(const int64_t axis);
   /// \brief Get exclusive.
   ///
   /// \return exclusive.
@@ -49,8 +47,6 @@ class MIND_API CumSum : public BaseOperator {
   /// \return reverse.
   bool get_reverse() const;
   ///
-  /// \return axis.
-  int64_t get_axis() const;
 };
 abstract::AbstractBasePtr CumSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args);
