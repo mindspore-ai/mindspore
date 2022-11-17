@@ -7426,7 +7426,7 @@ class Orgqr(Primitive):
     The output matrix is the same size as the input matrix :math:`x`.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(*, M, N)`, indicating 2D or 3D matrices,
+        - **x** (Tensor) - Tensor of shape :math:`(*, M, N)`, indicating matrices greater than or equal to 2D,
           with float32, float64, complex64 and complex128 data type.
         - **tau** (Tensor) - Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N`, indicating the
           reflecting coefficient in Householder transformation, which have the same type as x.
@@ -7441,10 +7441,10 @@ class Orgqr(Primitive):
         ValueError: If x.shape[-2] < x.shape[-1].
         ValueError: If x.shape[-1] < tau.shape[-1].
         ValueError: If rank(x) - rank(tau) != 1.
-        ValueError: If rank(x) != 2 or 3.
+        ValueError: If rank(x) < 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]), mindspore.float32)
