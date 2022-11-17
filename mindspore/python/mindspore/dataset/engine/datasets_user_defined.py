@@ -656,7 +656,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
                 " to replace it with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' "
                 "into 1.")
 
-        if python_multiprocessing and platform.system().lower() == 'windows':
+        if platform.system().lower() == 'windows' and num_parallel_workers > 1 and python_multiprocessing:
             logger.warning("Python multiprocessing is not supported on Windows platform.")
         self.python_multiprocessing = python_multiprocessing if platform.system().lower() != 'windows' else False
 
