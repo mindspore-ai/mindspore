@@ -8323,7 +8323,7 @@ class Dilation2D(Primitive):
         is not necessarily the same as the input x, the type is the same as the input x.
 
     Raises:
-        TypeError: If type of `x` or `filter` is not the tpye in [uint8, uint16, uint32, uint64, int8, int16,
+        TypeError: If type of `x` or `filter` is not the type in [uint8, uint16, uint32, uint64, int8, int16,
                                   int32, int64, float16, float32, float64].
         TypeError: If `stride` or `dilation` is not an int number or a tuple of two or four int numbers.
         ValueError: If the length of `stride` or `dilation` is neither two nor four when they are tuple.

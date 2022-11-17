@@ -21,7 +21,7 @@ A collection of operators to build neural networks or to compute functions.
 
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
-from ._inner_ops import (FillV2, MatmulDDS, DSDMatmul)
+from ._inner_ops import (FillV2, MatmulDDS, DSDMatmul, Cummin, ExtractImagePatches)
 from ._quant_ops import *
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
@@ -45,7 +45,8 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         UniqueWithPad, Unpack, UnsortedSegmentMax, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, Unstack, UpperBound, Zeros, ZerosLike, AffineGrid, Bincount, CheckNumerics,
                         HammingWindow, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
-                        MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero)
+                        MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero, Expand, Col2Im, ConjugateTranspose,
+                        FillDiagonal, Fills)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
                        Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
@@ -57,11 +58,12 @@ from .custom_ops import (Custom)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Print, Assert)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
-                        NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBicubic, ResizeBilinearV2)
+                        NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBicubic, ResizeBilinearV2, ExtractGlimpse,
+                        CombinedNonMaxSuppression)
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
                         FusedAdaFactorWithGlobalNorm)
-from .linalg_ops import (Svd)
+from .linalg_ops import (Svd, Geqrf)
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        BitwiseAnd, BitwiseOr, Ger,
                        BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub, InplaceUpdate,
@@ -80,7 +82,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        BesselY1, Bucketize, Cauchy, Cholesky, CholeskySolve, Betainc,
                        FFTWithSize, Heaviside, Histogram, Hypot, Lcm, LuUnpack, MatrixExp,
                        MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT,
-                       NextAfter, Orgqr, Qr, RaggedRange)
+                       NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
+                       CumulativeLogsumexp, Gcd)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -105,7 +108,9 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
                      ApplyAdamWithAmsgrad, AdaptiveAvgPool3D, AdaptiveMaxPool2D, AdaptiveMaxPool3D,
                      GridSampler3D, MaxPool3DWithArgmax, MaxUnpool2D, NuclearNorm, NthElement, MultilabelMarginLoss,
-                     PSROIPooling)
+                     PSROIPooling, Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
+                     FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
+                     GridSampler2D)
 from .other_ops import (Assign, IOU, BartlettWindow, BlackmanWindow, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load, StopGradient,
                         CheckValid, Partial, Depend, identity, Push, Pull, PyFunc, _DynamicLossScale)
@@ -582,6 +587,32 @@ __all__ = [
     "RandomPoisson",
     "PadAndShift",
     "RaggedRange",
+    "Digamma",
+    "Dilation2D",
+    "Eig",
+    "Expand",
+    "ExtractGlimpse",
+    "EuclideanNorm",
+    "CombinedNonMaxSuppression",
+    "Col2Im",
+    "CompareAndBitpack",
+    "ComplexAbs",
+    "ConjugateTranspose",
+    "Cross",
+    "Cummin",
+    "CumulativeLogsumexp",
+    "DataFormatVecPermute",
+    "DeformableOffsets",
+    "ExtractImagePatches",
+    "FillDiagonal",
+    "Fills",
+    "Gcd",
+    "Geqrf",
+    "GridSampler2D",
+    "FractionalAvgPool",
+    "FractionalMaxPool",
+    "FractionalMaxPool3DWithFixedKsize",
+    "FractionalMaxPoolWithFixedKsize",
 ]
 
 __custom__ = [
