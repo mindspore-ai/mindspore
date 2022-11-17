@@ -35,13 +35,14 @@ class PadNet(nn.Cell):
 
 def run_case():
     paddings = ((1, 0), (0, 2))
+    paddings_ms = (0, 2, 1, 0)
     shape = (4, 4)
     shape_dyn = (None, 4)
     sz = reduce(lambda a, b: a * b, shape)
     x = np.arange(sz).reshape(shape).astype(np.float32)
     expect = np.pad(x, paddings, mode="constant", constant_values=0)
     x_dyn = Tensor(shape=shape_dyn, dtype=mindspore.float32)
-    net = PadNet(paddings)
+    net = PadNet(paddings_ms)
     net.set_inputs(x_dyn)
     output = net(Tensor(x))
     assert (output.asnumpy() == expect).all()
@@ -74,20 +75,4 @@ def test_pad_dyn_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_case()
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    run_case()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pad_dyn_ascend():
-    """
-    Feature: test Pad dynamic shape on Ascend.
-    Description: inputs is dynamic shape.
-    Expectation: the result match with expect
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_case()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     run_case()

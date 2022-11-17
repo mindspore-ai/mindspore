@@ -23,7 +23,6 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.operations import image_ops as IMG
-from mindspore.ops._utils import is_shape_unknown
 import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp
 from mindspore.common.tensor import Tensor
@@ -34,6 +33,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error
 from mindspore.ops.operations.nn_ops import MaxUnpool2D, MaxUnpool3D
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, FractionalMaxPool3DWithFixedKsize
+from mindspore.ops.operations.nn_ops import PadV3
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -41,6 +41,7 @@ softsign_ = P.Softsign()
 hardswish_ = P.HSwish()
 mish_ = NN_OPS.Mish()
 selu_ = NN_OPS.SeLU()
+scalar_to_tensor_ = P.ScalarToTensor()
 sigmoid_ = NN_OPS.Sigmoid()
 
 
@@ -2385,123 +2386,112 @@ def pdist(x, p=2.0):
 
 
 @constexpr
-def _check_pad_inputs(x_shape, paddings):
+def _check_pad_inputs(padding):
     """check the input of pad"""
-    for _, pd in enumerate(paddings):
-        if not isinstance(pd, (list, tuple)) or len(pd) != 2 or not isinstance(pd[0], int) or \
-                not isinstance(pd[1], int):
-            raise TypeError(f"For 'pad', each element in 'paddings' must be a list or tuple of 2 int, but got {pd}.")
-    x_shape_unknown = is_shape_unknown(x_shape)
-    if not x_shape_unknown and len(x_shape) != len(paddings):
-        raise ValueError(f"For 'pad', the size of paddings must be 2 * {len(x_shape)}, but got {2 * len(paddings)}")
-
-    pad_all_non_negative = True
-    for _, pd in enumerate(paddings):
-        if pd[0] < 0 or pd[1] < 0:
-            pad_all_non_negative = False
-    if x_shape_unknown and not pad_all_non_negative:
-        # in this case, we can not infer the slice size
-        raise ValueError(f"For 'pad', if 'input_x' is dynamic shape, 'paddings' must be non-negative value, but got "
-                         f"{paddings}")
+    if len(padding) % 2 != 0:
+        raise ValueError(f"For 'pad', the size of padding must be divisible by 2, but got {len(padding)}")
+    if not isinstance(padding, (tuple, list)):
+        raise TypeError(f"For 'pad', the type of 'paddings' must be a tuple of int or list of int or a Tensor,"
+                        f" but got {type(padding)}.")
+    for pd in padding:
+        if not isinstance(pd, int):
+            raise TypeError(f"For 'pad', the paddings value must be tuple of int or list of int, but got {padding}")
 
 
-def pad(input_x, paddings):
+def pad(input_x, padding, mode='constant', value=None):
     r"""
     Pads the input tensor according to the paddings.
 
-    The formula to calculate the shape of the output tensor is as follows,
-
-    .. math::
-        \begin{aligned}
-            &\text{ input_x_shape} = (N_{1},N_{2},...,N_{n}) \\
-            &\begin{aligned}
-                \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
-                                 & N_{2}+paddings[1,0]+paddings[1,1], \\
-                                 &... , \\
-                                 & N_{n}+paddings[n-1,0]+paddings[n-1,1])
-            \end{aligned}
-        \end{aligned}
-
-    Note:
-        Negative `paddings` value is only supported when `input_x` is not dynamic shape.
-
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
-        paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
-            paddings are int type. For the input in `D` th dimension, paddings[D, 0] indicates how many sizes to be
-            extended(if this value > 0) or clipped(if this value < 0) ahead of the input tensor in the `D` th
-            dimension, and paddings[D, 1] indicates how many sizes to be extended(if this value > 0) or
-            clipped(if this value < 0) behind the input tensor in the `D` th dimension.
+        padding (Union[tuple[int], list[int], Tensor]): Filling position of pad.
+                :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` dimensions
+                of `input_x` will be padded.
+                Example: to pad only the last dimension of the input tensor, then
+                :attr:`padding` has the form
+                :math:`(\text{padding\_left}, \text{padding\_right})`;
+                Example: to pad the last 2 dimensions of the input tensor, then use
+                :math:`(\text{padding\_left}, \text{padding\_right},`
+                :math:`\text{padding\_top}, \text{padding\_bottom})`;
+                Example: to pad the last 3 dimensions, use
+                :math:`(\text{padding\_left}, \text{padding\_right},`
+                :math:`\text{padding\_top}, \text{padding\_bottom}`
+                :math:`\text{padding\_front}, \text{padding\_back})`.and so on.
+        mode (str, optional): Pad filling mode, "constant", "reflect" or "replicate". Default: "constant".
+            For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
+            this filling pattern and extend the padding pattern to n dimensions.
+
+            For "reflect" mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example
+            and extend the padding pattern to n dimensions.
+
+            For "replicate" mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example
+            and extend the padding pattern to n dimensions.
+        value (Union[int, float, None], optional): Valid only in "constant" mode, fill value for 'constant' padding,
+            if the value is None, the default value 0 is used.
 
     Returns:
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `paddings` is not a tuple.
+        TypeError: If `paddings` is not an int of tuple or int of list.
         TypeError: If `input_x` is not a Tensor.
-        ValueError: If shape of `paddings` is not :math:`(N, 2)`.
-        ValueError: If paddings.size is not equal to 2 * len(input_x).
-        ValueError: If the calculated output shape contains zero or negative dimension.
-        ValueError: If `paddings` contains negative value and `input_x` is dynamic shape.
+        ValueError: If padding.size is not equal to 2 * len(input_x).
+        ValueError: If mode is not "constant" and value not None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> paddings = ((1, 2), (2, 1))
-        >>> output = ops.pad(input_x, paddings)
-        >>> print(output)
-        [[ 0.   0.   0.   0.   0.   0. ]
-         [ 0.   0.  -0.1  0.3  3.6  0. ]
-         [ 0.   0.   0.4  0.5 -3.2  0. ]
-         [ 0.   0.   0.   0.   0.   0. ]
-         [ 0.   0.   0.   0.   0.   0. ]]
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
+        >>> output = ops.pad(x, [1, 0, 0, 1], mode='constant', value=6.0)
+        >>> print(x)
+        [[[[6. 0. 1.]
+           [6. 2. 3.]
+           [6. 6. 6.]]
+
+          [[6. 4. 5.]
+           [6. 6. 7.]
+           [6. 6. 6.]]]]
+        >>> output1 = ops.pad(x, (1, 0, 0, 1), mode='reflect')
+        >>> print(output1)
+        [[[[1. 0. 1.]
+           [3. 2. 3.]
+           [1. 0. 1.]]
+
+          [[5. 4. 5.]
+           [7. 6. 7.]
+           [5. 4. 5.]]]]
+        >>> output2 = ops.pad(x, (1, 1, 2, 1), mode='replicate')
+        [[[[0. 0. 1. 1.]
+           [0. 0. 1. 1.]
+           [0. 0. 1. 1.]
+           [2. 2. 3. 3.]
+           [2. 2. 3. 3.]]
+
+          [[4. 4. 5. 5.]
+           [4. 4. 5. 5.]
+           [4. 4. 5. 5.]
+           [6. 6. 7. 7.]
+           [6. 6. 7. 7.]]]]
     """
     if not isinstance(input_x, Tensor):
         raise TypeError(f"For 'pad', the type of 'input_x' must be Tensor, but got {type(input_x)}.")
-    if not isinstance(paddings, tuple):
-        raise TypeError(f"For 'pad', the type of 'paddings' must be tuple, but got {type(paddings)}.")
-    x_shape = input_x.shape
-    _check_pad_inputs(x_shape, paddings)
-    x_shape_unknown = is_shape_unknown(x_shape)
-    # input_x is dynamic shape
-    if x_shape_unknown:
-        _pad = _get_cache_prim(P.Pad)(paddings)
-        return _pad(input_x)
-    # input_x is static shape
-    pad_all_non_negative = True
-    pad_all_non_positive = True
-    slice_begin = []
-    slice_size = []
-    non_negative_padding = []
-    for i, pd in enumerate(paddings):
-        sz = x_shape[i] + pd[0]
-        if sz <= 0:
-            raise ValueError(f"For 'pad', input_x_shape[{i}] + paddings[{i}, 0] is {sz}, which is <= 0 and causes "
-                             f"the output shape invalid.")
-        sz = sz + pd[1]
-        if sz <= 0:
-            raise ValueError(f"For 'pad', input_x_shape[{i}] + paddings[{i}, 0] + paddings[{i}, 1] is {sz}, which is "
-                             f"<= 0 and causes the output shape invalid.")
-        slice_size.append(sz)
-        if pd[0] < 0:
-            slice_begin.append(abs(pd[0]))
-        else:
-            slice_begin.append(0)
-        if pd[0] < 0 or pd[1] < 0:
-            pad_all_non_negative = False
-        if pd[0] > 0 or pd[1] > 0:
-            pad_all_non_positive = False
-        non_negative_padding.append((max(0, pd[0]), max(0, pd[1])))
-    if pad_all_non_negative:
-        _pad = _get_cache_prim(P.Pad)(paddings)
-        return _pad(input_x)
-    if pad_all_non_positive:
-        return slice_(input_x, slice_begin, slice_size)
-    _pad = _get_cache_prim(P.Pad)(tuple(non_negative_padding))
-    out = _pad(input_x)
-    return slice_(out, slice_begin, slice_size)
+    if not isinstance(padding, Tensor):
+        _check_pad_inputs(padding)
+    if mode == "constant":
+        value = 0 if value is None else value
+        if isinstance(value, (float, int)):
+            value = scalar_to_tensor_(value, input_x.dtype)
+    else:
+        if value is not None:
+            raise ValueError(f"For 'pad', the padding mode '{mode}' can not set value, but got value {value}.")
+        if mode == "replicate":
+            mode = "edge"
+    out = PadV3(mode=mode, paddings_contiguous=True)(input_x, padding, value)
+    return out
 
 
 def relu(x):
