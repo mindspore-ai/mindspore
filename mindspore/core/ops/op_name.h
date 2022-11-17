@@ -75,6 +75,7 @@ constexpr auto kDilations = "dilations";
 constexpr auto kDropout = "dropout";
 constexpr auto kDstT = "dst_t";
 constexpr auto kDType = "d_type";
+constexpr auto kOutputDType = "dtype";
 constexpr auto kEllipsisMask = "ellipsis_mask";
 constexpr auto kEndMask = "end_mask";
 constexpr auto kEps = "eps";
