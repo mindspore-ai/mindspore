@@ -157,8 +157,9 @@ Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
   return Status::OK();
 }
 
-Status DistributedSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_tensor_, "[Internal ERROR] Reset() Sampler called early or late.");
+Status DistributedSamplerRT::ResetSampler(const bool failover_reset) {
+  CHECK_FAIL_RETURN_UNEXPECTED(failover_reset || cnt_ == samples_per_tensor_,
+                               "[Internal ERROR] ResetSampler() called early or late.");
   cnt_ = 0;
 
   if (shuffle_ == true) {
@@ -168,7 +169,7 @@ Status DistributedSamplerRT::ResetSampler() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();

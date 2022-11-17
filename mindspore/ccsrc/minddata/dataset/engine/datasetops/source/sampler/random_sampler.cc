@@ -101,8 +101,9 @@ Status RandomSamplerRT::InitSampler() {
   return Status::OK();
 }
 
-Status RandomSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "[Internal ERROR] Reset() Sampler called early or late.");
+Status RandomSamplerRT::ResetSampler(const bool failover_reset) {
+  CHECK_FAIL_RETURN_UNEXPECTED(failover_reset || next_id_ == num_samples_,
+                               "[Internal ERROR] ResetSampler() called early or late.");
   next_id_ = 0;
 
   if (reshuffle_each_epoch_) {
@@ -116,7 +117,7 @@ Status RandomSamplerRT::ResetSampler() {
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();

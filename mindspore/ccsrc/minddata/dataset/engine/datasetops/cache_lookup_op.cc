@@ -40,12 +40,12 @@ Status CacheLookupOp::WorkerEntry(int32_t worker_id) {
   RETURN_IF_NOT_OK(FetchFromCache(worker_id));
   return Status::OK();
 }
-Status CacheLookupOp::ResetSampler() { return Status::OK(); }
-Status CacheLookupOp::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+Status CacheLookupOp::ResetSampler(const bool failover_reset) { return Status::OK(); }
+Status CacheLookupOp::HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count) {
   RETURN_UNEXPECTED_IF_NULL(op);
   // We act like a sampler and as a dataset op. During handshake with leaf op,
   // We must wait until the leaf op has indexed everything.
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(op));
+  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(op, reset_count));
   // Now we notify the main thread handshake has finished.
   leaf_op_wp_.Set();
   return Status::OK();

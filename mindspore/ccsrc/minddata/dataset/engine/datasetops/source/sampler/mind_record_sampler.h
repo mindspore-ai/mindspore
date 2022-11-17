@@ -44,9 +44,10 @@ class MindRecordSamplerRT : public SamplerRT {
   // meant to be called by base class or python
   Status InitSampler() override;
 
-  // for next epoch of sampleIds
-  // @return Status The status code returned
-  Status ResetSampler() override;
+  /// \brief Reset for next epoch.
+  /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
+  /// \return Status The status code returned
+  Status ResetSampler(const bool failover_reset = false) override;
 
   void SamplerPrint(std::ostream &out, bool show_all) const override;
 

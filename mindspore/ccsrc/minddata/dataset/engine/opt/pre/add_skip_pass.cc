@@ -87,7 +87,8 @@ Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const 
   CHECK_FAIL_RETURN_UNEXPECTED(node != nullptr, "Failed to inject SkipOp.");
 
   int64_t dataset_size = -1;
-  RETURN_IF_NOT_OK(root_ir->GetDatasetSize(nullptr, false, &dataset_size));
+  std::shared_ptr<DatasetSizeGetter> size_getter = std::make_shared<DatasetSizeGetter>();
+  RETURN_IF_NOT_OK(root_ir->GetDatasetSize(size_getter, false, &dataset_size));
   CHECK_FAIL_RETURN_UNEXPECTED(dataset_size > 0, "Cannot reset the pipeline, dataset size is undefined");
   int32_t num_epochs = finder.GetNumEpochs();
   int64_t step = finder.GetStep();
@@ -105,11 +106,7 @@ Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const 
   }
   // in fast recovery, we start from current epoch and skip remaining steps (skip node will also be pushed down)
   if (GlobalContext::config_manager()->fast_recovery()) {
-    int32_t new_num_epochs = num_epochs - static_cast<int32_t>(step / dataset_size);
     int64_t skip_num = step % dataset_size;
-
-    root_ir->SetNumEpochs(new_num_epochs);
-
     auto skip_node = std::make_shared<SkipNode>(skip_num);
     skip_node->SetOnceOnly(true);
     RETURN_IF_NOT_OK(node->InsertAbove(skip_node));

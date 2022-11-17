@@ -48,12 +48,12 @@ Status SubsetSamplerRT::InitSampler() {
 }
 
 // Reset the internal variable to the initial state.
-Status SubsetSamplerRT::ResetSampler() {
+Status SubsetSamplerRT::ResetSampler(const bool failover_reset) {
   // Reset the internal counters.
   sample_id_ = 0;
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();

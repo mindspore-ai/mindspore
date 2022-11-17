@@ -46,15 +46,17 @@ class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
   // first handshake between leaf source op and Sampler. This func will determine the amount of data
   // in the dataset that we can sample from.
   // @param op - leaf op pointer, pass in so Sampler can ask it about how much data there is
+  // @param reset_count - reset the random generator these many times (used in fast_recovery mode of reset)
   // @return
-  Status HandshakeRandomAccessOp(const RandomAccessOp *op) override;
+  Status HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count = 0) override;
 
   // init sampler, to be called by python or Handshake
   Status InitSampler() override;
 
-  // for next epoch of sampleIds
-  // @return Status The status code returned
-  Status ResetSampler() override;
+  /// \brief Reset for next epoch.
+  /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
+  /// \return Status The status code returned
+  Status ResetSampler(const bool failover_reset = false) override;
 
   // Printer for debugging purposes.
   // @param out - output stream to write to

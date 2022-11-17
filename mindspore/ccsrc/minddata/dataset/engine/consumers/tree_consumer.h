@@ -60,8 +60,9 @@ class TreeConsumer {
   /// Function to reset the current consumer to the provided step.
   /// The consumer will terminate the pipeline and create a new one with skip injected.
   /// \param step the step to reset the pipeline to.
+  /// \param epoch_num the epoch to reset the pipeline to.
   /// \return Status error code
-  Status Reset(int64_t step);
+  Status Reset(int64_t step, const int64_t epoch_num);
 
   /// Function to stop the consumer.
   /// \return Status error code

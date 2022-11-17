@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/source/nonmappable_leaf_op.h"
+#include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
@@ -39,7 +40,9 @@ NonMappableLeafOp::NonMappableLeafOp(int32_t num_workers, int32_t worker_connect
       load_io_block_queue_(true),
       shuffle_files_(shuffle_files),
       num_rows_per_shard_(0),
-      num_rows_(0) {
+      num_rows_(0),
+      shuffled_keys_({}),
+      seed_(0) {
   worker_connector_size_ = worker_connector_size;
 }
 
@@ -244,22 +247,15 @@ bool NonMappableLeafOp::NeedPushFileToBlockQueue(const std::string &file_name, i
   return push;
 }
 
-void NonMappableLeafOp::ShuffleKeys(std::vector<int64_t> *i_keys, uint32_t seed) {
-  std::mt19937 rng(seed);
-  std::shuffle(i_keys->begin(), i_keys->end(), rng);
+void NonMappableLeafOp::ShuffleKeys() {
+  std::mt19937 rng(num_devices_ == 1 ? GetSeed() : ++seed_);
+  std::shuffle(shuffled_keys_.begin(), shuffled_keys_.end(), rng);
 }
 
 Status NonMappableLeafOp::WaitToFillIOBlockQueue() {
   // must be called first if called by worker spanwed by taskgroup
   TaskManager::FindMe()->Post();
 
-  std::vector<int64_t> i_keys;
-  if (shuffle_files_) {
-    for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
-      i_keys.push_back(it.key());
-    }
-  }
-  uint32_t seed = 0;
   while (true) {
     RETURN_IF_NOT_OK(io_block_queue_wait_post_.Wait());
     io_block_queue_wait_post_.Clear();
@@ -269,9 +265,27 @@ Status NonMappableLeafOp::WaitToFillIOBlockQueue() {
     }
 
     if (shuffle_files_) {
-      ShuffleKeys(&i_keys, num_devices_ == 1 ? GetSeed() : ++seed);
+      ShuffleKeys();
     }
-    RETURN_IF_NOT_OK(FillIOBlockQueue(i_keys));
+    RETURN_IF_NOT_OK(FillIOBlockQueue(shuffled_keys_));
+  }
+  return Status::OK();
+}
+
+Status NonMappableLeafOp::PrepareOperator() {
+  // Run any common code from super class first before adding our own
+  RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
+
+  if (shuffle_files_) {
+    for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
+      shuffled_keys_.push_back(it.key());
+    }
+    // in reset mode, shuffled_keys needs to be ordered in the rsetting epoch
+    if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
+      for (auto i = 0; i < op_current_repeats_; i++) {
+        ShuffleKeys();
+      }
+    }
   }
   return Status::OK();
 }

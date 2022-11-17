@@ -41,7 +41,7 @@ SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_tensor)
       col_desc_(nullptr),
       is_initialized(false) {}
 
-Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count) {
   RETURN_UNEXPECTED_IF_NULL(op);
   std::shared_ptr<SamplerRT> child_sampler;
   if (HasChildSampler()) {
@@ -52,7 +52,7 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
     }
 
     // Handshake and init child first.
-    RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
+    RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op, reset_count));
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "[Internal ERROR] RandomAccessOp init failed, as it is nullptr.");
@@ -67,7 +67,12 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   // It's up to the derived class to check the validity of the two args
   // Because some sampler only needs one of the arg (weighted_random_sampler)
   RETURN_IF_NOT_OK(InitSampler());  // init sampler after callback
-
+  // Move forward sampler's random generator if resetting the pipeline in fast_recovery mode
+  if (GlobalContext::config_manager()->fast_recovery()) {
+    for (auto i = 0; i < reset_count; i++) {
+      RETURN_IF_NOT_OK(ResetSampler(true));  // failover_reset = true
+    }
+  }
   return Status::OK();
 }
 

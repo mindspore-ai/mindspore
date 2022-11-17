@@ -91,15 +91,20 @@ class SamplerRT {
   Status GetAllIdsThenReset(py::array *data);
 #endif
 
-  // for next epoch of sampleIds
-  // @return Status The status code returned
-  virtual Status ResetSampler() = 0;
+  /// \brief Reset for next epoch.
+  /// \note If failover_reset is set, any override of this function must support the scenario where consecutive calls to
+  /// it are executed successfully (to prepare the sampler for a specific epoch, including updating any random
+  /// generator's internal state)
+  /// \param[in] failover_reset - A boolean to show whether we are resetting the pipeline
+  /// \return Status The status code returned
+  virtual Status ResetSampler(const bool failover_reset = false) = 0;
 
   // first handshake between leaf source op and Sampler. This func will determine the amount of data
   // in the dataset that we can sample from.
   // @param op - leaf op pointer, pass in so Sampler can ask it about how much data there is
-  // @return
-  virtual Status HandshakeRandomAccessOp(const RandomAccessOp *op);
+  // @param reset_count - reset the random generator these many times (used in fast_recovery mode of reset)
+  // @return status error code
+  virtual Status HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count = 0);
 
   // initialize sampler and perform checks on certain vars
   virtual Status InitSampler() { return Status::OK(); }

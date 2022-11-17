@@ -68,7 +68,8 @@ Status MappableLeafOp::operator()() {
   RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
   TensorRow sample_row;
   RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
-  while (true) {  // each iteration is 1 epoch, breaks when IsLastIteration() is true
+  while (true) {  // each iteration is 1 repeat (usually =1 epoch, unless we have a repeat node above us), breaks when
+                  // IsLastIteration() is true
     if (op_current_repeats_ % GetOpNumRepeatsPerEpoch() == 0) {
       ep_step = 0;
       RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
@@ -114,8 +115,10 @@ Status MappableLeafOp::Reset() {
 
 // hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
 Status MappableLeafOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
+  // Let the sampler know if we are resetting the pipeline to a specific epoch (op_current_repeats_ > 0)
+  // to mimic the behaviour in that state and have repeatability.
+  // Note that number of repeats is used since in each epoch we may reset sampler multiple times.
+  return sampler_->HandshakeRandomAccessOp(this, op_current_repeats_);
 }
 
 // contains the main logic of pulling a IOBlock from IOBlockQueue, load a row and push the row to out_connector_

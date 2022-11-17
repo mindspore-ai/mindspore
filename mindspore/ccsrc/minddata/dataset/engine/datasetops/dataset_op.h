@@ -197,7 +197,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   // \brief During tree prepare phase, operators may have specific post-operations to perform depending on
   //     their role.
-  // \notes Derived versions of this function should always call it's superclass version first
+  // \notes Derived versions of this function should always call their superclass version first
   //     before providing their own implementations.
   virtual Status PrepareOperator();
 
@@ -212,6 +212,11 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // \brief Getter function
   // \return T/F if this is an inlined operator
   bool inlined() const { return (oc_queue_size_ == 0); }
+
+  // \brief Set the epoch number for op manually. This is only used in reset mode.
+  // \param[in] epoch The new epoch number to restart the pipeline from
+  // \return - Status
+  Status SetEpoch(const int64_t epoch);
 
   // \brief Setter function, set the number of total repeats for the operator
   void SetTotalRepeats(int32_t total_repeats) { op_total_repeats_ = total_repeats; }

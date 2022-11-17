@@ -42,9 +42,10 @@ class SubsetSamplerRT : public SamplerRT {
   /// \return Status
   Status InitSampler() override;
 
-  /// Reset the internal variable to the initial state and reshuffle the indices.
-  /// \return Status
-  Status ResetSampler() override;
+  /// \brief Reset the internal variable(s) to the initial state and reshuffle the indices.
+  /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
+  /// \return Status The status code returned
+  Status ResetSampler(const bool failover_reset = false) override;
 
   /// Get the sample ids.
   /// \param[out] TensorRow where the sample ids will be placed.

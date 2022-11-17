@@ -169,14 +169,15 @@ class Iterator:
             self._col_names = self.__ori_dataset.get_col_names()
         return self._col_names
 
-    def _reset(self, step):
+    def _reset(self, step, epoch):
         """
-        Reset the iterator to the given step number.
+        Reset the iterator to the given step number and epoch number.
 
         Args:
-            step (int): Global step number.
+            step (int): Global step number
+            epoch (int): Global epoch number
         """
-        self._iterator.Reset(step)
+        self._iterator.Reset(step, epoch)
 
     def _transform_md_to_output(self, t):
         if self._output_numpy:

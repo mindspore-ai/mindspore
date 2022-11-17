@@ -93,13 +93,14 @@ Status SequentialSamplerRT::InitSampler() {
   return Status::OK();
 }
 
-Status SequentialSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(id_count_ == num_samples_, "[Internal ERROR] Reset() Sampler called early or late.");
+Status SequentialSamplerRT::ResetSampler(const bool failover_reset) {
+  CHECK_FAIL_RETURN_UNEXPECTED(failover_reset || id_count_ == num_samples_,
+                               "[Internal ERROR] ResetSampler() called early or late.");
   current_id_ = start_index_;
   id_count_ = 0;
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();

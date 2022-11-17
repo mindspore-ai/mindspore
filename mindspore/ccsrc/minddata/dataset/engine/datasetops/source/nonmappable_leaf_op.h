@@ -79,6 +79,13 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   // @return Name of the current Op
   std::string Name() const override { return "NonMappableLeafOp"; }
 
+  // \brief During tree prepare phase, operators may have specific post-operations to perform depending on
+  //     their role.
+  // \notes Derived versions of this function should always call their superclass version first
+  //     before providing their own implementations.
+  // @return Status The status code returned
+  Status PrepareOperator() override;
+
  protected:
   // The entry point for when workers are launched.
   // @param worker_id - the id of the worker that is executing this function.
@@ -135,7 +142,7 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   // @return Status - the error code returned.
   virtual Status CalculateNumRowsPerShard() = 0;
 
-  static void ShuffleKeys(std::vector<int64_t> *i_keys, uint32_t seed);
+  void ShuffleKeys();
 
   // Fill the IOBlockQueue.
   // @para i_keys - keys of file to fill to the IOBlockQueue
@@ -159,6 +166,10 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   bool shuffle_files_;
   int64_t num_rows_per_shard_;
   int64_t num_rows_;
+
+ private:
+  std::vector<int64_t> shuffled_keys_;  // to store shuffled filename indices
+  uint32_t seed_;                       // used to shuffle filename indices
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -55,9 +55,10 @@ class DistributedSamplerRT : public SamplerRT {
   /// Init sampler, called by base class or python
   Status InitSampler() override;
 
-  /// \brief for next epoch of sampleIds
-  /// \return Status code
-  Status ResetSampler() override;
+  /// \brief Reset for next epoch.
+  /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
+  /// \return Status The status code returned
+  Status ResetSampler(const bool failover_reset = false) override;
 
   int64_t GetDeviceID() { return device_id_; }
 

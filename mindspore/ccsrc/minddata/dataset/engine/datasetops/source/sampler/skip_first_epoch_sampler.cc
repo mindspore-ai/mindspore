@@ -19,26 +19,30 @@
 
 namespace mindspore {
 namespace dataset {
-Status SkipFirstEpochSamplerRT::ResetSampler() {
-  if (id_count_ != num_samples_) {
-    std::string err_msg =
-      "[Internal ERROR] ResetSampler() called early or late. id_count_: " + std::to_string(id_count_) +
-      " num_samples_: " + std::to_string(num_samples_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  current_id_ = 0;
-  id_count_ = 0;
+Status SkipFirstEpochSamplerRT::ResetSampler(const bool failover_reset) {
+  // This is a special sampler for Failover Reset, its internal state should
+  // not reset when failover_reset is set to true.
+  if (!failover_reset) {
+    if (id_count_ != num_samples_) {
+      std::string err_msg =
+        "[Internal ERROR] ResetSampler() called early or late. id_count_: " + std::to_string(id_count_) +
+        " num_samples_: " + std::to_string(num_samples_);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+    current_id_ = 0;
+    id_count_ = 0;
 
-  if (!first_epoch_done_) {
-    num_samples_ += start_index_;
-    start_index_ = 0;
-    samples_per_tensor_ = num_samples_;
-    first_epoch_done_ = true;
+    if (!first_epoch_done_) {
+      num_samples_ += start_index_;
+      start_index_ = 0;
+      samples_per_tensor_ = num_samples_;
+      first_epoch_done_ = true;
+    }
   }
 
   if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
+    RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));
   }
 
   return Status::OK();

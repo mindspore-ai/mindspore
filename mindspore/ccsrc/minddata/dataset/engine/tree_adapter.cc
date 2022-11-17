@@ -170,7 +170,7 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
   return Status::OK();
 }
 
-Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
+Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int64_t epoch_num) {
   RETURN_UNEXPECTED_IF_NULL(root_ir);
   // Create ExecutionTree
   tree_ = std::make_unique<ExecutionTree>();
@@ -180,6 +180,10 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   RETURN_IF_NOT_OK(BuildExecutionTreeRecur(root_ir->Children()[0], &root_op));
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
 
+  if (usage_ == kDeReset) {
+    RETURN_IF_NOT_OK(AdjustReset(epoch_num));
+  }
+
   // Prepare the tree
   RETURN_IF_NOT_OK(tree_->Prepare());
 
@@ -188,7 +192,8 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   return Status::OK();
 }
 
-Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs, int64_t step) {
+Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs, int64_t step,
+                            const int64_t epoch_num) {
   RETURN_UNEXPECTED_IF_NULL(input_ir);
   input_ir_ = input_ir;
   tree_state_ = kCompileStateIRGraphBuilt;
@@ -227,8 +232,18 @@ Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_
   // Remember the root node
   root_ir_ = root_ir;
 
-  RETURN_IF_NOT_OK(Build(root_ir_));
+  RETURN_IF_NOT_OK(Build(root_ir_, epoch_num));
   tree_state_ = kCompileStateReady;
+  return Status::OK();
+}
+
+Status TreeAdapter::AdjustReset(const int64_t epoch_num) {
+  if (GlobalContext::config_manager()->fast_recovery() && epoch_num > 0) {
+    MS_LOG(INFO) << "Adjusting dataset pipeline for failover reset to start on epoch: " << (epoch_num + 1);
+    for (auto op = tree_->begin(); op != tree_->end(); op++) {
+      op->SetEpoch(epoch_num);
+    }
+  }
   return Status::OK();
 }
 

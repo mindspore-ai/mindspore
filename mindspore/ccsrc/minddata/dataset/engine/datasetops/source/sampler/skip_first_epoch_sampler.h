@@ -30,9 +30,10 @@ class SkipFirstEpochSamplerRT : public SequentialSamplerRT {
   // Destructor.
   ~SkipFirstEpochSamplerRT() = default;
 
-  // for next epoch of sampleIds
-  // @return Status The status code returned
-  Status ResetSampler() override;
+  /// \brief Reset for next epoch.
+  /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
+  /// \return Status The status code returned
+  Status ResetSampler(const bool failover_reset = false) override;
 
   /// \brief Gets the number of samples available
   /// \note Since this sampler returns different number of samples in the first epoch (compared to other epochs), this

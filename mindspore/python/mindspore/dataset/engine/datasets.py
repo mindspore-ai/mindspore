@@ -114,16 +114,17 @@ def _get_training_dataset():
     return _train_dataset
 
 
-def _reset_training_dataset(step):
+def _reset_training_dataset(step, epoch):
     """
-    Reset the training dataset to the given step number.
+    Reset the training dataset to the given step and epoch number.
 
     Args:
         step (int): Global step number.
+        epoch (int): Global epoch number
     """
     dataset = _get_training_dataset()
     if dataset is not None:
-        dataset._reset(step)  # pylint: disable=W0212
+        dataset._reset(step, epoch)  # pylint: disable=W0212
     else:
         raise RuntimeError("Training dataset is not set.")
 
