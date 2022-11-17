@@ -237,7 +237,7 @@ else()
     else()
         target_link_libraries(_c_dataengine PRIVATE -ldl ${SECUREC_LIBRARY})
     endif()
-    target_link_libraries(_c_dataengine PUBLIC mindspore::sentencepiece)
+    target_link_libraries(_c_dataengine PUBLIC mindspore::sentencepiece mindspore::z)
 endif()
 
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core

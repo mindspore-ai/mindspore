@@ -720,28 +720,29 @@ PYBIND_REGISTER(TextFileNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(TFRecordNode, 2, ([](const py::module *m) {
-                  (void)py::class_<TFRecordNode, DatasetNode, std::shared_ptr<TFRecordNode>>(*m, "TFRecordNode",
-                                                                                             "to create a TFRecordNode")
-                    .def(py::init([](const py::list &dataset_files, const std::shared_ptr<SchemaObj> &schema,
-                                     const py::list &columns_list, int64_t num_samples, int32_t shuffle,
-                                     int32_t num_shards, int32_t shard_id, bool shard_equal_rows) {
-                      std::shared_ptr<TFRecordNode> tfrecord = std::make_shared<TFRecordNode>(
-                        toStringVector(dataset_files), schema, toStringVector(columns_list), num_samples,
-                        toShuffleMode(shuffle), num_shards, shard_id, shard_equal_rows, nullptr);
-                      THROW_IF_ERROR(tfrecord->ValidateParams());
-                      return tfrecord;
-                    }))
-                    .def(py::init([](const py::list &dataset_files, const std::string &schema,
-                                     const py::list &columns_list, int64_t num_samples, int32_t shuffle,
-                                     int32_t num_shards, int32_t shard_id, bool shard_equal_rows) {
-                      std::shared_ptr<TFRecordNode> tfrecord = std::make_shared<TFRecordNode>(
-                        toStringVector(dataset_files), schema, toStringVector(columns_list), num_samples,
-                        toShuffleMode(shuffle), num_shards, shard_id, shard_equal_rows, nullptr);
-                      THROW_IF_ERROR(tfrecord->ValidateParams());
-                      return tfrecord;
-                    }));
-                }));
+PYBIND_REGISTER(
+  TFRecordNode, 2, ([](const py::module *m) {
+    (void)py::class_<TFRecordNode, DatasetNode, std::shared_ptr<TFRecordNode>>(*m, "TFRecordNode",
+                                                                               "to create a TFRecordNode")
+      .def(py::init([](const py::list &dataset_files, const std::shared_ptr<SchemaObj> &schema,
+                       const py::list &columns_list, int64_t num_samples, int32_t shuffle, int32_t num_shards,
+                       int32_t shard_id, bool shard_equal_rows, const std::string &compression_type) {
+        std::shared_ptr<TFRecordNode> tfrecord = std::make_shared<TFRecordNode>(
+          toStringVector(dataset_files), schema, toStringVector(columns_list), num_samples, toShuffleMode(shuffle),
+          num_shards, shard_id, shard_equal_rows, nullptr, compression_type);
+        THROW_IF_ERROR(tfrecord->ValidateParams());
+        return tfrecord;
+      }))
+      .def(py::init([](const py::list &dataset_files, const std::string &schema, const py::list &columns_list,
+                       int64_t num_samples, int32_t shuffle, int32_t num_shards, int32_t shard_id,
+                       bool shard_equal_rows, const std::string &compression_type) {
+        std::shared_ptr<TFRecordNode> tfrecord = std::make_shared<TFRecordNode>(
+          toStringVector(dataset_files), schema, toStringVector(columns_list), num_samples, toShuffleMode(shuffle),
+          num_shards, shard_id, shard_equal_rows, nullptr, compression_type);
+        THROW_IF_ERROR(tfrecord->ValidateParams());
+        return tfrecord;
+      }));
+  }));
 
 PYBIND_REGISTER(UDPOSNode, 2, ([](const py::module *m) {
                   (void)py::class_<UDPOSNode, DatasetNode, std::shared_ptr<UDPOSNode>>(*m, "UDPOSNode",

@@ -338,7 +338,11 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         target_link_libraries(ut_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
                 mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                 mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
-                mindspore::icui18n)
+                mindspore::icui18n mindspore::z)
+    endif()
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    if(ENABLE_MINDDATA)
+        target_link_libraries(ut_tests PRIVATE  mindspore::z)
     endif()
 else()
     target_link_libraries(ut_tests PRIVATE mindspore::gtest ${PYTHON_LIBRARIES})

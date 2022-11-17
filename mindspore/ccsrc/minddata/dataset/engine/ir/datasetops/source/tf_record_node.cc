@@ -35,10 +35,10 @@ std::shared_ptr<DatasetNode> TFRecordNode::Copy() {
   std::shared_ptr<TFRecordNode> node;
   if (schema_obj_ != nullptr) {
     node = std::make_shared<TFRecordNode>(dataset_files_, schema_obj_, columns_list_, num_samples_, shuffle_,
-                                          num_shards_, shard_id_, shard_equal_rows_, cache_);
+                                          num_shards_, shard_id_, shard_equal_rows_, cache_, compression_type_);
   } else {
     node = std::make_shared<TFRecordNode>(dataset_files_, schema_path_, columns_list_, num_samples_, shuffle_,
-                                          num_shards_, shard_id_, shard_equal_rows_, cache_);
+                                          num_shards_, shard_id_, shard_equal_rows_, cache_, compression_type_);
   }
   (void)node->SetNumWorkers(num_workers_);
   (void)node->SetConnectorQueueSize(connector_que_size_);
@@ -61,32 +61,34 @@ Status TFRecordNode::ValidateTFRecordFiles(const std::vector<std::string> &filen
       continue;
     }
 
+    std::ifstream reader(realpath.value(), std::ios::binary);
     // failed to open
-    std::ifstream reader;
-    reader.open(realpath.value());
     if (!reader) {
       invalid_files.push_back(filename);
       reader.close();
       continue;
     }
 
-    // read data
-    int64_t record_length = 0;
-    (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(sizeof(int64_t)));
+    // delay inside checking for compressed files
+    if (compression_type_.empty()) {
+      // read data
+      int64_t record_length = 0;
+      (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(sizeof(int64_t)));
 
-    // read crc from file
-    uint32_t masked_crc = 0;
-    (void)reader.read(reinterpret_cast<char *>(&masked_crc), static_cast<std::streamsize>(sizeof(uint32_t)));
+      // read crc from file
+      uint32_t masked_crc = 0;
+      (void)reader.read(reinterpret_cast<char *>(&masked_crc), static_cast<std::streamsize>(sizeof(uint32_t)));
 
-    // generate crc from data
-    uint32_t generated_crc =
-      system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&record_length), sizeof(int64_t));
+      // generate crc from data
+      uint32_t generated_crc =
+        system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&record_length), sizeof(int64_t));
 
-    // invalid tfrecord file
-    if (masked_crc != generated_crc) {
-      invalid_files.push_back(filename);
-      reader.close();
-      continue;
+      // invalid tfrecord file
+      if (masked_crc != generated_crc) {
+        invalid_files.push_back(filename);
+        reader.close();
+        continue;
+      }
     }
 
     // check and log large files
@@ -103,6 +105,34 @@ Status TFRecordNode::ValidateTFRecordFiles(const std::vector<std::string> &filen
       [](const std::string &accumulated, const std::string &next) { return accumulated + "    " + next + "\n"; });
     err_msg += accumulated_filenames;
     RETURN_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+Status TFRecordNode::ValidateTFRecordCompressionType(const std::string &compression_type,
+                                                     const std::vector<std::string> &dataset_files, int32_t num_shards,
+                                                     int64_t num_samples) {
+  if (!compression_type.empty() && compression_type != "ZLIB" && compression_type != "GZIP") {
+    RETURN_STATUS_UNEXPECTED(
+      "Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP', but got '" + compression_type +
+      "'.");
+  }
+
+  if (!compression_type.empty()) {
+#if defined(_WIN32) || defined(_WIN64)
+    RETURN_STATUS_UNEXPECTED("Compressed TFRecord files are not supported in Windows OS.");
+#endif
+  }
+
+  if (!compression_type.empty() && dataset_files.size() < num_shards) {
+    RETURN_STATUS_UNEXPECTED(
+      "When compression_type is provided, number of dataset files cannot be less than num_shards but got " +
+      std::to_string(dataset_files.size()) + " number of files with " + std::to_string(num_shards) + " num_shards");
+  }
+
+  if (!compression_type.empty() && num_samples <= 0) {
+    RETURN_STATUS_UNEXPECTED("When compression_type is provided, num_samples must be provided and > 0, but got " +
+                             std::to_string(num_samples) + " num_samples ");
   }
   return Status::OK();
 }
@@ -129,6 +159,7 @@ Status TFRecordNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("TFRecordDataset", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("TFRecordDataset", num_shards_, shard_id_));
 
+  RETURN_IF_NOT_OK(ValidateTFRecordCompressionType(compression_type_, dataset_files_, num_shards_, num_samples_));
   RETURN_IF_NOT_OK(ValidateTFRecordFiles(dataset_files_));
   return Status::OK();
 }
@@ -151,10 +182,21 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
+  NonMappableLeafOp::CompressionType compression_type;
+  if (compression_type_.empty()) {
+    compression_type = NonMappableLeafOp::CompressionType::None;
+  } else if (compression_type_ == "GZIP") {
+    compression_type = NonMappableLeafOp::CompressionType::GZIP;
+  } else if (compression_type_ == "ZLIB") {
+    compression_type = NonMappableLeafOp::CompressionType::ZLIB;
+  } else {
+    RETURN_STATUS_UNEXPECTED("Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP'");
+  }
+
   // Create and initialize TFReaderOp
   std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
     num_workers_, worker_connector_size_, num_samples_, sorted_dir_files, std::move(data_schema), connector_que_size_,
-    columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_);
+    columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_, compression_type);
 
   RETURN_IF_NOT_OK(tf_reader_op->Init());
 
@@ -169,8 +211,13 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files));
-
+    if (compression_type_.empty()) {
+      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files));
+    } else {
+      // For compressed, actual total rows is unable to be counted, thus max number of rows that will be read is
+      // provided instead
+      num_rows = num_samples_ * num_shards_;
+    }
     // Add the shuffle op after this op
     RETURN_IF_NOT_OK(AddShuffleOp(sorted_dir_files.size(), num_shards_, num_rows, 0, connector_que_size_, &shuffle_op));
     shuffle_op->SetTotalRepeats(GetTotalRepeats());
@@ -200,21 +247,27 @@ Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows;
-  constexpr int64_t kThreadCount = 8;
-  // By default, TFRecord will do file-based sharding. But when cache is injected, it will be row-based sharding.
-  if (!shard_equal_rows_ && !IsCached()) {
-    // Data will be sharded by file
-    std::vector<std::string> shard_file_list;
-    RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, kThreadCount, estimate));
+
+  if (compression_type_.empty()) {
+    int64_t num_rows;
+    constexpr int64_t kThreadCount = 8;
+    // By default, TFRecord will do file-based sharding. But when cache is injected, it will be row-based sharding.
+    if (!shard_equal_rows_ && !IsCached()) {
+      // Data will be sharded by file
+      std::vector<std::string> shard_file_list;
+      RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
+      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, kThreadCount, estimate));
+    } else {
+      // Data will be sharded by row
+      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, kThreadCount, estimate));
+      num_rows = static_cast<int64_t>(ceil(num_rows / (num_shards_ * 1.0)));
+    }
+    *dataset_size = num_samples_ > 0 ? std::min(num_rows, num_samples_) : num_rows;
+    dataset_size_ = *dataset_size;
   } else {
-    // Data will be sharded by row
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, kThreadCount, estimate));
-    num_rows = static_cast<int64_t>(ceil(num_rows / (num_shards_ * 1.0)));
+    *dataset_size = num_samples_;
+    dataset_size_ = *dataset_size;
   }
-  *dataset_size = num_samples_ > 0 ? std::min(num_rows, num_samples_) : num_rows;
-  dataset_size_ = *dataset_size;
   return Status::OK();
 }
 
@@ -224,10 +277,12 @@ Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames)
   if (!shard_filenames->empty()) {
     RETURN_STATUS_UNEXPECTED("The initial file list must be empty.");
   }
-  for (int index = 0; index < dataset_files_.size(); index++) {
-    if (index % num_shards_ == shard_id_) {
-      shard_filenames->push_back(dataset_files_.at(index));
-    }
+  int cut_off_file = dataset_files_.size();
+  if (!compression_type_.empty()) {
+    cut_off_file = static_cast<int>(cut_off_file / num_shards_) * num_shards_;
+  }
+  for (int index = shard_id_; index < cut_off_file; index += num_shards_) {
+    shard_filenames->push_back(dataset_files_.at(index));
   }
   return Status::OK();
 }
@@ -246,6 +301,7 @@ Status TFRecordNode::to_json(nlohmann::json *out_json) {
   args["num_shards"] = num_shards_;
   args["shard_id"] = shard_id_;
   args["shard_equal_rows"] = shard_equal_rows_;
+  args["compression_type"] = compression_type_;
   if (cache_ != nullptr) {
     nlohmann::json cache_args;
     RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
@@ -274,6 +330,7 @@ Status TFRecordNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_shards", kTFRecordNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shard_id", kTFRecordNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shard_equal_rows", kTFRecordNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "compression_type", kTFRecordNode));
   std::vector<std::string> dataset_files = json_obj["dataset_files"];
   std::vector<std::string> columns_list = json_obj["columns_list"];
   int64_t num_samples = json_obj["num_samples"];
@@ -281,19 +338,20 @@ Status TFRecordNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   int32_t num_shards = json_obj["num_shards"];
   int32_t shard_id = json_obj["shard_id"];
   bool shard_equal_rows = json_obj["shard_equal_rows"];
+  std::string compression_type = json_obj["compression_type"];
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   if (json_obj.find("schema_file_path") != json_obj.end()) {
     std::string schema_file_path = json_obj["schema_file_path"];
     *ds = std::make_shared<TFRecordNode>(dataset_files, schema_file_path, columns_list, num_samples, shuffle,
-                                         num_shards, shard_id, shard_equal_rows, cache);
+                                         num_shards, shard_id, shard_equal_rows, cache, compression_type);
   } else {
     CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("schema_json_string") != json_obj.end(),
                                  "Failed to find either schema_file_path or schema_json_string");
     std::shared_ptr<SchemaObj> schema_obj = Schema();
     RETURN_IF_NOT_OK(schema_obj->from_json(json_obj["schema_json_string"]));
     *ds = std::make_shared<TFRecordNode>(dataset_files, schema_obj, columns_list, num_samples, shuffle, num_shards,
-                                         shard_id, shard_equal_rows, cache);
+                                         shard_id, shard_equal_rows, cache, compression_type);
   }
   (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
   return Status::OK();

@@ -499,8 +499,8 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMindRecordCApi) {
   std::string file_path = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
 
   // Create a MindRecord Dataset, 20 records in it
-  std::shared_ptr<Dataset> ds = MindData(file_path, {}, std::make_shared<RandomSampler>(), nullptr, 0,
-                                         ShuffleMode::kGlobal, some_cache);
+  std::shared_ptr<Dataset> ds =
+    MindData(file_path, {}, std::make_shared<RandomSampler>(), nullptr, 0, ShuffleMode::kGlobal, some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -584,7 +584,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi1) {
   std::string file_path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
   std::string schema_path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
   std::shared_ptr<Dataset> ds =
-    TFRecord({file_path}, schema_path, {"image"}, 0, ShuffleMode::kFalse, 1, 0, false, some_cache);
+    TFRecord({file_path}, schema_path, {"image"}, 0, ShuffleMode::kFalse, 1, 0, false, some_cache, "");
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -638,7 +638,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi2) {
   // In this case, it is a row-based sharding, not the file-based sharding that would happen if
   // there was not any cache.
   std::shared_ptr<Dataset> ds =
-    TFRecord({file_path}, schema_path, {"image"}, 0, ShuffleMode::kFalse, 3, 0, false, some_cache);
+    TFRecord({file_path}, schema_path, {"image"}, 0, ShuffleMode::kFalse, 3, 0, false, some_cache, "");
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -688,7 +688,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi3) {
   // In this case, a sequential sampler would be chosen with the same num_samples argument.
   // The samples will be selected by the sequential sampler, not by the TFRecord leaf node.
   std::shared_ptr<Dataset> ds =
-    TFRecord({file_path}, schema_path, {"image"}, 2, ShuffleMode::kFalse, 1, 0, false, some_cache);
+    TFRecord({file_path}, schema_path, {"image"}, 2, ShuffleMode::kFalse, 1, 0, false, some_cache, "");
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
