@@ -12,7 +12,7 @@ function Run_Converter() {
     local ascend_cfg_file_list=("$models_ascend_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile; $6:faile_not_return;
-    Convert "${ascend_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return
+    Convert "${ascend_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return $compile_type
 }
 
 # source ascend env
@@ -42,7 +42,14 @@ mkdir -p ${ms_models_path}
 
 model_data_path=/home/workspace/mindspore_dataset/mslite
 models_path=${model_data_path}/models
-models_ascend_config=${benchmark_test}/models_ascend.cfg
+
+if [[ ${backend} =~ "lite" ]]; then
+    compile_type="lite"
+    models_ascend_config=${benchmark_test}/models_ascend_lite.cfg
+elif [[ ${backend} =~ "cloud" ]]; then
+    compile_type="cloud"
+    models_ascend_config=${benchmark_test}/models_ascend_cloud.cfg
+fi
 
 # Write converter result to temp file
 run_converter_log_file=${benchmark_test}/run_converter_log.txt
@@ -67,6 +74,6 @@ else
 fi
 
 # Run Benchmark
-source ${benchmark_test}/run_benchmark_ascend.sh -v $version -b $backend -d $device_id -a ${arch}
+source ${benchmark_test}/run_benchmark_ascend.sh -v $version -b $backend -d $device_id -a ${arch} -c ${compile_type}
 Run_Benchmark_status=$?
 exit ${Run_Benchmark_status}

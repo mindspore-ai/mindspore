@@ -206,6 +206,9 @@ build_python_wheel_package() {
         cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtensorrt_plugin.so package/mindspore_lite/lib/
       fi
     else
+      if [[ "${MSLITE_ENABLE_ACL}" ]]; then
+        cp src/litert/kernel/ascend/*.so package/mindspore_lite/lib/
+      fi
       cp src/*.so package/mindspore_lite/lib/
     fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog" ]; then
