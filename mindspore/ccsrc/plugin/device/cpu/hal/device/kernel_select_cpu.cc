@@ -42,6 +42,7 @@ constexpr auto kParamDynamic = "dynamic";
 static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpName,
                                                         kUnsortedSegmentMaxOpName,
                                                         kUnsortedSegmentSumOpName,
+                                                        kUnsortedSegmentProdOpName,
                                                         kUniqueWithPadOpName,
                                                         kMaskedFillOpName,
                                                         kDataFormatDimMapOpName,
