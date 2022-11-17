@@ -21,7 +21,7 @@ from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
     MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
     _check_mpi_envs, _set_elegant_exit_handle
-from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster
+from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster, MSContext, ms_ctx_param
 
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
@@ -41,6 +41,7 @@ def _set_rank_from_mpi():
         os.environ["RANK_ID"] = ompi_rank_id
     if ompi_device_id:
         os.environ["DEVICE_ID"] = ompi_device_id
+        MSContext.get_instance().set_param(ms_ctx_param.device_id, int(ompi_device_id))
     if ompi_rank_size:
         os.environ["RANK_SIZE"] = ompi_rank_size
 
