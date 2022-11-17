@@ -32,6 +32,7 @@ from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
 from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
 from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
+from mindspore.ops.function.math_func import inplace_index_add
 
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
@@ -537,6 +538,16 @@ class Deg2radNet(nn.Cell):
         return self.deg2rad(x)
 
 
+class InplaceIndexAddFunc(nn.Cell):
+    def __init__(self):
+        super(InplaceIndexAddFunc, self).__init__()
+        self.inplace_index_add = inplace_index_add
+        self.var = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)))
+
+    def construct(self, indices, updates, axis=1):
+        return self.inplace_index_add(self.var, indices, updates, axis)
+
+
 class IsRealFunc(nn.Cell):
     def __init__(self):
         super(IsRealFunc, self).__init__()
@@ -696,6 +707,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'skip': ['backward']}),
+    ('InplaceIndexAdd', {
+        'block': InplaceIndexAddFunc(),
+        'desc_inputs': [Tensor(np.array([0, 1, 2], np.int32)),
+                        Tensor(np.array([[0.5, 1.0, 1.5], [1.0, 1.5, 2.0], [2.0, 2.5, 3.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]], np.float32))]}),
     ('Log1p', {
         'block': Log1pNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
