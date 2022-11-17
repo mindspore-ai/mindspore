@@ -191,8 +191,8 @@ void ProfilingReporter::ReportParallelStrategy() const {
 std::tuple<std::string, std::string> ProfilingReporter::GetTraceDataFilePath() const {
   const std::string dir = mindspore::profiler::ascend::GetOutputPath();
   std::map<std::string, std::string> trace_data_paths = {
-    {"device_queue", dir + "/" + "device_queue_profiling_" + std::to_string(device_id_) + ".txt"},
-    {"dataset_iterator", dir + "/" + "dataset_iterator_profiling_" + std::to_string(device_id_) + ".txt"}};
+    {"device_queue", dir + "/" + "device_queue_profiling_" + common::GetEnv("RANK_ID") + ".txt"},
+    {"dataset_iterator", dir + "/" + "dataset_iterator_profiling_" + common::GetEnv("RANK_ID") + ".txt"}};
   for (auto trace_data_path : trace_data_paths) {
     if (TraceDataPathValid(trace_data_path.second)) {
       return {trace_data_path.second, trace_data_path.first};
@@ -204,26 +204,26 @@ std::tuple<std::string, std::string> ProfilingReporter::GetTraceDataFilePath() c
 bool ProfilingReporter::TraceDataPathValid(const std::string &path) const {
   int ret = access(path.c_str(), F_OK);
   if (ret == -1) {
-    MS_LOG(ERROR) << "file: " << path << " is not exist.";
+    MS_LOG(WARNING) << "file: " << path << " is not exist.";
     return false;
   }
 
   ret = access(path.c_str(), R_OK);
   if (ret == -1) {
-    MS_LOG(ERROR) << "file: " << path << " is not readable.";
+    MS_LOG(WARNING) << "file: " << path << " is not readable.";
     return false;
   }
 
   std::ifstream ifs(path);
   if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "file: " << path << " is not open.";
+    MS_LOG(WARNING) << "file: " << path << " is not open.";
     return false;
   }
   std::string str;
   ifs >> str;
   ifs.close();
   if (str.empty()) {
-    MS_LOG(ERROR) << "file: " << path << " is empty.";
+    MS_LOG(WARNING) << "file: " << path << " is empty.";
     return false;
   }
   return true;
