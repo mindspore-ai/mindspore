@@ -9092,18 +9092,20 @@ class FractionalMaxPool(Primitive):
             Pooling ratio for each dimension of value should be >=0, currently only support for row and col
             dimension. The first and last elements must be 1.0 because we don't allow pooling on batch and
             channels dimensions.
-        pseudo_random(bool): An optional bool. Defaults to False. When set to True, generates the pooling
+        pseudo_random(bool, optional): When set to True, generates the pooling
             sequence in a pseudo random fashion, otherwise, in a random fashion.
             Check paper Benjamin Graham, Fractional Max-Pooling for difference between pseudo_random and
-            random.
-        overlapping(bool): An optional bool. Defaults to False. When set to True, it means when pooling,
+            random. Defaults to False.
+        overlapping(bool, optional): When set to True, it means when pooling,
             the values at the boundary of adjacent pooling cells are used by both cells.
-        deterministic(bool): An optional bool. Defaults to False. When set to True, a fixed pooling region
+            When set to False, the values are not reused. Defaults to False.
+        deterministic(bool, optional): When set to True, a fixed pooling region
             will be used when iterating over a FractionalMaxPool node in the computation graph. Mainly
-            used in unit test to make FractionalMaxPool deterministic.
-        seed(int): An optional int. Defaults to 0. If either seed or seed2 are set to be non-zero, the
-            random number generator is seeded by the given seed. Otherwise, it is seeded by a random seed.
-        seed2(int): An optional int. Defaults to 0. An second seed to avoid seed collision.
+            used in unit test to make FractionalMaxPool deterministic. When set to False,
+            fixed pool regions will not be used. Defaults to False.
+        seed(int, optional): If either seed or seed2 are set to be non-zero, the random number generator is
+            seeded by the given seed. Otherwise, it is seeded by a random seed. Defaults to 0.
+        seed2(int, optional): An second seed to avoid seed collision. Defaults to 0.
 
     Inputs:
         - **x** (Tensor) -The data type must be one of the following types: float32, float64, int32, int64.
@@ -9269,18 +9271,20 @@ class FractionalAvgPool(Primitive):
             Pooling ratio for each dimension of value should be >=0, currently only support for row and col
             dimension. The first and last elements must be 1.0 because we don't allow pooling on batch and
             channels dimensions.
-        pseudo_random(bool): An optional bool. Defaults to False. When set to True, generates the pooling
+        pseudo_random(bool, optional): When set to True, generates the pooling
             sequence in a pseudorandom fashion, otherwise, in a random fashion.
             Check paper Benjamin Graham, Fractional Max-Pooling for difference between pseudo_random and
-            random.
-        overlapping(bool): An optional bool. Defaults to False. When set to True, it means when pooling,
+            random. Defaults to False.
+        overlapping(bool, optional): When set to True, it means when pooling,
             the values at the boundary of adjacent pooling cells are used by both cells.
-        deterministic(bool): An optional bool. Defaults to False. When set to True, a fixed pooling region
+            When set to False, the values are not reused. Defaults to False.
+        deterministic(bool, optional): When set to True, a fixed pooling region
             will be used when iterating over a FractionalAvgPool node in the computation graph. Mainly
-            used in unit test to make FractionalAvgPool deterministic.
-        seed(int): An optional int. Defaults to 0. If either seed or seed2 are set to be non-zero, the
-            random number generator is seeded by the given seed. Otherwise, it is seeded by a random seed.
-        seed2(int): An optional int. Defaults to 0. An second seed to avoid seed collision.
+            used in unit test to make FractionalAvgPool deterministic. When set to False,
+            fixed pool regions will not be used. Defaults to False.
+        seed(int, optional): If either seed or seed2 are set to be non-zero, the random number generator
+            is seeded by the given seed. Otherwise, it is seeded by a random seed. Defaults to 0.
+        seed2(int, optional): An second seed to avoid seed collision. Defaults to 0.
 
     Inputs:
         - **x** (Tensor) -The data type must be one of the following types: float32, float64, int32, int64.
@@ -9602,8 +9606,8 @@ class GridSampler2D(Primitive):
             "bilinear" or "nearest". Default: "bilinear".
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
             "reflection". Default: "zeros".
-        align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
-            tensors are aligned. Defaults to "false".
+        align_corners (bool): An optional bool. When set to True, the centers of the corner pixels of the input
+            and output tensors are aligned. When set to False, it is not aligned. Defaults to False.
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor with dtype of float16 or float32 and shape of :math:`(N, C,
