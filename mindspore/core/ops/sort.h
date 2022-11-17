@@ -16,11 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_SORT_H_
 #define MINDSPORE_CORE_OPS_SORT_H_
+
 #include <map>
 #include <vector>
 #include <string>
 #include <memory>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -31,8 +31,10 @@ class MIND_API Sort : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Sort);
   Sort() : BaseOperator(kNameSort) { InitIOName({"x"}, {"y1", "y2"}); }
-
+  void Init(int64_t axis = -1, bool descending = false);
+  void set_axis(int64_t axis);
   int64_t get_axis() const;
+  void set_descending(bool descending);
   bool get_descending() const;
 };
 abstract::AbstractBasePtr SortInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
