@@ -117,7 +117,6 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod,
   size_t padded_size_;
   size_t workspace_size_;
   bool use_pad_;
-  bool is_dynamic_attr_{false};
   std::vector<int64_t> filter_shape_;
   std::vector<int> pad_list_;
   void *stream_ptr_{nullptr};

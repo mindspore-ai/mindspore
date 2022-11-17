@@ -36,8 +36,7 @@ constexpr size_t kWidth2DStrideIndex = 3;
 constexpr size_t k2DDilationSize = 4;
 constexpr size_t kHeight2DDilationIndex = 2;
 constexpr size_t kWidth2DDilationIndex = 3;
-constexpr auto StaticInput = 2;
-constexpr auto DynamicInput = 3;
+constexpr auto kInputDim = 3;
 
 constexpr auto k2DHeightIndexNCHW = 2;
 constexpr auto k2DHeightIndexNHWC = 1;
@@ -45,10 +44,6 @@ constexpr auto k2DHeightIndexNHWC = 1;
 using KernelRunFunc = ConvGradFilterBkwGpuKernelMod::KernelRunFunc;
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ConvGradFilterBkwGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &ConvGradFilterBkwGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &ConvGradFilterBkwGpuKernelMod::LaunchKernel<half>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
@@ -146,11 +141,8 @@ void ConvGradFilterBkwGpuKernelMod::CalPadList(const std::vector<int> &pad_list,
 
 void ConvGradFilterBkwGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs) {
   size_t input_num = inputs.size();
-  if (input_num != StaticInput && input_num != DynamicInput) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
-  }
-  if (input_num == DynamicInput) {
-    is_dynamic_attr_ = true;
+  if (input_num != kInputDim) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
   }
 }
 
@@ -273,9 +265,7 @@ bool ConvGradFilterBkwGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   if (format_attr_ == kOpFormat_NHWC) {
     data_format_ = kOpFormat_NHWC;
   }
-  if (!is_dynamic_attr_) {
-    filter_shape_ = GetValue<std::vector<int64_t>>(prim->GetAttr("filter_sizes"));
-  }
+
   group_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("group")));
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                       "cudnnSetConvGroupCount failed");
@@ -306,14 +296,12 @@ int ConvGradFilterBkwGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (is_null_input_) {
     return KRET_OK;
   }
-  if (is_dynamic_attr_) {
-    constexpr size_t kShapeIndex = 2;
-    auto value_res = TryGetIntValueFromInputs(inputs, kShapeIndex, kernel_name_, true);
-    if (!value_res.has_value()) {
-      MS_LOG(EXCEPTION) << "Fail to get filter_sizes from inputs";
-    }
-    filter_shape_ = value_res.value();
+
+  constexpr size_t kShapeIndex = 2;
+  if (!TryGetIntValue(inputs, kShapeIndex, kernel_name_, &filter_shape_, true)) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get filter_sizes input!";
   }
+
   auto filter_shape = filter_shape_;
   if (!CheckTensorSize({in_shape, dy_shape, filter_shape})) {
     return KRET_RESIZE_FAILED;
