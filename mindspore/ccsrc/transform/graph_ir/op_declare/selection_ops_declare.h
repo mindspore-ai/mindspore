@@ -58,9 +58,8 @@ DECLARE_OP_USE_OUTPUT(StridedSliceV2)
 DECLARE_OP_ADAPTER(UnsortedSegmentSum)
 DECLARE_OP_USE_OUTPUT(UnsortedSegmentSum)
 
-DECLARE_OP_ADAPTER(UnsortedSegmentProdD)
-DECLARE_OP_USE_INPUT_ATTR(UnsortedSegmentProdD)
-DECLARE_OP_USE_OUTPUT(UnsortedSegmentProdD)
+DECLARE_OP_ADAPTER(UnsortedSegmentProd)
+DECLARE_OP_USE_OUTPUT(UnsortedSegmentProd)
 
 DECLARE_OP_ADAPTER(UnsortedSegmentMaxD)
 DECLARE_OP_USE_INPUT_ATTR(UnsortedSegmentMaxD)

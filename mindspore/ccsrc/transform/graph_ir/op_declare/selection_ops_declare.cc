@@ -168,16 +168,18 @@ REG_ADPT_DESC(StridedSliceV2, kNameStridedSliceV2, ADPT_DESC(StridedSliceV2))
 
 // UnsortedSegmentSum
 INPUT_MAP(UnsortedSegmentSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
+ATTR_INPUT_MAP(UnsortedSegmentSum) = {{"num_segments", 3}};
 ATTR_MAP(UnsortedSegmentSum) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentSum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UnsortedSegmentSumD, prim::kPrimUnsortedSegmentSumD->name(), ADPT_DESC(UnsortedSegmentSum))
 REG_ADPT_DESC(UnsortedSegmentSum, prim::kPrimUnsortedSegmentSum->name(), ADPT_DESC(UnsortedSegmentSum))
 
-// UnsortedSegmentProdD
-INPUT_MAP(UnsortedSegmentProdD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
-INPUT_ATTR_MAP(UnsortedSegmentProdD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
-ATTR_MAP(UnsortedSegmentProdD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(UnsortedSegmentProdD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UnsortedSegmentProdD, kNameUnsortedSegmentProdD, ADPT_DESC(UnsortedSegmentProdD))
+// UnsortedSegmentProd
+INPUT_MAP(UnsortedSegmentProd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
+ATTR_INPUT_MAP(UnsortedSegmentProd) = {{"num_segments", 3}};
+ATTR_MAP(UnsortedSegmentProd) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UnsortedSegmentProd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UnsortedSegmentProd, kNameUnsortedSegmentProdD, ADPT_DESC(UnsortedSegmentProd))
 
 // UnsortedSegmentMaxD
 INPUT_MAP(UnsortedSegmentMaxD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
