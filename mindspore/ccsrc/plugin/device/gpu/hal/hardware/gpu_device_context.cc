@@ -85,15 +85,6 @@ void GPUDeviceContext::Initialize() {
   auto gpu_kernel_executor = dynamic_cast<GPUKernelExecutor *>(kernel_executor_.get());
   MS_EXCEPTION_IF_NULL(gpu_kernel_executor);
   gpu_kernel_executor->Initialize();
-
-#ifndef ENABLE_SECURITY
-  // Dump json config file if dump is enabled.
-  auto rank_id = gpu_kernel_executor->GetRankID();
-  auto &json_parser = DumpJsonParser::GetInstance();
-  json_parser.Parse();
-  json_parser.CopyDumpJsonToDir(rank_id);
-  json_parser.CopyMSCfgJsonToDir(rank_id);
-#endif
   initialized_ = true;
 }
 
@@ -128,6 +119,15 @@ void GPUDeviceResManager::Initialize() {
     auto_mem_offload_ = std::make_shared<MindRTAutoOffloadAdapter>(&GPUMemoryAllocator::GetInstance(),
                                                                    GPUDeviceManager::GetInstance().default_stream_id());
   }
+
+#ifndef ENABLE_SECURITY
+  // Dump json config file if dump is enabled.
+  auto rank_id = device_context_->device_context_key().device_id_;
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  json_parser.CopyDumpJsonToDir(rank_id);
+  json_parser.CopyMSCfgJsonToDir(rank_id);
+#endif
 
   // Initialize NCCL.
   if (distributed::collective::CollectiveManager::instance()->initialized()) {
