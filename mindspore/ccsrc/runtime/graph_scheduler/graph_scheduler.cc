@@ -1474,7 +1474,8 @@ void GraphScheduler::LinkDataArrow(AbstractActor *const to_actor, const GraphCom
 
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
     if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
-      MS_LOG(WARNING) << "Invalid from node:" << from_kernel->fullname_with_scope() << ", type:" << kernel_type;
+      MS_LOG(EXCEPTION) << "Invalid from node:" << from_kernel->fullname_with_scope()
+                        << " to actor:" << to_actor->GetAID().Name() << ", type:" << kernel_type;
     }
     return;
   }

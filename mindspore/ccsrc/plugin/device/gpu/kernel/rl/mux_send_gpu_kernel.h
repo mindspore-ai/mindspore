@@ -118,7 +118,8 @@ class MuxSendGpuKernel : public MuxBaseGpuKernel {
       }
       size_t input_size = std::accumulate(input_shape.begin(), input_shape.end(), data_size, std::multiplies<size_t>());
       input_size_list_.push_back(input_size);
-      total_size_ += input_size;
+      // Framework memory allocation ensures memory alignment.
+      total_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(input_size);
     }
     output_size_list_.push_back(0);
 

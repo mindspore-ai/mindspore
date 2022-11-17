@@ -81,8 +81,10 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     auto &size_list = (*size_list_list)[i];
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_context);
-    // if the address of continuous tensor has already been allocated, skip the tensor
+    // If the address of continuous tensor has already been allocated, skip the tensor.
     if (alloc_list[0]->GetPtr() != nullptr) {
+      MS_LOG(WARNING) << "The continuous memory has already been allocated of actor: " << from_aid.Name()
+                      << " with index: " << i;
       continue;
     }
     // Allocate memory through the device context.

@@ -94,9 +94,13 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       for (size_t j = 0; j < shape.size(); j++) {
         size *= LongToSizeClipNeg(shape[j]);
       }
-      size_t aligned_size = (nccl_kernel_type_ != NCCL_ALL_REDUCE) ? size : AlignMemorySize(size);
-      input_size_list_.push_back(aligned_size);
-      input_size_ += aligned_size;
+      input_size_list_.push_back(size);
+      // Framework memory allocation ensures memory alignment, but AllGather/ReduceScatter calculation cann‘t have
+      // aligned gaps in single input scenarios.
+      if (input_num > 1) {
+        size = device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
+      }
+      input_size_ += size;
     }
     for (size_t i = 0; i < output_num; ++i) {
       auto shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
@@ -109,9 +113,13 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       for (size_t j = 0; j < shape.size(); j++) {
         size *= LongToSizeClipNeg(shape[j]);
       }
-      size_t aligned_size = (nccl_kernel_type_ != NCCL_ALL_REDUCE) ? size : AlignMemorySize(size);
-      output_size_list_.push_back(aligned_size);
-      output_size_ += aligned_size;
+      output_size_list_.push_back(size);
+      // Framework memory allocation ensures memory alignment, but AllGather/ReduceScatter calculation cann‘t have
+      // aligned gaps in single output scenarios.
+      if (output_num > 1) {
+        size = device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
+      }
+      output_size_ += size;
     }
 
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
@@ -216,21 +224,12 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     return;
   }
 
-  size_t AlignMemorySize(size_t size) const {
-    if (size == 0) {
-      return COMMUNICATION_MEM_ALIGN_SIZE;
-    }
-    return ((size + COMMUNICATION_MEM_ALIGN_SIZE - 1) / COMMUNICATION_MEM_ALIGN_SIZE) * COMMUNICATION_MEM_ALIGN_SIZE;
-  }
-
   NcclKernelType nccl_kernel_type_;
   ncclRedOp_t nccl_reduce_type_;
   size_t input_size_;
   size_t output_size_;
   int root_;
   bool is_null_input_;
-
-  static const size_t COMMUNICATION_MEM_ALIGN_SIZE = 16;
 };
 }  // namespace kernel
 }  // namespace mindspore

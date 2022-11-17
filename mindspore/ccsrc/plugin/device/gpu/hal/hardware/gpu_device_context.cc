@@ -248,10 +248,17 @@ std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vec
     std::vector<void *> ptr_list;
     return ptr_list;
   }
-  if (auto_mem_offload_ != nullptr) {
-    return auto_mem_offload_->MallocContinuousMem(size_list);
+
+  // Memory allocation ensures memory alignment.
+  std::vector<size_t> align_size_list;
+  for (size_t size : size_list) {
+    auto align_size = GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
+    (void)align_size_list.emplace_back(align_size);
   }
-  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
+  if (auto_mem_offload_ != nullptr) {
+    return auto_mem_offload_->MallocContinuousMem(align_size_list);
+  }
+  return mem_manager_->MallocContinuousMemFromMemPool(align_size_list);
 }
 
 namespace {
