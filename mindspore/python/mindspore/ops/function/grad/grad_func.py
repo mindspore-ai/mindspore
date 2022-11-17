@@ -1299,6 +1299,43 @@ def custom_vjp(fn=None):
     return deco
 
 
+def stop_gradient(value):
+    """
+    StopGradient is used for eliminating the effect of a value on the gradient, such as truncating
+    the gradient propagation from an output of a function.
+    For more details, please refer to `Stop Gradient
+    <https://www.mindspore.cn/tutorials/en/master/beginner/autograd.html#stop-gradient>`_.
+
+    Args:
+        value (Any): The value whose effect on the gradient to be eliminated.
+
+    Returns:
+        The same as `value`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> def net(x, y):
+        ...     out1 = ops.MatMul()(x, y)
+        ...     out2 = ops.MatMul()(x, y)
+        ...     out2 = ops.stop_gradient(out2)
+        ...     return out1, out2
+        ...
+        >>> x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+        >>> y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+        >>> grad_fn = ops.grad(net)
+        >>> output = grad_fn(x, y)
+        >>> print(output)
+        [[1.4100001 1.6       6.5999994]
+         [1.4100001 1.6       6.5999994]]
+    """
+    return P.StopGradient()(value)
+
+
 __all__ = [
     'grad',
     'value_and_grad',
@@ -1309,6 +1346,7 @@ __all__ = [
     'jvp',
     'vjp',
     'custom_vjp',
-    'linearize'
+    'linearize',
+    'stop_gradient'
 ]
 __all__.sort()

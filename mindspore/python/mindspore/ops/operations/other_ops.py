@@ -568,6 +568,40 @@ class UpdateState(Primitive):
         return state
 
 
+class StopGradient(Primitive):
+    """
+    StopGradient is used for eliminating the effect of a value on the gradient,
+    such as truncating the gradient propagation from an output of a function.
+
+    Refer to :func:`mindspore.ops.stop_gradient` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> def net(x, y):
+        ...     out1 = ops.MatMul()(x, y)
+        ...     out2 = ops.MatMul()(x, y)
+        ...     out2 = ops.StopGradient()(out2)
+        ...     return out1, out2
+        ...
+        >>> x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+        >>> y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+        >>> grad_fn = ops.grad(net)
+        >>> output = grad_fn(x, y)
+        >>> print(output)
+        [[1.4100001 1.6       6.5999994]
+         [1.4100001 1.6       6.5999994]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+
 class ConfusionMatrix(PrimitiveWithInfer):
     r"""
     Calculates the confusion matrix from labels and predictions.

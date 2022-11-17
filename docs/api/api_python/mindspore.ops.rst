@@ -601,6 +601,7 @@ Parameter操作算子
     mindspore.ops.Map
     mindspore.ops.MultitypeFuncGraph
     mindspore.ops.Partial
+    mindspore.ops.StopGradient
 
 算子信息注册
 -------------
