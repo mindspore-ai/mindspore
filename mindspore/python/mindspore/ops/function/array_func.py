@@ -25,7 +25,6 @@ from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
     SearchSorted,
     NonZero,
-    MaskedScatter,
     MatrixDiagV3,
     MatrixDiagPartV3,
     MatrixSetDiagV3,
@@ -4133,43 +4132,6 @@ def tuple_to_array(input_x):
     return tuple_to_array_(input_x)
 
 
-def masked_scatter(x, mask, updates):
-    """
-    Updates the value in the input with the updates value according to the mask.
-    The shapes of `mask` and `x` must be the same or broadcastable.
-
-    Args:
-        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        mask (Tensor[bool]): A bool tensor with a shape broadcastable to x.
-        updates (Tensor): A tensor with the same data type as x. The
-            number of elements must be greater than or equal to the number of True's in `mask`.
-
-    Outputs:
-        y (Tensor), with the same type and shape as x.
-
-    Raises:
-        TypeError: If `x`, `mask` or `updates` is not a Tensor.
-        TypeError: If data type of `x` is not be supported.
-        TypeError: If dtype of `mask` is not bool.
-        TypeError: If the dim of `x` less than the dim of `mask`.
-        ValueError: If `mask` can not be broadcastable to `x`.
-        ValueError: If the number of elements in `updates` is less than the number required for the updates.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> x= Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
-        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
-        >>> updates = Tensor(np.array([5., 6., 7.]), mindspore.float32)
-        >>> output = ops.MaskedScatter()(input_X, mask, updates)
-        >>> print(output)
-        [5. 6. 3. 7.]
-    """
-    masked_scatter_ = MaskedScatter()
-    return masked_scatter_(x, mask, updates)
-
-
 def masked_select(x, mask):
     """
     Returns a new 1-D Tensor which indexes the `x` tensor according to the boolean `mask`.
@@ -5105,7 +5067,6 @@ __all__ = [
     'gather_nd',
     'one_hot',
     'masked_fill',
-    'masked_scatter',
     'masked_select',
     'narrow',
     'scatter_add',

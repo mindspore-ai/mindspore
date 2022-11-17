@@ -102,7 +102,6 @@ from .array_func import (
     matrix_diag_part,
     matrix_set_diag,
     diag,
-    masked_scatter,
     masked_select,
     meshgrid,
     affine_grid,

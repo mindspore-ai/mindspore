@@ -42,7 +42,6 @@ from .print_tensor import _print_aicpu
 from .topk import _top_k_aicpu
 from .log1p import _log1p_aicpu
 from .asin import _asin_aicpu
-from .masked_scatter import _masked_scatter_aicpu
 from .is_finite import _is_finite_aicpu
 from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu
