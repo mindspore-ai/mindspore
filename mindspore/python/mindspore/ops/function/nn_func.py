@@ -2407,17 +2407,22 @@ def pad(input_x, padding, mode='constant', value=None):
         padding (Union[tuple[int], list[int], Tensor]): Filling position of pad.
                 :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` dimensions
                 of `input_x` will be padded.
+
                 Example: to pad only the last dimension of the input tensor, then
                 :attr:`padding` has the form
                 :math:`(\text{padding\_left}, \text{padding\_right})`;
+
                 Example: to pad the last 2 dimensions of the input tensor, then use
                 :math:`(\text{padding\_left}, \text{padding\_right},`
                 :math:`\text{padding\_top}, \text{padding\_bottom})`;
+
                 Example: to pad the last 3 dimensions, use
                 :math:`(\text{padding\_left}, \text{padding\_right},`
                 :math:`\text{padding\_top}, \text{padding\_bottom}`
-                :math:`\text{padding\_front}, \text{padding\_back})`.and so on.
+                :math:`\text{padding\_front}, \text{padding\_back})` and so on.
+
         mode (str, optional): Pad filling mode, "constant", "reflect" or "replicate". Default: "constant".
+
             For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
             this filling pattern and extend the padding pattern to n dimensions.
 
@@ -2426,8 +2431,9 @@ def pad(input_x, padding, mode='constant', value=None):
 
             For "replicate" mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example
             and extend the padding pattern to n dimensions.
-        value (Union[int, float, None], optional): Valid only in "constant" mode, fill value for 'constant' padding,
-            if the value is None, the default value 0 is used.
+
+        value (Union[int, float, None], optional): Valid only in "constant" mode.
+                Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.
 
     Returns:
         Tensor, the tensor after padding.
