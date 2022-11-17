@@ -4519,6 +4519,52 @@ def min(x, axis=0, keep_dims=False):
     return argmin_with_value_(x)
 
 
+def aminmax(x, *, axis=0, keepdims=False):
+    """
+    Calculates the minimum value and maximum values.
+
+    Calculates the minimum value and maximum values along with the given axis for the input tensor.
+    It returns the minimum values and maximum values.
+
+    .. warning::
+        - The value range of "axis" is [-rank, rank). "rank" is the dimension length of "x".
+
+    Args:
+        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)` .
+        axis (int): The dimension to reduce. Default: 0.
+        keepdims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
+                          the output will reduce dimension if false. Default: False.
+
+    Returns:
+        tuple (Tensor), tuple of 2 tensors, containing the minimum value and maximum value of the input tensor.
+
+        - If `keepdims` is true, the shape of output tensors is
+          :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
+          Otherwise, the shape is
+          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+
+    Raises:
+        TypeError: If `keepdims` is not a bool.
+        TypeError: If `axis` is not an int.
+        ValueError: If `axis` is not in range [-rank, rank).
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> output0, output1 = ops.aminmax(x)
+        >>> print(output0, output1)
+        0.0 0.7
+    """
+    argmin_with_value_op = P.ArgMinWithValue(axis, keepdims)
+    argmax_with_value_op = P.ArgMaxWithValue(axis, keepdims)
+    _, output0 = argmin_with_value_op(x)
+    _, output1 = argmax_with_value_op(x)
+    return output0, output1
+
+
 def narrow(inputs, axis, start, length):
     """
     Returns a narrowed tensor from input tensor, and
