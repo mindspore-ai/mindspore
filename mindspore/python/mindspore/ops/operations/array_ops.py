@@ -6018,6 +6018,32 @@ class MaskedFill(Primitive):
         self.init_prim_io_names(inputs=['input', 'mask', 'value'], outputs=['output'])
 
 
+class MaskedScatter(Primitive):
+    """
+    Updates the value in the input with the updates value according to the mask.
+    The shapes of `mask` and `x` must be the same or broadcastable.
+
+    Refer to :func:`mindspore.ops.masked_scatter' for more details.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x= Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
+        >>> updates = Tensor(np.array([5., 6., 7.]), mindspore.float32)
+        >>> output = ops.MaskedScatter()(input_X, mask, updates)
+        >>> print(output)
+        [5. 6. 3. 7.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MaskedScatter"""
+        self.init_prim_io_names(inputs=['x', 'mask', 'updates'], outputs=['y'])
+        self.add_prim_attr("cust_aicpu", "MaskedScatter")
+
+
 class MaskedSelect(PrimitiveWithCheck):
     """
     Returns a new 1-D Tensor which indexes the `x` tensor according to the boolean `mask`.
