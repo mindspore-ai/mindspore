@@ -765,6 +765,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
+    auto graph_id = graph->graph_id();
     // As the cse optimization of kernel graph, front cnodes with the same inputs will be optimized to the same
     // backend cnode, it means that multiple front nodes will correspond to the same backend node. In order to
     // ensure that all front nodes are obtained, only the front node to graph output map can be used, not the
@@ -772,24 +773,44 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
     for (const auto &front_backend_pair : graph->front_node_to_graph_output_map()) {
       const auto &output_with_index = front_backend_pair.second;
       auto output_kernel = output_with_index.first;
+      auto output_index = output_with_index.second;
       MS_EXCEPTION_IF_NULL(output_kernel);
       auto origin_output_with_index = front_backend_pair.first;
       if (origin_output_with_index.first == nullptr) {
-        MS_LOG(WARNING) << "The graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
-                        << " with index: " << output_with_index.second << " has no front node.";
+        MS_LOG(WARNING) << "The graph " << graph_id << " output node:" << output_kernel->fullname_with_scope()
+                        << " with index: " << output_index << " has no front node.";
         continue;
       }
 
       auto kernel_type = FetchKernelTransformType(output_kernel, graph, graph_compiler_info.origin_parameters_order_);
       auto output_actor = FetchActor(kernel_type, graph_compiler_info.name_, output_kernel, graph);
-      if (output_actor == nullptr) {
-        MS_LOG(INFO) << "The graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
-                     << " with index:" << output_with_index.second
-                     << " is not actor, and the kernel type is:" << kernel_type;
+      // Internal parameter need update the output actor and output kernel through the front node of last graph.
+      if (kernel_type == KernelTransformType::kInternalParameter) {
+        auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(
+          common::AnfAlgo::FetchRealNodeSkipMonadControl(output_with_index).first);
+        if (graph_output_to_actor_.count(front_output_with_index) > 0) {
+          output_actor = graph_output_to_actor_[front_output_with_index].first;
+          output_kernel = graph_output_to_actor_[front_output_with_index].second.first;
+          output_index = graph_output_to_actor_[front_output_with_index].second.second;
+          MS_LOG(INFO) << "Graph " << graph_id << " output node:" << output_with_index.first->fullname_with_scope()
+                       << " with index:" << output_with_index.second
+                       << " is internal parameter, and fetch last graph real output node:"
+                       << output_kernel->fullname_with_scope() << " with index:" << output_index
+                       << ", from front node:" << front_output_with_index.first->fullname_with_scope()
+                       << " with index:" << front_output_with_index.second;
+        }
       }
+      // Only the device tensor store not need cache output actor.
+      if ((output_actor == nullptr) && (kernel_type != KernelTransformType::kDeviceTensorStore)) {
+        MS_LOG(WARNING) << "Graph " << graph_id << " output node:" << output_with_index.first->fullname_with_scope()
+                        << " with index:" << output_with_index.second
+                        << " is not actor, and the kernel type is:" << kernel_type;
+      }
+
       auto output_actor_name = (output_actor != nullptr) ? output_actor->GetAID().Name() : "";
-      (void)graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(output_actor, output_with_index));
-      MS_LOG(INFO) << "Cache the graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
+      (void)graph_output_to_actor_.emplace(origin_output_with_index,
+                                           GraphOutputPair(output_actor, {output_kernel, output_index}));
+      MS_LOG(INFO) << "Cache graph " << graph_id << " output node:" << output_with_index.first->fullname_with_scope()
                    << " with index:" << output_with_index.second << " to actor:" << output_actor_name
                    << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
                    << " with index:" << origin_output_with_index.second;
@@ -798,7 +819,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       if ((output_actor != nullptr) && (output_actor->type() == KernelTransformType::kKernelActor)) {
         auto kernel_info = dynamic_cast<KernelInfo *>(output_kernel->kernel_info());
         MS_EXCEPTION_IF_NULL(kernel_info);
-        auto is_somas = kernel_info->IsTensorEnableSomas(kernel_info->somas_output_result(), output_with_index.second);
+        auto is_somas = kernel_info->IsTensorEnableSomas(kernel_info->somas_output_result(), output_index);
         MS_EXCEPTION_IF_CHECK_FAIL((!is_somas),
                                    (output_kernel->fullname_with_scope() + " can't use somas for graph output."));
       }
