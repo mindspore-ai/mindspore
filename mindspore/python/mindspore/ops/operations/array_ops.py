@@ -6030,7 +6030,22 @@ class MaskedScatter(Primitive):
     Updates the value in the input with the updates value according to the mask.
     The shapes of `mask` and `x` must be the same or broadcastable.
 
-    Refer to :func:`mindspore.ops.masked_scatter' for more details.
+    Inputs:
+        - **x** (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **mask** (Tensor[bool]): A bool tensor with a shape broadcastable to x.
+        - **updates** (Tensor): A tensor with the same data type as x. The
+          number of elements must be greater than or equal to the number of True's in `mask`.
+
+    Outputs:
+        Tensor, with the same type and shape as x.
+
+    Raises:
+        TypeError: If `x`, `mask` or `updates` is not a Tensor.
+        TypeError: If data type of `x` is not be supported.
+        TypeError: If dtype of `mask` is not bool.
+        TypeError: If the dim of `x` less than the dim of `mask`.
+        ValueError: If `mask` can not be broadcastable to `x`.
+        ValueError: If the number of elements in `updates` is less than the number required for the updates.
 
     Supported Platforms:
         ``CPU``
@@ -6048,7 +6063,6 @@ class MaskedScatter(Primitive):
     def __init__(self):
         """Initialize MaskedScatter"""
         self.init_prim_io_names(inputs=['x', 'mask', 'updates'], outputs=['y'])
-        self.add_prim_attr("cust_aicpu", "MaskedScatter")
 
 
 class MaskedSelect(PrimitiveWithCheck):

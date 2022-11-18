@@ -46,6 +46,7 @@ from mindspore.ops.operations.array_ops import AffineGrid
 from mindspore.ops.operations.array_ops import Im2Col
 from mindspore.ops.operations.array_ops import Col2Im
 from mindspore.ops.operations.array_ops import StridedSliceV2
+from mindspore.ops.operations.array_ops import MaskedScatter
 from mindspore.ops.operations._grad_ops import StridedSliceV2Grad
 from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops.operations import _inner_ops as inner
@@ -124,11 +125,11 @@ def get_bprop_masked_select(self):
     return bprop
 
 
-@bprop_getters.register(P.MaskedScatter)
+@bprop_getters.register(MaskedScatter)
 def get_bprop_masked_scatter(self):
     """Generate bprop for MaskedScatter"""
     sort_ = P.Sort(descending=True)
-    masked_scatter = P.MaskedScatter()
+    masked_scatter = MaskedScatter()
     masked_fill = P.MaskedFill()
     masked_select = P.MaskedSelect()
     size = P.Size()
