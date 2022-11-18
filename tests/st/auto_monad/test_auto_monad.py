@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import os
+import sys
 import re
 import time
 import pytest
@@ -69,6 +70,7 @@ def test_print():
         net = Print()
         out = net(input_x, input_y)
         np.testing.assert_array_equal(out.asnumpy(), input_x.asnumpy())
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'input_x:\nTensor(shape=[], dtype=Int32, value=3)\n'
@@ -106,6 +108,7 @@ def test_print_add():
         expect = Tensor(7, dtype=ms.int32)
         net = Print_Add()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -144,6 +147,7 @@ def test_print_assign():
         expect = Tensor(3, dtype=ms.int32)
         net = Print_Assign()
         out = net(input_x)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -185,6 +189,7 @@ def test_print_assign_add():
         expect = Tensor(7, dtype=ms.int32)
         net = Print_Assign_Add()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -224,6 +229,7 @@ def test_print_while():
         expect = Tensor(4, dtype=ms.int32)
         net = Print_While()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -269,6 +275,7 @@ def test_print_if():
         expect = Tensor(4, dtype=ms.int32)
         net = Print_If()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -314,6 +321,7 @@ def test_print_assign_while():
         expect = Tensor(4, dtype=ms.int32)
         net = Print_Assign_While()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -368,6 +376,7 @@ def test_print_assign_if():
         expect = Tensor(4, dtype=ms.int32)
         net = Print_Assign_If()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -685,6 +694,7 @@ def test_print_for():
         expect = Tensor(9, dtype=ms.int32)
         net = Print_For()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -736,6 +746,7 @@ def test_print_assign_for():
         expect = Tensor(9, dtype=ms.int32)
         net = Print_Assign_For()
         out = net(input_x, input_y)
+        sys.stdout.flush()
         time.sleep(0.1)
         np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
@@ -964,6 +975,7 @@ def test_multi_assign_print():
         expect_para2 = Tensor(81, dtype=ms.int32)
         net = Multi_Assign_Print()
         out = net(x)
+        sys.stdout.flush()
         np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
         np.testing.assert_almost_equal(
             net.para1.data.asnumpy(), expect_para1.asnumpy())
@@ -1842,6 +1854,7 @@ def test_print_assign_print():
         expect = Tensor(10, dtype=ms.int32)
         net = Print()
         out = net(input_x)
+        sys.stdout.flush()
         time.sleep(0.1)
 
     patterns = {'param_1:\nTensor(shape=[], dtype=Int32, value=1)\n\n'
