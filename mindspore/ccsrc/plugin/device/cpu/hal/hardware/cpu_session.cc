@@ -27,6 +27,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/cpu/optimizer/print_value_type.h"
 #ifdef ENABLE_AKG
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
 #endif
@@ -105,6 +106,7 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
+  pm->AddPass(std::make_shared<opt::PrintValueType>("print_value_type"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

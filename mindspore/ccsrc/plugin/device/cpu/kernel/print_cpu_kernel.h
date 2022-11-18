@@ -21,6 +21,8 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <tuple>
+#include <unordered_map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -54,6 +56,9 @@ class PrintCpuKernelMod : public NativeCpuKernelMod {
   std::vector<ShapeVector> input_shapes_;
   std::vector<size_t> input_sizes_;
   std::vector<TypeId> data_types_;
+
+  std::unordered_map<int64_t, int64_t> value_type_;
+  std::vector<std::tuple<size_t, TypeId>> input_info_;
 };
 }  // namespace kernel
 }  // namespace mindspore

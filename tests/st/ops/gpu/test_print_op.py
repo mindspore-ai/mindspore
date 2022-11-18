@@ -177,3 +177,25 @@ def test_print_dynamic_shape(mode):
     x_dyn = Tensor(shape=[None, None, None], dtype=ms.float32)
     net.set_inputs(x_dyn)
     net(x)
+
+
+@security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_print_op_tuple():
+    """
+    Feature: cpu Print op.
+    Description: test Print with tuple input.
+    Expectation: success.
+    """
+    class PrintTupleNet(nn.Cell):
+        def construct(self, x):
+            tuple_x = tuple((1, 2, 3, 4, 5))
+            print("tuple_x:", tuple_x, x, "print success!")
+            return x
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = PrintTupleNet()
+    x = Tensor([6, 7, 8, 9, 10])
+    net(x)
