@@ -456,6 +456,11 @@ Array Operation
     mindspore.ops.InplaceSub
     mindspore.ops.InplaceUpdate
     mindspore.ops.InvertPermutation
+    mindspore.ops.LogSpace
+    mindspore.ops.LowerBound
+    mindspore.ops.Lstsq
+    mindspore.ops.LuSolve
+    mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
     mindspore.ops.MatrixBandPart
