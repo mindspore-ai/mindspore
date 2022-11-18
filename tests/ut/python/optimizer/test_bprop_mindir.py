@@ -20,7 +20,6 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
-import mindspore.ops.functional as F
 import mindspore.ops as ops
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer
@@ -480,26 +479,6 @@ def test_depend():
     grad.compile(x, y)
 
 
-def test_stop_gradient():
-    """
-    Feature: Bprop pre-compilation.
-    Description: Compile the backward graph for the stop_gradient op.
-    Expectation: Load the bprop mindir successfully.
-    """
-
-    class StopGradientNet(nn.Cell):
-        def construct(self, x, y):
-            c = x * y
-            c_s = F.stop_gradient(c)
-            return c_s
-
-    x = Tensor(np.ones([4, 5]), mstype.float32)
-    y = Tensor(np.ones([4, 5]), mstype.float32)
-    stop_gradient = StopGradientNet()
-    grad = GradNet(stop_gradient)
-    grad.compile(x, y)
-
-
 def test_switch():
     """
     Feature: Bprop pre-compilation.
@@ -890,3 +869,260 @@ def test_strided_slice_grad():
     grad = GradNet(strided_slice)
     second_grad = GradNet(grad)
     second_grad.compile(x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
+
+
+def test_sparse_gather_v2():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the sparse_gather_v2 op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mstype.float32)
+    input_indices = Tensor(np.array([1, 2]), mstype.int32)
+    axis = 1
+    sparse_gather_v2 = Net(P.SparseGatherV2())
+    grad = GradNet(sparse_gather_v2)
+    grad.compile(input_params, input_indices, axis)
+
+
+def test_resize_nearest_neighbor():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the resize_nearest_neighbor op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mstype.float32)
+    resize_nearest_neighbor = Net(P.ResizeNearestNeighbor((2, 2)))
+    grad = GradNet(resize_nearest_neighbor)
+    grad.compile(x)
+
+
+def test_gather_nd():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the gather_nd op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
+    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
+    gather_nd = Net(P.GatherNd())
+    grad = GradNet(gather_nd)
+    grad.compile(x, indices)
+
+
+def test_scatter_nd():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the scatter_nd op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    indices = Tensor(np.array([[0], [2]]), mstype.int32)
+    updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
+                                [3, 3, 3, 3], [4, 4, 4, 4]],
+                               [[1, 1, 1, 1], [2, 2, 2, 2],
+                                [3, 3, 3, 3], [4, 4, 4, 4]]]), mstype.float32)
+    shape = (4, 4, 4)
+    scatter_nd = Net(P.ScatterNd())
+    grad = GradNet(scatter_nd)
+    grad.compile(indices, updates, shape)
+
+
+def test_scatter_nd_update():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the scatter_nd_update op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
+    input_x = Parameter(Tensor(np_x, mstype.float32), name="x")
+    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
+    updates = Tensor(np.array([1.0, 2.2]), mstype.float32)
+    scatter_nd_update = Net(P.ScatterNdUpdate())
+    grad = GradNet(scatter_nd_update)
+    grad.compile(input_x, indices, updates)
+
+
+def test_scatter_non_aliasing_add():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the scatter_non_aliasing_add op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mstype.float32), name="x")
+    indices = Tensor(np.array([[2], [4], [1], [7]]), mstype.int32)
+    updates = Tensor(np.array([6, 7, 8, 9]), mstype.float32)
+    scatter_non_aliasing_add = Net(P.ScatterNonAliasingAdd())
+    grad = GradNet(scatter_non_aliasing_add)
+    grad.compile(input_x, indices, updates)
+
+
+def test_tensor_scatter_update():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the tensor_scatter_update op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
+    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
+    update = Tensor(np.array([1.0, 2.2]), mstype.float32)
+    tensor_scatter_update = Net(P.TensorScatterUpdate())
+    grad = GradNet(tensor_scatter_update)
+    grad.compile(input_x, indices, update)
+
+
+def test_tensor_scatter_add():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the tensor_scatter_add op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
+    indices = Tensor(np.array([[0, 0], [0, 0]]), mstype.int32)
+    updates = Tensor(np.array([1.0, 2.2]), mstype.float32)
+    tensor_scatter_add = Net(P.TensorScatterAdd())
+    grad = GradNet(tensor_scatter_add)
+    grad.compile(input_x, indices, updates)
+
+
+def test_space_to_depth():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the space_to_depth op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.random.rand(1, 3, 2, 2), mstype.float32)
+    block_size = 2
+    space_to_depth = Net(P.SpaceToDepth(block_size))
+    grad = GradNet(space_to_depth)
+    grad.compile(x)
+
+
+def test_depth_to_space():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the depth_to_space op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.random.rand(1, 12, 1, 1), mstype.float32)
+    block_size = 2
+    depth_to_space = Net(P.DepthToSpace(block_size))
+    grad = GradNet(depth_to_space)
+    grad.compile(x)
+
+
+def test_diag_part():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the diag_part op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor([[1, 0, 0, 0],
+                [0, 2, 0, 0],
+                [0, 0, 3, 0],
+                [0, 0, 0, 4]])
+    diag_part = Net(P.DiagPart())
+    grad = GradNet(diag_part)
+    grad.compile(x)
+
+
+def test_space_to_batch_nd():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the space_to_batch_nd op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    block_size = 2
+    paddings = [[0, 0], [0, 0]]
+    x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mstype.float32)
+    space_to_batch_nd = Net(P.SpaceToBatchND(block_size, paddings))
+    grad = GradNet(space_to_batch_nd)
+    grad.compile(x)
+
+
+def test_batch_to_space_nd():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the batch_to_space_nd op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    block_size = 2
+    crops = [[0, 0], [0, 0]]
+    x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mstype.float32)
+    batch_to_space_nd = Net(P.BatchToSpaceND(block_size, crops))
+    grad = GradNet(batch_to_space_nd)
+    grad.compile(x)
+
+
+def test_broadcast_to():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the broadcast_to op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    shape = (2, 3)
+    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+    broadcast_to = Net(P.BroadcastTo(shape))
+    grad = GradNet(broadcast_to)
+    grad.compile(x)
+
+
+def test_reverse_sequence():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the reverse_sequence op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mstype.float32)
+    seq_lengths = Tensor(np.array([1, 2, 3]))
+    reverse_sequence = Net(P.ReverseSequence(seq_dim=1))
+    grad = GradNet(reverse_sequence)
+    grad.compile(x, seq_lengths)
+
+
+def test_trans_shape():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the trans_shape op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    shape = (3, 1)
+    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+    trans_shape = Net(P.TransShape())
+    grad = GradNet(trans_shape)
+    grad.compile(x, shape)
+
+
+def test_trans_unique():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the unique op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([1, 2, 5, 2]), mstype.int32)
+    unique = Net(P.Unique())
+    grad = GradNet(unique)
+    grad.compile(x)
+
+
+def test_masked_select():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the masked_select op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([1, 2, 3, 4]), mstype.int32)
+    mask = Tensor(np.array([1, 0, 1, 0]), mstype.bool_)
+    masked_select = Net(P.MaskedSelect())
+    grad = GradNet(masked_select)
+    grad.compile(x, mask)
+
+
+def test_non_zero():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the non_zero op.
+    Expectation: Load the bprop mindir successfully.
+    """
+    x = Tensor(np.array([[[1, 0], [-5, 0]]]), mstype.int32)
+    grad = GradNet(ops.nonzero)
+    grad.compile(x)

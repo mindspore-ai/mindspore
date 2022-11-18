@@ -1,12 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:‚
-s#get_bprop_identity.908:[CNode]909:1#get_bprop_identity.908:[CNode]909:1"REF::bprop.910:Default/bprop.910-op737get_bprop_identity.908*
-get_bprop_identity.908:self*
-get_bprop_identity.908:x*
-get_bprop_identity.908:out*
-get_bprop_identity.908:dout2%
-#get_bprop_identity.908:[CNode]909:1:@bfa213dd499679a0e46921588aa86c02bba3ef29e44d1fd1a5e0627ad9ef8027J/grad_array_ops.pyB®
-†
-get_bprop_identity.908:doutbprop.910:[CNode]911:2bprop.910:[CNode]911:2"REF::S-Prim-MakeTuple:3:Default/S-Prim-MakeTuple-op738	bprop.9102
-bprop.910:[CNode]911:2Pb&
-S-Prim-MakeTuple:3S-Prim-MakeTupleh

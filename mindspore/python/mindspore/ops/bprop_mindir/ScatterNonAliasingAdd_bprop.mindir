@@ -1,0 +1,22 @@
+
+0.1.1	MindSpore*2.0.0:ñ
+“6get_bprop_scatter_non_aliasing_add_update.1:[CNode]2:16get_bprop_scatter_non_aliasing_add_update.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
+â0get_bprop_scatter_non_aliasing_add_update.1:op:30get_bprop_scatter_non_aliasing_add_update.1:op:3";REF::ClassType::mindspore.ops.operations.array_ops.GatherNd:?Default/class 'mindspore.ops.operations.array_ops.GatherNd'-op2+get_bprop_scatter_non_aliasing_add_update.1*2
+0get_bprop_scatter_non_aliasing_add_update.1:self*/
+-get_bprop_scatter_non_aliasing_add_update.1:x*5
+3get_bprop_scatter_non_aliasing_add_update.1:indices*4
+2get_bprop_scatter_non_aliasing_add_update.1:update*1
+/get_bprop_scatter_non_aliasing_add_update.1:out*2
+0get_bprop_scatter_non_aliasing_add_update.1:dout28
+6get_bprop_scatter_non_aliasing_add_update.1:[CNode]2:1:@2c32abe9e6b9cb5a8ecb1e4f395552d49a96dc67f3121cb1b2cfe559bdb9575cJ/grad_array_ops.pyBæ
+¼
+3get_bprop_scatter_non_aliasing_add_update.1:indicesbprop.3:[CNode]4:2bprop.3:[CNode]4:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op1
+É
+0get_bprop_scatter_non_aliasing_add_update.1:dout
+3get_bprop_scatter_non_aliasing_add_update.1:indicesbprop.3:[CNode]5:4bprop.3:[CNode]5:4"5REF::get_bprop_scatter_non_aliasing_add_update.1:op:3:3
+¹
+0get_bprop_scatter_non_aliasing_add_update.1:dout
+bprop.3:[CNode]4:2
+bprop.3:[CNode]5:4bprop.3:[CNode]6:5bprop.3:[CNode]6:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op4bprop.32
+bprop.3:[CNode]6:5Pb&
+S-Prim-MakeTuple:6S-Prim-MakeTupleh

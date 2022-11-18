@@ -38,6 +38,7 @@ class GetMetaFg : public AnfVisitor {
       {"logical_not", {"logical_not", "mindspore.ops.composite.multitype_ops.logic_not_impl"}},
       {"in", {"in_", "mindspore.ops.composite.multitype_ops.in_impl"}},
       {"less", {"less", "mindspore.ops.composite.multitype_ops.less_impl"}},
+      {"less_equal", {"less_equal", "mindspore.ops.composite.multitype_ops.less_equal_impl"}},
       {"greater", {"greater", "mindspore.ops.composite.multitype_ops.greater_impl"}},
       {"add", {"add", "mindspore.ops.composite.multitype_ops.add_impl"}},
       {"sub", {"sub", "mindspore.ops.composite.multitype_ops.sub_impl"}},

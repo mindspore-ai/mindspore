@@ -159,12 +159,6 @@ def bprop_embed(x, out, dout):
     return (C.zeros_like(x),)
 
 
-@bprops.register("StopGradient")
-def bprop_stop_gradient(x, out, dout):
-    """Backpropagator for primitive `StopGradient`."""
-    return (C.zeros_like(x),)
-
-
 @bprops.register("Switch")
 def bprop_switch(cond, tb, fb, out, dout):
     """Backpropagator for primitive `switch`."""
