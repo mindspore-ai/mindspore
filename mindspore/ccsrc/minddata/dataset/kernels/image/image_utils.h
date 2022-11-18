@@ -534,6 +534,13 @@ Status ReadImage(const std::string &filename, std::shared_ptr<Tensor> *output,
 /// \param[in] data The tensor data.
 /// \return The status code.
 Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data);
+
+/// \brief Write the image data into a JPEG file.
+/// \param[in] filename The path to the file to be written.
+/// \param[in] image The data tensor.
+/// \param[in] quality The quality for JPEG file, in range of [1, 100]. Default: 75.
+/// \return Status code.
+Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &image, int quality = 75);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

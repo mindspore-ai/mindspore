@@ -574,3 +574,42 @@ def write_file(filename, data):
         return cde.write_file(filename, cde.Tensor(data.asnumpy()))
     raise TypeError("Input data is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
                                                                                  mindspore.Tensor, type(data)))
+
+
+def write_jpeg(filename, image, quality=75):
+    """
+    Write the image data into a JPEG file.
+
+    Args:
+        filename (str): The path to the file to be written.
+        image (Union[numpy.ndarray, mindspore.Tensor]): The image data to be written.
+        quality (int, optional): Quality of the resulting JPEG file, in range of [1, 100]. Default: 75.
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
+        TypeError: If `quality` is not of type int.
+        RuntimeError: If the `filename` does not exist or not a common file.
+        RuntimeError: If the data type of `image` is not uint8.
+        RuntimeError: If the shape of `image` is not <H, W> or <H, W, 1> or <H, W, 3>.
+        RuntimeError: If `quality` is less than 1 or greater than 100.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> # Generate a random image with height=120, width=340, channels=3
+        >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
+        >>> vision.write_jpeg("/path/to/file", image)
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+    if not isinstance(quality, int):
+        raise TypeError("Input quality is not of type {0}, but got: {1}.".format(int, type(quality)))
+    if isinstance(image, np.ndarray):
+        return cde.write_jpeg(filename, cde.Tensor(image), quality)
+    if isinstance(image, mindspore.Tensor):
+        return cde.write_jpeg(filename, cde.Tensor(image.asnumpy()), quality)
+    raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray,
+                                                                                  mindspore.Tensor, type(image)))

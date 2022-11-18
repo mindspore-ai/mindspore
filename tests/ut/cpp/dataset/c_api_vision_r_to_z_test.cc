@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <opencv2/opencv.hpp>
+
 #include "common/common.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -1347,4 +1349,90 @@ TEST_F(MindDataTestPipeline, TestWriteFileException) {
   Tensor::CreateFromVector(float_vector, TensorShape({12}), &input);
   data_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
   ASSERT_ERROR(mindspore::dataset::vision::WriteFile(filename_2, data_tensor));
+}
+
+/// Feature: WriteJpeg
+/// Description: Test WriteJpeg by writing the image into a JPEG file
+/// Expectation: The file should be written and removed
+TEST_F(MindDataTestPipeline, TestWriteJpegNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesWriteJpegNormal.";
+  std::string folder_path = "./data/dataset/testFormats/";
+  std::string filename_1;
+  std::string filename_2;
+  cv::Mat image_1;
+  cv::Mat image_2;
+
+  filename_1 = folder_path + "apple.jpg";
+  filename_2 = filename_1 + ".test_write_jpeg.jpg";
+
+  cv::Mat image_bgr = cv::imread(filename_1, cv::ImreadModes::IMREAD_UNCHANGED);
+  cv::cvtColor(image_bgr, image_1, cv::COLOR_BGRA2RGB);
+
+  TensorShape img_tensor_shape = TensorShape({image_1.size[0], image_1.size[1], image_1.channels()});
+  DataType pixel_type = DataType(DataType::DE_UINT8);
+
+  std::shared_ptr<Tensor> image_de_tensor;
+  Tensor::CreateFromMemory(img_tensor_shape, pixel_type, image_1.data, &image_de_tensor);
+  auto image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
+
+  int quality;
+  for (quality = 20; quality <= 100 ; quality += 40) {
+    ASSERT_OK(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor, quality));
+    image_2 = cv::imread(filename_1, cv::ImreadModes::IMREAD_UNCHANGED);
+    remove(filename_2.c_str());
+    EXPECT_EQ(image_1.total(), image_2.total());
+  }
+}
+
+/// Feature: WriteJpeg
+/// Description: Test WriteJpeg with invalid parameter
+/// Expectation: Error is caught when the parameter is invalid
+TEST_F(MindDataTestPipeline, TestWriteJpegException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TesWriteJpegException.";
+  std::string folder_path = "./data/dataset/testFormats/";
+  std::string filename_1;
+  std::string filename_2;
+  cv::Mat image_1;
+
+  filename_1 = folder_path + "apple.jpg";
+  filename_2 = filename_1 + ".test_write_jpeg.jpg";
+  image_1 = cv::imread(filename_1, cv::ImreadModes::IMREAD_UNCHANGED);
+
+  TensorShape img_tensor_shape = TensorShape({image_1.size[0], image_1.size[1], image_1.channels()});
+  DataType pixel_type = DataType(DataType::DE_UINT8);
+
+  std::shared_ptr<Tensor> image_de_tensor;
+  Tensor::CreateFromMemory(img_tensor_shape, pixel_type, image_1.data, &image_de_tensor);
+  auto image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
+
+  // Test with invalid quality 0, 101
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor, 0));
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor, 101));
+
+  // Test with an invalid filename
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg("/dev/cdrom/0", image_ms_tensor));
+
+  // Test with a directory name
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg("./data/dataset/", image_ms_tensor));
+
+  // Test with an invalid image containing float elements
+  std::shared_ptr<Tensor> float32_cde_tensor;
+  Tensor::CreateEmpty(TensorShape({5, 4, 3 }), DataType(DataType::DE_FLOAT32), &float32_cde_tensor);
+  image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(float32_cde_tensor));
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor));
+
+  // Test with an invalid image with only one dimension
+  image_de_tensor->Reshape(TensorShape({image_1.size[0] * image_1.size[1] * image_1.channels()}));
+  image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor));
+
+  // Test with an invalid image with four dimensions
+  image_de_tensor->Reshape(TensorShape({image_1.size[0] / 2, image_1.size[1], image_1.channels(), 2}));
+  image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor));
+
+  // Test with an invalid image with two channels
+  image_de_tensor->Reshape(TensorShape({image_1.size[0] * image_1.channels() / 2, image_1.size[1], 2}));
+  image_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(image_de_tensor));
+  ASSERT_ERROR(mindspore::dataset::vision::WriteJpeg(filename_2, image_ms_tensor));
 }
