@@ -397,6 +397,11 @@ class OpAdapter : public BaseOpAdapter {
         if (it->type_name() != "ValueList") {
           MS_LOG(EXCEPTION) << "It should be ValueTuple or ValueList, but got " << it->type_name();
         }
+        auto sub_vector = it->cast<ValueListPtr>();
+        for (auto &item : sub_vector->value()) {
+          sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+        }
+      } else {
         auto sub_vector = it->cast<ValueTuplePtr>();
         for (auto &item : sub_vector->value()) {
           sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
