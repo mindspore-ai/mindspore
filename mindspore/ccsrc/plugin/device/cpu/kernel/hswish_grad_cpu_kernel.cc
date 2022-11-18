@@ -98,8 +98,12 @@ std::vector<std::pair<KernelAttr, HSwishGradCpuKernelMod::HSwishGradFunc>> HSwis
    &HSwishGradCpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
    &HSwishGradCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &HSwishGradCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &HSwishGradCpuKernelMod::LaunchKernel<float>}};
+   &HSwishGradCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &HSwishGradCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> HSwishGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

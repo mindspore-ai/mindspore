@@ -72,11 +72,20 @@ bool HSwishGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, HSwishGradGpuKernelMod::HSwishGradLaunchFunc>> HSwishGradGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &HSwishGradGpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &HSwishGradGpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &HSwishGradGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &HSwishGradGpuKernelMod::LaunchKernel<int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
    &HSwishGradGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &HSwishGradGpuKernelMod::LaunchKernel<float>},
-};
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &HSwishGradGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> HSwishGradGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
