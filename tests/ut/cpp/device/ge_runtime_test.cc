@@ -82,7 +82,7 @@ TEST_F(TestAscendGeRuntime, test_aicpu_task_create_one_stream_success) {
                              {reinterpret_cast<rtStream_t>(1)}, {reinterpret_cast<rtLabel_t>(1)},
                              {reinterpret_cast<rtEvent_t>(1)});
   std::shared_ptr<TaskInfo> aicpu_task_info = std::make_shared<AicpuTaskInfo>(
-    "op_name", 0, "so_name", "kernel_name", "node_def", "ext_info", std::vector<void *>{reinterpret_cast<void *>(1)},
+    "op_name", 0, "so_name", "kernel_name", "node_def", "", std::vector<void *>{reinterpret_cast<void *>(1)},
     std::vector<void *>{reinterpret_cast<void *>(1)}, true);
   std::shared_ptr<Task> task = TaskFactory::GetInstance().Create(model_context, aicpu_task_info);
   ASSERT_TRUE(std::dynamic_pointer_cast<AicpuTask>(task) != nullptr);
@@ -458,7 +458,7 @@ TEST_F(TestAscendGeRuntime, test_model_runner_success) {
     std::vector<void *>{reinterpret_cast<void *>(13), reinterpret_cast<void *>(14)},
     std::vector<void *>{reinterpret_cast<void *>(15), reinterpret_cast<void *>(16)}, true);
   std::shared_ptr<TaskInfo> aicpu_task_info = std::make_shared<AicpuTaskInfo>(
-    "op_name", 0, "so_name", "kernel_name", "node_def", "ext_info", std::vector<void *>{reinterpret_cast<void *>(1)},
+    "op_name", 0, "so_name", "kernel_name", "node_def", "", std::vector<void *>{reinterpret_cast<void *>(1)},
     std::vector<void *>{reinterpret_cast<void *>(1)}, true);
   auto davice_model = std::make_shared<DavinciModel>(
     std::vector<std::shared_ptr<TaskInfo>>{tbe_task_info, aicpu_task_info}, std::vector<uint32_t>{},

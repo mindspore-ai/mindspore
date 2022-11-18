@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "external/graph/types.h"
 
 namespace mindspore::ge::model_runner {
 enum TaskInfoType {
@@ -118,7 +119,8 @@ class AicpuTaskInfo : public TaskInfo {
   AicpuTaskInfo(const std::string &op_name, uint32_t stream_id, const std::string &so_name,
                 const std::string &kernel_name, const std::string &node_def, const std::string &ext_info,
                 const std::vector<void *> &input_data_addrs, const std::vector<void *> &output_data_addrs,
-                bool dump_flag, bool cust_aicpu = false)
+                bool dump_flag, bool cust_aicpu = false, bool is_blocking = false, uint32_t ms_event_id = 0,
+                ::ge::UnknowShapeOpType unknow_type = ::ge::UnknowShapeOpType::DEPEND_IN_SHAPE)
       : TaskInfo(op_name, stream_id, TaskInfoType::AICPU, dump_flag),
         so_name_(so_name),
         kernel_name_(kernel_name),
@@ -126,7 +128,10 @@ class AicpuTaskInfo : public TaskInfo {
         ext_info_(ext_info),
         input_data_addrs_(input_data_addrs),
         output_data_addrs_(output_data_addrs),
-        cust_aicpu_(cust_aicpu) {}
+        cust_aicpu_(cust_aicpu),
+        is_blocking_(is_blocking),
+        ms_event_id_(ms_event_id),
+        unknow_type_(unknow_type) {}
   ~AicpuTaskInfo() override {}
 
   const std::string &so_name() const { return so_name_; }
@@ -135,7 +140,10 @@ class AicpuTaskInfo : public TaskInfo {
   const std::vector<void *> &input_data_addrs() const { return input_data_addrs_; }
   const std::vector<void *> &output_data_addrs() const { return output_data_addrs_; }
   const std::string &ext_info() const { return ext_info_; }
-  const bool &cust_aicpu() const { return cust_aicpu_; }
+  const bool cust_aicpu() const { return cust_aicpu_; }
+  const bool is_blocking() const { return is_blocking_; }
+  const uint32_t ms_event_id() const { return ms_event_id_; }
+  const ::ge::UnknowShapeOpType unknown_type() const { return unknow_type_; }
 
  private:
   std::string so_name_;
@@ -145,6 +153,10 @@ class AicpuTaskInfo : public TaskInfo {
   std::vector<void *> input_data_addrs_;
   std::vector<void *> output_data_addrs_;
   bool cust_aicpu_;
+  // if true, means the op is async, and need FWK_ADPT_EXT_ASYNCWAIT in ext_info and UpdateEventId (GetNext).
+  bool is_blocking_;
+  uint32_t ms_event_id_;
+  ::ge::UnknowShapeOpType unknow_type_;
 };
 
 class LabelSetTaskInfo : public TaskInfo {
