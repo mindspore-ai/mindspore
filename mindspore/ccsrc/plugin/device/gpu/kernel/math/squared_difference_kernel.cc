@@ -107,17 +107,47 @@ bool SquaredDifferenceOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   }
   return true;
 }
+
+template <typename T>
+bool SquaredDifferenceOpGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
+                                                          const std::vector<AddressPtr> &workspace,
+                                                          const std::vector<AddressPtr> &outputs) {
+  T *lhs = GetDeviceAddress<T>(inputs, 0);
+  T *rhs = GetDeviceAddress<T>(inputs, 1);
+  T *output = GetDeviceAddress<T>(outputs, 0);
+  if (need_broadcast_) {
+    BroadcastComplexArith(lhs_shape_, rhs_shape_, output_shape_, op_type_, lhs, rhs, output,
+                          reinterpret_cast<cudaStream_t>(stream_ptr_));
+  } else {
+    ElewiseComplexArith(output_num_, op_type_, lhs, rhs, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  }
+  return true;
+}
+
 #define DTYPE_REGISTER_ATTR(INPUT1, INPUT2, OUTPUT, T)                            \
   {                                                                               \
     KernelAttr().AddInputAttr(INPUT1).AddInputAttr(INPUT2).AddOutputAttr(OUTPUT), \
       &SquaredDifferenceOpGpuKernelMod::LaunchKernel<T>                           \
   }
 
+#define COMPLEX_REGISTER_ATTR(INPUT1, INPUT2, OUTPUT, T)                          \
+  {                                                                               \
+    KernelAttr().AddInputAttr(INPUT1).AddInputAttr(INPUT2).AddOutputAttr(OUTPUT), \
+      &SquaredDifferenceOpGpuKernelMod::LaunchComplexKernel<T>                    \
+  }
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SquaredDifferenceOpGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     DTYPE_REGISTER_ATTR(kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, float),
+    DTYPE_REGISTER_ATTR(kNumberTypeFloat64, kNumberTypeFloat64, kNumberTypeFloat64, double),
+    COMPLEX_REGISTER_ATTR(kNumberTypeComplex64, kNumberTypeComplex64, kNumberTypeComplex64, Complex<float>),
+    COMPLEX_REGISTER_ATTR(kNumberTypeComplex128, kNumberTypeComplex128, kNumberTypeComplex128, Complex<double>),
     DTYPE_REGISTER_ATTR(kNumberTypeFloat16, kNumberTypeFloat16, kNumberTypeFloat16, half),
+    DTYPE_REGISTER_ATTR(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
     DTYPE_REGISTER_ATTR(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int)};
+
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, SquaredDifference, SquaredDifferenceOpGpuKernelMod);

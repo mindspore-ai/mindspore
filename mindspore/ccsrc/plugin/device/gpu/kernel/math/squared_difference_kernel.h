@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <complex>
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -57,6 +58,9 @@ class SquaredDifferenceOpGpuKernelMod : public NativeGpuKernelMod,
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
+  template <typename T>
+  bool LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                           const std::vector<AddressPtr> &outputs);
   BroadcastOpType op_type_{BROADCAST_TYPE_SQUARED_DIFFERENCE};
   bool need_broadcast_;
   size_t output_num_;
