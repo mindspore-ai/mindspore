@@ -245,7 +245,9 @@ class DfGraphConvertor {
   std::string GetGNodeType(const ::ge::GNode &node) const;
   bool IsIdentityRedundant(const ::ge::GNode &node) const;
   void RemoveIdentity(::ge::GNode identity_node);
-
+  void NoOpOptimization();
+  bool IsNoOpRedundant(const ::ge::GNode &node) const;
+  void RemoveNoOp(::ge::GNode noop);
   std::shared_ptr<std::vector<DfGraph>> BuildBranchGraphs(const CNodePtr &cnode);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
