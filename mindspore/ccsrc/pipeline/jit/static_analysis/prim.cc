@@ -2023,17 +2023,33 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     // Process the object.
     MS_EXCEPTION_IF_NULL(out_conf->node());
     TraceGuard guard(std::make_shared<TraceResolve>(out_conf->node()->debug_info()));
-    ValuePtr converted_ret = nullptr;
-    bool converted = parse::ConvertData(obj, &converted_ret, true);
+    ValuePtr converted_res = nullptr;
+    bool converted = parse::ConvertData(obj, &converted_res, true);
     if (!converted) {
       MS_LOG(EXCEPTION) << "Convert the python object failed";
     }
-    MS_EXCEPTION_IF_NULL(converted_ret);
-    if (converted_ret->isa<FuncGraph>()) {
-      AddToManager(engine, converted_ret->cast<FuncGraphPtr>());
+    MS_EXCEPTION_IF_NULL(converted_res);
+
+    // To check isolated side effect for the func graph who returns constant.
+    if (engine->check_isolated_side_effect()) {
+      MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", converted_res: " << converted_res->ToString();
+      auto prim = GetValueWithoutDoSignature(converted_res)->cast<PrimitivePtr>();
+      if (prim != nullptr) {
+        auto effect_info = GetPrimEffectInfo(prim);
+        if (effect_info.memory || effect_info.io) {
+          MS_LOG(INFO) << "Found Side Effect Primitive CNode: " << out_conf->node()->DebugString();
+          const auto &cnode = dyn_cast<CNode>(out_conf->node());
+          MS_EXCEPTION_IF_NULL(cnode);
+          cnode->set_has_isolated_side_effect_node(true);
+          out_conf->func_graph()->set_has_isolated_side_effect_node(true);
+        }
+      }
     }
 
-    AbstractBasePtr ret = ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
+    if (converted_res->isa<FuncGraph>()) {
+      AddToManager(engine, converted_res->cast<FuncGraphPtr>());
+    }
+    AbstractBasePtr ret = ToAbstract(converted_res, AnalysisContext::DummyContext(), out_conf);
     auto infer_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_spec_list, infer_result);
     return infer_result;

@@ -1863,3 +1863,30 @@ def test_print_assign_print():
                 'param_3:\nTensor(shape=[], dtype=Int32, value=3)\n\n'}
     check_output(cap.output, patterns)
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_print_in_constant_returned_func():
+    """
+    Feature: Auto Monad
+    Description: Test print in a func graph who returns constant.
+    Expectation: No exception.
+    """
+
+    class Print(Cell):
+        def construct(self):
+            x = tuple((1, 2, 3, 4, 5))
+            print("x:", x)
+            return x
+
+    cap = Capture()
+    with capture(cap):
+        net = Print()
+        net()
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'x:\n(1, 2, 3, 4, 5)'}
+    check_output(cap.output, patterns)

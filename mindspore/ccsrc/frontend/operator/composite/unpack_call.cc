@@ -39,60 +39,60 @@ using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
-FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   // slice a tensor
   // args: tensor, slice or slice tuple
-  size_t arg_length = args_spec_list.size();
+  size_t arg_length = args_abs_list.size();
   const size_t min_args_size = 2;
   if (arg_length < min_args_size) {
     MS_LOG(EXCEPTION) << "The UnpackCall operator requires at least two arguments, but got " << arg_length << ".";
   }
 
   // No need to check, check will be done in infer.
-  auto ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ret_graph->debug_info()->set_name("UnpackCall");
+  auto res_graph = std::make_shared<FuncGraph>();
+  res_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  res_graph->debug_info()->set_name("UnpackCall");
 
-  AnfNodePtr fn_node = ret_graph->add_parameter();
+  AnfNodePtr fn_node = res_graph->add_parameter();
   std::vector<AnfNodePtr> elems;
   elems.push_back(fn_node);
   for (size_t index = 1; index < arg_length; index++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[index]);
-    if (args_spec_list[index]->isa<AbstractTuple>()) {
-      auto arg_tuple = args_spec_list[index]->cast<AbstractTuplePtr>();
-      AnfNodePtr para_tuple = ret_graph->add_parameter();
+    MS_EXCEPTION_IF_NULL(args_abs_list[index]);
+    if (args_abs_list[index]->isa<AbstractTuple>()) {
+      auto arg_tuple = args_abs_list[index]->cast<AbstractTuplePtr>();
+      AnfNodePtr para_tuple = res_graph->add_parameter();
       for (size_t i = 0; i < arg_tuple->size(); ++i) {
         elems.push_back(
-          ret_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), para_tuple, NewValueNode(SizeToLong(i))}));
+          res_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), para_tuple, NewValueNode(SizeToLong(i))}));
       }
-    } else if (args_spec_list[index]->isa<AbstractList>()) {
-      auto arg_list = args_spec_list[index]->cast<AbstractListPtr>();
-      AnfNodePtr para_list = ret_graph->add_parameter();
+    } else if (args_abs_list[index]->isa<AbstractList>()) {
+      auto arg_list = args_abs_list[index]->cast<AbstractListPtr>();
+      AnfNodePtr para_list = res_graph->add_parameter();
       for (size_t i = 0; i < arg_list->size(); ++i) {
         elems.push_back(
-          ret_graph->NewCNode({NewValueNode(prim::kPrimListGetItem), para_list, NewValueNode(SizeToLong(i))}));
+          res_graph->NewCNode({NewValueNode(prim::kPrimListGetItem), para_list, NewValueNode(SizeToLong(i))}));
       }
-    } else if (args_spec_list[index]->isa<AbstractDictionary>()) {
-      AbstractDictionaryPtr arg_dict = args_spec_list[index]->cast<AbstractDictionaryPtr>();
-      AnfNodePtr para_dict = ret_graph->add_parameter();
+    } else if (args_abs_list[index]->isa<AbstractDictionary>()) {
+      AbstractDictionaryPtr arg_dict = args_abs_list[index]->cast<AbstractDictionaryPtr>();
+      AnfNodePtr para_dict = res_graph->add_parameter();
       auto dict_elems = arg_dict->elements();
       (void)std::transform(
         dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(elems),
-        [ret_graph, para_dict](const AbstractAttribute &item) {
+        [res_graph, para_dict](const AbstractAttribute &item) {
           // Dict_elems's first element represents parameter names, which should be string type.
           auto key_value = GetValue<std::string>(item.first->BuildValue());
           auto dict_get_item =
-            ret_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), para_dict, NewValueNode(key_value)});
-          return ret_graph->NewCNode({NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(key_value), dict_get_item});
+            res_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), para_dict, NewValueNode(key_value)});
+          return res_graph->NewCNode({NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(key_value), dict_get_item});
         });
     } else {
       MS_LOG(EXCEPTION) << "The arguments of UnpackCall operator should be tuple, list or dict, but got "
-                        << args_spec_list[index]->ToString();
+                        << args_abs_list[index]->ToString();
     }
   }
   // Add to order list to trace if fn_node had side effect.
-  ret_graph->set_output(ret_graph->NewCNodeInOrder(elems));
-  return ret_graph;
+  res_graph->set_output(res_graph->NewCNodeInOrder(elems));
+  return res_graph;
 }
 }  // namespace prim
 }  // namespace mindspore
