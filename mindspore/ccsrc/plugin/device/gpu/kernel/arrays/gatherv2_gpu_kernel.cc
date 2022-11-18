@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-const size_t kDynInputNum = 3;
+const size_t kInputNum = 3;
 bool GatherV2FwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
@@ -36,6 +36,7 @@ bool GatherV2FwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
   indices_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
   axis_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
+  axis_type_ = inputs.at(kIndex2)->GetDtype();
   return true;
 }
 
@@ -43,10 +44,11 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &) {
   size_t input_num = inputs.size();
-  if (input_num == kDynInputNum) {
-    TryGetIntValue(inputs, kIndex2, kernel_name_, &axis_);
-  } else {
+  if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+  }
+  if (TryGetIntValue(inputs, kIndex2, kernel_name_, &axis_)) {
+    is_get_axis_ = true;
   }
   ResetResource();
   input_shapes_ = inputs[kIndexZero]->GetShapeVector();
@@ -96,7 +98,9 @@ bool GatherV2FwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-
+  if (!is_get_axis_) {
+    axis_ = GetDimValue<int64_t>(inputs, kIndex2, kernel_name_, axis_type_);
+  }
   auto input_dim1 = input_shapes_[IntToSize(axis_)];
 
   MS_EXCEPTION_IF_NULL(input_addr);

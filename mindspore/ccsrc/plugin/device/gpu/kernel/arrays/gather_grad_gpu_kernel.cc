@@ -32,7 +32,7 @@ constexpr size_t kDynamicGradIdx = 3;
 bool GatherGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_v2_) {
-    int dim = GetGatherDGradV2DimValue(inputs);
+    int dim = GetDimValue<int>(inputs, kIndex1, kernel_name_, dim_type_);
     CalculateDim(dim);
   }
   cuda_stream_ = stream_ptr;
@@ -85,25 +85,6 @@ bool GatherGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
 int GatherGradGpuKernelMod::GetGatherDGradDimValue(const BaseOperatorPtr &base_operator) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGrad>(base_operator);
   return static_cast<int>(kernel_ptr->get_dim());
-}
-
-int GatherGradGpuKernelMod::GetGatherDGradV2DimValue(const std::vector<AddressPtr> &inputs) {
-  size_t size = abstract::TypeIdSize(dim_type_);
-  auto dim_gpu_addr =
-    std::make_shared<device::gpu::GPUDeviceAddress>(inputs[kDynamicDimIdx]->addr, size, kOpFormat_DEFAULT, dim_type_);
-  int res = 0;
-  if (dim_type_ == kNumberTypeInt32) {
-    int32_t host_dim = 0;
-    dim_gpu_addr->SyncDeviceToHost(size, &host_dim);
-    res = static_cast<int>(host_dim);
-  } else if (dim_type_ == kNumberTypeInt64) {
-    int64_t host_dim = 0;
-    dim_gpu_addr->SyncDeviceToHost(size, &host_dim);
-    res = static_cast<int>(host_dim);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', got unsupported data type of dim: " << dim_type_;
-  }
-  return res;
 }
 
 void GatherGradGpuKernelMod::CalculateDim(int axis) {
