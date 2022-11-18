@@ -675,9 +675,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 
     Returns:
         Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
-        :func:`mindspore.save_checkpoint` and the `append_info` parameter of :class:`CheckpointConfig` are used to
-        save the checkpoint, `append_dict` and `append_info` are dict types, and their value are string, then the
-        return value obtained by loading checkpoint is string, and in other cases the return value is Parameter.
+        :func:`mindspore.save_checkpoint` and the `append_info` parameter of :class:`mindspore.train.CheckpointConfig`
+        are used to save the checkpoint, `append_dict` and `append_info` are dict types, and their value are string,
+        then the return value obtained by loading checkpoint is string, and in other cases the return value is
+        Parameter.
 
     Raises:
         ValueError: Checkpoint file's format is incorrect.

@@ -256,7 +256,7 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
     Examples:
         >>> from mindspore import Tensor, CSRTensor
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.ops.function import csr_mm
+        >>> import mindspore.ops as ops
         >>> a_shape = (4, 5)
         >>> a_indptr = Tensor([0, 1, 1, 3, 4], dtype=mstype.int32)
         >>> a_indices = Tensor([0, 3, 4, 0],dtype=mstype.int32)
@@ -267,7 +267,7 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
         >>> b_values = Tensor([2.0, 7.0, 8.0], dtype=mstype.float32)
         >>> a = CSRTensor(a_indptr, a_indices, a_values, a_shape)
         >>> b = CSRTensor(b_indptr, b_indices, b_values, b_shape)
-        >>> c = csr_mm(a, b)
+        >>> c = ops.csr_mm(a, b)
         >>> print(c.shape)
         (4, 3)
         >>> print(c.values)
@@ -727,15 +727,15 @@ def csr_softmax(logits: CSRTensor, dtype: mstype):
 
     Examples:
         >>> import mindspore as ms
+        >>> import mindspore.ops as ops
         >>> import mindspore.common.dtype as mstype
         >>> from mindspore import Tensor, CSRTensor
-        >>> from mindspore.ops.function import csr_softmax
         >>> logits_indptr = Tensor([0, 4, 6], dtype=mstype.int32)
         >>> logits_indices = Tensor([0, 2, 3, 4, 3, 4], dtype=mstype.int32)
         >>> logits_values = Tensor([1, 2, 3, 4, 1, 2], dtype=mstype.float32)
         >>> shape = (2, 6)
         >>> logits = CSRTensor(logits_indptr, logits_indices, logits_values, shape)
-        >>> out = csr_softmax(logits, dtype=mstype.float32)
+        >>> out = ops.csr_softmax(logits, dtype=mstype.float32)
         >>> print(out)
         CSRTensor(shape=[2, 6], dtype=Float32, indptr=Tensor(shape=[3], dtype=Int32, value=[0 4 6]),
                        indices=Tensor(shape=[6], dtype=Int32, value=[0 2 3 4 3 4]),
@@ -783,7 +783,7 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
     Examples:
         >>> import mindspore.common.dtype as mstype
         >>> from mindspore import Tensor, CSRTensor
-        >>> from mindspore.ops.functional import csr_add
+        >>> import mindspore.ops as ops
         >>> a_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
         >>> a_indices = Tensor([0, 1], dtype=mstype.int32)
         >>> a_values = Tensor([1, 2], dtype=mstype.float32)
@@ -795,7 +795,7 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
         >>> beta = Tensor(1, mstype.float32)
         >>> csra = CSRTensor(a_indptr, a_indices, a_values, shape)
         >>> csrb = CSRTensor(b_indptr, b_indices, b_values, shape)
-        >>> out = csr_add(csra, csrb, alpha, beta)
+        >>> out = ops.csr_add(csra, csrb, alpha, beta)
         >>> print(out)
         CSRTensor(shape=[2,6], dtype=Float32,
                   indptr=Tensor(shape=[3], dtype=Int32, value = [0, 1, 2]),

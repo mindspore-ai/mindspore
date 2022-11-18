@@ -405,15 +405,14 @@ def jet(fn, primals, series):
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> import mindspore as ms
-        >>> import mindspore.ops as P
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.functional import jet
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.sin = P.Sin()
-        ...         self.exp = P.Exp()
+        ...         self.sin = ops.Sin()
+        ...         self.exp = ops.Exp()
         ...     def construct(self, x):
         ...         out1 = self.sin(x)
         ...         out2 = self.exp(out1)
@@ -421,7 +420,7 @@ def jet(fn, primals, series):
         >>> primals = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> series = Tensor(np.array([[[1, 1], [1, 1]], [[0, 0], [0, 0]], [[0, 0], [0, 0]]]).astype(np.float32))
         >>> net = Net()
-        >>> out_primals, out_series = jet(net, primals, series)
+        >>> out_primals, out_series = ops.jet(net, primals, series)
         >>> print(out_primals, out_series)
         [[2.319777  2.4825778]
          [1.1515628 0.4691642]] [[[ 1.2533808  -1.0331168 ]
@@ -516,15 +515,14 @@ def derivative(fn, primals, order):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as P
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.functional import derivative
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.sin = P.Sin()
-        ...         self.exp = P.Exp()
+        ...         self.sin = ops.Sin()
+        ...         self.exp = ops.Exp()
         ...     def construct(self, x):
         ...         out1 = self.sin(x)
         ...         out2 = self.exp(out1)
@@ -532,7 +530,7 @@ def derivative(fn, primals, order):
         >>> primals = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> order = 3
         >>> net = Net()
-        >>> out_primals, out_series = derivative(net, primals, order)
+        >>> out_primals, out_series = ops.derivative(net, primals, order)
         >>> print(out_primals, out_series)
         [[2.319777  2.4825778]
          [1.1515628 0.4691642]] [[-4.0515366   3.6724353 ]

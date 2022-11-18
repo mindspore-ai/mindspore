@@ -2410,16 +2410,16 @@ def pad(input_x, padding, mode='constant', value=None):
 
                 Example: to pad only the last dimension of the input tensor, then
                 :attr:`padding` has the form
-                :math:`(\text{padding\_left}, \text{padding\_right})`;
+                :math:`(\text{padding_left}, \text{padding_right})`;
 
                 Example: to pad the last 2 dimensions of the input tensor, then use
-                :math:`(\text{padding\_left}, \text{padding\_right},`
-                :math:`\text{padding\_top}, \text{padding\_bottom})`;
+                :math:`(\text{padding_left}, \text{padding_right}`,
+                :math:`\text{padding_top}, \text{padding_bottom})`;
 
                 Example: to pad the last 3 dimensions, use
-                :math:`(\text{padding\_left}, \text{padding\_right},`
-                :math:`\text{padding\_top}, \text{padding\_bottom}`
-                :math:`\text{padding\_front}, \text{padding\_back})` and so on.
+                :math:`(\text{padding_left}, \text{padding_right}`,
+                :math:`\text{padding_top}, \text{padding_bottom}`,
+                :math:`\text{padding_front}, \text{padding_back})` and so on.
 
         mode (str, optional): Pad filling mode, "constant", "reflect" or "replicate". Default: "constant".
 
@@ -2457,7 +2457,6 @@ def pad(input_x, padding, mode='constant', value=None):
         [[[[6. 0. 1.]
            [6. 2. 3.]
            [6. 6. 6.]]
-
           [[6. 4. 5.]
            [6. 6. 7.]
            [6. 6. 6.]]]]
@@ -2466,7 +2465,6 @@ def pad(input_x, padding, mode='constant', value=None):
         [[[[1. 0. 1.]
            [3. 2. 3.]
            [1. 0. 1.]]
-
           [[5. 4. 5.]
            [7. 6. 7.]
            [5. 4. 5.]]]]
@@ -2476,7 +2474,6 @@ def pad(input_x, padding, mode='constant', value=None):
            [0. 0. 1. 1.]
            [2. 2. 3. 3.]
            [2. 2. 3. 3.]]
-
           [[4. 4. 5. 5.]
            [4. 4. 5. 5.]
            [4. 4. 5. 5.]

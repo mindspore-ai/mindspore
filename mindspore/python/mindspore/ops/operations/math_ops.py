@@ -1632,7 +1632,7 @@ class Betainc(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> a = Tensor(np.array([1, 1, 1]), mindspore.float32)
         >>> b = Tensor(np.array([1, 1, 1]), mindspore.float32)
         >>> x = Tensor(np.array([1, 1,1 ]), mindspore.float32)

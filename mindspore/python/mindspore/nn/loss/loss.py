@@ -501,13 +501,13 @@ class MarginRankingLoss(LossBase):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as P
+        >>> import mindspore.ops as ops
         >>> from mindspore.ops import Tensor
         >>> import numpy as np
         >>> loss1 = nn.MarginRankingLoss(reduction='none')
         >>> loss2 = nn.MarginRankingLoss(reduction='mean')
         >>> loss3 = nn.MarginRankingLoss(reduction='sum')
-        >>> sign = P.Sign()
+        >>> sign = ops.Sign()
         >>> input1 = Tensor(np.array([0.3864, -2.4093, -1.4076]), ms.float32)
         >>> input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
         >>> target = sign(Tensor(np.array([-2, -2, 3]), ms.float32))

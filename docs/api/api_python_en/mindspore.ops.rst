@@ -652,7 +652,7 @@ Customizing Operator
 Spectral Operator
 -----------------
 
-.. autosummary::
+.. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

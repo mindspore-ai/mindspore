@@ -2581,7 +2581,7 @@ class Conv2DTranspose(Conv2DBackpropInput):
         out_channel (int): The dimensionality of the output space.
         kernel_size (Union[int, tuple[int]]): The size of the convolution window.
         pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
-            Please refer to :class:`mindspore.nn.Conv2DTranspose` for more specifications about `pad_mode`.
+            Please refer to :class:`mindspore.nn.Conv2dTranspose` for more specifications about `pad_mode`.
         pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.

@@ -94,7 +94,7 @@ class SymbolTree:
             An instance of `Node`.
 
         Raises:
-            TypeError: If `func` is not FuntionType.
+            TypeError: If `func` is not FunctionType.
             TypeError: If `targets` is not `list`.
             TypeError: If the type of `targets` is not str.
             TypeError: If arg in `args` is not ParamType.

@@ -211,12 +211,11 @@ class GradOperation(GradOperation_):
 
     Examples:
         >>> from mindspore import ParameterTuple
-        >>> from mindspore.ops.composite import GradOperation
-        >>> from mindspore.ops import operations as P
+        >>> import mindspore.ops as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.matmul = P.MatMul()
+        ...         self.matmul = ops.MatMul()
         ...         self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
         ...     def construct(self, x, y):
         ...         x = x * self.z
@@ -227,7 +226,7 @@ class GradOperation(GradOperation_):
         ...     def __init__(self, net):
         ...         super(GradNetWrtX, self).__init__()
         ...         self.net = net
-        ...         self.grad_op = GradOperation()
+        ...         self.grad_op = ops.GradOperation()
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net)
         ...         return gradient_function(x, y)
@@ -243,7 +242,7 @@ class GradOperation(GradOperation_):
         ...     def __init__(self, net):
         ...         super(GradNetWrtXY, self).__init__()
         ...         self.net = net
-        ...         self.grad_op = GradOperation(get_all=True)
+        ...         self.grad_op = ops.GradOperation(get_all=True)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net)
         ...         return gradient_function(x, y)
@@ -263,7 +262,7 @@ class GradOperation(GradOperation_):
         ...     def __init__(self, net):
         ...         super(GradNetWrtXYWithSensParam, self).__init__()
         ...         self.net = net
-        ...         self.grad_op = GradOperation(get_all=True, sens_param=True)
+        ...         self.grad_op = ops.GradOperation(get_all=True, sens_param=True)
         ...         self.grad_wrt_output = Tensor([[0.1, 0.6, 0.2], [0.8, 1.3, 1.1]], dtype=mstype.float32)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net)
@@ -285,7 +284,7 @@ class GradOperation(GradOperation_):
         ...         super(GradNetWithWrtParams, self).__init__()
         ...         self.net = net
         ...         self.params = ParameterTuple(net.trainable_params())
-        ...         self.grad_op = GradOperation(get_by_list=True)
+        ...         self.grad_op = ops.GradOperation(get_by_list=True)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net, self.params)
         ...         return gradient_function(x, y)
@@ -301,7 +300,7 @@ class GradOperation(GradOperation_):
         ...         super(GradNetWrtInputsAndParams, self).__init__()
         ...         self.net = net
         ...         self.params = ParameterTuple(net.trainable_params())
-        ...         self.grad_op = GradOperation(get_all=True, get_by_list=True)
+        ...         self.grad_op = ops.GradOperation(get_all=True, get_by_list=True)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net, self.params)
         ...         return gradient_function(x, y)
@@ -625,10 +624,10 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         >>> from mindspore import Tensor
         >>> from mindspore import ops
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.ops.composite import MultitypeFuncGraph
+        >>> import mindspore.ops as ops
         >>>
         >>> tensor_add = ops.Add()
-        >>> add = MultitypeFuncGraph('add')
+        >>> add = ops.MultitypeFuncGraph('add')
         >>> @add.register("Number", "Number")
         ... def add_scala(x, y):
         ...     return x + y
@@ -731,23 +730,22 @@ class HyperMap(HyperMap_):
 
     Examples:
         >>> from mindspore import Tensor, ops
-        >>> from mindspore.ops.composite.base import MultitypeFuncGraph, HyperMap
         >>> from mindspore import dtype as mstype
         >>> nest_tensor_list = ((Tensor(1, mstype.float32), Tensor(2, mstype.float32)),
         ...                     (Tensor(3, mstype.float32), Tensor(4, mstype.float32)))
         >>> # square all the tensor in the nested list
         >>>
-        >>> square = MultitypeFuncGraph('square')
+        >>> square = ops.MultitypeFuncGraph('square')
         >>> @square.register("Tensor")
         ... def square_tensor(x):
         ...     return ops.square(x)
         >>>
-        >>> common_map = HyperMap()
+        >>> common_map = ops.HyperMap()
         >>> output = common_map(square, nest_tensor_list)
         >>> print(output)
         ((Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4)),
         (Tensor(shape=[], dtype=Float32, value= 9), Tensor(shape=[], dtype=Float32, value= 16)))
-        >>> square_map = HyperMap(square, False)
+        >>> square_map = ops.HyperMap(square, False)
         >>> output = square_map(nest_tensor_list)
         >>> print(output)
         ((Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4)),

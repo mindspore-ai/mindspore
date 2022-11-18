@@ -83,7 +83,6 @@ def mutable(input_data):
     Examples:
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
-        >>> from mindspore.ops.composite import GradOperation
         >>> from mindspore.common import mutable
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore import Tensor
@@ -102,7 +101,7 @@ def mutable(input_data):
         ...     def __init__(self, net):
         ...         super(GradNetWrtX, self).__init__()
         ...         self.net = net
-        ...         self.grad_op = GradOperation()
+        ...         self.grad_op = ops.GradOperation()
         ...
         ...     def construct(self, z):
         ...         gradient_function = self.grad_op(self.net)

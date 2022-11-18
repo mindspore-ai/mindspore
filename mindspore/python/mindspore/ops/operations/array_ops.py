@@ -4469,11 +4469,11 @@ class ScatterMul(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import operations as op
+        >>> import mindspore.ops as ops
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mstype.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
-        >>> scatter_mul = op.ScatterMul()
+        >>> scatter_mul = ops.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[2. 2. 2.]
@@ -4490,7 +4490,7 @@ class ScatterMul(_ScatterOpDynamic):
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mstype.float32)
-        >>> scatter_mul = op.ScatterMul()
+        >>> scatter_mul = ops.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[  1.   1.   1.]
@@ -4507,7 +4507,7 @@ class ScatterMul(_ScatterOpDynamic):
         >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mstype.float32)
-        >>> scatter_mul = op.ScatterMul()
+        >>> scatter_mul = ops.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[  3.   3.   3.]
@@ -4524,7 +4524,7 @@ class ScatterMul(_ScatterOpDynamic):
         >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mstype.float32)
-        >>> scatter_mul = op.ScatterMul()
+        >>> scatter_mul = ops.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[ 7.  7.  7.]
@@ -4577,11 +4577,11 @@ class ScatterDiv(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import operations as op
+        >>> import mindspore.ops as ops
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mstype.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
-        >>> scatter_div = op.ScatterDiv()
+        >>> scatter_div = ops.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[3. 3. 3.]
@@ -4599,7 +4599,7 @@ class ScatterDiv(_ScatterOpDynamic):
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mstype.float32)
-        >>> scatter_div = op.ScatterDiv()
+        >>> scatter_div = ops.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[105. 105. 105.]
@@ -4617,7 +4617,7 @@ class ScatterDiv(_ScatterOpDynamic):
         >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mstype.float32)
-        >>> scatter_div = op.ScatterDiv()
+        >>> scatter_div = ops.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[35. 35. 35.]
@@ -4635,7 +4635,7 @@ class ScatterDiv(_ScatterOpDynamic):
         >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mstype.float32)
-        >>> scatter_div = op.ScatterDiv()
+        >>> scatter_div = ops.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[21. 21. 21.]
@@ -7814,7 +7814,7 @@ class Bincount(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> array = Tensor(np.array([1, 2, 2, 3, 3, 3, 4, 4, 4, 4]), mindspore.int32)
         >>> size = Tensor(5, mindspore.int32)
         >>> weights = Tensor(np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]), mindspore.float32)
