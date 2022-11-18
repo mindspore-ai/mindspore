@@ -91,8 +91,14 @@ class MSANFModelParser {
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
+  bool ImportMapParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildParameterForFuncGraph(const ParameterPtr &node, const mind_ir::TensorProto &parameter_proto);
+  bool BuildMapParameterFromMapTensorProto(const ParameterPtr &node,
+                                           const mind_ir::MapTensorProto &map_parameter_proto);
+  abstract::AbstractMapTensorPtr BuildAbstractMapTensorFromAttrProto(const mind_ir::AttributeProto &attr_proto);
+  abstract::AbstractCOOTensorPtr BuildAbstractCOOTensorFromAttrProto(const mind_ir::AttributeProto &attr_proto);
+  abstract::AbstractCSRTensorPtr BuildAbstractCSRTensorFromAttrProto(const mind_ir::AttributeProto &attr_proto);
   bool SetValueForTopGraphParameter(const FuncGraphPtr &topGraph, const std::map<std::string, ValuePtr> &weights);
   bool GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto, const tensor::TensorPtr &tensor_info);
   bool BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto);
@@ -108,6 +114,7 @@ class MSANFModelParser {
   ValuePtr ObtainCNodeAttrInSingleScalarForm(const mind_ir::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node_proto);
+  ValuePtr BuildValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto);
   AnfNodePtr BuildOperatorNode(const mind_ir::NodeProto &node_proto);
   bool SetEmptyTensorProtoCNodeAbstract(const AnfNodePtr &node_ptr);
   void SetCNodeAbstract(const mind_ir::AttributeProto &attr_proto, const CNodePtr &cnode_ptr);

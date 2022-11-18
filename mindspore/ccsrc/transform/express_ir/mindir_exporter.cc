@@ -131,6 +131,9 @@ class IrExportBuilder {
 
   bool SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueInfoProto *const value_proto);
   bool SetParamToTensorProto(const ParameterPtr &param, mind_ir::TensorProto *const tensor_proto);
+  bool ConvertMapParameterToMapTensorProto(const ParameterPtr &map_parameter,
+                                           mind_ir::MapTensorProto *const map_tensor_proto);
+  bool ConvertAbstractMapTensorToAttrProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto);
   bool SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
@@ -448,16 +451,28 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
     std::string param_name = GetUniqueNodeName(param);
     if (top_graph && param->has_default()) {
       MS_LOG(DEBUG) << "Parameter: '" << item->DebugString();
-      mind_ir::TensorProto *parameter_proto = graph_proto->add_parameter();
-      parameter_proto->set_name(param_name);
-      if (!SetParamToTensorProto(param, parameter_proto)) {
-        MS_LOG(ERROR) << "Set parameter " << param->DebugString() << " to TensorProto failed.";
+      if (param->abstract()->isa<abstract::AbstractMapTensor>()) {
+        auto *map_parameter_proto = graph_proto->add_map_parameter();
+        if (!ConvertMapParameterToMapTensorProto(param, map_parameter_proto)) {
+          MS_LOG(ERROR) << "Convert MapParameter " << param->ToString() << " to MapTensorProto failed.";
+          return false;
+        }
+      } else if (param->abstract()->isa<abstract::AbstractTensor>()) {
+        mind_ir::TensorProto *parameter_proto = graph_proto->add_parameter();
+        parameter_proto->set_name(param_name);
+        if (!SetParamToTensorProto(param, parameter_proto)) {
+          MS_LOG(ERROR) << "Set parameter " << param->DebugString() << " to TensorProto failed.";
+          return false;
+        }
+        auto tensor = param->default_param()->cast<tensor::TensorPtr>();
+        if (tensor != nullptr) {
+          parameter_proto->set_compression_type(
+            static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
+        }
+      } else {
+        MS_LOG(ERROR) << "Only support MapTensor or Tensor as default param of Parameter, got: "
+                      << param->default_param()->ToString();
         return false;
-      }
-      auto tensor = param->default_param()->cast<tensor::TensorPtr>();
-      if (tensor != nullptr) {
-        parameter_proto->set_compression_type(
-          static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
       }
     } else {
       mind_ir::ValueInfoProto *input_proto = graph_proto->add_input();
@@ -660,6 +675,101 @@ bool IrExportBuilder::SetParamToTensorProto(const ParameterPtr &param, mind_ir::
   return SetTensorProto(param->abstract(), tensor_proto);
 }
 
+bool IrExportBuilder::ConvertMapParameterToMapTensorProto(const ParameterPtr &map_parameter,
+                                                          mind_ir::MapTensorProto *const map_tensor_proto) {
+  if (map_parameter == nullptr || map_tensor_proto == nullptr) {
+    MS_LOG(EXCEPTION) << "MapParameter or MapTensorProto is null!";
+  }
+  MS_LOG(DEBUG) << "ConvertMapParameterToMapTensorProto: " << map_parameter->ToString();
+
+  // parameter name
+  map_tensor_proto->set_name(GetUniqueNodeName(map_parameter));
+
+  auto param_default = map_parameter->default_param();
+  MS_EXCEPTION_IF_NULL(param_default);
+  auto map_tensor = param_default->cast<tensor::MapTensorPtr>();
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  // default value
+  auto default_value = map_tensor->default_value();
+  MS_EXCEPTION_IF_NULL(default_value);
+  auto *default_value_proto = map_tensor_proto->mutable_default_value();
+  MS_EXCEPTION_IF_NULL(default_value_proto);
+  if (!SetValueToAttributeProto(default_value, default_value_proto)) {
+    MS_LOG(ERROR) << "Export default value of MapTensor failed, default_value: " << default_value->ToString();
+    return false;
+  }
+  tensor::MapTensor::ExportData export_data = map_tensor->Export(true);
+  // key_tensor
+  auto *key_tensor_proto = map_tensor_proto->mutable_key_tensor();
+  MS_EXCEPTION_IF_NULL(key_tensor_proto);
+  auto &key_tensor = export_data.key_tensor;
+  MS_EXCEPTION_IF_NULL(key_tensor);
+  if (!SetTensorProto(key_tensor->ToAbstract(), key_tensor_proto)) {
+    MS_LOG(ERROR) << "Export key tensor of MapTensor failed, key_tensor: " << key_tensor->ToString();
+    return false;
+  }
+  // value_tensor
+  auto *value_tensor_proto = map_tensor_proto->mutable_value_tensor();
+  MS_EXCEPTION_IF_NULL(value_tensor_proto);
+  auto &value_tensor = export_data.value_tensor;
+  MS_EXCEPTION_IF_NULL(value_tensor);
+  if (!SetTensorProto(value_tensor->ToAbstract(), value_tensor_proto)) {
+    MS_LOG(ERROR) << "Export value tensor of MapTensor failed, value_tensor: " << value_tensor->ToString();
+    return false;
+  }
+  // status_tensor
+  auto *status_tensor_proto = map_tensor_proto->mutable_status_tensor();
+  MS_EXCEPTION_IF_NULL(status_tensor_proto);
+  auto &status_tensor = export_data.status_tensor;
+  MS_EXCEPTION_IF_NULL(status_tensor);
+  if (!SetTensorProto(status_tensor->ToAbstract(), status_tensor_proto)) {
+    MS_LOG(ERROR) << "Export status tensor of MapTensor failed, status_tensor: " << status_tensor->ToString();
+    return false;
+  }
+  return true;
+}
+
+bool IrExportBuilder::ConvertAbstractMapTensorToAttrProto(const AbstractBasePtr &abstract,
+                                                          mind_ir::AttributeProto *const attr_proto) {
+  auto map_tensor_abs = abstract->cast<abstract::AbstractMapTensorPtr>();
+  MS_EXCEPTION_IF_NULL(map_tensor_abs);
+
+  auto map_tensor_type = map_tensor_abs->map_tensor_type();
+  MS_EXCEPTION_IF_NULL(map_tensor_type);
+  attr_proto->set_type(mind_ir::AttributeProto_AttributeType_MAP_TENSOR);
+  // key_tensor
+  auto key_dtype = map_tensor_type->key_dtype();
+  auto key_shape = {abstract::Shape::kShapeDimAny};
+  auto key_tensor_abs = std::make_shared<abstract::AbstractTensor>(key_dtype, key_shape);
+  auto *key_tensor_proto = attr_proto->add_tensors();
+  MS_EXCEPTION_IF_NULL(key_tensor_proto);
+  if (!SetTensorProto(key_tensor_abs, key_tensor_proto)) {
+    MS_LOG(ERROR) << "Export key tensor abstract of AbstractMapTensor failed, abstract_map_tensor: "
+                  << abstract->ToString();
+    return false;
+  }
+  // value_dtype value_shape
+  auto value_dtype = map_tensor_type->key_dtype();
+  auto value_shape = map_tensor_abs->value_shape()->shape();
+  auto value_tensor_abs = std::make_shared<abstract::AbstractTensor>(value_dtype, value_shape);
+  auto *value_tensor_proto = attr_proto->add_tensors();
+  MS_EXCEPTION_IF_NULL(value_tensor_proto);
+  if (!SetTensorProto(value_tensor_abs, value_tensor_proto)) {
+    MS_LOG(ERROR) << "Export value tensor abstract of AbstractMapTensor failed, abstract_map_tensor: "
+                  << abstract->ToString();
+    return false;
+  }
+  // default_value
+  auto default_value = map_tensor_abs->default_value();
+  auto *default_value_proto = attr_proto->add_values();
+  MS_EXCEPTION_IF_NULL(default_value_proto);
+  if (!SetValueToAttributeProto(default_value, default_value_proto)) {
+    MS_LOG(ERROR) << "Export default value of AbstractMapTensor failed, abstract_map_tensor: " << abstract->ToString();
+    return false;
+  }
+  return true;
+}
+
 bool IrExportBuilder::BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
   for (const AnfNodePtr &node : nodes) {
@@ -799,6 +909,8 @@ bool IrExportBuilder::SetAbstractToNodeProto(const AbstractBasePtr &abs, mind_ir
     }
   } else if (type->isa<TypeNone>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_NONE);
+  } else if (type->isa<MapTensorType>()) {
+    return ConvertAbstractMapTensorToAttrProto(abs, attr_proto);
   } else {
     MS_LOG(ERROR) << "Type of cnode need to be supported: " << type->type_name();
     return false;

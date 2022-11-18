@@ -45,6 +45,7 @@ message AttributeProto {
     NAME_SPACE = 34;
     SYMBOL = 35;
     TYPE_NULL = 36;
+    MAP_TENSOR = 37;
   }
   optional string name = 1;
   optional float f = 2;
@@ -128,6 +129,7 @@ message GraphProto {
   optional string bprop_hash = 7;
   repeated AttributeProto attribute = 8;
   optional string bprop_filepath = 9;
+  repeated MapTensorProto map_parameter = 10;
 }
 
 
@@ -190,6 +192,14 @@ message TensorProto {
   repeated int64 max_dims = 15;
   optional CompressionType compression_type = 16;
   repeated QuantParamProto quant_params = 17;
+}
+
+message MapTensorProto {
+  required string name = 1;
+  required AttributeProto default_value = 2;
+  required TensorProto key_tensor = 3;
+  required TensorProto value_tensor = 4;
+  required TensorProto status_tensor = 5;
 }
 
 message ParallelProto {
