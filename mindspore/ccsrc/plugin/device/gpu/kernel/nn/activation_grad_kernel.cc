@@ -60,7 +60,19 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationGradGpuKernelMod::LaunchKernel<half>}}}};
+       &ActivationGradGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &ActivationGradGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &ActivationGradGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &ActivationGradGpuKernelMod::LaunchKernel<utils::Complex<double>>}}}};
 
 bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
@@ -100,9 +112,9 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 
   const auto dtype = inputs.at(kIndex0)->GetDtype();
   if (((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) &&
-      (kernel_name_ != kTanhGrad)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', only tanh support complex input, but got " << kernel_name_
-                  << " with dtype " << TypeIdLabel(inputs.at(kIndex0)->GetDtype());
+      (kernel_name_ != kTanhGrad) && (kernel_name_ != kSigmoidGrad)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', only tanh and sigmoid support complex input, but got "
+                  << kernel_name_ << " with dtype " << TypeIdLabel(inputs.at(kIndex0)->GetDtype());
   }
 
   return true;
@@ -127,7 +139,7 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 
   const auto dtype = inputs.at(kIndex0)->GetDtype();
   if (((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) &&
-      (kernel_name_ == kTanhGrad)) {
+      ((kernel_name_ == kTanhGrad) || (kernel_name_ == kSigmoidGrad))) {
     // Does not call Cudnn
     return KRET_OK;
   }
@@ -198,6 +210,7 @@ bool ActivationGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
     std::is_same_v<T, double> || std::is_same_v<T, utils::Complex<float>> || std::is_same_v<T, utils::Complex<double>>;
   if constexpr (use_unary) {
     TanhGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    SigmoidGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
     return true;
   }
 

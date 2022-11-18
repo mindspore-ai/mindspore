@@ -60,6 +60,7 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
   void ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
+  void ComplexSigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void RsqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void ReciprocalGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
@@ -125,13 +126,29 @@ void EltWiseGradCpuTypeFunc<T>::AbsGrad(const T *input1, const T *input2, T *out
 
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
-  if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "For 'SigmoidGrad', the dtype of input must be float.";
+  if constexpr (std::is_same<T, float>::value) {
+    int ret = ::SigmoidGrad(input2 + start, input1 + start, end - start, out + start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "For 'SigmoidGrad', execute failed. Error no: " << ret;
+    }
+  } else {
+    for (size_t i = start; i < end; i++) {
+      T dividend = input2[i];
+      T divisor = input1[i] * (static_cast<T>(1) - input1[i]);
+      out[i] = dividend * divisor;
+    }
   }
+}
 
-  int ret = ::SigmoidGrad(input2 + start, input1 + start, end - start, out + start);
-  if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "For 'SigmoidGrad', execute failed. Error no: " << ret;
+template <typename T>
+void EltWiseGradCpuTypeFunc<T>::ComplexSigmoidGrad(const T *input1, const T *input2, T *out, size_t start,
+                                                   size_t end) const {
+  if constexpr ((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>)) {
+    for (size_t i = start; i < end; i++) {
+      T dividend = input2[i];
+      T divisor = std::conj(input1[i] * (static_cast<T>(1) - input1[i]));
+      out[i] = dividend * divisor;
+    }
   }
 }
 
@@ -440,7 +457,8 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
               {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::AcoshGrad},
               {prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad},
-              {prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
+              {prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad},
+              {prim::kPrimSigmoidGrad->name(), &EltWiseGradCpuTypeFunc<T>::SigmoidGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_ << " with double as input.";
     }
@@ -452,7 +470,8 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
       elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad},
               {prim::kPrimReciprocalGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReciprocalGrad},
-              {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad}};
+              {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad},
+              {prim::kPrimSigmoidGrad->name(), &EltWiseGradCpuTypeFunc<T>::SigmoidGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with float as input.";
     }
@@ -519,7 +538,8 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
               {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimSqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::SqrtGrad},
               {prim::kPrimReciprocalGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReciprocalGrad},
-              {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad}};
+              {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad},
+              {prim::kPrimSigmoidGrad->name(), &EltWiseGradCpuTypeFunc<T>::ComplexSigmoidGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_;
     }
@@ -580,7 +600,21 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
      &SpecializeEltWiseGradFunc<double>}}},
   {kSigmoidGrad,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &SpecializeEltWiseGradFunc<float>}}},
+     &SpecializeEltWiseGradFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &SpecializeEltWiseGradFunc<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &SpecializeEltWiseGradFunc<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &SpecializeEltWiseGradFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &SpecializeEltWiseGradFunc<complex128>}}},
   {kSqrtGrad,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>},

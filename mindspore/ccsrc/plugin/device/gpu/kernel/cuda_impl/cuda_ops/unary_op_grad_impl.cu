@@ -200,6 +200,26 @@ __global__ void TanhGradKernel(const T *__restrict__ input, const T *dout, T *ou
 }
 
 template <typename T>
+__global__ void SigmoidGradKernel(const T *__restrict__ input, const T *dout, T *output, const size_t count) {
+  const T one = static_cast<T>(1);
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    T divisor = input[i] * (one - input[i]);
+    output[i] = dout[i] * divisor;
+  }
+  return;
+}
+
+template <typename T>
+__global__ void SigmoidGradKernel(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output,
+                                  const size_t count) {
+  Complex<T> one = static_cast<Complex<T>>(1);
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    output[i] = dout[i] * conj(input[i] * (one - input[i]));
+  }
+  return;
+}
+
+template <typename T>
 __global__ void AsinhGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     float inputf = static_cast<float>(input[i]);
@@ -353,6 +373,12 @@ void TanhGrad(const T *input, const T *dout, T *output, const size_t count, cuda
 }
 
 template <typename T>
+void SigmoidGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
+  SigmoidGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
+  return;
+}
+
+template <typename T>
 void AsinhGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
   AsinhGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
   return;
@@ -403,6 +429,14 @@ template CUDA_LIB_EXPORT void SqrtGrad<Complex<double>>(const Complex<double> *i
                                                         cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void SqrtGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                        Complex<float> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void SigmoidGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                        Complex<double> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void SigmoidGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
                                                        Complex<float> *output, const size_t count,
                                                        cudaStream_t cuda_stream);
 
@@ -426,6 +460,8 @@ template CUDA_LIB_EXPORT void ReciprocalGrad<double>(const double *input, const 
                                                      const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void InvGrad<double>(const double *input, const double *dout, double *output,
                                               const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SigmoidGrad<double>(const double *input, const double *dout, double *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SqrtGrad<float>(const float *input, const float *dout, float *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void RsqrtGrad<float>(const float *input, const float *dout, float *output, const size_t count,
