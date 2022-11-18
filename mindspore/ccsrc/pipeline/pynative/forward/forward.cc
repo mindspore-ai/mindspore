@@ -392,6 +392,7 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
       ClearNodeAbsMap();
     }
   }
+  infer_operation()->set_only_single_op_run(false);
 }
 
 void ForwardExecutor::ProcessAfterEndGraph() const {
