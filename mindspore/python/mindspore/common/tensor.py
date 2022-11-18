@@ -1696,6 +1696,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('rad2deg')(self)
 
+    def copysign(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.copysign`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('copysign')(self, other)
+
     def nelement(self):
         r"""
         Alias for :func:`mindspore.Tensor.numel`.

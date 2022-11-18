@@ -77,6 +77,7 @@
     mindspore.Tensor.col2im
     mindspore.Tensor.conj
     mindspore.Tensor.copy
+    mindspore.Tensor.copysign
     mindspore.Tensor.cosh
     mindspore.Tensor.cross
     mindspore.Tensor.cummax

@@ -1118,6 +1118,13 @@ def deg2rad(x):
     return F.deg2rad(x)
 
 
+def copysign(x, other):
+    """
+    Create a new floating-point tensor with the magnitude of `x` and the sign of `other`, element-wise.
+    """
+    return F.copysign(x, other)
+
+
 def numel(x):
     """
     Returns a Scalar of type int that represents the total number of elements in the Tensor.

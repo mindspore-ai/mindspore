@@ -4898,13 +4898,7 @@ def vstack(inputs):
 
 def copysign(x, other):
     r"""
-    Changes the sign of `x` to that of `other`, element-wise.
-
-    If `other` is a scalar, its sign will be copied to all elements of `x`.
-
-    Note:
-        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
-        not supported. Complex inputs are not supported.
+    Create a new floating-point tensor with the magnitude of `x` and the sign of `other`, element-wise.
 
     Args:
         x (Union[Tensor]): Values to change the sign of.
@@ -4912,7 +4906,8 @@ def copysign(x, other):
             `other` must be broadcastable to the shape of `x` (which is also the shape of the output).
 
     Returns:
-        Tensor, float, the values of `x` with the sign of `other`, the shape is the same as `x`.
+        Tensor. The dtype of the tensor is float.
+        The values of `x` with the sign of `other`, the shape is the same as `x`.
 
     Raises:
         TypeError: If dtype of the input is not in the given types or
@@ -4923,6 +4918,7 @@ def copysign(x, other):
 
     Examples:
         >>> import mindspore.numpy as np
+        >>> import mindspore.ops as ops
         >>> x = np.array([[0.3, -0.7], [0.5, 0.5]])
         >>> other = np.array([[-0.4, 0.6], [0.4, -0.6]])
         >>> out = ops.copysign(x, other)
