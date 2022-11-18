@@ -51,6 +51,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import MatrixExp
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
+from mindspore.ops.operations.math_ops import MatrixSolveLs
 from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.math_ops import MatrixTriangularSolve
@@ -74,6 +75,7 @@ from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_elemen
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_fill, sum_grad_reduce_axis
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
 from mindspore.ops.operations.array_ops import MatrixBandPart
+from mindspore.ops.operations.array_ops import ConjugateTranspose
 
 transpose = P.Transpose()
 dyn_shape_op = P.TensorShape()
@@ -669,6 +671,155 @@ def get_bprop_matrix_solve(self):
                 grad_a = matmul(grad_b, out)
                 grad_a = neg(grad_a)
         return grad_a, grad_b
+
+    return bprop
+
+
+@constexpr
+def _generate_perm_matrix_solve_ls(x_dim):
+    perm = tuple(range(x_dim - 2))
+    perm = perm + (x_dim-1, x_dim-2)
+    return perm
+
+
+@bprop_getters.register(MatrixSolveLs)
+def get_bprop_matrix_solve_ls(self):
+    """Grad definition for 'MatrixSolveLs' operation"""
+    fast = self.fast
+    cast = P.Cast()
+    neg = P.Neg()
+    rank = P.Rank()
+    cholesky = Cholesky()
+    eye = P.Eye()
+    add = P.Add()
+    mul = P.Mul()
+    matmul = P.MatMul()
+    batch_matmul = P.BatchMatMul()
+    cholesky_solve = CholeskySolve()
+    _transpose = Transpose()
+    conjugate_transpose = ConjugateTranspose()
+    shape = P.Shape()
+    _complex = P.Complex()
+
+    def regularized_gramian_cholesky(matrix, l2, first_kind):
+        matrix_dim = rank(matrix)
+        perm = _generate_perm_matrix_solve_ls(matrix_dim)
+        if matrix.dtype in (mstype.complex64, mstype.complex128):
+            matrix_temp = conjugate_transpose(matrix, perm)
+        else:
+            matrix_temp = _transpose(matrix, perm)
+        if first_kind:
+            if matrix_dim > 2:
+                gramian = batch_matmul(matrix_temp, matrix)
+            else:
+                gramian = matmul(matrix_temp, matrix)
+        else:
+            if matrix_dim > 2:
+                gramian = batch_matmul(matrix, matrix_temp)
+            else:
+                gramian = matmul(matrix, matrix_temp)
+        if isinstance(l2, Tensor) or l2 != 0:
+            matrix_shape = shape(matrix)
+            if first_kind:
+                small_dim = matrix_shape[-1]
+            else:
+                small_dim = matrix_shape[-2]
+            identity = eye(small_dim, small_dim, matrix.dtype)
+            gramian = add(gramian, mul(l2, identity))
+
+        #Cholesky not support complex dtype for now
+        return cholesky(gramian)
+
+    def bprop(matrix, rhs, l2, out, dout):
+        #support dtype:float32
+        #support dimension: 2D,3D
+        def over_determined(matrix, rhs, out, l2, dout):
+            if matrix.dtype == mstype.complex64:
+                l2_regularizer = _complex(cast(l2, mstype.float32), Tensor(0, mstype.float32))
+            elif matrix.dtype == mstype.complex128:
+                l2_regularizer = _complex(cast(l2, mstype.float64), Tensor(0, mstype.float64))
+            else:
+                l2_regularizer = cast(l2, matrix.dtype)
+            chol = cast(regularized_gramian_cholesky(matrix, l2_regularizer, first_kind=True), matrix.dtype)
+            #CholeskySolve not support complex dtype and just support 2D or 3D matrices for now
+            z = cholesky_solve(dout, chol)
+
+            matrix_dim = rank(matrix)
+            perm = _generate_perm_matrix_solve_ls(matrix_dim)
+            if matrix.dtype in (mstype.complex64, mstype.complex128):
+                z_temp = conjugate_transpose(z, perm)
+            else:
+                z_temp = _transpose(z, perm)
+            if matrix_dim > 2:
+                xzt = batch_matmul(out, z_temp)
+            else:
+                xzt = matmul(out, z_temp)
+            zx_sym = add(xzt, _transpose(xzt, perm))
+
+            if matrix_dim > 2:
+                grad_a = add(neg(batch_matmul(matrix, zx_sym)), batch_matmul(rhs, z_temp))
+                grad_b = batch_matmul(matrix, z)
+            else:
+                grad_a = add(neg(matmul(matrix, zx_sym)), matmul(rhs, z_temp))
+                grad_b = matmul(matrix, z)
+
+            return (grad_a, grad_b, None)
+
+        def under_determined(matrix, rhs, l2, dout):
+            if matrix.dtype == mstype.complex64:
+                l2_regularizer = _complex(cast(l2, mstype.float32), Tensor(0, mstype.float32))
+            elif matrix.dtype == mstype.complex128:
+                l2_regularizer = _complex(cast(l2, mstype.float64), Tensor(0, mstype.float64))
+            else:
+                l2_regularizer = cast(l2, matrix.dtype)
+            chol = cast(regularized_gramian_cholesky(matrix, l2_regularizer, first_kind=False), matrix.dtype)
+
+            matrix_dim = rank(matrix)
+            perm = _generate_perm_matrix_solve_ls(matrix_dim)
+            if matrix_dim > 2:
+                gramian = batch_matmul(matrix, dout)
+            else:
+                gramian = matmul(matrix, dout)
+            #CholeskySolve not support complex dtype and just support 2D or 3D matrices for now
+            grad_b = cholesky_solve(gramian, chol)
+            tmp = cholesky_solve(rhs, chol)
+
+            if matrix.dtype in (mstype.complex64, mstype.complex128):
+                tmp_temp = conjugate_transpose(tmp, perm)
+                matrix_temp = conjugate_transpose(matrix, perm)
+            else:
+                tmp_temp = _transpose(tmp, perm)
+                matrix_temp = _transpose(matrix, perm)
+            if matrix_dim > 2:
+                a1 = batch_matmul(tmp_temp, matrix)
+                a1 = neg(batch_matmul(grad_b, a1))
+                a2 = dout - batch_matmul(matrix_temp, grad_b)
+                if matrix.dtype in (mstype.complex64, mstype.complex128):
+                    a2_temp = conjugate_transpose(a2, perm)
+                else:
+                    a2_temp = _transpose(a2, perm)
+                a2 = batch_matmul(tmp, a2_temp)
+            else:
+                a1 = matmul(tmp_temp, matrix)
+                a1 = neg(matmul(grad_b, a1))
+                a2 = dout - matmul(matrix_temp, grad_b)
+                if matrix.dtype in (mstype.complex64, mstype.complex128):
+                    a2_temp = conjugate_transpose(a2, perm)
+                else:
+                    a2_temp = _transpose(a2, perm)
+                a2 = matmul(tmp, a2_temp)
+
+            grad_a = add(a1, a2)
+            return (grad_a, grad_b, None)
+
+        if fast is False:
+            raise ValueError("For MatrixSolveLs, gradient not defined for fast=False")
+        matrix_shape = shape(matrix)[-2:]
+
+        if matrix_shape[-2] >= matrix_shape[-1]:
+            return over_determined(matrix, rhs, out, l2, dout)
+
+        return under_determined(matrix, rhs, l2, dout)
 
     return bprop
 

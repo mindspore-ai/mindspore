@@ -51,6 +51,7 @@ from mindspore.ops.operations.math_ops import MatrixExp
 from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import MatrixSolve
+from mindspore.ops.operations.math_ops import MatrixSolveLs
 from mindspore.ops.operations.math_ops import MatrixLogarithm
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import InplaceIndexAdd
@@ -2483,6 +2484,12 @@ test_case_math_ops = [
         'block': MatrixSolve(),
         'desc_inputs': [Tensor(np.array([[[1., 4.], [2., 7.]], [[1., 4.], [2., 7.]]]).astype(np.float32)),
                         Tensor(np.array([[[1.], [3.]], [[1.], [3.]]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[[1.], [1.]], [[1.], [1.]]]).astype(np.float32))]}),
+    ('MatrixSolveLs', {
+        'block': MatrixSolveLs(fast=True),
+        'desc_inputs': [Tensor(np.array([[[1., 4.], [2., 7.]], [[1., 4.], [2., 7.]]]).astype(np.float32)),
+                        Tensor(np.array([[[1.], [3.]], [[1.], [3.]]]).astype(np.float32)),
+                        Tensor(np.random.uniform(0.0, 5.0), mstype.float64)],
         'desc_bprop': [Tensor(np.array([[[1.], [1.]], [[1.], [1.]]]).astype(np.float32))]}),
     ('MatrixDeterminant', {
         'block': P.MatrixDeterminant(),
