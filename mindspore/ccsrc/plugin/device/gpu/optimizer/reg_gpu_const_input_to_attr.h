@@ -38,7 +38,6 @@ RER_GPU_STATIC_CONST_TO_ATTR(kFillOpName, 0);
 RER_GPU_STATIC_CONST_TO_ATTR(kSpaceToBatchOpName, 1);
 RER_GPU_STATIC_CONST_TO_ATTR(kSparseApplyAdagradOpName, 2);
 RER_GPU_STATIC_CONST_TO_ATTR(kStridedSliceAssignOpName, 1, 2, 3);
-RER_GPU_STATIC_CONST_TO_ATTR(kTensorCopySlicesOpName, 2, 3, 4);
 }  // namespace mindspore::opt
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_GPU_OPTIMIZER_REG_GPU_CONST_INPUT_TO_ATTR_H_

@@ -84,9 +84,9 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << kMaxDims
                         << ", but got " << input_shape_.size();
     }
-    TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_, false);
-    TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_, false);
-    TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_, false);
+    TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_, true);
+    TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_, true);
+    TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_, true);
     if (begin_.size() > input_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the size of 'begin' cannot be greater than the dimension of input, but got the "
