@@ -166,6 +166,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"addcmul", std::string("addcmul")},                                // C.addcmul
        {"all", std::string("all_")},                                       // C.reduce_all
        {"atan2", std::string("atan2")},                                    // P.Atan2
+       {"angle", std::string("angle")},                                    // C.reduce_any
        {"any", std::string("any_")},                                       // C.reduce_any
        {"__add__", std::string("add")},                                    // C.add
        {"__sub__", std::string("sub")},                                    // C.sub

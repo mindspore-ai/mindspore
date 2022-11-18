@@ -156,6 +156,7 @@ mindspore.ops.function
     mindspore.ops.addcmul
     mindspore.ops.addn
     mindspore.ops.addr
+    mindspore.ops.angle
     mindspore.ops.arccosh
     mindspore.ops.arcsin
     mindspore.ops.arctan

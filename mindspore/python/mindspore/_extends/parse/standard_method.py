@@ -179,6 +179,13 @@ def all_(x, axis=(), keep_dims=False):
     return reduce_all(x, axis)
 
 
+def angle(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.angle`.
+    """
+    return F.angle(x)
+
+
 def any_(x, axis=(), keep_dims=False):
     """
     Check any array element along a given axis evaluate to True.

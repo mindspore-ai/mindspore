@@ -136,6 +136,7 @@ from .math_func import (
     absolute,
     abs,
     argmin,
+    angle,
     tensor_add,
     add,
     addcdiv,
