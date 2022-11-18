@@ -55,10 +55,12 @@ bool ConstFoldAlongInferShape::CheckCanFold(const FuncGraphPtr &func_graph, cons
   }
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
+    MS_LOG(DEBUG) << "prim is nullptr.";
     return false;
   }
   auto is_inferred = prim->GetAttr(kInferDone) != nullptr && GetValue<bool>(prim->GetAttr(kInferDone));
   if (!is_inferred) {
+    MS_LOG(DEBUG) << "is_inferred is flase.";
     return false;
   }
   if (CheckPrimitiveType(cnode, prim::kPrimShape) &&

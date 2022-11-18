@@ -46,6 +46,7 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node) {
     auto temp_node = cnode->input(1);
     if (temp_node == nullptr) {
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+      MS_LOG(ERROR) << "temp_node is nullptr.";
       return nullptr;
     }
     return GetRealPrevCNode(temp_node);
@@ -96,6 +97,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   // get inputs node
   auto it = graph_node_outputs.find(cnode->fullname_with_scope());
   if (it == graph_node_outputs.end()) {
+    MS_LOG(ERROR) << "Can not find " << cnode->fullname_with_scope() << "in graph_node_outputs.";
     return RET_ERROR;
   }
   auto out_num = static_cast<int64_t>(it->second.size());
@@ -108,6 +110,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
     auto tmp = it->second[i];
     auto tmp_cnode = tmp->cast<CNodePtr>();
     if (tmp_cnode == nullptr) {
+      MS_LOG(ERROR) << "temp_cnode is nullptr.";
       return RET_ERROR;
     }
     if (!CheckPrimitiveType(tmp_cnode, prim::kPrimTupleGetItem)) {
@@ -155,6 +158,7 @@ const AnfNodePtr EliminateConcatSplit::Process(const FuncGraphPtr &func_graph, c
                                                const EquivPtr &) const {
   MS_LOG(DEBUG) << "Enter EliminateConcatSplit pass process";
   if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func_graph is nullptr.";
     return nullptr;
   }
   if (node == nullptr) {
@@ -162,6 +166,7 @@ const AnfNodePtr EliminateConcatSplit::Process(const FuncGraphPtr &func_graph, c
   }
   auto split_cnode = node->cast<CNodePtr>();
   if (split_cnode == nullptr) {
+    MS_LOG(ERROR) << "split_cnode is nullptr.";
     return nullptr;
   }
   auto ret = ConcatSplitEliminate(func_graph, split_cnode);

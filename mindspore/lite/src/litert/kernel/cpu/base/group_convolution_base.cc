@@ -151,6 +151,7 @@ int GroupConvolutionBaseCPUKernel::InitGroupParam() {
     return RET_ERROR;
   }
   sub_in_channel_ = conv_param_->input_channel_;
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(sub_in_channel_, group_num_), RET_ERROR, "Mul overflow.");
   ori_in_channel_ = sub_in_channel_ * group_num_;
   in_thread_num_ = MSMIN(MSMAX(1, ctx_->thread_num_), in_plane_);
 
@@ -162,6 +163,7 @@ int GroupConvolutionBaseCPUKernel::InitGroupParam() {
     return RET_ERROR;
   }
   sub_out_channel_ = conv_param_->output_channel_;
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(sub_out_channel_, group_num_), RET_ERROR, "Mul overflow.");
   ori_out_channel_ = sub_out_channel_ * group_num_;
   out_thread_num_ = MSMIN(MSMAX(1, ctx_->thread_num_), out_plane_);
   return RET_OK;

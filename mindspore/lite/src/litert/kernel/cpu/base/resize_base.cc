@@ -39,8 +39,8 @@ int ResizeBaseCPUKernel::CheckParameters() {
   }
   MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "thread_num_ should not be 0");
   method_ = parameter->method_;
-  if (method_ == schema::ResizeMethod::ResizeMethod_UNKNOWN) {
-    MS_LOG(ERROR) << "Resize method can not be unknown.";
+  if (method_ <= schema::ResizeMethod::ResizeMethod_UNKNOWN || method_ > schema::ResizeMethod::ResizeMethod_MAX) {
+    MS_LOG(ERROR) << "Resize method is invalid.";
     return RET_INVALID_OP_ATTR;
   }
   if (this->in_tensors_.size() == 1) {
@@ -108,6 +108,7 @@ int ResizeBaseCPUKernel::Prepare() {
   }
 
   auto input = in_tensors_.at(0);
+  MSLITE_CHECK_PTR(input);
   auto input_shape = input->shape();
   if (InferShapeDone() && input_shape.size() != COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "Resize op support input rank 4, got " << input_shape.size();

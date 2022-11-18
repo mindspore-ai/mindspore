@@ -33,6 +33,34 @@ constexpr int WEIGHT_INDEX = 3;
 int PredictCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C4NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
+  auto input_tensor = in_tensors_[INPUT_INDEX];
+  auto keys_tensor = in_tensors_[KEY_INDEX];
+  auto labels_tensor = in_tensors_[LABEL_INDEX];
+  auto weights_tensor = in_tensors_[WEIGHT_INDEX];
+  if (input_tensor == nullptr || keys_tensor == nullptr || labels_tensor == nullptr || weights_tensor == nullptr) {
+    MS_LOG(ERROR) << "Found nullptr";
+    return RET_ERROR;
+  }
+  if (input_tensor->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "input_tensorj data_type should be " << kNumberTypeInt32
+                  << " ,but got: " << input_tensor->data_type();
+    return RET_ERROR;
+  }
+  if (keys_tensor->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "keys_tensor data_type should be " << kNumberTypeInt32
+                  << " ,but got: " << keys_tensor->data_type();
+    return RET_ERROR;
+  }
+  if (labels_tensor->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "labels_tensor data_type should be " << kNumberTypeInt32
+                  << " ,but got: " << labels_tensor->data_type();
+    return RET_ERROR;
+  }
+  if (weights_tensor->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "weights_tensor data_type should be " << kNumberTypeFloat32
+                  << " ,but got: " << weights_tensor->data_type();
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -50,7 +78,6 @@ std::vector<LabelInfo> PredictCPUKernel::GetLabelInfo() {
   if (input_tensor == nullptr || keys_tensor == nullptr || labels_tensor == nullptr || weights_tensor == nullptr) {
     return label_info_vec;
   }
-
   int32_t *input = reinterpret_cast<int32_t *>(input_tensor->data());
   int32_t *key_begin = reinterpret_cast<int32_t *>(keys_tensor->data());
   int32_t *key_end = key_begin + keys_tensor->ElementsNum();

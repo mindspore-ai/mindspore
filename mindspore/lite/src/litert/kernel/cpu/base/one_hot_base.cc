@@ -141,12 +141,16 @@ int OneHotCPUKernel::InitParamsAndOnOffValue() {
     MS_LOG(ERROR) << "OneHot inputs[1] depth nullptr";
     return RET_NULL_PTR;
   }
-  const int *depth = reinterpret_cast<int *>(depth_tensor->data());
-  if (depth == nullptr) {
-    return RET_NULL_PTR;
+  if (depth_tensor->data_type() == kNumberTypeInt32) {
+    const int *depth = reinterpret_cast<int *>(depth_tensor->data());
+    if (depth == nullptr) {
+      return RET_NULL_PTR;
+    }
+    one_hot_param_->depth_ = *depth;
+  } else {
+    MS_LOG(ERROR) << "depth_tensor type error.";
+    return RET_ERROR;
   }
-  one_hot_param_->depth_ = *depth;
-
   if (in_tensors_.size() == kInputNum) {
     // 4 inputs: indices, depth, on_value, off_value
     one_hot_param_->support_neg_index_ = false;

@@ -53,6 +53,7 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_arg = input_tensor->quant_params();
+  MS_CHECK_TRUE_MSG(input_tensor != nullptr, RET_ERROR, "input_tensor is nullptr.");
   if (in_quant_arg.empty()) {
     MS_LOG(ERROR) << "input tensor quant_params() return empty vector.";
     FreeQuantParam();
@@ -60,6 +61,7 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   }
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_arg = out_tensor->quant_params();
+  MS_CHECK_TRUE_MSG(out_tensor != nullptr, RET_ERROR, "out_tensor is nullptr.");
   if (out_quant_arg.empty()) {
     MS_LOG(ERROR) << "output tensor quant_params() return empty vector.";
     FreeQuantParam();
@@ -92,8 +94,8 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
 }
 
 int PoolingBaseCPUKernel::Prepare() {
-  MS_CHECK_TRUE_RET(in_tensors_.size() == 1, RET_ERROR);
-  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
+  MS_CHECK_TRUE_MSG(in_tensors_.size() == 1, RET_ERROR, "input tensor size error.");
+  MS_CHECK_TRUE_MSG(out_tensors_.size() == 1, RET_ERROR, "output tensor size error.");
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(pooling_param_);

@@ -50,6 +50,7 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
   // assume multi outputs
   auto out_shape = cnode->Shape();
   if (out_shape == nullptr) {
+    MS_LOG(ERROR) << "out_shape is nullptr.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -59,6 +60,7 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
       const auto &shape_ptr = (*shape)[i];
       if (!utils::isa<abstract::ShapePtr>(shape_ptr)) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        MS_LOG(ERROR) << "shape_ptr type error.";
         return nullptr;
       }
       output_shapes.push_back(shape_ptr->cast<abstract::ShapePtr>()->shape());

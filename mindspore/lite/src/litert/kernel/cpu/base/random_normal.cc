@@ -51,6 +51,9 @@ int RandomNormalCPUKernel::Run() {
 #ifdef ENABLE_FP16
     auto output = static_cast<float16_t *>(out_data);
     std::generate_n(output, all_data_nums, [&]() { return nums(engine); });
+#else
+    MS_LOG(ERROR) << "ENABLE_FP16 is off, RandomNormal can not support kNumberTypeFloat16 datatype.";
+    return lite::RET_NOT_SUPPORT;
 #endif
   } else if (out_tensors_[kOutputIndex]->data_type() == kNumberTypeFloat32) {
     auto output = static_cast<float *>(out_data);

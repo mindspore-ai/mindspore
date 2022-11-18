@@ -34,10 +34,12 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
 bool LiteNodePass::Run(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    MS_LOG(ERROR) << "func_graph is nullptr.";
     return false;
   }
   FuncGraphManagerPtr manager = func_graph->manager();
   if (manager == nullptr) {
+    MS_LOG(ERROR) << "manager is nullptr.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return false;
   }

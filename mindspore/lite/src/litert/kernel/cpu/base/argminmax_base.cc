@@ -42,6 +42,7 @@ int ArgMinMaxCPUKernel::ReSize() {
   CHECK_NULL_RETURN(in_tensors_.at(0));
   auto in_shape = in_tensors_.at(0)->shape();
   auto dims_size = in_shape.size();
+  MS_CHECK_TRUE_MSG(dims_size >= 0, RET_ERROR, "The input shape is invalid.");
   int axis = arg_param_->axis_ < 0 ? arg_param_->axis_ + dims_size : arg_param_->axis_;
   arg_param_->axis_ = axis;
   arg_param_->dims_size_ = static_cast<int>(dims_size);
@@ -54,6 +55,7 @@ int ArgMinMaxCPUKernel::ReSize() {
   ComputeStrides(in_shape.data(), arg_param_->in_strides_, in_shape.size());
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto out_shape = out_tensors_.at(0)->shape();
+  MS_CHECK_TRUE_MSG(out_shape.size() >= 0, RET_ERROR, "The out shape is invalid.");
   CHECK_NULL_RETURN(out_shape.data());
   MS_CHECK_TRUE_MSG(static_cast<int>(out_shape.size()) <= COMM_SHAPE_SIZE, RET_ERROR, "The out_shape size invalid.");
   ComputeStrides(out_shape.data(), arg_param_->out_strides_, out_shape.size());

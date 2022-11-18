@@ -51,6 +51,26 @@ int LshProjectionCPUKernel::Run() {
   auto input1_tensor = in_tensors_.at(1);
   auto out_tensor = out_tensors_.at(0);
 
+  if (input0_tensor->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "input0 data_type should be " << kNumberTypeInt32 << " ,but got: " << input0_tensor->data_type();
+    return RET_ERROR;
+  }
+  if (input1_tensor->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "input1 data_type should be " << kNumberTypeInt32 << " ,but got: " << input1_tensor->data_type();
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() > C2NUM) {
+    auto input2_tensor = in_tensors_.at(THIRD_INPUT);
+    if (input2_tensor->data_type() != kNumberTypeFloat32) {
+      MS_LOG(ERROR) << "input2 data_type should be " << kNumberTypeFloat32
+                    << " ,but got: " << input2_tensor->data_type();
+      return RET_ERROR;
+    }
+  }
+  if (out_tensor->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "output0 data_type should be " << kNumberTypeInt32 << " ,but got: " << out_tensor->data_type();
+    return RET_ERROR;
+  }
   hash_seed_ = reinterpret_cast<float *>(input0_tensor->MutableData());
   CHECK_NULL_RETURN(hash_seed_);
   feature_ = reinterpret_cast<int32_t *>(input1_tensor->MutableData());

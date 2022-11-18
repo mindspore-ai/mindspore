@@ -66,6 +66,7 @@ AnfNodePtr Helper::HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, P
                                     bool multigraph) {
   if (primitive_vars == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    MS_LOG(ERROR) << "primitive_vars is nullptr";
     return nullptr;
   }
   MS_LOG(DEBUG) << "HandleSexpVector sexp: " + sexp.ToString() + ", graph " + graph.ToString();
@@ -148,6 +149,7 @@ CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
 
 // not implement for lite, just for api compatible
 CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::vector<AnfNodePtr> &orig_nodes) {
+  MS_LOG(DEBUG) << "Not implement for lite, just for api compatible.";
   return nullptr;
 }
 
@@ -223,6 +225,7 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
     auto b_node = utils::cast<AnfNodePtr>(b);
     if (a_node == nullptr || b_node == nullptr) {
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+      MS_LOG(ERROR) << "a or b is nullptr.";
       return false;
     }
     if (IsValueNode<Primitive>(a_node) && IsValueNode<Primitive>(b_node)) {
@@ -259,6 +262,7 @@ AnfNodePtr Helper::SexpToNode(const BaseRef &sexp, const BaseRef &graph, Primiti
     auto var_ptr = utils::cast<VarPtr>(sexp);
     if (var_ptr == nullptr) {
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+      MS_LOG(ERROR) << "var_ptr is nullptr.";
       return nullptr;
     }
     if (var_ptr->primitive()) {

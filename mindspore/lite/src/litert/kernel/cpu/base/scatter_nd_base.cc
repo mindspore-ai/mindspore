@@ -44,8 +44,11 @@ int ScatterNDCPUKernel::Prepare() {
 
 int ScatterNDCPUKernel::ReSize() {
   auto indices = in_tensors_[kScatterIndicesIndex];
+  CHECK_NULL_RETURN(indices);
   auto update = in_tensors_[kScatterUpdateIndex];
+  CHECK_NULL_RETURN(update);
   auto shape = in_tensors_[kScatterShapeIndex];
+  CHECK_NULL_RETURN(shape);
   auto indices_shape = indices->shape();
   auto update_shape = update->shape();
   auto shape_data = reinterpret_cast<int *>(shape->data());

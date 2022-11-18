@@ -153,7 +153,6 @@ int GatherBaseCPUKernel::ChooseThreadCuttingStrategy() {
   if (outer_size_ == 0 || indices_size_ == 0 || byte_inner_size_ == 0) {
     return RET_OK;
   }
-
   if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_Gather), 0, byte_inner_size_, out_tensors_.front()->Size()) !=
       RET_OK) {
     return RET_ERROR;
@@ -162,8 +161,10 @@ int GatherBaseCPUKernel::ChooseThreadCuttingStrategy() {
     block_boundary_infos_.emplace_back(BlockBoundaryInfo{0, 0, outer_size_, 0});
     return RET_OK;
   }
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(outer_size_, indices_size_), RET_ERROR, "Mul overflow.");
   auto total_block = outer_size_ * indices_size_;
   int64_t block_size = total_block / thread_num_;
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(block_size, thread_num_), RET_ERROR, "Mul overflow.");
   auto remain_block = total_block - block_size * thread_num_;
   int64_t start = 0;
   while (start < total_block) {

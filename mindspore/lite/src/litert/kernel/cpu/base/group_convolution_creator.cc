@@ -81,6 +81,13 @@ lite::Tensor *CreateConstTensor(const lite::Tensor *tensor, const std::vector<in
     MS_LOG(ERROR) << "Tensor data size should not be 0.";
     return nullptr;
   }
+  auto size = new_tensor->Size();
+  if (SIZE_MUL_OVERFLOW(static_cast<size_t>(index), size)) {
+    delete new_tensor;
+    MS_LOG(ERROR) << "Mul overflow.";
+    return nullptr;
+  }
+  MS_CHECK_TRUE_MSG(tensor->data() != nullptr, nullptr, "tensor data is nullptr.");
   void *new_tensor_data =
     reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(tensor->data()) + index * new_tensor->Size());
   if (new_tensor_data == nullptr) {
@@ -166,6 +173,7 @@ int GroupConvCreator::NewConstTensor(std::vector<lite::Tensor *> *tensors, int g
   for (auto &info : const_tensor_list) {
     auto const_tensor = CreateConstTensor(origin_inputs_.at(info.first), info.second, group_id);
     if (const_tensor == nullptr) {
+      MS_LOG(ERROR) << "const tensor is nullptr.";
       return lite::RET_ERROR;
     }
     tensors->emplace_back(const_tensor);
