@@ -283,7 +283,7 @@ class LogNormalReverse(Primitive):
 
     Inputs:
         - **input** (Tensor) - The tensor to be generated with log-normal distribution.
-          Must be one of the following types: float16, float32.
+        Must be one of the following types: float16, float32, float64.
 
     Outputs:
         Tensor. A Tensor with the same type and shape of input.
@@ -293,21 +293,22 @@ class LogNormalReverse(Primitive):
         ValueError: If `input` is NULL.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
 
     Examples:
-        >>> x = Tensor(np.array([2, 2]), mstype.float32)
+        >>> x = Tensor(np.random.randn(3,4),mstype.float64)
         >>> mean = 2.0
         >>> std = 1.0
         >>> lognormalreverse = ops.LogNormalReverse(mean, std)
         >>> output = lognormalreverse(x)
-        >>> print(output)
-        (3, 1, 2)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 4)
     """
 
     @prim_attr_register
-    def __init__(self, mean=2.0, std=1.0):
+    def __init__(self, mean=1.0, std=2.0):
         """Initialize LogNormalReverse"""
         Validator.check_value_type("mean", mean, [float], self.name)
         Validator.check_value_type("std", std, [float], self.name)
