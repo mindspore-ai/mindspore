@@ -604,15 +604,15 @@ class RGBToHSV(Primitive):
         Last dimension of input images must be size 3.
 
     Inputs:
-        **images** (Tensor) - Must be one of the following types: float16, float32, float64. 1-D or higher rank.
-        RGB data to convert. Last dimension must be size 3.
+        **images** (Tensor) - 1-D or higher rank RGB data Tensor to convert, last dimension must be size 3.
+        Must be one of the following types: float16, float32, float64.
 
     Outputs:
         A Tensor, has the same type and shape as input `images`.
 
     Raises:
         TypeError: If `images` is not tensor or its dtype is not float or double.
-        ValueError: If the size of shape of `images` is less than 1.
+        ValueError: If the rank of `images` is less than 1.
         ValueError: If the last value of shape of `images` is not 3.
 
     Supported Platforms:
@@ -689,10 +689,10 @@ class ResizeBilinearV2(Primitive):
     The resizing only affects the lower two dimensions which represent the height and width.
 
     Args:
-        align_corners (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
+        align_corners (bool, optional): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
                        which exactly aligns the 4 corners of images and resized images. If false,
                        rescale by :math:`new\_height / height`. Default: False.
-        half_pixel_centers (bool): Whether half pixel center. If set to True, `align_corners` should be False.
+        half_pixel_centers (bool, optional): Whether half pixel center. If set to True, `align_corners` should be False.
                            Default: False.
 
     Inputs:
@@ -853,8 +853,8 @@ class ResizeArea(Primitive):
         The values of "size" must be greater than zero.
 
     Args:
-        align_corners (bool): If true, the centers of the 4 corner pixels of the input and output tensors are aligned,
-            preserving the values at the corner pixels. Defaults： False.
+        align_corners (bool, optional): If true, the centers of the 4 corner pixels of the input and output
+          tensors are aligned, preserving the values at the corner pixels. Defaults: False.
 
     Inputs:
         - **images** (Tensor) -  Input images must be a 4-D tensor with shape which is [batch, height, width, channels].
@@ -1002,15 +1002,17 @@ class ScaleAndTranslate(Primitive):
     Scale And Translate the input image tensor.
 
     Note:
-        Input images must be a 4-D tensor.
-        Input size, scale and translation must be a 1-D tensor with two elements.
+        - Input images must be a 4-D tensor.
+        - Input size, scale and translation must be a 1-D tensor with two elements.
 
     Args:
-        kernel_type (str): An optional string. Deciding which image filtering algorithm to choose. Default: "lanczos3".
-        antialias (bool): An optional bool. Deciding whether to use the antialias. Default: True.
+        kernel_type (str, optional): Deciding which image filtering algorithm to choose. Valid options:
+            ["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle", "keyscubic", "mitchellcubic"]
+            Default: "lanczos3".
+        antialias (bool, optional): Deciding whether to use the antialias. Default: True.
 
     Inputs:
-        - **images** (Tensor) - A 4-D tensor of shape (batch, image_height, image_width, channel).
+        - **images** (Tensor) - A 4-D tensor of shape :math:`(batch, image_height, image_width, channel)`.
         - **size** (Tensor) - The size of the output image after scale and translate operations. A 1-D tensor with two
           positive elements whose dtype is int32 and shape must be (2,).
         - **scale** (Tensor) - Indicates the zoom factor. A 1-D tensor with two positive elements whose dtype is float32
@@ -1019,7 +1021,7 @@ class ScaleAndTranslate(Primitive):
           float32 and shape must be (2,).
 
     Outputs:
-        A 4-D tensor with type: float32 and shape: [batch, size[0], size[1], channel].
+        A 4-D tensor with type: float32 and shape :math:`(batch, size[0], size[1], channel)`.
 
     Raises:
         TypeError: If `kernel_type` is not str.
@@ -1031,9 +1033,9 @@ class ScaleAndTranslate(Primitive):
         ValueError: If `kernel_type` is not in ["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle",
                     "keyscubic", "mitchellcubic"].
         ValueError: If the rank of `images` is not 4.
-        ValueError: If  the shape of `size` is not (2,).
-        ValueError: If  the shape of `scale` is not (2,).
-        ValueError: If the shape of `translation`  is not (2,).
+        ValueError: If the shape of `size` is not :math:`(2,)`.
+        ValueError: If the shape of `scale` is not :math:`(2,)`.
+        ValueError: If the shape of `translation`  is not :math:`(2,)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

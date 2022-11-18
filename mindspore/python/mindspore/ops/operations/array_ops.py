@@ -3787,33 +3787,36 @@ class ResizeNearestNeighborV2(Primitive):
     r"""
     Resizes the input tensor to specific size by using the nearest neighbor algorithm.
 
-    Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
-    neighbor algorithm selects the value of the nearest point and does not consider the
+    The nearest neighbor algorithm selects the value of the nearest point and does not consider the
     values of neighboring points at all, yielding a piecewise-constant interpolant.
 
     Args:
-        align_corners: An optional `bool`. Defaults to `False`.
-            If true, the centers of the 4 corner pixels of the input and output tensors are
-            aligned, preserving the values at the corner pixels.
-        half_pixel_centers: An optional `bool`. Defaults to `False`.
-        data_format: An optional `string` that describes the format of the input `x`. Defaults to `NHWC`.
+        align_corners (bool, optional): If true, the centers of the 4 corner pixels of the input and output
+            tensors are aligned, preserving the values at the corner pixels. Defaults： False.
+        half_pixel_centers (bool, optional): Whether half pixel center. If set to True,
+            `align_corners` should be False. Default: False.
+        data_format (string, optional): An optional `string` that describes the
+            format of the input `x`. Default: `NHWC`.
 
     Inputs:
-        - **x** (Tensor) - 4-D with shape `[batch, height, width, channels]` or `[batch, channels, height, width]`
-          depending on the attr 'data_format'. Support type [`int8`, `uint8`, `int16`, `uint16`, `int32`, `int64`,
-          `float16`, `float32`, `float64`].
-        - **size** (Tensor) - A 1-D int32 Tensor of 2 elements: [`new_height, new_width`]. The new size for the images.
+        - **x** (Tensor) - 4-D with shape :math:`(batch, height, width, channels)`
+          or :math:`(batch, channels, height, width)` depending on the attr 'data_format'. Support
+          type [`int8`, `uint8`, `int16`, `uint16`, `int32`, `int64`, `float16`, `float32`, `float64`].
+        - **size** (Tensor) - The new size for the images. A 1-D int32 Tensor
+          of 2 elements: [`new_height, new_width`].
 
     Outputs:
-        Tensor `y`, has the same type as input `x` with the shape of `[batch, channels, new_height, new_width]` or
-        `[batch, new_height, new_width, channels]` depending on attr 'data_format'.
+        -  **y** (Tensor) - The resized images. A 4-D with shape
+          :math:`(batch, new\_height, new\_width, channels)`
+          or :math:`(batch, channels, new\_height, new\_width)`
+          depending on the attr `data_format`. It has the same dtype as `x`.
 
     Raises:
         TypeError: If `x` or `size` is not a Tensor.
-        TypeError: If `x` data type not in support list.
-        TypeError: If `size` data type is not int32.
-        TypeError: If `align_corners` or `half_pixel_centers` is not `bool` value.
-        TypeError: If `data_format` is not `str`.
+        TypeError: If the data type  of `x` is not in supported list.
+        TypeError: If the data type  of `size` is not int32.
+        TypeError: If `align_corners` or `half_pixel_centers` is not bool.
+        TypeError: If `data_format` is not string.
         ValueError: If `data_format` not in [`NHWC`, `NCHW`].
         ValueError: If any value of `size` is non positive.
         ValueError: If the dimension of `x` is not 4.
@@ -6111,7 +6114,7 @@ class SearchSorted(Primitive):
     within `sorted_sequence` would be preserved when the corresponding values in `values` were inserted before the
     indices.
 
-    Refer to :func:`mindspore.ops.search_sorted` for more detail.
+    Refer to :func:`mindspore.ops.search_sorted` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -6763,27 +6766,28 @@ class ExtractVolumePatches(Primitive):
 
 class ScatterAddWithAxis(Primitive):
     """
-    ScatterAddWithAxis takes three inputs input_x, updates, and indices of the same rank r >= 1
-    and an optional attribute axis that identifies an axis of input_x (default is 0).
     The output of the operation is produced by creating a copy of the input input_x, and then
-    add updating its value to values specified by updates at specific index positions specified
-    by indices.
+    add updating its value to values specified by `updates` at specific index positions specified
+    by `indices`.
+
+    Note:
+        The three inputs `input_x`, `updates` and `indices` must have the same rank r >= 1.
 
     Args:
-        axis (int): which axis to scatter, default is 0.
+        axis (int, optional): Specifies which axis to do scatter add, default: 0.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor.
+        - **input_x** (Tensor) - The target tensor to be added.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and update.shape should be equal to indices.shape.
+        - **update** (Tensor) - The Tensor to update the `input_x`, has the same type as `input_x`
+          and the same shape as `indices`.
 
     Outputs:
-        Tensor, has the same shape and type as `input_x`.
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If the shape of `indices` is not equal to the shape of `update`
+        ValueError: If the shape of `indices` is not equal to the shape of `update`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -7040,7 +7044,7 @@ class Cummax(Primitive):
 
 class RightShift(Primitive):
     r"""
-    Shift the value of each position of the tensor to the right several bits.
+    Shift the value of each position of Tensor `input_x` to the right by corresponding bits in Tensor `input_y`.
     The inputs are two tensors, dtypes of them must be consistent, and the
     shapes of them could be broadcast.
 
@@ -7053,10 +7057,10 @@ class RightShift(Primitive):
     Inputs:
         - **input_x** (Tensor) - The target tensor, will be shifted to the right
           by y in element-wise.
-        - **input_y** (Tensor) - The tensor must have the same type as input_x.
+        - **input_y** (Tensor) - Number of bits shifted, the tensor must have the same type as `input_x`.
 
     Outputs:
-        - **output** (Tensor) - The output tensor, has the same type as input_x.
+        - **output** (Tensor) - The output tensor, has the same type as `input_x`.
 
     Raises:
         TypeError: If `input_x` or `input_y` is not tensor.
@@ -7289,14 +7293,14 @@ class SegmentMax(Primitive):
     r"""
     Computes the maximum along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i=max_j(data_j)` where max is over :math:`j` such that
+    Computes a tensor such that :math:`output_i=max_j(input\_x_j)` where max is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the max is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose dtype is real number and whose rank is not less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7339,14 +7343,14 @@ class SegmentMin(Primitive):
     r"""
     Computes the minimum along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i=min_j(data_j)` where :math:`min` is over :math:`j` such that
+    Computes a tensor such that :math:`output_i=min_j(input\_x_j)` where :math:`min` is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the min is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose dtype is real number and whose rank is not less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7389,7 +7393,7 @@ class SegmentSum(Primitive):
     r"""
     Computes the sum along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i = \sum_j data_j` where sum is over :math:`j` such that
+    Computes a tensor such that :math:`output_i = \sum_j input\_x_j` where sum is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the sum is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     .. warning::
@@ -7400,7 +7404,7 @@ class SegmentSum(Primitive):
           less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7665,7 +7669,7 @@ class SegmentMean(Primitive):
     r"""
     Computes the mean along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i = \mean_j data_j` where mean is over :math:`j` such that
+    Computes a tensor such that :math:`output_i = \mean_j input\_x_j` where mean is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the mean is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     .. warning::
@@ -7676,7 +7680,7 @@ class SegmentMean(Primitive):
           less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
@@ -7719,7 +7723,7 @@ class SegmentProd(Primitive):
     r"""
     Computes the prod along segments of a tensor.
 
-    Computes a tensor such that :math:`output_i = \prod_j data_j` where prod is over :math:`j` such that
+    Computes a tensor such that :math:`output_i = \prod_j input\_x_j` where prod is over :math:`j` such that
     :math:`segment\_ids[j] == i`. If the prod is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
 
     .. warning::
@@ -7730,7 +7734,7 @@ class SegmentProd(Primitive):
           less than 1.
         - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
           the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
-          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+          all values in the full range of valid values, but must be positive integer. Only constant values is allowed.
 
     Outputs:
         Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
