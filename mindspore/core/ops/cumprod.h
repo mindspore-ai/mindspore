@@ -28,7 +28,7 @@ constexpr auto kNameCumProd = "CumProd";
 class MIND_API CumProd : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CumProd);
-  CumProd() : BaseOperator(kNameCumProd) {}
+  CumProd() : BaseOperator(kNameCumProd) { InitIOName({"x", "axis"}, {"y"}); }
   void Init(const bool exclusive, const bool reverse);
   void SetExclusive(const bool exclusive);
   void SetReverse(const bool reverse);
