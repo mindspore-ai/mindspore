@@ -20,7 +20,10 @@ file(GLOB ACL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
         )
 
-set(ACL_SRC ${ACL_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/acl_pass.cc)
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    set(ACL_SRC ${ACL_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/acl_pass.cc)
+endif()
 
 set(ENABLE_ACL on)
 set(MODE_ASCEND_ACL off)
@@ -30,7 +33,14 @@ add_subdirectory(${TOP_DIR}/mindspore/ccsrc/cxx_api mindspore_shared_lib)
 
 set_property(SOURCE ${ACL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 
-add_library(ascend_pass_plugin SHARED ${ACL_SRC})
-target_link_libraries(ascend_pass_plugin mindspore_shared_lib)
-add_dependencies(ascend_pass_plugin mindspore_shared_lib)
-add_dependencies(ascend_pass_plugin fbs_inner_src)
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    add_library(ascend_pass_plugin SHARED ${ACL_SRC})
+    target_link_libraries(ascend_pass_plugin mindspore_shared_lib)
+    add_dependencies(ascend_pass_plugin mindspore_shared_lib)
+    add_dependencies(ascend_pass_plugin fbs_inner_src)
+else()
+    add_library(lite_acl_mid OBJECT ${ACL_SRC})
+    target_link_libraries(lite_acl_mid mindspore_shared_lib)
+    add_dependencies(lite_acl_mid mindspore_shared_lib)
+    add_dependencies(lite_acl_mid fbs_inner_src)
+endif()
