@@ -256,6 +256,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             If num_samples is None and numRows(parsed from schema) does not exist, read the full dataset;
             If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
+            If `compression_type` is not None, then num_samples is a mandatory parameter and it is
+            for the number of rows that is be read per shard from the compressed files.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
@@ -273,20 +275,28 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
-        shard_equal_rows (bool, optional): Get equal rows for all shards. Default: False. If shard_equal_rows
-            is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
+        shard_equal_rows (bool, optional): Get equal rows for all shards. Default: False. If `shard_equal_rows`
+            is False, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
             When the number of samples of per TFRecord file are not equal, it is suggested to set to true.
             This argument should only be specified when `num_shards` is also specified.
+            When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
+        compression_type (str, optional): Type of compression used for all files, must be either '', 'GZIP', or 'ZLIB'.
+            Default: None, as in empty string.
+            This will automatically get equal rows for all shards (`shard_equal_rows` considered to be True) and thus
+            cannot have the case where `num_samples` is None.
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards` ).
+        ValueError: If `compression_type` is invalid (other than '', 'GZIP', or 'ZLIB').
+        ValueError: If `compression_type` is provided but number of dataset files < `num_shards` .
+        ValueError: If `compression_type` is provided but `num_samples` is not provided or <= 0.
 
     Examples:
         >>> from mindspore import dtype as mstype
@@ -309,7 +319,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
 
     @check_tfrecorddataset
     def __init__(self, dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
-                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False, cache=None):
+                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False,
+                 cache=None, compression_type=None):
         super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
                          num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.dataset_files = self._find_files(dataset_files)
@@ -318,6 +329,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         self.schema = schema
         self.columns_list = replace_none(columns_list, [])
         self.shard_equal_rows = replace_none(shard_equal_rows, False)
+        self.compression_type = replace_none(compression_type, "")
 
         if self.schema is not None and (self.num_samples is None or self.num_samples == 0):
             self.num_samples = Schema.get_num_rows(self.schema)
@@ -325,7 +337,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
     def parse(self, children=None):
         schema = self.schema.cpp_schema if isinstance(self.schema, Schema) else self.schema
         return cde.TFRecordNode(self.dataset_files, schema, self.columns_list, self.num_samples, self.shuffle_flag,
-                                self.num_shards, self.shard_id, self.shard_equal_rows)
+                                self.num_shards, self.shard_id, self.shard_equal_rows, self.compression_type)
 
 
 class OBSMindDataset(GeneratorDataset):

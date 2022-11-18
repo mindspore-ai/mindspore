@@ -44,6 +44,8 @@ using StringIndex = AutoIndexObj<std::string>;
 
 class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow> {
  public:
+  enum class CompressionType { None = 0, GZIP = 1, ZLIB = 2 };
+
   // Constructor of TFReaderOp (2)
   // @note The builder class should be used to call this constructor.
   // @param num_workers - number of worker threads reading data from tf_file files.
@@ -54,8 +56,10 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   // @param columns_to_load - the names of the columns to load data from.
   // @param shuffle_files - whether or not to shuffle the files before reading data.
   // @param equal_rows_per_shard - whether or not to get equal rows for each process.
+  // @param compression_type - the compression type of the tf_file files
   NonMappableLeafOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
-                    int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id);
+                    int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id,
+                    const CompressionType &compression_type = CompressionType::None);
 
   // Default destructor
   ~NonMappableLeafOp() = default;
@@ -157,7 +161,9 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   QueueList<std::unique_ptr<FilenameBlock>> io_block_queues_;
   std::map<std::string, int64_t> filename_numrows_;
   bool finished_reading_dataset_;
+  // Note: If compression_type_ is not empty, then total_rows_ is the total rows that will be read per shard
   int64_t total_rows_;
+  CompressionType compression_type_;
 
   WaitPost io_block_queue_wait_post_;
   bool load_io_block_queue_;

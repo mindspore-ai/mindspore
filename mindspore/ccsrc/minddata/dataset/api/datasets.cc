@@ -172,7 +172,6 @@ std::shared_ptr<Iterator> Dataset::CreateIteratorCharIF(int32_t num_epochs) {
   std::shared_ptr<Iterator> iter;
   try {
     auto ds = shared_from_this();
-
     iter = std::make_shared<Iterator>();
     Status rc = iter->BuildAndLaunchTree(ds, num_epochs);
     if (rc.IsError()) {
@@ -2006,10 +2005,11 @@ SpeechCommandsDataset::SpeechCommandsDataset(const std::vector<char> &dataset_di
 TFRecordDataset::TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, const std::vector<char> &schema,
                                  const std::vector<std::vector<char>> &columns_list, int64_t num_samples,
                                  ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
-                                 const std::shared_ptr<DatasetCache> &cache) {
+                                 const std::shared_ptr<DatasetCache> &cache,
+                                 const std::vector<char> &compression_type) {
   auto ds = std::make_shared<TFRecordNode>(VectorCharToString(dataset_files), CharToString(schema),
                                            VectorCharToString(columns_list), num_samples, shuffle, num_shards, shard_id,
-                                           shard_equal_rows, cache);
+                                           shard_equal_rows, cache, CharToString(compression_type));
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
@@ -2017,9 +2017,11 @@ TFRecordDataset::TFRecordDataset(const std::vector<std::vector<char>> &dataset_f
                                  const std::shared_ptr<SchemaObj> &schema,
                                  const std::vector<std::vector<char>> &columns_list, int64_t num_samples,
                                  ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
-                                 const std::shared_ptr<DatasetCache> &cache) {
+                                 const std::shared_ptr<DatasetCache> &cache,
+                                 const std::vector<char> &compression_type) {
   auto ds = std::make_shared<TFRecordNode>(VectorCharToString(dataset_files), schema, VectorCharToString(columns_list),
-                                           num_samples, shuffle, num_shards, shard_id, shard_equal_rows, cache);
+                                           num_samples, shuffle, num_shards, shard_id, shard_equal_rows, cache,
+                                           CharToString(compression_type));
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

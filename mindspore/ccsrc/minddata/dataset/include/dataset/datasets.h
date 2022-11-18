@@ -5396,27 +5396,38 @@ class DATASET_API TFRecordDataset : public Dataset {
   /// \param[in] dataset_files List of files to be read to search for a pattern of files. The list
   ///     will be sorted in a lexicographical order.
   /// \param[in] schema Path to schema file.
-  /// \param[in] columns_list List of columns to be read (Default = {}, read all columns).
-  /// \param[in] num_samples The number of samples to be included in the dataset
+  /// \param[in] columns_list List of columns to be read. (Default = {}, read all columns).
+  /// \param[in] num_samples The number of samples to be included in the dataset.
   ///     (Default = 0 means all samples).
-  ///     If num_samples is 0 and numRows(parsed from schema) does not exist, read the full dataset;
-  ///     If num_samples is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
-  ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-  /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal)
+  ///     If `num_samples` is 0 and numRows(parsed from schema) does not exist, read the full dataset;
+  ///     If `num_samples` is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
+  ///     If both `num_samples` and numRows(parsed from schema) are greater than 0, read `num_samples` rows.
+  ///     If `compression_type` is not None, then num_samples is a mandatory parameter and it is
+  ///     for the number of rows that is be read per shard from the compressed files.
+  /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
   ///     Can be any of:
   ///     ShuffleMode::kFalse - No shuffling is performed.
   ///     ShuffleMode::kFiles - Shuffle files only.
   ///     ShuffleMode::kGlobal - Shuffle both the files and samples.
-  /// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+  /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1).
   /// \param[in] shard_id The shard ID within num_shards. This argument should be specified only
-  ///     when num_shards is also specified (Default = 0).
-  /// \param[in] shard_equal_rows Get equal rows for all shards (Default = False, number of rows of
-  ///     each shard may be not equal).
+  ///     when num_shards is also specified. (Default = 0).
+  /// \param[in] shard_equal_rows Get equal rows for all shards.
+  ///     (Default = false, number of rows of each shard may be not equal).
+  ///     When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+  /// \param[in] compression_type Compression type to use.
+  ///     (Default = "", which means no compression is used).
+  ///     Can be any of:
+  ///     "" - No compression is used.
+  ///     "GZIP" - GZIP compression is used.
+  ///     "ZLIB" - ZLIB compression is used.
+  ///     This will automatically get equal rows for all shards and thus cannot have the case
+  ///     where `num_samples` is None.
   TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, const std::vector<char> &schema,
                   const std::vector<std::vector<char>> &columns_list, int64_t num_samples, ShuffleMode shuffle,
                   int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
-                  const std::shared_ptr<DatasetCache> &cache);
+                  const std::shared_ptr<DatasetCache> &cache, const std::vector<char> &compression_type);
 
   /// \brief Constructor of TFRecordDataset.
   /// \note Parameter 'schema' is shared pointer to Schema object
@@ -5429,21 +5440,33 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     If num_samples is 0 and numRows(parsed from schema) does not exist, read the full dataset;
   ///     If num_samples is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
   ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-  /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal)
+  ///     If `compression_type` is not None, then num_samples is a mandatory parameter and it is
+  ///     for the number of rows that is be read per shard from the compressed files.
+  /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
   ///     Can be any of:
   ///     ShuffleMode::kFalse - No shuffling is performed.
   ///     ShuffleMode::kFiles - Shuffle files only.
   ///     ShuffleMode::kGlobal - Shuffle both the files and samples.
-  /// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+  /// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1).
   /// \param[in] shard_id The shard ID within num_shards. This argument should be specified only
-  ///     when num_shards is also specified (Default = 0).
-  /// \param[in] shard_equal_rows Get equal rows for all shards (Default = False, number of rows of
-  ///     each shard may be not equal).
+  ///     when num_shards is also specified. (Default = 0).
+  /// \param[in] shard_equal_rows Get equal rows for all shards.
+  ///     (Default = false, number of rows of each shard may be not equal).
+  ///     When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+  /// \param[in] compression_type Compression type to use.
+  ///     (Default = "", which means no compression is used).
+  ///     Can be any of:
+  ///     "" - No compression is used.
+  ///     "GZIP" - GZIP compression is used.
+  ///     "ZLIB" - ZLIB compression is used.
+  ///     This will automatically get equal rows for all shards and thus cannot have the case
+  ///     where `num_samples` is None.
+
   TFRecordDataset(const std::vector<std::vector<char>> &dataset_files, const std::shared_ptr<SchemaObj> &schema,
                   const std::vector<std::vector<char>> &columns_list, int64_t num_samples, ShuffleMode shuffle,
                   int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
-                  const std::shared_ptr<DatasetCache> &cache);
+                  const std::shared_ptr<DatasetCache> &cache, const std::vector<char> &compression_type);
 
   /// \brief Destructor of TFRecordDataset.
   ~TFRecordDataset() override = default;
@@ -5460,17 +5483,28 @@ class DATASET_API TFRecordDataset : public Dataset {
 ///     If num_samples is 0 and numRows(parsed from schema) does not exist, read the full dataset;
 ///     If num_samples is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
 ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-/// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal)
+///     If `compression_type` is not None, then num_samples is a mandatory parameter and it is
+///     for the number of rows that is be read per shard from the compressed files.
+/// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
 ///     Can be any of:
 ///     ShuffleMode::kFalse - No shuffling is performed.
 ///     ShuffleMode::kFiles - Shuffle files only.
 ///     ShuffleMode::kGlobal - Shuffle both the files and samples.
-/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] num_shards Number of shards that the dataset should be divided into. (Default = 1).
 /// \param[in] shard_id The shard ID within num_shards. This argument should be specified only
-///     when num_shards is also specified (Default = 0).
-/// \param[in] shard_equal_rows Get equal rows for all shards (Default = False, number of rows of
-///     each shard may be not equal).
+///     when num_shards is also specified. (Default = 0).
+/// \param[in] shard_equal_rows Get equal rows for all shards.
+///     (Default = false, number of rows of each shard may be not equal).
+///     When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \param[in] compression_type Compression type to use.
+///     (Default = "", which means no compression is used).
+///     Can be any of:
+///     "" - No compression is used.
+///     "GZIP" - GZIP compression is used.
+///     "ZLIB" - ZLIB compression is used.
+///     This will automatically get equal rows for all shards and thus cannot have the case
+///     where `num_samples` is None.
 /// \return Shared pointer to the TFRecordDataset.
 /// \par Example
 /// \code
@@ -5492,13 +5526,14 @@ std::shared_ptr<TFRecordDataset> DATASET_API
 TFRecord(const std::vector<std::string> &dataset_files, const T &schema = nullptr,
          const std::vector<std::string> &columns_list = {}, int64_t num_samples = 0,
          ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1, int32_t shard_id = 0,
-         bool shard_equal_rows = false, const std::shared_ptr<DatasetCache> &cache = nullptr) {
+         bool shard_equal_rows = false, const std::shared_ptr<DatasetCache> &cache = nullptr,
+         const std::string &compression_type = "") {
   std::shared_ptr<TFRecordDataset> ds;
   if constexpr (std::is_same<T, std::nullptr_t>::value || std::is_same<T, std::shared_ptr<SchemaObj>>::value) {
     std::shared_ptr<SchemaObj> schema_obj = schema;
     ds = std::make_shared<TFRecordDataset>(VectorStringToChar(dataset_files), std::move(schema_obj),
                                            VectorStringToChar(columns_list), num_samples, shuffle, num_shards, shard_id,
-                                           shard_equal_rows, cache);
+                                           shard_equal_rows, cache, StringToChar(compression_type));
   } else {
     std::string schema_path = schema;
     if (!schema_path.empty()) {
@@ -5510,7 +5545,7 @@ TFRecord(const std::vector<std::string> &dataset_files, const T &schema = nullpt
     }
     ds = std::make_shared<TFRecordDataset>(VectorStringToChar(dataset_files), StringToChar(schema_path),
                                            VectorStringToChar(columns_list), num_samples, shuffle, num_shards, shard_id,
-                                           shard_equal_rows, cache);
+                                           shard_equal_rows, cache, StringToChar(compression_type));
   }
   return ds;
 }

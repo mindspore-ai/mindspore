@@ -121,8 +121,8 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCelebA) {
   std::shared_ptr<TensorOperation> operation6 = std::make_shared<vision::GaussianBlurOperation>(coordinates, sigma);
   std::shared_ptr<TensorOperation> operation7 = std::make_shared<vision::MixUpBatchOperation>(1.0);
   std::shared_ptr<TensorOperation> operation8 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
-  std::shared_ptr<TensorOperation> operation9 = std::make_shared<vision::NormalizePadOperation>(mean, std, "float",
-                                                                                                true);
+  std::shared_ptr<TensorOperation> operation9 =
+    std::make_shared<vision::NormalizePadOperation>(mean, std, "float", true);
   std::shared_ptr<TensorOperation> operation10 =
     std::make_shared<vision::PadOperation>(padding, fill_value, BorderType::kConstant);
   std::shared_ptr<TensorOperation> operation11 = std::make_shared<vision::RescaleOperation>(1.0, 0.5);
@@ -433,6 +433,7 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTFRecord) {
   int32_t shard_id = 0;
   bool shard_equal_rows = false;
   std::shared_ptr<DatasetCache> cache = nullptr;
+  std::string compression_type = "";
   std::vector<std::string> columns_list = {};
   std::vector<std::string> dataset_files = {"./data/dataset/testTFTestAllTypes/test.data"};
 
@@ -442,7 +443,7 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTFRecord) {
 
   std::shared_ptr<DatasetNode> ds =
     std::make_shared<TFRecordNode>(dataset_files, schema, columns_list, num_samples, ShuffleMode::kFiles, num_shards,
-                                   shard_id, shard_equal_rows, cache);
+                                   shard_id, shard_equal_rows, cache, compression_type);
   ds = std::make_shared<ShuffleNode>(ds, 10000, true);
   std::vector<std::string> input_columns = {"col_sint16", "col_sint32", "col_sint64", "col_float",
                                             "col_1d",     "col_2d",     "col_3d",     "col_binary"};

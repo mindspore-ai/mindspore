@@ -37,7 +37,8 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \note Parameter 'schema' is the path to the schema file
   TFRecordNode(const std::vector<std::string> &dataset_files, const std::string &schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, const std::shared_ptr<DatasetCache> &cache)
+               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, const std::shared_ptr<DatasetCache> &cache,
+               const std::string &compression_type)
       : NonMappableSourceNode(cache),
         dataset_files_(dataset_files),
         schema_path_(schema),
@@ -46,7 +47,8 @@ class TFRecordNode : public NonMappableSourceNode {
         shuffle_(shuffle),
         num_shards_(num_shards),
         shard_id_(shard_id),
-        shard_equal_rows_(shard_equal_rows) {
+        shard_equal_rows_(shard_equal_rows),
+        compression_type_(compression_type) {
     // Update the num_shards_ in global context. this number is only used for now by auto_num_worker_pass. User
     // discretion is advised. Auto_num_worker_pass is currently an experimental feature which can still work if the
     // num_shards_ isn't 100% correct. The reason behind is for now, PreBuildSampler doesn't offer a way to return
@@ -58,7 +60,8 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \note Parameter 'schema' is shared pointer to Schema object
   TFRecordNode(const std::vector<std::string> &dataset_files, const std::shared_ptr<SchemaObj> &schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, const std::shared_ptr<DatasetCache> &cache)
+               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, const std::shared_ptr<DatasetCache> &cache,
+               const std::string &compression_type)
       : NonMappableSourceNode(cache),
         dataset_files_(dataset_files),
         schema_obj_(schema),
@@ -67,7 +70,8 @@ class TFRecordNode : public NonMappableSourceNode {
         shuffle_(shuffle),
         num_shards_(num_shards),
         shard_id_(shard_id),
-        shard_equal_rows_(shard_equal_rows) {}
+        shard_equal_rows_(shard_equal_rows),
+        compression_type_(compression_type) {}
 
   /// \brief Destructor
   ~TFRecordNode() override = default;
@@ -164,6 +168,11 @@ class TFRecordNode : public NonMappableSourceNode {
   /// Check and return if there exists invalid tfrecord files in the file list
   Status ValidateTFRecordFiles(const std::vector<std::string> &filenames);
 
+  /// Check and return if compression type is invalid or number of files in dataset_files is less than num_shards
+  Status ValidateTFRecordCompressionType(const std::string &compression_type,
+                                         const std::vector<std::string> &dataset_files, int32_t num_shards,
+                                         int64_t num_samples);
+
   /// Record large tf file and log a warning.
   void CheckLargeFile(const std::string &filename, std::ifstream *reader);
 
@@ -176,6 +185,7 @@ class TFRecordNode : public NonMappableSourceNode {
   int32_t num_shards_;
   int32_t shard_id_;
   bool shard_equal_rows_;
+  std::string compression_type_;
 
   static std::unordered_set<std::string> large_files_;
 };

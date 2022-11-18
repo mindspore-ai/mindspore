@@ -23,6 +23,7 @@ from functools import wraps
 import numpy as np
 
 from mindspore._c_expression import typing
+from mindspore import log as logger
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_gnn_list_of_pair_or_ndarray, \
@@ -583,6 +584,25 @@ def check_tfrecorddataset(method):
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_list, param_dict, list)
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        compression_type = param_dict.get('compression_type')
+        if compression_type is not None and compression_type not in ['', 'ZLIB', 'GZIP']:
+            raise ValueError("Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP', \
+                             but got '" + str(compression_type) + "'.")
+        if compression_type is not None and compression_type in ['ZLIB', 'GZIP']:
+            if param_dict.get('num_shards') is not None and ((isinstance(dataset_files, str) and \
+                param_dict.get('num_shards') > 1) or (isinstance(dataset_files, list) and \
+                len(dataset_files) < param_dict.get('num_shards'))):
+                num_files = len(dataset_files) if isinstance(dataset_files, list) else 1
+                act_num_shard = param_dict.get('num_shards') if param_dict.get('num_shards') is not None else 1
+                raise ValueError("When compression_type is provided, the number of dataset files cannot be less " +
+                                 "than num_shards, but the actual number of files is " + str(num_files) +
+                                 " and actual num_shards is " + str(act_num_shard) + ".")
+            if param_dict.get('num_samples') is None or param_dict.get('num_samples') <= 0:
+                raise ValueError("When compression_type is provided, num_samples must be provided and > 0, but got " +
+                                 str(param_dict.get('num_samples')) + " for num_samples.")
+            if param_dict.get('shard_equal_rows') is None or not param_dict.get('shard_equal_rows'):
+                logger.warning("If compression_type is set, shard_equal_rows will be ignored.")
 
         check_sampler_shuffle_shard_options(param_dict)
 
