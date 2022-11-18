@@ -9,11 +9,23 @@ function PrePareLocal() {
   cp ./scripts/base_functions.sh ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/run_converter_ascend.sh ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/run_benchmark_ascend.sh ${benchmark_test_path} || exit 1
-  cp ./../${config_folder}/models_ascend.cfg ${benchmark_test_path} || exit 1
-  if [[ ${backend} =~ "arm" ]]; then
-      cp ${release_path}/linux_aarch64/cloud_fusion/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
+  if [[ ${backend} =~ "_cloud" ]]; then
+      cp ./../${config_folder}/models_ascend_cloud.cfg ${benchmark_test_path} || exit 1
   else
-      cp ${release_path}/centos_x86/cloud_fusion/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/models_ascend_lite.cfg ${benchmark_test_path} || exit 1
+  fi
+  if [[ ${backend} =~ "arm" ]]; then
+      if [[ ${backend} =~ "_cloud" ]]; then
+          cp ${release_path}/linux_aarch64/cloud_fusion/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
+      else
+          cp ${release_path}/linux_aarch64/ascend/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
+      fi
+  else
+      if [[ ${backend} =~ "_cloud" ]]; then
+          cp ${release_path}/centos_x86/cloud_fusion/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
+      else
+          cp ${release_path}/centos_x86/ascend/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
+      fi
   fi
   echo "Copy file success"
 }
@@ -25,11 +37,23 @@ function PrePareRemote() {
   scp ./scripts/ascend/run_converter_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/ascend/run_benchmark_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/base_functions.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
-  scp ./../${config_folder}/models_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
-  if [[ ${backend} =~ "arm" ]]; then
-      scp ${release_path}/linux_aarch64/cloud_fusion/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  if [[ ${backend} =~ "_cloud" ]]; then
+      scp ./../${config_folder}/models_ascend_cloud.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   else
-      scp ${release_path}/centos_x86/cloud_fusion/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      scp ./../${config_folder}/models_ascend_lite.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  fi
+  if [[ ${backend} =~ "arm" ]]; then
+      if [[ ${backend} =~ "_cloud" ]]; then
+          scp ${release_path}/linux_aarch64/cloud_fusion/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      else
+          scp ${release_path}/linux_aarch64/ascend/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      fi
+  else
+      if [[ ${backend} =~ "_cloud" ]]; then
+          scp ${release_path}/centos_x86/cloud_fusion/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      else
+          scp ${release_path}/centos_x86/ascend/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      fi
   fi
   echo "Copy file success"
 }
