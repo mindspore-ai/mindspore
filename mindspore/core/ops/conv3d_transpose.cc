@@ -265,8 +265,8 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension 'DHW' of input 'weight' must be "
                                << " equal to the shape of 'kernel size', but got 'DHW' of input 'weight': ("
                                << w_shape[kAxis2] << ", " << w_shape[kAxis3] << ", " << w_shape[kAxis4]
-                               << "), and 'kernel size': (" << kernel_size[kAxis0] << ", " << w_shape[kAxis1] << ", "
-                               << w_shape[kAxis2] << ").";
+                               << "), and 'kernel size': (" << kernel_size[kAxis0] << ", " << kernel_size[kAxis1]
+                               << ", " << kernel_size[kAxis2] << ").";
     }
 
     int64_t d_out = abstract::Shape::kShapeDimAny;
