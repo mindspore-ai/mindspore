@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.api import jit, jit_class
 
 grad_all = C.GradOperation(get_all=True)
 grad_by_list = C.GradOperation(get_by_list=True)
@@ -489,6 +490,47 @@ def test_grad_net_is_none():
         GradNetWrtX(Net())(x, y)
     except Exception as e:
         assert "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got" in str(e)
+
+
+def test_grad_call_self_net():
+    """
+    Feature: Custom cell use GradOperation.
+    Description: GradOperation does not support __call__ magic methods as object.
+    Expectation: Raise an error.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    @jit_class
+    class Net:
+        def __init__(self):
+            self.weight = Parameter([10, 10], name='v')
+
+        @jit
+        def __call__(self, x):
+            a = self.func(x)
+            out = self.func(a)
+            return out
+
+        def func(self, x):
+            self.weight = 2 * self.weight
+            return self.weight * x
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.grad_op = ops.GradOperation()
+            self.net = net
+
+        def construct(self, x):
+            grad_net = self.grad_op(self.net)
+            grad = grad_net(x)
+            return grad
+
+    x = Tensor(np.array([1.0, 1.0], dtype=np.float32))
+    try:
+        GradNetWrtX(Net())(x)
+    except Exception as e:
+        assert "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type object, "\
+               "but got object with jit_class type 'Net'." in str(e)
 
 
 def test_grad_missing_net():
