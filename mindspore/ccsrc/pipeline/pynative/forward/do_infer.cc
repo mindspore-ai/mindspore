@@ -22,6 +22,7 @@ namespace pynative {
 namespace {
 const mindspore::HashSet<std::string> kForceInferPrim = {prim::kTopK, prim::kDropoutGenMask,
                                                          prim::kStatelessDropOutGenMask};
+constexpr size_t kCacheThreshold = 10000;
 
 void SetAnyValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
@@ -287,6 +288,11 @@ void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_i
     for (size_t i = 0; i < num; ++i) {
       node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value_elems[i])] = abs_elems[i];
     }
+  }
+  // If Just call run op and have no cell or function running, node_abs_cache_ will not be clear.
+  // So, set a threshold for clear it.
+  if (only_single_op_run_ && node_abs_cache_.size() > kCacheThreshold) {
+    node_abs_cache_.clear();
   }
 }
 
