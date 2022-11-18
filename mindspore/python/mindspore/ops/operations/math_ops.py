@@ -7756,3 +7756,61 @@ class Cauchy(Primitive):
         validator.check_value_type('size', size, (list), self.name)
         for index, size_ in enumerate(size):
             validator.check_positive_int(size_, 'size[%d]' % index, self.name)
+
+
+class Ormqr(Primitive):
+    r"""
+    Computes the matrix-matrix multiplication of a product of Householder matrices with a general matrix.
+    Multiplies a(m, n) matrix C (given by other) with a matrix Q, where Q is represented using Householder
+    reflectors (x, tau), which is the output of torch.geqrf().
+
+    Args:
+        left (bool, optional): controls the order of multiplication. If true, compute op(Q)*C.
+                               If false, compute C*op(Q). Default: True.
+        transpose(bool, optional): controls whether the matrix Q is conjugate transposed or not.Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape: (*, mn, k) where mn equals to m or n depending on the left.
+          with float32, float64, complex64 and complex128 data type.
+        - **tau** (Tensor) - Tensor of shape (*, min(mn, k)) which have the same type as x.
+        - **other** (Tensor) - tensor of shape (*, m, n) where * is zero or more batch dimensions.
+
+    Outputs:
+        - **y** (Tensor) - the output Tensor.
+
+    Raises:
+        TypeError: If `x` or `tau` or `other` is not Tensor.
+        TypeError: If dtype of `x` or `tau` or `other` is not one of: float64, float32, complex64, complex128.
+        ValueError: If `x` or `other` is less than 2D.
+        ValueError: If rank(x) - rank(tau) != 1.
+        ValueError: If tau.shape[:-2] != x.shape[:-2]
+        ValueError: If other.shape[:-2] != x.shape[:-2]
+        ValueError: If left == true, other.shape[-2] < tau.shape[-1].
+        ValueError: If left == true, other.shape[-2] != x.shape[-2].
+        ValueError: If left == false, other.shape[-1] < tau.shape[-1].
+        ValueError: If left == false, other.shape[-1] != x.shape[-2].
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62]]), mindspore.float32)
+        >>> tau = Tensor(np.array([1.55, 1.94, 3.0]), mindspore.float32)
+        >>> other = Tensor(np.array([[-114.6, 10.9, 1.1],
+                                     [-0.304, 38.07, 69.38],
+                                     [-0.45, -0.17, 62]]), mindspore.float32)
+        >>> net = ops.Ormqr()
+        >>> y = net(x, tau, other)
+        >>> print(y)
+        [[  63.82713   -13.823125 -116.28614 ]
+         [ -53.659264  -28.157839  -70.42702 ]
+         [ -79.54292    24.00183   -41.34253 ]]
+    """
+    @prim_attr_register
+    def __init__(self, left=True, transpose=False):
+        """Initialize Ormqr"""
+        self.init_prim_io_names(inputs=['x', 'tau', 'other'], outputs=['y'])
+        self.left = validator.check_value_type('left', left, [bool], self.name)
+        self.transpose = validator.check_value_type('transpose', transpose, [bool], self.name)
+        self.add_prim_attr('left', self.left)
+        self.add_prim_attr('transpose', self.transpose)
