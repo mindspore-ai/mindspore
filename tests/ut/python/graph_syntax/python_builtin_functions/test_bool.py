@@ -20,7 +20,7 @@ from mindspore import jit, context, Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_fallback_bool_with_input_tensor():
+def test_fallback_bool_with_input_tensor1():
     """
     Feature: JIT Fallback
     Description: Test bool() in graph mode with tensor input.
@@ -183,5 +183,19 @@ def test_fallback_bool_with_type_input():
     @jit
     def foo():
         return bool(int)
+
+    assert foo()
+
+
+def test_fallback_bool_with_input_tensor2():
+    """
+    Feature: JIT Fallback
+    Description: Test bool() in graph mode with tensor input.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = Tensor([10])
+        return bool(x)
 
     assert foo()

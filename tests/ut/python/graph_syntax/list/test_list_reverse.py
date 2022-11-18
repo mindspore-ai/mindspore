@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_list_reverse """
-import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
 
@@ -21,11 +20,6 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_reverse_1():
     """
     Feature: list reverse.
@@ -41,11 +35,6 @@ def test_list_reverse_1():
     assert np.all(out == (4, 3, 2, 1))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_reverse_2():
     """
     Feature: list reverse.
@@ -62,11 +51,6 @@ def test_list_reverse_2():
     assert np.all(out == (4, 20, ('bb', '2', 3), 'a'))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_reverse_3():
     """
     Feature: list reverse.
@@ -84,11 +68,6 @@ def test_list_reverse_3():
     assert np.all(out == (Tensor(1), (1, 2), Tensor(1), 4, 20, ('Michael', 'Bob', '2'), 'a'))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_reverse_4():
     """
     Feature: list reverse.

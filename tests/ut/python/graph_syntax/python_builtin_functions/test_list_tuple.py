@@ -207,3 +207,35 @@ def test_fallback_tuple_with_input_number():
     with pytest.raises(TypeError) as ex:
         foo()
     assert "object is not iterable" in str(ex.value)
+
+
+def test_builtin_function_list_with_non_constant_tensor():
+    """
+    Feature: Graph list function.
+    Description: When the input to list() is non constant tensor, list function will return correct result.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return list(x)
+
+    ret = foo(Tensor([[1, 2, 3], [4, 5, 6]]))
+    assert len(ret) == 2
+    assert np.all(ret[0].asnumpy() == np.array([1, 2, 3]))
+    assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))
+
+
+def test_builtin_function_tuple_with_non_constant_tensor():
+    """
+    Feature: Graph tuple function.
+    Description: When the input to tuple() is non constant tensor, list function will return correct result.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        return tuple(x)
+
+    ret = foo(Tensor([[1, 2, 3], [4, 5, 6]]))
+    assert len(ret) == 2
+    assert np.all(ret[0].asnumpy() == np.array([1, 2, 3]))
+    assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))

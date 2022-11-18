@@ -20,11 +20,6 @@ from mindspore import jit, context, Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_1():
     """
     Feature: list insert.
@@ -40,11 +35,6 @@ def test_list_insert_1():
     assert np.all(list_insert().asnumpy() == np.array([2, 1, 3, 4]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_2():
     """
     Feature: list insert.
@@ -60,10 +50,6 @@ def test_list_insert_2():
     assert np.all(list_insert().asnumpy() == np.array([1, 3, 4, 2]))
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_3():
     """
     Feature: list insert.
@@ -79,10 +65,6 @@ def test_list_insert_3():
     assert np.all(list_insert().asnumpy() == np.array([1, 3, 2, 4]))
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_4():
     """
     Feature: list insert.
@@ -98,10 +80,6 @@ def test_list_insert_4():
     assert np.all(list_insert().asnumpy() == np.array([2, 1, 3, 4]))
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_5():
     """
     Feature: list insert.
@@ -119,10 +97,6 @@ def test_list_insert_5():
     assert np.all(res == np.array((2, Tensor([1]), 9, Tensor([3]), Tensor([4]))))
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_pop_1():
     """
     Feature: list insert and pop.
@@ -144,10 +118,6 @@ def test_list_insert_pop_1():
     assert res_z == 9
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_pop_2():
     """
     Feature: list insert.
@@ -166,10 +136,6 @@ def test_list_insert_pop_2():
     assert res_y == 3
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_pop_append_1():
     """
     Feature: list insert, pop and append.
@@ -193,10 +159,6 @@ def test_list_insert_pop_append_1():
     assert res_z == 3
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_insert_type_error():
     """
     Feature: list insert.

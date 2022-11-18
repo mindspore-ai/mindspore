@@ -145,24 +145,3 @@ def test_fallback_tuple_with_input_constant_tensor_2():
     assert np.allclose(out[0].asnumpy(), np.array([1, 2]))
     assert isinstance(out[1], Tensor)
     assert np.allclose(out[1].asnumpy(), np.array([3, 4]))
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_builtin_function_tuple_with_non_constant_tensor():
-    """
-    Feature: Graph tuple function.
-    Description: When the input to tuple() is non constant tensor, list function will return correct result.
-    Expectation: No exception.
-    """
-    @jit
-    def foo(x):
-        return tuple(x)
-
-    ret = foo(Tensor([[1, 2, 3], [4, 5, 6]]))
-    assert len(ret) == 2
-    assert np.all(ret[0].asnumpy() == np.array([1, 2, 3]))
-    assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))

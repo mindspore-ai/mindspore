@@ -23,11 +23,6 @@ from mindspore.common.api import _cell_graph_executor
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_1():
     """
     Feature: graph raise.
@@ -46,11 +41,6 @@ def test_raise_1():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_2():
     """
     Feature: graph raise.
@@ -69,11 +59,6 @@ def test_raise_2():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_3():
     """
     Feature: graph raise.
@@ -92,11 +77,6 @@ def test_raise_3():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_4():
     """
     Feature: graph raise.
@@ -116,11 +96,6 @@ def test_raise_4():
         assert res == 9
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_5():
     """
     Feature: graph raise.
@@ -137,11 +112,6 @@ def test_raise_5():
         _cell_graph_executor.compile(net, inp)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_6():
     """
     Feature: graph raise.
@@ -169,11 +139,6 @@ def test_raise_6():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_7():
     """
     Feature: graph raise.
@@ -192,11 +157,6 @@ def test_raise_7():
     assert "Not expected value, x is [1, 3, 5, 7, 9]" in str(raise_info_7.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_8():
     """
     Feature: graph raise.
@@ -222,11 +182,6 @@ def test_raise_8():
     assert "Not expected value, x is [1, 3, 5, 7]" in str(raise_info_8.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_9():
     """
     Feature: graph raise.
@@ -245,11 +200,6 @@ def test_raise_9():
     assert "The input can not be 11." in str(raise_info_9.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_10():
     """
     Feature: graph raise by JIT Fallback.
@@ -267,11 +217,6 @@ def test_raise_10():
     assert "The input can not be 11." in str(raise_info_10.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_11():
     """
     Feature: graph raise.
@@ -289,11 +234,6 @@ def test_raise_11():
     assert "('The input can not be ', 11, '.')" in str(raise_info_11.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_12():
     """
     Feature: graph raise by JIT Fallback.
@@ -314,11 +254,6 @@ def test_raise_12():
     assert "The var name is x, it can not be 1." in str(raise_info_12.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_13():
     """
     Feature: graph raise by JIT Fallback.
@@ -339,11 +274,6 @@ def test_raise_13():
     assert "The input should not be Tensor(1)." in str(raise_info_13.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_14():
     """
     Feature: graph raise by JIT Fallback.
@@ -364,11 +294,6 @@ def test_raise_14():
     assert "Unsupported exception type: UserWarning." in str(raise_info_14.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_15():
     """
     Feature: graph raise by JIT Fallback.
@@ -390,11 +315,6 @@ def test_raise_15():
     assert "The list index out of range." in str(raise_info_15.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_16():
     """
     Feature: graph raise by JIT Fallback.
@@ -415,11 +335,6 @@ def test_raise_16():
     assert "The input should not be list." in str(raise_info_16.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_17():
     """
     Feature: graph raise by JIT Fallback.
@@ -440,11 +355,6 @@ def test_raise_17():
     assert "The name should not be name_a." in str(raise_info_17.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_18():
     """
     Feature: graph raise by JIT Fallback.
@@ -468,11 +378,6 @@ def test_raise_18():
     assert "The input should not be 1." in str(raise_info_18.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_19():
     """
     Feature: graph raise.
@@ -491,11 +396,6 @@ def test_raise_19():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_20():
     """
     Feature: graph raise.
@@ -514,11 +414,6 @@ def test_raise_20():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_21():
     """
     Feature: graph raise.
@@ -537,11 +432,6 @@ def test_raise_21():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_tensor_1():
     """
     Feature: graph raise by JIT Fallback.
@@ -560,11 +450,6 @@ def test_raise_tensor_1():
     assert "Currently only supports raise in constant scenarios." in str(raise_info_tensor_1.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_tensor_2():
     """
     Feature: graph raise by JIT Fallback.
@@ -582,11 +467,6 @@ def test_raise_tensor_2():
     assert "Currently only supports raise in constant scenarios." in str(raise_info_tensor_2.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_list():
     """
     Feature: graph raise by JIT Fallback.
@@ -605,11 +485,6 @@ def test_raise_list():
     assert "[1, 2, 3, 4]" in str(raise_info_list.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_tuple():
     """
     Feature: graph raise by JIT Fallback.
@@ -628,11 +503,6 @@ def test_raise_tuple():
     assert "(1, 2, 3, 4)" in str(raise_info_tuple.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_string_tuple():
     """
     Feature: graph raise by JIT Fallback.
@@ -651,11 +521,6 @@ def test_raise_string_tuple():
     assert "'test_string_tuple', (1, 2, 3, 4)" in str(raise_info_string_tuple.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_string_list():
     """
     Feature: graph raise by JIT Fallback.
@@ -674,11 +539,6 @@ def test_raise_string_list():
     assert "'test_string_list', [1, 2, 3, 4]" in str(raise_info_string_list.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_float():
     """
     Feature: graph raise by JIT Fallback.
@@ -697,11 +557,6 @@ def test_raise_float():
     assert "1.100000" in str(raise_info_float.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_nested_list():
     """
     Feature: graph raise by JIT Fallback.
@@ -721,11 +576,6 @@ def test_raise_nested_list():
     assert "([1, 2.000000], [[1, 2.000000], [1, 2.000000]])" in str(raise_info_nested_list.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_nested_tuple():
     """
     Feature: graph raise by JIT Fallback.
@@ -764,11 +614,6 @@ def test_raise_dict():
     assert "{'a': 1, 'b': 2}" in str(raise_info_dict.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_raise_joinedstr_tensor():
     """
     Feature: graph raise by JIT Fallback.
