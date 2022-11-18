@@ -7110,12 +7110,12 @@ def igamma(input, other):
     If we define `input` as `a` and `other` as `x`, the lower regularized incomplete Gamma function is defined as:
 
     .. math::
-        \(P(a, x) = Gamma(a, x) / Gamma(a) = 1 - Q(a, x)\)
+        P(a, x) = Gamma(a, x) / Gamma(a) = 1 - Q(a, x)
 
     where
 
     .. math::
-        \(Gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt\)
+        Gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
 
     is the lower incomplete Gamma function.
 
@@ -7159,12 +7159,12 @@ def igammac(input, other):
     If we define `input` as `a` and `other` as `x`, the upper regularized incomplete Gamma function is defined as:
 
     .. math::
-        \(Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)\)
+        Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)
 
     where
 
     .. math::
-        \(Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt\)
+        Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt
 
     is the upper incomplete Gama function.
 

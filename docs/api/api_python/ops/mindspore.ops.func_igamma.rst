@@ -7,12 +7,12 @@ mindspore.ops.igamma
     如果我们将 `input` 比作 `a` ， `other` 比作 `x` ，则正规化的下层不完全伽马函数可以表示成：
 
     .. math::
-        P(a, x) = gamma(a, x) / Gamma(a) = 1 - Q(a, x)
+        P(a, x) = Gamma(a, x) / Gamma(a) = 1 - Q(a, x)
 
     其中，
 
     .. math::
-        gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
+        Gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
 
     为下层不完全伽马函数。
 
