@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test function jvp in pynative mode """
+"""test function jvp in graph mode"""
 
 import numpy as np
 import pytest
@@ -22,7 +22,6 @@ from mindspore import Tensor
 from mindspore import jit
 from mindspore.ops.functional import jvp
 
-context.set_context(mode=context.PYNATIVE_MODE)
 
 class SingleInputSingleOutputNet(nn.Cell):
     def construct(self, x):
@@ -44,15 +43,17 @@ class MultipleInputMultipleOutputNet(nn.Cell):
         return 2*x, y**3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_single_input_single_output_default_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_single_input_single_output_default_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with single input, single output and default v in pynative mode.
+    Description: Test jvp with single input, single output and default v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = SingleInputSingleOutputNet()
@@ -66,12 +67,14 @@ def test_jvp_single_input_single_output_default_v_pynative():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_single_input_single_output_custom_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_single_input_single_output_custom_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with single input, single output and custom v in pynative mode.
+    Description: Test jvp with single input, single output and custom v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     net = SingleInputSingleOutputNet()
@@ -82,15 +85,17 @@ def test_jvp_single_input_single_output_custom_v_pynative():
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_single_input_multiple_outputs_default_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_single_input_multiple_outputs_default_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with single input, multiple outputs and default v in pynative mode.
+    Description: Test jvp with single input, multiple outputs and default v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = SingleInputMultipleOutputNet()
@@ -112,12 +117,14 @@ def test_jvp_single_input_multiple_outputs_default_v_pynative():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_single_input_multiple_outputs_custom_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_single_input_multiple_outputs_custom_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with single input, multiple outputs and custom v in pynative mode.
+    Description: Test jvp with single input, multiple outputs and custom v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     net = SingleInputMultipleOutputNet()
@@ -136,15 +143,62 @@ def test_jvp_single_input_multiple_outputs_custom_v_pynative():
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_multiple_inputs_single_output_default_v_graph(mode):
+    """
+    Features: Function jvp
+    Description: Test jvp with multiple inputs, single output and default v in graph mode.
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+    net = MultipleInputSingleOutputNet()
+    expect_primal = Tensor(np.array([[5, 10], [15, 20]]).astype(np.float32))
+    expect_grad = Tensor(np.array([[5, 5], [5, 5]]).astype(np.float32))
+    primal, grad = jvp(net, (x, y), (v, v))
+    assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
+    assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_multiple_inputs_multiple_outputs_default_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_multiple_inputs_single_output_custom_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with multiple inputs, multiple outputs and default v in pynative mode.
+    Description: Test jvp with multiple inputs, single output and custom v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    v1 = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+    v2 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    net = MultipleInputSingleOutputNet()
+    expect_primal = Tensor(np.array([[5, 10], [15, 20]]).astype(np.float32))
+    expect_grad = Tensor(np.array([[5, 8], [11, 14]]).astype(np.float32))
+    primal, grad = jvp(net, (x, y), (v1, v2))
+    assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
+    assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_multiple_inputs_multiple_outputs_default_v_graph(mode):
+    """
+    Features: Function jvp
+    Description: Test jvp with multiple inputs, multiple outputs and default v in graph mode.
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
@@ -167,12 +221,14 @@ def test_jvp_multiple_inputs_multiple_outputs_default_v_pynative():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_multiple_inputs_multiple_outputs_custom_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_multiple_inputs_multiple_outputs_custom_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with multiple inputs, multiple outputs and custom v in pynative mode.
+    Description: Test jvp with multiple inputs, multiple outputs and custom v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v1 = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
@@ -193,56 +249,17 @@ def test_jvp_multiple_inputs_multiple_outputs_custom_v_pynative():
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_multiple_inputs_single_output_default_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_jit_function_single_input_single_output_default_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with multiple inputs, single output and default v in pynative mode.
+    Description: Test jvp with @jit decorated function, single input, single output and default v in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-    net = MultipleInputSingleOutputNet()
-    expect_primal = Tensor(np.array([[5, 10], [15, 20]]).astype(np.float32))
-    expect_grad = Tensor(np.array([[5, 5], [5, 5]]).astype(np.float32))
-    primal, grad = jvp(net, (x, y), (v, v))
-    assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
-    assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_jvp_multiple_inputs_single_output_custom_v_pynative():
-    """
-    Features: Function jvp
-    Description: Test jvp with multiple inputs, single output and custom v in pynative mode.
-    Expectation: No exception.
-    """
-    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    v1 = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-    v2 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    net = MultipleInputSingleOutputNet()
-    expect_primal = Tensor(np.array([[5, 10], [15, 20]]).astype(np.float32))
-    expect_grad = Tensor(np.array([[5, 8], [11, 14]]).astype(np.float32))
-    primal, grad = jvp(net, (x, y), (v1, v2))
-    assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
-    assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_jvp_jit_function_single_input_single_output_default_v_pynative():
-    """
-    Features: Function jvp
-    Description: Test jvp with @jit decorated function, single input, single output and default v in pynative mode.
-    Expectation: No exception.
-    """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = SingleInputSingleOutputNet()
@@ -259,15 +276,17 @@ def test_jvp_jit_function_single_input_single_output_default_v_pynative():
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_input_function_single_input_single_output_default_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_input_function_single_input_single_output_default_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with function, single input, single output and default v in pynative mode.
+    Description: Test jvp with function, single input, single output and default v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
 
@@ -281,15 +300,17 @@ def test_jvp_input_function_single_input_single_output_default_v_pynative():
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_construct_single_input_single_output_default_v_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_construct_single_input_single_output_default_v_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with Cell construct, single input, single output and default v in pynative mode.
+    Description: Test jvp with Cell construct, single input, single output and default v in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
 
@@ -313,13 +334,14 @@ def test_jvp_construct_single_input_single_output_default_v_pynative():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jvp_multiple_outputs_with_has_aux_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jvp_multiple_outputs_with_has_aux_graph(mode):
     """
     Features: Function jvp
-    Description: Test jvp with multiple inputs, multiple outputs with set_aux as True in pynative mode.
+    Description: Test jvp with multiple inputs, multiple outputs with set_aux as True in graph mode.
     Expectation: No exception.
     """
-
+    context.set_context(mode=mode)
     def fn(x, y):
         return 2 * x + y, y ** 3
 
@@ -330,8 +352,8 @@ def test_jvp_multiple_outputs_with_has_aux_pynative():
     y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     expect_primal = Tensor(np.array([[3, 6], [9, 12]]).astype(np.float32))
-    expect_grad = Tensor(np.array([[3, 3], [3, 3]]).astype(np.float32))
     expect_aux = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
+    expect_grad = Tensor(np.array([[3, 3], [3, 3]]).astype(np.float32))
     primal, jvp_out, aux = jvp(fn2, (x, y), (v, v), has_aux=True)
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
     assert np.allclose(aux.asnumpy(), expect_aux.asnumpy())

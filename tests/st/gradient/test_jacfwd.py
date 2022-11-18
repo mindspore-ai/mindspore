@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test function jacrev in pynative mode"""
+"""test function jacfwd in graph mode"""
 import numpy as np
 import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import jit
-from mindspore.ops import jacrev
-
-context.set_context(mode=context.PYNATIVE_MODE)
+from mindspore.ops import jacfwd
 
 
 class SingleInputSingleOutputNet(nn.Cell):
@@ -54,56 +52,62 @@ def iteration_jac_function(x, y, z):
 
 @jit
 def jac_wrap_with_jit_function(x, y, z):
-    output = jacrev(function, has_aux=True)(x, y, z)
+    output = jacfwd(function, has_aux=True)(x, y, z)
     return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_single_input_single_output_cell_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_single_input_single_output_cell_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev with single input and single output net in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd with single input and single output net in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     net = SingleInputSingleOutputNet()
     expect_jac = np.array([[[[3, 0], [0, 0]], [[0, 12], [0, 0]]],
                            [[[0, 0], [27, 0]], [[0, 0], [0, 48]]]]).astype(np.float32)
-    jac = jacrev(net)(x)
+    jac = jacfwd(net)(x)
     assert np.allclose(jac.asnumpy(), expect_jac)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_single_input_multiple_outputs_cell_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_single_input_multiple_outputs_cell_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev with single input and multiple outputs net in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd with single input and multiple outputs net in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     net = SingleInputMultipleOutputsNet()
     expect_jac_0 = np.array([[[[3, 0], [0, 0]], [[0, 12], [0, 0]]],
                              [[[0, 0], [27, 0]], [[0, 0], [0, 48]]]]).astype(np.float32)
     expect_jac_1 = np.array([[[[2, 0], [0, 0]], [[0, 2], [0, 0]]],
                              [[[0, 0], [2, 0]], [[0, 0], [0, 2]]]]).astype(np.float32)
-    jac = jacrev(net)(x)
+    jac = jacfwd(net)(x)
     assert np.allclose(jac[0].asnumpy(), expect_jac_0)
     assert np.allclose(jac[1].asnumpy(), expect_jac_1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_multiple_inputs_single_output_cell_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_multiple_inputs_single_output_cell_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev with multiple inputs and single output net in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd with multiple inputs and single output net in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
@@ -112,22 +116,24 @@ def test_jac_multiple_inputs_single_output_cell_pynative():
                              [[[0, 0], [15, 0]], [[0, 0], [0, -4]]]]).astype(np.float32)
     expect_jac_1 = np.array([[[[-2, 0], [0, 0]], [[0, 6], [0, 0]]],
                              [[[0, 0], [-3, 0]], [[0, 0], [0, 8]]]]).astype(np.float32)
-    jac = jacrev(net, grad_position=(1, 2))(x, y, z)
+    jac = jacfwd(net, grad_position=(1, 2))(x, y, z)
     assert isinstance(jac, tuple)
     assert len(jac) == 2
     assert np.allclose(jac[0].asnumpy(), expect_jac_0)
     assert np.allclose(jac[1].asnumpy(), expect_jac_1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_multiple_inputs_multiple_outputs_cell_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_multiple_inputs_multiple_outputs_cell_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev with multiple inputs and multiple outputs net in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd with multiple inputs and multiple outputs net in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
@@ -140,7 +146,7 @@ def test_jac_multiple_inputs_multiple_outputs_cell_pynative():
                              [[[0, 0], [15, 0]], [[0, 0], [0, -4]]]]).astype(np.float32)
     expect_jac_3 = np.array([[[[-2, 0], [0, 0]], [[0, 6], [0, 0]]],
                              [[[0, 0], [-3, 0]], [[0, 0], [0, 8]]]]).astype(np.float32)
-    jac = jacrev(net, grad_position=(1, 2))(x, y, z)
+    jac = jacfwd(net, grad_position=(1, 2))(x, y, z)
     assert isinstance(jac, tuple)
     assert len(jac) == 2
     assert np.allclose(jac[0][0].asnumpy(), expect_jac_0)
@@ -149,15 +155,17 @@ def test_jac_multiple_inputs_multiple_outputs_cell_pynative():
     assert np.allclose(jac[1][1].asnumpy(), expect_jac_3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_wrap_with_jit_function_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_wrap_with_jit_function_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev warpped with @jit decorated function in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd warpped with @jit decorated function in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
@@ -169,15 +177,17 @@ def test_jac_wrap_with_jit_function_pynative():
     assert np.allclose(aux.asnumpy(), expect_aux)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_with_grad_position_twice_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_with_grad_position_twice_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev with function setting grad_position twice in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd with function setting grad_position twice in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[1, 3], [5, 7]]).astype(np.float32))
     z = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
@@ -186,22 +196,24 @@ def test_jac_with_grad_position_twice_pynative():
     expect_jac_1 = np.array([[[[1, 0], [0, 0]], [[0, 2], [0, 0]]],
                              [[[0, 0], [3, 0]], [[0, 0], [0, 4]]]]).astype(np.float32)
     net = MultipleInputsSingleOutputNet()
-    jac1 = jacrev(net, grad_position=0)(x, y, z)
-    jac2 = jacrev(net, grad_position=(0, 1))(x, y, z)
+    jac1 = jacfwd(net, grad_position=0)(x, y, z)
+    jac2 = jacfwd(net, grad_position=(0, 1))(x, y, z)
 
     assert np.allclose(jac1.asnumpy(), expect_jac_0)
     assert np.allclose(jac2[1].asnumpy(), expect_jac_1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_with_has_aux_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_with_has_aux_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev with Cell setting grad_position in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd with Cell setting grad_position in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     z = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
@@ -209,21 +221,22 @@ def test_jac_with_has_aux_pynative():
                            [[[0, 0], [6, 0]], [[0, 0], [0, 8]]]]).astype(np.float32)
     expect_aux = np.array([[1, 4], [9, 16]]).astype(np.float32)
     net = MultipleInputsMultipleOutputsNet()
-    jac, aux = jacrev(net, grad_position=0, has_aux=True)(x, y, z)
+    jac, aux = jacfwd(net, grad_position=0, has_aux=True)(x, y, z)
     assert np.allclose(jac.asnumpy(), expect_jac)
     assert np.allclose(aux.asnumpy(), expect_aux)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jac_with_function_has_aux_pynative():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jac_with_function_has_aux_graph(mode):
     """
-    Features: Function jacrev.
-    Description: Test ops.jacrev with function setting grad_position in pynative mode.
+    Features: Function jacfwd.
+    Description: Test ops.jacfwd with function setting grad_position in graph mode.
     Expectation: No exception.
     """
-
+    context.set_context(mode=mode)
     def fn(x, y, z):
         return x ** 2 + y ** 2 + z ** 2, x * y * z
 
@@ -239,6 +252,6 @@ def test_jac_with_function_has_aux_pynative():
     expect_jac = np.array([[[[2, 0], [0, 0]], [[0, 4], [0, 0]]],
                            [[[0, 0], [6, 0]], [[0, 0], [0, 8]]]]).astype(np.float32)
     expect_aux = np.array([[1, 4], [9, 16]]).astype(np.float32)
-    jac, aux = jacrev(fn2, grad_position=0, has_aux=True)(x, y, z)
+    jac, aux = jacfwd(fn2, grad_position=0, has_aux=True)(x, y, z)
     assert np.allclose(jac.asnumpy(), expect_jac)
     assert np.allclose(aux.asnumpy(), expect_aux)
