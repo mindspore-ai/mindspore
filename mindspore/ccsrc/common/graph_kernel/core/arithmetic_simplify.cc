@@ -628,8 +628,6 @@ bool ArithmeticSimplify::DoArithmeticTrans(const inner::LiteGraphPtr &litegraph)
           // get the new node to replace
           inner::NodePtr alter_graph_node = cur_pattern->AlterGraph(para_to_ref, const_to_ref, *iter);
           (*iter)->ReplaceWith(alter_graph_node);
-          ops_list = litegraph->GetOrderedNodes();
-          iter = ops_list.rbegin();
           changed = true;
           break;
         }
@@ -637,6 +635,8 @@ bool ArithmeticSimplify::DoArithmeticTrans(const inner::LiteGraphPtr &litegraph)
     }
     if (!can_simplify) {
       ++iter;
+    } else {
+      break;
     }
   }
   return changed;
