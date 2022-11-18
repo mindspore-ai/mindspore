@@ -3731,7 +3731,7 @@ class ResizeBilinear(PrimitiveWithInfer):
 
 class UpsampleTrilinear3D(Primitive):
     r"""
-    Performs upsampling with trilinear interpolation across 3dims for 5dim inputs.
+    Performs upsampling with trilinear interpolation across 3dims for 5dim input Tensor.
 
     This operator scale up the volumetric input with specified `output_size` or `scales` factors,
     using trilinear upscaling algorithm.
@@ -3740,15 +3740,15 @@ class UpsampleTrilinear3D(Primitive):
         One of `scales` and `output_size` MUST be specified and it is an error if both are specified.
 
     Args:
-        output_size (Union[tuple[int], list[int]]):  A tuple or list of 3 int
+        output_size (Union[tuple[int], list[int]], optional):  A tuple or list of 3 int
             elements :math:`(output\_depth, output\_height, output\_width)`.
             Defaults to None. Only one of `scales` and `output_size` can be specified.
-        scales (Union[tuple[float], list[float]]): A tuple or list of 3 float
+        scales (Union[tuple[float], list[float]], optional): A tuple or list of 3 float
            elements :math:`(scale\_depth, scale\_height, scale\_width)`. Defaults to None.
-        align_corners (bool): An optional bool. Defaults to false.
-            If true, the input and output tensors are aligned by the center points of their corner pixels,
+        align_corners (bool, optional): An optional bool. Defaults to false.
+            If True, the input and output tensors are aligned by the center points of their corner pixels,
             preserving the values at the corner pixels.
-            If false, the input and output tensors are aligned by the corner points of their corner pixels,
+            If False, the input and output tensors are aligned by the corner points of their corner pixels,
             and the interpolation use edge value padding for out of boundary values.
 
     Inputs:
@@ -3760,8 +3760,8 @@ class UpsampleTrilinear3D(Primitive):
           Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: When `output_size` is not none and `output_size` is not list[int] or tuple[int].
-        TypeError: When `scales` is not none and `scales` is not list[float] or tuple[float].
+        TypeError: When `output_size` is not None and `output_size` is not list[int] or tuple[int].
+        TypeError: When `scales` is not None and `scales` is not list[float] or tuple[float].
         TypeError: If dtype of `x` is not in [float16, float32, float64].
         TypeError: If type of `align_corners` is not bool.
         ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
@@ -9469,9 +9469,10 @@ class TripletMarginLoss(Primitive):
     examples` respectively). The shapes of all input tensors should be
     :math:`(N, D)`.
 
-    The distance swap is described in detail in the paper `Learning shallow
-    convolutional feature descriptors with triplet losses` by
-    V. Balntas, E. Riba et al.
+    The distance swap is described in detail in the paper
+    `Learning local feature descriptors with triplets and shallow convolutional neural
+    networks <http://158.109.8.37/files/BRP2016.pdf>`_
+    by V. Balntas, E. Riba et al.
 
     The loss function for each sample in the mini-batch is:
 
@@ -9484,17 +9485,20 @@ class TripletMarginLoss(Primitive):
         d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
 
     Args:
-        p (int): The norm degree for pairwise distance. Default: 2.
-        eps (float): Default: 1e-06.
-        swap (bool): The distance swap is described in detail in the paper
-            `Learning shallow convolutional feature descriptors with triplet losses` by
-            V. Balntas, E. Riba et al. Default: "False".
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        p (int, optional): The norm degree for pairwise distance. Default: 2.
+        eps (float, optional): Default: 1e-06.
+        swap (bool, optional): The distance swap is described in detail in the paper
+            `Learning local feature descriptors with triplets and shallow convolutional neural networks`
+            by V. Balntas, E. Riba et al. Default: "False".
+        reduction (str, optional): Apply specific reduction method to the
+        output: 'none', 'mean', 'sum'. Default: "mean".
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
-        - **positive** (Tensor) - A sample belonging to the same category as x, with the same type and shape as `x`.
-        - **negative** (Tensor) - A sample belonging to the different class from x, with the same type and shape as `x`.
+        - **positive** (Tensor) - A sample belonging to the same category as x,
+          with the same type and shape as `x`.
+        - **negative** (Tensor) - A sample belonging to the different class from x,
+          with the same type and shape as `x`.
         - **margin** (Tensor) - Make a margin between the positive pair and the negative pair.
 
     Outputs:
@@ -9502,15 +9506,17 @@ class TripletMarginLoss(Primitive):
         Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If `x` or `positive` or 'negative' or 'margin' is not a Tensor.
+        TypeError: If `x` or `positive` or `negative` or `margin` is not a Tensor.
         TypeError: If dtype of `x` or `positive` or `negative` is not BasicType.
         TypeError: If dtype of `x`, `positive` and `negative` is not the same.
         TypeError: If `margin` is not float32.
         TypeError: If `p` is not an int.
         TypeError: If `eps` is not a float.
         TypeError: If `swap` is not a bool.
-        ValueError: If dimensions of input `x`, `positive` and `negative` are less than or equal to 1 at the same time.
-        ValueError: If the dimension of input `x` or `positive` or `negative` is bigger than or equal to 8.
+        ValueError: If dimensions of input `x`, `positive` and `negative` are
+          less than or equal to 1 at the same time.
+        ValueError: If the dimension of input `x` or `positive` or `negative`
+          is bigger than or equal to 8.
         ValueError: If length of shape of `margin` is not 0.
         ValueError: If shape of `x`, `positive` and `negative` cannot broadcast.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
@@ -9720,9 +9726,11 @@ class UpsampleNearest3D(Primitive):
     One of `output_size` or `scales` must be given, and cannot specify both.
 
     Args:
-        output_size (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
+        output_size (Union[tuple[int], list[int]], optional): A tuple or list of int
+            specifying the output volumetric size.
             Default: None.
-        scales (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
+        scales (Union[tuple[float], list[float]], optional): A tuple or list of float
+            specifying the upsampling factors.
             Default: None.
 
     Inputs:
@@ -9734,8 +9742,8 @@ class UpsampleNearest3D(Primitive):
           Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: When `output_size` is not none and `output_size` is not list[int] or tuple[int].
-        TypeError: When `scales` is not none and `scales` is not list[float] or tuple[float].
+        TypeError: When `output_size` is not None and `output_size` is not list[int] or tuple[int].
+        TypeError: When `scales` is not None and `scales` is not list[float] or tuple[float].
         TypeError: If dtype of `x` is not int [float16, float32, float64].
         ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
         ValueError: If any value of `scales` is negative or zero when `scales` is not empty.
