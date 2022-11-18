@@ -28,8 +28,8 @@ __global__ void SparseTensorToCSRSparseMatrixKernel(const IndiceType* x_indices_
                                                     int total_num,
                                                     int rank) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < total_num; i += blockDim.x * gridDim.x) {
-        out_row_indices_ptr[i] = static_cast<IndiceType>(__ldg(x_indices_ptr + i * rank + rank - 2));
-        out_col_indices_ptr[i] = static_cast<IndiceType>(__ldg(x_indices_ptr + i * rank + rank - 1));
+        out_row_indices_ptr[i] = x_indices_ptr[i * rank + rank - 2];
+        out_col_indices_ptr[i] = x_indices_ptr[i * rank + rank - 1];
         if (rank == 3) {
             IndiceType batch = x_indices_ptr[i * rank];
             MsAtomicMax(out_batch_pointers_ptr + batch + 1, i + 1);
