@@ -96,6 +96,7 @@ from .array_func import (
     space_to_batch_nd,
     batch_to_space_nd,
     range,
+    arange,
     select,
     one_hot,
     matrix_diag,
