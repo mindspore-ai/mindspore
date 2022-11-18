@@ -22,12 +22,12 @@ mindspore.nn.ELU
         - **alpha** (`float`) - ELU的alpha值，数据类型为浮点数。默认值：1.0。
 
     输入：
-        - **x** （Tensor） - 用于计算ELU的任意维度的Tensor，数据类型为float16或float32。
+        - **x** （Tensor） - 用于计算ELU的任意维度的Tensor，数据类型为float16，float32或float64。
 
     输出：
         Tensor，数据类型和shape与 `x` 相同。
 
     异常：
         - **TypeError** - `alpha` 不是浮点数。
-        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `x` 的数据类型既不是float16，float32也不是float64。
         - **ValueError** - `alpha` 不等于1.0。
