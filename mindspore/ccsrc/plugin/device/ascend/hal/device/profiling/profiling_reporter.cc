@@ -36,10 +36,10 @@ constexpr uint32_t kProfilingModelEndLogId = 1;
 // GE task info task_type
 enum class TaskInfoTaskType {
   MSPROF_AI_CORE = 0,
-  MSPROF_AI_CPU,
-  MSPROF_AIV,
-  MSPROF_RTS,
-  MSPROF_HCCL,
+  MSPROF_AI_CPU = 1,
+  MSPROF_AIV = 2,
+  MSPROF_HCCL = 10,
+  MSPROF_RTS = 11,
   MSPROF_UNKNOWN_TYPE = 1000,
 };
 
