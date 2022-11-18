@@ -258,22 +258,30 @@ class DynamicAssign(PrimitiveWithCheck):
 
 class PadAndShift(PrimitiveWithCheck):
     """
-    Pad a tensor with -1, and shift with a length.
+    Initialize a tensor with -1, and copy a slice from `input_x` to the padded Tensor.
+
+    Note:
+        If use python, PadAndShift is:
+            output = [-1] * cum_sum_arr[-1]
+            start = cum_sum_arr[shift_idx]
+            end = cum_sum_arr[shift_idx + 1]
+            output[start:end] = input_x[:(end-start)]
 
     Inputs:
         - **input_x** (Tensor) - The input Tensor, which will be copied
             to `output`.
         - **cum_sum_arr** (Tensor) - The last value of cum_sum_arr is
-            the pad length of output tensor, cum_sum_arr[shift_idx] is
-            the start to shift, and cum_sum_arr[shift_idx+1] is the end.
-        - **shift_idx** (Int) - The idx of cum_sum_arr.
-        if use python, PadAndShift is:
-            output = [-1] * cum_sum_arr[-1]
-            start = cum_sum_arr[shift_idx]
-            end = cum_sum_arr[shift_idx + 1]
-            output[start:end] = input_x[:(end-start)]
+            the pad length of output tensor, `cum_sum_arr[shift_idx]` is
+            the start to shift, and `cum_sum_arr[shift_idx+1]` is the end.
+        - **shift_idx** (int) - The idx of `cum_sum_arr` .
+
     Outputs:
-        Tensor, has the same type as original `variable`.
+        - **output** (Tensor) - Tensor, has the same type as `input`.
+
+    Raises:
+        TypeError: `input_x` or `cum_sum_arr` is not Tensor.
+        TypeError: `shift_idx` is not int.
+        ValueError: Value of `shift_idx` is larger than or equal to the length of  `cum_sum_arr` .
 
     Supported Platforms:
         `CPU`

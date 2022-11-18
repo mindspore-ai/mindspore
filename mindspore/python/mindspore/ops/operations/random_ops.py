@@ -225,9 +225,10 @@ class RandomGamma(Primitive):
           operator-level random seed.
 
     Args:
-        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
-        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-            final generated random number, must be non-negative. Default: 0.
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: 0.
+        seed2 (int, optional): The global random seed and it will combile with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated.
@@ -438,38 +439,38 @@ class Gamma(PrimitiveWithInfer):
 class ParameterizedTruncatedNormal(Primitive):
     """
     Returns a tensor of the specified shape filled with truncated normal values.
-
-    When 'shape' is (batch_size, *), the shape of 'mean', 'stdevs', 'min', 'max' should be () or (batch_size, ).
+    When `shape` is :math:`(batch_size, *)`, the shape of `mean`, `stdevs`,
+    `min` and `max` should be :math:`()` or :math:`(batch_size, )`.
 
     Note:
-        The number in tensor minval must be strictly less than maxval at any position after broadcasting.
+        The value in tensor `min` must be strictly less than `max` at any position after broadcasting.
 
     Args:
-        seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
-            the seed is set by the given seed. Otherwise, it is seeded by a random seed.
-        seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
+        seed (int, optional): Random number seed. If either `seed` or `seed2` are set to be non-zero,
+            the seed is set by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
+        seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
           int32 and int64.
-        - **mean** (Tensor) - A Tensor. The parameter defines the mean of truncated normal distribution.
+        - **mean** (Tensor) - The parameter defines the mean of truncated normal distribution.
           Its type must be one of the following types:float16, float32, float64.
-        - **stdevs** (Tensor) - A Tensor. The parameter defines the standard deviation for truncation of
+        - **stdevs** (Tensor) - The parameter defines the standard deviation for truncation of
           the normal distribution. It must be greater than 0 and have the same type as means.
-        - **min** (Tensor) - The distribution parameter, a. The parameter defines the minimum of
+        - **min** (Tensor) - The parameter defines the minimum of
           truncated normal distribution. It must have the same type as means.
-        - **max** (Tensor) - The distribution parameter, b. The parameter defines the maximum of
+        - **max** (Tensor) - The parameter defines the maximum of
           truncated normal distribution. It must have the same type as means.
 
     Outputs:
         Tensor. Its shape is specified by the input `shape` and it must have the same type as means.
 
     Raises:
-        TypeError: If `shape`, `mean`, `stdevs`, `min`, `max` and input tensor type are not allowed.
+        TypeError: If data type of `shape`, `mean`, `stdevs`, `min` and `max` are not allowed.
         TypeError: If `mean`, `stdevs`, `min`, `max` don't have the same type.
-        TypeError: If `mean` or `stdevs` or `minval` or `maxval` is not a Tensor.
-        ValueError: When 'shape' is (batch_size, *), if the shape of 'mean', 'stdevs', 'min', 'max'
-                    is not () or (batch_size, ).
+        TypeError: If any of `shape`, `mean`, `stdevs`, `min` and `max` is not Tensor.
+        ValueError: When `shape` is :math:`(batch_size, *)`, if the shape of `mean`, `stdevs`, `min` or `max`
+                    is not :math:`()` or :math:`(batch_size, )`.
         ValueError: If `shape` elements are not positive.
         ValueError: If `stdevs` elements are not positive.
         ValueError: If `shape` has less than 2 elements.
@@ -569,25 +570,26 @@ class Poisson(PrimitiveWithInfer):
 
 class RandomPoisson(Primitive):
     r"""
-    Produces random non-negative  values i, distributed according to discrete probability function:
+    Produces random non-negative values i, distributed according to discrete probability function:
 
     .. math::
-        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!},
+        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     Args:
-         seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
-            the seed is set by the given seed. Otherwise, it is seeded by a random seed.
-         seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
-         dtype (mindspore.dtype): The type of output. Default: mindspore.int64.
+        seed (int, optional): Random number seed. If either `seed` or `seed2` are set to be non-zero,
+            the seed is set by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
+        seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
+
+        dtype (mindspore.dtype, optional): The type of output. Default: mindspore.int64.
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated, 1-D Tensor, whose dtype must be in
-                               [int32, int64]
+          [int32, int64].
         - **rate** (Tensor) - μ parameter the distribution was constructed with. The parameter defines mean number
-          of occurrences of the event. Its type must be in [float16, float32, float64, int32, int64]
+          of occurrences of the event. Its type must be in [float16, float32, float64, int32, int64].
 
     Outputs:
-        Tensor. Its shape is (*shape, *rate.shape). Its type is specified by `dtype`.
+        Tensor. Its shape is :math:`(*shape, *rate.shape)`. Its type is specified by `dtype`.
 
     Raises:
         TypeError: If `shape` is not a Tensor or its dtype is not int32 or int64.
