@@ -374,6 +374,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"expand", std::string("expand")},                                  // expand()
        {"cumprod", std::string("cumprod")},                                // cumprod()
        {"div", std::string("div")},                                        // div()
+       {"divide", std::string("div")},                                     // divide()
        {"equal", std::string("equal")},                                    // equal()
        {"expm1", std::string("expm1")},                                    // expm1()
        {"dim", prim::kPrimRank},                                           // P.Rank()

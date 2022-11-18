@@ -88,6 +88,7 @@
     mindspore.Tensor.diag
     mindspore.Tensor.diagonal
     mindspore.Tensor.div
+    mindspore.Tensor.divide
     mindspore.Tensor.dtype
     mindspore.Tensor.equal
     mindspore.Tensor.erf

@@ -824,6 +824,14 @@ def div(input, other, rounding_mode=None):
     return output
 
 
+def divide(x, other, *, rounding_mode=None):
+    """
+    Alias for ops.div().
+    For details, please refer to :func:`mindspore.ops.div`.
+    """
+    return div(x, other, rounding_mode)
+
+
 def floor_div(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
@@ -7330,6 +7338,7 @@ __all__ = [
     'multiply',
     'tensor_div',
     'div',
+    'divide',
     'true_divide',
     'tensor_floordiv',
     'floor_div',

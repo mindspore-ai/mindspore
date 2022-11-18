@@ -3885,6 +3885,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('div')(self, other, rounding_mode)
 
+    def divide(self, other, *, rounding_mode=None):
+        r"""
+        For details, please refer to :func:`mindspore.ops.div`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('div')(self, other, rounding_mode)
+
     def equal(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.equal`.
