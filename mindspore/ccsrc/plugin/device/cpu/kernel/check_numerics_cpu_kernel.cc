@@ -38,15 +38,6 @@ bool CheckNumericsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int CheckNumericsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-    return ret;
-  }
-  return KRET_OK;
-}
-
 bool CheckNumericsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &,
                                        const std::vector<kernel::AddressPtr> &outputs) {

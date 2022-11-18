@@ -47,6 +47,7 @@ void SquareSum(const T *in0, const T *in1, float *out0, float *out1, int64_t bat
 
 bool SquareSumAllCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   dtype_ = inputs.at(kIndex0)->GetDtype();
   dtype_size_ = abstract::TypeIdSize(dtype_);
@@ -64,7 +65,7 @@ int SquareSumAllCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[0]->GetShapeVector();
+  auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
   input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   num_batch_ =
     std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, size_t(1), std::multiplies<size_t>());

@@ -35,6 +35,7 @@ constexpr size_t kIndices2rdDimNum = 2;
 bool SparseTensorDenseMatmulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                                const std::vector<KernelTensorPtr> &inputs,
                                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto prim = base_operator->GetPrim();
   adj_st_ = GetValue<bool>(prim->GetAttr(ADJ_ST));

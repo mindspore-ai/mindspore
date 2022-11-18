@@ -43,7 +43,6 @@ int UniqueWithPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                         << Vector2Str(pad_shape) << " and input 'x' batch size: " << batch_size_;
     }
   }
-  workspace_size_list_.clear();
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));

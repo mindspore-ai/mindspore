@@ -54,8 +54,8 @@ template <typename T>
 __global__ void CoalesceKernel(int64_t *origin_indices, int64_t newNnz, int64_t *unique_indices,
                                const size_t indices_num, const size_t values_num, const int64_t *input_indices,
                                const T *input_values, int64_t *output_indices, T *output_value) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x;
-              pos < indices_num * values_num; pos += blockDim.x * gridDim.x) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < indices_num * values_num;
+       pos += blockDim.x * gridDim.x) {
     if (pos < newNnz) {
       output_value[pos] = 0;
       const int begin = unique_indices[pos];
@@ -72,28 +72,28 @@ __global__ void CoalesceKernel(int64_t *origin_indices, int64_t newNnz, int64_t 
   }
 }
 
-__global__ void CoalesceKernelCheck(const int64_t *indices, const int64_t *input_shape,
-                                    const size_t indices_num, size_t values_num, int *ret_flag) {
+__global__ void CoalesceKernelCheck(const int64_t *indices, const int64_t *input_shape, const size_t indices_num,
+                                    size_t values_num, int *ret_flag) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < indices_num * values_num; i += gridDim.x * blockDim.x) {
     if (indices[i] < 0) {
-       *ret_flag = 1;
-       return;
+      *ret_flag = 1;
+      return;
     }
     int shape_pos = i / values_num;
     if (input_shape[shape_pos] <= 0) {
-       *ret_flag = 2;
-       return;
+      *ret_flag = 2;
+      return;
     }
     if (indices[i] >= input_shape[shape_pos]) {
-       *ret_flag = 3;
-       return;
+      *ret_flag = 3;
+      return;
     }
   }
 }
 
 template <typename T>
 int Coalesce(int64_t *origin_indices, int64_t *unique_indices, const size_t shape_elements, const size_t indices_num,
-             const size_t values_num, int* ret_flag_host, int64_t *flatten_input_indices, const int64_t *input_indices,
+             const size_t values_num, int *ret_flag_host, int64_t *flatten_input_indices, const int64_t *input_indices,
              const T *input_values, const int64_t *input_shape, int64_t *output_indices, T *output_value,
              int64_t *output_shape, const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t allelement = indices_num * values_num;
@@ -101,8 +101,9 @@ int Coalesce(int64_t *origin_indices, int64_t *unique_indices, const size_t shap
   (void)cudaMalloc(&ret_flag_device, sizeof(int));
   (void)cudaMemset(ret_flag_device, 0, sizeof(int));
   CoalesceKernelCheck<<<CUDA_BLOCKS(device_id, allelement), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-                        input_indices, input_shape, indices_num, values_num, ret_flag_device);
+    input_indices, input_shape, indices_num, values_num, ret_flag_device);
   (void)cudaMemcpy(ret_flag_host, ret_flag_device, sizeof(int), cudaMemcpyDeviceToHost);
+  (void)cudaFree(ret_flag_device);
   if (*ret_flag_host != 0) {
     return -1;
   }
@@ -133,24 +134,21 @@ int Coalesce(int64_t *origin_indices, int64_t *unique_indices, const size_t shap
 
 template CUDA_LIB_EXPORT int Coalesce<float>(int64_t *origin_indices, int64_t *unique_indices,
                                              const size_t shape_elements, const size_t indices_num,
-                                             const size_t values_num, int* ret_flag_host,
+                                             const size_t values_num, int *ret_flag_host,
                                              int64_t *flatten_input_indices, const int64_t *input_indices,
                                              const float *input_values, const int64_t *input_shape,
-                                             int64_t *output_indices, float *output_value,
-                                             int64_t *output_shape, const uint32_t &device_id,
-                                             cudaStream_t cuda_stream);
+                                             int64_t *output_indices, float *output_value, int64_t *output_shape,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT int Coalesce<half>(int64_t *origin_indices, int64_t *unique_indices,
                                             const size_t shape_elements, const size_t indices_num,
-                                            const size_t values_num, int* ret_flag_host,
-                                            int64_t *flatten_input_indices, const int64_t *input_indices,
-                                            const half *input_values, const int64_t *input_shape,
-                                            int64_t *output_indices, half *output_value,
+                                            const size_t values_num, int *ret_flag_host, int64_t *flatten_input_indices,
+                                            const int64_t *input_indices, const half *input_values,
+                                            const int64_t *input_shape, int64_t *output_indices, half *output_value,
                                             int64_t *output_shape, const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT int Coalesce<double>(int64_t *origin_indices, int64_t *unique_indices,
                                               const size_t shape_elements, const size_t indices_num,
-                                              const size_t values_num, int* ret_flag_host,
+                                              const size_t values_num, int *ret_flag_host,
                                               int64_t *flatten_input_indices, const int64_t *input_indices,
                                               const double *input_values, const int64_t *input_shape,
-                                              int64_t *output_indices, double *output_value,
-                                              int64_t *output_shape, const uint32_t &device_id,
-                                              cudaStream_t cuda_stream);
+                                              int64_t *output_indices, double *output_value, int64_t *output_shape,
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);

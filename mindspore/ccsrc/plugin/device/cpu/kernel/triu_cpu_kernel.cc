@@ -29,6 +29,7 @@ constexpr size_t kDim = 2;
 
 bool TriuCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   input_dtype_ = inputs.at(kIndex0)->GetDtype();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Triu>(base_operator);
