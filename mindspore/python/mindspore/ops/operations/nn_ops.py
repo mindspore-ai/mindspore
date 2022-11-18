@@ -2049,14 +2049,14 @@ class MaxPool3D(PrimitiveWithInfer):
 
 class MaxUnpool2D(Primitive):
     r"""
-    Computes a partial inverse of MaxUnpool2D.
+    Computes a partial inverse of MaxPool2D.
 
-    MaxUnpool2D is not fully invertible, since the non-maximal values are lost.
+    MaxPool2D is not fully invertible, since the non-maximal values are lost.
 
-    MaxUnpool2D takes in as input the output of MaxUnpool2D including the indices of the maximal values
-    and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
-    is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape :math:`(N, C, H_{out}, W_{out})`,
-    the operation is as follows.
+    MaxUnpool2D takes in as input the output of MaxPool2D including the indices of
+    the maximal values and computes a partial inverse in which all non-maximal values
+    are set to zero. Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` ,
+    the output is of shape :math:`(N, C, H_{out}, W_{out})` , the operation is as follows:
 
     .. math::
         \begin{array}{ll} \\
@@ -2068,28 +2068,34 @@ class MaxUnpool2D(Primitive):
         ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents height and width of the kernel, or a tuple
             of two int numbers that represent height and width respectively.
-        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively.
-            If strides is 0 or (0, 0), then strides equal to ksize. Default: 0.
-        pads (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pads` is an integer,
-            the paddings of height and width are the same, equal to pads. If `pads` is a tuple of two
-            integers, the padding of height and width equal to pads[0] and pads[1] correspondingly.
-        output_shape (tuple[int]) : The target output size is an optional input. Default: ().
-            If output_shape == (), then the shape of output computed by kszie, strides and pads.
-            If output_shape != (), then output_shape must be :math:`(N, C, H, W)` or
-            :math:`(N, H, W, C)` and output_shape must belong to
-            :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
-            (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
-        data_format (str) : The optional value for data format.
+        strides (Union[int, tuple[int]], optional): The strides of kernel moving.
+            If `strides` is 0 or (0, 0), then `strides` equal to `ksize` . Default: 0.
+
+            - An int number that represents the height and width of movement are both `strides` .
+            - A tuple of two int numbers that represent height and width of movement respectively.
+
+        pads (Union[int, tuple[int]], optional): The pad value to be filled. Default: 0.
+
+            - If `pads` is an integer, the paddings of height and width are the same, equal to pads.
+            - If `pads` is a tuple of two integers, the padding of height and width equal to pads[0]
+              and pads[1] correspondingly.
+
+        output_shape (tuple[int], optional): The target output size is an optional input. Default: ().
+
+            - If :math:`output_shape == ()` , then the shape of output computed by `kszie`, `strides` and `pads` .
+            - If :math:`output_shape != ()` , then `output_shape` must be :math:`(N, C, H, W)` or :math:`(N, H, W, C)`
+              and `output_shape` must belong to :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
+              (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
+
+        data_format (str, optional): The optional value for data format.
             Currently support 'NCHW' and 'NHWC'. Default: 'NCHW'.
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
           Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(N, H_{in}, W_{in}, C)`.
-        - **argmax** (Tensor) - Max values' index represented by the argmax.
+        - **argmax** (Tensor) - Max values' index represented by the `argmax`.
           Tensor of shape must be same with input 'x'.
-          Values of argmax must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
+          Values of `argmax` must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
 
     Outputs:
@@ -2105,7 +2111,7 @@ class MaxUnpool2D(Primitive):
         ValueError: If `data_format` is not a str or is neither `NCHW` nor `NHWC`.
         ValueError: If `output_shape` whose length is neither 0 or 4.
         ValueError: If `output_shape` is not close to output size
-                    computed by attr `ksize, strides, pads`.
+                    computed by attr `ksize`, `strides` and `pads`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

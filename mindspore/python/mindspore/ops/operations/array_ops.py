@@ -403,15 +403,15 @@ class Im2Col(Primitive):
     r"""
     Extracts sliding local blocks from a batched input tensor.
 
-    Consider a batched :attr:`input` tensor of shape :math:`(N, C, *)`,
+    Consider a batched input tensor of shape :math:`(N, C, *)`,
     where :math:`N` is the batch dimension, :math:`C` is the channel dimension,
     and :math:`*` represent arbitrary spatial dimensions. This operation flattens
-    each sliding :attr:`ksizes`- sized block within the spatial dimensions
-    of :attr:`input` into a column (i.e., last dimension) of a 4-D :attr:`output`
+    each sliding `ksizes`- sized block within the spatial dimensions
+    of input `x` into a column (i.e., last dimension) of a 4-D output
     tensor of shape :math:`(N, C, \prod(\text{kernel_size}), L)`, where
     :math:`C \times \prod(\text{kernel_size})` is the total number of values
     within each block (a block has :math:`\prod(\text{kernel_size})` spatial
-    locations each containing a :math:`C`-channeled vector), and :math:`L` is
+    locations each containing a `C`-channeled vector), and :math:`L` is
     the total number of such blocks:
 
     .. math::
@@ -419,13 +419,13 @@ class Im2Col(Primitive):
             - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
 
     where :math:`\text{spatial_size}` is formed by the spatial dimensions
-    of :attr:`input` (:math:`*` above), and :math:`d` is over all spatial
+    of input `x` (:math:`*` above), and :math:`d` is over all spatial
     dimensions.
 
-    Therefore, indexing :attr:`output` at the last dimension (column dimension)
+    Therefore, indexing `output` at the last dimension (column dimension)
     gives all values within a certain block.
 
-    The :attr:`pads`, :attr:`strides` and :attr:`dilations` arguments specify
+    The `pads`, `strides` and `dilations` arguments specify
     how the sliding blocks are retrieved.
 
     .. note::
@@ -434,22 +434,29 @@ class Im2Col(Primitive):
       Args:
         ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
-        strides (Union[int, tuple[int], list[int]]): The stride of the window, should be two int
+        strides (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
-        dilations (Union[int, tuple[int], list[int]]): The dilation of the window, should be two int
+        dilations (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
-        padding_mode (str): The optional value for pad mode, support "CALCULATED", "SAME" and "VALID".
+        padding_mode (str, optional): The optional value for pad mode, support "CALCULATED", "SAME" and "VALID".
             Default: "CALCULATED".
-        pads (Union[int, tuple[int], list[int]]): The pad of the window, that must be
-            a tuple of one or two or four `int` for height and width.
-            If one int, pad_height = pad_width.
-            If two int, pad_height = pads[0], pad_width = pads[1].
-            If four int, pads = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]
-            Default: 0.
+
+            - "SAME", the width and height of the output are the same as the value of the width and height of
+              the input divided by 'strides' rounded up.
+            - "VALID", return a valid calculated output without padding. Excess pixels that do not satisfy
+              the calculation are discarded.
+            - "CALCULATED", pads the input. Padding 'pads' size of zero on both sides of the input.
+
+        pads (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be a tuple of
+            one or two or four `int` for height and width. Default: 0.
+
+            - If one int, :math:`pad_height = pad_width`.
+            - If two int, :math:`pad_height = pads[0]`, :math:`pad_width = pads[1]`.
+            - If four int, :math:`pads = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]`.
 
       Inputs:
-        - **x** (Tensor) : input tensor, only 4-D input tensors (batched image-like tensors) are supported.
-            support all real number data type.
+        - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
+          support all real number data type.
 
       Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
@@ -458,17 +465,17 @@ class Im2Col(Primitive):
         ``Ascend`` ``CPU``
 
     Raises:
-        TypeError: If :attr:`ksizes` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`strides` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`dilations` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`padding_mode` data type is not str.
-        TypeError: If :attr:`pads` data type isnot in Union[int, tuple[int], list[int]].
-            when :attr:`padding_mode` is "CALCULATED".
-        ValueError: If :attr:`ksizes` value is not greater than zero or elements number more than 2.
-        ValueError: If :attr:`strides` value is not greater than zero or elements number more than 2.
-        ValueError: If :attr:`dilations` value is not greater than zero or elements number more than 2.
-        ValueError: If :attr:`padding_mode` value is not in ["SAME", "VALID", "CALCULATED"].
-        ValueError: If :attr:`pads` value is not greater than zero.
+        TypeError: If `ksizes` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If `strides` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If `dilations` data type is not in Union[int, tuple[int], list[int]].
+        TypeError: If `padding_mode` data type is not str.
+        TypeError: If `pads` data type isnot in Union[int, tuple[int], list[int]].
+            when `padding_mode` is "CALCULATED".
+        ValueError: If `ksizes` value is not greater than zero or elements number more than 2.
+        ValueError: If `strides` value is not greater than zero or elements number more than 2.
+        ValueError: If `dilations` value is not greater than zero or elements number more than 2.
+        ValueError: If `padding_mode` value is not in ["SAME", "VALID", "CALCULATED"].
+        ValueError: If `pads` value is not greater than zero.
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
@@ -6527,16 +6534,19 @@ class ListDiff(Primitive):
 
 class SplitV(Primitive):
     r"""
-    Splits the input tensor into num_split tensors along the given dimension.
+    Splits the input tensor into `num_split` tensors along the given dimension.
 
-    The `input_x` tensor will be split into sub-tensors with individual shapes given by `size_splits` along the split
-    dimension. This requires that `input_x.shape(split_dim)` is equal to the sum of `size_splits`.
+    The `input_x` tensor will be split into sub-tensors with individual shapes given
+    by `size_splits` along the split dimension. This requires that `input_x.shape(split_dim)`
+    is equal to the sum of `size_splits`.
 
-    The shape of `input_x` is :math:`(x_1, x_2, ..., x_M, ..., x_R)`. The rank of `input_x` is `R`. Set the given
-    `split_dim` as M, and :math:`-R \le M < R`. Set the given `num_split` as `N`, the given `size_splits` as
-    :math:`(x_{m_1}, x_{m_2}, ..., x_{m_N})`, :math:`x_M=\sum_{i=1}^Nx_{m_i}`. The output is a list of tensor objects,
-    for the :math:`i`-th tensor, it has the shape of :math:`(x_1, x_2, ..., x_{m_i}, ..., x_R)`. :math:`x_{m_i}` is the
-    :math:`M`-th dimension of the :math:`i`-th tensor. Then, the shape of the output tensor is
+    The shape of `input_x` is :math:`(x_1, x_2, ..., x_M, ..., x_R)`. The rank of `input_x`
+    is `R`. Set the given `split_dim` as M, and :math:`-R \le M < R`. Set the given `num_split`
+    as `N`, the given `size_splits` as :math:`(x_{m_1}, x_{m_2}, ..., x_{m_N})`,
+    :math:`x_M=\sum_{i=1}^Nx_{m_i}`. The output is a list of tensor objects, for the
+    :math:`i`-th tensor, it has the shape of :math:`(x_1, x_2, ..., x_{m_i}, ..., x_R)`.
+    :math:`x_{m_i}` is the :math:`M`-th dimension of the :math:`i`-th tensor.
+    Then, the shape of the output tensor is
 
     .. math::
 
@@ -6544,11 +6554,11 @@ class SplitV(Primitive):
          (x_1, x_2, ..., x_{m_N}, ..., x_R))
 
     Args:
-        size_splits (Union[tuple, list]): The list containing the sizes of each output tensor along the split
-                                          dimension. Must sum to the dimension of value along `split_dim`.
-                                          Can contain one -1 indicating that dimension is to be inferred.
+        size_splits (Union[tuple, list]): The list containing the sizes of each output tensor
+            along the split dimension. Must sum to the dimension of value along `split_dim`.
+            Can contain one -1 indicating that dimension is to be inferred.
         split_dim (int): The dimension along which to split. Must be in the range [-len(input_x.shape),
-                         len(input_x.shape)).
+            len(input_x.shape)).
         num_split (int): The number of output tensors. Must be positive int.
 
     Inputs:

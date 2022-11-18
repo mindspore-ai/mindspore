@@ -65,7 +65,9 @@ Neural Network
     mindspore.ops.LSTM
     mindspore.ops.MaxPool
     mindspore.ops.MaxPool3D
+    mindspore.ops.MaxPool3DWithArgmax
     mindspore.ops.MaxPoolWithArgmax
+    mindspore.ops.MaxUnpool2D
     mindspore.ops.MirrorPad
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
@@ -371,6 +373,7 @@ Linear Algebraic Operator
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
+    mindspore.ops.Svd
 
 Tensor Operation Operator
 --------------------------
@@ -441,6 +444,7 @@ Array Operation
     mindspore.ops.GatherNd
     mindspore.ops.HistogramFixedWidth
     mindspore.ops.Identity
+    mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
     mindspore.ops.InplaceAdd
     mindspore.ops.InplaceSub
@@ -448,6 +452,13 @@ Array Operation
     mindspore.ops.InvertPermutation
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
+    mindspore.ops.MatrixBandPart
+    mindspore.ops.MatrixDeterminant
+    mindspore.ops.MatrixExp
+    mindspore.ops.MatrixLogarithm
+    mindspore.ops.MatrixPower
+    mindspore.ops.MatrixSolve
+    mindspore.ops.MatrixTriangularSolve
     mindspore.ops.Meshgrid
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
@@ -486,6 +497,8 @@ Array Operation
     mindspore.ops.UnsortedSegmentProd
     mindspore.ops.UnsortedSegmentSum
     mindspore.ops.Unstack
+    mindspore.ops.SplitV
+    mindspore.ops.STFT
 
 Type Conversion
 ^^^^^^^^^^^^^^^

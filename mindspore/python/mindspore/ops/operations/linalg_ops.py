@@ -68,7 +68,7 @@ class Geqrf(Primitive):
 
 class Svd(Primitive):
     """
-    Refer to :func:`mindspore.ops.svd` for more detail.
+    Refer to :func:`mindspore.ops.svd` for more details.
 
     Args:
         full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
