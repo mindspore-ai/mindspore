@@ -14,7 +14,6 @@
 # ============================================================================
 """Defines parameter operators with functional form."""
 
-import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
@@ -24,7 +23,6 @@ from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops._utils import get_broadcast_shape
 
 
 def random_gamma(shape, alpha, seed=0, seed2=0):
@@ -67,16 +65,8 @@ def random_gamma(shape, alpha, seed=0, seed2=0):
         (7, 5, 2)
     """
 
-    alpha_type = P.DType()(alpha)
-    beta = Tensor(np.array([1.0]), alpha_type)
-    alpha_shape = P.Shape()(alpha)
-    beta_shape = P.Shape()(beta)
-    broadcast_shape = get_broadcast_shape(alpha_shape, beta_shape, "random_gamma", arg_name1="alpha", arg_name2="beta")
-    broadcast_shape_t = tuple(broadcast_shape)
-    broadcast_to = P.BroadcastTo(broadcast_shape_t)
-    alpha_broadcast = broadcast_to(alpha)
     random_gamma_op = _get_cache_prim(P.RandomGamma)(seed=seed, seed2=seed2)
-    output = random_gamma_op(shape, alpha_broadcast)
+    output = random_gamma_op(shape, alpha)
 
     return output
 

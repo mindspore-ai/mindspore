@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
+import mindspore.numpy as ms_np
 
 
 class RandomGammaTEST(nn.Cell):
@@ -36,6 +37,42 @@ class RandomGamma(nn.Cell):
 
     def construct(self, shape, alpha, seed=0):
         return F.random_gamma(shape, alpha, seed)
+
+
+class RandomGammaDR(nn.Cell):
+    def __init__(self):
+        super(RandomGammaDR, self).__init__()
+        self.reducesum = P.ReduceSum(keep_dims=False)
+
+    def construct(self, shape, alpha, seed=0):
+        axis = ms_np.randint(1, 2, (2,))
+        rand_axis = ms_np.unique(axis)
+        outshape = self.reducesum(shape, rand_axis)
+        outalpha = self.reducesum(alpha, rand_axis)
+        return F.random_gamma(outshape, outalpha, seed), outshape, outalpha
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_dynamic_rank():
+    """
+    Feature: RandomGamma cpu kernel for dynamic rank
+    Description: test the random gamma alpha is a tensor.
+    Expectation: match to tensorflow benchmark.
+    """
+
+    ms.set_context(mode=ms.GRAPH_MODE, device_target='CPU')
+    shape_ = Tensor(np.random.randint(low=1, high=8, size=(2, 2)), ms.int32)
+    alpha_ = Tensor(np.random.randint(low=1, high=5, size=(2, 2)), ms.float32)
+    net = RandomGammaDR()
+    input_dyn_shape = [None, None]
+    alpha_dyn_shape = [None, None]
+    net.set_inputs(Tensor(shape=input_dyn_shape, dtype=ms.int32),
+                   Tensor(shape=alpha_dyn_shape, dtype=ms.float32))
+    output, out_s, out_a = net(shape_, alpha_)
+    expect = np.concatenate((out_s, np.shape(out_a)), axis=0)
+    assert (output.shape == expect).all()
 
 
 @pytest.mark.level0
