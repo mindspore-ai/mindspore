@@ -40,8 +40,7 @@ abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
   const int kDimensionOne = 1;
   std::vector<ShapeVector> all_shapes = {indices_shape, values_shape, shape_shape, x2_shape, x3_shape};
   bool is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
-  bool is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
-  if (!is_dynamic && !is_dynamic_rank) {
+  if (!is_dynamic) {
     if (indices_shape.size() != kDimensionTwo) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input indices should "
                                << "have rank 2, but got " << indices_shape.size() << ".";
