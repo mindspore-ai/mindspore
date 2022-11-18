@@ -156,6 +156,10 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, schema
     activation_layer->setAlpha(alpha);
   }
 
+  if (action_param.activation_type == nvinfer1::ActivationType::kHARD_SIGMOID) {
+    activation_layer->setAlpha(action_param.alpha);
+  }
+
   if (action_param.has_beta) {
     activation_layer->setBeta(action_param.beta);
   }

@@ -79,7 +79,8 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
     return nullptr;
   }
   int64_t axis_format_value = (axis_val[0] == -1) ? input(ctx, 0).trt_tensor_->getDimensions().nbDims - 1 : axis_val[0];
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NCHW) {
+  if (!input(ctx, 0).same_format_ && input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      input(ctx, 0).format_ == Format::NCHW) {
     // transpose axis to NCHW
     axis_format_value = ConvertAxisFromNHWC2NCHW(axis_format_value);
   }
