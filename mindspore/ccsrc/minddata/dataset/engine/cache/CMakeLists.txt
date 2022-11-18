@@ -117,8 +117,8 @@ if(ENABLE_CACHE)
 
   add_dependencies(engine-cache-server generated_engine_files)
 
-  set_target_properties(cache_admin PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
-  set_target_properties(cache_server PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+  set_target_properties(cache_admin PROPERTIES INSTALL_RPATH ${ORIGIN_PATH}/..:${ORIGIN_PATH}/../lib)
+  set_target_properties(cache_server PROPERTIES INSTALL_RPATH ${ORIGIN_PATH}/..:${ORIGIN_PATH}/../lib)
 else()
   ms_protobuf_generate(CACHE_PROTO_SRCS CACHE_PROTO_HDRS cache_grpc.proto)
   target_sources(engine-cache-client PUBLIC ${CACHE_PROTO_SRCS})

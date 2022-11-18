@@ -3,17 +3,17 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-set(MINDSPORE_RPATH
-        ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-set(MINDSPORE_RPATH
-        ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
-set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/lib64)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH
+        ${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH
+        ${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
 
 ### cxx api need file ###
 if(ENABLE_ACL)
@@ -58,7 +58,8 @@ target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec d_collective)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::dnnl mindspore::mkldnn mindspore::ssl
                       mindspore::crypto nnacl)
-set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
+        ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${ASCEND_RPATH})
 
 if(ENABLE_DEBUGGER)
     # debugger: link grpc
@@ -100,7 +101,8 @@ endif()
 
 if(ENABLE_D)
     if(ENABLE_MPI)
-        set_target_properties(_ascend_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+        set_target_properties(_ascend_mpi PROPERTIES INSTALL_RPATH
+            ${ORIGIN_PATH}:${ORIGIN_PATH}/lib:${ORIGIN_PATH}/lib/plugin/:${ASCEND_RPATH})
     endif()
 endif()
 

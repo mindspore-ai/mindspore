@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
+#include <nvrtc.h>
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
 
@@ -270,6 +271,12 @@ bool CudaDriver::SetDevice(int index) {
          "'device_id' can be 0,1,2 at the moment, 'device_id' starts from 0, and 'device_id'=0 means using GPU of "
          "number 4.";
     return false;
+  }
+  int major = 0;
+  int minor = 0;
+  auto curtc_ret = nvrtcVersion(&major, &minor);
+  if (curtc_ret == nvrtcResult::NVRTC_SUCCESS) {
+    MS_LOG(DEBUG) << "NVRTC version is " << major << "." << minor;
   }
   return true;
 }

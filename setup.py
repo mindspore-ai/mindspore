@@ -24,7 +24,6 @@ from setuptools.command.egg_info import egg_info
 from setuptools.command.build_py import build_py
 
 backend_policy = os.getenv('BACKEND_POLICY')
-device_target = os.getenv('BACKEND_TARGET')
 commit_id = os.getenv('COMMIT_ID').replace("\n", "")
 package_name = os.getenv('MS_PACKAGE_NAME').replace("\n", "")
 build_path = os.getenv('BUILD_PATH')
@@ -58,10 +57,6 @@ def _write_package_name(file):
     file.write("__package_name__ = '{}'\n".format(package_name))
 
 
-def _write_device_target(file):
-    file.write("__device_target__ = '{}'\n".format(device_target))
-
-
 def build_dependencies():
     """generate python file"""
     version_file = os.path.join(pkg_dir, 'mindspore', 'version.py')
@@ -79,14 +74,6 @@ def build_dependencies():
     config_file = os.path.join(pwd, 'mindspore/python/mindspore', 'default_config.py')
     with open(config_file, 'w') as f:
         _write_config(f)
-
-    target = os.path.join(pkg_dir, 'mindspore', 'default_config.py')
-    with open(target, 'a') as f:
-        _write_device_target(f)
-
-    target = os.path.join(pwd, 'mindspore/python/mindspore', 'default_config.py')
-    with open(target, 'a') as f:
-        _write_device_target(f)
 
     package_info = os.path.join(pkg_dir, 'mindspore', 'default_config.py')
     with open(package_info, 'a') as f:
@@ -126,6 +113,7 @@ package_data = {
         '*.pdb',
         'bin/*',
         'lib/plugin/*',
+        'lib/plugin/*/*',
         'lib/*.so*',
         'lib/*.a',
         'lib/*.dylib*',

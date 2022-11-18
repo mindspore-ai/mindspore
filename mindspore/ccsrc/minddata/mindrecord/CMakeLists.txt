@@ -61,5 +61,5 @@ else()
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin" AND NOT MSLITE_ENABLE_CLOUD_MIND_DATA)
-    set_target_properties(_c_mindrecord PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
+    set_target_properties(_c_mindrecord PROPERTIES INSTALL_RPATH ${ORIGIN_PATH}:${ORIGIN_PATH}/lib)
 endif()

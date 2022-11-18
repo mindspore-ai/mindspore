@@ -33,7 +33,6 @@ do
   if [ -d "./$i/mindspore/lib/plugin" ]; then
     \cp -rf ./$i/mindspore/lib/plugin/* $BSAE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin
   fi;
-  find ./$i/mindspore/_ms_mpi.*.so -print0 | xargs -0 -I {} \cp -f {} $BSAE_PACKAGE_UNZIP_DIR/mindspore/
   if [ -f "./$i/mindspore/lib/libmpi_collective.so" ]; then
     \cp -rf ./$i/mindspore/lib/libmpi_collective.so $BSAE_PACKAGE_UNZIP_DIR/mindspore/lib/
   fi;
