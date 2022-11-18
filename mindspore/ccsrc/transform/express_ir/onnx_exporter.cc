@@ -1172,6 +1172,8 @@ class OnnxExporter {
                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimExpandDims(const FuncGraphPtr &func_graph, const CNodePtr &node,
                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimGatherD(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                         std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimPad(const FuncGraphPtr &func_graph, const CNodePtr &node,
                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimBatchMatMul(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1912,6 +1914,25 @@ void OnnxExporter::ExportPrimExpandDims(const FuncGraphPtr &, const CNodePtr &no
   node_proto->add_output(node_name);
   node_proto->add_input(input_x);
   node_proto->add_input(name_shape);
+}
+
+// MindSpore GatherD -> ONNX GatherElements
+void OnnxExporter::ExportPrimGatherD(const FuncGraphPtr &, const CNodePtr &node,
+                                     std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                     onnx::GraphProto *const graph_proto) {
+  auto input_x = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto axis = GetInt64Value(node->input(kTwoNum));
+  auto input_indices = GetNodeInputName(node->input(kThreeNum), node_map_ptr, graph_proto);
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_op_type("GatherElements");
+  node_proto->add_output(node_name);
+  node_proto->add_input(input_x);
+  node_proto->add_input(input_indices);
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_name("axis");
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  attr_proto->set_i(static_cast<::google::protobuf::int64>(axis));
 }
 
 // MindSpore Pad -> ONNX Pad
@@ -3422,6 +3443,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimLessEqual, &OnnxExporter::ExportPrimLessEqual},
     {prim::kPrimSqueeze, &OnnxExporter::ExportPrimSqueeze},
     {prim::kPrimExpandDims, &OnnxExporter::ExportPrimExpandDims},
+    {prim::kPrimGatherD, &OnnxExporter::ExportPrimGatherD},
     {prim::kPrimPad, &OnnxExporter::ExportPrimPad},
     {prim::kPrimBatchMatMul, &OnnxExporter::ExportPrimBatchMatMul},
     {prim::kPrimBroadcastTo, &OnnxExporter::ExportPrimBroadcastTo},
