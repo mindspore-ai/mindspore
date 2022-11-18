@@ -79,7 +79,7 @@ class GradExecutor {
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
   void EndGraphImpl(const InputArgsInfoPtr &input_args_info);
-  AnfNodePtr GetInput(const ValuePtr &v) const;
+  AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
   void ClearRes();
 
@@ -109,7 +109,7 @@ class GradExecutor {
     }
   }
   inline bool is_high_order_top_cell() const {
-    return !input_args_info_stack_.empty() && top_cell()->grad_order() != grad_order_ && IsNestedGrad();
+    return !input_args_info_stack_.empty() && IsNestedGrad() && top_cell()->grad_order() != grad_order_;
   }
   void SwitchTopCell();
   void DoParameterReplace(const FuncGraphPtr &first_grad_fg, const std::vector<ValuePtr> &forward_args,
@@ -141,9 +141,10 @@ class GradExecutor {
   void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph, bool has_sens);
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
   // Manage resource for construct forward graph.
-  AnfNodePtr GetObjNode(const ValuePtr &v, const std::string &obj_id) const;
-  AnfNodePtr CreateMakeTupleGradNode(const ValuePtr &v, const std::string &obj_id) const;
-  AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id) const;
+  AnfNodePtr GetOutputNodeAsInput(const std::string &obj_id) const;
+  AnfNodePtr GetValueSequenceInput(const ValuePtr &v, const std::string &obj_id) const;
+  AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
+                                    const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
   void RecordGradNodeToGraphInfoMap(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &obj_id,
                                     const ValuePtrList &input_args) const;
 

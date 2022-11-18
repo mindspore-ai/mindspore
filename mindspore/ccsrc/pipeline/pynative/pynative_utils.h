@@ -32,7 +32,7 @@ namespace PyNativeAlgo {
 struct Common {
   static std::string GetIdByValue(const ValuePtr &v);
   static bool ValueHasDynamicShape(const ValuePtr &value);
-  static bool IsTensor(const ValuePtr &v);
+  static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
   static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
   static void SetForwardOutputFlag(const ValuePtr &v);
   static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
@@ -54,7 +54,7 @@ struct DataConvert {
   static ValuePtr BaseRefToValue(const BaseRef &value);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref);
   static void FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
-  static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v);
+  static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                            const tensor::CSRTensorPtr &csr_tensor, const PrimitivePtr &op_prim);

@@ -80,8 +80,24 @@ bool Common::ValueHasDynamicShape(const ValuePtr &value) {
   return false;
 }
 
-bool Common::IsTensor(const ValuePtr &v) {
+bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
   MS_EXCEPTION_IF_NULL(v);
+  if (include_sequence) {
+    if (v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>()) {
+      return true;
+    } else if (v->isa<ValueSequence>()) {
+      auto v_seq = v->cast<ValueSequencePtr>();
+      // SpareTensor have scalar index, so just check have csr tensor
+      if (v_seq->value().front()->isa<tensor::MetaSparseTensor>()) {
+        return true;
+      }
+      // All value are tensor
+      return std::all_of(v_seq->value().begin(), v_seq->value().end(),
+                         [](const ValuePtr &e) { return PyNativeAlgo::Common::IsTensor(e, true); });
+    } else {
+      return false;
+    }
+  }
   return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
 }
 
@@ -254,6 +270,7 @@ void DataConvert::FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flat
   size_t v_vec_size = v_vec->size();
   for (size_t i = 0; i < v_vec_size; ++i) {
     const auto &elem_v = v_vec->value()[i];
+    MS_LOG(DEBUG) << "Get elem_v is " << v->ToString();
     if (elem_v->isa<ValueSequence>()) {
       FlattenTupleArg(elem_v, flatten_v);
     } else if (PyNativeAlgo::Common::IsTensor(elem_v)) {
@@ -262,15 +279,22 @@ void DataConvert::FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flat
   }
 }
 
-void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v) {
+void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens) {
   MS_EXCEPTION_IF_NULL(flatten_v);
-  for (size_t i = 0; i < v_vec.size(); ++i) {
+  size_t input_size = has_sens ? v_vec.size() - 1 : v_vec.size();
+  for (size_t i = 0; i < input_size; ++i) {
     const auto &v = v_vec[i];
     MS_EXCEPTION_IF_NULL(v);
-    if (v->isa<ValueSequence>()) {
-      FlattenTupleArg(v, flatten_v);
-    } else if (PyNativeAlgo::Common::IsTensor(v)) {
+    MS_LOG(DEBUG) << "Get v is " << v->ToString();
+    if (PyNativeAlgo::Common::IsTensor(v)) {
       (void)flatten_v->emplace_back(v);
+    }
+  }
+  if (has_sens) {
+    if (PyNativeAlgo::Common::IsTensor(v_vec[input_size])) {
+      (void)flatten_v->emplace_back(v_vec[input_size]);
+    } else if (v_vec[input_size]->isa<ValueSequence>()) {
+      FlattenTupleArg(v_vec[input_size], flatten_v);
     }
   }
 }
