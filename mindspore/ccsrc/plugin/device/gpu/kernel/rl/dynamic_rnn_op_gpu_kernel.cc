@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/rl/dynamic_gru_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/rl/dynamic_rnn_op_gpu_kernel.h"
 #include <functional>
 #include <utility>
 #include <string>
@@ -25,19 +25,17 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int kDynamicGruGpuInputsNum = 4;
-constexpr int kDynamicGruGpuOutputsNum = 4;
 constexpr size_t kDimOfTensor = 3;
 }  // namespace
 
-bool DynamicGruGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
+bool DynamicRnnOpBaseMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
   kernel_name_ = base_operator->name();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDynamicGruGpuInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicGruGpuOutputsNum, kernel_name_);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num_, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num_, kernel_name_);
   InitResource();
-  if (!GetCudnnDataType(TypeIdLabel(inputs[0]->GetDtype()), &cudnn_data_type_)) {
+  if (!GetCudnnDataType(TypeIdLabel(inputs[inputs_x_index_]->GetDtype()), &cudnn_data_type_)) {
     MS_LOG(ERROR) << kernel_name_ << ": Get cudnn data type failed.";
     return false;
   }
@@ -64,20 +62,21 @@ bool DynamicGruGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   bidirectional_ = GetValue<bool>(base_operator->GetAttr("bidirectional"));
   dropout_ = GetValue<float>(base_operator->GetAttr("dropout"));
   is_train_ = GetValue<bool>(base_operator->GetAttr("is_train"));
-  kernel_func_ = func_list_[index].second;
+  const auto &func_list = GetSupportFuncList();
+  kernel_func_ = func_list[index].second;
   return true;
 }
 
-void DynamicGruGpuKernelMod::ResetResource() noexcept {
+void DynamicRnnOpBaseMod::ResetResource() noexcept {
   input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   reserved_size_ = 0;
 }
 
-int DynamicGruGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+int DynamicRnnOpBaseMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   batch_size_ = static_cast<int>(input_shape[1]);
@@ -134,15 +133,25 @@ int DynamicGruGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   size_t x_size = IntToSize(max_seq_len_ * batch_size_ * input_size_) * input_type_size_;
   size_t seq_len_size = IntToSize(batch_size_) * sizeof(int32_t);
   size_t h_size = 0;
+  size_t c_size = 0;
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "Get h size failed");
+  if (rnn_mode_ == CUDNN_LSTM) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(cx_desc_, &c_size), "Get c size failed");
+  }
   input_size_list_.push_back(x_size);
   input_size_list_.push_back(h_size);
+  if (rnn_mode_ == CUDNN_LSTM) {
+    input_size_list_.push_back(c_size);
+  }
   input_size_list_.push_back(weight_size_);
   input_size_list_.push_back(seq_len_size);
 
   size_t y_size = IntToSize(max_seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * input_type_size_;
   output_size_list_.push_back(y_size);
   output_size_list_.push_back(h_size);
+  if (rnn_mode_ == CUDNN_LSTM) {
+    output_size_list_.push_back(c_size);
+  }
   output_size_list_.push_back(reserved_size_);
   size_t state_size = 0;
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size),
@@ -152,31 +161,22 @@ int DynamicGruGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool DynamicGruGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DynamicRnnOpBaseMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
 
   VARIABLE_NOT_USED(stream_ptr);
-  constexpr size_t kXAddrInputsIndex = 0;
-  constexpr size_t kHxAddrInputsIndex = 1;
-  constexpr size_t kWAddrInputsIndex = 2;
-  constexpr size_t kSeqAddrInputsIndex = 3;
-  constexpr size_t kYAddrOutputsIndex = 0;
-  constexpr size_t kHyAddrOutputsIndex = 1;
-  constexpr size_t kReservedAddrOutputsIndex = 2;
-  constexpr size_t kStatesAddrOutputsIndex = 3;
 
-  auto x_addr = GetDeviceAddress<T>(inputs, kXAddrInputsIndex);
-  auto hx_addr = GetDeviceAddress<T>(inputs, kHxAddrInputsIndex);
-  auto w_addr = GetDeviceAddress<T>(inputs, kWAddrInputsIndex);
-  auto seq_addr = GetDeviceAddress<int>(inputs, kSeqAddrInputsIndex);
-  auto cx_addr = nullptr;
-  auto y_addr = GetDeviceAddress<T>(outputs, kYAddrOutputsIndex);
-  auto hy_addr = GetDeviceAddress<T>(outputs, kHyAddrOutputsIndex);
-  auto cy_addr = nullptr;
-  auto reserved_addr = GetPossiblyNullDeviceAddress<T>(outputs, kReservedAddrOutputsIndex);
-  auto states_addr = GetPossiblyNullDeviceAddress<T>(outputs, kStatesAddrOutputsIndex);
+  auto x_addr = GetDeviceAddress<T>(inputs, inputs_x_index_);
+  auto hx_addr = GetDeviceAddress<T>(inputs, inputs_hx_index_);
+  auto cx_addr = rnn_mode_ == CUDNN_LSTM ? GetDeviceAddress<T>(inputs, inputs_cx_index_) : nullptr;
+  auto w_addr = GetDeviceAddress<T>(inputs, inputs_w_index_);
+  auto seq_addr = GetDeviceAddress<int>(inputs, inputs_seq_len_index_);
+  auto y_addr = GetDeviceAddress<T>(outputs, outputs_y_index_);
+  auto hy_addr = GetDeviceAddress<T>(outputs, outputs_hy_index_);
+  auto cy_addr = rnn_mode_ == CUDNN_LSTM ? GetDeviceAddress<T>(outputs, outputs_cy_index_) : nullptr;
+  auto reserved_addr = GetPossiblyNullDeviceAddress<T>(outputs, outputs_reserved_index_);
+  auto states_addr = GetPossiblyNullDeviceAddress<T>(outputs, outputs_states_index_);
   void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
 
   // copy seq_lens_ from seq_addr
@@ -207,7 +207,7 @@ bool DynamicGruGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
         /*workSpace=*/workspace_addr,
         /*workSpaceSizeInBytes=*/workspace_size_list_[0], /*reserveSpace=*/reserved_addr,
         /*reserveSpaceSizeInBytes=*/reserved_size_),
-      "Launch gru kernel failed(cudnnRNNForwardTrainingEx)");
+      "Launch kernel failed(cudnnRNNForwardTrainingEx)");
   } else {
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(
       cudnnRNNForwardInferenceEx(/*handle=*/handle_, /*rnnDesc=*/rnn_desc_,
@@ -224,7 +224,7 @@ bool DynamicGruGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                  /*queries=*/nullptr,
                                  /*workspace=*/workspace_addr,
                                  /*workSpaceSizeInBytes=*/workspace_size_list_[0]),
-      "Launch gru kernel failed(cudnnRNNForwardInferenceEx)");
+      "Launch kernel failed(cudnnRNNForwardInferenceEx)");
   }
 #else
   cudnnForwardMode_t rnn_fwd_mode = is_train_ ? CUDNN_FWD_MODE_TRAINING : CUDNN_FWD_MODE_INFERENCE;
@@ -243,40 +243,20 @@ bool DynamicGruGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                     /* workSpaceSize= */ workspace_size_list_[0], /* workspace= */ workspace_addr,
                     /* reserveSpaceSize= */ reserved_size_,
                     /* reserveSpace= */ reserved_addr),
-    "Launch gru kernel failed");
+    "Launch kernel failed");
 #endif
   return true;
 }
 
-std::vector<std::pair<KernelAttr, DynamicGruGpuKernelMod::DynamicGruGpuFunc>> DynamicGruGpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &DynamicGruGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &DynamicGruGpuKernelMod::LaunchKernel<half>}};
-
-void DynamicGruGpuKernelMod::CreateTensorNdDesc() {
+void DynamicRnnOpBaseMod::CreateTensorNdDesc() {
   int hx_dims[] = {num_layers_ * (bidirectional_ ? 2 : 1), batch_size_, hidden_size_};
   int strides[] = {hx_dims[1] * hx_dims[2], hx_dims[2], 1};
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensorNdDescriptor(hx_desc_, cudnn_data_type_, kDimOfTensor, hx_dims, strides), "Set hx_desc failed");
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetTensorNdDescriptor(cx_desc_, cudnn_data_type_, kDimOfTensor, hx_dims, strides), "Set cx_desc failed");
+  if (rnn_mode_ == CUDNN_LSTM) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetTensorNdDescriptor(cx_desc_, cudnn_data_type_, kDimOfTensor, hx_dims, strides), "Set cx_desc failed");
+  }
 #if CUDNN_VERSION < 8000
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensorNdDescriptor(hy_desc_, cudnn_data_type_, kDimOfTensor, hx_dims, strides), "Set hy_desc failed.");
@@ -285,17 +265,16 @@ void DynamicGruGpuKernelMod::CreateTensorNdDesc() {
 #endif
 }
 
-void DynamicGruGpuKernelMod::SetRNNDesc() {
+void DynamicRnnOpBaseMod::SetRNNDesc() {
   cudnnRNNInputMode_t input_mode = CUDNN_LINEAR_INPUT;
   cudnnDirectionMode_t direction = bidirectional_ ? CUDNN_BIDIRECTIONAL : CUDNN_UNIDIRECTIONAL;
-  cudnnRNNMode_t rnn_mode = CUDNN_GRU;
   cudnnRNNAlgo_t algo = CUDNN_RNN_ALGO_STANDARD;
   cudnnRNNBiasMode_t bias_mode = has_bias_ ? CUDNN_RNN_DOUBLE_BIAS : CUDNN_RNN_NO_BIAS;
 #if CUDNN_VERSION < 8000
   cudnnMathType_t math_type = (cudnn_data_type_ == CUDNN_DATA_HALF) ? CUDNN_TENSOR_OP_MATH : CUDNN_DEFAULT_MATH;
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetRNNDescriptor_v6(handle_, rnn_desc_, hidden_size_, num_layers_, dropout_desc_, input_mode, direction,
-                             rnn_mode, algo, cudnn_data_type_),
+                             rnn_mode_, algo, cudnn_data_type_),
     "Set rnn_desc failed");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetRNNBiasMode(rnn_desc_, bias_mode), "Set bias mode failed.");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetRNNMatrixMathType(rnn_desc_, math_type), "Set math type failed.");
@@ -304,15 +283,15 @@ void DynamicGruGpuKernelMod::SetRNNDesc() {
 #else
   cudnnMathType_t math_type = (cudnn_data_type_ == CUDNN_DATA_HALF) ? CUDNN_TENSOR_OP_MATH : CUDNN_FMA_MATH;
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetRNNDescriptor_v8(rnn_desc_, algo, rnn_mode, bias_mode, direction, input_mode, cudnn_data_type_,
+    cudnnSetRNNDescriptor_v8(rnn_desc_, algo, rnn_mode_, bias_mode, direction, input_mode, cudnn_data_type_,
                              cudnn_data_type_, math_type, input_size_, hidden_size_, hidden_size_, num_layers_,
                              dropout_desc_, CUDNN_RNN_PADDED_IO_ENABLED),
     "Set rnn_desc failed");
 #endif
 }
 
-void DynamicGruGpuKernelMod::CheckWeightSize(const std::vector<KernelTensorPtr> &inputs) {
-  auto weight_shape = inputs[kIndex2]->GetShapeVector();
+void DynamicRnnOpBaseMod::CheckWeightSize(const std::vector<KernelTensorPtr> &inputs) {
+  auto weight_shape = inputs[inputs_w_index_]->GetShapeVector();
   size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[kIndexTwo] * input_type_size_;
   if (weight_size != weight_size_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of weight should be equal to " << weight_size_
@@ -320,7 +299,7 @@ void DynamicGruGpuKernelMod::CheckWeightSize(const std::vector<KernelTensorPtr> 
   }
 }
 
-void DynamicGruGpuKernelMod::CreateRNNDataDescGrp() {
+void DynamicRnnOpBaseMod::CreateRNNDataDescGrp() {
   x_desc_ = std::make_unique<cudnnRNNDataDescriptor_t>();
   y_desc_ = std::make_unique<cudnnRNNDataDescriptor_t>();
   float padding_fill = 0.0f;
@@ -339,7 +318,7 @@ void DynamicGruGpuKernelMod::CreateRNNDataDescGrp() {
 }
 
 #if CUDNN_VERSION < 8000
-void DynamicGruGpuKernelMod::CreateFilterDesc() {
+void DynamicRnnOpBaseMod::CreateFilterDesc() {
   int filter_dims[] = {static_cast<int>(weight_size_), 1, 1};
   CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(
     cudnnSetFilterNdDescriptor(/*filterDesc=*/w_desc_, /*dataType=*/cudnn_data_type_,
@@ -349,14 +328,69 @@ void DynamicGruGpuKernelMod::CreateFilterDesc() {
 }
 #endif
 
-std::vector<KernelAttr> DynamicGruGpuKernelMod::GetOpSupport() {
+std::vector<KernelAttr> DynamicRnnOpBaseMod::GetOpSupport() {
+  const auto &func_list = GetSupportFuncList();
   std::vector<KernelAttr> support_list;
-  (void)std::transform(
-    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-    [](const std::pair<KernelAttr, DynamicGruGpuKernelMod::DynamicGruGpuFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list.begin(), func_list.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, DynamicRnnOpBaseFunc> &pair) { return pair.first; });
   return support_list;
 }
 
+const std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> &DynamicGruGpuKernelMod::GetSupportFuncList() {
+  static std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &DynamicRnnOpBaseMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &DynamicRnnOpBaseMod::LaunchKernel<half>}};
+  return func_list;
+}
+
+const std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> &DynamicLstmGpuKernelMod::GetSupportFuncList() {
+  static std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &DynamicRnnOpBaseMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &DynamicRnnOpBaseMod::LaunchKernel<half>}};
+  return func_list;
+}
+
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, GRUV2, DynamicGruGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LSTMV2, DynamicLstmGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

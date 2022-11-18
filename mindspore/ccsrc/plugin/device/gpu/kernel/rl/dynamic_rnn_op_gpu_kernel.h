@@ -29,9 +29,14 @@
 
 namespace mindspore {
 namespace kernel {
-class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
+class DynamicRnnOpBaseMod;
+using DynamicRnnOpBaseFunc =
+  std::function<bool(DynamicRnnOpBaseMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                     const std::vector<AddressPtr> &, void *)>;
+
+class DynamicRnnOpBaseMod : public NativeGpuKernelMod {
  public:
-  DynamicGruGpuKernelMod()
+  DynamicRnnOpBaseMod()
       : batch_size_(0),
         max_seq_len_(0),
         input_size_(0),
@@ -58,7 +63,7 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
         handle_(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
 
-  ~DynamicGruGpuKernelMod() override { DestroyResource(); }
+  ~DynamicRnnOpBaseMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -75,7 +80,9 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDescriptor(rnn_desc_), "Destroy rnn_desc failed");
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyDropoutDescriptor(dropout_desc_), "Destroy dropout_desc failed");
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(hx_desc_), "Destroy hx_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(cx_desc_), "Destroy cx_desc failed");
+    if (cx_desc_) {
+      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(cx_desc_), "Destroy cx_desc failed");
+    }
     if (y_desc_.get() != nullptr) {
       CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDataDescriptor(*(y_desc_.get())), "Destroy y_desc failed");
     }
@@ -101,6 +108,7 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
 #endif
   }
 
+  virtual const std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> &GetSupportFuncList() = 0;
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
@@ -117,6 +125,24 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateRNNDescriptor(&rnn_desc_), "Create rnn_desc failed");
   }
 
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  cudnnRNNMode_t rnn_mode_;
+  size_t inputs_num_;
+  size_t inputs_x_index_;
+  size_t inputs_hx_index_;
+  size_t inputs_cx_index_;
+  size_t inputs_w_index_;
+  size_t inputs_seq_len_index_;
+  size_t outputs_num_;
+  size_t outputs_y_index_;
+  size_t outputs_hy_index_;
+  size_t outputs_cy_index_;
+  size_t outputs_reserved_index_;
+  size_t outputs_states_index_;
+
  private:
   void ResetResource() noexcept;
   void CreateRNNDataDescGrp();
@@ -126,15 +152,7 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
   void CreateTensorNdDesc();
   void SetRNNDesc();
   void CheckWeightSize(const std::vector<KernelTensorPtr> &inputs);
-  template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-
-  using DynamicGruGpuFunc =
-    std::function<bool(DynamicGruGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
-  static std::vector<std::pair<KernelAttr, DynamicGruGpuFunc>> func_list_;
-  DynamicGruGpuFunc kernel_func_;
+  DynamicRnnOpBaseFunc kernel_func_;
   cudaStream_t cuda_stream_;
 
   int batch_size_;
@@ -173,6 +191,48 @@ class DynamicGruGpuKernelMod : public NativeGpuKernelMod {
   cudnnRNNDescriptor_t rnn_desc_;
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
+};
+
+class DynamicGruGpuKernelMod : public DynamicRnnOpBaseMod {
+ public:
+  DynamicGruGpuKernelMod() : DynamicRnnOpBaseMod() {
+    rnn_mode_ = CUDNN_GRU;
+
+    inputs_num_ = 4;
+    inputs_x_index_ = 0;
+    inputs_hx_index_ = 1;
+    inputs_w_index_ = 2;
+    inputs_seq_len_index_ = 3;
+
+    outputs_num_ = 4;
+    outputs_y_index_ = 0;
+    outputs_hy_index_ = 1;
+    outputs_reserved_index_ = 2;
+    outputs_states_index_ = 3;
+  }
+  const std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> &GetSupportFuncList() override;
+};
+
+class DynamicLstmGpuKernelMod : public DynamicRnnOpBaseMod {
+ public:
+  DynamicLstmGpuKernelMod() : DynamicRnnOpBaseMod() {
+    rnn_mode_ = CUDNN_LSTM;
+
+    inputs_num_ = 5;
+    inputs_x_index_ = 0;
+    inputs_hx_index_ = 1;
+    inputs_cx_index_ = 2;
+    inputs_w_index_ = 3;
+    inputs_seq_len_index_ = 4;
+
+    outputs_num_ = 5;
+    outputs_y_index_ = 0;
+    outputs_hy_index_ = 1;
+    outputs_cy_index_ = 2;
+    outputs_reserved_index_ = 3;
+    outputs_states_index_ = 4;
+  }
+  const std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> &GetSupportFuncList() override;
 };
 }  // namespace kernel
 }  // namespace mindspore
