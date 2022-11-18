@@ -7233,7 +7233,7 @@ class Polar(Primitive):
 
 class NextAfter(Primitive):
     """
-    Returns the next representable value after the given first number in the direction of given second number.
+    Returns the next representable value after `x1` in the direction of `x2`.
 
     .. math::
 
@@ -7249,12 +7249,12 @@ class NextAfter(Primitive):
           Must be one of the following types: float32, float64.
 
     Outputs:
-        Tensor, has the same shape and data type as `x`.
+        Tensor, has the same shape and data type as `x1`.
 
     Raises:
         TypeError: If neither `x1` nor `x2` is a Tensor.
-        TypeError: If the dtype of input is not one of: float32, float64.
-        TypeError: If the dtypes of two inputs are not same.
+        TypeError: If the dtype of `x1` and `x2` is not one of: float32, float64.
+        TypeError: If the dtypes of `x1` and `x2` are not same.
         ValueError: If `x1`'s shape is not the same as `x2`.
 
     Supported Platforms:
@@ -7475,35 +7475,9 @@ class NanToNum(Primitive):
 
 class Orgqr(Primitive):
     r"""
-    Computes the first :math:`N` columns of a product of Householder matrices. Take the case of input without batch
-    as an example. The input x is a matrix of size :math:`(M, N)` after householder transformation. When the diagonal
-    of x is set to 1, every colunm of lower triangular in x is denoted as :math:`w_j` for :math:`j` for
-    :math:`j=1, \ldots, M`, this function returns the first :math:`N` columns of the matrix
+    Computes the first :math:`N` columns of a product of Householder matrices.
 
-    .. math::
-        H_{1} H_{2} \ldots H_{k} \quad \text { with } \quad H_{j}=\mathrm{I}_{M}-\tau_{j} w_{j} w_{j}^{\mathrm{H}}
-
-    where :math:`\mathrm{I}_{M}` is the :math:`M`-dimensional identity matrix. And when :math:`w` is complex,
-    :math:`w^{\mathrm{H}}` is the conjugate transpose, otherwise the transpose.
-    The output matrix is the same size as the input matrix :math:`x`.
-
-    Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(*, M, N)`, indicating matrices greater than or equal to 2D,
-          with float32, float64, complex64 and complex128 data type.
-        - **tau** (Tensor) - Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N`, indicating the
-          reflecting coefficient in Householder transformation, which have the same type as x.
-
-    Outputs:
-        Tensor, has the same shape and data type as `x`.
-
-    Raises:
-        TypeError: If `x` or `tau` are not Tensors.
-        TypeError: If dtype of `x` and `tau` is not one of: float64, float32, complex64, complex128.
-        ValueError: If `x` and `tau` have different batch size.
-        ValueError: If x.shape[-2] < x.shape[-1].
-        ValueError: If x.shape[-1] < tau.shape[-1].
-        ValueError: If rank(x) - rank(tau) != 1.
-        ValueError: If rank(x) < 2.
+    Refer to :func:`mindspore.ops.orgqr` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

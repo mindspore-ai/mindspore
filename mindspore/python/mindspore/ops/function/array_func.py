@@ -4963,9 +4963,9 @@ def lstsq(input, A):
 
 def mvlgamma(input, p):
     r"""
-    Computes the multivariate log-gamma function with dimension p element-wise.
+    Computes the multivariate log-gamma function with dimension `p` element-wise.
 
-    The following tex shows the mathematical calculation process of Mvlgamma:
+    The mathematical calculation process of Mvlgamma is shown as follows:
 
     .. math::
 
@@ -4977,7 +4977,7 @@ def mvlgamma(input, p):
         input (Tensor): The tensor to compute the multivariate log-gamma function,
           which must be one of the following types: float32, float64.
           The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
-          And the value of any element in `input` must be greater than (p - 1) / 2.
+          And the value of any element in `input` must be greater than :math:`(p - 1) / 2`.
         p (int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
 
     Returns:
@@ -4986,8 +4986,8 @@ def mvlgamma(input, p):
     Raises:
         TypeError: If dtype of `input` is neither float32 nor float64.
         TypeError: If `p` is not an int.
-        ValueError: If `p` is not greater than or equal to 1.
-        ValueError: If all elements of `input` are not greater than (p-1)/2.
+        ValueError: If `p` is less than 1.
+        ValueError: If not all elements of `input` are greater than :math:`(p - 1) / 2`.
 
     Supported Platforms:
         ``CPU`` ``GPU``

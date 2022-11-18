@@ -30,22 +30,23 @@ class NonDeterministicInts(Primitive):
     that a given type can represent.
 
     .. warning::
-        The value of "shape" must be greater than zero. The output length must be less than 1000000.
+        The value of `shape` must be greater than zero.
+        The number of elements of output can not exceed 1000000.
 
     Args:
-        dtype (mindspore.dtype): The type of output. Its value must be one of the following types: mindspore.int32
-            and mindspore.int64. Default: mindspore.int64.
+        - **dtype** (mindspore.dtype, optional) - The date type of output. The supported values are: mindspore.int32
+          and mindspore.int64. Default: mindspore.int64.
 
     Inputs:
-        - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
-          mindspore.int32 and mindspore.int64.
+        - **shape** (Tensor) - The shape of random tensor to be generated. The supported values are:
+          int32 and int64.
 
     Outputs:
         Tensor. Its shape is specified by the input `shape`. Its type is specified by `dtype`.
 
     Raises:
         TypeError: If `shape` is not a Tensor.
-        TypeError: If `dtype` and input tensor type are not allowed.
+        TypeError: If `dtype` is not mindspore.int32 or mindspore.int64.
         ValueError: If `shape` has negative elements.
         ValueError: If `shape` has less than 2 elements.
         ValueError: If `shape` is not a 1-D tensor.
