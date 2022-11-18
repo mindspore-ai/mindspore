@@ -30,6 +30,7 @@ constexpr auto kLibAicpuKernelSoName = "libaicpu_kernels.so";
 constexpr auto kLibCpuKernelSoName = "libcpu_kernels.so";
 constexpr auto kFormat = "format";
 constexpr auto kDataFormat = "data_format";
+constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kInitDataSetQueue = "InitDataSetQueue";
 constexpr auto kInitData = "InitData";
 constexpr auto kGetNext = "GetNext";
@@ -252,7 +253,8 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kSign};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
-const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
+const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
+                                              kRandomChoiceWithMask,
                                               kEnvironCreate,
                                               kEnvironSet,
                                               kEnvironGet,
