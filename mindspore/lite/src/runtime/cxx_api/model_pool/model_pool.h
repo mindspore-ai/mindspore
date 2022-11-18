@@ -117,7 +117,6 @@ class ModelPool {
   std::unordered_map<int, std::vector<std::shared_ptr<ModelWorker>>> all_model_workers_;
 
   // save all worker thread
-  std::vector<std::thread> worker_thread_vec_;
   std::mutex predict_task_mutex_;
   std::vector<TensorInfo> inputs_info_;
   std::vector<TensorInfo> outputs_info_;

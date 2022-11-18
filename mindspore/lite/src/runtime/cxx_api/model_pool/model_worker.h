@@ -58,8 +58,8 @@ class ModelWorker {
 
   bool IsAvailable();
 
-  void CreateThreadWorker(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config,
-                          const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
+  void InitModelWorker(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config,
+                       const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
 
  private:
   void Run();

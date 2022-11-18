@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/cxx_api/model_pool/model_worker.h"
+#include <algorithm>
 #include "src/common/log_adapter.h"
 #include "src/runtime/numa_adapter.h"
 #include "src/common/common.h"
@@ -32,10 +33,9 @@ void ModelWorker::WaitCreateWorkerDone() {
   return;
 }
 
-void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
-                                     const std::shared_ptr<WorkerConfig> &worker_config,
-                                     const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
-                                     bool *create_success) {
+void ModelWorker::InitModelWorker(const char *model_buf, size_t size,
+                                  const std::shared_ptr<WorkerConfig> &worker_config,
+                                  const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success) {
   worker_config_ = worker_config;
   MS_LOG(DEBUG) << "worker bind core id list: " << worker_config_->context->GetThreadAffinityCoreList();
   MS_LOG(DEBUG) << "worker thread num: " << worker_config_->context->GetThreadNum();

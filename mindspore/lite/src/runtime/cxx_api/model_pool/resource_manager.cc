@@ -15,10 +15,12 @@
  */
 #include "src/runtime/cxx_api/model_pool/resource_manager.h"
 #include <unordered_map>
+#include <memory>
 #include <fstream>
 #include <utility>
 #include "include/api/status.h"
 #include "src/common/log_adapter.h"
+#include "src/common/utils.h"
 #include "src/runtime/numa_adapter.h"
 #include "nnacl/op_base.h"
 
@@ -199,5 +201,96 @@ Status ResourceManager::DistinguishPhysicalAndLogicalByNuma(std::vector<std::vec
   *numa_physical_cores = numa_physical_core_ids_;
   *numa_logical_cores = numa_logical_core_ids_;
   return kSuccess;
+}
+
+void InitWorkerThread::Destroy() {
+  std::unique_lock<std::mutex> l(mtx_init_);
+  is_destroy_ = true;
+  is_launch_ = true;
+  init_cond_var_.notify_one();
+}
+
+void InitWorkerThread::Run() {
+  while (!is_destroy_) {
+    std::unique_lock<std::mutex> l(mtx_init_);
+    while (!is_launch_) {
+      init_cond_var_.wait(l);
+    }
+    if (is_destroy_) {
+      is_idle_ = true;
+      return;
+    }
+    if (model_worker_ == nullptr) {
+      continue;
+    }
+    model_worker_->InitModelWorker(model_buf_, size_, worker_config_, predict_task_queue_, create_success_);
+    model_worker_ = nullptr;
+    is_idle_ = true;
+    is_launch_ = false;
+  }
+}
+
+InitWorkerThread::~InitWorkerThread() {
+  if (thread_.joinable()) {
+    thread_.join();
+  }
+}
+
+void InitWorkerThread::Launch(std::shared_ptr<ModelWorker> worker, const char *model_buf, size_t size,
+                              const std::shared_ptr<WorkerConfig> &worker_config,
+                              const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success) {
+  std::unique_lock<std::mutex> l(mtx_init_);
+  is_idle_ = false;
+  model_worker_ = worker;
+  model_buf_ = model_buf;
+  size_ = size;
+  worker_config_ = worker_config;
+  predict_task_queue_ = predict_task_queue;
+  create_success_ = create_success;
+  is_launch_ = true;
+  init_cond_var_.notify_one();
+}
+
+InitWorkerManager *InitWorkerManager::GetInstance() {
+  static InitWorkerManager instance;
+  return &instance;
+}
+
+void InitWorkerManager::InitModelWorker(std::shared_ptr<ModelWorker> worker, const char *model_buf, size_t size,
+                                        const std::shared_ptr<WorkerConfig> &worker_config,
+                                        const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
+                                        bool *create_success) {
+  std::unique_lock<std::mutex> l(manager_mutex_);
+  auto numa_id = worker_config->numa_id;
+  if (all_init_worker_.find(numa_id) != all_init_worker_.end()) {
+    for (auto &worker_thread : all_init_worker_[numa_id]) {
+      if (worker_thread->IsIdle()) {
+        MS_LOG(INFO) << "reuse init worker thread.";
+        worker_thread->Launch(worker, model_buf, size, worker_config, predict_task_queue, create_success);
+        return;
+      }
+    }
+  }
+  auto init_worker = std::make_shared<InitWorkerThread>();
+  if (init_worker == nullptr) {
+    MS_LOG(ERROR) << "create init worker thread failed.";
+    *create_success = false;
+    return;
+  }
+  init_worker->CreateInitThread();
+  init_worker->Launch(worker, model_buf, size, worker_config, predict_task_queue, create_success);
+  if (all_init_worker_.find(numa_id) == all_init_worker_.end()) {
+    all_init_worker_[numa_id] = {init_worker};
+  } else {
+    all_init_worker_[numa_id].push_back(init_worker);
+  }
+}
+
+InitWorkerManager::~InitWorkerManager() {
+  for (auto &numa_threads : all_init_worker_) {
+    for (auto &thread : numa_threads.second) {
+      thread->Destroy();
+    }
+  }
 }
 }  // namespace mindspore
