@@ -24,6 +24,7 @@ import time
 import ast
 import inspect
 import importlib
+import hashlib
 from collections import OrderedDict
 from functools import wraps
 import numpy as np
@@ -1398,6 +1399,17 @@ class _CellGraphExecutor:
     def del_net_res(self, net_id):
         self._graph_executor.del_net_res(net_id)
 
+    def _get_obf_pair_password(self):
+        if ('obf_ratio' not in self.obfuscate_config.keys()) or (
+                'obf_password' not in self.obfuscate_config.keys()):
+            raise ValueError("'obf_ratio' and 'obf_password' must be in obfuscate_config.")
+        obf_password = self.obfuscate_config.get('obf_password')
+        if obf_password == 0:
+            append_password = 0
+        else:
+            obf_password, append_password = _generate_pair_password(obf_password)
+        return obf_password, append_password
+
     def _get_func_graph_proto(self, obj, exec_id, ir_type="onnx_ir", use_prefix=False):
         """Get graph proto from pipeline."""
         if use_prefix:
@@ -1405,18 +1417,7 @@ class _CellGraphExecutor:
         if self._graph_executor.has_compiled(exec_id) is False:
             return None
         if self.obfuscate_config is not None:
-            if ('obf_ratio' not in self.obfuscate_config.keys()) or (
-                    'obf_password' not in self.obfuscate_config.keys()):
-                raise ValueError("'obf_ratio' and 'obf_password' must be in obfuscate_config.")
-            obf_password = self.obfuscate_config.get('obf_password')
-            if obf_password == 0:
-                append_password = 0
-            else:
-                seed_max = 2 ** 32 - 1
-                int_max = 2 ** 31 - 1
-                np.random.seed(obf_password % seed_max)
-                append_password = np.random.randint(int_max)
-                obf_password %= int_max
+            obf_password, append_password = self._get_obf_pair_password()
             return self._graph_executor.get_obfuscate_func_graph_proto(exec_id, self.obfuscate_config['obf_ratio'],
                                                                        obf_password, append_password)
         return self._graph_executor.get_func_graph_proto(exec_id, ir_type)
@@ -1464,6 +1465,31 @@ def ms_memory_recycle():
             _cell_graph_executor.del_net_res(cell_cache)
             cell_cache.clear()
     _ms_memory_recycle()
+
+
+def _generate_pair_password(obf_password):
+    """Generate pair password for dynamic obfuscation in password mode."""
+    seed_max = 2 ** 32 - 1
+    int_max = 2 ** 31 - 1
+    np.random.seed(obf_password % seed_max)
+    # generate a string as hash function inputs
+    word_repo = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghigklmnopqrstuvwxyz" + "0123456789"
+    repo_len = len(word_repo)
+    sha_string = ''
+    string_len = 1024*1024
+    for _ in range(string_len):
+        rand_index = np.random.randint(0, repo_len)
+        sha_string += word_repo[rand_index]
+    # get hash result
+    sha_result = hashlib.sha256(sha_string.encode('utf-8')).hexdigest()  # len is 64
+    append_password = 1
+    hex_base = 16
+    for item in sha_result:
+        if int(item, hex_base) > 0:
+            append_password *= int(item, hex_base)
+    append_password %= int_max
+    obf_password %= int_max
+    return obf_password, append_password
 
 
 _cell_graph_executor = _CellGraphExecutor()

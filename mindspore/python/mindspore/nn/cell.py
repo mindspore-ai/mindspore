@@ -34,6 +34,7 @@ from mindspore._c_expression import init_pipeline, update_func_graph_hyper_param
 from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
+from mindspore.common.api import _generate_pair_password
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
@@ -2255,19 +2256,10 @@ class GraphCell(Cell):
         self._add_attr("graph_load_from_mindir", self.graph)
         if not self.obf_password:
             return self.compile_and_run(*inputs)
-        append_input_1, append_input_2 = _obf_appended_inputs(self.obf_password)
+        obf_password, append_password = _generate_pair_password(self.obf_password)
+        append_input_1 = Tensor((numpy.ones((1, 1)) * obf_password).astype(numpy.int32))
+        append_input_2 = Tensor((numpy.ones((1, 1)) * append_password).astype(numpy.int32))
         return self.compile_and_run(*inputs, append_input_1, append_input_2)
-
-
-def _obf_appended_inputs(obf_password):
-    seed_max = 2 ** 32 - 1
-    int_max = 2 ** 31 - 1
-    numpy.random.seed(obf_password % seed_max)
-    append_password = numpy.random.randint(int_max)
-    obf_password %= int_max
-    append_input_1 = Tensor((numpy.ones((1, 1)) * obf_password).astype(numpy.int32))
-    append_input_2 = Tensor((numpy.ones((1, 1)) * append_password).astype(numpy.int32))
-    return append_input_1, append_input_2
 
 
 def _check_param_list_tuple(value):
