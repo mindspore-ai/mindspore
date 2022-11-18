@@ -197,6 +197,7 @@ Image Processing
     mindspore.ops.BoundingBoxDecode
     mindspore.ops.BoundingBoxEncode
     mindspore.ops.CheckValid
+    mindspore.ops.CombinedNonMaxSuppression
     mindspore.ops.CropAndResize
     mindspore.ops.ExtractVolumePatches
     mindspore.ops.IOU
@@ -237,6 +238,9 @@ Mathematical Operators
     mindspore.ops.Cholesky
     mindspore.ops.CholeskyInverse
     mindspore.ops.CholeskySolve
+    mindspore.ops.CompareAndBitpack
+    mindspore.ops.Complex
+    mindspore.ops.ComplexAbs
     mindspore.ops.Cross
 
 Element-wise Operator
@@ -428,6 +432,8 @@ Array Operation
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.CheckNumerics
+    mindspore.ops.Coalesce
+    mindspore.ops.Col2Im
     mindspore.ops.Concat
     mindspore.ops.ConjugateTranspose
     mindspore.ops.Cummax
