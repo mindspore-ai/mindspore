@@ -361,6 +361,7 @@ constexpr const char kNameKLDiv[] = "KLDivLoss";
 constexpr const char kNameGetShape[] = "GetShape";
 constexpr const char kNameKlDivLossGrad[] = "KLDivLossGrad";
 constexpr const char kNameRandomStandardNormal[] = "RandomStandardNormal";
+constexpr const char kNameStandardNormal[] = "StandardNormal";
 constexpr const char kNameUnsortedSegmentSum[] = "UnsortedSegmentSum";
 constexpr const char kNameSpaceToBatchTF[] = "SpaceToBatchTF";
 constexpr const char kNameBatchToSpaceTF[] = "BatchToSpaceTF";
