@@ -14,20 +14,24 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/pytorch/pytorch_cumsum_parser.h"
-#include <memory>
-#include "ops/cumsum.h"
-#include "nnacl/op_base.h"
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TILE_FUSION_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TILE_FUSION_MAPPER_H_
+
+#include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
+#include "ops/fusion/tile_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveCPtr PytorchCumSumParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
-  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
-  auto prim = std::make_unique<ops::CumSum>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
+using mindspore::ops::kNameTileFusion;
 
-PytorchNodeRegistrar g_pytorchCunSumParser("cumsum", new PytorchCumSumParser());
+class TileFusionMapper : public PrimitiveMapper {
+ public:
+  TileFusionMapper() : PrimitiveMapper(kNameTileFusion) {}
+
+  ~TileFusionMapper() override = default;
+
+  STATUS Mapper(const CNodePtr &cnode) override;
+};
 }  // namespace lite
 }  // namespace mindspore
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TILE_FUSION_MAPPER_H_
