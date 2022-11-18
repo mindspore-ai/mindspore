@@ -470,6 +470,70 @@ from .spectral_func import (
 from .vmap_func import (
     vmap,
 )
+from .sparse_unary_func import (
+    csr_cos,
+    csr_tan,
+    csr_inv,
+    csr_exp,
+    csr_relu,
+    csr_expm1,
+    csr_isfinite,
+    csr_asin,
+    csr_sqrt,
+    csr_log,
+    csr_isnan,
+    csr_acos,
+    csr_floor,
+    csr_atan,
+    csr_square,
+    csr_relu6,
+    csr_sinh,
+    csr_ceil,
+    csr_cosh,
+    csr_softsign,
+    csr_log1p,
+    csr_round,
+    csr_tanh,
+    csr_neg,
+    csr_asinh,
+    csr_acosh,
+    csr_abs,
+    csr_isinf,
+    csr_atanh,
+    csr_sigmoid,
+    csr_sin,
+    coo_cos,
+    coo_tan,
+    coo_inv,
+    coo_exp,
+    coo_relu,
+    coo_expm1,
+    coo_isfinite,
+    coo_asin,
+    coo_sqrt,
+    coo_log,
+    coo_isnan,
+    coo_acos,
+    coo_floor,
+    coo_atan,
+    coo_square,
+    coo_relu6,
+    coo_sinh,
+    coo_ceil,
+    coo_cosh,
+    coo_softsign,
+    coo_log1p,
+    coo_round,
+    coo_tanh,
+    coo_neg,
+    coo_asinh,
+    coo_acosh,
+    coo_abs,
+    coo_isinf,
+    coo_atanh,
+    coo_sigmoid,
+    coo_sin
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -484,4 +548,5 @@ __all__.extend(debug_func.__all__)
 __all__.extend(image_func.__all__)
 __all__.extend(spectral_func.__all__)
 __all__.extend(vmap_func.__all__)
+__all__.extend(sparse_unary_func.__all__)
 __all__.sort()
