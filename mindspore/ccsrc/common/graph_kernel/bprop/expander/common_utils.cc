@@ -26,6 +26,7 @@
 
 #include "ops/core_ops.h"
 #include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -105,14 +106,7 @@ TypeId GetOutputDtype(TypeId t1, TypeId t2, bool use_complex = false) {
 }
 }  // namespace
 
-ShapeVector GetAxisValue(const NodePtr &axis) {
-  MS_EXCEPTION_IF_NULL(axis);
-  auto axis_node = axis->get<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(axis_node);
-  return GetAxisList(axis_node->value());
-}
-
-std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector axis) {
+std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis) {
   auto rank = input_shape.size();
   std::set<int64_t> reduction_indices_set;
   ShapeVector perm;
@@ -209,17 +203,23 @@ std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vecto
   return out;
 }
 
-std::vector<int64_t> GetAxisList(const ValuePtr &value) {
+int64_t GetIntValue(const NodePtr &node) { return AnfUtils::GetIntValue(node->get()); }
+
+std::vector<int64_t> GetIntList(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  std::vector<int64_t> result;
-  if (value->isa<ValueSequence>()) {
-    const auto &vals = value->cast<ValueSequencePtr>()->value();
-    (void)std::transform(vals.begin(), vals.end(), std::back_inserter(result),
-                         [](const ValuePtr &v) { return AnfUtils::GetIntValue(v); });
+  if (value->isa<tensor::Tensor>()) {
+    return CheckAndConvertUtils::CheckTensorIntValue("tensor", value, "bprop");
   } else {
-    result.push_back(AnfUtils::GetIntValue(value));
+    return CheckAndConvertUtils::CheckIntOrTupleInt("value", value, "bprop");
   }
-  return result;
+}
+
+std::vector<int64_t> GetIntList(const NodePtr &node) {
+  if (node->isa<ValueNode>()) {
+    auto value = node->get<ValueNodePtr>()->value();
+    return GetIntList(value);
+  }
+  return GetIntList(node->get()->abstract()->BuildValue());
 }
 
 NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
@@ -289,11 +289,15 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
 }
 
 std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step) {
-  int64_t size = (step != 0) ? ((stop - start) / step) : 0;
-  if (size <= 0) {
+  auto size = stop - start;
+  if (size * step <= 0) {
     return {};
   }
-  size = ((stop - start) % step == 0) ? size : size + 1;
+  if (size % step == 0) {
+    size = size / step;
+  } else {
+    size = size / step + 1;
+  }
   std::vector<int64_t> range(LongToSize(size));
   std::generate(range.begin(), range.end(), [n = start - step, step]() mutable {
     n = n + step;
@@ -347,7 +351,7 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
   auto x_shp = ib->GetShape(x);
   auto out_shp = ib->GetShape(dout);
   auto ind_shp = ib->GetShape(indices);
-  auto axis_v = CheckRange(GetIntFromValueNode(axis), SizeToLong(x_shp.size()));
+  auto axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
   if (out_shp.empty()) {
     dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
   }
@@ -472,40 +476,6 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   trans.insert(trans.end(), after_axis.begin(), after_axis.end());
   trans.push_back(axis);
   return trans;
-}
-
-int64_t GetIntFromValueNode(const NodePtr &node) {
-  if (!node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The output of node should be value node, but got " << node->get()->ToString();
-  }
-  auto value_node = node->get()->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto v = value_node->value();
-  MS_EXCEPTION_IF_NULL(v);
-  int64_t res = 0;
-  if (v->isa<Int32Imm>()) {
-    res = static_cast<int64_t>(GetValue<int32_t>(v));
-  } else if (v->isa<Int64Imm>()) {
-    res = GetValue<int64_t>(v);
-  } else {
-    MS_LOG(EXCEPTION) << "The output of node should be int, but got " << node->get()->ToString();
-  }
-  return res;
-}
-
-std::vector<int64_t> GetTupleIntFromValueNode(const NodePtr &node) {
-  if (!node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The output of node should be value node, but got " << node->get()->ToString();
-  }
-  auto value_node = node->get()->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto v = value_node->value();
-  MS_EXCEPTION_IF_NULL(v);
-  if (!v->isa<ValueTuple>() && !v->isa<ValueList>()) {
-    MS_LOG(EXCEPTION) << "The output of node should be tuple, but got " << node->get()->ToString();
-  }
-  auto sh = GetValue<std::vector<int64_t>>(v);
-  return sh;
 }
 
 NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &dout) {

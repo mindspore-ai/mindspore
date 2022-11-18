@@ -40,6 +40,8 @@ AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePt
     tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
   } else if (value->isa<ValueTuple>()) {
     tensor_ptr = CreateTupleTensor(value->cast<ValueTuplePtr>());
+  } else if (value->isa<ValueList>()) {
+    tensor_ptr = CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
   } else {
     MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple";
   }
@@ -78,7 +80,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
   // the first input is primitive node which is not the real input
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
-    if (IsValueNode<Scalar>(input_node) || IsValueNode<ValueTuple>(input_node)) {
+    if (IsValueNode<Scalar>(input_node) || IsValueNode<ValueSequence>(input_node)) {
       auto tensor_input = CreateTensorInput(kernel_graph, input_node);
       if (tensor_input == nullptr) {
         new_inputs.push_back(input_node);

@@ -36,8 +36,6 @@ std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<i
 
 std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis);
 
-std::vector<int64_t> GetAxisList(const ValuePtr &value);
-
 int64_t CheckRange(int64_t idx, int64_t dim_size);
 
 NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
@@ -58,6 +56,10 @@ std::vector<T> operator+(std::vector<T> const &m, std::vector<T> const &n) {
   return v;                               // return the vector v
 }
 
+int64_t GetIntValue(const NodePtr &node);
+std::vector<int64_t> GetIntList(const ValuePtr &value);
+std::vector<int64_t> GetIntList(const NodePtr &node);
+
 NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type);
 NodePtrList BinopGatherCommon(const BpropIRBuilder *ib);
 std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v);
@@ -65,8 +67,6 @@ std::vector<int64_t> GenerateShapeIndex(const std::vector<int64_t> &out_shp, con
                                         int64_t axis_v);
 std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, const std::vector<int64_t> &ind_shp,
                                            int64_t axis_v);
-std::vector<int64_t> GetTupleIntFromValueNode(const NodePtr &node);
-int64_t GetIntFromValueNode(const NodePtr &node);
 std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex);
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
 std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
@@ -74,8 +74,7 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &dout);
 NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &out,
                      const NodePtr &dout);
-std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, ShapeVector axis);
-ShapeVector GetAxisValue(const NodePtr &axis);
+std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis);
 NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max);
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2);

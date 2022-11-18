@@ -895,7 +895,7 @@ REG_BPROP_BUILDER("ReduceSum").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = SumGrad(ib, x, GetAxisValue(axis), dout);
+  auto dx = SumGrad(ib, x, GetIntList(axis), dout);
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -905,11 +905,11 @@ REG_BPROP_BUILDER("ReduceProd").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
   auto input_shape = ib->GetShape(x);
-  auto output_shape_kept_dims = ReduceShape(input_shape, GetAxisValue(axis));
+  auto output_shape_kept_dims = ReduceShape(input_shape, GetIntList(axis));
   dout = ib->Reshape(dout, output_shape_kept_dims);
   auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
   auto grad = ib->Tile(dout, tile_scaling);
-  auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetAxisValue(axis));
+  auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetIntList(axis));
   auto permuted = ib->Transpose(x, perm);
   auto permuted_shape = ib->GetShape(permuted);
   auto reshaped = ib->Reshape(permuted, pack_shape);
@@ -928,7 +928,7 @@ REG_BPROP_BUILDER("ReduceMax").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = MinOrMaxGrad(ib, x, GetAxisValue(axis), out, dout);
+  auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -937,7 +937,7 @@ REG_BPROP_BUILDER("ReduceMin").SetBody([](const BpropIRBuilder *ib) -> NodePtrLi
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = MinOrMaxGrad(ib, x, GetAxisValue(axis), out, dout);
+  auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
   return {dx, ib->ZerosLike(axis)};
 });
 
@@ -946,7 +946,7 @@ REG_BPROP_BUILDER("ReduceMean").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto grad = SumGrad(ib, x, GetAxisValue(axis), dout);
+  auto grad = SumGrad(ib, x, GetIntList(axis), dout);
   auto shape_x = ib->GetShape(x);
   auto shape_out = ib->GetShape(out);
   auto getSize = [](const ShapeVector shape) {
@@ -1481,7 +1481,7 @@ REG_BPROP_BUILDER("Addcmul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
 REG_BPROP_BUILDER("LpNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto p = GetValue<int64_t>(ib->GetAttr("p"));
   auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
-  auto axis = GetAxisList(ib->GetAttr("axis"));
+  auto axis = GetIntList(ib->GetAttr("axis"));
   auto input_x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -1513,7 +1513,7 @@ REG_BPROP_BUILDER("LpNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
 REG_BPROP_BUILDER("Renorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto p = FloatToInt(GetValue<float>(ib->GetAttr("p")));
   float ext = 1e-07;
-  auto dim = GetAxisList(ib->GetAttr("dim"))[0];
+  auto dim = GetIntList(ib->GetAttr("dim"))[0];
   auto max_norm = GetValue<float>(ib->GetAttr("maxnorm"));
   auto input_x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
@@ -1560,7 +1560,7 @@ REG_BPROP_BUILDER("Renorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
 });
 
 REG_BPROP_BUILDER("ReduceStd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  auto axis = GetAxisList(ib->GetAttr("axis"));
+  auto axis = GetIntList(ib->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
   auto unbiased = GetValue<bool>(ib->GetAttr("unbiased"));
   auto x = ib->GetInput(kIndex0);

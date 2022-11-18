@@ -204,8 +204,8 @@ REG_BPROP_BUILDER("CSRReduceSum").SetBody([](const BpropIRBuilder *ib) -> NodePt
   auto shape = ib->GetInput(kIndex3);
   auto axis = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex6);
-  auto shape_vec = GetAxisValue(shape);
-  auto output_shape_kept_dims = ReduceShape(shape_vec, GetAxisValue(axis));
+  auto shape_vec = GetIntList(shape);
+  auto output_shape_kept_dims = ReduceShape(shape_vec, GetIntList(axis));
   auto tile_scaling = TupleDiv(shape_vec, output_shape_kept_dims);
   auto values_grad_dense = ib->Tile(ib->Reshape(dout, output_shape_kept_dims), tile_scaling);
   auto values_grad = ib->Emit("CSRGather", {indptr, indices, values_grad_dense, shape});
@@ -231,7 +231,7 @@ REG_BPROP_BUILDER("CSRMV").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto zero = ib->Value<int64_t>(0);
   auto cols_transposed = ib->Emit("Gather", {rows, cols_indexing, zero});
   auto values_transposed = ib->Emit("Gather", {values, cols_indexing, zero});
-  auto dense_shape_vec = GetAxisValue(dense_shape);
+  auto dense_shape_vec = GetIntList(dense_shape);
   auto indptr_transposed = ib->Emit("COO2CSR", {rows_transposed, ib->Value(dense_shape_vec.at(1))});
   NodePtr t1 = nullptr;
   NodePtr t2 = nullptr;
@@ -275,7 +275,7 @@ REG_BPROP_BUILDER("CSRDiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   auto indptr = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto shape_node = ib->GetInput(kIndex3);
-  auto shape = GetAxisValue(shape_node);
+  auto shape = GetIntList(shape_node);
   auto dense = ib->GetInput(kIndex4);
   auto out = ib->GetInput(kIndex5);
   auto dout = ib->GetInput(kIndex6);
