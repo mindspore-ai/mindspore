@@ -104,6 +104,19 @@ bool VectorReplace(std::vector<T> *vec, T srcElement, T dstElement) {
   return ret;
 }
 
+template <typename T>
+bool CommonCheckTensorType(const std::vector<T *> &tensors, size_t index, TypeId input_type) {
+  if (tensors.at(index) == nullptr) {
+    MS_LOG(ERROR) << "Tensors index: " << index << " is a nullptr";
+    return false;
+  }
+  if (tensors.at(index)->data_type() != input_type) {
+    MS_LOG(ERROR) << "Invalid tensor[" << index << "] data_type: " << tensors.at(index)->data_type();
+    return false;
+  }
+  return true;
+}
+
 const char WHITESPACE[] = "\t\n\v\f\r ";
 const char STR_TRUE[] = "true";
 const char STR_FALSE[] = "false";
