@@ -488,15 +488,18 @@ class NonMaxSuppressionWithOverlaps(Primitive):
 class HSVToRGB(Primitive):
     """
     Convert one or more images from HSV to RGB.
-    Outputs a tensor of the same shape as the images tensor, containing the HSV value of the pixels.
-    The output is only well defined if the value in images are in [0,1].
+    Outputs a tensor of the same shape as the images tensor,
+    containing the HSV value of the pixels. The output is only
+    well defined if the value in images are in [0,1].
 
     Inputs:
-        **x** (Tensor) - The input image must be a 4-D tensor of shape [batch, image_height, image_width, channel].
-        Number of channel must be 3.
-        Types allowed: float16, float32, float64.
+        - **x** (Tensor) - The input image must be a 4-D tensor of shape
+          :math:`[batch, image_height, image_width, channel]`.
+          Number of channel must be 3. Types allowed: float16, float32, float64.
+
     Outputs:
-        A 4-D tensor of shape [batch, image_height, image_width, channel] with same type of input.
+        A 4-D tensor of shape :math:`[batch, image_height, image_width, channel]`
+        with same type of input.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -755,6 +758,7 @@ class ResizeBicubic(Primitive):
           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - A 1-D tensor of shape [2], with 2 elements: new_height, new_width.
           Types allowed: int32.
+
     Outputs:
         A 4-D tensor of shape [batch, new_height, new_width, channels] with type: float32.
 

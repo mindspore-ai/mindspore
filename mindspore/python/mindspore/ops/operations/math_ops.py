@@ -2466,7 +2466,7 @@ class ReduceStd(Primitive):
     Returns the standard-deviation and mean of each row of the input tensor in the dimension `axis`.
     If `axis` is a list of dimensions, reduce over all of them.
 
-    Refer to :func:`mindspore.ops.std` for more detail.
+    Refer to :func:`mindspore.ops.std` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -2878,8 +2878,9 @@ class Heaviside(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor. With real number data type.
-        - **values** (Tensor) - The values to use where x is zero. Values can be broadcast with x.
-          'x' should have the same dtype with 'values'.
+        - **values** (Tensor) - The values to use where `x` is zero.
+          Values can be broadcast with `x` . 'x' should have the same
+          dtype with 'values'.
 
     Outputs:
         Tensor, has the same type as 'x' and 'values'.
@@ -5589,7 +5590,7 @@ class LogMatrixDeterminant(Primitive):
     """
     Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
-    Refer to :func:`mindspore.ops.log_matrix_determinant` for more detail.
+    Refer to :func:`mindspore.ops.log_matrix_determinant` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6143,7 +6144,7 @@ class IsClose(Primitive):
     r"""
     Returns a boolean Tensor where two tensors are element-wise equal within a tolerance.
 
-    Refer to :func:`mindspore.ops.isclose` for more detail.
+    Refer to :func:`mindspore.ops.isclose` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7093,7 +7094,7 @@ class FFTWithSize(Primitive):
             \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
              e^{-j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
 
-    where :math:`d` = :attr:`signal_ndim` is number of dimensions for the
+    where :math:`d` = `signal_ndim` is number of dimensions for the
     signal, and :math:`N_i` is the size of signal dimension :math:`i`.
 
     For ifft, it computes the following expression:
@@ -7103,26 +7104,29 @@ class FFTWithSize(Primitive):
             \frac{1}{\prod_{i=1}^d N_i} \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
              e^{\ j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
 
-    where :math:`d` = :attr:`signal_ndim` is number of dimensions for the
+    where :math:`d` = `signal_ndim` is number of dimensions for the
     signal, and :math:`N_i` is the size of signal dimension :math:`i`.
 
     Note:
-        FFT/IFFT requires complex64 or complex128 inputs, return complex64 or complex128 outputs.
-        RFFT requires float32 or float64 inputs, return complex64 or complex128 outputs.
-        IRFFT requires complex64 or complex128 inputs, return float32 or float64 outputs.
+        - FFT/IFFT requires complex64 or complex128 inputs, return complex64 or complex128 outputs.
+        - RFFT requires float32 or float64 inputs, return complex64 or complex128 outputs.
+        - IRFFT requires complex64 or complex128 inputs, return float32 or float64 outputs.
 
     Args:
-        signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions of the fourier
-            transform are realized, can only be 1, 2 or 3.
-        inverse (bool): Whether it is the inverse transformation, used to select FFT or IFFT and RFFT or IRFFT.
-            inverse=False means FFT or RFFT, inverse=True means IFFT or IRFFT.
+        signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions
+            of the fourier transform are realized, can only be 1, 2 or 3.
+        inverse (bool): Whether it is the inverse transformation, used to select FFT or IFFT and RFFT or
+            IRFFT. inverse=False means FFT or RFFT, inverse=True means IFFT or IRFFT.
         real (bool): Whether it is the real transformation, used to select FFT/IFFT or RFFT/IRFFT.
             real=False means FFT or IFFT, real=True means RFFT or IRFFT.
-        norm (str): The default normalization ("backward") has the direct (forward) transforms unscaled
-            and the inverse (backward) transforms scaled by 1/n.
-            "ortho" has both direct and inverse transforms are scaled by 1/sqrt(n).
-            "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
-            n is the input x's element numbers.
+        norm (str, optional): The normalization, optional values: ["backward", "forward", "ortho"].
+            Default value: "backward".
+
+            - "backward" has the direct (forward) transforms unscaled and the inverse (backward) transforms
+              scaled by 1/n, where n is the input x's element numbers.
+            - "ortho" has both direct and inverse transforms are scaled by 1/sqrt(n).
+            - "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
+
         onesided (bool): Controls whether the input is halved to avoid redundancy. Default: True.
         signal_sizes (list): Size of the original signal (the signal before rfft, no batch dimension),
             only in irfft mode and set onesided=true requires the parameter. Default: [].

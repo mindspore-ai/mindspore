@@ -268,18 +268,21 @@ class RandomGamma(Primitive):
 
 class LogNormalReverse(Primitive):
     r"""
-    Fills the elements of the input tensor with log normal values initialized by given mean and std:
+    Fills the elements of the input tensor with log normal values initialized by
+    given mean and std:
 
     .. math::
         \text{f}(x;1.0,2.0)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
 
     Args:
-        mean (float): the mean of normal distribution. With float data type. Default: 2.0.
-        std (float): the std of normal distribution. With float data type. Default: 1.0.
+        mean (float, optional): the mean of normal distribution. With float data type.
+            Default: 2.0.
+        std (float, optional): the std of normal distribution. With float data type.
+            Default: 1.0.
 
     Inputs:
         - **input** (Tensor) - The tensor to be generated with log-normal distribution.
-        Must be one of the following types: float16, float32.
+          Must be one of the following types: float16, float32.
 
     Outputs:
         Tensor. A Tensor with the same type and shape of input.
