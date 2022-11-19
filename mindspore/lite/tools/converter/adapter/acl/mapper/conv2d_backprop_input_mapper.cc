@@ -79,10 +79,6 @@ STATUS Conv2DBackpropInputMapper::AdjustInputOrder(const CNodePtr &cnode) {
   std::vector<AnfNodePtr> new_inputs = {inputs[kPrimIndex], inputs[kInputSizeIndex], inputs[kFilterIndex],
                                         inputs[kOutBackpropIndex]};
   cnode->set_inputs(new_inputs);
-  if (AdjustInputOrder(cnode) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Adjust input order failed.";
-    return lite::RET_ERROR;
-  }
   return lite::RET_OK;
 }
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Example:sh run_remote_ascend.sh -v version -b backend
-while getopts "v:b:d:a:" opt; do
+while getopts "v:b:d:a:c:" opt; do
     case ${opt} in
         v)
             version=${OPTARG}
@@ -18,6 +18,10 @@ while getopts "v:b:d:a:" opt; do
         a)
             arch=${OPTARG}
             echo "arch is ${arch}"
+            ;;
+        c)
+            compile_type=${OPTARG}
+            echo "compile type is ${compile_type}"
             ;;
         ?)
         echo "unknown para"
@@ -59,11 +63,15 @@ function Run_Benchmark() {
 
         echo "Benchmarking ${model_name} ......"
         model_type=${model_name##*.}
-        model_file=${ms_models_path}'/'${model_name}'.ms'
+        if [[ ${compile_type} == "cloud" ]]; then
+          model_file=${ms_models_path}'/'${model_name}'.mindir'
+        else
+          model_file=${ms_models_path}'/'${model_name}'.ms'
+        fi
         input_files=""
         output_file=""
         data_path=${model_data_path}'/data/'
-        if [[ ${model_type} == "mindir" ]]; then
+        if [[ ${model_type} == "mindir" || ${model_type} == "ms" ]]; then
           if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
             input_files=${data_path}'input/'${model_name}'.ms.bin'
           else
@@ -102,7 +110,7 @@ function Run_Benchmark() {
 
         # different tensorrt run mode use different cuda command
         echo './benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
-        ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
+        ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device}
 
         if [ $? = 0 ]; then
             run_result=${backend}': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -116,7 +124,11 @@ function Run_Benchmark() {
 user_name=${USER}
 benchmark_test=/home/${user_name}/benchmark_test/${device_id}
 ms_models_path=${benchmark_test}/ms_models
-models_ascend_config=${benchmark_test}/models_ascend.cfg
+if [[ ${backend} =~ "lite" ]]; then
+    models_ascend_config=${benchmark_test}/models_ascend_lite.cfg
+elif [[ ${backend} =~ "cloud" ]]; then
+    models_ascend_config=${benchmark_test}/models_ascend_cloud.cfg
+fi
 model_data_path=/home/workspace/mindspore_dataset/mslite
 
 # Write benchmark result to temp file
