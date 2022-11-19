@@ -407,7 +407,6 @@ void ConvGradInputBkwGpuKernelMod::ResetResource() noexcept {
   padded_size_ = 0;
   workspace_size_ = 0;
   use_pad_ = false;
-  beta_ = 0;
   input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
