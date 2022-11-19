@@ -1218,6 +1218,8 @@ class OnnxExporter {
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimOnesLike(const FuncGraphPtr &func_graph, const CNodePtr &node,
                           std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimScatterNd(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                           std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimArgMaxWithValue(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimOneHot(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -2868,6 +2870,50 @@ void OnnxExporter::ExportPrimOnesLike(const FuncGraphPtr &, const CNodePtr &node
   }
 }
 
+void OnnxExporter::ExportPrimScatterNd(const FuncGraphPtr &, const CNodePtr &node,
+                                       std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                       onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto input_indices_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_update_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto input_shape_name = GetNodeInputName(node->input(kThreeNum), node_map_ptr, graph_proto);
+  auto node_zero_tensor_name = node_name + "_zero";
+  auto dtype = node->input(kTwoNum)->Type();
+  auto elem_type = dyn_cast<TensorType>(dtype)->element()->type_id();
+
+  onnx::TensorProto *zero_proto = AddConstantOfShapeOp(input_shape_name, node_zero_tensor_name, graph_proto);
+  switch (elem_type) {
+    case kNumberTypeInt32:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_INT32);
+      zero_proto->add_int32_data(0);
+      break;
+    case kNumberTypeInt64:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_INT64);
+      zero_proto->add_int64_data(0);
+      break;
+    case kNumberTypeFloat32:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_FLOAT);
+      zero_proto->add_float_data(0.0f);
+      break;
+    case kNumberTypeFloat64:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_DOUBLE);
+      zero_proto->add_double_data(0.0);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unsupported dtype: " << elem_type;
+  }
+  auto int64_indices_name = input_indices_name + "_int64";
+  AddCastOp(input_indices_name, int64_indices_name, onnx::TensorProto_DataType_INT64, graph_proto);
+
+  // Create ScatterND node
+  onnx::NodeProto *scatternd_proto = graph_proto->add_node();
+  scatternd_proto->set_op_type("ScatterND");
+  scatternd_proto->add_input(node_zero_tensor_name);
+  scatternd_proto->add_input(int64_indices_name);
+  scatternd_proto->add_input(input_update_name);
+  scatternd_proto->add_output(node_name);
+}
+
 void OnnxExporter::ExportPrimArgMaxWithValue(const FuncGraphPtr &, const CNodePtr &node,
                                              std::map<AnfNodePtr, std::string> *node_map_ptr,
                                              onnx::GraphProto *const graph_proto) {
@@ -3509,6 +3555,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimROIAlign, &OnnxExporter::ExportPrimROIAlign},
     {prim::kPrimSlice, &OnnxExporter::ExportPrimSlice},
     {prim::kPrimOnesLike, &OnnxExporter::ExportPrimOnesLike},
+    {prim::kPrimScatterNd, &OnnxExporter::ExportPrimScatterNd},
     {prim::kPrimArgMaxWithValue, &OnnxExporter::ExportPrimArgMaxWithValue},
     {prim::kPrimOneHot, &OnnxExporter::ExportPrimOneHot},
     {prim::kPrimConv2DTranspose, &OnnxExporter::ExportPrimConv2DTranspose},

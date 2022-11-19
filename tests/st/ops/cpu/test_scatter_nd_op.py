@@ -342,3 +342,40 @@ def test_scatternd_functional_pynative():
     diff = output - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatternd_cpu_onnx():
+    """
+    Feature: test ScatterNd op in cpu.
+    Description: test the ops export onnx.
+    Expectation: expect correct shape result.
+    """
+    import os
+    import stat
+    import onnxruntime
+    from mindspore.train.serialization import export
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    shape = (4, 4, 4)
+    net = Net(shape)
+    indices = np.array([[0], [2]], dtype=np.int32)
+    updates = np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
+                         [3, 3, 3, 3], [4, 4, 4, 4]],
+                        [[1, 1, 1, 1], [2, 2, 2, 2],
+                         [3, 3, 3, 3], [4, 4, 4, 4]]], dtype=np.float32)
+    out_ms = net(Tensor(indices), Tensor(updates)).asnumpy()
+    file = 'scatternd.onnx'
+    export(net, Tensor(indices), Tensor(updates), file_name=file, file_format="ONNX")
+    assert os.path.exists(file)
+
+    sess = onnxruntime.InferenceSession(file)
+    input_indices = sess.get_inputs()[0].name
+    input_updates = sess.get_inputs()[1].name
+    result = sess.run([], {input_indices: indices, input_updates: updates})[0]
+    assert np.all(out_ms == result)
+
+    os.chmod(file, stat.S_IWRITE)
+    os.remove(file)
