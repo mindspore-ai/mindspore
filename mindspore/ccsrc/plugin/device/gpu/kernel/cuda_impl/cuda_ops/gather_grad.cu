@@ -16,7 +16,11 @@
 
 #include <iostream>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather_grad.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S>
 __global__ void GatherGradKernel(const size_t num, const T *index, const S *grad, S *output,
@@ -65,6 +69,27 @@ void GatherGrad(const T *index, const S *grad, S *output, const size_t dim_befor
   return;
 }
 
+template CUDA_LIB_EXPORT void GatherGrad<int, Complex<double>>(const int *index, const Complex<double> *grad,
+                                                               Complex<double> *output, const size_t dim_before_axis,
+                                                               const size_t dim_at_axis_index,
+                                                               const size_t dim_at_axis_output,
+                                                               const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int64_t, Complex<double>>(const int64_t *index, const Complex<double> *grad,
+                                                                   Complex<double> *output,
+                                                                   const size_t dim_before_axis,
+                                                                   const size_t dim_at_axis_index,
+                                                                   const size_t dim_at_axis_output,
+                                                                   const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int, Complex<float>>(const int *index, const Complex<float> *grad,
+                                                              Complex<float> *output, const size_t dim_before_axis,
+                                                              const size_t dim_at_axis_index,
+                                                              const size_t dim_at_axis_output,
+                                                              const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int64_t, Complex<float>>(const int64_t *index, const Complex<float> *grad,
+                                                                  Complex<float> *output, const size_t dim_before_axis,
+                                                                  const size_t dim_at_axis_index,
+                                                                  const size_t dim_at_axis_output,
+                                                                  const size_t dim_after_axis, cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherGrad<int, double>(const int *index, const double *grad, double *output,
                                                       const size_t dim_before_axis, const size_t dim_at_axis_index,
                                                       const size_t dim_at_axis_output, const size_t dim_after_axis,
@@ -131,16 +156,36 @@ template CUDA_LIB_EXPORT void GatherGrad<int64_t, unsigned char>(const int64_t *
                                                                  const size_t dim_at_axis_index,
                                                                  const size_t dim_at_axis_output,
                                                                  const size_t dim_after_axis, cudaStream_t stream);
-template CUDA_LIB_EXPORT void GatherGrad<int, unsigned int>(const int *index, const unsigned int *grad,
-                                                            unsigned int *output, const size_t dim_before_axis,
+template CUDA_LIB_EXPORT void GatherGrad<int, uint64_t>(const int *index, const uint64_t *grad,
+                                                        uint64_t *output, const size_t dim_before_axis,
+                                                        const size_t dim_at_axis_index,
+                                                        const size_t dim_at_axis_output,
+                                                        const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int64_t, uint64_t>(const int64_t *index, const uint64_t *grad,
+                                                            uint64_t *output, const size_t dim_before_axis,
                                                             const size_t dim_at_axis_index,
                                                             const size_t dim_at_axis_output,
                                                             const size_t dim_after_axis, cudaStream_t stream);
-template CUDA_LIB_EXPORT void GatherGrad<int64_t, unsigned int>(const int64_t *index, const unsigned int *grad,
-                                                                unsigned int *output, const size_t dim_before_axis,
-                                                                const size_t dim_at_axis_index,
-                                                                const size_t dim_at_axis_output,
-                                                                const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int, uint32_t>(const int *index, const uint32_t *grad,
+                                                        uint32_t *output, const size_t dim_before_axis,
+                                                        const size_t dim_at_axis_index,
+                                                        const size_t dim_at_axis_output,
+                                                        const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int64_t, uint32_t>(const int64_t *index, const uint32_t *grad,
+                                                            uint32_t *output, const size_t dim_before_axis,
+                                                            const size_t dim_at_axis_index,
+                                                            const size_t dim_at_axis_output,
+                                                            const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int, uint16_t>(const int *index, const uint16_t *grad,
+                                                        uint16_t *output, const size_t dim_before_axis,
+                                                        const size_t dim_at_axis_index,
+                                                        const size_t dim_at_axis_output,
+                                                        const size_t dim_after_axis, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherGrad<int64_t, uint16_t>(const int64_t *index, const uint16_t *grad,
+                                                            uint16_t *output, const size_t dim_before_axis,
+                                                            const size_t dim_at_axis_index,
+                                                            const size_t dim_at_axis_output,
+                                                            const size_t dim_after_axis, cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherGrad<int, bool>(const int *index, const bool *grad, bool *output,
                                                     const size_t dim_before_axis, const size_t dim_at_axis_index,
                                                     const size_t dim_at_axis_output, const size_t dim_after_axis,

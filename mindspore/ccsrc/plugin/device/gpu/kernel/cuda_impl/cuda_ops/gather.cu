@@ -16,7 +16,12 @@
 
 #include <iostream>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "include/cuda_fp16.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 template <typename T, typename S>
 __global__ void GatherKernel(const T *input, const S *index, T *output, const size_t dim_before_axis,
                              const size_t dim_at_axis_input, const size_t dim_at_axis_output,
@@ -50,6 +55,30 @@ void Gather(const T *input, const S *index, T *output, const size_t dim_before_a
   return;
 }
 
+template CUDA_LIB_EXPORT void Gather<Complex<double>, int>(const Complex<double> *input, const int *index,
+                                                           Complex<double> *output, const size_t dim_before_axis,
+                                                           const size_t dim_at_axis_input,
+                                                           const size_t dim_at_axis_output,
+                                                           const size_t dim_after_axis,
+                                                           cudaStream_t stream, uint32_t device_id);
+template CUDA_LIB_EXPORT void Gather<Complex<double>, int64_t>(const Complex<double> *input, const int64_t *index,
+                                                               Complex<double> *output, const size_t dim_before_axis,
+                                                               const size_t dim_at_axis_input,
+                                                               const size_t dim_at_axis_output,
+                                                               const size_t dim_after_axis,
+                                                               cudaStream_t stream, uint32_t device_id);
+template CUDA_LIB_EXPORT void Gather<Complex<float>, int>(const Complex<float> *input, const int *index,
+                                                          Complex<float> *output, const size_t dim_before_axis,
+                                                          const size_t dim_at_axis_input,
+                                                          const size_t dim_at_axis_output,
+                                                          const size_t dim_after_axis,
+                                                          cudaStream_t stream, uint32_t device_id);
+template CUDA_LIB_EXPORT void Gather<Complex<float>, int64_t>(const Complex<float> *input, const int64_t *index,
+                                                              Complex<float> *output, const size_t dim_before_axis,
+                                                              const size_t dim_at_axis_input,
+                                                              const size_t dim_at_axis_output,
+                                                              const size_t dim_after_axis, cudaStream_t stream,
+                                                              uint32_t device_id);
 template CUDA_LIB_EXPORT void Gather<double, int>(const double *input, const int *index, double *output,
                                                   const size_t dim_before_axis, const size_t dim_at_axis_input,
                                                   const size_t dim_at_axis_output, const size_t dim_after_axis,

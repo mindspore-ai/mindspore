@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/gather_d_grad_cpu_kernel.h"
 #include <algorithm>
+#include <complex>
 #include <functional>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -30,7 +31,13 @@ constexpr size_t kDynamicDimIdx = 1;
 constexpr size_t kDynamicIndexIdx = 2;
 constexpr size_t kDynamicGradIdx = 3;
 
-#define V2_REGISTER(X1, X2, X3, X4, OUTPUT, T1, T2)                                                         \
+#define REGISTER(X1, X2, OUTPUT, T1, T2)                                  \
+  {                                                                       \
+    KernelAttr().AddInputAttr(X1).AddInputAttr(X2).AddOutputAttr(OUTPUT), \
+      &GatherDGradCpuKernelMod::LaunchKernel<T1, T2>                      \
+  }
+
+#define V2(X1, X2, X3, X4, OUTPUT, T1, T2)                                                                  \
   {                                                                                                         \
     KernelAttr().AddInputAttr(X1).AddInputAttr(X2).AddInputAttr(X3).AddInputAttr(X4).AddOutputAttr(OUTPUT), \
       &GatherDGradCpuKernelMod::LaunchKernel<T1, T2>                                                        \
@@ -203,63 +210,85 @@ const std::vector<std::pair<KernelAttr, GatherDGradCpuKernelMod::KernelRunFunc>>
   const {
   static const std::vector<std::pair<KernelAttr, GatherDGradCpuKernelMod::KernelRunFunc>> func_list = {
     // For static shape case:
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, float>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, bool>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, float>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, bool>},
+    REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+    REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t, int64_t),
+    REGISTER(kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t, float),
+    REGISTER(kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int32_t, float16),
+    REGISTER(kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
+    REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+    REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int32_t, int64_t),
+    REGISTER(kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int32_t, float),
+    REGISTER(kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, int32_t, float16),
+    REGISTER(kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
     // For dynamic shape case:
-    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
-                int32_t),
-    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t,
-                int64_t),
-    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t,
-                float),
-    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int32_t,
-                float16),
-    V2_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
-    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t,
-                int32_t),
-    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
-                int64_t),
-    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t,
-                float),
-    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, int64_t,
-                float16),
-    V2_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t, bool),
-    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
-                int32_t),
-    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t,
-                int64_t),
-    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t,
-                float),
-    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int32_t,
-                float16),
-    V2_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
-    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t,
-                int32_t),
-    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
-                int64_t),
-    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t,
-                float),
-    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, int64_t,
-                float16),
-    V2_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t, bool)};
+    V2(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, int32_t, uint8_t),
+    V2(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int32_t, int8_t),
+    V2(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, int32_t, uint16_t),
+    V2(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int32_t, int16_t),
+    V2(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, int32_t, uint32_t),
+    V2(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+    V2(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, int32_t, uint64_t),
+    V2(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t, int64_t),
+    V2(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, int32_t, double),
+    V2(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t, float),
+    V2(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int32_t,
+       float16),
+    V2(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeComplex64, int32_t,
+       std::complex<float>),
+    V2(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex128, kNumberTypeComplex128, int32_t,
+       std::complex<double>),
+    V2(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
+    V2(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, int64_t, uint8_t),
+    V2(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int64_t, int8_t),
+    V2(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, int64_t, uint16_t),
+    V2(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int64_t, int16_t),
+    V2(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, int64_t, uint32_t),
+    V2(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t, int32_t),
+    V2(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, int64_t, uint64_t),
+    V2(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+    V2(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64, int64_t, double),
+    V2(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t, float),
+    V2(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, int64_t,
+       float16),
+    V2(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeComplex64, int64_t,
+       std::complex<float>),
+    V2(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeComplex128, int64_t,
+       std::complex<double>),
+    V2(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t, bool),
+    V2(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, int32_t, uint8_t),
+    V2(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int32_t, int8_t),
+    V2(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, int32_t, uint16_t),
+    V2(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int32_t, int16_t),
+    V2(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, int32_t, uint32_t),
+    V2(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+    V2(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, int32_t, uint64_t),
+    V2(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t, int64_t),
+    V2(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, int32_t, double),
+    V2(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t, float),
+    V2(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int32_t,
+       float16),
+    V2(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeComplex64, int32_t,
+       std::complex<float>),
+    V2(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeComplex128, kNumberTypeComplex128, int32_t,
+       std::complex<double>),
+    V2(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
+    V2(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, int64_t, uint8_t),
+    V2(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int64_t, int8_t),
+    V2(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, int64_t, uint16_t),
+    V2(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int64_t, int16_t),
+    V2(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, int64_t, uint32_t),
+    V2(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t, int32_t),
+    V2(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, int64_t, uint64_t),
+    V2(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+    V2(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64, int64_t, double),
+    V2(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t, float),
+    V2(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, int64_t,
+       float16),
+    V2(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeComplex64, int64_t,
+       std::complex<float>),
+    V2(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeComplex128, int64_t,
+       std::complex<double>),
+    V2(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t, bool)};
   return func_list;
 }
 

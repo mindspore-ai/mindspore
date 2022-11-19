@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/arrays/gather_gpu_kernel.h"
 #include <string>
 #include <algorithm>
 
+#include "plugin/device/gpu/kernel/arrays/gather_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 template <typename T, typename S>
 bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
@@ -46,6 +51,30 @@ bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, GatherFwdGpuKernelMod::GatherFwdFunc>> GatherFwdGpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &GatherFwdGpuKernelMod::LaunchKernel<Complex<float>, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &GatherFwdGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &GatherFwdGpuKernelMod::LaunchKernel<Complex<double>, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &GatherFwdGpuKernelMod::LaunchKernel<Complex<double>, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeInt64)
