@@ -327,7 +327,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+       &UnaryOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kAtanh,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &UnaryOpGpuKernelMod::LaunchKernel<double>},
@@ -473,7 +479,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
       {kInv, Inv<T>},     {kLog, Logarithm<T>}, {kExp, Exponential<T>}, {kNeg, Negative<T>},
       {kSin, Sin<T>},     {kCos, Cos<T>},       {kACos, ACos<T>},       {kAcosh, Acosh<T>},
       {kAsin, Asin<T>},   {kAsinh, Asinh<T>},   {kSquare, Square<T>},   {kReciprocal, Reciprocal<T>},
-      {kRsqrt, Rsqrt<T>}, {kSign, Sign<T>}};
+      {kRsqrt, Rsqrt<T>}, {kSign, Sign<T>},     {kAtan, Atan<T>}};
     copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
   } else {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_normal = {

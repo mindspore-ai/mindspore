@@ -60,8 +60,8 @@ TypePtr FloorDivInferType(const PrimitivePtr &primitive, const std::vector<Abstr
                             << " one of the inputs must be tensor type but got " << input_type01->ToString() << " and "
                             << input_type02->ToString() << ".";
   }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16,
-                                         kInt32,   kInt64,   kUInt8,   kUInt16, kBool};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,     kInt64,
+                                         kUInt8,   kUInt16,  kUInt32,  kUInt64, kBool,  kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTypeValid("x", input_type01, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("y", input_type02, valid_types, prim_name);
   return input_type01;
