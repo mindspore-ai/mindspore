@@ -358,7 +358,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<StatelessDropOutGenMaskReplace>());
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
@@ -650,7 +649,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
   unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
@@ -686,6 +684,7 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(kernel_graph);
