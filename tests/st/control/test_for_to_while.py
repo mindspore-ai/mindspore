@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.st.control.cases_register import case_register
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -21,11 +21,10 @@ from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
 
+
 # Although we don't transform for to while any more, we keep this test case.
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_single_for_01():
     class SingleForNet(nn.Cell):
         def __init__(self):

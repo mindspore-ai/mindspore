@@ -19,12 +19,11 @@ import mindspore.ops.operations as P
 import mindspore.ops.functional as F
 from mindspore import context
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_switch_simplify_avoid_dead_node():
     """
     Feature: Switch simplify pass.
@@ -91,10 +90,8 @@ def test_switch_simplify_avoid_dead_node():
     assert np.allclose(sgrad.asnumpy(), np.array([0.], np.float32))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_ascend
 def test_tensor_condition():
     """
     Feature: control flow function.

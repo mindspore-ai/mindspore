@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.st.control.cases_register import case_register
 import numpy as np
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore import Parameter
 from mindspore import Tensor
-from mindspore import context
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 
@@ -41,12 +40,9 @@ class GradNet(nn.Cell):
         return gradient_function(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_while_grad():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = Tensor([2.0], dtype=mstype.float32)
     y = Tensor([2.0], dtype=mstype.float32)
     GradNet(Net())(x, y)
@@ -65,9 +61,8 @@ class WhileSpecTwiceNet(nn.Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_while_header_spec_twice():
     """
     Feature: FuncGraph Cloner.

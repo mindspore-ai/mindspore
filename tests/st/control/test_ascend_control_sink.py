@@ -13,9 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ test_ascend_control_sink """
-import pytest
+from tests.st.control.cases_register import case_register
 import numpy as np
-import mindspore.context as context
 import mindspore.nn as nn
 import mindspore as ms
 from mindspore.ops import functional as F
@@ -223,7 +222,6 @@ class CellListInWhileByWhile(nn.Cell):
 
 
 def cell_list_in_while_by_while():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = CellListInWhileByWhile()
     t = Tensor(10, mstype.int32)
     x = Tensor(0, mstype.int32)
@@ -231,12 +229,9 @@ def cell_list_in_while_by_while():
     return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_simple_if():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.array(3).astype(np.float32)
     y = np.array(2).astype(np.float32)
     z = np.array(3).astype(np.float32)
@@ -249,12 +244,9 @@ def test_simple_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_simple_if_with_assign():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.array(0).astype(np.float32)
     y = np.array(1).astype(np.float32)
     input_shape = (127, 7, 53, 31)
@@ -265,12 +257,9 @@ def test_simple_if_with_assign():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_in_if():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.array(2.345678).astype(np.float32)
     y = np.array(1.234567).astype(np.float32)
     net = ControlIfinIf()
@@ -279,12 +268,9 @@ def test_if_in_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_by_if_by_if():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.array(2.345678).astype(np.float32)
     y = np.array(1.234567).astype(np.float32)
     cond1 = np.array(True).astype(np.bool)
@@ -297,12 +283,9 @@ def test_if_by_if_by_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_simple_while():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.array(True).astype(np.bool)
     y = np.array(False).astype(np.bool)
     input_shape = (127, 7, 53, 31)
@@ -313,12 +296,9 @@ def test_simple_while():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_mixed_while_if():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.array(2).astype(np.int32)
     y = np.array(14).astype(np.int32)
     z = np.array(1).astype(np.int32)
@@ -330,12 +310,9 @@ def test_mixed_while_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_and_or_operation():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.array([0, 1]).astype(np.float32)
     y = np.array([0, 0]).astype(np.float32)
     net = AndOperation()
@@ -354,10 +331,8 @@ def test_and_or_operation():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_ascend
 def test_control_flow_ref():
     """
     Feature: Control flow graph sinking scenarios.

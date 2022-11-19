@@ -1,5 +1,5 @@
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
@@ -11,10 +11,8 @@ import mindspore.ops.functional as F
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_by_if_basic():
     class SubNet(Cell):
         def __init__(self):
@@ -70,10 +68,8 @@ def test_if_by_if_basic():
     assert np.allclose(out_ms.asnumpy(), out_np)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_ascend
 def test_branch_same_shape():
     """
     Feature: control flow function.
@@ -110,10 +106,8 @@ def test_branch_same_shape():
     print(fgrad)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_ascend
 def test_parallel_if_add_by_zero():
     """
     Feature: AddByZero optimization in parallel if.

@@ -18,12 +18,11 @@ from mindspore.common import Tensor, dtype
 import mindspore.ops.operations as P
 import mindspore.ops.functional as F
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_watch_get_func_graphs_from_abstract():
     """
     Feature: Get func_graph from abstract.

@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 import mindspore.nn as nn
 from mindspore import context
@@ -110,11 +110,9 @@ class SingleIfNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_export_lenet_grad_mindir():
     context.set_context(mode=context.GRAPH_MODE)
     network = LeNet5()
@@ -127,11 +125,9 @@ def test_export_lenet_grad_mindir():
     assert os.path.exists(verify_name)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_load_mindir_and_run():
     context.set_context(mode=context.GRAPH_MODE)
     network = LeNet5()
@@ -151,11 +147,9 @@ def test_load_mindir_and_run():
     assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_if():
     context.set_context(mode=context.GRAPH_MODE)
     network = SingleIfNet()

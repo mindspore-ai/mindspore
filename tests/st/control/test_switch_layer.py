@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 import mindspore.context as context
 from mindspore import Tensor, nn
@@ -76,11 +76,9 @@ class CellInList(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_switch_layer():
     context.set_context(mode=context.GRAPH_MODE)
     net = CaseNet()
@@ -94,11 +92,9 @@ def test_switch_layer():
     assert ret
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_ascend
+@case_register.target_gpu
 def test_cell_in_list():
     """
     Feature: Switch layer in while.

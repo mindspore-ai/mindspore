@@ -14,7 +14,7 @@
 # ============================================================================
 import os
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 import mindspore.nn as nn
 from mindspore import context
@@ -44,11 +44,9 @@ class RecrusiveNet(nn.Cell):
         return f(x, z)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_recrusive():
     context.set_context(mode=context.GRAPH_MODE)
     network = RecrusiveNet()

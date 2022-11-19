@@ -14,7 +14,7 @@
 # ============================================================================
 import os
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 import mindspore.context as context
 from mindspore import Tensor, nn
@@ -38,11 +38,9 @@ class CaseNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_mindir_switch_layer():
     context.set_context(mode=context.GRAPH_MODE)
     net = CaseNet()
@@ -64,12 +62,10 @@ def test_mindir_switch_layer():
     assert ret
 
 
-@pytest.mark.skip(reason="depend on export")
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.skip(reason="depend on export")
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_mindir_export():
     context.set_context(mode=context.GRAPH_MODE)
     net = CaseNet()
@@ -83,11 +79,9 @@ def test_mindir_export():
     assert os.path.exists(mindir_name)
 
 
-@pytest.mark.skip(reason="depend on export")
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.skip(reason="depend on export")
+@case_register.level1
+@case_register.target_ascend
 def test_mindir_load():
     context.set_context(mode=context.GRAPH_MODE)
     data = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)

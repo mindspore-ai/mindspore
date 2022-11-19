@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
@@ -57,11 +57,9 @@ class ForBreakForwardNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_break_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -70,11 +68,9 @@ def test_for_break_forward():
     assert graph_out == Tensor(np.array(3), mstype.int32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_break_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -107,11 +103,9 @@ class WhileBreakForwardNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_break_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -120,10 +114,8 @@ def test_while_break_forward():
     assert graph_mode_out == Tensor(np.array(15))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_ascend
 def test_while_break_backward():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
@@ -164,11 +156,9 @@ class IfAfterIfInWhileBreakForwardNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_after_if_in_while_break_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -179,11 +169,9 @@ def test_if_after_if_in_while_break_forward():
     assert graph_mode_out == Tensor(np.array(16), mstype.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_after_if_in_while_break_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -196,11 +184,9 @@ def test_if_after_if_in_while_break_backward():
     assert graph_mode_grads == (Tensor(np.array(15), mstype.int32), Tensor(np.array(5), mstype.int32))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_after_for_in_if_break():
     class IfAfterForInIfNet(nn.Cell):
         def __init__(self):
@@ -242,11 +228,9 @@ def test_if_after_for_in_if_break():
     assert graph_backward_res == (Tensor(1, mstype.int32),)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_after_for_in_for_break():
     class IfAfterForInForNet(nn.Cell):
         def __init__(self):
@@ -313,11 +297,9 @@ class WhileAfterWhileInWhileBreakForwardNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_after_while_in_while_break_forward():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
@@ -328,11 +310,9 @@ def test_while_after_while_in_while_break_forward():
     assert graph_out == Tensor(np.array(54), mstype.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_after_while_in_while_break_backward():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
@@ -361,11 +341,9 @@ class TwoBreakDeadForwardNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_2break_dead_block():
     x = Tensor(np.array(1), mstype.int32)
     forward_net = TwoBreakDeadForwardNet()
@@ -393,11 +371,9 @@ class ForInFor2BreakForwardNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_for_break():
     x = Tensor(np.array(7), mstype.float32)
     y = Tensor(np.array(20), mstype.float32)
@@ -407,11 +383,9 @@ def test_for_in_for_break():
     print("test_for_in_for_break graph out:", graph_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_true_break():
     class WhileTrueBreakNet(nn.Cell):
         def __init__(self, t):
@@ -440,11 +414,9 @@ def test_while_true_break():
     print(grad_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_continue_stuck_in_vm():
     class NetWork(nn.Cell):
         def __init__(self, t):
@@ -477,11 +449,9 @@ def test_continue_stuck_in_vm():
     print(grad)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_partial_eliminate_while_for_if_break():
     """
     Feature: nest control flow.
