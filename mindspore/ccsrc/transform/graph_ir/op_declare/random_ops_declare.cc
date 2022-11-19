@@ -57,8 +57,9 @@ REG_ADPT_DESC(TruncatedNormal, kNameTruncatedNormal, ADPT_DESC(TruncatedNormal))
 
 // RandomStandardNormal
 INPUT_MAP(RandomStandardNormal) = {{1, INPUT_DESC(shape)}};
-ATTR_MAP(RandomStandardNormal) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+ATTR_MAP(RandomStandardNormal) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                                  {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                                   {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(RandomStandardNormal) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(RandomStandardNormal, kNameRandomStandardNormal, ADPT_DESC(RandomStandardNormal))
+REG_ADPT_DESC(RandomStandardNormal, kNameStandardNormal, ADPT_DESC(RandomStandardNormal))
 }  // namespace mindspore::transform
