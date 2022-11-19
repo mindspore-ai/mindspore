@@ -140,6 +140,9 @@
     mindspore.Tensor.is_floating_point
     mindspore.Tensor.isinf
     mindspore.Tensor.isnan
+    mindspore.Tensor.isneginf
+    mindspore.Tensor.isposinf
+    mindspore.Tensor.isreal
     mindspore.Tensor.is_signed
     mindspore.Tensor.item
     mindspore.Tensor.itemset

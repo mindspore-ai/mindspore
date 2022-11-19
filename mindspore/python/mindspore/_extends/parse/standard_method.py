@@ -1374,6 +1374,27 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
     return F.isclose(x1, x2, rtol, atol, equal_nan)
 
 
+def isneginf(x):
+    """
+    Tests element-wise for negative infinity, returns result as bool array.
+    """
+    return F.isneginf(x)
+
+
+def isposinf(x):
+    """
+    Tests element-wise for positive infinity, returns result as bool array.
+    """
+    return F.isposinf(x)
+
+
+def isreal(x):
+    """
+    Tests element-wise for real number.
+    """
+    return F.isreal(x)
+
+
 def flip(x, dims):
     """
     For details, please refer to :func:`mindspore.ops.flip`.

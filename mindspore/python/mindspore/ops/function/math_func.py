@@ -3265,15 +3265,14 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
 
 def isreal(x):
     """
-    Returns a new tensor with boolean elements representing whether each element of `x` is real-valued.
-    All real value types are considered real numbers.
+    Tests element-wise for real number.
     A complex value is considered real when its imaginary part is 0.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
 
-    Outputs:
-        Tensor, has the same shape of input, and the dtype is bool.
+    Returns:
+       Tensor, true where `x` is real number, false otherwise.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -7312,6 +7311,66 @@ def isinf(input):
     return isinf_op(input)
 
 
+def _is_sign_inf(x, fn):
+    """Tests element-wise for inifinity with sign."""
+    shape = x.shape
+    zeros_tensor = _get_cache_prim(P.Zeros)()(shape, mstype.float32)
+    ones_tensor = _get_cache_prim(P.Ones)()(shape, mstype.float32)
+    is_inf = _get_cache_prim(P.IsInf)()(x)
+    is_sign = fn(x, zeros_tensor)
+    res = ops.select(is_inf, ones_tensor, zeros_tensor)
+    res = ops.select(is_sign, res, zeros_tensor)
+    return _get_cache_prim(P.Cast)()(res, mstype.bool_)
+
+
+def isposinf(x):
+    """
+    Tests element-wise for positive infinity.
+
+    Args:
+        x (Tensor): Input values.
+
+    Returns:
+       Tensor, true where `x` is positive infinity, false otherwise.
+
+    Raises:
+        TypeError: If the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = ops.isposinf(Tensor([-float("inf"), float("inf"), 1.2], ms.float32))
+        >>> print(output)
+        [False  True False]
+    """
+    return _is_sign_inf(x, tensor_gt)
+
+
+def isneginf(x):
+    """
+    Tests element-wise for negative infinity.
+
+    Args:
+        x (Tensor): Input Tensor.
+
+    Returns:
+       Tensor, true where `x` is negative infinity, false otherwise.
+
+    Raises:
+        TypeError: If the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = ops.isneginf(Tensor([-float("inf"), float("inf"), 1.2], ms.float32))
+        >>> print(output)
+        [ True False False]
+    """
+    return _is_sign_inf(x, tensor_lt)
+
+
 def logical_xor(input, other):
     r"""
     Computes the "logical XOR" of two tensors element-wise.
@@ -7447,6 +7506,8 @@ __all__ = [
     'isnan',
     'isclose',
     'isreal',
+    'isneginf',
+    'isposinf',
     'log',
     'log_matrix_determinant',
     'matrix_determinant',
