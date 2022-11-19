@@ -1864,9 +1864,6 @@ class ResizeBilinearGrad(Primitive):
         self.init_prim_io_names(inputs=['grads', 'original_image'], outputs=['y'])
         if half_pixel_centers and align_corners:
             raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
-        target = context.get_context("device_target")
-        if half_pixel_centers and target.lower() == "cpu":
-            raise ValueError(f"Currently `half_pixel_centers`=True not support in cpu device_target")
 
 
 class ResizeNearestNeighborGrad(Primitive):
