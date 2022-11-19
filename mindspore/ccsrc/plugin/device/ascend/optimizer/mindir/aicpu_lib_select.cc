@@ -29,7 +29,8 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
 
-  static const std::set<std::string> kAICpuOpNames = {kEnvironCreateOpName,
+  static const std::set<std::string> kAICpuOpNames = {kDropoutGenMaskOpName,
+                                                      kEnvironCreateOpName,
                                                       kEnvironSetOpName,
                                                       kEnvironGetOpName,
                                                       kEnvironDestroyAllOpName,

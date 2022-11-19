@@ -20,10 +20,13 @@ dropout_genmask_op_info = AiCPURegOp("DropoutGenMask") \
     .fusion_type("OPAQUE") \
     .input(0, "x1", "required") \
     .input(1, "x2", "required") \
+    .input(2, "offset1", "required") \
+    .input(3, "offset2", "required") \
     .output(0, "y", "required") \
     .attr("Seed0", "int") \
     .attr("Seed1", "int") \
-    .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.U64_Default, DataType.U64_Default,
+                  DataType.U8_Default) \
     .get_op_info()
 
 @op_info_register(dropout_genmask_op_info)
