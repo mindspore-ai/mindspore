@@ -288,8 +288,8 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
     }
   }
   auto res = engine->Run(func_graph, args_abs);
-  MS_LOG(INFO) << "function call max depth: " << abstract::FunctionCallMaxDepth()
-               << ", simulate call max depth: " << abstract::StackFrameMaxDepth();
+  MS_LOG(INFO) << "function call depth: " << abstract::FunctionCallDepth()
+               << ", simulate call depth: " << abstract::StackFrameDepth();
   MS_LOG(DEBUG) << "AbstractAnalyze end";
   return res;
 }
