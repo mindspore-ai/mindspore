@@ -31,25 +31,29 @@
 namespace mindspore::opt {
 namespace {
 const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,
-                                                      kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName};
-tensor::TensorPtr CreateTensor(int64_t seed) {
+                                                      kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName,
+                                                      kDropoutGenMaskOpName};
+template <typename T>
+tensor::TensorPtr CreateTensor(T seed) {
   // 1 create seed tensor
   std::vector<int64_t> indices_shape = {1};
+  auto type = std::is_same<T, int64_t>::value ? kInt64 : kUInt64;
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kInt64);
   MS_EXCEPTION_IF_NULL(tensor_type);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
-  tensor::TensorPtr indices_tensor = std::make_shared<tensor::Tensor>(kInt64->type_id(), indices_shape);
+  tensor::TensorPtr indices_tensor = std::make_shared<tensor::Tensor>(type->type_id(), indices_shape);
   MS_EXCEPTION_IF_NULL(indices_tensor);
   indices_tensor->set_device_info(device_info);
   // 2 set value of tensor
   auto data_ptr = indices_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
-  auto ptr = static_cast<int64_t *>(data_ptr);
+  auto ptr = static_cast<T *>(data_ptr);
   *ptr = seed;
   return indices_tensor;
 }
 
-ValueNodePtr CreateValueNode(int64_t seed) {
+template <typename T>
+ValueNodePtr CreateValueNode(T seed) {
   tensor::TensorPtr tensor = CreateTensor(seed);
   MS_EXCEPTION_IF_NULL(tensor);
   auto value_node = std::make_shared<ValueNode>(tensor);
@@ -61,7 +65,11 @@ ValueNodePtr CreateValueNode(int64_t seed) {
   value_node->set_kernel_info(indices_kernel_info);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   builder.SetOutputsFormat({kOpFormat_DEFAULT});
-  builder.SetOutputsDeviceType({kNumberTypeInt64});
+  if (std::is_same<T, int64_t>::value) {
+    builder.SetOutputsDeviceType({kNumberTypeInt64});
+  } else {
+    builder.SetOutputsDeviceType({kNumberTypeUInt64});
+  }
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), value_node.get());
   return value_node;
 }
@@ -70,29 +78,41 @@ std::vector<ValueNodePtr> ConvertAttrToValueNode(const std::shared_ptr<kernel::O
                                                  const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(op_info);
   MS_EXCEPTION_IF_NULL(cnode);
-  // get seed
   std::vector<ValueNodePtr> ret = {};
-  auto attrs = op_info->attrs_ptr();
-  if (attrs.empty()) {
-    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any attrs."
-                      << trace::DumpSourceLines(cnode);
-  }
-  for (const auto &attr : attrs) {
-    if (!common::AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
-      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")."
+  // DropoutGenMask only create offset
+  if (op_info->op_name() == kDropoutGenMaskOpName) {
+    uint64_t offset = 0;
+    auto offset0 = CreateValueNode(offset);
+    auto offset1 = CreateValueNode(offset);
+    if (offset0 == nullptr || offset1 == nullptr) {
+      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << trace::DumpSourceLines(cnode);
+    }
+    (void)ret.emplace_back(offset0);
+    (void)ret.emplace_back(offset1);
+  } else {
+    // Get seed to create value node
+    auto attrs = op_info->attrs_ptr();
+    if (attrs.empty()) {
+      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any attrs."
                         << trace::DumpSourceLines(cnode);
     }
-    auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
-    auto value_node = CreateValueNode(attr_value);
-    if (value_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
+    for (const auto &attr : attrs) {
+      if (!common::AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
+        MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")."
+                          << trace::DumpSourceLines(cnode);
+      }
+      auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
+      auto value_node = CreateValueNode(attr_value);
+      if (value_node == nullptr) {
+        MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
+                          << trace::DumpSourceLines(cnode);
+      }
+      (void)ret.emplace_back(value_node);
+    }
+    if (ret.empty()) {
+      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs."
                         << trace::DumpSourceLines(cnode);
     }
-    (void)ret.emplace_back(value_node);
-  }
-  if (ret.empty()) {
-    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs."
-                      << trace::DumpSourceLines(cnode);
   }
   return ret;
 }
