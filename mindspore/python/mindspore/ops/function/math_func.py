@@ -5657,7 +5657,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
     if return_complex is None:
         return_complex = _is_complex(x) or _is_complex(window)
     if center:
-        _check_input_dtype("center", center, [bool], "")
+        _check_attr_dtype("center", center, [bool], "stft")
         signal_dim = len(x.shape)
         pad = n_fft // 2
         if signal_dim == 1:

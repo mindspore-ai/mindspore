@@ -1,7 +1,7 @@
 mindspore.ops.ZerosLike
 =======================
 
-.. py:class:: mindspore.ops.ZerosLike()
+.. py:class:: mindspore.ops.ZerosLike
 
     返回值为0的Tensor，其shape和数据类型与输入Tensor相同。
 

@@ -1,7 +1,7 @@
 mindspore.ops.Inv
 =================
 
-.. py:class:: mindspore.ops.Inv()
+.. py:class:: mindspore.ops.Inv
 
     按元素计算输入Tensor的倒数。
 

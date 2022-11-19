@@ -1,7 +1,7 @@
 mindspore.ops.Erfc
 ==================
 
-.. py:class:: mindspore.ops.Erfc()
+.. py:class:: mindspore.ops.Erfc
 
     逐元素计算 `x` 的互补误差函数。
 

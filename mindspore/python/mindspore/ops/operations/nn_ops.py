@@ -302,7 +302,7 @@ class AdaptiveAvgPool2D(AdaptiveAvgPool2DV1):
     r"""
     2D adaptive average pooling for temporal data.
 
-    Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more detail.
+    Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more details.
 
     Supported Platforms:
         ``GPU``
@@ -415,7 +415,7 @@ class AdaptiveMaxPool3D(Primitive):
     r"""
     Applies a 3D adaptive max pooling over an input signal composed of several input planes.
 
-    Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more detail.
+    Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -446,7 +446,7 @@ class Softmax(Primitive):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
 
-    Refer to :func:`mindspore.ops.softmax` for more detail.
+    Refer to :func:`mindspore.ops.softmax` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -474,7 +474,7 @@ class LogSoftmax(Primitive):
     r"""
     Log Softmax activation function.
 
-    Refer to :func:`mindspore.ops.log_softmax` for more detail.
+    Refer to :func:`mindspore.ops.log_softmax` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -843,7 +843,7 @@ class HSwish(Primitive):
     r"""
     Hard swish activation function.
 
-    Refer to :func:`mindspore.ops.hardswish` for more detail.
+    Refer to :func:`mindspore.ops.hardswish` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -931,7 +931,7 @@ class Tanh(Primitive):
 
     Computes hyperbolic tangent of input element-wise.
 
-    Refer to :func:`mindspore.ops.tanh` for more detail.
+    Refer to :func:`mindspore.ops.tanh` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -1340,7 +1340,7 @@ class Conv2D(Primitive):
     r"""
     2D convolution layer.
 
-    Refer to :func:`mindspore.ops.conv2d` for more detail.
+    Refer to :func:`mindspore.ops.conv2d` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2251,7 +2251,7 @@ class AvgPool(_Pool):
     r"""
     Average pooling operation.
 
-    Refer to :func:`mindspore.ops.avg_pool2d` for more detail.
+    Refer to :func:`mindspore.ops.avg_pool2d` for more details.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
@@ -2972,7 +2972,7 @@ class SmoothL1Loss(Primitive):
     r"""
     Calculate the smooth L1 loss, and the L1 loss function has robustness.
 
-    Refer to :func:`mindspore.ops.smooth_l1_loss` for more detail.
+    Refer to :func:`mindspore.ops.smooth_l1_loss` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3645,7 +3645,7 @@ class ResizeBilinear(PrimitiveWithInfer):
     The resizing only affects the lower two dimensions which represent the height and width. The input images
     can be represented by different data types, but the data types of output images are always float32.
 
-    For general resize, refer to :func:`mindspore.ops.interpolate` for more detail.
+    For general resize, refer to :func:`mindspore.ops.interpolate` for more details.
 
     .. warning::
         This interface does not support dynamic shape and is subject to change or deletion,
@@ -3957,7 +3957,7 @@ class FastGeLU(Primitive):
     r"""
     Fast Gaussian Error Linear Units activation function.
 
-    Refer to :func:`mindspore.ops.fast_gelu` for more detail.
+    Refer to :func:`mindspore.ops.fast_gelu` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4071,7 +4071,7 @@ class LSTM(PrimitiveWithInfer):
     """
     Performs the Long Short-Term Memory (LSTM) on the input.
 
-    For detailed information, please refer to :class:`mindspore.nn.LSTM`.
+    For detailsed information, please refer to :class:`mindspore.nn.LSTM`.
 
     Args:
         input_size (int): Number of features of input.
@@ -4079,8 +4079,8 @@ class LSTM(PrimitiveWithInfer):
         num_layers (int): Number of layers of stacked LSTM.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`.
         bidirectional (bool): Specifies whether it is a bidirectional LSTM.
-        dropout (float, optional): If not 0, append `Dropout` layer on the outputs of each
-            LSTM layer except the last layer. The range of dropout is [0.0, 1.0]. Default: 0.0.
+        dropout (float): If not 0, append `Dropout` layer on the outputs of each
+            LSTM layer except the last layer. The range of dropout is [0.0, 1.0].
 
     Inputs:
         - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
@@ -4316,7 +4316,7 @@ class Pad(Primitive):
     r"""
     Pads the input tensor according to the paddings.
 
-    Refer to :func:`mindspore.ops.pad` for more detail. Use :func:`mindspore.ops.pad` instead if `paddings` has
+    Refer to :func:`mindspore.ops.pad` for more details. Use :func:`mindspore.ops.pad` instead if `paddings` has
     negative values.
 
     Args:
@@ -6517,7 +6517,7 @@ class ApplyProximalGradientDescent(Primitive):
     r"""
     Updates relevant entries according to the FOBOS(Forward Backward Splitting) algorithm.
     Refer to the paper `Efficient Learning using Forward-Backward Splitting
-    <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ for more detail.
+    <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ for more details.
 
     .. math::
         \begin{array}{ll} \\
@@ -6935,7 +6935,7 @@ class Dropout(PrimitiveWithCheck):
     with probability 1-`keep_prob` from a Bernoulli distribution. It plays the
     role of reducing neuron correlation and avoid overfitting.
 
-    Refer to :func:`mindspore.ops.dropout` for more detail.
+    Refer to :func:`mindspore.ops.dropout` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6974,7 +6974,7 @@ class Dropout2D(PrimitiveWithInfer):
     Note:
         The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout2d`.
 
-    Refer to :func:`mindspore.ops.dropout2d` for more detail.
+    Refer to :func:`mindspore.ops.dropout2d` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7007,7 +7007,7 @@ class Dropout3D(PrimitiveWithInfer):
     Note:
         The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout3d`.
 
-    Refer to :func:`mindspore.ops.dropout3d` for more detail.
+    Refer to :func:`mindspore.ops.dropout3d` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7118,7 +7118,7 @@ class CTCGreedyDecoder(Primitive):
     r"""
     Performs greedy decoding on the logits given in inputs.
 
-    Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more detail.
+    Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -7449,7 +7449,7 @@ class InTopK(Primitive):
     r"""
     Determines whether the targets are in the top `k` predictions.
 
-    Refer to :func:`mindspore.ops.intopk` for more detail.
+    Refer to :func:`mindspore.ops.intopk` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7649,7 +7649,7 @@ class Conv3D(Primitive):
     r"""
     3D convolution layer.
 
-    Refer to :func:`mindspore.ops.conv3d` for more detail.
+    Refer to :func:`mindspore.ops.conv3d` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8368,7 +8368,7 @@ class SoftShrink(Primitive):
     r"""
     Applies the SoftShrink function element-wise.
 
-    Refer to :func:`mindspore.ops.soft_shrink` for more detail.
+    Refer to :func:`mindspore.ops.soft_shrink` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -8396,7 +8396,7 @@ class HShrink(Primitive):
     r"""
     Hard Shrink activation function.
 
-    Refer to :func:`mindspore.ops.hardshrink` for more detail.
+    Refer to :func:`mindspore.ops.hardshrink` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -9561,7 +9561,7 @@ class DeformableOffsets(Primitive):
     r"""
     Computes the deformed convolution output with the expected input.
 
-    Refer to :func:`mindspore.ops.deformable_conv2d` for more detail.
+    Refer to :func:`mindspore.ops.deformable_conv2d` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``

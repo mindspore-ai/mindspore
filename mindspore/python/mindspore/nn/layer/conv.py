@@ -157,7 +157,7 @@ class Conv2d(_Conv):
     For more details, please refers to the paper `Gradient Based Learning Applied to Document
     Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
-    .. note::
+    Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
         That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
 
@@ -347,7 +347,7 @@ class Conv1d(_Conv):
     For more details, please refers to the paper `Gradient Based Learning Applied to Document
     Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
-    .. note::
+    Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
         That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
 
@@ -534,6 +534,10 @@ class Conv3d(_Conv):
 
     For more details, please refers to the paper `Gradient Based Learning Applied to Document
     Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
+
+    Note:
+        On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
+        That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv3d layer.

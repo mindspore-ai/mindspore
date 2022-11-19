@@ -1,7 +1,7 @@
 mindspore.ops.SeLU
 ==================
 
-.. py:class:: mindspore.ops.SeLU()
+.. py:class:: mindspore.ops.SeLU
 
     激活函数SeLU（Scaled exponential Linear Unit）。
 

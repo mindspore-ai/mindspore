@@ -779,7 +779,7 @@ Status CacheServer::BatchCacheRows(CacheRequest *rq) {
       }
       CacheServerRequest *cache_rq;
       RETURN_IF_NOT_OK(GetFreeRequestTag(&cache_rq));
-      // Fill in details.
+      // Fill in detail.
       cache_rq->type_ = BaseRequest::RequestType::kInternalCacheRow;
       cache_rq->st_ = CacheServerRequest::STATE::PROCESS;
       cache_rq->rq_.set_connection_id(connection_id);

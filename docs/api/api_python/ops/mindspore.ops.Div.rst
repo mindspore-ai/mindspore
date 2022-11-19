@@ -1,7 +1,7 @@
 mindspore.ops.Div
 =================
 
-.. py:class:: mindspore.ops.Div()
+.. py:class:: mindspore.ops.Div
 
     逐元素计算第一输入Tensor除以第二输入Tensor的商。
 

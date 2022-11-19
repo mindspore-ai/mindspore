@@ -1,5 +1,5 @@
 mindspore.ops.Mvlgamma
-==================================
+=======================
 
 .. py:class:: mindspore.ops.Mvlgamma
 

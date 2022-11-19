@@ -136,7 +136,7 @@ class StandardNormal(Primitive):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
-    Refer to :func:`mindspore.ops.standard_normal` for more detail.
+    Refer to :func:`mindspore.ops.standard_normal` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -733,7 +733,7 @@ class RandomChoiceWithMask(Primitive):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
 
-    Refer to :func:`mindspore.ops.choice_with_mask` for more detail.
+    Refer to :func:`mindspore.ops.choice_with_mask` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -874,7 +874,7 @@ class MultinomialWithReplacement(Primitive):
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
 
-    Refer to :func:`mindspore.ops.multinomial_with_replacement` for more detail.
+    Refer to :func:`mindspore.ops.multinomial_with_replacement` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -901,7 +901,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
 
     This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
 
-    Refer to :func:`mindspore.ops.uniform_candidate_sampler` for more detail.
+    Refer to :func:`mindspore.ops.uniform_candidate_sampler` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

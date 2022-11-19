@@ -1,7 +1,7 @@
 mindspore.ops.BesselJ0
 ======================
 
-.. py:class:: mindspore.ops.BesselJ0()
+.. py:class:: mindspore.ops.BesselJ0
 
     逐元素计算输入数据的BesselJ0函数值。
 

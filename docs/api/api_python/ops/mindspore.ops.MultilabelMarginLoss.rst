@@ -1,7 +1,7 @@
 mindspore.ops.MultilabelMarginLoss
 ==================================
 
-.. py:class:: mindspore.ops.MultilabelMarginLoss(reduction='none')
+.. py:class:: mindspore.ops.MultilabelMarginLoss(reduction='mean')
 
     二维卷积层。
 

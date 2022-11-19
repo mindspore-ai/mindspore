@@ -635,7 +635,7 @@ class ResizeLinear1D(Primitive):
     r"""
     Using the linear interpolate method resize the input tensor 'x'.
 
-    For general resize, refer to :func:`mindspore.ops.interpolate` for more detail.
+    For general resize, refer to :func:`mindspore.ops.interpolate` for more details.
 
     .. warning::
         This is an experimental feature and is subjected to change.

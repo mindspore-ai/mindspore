@@ -150,7 +150,7 @@ class Ger(Primitive):
     shape :math:`(m,)` and `x2` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a 2D Tensor of shape
     :math:`(m, n)`.
 
-    Refer to :func:`mindspore.ops.ger` for more detail.
+    Refer to :func:`mindspore.ops.ger` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -177,7 +177,7 @@ class Add(_MathBinaryOp):
     r"""
     Adds two input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.add` for more detail.
+    Refer to :func:`mindspore.ops.add` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -410,7 +410,7 @@ class AssignAdd(Primitive):
     """
     Updates a `Parameter` by adding a value to it.
 
-    Refer to :func:`mindspore.ops.assign_add` for more detail.
+    Refer to :func:`mindspore.ops.assign_add` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -448,7 +448,7 @@ class AssignSub(Primitive):
     """
     Updates a `Parameter` by subtracting a value from it.
 
-    Refer to :func:`mindspore.ops.assign_sub` for more detail.
+    Refer to :func:`mindspore.ops.assign_sub` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1368,7 +1368,7 @@ class Cdist(Primitive):
     """
     Computes batched the p-norm distance between each pair of the two collections of row vectors.
 
-    Refer to :func:`mindspore.ops.cdist` for more detail.
+    Refer to :func:`mindspore.ops.cdist` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1401,7 +1401,7 @@ class LpNorm(Primitive):
     .. math::
         output = sum(abs(input)**p)**(1/p)
 
-    Refer to :func:`mindspore.ops.norm` for more detail.
+    Refer to :func:`mindspore.ops.norm` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1724,7 +1724,7 @@ class AddN(Primitive):
     """
     Computes addition of all input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.addn` for more detail.
+    Refer to :func:`mindspore.ops.addn` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1765,7 +1765,7 @@ class AccumulateNV2(Primitive):
     """
     Computes accumulation of all input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.accumulate_n` for more detail.
+    Refer to :func:`mindspore.ops.accumulate_n` for more details.
 
     Supported Platforms:
         ``Ascend``
@@ -1807,7 +1807,7 @@ class Neg(Primitive):
     """
     Returns a tensor with negative values of the input tensor element-wise.
 
-    Refer to :func:`mindspore.ops.neg` for more detail.
+    Refer to :func:`mindspore.ops.neg` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1928,7 +1928,7 @@ class InplaceAdd(PrimitiveWithInfer):
     """
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
-    Refer to :func:`mindspore.ops.inplace_add` for more detail.
+    Refer to :func:`mindspore.ops.inplace_add` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1985,7 +1985,7 @@ class InplaceIndexAdd(Primitive):
     Adds tensor `updates` to specified axis and indices of tensor `var`. The axis should be in [0,  len(var.dim) - 1],
     and indices should be in [0, the size of `var` - 1] at the axis dimension.
 
-    Refer to :func:`mindspore.ops.inplace_index_add` for more detail.
+    Refer to :func:`mindspore.ops.inplace_index_add` for more details.
 
     Supported Platforms:
         ``CPU``
@@ -2020,7 +2020,7 @@ class InplaceSub(PrimitiveWithInfer):
     """
     Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
 
-    Refer to :func:`mindspore.ops.inplace_sub` for more detail.
+    Refer to :func:`mindspore.ops.inplace_sub` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -2077,7 +2077,7 @@ class Sub(_MathBinaryOp):
     r"""
     Subtracts the second input tensor from the first input tensor element-wise.
 
-    Refer to :func:`mindspore.ops.sub` for more detail.
+    Refer to :func:`mindspore.ops.sub` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2105,7 +2105,7 @@ class Mul(_MathBinaryOp):
     r"""
     Multiplies two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.mul` for more detail.
+    Refer to :func:`mindspore.ops.mul` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2361,7 +2361,7 @@ class Pow(Primitive):
     r"""
     Calculates the `y` power of each element in `x`.
 
-    Refer to :func:`mindspore.ops.pow` for more detail.
+    Refer to :func:`mindspore.ops.pow` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2403,7 +2403,7 @@ class Exp(Primitive):
     r"""
     Returns exponential of a tensor element-wise.
 
-    Refer to :func:`mindspore.ops.exp` for more detail.
+    Refer to :func:`mindspore.ops.exp` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2440,7 +2440,7 @@ class Logit(Primitive):
         \end{cases}
         \end{align}
 
-    Refer to :func:`mindspore.ops.logit` for more detail.
+    Refer to :func:`mindspore.ops.logit` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2664,7 +2664,7 @@ class Expm1(Primitive):
     r"""
     Returns exponential then minus 1 of a tensor element-wise.
 
-    Refer to :func:`mindspore.ops.expm1` for more detail.
+    Refer to :func:`mindspore.ops.expm1` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2782,7 +2782,7 @@ class Log(Primitive):
     """
     Returns the natural logarithm of a tensor element-wise.
 
-    Refer to :func:`mindspore.ops.log` for more detail.
+    Refer to :func:`mindspore.ops.log` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2809,7 +2809,7 @@ class Log1p(Primitive):
     r"""
     Returns the natural logarithm of one plus the input tensor element-wise.
 
-    Refer to :func:`mindspore.ops.log1p` for more detail.
+    Refer to :func:`mindspore.ops.log1p` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2911,7 +2911,7 @@ class Erf(Primitive):
     r"""
     Computes the Gauss error function of `x` element-wise.
 
-    Refer to :func:`mindspore.ops.erf` for more detail.
+    Refer to :func:`mindspore.ops.erf` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2934,7 +2934,7 @@ class Erfc(Primitive):
     r"""
     Computes the complementary error function of `x` element-wise.
 
-    Refer to :func:`mindspore.ops.erfc` for more detail.
+    Refer to :func:`mindspore.ops.erfc` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -2957,7 +2957,7 @@ class Minimum(_MathBinaryOp):
     r"""
     Computes the minimum of input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.minimum` for more detail.
+    Refer to :func:`mindspore.ops.minimum` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2992,7 +2992,7 @@ class Maximum(_MathBinaryOp):
     """
     Computes the maximum of input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.maximum` for more detail.
+    Refer to :func:`mindspore.ops.maximum` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3018,7 +3018,7 @@ class RealDiv(_MathBinaryOp):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
-    Refer to :func:`mindspore.ops.div` for more detail.
+    Refer to :func:`mindspore.ops.div` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3050,7 +3050,7 @@ class Div(_MathBinaryOp):
 
         out_{i} = \frac{x_i}{y_i}
 
-    .. note::
+    Note:
         - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
@@ -3259,7 +3259,7 @@ class FloorDiv(Primitive):
     """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
 
-    Refer to :func:`mindspore.ops.floor_div` for more detail.
+    Refer to :func:`mindspore.ops.floor_div` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3441,7 +3441,7 @@ class Floor(Primitive):
     r"""
     Rounds a tensor down to the closest integer element-wise.
 
-    Refer to :func:`mindspore.ops.floor` for more detail.
+    Refer to :func:`mindspore.ops.floor` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3464,7 +3464,7 @@ class FloorMod(Primitive):
     r"""
     Computes the remainder of division element-wise, and it's a flooring divide.
 
-    Refer to :func:`mindspore.ops.floor_mod` for more detail.
+    Refer to :func:`mindspore.ops.floor_mod` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3490,7 +3490,7 @@ class Ceil(PrimitiveWithInfer):
     r"""
     Rounds a tensor up to the closest integer element-wise.
 
-    Refer to :func:`mindspore.ops.ceil` for more detail.
+    Refer to :func:`mindspore.ops.ceil` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3605,7 +3605,7 @@ class Xlogy(Primitive):
     Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
     Returns zero when `x` is zero.
 
-    Refer to :func:`mindspore.ops.xlogy` for more detail.
+    Refer to :func:`mindspore.ops.xlogy` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3630,7 +3630,7 @@ class Acosh(Primitive):
     r"""
     Computes inverse hyperbolic cosine of the inputs element-wise.
 
-    Refer to :func:`mindspore.ops.acosh` for more detail.
+    Refer to :func:`mindspore.ops.acosh` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3656,7 +3656,7 @@ class Cosh(Primitive):
     r"""
     Computes hyperbolic cosine of input element-wise.
 
-    Refer to :func:`mindspore.ops.cosh` for more detail.
+    Refer to :func:`mindspore.ops.cosh` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3678,7 +3678,7 @@ class Asinh(Primitive):
     r"""
     Computes inverse hyperbolic sine of the input element-wise.
 
-    Refer to :func:`mindspore.ops.asinh` for more detail.
+    Refer to :func:`mindspore.ops.asinh` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3701,7 +3701,7 @@ class Sinc(Primitive):
     r"""
     Computes the normalized sinc of input.
 
-    Refer to :func:`mindspore.ops.sinc` for more detail.
+    Refer to :func:`mindspore.ops.sinc` for more details.
 
     .. math::
 
@@ -3743,7 +3743,7 @@ class Sinh(Primitive):
     r"""
     Computes hyperbolic sine of the input element-wise.
 
-    Refer to :func:`mindspore.ops.sinh` for more detail.
+    Refer to :func:`mindspore.ops.sinh` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3781,7 +3781,7 @@ class Equal(Primitive):
     r"""
     Computes the equivalence between two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.equal` for more detail.
+    Refer to :func:`mindspore.ops.equal` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3903,7 +3903,7 @@ class NotEqual(Primitive):
     """
     Computes the non-equivalence of two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.ne` for more detail.
+    Refer to :func:`mindspore.ops.ne` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3934,7 +3934,7 @@ class Greater(PrimitiveWithCheck):
     r"""
     Compare the value of the input parameters :math:`x,y` element-wise, and the output result is a bool value.
 
-    Refer to :func:`mindspore.ops.gt` for more detail.
+    Refer to :func:`mindspore.ops.gt` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3969,7 +3969,7 @@ class GreaterEqual(PrimitiveWithCheck):
     r"""
     Computes the boolean value of :math:`x >= y` element-wise.
 
-    Refer to :func:`mindspore.ops.ge` for more detail.
+    Refer to :func:`mindspore.ops.ge` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4001,7 +4001,7 @@ class Lerp(Primitive):
     """
     Calculate the linear interpolation between two tensors based on the weight parameter.
 
-    Refer to :func:`mindspore.ops.lerp` for more detail.
+    Refer to :func:`mindspore.ops.lerp` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4063,7 +4063,7 @@ class Less(PrimitiveWithCheck):
     r"""
     Computes the boolean value of :math:`x < y` element-wise.
 
-    Refer to :func:`mindspore.ops.less` for more detail.
+    Refer to :func:`mindspore.ops.less` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4095,7 +4095,7 @@ class LessEqual(PrimitiveWithCheck):
     r"""
     Computes the boolean value of :math:`x <= y` element-wise.
 
-    Refer to :func:`mindspore.ops.le` for more detail.
+    Refer to :func:`mindspore.ops.le` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4127,7 +4127,7 @@ class LogicalNot(Primitive):
     """
     Computes the "logical NOT" of a tensor element-wise.
 
-    Refer to :func:`mindspore.ops.logical_not` for more detail.
+    Refer to :func:`mindspore.ops.logical_not` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4150,7 +4150,7 @@ class LogicalAnd(_LogicBinaryOp):
     r"""
     Computes the "logical AND" of two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.logical_and` for more detail.
+    Refer to :func:`mindspore.ops.logical_and` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4169,7 +4169,7 @@ class LogicalOr(_LogicBinaryOp):
     """
     Computes the "logical OR" of two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.logical_or` for more detail.
+    Refer to :func:`mindspore.ops.logical_or` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4226,7 +4226,7 @@ class IsNan(Primitive):
     r"""
     Determines which elements are NaN for each position.
 
-    Refer to :func:`mindspore.ops.isnan` for more detail.
+    Refer to :func:`mindspore.ops.isnan` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4289,7 +4289,7 @@ class IsFinite(Primitive):
     r"""
     Determines which elements are finite for each position.
 
-    Refer to :func:`mindspore.ops.isfinite` for more detail.
+    Refer to :func:`mindspore.ops.isfinite` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4502,7 +4502,7 @@ class Cos(Primitive):
     r"""
     Computes cosine of input element-wise.
 
-    Refer to :func:`mindspore.ops.cos` for more detail.
+    Refer to :func:`mindspore.ops.cos` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4524,7 +4524,7 @@ class ACos(Primitive):
     r"""
     Computes arccosine of input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.acos` for more detail.
+    Refer to :func:`mindspore.ops.acos` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4547,7 +4547,7 @@ class Sin(Primitive):
     r"""
     Computes sine of the input element-wise.
 
-    Refer to :func:`mindspore.ops.sin` for more detail.
+    Refer to :func:`mindspore.ops.sin` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4569,7 +4569,7 @@ class Asin(Primitive):
     r"""
     Computes arcsine of input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.asin` for more detail.
+    Refer to :func:`mindspore.ops.asin` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4672,7 +4672,7 @@ class Abs(Primitive):
     r"""
     Returns absolute value of a tensor element-wise.
 
-    Refer to :func:`mindspore.ops.abs` for more detail.
+    Refer to :func:`mindspore.ops.abs` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4730,7 +4730,7 @@ class Round(Primitive):
     r"""
     Returns half to even of a tensor element-wise.
 
-    Refer to :func:`mindspore.ops.round` for more detailed.
+    Refer to :func:`mindspore.ops.round` for more detailsed.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4753,7 +4753,7 @@ class Tan(Primitive):
     r"""
     Computes tangent of `x` element-wise.
 
-    Refer to :func:`mindspore.ops.tan` for more detail.
+    Refer to :func:`mindspore.ops.tan` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -4776,7 +4776,7 @@ class Atan(Primitive):
     r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
-    Refer to :func:`mindspore.ops.atan` for more detail.
+    Refer to :func:`mindspore.ops.atan` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4802,7 +4802,7 @@ class Atanh(Primitive):
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
-    Refer to :func:`mindspore.ops.atanh` for more detail.
+    Refer to :func:`mindspore.ops.atanh` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4825,7 +4825,7 @@ class Atan2(_MathBinaryOp):
     r"""
     Returns arctangent of x/y element-wise.
 
-    Refer to :func:`mindspore.ops.atan2` for more detail.
+    Refer to :func:`mindspore.ops.atan2` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -4897,7 +4897,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     r"""
     Returns bitwise `and` of two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.bitwise_and` for more detail.
+    Refer to :func:`mindspore.ops.bitwise_and` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -4916,7 +4916,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     r"""
     Returns bitwise `or` of two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.bitwise_or` for more detail.
+    Refer to :func:`mindspore.ops.bitwise_or` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -4935,7 +4935,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     r"""
     Returns bitwise `xor` of two tensors element-wise.
 
-    Refer to :func:`mindspore.ops.bitwise_xor` for more detail.
+    Refer to :func:`mindspore.ops.bitwise_xor` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -5448,7 +5448,7 @@ class LinSpace(Primitive):
     Returns a Tensor whose value is `num` evenly spaced in the interval `start` and `stop` (including `start` and
     `stop`), and the length of the output Tensor is `num`.
 
-    Refer to :func:`mindspore.ops.linspace` for more detail.
+    Refer to :func:`mindspore.ops.linspace` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5565,7 +5565,7 @@ class MatrixDeterminant(Primitive):
     """
     Computes the determinant of one or more square matrices.
 
-    Refer to :func:`mindspore.ops.matrix_determinant` for more detail.
+    Refer to :func:`mindspore.ops.matrix_determinant` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -5959,7 +5959,7 @@ class Trunc(Primitive):
     """
     Returns a new tensor with the truncated integer values of the elements of input.
 
-    Refer to :func:`mindspore.ops.trunc` for more detail.
+    Refer to :func:`mindspore.ops.trunc` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6555,7 +6555,7 @@ class CholeskyInverse(Primitive):
     """
     Returns the inverse of the positive definite matrix using cholesky matrix factorization.
 
-    Refer to :func::`mindspore.ops.cholesky_inverse` for more detail.
+    Refer to :func::`mindspore.ops.cholesky_inverse` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6769,7 +6769,7 @@ class SparseSegmentMean(Primitive):
     """
     Computes the mean along sparse segments of a Tensor.
 
-    Refer to :func:`mindspore.ops.sparse_segment_mean` for more detail.
+    Refer to :func:`mindspore.ops.sparse_segment_mean` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6839,7 +6839,7 @@ class Bernoulli(Primitive):
     """
     Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli distribution.
 
-    Refer to :func:`mindspore.ops.bernoulli` for more detail.
+    Refer to :func:`mindspore.ops.bernoulli` for more details.
 
     Supported Platforms:
         ``GPU``
@@ -6954,7 +6954,7 @@ class Cholesky(Primitive):
     Computes the Cholesky decomposition of a symmetric positive-definite matrix `A`
     or for batches of symmetric positive-definite matrices.
 
-    Refer to :func::`mindspore.ops.cholesky` for more detail.
+    Refer to :func::`mindspore.ops.cholesky` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -7234,7 +7234,12 @@ class Polar(Primitive):
 
 class NextAfter(Primitive):
     """
-    Returns the next representable value after `x1` in the direction of `x2`.
+    Returns the next representable floating-point value after `x1` towards `x2` element-wise.
+
+    Say there are two float32 numbers :math:`a`, :math:`b`, and let the
+    representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
+    then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
+    the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
 
     .. math::
 

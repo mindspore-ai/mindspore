@@ -427,7 +427,7 @@ class Im2Col(Primitive):
     The `pads`, `strides` and `dilations` arguments specify
     how the sliding blocks are retrieved.
 
-    .. note::
+    Note:
         Currently, only 4-D input tensors (batched image-like tensors) are supported.
 
     Args:

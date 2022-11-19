@@ -1,7 +1,7 @@
 mindspore.ops.BitwiseAnd
 ========================
 
-.. py:class:: mindspore.ops.BitwiseAnd()
+.. py:class:: mindspore.ops.BitwiseAnd
 
     逐元素执行两个Tensor的与运算。
 

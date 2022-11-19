@@ -1,7 +1,7 @@
 mindspore.ops.AffineGrid
 ========================
 
-.. py:class:: mindspore.ops.AffineGrid()
+.. py:class:: mindspore.ops.AffineGrid
 
     给定一批仿射矩阵 theta，生成 2D 或 3D 流场（采样网格）。
 

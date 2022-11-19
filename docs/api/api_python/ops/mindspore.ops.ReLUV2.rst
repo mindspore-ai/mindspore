@@ -1,7 +1,7 @@
 mindspore.ops.ReLUV2
 ====================
 
-.. py:class:: mindspore.ops.ReLUV2()
+.. py:class:: mindspore.ops.ReLUV2
 
     ReLUV2接口已经弃用，请使用 :class:`mindspore.ops.ReLU` 替代。
 

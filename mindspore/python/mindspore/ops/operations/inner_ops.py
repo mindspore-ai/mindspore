@@ -28,7 +28,7 @@ class ScalarCast(PrimitiveWithInfer):
     """
     Casts the input scalar to another type.
 
-    Refer to :func:`mindspore.ops.scalar_cast` for more detail.
+    Refer to :func:`mindspore.ops.scalar_cast` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

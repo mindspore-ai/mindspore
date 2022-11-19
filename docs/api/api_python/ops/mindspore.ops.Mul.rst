@@ -1,7 +1,7 @@
 mindspore.ops.Mul
 =================
 
-.. py:class:: mindspore.ops.Mul()
+.. py:class:: mindspore.ops.Mul
 
     两个Tensor逐元素相乘。
 
