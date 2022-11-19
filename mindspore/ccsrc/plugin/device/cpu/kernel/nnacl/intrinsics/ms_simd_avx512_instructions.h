@@ -203,9 +203,14 @@ static inline MS_FLOAT32X16 simd_exp512_f32(MS_FLOAT32X16 input) {
     {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6,
      1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
     {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f},
-    {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}};
+    {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
+    {1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f,
+     1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f,
+     1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f,
+     1.44269504088896341f}};
+
   input = MS_MAX512_F32(minv, MS_MIN512_F32(input, maxv));
-  MS_INT32X16 integer = MS_CVT512PS_EPI32(MS_DIV512_F32(input, param[0]));
+  MS_INT32X16 integer = MS_CVT512PS_EPI32(MS_FLOOR512_F32(MS_FMADD512_F32(input, param[6], param[4])));
   MS_FLOAT32X16 decimal = MS_SUB512_F32(input, MS_MUL512_F32(MS_CVT512EPI32_PS(integer), param[0]));
   MS_INT32X16 int_exp = MS_SLLI512_EPI32(MS_ADD512_EPI32(integer, MS_MOV512_EPI32(127)), 23);
   MS_FLOAT32X16 tmp = MS_FMADD512_F32(decimal, MS_FMADD512_F32(decimal, param[1], param[2]), param[3]);
