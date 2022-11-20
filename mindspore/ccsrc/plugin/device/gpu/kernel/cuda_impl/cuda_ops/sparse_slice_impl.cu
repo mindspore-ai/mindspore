@@ -47,7 +47,7 @@ __global__ void SparseSliceKernel(const IndexType *indices_ptr, const DataType *
         auto start = start_ptr[dim];
         IndexType index = indices_ptr[input_nz * num_dim_ + dim];
         IndexType new_index = index - start;
-        y_indices_ptr[input_nz * num_dim_ + dim] = new_index;
+        y_indices_ptr[non_zeros_ * num_dim_ + dim] = new_index;
       }
       non_zeros_ += 1;
       *sum_count_ptr += 1;
@@ -77,6 +77,20 @@ template CUDA_LIB_EXPORT void SparseSlice<uint16_t, int64_t>(const int64_t *indi
                                                             const int64_t *x_ptr, int64_t *start_ptr,
                                                             int64_t *size_ptr, int64_t *y_indices_ptr,
                                                             uint16_t *y_values_ptr, int64_t *out_shape_ptr,
+                                                            int64_t *sum_count_ptr,
+                                                            size_t input_nnz_, size_t num_dim_, size_t out_size_,
+                                                            uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SparseSlice<uint32_t, int64_t>(const int64_t *indices_ptr, const uint32_t *values_ptr,
+                                                            const int64_t *x_ptr, int64_t *start_ptr,
+                                                            int64_t *size_ptr, int64_t *y_indices_ptr,
+                                                            uint32_t *y_values_ptr, int64_t *out_shape_ptr,
+                                                            int64_t *sum_count_ptr,
+                                                            size_t input_nnz_, size_t num_dim_, size_t out_size_,
+                                                            uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SparseSlice<uint64_t, int64_t>(const int64_t *indices_ptr, const uint64_t *values_ptr,
+                                                            const int64_t *x_ptr, int64_t *start_ptr,
+                                                            int64_t *size_ptr, int64_t *y_indices_ptr,
+                                                            uint64_t *y_values_ptr, int64_t *out_shape_ptr,
                                                             int64_t *sum_count_ptr,
                                                             size_t input_nnz_, size_t num_dim_, size_t out_size_,
                                                             uint32_t device_id, cudaStream_t cuda_stream);
