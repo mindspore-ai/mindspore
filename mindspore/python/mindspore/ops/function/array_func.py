@@ -161,9 +161,15 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     `step` up to but not including `end`.
 
     Args:
-        start (Union[float, int, Tensor]): The first number in the sequence.
-        end (Union[float, int, Tensor]): Upper or lower limit of the sequence, exclusive.
-        step (Union[float, int, Tensor]): Number that increments `start`.
+        start (Union[float, int, Tensor], optional): The first number in the sequence.
+            If Tensor, the shape must be (). Default: 0.
+        end (Union[float, int, Tensor], optional): Upper or lower limit of the sequence, exclusive.
+            If Tensor, the shape must be ().
+            Default: None. If None, it defaults to the value of `start`, and 0 is used as the starting value.
+        step (Union[float, int, Tensor], optional): Number that increments `start`.
+            If Tensor, the shape must be (). Default: 1.
+
+    Keyword Args:
         dtype (mindspore.dtype, optional): The desired data type of returned tensor. Default: None.
             If dtype is not given or None, the dtype is inferred to be the type with the highest precision among
             the `start`, `end` and `step` parameters.
@@ -172,7 +178,8 @@ def arange(start=0, end=None, step=1, *, dtype=None):
         A 1-D Tensor, with the same type as the inputs.
 
     Raises:
-        TypeError: If `start`, `end` or `step` is not an int or a float or a TensorScalar in valid dtypes.
+        TypeError: If `start`, `end` or `step` is not an int or a float or a TensorScalar(Special Tensor with shape ())
+                   in valid dtypes.
         ValueError: If `step` = 0.
         ValueError: If `start` >= `end` when `step` > 0.
         ValueError: If `start` <= `end` when `step` < 0.
@@ -183,22 +190,22 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> output = arange(1, 6)
+        >>> output = ops.arange(1, 6)
         >>> print(output)
         >>> print(output.dtype)
         [1 2 3 4 5]
         Int64
-        >>> output = arange(0, 3, 1.2)
+        >>> output = ops.arange(0, 3, 1.2)
         >>> print(output)
         >>> print(output.dtype)
         [0.  1.2 2.4]
         Float32
-        >>> output = arange(7, 1, -2)
+        >>> output = ops.arange(7, 1, -2)
         >>> print(output)
         >>> print(output.dtype)
         [7 5 3]
         Int64
-        >>> output = arange(ms.Tensor(12.0, dtype=ms.float64), 2, ms.Tensor(-1.0, dtype=ms.float32))
+        >>> output = ops.arange(ms.Tensor(12.0, dtype=ms.float64), 2, ms.Tensor(-1.0, dtype=ms.float32))
         >>> print(output)
         >>> print(output.dtype)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
