@@ -271,6 +271,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_csr_fusion", &enable_csr_fusion);
   reg.AddFlag("enable_debug_mode", &enable_debug_mode);
   reg.AddFlag("enable_lite_conv_tuning", &enable_lite_conv_tuning);
+  reg.AddFlag("enable_vectorization", &enable_vectorization);
 
   // Integer flags
   reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth);
@@ -280,6 +281,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("parallel_ops_level", &parallel_ops_level);
   reg.AddFlag("recompute_increment_threshold", &recompute_increment_threshold);
   reg.AddFlag("recompute_peak_threshold", &recompute_peak_threshold);
+  reg.AddFlag("composite_op_limit_size", &composite_op_limit_size);
 
   // String flags
   reg.AddFlag("repository_path", &repository_path);
@@ -315,6 +317,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_low_precision"] = enable_low_precision;
   json["enable_debug_mode"] = enable_debug_mode;
   json["enable_lite_conv_tuning"] = enable_lite_conv_tuning;
+  json["enable_vectorization"] = enable_vectorization;
 
   json["opt_level"] = opt_level;
   json["fusion_ops_level"] = fusion_ops_level;
@@ -324,6 +327,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["cpu_refer_thread_num"] = cpu_refer_thread_num;
   json["recompute_increment_threshold"] = recompute_increment_threshold;
   json["recompute_peak_threshold"] = recompute_peak_threshold;
+  json["composite_op_limit_size"] = composite_op_limit_size;
 
   json["repository_path"] = repository_path;
   json["target_os"] = target_os;

@@ -648,7 +648,7 @@ class GraphSplitByPattern:
         area.mode = self.get_default_mode(area.ops[0])
 
     @staticmethod
-    def limit_area_size(dominant, fuse_areas, limit_size=200):
+    def limit_area_size(dominant, fuse_areas, limit_size):
         """Remove some areas if the size is too large"""
         area_sizes = map(lambda area: len(area.ops), fuse_areas)
         dom_size = len(dominant.ops)
@@ -674,7 +674,7 @@ class GraphSplitByPattern:
                     continue
                 fuse_areas, is_forward = result
                 if not is_stitch:
-                    fuse_areas = self.limit_area_size(dominant, fuse_areas)
+                    fuse_areas = self.limit_area_size(dominant, fuse_areas, self.flags['composite_op_limit_size'])
                     if not fuse_areas:
                         continue
                 changed = False
@@ -752,7 +752,7 @@ class GraphSplitByPattern:
             result = selector(dominant)
             if result and result[0]:
                 fuse_areas, _ = result
-                fuse_areas = self.limit_area_size(dominant, fuse_areas)
+                fuse_areas = self.limit_area_size(dominant, fuse_areas, self.flags['composite_op_limit_size'])
                 if not fuse_areas:
                     continue
                 if fuse_areas[0] in [self.recom_area, user] and user.fuse_confirm(self.recom_area):
@@ -1256,14 +1256,14 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return []
             op = a.ops[0]
             return a.pattern == PrimLib.REDUCE and not a.stitch_info.stitch_ops and \
-                   PrimLib.is_reduce(op) and dom_op.inputs[0].shape == op.inputs[0].shape and \
-                   dom_op.attrs.get("reduce_axis") == op.attrs.get("reduce_axis")
+                PrimLib.is_reduce(op) and dom_op.inputs[0].shape == op.inputs[0].shape and \
+                dom_op.attrs.get("reduce_axis") == op.attrs.get("reduce_axis")
 
         def _h_opaque(dom, a):
             if dom.ops[0].prim not in {"StridedSlice"}:
                 return []
             return a.ops[0].prim == dom.ops[0].prim and dom.ops[0].output.shape == a.ops[0].output.shape and \
-                   dom.ops[0].inputs[0].shape == a.ops[0].inputs[0].shape
+                dom.ops[0].inputs[0].shape == a.ops[0].inputs[0].shape
 
         def _link_csr(dom):
             def _same_input(op1, op2):

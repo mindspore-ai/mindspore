@@ -122,6 +122,11 @@ class BACKEND_EXPORT GraphKernelFlags {
   bool enable_lite_conv_tuning{false};
 
   /**
+   * Enable vectorization on akg.
+   */
+  bool enable_vectorization{true};
+
+  /**
    * Expand and cluster AKG's operators by level.
    */
   unsigned int fusion_ops_level{OpLevel_0};
@@ -169,6 +174,11 @@ class BACKEND_EXPORT GraphKernelFlags {
    * Threshold for detection of recopute's memory peak case, unit is byte.
    */
   int64_t recompute_peak_threshold{0};
+
+  /**
+   * Threshold for composite ops number.
+   */
+  int64_t composite_op_limit_size{200};
 
   /**
    * AKG's operator repository file path.

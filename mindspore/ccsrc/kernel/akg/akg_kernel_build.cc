@@ -654,6 +654,9 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
 
 std::string AkgKernelBuilder::CollectBuildAttrs() {
   auto &flags = graphkernel::GraphKernelFlags::GetInstance();
+  if (!flags.enable_vectorization) {
+    build_attrs_["enable_vectorization"] = flags.enable_vectorization;
+  }
   if (flags.online_tuning > 0) {
     build_attrs_["online_tuning"] = flags.online_tuning;
   }
