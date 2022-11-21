@@ -46,6 +46,19 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs, which is invalid.";
     return false;
   }
+  handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCuSparseHandle();
+  cusparseSetPointerMode(handle_, CUSPARSE_POINTER_MODE_HOST);
+  return true;
+}
+
+int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                      const std::vector<KernelTensorPtr> &inputs,
+                                                      const std::vector<KernelTensorPtr> &outputs,
+                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   for (size_t i = 0; i < inputs.size(); i++) {
     std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(i)->GetDeviceShapeAdaptively().begin(),
                                                             inputs.at(i)->GetDeviceShapeAdaptively().end());
@@ -69,15 +82,6 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::Init(const BaseOperatorPtr &base
       y_batch_pointers_ptr_test.resize(output_elements_);
     }
   }
-  handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCuSparseHandle();
-  cusparseSetPointerMode(handle_, CUSPARSE_POINTER_MODE_HOST);
-  return true;
-}
-
-int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
   return KRET_OK;
 }
 
@@ -97,9 +101,6 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
 
   cudaMemcpyAsync(x_dense_shape_ptr_test.data(), x_dense_shape_ptr, elements[kTwo] * sizeof(IndiceType),
                   cudaMemcpyDeviceToHost, stream);
-  cudaMemcpyAsync(y_value_ptr, x_value_ptr, elements[kOne] * sizeof(DataType), cudaMemcpyDeviceToDevice, stream);
-  cudaMemcpyAsync(y_dense_shape_ptr, x_dense_shape_ptr, elements[kTwo] * sizeof(DataType), cudaMemcpyDeviceToDevice,
-                  stream);
   SparseTensorToCSRSparseMatrix<IndiceType>(x_indices_ptr, x_row_indices_ptr, y_col_indices_ptr, y_batch_pointers_ptr,
                                             elements[kOne], elements[kTwo], stream, device_id_);
   if (elements[kTwo] == kRankWithoutBatch) {
@@ -111,6 +112,7 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
     cudaMemcpyAsync(y_batch_pointers_ptr_test.data(), y_batch_pointers_ptr, (batch_size + 1) * sizeof(IndiceType),
                     cudaMemcpyDeviceToHost, stream);
     for (int i = 0; i < batch_size; ++i) {
+      y_batch_pointers_ptr_test[i + 1] = std::max(y_batch_pointers_ptr_test[i + 1], y_batch_pointers_ptr_test[i]);
       int *temp_row_indices_addr = x_row_indices_ptr + y_batch_pointers_ptr_test[i];
       int *temp_row_pointers_addr = y_row_pointers_ptr + i * (row_num + 1);
       temp_nnz = y_batch_pointers_ptr_test[i + 1] - y_batch_pointers_ptr_test[i];
@@ -119,7 +121,12 @@ bool SparseTensorToCSRSparseMatrixGpuKernelMod::LaunchKernel(const std::vector<A
                          CUSPARSE_INDEX_BASE_ZERO);
       }
     }
+    cudaMemcpyAsync(y_batch_pointers_ptr, y_batch_pointers_ptr_test.data(), (batch_size + 1) * sizeof(IndiceType),
+                    cudaMemcpyHostToDevice, stream);
   }
+  cudaMemcpyAsync(y_dense_shape_ptr, x_dense_shape_ptr, elements[kTwo] * sizeof(DataType), cudaMemcpyDeviceToDevice,
+                  stream);
+  cudaMemcpyAsync(y_value_ptr, x_value_ptr, elements[kOne] * sizeof(DataType), cudaMemcpyDeviceToDevice, stream);
   return true;
 }
 
