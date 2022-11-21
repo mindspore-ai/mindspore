@@ -444,15 +444,6 @@ void GeDeviceContext::Initialize() {
   (void)rtGetIsHeterogenous(&is_heterogenous);
   ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
   InitGe(ms_context);
-  std::string rank_id = common::GetEnv("RANK_ID");
-  std::string rank_table_file = common::GetEnv("RANK_TABLE_FILE");
-  if (!rank_id.empty() && !rank_table_file.empty()) {
-    MsContext::GetInstance()->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
-    if (!mindspore::distributed::Initialize()) {
-      MS_LOG(EXCEPTION) << "InitHccl failed.";
-    }
-  }
-
   initialized_ = true;
 }
 
