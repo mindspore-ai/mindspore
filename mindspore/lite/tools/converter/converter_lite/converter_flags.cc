@@ -158,7 +158,7 @@ int Flags::InitInTensorShape() const {
     constexpr int kMinShapeSizeInStr = 2;
     if (string_split.size() < kMinShapeSizeInStr) {
       MS_LOG(ERROR) << "shape size must not be less than " << kMinShapeSizeInStr;
-      return mindspore::lite::RET_ERROR;
+      return lite::RET_INPUT_PARAM_INVALID;
     }
     auto name = string_split[0];
     for (size_t i = 1; i < string_split.size() - 1; ++i) {
@@ -166,17 +166,17 @@ int Flags::InitInTensorShape() const {
     }
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
-      return lite::RET_ERROR;
+      return lite::RET_INPUT_PARAM_INVALID;
     }
     auto dim_strs = string_split[string_split.size() - 1];
     if (dim_strs.empty()) {
       MS_LOG(ERROR) << "input tensor dim string is empty";
-      return lite::RET_ERROR;
+      return lite::RET_INPUT_PARAM_INVALID;
     }
     auto dims = lite::StrSplit(dim_strs, std::string(","));
     if (dims.empty()) {
       MS_LOG(ERROR) << "input tensor dim is empty";
-      return lite::RET_ERROR;
+      return lite::RET_INPUT_PARAM_INVALID;
     }
     for (const auto &dim : dims) {
       int64_t dim_value;
@@ -184,7 +184,7 @@ int Flags::InitInTensorShape() const {
         dim_value = std::stoi(dim);
       } catch (const std::exception &e) {
         MS_LOG(ERROR) << "Get dim failed: " << e.what();
-        return lite::RET_ERROR;
+        return lite::RET_INPUT_PARAM_INVALID;
       }
       shape.push_back(dim_value);
     }
