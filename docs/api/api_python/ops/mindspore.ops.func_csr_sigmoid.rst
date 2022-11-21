@@ -3,7 +3,7 @@ mindspore.ops.csr_sigmoid
 
 .. py:function:: mindspore.ops.csr_sigmoid(input_x: CSRTensor)
 
-    Sigmoid激活函数，逐元素计算Sigmoid激活函数。Sigmoid函数定义为：
+    Sigmoid激活函数，CSRTensor逐元素计算Sigmoid激活函数。Sigmoid函数定义为：
 
     .. math::
 

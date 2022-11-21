@@ -3,7 +3,7 @@ mindspore.ops.coo_floor
 
 .. py:function:: mindspore.ops.coo_floor(x: COOTensor)
 
-    逐元素向下取整函数。
+    COOTensor逐元素向下取整函数。
 
     .. math::
         out_i = \lcoo_floor x_i \rcoo_floor

@@ -3,7 +3,7 @@ mindspore.ops.coo_tan
 
 .. py:function:: mindspore.ops.coo_tan(x: COOTensor)
 
-    计算输入元素的正切值。
+    计算COOTensor输入元素的正切值。
 
     .. math::
         out_i = coo_tan(x_i)

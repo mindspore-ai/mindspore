@@ -3,7 +3,7 @@ mindspore.ops.csr_cosh
 
 .. py:function:: mindspore.ops.csr_cosh(x: CSRTensor)
 
-    逐元素计算 `x` 的双曲余弦值。
+    逐元素计算CSRTensor `x` 的双曲余弦值。
 
     .. math::
         out_i = csr_cosh(x_i)

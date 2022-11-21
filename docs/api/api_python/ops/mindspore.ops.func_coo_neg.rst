@@ -3,7 +3,7 @@ mindspore.ops.coo_neg
 
 .. py:function:: mindspore.ops.coo_neg(x: COOTensor)
 
-    计算输入x的相反数并返回。
+    计算输入COOTensor的相反数并返回。
 
     .. math::
         out_{i} = - x_{i}

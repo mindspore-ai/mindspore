@@ -3,7 +3,7 @@ mindspore.ops.coo_round
 
 .. py:function:: mindspore.ops.coo_round(x: COOTensor)
 
-    对输入数据进行四舍五入到最接近的整数数值。
+    对COOTensor输入数据进行四舍五入到最接近的整数数值。
 
     .. math::
         out_i \approx x_i

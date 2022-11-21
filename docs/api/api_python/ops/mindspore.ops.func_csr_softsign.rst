@@ -3,7 +3,7 @@ mindspore.ops.csr_softsign
 
 .. py:function:: mindspore.ops.csr_softsign(x: CSRTensor)
 
-    Softsign激活函数。
+    CSRTensor Softsign激活函数。
 
     Softsign函数定义为：
 

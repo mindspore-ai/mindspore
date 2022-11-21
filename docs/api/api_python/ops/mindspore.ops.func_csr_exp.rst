@@ -3,7 +3,7 @@ mindspore.ops.csr_exp
 
 .. py:function:: mindspore.ops.csr_exp(x: CSRTensor)
 
-    逐元素计算 `x` 的指数。
+    逐元素计算CSRTensor `x` 的指数。
 
     .. math::
 

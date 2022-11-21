@@ -3,7 +3,7 @@ mindspore.ops.coo_softsign
 
 .. py:function:: mindspore.ops.coo_softsign(x: COOTensor)
 
-    Softsign激活函数。
+    COOTensor Softsign激活函数。
 
     Softsign函数定义为：
 

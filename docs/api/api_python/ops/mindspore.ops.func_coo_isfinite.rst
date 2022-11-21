@@ -3,7 +3,7 @@ mindspore.ops.coo_isfinite
 
 .. py:function:: mindspore.ops.coo_isfinite(x: COOTensor)
 
-    判断输入数据每个位置上的值是否是有限数。
+    判断COOTensor输入数据每个位置上的值是否是有限数。
 
     .. math::
 

@@ -3,7 +3,7 @@ mindspore.ops.csr_asinh
 
 .. py:function:: mindspore.ops.csr_asinh(x: CSRTensor)
 
-    计算输入元素的反双曲正弦。
+    计算CSRTensor输入元素的反双曲正弦。
 
     .. math::
 
