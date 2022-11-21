@@ -808,7 +808,7 @@ REG_BPROP_BUILDER("Padding").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
 REG_BPROP_BUILDER("Transpose").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto perm = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto tmp_perm = GetTupleIntFromValueNode(perm);
+  auto tmp_perm = GetIntList(perm);
   std::vector<int64_t> new_perm;
   (void)std::transform(tmp_perm.begin(), tmp_perm.end(), std::back_inserter(new_perm),
                        [&tmp_perm](const int64_t v) { return v >= 0 ? v : v + tmp_perm.size(); });
@@ -836,7 +836,7 @@ REG_BPROP_BUILDER("Tile").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto input_multiples = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto shapex = ib->GetShape(x);
-  auto multiples = GetTupleIntFromValueNode(input_multiples);
+  auto multiples = GetIntList(input_multiples);
   auto r_shape = TileShape(multiples, shapex);
   auto axis = Range(0, static_cast<int64_t>(r_shape.size()), 2);
   auto dout_reshaped = ib->Reshape(dout, r_shape);
@@ -987,7 +987,7 @@ REG_BPROP_BUILDER("Coalesce").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
 REG_BPROP_BUILDER("ConjugateTranspose").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto perm = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto tmp_perm = GetTupleIntFromValueNode(perm);
+  auto tmp_perm = GetIntList(perm);
   std::vector<int64_t> new_perm;
   (void)std::transform(tmp_perm.begin(), tmp_perm.end(), std::back_inserter(new_perm),
                        [&tmp_perm](const int64_t v) { return v >= 0 ? v : v + tmp_perm.size(); });
@@ -1058,7 +1058,7 @@ REG_BPROP_BUILDER("EmbeddingLookup").SetBody([](const BpropIRBuilder *ib) -> Nod
   auto offset = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto x_shp = ib->GetShape(x);
-  auto offset_v = GetIntFromValueNode(offset);
+  auto offset_v = GetIntValue(offset);
   auto new_indices = ib->Sub(indices, ib->Tensor(offset_v, ib->GetDtype(indices)));
   auto indices_size = ib->GetSize(new_indices);
   ShapeVector new_indices_shape;
@@ -1162,7 +1162,7 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetBody([](const BpropIRBuilder *ib) -
 REG_BPROP_BUILDER("AffineGrid").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
   auto theta = ib->GetInput(kIndex0);
-  auto output_size = GetAxisValue(ib->GetInput(kIndex1));
+  auto output_size = GetIntList(ib->GetInput(kIndex1));
   auto dout = ib->GetInput(kIndex3);
   auto dtype = ib->GetDtype(theta);
 

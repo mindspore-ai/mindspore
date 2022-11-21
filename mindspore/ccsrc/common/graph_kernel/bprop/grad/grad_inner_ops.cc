@@ -205,7 +205,7 @@ REG_BPROP_BUILDER(kTensorCopySlicesOpName).SetBody([](const BpropIRBuilder *ib) 
 
 REG_BPROP_BUILDER("Roll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex2);
-  std::vector<int64_t> shift = GetAxisList(ib->GetAttr("shift"));
+  std::vector<int64_t> shift = GetIntList(ib->GetAttr("shift"));
   std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
   return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });

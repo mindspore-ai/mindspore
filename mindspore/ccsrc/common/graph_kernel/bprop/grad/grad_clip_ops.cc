@@ -47,7 +47,7 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto max_dout_x = ib->TupleGetItem(tmp_max_dout, 0);
   auto max_dout_y = ib->TupleGetItem(tmp_max_dout, 1);
   auto sqrt_dout_x = ib->Emit("SqrtGrad", {sqrt_out, max_dout_x});
-  auto reduce_sum_dout_x = SumGrad(ib, square_out, GetAxisList(reduce_sum_axis), sqrt_dout_x);
+  auto reduce_sum_dout_x = SumGrad(ib, square_out, GetIntList(reduce_sum_axis), sqrt_dout_x);
   auto temp_out = ib->Mul(reduce_sum_dout_x, cast_x);
   auto square_dout_x = ib->Mul(ib->Tensor(2.0, ib->GetDtype(temp_out)), temp_out);
   auto x_dout = ib->Cast(ib->Add(mul_dout_x, square_dout_x), ib->GetDtype(x));

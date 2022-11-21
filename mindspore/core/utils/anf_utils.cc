@@ -404,9 +404,12 @@ int64_t AnfUtils::GetIntValue(const AnfNodePtr &anf_node) {
 int64_t AnfUtils::GetIntValue(const ValuePtr &value) {
   if (value->isa<Int64Imm>()) {
     return GetValue<int64_t>(value);
-  } else {
+  } else if (value->isa<Int32Imm>()) {
     return IntToLong(GetValue<int>(value));
+  } else {
+    MS_LOG(EXCEPTION) << "The value should be Int32Imm or Int64Imm, but got " << value->ToString();
   }
+  return 0;
 }
 
 std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
