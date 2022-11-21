@@ -62,6 +62,10 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.DynamicRNN
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Flatten
+    mindspore.ops.FractionalAvgPool
+    mindspore.ops.FractionalMaxPool
+    mindspore.ops.FractionalMaxPoolWithFixedKsize
+    mindspore.ops.FractionalMaxPool3DWithFixedKsize
     mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
     mindspore.ops.LRN
@@ -190,6 +194,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     :template: classtemplate.rst
     
     mindspore.ops.ComputeAccidentalHits
+    mindspore.ops.GridSampler2D
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
     mindspore.ops.UpsampleNearest3D
@@ -262,6 +267,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
     mindspore.ops.Cross
+    mindspore.ops.Gcd
 
 逐元素运算
 ^^^^^^^^^^^^^
@@ -305,6 +311,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Floor
     mindspore.ops.FloorDiv
     mindspore.ops.FloorMod
+    mindspore.ops.Geqrf
     mindspore.ops.Imag
     mindspore.ops.Inv
     mindspore.ops.Invert
@@ -482,6 +489,7 @@ Array操作
     mindspore.ops.ExpandDims
     mindspore.ops.FFTWithSize
     mindspore.ops.FloatStatus
+    mindspore.ops.FillDiagonal
     mindspore.ops.Gather
     mindspore.ops.GatherD
     mindspore.ops.GatherNd

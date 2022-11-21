@@ -61,6 +61,10 @@ Neural Network
     mindspore.ops.DynamicGRUV2
     mindspore.ops.DynamicRNN
     mindspore.ops.Flatten
+    mindspore.ops.FractionalAvgPool
+    mindspore.ops.FractionalMaxPool
+    mindspore.ops.FractionalMaxPoolWithFixedKsize
+    mindspore.ops.FractionalMaxPool3DWithFixedKsize
     mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
     mindspore.ops.LRN
@@ -190,6 +194,7 @@ Sampling Operator
     :template: classtemplate.rst
     
     mindspore.ops.ComputeAccidentalHits
+    mindspore.ops.GridSampler2D
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
     
@@ -261,6 +266,7 @@ Mathematical Operators
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
     mindspore.ops.Cross
+    mindspore.ops.Gcd
 
 Element-wise Operator
 ^^^^^^^^^^^^^^^^^^^^^
@@ -304,6 +310,7 @@ Element-wise Operator
     mindspore.ops.Floor
     mindspore.ops.FloorDiv
     mindspore.ops.FloorMod
+    mindspore.ops.Geqrf
     mindspore.ops.Imag
     mindspore.ops.Inv
     mindspore.ops.Invert
@@ -481,6 +488,7 @@ Array Operation
     mindspore.ops.ExpandDims
     mindspore.ops.FFTWithSize
     mindspore.ops.FloatStatus
+    mindspore.ops.FillDiagonal
     mindspore.ops.Gather
     mindspore.ops.GatherD
     mindspore.ops.GatherNd
