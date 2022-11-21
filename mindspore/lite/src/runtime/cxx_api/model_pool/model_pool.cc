@@ -685,8 +685,9 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
         }
       }
     }
-    worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
-                                             model_pool_config[i], predict_task_queue_, &create_worker_success));
+
+    InitWorkerManager::GetInstance()->InitModelWorker(model_worker, new_model_buf, size, model_pool_config[i],
+                                                      predict_task_queue_, &create_worker_success);
     if (all_model_workers_.find(task_queue_id) != all_model_workers_.end()) {
       all_model_workers_[task_queue_id].push_back(model_worker);
     } else {
@@ -699,11 +700,11 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
     auto &workers = item.second;
     for (auto &worker : workers) {
       worker->WaitCreateWorkerDone();
-      if (!create_worker_success) {
-        MS_LOG(ERROR) << "worker init failed.";
-        return kLiteError;
-      }
     }
+  }
+  if (!create_worker_success) {
+    MS_LOG(ERROR) << "worker init failed.";
+    return kLiteError;
   }
   MS_LOG(INFO) << "All models are initialized.";
   // init model pool input and output
@@ -952,12 +953,6 @@ ModelPool::~ModelPool() {
   MS_LOG(INFO) << "free model pool.";
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
-  }
-  MS_LOG(INFO) << "Wait for all threads to finish tasks.";
-  for (auto &th : worker_thread_vec_) {
-    if (th.joinable()) {
-      th.join();
-    }
   }
   MS_LOG(INFO) << "delete model pool task.";
   if (tasks_ != nullptr) {
