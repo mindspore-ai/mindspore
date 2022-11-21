@@ -20,6 +20,7 @@
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -80,8 +81,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
     const int64_t input_num = kL2NormalizeInputsNum;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
-
-    const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+    const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kFloat64};
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
     auto type = input_args[kInputIndex0]->BuildType();
     MS_EXCEPTION_IF_NULL(type);

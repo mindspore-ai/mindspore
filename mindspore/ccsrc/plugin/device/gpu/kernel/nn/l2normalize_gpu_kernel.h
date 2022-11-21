@@ -62,8 +62,8 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     T *reduce_workspace_addr = GetDeviceAddress<T>(workspace, 0);
     T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 1);
 
-    const float alpha = 1;
-    const float beta = 0;
+    T alpha = static_cast<T>(1.0f);
+    T beta = static_cast<T>(0.0f);
 
     if (all_match_) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -71,10 +71,20 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
                         reinterpret_cast<cudaStream_t>(stream_ptr)),
         "cudaMemcpyAsync failed in L2Normalize::Launch.");
     } else {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
-                          inputA_descriptor_, input_addr, &beta, outputC_descriptor_, reduce_workspace_addr),
-        "cudnnReduceTensor failed.");
+      if (data_type_ == CUDNN_DATA_DOUBLE) {
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+          cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_,
+                            &alpha, inputA_descriptor_, input_addr, &beta, outputC_descriptor_, reduce_workspace_addr),
+          "cudnnReduceTensor failed.");
+      } else {
+        const float alphaf = static_cast<float>(alpha);
+        const float betaf = static_cast<float>(beta);
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+          cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_,
+                            &alphaf, inputA_descriptor_, input_addr, &betaf, outputC_descriptor_,
+                            reduce_workspace_addr),
+          "cudnnReduceTensor failed.");
+      }
     }
     GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -198,8 +208,9 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
                                        "cudnnDestroyTensorDescriptor failed.");
   }
   void InferArrayReduceType() {
+    cudnnDataType_t comp_type = (data_type_ == CUDNN_DATA_DOUBLE) ? CUDNN_DATA_DOUBLE : CUDNN_DATA_FLOAT;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, CUDNN_REDUCE_TENSOR_NORM2, CUDNN_DATA_FLOAT, nan_prop_,
+      cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, CUDNN_REDUCE_TENSOR_NORM2, comp_type, nan_prop_,
                                      reduce_indices_, CUDNN_32BIT_INDICES),
       "cudnnSetReduceTensorDescriptor failed");
   }

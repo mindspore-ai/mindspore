@@ -3524,13 +3524,16 @@ class L2Normalize(Primitive):
     where :math:`\epsilon` is epsilon and :math:`\sum_{i}^{}\left | x_i  \right | ^2` calculate the sum of squares of
     the input `x` along the dimension `axis`.
 
+    Note:
+        On Ascend, input data type of float64 is currently not supported.
+
     Args:
         axis (Union[list(int), tuple(int), int]): Specify the axis for calculating the L2 norm. Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
         - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, \ldots)`.
-          Data type must be float16 or float32.
+          Data type must be float16, float32 or float64.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
@@ -3539,7 +3542,7 @@ class L2Normalize(Primitive):
         TypeError: If `axis` is not one of the following: list, tuple or int.
         TypeError: If `epsilon` is not a float.
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is not in [float16, float32, float64].
         ValueError: If dimension of `x` is not greater than 0.
 
     Supported Platforms:

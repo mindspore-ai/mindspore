@@ -225,6 +225,12 @@ std::shared_ptr<CpuKernelFunc> SpecializeL2NormGradFunc() {
 using SpecializeL2NormGradFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 std::vector<std::pair<KernelAttr, SpecializeL2NormGradFuncCreator>> func_class_list = {
   {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   SpecializeL2NormGradFunc<double>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
