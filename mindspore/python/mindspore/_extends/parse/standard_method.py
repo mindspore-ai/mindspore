@@ -1294,6 +1294,13 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     return res.astype(dtype)
 
 
+def i0(x):
+    """
+    For details, please refer to :func:`mindspore.ops.i0`.
+    """
+    return F.i0(x)
+
+
 def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
     """
     Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
@@ -2015,6 +2022,20 @@ def hardshrink(x, lambd=0.5):
         [ 0.      0.     -2.1233]]
     """
     return P.HShrink(lambd)(x)
+
+
+def heaviside(x, values):
+    r"""
+    For details, please refer to :func:`mindspore.ops.heaviside`.
+    """
+    return F.heaviside(x, values)
+
+
+def hypot(x, other):
+    r'''
+    For details, please refer to :func:`mindspore.ops.hypot`.
+    '''
+    return F.hypot(x, other)
 
 
 def soft_shrink(x, lambd=0.5):

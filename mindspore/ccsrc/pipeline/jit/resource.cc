@@ -276,6 +276,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"select", std::string("select")},                                  // P.Select()
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
+       {"i0", std::string("i0")},                                          // F.i0()
        {"isclose", std::string("isclose")},                                // P.IsClose()
        {"is_floating_point", std::string("is_floating_point")},            // is_floating_point()
        {"is_signed", std::string("is_signed")},                            // is_signed()
@@ -314,6 +315,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"fliplr", std::string("fliplr")},                                  // fliplr
        {"flipud", std::string("flipud")},                                  // flipud
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
+       {"heaviside", std::string("heaviside")},                            // F.heaviside
+       {"hypot", std::string("hypot")},                                    // F.hypot
        {"soft_shrink", std::string("soft_shrink")},                        // P.SoftShrink
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()

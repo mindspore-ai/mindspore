@@ -121,6 +121,9 @@
     mindspore.Tensor.half
     mindspore.Tensor.hardshrink
     mindspore.Tensor.has_init
+    mindspore.Tensor.heaviside
+    mindspore.Tensor.hypot
+    mindspore.Tensor.i0
     mindspore.Tensor.igamma
     mindspore.Tensor.igammac
     mindspore.Tensor.index_add

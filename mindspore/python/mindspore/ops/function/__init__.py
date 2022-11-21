@@ -250,6 +250,7 @@ from .math_func import (
     positive,
     numel,
     permute,
+    i0,
     bernoulli,
     bessel_i0,
     bessel_i0e,

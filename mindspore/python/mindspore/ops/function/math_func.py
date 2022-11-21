@@ -1106,6 +1106,14 @@ def floor(x):
     return _floor(x)
 
 
+def i0(x):
+    r"""
+    Alias for ops.bessel_i0.
+    For details, please refer to :func:`mindspore.ops.bessel_i0`.
+    """
+    return bessel_i0(x)
+
+
 def inplace_update(x, v, indices):
     """
     Updates specified rows with values in `v`.
@@ -3512,37 +3520,37 @@ def orgqr(x, tau):
     return orgqr_(x, tau)
 
 
-def hypot(x1, x2):
+def hypot(x, other):
     """
     Computes hypotenuse of input tensors element-wise as legs of a right triangle.
     The shape of two inputs should be broadcastable, and data type of them should be
     one of: float32, float64
 
     Args:
-        x1 (Tensor): The first input tensor.
-        x2 (Tensor): The second input tensor.
+        x (Tensor): The first input tensor.
+        other (Tensor): The second input tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
         with higher precision in the two inputs.
 
     Raises:
-        TypeError: If data type `x1` or `x2` is not float32 or float64.
+        TypeError: If data type `x` or `other` is not float32 or float64.
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
-        >>> x1 = Tensor(np.array([3., 5., 7.]))
-        >>> x2 = Tensor(np.array([4., 12., 24.]))
-        >>> y = ops.hypot(x1, x2)
+        >>> x = Tensor(np.array([3., 5., 7.]))
+        >>> other = Tensor(np.array([4., 12., 24.]))
+        >>> y = ops.hypot(x, other)
         >>> print(y)
         [ 5. 13. 25.]
     """
 
     hypot_ = Hypot()
-    return hypot_(x1, x2)
+    return hypot_(x, other)
 
 
 def heaviside(x, values):
@@ -3570,12 +3578,11 @@ def heaviside(x, values):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``GPU`` ``CPU``
     Examples:
         >>> x = Tensor(np.array([-1.5, 0., 2.]))
         >>> values = Tensor(np.array([0.5]))
-        >>> heaviside = ops.Heaviside()
-        >>> y = heaviside(x, values)
+        >>> y = ops.heaviside(x, values)
         >>> print(y)
         [ 0.  0.5 1. ]
     """
@@ -7414,6 +7421,9 @@ __all__ = [
     'cdist',
     'ceil',
     'bernoulli',
+    'heaviside',
+    'hypot',
+    'i0',
     'bessel_j0',
     'bessel_j1',
     'bessel_i0',
