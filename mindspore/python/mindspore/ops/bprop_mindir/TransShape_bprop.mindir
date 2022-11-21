@@ -1,0 +1,23 @@
+
+0.1.1	MindSpore*2.0.0:‡
+k"get_bprop_trans_shape.1:[CNode]2:1"get_bprop_trans_shape.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
+æget_bprop_trans_shape.1:op:2get_bprop_trans_shape.1:op:2"=REF::ClassType::mindspore.ops.operations.array_ops.TransShape:ADefault/class 'mindspore.ops.operations.array_ops.TransShape'-op1get_bprop_trans_shape.1*
+get_bprop_trans_shape.1:self*
+get_bprop_trans_shape.1:x*
+get_bprop_trans_shape.1:shape*
+get_bprop_trans_shape.1:out*
+get_bprop_trans_shape.1:dout2$
+"get_bprop_trans_shape.1:[CNode]2:1:@adaf31d907574c3f63f9202dc6a36f2f70f0e7caf15e7294fa4a4f2427bc8d02J/grad_array_ops.pyB∂
+r
+get_bprop_trans_shape.1:xbprop.3:[CNode]4:3bprop.3:[CNode]4:3"REF::S-Prim-Shape:4:Default/S-Prim-Shape-op2
+t
+get_bprop_trans_shape.1:dout
+bprop.3:[CNode]4:3bprop.3:dx:5bprop.3:dx:5"!REF::get_bprop_trans_shape.1:op:2:3
+¶
+get_bprop_trans_shape.1:shapebprop.3:[CNode]5:6bprop.3:[CNode]5:6".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op4
+Å
+bprop.3:dx:5
+bprop.3:[CNode]5:6bprop.3:[CNode]6:7bprop.3:[CNode]6:7"REF::S-Prim-MakeTuple:8:Default/S-Prim-MakeTuple-op5bprop.32
+bprop.3:[CNode]6:7Pb
+S-Prim-Shape:4S-Prim-Shapeb&
+S-Prim-MakeTuple:8S-Prim-MakeTupleh

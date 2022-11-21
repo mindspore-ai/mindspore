@@ -1,0 +1,22 @@
+
+0.1.1	MindSpore*2.0.0:È
+w(get_bprop_scatter_nd_update.1:[CNode]2:1(get_bprop_scatter_nd_update.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
+Æ"get_bprop_scatter_nd_update.1:op:3"get_bprop_scatter_nd_update.1:op:3";REF::ClassType::mindspore.ops.operations.array_ops.GatherNd:?Default/class 'mindspore.ops.operations.array_ops.GatherNd'-op2get_bprop_scatter_nd_update.1*$
+"get_bprop_scatter_nd_update.1:self*!
+get_bprop_scatter_nd_update.1:x*'
+%get_bprop_scatter_nd_update.1:indices*&
+$get_bprop_scatter_nd_update.1:update*#
+!get_bprop_scatter_nd_update.1:out*$
+"get_bprop_scatter_nd_update.1:dout2*
+(get_bprop_scatter_nd_update.1:[CNode]2:1:@ffece89904a6a9790c35051b58c631490e55629a8853238c6ea1270bc2cc2ab0J/grad_array_ops.pyB 
+®
+%get_bprop_scatter_nd_update.1:indicesbprop.3:[CNode]4:2bprop.3:[CNode]4:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op1
+Ÿ
+"get_bprop_scatter_nd_update.1:dout
+%get_bprop_scatter_nd_update.1:indicesbprop.3:[CNode]5:4bprop.3:[CNode]5:4"'REF::get_bprop_scatter_nd_update.1:op:3:3
+«
+"get_bprop_scatter_nd_update.1:dout
+bprop.3:[CNode]4:2
+bprop.3:[CNode]5:4bprop.3:[CNode]6:5bprop.3:[CNode]6:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op4bprop.32
+bprop.3:[CNode]6:5Pb&
+S-Prim-MakeTuple:6S-Prim-MakeTupleh
