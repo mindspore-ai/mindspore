@@ -37,6 +37,11 @@ abstract::TupleShapePtr SparseReorderInferShape(const PrimitivePtr &primitive,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  if (IsDynamicRank(indices_shape) || IsDynamicRank(values_shape) || IsDynamicRank(shape_shape)) {
+    abstract::ShapePtr output0_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    abstract::ShapePtr output1_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{output0_shape, output1_shape});
+  }
   // Indices  must be 2D
   const int64_t indices_dims = 2;
   std::vector<ShapeVector> all_shapes = {indices_shape, values_shape, shape_shape};

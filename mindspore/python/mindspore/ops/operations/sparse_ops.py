@@ -372,16 +372,19 @@ class SparseReorder(Primitive):
     Raises:
         TypeError: If `indices` or `shape` is not tensor or its dtype is not int64.
         TypeError: If `values` is not tensor or its dtype is incorrect.
-        ValueError: If the index exceeds the bounds.
+        ValueError: If the index exceeds the bounds. (Raise RuntimeError if on GPU Platform)
         ValueError: If the size of `indices` tensor shape is not equal to 2.
         ValueError: If the size of `values` or `shape` tensor shape is not equal to 1.
         ValueError: If `values` the first dimension length is not equal the first dimension length of 'indices'.
         ValueError: If `shape` the first dimension length is not equal the second dimension length of 'indices'.
 
     Supported Platforms:
-        ``Ascend````CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.common.dtype as ms
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops.operations.sparse_ops as op
         >>> indices = Tensor([[2, 1], [0, 1]], dtype=ms.int64)
         >>> values = Tensor([1, 2], dtype=ms.int16)
         >>> shape = Tensor([3,3], dtype=ms.int64)
