@@ -28,7 +28,7 @@
 #include "backend/common/pass/convert_attr_to_unify_mindir.h"
 #include "backend/common/pass/optimize_updatestate.h"
 #include "backend/common/pass/conv_transpose_to_conv_bp.h"
-#include "backend/common/pass/reduce_sum_optimizer.h"
+#include "backend/common/pass/reduce_optimizer.h"
 #include "backend/common/pass/add_dynamic_shape_attr.h"
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
@@ -62,7 +62,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ConvertDynamicBroadcastTo>());
-  common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
+  common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
@@ -91,7 +91,7 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
-  common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
+  common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);

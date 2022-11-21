@@ -36,8 +36,6 @@ matmul_op_info = TBERegOp("MatMul") \
                   DataType.F16_FracNZ) \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_Default, DataType.I8_Default,
                   DataType.F16_FracNZ) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_Default, DataType.I8_Default,
-                  DataType.F32_FracNZ) \
     .get_op_info()
 
 

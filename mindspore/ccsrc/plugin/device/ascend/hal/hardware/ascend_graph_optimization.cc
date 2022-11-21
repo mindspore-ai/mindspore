@@ -16,6 +16,8 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include <set>
+#include <unordered_set>
+#include <memory>
 #include <string>
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
@@ -53,6 +55,8 @@ void RemoveUnusedValueNode(const KernelGraphPtr &graph) {
     graph->RemoveNodeFromGraph(value_node);
   }
 }
+
+const std::unordered_set<std::string> kDefaultFormatAclOps = {kAddNOpName};
 }  // namespace
 
 void AscendGraphOptimization::Reset() {
@@ -87,9 +91,14 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
 
 void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  opt::RunOpAscendBackendIRFusionOptimization(graph);
-  SelectKernel(graph);
-  opt::RunOpAscendBackendOptimization(graph);
+
+  if (graph->has_flag(kAttrMutableKernel)) {
+    AclOpOptimize(graph);
+  } else {
+    opt::RunOpAscendBackendIRFusionOptimization(graph);
+    SelectKernel(graph);
+    opt::RunOpAscendBackendOptimization(graph);
+  }
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -100,6 +109,55 @@ void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph)
 
   // must clear memo_ which holds kernel graph after using AscendGraphOptimization class.
   memo_.clear();
+}
+
+void AscendGraphOptimization::AclOpOptimize(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  opt::RunOpIRFissionForAcl(graph);
+
+  auto nodes = graph->execution_order();
+  for (auto &node : nodes) {
+    common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node);
+  }
+  SelectKernel(graph);
+
+  // Change format to DefaultFormat.
+  bool need_change_format = false;
+  for (auto &node : nodes) {
+    if (kDefaultFormatAclOps.count(common::AnfAlgo::GetCNodeName(node))) {
+      need_change_format = true;
+      auto new_builder =
+        std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+      MS_EXCEPTION_IF_NULL(new_builder);
+      auto inputs_format = AnfAlgo::GetAllInputFormats(node);
+      auto outputs_format = AnfAlgo::GetAllOutputFormats(node);
+      new_builder->SetInputsFormat(std::vector<std::string>(inputs_format.size(), kOpFormat_DEFAULT));
+      new_builder->SetOutputsFormat(std::vector<std::string>(outputs_format.size(), kOpFormat_DEFAULT));
+      AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), node.get());
+    }
+  }
+
+  bool has_aicpu = std::any_of(nodes.begin(), nodes.end(),
+                               [](const CNodePtr &node) { return AnfAlgo::GetKernelType(node) == AICPU_KERNEL; });
+  if (has_aicpu || need_change_format) {
+    // Insert Cast and TransData.
+    opt::RunOpAscendBackendOptimization(graph);
+  } else {
+    // Only insert Cast.
+    opt::AscendMixPrecision(graph);
+  }
+
+  // Replace all TBE_KERNEL with ACL_KERNEL.
+  for (const auto &node : graph->execution_order()) {
+    if (AnfAlgo::GetKernelType(node) == TBE_KERNEL) {
+      auto new_builder =
+        std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+      MS_EXCEPTION_IF_NULL(new_builder);
+      new_builder->SetKernelType(ACL_KERNEL);
+      MS_LOG(INFO) << "SUCCESS SET ACL KERNEL FOR" << node->DebugString();
+      AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), node.get());
+    }
+  }
 }
 
 void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) {

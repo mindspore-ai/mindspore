@@ -35,6 +35,10 @@
 #include "utils/trace_base.h"
 #include "mindspore/core/ops/op_name.h"
 
+#include "kernel/common_utils.h"
+#include "kernel/kernel.h"
+#include "kernel/kernel_build_info.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -704,6 +708,45 @@ void ResetPreFixedFormat(const CNodePtr &kernel_node, kernel::KernelBuildInfoPtr
   common::AnfAlgo::EraseNodeAttr(kAttrFixedInputFormat, kernel_node);
   common::AnfAlgo::EraseNodeAttr(kAttrFixedOutputFormat, kernel_node);
 }
+
+void SetKernelWithDefaultInfo(const CNodePtr &kernel_node) {
+  auto builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
+  builder.SetProcessor(kernel::AICORE);
+  builder.SetFusionType(kernel::UNKNOWN_FUSION_TYPE);
+  builder.SetOpPattern(kernel::kCommonPattern);
+  builder.SetKernelType(TBE_KERNEL);
+
+  auto input_size = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  std::vector<std::string> inputs_format;
+  std::vector<TypeId> inputs_device_type;
+  std::vector<std::string> inputs_reshape_type(input_size, "");
+  for (size_t i = 0; i < input_size; ++i) {
+    auto type_id = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, i);
+    if (type_id == kTypeUnknown) {
+      type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, i);
+    }
+    auto format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, i);
+    inputs_device_type.emplace_back(type_id);
+    inputs_format.emplace_back(format);
+  }
+  builder.SetInputsDeviceType(inputs_device_type);
+  builder.SetInputsFormat(inputs_format);
+  builder.SetInputsReshapeType(inputs_reshape_type);
+
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  std::vector<std::string> outputs_format;
+  std::vector<TypeId> outputs_device_type;
+  std::vector<std::string> outputs_reshape_type(output_size, "");
+  for (size_t i = 0; i < output_size; ++i) {
+    auto type_id = common::AnfAlgo::GetOutputInferDataType(kernel_node, i);
+    outputs_device_type.emplace_back(type_id);
+    outputs_format.emplace_back(kOpFormat_DEFAULT);
+  }
+  builder.SetOutputsDeviceType(outputs_device_type);
+  builder.SetOutputsFormat(outputs_format);
+  builder.SetOutputsReshapeType(outputs_reshape_type);
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), kernel_node.get());
+}
 }  // namespace
 
 void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
@@ -890,6 +933,11 @@ void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status
 
 void SetAclKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel_node)) {
+    MS_LOG(INFO) << "No is_dynamic_kernel attr found, cannot set ACL KERNEL for " << kernel_node->DebugString();
+    return;
+  }
+
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel_node);
   if (kernel_type != AICPU_KERNEL && kernel_type != TBE_KERNEL) {
     MS_LOG(INFO) << "Current node don't support acl kernel launch! Node info:" << kernel_node->DebugString();
@@ -903,20 +951,9 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
     MS_LOG(INFO) << "Current mode or device don't support acl kernel launch! Node info:" << kernel_node->DebugString();
     return;
   }
-  if (!common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    return;
-  }
+
   if (common::AnfAlgo::IsGraphKernel(kernel_node) || IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     MS_LOG(INFO) << "Current node is graph kernel or custom io! Node info:" << kernel_node->DebugString();
-    return;
-  }
-  auto op_type = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kAclBlackList.count(op_type) != 0) {
-    MS_LOG(INFO) << "Current node in acl black list! Node info:" << kernel_node->DebugString();
-    return;
-  }
-  if (kAclKernelSet.count(op_type) == 0) {
-    MS_LOG(INFO) << "Current node in acl black list! Node info:" << kernel_node->DebugString();
     return;
   }
 
@@ -988,15 +1025,24 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
   }
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {
-    GatherInputAndOutputInferType(aicpu_in_out_info, kernel_node);
-    std::get<0>(result) = select_status;
-    auto [msg, etype] = CollectNotMatchMessage(kernel_info_list, aicpu_kernel_info_list, aicore_in_out_info,
-                                               aicpu_in_out_info, kernel_node);
-    constexpr int one = 1;
-    constexpr int two = 2;
-    std::get<one>(result) = msg;
-    std::get<two>(result) = etype;
-    return result;
+    if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel_node)) {
+      MS_LOG(WARNING) << "NOT FOUND KernelBuildInfo for " << kernel_node->fullname_with_scope()
+                      << ". Set default KernelBuildInfo.";
+      SetKernelWithDefaultInfo(kernel_node);
+      SetTensorDeviceInfo(kernel_node);
+      select_status = kStatusAllMatched;
+      SetAclKernelInfo(kernel_node);
+    } else {
+      GatherInputAndOutputInferType(aicpu_in_out_info, kernel_node);
+      std::get<0>(result) = select_status;
+      auto [msg, etype] = CollectNotMatchMessage(kernel_info_list, aicpu_kernel_info_list, aicore_in_out_info,
+                                                 aicpu_in_out_info, kernel_node);
+      constexpr int one = 1;
+      constexpr int two = 2;
+      std::get<one>(result) = msg;
+      std::get<two>(result) = etype;
+      return result;
+    }
   }
   SetRaiseOrReduceFlag(kernel_node, select_status);
   std::get<0>(result) = select_status;

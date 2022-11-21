@@ -306,9 +306,8 @@ bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Ad
                                            const vector<AddressPtr> &outputs) const {
   MS_LOG(DEBUG) << "Launch MemoryCopyAsync instead for kernel " << node->fullname_with_scope();
   if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "Kernel " << node->fullname_with_scope() << " input output size should be 1 but"
-                  << " input size is:" << inputs.size() << " output size is:" << outputs.size();
-    return false;
+    MS_LOG(WARNING) << "Kernel " << node->fullname_with_scope() << " input output size should be 1 but"
+                    << " input size is:" << inputs.size() << " output size is:" << outputs.size();
   }
 
   const auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);

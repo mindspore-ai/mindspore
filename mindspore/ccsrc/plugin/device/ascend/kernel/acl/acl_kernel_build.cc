@@ -28,13 +28,13 @@ namespace mindspore {
 namespace kernel {
 namespace {
 static const std::unordered_set<std::string> kAclStaticList = {kPackOpName,
+                                                               kAddNOpName,
                                                                kTensorMoveOpName,
                                                                kConcatDOpName,
                                                                kCheckValidOpName,
                                                                kBiasAddOpName,
                                                                kBiasAddGradOpName,
                                                                kConv3DTransposeOpName,
-                                                               kTileOpName,
                                                                kROIAlignName,
                                                                kDynamicGRUV2OpName,
                                                                kSoftmaxCrossEntropyWithLogitsOpName};

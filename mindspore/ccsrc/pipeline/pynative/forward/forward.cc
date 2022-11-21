@@ -89,9 +89,8 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
                       << tensors_mask.size();
   }
   std::ostringstream buf;
-  buf << cur_target << "_";
+  buf << cur_target << "_dynamic" << op_run_info->base_op_run_info.use_dynamic_shape_process << "_";
   buf << op_run_info->base_op_run_info.op_name << "_";
-  bool has_const_input = false;
   const auto &op_prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(op_prim);
   bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
@@ -120,7 +119,6 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
     }
     // For constant input
     if (tensors_mask[index] == kValueNodeTensorMask) {
-      has_const_input = true;
       buf << common::AnfAlgo::GetTensorValueString(input_tensor);
     }
     buf << "_";
@@ -129,20 +127,6 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
   const auto &attr_map = op_prim->attrs();
   (void)std::for_each(attr_map.begin(), attr_map.end(),
                       [&buf](const auto &element) { buf << element.second->ToString(); });
-
-  // Constant input affects output, operators like DropoutGenMask whose output is related to values of input when input
-  // shapes are the same but values are different
-  if (has_const_input) {
-    buf << "_";
-    auto abstr = op_run_info->base_op_run_info.abstract;
-    MS_EXCEPTION_IF_NULL(abstr);
-    auto build_shape = abstr->BuildShape();
-    MS_EXCEPTION_IF_NULL(build_shape);
-    buf << build_shape->ToString();
-    auto build_type = abstr->BuildType();
-    MS_EXCEPTION_IF_NULL(build_type);
-    buf << build_type->type_id();
-  }
 
   // Operator with hidden side effect.
   if (has_hidden_side_effect) {
@@ -210,8 +194,7 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   // Used for async run
   op_run_info->grad_flag = grad()->grad_flag();
   op_run_info->custom_bprop_cell_count = grad()->custom_bprop_cell_count();
-  op_run_info->base_op_run_info.use_dynamic_shape_process =
-    (device_target_ == kAscendDevice ? false : grad()->use_dynamic_shape_process());
+  op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
@@ -454,6 +437,9 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
   bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
   if (use_dynamic_shape_process) {
+    backend_op_run_info->op_prim->AddAttr(kAttrMutableKernel, MakeValue(true));
+    backend_op_run_info->op_prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
+    backend_op_run_info->op_prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
     cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
   } else {
     cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
