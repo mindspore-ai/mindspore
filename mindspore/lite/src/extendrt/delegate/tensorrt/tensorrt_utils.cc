@@ -222,7 +222,7 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(schema::A
     {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
     {schema::ActivationType_HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
     {schema::ActivationType_HSIGMOID,
-     ActivationParams{nvinfer1::ActivationType::kHARD_SIGMOID, true, 0.2f, true, 0.5f}},
+     ActivationParams{nvinfer1::ActivationType::kHARD_SIGMOID, true, 1.f / 6, true, 0.5f}},
     // using plugin
     {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
     {schema::ActivationType_SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}}};
