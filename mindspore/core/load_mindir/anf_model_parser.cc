@@ -46,6 +46,7 @@ std::map<std::string, tensor::TensorPtr> MSANFModelParser::load_tensor_map_;
 namespace {
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
+static constexpr char kQuantParam[] = "quant_param";
 
 enum ParseForm : int {
   FORM_PARSE_TYPE = 0,
@@ -289,6 +290,10 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
       std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape, data_size, compression_type);
   }
 
+  auto quantization_param_vector = GenerateQuantizationParam(attr_tensor);
+  if (!quantization_param_vector.empty()) {
+    tensor->set_quant_param(quantization_param_vector);
+  }
   if (!IsIncLoad() || load_tensor_map_.find(attr_tensor.name()) == load_tensor_map_.end()) {
     load_tensor_map_[attr_tensor.name()] = tensor;
   }
@@ -312,6 +317,29 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
     MS_LOG(DEBUG) << "Parameter will load initialized data.";
   }
   return tensor;
+}
+
+std::vector<std::shared_ptr<mindspore::QuantizationParam>> MSANFModelParser::GenerateQuantizationParam(
+  const mind_ir::TensorProto &attr_tensor) {
+  auto quant_param_proto = attr_tensor.quant_params();
+  std::vector<std::shared_ptr<mindspore::QuantizationParam>> quantization_param_vector;
+  for (int i = 0; i < quant_param_proto.size(); i++) {
+    auto quant_data = quant_param_proto.Get(i);
+    QuantizationParam quantization_param(quant_data.quant_algo_name());
+    for (int index = 0; index < quant_data.attribute_size(); index++) {
+      auto quant_attr_proto = quant_data.attribute().Get(index);
+      if (quant_attr_proto.type() != mind_ir::AttributeProto_AttributeType_LIST) {
+        MS_LOG(ERROR) << "quant_attr_proto.type is " << quant_attr_proto.type()
+                      << ", is should be mind_ir::AttributeProto_AttributeType_LIST ("
+                      << mind_ir::AttributeProto_AttributeType_LIST << ")";
+        return {};
+      }
+      auto sequence_value = ObtainValueInSequenceForm(quant_attr_proto);
+      quantization_param.SetAttr(quant_attr_proto.name(), sequence_value);
+    }
+    quantization_param_vector.push_back(std::make_shared<mindspore::QuantizationParam>(quantization_param));
+  }
+  return quantization_param_vector;
 }
 
 abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType(
@@ -973,6 +1001,11 @@ bool MSANFModelParser::SetPrimitiveAttrWithType(const PrimitivePtr &prim, const 
           return false;
         }
         (void)prim->AddAttr(attr_name, tensor_info);
+      } else if (tensor_proto.name() == kQuantParam) {
+        auto quantization_param_vector = GenerateQuantizationParam(tensor_proto);
+        if (!quantization_param_vector.empty()) {
+          (void)prim->AddAttr(kQuantParam, quantization_param_vector[0]);
+        }
       } else {
         // For data type.
         const int attr_tensor_type = tensor_proto.data_type();

@@ -25,6 +25,7 @@
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ir/func_graph.h"
+#include "ir/quantization_param.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "proto/mind_ir.pb.h"
 #include "utils/check_convert_utils.h"
@@ -152,6 +153,8 @@ class IrExportBuilder {
   bool SetSequenceToAttributeProto(const ValueSequencePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetDictToAttributeProto(const ValueDictionaryPtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetQuantizationParamToAttrProto(const std::shared_ptr<QuantizationParam> &quantization_param,
+                                       mind_ir::TensorProto_QuantParamProto *const quant_param_proto);
 
   mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
@@ -469,6 +472,15 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
           parameter_proto->set_compression_type(
             static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
         }
+        auto quant_params = tensor->quant_params();
+        for (size_t i = 0; i < quant_params.size(); i++) {
+          auto quant_param_proto = parameter_proto->add_quant_params();
+          auto ret = SetQuantizationParamToAttrProto(quant_params[i], quant_param_proto);
+          if (ret != true) {
+            MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
+            return false;
+          }
+        }
       } else {
         MS_LOG(ERROR) << "Only support MapTensor or Tensor as default param of Parameter, got: "
                       << param->default_param()->ToString();
@@ -487,6 +499,23 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
       return false;
     }
     (void)nodeName_.insert(param_name);
+  }
+  return true;
+}
+
+bool IrExportBuilder::SetQuantizationParamToAttrProto(const std::shared_ptr<QuantizationParam> &quantization_param,
+                                                      mind_ir::TensorProto_QuantParamProto *const quant_param_proto) {
+  quant_param_proto->set_quant_algo_name(quantization_param->quant_algo_name());
+  auto quant_param_attrs = quantization_param->attrs();
+  for (auto &quant_param_attr : quant_param_attrs) {
+    auto attr_proto = quant_param_proto->add_attribute();
+    attr_proto->set_name(quant_param_attr.first);
+    auto value_ptr = quant_param_attr.second;
+    auto ret = SetValueToAttributeProto(value_ptr, attr_proto);
+    if (!ret) {
+      MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
+      return false;
+    }
   }
   return true;
 }
@@ -1200,6 +1229,17 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
       attr_proto->set_type(mind_ir::AttributeProto_AttributeType_IOMONAD);
     } else {
       MS_LOG(ERROR) << "Unsupported Monad type: " << value->type_name();
+      return false;
+    }
+  } else if (value->isa<QuantizationParam>()) {
+    auto quantization_param = value->cast<std::shared_ptr<QuantizationParam>>();
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
+    auto tensor_proto = attr_proto->add_tensors();
+    tensor_proto->set_name(attr_proto->name());
+    auto quant_param_proto = tensor_proto->add_quant_params();
+    auto ret = SetQuantizationParamToAttrProto(quantization_param, quant_param_proto);
+    if (ret != true) {
+      MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
       return false;
     }
   } else {
