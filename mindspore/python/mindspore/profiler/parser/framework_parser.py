@@ -436,7 +436,7 @@ class GpuFrameWorkParser:
         self.activity_info_dir = []
         self.framework_info_dir = []
         self.cpu_detail_info_dir = []
-        self.gpu_detail_info_dir = []
+        self.gpu_op_type_info_dir = []
         self.op_execute_times = {}
         self.op_step_shape_info = defaultdict(list)
         self.one_step_op_time = dict()
@@ -491,23 +491,23 @@ class GpuFrameWorkParser:
 
     def get_execute_times(self):
         """Get gpu operators execute times."""
-        if self.gpu_detail_info_dir:
-            gpu_op_detail_file_path = os.path.join(self._output_path, self.gpu_detail_info_dir[0])
-            gpu_op_detail_file_path = validate_and_normalize_path(gpu_op_detail_file_path)
-            with open(gpu_op_detail_file_path, 'r') as fp:
-                op_detail_info = fp.readlines()
-                for line_info in op_detail_info[1:]:
+        if self.gpu_op_type_info_dir:
+            gpu_op_type_file_path = os.path.join(self._output_path, self.gpu_op_type_info_dir[0])
+            gpu_op_type_file_path = validate_and_normalize_path(gpu_op_type_file_path)
+            with open(gpu_op_type_file_path, 'r') as fp:
+                op_type_info = fp.readlines()
+                for line_info in op_type_info[1:]:
                     line_info = line_info.strip(' ').strip('\n').split(',')
-                    self.op_execute_times[line_info[2]] = line_info[4]
+                    self.op_execute_times[line_info[0]] = line_info[1]
 
     def get_activity_op_info(self):
         """Get op detail data."""
         all_file = os.listdir(self._output_path)
         for file_name in all_file:
-            if file_name.startswith('gpu_op_detail') and file_name.endswith(f'{self._dev_id}.csv'):
-                self.gpu_detail_info_dir.append(file_name)
-        if not self.gpu_detail_info_dir and self.activity_info_dir:
-            raise RuntimeError(f'The output file <%s> is not found.' % self.gpu_detail_info_dir)
+            if file_name.startswith('gpu_op_type') and file_name.endswith(f'{self._dev_id}.csv'):
+                self.gpu_op_type_info_dir.append(file_name)
+        if not self.gpu_op_type_info_dir and self.activity_info_dir:
+            raise RuntimeError(f'The output file <%s> is not found.' % self.gpu_op_type_info_dir)
         self.get_execute_times()
         for filename in self.activity_info_dir:
             op_side = filename.split('_')[0]
@@ -518,7 +518,9 @@ class GpuFrameWorkParser:
             for line_info in activity_info[1:]:
                 line_info = line_info.strip(' ').strip('\n').replace(', ', ';').split(',')
                 op_name = line_info[2].split('/')[-1]
-                op_occurrences = int(self.op_execute_times.get(op_name))
+                # op_name: xxx-opx
+                op_type = op_name.split('-')[0]
+                op_occurrences = int(self.op_execute_times.get(op_type))
                 op_total_time = float(line_info[-4])
                 if not self.op_detail.get(op_name):
                     # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
