@@ -147,7 +147,7 @@ def test_read_image_exception():
 
     # Test with a not supported gif file
     wrong_filename = "../data/dataset/testFormats/apple.gif"
-    error_message = "Can not read file " + wrong_filename
+    error_message = "Failed to read file " + wrong_filename
     test_invalid_param(wrong_filename, ImageReadMode.COLOR, RuntimeError, error_message)
 
     # Test with an invalid type for the filename

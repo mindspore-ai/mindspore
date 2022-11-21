@@ -57,6 +57,8 @@ constexpr dsize_t kHeightIndex = 0;          // index of height of HWC images
 constexpr dsize_t kWidthIndex = 1;           // index of width of HWC images
 constexpr dsize_t kMinJpegQuality = 1;       // the minimum quality for JPEG
 constexpr dsize_t kMaxJpegQuality = 100;     // the maximum quality for JPEG
+constexpr dsize_t kMinPngCompression = 0;    // the minimum compression level for PNG
+constexpr dsize_t kMaxPngCompression = 9;    // the maximum compression level for PNG
 
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
@@ -506,9 +508,16 @@ Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 /// \brief Encode the image as JPEG data.
 /// \param[in] image The image to be encoded.
 /// \param[out] output The Tensor data.
-/// \param[in] quality The quality for the output tensor from 1 to 100. Default: 75.
+/// \param[in] quality The quality for the output tensor, in range of [1, 100]. Default: 75.
 /// \return The status code.
 Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int quality = 75);
+
+/// \brief Encode the image as PNG data.
+/// \param[in] image The image to be encoded.
+/// \param[out] output The Tensor data.
+/// \param[in] compression_level The compression_level for encoding, in range of [0, 9]. Default: 6.
+/// \return The status code.
+Status EncodePng(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int compression_level = 6);
 
 /// \brief Reads a file in binary mode.
 /// \param[in] filename The path to the file to be read.

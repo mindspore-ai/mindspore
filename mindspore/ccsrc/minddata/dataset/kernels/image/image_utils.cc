@@ -2230,8 +2230,9 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
   }
 
   if (quality < kMinJpegQuality || quality > kMaxJpegQuality) {
-    err_msg = "EncodeJpeg: Invalid quality " + std::to_string(quality) + ", should be from " +
-              std::to_string(kMinJpegQuality) + " to " + std::to_string(kMaxJpegQuality) + ".";
+    err_msg = "EncodeJpeg: Invalid quality " + std::to_string(quality) + ", should be in range of [" +
+              std::to_string(kMinJpegQuality) + ", " + std::to_string(kMaxJpegQuality) + "].";
+
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -2248,11 +2249,74 @@ Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> 
   }
 
   if (channels == kMinImageChannel) {
-    cv::imencode(".JPEG", image_matrix, buffer, params);
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".JPEG", image_matrix, buffer, params),
+                                 "EncodeJpeg: Failed to encode image.");
   } else {
     cv::Mat image_bgr;
     cv::cvtColor(image_matrix, image_bgr, cv::COLOR_RGB2BGR);
-    cv::imencode(".JPEG", image_bgr, buffer, params);
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".JPEG", image_bgr, buffer, params),
+                                 "EncodeJpeg: Failed to encode image.");
+  }
+
+  TensorShape tensor_shape = TensorShape({(long int)buffer.size()});
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(tensor_shape, DataType(DataType::DE_UINT8), buffer.data(), output));
+
+  return Status::OK();
+}
+
+Status EncodePng(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int compression_level) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+
+  std::string err_msg;
+  if (image->type() != DataType::DE_UINT8) {
+    err_msg = "EncodePng: The type of the image data should be UINT8, but got " + image->type().ToString() + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  TensorShape shape = image->shape();
+  int rank = shape.Rank();
+  if (rank < kMinImageRank || rank > kDefaultImageRank) {
+    err_msg = "EncodePng: The image has invalid dimensions. It should have two or three dimensions, but got ";
+    err_msg += std::to_string(rank) + " dimensions.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  int channels;
+  if (rank == kDefaultImageRank) {
+    channels = shape[kMinImageRank];
+    if (channels != kMinImageChannel && channels != kDefaultImageChannel) {
+      err_msg = "EncodePng: The image has invalid channels. It should have 1 or 3 channels, but got ";
+      err_msg += std::to_string(channels) + " channels.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  } else {
+    channels = 1;
+  }
+
+  if (compression_level < kMinPngCompression || compression_level > kMaxPngCompression) {
+    err_msg = "EncodePng: Invalid compression_level " + std::to_string(compression_level) +
+              ", should be in range of [" + std::to_string(kMinPngCompression) + ", " +
+              std::to_string(kMaxPngCompression) + "].";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  std::vector<int> params = {cv::IMWRITE_PNG_COMPRESSION, compression_level, cv::IMWRITE_PNG_STRATEGY,
+                             cv::IMWRITE_PNG_STRATEGY_RLE};
+  std::vector<unsigned char> buffer;
+  cv::Mat image_matrix;
+
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(image);
+  image_matrix = input_cv->mat();
+  if (!image_matrix.data) {
+    RETURN_STATUS_UNEXPECTED("EncodePng: Load the image tensor failed.");
+  }
+
+  if (channels == kMinImageChannel) {
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".PNG", image_matrix, buffer, params),
+                                 "EncodePng: Failed to encode image.");
+  } else {
+    cv::Mat image_bgr;
+    cv::cvtColor(image_matrix, image_bgr, cv::COLOR_RGB2BGR);
+    CHECK_FAIL_RETURN_UNEXPECTED(cv::imencode(".PNG", image_bgr, buffer, params), "EncodePng: Failed to encode image.");
   }
 
   TensorShape tensor_shape = TensorShape({(long int)buffer.size()});
@@ -2296,7 +2360,7 @@ Status ReadImage(const std::string &filename, std::shared_ptr<Tensor> *output, I
   int cv_mode = static_cast<int>(mode) - 1;
   image = cv::imread(realpath.value(), cv_mode);
   if (image.data == nullptr) {
-    RETURN_STATUS_UNEXPECTED("ReadImage: Can not read file " + filename);
+    RETURN_STATUS_UNEXPECTED("ReadImage: Failed to read file " + filename);
   }
 
   std::shared_ptr<CVTensor> output_cv;
