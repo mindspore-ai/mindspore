@@ -51,6 +51,8 @@ class TransformUint8Pass {
 
   bool IsSharedWeightParameter(const AnfNodePtr &anf_node);
 
+  bool CheckCastNodeUint8Int8(const CNodePtr &cnode);
+
   FuncGraphPtr func_graph_ = nullptr;
 
   // key is tensor_name
