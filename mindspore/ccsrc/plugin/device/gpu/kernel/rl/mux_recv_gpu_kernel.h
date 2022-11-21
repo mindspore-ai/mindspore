@@ -105,7 +105,8 @@ class MuxRecvGpuKernel : public MuxBaseGpuKernel {
       size_t output_size =
         std::accumulate(output_shape.begin(), output_shape.end(), data_size, std::multiplies<size_t>());
       output_size_list_.push_back(output_size);
-      total_size_ += output_size;
+      // Framework memory allocation ensures memory alignment.
+      total_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(output_size);
     }
 
     SelectCollectiveHandle();

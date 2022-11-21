@@ -81,7 +81,8 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
         size *= LongToSizeClipNeg(shape[j]);
       }
       input_size_list_.push_back(size);
-      input_size_ += size;
+      // Framework memory allocation ensures memory alignment.
+      input_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
     }
     for (size_t i = 0; i < output_num; ++i) {
       auto shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
@@ -95,7 +96,8 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
         size *= LongToSizeClipNeg(shape[j]);
       }
       output_size_list_.push_back(size);
-      output_size_ += size;
+      // Framework memory allocation ensures memory alignment.
+      output_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
     }
 
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
