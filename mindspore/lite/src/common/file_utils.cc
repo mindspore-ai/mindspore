@@ -181,6 +181,7 @@ char *ReadFile(const char *file, size_t *size) {
   if (goffset < 0) {
     MS_LOG(ERROR) << "read file range failed";
     ifs->close();
+    delete ifs;
     return nullptr;
   }
   *size = static_cast<size_t>(goffset);
