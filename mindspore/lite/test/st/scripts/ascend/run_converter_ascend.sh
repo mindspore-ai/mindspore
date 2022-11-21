@@ -41,7 +41,7 @@ rm -rf ${ms_models_path}
 mkdir -p ${ms_models_path}
 
 model_data_path=/home/workspace/mindspore_dataset/mslite
-models_path=${model_data_path}/models
+models_path=${model_data_path}/models/hiai
 
 if [[ ${backend} =~ "lite" ]]; then
     compile_type="lite"

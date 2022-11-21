@@ -70,7 +70,7 @@ function Run_Benchmark() {
         fi
         input_files=""
         output_file=""
-        data_path=${model_data_path}'/data/'
+        data_path=${model_data_path}'/models/hiai/input_output/'
         if [[ ${model_type} == "mindir" || ${model_type} == "ms" ]]; then
           if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
             input_files=${data_path}'input/'${model_name}'.ms.bin'
