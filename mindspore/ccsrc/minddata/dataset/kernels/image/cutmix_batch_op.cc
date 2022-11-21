@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/kernels/image/cutmix_batch_op.h"
 
+#include <cmath>
 #include <limits>
 #include <string>
 #include <utility>
@@ -29,14 +30,13 @@
 namespace mindspore {
 namespace dataset {
 
+constexpr size_t kInputColumnSize = 2;
 constexpr size_t kMinLabelShapeSize = 2;
 constexpr size_t kMaxLabelShapeSize = 3;
-constexpr size_t kExpectedImageShapeSize = 4;
+constexpr size_t kImageShapeSize = 4;
 constexpr size_t kDimensionOne = 1;
 constexpr size_t kDimensionTwo = 2;
 constexpr size_t kDimensionThree = 3;
-constexpr int64_t kValueOne = 1;
-constexpr int64_t kValueThree = 3;
 
 CutMixBatchOp::CutMixBatchOp(ImageBatchFormat image_batch_format, float alpha, float prob)
     : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {
@@ -44,9 +44,9 @@ CutMixBatchOp::CutMixBatchOp(ImageBatchFormat image_batch_format, float alpha, f
 }
 
 void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y, int *crop_width, int *crop_height) {
-  const float cut_ratio = 1 - lam;
-  int cut_w = static_cast<int>(width * cut_ratio);
-  int cut_h = static_cast<int>(height * cut_ratio);
+  const float cut_ratio = std::sqrt(1.F - lam);
+  auto cut_w = static_cast<int>(static_cast<float>(width) * cut_ratio);
+  auto cut_h = static_cast<int>(static_cast<float>(height) * cut_ratio);
   std::uniform_int_distribution<int> width_uniform_distribution(0, width);
   std::uniform_int_distribution<int> height_uniform_distribution(0, height);
   int cx = width_uniform_distribution(rnd_);
@@ -62,43 +62,56 @@ void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y,
 }
 
 Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
-  if (input.size() < kMinLabelShapeSize) {
+  // check column size
+  if (input.size() < kInputColumnSize) {
     RETURN_STATUS_UNEXPECTED(
-      "CutMixBatch: invalid input, size of input should be 2 (including image and label), but got: " +
+      "CutMixBatch: invalid input size, input should have 2 columns (image and label), but got: " +
       std::to_string(input.size()));
   }
-  std::vector<int64_t> image_shape = input.at(0)->shape().AsVector();
-  std::vector<int64_t> label_shape = input.at(1)->shape().AsVector();
 
-  // Check inputs
-  if (image_shape.size() != kExpectedImageShapeSize || image_shape[0] != label_shape[0]) {
-    RETURN_STATUS_UNEXPECTED(
-      "CutMixBatch: please make sure images are <H,W,C> or <C,H,W> format, and batched before calling CutMixBatch.");
+  std::shared_ptr<Tensor> image = input.at(0);
+  std::shared_ptr<Tensor> label = input.at(1);
+  TensorShape image_shape = image->shape();
+  TensorShape label_shape = label->shape();
+
+  // check image shape
+  if (image_shape.Size() != kImageShapeSize) {
+    std::string err_msg = "CutMixBatch: input image is not in shape of <B,H,W,C> or <B,C,H,W>, but got dimension: " +
+                          std::to_string(image_shape.Size());
+    if (image_shape.Size() == kDefaultImageRank) {
+      err_msg += ". You may need to perform Batch first.";
+    }
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(input.at(1)->type().IsNumeric(),
+  // check image channel
+  dsize_t channel_index;
+  if (image_batch_format_ == ImageBatchFormat::kNCHW) {
+    channel_index = kChannelIndexCHW + 1;
+  } else {  // ImageBatchFormat::kNHWC
+    channel_index = kChannelIndexHWC + 1;
+  }
+  if (image_shape[channel_index] != kMinImageChannel && image_shape[channel_index] != kDefaultImageChannel) {
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: input image is not in channel of 1 or 3, but got channel: " +
+                             std::to_string(image_shape[channel_index]));
+  }
+
+  // check label dtype
+  CHECK_FAIL_RETURN_UNEXPECTED(label->type().IsNumeric(),
                                "CutMixBatch: invalid label type, label must be in a numeric type, but got: " +
-                                 input.at(1)->type().ToString() + ". You may need to perform OneHot first.");
-  if (label_shape.size() != kMinLabelShapeSize && label_shape.size() != kMaxLabelShapeSize) {
+                                 label->type().ToString() + ". You may need to perform OneHot first.");
+
+  // check label size
+  if (label_shape.Size() != kMinLabelShapeSize && label_shape.Size() != kMaxLabelShapeSize) {
     RETURN_STATUS_UNEXPECTED(
-      "CutMixBatch: wrong labels shape. "
-      "The second column (labels) must have a shape of NC or NLC where N is the batch size, "
-      "L is the number of labels in each row, and C is the number of classes. "
-      "labels must be in one-hot format and in a batch, but got rank: " +
-      std::to_string(label_shape.size()));
+      "CutMixBatch: input label is not in shape of <Batch,Class> or <Batch,Row,Class>, but got dimension: " +
+      std::to_string(label_shape.Size()) + ". You may need to perform OneHot and Batch first.");
   }
-  std::string shape_info = "(";
-  for (auto i : image_shape) {
-    shape_info = shape_info + std::to_string(i) + ", ";
-  }
-  shape_info.replace(shape_info.end() - 1, shape_info.end(), ")");
-  if ((image_shape[kDimensionOne] != kValueOne && image_shape[kDimensionOne] != kValueThree) &&
-      image_batch_format_ == ImageBatchFormat::kNCHW) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the <N,C,H,W> format, got shape: " + shape_info);
-  }
-  if ((image_shape[kDimensionThree] != kValueOne && image_shape[kDimensionThree] != kValueThree) &&
-      image_batch_format_ == ImageBatchFormat::kNHWC) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the <N,H,W,C> format, got shape: " + shape_info);
+
+  // check batch size equal
+  if (image_shape[0] != label_shape[0]) {
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: batch sizes of image and label must be the same, but got image size: " +
+                             std::to_string(image_shape[0]) + " and label size: " + std::to_string(label_shape[0]));
   }
 
   return Status::OK();
@@ -106,7 +119,7 @@ Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
 
 Status CutMixBatchOp::ComputeImage(const std::shared_ptr<Tensor> &image, int64_t rand_indx_i, float lam,
                                    float *label_lam, std::shared_ptr<Tensor> *image_i) {
-  std::vector<int64_t> image_shape = image->shape().AsVector();
+  TensorShape image_shape = image->shape();
   int x, y, crop_width, crop_height;
   // Get a random image
   TensorShape remaining({-1});
@@ -123,31 +136,33 @@ Status CutMixBatchOp::ComputeImage(const std::shared_ptr<Tensor> &image, int64_t
     // NHWC Format
     GetCropBox(static_cast<int32_t>(image_shape[kDimensionOne]), static_cast<int32_t>(image_shape[kDimensionTwo]), lam,
                &x, &y, &crop_width, &crop_height);
-    std::shared_ptr<Tensor> cropped;
-    RETURN_IF_NOT_OK(Crop(rand_image, &cropped, x, y, crop_width, crop_height));
-    RETURN_IF_NOT_OK(MaskWithTensor(cropped, image_i, x, y, crop_width, crop_height, ImageFormat::HWC));
-    *label_lam = kValueOne - (crop_width * crop_height /
-                              static_cast<float>(image_shape[kDimensionOne] * image_shape[kDimensionTwo]));
+    std::shared_ptr<CVTensor> crop_from = CVTensor::AsCVTensor(rand_image);
+    std::shared_ptr<CVTensor> mix_to = CVTensor::AsCVTensor(*image_i);
+    cv::Rect roi(x, y, crop_width, crop_height);
+    (crop_from->mat())(roi).copyTo((mix_to->mat())(roi));
+    *image_i = std::static_pointer_cast<Tensor>(mix_to);
+    *label_lam = 1.F - (static_cast<float>(crop_width * crop_height) /
+                        static_cast<float>(image_shape[kDimensionOne] * image_shape[kDimensionTwo]));
   } else {
     // NCHW Format
     GetCropBox(static_cast<int32_t>(image_shape[kDimensionTwo]), static_cast<int32_t>(image_shape[kDimensionThree]),
                lam, &x, &y, &crop_width, &crop_height);
-    std::vector<std::shared_ptr<Tensor>> channels;          // A vector holding channels of the CHW image
-    std::vector<std::shared_ptr<Tensor>> cropped_channels;  // A vector holding the channels of the cropped CHW
-    RETURN_IF_NOT_OK(BatchTensorToTensorVector(rand_image, &channels));
-    for (auto channel : channels) {
-      // Call crop for each single channel
-      std::shared_ptr<Tensor> cropped_channel;
-      RETURN_IF_NOT_OK(Crop(channel, &cropped_channel, x, y, crop_width, crop_height));
-      cropped_channels.push_back(cropped_channel);
+    // Divide a multi-channel array into several single-channel arrays
+    std::vector<std::shared_ptr<Tensor>> rand_image_channels;
+    std::vector<std::shared_ptr<Tensor>> image_i_channels;
+    RETURN_IF_NOT_OK(BatchTensorToTensorVector(rand_image, &rand_image_channels));
+    RETURN_IF_NOT_OK(BatchTensorToTensorVector(*image_i, &image_i_channels));
+    std::vector<std::shared_ptr<Tensor>> mix_channels;
+    for (auto i = 0; i < rand_image_channels.size() && i < image_i_channels.size(); ++i) {
+      std::shared_ptr<CVTensor> crop_from = CVTensor::AsCVTensor(rand_image_channels[i]);
+      std::shared_ptr<CVTensor> mix_to = CVTensor::AsCVTensor(image_i_channels[i]);
+      cv::Rect roi(x, y, crop_width, crop_height);
+      (crop_from->mat())(roi).copyTo((mix_to->mat())(roi));
+      mix_channels.push_back(std::static_pointer_cast<Tensor>(mix_to));
     }
-    std::shared_ptr<Tensor> cropped;
-    // Merge channels to a single tensor
-    RETURN_IF_NOT_OK(TensorVectorToBatchTensor(cropped_channels, &cropped));
-
-    RETURN_IF_NOT_OK(MaskWithTensor(cropped, image_i, x, y, crop_width, crop_height, ImageFormat::CHW));
-    *label_lam = kValueOne - (crop_width * crop_height /
-                              static_cast<float>(image_shape[kDimensionTwo] * image_shape[kDimensionThree]));
+    RETURN_IF_NOT_OK(TensorVectorToBatchTensor(mix_channels, image_i));
+    *label_lam = 1.F - (static_cast<float>(crop_width * crop_height) /
+                        static_cast<float>(image_shape[kDimensionTwo] * image_shape[kDimensionThree]));
   }
 
   return Status::OK();
@@ -178,8 +193,8 @@ Status CutMixBatchOp::ComputeLabel(const std::shared_ptr<Tensor> &label, int64_t
 Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   RETURN_IF_NOT_OK(ValidateCutMixBatch(input));
-  std::vector<int64_t> image_shape = input.at(0)->shape().AsVector();
-  std::vector<int64_t> label_shape = input.at(1)->shape().AsVector();
+  TensorShape image_shape = input.at(0)->shape();
+  TensorShape label_shape = input.at(1)->shape();
 
   // Move images into a vector of Tensors
   std::vector<std::shared_ptr<Tensor>> images;
@@ -194,22 +209,23 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
     rand_indx.push_back(idx);
   }
   std::shuffle(rand_indx.begin(), rand_indx.end(), rnd_);
-  std::gamma_distribution<float> gamma_distribution(alpha_, 1);
+  std::gamma_distribution<float> gamma_alpha(alpha_, 1.F);
+  std::gamma_distribution<float> gamma_beta(alpha_, 1.F);
   std::uniform_real_distribution<double> uniform_distribution(0.0, 1.0);
 
   // Tensor holding the output labels
   std::shared_ptr<Tensor> out_labels;
   RETURN_IF_NOT_OK(TypeCast(input.at(1), &out_labels, DataType(DataType::DE_FLOAT32)));
-  int64_t row_labels = label_shape.size() == kValueThree ? label_shape[kDimensionOne] : kValueOne;
-  int64_t num_classes = label_shape.size() == kValueThree ? label_shape[kDimensionTwo] : label_shape[kDimensionOne];
+  int64_t row_labels = label_shape.Size() == kMaxLabelShapeSize ? label_shape[kDimensionOne] : 1;
+  int64_t num_classes = label_shape[-1];
 
   // Compute labels and images
   for (size_t i = 0; i < static_cast<size_t>(image_shape[0]); i++) {
     // Calculating lambda
     // If x1 is a random variable from Gamma(a1, 1) and x2 is a random variable from Gamma(a2, 1)
     // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)
-    float x1 = gamma_distribution(rnd_);
-    float x2 = gamma_distribution(rnd_);
+    float x1 = gamma_alpha(rnd_);
+    float x2 = gamma_beta(rnd_);
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2,
                                  "CutMixBatchOp: gamma_distribution x1 and x2 are too large, got x1: " +
                                    std::to_string(x1) + ", x2:" + std::to_string(x2));
@@ -221,7 +237,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
       RETURN_IF_NOT_OK(ComputeImage(input.at(0), rand_indx[i], lam, &label_lam, &images[i]));
       // Compute labels
       RETURN_IF_NOT_OK(ComputeLabel(input.at(1), rand_indx[i], static_cast<int64_t>(i), row_labels, num_classes,
-                                    label_shape.size(), label_lam, &out_labels));
+                                    label_shape.Size(), label_lam, &out_labels));
     }
   }
 
