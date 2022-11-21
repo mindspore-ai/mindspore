@@ -3,7 +3,7 @@ mindspore.ops.csr_ceil
 
 .. py:function:: mindspore.ops.csr_ceil(x: CSRTensor)
 
-    向上取整函数。
+    CSRTensor向上取整函数。
 
     .. math::
         out_i = \lcsr_ceil x_i \rcsr_ceil = \lfloor x_i \rfloor + 1

@@ -3,7 +3,7 @@ mindspore.ops.csr_floor
 
 .. py:function:: mindspore.ops.csr_floor(x: CSRTensor)
 
-    逐元素向下取整函数。
+    CSRTensor逐元素向下取整函数。
 
     .. math::
         out_i = \lcsr_floor x_i \rcsr_floor

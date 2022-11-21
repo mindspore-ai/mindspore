@@ -3,7 +3,7 @@ mindspore.ops.coo_cosh
 
 .. py:function:: mindspore.ops.coo_cosh(x: COOTensor)
 
-    逐元素计算 `x` 的双曲余弦值。
+    逐元素计算COOTensor `x` 的双曲余弦值。
 
     .. math::
         out_i = coo_cosh(x_i)

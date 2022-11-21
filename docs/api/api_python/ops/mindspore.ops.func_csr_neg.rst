@@ -3,7 +3,7 @@ mindspore.ops.csr_neg
 
 .. py:function:: mindspore.ops.csr_neg(x: CSRTensor)
 
-    计算输入x的相反数并返回。
+    计算输入CSRTensor的相反数并返回。
 
     .. math::
         out_{i} = - x_{i}

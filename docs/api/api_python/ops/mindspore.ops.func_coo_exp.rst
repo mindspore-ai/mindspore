@@ -3,7 +3,7 @@ mindspore.ops.coo_exp
 
 .. py:function:: mindspore.ops.coo_exp(x: COOTensor)
 
-    逐元素计算 `x` 的指数。
+    逐元素计算COOTensor `x` 的指数。
 
     .. math::
 

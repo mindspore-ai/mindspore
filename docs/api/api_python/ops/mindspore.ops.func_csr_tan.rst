@@ -3,7 +3,7 @@ mindspore.ops.csr_tan
 
 .. py:function:: mindspore.ops.csr_tan(x: CSRTensor)
 
-    计算输入元素的正切值。
+    计算CSRTensor输入元素的正切值。
 
     .. math::
         out_i = csr_tan(x_i)

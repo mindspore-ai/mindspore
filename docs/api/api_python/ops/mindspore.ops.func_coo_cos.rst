@@ -3,7 +3,7 @@ mindspore.ops.coo_cos
 
 .. py:function:: mindspore.ops.coo_cos(x: COOTensor)
 
-    逐元素计算输入的余弦。
+    逐元素计算COOTensor输入的余弦。
 
     .. math::
         out_i = coo_cos(x_i)

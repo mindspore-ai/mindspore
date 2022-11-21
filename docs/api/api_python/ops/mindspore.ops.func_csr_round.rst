@@ -3,7 +3,7 @@ mindspore.ops.csr_round
 
 .. py:function:: mindspore.ops.csr_round(x: CSRTensor)
 
-    对输入数据进行四舍五入到最接近的整数数值。
+    对CSRTensor输入数据进行四舍五入到最接近的整数数值。
 
     .. math::
         out_i \approx x_i

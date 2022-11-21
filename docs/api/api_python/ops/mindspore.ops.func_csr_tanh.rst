@@ -5,7 +5,7 @@
 
     Tanh激活函数。
 
-    按元素计算输入元素的双曲正切。Tanh函数定义为：
+    按元素计算CSRTensor输入元素的双曲正切。Tanh函数定义为：
 
     .. math::
         csr_tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},

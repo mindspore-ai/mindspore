@@ -3,7 +3,7 @@ mindspore.ops.coo_ceil
 
 .. py:function:: mindspore.ops.coo_ceil(x: COOTensor)
 
-    向上取整函数。
+    COOTensor向上取整函数。
 
     .. math::
         out_i = \lcoo_ceil x_i \rcoo_ceil = \lfloor x_i \rfloor + 1
