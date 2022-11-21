@@ -12,7 +12,7 @@ set(TEST_SRC
     )
 
 # add static securec link library
-include_directories(${TOP_DIR}/cmake/dependency_securec.cmake)
+include(${TOP_DIR}/cmake/dependency_securec.cmake)
 
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     set(TEST_SRC
