@@ -21,4 +21,4 @@ mindspore.ops.ScatterAddWithAxis
 
     异常：
         - **TypeError** - `indices` 不是int32或者int64。
-        - **TypeError** - `indices` 和 `update` 的shape不一致。
+        - **ValueError** - `indices` 和 `updates` 的shape不一致。

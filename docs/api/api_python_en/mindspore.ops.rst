@@ -223,7 +223,7 @@ Image Processing
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2
     mindspore.ops.ScaleAndTranslate
-    
+
 Text Processing
 ^^^^^^^^^^^^^^^
 
@@ -231,7 +231,7 @@ Text Processing
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
-    
+
     mindspore.ops.NoRepeatNGram
 
 Mathematical Operators

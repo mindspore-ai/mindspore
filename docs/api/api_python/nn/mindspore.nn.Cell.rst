@@ -78,7 +78,7 @@
 
         参数：
             - **cells** (str) - 需要进行迭代的Cell。默认值：None。
-            - **name_prefix** (str) - 作用域。默认值：''。
+            - **name_prefix** (str) - 作用域。默认值： ''。
 
         返回：
             Iteration类型，当前Cell及输入 `cells` 的所有子Cell和相对应的名称。
@@ -590,5 +590,5 @@
         给网络参数名称添加 `prefix` 前缀字符串。
 
         参数：
-            - **prefix** (str) - 前缀字符串。默认值：''。
+            - **prefix** (str) - 前缀字符串。默认值： ''。
             - **recurse** (bool) - 是否递归地包含所有子Cell的参数。默认值：True。

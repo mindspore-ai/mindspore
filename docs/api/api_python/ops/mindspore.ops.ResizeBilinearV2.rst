@@ -1,7 +1,7 @@
 mindspore.ops.ResizeBilinearV2
 ===============================
 
-.. py:class:: mindspore.ops.ResizeBicubic(align_corners=False, half_pixel_centers=False)
+.. py:class:: mindspore.ops.ResizeBilinearV2(align_corners=False, half_pixel_centers=False)
 
     使用双线性插值调整图像大小到指定的大小。
 

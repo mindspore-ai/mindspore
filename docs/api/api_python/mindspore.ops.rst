@@ -224,7 +224,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2
     mindspore.ops.ScaleAndTranslate
-    
+
 文本处理
 ^^^^^^^^^^
 
@@ -232,7 +232,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
-    
+
     mindspore.ops.NoRepeatNGram
 
 数学运算算子

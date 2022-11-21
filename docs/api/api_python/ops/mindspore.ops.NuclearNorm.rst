@@ -13,7 +13,7 @@ mindspore.ops.NuclearNorm
 
     参数：
         - **dim** (Union[list(int), tuple(int)]，可选) - 指定计算 `x` 矩阵核范数的哪两个维度，如果 `dim` 为None，则核规范将在输入所有维度上计算。 `dim` 的长度应该是2，其值应在此范围内：:math:`[-x_rank,x_rank)` 。x_rank是 `x` 的维度。dim[0]和dim[1]的值不能指向相同的维度。默认值：None。
-        - **keep_dim** (bool，可选) - 输出Tensor是否保留维度。默认值：False。
+        - **keepdim** (bool，可选) - 输出Tensor是否保留维度。默认值：False。
 
     输入：
         - **x** (Tensor) - 计算矩阵核范数的Tensor。 `x` 的维度应该大于等于2，数据类型为float32或者float64。

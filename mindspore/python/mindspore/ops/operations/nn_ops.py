@@ -809,7 +809,7 @@ class Elu(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of
-        float16, float32 or float64.
+          float16, float32 or float64.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
@@ -3778,7 +3778,7 @@ class UpsampleTrilinear3D(Primitive):
         >>> out = ops(Tensor(input_data=np.random.randn(2, 3, 4, 512, 256)))
         >>> print(out.shape)
         (2, 3, 4, 64, 48)
-
+        ...
         >>> ops = P.UpsampleTrilinear3D(output_size=[2, 4, 4])
         >>> in_x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
         >>> out = ops(in_x)
@@ -9357,7 +9357,7 @@ class NthElement(Primitive):
         ValueError**: If n is out of :math:`[0, input.shape[-1])`.
 
     Supported Platforms:
-         ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([[1,2,3],[4,5,6]]) , mstype.int8)
@@ -9499,7 +9499,7 @@ class TripletMarginLoss(Primitive):
             `Learning local feature descriptors with triplets and shallow convolutional neural networks`
             by V. Balntas, E. Riba et al. Default: "False".
         reduction (str, optional): Apply specific reduction method to the
-        output: 'none', 'mean', 'sum'. Default: "mean".
+            output: 'none', 'mean', 'sum'. Default: "mean".
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.

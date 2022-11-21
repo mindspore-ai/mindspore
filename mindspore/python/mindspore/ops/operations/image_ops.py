@@ -33,9 +33,9 @@ class AdjustSaturation(Primitive):
         If several adjustments are chained it is advisable to minimize the number of redundant conversions.
 
     Inputs:
-        - **image** (Tensor): Images to adjust. Must be one of the following types: float16, float32.
+        - **image** (Tensor) - Images to adjust. Must be one of the following types: float16, float32.
           At least 3-D.The last dimension is interpreted as channels, and must be three.
-        - **scale** (Tensor): A float scale to add to the saturation. A Tensor of type float32. Must be 0-D.
+        - **scale** (Tensor) - A float scale to add to the saturation. A Tensor of type float32. Must be 0-D.
 
     Outputs:
         Adjusted image(s), same shape and dtype as `image`.
@@ -443,7 +443,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
 
     Outputs:
        A 1-D integer Tensor of shape :math:`(M)` representing the selected indices from the boxes Tensor,
-        where M <= max_output_size. Its data type is int32.
+       where M <= max_output_size. Its data type is int32.
 
     Raises:
         TypeError: If the dtype of `overlaps` , `scores` `overlap_threshold` and `score_threshold` is not float32.
@@ -459,7 +459,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
         ValueError: If the shape of `scores` is not equal to the shape of the dim0 or dim1 of `overlaps`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> overlaps = Tensor(np.array([[0.6964692, 0.28613934, 0.22685145, 0.5513148],
@@ -603,8 +603,8 @@ class RGBToHSV(Primitive):
         Last dimension of input images must be size 3.
 
     Inputs:
-        **images** (Tensor) - 1-D or higher rank RGB data Tensor to convert, last dimension must be size 3.
-        Must be one of the following types: float16, float32, float64.
+        - **images** (Tensor) - 1-D or higher rank RGB data Tensor to convert, last dimension must be size 3.
+          Must be one of the following types: float16, float32, float64.
 
     Outputs:
         A Tensor, has the same type and shape as input `images`.
@@ -755,7 +755,7 @@ class ResizeBicubic(Primitive):
     Args:
         align_corners (bool, optional):If true, the centers of the 4 corner pixels of the input
             and output tensors are aligned, preserving the values at the corner pixels.Default: False.
-        half_pixel_centers (bool): Whether to use half-pixel center alignment. If set to True,
+        half_pixel_centers (bool, optional): Whether to use half-pixel center alignment. If set to True,
             `align_corners` should be False. Default: False.
 
 
@@ -1111,7 +1111,7 @@ class CombinedNonMaxSuppression(Primitive):
           detections of each batch.
 
     Raises:
-        TypeError: If the dtype of `boxes` `scores` `iou_threshold` `score threshold` are not float32.
+        TypeError: If the dtype of `boxes`, `scores` , `iou_threshold` , `score threshold` are not float32.
         TypeError: If the dtype of `max_output_size_per_class` and `max_total_size` are not int32.
         ValueError: If `boxes`is not 4D.
         ValueError: If `max_output_size_per_class`, `max_total_size`, `iou_threshold` and `score threshold` are not 0D.

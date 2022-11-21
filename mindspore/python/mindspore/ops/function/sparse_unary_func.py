@@ -242,7 +242,7 @@ def coo_exp(x: COOTensor) -> COOTensor:
 
 
 def csr_inv(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes Reciprocal of input csr_tensor element-wise.
 
     .. math::
@@ -278,7 +278,7 @@ def csr_inv(x: CSRTensor) -> CSRTensor:
 
 
 def coo_inv(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes Reciprocal of input coo_tensor element-wise.
 
     .. math::
@@ -1448,7 +1448,7 @@ def coo_cosh(x: COOTensor) -> COOTensor:
 
 
 def csr_softsign(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Softsign activation function.
 
     The function is shown as follows:
@@ -1486,7 +1486,7 @@ def csr_softsign(x: CSRTensor) -> CSRTensor:
 
 
 def coo_softsign(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Softsign activation function.
 
     The function is shown as follows:

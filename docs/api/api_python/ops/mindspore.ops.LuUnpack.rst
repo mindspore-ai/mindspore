@@ -28,4 +28,4 @@ mindspore.ops.LuUnpack
         - **ValueError** - 若 `LU_pivots` 最后一维的大小不等于 `LU_data` 的最后两维的较小者。
         - **ValueError** - 若 `lu_data` 与 `LU_pivots` 的batch维度不匹配。
         - **ValueError** - 在CPU平台上，若 `LU_pivots` 的值不在 :math:`[1, LU_data.shape[-2]]` 范围内。
-        - **RuntimeErrorr** - 在Ascend平台上，若 `LU_pivots` 的值不在 :math:`[1, LU_data.shape[-2]]` 范围内。
+        - **RuntimeError** - 在Ascend平台上，若 `LU_pivots` 的值不在 :math:`[1, LU_data.shape[-2]]` 范围内。
