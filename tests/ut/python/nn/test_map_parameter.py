@@ -275,3 +275,8 @@ def test_simple_graph_export_load():
     export(net, t, file_name=file_path, file_format="MINDIR")
     assert os.path.isfile(file_path)
     load(file_path)
+
+    file_path = "./map-parameter-incremental.mindir"
+    export(net, t, file_name=file_path, file_format="MINDIR", incremental=True)
+    assert os.path.isfile(file_path)
+    load(file_path)

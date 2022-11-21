@@ -145,10 +145,12 @@ PYBIND11_MODULE(_c_expression, m) {
          "Delete network resource.")
     .def("get_func_graph", &GraphExecutorPy::GetFuncGraph, py::arg("phase") = py::str(""), "Get graph pointer.")
     .def("get_func_graph_proto", &GraphExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
-         py::arg("type") = py::str("onnx_ir"), "Get graph proto string by specifying ir type.")
+         py::arg("type") = py::str("onnx_ir"), py::arg("incremental") = py::bool_(false),
+         "Get graph proto string by specifying ir type.")
     .def("get_obfuscate_func_graph_proto", &GraphExecutorPy::GetObfuscateFuncGraphProto, py::arg("phase") = py::str(""),
-         py::arg("obf_ratio") = py::float_(1.0), py::arg("obf_pasword") = py::int_(0),
-         py::arg("append_password") = py::int_(0), "Get graph proto of dynamic-obfuscated model.")
+         py::arg("incremental") = py::bool_(false), py::arg("obf_ratio") = py::float_(1.0),
+         py::arg("obf_pasword") = py::int_(0), py::arg("append_password") = py::int_(0),
+         "Get graph proto of dynamic-obfuscated model.")
     .def("get_params", &GraphExecutorPy::GetParams, py::arg("phase") = py::str(""), "Get Parameters from graph")
     .def("compile", &GraphExecutorPy::Compile, py::arg("obj"), py::arg("args"), py::arg("phase") = py::str(""),
          py::arg("use_vm") = py::bool_(false), "Compile obj by executor.")

@@ -1089,6 +1089,9 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                 obf_password is set, then it should be passed to `nn.GraphCell()` interface when loading obfuscated
                 model. It should be noted that at least one of 'customized_func' or 'obf_password' should be set, and
                 'obf_password' mode would be applied if both of them are set.
+
+            - incremental (bool): export MindIR incrementally.
+
     Examples:
         >>> import mindspore as ms
         >>> import numpy as np
@@ -1268,6 +1271,8 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
     """The function to save parameter data."""
     logger.warning("Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.")
     # save parameter
+    if model.graph.map_parameter:
+        raise ValueError("MapParameter not support save in split MindIR file now.")
     file_prefix = file_name.split("/")[-1]
     if file_prefix.endswith(".mindir"):
         file_prefix = file_prefix[:-7]
@@ -1344,12 +1349,12 @@ def _msfunc_info(net, *inputs):
     return mindir_stream, net_dict
 
 
-def _cell_info(net, *inputs):
+def _cell_info(net, incremental, *inputs):
     """Get mindir stream and net dict of cell"""
     phase_name = "predict" if _is_in_auto_parallel_mode() else "export.mindir"
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
     # pylint: disable=protected-access
-    mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
+    mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir', incremental=incremental)
     # clean obfuscation config to prevent the next call
     _executor.obfuscate_config = None
 
@@ -1384,11 +1389,13 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     if 'obf_config' in kwargs.keys():
         _set_obfuscate_config(**kwargs)
 
+    incremental = kwargs.get('incremental', False)
+
     model = mindir_model()
     if not isinstance(net, nn.Cell):
         mindir_stream, net_dict = _msfunc_info(net, *inputs)
     else:
-        mindir_stream, net_dict = _cell_info(net, *inputs)
+        mindir_stream, net_dict = _cell_info(net, incremental, *inputs)
     model.ParseFromString(mindir_stream)
 
     if kwargs.get('dataset'):
@@ -1414,11 +1421,12 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         else:
             logger.warning("The parameter '{}' is not belongs to any cell,the data of parameter cannot be exported."
                            .format(param_proto.name))
+    incremental = kwargs.get('incremental', False)
     for map_param_proto in model.graph.map_parameter:
         map_param_name = map_param_proto.name[map_param_proto.name.find(":") + 1:]
         if map_param_name in net_dict.keys():
             map_parameter = net_dict[map_param_name]
-            key_nparr, value_nparr, status_nparr = map_parameter.export_data()
+            key_nparr, value_nparr, status_nparr = map_parameter.export_data(not incremental)
             map_param_proto.key_tensor.raw_data = key_nparr.tobytes()
             map_param_proto.value_tensor.raw_data = value_nparr.tobytes()
             map_param_proto.status_tensor.raw_data = status_nparr.tobytes()

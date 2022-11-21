@@ -88,9 +88,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   FuncGraphPtr GetGradGraph(const std::string &phase);
   void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
-  py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type);
-  py::bytes GetObfuscateFuncGraphProto(const std::string &phase, const float obf_ratio, const int obf_password,
-                                       const int append_password);
+  py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type, const bool &incremental);
+  py::bytes GetObfuscateFuncGraphProto(const std::string &phase, const bool &incremental, const float obf_ratio,
+                                       const int obf_password, const int append_password);
 #ifndef ENABLE_SECURITY
   py::bytes GetOptimizeGraphProto(const std::string &phase);
 #endif
