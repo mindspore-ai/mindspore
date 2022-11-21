@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+import os
+import stat
 import pytest
 import numpy as np
 from mindspore import Tensor
@@ -20,6 +22,7 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.common.api import jit
+from mindspore.train.serialization import export
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
 
@@ -101,6 +104,84 @@ class NetReduceProd(nn.Cell):
                 self.reduce_prod(indices, self.axis2),
                 self.reduce_prod(indices, self.axis3),
                 self.reduce_prod_keep(indices, self.axis4))
+
+
+class NetReduceAny(nn.Cell):
+    def __init__(self, axis=()):
+        super(NetReduceAny, self).__init__()
+        self.op = P.ReduceAny(keep_dims=False)
+        self.axis = axis
+
+    @jit
+    def construct(self, x):
+        return self.op(x, self.axis)
+
+
+class NetReduceAll(nn.Cell):
+    def __init__(self, axis=()):
+        super(NetReduceAll, self).__init__()
+        self.op = P.ReduceAll(keep_dims=False)
+        self.axis = axis
+
+    @jit
+    def construct(self, x):
+        return self.op(x, self.axis)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_reduce_any_onnx():
+    """
+    Feature: test ReduceAll op in cpu.
+    Description: test the ops export onnx.
+    Expectation: expect correct value result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    axis = 1
+    net = NetReduceAny(axis)
+    data = np.array([[True, True, True], [False, False, False], [True, False, False]])
+    out_ms = net(Tensor(data)).asnumpy()
+    file = 'reduceAny.onnx'
+    export(net, Tensor(data), file_name=file, file_format="ONNX")
+    assert os.path.exists(file)
+
+    import onnxruntime
+    sess = onnxruntime.InferenceSession(file)
+    input_x = sess.get_inputs()[0].name
+    result = sess.run([], {input_x: data})[0]
+    assert np.all(out_ms == result)
+
+    os.chmod(file, stat.S_IWRITE)
+    os.remove(file)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_reduce_all_onnx():
+    """
+    Feature: test ReduceAll op in cpu.
+    Description: test the ops export onnx.
+    Expectation: expect correct value result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    axis = 1
+    net = NetReduceAll(axis)
+    data = np.array([[True, True, True], [False, False, False], [True, False, False]])
+    out_ms = net(Tensor(data)).asnumpy()
+    file = 'reduceAll.onnx'
+    export(net, Tensor(data), file_name=file, file_format="ONNX")
+    assert os.path.exists(file)
+
+    import onnxruntime
+    sess = onnxruntime.InferenceSession(file)
+    input_x = sess.get_inputs()[0].name
+    result = sess.run([], {input_x: data})[0]
+    assert np.all(out_ms == result)
+
+    os.chmod(file, stat.S_IWRITE)
+    os.remove(file)
 
 
 @pytest.mark.level0
