@@ -29,7 +29,7 @@ mindspore.ops.GradOperation
 
     1. 构造一个带有 `get_by_list=True` 参数的GradOperation高阶函数： grad_op = GradOperation(get_by_list=True)。
 
-    2. 当构建 `GradOperation` 高阶函数时，创建一个 `ParameterTuple` 和 `net` 作为参数输入， `ParameterTuple` 作为参数过滤器决定返回哪个梯度：`params = ParameterTuple(net.trainingable_params())` 。
+    2. 当构建 `GradOperation` 高阶函数时，创建一个 `ParameterTuple` 和 `net` 作为参数输入， `ParameterTuple` 作为参数过滤器决定返回哪个梯度：`params = ParameterTuple(net.trainable_params())` 。
 
     3. 将 `net` 和 `params` 作为参数输入 `grad_op` ，得到梯度函数： `gradient_function = grad_op(net, params)` 。
 
@@ -39,7 +39,7 @@ mindspore.ops.GradOperation
 
     1. 构建一个带有 `get_all=True` 和 `get_by_list=True` 参数的 `GradOperation` 高阶函数：`grad_op = GradOperation(get_all=True, get_by_list=True)` 。
 
-    2. 当构建 `GradOperation` 高阶函数时，创建一个 `ParameterTuple` 和 `net` 作为参数输入：`params = ParameterTuple(net.trainingable_params())` 。
+    2. 当构建 `GradOperation` 高阶函数时，创建一个 `ParameterTuple` 和 `net` 作为参数输入：`params = ParameterTuple(net.trainable_params())` 。
 
     3. 将 `net` 和 `params` 作为参数输入 `grad_op` ，得到梯度函数： `gradient_function = grad_op(net, params)` 。
 
