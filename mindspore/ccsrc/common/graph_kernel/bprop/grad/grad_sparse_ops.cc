@@ -479,15 +479,6 @@ REG_BPROP_BUILDER("CSRSparseMatrixToSparseTensor").SetBody([](const BpropIRBuild
           ib->TupleGetItem(dx, kIndex3), ib->TupleGetItem(dx, kIndex4)};
 });
 
-REG_BPROP_BUILDER("SparseToDenseV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  auto indices = ib->GetInput(kIndex0);
-  auto output_shape = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex5);
-  auto sparse_values_grad = ib->Emit("GatherNd", {dout, indices});
-  auto default_value_grad = ib->Sub(ib->ReduceSum(dout), ib->ReduceSum(sparse_values_grad));
-  return {ib->ZerosLike(indices), ib->ZerosLike(output_shape), sparse_values_grad, default_value_grad};
-});
-
 NodePtrList CommonSparseSegmentBprop(const BpropIRBuilder *ib, const std::string &grad_op, bool with_segments) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);

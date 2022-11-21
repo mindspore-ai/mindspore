@@ -195,11 +195,21 @@ void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, DoutUserType *dout
   (void)e.Run(cnode);
 }
 
-void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users) {
+bool BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users) {
+  MS_LOG(DEBUG) << "Begin building bprop for " << cnode->fullname_with_scope();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(users);
-  expander::bprop::BpropExpander e(outputs, nullptr, users);
-  (void)e.Run(cnode);
+  bool ret = true;
+  try {
+    expander::bprop::BpropExpander e(outputs, nullptr, users);
+    ret = e.Run(cnode);
+  } catch (const std::exception &e) {
+    MS_LOG(WARNING) << "Bprop \"" << AnfUtils::GetCNodeName(cnode) << "\" encounter a problem: [" << e.what() << "]";
+    outputs->clear();
+    ret = false;
+  }
+  MS_LOG(DEBUG) << "Finish building bprop for " << cnode->fullname_with_scope();
+  return ret;
 }
 }  // namespace mindspore

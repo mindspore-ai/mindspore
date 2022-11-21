@@ -29,6 +29,6 @@ using DoutUserType = std::vector<std::pair<CNodePtr, int>>;
 COMMON_EXPORT void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, DoutUserType *dout_user);
 
 using UserType = std::map<AnfNodePtr, std::vector<std::pair<CNodePtr, int>>>;
-COMMON_EXPORT void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users);
+COMMON_EXPORT bool BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_BPROP_BPROP_H_

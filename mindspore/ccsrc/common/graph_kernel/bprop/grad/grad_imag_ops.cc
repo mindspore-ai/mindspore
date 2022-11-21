@@ -92,7 +92,7 @@ REG_BPROP_BUILDER("RGBToHSV").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto tensor_n1 = ib->Tensor(-1, kFloat32);
   auto tensor_60 = ib->Tensor(60, kFloat32);
   auto tensor_360 = ib->Tensor(360, kFloat32);
-  auto crcp = [&tensor_1, &ib](const NodePtr &x) { return ib->Emit("DivNoNan", {tensor_1, x}); };
+  auto crcp = [&tensor_1, &ib](const NodePtr &x) { return ib->DivNoNan(tensor_1, x); };
 
   auto reds = ib->StridedSlice(images, {{-1, {0}}});
   auto greens = ib->StridedSlice(images, {{-1, {1}}});
