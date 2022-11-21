@@ -66,7 +66,7 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib/x64/cusolver.lib
             ${CUDA_PATH}/lib/x64/cufft.lib
             ${CUDA_PATH}/lib/x64/cusparse.lib
-            ${CUDA_PATH}/lib/x64/libnvrtc.so
+            ${CUDA_PATH}/lib/x64/nvrtc.lib
             )
     else()
     target_link_libraries(mindspore_gpu PRIVATE cuda_ops
