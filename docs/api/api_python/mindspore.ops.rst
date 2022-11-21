@@ -721,7 +721,7 @@ Parameter操作算子
 光谱算子
 ----------
 
-.. mscnautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

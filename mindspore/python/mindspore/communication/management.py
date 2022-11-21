@@ -456,7 +456,7 @@ def create_group(group, rank_ids):
 
     Examples:
         >>> from mindspore import set_context
-        >>> from mindspore.ops import operations as ops
+        >>> import mindspore.ops as ops
         >>> from mindspore.communication.management import init, create_group
         >>> set_context(device_target="Ascend")
         >>> init()

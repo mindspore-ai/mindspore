@@ -34,7 +34,7 @@ class AdjustSaturation(Primitive):
 
     Inputs:
         - **image** (Tensor): Images to adjust. Must be one of the following types: float16, float32.
-           At least 3-D.The last dimension is interpreted as channels, and must be three.
+          At least 3-D.The last dimension is interpreted as channels, and must be three.
         - **scale** (Tensor): A float scale to add to the saturation. A Tensor of type float32. Must be 0-D.
 
     Outputs:

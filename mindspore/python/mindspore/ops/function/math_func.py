@@ -416,8 +416,8 @@ def argmin(x, axis=-1, keepdims=False):
 
     Args:
         x (Tensor): Input tensor. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        axis (int): Axis where the Argmin operation applies to. Default: -1.
-        keepdims (boolean, optional): Whether the output tensor retains the specified
+        axis (Union[int, None], optional): Axis where the Argmin operation applies to. Default: None.
+        keepdims (bool, optional): Whether the output tensor retains the specified
             dimension. Ignored if `axis` is None. Default: False.
 
     Returns:
@@ -3103,11 +3103,11 @@ def approximate_equal(x, y, tolerance=1e-5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.function.math_func import approximate_equal
+        >>> import mindspore.ops as ops
         >>> tol = 1.5
         >>> x = Tensor(np.array([1, 2, 3]), mstype.float32)
         >>> y = Tensor(np.array([2, 4, 6]), mstype.float32)
-        >>> output = approximate_equal(Tensor(x), Tensor(y), tol)
+        >>> output = ops.approximate_equal(Tensor(x), Tensor(y), tol)
         >>> print(output)
         [ True  False  False]
     """
@@ -3708,9 +3708,8 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output = F.std(input_x, 1, True, False)
+        >>> output = ops.std(input_x, 1, True, False)
         >>> output_std, output_mean = output[0], output[1]
         >>> print(output_std)
         [1.        2.5166116]

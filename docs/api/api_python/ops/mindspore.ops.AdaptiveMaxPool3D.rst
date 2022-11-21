@@ -1,7 +1,7 @@
 mindspore.ops.AdaptiveMaxPool3D
 ===============================
 
-.. py:class:: mindspore.ops.AdaptiveMaxPool3D(output_size)
+.. py:class:: mindspore.ops.AdaptiveMaxPool3D()
 
     三维自适应最大值池化。
 

@@ -94,7 +94,7 @@ class Converter:
             model named model.prototxt.ms in /home/user/.
         weight_file (str, optional): Set the path of input model weight file. Required only when fmk_type is
             FmkType.CAFFE. The Caffe model is generally divided into two files: 'model.prototxt' is model structure,
-            corresponding to 'model_file` parameter; `model.Caffemodel' is model weight value file, corresponding to
+            corresponding to `model_file` parameter; 'model.Caffemodel' is model weight value file, corresponding to
             `weight_file` parameter. For example, "/home/user/model.caffemodel". Default: "".
         config_file (str, optional): Set the path of the configuration file of Converter can be used to post-training,
             offline split op to parallel, disable op fusion ability and set plugin so path. `config_file' uses the
@@ -115,45 +115,45 @@ class Converter:
             parameter. For example, {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}. Default: None, None is
             equivalent to {}.
 
-                - Usage 1:The input of the model to be converted is dynamic shape, but prepare to use fixed shape for
-                  inference, then set the parameter to fixed shape. After setting, when inferring on the converted
-                  model, the default input shape is the same as the parameter setting, no need to resize.
-                - Usage 2: No matter whether the original input of the model to be converted is dynamic shape or not,
-                  but prepare to use fixed shape for inference, and the performance of the model is
-                  expected to be optimized as much as possible, then set the parameter to fixed shape. After
-                  setting, the model structure will be further optimized, but the converted model may lose the
-                  characteristics of dynamic shape(some operators strongly related to shape will be merged).
-                - Usage 3: When using the converter function to generate code for Micro inference execution, it is
-                  recommended to set the parameter to reduce the probability of errors during deployment.
-                  When the model contains a Shape ops or the input of the model to be converted is a dynamic
-                  shape, you must set the parameter to fixed shape to support the relevant shape optimization and
-                  code generation.
+            - Usage 1:The input of the model to be converted is dynamic shape, but prepare to use fixed shape for
+              inference, then set the parameter to fixed shape. After setting, when inferring on the converted
+              model, the default input shape is the same as the parameter setting, no need to resize.
+            - Usage 2: No matter whether the original input of the model to be converted is dynamic shape or not,
+              but prepare to use fixed shape for inference, and the performance of the model is
+              expected to be optimized as much as possible, then set the parameter to fixed shape. After
+              setting, the model structure will be further optimized, but the converted model may lose the
+              characteristics of dynamic shape(some operators strongly related to shape will be merged).
+            - Usage 3: When using the converter function to generate code for Micro inference execution, it is
+              recommended to set the parameter to reduce the probability of errors during deployment.
+              When the model contains a Shape ops or the input of the model to be converted is a dynamic
+              shape, you must set the parameter to fixed shape to support the relevant shape optimization and
+              code generation.
 
         input_format (Format, optional): Set the input format of exported model. Only Valid for 4-dimensional input. The
             following 2 input formats are supported: Format.NCHW | Format.NHWC. Default: Format.NHWC.
 
-                - Format.NCHW: Store tensor data in the order of batch N, channel C, height H and width W.
-                - Format.NHWC: Store tensor data in the order of batch N, height H, width W and channel C.
+            - Format.NCHW: Store tensor data in the order of batch N, channel C, height H and width W.
+            - Format.NHWC: Store tensor data in the order of batch N, height H, width W and channel C.
 
         input_data_type (DataType, optional): Set the data type of the quantization model input Tensor. It is only valid
             when the quantization parameters ( `scale` and `zero point` ) of the model input tensor are available.
             The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
             DataType.UNKNOWN. Default: DataType.FLOAT32.
 
-                - DataType.FLOAT32: 32-bit floating-point number.
-                - DataType.INT8:    8-bit integer.
-                - DataType.UINT8:   unsigned 8-bit integer.
-                - DataType.UNKNOWN: Set the Same DataType as the model input Tensor.
+            - DataType.FLOAT32: 32-bit floating-point number.
+            - DataType.INT8:    8-bit integer.
+            - DataType.UINT8:   unsigned 8-bit integer.
+            - DataType.UNKNOWN: Set the Same DataType as the model input Tensor.
 
         output_data_type (DataType, optional): Set the data type of the quantization model output Tensor. It is only
             valid when the quantization parameters ( `scale` and `zero point` ) of the model output tensor are
             available. The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
             DataType.UNKNOWN. Default: DataType.FLOAT32.
 
-                - DataType.FLOAT32: 32-bit floating-point number.
-                - DataType.INT8:    8-bit integer.
-                - DataType.UINT8:   unsigned 8-bit integer.
-                - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
+            - DataType.FLOAT32: 32-bit floating-point number.
+            - DataType.INT8:    8-bit integer.
+            - DataType.UINT8:   unsigned 8-bit integer.
+            - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
 
         export_mindir (ModelType, optional): Set the model type needs to be export. Options: ModelType.MINDIR |
             ModelType.MINDIR_LITE. Default: ModelType.MINDIR_LITE. For details, see

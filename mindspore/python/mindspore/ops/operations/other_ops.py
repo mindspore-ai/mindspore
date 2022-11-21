@@ -450,10 +450,10 @@ class Partial(Primitive):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as P
+        >>> import mindspore.ops as ops
         >>> def show_input(x, y, z):
         ...     return x, y, z
-        >>> partial = P.Partial()
+        >>> partial = ops.Partial()
         >>> partial_show_input = partial(show_input, Tensor(1))
         >>> output1 = partial_show_input(Tensor(2), Tensor(3))
         >>> print(output1)
