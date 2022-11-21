@@ -65,6 +65,8 @@ The data transform operation can be executed in the data processing pipeline or 
       # ids to token
       tokens_from_ids = vocab.ids_to_tokens([15, 3, 7])
       print("token to id: {}".format(tokens_from_ids), flush=True)
+
+Note: In eager mode, non-NumPy input is implicitly converted to NumPy format and sent to MindSpore.
 """
 import platform
 
