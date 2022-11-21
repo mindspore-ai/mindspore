@@ -368,6 +368,15 @@ class ArgMinWithValueFunc(Cell):
         return self.argmin_(x, axis=0, keep_dims=False)
 
 
+class AminmaxFunc(Cell):
+    def __init__(self):
+        super(AminmaxFunc, self).__init__()
+        self.aminmax_ = ops.function.array_func.aminmax
+
+    def construct(self, x):
+        return self.aminmax_(x, axis=0, keepdims=False)
+
+
 class RangeNet(Cell):
     def __init__(self):
         super(RangeNet, self).__init__()
@@ -453,6 +462,9 @@ test_case_array_ops = [
     ('ArgMinWithValue', {
         'block': ArgMinWithValueFunc(),
         'desc_inputs': [Tensor(np.array([1., 4., 2., 3.]), ms.float32)]}),
+    ('Aminmax', {
+        'block': AminmaxFunc(),
+        'desc_inputs': [Tensor(np.array([1., 2., 4., 3.]), ms.float32)]}),
     ('FlattenConcat', {
         'block': NetForFlattenConcat(),
         'desc_inputs': [Tensor(np.array([1], np.float32)),
