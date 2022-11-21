@@ -16,11 +16,11 @@
 import pytest
 from mindspore import nn
 from mindspore import context
-from mindspore.ops.operations import Cauchy
+from mindspore.ops.operations.math_ops import Cauchy
 
 
 class Net(nn.Cell):
-    """a class used to test CholeskySolve gpu operator."""
+    """a class used to test Cauchy gpu operator."""
 
     def __init__(self, size, median=0.0, sigma=1.0):
         super(Net, self).__init__()
