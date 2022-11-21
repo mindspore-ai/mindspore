@@ -460,7 +460,7 @@ Sparse Functions
 COO Functions
 ++++++++++++++++
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -501,7 +501,7 @@ COO Functions
 CSR Functions
 ++++++++++++++++
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

@@ -2693,9 +2693,9 @@ class Histogram(Primitive):
     Elements lower than min and higher than max are ignored.
 
     Args:
-        bins (int) : Number of histogram bins, optional. Default 100. If specified, must be positive.
-        min (float): An optional float of the lower end of the range (inclusive). Default value is 0.0.
-        max (float): An optional float of the upper end of the range (inclusive). Default value is 0.0.
+        bins (int, optional) : Number of histogram bins, optional. Default 100. If specified, must be positive.
+        min (float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
+        max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
 
     Inputs:
         - **x** (Tensor) - the input tensor, type support list [float16, float32, int32]
@@ -5800,11 +5800,11 @@ class ComplexAbs(Primitive):
         y = \sqrt{a^2+b^2}.
 
     Inputs:
-        -**x** (Tensor) - A Tensor, types: complex64, complex128.
+        - **x** (Tensor) - A Tensor, types: complex64, complex128.
 
     Outputs:
-        -**y** (Tensor) - Tensor, has the same shape as x. If the type of x is complex64, the type of y is float32.
-        If the type of x is complex128, the type of y is float64.
+        - **y** (Tensor) - Tensor, has the same shape as x. If the type of x is complex64, the type of y is float32.
+          If the type of x is complex128, the type of y is float64.
 
     Raises:
        TypeError: If the input is not a Tensor.
@@ -6311,7 +6311,7 @@ class MatrixSolveLs(Primitive):
 
 
 class LuSolve(Primitive):
-    """
+    r"""
     Return the solution of the linear equation :math:`Ax = b` .
 
     Note:
@@ -6324,12 +6324,12 @@ class LuSolve(Primitive):
         is (3, 3, 2, 2) x is (2, 3, 3, 2, 1), lu_data's batch dimensions is (3, 3), x's batch dimensions is (2, 3, 3).
 
     Inputs:
-        - **x** (Tensor) - The input is a tensor of size (*, m, k), where * is batch dimensions, with data type
+        - **x** (Tensor) - The input is a tensor of size `(*, m, k)`, where * is batch dimensions, with data type
           float32, float16.
-        - **lu_data** (Tensor) - The input is a tensor of size (*, m, m), where * is batch dimensions, that can
+        - **lu_data** (Tensor) - The input is a tensor of size `(*, m, m)`, where * is batch dimensions, that can
           be decomposed into an upper
           triangular matrix U and a lower triangular matrix L, with data type float32, float16.
-        - **lu_pivots** (Tensor) - The input is a tensor of size (*, m), where * is batch dimensions, that can
+        - **lu_pivots** (Tensor) - The input is a tensor of size `(*, m)`, where * is batch dimensions, that can
           be converted to a permutation matrix P, with data type int32.
 
     Outputs:
@@ -6374,10 +6374,10 @@ class LuUnpack(Primitive):
             into a permutation matrix P. If False, then the returned P is None. Default: True.
 
     Inputs:
-        - **LU_data** (Tensor) - The packed LU factorization data. A tensor of size [*, M, N],
+        - **LU_data** (Tensor) - The packed LU factorization data. A tensor of size `[*, M, N]`,
           where * is batch dimensions, with data type int8, uint8, int16, int32, int64, float16,
           float32, float64. The dims of LU_data must be equal to or greater than 2.
-        - **LU_pivots** (Tensor) - The packed LU factorization pivots. A tensor of size [*, min(M, N)],
+        - **LU_pivots** (Tensor) - The packed LU factorization pivots. A tensor of size `[*, min(M, N)]`,
           where * is batch dimensions, with data type int8, uint8, int16, int32, int64.
 
     Outputs:
@@ -6619,6 +6619,7 @@ class RaggedRange(Primitive):
         - **limits** (Tensor) - The limits of each range, whose type and shape should be same as input `starts`.
         - **deltas** (Tensor) - The deltas of each range, whose type and shape should be same as input `starts`,
           and each element in the tensor should not be equal to 0.
+
       Outputs:
         - **rt_nested_splits** (Tensor) - The nested splits of the return `RaggedTensor`,
           and type of the tensor is `Tsplits`,
@@ -6626,6 +6627,7 @@ class RaggedRange(Primitive):
         - **rt_dense_values**  (Tensor) - The dense values of the return `RaggedTensor`,
           and type of the tensor should be same as input `starts`.
           Let size of input `starts`, input `limits` and input `deltas` are i,
+
           - if type of the input `starts`, input `limits` and input `deltas`
             are int32 or int64, shape of the output `rt_dense_values` is equal to
             sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
@@ -6674,9 +6676,9 @@ class Trace(Primitive):
         Input must be matrix, and complex number is not supported at present.
 
     Inputs:
-        - **x**(Tensor) - A matrix to be calculated. The matrix must be two dimensional.
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be two dimensional.
 
-    Output:
+    Outputs:
         Tensor, with the same data type as input `x`, and size equals to 1.
 
     Raises:
@@ -6819,7 +6821,7 @@ class Zeta(Primitive):
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
 
-    Example:
+    Examples:
         >>> x = Tensor(np.array([10.]), mindspore.float32)
         >>> q = Tensor(np.array([1.]), mindspore.float32)
         >>> zeta = P.Zeta()
@@ -6921,7 +6923,7 @@ class Renorm(Primitive):
     `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
     divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
-    Refer to :func::`mindspore.ops.renorm` for more details.
+    Refer to :func:`mindspore.ops.renorm` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -6988,12 +6990,11 @@ class STFT(Primitive):
         return_complex (bool): If True, return a complex tensor. If False, return
             a real tensor with an extra last dimension for the real and imaginary components.
 
-    input:
+    Inputs:
         - **x** (Tensor) - Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
         - **window** (Tensor) - the optional window function.
 
-
-    output:
+    Outputs:
         - **y** (Tensor) - A tensor containing the STFT result with shape described above.
 
     Examples:
@@ -7354,7 +7355,7 @@ class MatrixTriangularSolve(Primitive):
         TypeError: If `lower` or `adjoint` is not bool.
         ValueError: If the batch sizes of `matrix`and `rhs` are not equal.
         ValueError: If the inner-most 2 dimensions of `matrix` are not equal.
-        ValueError: If the second-last dimensions of `matrix`and `rhs` are not equal.
+        ValueError: If the second-last dimensions of `matrix` and `rhs` are not equal.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -7650,7 +7651,7 @@ class Qr(Primitive):
     If False (the default), compute the P columns of q where P is minimum of the 2 innermost dimensions of x.
 
     Args:
-        - **full_matrices** (bool, optional) - Whether compute full-sized QR decomposition. Default: False.
+        full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: False.
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions.
@@ -7659,11 +7660,11 @@ class Qr(Primitive):
 
     Outputs:
         - **q** (Tensor) - The orthonormal matrices of x.
-        If `full_matrices` is true, the shape is :math:`(m, m)`, else the shape is :math:`(m, p)`.
-        The dtype of `q` is same as `x`.
+          If `full_matrices` is true, the shape is :math:`(m, m)`, else the shape is :math:`(m, p)`.
+          The dtype of `q` is same as `x`.
         - **r** (Tensor) - The upper triangular matrices of x.
-        If `full_matrices` is true, the shape is :math:`(m, n)`, else the shape is :math:`(p, n)`.
-        The dtype of `r` is same as `x`.
+          If `full_matrices` is true, the shape is :math:`(m, n)`, else the shape is :math:`(p, n)`.
+          The dtype of `r` is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.

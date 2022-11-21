@@ -250,22 +250,22 @@ class SampleDistortedBoundingBoxV2(Primitive):
     The latter is the generated distorted bounding box.
 
     Args:
-    seed (int, optional): If either `seed` or `seed2` is set to non-zero, the random number generator is
-        seeded by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
-    seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
-    aspect_ratio_range (Union[list(float), tuple(float)], optional): Specifying the valild range of aspect
-        ratio of cropped area. Aspect ratio of area = area_width / area_height. The value of this
-        attribute should be positive. Default: (0.75, 1.33).
-    area_range (Union[list(float), tuple(float)], optional): The cropped area of the image must contain a
-        fraction of the supplied image within this range. The value of this attribute should
-        be in range (0.0, 1.0]. Default: (0.05, 1.0).
-    max_attempts (int, optional): Number of attempts at generating a cropped region of the image
-        of the specified constraints. After max_attempts failures, return the entire image. The value of
-        this attribute should be positive. Default: 100.
-    use_image_if_no_bounding_boxes (bool, optional): Controls behavior if no bounding boxes supplied.
-        If no bounding boxes supplied (`bounding_boxes` in shape [0, N, 4] or [batch, 0, 4]), and this
-        attribute is set True, then assume an implicit bounding box covering the
-        whole input, else if this attribute is set False, then raise an error. Default: False.
+        seed (int, optional): If either `seed` or `seed2` is set to non-zero, the random number generator is
+            seeded by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
+        seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
+        aspect_ratio_range (Union[list(float), tuple(float)], optional): Specifying the valild range of aspect
+            ratio of cropped area. Aspect ratio of area = area_width / area_height. The value of this
+            attribute should be positive. Default: (0.75, 1.33).
+        area_range (Union[list(float), tuple(float)], optional): The cropped area of the image must contain a
+            fraction of the supplied image within this range. The value of this attribute should
+            be in range (0.0, 1.0]. Default: (0.05, 1.0).
+        max_attempts (int, optional): Number of attempts at generating a cropped region of the image
+            of the specified constraints. After max_attempts failures, return the entire image. The value of
+            this attribute should be positive. Default: 100.
+        use_image_if_no_bounding_boxes (bool, optional): Controls behavior if no bounding boxes supplied.
+            If no bounding boxes supplied (`bounding_boxes` in shape [0, N, 4] or [batch, 0, 4]), and this
+            attribute is set True, then assume an implicit bounding box covering the
+            whole input, else if this attribute is set False, then raise an error. Default: False.
 
     Inputs:
         - **image_size** (Tensor) - 1-D, containing [height, width, channels]. The value of this input

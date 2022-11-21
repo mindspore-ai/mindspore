@@ -1,7 +1,7 @@
 mindspore.ops.MultiMarginLoss
 ==================================
 
-.. py:class:: mindspore.ops.MultiMarginLoss(reduction='mean')
+.. py:class:: mindspore.ops.MultiMarginLoss(p=1, margin=1.0, reduction="mean")
 
     创建一个标准，用于优化输入和输出之间的多类分类铰链损失（基于边距的损失）。
 

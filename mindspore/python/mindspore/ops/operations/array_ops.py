@@ -99,7 +99,7 @@ class UnravelIndex(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> indices = Tensor(np.array([2, 5]), mindspore.int32)
         >>> dims = Tensor(np.array([3, 3]), mindspore.int32)
         >>> output = ops.UnravelIndex()(indices, dims)
@@ -430,7 +430,7 @@ class Im2Col(Primitive):
     .. note::
         Currently, only 4-D input tensors (batched image-like tensors) are supported.
 
-      Args:
+    Args:
         ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         strides (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
@@ -453,11 +453,11 @@ class Im2Col(Primitive):
             - If two int, :math:`pad_height = pads[0]`, :math:`pad_width = pads[1]`.
             - If four int, :math:`pads = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]`.
 
-      Inputs:
+    Inputs:
         - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
           support all real number data type.
 
-      Outputs:
+    Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
 
     Supported Platforms:
@@ -3768,7 +3768,7 @@ class ResizeNearestNeighborV2(Primitive):
 
     Args:
         align_corners (bool, optional): If true, the centers of the 4 corner pixels of the input and output
-            tensors are aligned, preserving the values at the corner pixels. Defaults： False.
+            tensors are aligned, preserving the values at the corner pixels. Defaults: False.
         half_pixel_centers (bool, optional): Whether half pixel center. If set to True,
             `align_corners` should be False. Default: False.
         data_format (string, optional): An optional `string` that describes the
@@ -3782,7 +3782,7 @@ class ResizeNearestNeighborV2(Primitive):
           of 2 elements: [`new_height, new_width`].
 
     Outputs:
-        -  **y** (Tensor) - The resized images. A 4-D with shape
+        - **y** (Tensor) - The resized images. A 4-D with shape
           :math:`(batch, new\_height, new\_width, channels)`
           or :math:`(batch, channels, new\_height, new\_width)`
           depending on the attr `data_format`. It has the same dtype as `x`.
@@ -6487,17 +6487,17 @@ class ListDiff(Primitive):
 
     Args:
         out_idx (:class:`mindspore.dtype`, optional): The dtype of `idx`,
-        an optioanal datatype of `mindspore.dtype.int32` and `mindspore.dtype.int64`.
-        Default: `mindspore.dtype.int32`.
+            an optioanal datatype of `mindspore.dtype.int32` and `mindspore.dtype.int64`.
+            Default: `mindspore.dtype.int32`.
 
     Inputs:
-        - **x**: A 1-D `Tensor`. Values to keep. type support list [float16, float32,
+        - **x** - A 1-D `Tensor`. Values to keep. type support list [float16, float32,
           float64, uint8, uint16, int8, int16, int32, int64]
-        - **y**: A 1-D `Tensor`. Must have the same type as `x`. 1-D. Values to remove.
+        - **y** - A 1-D `Tensor`. Must have the same type as `x`. 1-D. Values to remove.
 
     Outputs:
-        - **out**: A 1-D `Tensor`. Has the same type as `x`.
-        - **idx**: A 1-D `Tensor` of type `out_idx`.
+        - **out** - A 1-D `Tensor`. Has the same type as `x`.
+        - **idx** - A 1-D `Tensor` of type `out_idx`.
 
     Raises:
         ValueError: If `x` or `y` shape is not 1D.
@@ -6755,7 +6755,7 @@ class ScatterAddWithAxis(Primitive):
     Inputs:
         - **input_x** (Tensor) - The target tensor to be added.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-        - **update** (Tensor) - The Tensor to update the `input_x`, has the same type as `input_x`
+        - **updates** (Tensor) - The Tensor to update the `input_x`, has the same type as `input_x`
           and the same shape as `indices`.
 
     Outputs:
@@ -6763,7 +6763,7 @@ class ScatterAddWithAxis(Primitive):
 
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If the shape of `indices` is not equal to the shape of `update`.
+        ValueError: If the shape of `indices` is not equal to the shape of `updates`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -7224,6 +7224,7 @@ class IndexFill(Primitive):
     by selecting the indices in the order given in index.
 
     Refer to :func:`mindspore.ops.index_fill` for more details.
+
     Inputs:
         - **x** (Tensor) - Input tensor.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -7434,14 +7435,14 @@ class LeftShift(Primitive):
 
     Inputs:
         - **x1** (Tensor) - The target tensor whose dtype supports int8, int16, int32, int64,
-        uint8, uint16, uint32, uint64, will be shifted to the left by x2 in element-wise.
+          uint8, uint16, uint32, uint64, will be shifted to the left by x2 in element-wise.
         - **x2** (Tensor) - The tensor must have the same dtype as x1. And the tensor must have the same shape as x1
-        or could be broadcast with x1.
+          or could be broadcast with x1.
 
     Outputs:
         - **output** (Tensor) - The output tensor, has the same dtype as x1.
-        And the shape of the output tensor is the same shape as x1, or the same shape
-        as x1 and x2 after broadcasting.
+          And the shape of the output tensor is the same shape as x1, or the same shape
+          as x1 and x2 after broadcasting.
 
     Raises:
         TypeError: If `x1` or `x2` has wrong type.

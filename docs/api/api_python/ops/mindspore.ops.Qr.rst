@@ -19,5 +19,5 @@ mindspore.ops.Qr
     异常：
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `full_matrices` 不是bool。
-        - **TypeError** - `x` 的维度小于2。
+        - **ValueError** - `x` 的维度小于2。
 

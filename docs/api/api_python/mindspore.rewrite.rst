@@ -384,7 +384,7 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
 
     参数：
         - **arg_type** (ValueType) - 当前值的类型。
-        - **scope** (str) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值：""。
+        - **scope** (str) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ""。
         - **value** - 当前ScopedValue中保存的值。值的类型对应于 `arg_type`。默认值：None。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names: Union[list, tuple], scopes: Union[list, tuple] = None)

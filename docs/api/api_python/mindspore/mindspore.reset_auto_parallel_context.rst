@@ -9,12 +9,12 @@ mindspore.reset_auto_parallel_context
     - global_rank：0。
     - gradients_mean：False。
     - gradient_fp32_sync：True。
-    - parallel_mode：'stand_alone'。
-    - search_mode：'dynamic_programming'。
-    - auto_parallel_search_mode：'dynamic_programming'。
+    - parallel_mode： 'stand_alone'。
+    - search_mode： 'dynamic_programming'。
+    - auto_parallel_search_mode： 'dynamic_programming'。
     - parameter_broadcast：False。
-    - strategy_ckpt_load_file：''。
-    - strategy_ckpt_save_file：''。
+    - strategy_ckpt_load_file： ''。
+    - strategy_ckpt_save_file： ''。
     - full_batch：False。
     - enable_parallel_optimizer：False。
     - enable_alltoall：False。

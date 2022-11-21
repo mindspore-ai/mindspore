@@ -1917,7 +1917,7 @@ class ResizeNearestNeighborV2Grad(Primitive):
     Args:
         align_corners (bool): Whether the centers of the 4 corner pixels of the input
             and output tensors are aligned. Default: False.
-        half_pixel_centers (bool): Default :False.
+        half_pixel_centers (bool): Default: False.
         data_format: An optional `string` that describes the format of the input `x` Defaults to `NHWC`.
     """
 

@@ -23,5 +23,5 @@ mindspore.ops.mvlgamma
     异常：
         - **TypeError** - `input` 的数据类型不是float32或者float64。
         - **TypeError** - `p` 不是int类型。
-        - **TypeError** - `p` 小于1。
-        - **TypeError** - `input` 中不是所有元素的值都大于 :math:`(p - 1) / 2` 。
+        - **ValueError** - `p` 小于1。
+        - **ValueError** - `input` 中不是所有元素的值都大于 :math:`(p - 1) / 2` 。

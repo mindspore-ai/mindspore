@@ -2405,21 +2405,21 @@ def pad(input_x, padding, mode='constant', value=None):
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
         padding (Union[tuple[int], list[int], Tensor]): Filling position of pad.
-                :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` dimensions
-                of `input_x` will be padded.
+            :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` dimensions
+            of `input_x` will be padded.
 
-                Example: to pad only the last dimension of the input tensor, then
-                :attr:`padding` has the form
-                :math:`(\text{padding_left}, \text{padding_right})`;
+            Example: to pad only the last dimension of the input tensor, then
+            :attr:`padding` has the form
+            :math:`(\text{padding_left}, \text{padding_right})`;
 
-                Example: to pad the last 2 dimensions of the input tensor, then use
-                :math:`(\text{padding_left}, \text{padding_right}`,
-                :math:`\text{padding_top}, \text{padding_bottom})`;
+            Example: to pad the last 2 dimensions of the input tensor, then use
+            :math:`(\text{padding_left}, \text{padding_right}`,
+            :math:`\text{padding_top}, \text{padding_bottom})`;
 
-                Example: to pad the last 3 dimensions, use
-                :math:`(\text{padding_left}, \text{padding_right}`,
-                :math:`\text{padding_top}, \text{padding_bottom}`,
-                :math:`\text{padding_front}, \text{padding_back})` and so on.
+            Example: to pad the last 3 dimensions, use
+            :math:`(\text{padding_left}, \text{padding_right}`,
+            :math:`\text{padding_top}, \text{padding_bottom}`,
+            :math:`\text{padding_front}, \text{padding_back})` and so on.
 
         mode (str, optional): Pad filling mode, "constant", "reflect" or "replicate". Default: "constant".
 
@@ -2433,7 +2433,7 @@ def pad(input_x, padding, mode='constant', value=None):
             and extend the padding pattern to n dimensions.
 
         value (Union[int, float, None], optional): Valid only in "constant" mode.
-                Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.
+            Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.
 
     Returns:
         Tensor, the tensor after padding.

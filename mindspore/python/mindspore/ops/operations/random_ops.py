@@ -34,8 +34,8 @@ class NonDeterministicInts(Primitive):
         The number of elements of output can not exceed 1000000.
 
     Args:
-        - **dtype** (mindspore.dtype, optional) - The date type of output. The supported values are: mindspore.int32
-          and mindspore.int64. Default: mindspore.int64.
+        dtype (mindspore.dtype, optional): The date type of output. The supported values are: mindspore.int32
+            and mindspore.int64. Default: mindspore.int64.
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated. The supported values are:
@@ -84,9 +84,9 @@ class TruncatedNormal(Primitive):
         The value of `shape` must be greater than zero. The output length can not exceed 1000000.
 
     Args:
-        seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
+        seed (int, optional): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
             the seed is set by the given seed. Otherwise, it is seeded by a random seed.
-        seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
+        seed2 (int, optional): An optional int. Defaults to 0. A second seed to avoid seed collision.
         dtype (mindspore.dtype): Specified output data type. Must be one of the following types:
             mindspore.float16, mindspore.float32 and mindspore.float64. Default: mindspore.float32.
 
@@ -232,9 +232,9 @@ class RandomGamma(Primitive):
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated.
-        Must be one of the following types: int32, int64. 1-D integer tensor.
+          Must be one of the following types: int32, int64. 1-D integer tensor.
         - **alpha** (Tensor) - α is the shape parameter of RandomGamma distribution.
-        It must be greater than 0. Must be one of the following types: half, float32, float64.
+          It must be greater than 0. Must be one of the following types: half, float32, float64.
 
     Outputs:
         Tensor. The shape should be equal to the concat shape between the input `shape` and `alpha`.
@@ -598,7 +598,7 @@ class RandomPoisson(Primitive):
         ValueError: If `shape` elements are negative.
 
     Supported Platforms:
-        ``Ascend````GPU````CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)
