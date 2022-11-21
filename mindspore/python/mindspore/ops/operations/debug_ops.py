@@ -76,7 +76,7 @@ class ScalarSummary(Primitive):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, set_context
         >>>
         >>>
         >>> class SummaryDemo(nn.Cell):
@@ -90,9 +90,10 @@ class ScalarSummary(Primitive):
         ...         self.summary(name, x)
         ...         x = self.add(x, y)
         ...         return x
+        >>> set_context(mode=mindspore.GRAPH_MODE)
         >>> summary = SummaryDemo()(Tensor(3), Tensor(4))
         >>> print(summary)
-        Tensor(shape=[], dtype=Int64, value=7)
+        7
     """
 
     @prim_attr_register
@@ -192,7 +193,7 @@ class TensorSummary(Primitive):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, set_context
         >>>
         >>>
         >>> class SummaryDemo(nn.Cell):
@@ -206,9 +207,10 @@ class TensorSummary(Primitive):
         ...         name = "x"
         ...         self.summary(name, x)
         ...         return x
+        >>> set_context(mode=mindspore.GRAPH_MODE)
         >>> summary = SummaryDemo()(Tensor([[1]]), Tensor([[2]]))
         >>> print(summary)
-        Tensor(shape=[1, 1], dtype=Int64, value=[[3]])
+        [[3]]
     """
 
     @prim_attr_register
@@ -246,7 +248,7 @@ class HistogramSummary(PrimitiveWithInfer):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, set_context
         >>>
         >>>
         >>> class SummaryDemo(nn.Cell):
@@ -260,9 +262,10 @@ class HistogramSummary(PrimitiveWithInfer):
         ...         name = "x"
         ...         self.summary(name, x)
         ...         return x
+        >>> set_context(mode=mindspore.GRAPH_MODE)
         >>> summary = SummaryDemo()(Tensor([1, 2]), Tensor([3, 4]))
         >>> print(summary)
-        Tensor(shape=[2], dtype=Int64, value= [3, 5])
+        [3, 5]
     """
 
     @prim_attr_register
