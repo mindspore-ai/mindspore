@@ -266,6 +266,11 @@ bool HasMutableAttr(const py::object &obj) {
   return py::hasattr(obj, mutable_attr) && py::cast<bool>(py::getattr(obj, mutable_attr));
 }
 
+bool HasVariableLenAttr(const py::object &obj) {
+  constexpr char variable_len_attr[] = "__ms_dynamic_len__";
+  return py::hasattr(obj, variable_len_attr) && py::cast<bool>(py::getattr(obj, variable_len_attr));
+}
+
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -313,7 +318,8 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     }
   }
   if (HasMutableAttr(obj)) {
-    output = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimMutable), output});
+    auto dynamic_len = HasVariableLenAttr(obj);
+    output = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimMutable), output, NewValueNode(dynamic_len)});
   }
   return output;
 }

@@ -327,6 +327,10 @@ class MS_CORE_API CheckAndConvertUtils {
                              const int64_t match_value, const std::string &prim_name);
   static bool HasDynamicShapeInput(const AbstractBasePtrList &abs_list);
   static void GetFormatStringVal(const PrimitivePtr &prim, std::string *format);
+  static void CheckAbstractShapeSame(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2,
+                                     const std::string &prim_name, const std::string &name1, const std::string &name2);
+  static void CheckAbstractTypeIdSame(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2,
+                                      const std::string &prim_name, const std::string &name1, const std::string &name2);
 
  private:
   static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,

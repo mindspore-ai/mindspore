@@ -46,6 +46,7 @@
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/stack_unstack_eliminate.h"
+#include "frontend/optimizer/irpass/mutable_eliminate.h"
 #include "frontend/optimizer/irpass/switch_or_switch_layer_defer_inline.h"
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
@@ -68,10 +69,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                            prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
   arithmetic_simplify2_ =
     MakeSubstitution(std::make_shared<ArithmeticSimplify2>(), "arithmetic_simplify2", {prim::kPrimMul});
-  special_op_eliminate_ =
-    MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
-                     {prim::kPrimInsertGradientOf, prim::kPrimHookBackward, prim::kPrimCellBackwardHook,
-                      prim::kPrimPrintShapeType, prim::kPrimMutable});
+  special_op_eliminate_ = MakeSubstitution(
+    std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
+    {prim::kPrimInsertGradientOf, prim::kPrimHookBackward, prim::kPrimCellBackwardHook, prim::kPrimPrintShapeType});
+  mutable_op_eliminate_ =
+    MakeSubstitution(std::make_shared<MutableEliminater>(), "mutable_eliminate", prim::kPrimMutable);
   ad_related_special_op_eliminate_ =
     MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "ad_related_special_op_eliminate",
                      {prim::kPrimMirror, prim::kPrimVirtualDiv, prim::kPrimStopGradient});

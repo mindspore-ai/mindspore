@@ -647,13 +647,17 @@ class CleanAfterOptARewriter : public BaseRewriter {
   }
 
   // AbstractSequence, AbstractDict, AbstractRowTensor --> AbstractTuple.
-  static AbstractTuplePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
+  static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
     }
     // AbstractList --> AbstractTuple.
     auto abs_seq = abs->cast<AbstractSequencePtr>();
     if (abs_seq != nullptr) {
+      // Dynamic length sequence do not convert.
+      if (abs_seq->dynamic_len()) {
+        return abs->Clone();
+      }
       const auto &seq_elements = abs_seq->elements();
       // First we check if elements should be converted,
       // changed_elements maps old element to new element.

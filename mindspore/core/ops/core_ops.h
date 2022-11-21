@@ -244,6 +244,9 @@ constexpr auto kUnsortedSegmentProd = "UnsortedSegmentProd";
 constexpr auto kBincount = "Bincount";
 constexpr auto kNoRepeatNGram = "NoRepeatNGram";
 
+// Sequence operation
+constexpr auto kListAppend = "ListAppend";
+
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
 constexpr auto kFractionalMaxPoolGradWithFixedKsize = "FractionalMaxPoolGradWithFixedKsize";
@@ -416,7 +419,6 @@ constexpr auto kUpdateState = "UpdateState";
 constexpr auto kReturn = "Return";
 constexpr auto kDepend = "Depend";
 constexpr auto kidentity = "identity";
-constexpr auto kListAppend = "list_append";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kAssign = "Assign";
 constexpr auto kAssignAdd = "AssignAdd";
@@ -1385,7 +1387,6 @@ GVAR_DEF(PrimitivePtr, kPrimArrayGetItem, std::make_shared<Primitive>("array_get
 GVAR_DEF(PrimitivePtr, kPrimTupleSetItem, std::make_shared<Primitive>("tuple_setitem"));
 GVAR_DEF(PrimitivePtr, kPrimArraySetItem, std::make_shared<Primitive>("array_setitem"));
 GVAR_DEF(PrimitivePtr, kPrimGetAttr, std::make_shared<Primitive>("getattr"));
-GVAR_DEF(PrimitivePtr, kPrimTupleLen, std::make_shared<Primitive>("tuple_len"));
 GVAR_DEF(PrimitivePtr, kPrimArrayLen, std::make_shared<Primitive>("array_len"));
 GVAR_DEF(PrimitivePtr, kPrimTileShape, std::make_shared<Primitive>("tile_shape"));
 GVAR_DEF(PrimitivePtr, kPrimGenerateShapeIndex, std::make_shared<Primitive>("generate_shape_index"));
@@ -1406,6 +1407,10 @@ GVAR_DEF(PrimitivePtr, kPrimDebug, std::make_shared<Primitive>("Debug"));
 GVAR_DEF(PrimitivePtr, kPrimConvertToDynamic, std::make_shared<Primitive>("ConvertToDynamic"));
 GVAR_DEF(PrimitivePtr, kPrimGpuConvertToDynamicShape, std::make_shared<Primitive>("GpuConvertToDynamicShape"));
 GVAR_DEF(PrimitivePtr, kPrimErrorOnDynamicShapeInput, std::make_shared<Primitive>("ErrorOnDynamicShapeInput"));
+
+// Dynamic shape.
+GVAR_DEF(PrimitivePtr, kPrimIsDimUnknown, std::make_shared<Primitive>("IsDimUnKnown"));
+GVAR_DEF(PrimitivePtr, kPrimIsShapeUnknown, std::make_shared<Primitive>("IsShapeUnKnown"));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimCheckValid, std::make_shared<Primitive>("CheckValid"));
@@ -1457,8 +1462,10 @@ GVAR_DEF(PrimitivePtr, kPrimDictSetItem, std::make_shared<Primitive>("dict_setit
 GVAR_DEF(PrimitivePtr, kPrimDictGetKeys, std::make_shared<Primitive>("dict_getkeys"));
 GVAR_DEF(PrimitivePtr, kPrimDictGetValues, std::make_shared<Primitive>("dict_getvalues"));
 GVAR_DEF(PrimitivePtr, kPrimDictItems, std::make_shared<Primitive>("dict_items"));
-GVAR_DEF(PrimitivePtr, kPrimListAppend, std::make_shared<Primitive>("list_append"));
-GVAR_DEF(PrimitivePtr, kPrimListLen, std::make_shared<Primitive>("list_len"));
+GVAR_DEF(PrimitivePtr, kPrimSequenceLen, std::make_shared<Primitive>("sequence_len"));
+
+// Sequence operations.
+GVAR_DEF(PrimitivePtr, kPrimListAppend, std::make_shared<Primitive>(kListAppend));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));

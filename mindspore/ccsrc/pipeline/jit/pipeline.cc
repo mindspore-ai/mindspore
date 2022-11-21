@@ -149,6 +149,20 @@ bool Mutable(const py::object &obj, const ValuePtr &value) {
   return py::hasattr(obj, mutable_attr) && py::cast<bool>(py::getattr(obj, mutable_attr));
 }
 
+void CheckAndConvertToVariableLenSequence(const py::object &obj, AbstractBasePtr abs) {
+  constexpr char variable_len_attr[] = "__ms_dynamic_len__";
+  bool dynamic_len = (py::hasattr(obj, variable_len_attr) && py::cast<bool>(py::getattr(obj, variable_len_attr)));
+  if (!dynamic_len) {
+    return;
+  }
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    MS_EXCEPTION(TypeError) << "For mutable, when the variable_len the True, the first input should be"
+                            << " list or tuple, but got: " << abs->ToString();
+  }
+  auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+  abs_seq->CheckAndConvertToDynamicLenSequence();
+}
+
 bool TensorArgMutable(const py::object &obj, const ValuePtr &value) {
   if (!value->isa<MetaTensor>()) {
     return false;
@@ -168,8 +182,9 @@ bool GradForScalar(const ValuePtr &value) {
 AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden = false) {
   bool broaden = TensorArgMutable(arg, value) || Mutable(arg, value) || value->isa<MetaSparseTensor>() ||
                  EnableTupleBroaden(value, enable_tuple_broaden) || GradForScalar(value);
-
-  return abstract::FromValue(value, broaden);
+  auto ret = abstract::FromValue(value, broaden);
+  CheckAndConvertToVariableLenSequence(arg, ret);
+  return ret;
 }
 
 bool CheckArgValid(const py::handle &arg) {

@@ -717,7 +717,7 @@ bool PynativeOptPass(const ResourcePtr &resource) {
   return true;
 }
 
-bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &resource) {
+bool EliminateSpecialOpOptPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -725,8 +725,12 @@ bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &resource) {
   opt::OptPassConfig ad_related_special_op_eliminate = opt::OptPassConfig({
     irpass.ad_related_special_op_eliminate_,
   });
+  opt::OptPassConfig mutable_op_eliminate = opt::OptPassConfig({
+    irpass.mutable_op_eliminate_,
+  });
   OptPassGroupMap map({
     {"ad_related_special_op_eliminate", ad_related_special_op_eliminate},
+    {"mutable_op_eliminate", mutable_op_eliminate},
   });
   auto ad_related_special_op_eliminate_opt =
     opt::Optimizer::MakeOptimizer("ad_related_special_op_eliminate", resource, map);

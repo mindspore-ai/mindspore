@@ -418,6 +418,48 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   return ret;
 }
 
+AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t input_size = 1;
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, input_size);
+  auto abs = args_spec_list[0];
+  if (!abs->isa<AbstractSequence>()) {
+    MS_EXCEPTION(TypeError) << "The input of " << op_name << " should be tuple but got " << abs->ToString();
+  }
+  auto abs_seq = abs->cast<AbstractSequencePtr>();
+  return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(abs_seq->dynamic_len()), kBool);
+}
+
+AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t input_size = 1;
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, input_size);
+  auto abs = args_spec_list[0];
+  if (!abs->isa<AbstractSequence>()) {
+    MS_EXCEPTION(TypeError) << "The input of " << op_name << " should be tuple or list but got " << abs->ToString();
+  }
+  auto abs_seq = abs->cast<AbstractSequencePtr>();
+  bool is_shape_unknown = false;
+  if (abs_seq->dynamic_len()) {
+    is_shape_unknown = true;
+  } else {
+    auto &elements = abs_seq->elements();
+    for (size_t i = 0; i < elements.size(); ++i) {
+      auto cur = elements[i];
+      MS_EXCEPTION_IF_NULL(cur);
+      auto cur_val = cur->BuildValue();
+      MS_EXCEPTION_IF_NULL(cur_val);
+      if (cur_val == kAnyValue) {
+        is_shape_unknown = true;
+        break;
+      }
+    }
+  }
+  return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(is_shape_unknown), kBool);
+}
+
 AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const AbstractBasePtrList &args_spec_list) {
   // Inputs: Ref/Tensor, universal

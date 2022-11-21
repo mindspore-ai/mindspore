@@ -84,7 +84,6 @@ class Jvp(Cell):
         self.issubclass_ = inner.IsSubClass()
         self.typeof = Primitive('typeof')
         self.make_tuple = Primitive('MakeTuple')
-        self.tuple_len = Primitive("tuple_len")
 
     @jit
     def construct(self, *args):
@@ -95,12 +94,12 @@ class Jvp(Cell):
 
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
-            for i in range(self.tuple_len(output)):
+            for i in range(len(output)):
                 u = u + self.make_tuple(self.oneslike(output[i]))
         else:
             u = self.oneslike(output)
 
-        if self.tuple_len(jvp_input) == 1:
+        if len(jvp_input) == 1:
             second_gradient_net = self.second_grad_op(self.first_grad_single_value)
             gradient_output = second_gradient_net(u, jvp_input, v)
         else:
@@ -126,18 +125,17 @@ class _JvpInner(Cell):
         self.issubclass_ = inner.IsSubClass()
         self.typeof = Primitive('typeof')
         self.make_tuple = Primitive('MakeTuple')
-        self.tuple_len = Primitive("tuple_len")
 
     def compute_jvp(self, fn, v, jvp_input, output):
         """Compute the jacobian-vector-product of the given fn, vector, inputs and outputs."""
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
-            for i in range(self.tuple_len(output)):
+            for i in range(len(output)):
                 u = u + self.make_tuple(self.oneslike(output[i]))
         else:
             u = self.oneslike(output)
 
-        if self.tuple_len(jvp_input) == 1:
+        if len(jvp_input) == 1:
             second_gradient_net = self.second_grad_op(self.first_grad_single_value)
             gradient_output = second_gradient_net(u, fn, jvp_input, v)
         else:
@@ -185,13 +183,12 @@ class Vjp(Cell):
         self.grad_single_value = C.GradOperation(sens_param=True)
         self.issubclass_ = inner.IsSubClass()
         self.typeof = Primitive('typeof')
-        self.tuple_len = Primitive("tuple_len")
 
     @jit
     def construct(self, *args):
         front_input = args[0:-1]
         output = self.fn(*front_input)
-        if self.tuple_len(front_input) == 1:
+        if len(front_input) == 1:
             gradient_output = self.grad_single_value(self.fn)(*args)
         else:
             gradient_output = self.grad(self.fn)(*args)

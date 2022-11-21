@@ -314,8 +314,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDictGetKeys, R{InferImplDictGetKeys, nullptr, true}},
     {prim::kPrimDictGetValues, R{InferImplDictGetValues, nullptr, true}},
     {prim::kPrimDictItems, R{InferImplDictItems, nullptr, true}},
-    {prim::kPrimTupleLen, R{InferImplTupleLen, nullptr, true}},
-    {prim::kPrimListLen, R{InferImplListLen, nullptr, true}},
+    {prim::kPrimSequenceLen, R{InferImplSequenceLen, nullptr, true}},
     {prim::kPrimArrayLen, R{InferImplArrayLen, nullptr, true}},
     // NN
     {prim::kPrimPooling, R{InferImplPooling, nullptr, true}},
@@ -341,6 +340,9 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUpdateState, R{InferImplUpdateState, nullptr, true}},
     // Debug
     {prim::kPrimDebug, R{InferImplDebug, nullptr, true}},
+    // Dynamic Shape
+    {prim::kPrimIsDimUnknown, R{InferImplIsDimUnknown, nullptr, false}},
+    {prim::kPrimIsShapeUnknown, R{InferImplIsShapeUnknown, nullptr, false}},
     // RowTensor
     {prim::kPrimMakeRowTensor, R{InferImplMakeRowTensor, nullptr, true}},
     {prim::kPrimRowTensorGetValues, R{InferImplRowTensorGetValues, nullptr, true}},

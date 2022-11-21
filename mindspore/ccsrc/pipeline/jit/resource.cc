@@ -117,7 +117,7 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeTuple,
      {
-       {"__len__", prim::kPrimTupleLen},                  // P.tuple_len,
+       {"__len__", prim::kPrimSequenceLen},               // P.sequence_len,
        {"__getitem__", prim::kPrimTupleGetItem},          // P.tuple_getitem,
        {"__setitem__", prim::kPrimTupleSetItem},          // P.tuple_setitem,
        {"__ms_iter__", prim::kPrimIdentity},              // P.identity,
@@ -127,7 +127,7 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeList,
      {
-       {"__len__", prim::kPrimListLen},                  // P.list_len,
+       {"__len__", prim::kPrimSequenceLen},              // P.sequence_len,
        {"__getitem__", prim::kPrimListGetItem},          // P.list_getitem,
        {"__setitem__", prim::kPrimListSetItem},          // P.list_setitem,
        {"__ms_iter__", prim::kPrimIdentity},             // P.identity

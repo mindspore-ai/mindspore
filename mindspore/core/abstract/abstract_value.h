@@ -279,6 +279,11 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   ~AbstractScalar() override = default;
   MS_DECLARE_PARENT(AbstractScalar, AbstractBase)
 
+  /// \brief Set the flag 'is_variable_' for scalar.
+  ///
+  /// \param[in] is_variable Boolean value for flag 'is_variable_'.
+  void set_is_variable(bool is_variable) { is_variable_ = is_variable; }
+
   std::size_t hash() const override { return hash_combine({tid(), GetValueTrack()->hash(), GetTypeTrack()->hash()}); }
 
   TypePtr BuildType() const override { return GetTypeTrack(); }
@@ -290,6 +295,9 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   AbstractBasePtr Broaden() const override;
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
+
+ private:
+  bool is_variable_{false};
 };
 using AbstractScalarPtr = std::shared_ptr<AbstractScalar>;
 

@@ -368,6 +368,9 @@ py::object BuildValue(const ValuePtr &value_ptr) {
 
 py::object AbstractTupleValueToPython(const AbstractTuple *tuple_abs) {
   MS_EXCEPTION_IF_NULL(tuple_abs);
+  if (tuple_abs->dynamic_len()) {
+    return py::none();
+  }
   const auto &elements = tuple_abs->elements();
   size_t len = elements.size();
   py::tuple value_tuple(len);
@@ -400,6 +403,12 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
   auto dic = py::dict();
   if (only_convert_value) {
     dic[ATTR_VALUE] = AbstractTupleValueToPython(arg_tuple);
+    return dic;
+  }
+  if (arg_tuple->dynamic_len()) {
+    dic[ATTR_VALUE] = py::none();
+    dic[ATTR_SHAPE] = ShapeVector{abstract::Shape::kShapeDimAny};
+    dic[ATTR_DTYPE] = arg_tuple->BuildType();
     return dic;
   }
   size_t len = arg_tuple->size();
@@ -509,6 +518,9 @@ py::dict AbstractDictionaryToPython(const AbstractBasePtr &abs_base) {
 
 py::object AbstractListValueToPython(const AbstractList *list_abs) {
   MS_EXCEPTION_IF_NULL(list_abs);
+  if (list_abs->dynamic_len()) {
+    return py::none();
+  }
   const auto &elements = list_abs->elements();
   size_t len = elements.size();
   py::list value_list(len);
@@ -524,6 +536,12 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
   auto dic = py::dict();
   if (only_convert_value) {
     dic[ATTR_VALUE] = AbstractListValueToPython(arg_list);
+    return dic;
+  }
+  if (arg_list->dynamic_len()) {
+    dic[ATTR_VALUE] = py::none();
+    dic[ATTR_SHAPE] = ShapeVector{abstract::Shape::kShapeDimAny};
+    dic[ATTR_DTYPE] = arg_list->BuildType();
     return dic;
   }
   size_t len = arg_list->size();

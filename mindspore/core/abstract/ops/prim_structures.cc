@@ -19,6 +19,7 @@
 #include "abstract/ops/infer_functions.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -134,7 +135,19 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got " << index->ToString();
   }
   auto index_int64_value = GetValue<int64_t>(index_value);
+  if (queue->dynamic_len()) {
+    // For list/tuple, with dynamic len, getitem can not be folded.
+    // The value of dynamic_len_element_abs is kAnyValue, do not need to Broaden.
+    auto element_abs = queue->dynamic_len_element_abs();
+    if (element_abs == nullptr) {
+      MS_LOG(EXCEPTION) << "Getitem can not get element from an empty dynamic length sequence.";
+    }
+    return element_abs->Clone();
+  }
   std::size_t nelems = queue->elements().size();
+  if (nelems == 0) {
+    MS_EXCEPTION(IndexError) << "Can not getitem for an empty sequence.";
+  }
   if (index_int64_value >= SizeToLong(nelems) || index_int64_value < -SizeToLong(nelems)) {
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToLong(nelems) << ", "
                              << SizeToLong(nelems) << "), but got " << index_int64_value << ".";
@@ -165,16 +178,46 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got "
                              << index_value->ToString();
   }
+  constexpr int target_value_index = 2;
+  if (queue->dynamic_len()) {
+    auto element_abs = queue->dynamic_len_element_abs();
+    if (element_abs == nullptr) {
+      MS_LOG(EXCEPTION) << "Empty variable len sequence can not setitem.";
+    } else {
+      auto target = args_spec_list[target_value_index];
+      auto element_abs_shape = element_abs->BuildShape();
+      auto target_shape = target->BuildShape();
+      if (*target_shape != *element_abs_shape) {
+        MS_EXCEPTION(ValueError) << "In graph mode, when setitem for a dynamic length sequence, the new value should"
+                                 << " have the same type and shape as the element within the dynamic length sequence."
+                                 << "Now, the shape is not match, the element within the dynamic length sequence has"
+                                 << " shape: " << element_abs_shape->ToString()
+                                 << " and the new value has shape: " << target_shape->ToString();
+      }
+      auto element_abs_type = element_abs->BuildType();
+      auto target_type = target->BuildType();
+      if (*target_type != *element_abs_type) {
+        MS_EXCEPTION(ValueError) << "In graph mode, when setitem for a dynamic length sequence, the new value should"
+                                 << " have the same type and shape as the element within the dynamic length sequence."
+                                 << "Now, the type is not match, the element within the dynamic length sequence has"
+                                 << " type: " << element_abs_type->ToString()
+                                 << " and the new value has type: " << target_type->ToString();
+      }
+    }
+    return queue;
+  }
   auto index_int64_value = GetValue<int64_t>(index_value);
   AbstractBasePtrList elements = queue->elements();
   std::size_t nelems = elements.size();
+  if (nelems == 0) {
+    MS_EXCEPTION(IndexError) << "Can not setitem for an empty sequence.";
+  }
   int64_t index_positive_value = index_int64_value >= 0 ? index_int64_value : index_int64_value + SizeToLong(nelems);
   if (index_positive_value < 0 || index_positive_value >= SizeToLong(nelems)) {
     MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << index_int64_value << " to set out of range: [-"
                              << nelems << "," << (nelems - 1) << "].";
   }
   size_t index_unsigned_value = LongToSize(index_positive_value);
-  constexpr int target_value_index = 2;
   elements[index_unsigned_value] = args_spec_list[target_value_index];
   MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
   return std::make_shared<T>(elements, queue->sequence_nodes());
@@ -307,14 +350,9 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractList>(items);
 }
 
-AbstractBasePtr InferImplTupleLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListOrDictLen<AbstractTuple>(primitive->name(), args_spec_list);
-}
-
-AbstractBasePtr InferImplListLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListOrDictLen<AbstractList>(primitive->name(), args_spec_list);
+AbstractBasePtr InferImplSequenceLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  return InferTupleOrListOrDictLen<AbstractSequence>(primitive->name(), args_spec_list);
 }
 
 AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -355,10 +393,30 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
 AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  constexpr int args_spec_size = 1;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  CheckMutableArgAbstract(args_spec_list[0]);
-  return args_spec_list[0]->Broaden();
+  constexpr int max_args_spec_size = 2;
+  auto arg_size = args_spec_list.size();
+  (void)CheckAndConvertUtils::CheckValue<size_t>("input size", arg_size, kLessEqual, max_args_spec_size, op_name);
+  bool variable_len = false;
+  if (arg_size == max_args_spec_size) {
+    auto arg_value = args_spec_list[1]->BuildValue();
+    MS_EXCEPTION_IF_NULL(arg_value);
+    if (!arg_value->isa<BoolImm>()) {
+      MS_EXCEPTION(TypeError) << "The second argument to mutable should be boolean value.";
+    }
+    variable_len = arg_value->cast<BoolImmPtr>()->value();
+  }
+  if (!variable_len) {
+    CheckMutableArgAbstract(args_spec_list[0]);
+    return args_spec_list[0]->Broaden();
+  }
+  auto ret = args_spec_list[0]->Clone();
+  if (!ret->isa<abstract::AbstractSequence>()) {
+    MS_EXCEPTION(TypeError) << "For mutable, when the variable_len is True, the first input should be"
+                            << " list or tuple, but got: " << ret->ToString();
+  }
+  auto ret_seq = ret->cast<AbstractSequencePtr>();
+  ret_seq->CheckAndConvertToDynamicLenSequence();
+  return ret;
 }
 }  // namespace abstract
 }  // namespace mindspore
