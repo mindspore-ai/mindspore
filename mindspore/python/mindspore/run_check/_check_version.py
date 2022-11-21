@@ -491,14 +491,15 @@ def set_env(device, library_path):
 
 def check_version_and_env_config():
     """check version and env config"""
-    # Note: pre-load libgomp.so to solve error like "cannot allocate memory in statis TLS block"
-    try:
-        import ctypes
-        ctypes.cdll.LoadLibrary("libgomp.so.1")
-    except OSError:
-        logger.warning(
-            "Pre-Load Lirary libgomp.so.1 failed, this might cause cannot allocate TLS memory problem, "
-            "if so find solution in FAQ in https://www.mindspore.cn/docs/en/master/faq/installation.html.")
+    if platform.system().lower() == 'linux':
+        # Note: pre-load libgomp.so to solve error like "cannot allocate memory in statis TLS block"
+        try:
+            import ctypes
+            ctypes.cdll.LoadLibrary("libgomp.so.1")
+        except OSError:
+            logger.warning(
+                "Pre-Load Lirary libgomp.so.1 failed, this might cause cannot allocate TLS memory problem, "
+                "if so find solution in FAQ in https://www.mindspore.cn/docs/en/master/faq/installation.html.")
     if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
         return
     MSContext.get_instance().register_check_env_callback(check_env)
