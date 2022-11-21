@@ -9,7 +9,7 @@ mindspore.dataset.QMnistDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'、'test'、'test10k'、'test50k'、'nist'或'all'。默认值：None，读取所有子集。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、 'test'、 'test10k'、 'test50k'、 'nist'或 'all'。默认值：None，读取所有子集。
         - **compat** (bool, 可选) - 指定每个样本的标签是类别号（compat=True）还是完整的QMNIST信息（compat=False）。默认值：True，标签为类别号。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。

@@ -10,10 +10,10 @@ mindspore.dataset.TedliumDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **release** (str) - 指定数据集的发布版本，可以取值为'release1'、'release2'或'release3'。
+        - **release** (str) - 指定数据集的发布版本，可以取值为 'release1'、 'release2'或 'release3'。
         - **usage** (str, 可选) - 指定数据集的子集。
-          对于 `release` 为'release1'或'release2'， `usage` 可以是'train'、'test'、'dev'或'all'。
-          对于 `release` 为'release3'， `usage` 只能是'all'。默认值：None，读取全部样本。
+          对于 `release` 为 'release1'或 'release2'， `usage` 可以是 'train'、 'test'、 'dev'或 'all'。
+          对于 `release` 为 'release3'， `usage` 只能是 'all'。默认值：None，读取全部样本。
         - **extensions** (str, 可选) - 指定SPH文件的扩展名。默认值：'.sph'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。

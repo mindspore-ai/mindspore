@@ -12,7 +12,7 @@ mindspore.dataset.VOCDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
-        - **task** (str, 可选) - 指定读取VOC数据的任务类型，现在只支持'Segmentation'和'Detection'。默认值：'Segmentation'。
+        - **task** (str, 可选) - 指定读取VOC数据的任务类型，现在只支持 'Segmentation'和 'Detection'。默认值：'Segmentation'。
         - **usage** (str, 可选) - 指定数据集的子集。默认值：'train'。
 
           - 如果 'task' 的值为 'Segmentation'，则读取 'ImageSets/Segmentation/' 目录下定义的图片和label信息；
@@ -40,13 +40,13 @@ mindspore.dataset.VOCDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - 指定的任务不为'Segmentation'或'Detection'。
-        - **ValueError** - 指定任务为'Segmentation'时， `class_indexing` 参数不为None。
+        - **ValueError** - 指定的任务不为 'Segmentation'或 'Detection'。
+        - **ValueError** - 指定任务为 'Segmentation'时， `class_indexing` 参数不为None。
         - **ValueError** - 与 `usage` 参数相关的txt文件不存在。
         - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note::
-        - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列'_meta-filename'的前缀'_meta-'，
+        - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列 '_meta-filename'的前缀 '_meta-'，
           否则迭代得到的数据行中不会出现此额外数据列。
         - 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

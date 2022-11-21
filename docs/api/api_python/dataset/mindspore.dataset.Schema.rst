@@ -45,8 +45,8 @@ mindspore.dataset.Schema
         参数：
             - **columns** (Union[dict, list[dict], tuple[dict]]) - 数据集属性信息，从schema文件解码。
 
-              - **list** [dict]：'name'和'type'必须为key值，'shape'可选。
-              - **dict** ：columns.keys()作为名称，columns.values()是dict，其中包含'type'，'shape'可选。
+              - **list** [dict]：'name'和 'type'必须为key值， 'shape'可选。
+              - **dict** ：columns.keys()作为名称，columns.values()是dict，其中包含 'type'， 'shape'可选。
 
         异常：
             - **RuntimeError** - 解析列失败。

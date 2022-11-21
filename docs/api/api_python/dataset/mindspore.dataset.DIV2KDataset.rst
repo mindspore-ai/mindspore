@@ -9,10 +9,10 @@ mindspore.dataset.DIV2KDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集。可取值为'train'、'valid'或'all'。默认值：'train'。
-        - **downgrade** (str, 可选) - 指定数据集的下采样的模式，可取值为'bicubic'、'unknown'、'mild'、'difficult'或'wild'。默认值：'bicubic'。
-        - **scale** (str, 可选) - 指定数据集的缩放尺度。当参数 `downgrade` 取值为'bicubic'时，此参数可以取值为2、3、4、8。
-          当参数 `downgrade` 取值为'unknown'时，此参数可以取值为2、3、4。当参数 `downgrade` 取值为'mild'、'difficult'、'wild'时，此参数仅可以取值为4。默认值：2。
+        - **usage** (str, 可选) - 指定数据集的子集。可取值为 'train'、 'valid'或 'all'。默认值：'train'。
+        - **downgrade** (str, 可选) - 指定数据集的下采样的模式，可取值为 'bicubic'、 'unknown'、 'mild'、 'difficult'或 'wild'。默认值：'bicubic'。
+        - **scale** (str, 可选) - 指定数据集的缩放尺度。当参数 `downgrade` 取值为 'bicubic'时，此参数可以取值为2、3、4、8。
+          当参数 `downgrade` 取值为 'unknown'时，此参数可以取值为2、3、4。当参数 `downgrade` 取值为 'mild'、 'difficult'、 'wild'时，此参数仅可以取值为4。默认值：2。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
@@ -30,11 +30,11 @@ mindspore.dataset.DIV2KDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `dataset_dir` 路径非法或不存在。
-        - **ValueError** - `usage` 参数取值不为'train'、'valid'或'all'。
-        - **ValueError** - `downgrade` 参数取值不为'bicubic'、'unknown'、'mild'、'difficult'或'wild'。
+        - **ValueError** - `usage` 参数取值不为 'train'、 'valid'或 'all'。
+        - **ValueError** - `downgrade` 参数取值不为 'bicubic'、 'unknown'、 'mild'、 'difficult'或 'wild'。
         - **ValueError** - `scale` 参数取值不在给定的字段中，或与 `downgrade` 参数的值不匹配。
         - **ValueError** - `scale` 参数取值为8，但 `downgrade` 参数的值不为 'bicubic'。
-        - **ValueError** - `downgrade` 参数取值为'mild'、'difficult'或'wild'，但 `scale` 参数的值不为4。
+        - **ValueError** - `downgrade` 参数取值为 'mild'、 'difficult'或 'wild'，但 `scale` 参数的值不为4。
         - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。

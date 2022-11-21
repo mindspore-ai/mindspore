@@ -9,8 +9,8 @@ mindspore.dataset.CoNLL2000Dataset
 
     参数：
         - **dataset_dir** (str) - 包含CoNLL2000分块数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'，'test'或'all'。
-          'train'将读取8936个训练样本，'test'将读取2,012个测试样本中，'all'将读取所有1,0948个样本。默认值：None，读取全部样本。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'test'或 'all'。
+          'train'将读取8936个训练样本， 'test'将读取2,012个测试样本中， 'all'将读取所有1,0948个样本。默认值：None，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式。默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗。如果 `shuffle` 为True，执行全局混洗。

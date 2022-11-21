@@ -11,8 +11,8 @@ mindspore.dataset.TextBaseDataset.build_sentencepiece_vocab
         - **vocab_size** (int) - 词汇表的容量。
         - **character_coverage** (float) - 模型涵盖的字符百分比，必须介于0.98和1.0之间。
           对于具有丰富字符集的语言，如日语或中文字符集，推荐使用0.9995；对于其他字符集较小的语言，比如英语或拉丁文，推荐使用1.0。
-        - **model_type** (SentencePieceModel) - 训练的SentencePiece模型类型，可取值为'SentencePieceModel.UNIGRAM'、'SentencePieceModel.BPE'、'SentencePieceModel.CHAR'或'SentencePieceModel.WORD'。
-          当取值为'SentencePieceModel.WORD'时，输入的数据必须进行预分词（pretokenize）。默认值：SentencePieceModel.UNIGRAM。
+        - **model_type** (SentencePieceModel) - 训练的SentencePiece模型类型，可取值为 'SentencePieceModel.UNIGRAM'、 'SentencePieceModel.BPE'、 'SentencePieceModel.CHAR'或 'SentencePieceModel.WORD'。
+          当取值为 'SentencePieceModel.WORD'时，输入的数据必须进行预分词（pretokenize）。默认值：SentencePieceModel.UNIGRAM。
         - **params** (dict) - 如果希望使用SentencePiece的其他参数，可以构造一个dict进行传入，键为SentencePiece库接口的输入参数名，值为参数值。
 
     返回：

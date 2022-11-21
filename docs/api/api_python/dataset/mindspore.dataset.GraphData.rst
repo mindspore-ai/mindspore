@@ -9,7 +9,7 @@ mindspore.dataset.GraphData
     参数：
         - **dataset_file** (str) - 数据集文件路径。
         - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
-        - **working_mode** (str, 可选) - 设置工作模式，目前支持'local'/'client'/'server'。默认值：'local'。
+        - **working_mode** (str, 可选) - 设置工作模式，目前支持 'local'/'client'/'server'。默认值：'local'。
 
           - **local**：用于非分布式训练场景。
           - **client**：用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
@@ -23,7 +23,7 @@ mindspore.dataset.GraphData
     异常：
         - **ValueError** - `dataset_file` 路径下数据文件不存在或无效。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `working_mode` 参数取值不为'local', 'client' 或 'server'。
+        - **ValueError** - `working_mode` 参数取值不为 'local', 'client' 或 'server'。
         - **TypeError** - `hostname` 参数类型错误。
         - **ValueError** - `port` 参数不在范围[1024, 65535]内。
         - **ValueError** - `num_client` 参数不在范围[1, 255]内。

@@ -11,7 +11,7 @@ mindspore.dataset.CelebADataset
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'，'valid'，'test'或'all'。默认值：'all'，全部样本图片。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'valid'， 'test'或 'all'。默认值：'all'，全部样本图片。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **extensions** (list[str], 可选) - 指定文件的扩展名，仅读取与指定扩展名匹配的文件到数据集中。默认值：None。
@@ -29,7 +29,7 @@ mindspore.dataset.CelebADataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `usage` 参数取值不为'train'、'valid'、'test'或'all'。
+        - **ValueError** - `usage` 参数取值不为 'train'、 'valid'、 'test'或 'all'。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
