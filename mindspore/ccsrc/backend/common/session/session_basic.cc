@@ -430,7 +430,7 @@ void SessionBasic::InitExecutor(const std::string &device_name, uint32_t device_
 }
 
 void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
-                                        GraphInfo *graph_info) const {
+                                        GraphInfo *graph_info, const BackendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(graph_info);
   // Get input tensor info
@@ -445,16 +445,22 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
   MS_EXCEPTION_IF_NULL(prim);
   buf << GetOpRunDeviceTarget(prim) << "_";
-  buf << prim->id();
+  buf << prim->id() << "_";
   bool has_const_input = false;
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto &tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->base_shape_ptr() != nullptr) {
-      buf << tensor->base_shape_ptr()->ToString();
+    bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+    if (use_dynamic_shape_process) {
+      buf << tensor->shape().size() << "_";
     } else {
-      buf << tensor->shape();
+      if (tensor->base_shape_ptr() != nullptr) {
+        buf << tensor->base_shape_ptr()->ToString();
+      } else {
+        buf << tensor->shape();
+      }
     }
+
     buf << tensor->data_type();
     buf << tensor->padding_type();
     // In the case of the same shape, but dtype and format are inconsistent
@@ -1411,10 +1417,11 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     GetOpInputTensors(kernel, op_output_map, parameter_index, inputs, &input_tensor_info);
 
     VectorRef op_outputs;
-    // Get OpRunInfo and GraphInfo
     GraphInfo graph_info;
-    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info);
+    // Get OpRunInfo and GraphInfo
     BackendOpRunInfoPtr run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
+    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info, run_info);
+    run_info->base_op_run_info.graph_info = graph_info;
 
     // Build and run current single op
     RunOpImplOrigin(graph_info, run_info, &input_tensor_info.input_tensors, &op_outputs,
