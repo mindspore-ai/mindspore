@@ -60,7 +60,7 @@ def test_custom_vjp_mul_add():
     assert grads[1] == Tensor(4, dtype=ms.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_custom_vjp_inline_mul_add():
@@ -93,7 +93,7 @@ def test_custom_vjp_inline_mul_add():
     assert grads[1] == Tensor(6, dtype=ms.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_custom_vjp_with_no_bprop():
@@ -154,7 +154,7 @@ def test_custom_vjp_bprop_in_fn_2():
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_custom_vjp_bprop_in_fn3():
@@ -197,7 +197,7 @@ def test_custom_vjp_bprop_in_fn3():
     assert (grads[1].asnumpy() == np.array([[5, 5], [5, 5]]).astype(np.float32)).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_custom_vjp_one_input_bprop():
@@ -223,7 +223,7 @@ def test_custom_vjp_one_input_bprop():
     assert (grads[0].asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_custom_vjp_inline_bprop_two_input():
@@ -257,7 +257,7 @@ def test_custom_vjp_inline_bprop_two_input():
     assert len(grads) == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_custom_vjp_inline_bprop_multi_input():
@@ -315,7 +315,7 @@ def test_custom_vjp_inline_bprop_multi_input():
     assert len(grads) == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_custom_vjp_fn_with_net():

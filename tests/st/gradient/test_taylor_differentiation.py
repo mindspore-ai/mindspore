@@ -21,8 +21,6 @@ from mindspore import ops
 from mindspore import Tensor
 from mindspore.ops.functional import jet, derivative
 
-context.set_context(mode=context.GRAPH_MODE)
-
 
 class MultipleInputSingleOutputNet(nn.Cell):
     def __init__(self):
@@ -83,18 +81,20 @@ class SingleInputSingleOutputWithScalarNet(nn.Cell):
         return out * 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jet_single_input_single_output_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jet_single_input_single_output_graph_mode(mode):
     """
     Features: Function jet
     Description: Test jet with single input in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     primals = Tensor([1., 1.])
     series = Tensor([[1., 1.], [0., 0.], [0., 0.]])
     net = SingleInputSingleOutputNet()
@@ -111,12 +111,14 @@ def test_jet_single_input_single_output_graph_mode():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jet_single_input_single_output_with_scalar_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jet_single_input_single_output_with_scalar_graph_mode(mode):
     """
     Features: Function jet
     Description: Test jet with single input with scalar in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     primals = Tensor([2., 2.])
     series = Tensor([[1., 1.], [0., 0.], [0., 0.]])
     net = SingleInputSingleOutputWithScalarNet()
@@ -134,12 +136,14 @@ def test_jet_single_input_single_output_with_scalar_graph_mode():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_derivative_single_input_single_output_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_derivative_single_input_single_output_graph_mode(mode):
     """
     Features: Function derivative
     Description: Test derivative with single input in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     primals = Tensor([1., 1.])
     order = 3
     net = SingleInputSingleOutputNet()
@@ -156,12 +160,14 @@ def test_derivative_single_input_single_output_graph_mode():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jet_multiple_input_single_output_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jet_multiple_input_single_output_graph_mode(mode):
     """
     Features: Function jet
     Description: Test jet with multiple inputs in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     primals = (Tensor([1., 1.]), Tensor([1., 1.]))
     series = (Tensor([[1., 1.], [0., 0.], [0., 0.]]), Tensor([[1., 1.], [0., 0.], [0., 0.]]))
     net = MultipleInputSingleOutputNet()
@@ -178,12 +184,14 @@ def test_jet_multiple_input_single_output_graph_mode():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_derivative_multiple_input_single_output_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_derivative_multiple_input_single_output_graph_mode(mode):
     """
     Features: Function derivative
     Description: Test derivative with multiple inputs in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     primals = (Tensor([1., 1.]), Tensor([1., 1.]))
     order = 3
     net = MultipleInputSingleOutputNet()
@@ -200,13 +208,14 @@ def test_derivative_multiple_input_single_output_graph_mode():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jet_construct_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jet_construct_graph_mode(mode):
     """
     Features: Function jet
     Description: Test jet in construct with multiple inputs in graph mode.
     Expectation: No exception.
     """
-
+    context.set_context(mode=mode)
     class Net(nn.Cell):
         def __init__(self, net):
             super(Net, self).__init__()
@@ -234,13 +243,14 @@ def test_jet_construct_graph_mode():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_derivative_construct_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_derivative_construct_graph_mode(mode):
     """
     Features: Function derivative
     Description: Test derivative in construct with multiple inputs in graph mode.
     Expectation: No exception.
     """
-
+    context.set_context(mode=mode)
     class Net(nn.Cell):
         def __init__(self, net, order):
             super(Net, self).__init__()
@@ -269,12 +279,14 @@ def test_derivative_construct_graph_mode():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_jet_function_graph_mode():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_jet_function_graph_mode(mode):
     """
     Features: Function jet
     Description: Test function in graph mode.
     Expectation: No exception.
     """
+    context.set_context(mode=mode)
     primals = Tensor([1., 1.])
     series = Tensor([[1., 1.], [0., 0.], [0., 0.]])
     out_primals, out_series = jet(function_graph, primals, series)

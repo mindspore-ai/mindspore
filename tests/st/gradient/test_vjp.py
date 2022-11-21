@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test jvp in pynative mode"""
+"""test jvp in graph mode"""
 import numpy as np
 import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn.grad import Vjp
-
-context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class SingleInputNet(nn.Cell):
@@ -33,10 +31,17 @@ class MultipleInputsOutputNet(nn.Cell):
         return 2*x, y**3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_vjp_single_input_graph():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_vjp_single_input_graph(mode):
+    """
+    Features: Class Vjp.
+    Description: Test whenther Vjp can calculate backward-mode diff correctly.
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = SingleInputNet()
@@ -48,10 +53,17 @@ def test_vjp_single_input_graph():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_vjp_multiple_inputs_default_v_graph():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_vjp_multiple_inputs_default_v_graph(mode):
+    """
+    Features: Class Vjp.
+    Description: Test whenther Vjp can calculate backward-mode diff correctly.
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))

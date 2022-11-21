@@ -45,7 +45,7 @@ class MultipleInputMultipleOutputNet(nn.Cell):
         return 2 * x, y**3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_linearize_single_input_single_output_diverse_v_graph():
@@ -68,7 +68,7 @@ def test_linearize_single_input_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_linearize_single_input_multiple_outputs_diverse_v_graph():
@@ -101,7 +101,7 @@ def test_linearize_single_input_multiple_outputs_diverse_v_graph():
     assert np.allclose(grad_1[1].asnumpy(), expect_grad_1[1].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_linearize_multiple_inputs_single_output_diverse_v_graph():
@@ -125,7 +125,7 @@ def test_linearize_multiple_inputs_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_linearize_multiple_inputs_multiple_outputs_diverse_v_graph():
@@ -158,7 +158,7 @@ def test_linearize_multiple_inputs_multiple_outputs_diverse_v_graph():
     assert np.allclose(grad_1[1].asnumpy(), expect_grad_1[1].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_linearize_input_function_single_input_single_output_diverse_v_graph():
@@ -184,7 +184,7 @@ def test_linearize_input_function_single_input_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_linearize_jit_function_single_input_single_output_diverse_v_graph():
@@ -213,7 +213,7 @@ def test_linearize_jit_function_single_input_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_linearize_construct_single_input_single_output_diverse_v_graph():
