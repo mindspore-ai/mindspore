@@ -116,7 +116,7 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod, public MatchKern
   size_t padded_size_;
   size_t workspace_size_;
   bool use_pad_;
-  float beta_;
+  float beta_{0};
   bool get_dynamic_attr_value_{false};
   std::vector<int64_t> input_shape_;
   static constexpr size_t kShapeIndex_{2};
