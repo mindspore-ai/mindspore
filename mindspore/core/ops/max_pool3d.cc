@@ -137,18 +137,27 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
     out_h = in_h == -1 ? -1 : MaxPool3DCeilDiv(in_h, stride_h);
     out_w = in_w == -1 ? -1 : MaxPool3DCeilDiv(in_w, stride_w);
   } else {
-    out_d = in_d == -1 ? -1 : (in_d + pad_list[kInputIndex0] + pad_list[kInputIndex1] - kernel_d) / stride_d + 1;
-    out_h = in_h == -1 ? -1 : (in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h) / stride_h + 1;
-    out_w = in_w == -1 ? -1 : (in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1;
+    double out_d_tmp =
+      in_d == -1
+        ? -1
+        : static_cast<double>(in_d + pad_list[kInputIndex0] + pad_list[kInputIndex1] - kernel_d) / stride_d + 1;
+    double out_h_tmp =
+      in_h == -1
+        ? -1
+        : static_cast<double>(in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h) / stride_h + 1;
+    double out_w_tmp =
+      in_w == -1
+        ? -1
+        : static_cast<double>(in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1;
 
     if (ceil_mode) {
-      out_d = DoubleToLong(std::ceil(out_d));
-      out_h = DoubleToLong(std::ceil(out_h));
-      out_w = DoubleToLong(std::ceil(out_w));
+      out_d = DoubleToLong(std::ceil(out_d_tmp));
+      out_h = DoubleToLong(std::ceil(out_h_tmp));
+      out_w = DoubleToLong(std::ceil(out_w_tmp));
     } else {
-      out_d = DoubleToLong(std::floor(out_d));
-      out_h = DoubleToLong(std::floor(out_h));
-      out_w = DoubleToLong(std::floor(out_w));
+      out_d = DoubleToLong(std::floor(out_d_tmp));
+      out_h = DoubleToLong(std::floor(out_h_tmp));
+      out_w = DoubleToLong(std::floor(out_w_tmp));
     }
   }
 
