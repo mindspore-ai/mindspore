@@ -19,6 +19,7 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+import mindspore.ops as ops
 import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore.ops import operations as P
@@ -308,15 +309,15 @@ class RandomColorAdjust(nn.Cell):
 
         # Apply brightness
         x = self.mul(x, br_rand_factor)
-        x = C.clip_by_value(x, 0.0, 255.0)
+        x = ops.clip_by_value(x, 0.0, 255.0)
 
         # Apply contrast
         x = self.mul(x, cont_rand_factor) + self.mul((1 - cont_rand_factor), x_gray_mean)
-        x = C.clip_by_value(x, 0.0, 255.0)
+        x = ops.clip_by_value(x, 0.0, 255.0)
 
         # Apply saturation
         x = self.mul(x, sat_rand_factor) + self.mul((1 - sat_rand_factor), x_gray)
-        x = C.clip_by_value(x, 0.0, 255.0)
+        x = ops.clip_by_value(x, 0.0, 255.0)
 
         # Apply Hue Transform
         # Convert tensor from rgb to hsv
@@ -361,7 +362,7 @@ class RandomColorAdjust(nn.Cell):
         x_rgb = x_rgb + C.repeat_elements(self.expand_dims((v - c), 1), 3, 1)
 
         x_rgb = self.transpose(x, (0, 2, 3, 1)) * 255.0
-        x_rgb = C.clip_by_value(x, 0.0, 255.0)
+        x_rgb = ops.clip_by_value(x, 0.0, 255.0)
 
         return x_rgb
 
@@ -414,7 +415,7 @@ class RandomSharpness(nn.Cell):
         x_sharp = self.transpose(x_sharp, (0, 2, 3, 1))
 
         x = self.mul(x, degree_rand_factor) + self.mul((1 - degree_rand_factor), x_sharp)
-        x = C.clip_by_value(x, 0.0, 255.0)
+        x = ops.clip_by_value(x, 0.0, 255.0)
         return x
 
 

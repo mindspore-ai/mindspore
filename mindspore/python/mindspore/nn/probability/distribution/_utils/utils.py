@@ -19,9 +19,9 @@ from mindspore._checkparam import Validator as validator
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
-from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
+import mindspore.ops as ops
 import mindspore.nn as nn
 
 
@@ -214,7 +214,7 @@ def clamp_probs(probs):
     clamp probs boundary
     """
     eps = P.Eps()(probs)
-    return C.clip_by_value(probs, eps, 1-eps)
+    return ops.clip_by_value(probs, eps, 1-eps)
 
 
 def probs_to_logits(probs, is_binary=False):

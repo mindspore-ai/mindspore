@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 import mindspore.context as context
+import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
@@ -23,7 +24,6 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.nn import layer
 from mindspore.ops import functional as F
-from mindspore.ops import composite as C
 from mindspore.ops.operations import _inner_ops as inner
 
 num_one = Tensor(np.ones([1]), mstype.float32)
@@ -88,7 +88,7 @@ class LambGPUOrigin(nn.Cell):
             self.op_select(self.op_greater(g_norm, zeros), w_norm / g_norm_hat, ones),
             ones)
         tens = self.op_fill(self.op_dtype(trust_ratio), self.op_shape(trust_ratio), 10.0)
-        trust_ratio = C.clip_by_value(trust_ratio, zeros, tens)
+        trust_ratio = ops.clip_by_value(trust_ratio, zeros, tens)
         update = next_mm / (self.op_sqrt(next_vv) + eps)
 
         if decay_flag:
