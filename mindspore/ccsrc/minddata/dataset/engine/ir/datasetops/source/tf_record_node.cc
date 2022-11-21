@@ -174,6 +174,7 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   // Create Schema Object
   std::unique_ptr<DataSchema> data_schema = std::make_unique<DataSchema>();
   if (!schema_path_.empty()) {
+    RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TFRecordDataset", {schema_path_}));
     RETURN_IF_NOT_OK(data_schema->LoadSchemaFile(schema_path_, columns_list_));
   } else if (schema_obj_ != nullptr) {
     std::string schema_json_string = schema_obj_->to_json();

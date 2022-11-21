@@ -2332,9 +2332,7 @@ Status ReadFile(const std::string &filename, std::shared_ptr<Tensor> *output) {
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " does not exist.");
   }
-  struct stat sb;
-  stat(realpath.value().c_str(), &sb);
-  if (S_ISREG(sb.st_mode) == 0) {
+  if (!Path(realpath.value()).IsFile()) {
     RETURN_STATUS_UNEXPECTED("ReadFile: Invalid file path, " + filename + " is not a regular file.");
   }
 
@@ -2350,9 +2348,7 @@ Status ReadImage(const std::string &filename, std::shared_ptr<Tensor> *output, I
     std::string err_msg = "ReadImage: Invalid file path, " + filename + " does not exist.";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  struct stat sb;
-  stat(realpath.value().c_str(), &sb);
-  if (S_ISREG(sb.st_mode) == 0) {
+  if (!Path(realpath.value()).IsFile()) {
     RETURN_STATUS_UNEXPECTED("ReadImage: Invalid file path, " + filename + " is not a regular file.");
   }
 
@@ -2416,9 +2412,7 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("WriteFile: Invalid file path, " + filename + " failed to get the real path.");
   }
-  struct stat sb;
-  stat(realpath.value().c_str(), &sb);
-  if (S_ISREG(sb.st_mode) == 0) {
+  if (!Path(realpath.value()).IsFile()) {
     RETURN_STATUS_UNEXPECTED("WriteFile: Invalid file path, " + filename + " is not a regular file.");
   }
 
@@ -2501,9 +2495,7 @@ Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &ima
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("WriteJpeg: Invalid file path, " + filename + " failed to get the real path.");
   }
-  struct stat sb;
-  stat(realpath.value().c_str(), &sb);
-  if (S_ISREG(sb.st_mode) == 0) {
+  if (!Path(realpath.value()).IsFile()) {
     RETURN_STATUS_UNEXPECTED("WriteJpeg: Invalid file path, " + filename + " is not a regular file.");
   }
 

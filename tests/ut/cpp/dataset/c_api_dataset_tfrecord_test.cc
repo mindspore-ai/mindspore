@@ -489,7 +489,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception) {
   EXPECT_EQ(ds2->CreateIterator(), nullptr);
 
   // This case expected to fail because the file of schema is not exist.
-  std::shared_ptr<Dataset> ds4 = TFRecord({file_path, "notexist.json"});
+  std::shared_ptr<Dataset> ds4 = TFRecord({file_path}, "notexist.json");
   EXPECT_EQ(ds4->CreateIterator(), nullptr);
 
   // This case expected to fail because num_samples is negative.
