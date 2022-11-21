@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/mirror_pad_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "ops/mirror_pad.h"
 
 namespace mindspore {
@@ -102,16 +103,45 @@ int MirrorPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return static_cast<int>(KRET_OK);
 }
 
+#define REG_MIRROR_PAD_GPU_KERNEL(TypeId1, TypeId2, Type1)                           \
+  {                                                                                  \
+    KernelAttr().AddInputAttr(TypeId1).AddInputAttr(TypeId2).AddOutputAttr(TypeId1), \
+      &MirrorPadGpuKernelMod::LaunchKernel<Type1>                                    \
+  }
+
 using KernelRunFunc = MirrorPadGpuKernelMod::KernelRunFunc;
 // int the python api description, input data type is number but CalExtractImagePatchesNHWC only support four type.
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MirrorPadGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-     &MirrorPadGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-     &MirrorPadGpuKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-     &MirrorPadGpuKernelMod::LaunchKernel<int>},
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeFloat64, kNumberTypeInt64, double),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeFloat32, kNumberTypeInt64, float),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeFloat16, kNumberTypeInt64, half),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt64, kNumberTypeInt64, int64_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt32, kNumberTypeInt64, int32_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt16, kNumberTypeInt64, int16_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt8, kNumberTypeInt64, int8_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt64, kNumberTypeInt64, uint64_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt32, kNumberTypeInt64, uint32_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt16, kNumberTypeInt64, uint16_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt8, kNumberTypeInt64, uint8_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeBool, kNumberTypeInt64, bool),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeComplex64, kNumberTypeInt64, utils::Complex<float>),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeComplex128, kNumberTypeInt64, utils::Complex<double>),
+
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeFloat64, kNumberTypeInt32, double),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeFloat32, kNumberTypeInt32, float),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeFloat16, kNumberTypeInt32, half),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt64, kNumberTypeInt32, int64_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt32, kNumberTypeInt32, int32_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt16, kNumberTypeInt32, int16_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeInt8, kNumberTypeInt32, int8_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt64, kNumberTypeInt32, uint64_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt32, kNumberTypeInt32, uint32_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt16, kNumberTypeInt32, uint16_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeUInt8, kNumberTypeInt32, uint8_t),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeBool, kNumberTypeInt32, bool),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeComplex64, kNumberTypeInt32, utils::Complex<float>),
+    REG_MIRROR_PAD_GPU_KERNEL(kNumberTypeComplex128, kNumberTypeInt32, utils::Complex<double>),
   };
   return func_list;
 }
