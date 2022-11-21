@@ -31,10 +31,6 @@ nvinfer1::ITensor *TopkReshape(TensorRTContext *ctx, nvinfer1::ITensor *input, i
 }  // namespace
 int TopKTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != 1 && in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -79,7 +75,7 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *index_out_tensor = topk_layer->getOutput(1);
   // output 0 is data value, output 1 is index
 
-  if (top_k_ == 1 && type_ != schema::PrimitiveType_TopKFusion) {
+  if (top_k_ == 1 && type_ != schema::PrimitiveType_TopKFusion && keep_dims_ == false) {
     value_out_tensor = TopkReshape(ctx, value_out_tensor, axis_value_);
     if (value_out_tensor == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed!";
@@ -109,6 +105,7 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
       axis_value_ = max_prim->axis();
       axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
       top_k_ = max_prim->top_k();
+      keep_dims_ = max_prim->keep_dims();
       break;
     }
     case schema::PrimitiveType_ArgMinFusion: {
@@ -118,6 +115,7 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
       axis_value_ = mim_prim->axis();
       axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
       top_k_ = mim_prim->top_k();
+      keep_dims_ = mim_prim->keep_dims();
       break;
     }
     case schema::PrimitiveType_TopKFusion: {

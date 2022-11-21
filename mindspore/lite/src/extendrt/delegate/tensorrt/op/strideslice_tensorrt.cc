@@ -20,6 +20,32 @@
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
+nvinfer1::ITensor *StrideSliceTensorRT::GetDynamicAxisSliceStart(TensorRTContext *ctx, nvinfer1::ITensor *input,
+                                                                 int axis, int nbdims) {
+  if (axis == 0 && nbdims == 1) {
+    return input;
+  }
+  std::vector<nvinfer1::ITensor *> gather_inputs;
+  if (axis == 0) {
+    gather_inputs.push_back(input);
+    gather_inputs.push_back(ctx->ConvertTo1DTensor(std::vector<int>(nbdims - 1, 0)));
+  } else if (axis == nbdims - 1) {
+    gather_inputs.push_back(ctx->ConvertTo1DTensor(std::vector<int>(nbdims - 1, 0)));
+    gather_inputs.push_back(input);
+  } else {
+    gather_inputs.push_back(ctx->ConvertTo1DTensor(std::vector<int>(axis, 0)));
+    gather_inputs.push_back(input);
+    gather_inputs.push_back(ctx->ConvertTo1DTensor(std::vector<int>(nbdims - 1 - axis, 0)));
+  }
+  auto concat_layer = ctx->network()->addConcatenation(gather_inputs.data(), gather_inputs.size());
+  if (concat_layer == nullptr) {
+    MS_LOG(ERROR) << "add concat layer failed!";
+    return nullptr;
+  }
+  concat_layer->setAxis(0);
+  return concat_layer->getOutput(0);
+}
+
 nvinfer1::ITensor *StrideSliceTensorRT::GetDynamicAxisSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input,
                                                                 int size_dim, int axis,
                                                                 nvinfer1::ITensor *size_tensor) {
@@ -144,74 +170,97 @@ int StrideSliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive
   return RET_OK;
 }
 
-int StrideSliceTensorRT::ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_input, const mindspore::MSTensor &begin,
-                                     const mindspore::MSTensor &stride, const mindspore::MSTensor &end,
-                                     size_t start_mask, size_t end_mask, size_t axis_index) {
+int StrideSliceTensorRT::ComputeDimsMulti(TensorRTContext *ctx, ITensorHelper *slice_input,
+                                          const mindspore::MSTensor &begin, const mindspore::MSTensor &stride,
+                                          const mindspore::MSTensor &end, size_t start_mask, size_t end_mask,
+                                          size_t axis_index) {
+  auto input_dims = slice_input->trt_tensor_->getDimensions();
+  start_dims_ = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
+  stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
+  auto end_dims = lite::ConvertCudaDims(end.Data().get(), end.ElementNum());
+  size_dims_.nbDims = input_dims.nbDims;
+  const int *start_value = static_cast<const int *>(begin.Data().get());
+  const int *stride_value = static_cast<const int *>(stride.Data().get());
+  for (int i = 0; i < size_dims_.nbDims; i++) {
+    size_t mask = 1 << i;
+    start_dims_.d[i] = ((start_mask & mask) == 0 ? start_dims_.d[i] : 0);
+    if (end.Data() != nullptr) {
+      end_dims.d[i] = ((end_mask & mask) == 0 ? end_dims.d[i] : slice_input->trt_tensor_->getDimensions().d[i]);
+      if (end_dims.d[i] >= 0) {
+        if (input_dims.d[i] >= 0) {
+          size_dims_.d[i] = std::min(end_dims.d[i], input_dims.d[i]) - start_dims_.d[i];
+        } else {
+          size_dims_.d[i] = end_dims.d[i] - start_dims_.d[i];
+        }
+      } else if (end_dims.d[i] >= -input_dims.d[i]) {
+        size_dims_.d[i] = end_dims.d[i] + input_dims.d[i] - start_dims_.d[i];
+      } else {
+        size_dims_.d[i] = input_dims.d[i];
+      }
+    }
+    if (*(start_value + i) < 0) {
+      start_dims_.d[i] = *(start_value + i) + input_dims.d[i];
+      stride_dims_.d[i] = -*(stride_value + i);
+    }
+  }
+  return RET_OK;
+}
+
+int StrideSliceTensorRT::ComputeDimsSingle(TensorRTContext *ctx, ITensorHelper *slice_input,
+                                           const mindspore::MSTensor &begin, const mindspore::MSTensor &stride,
+                                           const mindspore::MSTensor &end, size_t start_mask, size_t end_mask,
+                                           size_t axis_index) {
   auto input_dims = slice_input->trt_tensor_->getDimensions();
 
-  if (static_cast<size_t>(begin.ElementNum()) == slice_input->trt_tensor_->getDimensions().nbDims) {
-    start_dims_ = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
-    stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
-    auto end_dims = lite::ConvertCudaDims(end.Data().get(), end.ElementNum());
-    size_dims_.nbDims = input_dims.nbDims;
-    const int *start_value = static_cast<const int *>(begin.Data().get());
-    const int *stride_value = static_cast<const int *>(stride.Data().get());
-    for (int i = 0; i < size_dims_.nbDims; i++) {
-      size_t mask = 1 << i;
-      start_dims_.d[i] = ((start_mask & mask) == 0 ? start_dims_.d[i] : 0);
-      if (end.Data() != nullptr) {
-        end_dims.d[i] = ((end_mask & mask) == 0 ? end_dims.d[i] : slice_input->trt_tensor_->getDimensions().d[i]);
-        if (end_dims.d[i] >= 0) {
-          size_dims_.d[i] = std::min(end_dims.d[i], input_dims.d[i]) - start_dims_.d[i];
-        } else if (end_dims.d[i] >= -input_dims.d[i]) {
-          size_dims_.d[i] = end_dims.d[i] + input_dims.d[i] - start_dims_.d[i];
-        } else {
-          size_dims_.d[i] = input_dims.d[i];
-        }
-        size_dims_.d[i] = end_dims.d[i] - start_dims_.d[i];
-      }
-      if (*(start_value + i) < 0) {
-        start_dims_.d[i] = *(start_value + i) + input_dims.d[i];
-        stride_dims_.d[i] = -*(stride_value + i);
-      }
-    }
-  } else {
-    if (axis_index == -1 || in_tensors_.at(axis_index).ElementNum() != 1) {
-      MS_LOG(ERROR) << "invalid input params for " << op_name_;
-      return RET_ERROR;
-    }
-    int axis_value = *(static_cast<const int *>(in_tensors_.at(axis_index).Data().get()));
-    if (axis_value < 0) {
-      axis_value += input_dims.nbDims;
-    }
-    int start_value = *(static_cast<const int *>(begin.Data().get()));
-    int stride_value = *(static_cast<const int *>(stride.Data().get()));
-    start_dims_.nbDims = input_dims.nbDims;
-    std::fill(start_dims_.d, start_dims_.d + start_dims_.nbDims, 0);
-    stride_dims_.nbDims = input_dims.nbDims;
-    std::fill(stride_dims_.d, stride_dims_.d + stride_dims_.nbDims, 1);
-    size_dims_ = slice_input->trt_tensor_->getDimensions();
-    if (start_value < 0) {
-      start_value = input_dims.d[axis_value] + start_value;
-    }
-    for (int i = 0; i < start_dims_.nbDims; i++) {
-      if (i == axis_value) {
-        start_dims_.d[i] = start_value;
-        stride_dims_.d[i] = stride_value;
-        if (end.Data() != nullptr) {
-          int end_value = *(static_cast<const int *>(end.Data().get()));
-          if (end_value >= 0) {
-            size_dims_.d[i] = std::min(end_value, input_dims.d[i]) - start_dims_.d[i];
-          } else if (end_value >= -input_dims.d[i]) {
-            size_dims_.d[i] = end_value + input_dims.d[i] - start_dims_.d[i];
-          } else {
-            size_dims_.d[i] = input_dims.d[i];
-          }
-        }
+  if (axis_index == -1 || in_tensors_.at(axis_index).ElementNum() != 1) {
+    MS_LOG(ERROR) << "invalid input params for " << op_name_;
+    return RET_ERROR;
+  }
+  int axis_value = *(static_cast<const int *>(in_tensors_.at(axis_index).Data().get()));
+  if (axis_value < 0) {
+    axis_value += input_dims.nbDims;
+  }
+  stride_dims_.nbDims = input_dims.nbDims;
+  std::fill(stride_dims_.d, stride_dims_.d + stride_dims_.nbDims, 1);
+  int stride_value = *(static_cast<const int *>(stride.Data().get()));
+  stride_dims_.d[axis_value] = stride_value;
+
+  if (begin.Data() == nullptr && end.Data() == nullptr) {
+    return RET_OK;
+  }
+  int start_value = *(static_cast<const int *>(begin.Data().get()));
+  if (start_value < 0) {
+    start_value = input_dims.d[axis_value] + start_value;
+  }
+  start_dims_.nbDims = input_dims.nbDims;
+  std::fill(start_dims_.d, start_dims_.d + start_dims_.nbDims, 0);
+  start_dims_.d[axis_value] = start_value;
+  if (end.Data() == nullptr) {
+    return RET_OK;
+  }
+  int end_value = *(static_cast<const int *>(end.Data().get()));
+  size_dims_ = slice_input->trt_tensor_->getDimensions();
+  for (int i = 0; i < start_dims_.nbDims; i++) {
+    if (i == axis_value) {
+      if (end_value >= 0) {
+        size_dims_.d[i] = std::min(end_value, input_dims.d[i]) - start_dims_.d[i];
+      } else if (end_value >= -input_dims.d[i]) {
+        size_dims_.d[i] = end_value + input_dims.d[i] - start_dims_.d[i];
+      } else {
+        size_dims_.d[i] = input_dims.d[i];
       }
     }
   }
   return RET_OK;
+}
+
+int StrideSliceTensorRT::ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_input, const mindspore::MSTensor &begin,
+                                     const mindspore::MSTensor &stride, const mindspore::MSTensor &end,
+                                     size_t start_mask, size_t end_mask, size_t axis_index) {
+  if (static_cast<size_t>(begin.ElementNum()) == slice_input->trt_tensor_->getDimensions().nbDims) {
+    return ComputeDimsMulti(ctx, slice_input, begin, stride, end, start_mask, end_mask, axis_index);
+  }
+  return ComputeDimsSingle(ctx, slice_input, begin, stride, end, start_mask, end_mask, axis_index);
 }
 
 int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *slice_input) {
@@ -224,7 +273,8 @@ int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *s
   const mindspore::MSTensor &end = in_tensors_.at(ENDS_INDEX);
 
   size_t axis_index = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
-  if (static_cast<size_t>(begin.ElementNum()) == slice_input->trt_tensor_->getDimensions().nbDims) {
+  int nbdims = slice_input->trt_tensor_->getDimensions().nbDims;
+  if (static_cast<size_t>(begin.ElementNum()) == nbdims) {
     int dims_ret = ComputeDims(ctx, slice_input, begin, stride, end, start_mask, end_mask, axis_index);
     if (dims_ret) {
       MS_LOG(ERROR) << "comput start dims, stride dims, size dims filed for " << op_name_;
@@ -245,17 +295,24 @@ int StrideSliceTensorRT::ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *s
       return RET_ERROR;
     }
     int axis_value = *(static_cast<const int *>(in_tensors_.at(axis_index).Data().get()));
-    if (IsDynamicInput(ctx, 0)) {
+    if (IsDynamicInput(ctx, 0) && begin.Data() != nullptr && end.Data() != nullptr) {
       size_tensor_ =
         GetDynamicAxisSliceSize(ctx, slice_input->trt_tensor_, size_dims_.d[axis_value], axis_value, nullptr);
       size_dims_ = nvinfer1::Dims{-1};
     }
+    if (begin.Data() == nullptr) {
+      start_tensor_ = GetDynamicAxisSliceStart(ctx, input(ctx, 1).trt_tensor_, axis_value, nbdims);
+      start_dims_ = nvinfer1::Dims{-1};
+    }
     if (end.Data() == nullptr) {
-      std::vector<int> start_vec;
-      for (int i = 0; i < start_dims_.nbDims; i++) {
-        start_vec.push_back(start_dims_.d[i]);
+      auto start_tensor = input(ctx, 1).trt_tensor_;
+      if (start_tensor == nullptr) {
+        int start_value = *(static_cast<const int *>(begin.Data().get()));
+        if (start_value < 0) {
+          start_value = slice_input->trt_tensor_->getDimensions().d[axis_value] + start_value;
+        }
+        start_tensor = ctx->ConvertTo1DTensor(start_value);
       }
-      auto start_tensor = ctx->ConvertTo1DTensor(start_vec);
       auto len_tensor =
         ctx->network()
           ->addElementWise(*input(ctx, INPUT_SIZE2).trt_tensor_, *start_tensor, nvinfer1::ElementWiseOperation::kSUB)
@@ -283,6 +340,9 @@ int StrideSliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (slice_layer == nullptr) {
     MS_LOG(ERROR) << "add Slice op failed for TensorRT: " << op_name_;
     return RET_ERROR;
+  }
+  if (start_tensor_ != nullptr) {
+    slice_layer->setInput(1, *start_tensor_);
   }
   if (size_tensor_ != nullptr) {
     slice_layer->setInput(INPUT_SIZE2, *size_tensor_);
