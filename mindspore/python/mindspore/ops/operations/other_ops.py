@@ -154,33 +154,6 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         validator.check_equal_int(len(stds), 4, "stds len", self.name)
 
 
-class BartlettWindow(Primitive):
-    r"""
-    Bartlett window function.
-
-    Refer to :func:`mindspore.ops.bartlett_window` for more details.
-
-    Supported Platforms:
-        ``GPU``
-
-    Examples:
-        >>> window_length = Tensor(5, mstype.int32)
-        >>> bartlett_window = ops.BartlettWindow(periodic=True, dtype=mstype.float32)
-        >>> output = bartlett_window(window_length)
-        >>> print(output)
-        [0.  0.4 0.8 0.8 0.4]
-    """
-
-    @prim_attr_register
-    def __init__(self, periodic=True, dtype=mstype.float32):
-        """Initialize BartlettWindow"""
-        self.add_prim_attr("max_length", 1000000)
-        validator.check_value_type("periodic", periodic, [bool], self.name)
-        validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
-        valid_values = (mstype.float16, mstype.float32, mstype.float64)
-        validator.check_type_name("dtype", dtype, valid_values, self.name)
-
-
 class BoundingBoxDecode(Primitive):
     """
     Decodes bounding boxes locations.
@@ -824,64 +797,3 @@ class PyFunc(PrimitiveWithInfer):
         logger.warning("The function output are empty tuple. Add a placeholder instead. "
                        "Do not use it as it could be any uninitialized data.")
         return (mstype.int32,)
-
-
-class BlackmanWindow(Primitive):
-    r"""
-    Blackman window function.
-
-    The input "window_length" is a tensor that datatype must be a integer, which
-    controlling the returned window size. In particular, If "window_length" =1,
-    the returned window contains a single value 1.
-    Attr "periodic" determines whether the returned window trims off the last duplicate value
-    from the symmetric window and is ready to be used as a periodic window with functions.
-    Therefore, if attr "periodic" is true, the "N" in formula is in fact "window_length" + 1.
-
-    .. math::
-
-        w[n] = 0.42 - 0.5 cos(\frac{2\pi n}{N - 1}) + 0.08 cos(\frac{4\pi n}{N - 1})
-
-        \text{where : N is the full window size.}
-
-    Args:
-        periodic (bool): If True, returns a window to be used as periodic function.
-            If False, return a symmetric window. Default: True.
-        dtype (mindspore.dtype): the desired data type of returned tensor.
-            Only float16, float32 and float64 is allowed. Default: mindspore.float32.
-
-    Inputs:
-        - **window_length** (Tensor) - the size of returned window, with data type int32, int64.
-          The input data should be an integer with a value of [0, 1000000].
-
-    Outputs:
-        A 1-D tensor of size "window_length" containing the window. Its datatype is set by the attr 'dtype'.
-
-    Raises:
-        TypeError: If "window_length" is not a Tensor.
-        TypeError: If "periodic" is not a bool.
-        TypeError: If "dtype" is not one of: float16, float32, float64.
-        TypeError: If the type of "window_length" is not one of: int32, int64.
-        ValueError: If the value range of "window_length" is not [0,1000000].
-        ValueError: If the dimension of "window_length" is not 0.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> window_length = Tensor(10, mindspore.int32)
-        >>> blackman_window = ops.BlackmanWindow(periodic = True, dtype = mindspore.float32)
-        >>> output = blackman_window(window_length)
-        >>> print(output)
-        [-2.9802322e-08  4.0212840e-02  2.0077014e-01  5.0978714e-01
-          8.4922993e-01  1.0000000e+00  8.4922981e-01  5.0978690e-01
-          2.0077008e-01  4.0212870e-02]
-    """
-
-    @prim_attr_register
-    def __init__(self, periodic=True, dtype=mstype.float32):
-        """Initialize BlackmanWindow"""
-        self.add_prim_attr("max_length", 1000000)
-        validator.check_value_type("periodic", periodic, [bool], self.name)
-        validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
-        valid_values = (mstype.float16, mstype.float32, mstype.float64)
-        validator.check_type_name("dtype", dtype, valid_values, self.name)

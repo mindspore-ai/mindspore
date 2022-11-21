@@ -7998,7 +7998,7 @@ class CTCLossV2(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, blank, reduction="none", zero_infinity=False):
+    def __init__(self, blank=0, reduction="none", zero_infinity=False):
         """Initialize CTCLossV2"""
         self.init_prim_io_names(inputs=["log_probs", "targets", "input_lengths", "target_lengths"],
                                 outputs=["neg_log_likelihood", "log_alpha"])
