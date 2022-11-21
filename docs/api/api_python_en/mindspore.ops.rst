@@ -54,6 +54,7 @@ Neural Network
     mindspore.ops.Conv3D
     mindspore.ops.Conv3DTranspose
     mindspore.ops.CTCGreedyDecoder
+    mindspore.ops.Dilation2D
     mindspore.ops.Dropout
     mindspore.ops.Dropout2D
     mindspore.ops.Dropout3D
@@ -207,6 +208,7 @@ Image Processing
     mindspore.ops.CheckValid
     mindspore.ops.CombinedNonMaxSuppression
     mindspore.ops.CropAndResize
+    mindspore.ops.ExtractGlimpse
     mindspore.ops.ExtractVolumePatches
     mindspore.ops.HSVToRGB
     mindspore.ops.IOU
@@ -290,6 +292,7 @@ Element-wise Operator
     mindspore.ops.Conj
     mindspore.ops.Cos
     mindspore.ops.Cosh
+    mindspore.ops.Digamma
     mindspore.ops.Div
     mindspore.ops.DivNoNan
     mindspore.ops.Einsum
@@ -351,6 +354,7 @@ Reduction Operator
     mindspore.ops.ArgMaxWithValue
     mindspore.ops.Argmin
     mindspore.ops.ArgMinWithValue
+    mindspore.ops.EuclideanNorm
     mindspore.ops.ReduceAll
     mindspore.ops.ReduceAny
     mindspore.ops.ReduceMax
@@ -472,6 +476,8 @@ Array Operation
     mindspore.ops.DepthToSpace
     mindspore.ops.DiagPart
     mindspore.ops.DType
+    mindspore.ops.Eig
+    mindspore.ops.Expand
     mindspore.ops.ExpandDims
     mindspore.ops.FFTWithSize
     mindspore.ops.FloatStatus
