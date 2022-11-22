@@ -35,6 +35,7 @@ mindspore.Tensor
     mindspore.Tensor.amax
     mindspore.Tensor.amin
     mindspore.Tensor.any
+    mindspore.Tensor.angle
     mindspore.Tensor.approximate_equal
     mindspore.Tensor.arccos
     mindspore.Tensor.arccosh

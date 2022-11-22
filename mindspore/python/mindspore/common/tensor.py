@@ -1035,6 +1035,13 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('all')(keep_dims)(self, axis)
 
+    def angle(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.angle`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('angle')(self)
+
     def any(self, axis=(), keep_dims=False):
         """
         Check any tensor element along a given axis evaluate to True.

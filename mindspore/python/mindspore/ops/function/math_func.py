@@ -62,6 +62,7 @@ from mindspore.ops.operations.math_ops import (
     InplaceUpdateV2,
     Igamma,
     Igammac,
+    Angle,
 )
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
@@ -114,6 +115,7 @@ transpose_ = P.Transpose()
 # Private Operation Functions.
 #####################################
 addn_ = P.AddN()
+angle_ = Angle()
 log_ = P.Log()
 floor_ = P.Floor()
 logical_not_ = P.LogicalNot()
@@ -377,6 +379,34 @@ def addcmul(input_data, x1, x2, value):
          [ 4.  7. 10.]]
     """
     return _get_cache_prim(P.Addcmul)()(input_data, x1, x2, value)
+
+
+def angle(x):
+    """
+    Returns the element-wise argument of a complex tensor.
+    The elements in input are considered to be complex numbers of the form a+bj, where a is the real part and b
+    is the imaginary part. The argument returned by this function is of the form atan2(b,a).
+
+    Args:
+        x (Tensor) - The input tensor. types: complex64, complex128.
+
+    Returns:
+        Tensor, has the float32 or float64 type and the same shape as input.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If the dtype of input is not one of: complex64, complex128.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
+        >>> output = ops.angle(input)
+        >>> print(output)
+        [1.7607845 1.0899091]
+    """
+    return angle_(x)
 
 
 def exp2(x):
@@ -7309,6 +7339,7 @@ __all__ = [
     'addbmm',
     'addcdiv',
     'addcmul',
+    'angle',
     'argmin',
     'arccosh',
     'arcsin',
