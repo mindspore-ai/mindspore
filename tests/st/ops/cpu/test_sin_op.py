@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import numpy as np
 import pytest
 
@@ -20,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import operations as P
+from mindspore.train.serialization import export
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -52,3 +54,31 @@ def test_sin():
     print(output)
     expect = np.sin(np_array)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_sin_onnx():
+    """
+    Feature: test sin op in cpu
+    Description: test the ops onnx export
+    Expectation: expect correct result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float32')
+    input_x = Tensor(np_array)
+    net = NetSin()
+    ms_output = net(input_x)
+    file = 'sin.onnx'
+    export(net, input_x, file_name=file, file_format="ONNX")
+    assert os.path.exists(file)
+
+    import onnxruntime as ort
+    import onnx
+    onnx_model = onnx.load_model(file)
+    sess = ort.InferenceSession(onnx_model.SerializeToString())
+    input_name = sess.get_inputs()[0].name
+    result = sess.run([], {input_name: np_array})
+    assert np.allclose(list(ms_output)[0].asnumpy(), result[0])
