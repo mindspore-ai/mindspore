@@ -68,7 +68,13 @@ bool CheckValueType(const AnfNodePtr &input_node, size_t inputs_num) {
 }
 
 static bool CheckStridedSlice(const CNodePtr &cnode) {
-  if (!common::AnfAlgo::HasNodeAttr(kAttrStrides, cnode)) {
+  // check stride[-1] != 1
+  if (common::AnfAlgo::HasNodeAttr(kAttrStrides, cnode)) {
+    auto strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrStrides);
+    if (!strides.empty() && strides[strides.size() - 1] <= 0) {
+      return false;
+    }
+  } else {
     auto inputs = cnode->inputs();
     const size_t kInputNum = 5;
     if (inputs.size() == kInputNum + IntToSize(1)) {
@@ -81,7 +87,6 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
       return CheckValueType(input_node, inputs.size());
     }
   }
-
   return true;
 }
 
