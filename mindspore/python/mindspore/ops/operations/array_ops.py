@@ -5922,9 +5922,9 @@ class Range(PrimitiveWithCheck):
     def infer_value(self, start_value, limit_value, delat_value):
         """Infer the value of input for Range."""
         if start_value is not None and limit_value is not None and delat_value is not None:
-            start = np.asscalar(start_value.asnumpy())
-            limit = np.asscalar(limit_value.asnumpy())
-            delat = np.asscalar(delat_value.asnumpy())
+            start = start_value.asnumpy()
+            limit = limit_value.asnumpy()
+            delat = delat_value.asnumpy()
             return Tensor(np.arange(start, limit, delat), dtype=start_value.dtype)
         return None
 
