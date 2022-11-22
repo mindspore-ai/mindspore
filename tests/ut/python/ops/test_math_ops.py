@@ -451,6 +451,16 @@ class HypotFunc(nn.Cell):
         return y
 
 
+class NanSumFunc(nn.Cell):
+    def __init__(self):
+        super(NanSumFunc, self).__init__()
+        self.nansum = ops.function.math_func.nansum
+
+    def construct(self, x, axes):
+        y = self.nansum(x, axes)
+        return y
+
+
 class HeavisideFunc(nn.Cell):
     def __init__(self):
         super(HeavisideFunc, self).__init__()
@@ -881,6 +891,10 @@ test_case_math_ops = [
         'block': RemainderNet(),
         'desc_inputs': [Tensor(np.array([-1.0, 5.0, 6.0]), ms.float32), Tensor(np.array([3.0, 2.0, 3.0]), ms.float32)],
         'skip': ['backward']}),
+    ('NanSum', {
+        'block': NanSumFunc(),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float32)), int(0)],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float32))]}),
 ]
 
 test_case_lists = [test_case_math_ops]
