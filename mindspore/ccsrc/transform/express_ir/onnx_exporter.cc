@@ -1249,6 +1249,8 @@ class OnnxExporter {
                           onnx::GraphProto *graph_proto);
   void ExportPrimFloorMod(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
                           onnx::GraphProto *graph_proto);
+  void ExportPrimSort(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                      onnx::GraphProto *graph_proto);
   void ExportMergeConv(const FuncGraphPtr &func_graph, const CNodePtr &node,
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeGemm(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -3477,6 +3479,64 @@ void OnnxExporter::ExportPrimFloorMod(const FuncGraphPtr &, const CNodePtr &node
   }
 }
 
+void OnnxExporter::ExportPrimSort(const FuncGraphPtr &, const CNodePtr &node,
+                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+
+  auto x_input = node->input(kOneNum);
+  auto x_input_name = GetNodeInputName(x_input, node_map_ptr, graph_proto);
+  auto x_input_shape = dyn_cast<abstract::Shape>(x_input->Shape())->shape();
+
+  auto axis_attr = GetOpAttribute<int64_t>(node, "axis");
+  auto descending_attr = GetOpAttribute<bool>(node, "descending");
+
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_name(node_name + "TopK");
+  node_proto->set_op_type("TopK");
+  node_proto->add_input(x_input_name);
+
+  onnx::TensorProto *k_initializer_proto = graph_proto->add_initializer();
+  auto k_input_name = "k";
+  k_initializer_proto->set_name(k_input_name);
+  k_initializer_proto->add_dims(static_cast<int64_t>(1));
+  k_initializer_proto->set_data_type(GetOnnxDataType(kNumberTypeInt64));
+  int64_t k_index = axis_attr;
+  if (axis_attr < 0) {
+    k_index += SizeToLong(x_input_shape.size());
+  }
+  if (k_index > SizeToLong(x_input_shape.size()) - 1 || k_index < 0) {
+    MS_LOG(EXCEPTION) << "Invalid axis value: " << axis_attr;
+  }
+  int64_t k_value = x_input_shape[k_index];
+  k_initializer_proto->add_int64_data(k_value);
+  node_proto->add_input(k_input_name);
+
+  node_proto->add_output(MakeOutputName(node_name, kZeroNum));
+  auto indices_output_name = MakeOutputName(node_name, kOneNum);
+  auto indices_cast_name = indices_output_name + "_cast";
+  node_proto->add_output(indices_cast_name);
+  AddCastOp(indices_cast_name, indices_output_name, onnx::TensorProto_DataType_INT32, graph_proto);
+
+  onnx::AttributeProto *axis_attr_proto = node_proto->add_attribute();
+  axis_attr_proto->set_name("axis");
+  axis_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  axis_attr_proto->set_i(axis_attr);
+
+  onnx::AttributeProto *largest_attr_proto = node_proto->add_attribute();
+  largest_attr_proto->set_name("largest");
+  largest_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  if (descending_attr) {
+    largest_attr_proto->set_i(kOneNum);
+  } else {
+    largest_attr_proto->set_i(kZeroNum);
+  }
+
+  onnx::AttributeProto *sorted_attr_proto = node_proto->add_attribute();
+  sorted_attr_proto->set_name("sorted");
+  sorted_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  sorted_attr_proto->set_i(1);
+}
+
 void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   using ExportFunc = std::function<void(OnnxExporter *, const FuncGraphPtr &, const CNodePtr &,
@@ -3529,6 +3589,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimAtan2, &OnnxExporter::ExportPrimAtan2},
     {prim::kPrimFloorDiv, &OnnxExporter::ExportPrimFloorDiv},
     {prim::kPrimFloorMod, &OnnxExporter::ExportPrimFloorMod},
+    {prim::kPrimSort, &OnnxExporter::ExportPrimSort},
   };
 
   auto iter = std::find_if(export_table.begin(), export_table.end(),
