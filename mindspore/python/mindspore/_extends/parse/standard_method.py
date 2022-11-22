@@ -3462,6 +3462,39 @@ def split(input_x, axis=0, output_num=1):
     return F.split(input_x, axis, output_num)
 
 
+def tensor_split(x, indices_or_sections, axis=0):
+    """
+    Splits a tensor into multiple sub-tensors along the given axis.
+    Refer to :func:`mindspore.ops.tensor_split` for more detail.
+    """
+    return F.tensor_split(x, indices_or_sections, axis=axis)
+
+
+def vsplit(x, indices_or_sections):
+    """
+    Splits a tensor into multiple sub-tensors vertically. It is equivalent to `ops.tensor_split` with :math:`axis=0` .
+    Refer to :func:`mindspore.ops.vsplit` for more detail.
+    """
+    return F.vsplit(x, indices_or_sections)
+
+
+def hsplit(x, indices_or_sections):
+    """
+    Splits a tensor into multiple sub-tensors horizontally. It is equivalent to `ops.tensor_split` with :math:`axis=1` .
+    Refer to :func:`mindspore.ops.hsplit` for more detail.
+    """
+    return F.hsplit(x, indices_or_sections)
+
+
+def dsplit(x, indices_or_sections):
+    """
+    Splits a tensor into multiple sub-tensors along the 3rd axis.
+    It is equivalent to `ops.tensor_split` with :math:`axis=2` .
+    Refer to :func:`mindspore.ops.tensor_split` for more detail.
+    """
+    return F.dsplit(x, indices_or_sections)
+
+
 def xlogy(x, y):
     r"""
     Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.

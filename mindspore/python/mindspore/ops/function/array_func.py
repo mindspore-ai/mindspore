@@ -4476,6 +4476,275 @@ def split(input_x, axis=0, output_num=1):
     return split_(input_x)
 
 
+@constexpr
+def _canonicalize_axis(axis, ndim):
+    """
+    Check axes are within the number of dimensions of tensor x and normalize the negative axes.
+
+    Args:
+        axis (Union[int, tuple(int), list(int)]): Axes of the tensor.
+        ndim (int): The number of dimensions of the tensor.
+    Return:
+        Axis (Union[int, tuple(int)]). If input is integer, return integer, else tuple.
+    """
+    if isinstance(axis, int):
+        axis = [axis]
+    for ax in axis:
+        if not isinstance(ax, int):
+            raise TypeError(f'axis should be integers, not {type(ax)}')
+        if not -ndim <= ax < ndim:
+            raise ValueError(f'axis {ax} is out of bounds for array of dimension {ndim}')
+
+    def canonicalizer(ax):
+        return ax + ndim if ax < 0 else ax
+
+    axis = tuple([canonicalizer(ax) for ax in axis])
+    if all(axis.count(el) <= 1 for el in axis):
+        return tuple(sorted(axis)) if len(axis) > 1 else axis[0]
+    raise ValueError(f"duplicate axis in {axis}.")
+
+
+@constexpr
+def _list_comprehensions(obj, item=None, return_tuple=False):
+    """
+    Generates a new list or tuple by list comprehension.
+
+    Args:
+        obj (Union[int, list, tuple]):
+            If integer, it will be the length of the returned tuple/list.
+        item: The value to be filled. Default: None.
+            If None, the values in the new list/tuple are the same as obj
+            or range(obj) when obj is integer.
+        return_tuple(bool): If true, returns tuple, else returns list.
+
+    Returns:
+        List or tuple.
+    """
+    lst = obj
+    if isinstance(obj, int):
+        lst = np.arange(obj)
+    if item is None:
+        res = list(lst)
+    else:
+        res = [item for _ in lst]
+    if return_tuple:
+        return tuple(res)
+    return res
+
+
+@constexpr
+def _tuple_setitem(tup, idx, value):
+    """
+    Returns a tuple with specified `idx` set to `value`.
+    """
+    tup = list(tup)
+    tup[idx] = value
+    return tuple(tup)
+
+
+def _tensor_split_sub_tensors(x, indices_or_sections, axis):
+    """
+    Splits the input tensor `x` into multiple sub-tensors along the axis according to the given `indices_or_sections`
+    with type of tuple or list.
+    """
+    length_along_dim = x.shape[axis]
+    indices_or_sections = tuple(indices_or_sections)
+    indices_or_sections += (length_along_dim,)
+    sub_tensors = []
+    strides = _list_comprehensions(x.ndim, 1, True)
+    begin = _list_comprehensions(x.ndim, 0)
+    end = _list_comprehensions(x.shape)
+    for i, idx in enumerate(indices_or_sections):
+        begin[axis] = 0 if i == 0 else indices_or_sections[i - 1]
+        end[axis] = idx
+        sliced_tensor = strided_slice(x, tuple(begin), tuple(end), strides)
+        sub_tensors.append(sliced_tensor)
+    return sub_tensors
+
+
+def _tensor_split_sub_int(x, indices_or_sections, axis):
+    """
+    Splits the input tensor `x` into multiple sub-tensors along the axis according to the given `indices_or_sections`
+    with type if int.
+    """
+    arr_shape = x.shape
+    length_along_dim = arr_shape[axis]
+    if indices_or_sections > length_along_dim:
+        res = P.Split(axis, length_along_dim)(x)
+        indices_or_sections_n = [i for i in np.arange(length_along_dim, indices_or_sections)]
+        res2 = _tensor_split_sub_tensors(x, indices_or_sections_n, axis)
+        res += tuple(res2)[1:]
+    elif length_along_dim % indices_or_sections == 0:
+        res = P.Split(axis, indices_or_sections)(x)
+    else:
+        num_long_tensor = length_along_dim % indices_or_sections
+        num_short_tensor = indices_or_sections - num_long_tensor
+        length1 = num_long_tensor * (length_along_dim // indices_or_sections + 1)
+        length2 = length_along_dim - length1
+        start1 = _list_comprehensions(rank(x), 0, True)
+        size1 = _tuple_setitem(arr_shape, axis, length1)
+        start2 = _tuple_setitem(start1, axis, length1)
+        size2 = _tuple_setitem(arr_shape, axis, length2)
+        res = P.Split(axis, num_long_tensor)(tensor_slice(x, start1, size1)) + \
+              P.Split(axis, num_short_tensor)(tensor_slice(x, start2, size2))
+    return res
+
+
+def tensor_split(x, indices_or_sections, axis=0):
+    """
+    Splits a tensor into multiple sub-tensors along the given axis.
+
+    Args:
+        x (Tensor): A Tensor to be divided.
+        indices_or_sections (Union[int, tuple(int), list(int)]):
+            If `indices_or_sections` is an integer n, input is split into
+            n sections along dimension `axis`. If input is divisible by n along dimension `axis`, each section will be
+            of equal size, :math:`input.size(axis) / n` . If input is not divisible by n, the sizes of the first
+            :math:`input.size(axis) % n` sections will have size :math:`input.size(axis) // n + 1` , and the rest will
+            have size :math:`input.size(axis) // n` .
+            If `indices_or_sections` is a list or tuple of ints, then input is split
+            along dimension `axis` at each of the indices in the list, tuple. For instance,
+            :math:`indices_or_sections=[2, 3]` and :math:`axis=0` would result in the tensors :math:`x[:2]` ,
+            :math:`x[2:3]` , and :math:`x[3:]` .
+        axis (int): The axis along which to split. Default: 0.
+
+    Returns:
+        A tuple of sub-tensors.
+
+    Raises:
+        TypeError: If argument `x` is not Tensor.
+        TypeError: If argument `axis` is not Tensor.
+        ValueError: If argument `axis` is out of range of :math:`[-x.ndim, x.ndim)` .
+        TypeError: If each element in 'indices_or_sections' is not integer.
+        TypeError: If argument `indices_or_sections` is not int, tuple(int) or list(int).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(9).astype("float32")
+        >>> output = ops.tensor_split(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Float32,
+          value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32,
+          value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32,
+          value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
+
+    _ = validator.check_axis_type(axis, True, False, False)
+    axis = _canonicalize_axis(axis, x.ndim)
+    if isinstance(indices_or_sections, int):
+        res = _tensor_split_sub_int(x, indices_or_sections, axis)
+
+    elif isinstance(indices_or_sections, (list, tuple)):
+        for item in indices_or_sections:
+            if not isinstance(item, int):
+                raise TypeError(f"Each element in 'indices_or_sections' should be integer, but got {type(item)}.")
+        res = _tensor_split_sub_tensors(x, indices_or_sections, axis)
+    else:
+        raise TypeError(f"Type of Argument `indices_or_sections` should be integer, tuple(int) or list(int), " \
+                        f"but got {type(indices_or_sections)}")
+
+    return res
+
+
+def vsplit(x, indices_or_sections):
+    """
+    Splits a tensor into multiple sub-tensors vertically.
+    It is equivalent to `ops.tensor_split` with :math:`axis=0` .
+
+    Args:
+        x (Tensor): A Tensor to be divided.
+        indices_or_sections (Union[int, tuple(int), list(int)]): See argument in :func:`mindspore.ops.tensor_split`.
+
+    Returns:
+        A list of sub-tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(9).reshape((3, 3)).astype('float32')
+        >>> output = ops.vsplit(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[1, 3], dtype=Float32,
+          value=[[ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]]),
+         Tensor(shape=[1, 3], dtype=Float32,
+          value=[[ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]]),
+         Tensor(shape=[1, 3], dtype=Float32,
+          value=[[ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]]))
+    """
+    return tensor_split(x, indices_or_sections, 0)
+
+
+def hsplit(x, indices_or_sections):
+    """
+    Splits a tensor into multiple sub-tensors horizontally.
+    It is equivalent to `ops.tensor_split` with :math:`axis=1` .
+
+    Args:
+        x (Tensor): A Tensor to be divided.
+        indices_or_sections (Union[int, tuple(int), list(int)]): See argument in :func:`mindspore.ops.tensor_split`.
+
+    Returns:
+        A list of sub-tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(6).reshape((2, 3)).astype('float32')
+        >>> output = ops.hsplit(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[2, 1], dtype=Float32,
+        value=[[ 0.00000000e+00],
+               [ 3.00000000e+00]]),
+        Tensor(shape=[2, 1], dtype=Float32,
+        value=[[ 1.00000000e+00],
+               [ 4.00000000e+00]]),
+        Tensor(shape=[2, 1], dtype=Float32,
+        value=[[ 2.00000000e+00],
+               [ 5.00000000e+00]]))
+    """
+    return tensor_split(x, indices_or_sections, 1)
+
+
+def dsplit(x, indices_or_sections):
+    """
+    Splits a tensor into multiple sub-tensors along the 3rd axis.
+    It is equivalent to `ops.tensor_split` with :math:`axis=2` .
+
+    Args:
+        x (Tensor): A Tensor to be divided.
+        indices_or_sections (Union[int, tuple(int), list(int)]): See argument in :func:`mindspore.ops.tensor_split`.
+
+    Returns:
+        A list of sub-tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = np.arange(6).reshape((1, 2, 3)).astype('float32')
+        >>> output = ops.dsplit(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[1, 2, 1], dtype=Float32,
+        value=[[[ 0.00000000e+00],
+                [ 3.00000000e+00]]]),
+        Tensor(shape=[1, 2, 1], dtype=Float32,
+        value=[[[ 1.00000000e+00],
+                [ 4.00000000e+00]]]),
+        Tensor(shape=[1, 2, 1], dtype=Float32,
+        value=[[[ 2.00000000e+00],
+                [ 5.00000000e+00]]]))
+    """
+    return tensor_split(x, indices_or_sections, 2)
+
+
 def max(x, axis=0, keep_dims=False):
     """
     Calculates the maximum value with the corresponding index.
@@ -5278,6 +5547,10 @@ __all__ = [
     'broadcast_to',
     'col2im',
     'split',
+    'tensor_split',
+    'vsplit',
+    'hsplit',
+    'dsplit',
     "index_fill",
     'max',
     'argmax',

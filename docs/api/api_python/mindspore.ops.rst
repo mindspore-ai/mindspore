@@ -372,6 +372,7 @@ Array操作
     mindspore.ops.diag
     mindspore.ops.diagonal
     mindspore.ops.dyn_shape
+    mindspore.ops.dsplit
     mindspore.ops.expand
     mindspore.ops.expand_dims
     mindspore.ops.flip
@@ -382,6 +383,7 @@ Array操作
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
+    mindspore.ops.hsplit
     mindspore.ops.index_add
     mindspore.ops.index_fill
     mindspore.ops.inplace_add
@@ -428,6 +430,7 @@ Array操作
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tensor_scatter_elements
+    mindspore.ops.tensor_split
     mindspore.ops.tile
     mindspore.ops.top_k
     mindspore.ops.transpose
@@ -442,6 +445,7 @@ Array操作
     mindspore.ops.unsorted_segment_sum
     mindspore.ops.unsqueeze
     mindspore.ops.unstack
+    mindspore.ops.vsplit
     mindspore.ops.where
 
 类型转换
