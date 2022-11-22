@@ -31,6 +31,7 @@ from mindspore.train._utils import _check_lineage_value, _check_to_numpy, _make_
 from mindspore.train.summary._summary_adapter import get_event_file_name, package_graph_event
 from mindspore.train.summary._writer_pool import WriterPool
 from mindspore.train.summary.enums import PluginEnum
+from mindspore.ops.operations import debug_ops
 
 # for the moment, this lock is for caution's sake,
 # there are actually no any concurrences happening.
@@ -58,11 +59,33 @@ def _cache_summary_tensor_data(summary):
 
 
 def _get_summary_tensor_data():
+    """Get summary tensor data."""
     global SUMMARY_TENSOR_CACHE
     with _summary_lock:
         data = SUMMARY_TENSOR_CACHE
         SUMMARY_TENSOR_CACHE = {}
         return data
+
+
+def _record_summary_tensor_data():
+    """Record summary tensor data."""
+    summary_list = list()
+    for data in debug_ops.SUMMARY_TENSOR_CACHE:
+        if data[0] == "TensorSummary":
+            summary_op_name = data[1] + "[:Tensor]"
+        elif data[0] == "ScalarSummary":
+            summary_op_name = data[1] + "[:Scalar]"
+        elif data[0] == "ImageSummary":
+            summary_op_name = data[1] + "[:Image]"
+        elif data[0] == "HistogramSummary":
+            summary_op_name = data[1] + "[:Histogram]"
+        summary_value = {
+            "name": summary_op_name,
+            "data": data[2]
+        }
+        summary_list.append(summary_value)
+    _cache_summary_tensor_data(summary_list)
+    debug_ops.SUMMARY_TENSOR_CACHE = []
 
 
 def process_export_options(export_options):
@@ -414,6 +437,8 @@ class SummaryRecord:
         atexit.register(self.close)
 
     def _add_summary_tensor_data(self):
+        """Add summary tensor data."""
+        _record_summary_tensor_data()
         summary_data = _get_summary_tensor_data()
         if not summary_data:
             logger.debug(f'No summary data bubbled from the network.')

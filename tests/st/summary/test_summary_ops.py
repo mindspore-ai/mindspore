@@ -26,7 +26,7 @@ from mindspore.train import Loss
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Model
-from mindspore.train.summary.summary_record import _get_summary_tensor_data
+from mindspore.train.summary.summary_record import _get_summary_tensor_data, _record_summary_tensor_data
 from tests.st.summary.dataset import create_mnist_dataset
 from tests.security_utils import security_off_wrap
 
@@ -75,12 +75,11 @@ class LeNet5(nn.Cell):
 class TestSummaryOps:
     """Test summary ops."""
     base_summary_dir = ''
+    device_id = int(os.getenv('DEVICE_ID', '0'))
 
     @classmethod
     def setup_class(cls):
         """Run before test this class."""
-        device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
-        context.set_context(mode=context.GRAPH_MODE, device_id=device_id)
         cls.base_summary_dir = tempfile.mkdtemp(suffix='summary')
 
     @classmethod
@@ -89,14 +88,15 @@ class TestSummaryOps:
         if os.path.exists(cls.base_summary_dir):
             shutil.rmtree(cls.base_summary_dir)
 
-    @pytest.mark.level1
+    @pytest.mark.level0
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
     @security_off_wrap
-    def test_summary_ops(self):
-        """Test summary operators."""
+    def test_graph_summary_ops(self):
+        """Test summary operators in GRAPH mode."""
+        context.set_context(mode=context.GRAPH_MODE, device_id=self.device_id)
         ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
         ds_train_iter = ds_train.create_dict_iterator()
         expected_data = next(ds_train_iter)['image'].asnumpy()
@@ -108,9 +108,37 @@ class TestSummaryOps:
         model.train(1, ds_train, dataset_sink_mode=False)
 
         summary_data = _get_summary_tensor_data()
-        image_data = summary_data['x[:Image]'].asnumpy()
-        tensor_data = summary_data['x[:Tensor]'].asnumpy()
-        x_fc3 = summary_data['x_fc3[:Scalar]'].asnumpy()
+        image_data = summary_data.get('x[:Image]').asnumpy()
+        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
+
+        assert np.allclose(expected_data, image_data)
+        assert np.allclose(expected_data, tensor_data)
+        assert not np.allclose(0, x_fc3)
+
+    @pytest.mark.level0
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_pynative_summary_ops(self):
+        """Test summary operators in PyNative mode."""
+        context.set_context(mode=context.PYNATIVE_MODE)
+        ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
+        ds_train_iter = ds_train.create_dict_iterator()
+        expected_data = next(ds_train_iter)['image'].asnumpy()
+
+        net = LeNet5()
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
+        model.train(1, ds_train, dataset_sink_mode=False)
+        _record_summary_tensor_data()
+        summary_data = _get_summary_tensor_data()
+        image_data = summary_data.get('x[:Image]').asnumpy()
+        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
 
         assert np.allclose(expected_data, image_data)
         assert np.allclose(expected_data, tensor_data)

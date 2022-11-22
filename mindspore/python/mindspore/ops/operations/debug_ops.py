@@ -15,7 +15,6 @@
 """debug_ops"""
 from types import FunctionType, MethodType
 
-from mindspore import context
 from mindspore import log as logger
 from mindspore._c_expression import security
 from mindspore._c_expression import Tensor as Tensor_
@@ -26,16 +25,17 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops.primitive import prim_attr_register, Primitive, PrimitiveWithInfer
 
 
-def _check_mode(class_name):
-    """Check for PyNative mode."""
-    mode = context.get_context('mode')
-    if mode == context.PYNATIVE_MODE:
-        raise RuntimeError(f"For '{class_name}', the operator does not support PyNative mode.")
+SUMMARY_TENSOR_CACHE = []
+
+
+def _cache_summary_data(op_name, define_name, tensor):
+    """Cache summary tensor data."""
+    global SUMMARY_TENSOR_CACHE
+    SUMMARY_TENSOR_CACHE.append([op_name, define_name, tensor])
 
 
 def _check_summary_param(name, value, class_name):
     """Checks the name and value is valid for summary."""
-    _check_mode(class_name)
     n_type = name['dtype']
     n_value = name['value']
     validator.check_value_type('name', n_type, [type(mstype.string)], class_name)
@@ -106,7 +106,7 @@ class ScalarSummary(Primitive):
         self.add_prim_attr("side_effect_io", True)
 
     def __call__(self, *args):
-        raise RuntimeError(f"PyNative not support Operator '{self.__class__.__name__}'")
+        _cache_summary_data(self.name, args[0], args[1])
 
 
 class ImageSummary(PrimitiveWithInfer):
@@ -167,7 +167,7 @@ class ImageSummary(PrimitiveWithInfer):
         return SUMMARY_RETURN_VALUE
 
     def __call__(self, *args):
-        raise RuntimeError(f"PyNative not support Operator '{self.__class__.__name__}'")
+        _cache_summary_data(self.name, args[0], args[1])
 
 
 class TensorSummary(Primitive):
@@ -223,7 +223,7 @@ class TensorSummary(Primitive):
         self.add_prim_attr("side_effect_io", True)
 
     def __call__(self, *args):
-        raise RuntimeError(f"PyNative not support Operator '{self.__class__.__name__}'")
+        _cache_summary_data(self.name, args[0], args[1])
 
 
 class HistogramSummary(PrimitiveWithInfer):
@@ -289,7 +289,7 @@ class HistogramSummary(PrimitiveWithInfer):
         return SUMMARY_RETURN_VALUE
 
     def __call__(self, *args):
-        raise RuntimeError(f"PyNative not support Operator '{self.__class__.__name__}'")
+        _cache_summary_data(self.name, args[0], args[1])
 
 
 class InsertGradientOf(PrimitiveWithInfer):
