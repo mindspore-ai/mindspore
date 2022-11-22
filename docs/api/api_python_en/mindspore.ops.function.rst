@@ -185,6 +185,7 @@ Element-by-Element Operations
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor
     mindspore.ops.ceil
+    mindspore.ops.copysign
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.deg2rad
