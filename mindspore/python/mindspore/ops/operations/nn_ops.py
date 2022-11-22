@@ -7708,6 +7708,7 @@ class Conv3D(Primitive):
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         validator.check_value_type("group", group, (int,), self.name)
+        validator.check_int_range(group, 1, out_channel, Rel.INC_BOTH, "group", self.name)
         self.group = group
         self.add_prim_attr('groups', self.group)
         self.add_prim_attr('offset_x', 0)
