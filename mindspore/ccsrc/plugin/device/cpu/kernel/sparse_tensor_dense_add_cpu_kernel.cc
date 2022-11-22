@@ -35,6 +35,7 @@ using complex128 = std::complex<double>;
 bool SparseTensorDenseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseAddOutputsNum, kernel_name_);
@@ -64,9 +65,6 @@ int SparseTensorDenseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   x2_shape_ = x2_shape;
   size_t x1_rank = static_cast<size_t>(shape_shape[0]);
   size_t x2_rank = x2_shape_.size();
-  if (IsDynamic(values_shape) || IsDynamic(indices_shape) || IsDynamic(shape_shape) || IsDynamic(x2_shape)) {
-    return KRET_OK;
-  }
   if (indices_shape.size() != kIndicesShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'x1_indices' must be a " << kIndicesShapeSize
                       << "-D Tensor, but got " << indices_shape.size() << "-D";

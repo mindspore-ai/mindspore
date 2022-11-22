@@ -29,11 +29,9 @@ const size_t kOutputNum = 1;
 
 bool RGBToHSVCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   input_dtype = inputs.at(kIndex0)->GetDtype();
-  if (input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat64 && input_dtype != kNumberTypeFloat16) {
-    MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the type of inputs are invalid";
-  }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -50,7 +48,7 @@ int RGBToHSVCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     return ret;
   }
 
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
   input0_elements_nums_ = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
     input0_elements_nums_ *= static_cast<size_t>(input_shape[i]);

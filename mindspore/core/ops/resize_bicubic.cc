@@ -38,7 +38,9 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-
+  auto max_length_ptr = primitive->GetAttr("max_length");
+  MS_EXCEPTION_IF_NULL(max_length_ptr);
+  const int64_t kMaxLen = GetValue<int64_t>(max_length_ptr);
   auto align_corners_ptr = primitive->GetAttr("align_corners");
   bool align_corners = GetValue<bool>(align_corners_ptr);
   auto half_pixel_centers_ptr = primitive->GetAttr("half_pixel_centers");
@@ -66,15 +68,19 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   }
 
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto input1_value = input_args[1]->BuildValue();
-    if (!input1_value->isa<tensor::Tensor>()) {
-      MS_LOG(EXCEPTION) << "For ResizeArea, the inputs[1] must be a tensor, but got: " << input1_value->ToString()
-                        << ".";
+    auto value_ptr = input_args[kInputIndex1]->BuildValue();
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    auto size_value = CheckAndConvertUtils::CheckTensorIntValue("size", value_ptr, prim_name);
+    const int64_t kNumZero = 0;
+    for (size_t i = 0; i < size_value.size(); ++i) {
+      CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
     }
-    auto input1_shape_ptr = static_cast<int32_t *>(input1_value->cast<tensor::TensorPtr>()->data_c());
-    output_shape[kInputIndex1] = input1_shape_ptr[kInputIndex0];
-    output_shape[kInputIndex2] = input1_shape_ptr[kInputIndex1];
+    output_shape[kInputIndex1] = size_value[kInputIndex0];
+    output_shape[kInputIndex2] = size_value[kInputIndex1];
+    (void)CheckAndConvertUtils::CheckInteger("the number of elements of output", SizeToLong(SizeOf(output_shape)),
+                                             kLessEqual, kMaxLen, prim_name);
   }
+
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
