@@ -1418,6 +1418,13 @@ def inv(x):
     return F.inv(x)
 
 
+def inverse(x):
+    """
+    Computes the inverse of a square matrix.
+    """
+    return F.inverse(x)
+
+
 def invert(x):
     """
     Flips all bits of input tensor element-wise.

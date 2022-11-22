@@ -287,6 +287,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"is_floating_point", std::string("is_floating_point")},            // is_floating_point()
        {"is_signed", std::string("is_signed")},                            // is_signed()
        {"inv", std::string("inv")},                                        // inv()
+       {"inverse", std::string("inverse")},                                // inverse()
        {"invert", std::string("invert")},                                  // invert()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()

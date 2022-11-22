@@ -216,6 +216,7 @@ from .math_func import (
     inplace_sub,
     inplace_update,
     inv,
+    inverse,
     invert,
     minimum,
     renorm,

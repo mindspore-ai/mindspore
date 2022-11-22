@@ -2123,6 +2123,36 @@ def inv(x):
     return inv_(x)
 
 
+def inverse(x):
+    """
+    Compute the inverse of the input matrix.
+
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated. Input `x` must be at least two dimensions, and the size of
+          the last two dimensions must be the same size.
+
+    Returns:
+        Tensor, has the same type and shape as input `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the size of the last two dimensions of `x` is not the same.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[1., 2.], [3., 4.]], ms.float32)
+        >>> print(ops.inverse(x))
+        [[-2.   1. ]
+         [ 1.5 -0.5]]
+    """
+    if x.dtype in mstype.int_type:
+        _get_cache_prim(P.Cast)()(x, mstype.float64)
+    return _get_cache_prim(P.MatrixInverse)()(x)
+
+
 def invert(x):
     r"""
     Flips all bits of input tensor element-wise.
@@ -7484,6 +7514,7 @@ __all__ = [
     'bitwise_or',
     'bitwise_xor',
     'inv',
+    'inverse',
     'invert',
     'erf',
     'erfc',

@@ -1419,7 +1419,7 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
         raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
                          f"at the same time, but got {output_ratio} and {output_size} .")
     if len(input_x.shape) == 3:
-        input_x.expend_dims(axis=0)
+        input_x = input_x.expand_dims(axis=0)
     if _random_samples is None:
         _random_samples = Tensor([[[0, 0]]], mstype.float32)
     if output_ratio is not None:
@@ -1517,8 +1517,6 @@ def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=N
     if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
         raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
                          f"at the same time, but got {output_ratio} and {output_size} .")
-    if len(input_x.shape) == 4:
-        input_x.expend_dims(axis=0)
     if _random_samples is None:
         _random_samples = Tensor([[[0, 0, 0]]], mstype.float32)
     if output_ratio is not None:
