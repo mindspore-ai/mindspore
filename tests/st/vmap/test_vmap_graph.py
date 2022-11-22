@@ -14,6 +14,7 @@
 # ============================================================================
 """test vmap in graph mode"""
 
+import platform
 import pytest
 import numpy as np
 import mindspore.nn as nn
@@ -414,27 +415,30 @@ def test_vmap_with_celllist_input():
             out = self.ref_b + self.ref_a
             return out
 
-    m1 = AssignNet()
-    m2 = AssignNet()
-    m3 = AssignNet()
-    mm = nn.CellList([m1, m2, m3])
-    replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+    if platform.system() == "Linux":
+        m1 = AssignNet()
+        m2 = AssignNet()
+        m3 = AssignNet()
+        mm = nn.CellList([m1, m2, m3])
+        replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
 
-    output = F.vmap(mm, 0)(replace_tensor)
+        output = F.vmap(mm, 0)(replace_tensor)
 
-    expect_res1 = Tensor([[1, 3, 5], [4, 6, 8], [7, 9, 11]], mstype.float32)
-    expect_res2 = Tensor([1, 2, 3], mstype.float32)
-    expect_res3 = Tensor([4, 5, 6], mstype.float32)
-    expect_res4 = Tensor([7, 8, 9], mstype.float32)
-    expect_res5 = Tensor([0, 1, 2], mstype.float32)
+        expect_res1 = Tensor([[1, 3, 5], [4, 6, 8], [7, 9, 11]], mstype.float32)
+        expect_res2 = Tensor([1, 2, 3], mstype.float32)
+        expect_res3 = Tensor([4, 5, 6], mstype.float32)
+        expect_res4 = Tensor([7, 8, 9], mstype.float32)
+        expect_res5 = Tensor([0, 1, 2], mstype.float32)
 
-    assert np.allclose(output.asnumpy(), expect_res1.asnumpy())
-    assert np.allclose(m1.ref_a.asnumpy(), expect_res2.asnumpy())
-    assert np.allclose(m2.ref_a.asnumpy(), expect_res3.asnumpy())
-    assert np.allclose(m3.ref_a.asnumpy(), expect_res4.asnumpy())
-    assert np.allclose(m1.ref_b.asnumpy(), expect_res5.asnumpy())
-    assert np.allclose(m2.ref_b.asnumpy(), expect_res5.asnumpy())
-    assert np.allclose(m3.ref_b.asnumpy(), expect_res5.asnumpy())
+        assert np.allclose(output.asnumpy(), expect_res1.asnumpy())
+        assert np.allclose(m1.ref_a.asnumpy(), expect_res2.asnumpy())
+        assert np.allclose(m2.ref_a.asnumpy(), expect_res3.asnumpy())
+        assert np.allclose(m3.ref_a.asnumpy(), expect_res4.asnumpy())
+        assert np.allclose(m1.ref_b.asnumpy(), expect_res5.asnumpy())
+        assert np.allclose(m2.ref_b.asnumpy(), expect_res5.asnumpy())
+        assert np.allclose(m3.ref_b.asnumpy(), expect_res5.asnumpy())
+    else:
+        pass
 
 
 @pytest.mark.level0
@@ -491,15 +495,18 @@ def test_vmap_with_celllist_nested_grad():
             out = self.ref_a + replace_tensor
             return out
 
-    m1 = AssignNet()
-    m2 = AssignNet()
-    m3 = AssignNet()
-    mm = nn.CellList([m1, m2, m3])
-    vmap_net = F.vmap(mm)
+    if platform.system() == "Linux":
+        m1 = AssignNet()
+        m2 = AssignNet()
+        m3 = AssignNet()
+        mm = nn.CellList([m1, m2, m3])
+        vmap_net = F.vmap(mm)
 
-    replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+        replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
 
-    output_grad = F.grad(vmap_net)(replace_tensor)
+        output_grad = F.grad(vmap_net)(replace_tensor)
 
-    expect_res = Tensor([[2, 2, 2], [2, 2, 2], [2, 2, 2]], mstype.float32)
-    assert np.allclose(output_grad.asnumpy(), expect_res.asnumpy())
+        expect_res = Tensor([[2, 2, 2], [2, 2, 2], [2, 2, 2]], mstype.float32)
+        assert np.allclose(output_grad.asnumpy(), expect_res.asnumpy())
+    else:
+        pass
