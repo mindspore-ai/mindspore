@@ -43,11 +43,11 @@ abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &, const std::ve
   std::vector<int64_t> values =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
 
-  const int64_t rank_x = dense_shape[0];
   const int kInputNoBatch = 2;
   const int kInputWithBatch = 3;
   const int kZero = 0;
   const int kOne = 1;
+
   if (!IsDynamicRank(dense_shape) && dense_shape.size() != kOne) {
     MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_dense_shape should be 1-D, but got " << dense_shape.size()
                              << "-D.";
@@ -68,6 +68,7 @@ abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &, const std::ve
     MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_values should be 1-D, but got " << values.size() << "-D.";
   }
 
+  const int64_t rank_x = dense_shape[0];
   if (rank_x > kZero && rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
     MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, the shape of x_dense_shape must be (2,) or (3,), but got ("
                              << rank_x << ",).";
