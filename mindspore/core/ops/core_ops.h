@@ -398,6 +398,7 @@ constexpr auto kSparseSegmentSumWithNumSegments = "SparseSegmentSumWithNumSegmen
 constexpr auto kSparseSegmentSqrtN = "SparseSegmentSqrtN";
 constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
 constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
+constexpr auto kRaggedTensorToSparse = "RaggedTensorToSparse";
 
 // Sparse Grad ops
 constexpr auto kSparseAddGrad = "SparseAddGrad";
@@ -1201,6 +1202,7 @@ GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtN, std::make_shared<Primitive>("Spa
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNGrad, std::make_shared<Primitive>("SparseSegmentSqrtNGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNWithNumSegments,
          std::make_shared<Primitive>("SparseSegmentSqrtNWithNumSegments"));
+GVAR_DEF(PrimitivePtr, kPrimRaggedTensorToSparse, std::make_shared<Primitive>(kRaggedTensorToSparse));
 
 // Sparse Grad ops
 GVAR_DEF(PrimitivePtr, kPrimSparseAddGrad, std::make_shared<Primitive>(kSparseAddGrad));

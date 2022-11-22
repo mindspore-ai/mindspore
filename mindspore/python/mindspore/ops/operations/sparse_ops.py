@@ -2668,3 +2668,67 @@ class SparseCross(Primitive):
         validator.check_value_type("out_type", out_type, [mstype.Type], self.name)
         validator.check_value_type("internal_type", internal_type, [mstype.Type], self.name)
         validator.check_value_type("num_buckets", num_buckets, [int], self.name)
+
+
+class RaggedTensorToSparse(Primitive):
+    r"""
+    Converts a RaggedTensor into a SparseTensor with the same values.
+
+    Args:
+        Tsplits(mindspore.dtype): A required attribute, the type of the `rt_nested_splits`. Default: `int64`.
+
+    Inputs:
+        - **rt_nested_splits** (list(Tensor)) - A list of at least 1 `Tensor` objects with the same
+          type in: `int64`, `int32`. The row_splits for the RaggedTensor.
+          Ragged splits is in ascending order, first value of splits must be 0 and final value of splits
+          must equal with the length of `rt_dense_values`.
+        - **rt_dense_values** (Tensor) - A `Tensor`. The flat_values for the RaggedTensor. The rank of values
+          must more than 0.
+
+    Outputs:
+        - **sparse_indices** (Tensor) - A `Tensor` of type int64. Contains the indices of the output
+          sparse tensor.
+        - **sparse_values** (Tensor) - A `Tensor`. Has the same type as rt_dense_values.
+          Contains the values of the output sparse tensor.
+        - **sparse_dense_shape** (Tensor) - A `Tensor` of type int64. Contains the dense shape of the
+          output sparse tensor.
+
+    Raises:
+        TypeError: If the type of `Tsplits`, `rt_nested_splits` or `rt_dense_values` is not support.
+        RuntimeError: If the order of `rt_nested_splits` is not support.
+        RuntimeError: If the first value of `rt_nested_splits` is not 0.
+        RuntimeError: If the final value of `rt_nested_splits` is not equal with the length of
+            `rt_dense_values`.
+        ValueError: If the rank of `rt_dense_values` is not more than 0.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.sparse_ops import RaggedTensorToSparse
+        >>> rt_nested_splits = Tensor([0, 3, 3, 5, 6], mstype.int64)
+        >>> rt_dense_values = Tensor([1, 2, 3, 4, 5, 6], mstype.int32)
+        >>> rt_nested_splits_list = []
+        >>> rt_nested_splits_list.append(rt_nested_splits)
+        >>> Tsplits = mstype.int64
+        >>> ragged_tensor_to_sparse = RaggedTensorToSparse(Tsplits)
+        >>> out = ragged_tensor_to_sparse(rt_nested_splits_list, rt_dense_values)
+        >>> print(out)
+        (Tensor(shape=[6, 2], dtype=Int64, value=
+        [[0, 0],
+         [0, 1],
+         [0, 2],
+         [2, 0],
+         [2, 1],
+         [3, 0]]),
+         Tensor(shape=[6], dtype=Int32, value= [1, 2, 3, 4, 5, 6]),
+         Tensor(shape=[2], dtype=Int64, value= [4, 3]))
+    """
+    @prim_attr_register
+    def __init__(self, Tsplits):
+        """Initialize RaggedTensorToSparse."""
+        self.init_prim_io_names(inputs=['rt_nested_splits', 'rt_dense_values'],
+                                outputs=['sparse_indices', 'sparse_values', 'sparse_dense_shape'])
+        validator.check_value_type("Tsplits", Tsplits, [mstype.Type], self.name)
+        valid_values = {mstype.int64, mstype.int32}
+        validator.check_type_name("Tsplits", Tsplits, valid_values, self.name)

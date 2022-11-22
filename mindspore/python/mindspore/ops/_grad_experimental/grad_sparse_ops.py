@@ -14,6 +14,7 @@
 # ============================================================================
 
 """bprop primitives"""
+from mindspore.ops.operations.sparse_ops import RaggedTensorToSparse
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseReorder
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
@@ -30,6 +31,8 @@ from mindspore.ops.operations.sparse_ops import SparseSlice
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseDiv
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
+from mindspore.ops.operations._inner_ops import IsSubClass
+import mindspore as ms
 from mindspore.ops.operations import _map_tensor_ops
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
@@ -44,6 +47,7 @@ from mindspore import context
 
 # Unused parameters are placeholders.
 dyn_shape_op = P.TensorShape()
+is_sub_class = IsSubClass()
 
 
 @bprop_getters.register(SparseDenseCwiseMul)
@@ -332,6 +336,31 @@ def get_bprop_sparse_slice(self):
         grad_op = sparse_slice_grad(dout[1], indices, start, out[0])
         result_all = (zeros_like(indices), grad_op, zeros_like(shape), zeros_like(start), zeros_like(size))
         return result_all
+
+    return bprop
+
+
+@bprop_getters.register(RaggedTensorToSparse)
+def get_bprop_ragged_tensor_to_sparse(self):
+    """Grad definition for `RaggedTensorToSparse` operation."""
+    shape = P.Shape()
+    reshape = P.Reshape()
+
+    def bprop(rt_nested_splits, rt_dense_values, out, dout):
+        ragged_values_shape = shape(rt_dense_values)
+        ragged_values_grad = reshape(dout[1], ragged_values_shape)
+
+        if is_sub_class(F.typeof(rt_nested_splits), ms.list_):
+            split = []
+            for i in enumerate(rt_nested_splits):
+                split.append(zeros_like(i))
+            all_d = (split, ragged_values_grad)
+            return all_d
+        split = ()
+        for i in enumerate(rt_nested_splits):
+            split = split + (zeros_like(i),)
+        all_d = (split, ragged_values_grad)
+        return all_d
 
     return bprop
 
