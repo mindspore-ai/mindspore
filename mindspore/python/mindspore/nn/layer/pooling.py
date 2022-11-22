@@ -1226,7 +1226,7 @@ class AdaptiveMaxPool3d(Cell):
         ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
