@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "plugin/device/cpu/optimizer/reg_cpu_const_input_to_attr.h"
+#include "plugin/device/cpu/optimizer/print_value_type.h"
 #include "plugin/device/cpu/hal/hardware/cpu_somas.h"
 #ifdef ENABLE_AKG
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
@@ -195,6 +196,7 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   pm->AddPass(std::make_shared<opt::InsertTensorMoveForCommunication>());
   pm->AddPass(std::make_shared<opt::AddTrainingAttr>());
+  pm->AddPass(std::make_shared<opt::PrintValueType>("print_value_type"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();

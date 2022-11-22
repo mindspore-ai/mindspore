@@ -91,3 +91,24 @@ def test_print_op_functional(mode):
     net = PrintFunc()
     x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
     net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_print_op_tuple():
+    """
+    Feature: cpu Print op.
+    Description: test Print with tuple input.
+    Expectation: success.
+    """
+    class PrintTupleNet(nn.Cell):
+        def construct(self, x):
+            tuple_x = tuple((1, 2, 3, 4, 5))
+            ops.print_("tuple_x:", tuple_x, x, "print success!")
+            return x
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = PrintTupleNet()
+    x = Tensor([6, 7, 8, 9, 10])
+    net(x)

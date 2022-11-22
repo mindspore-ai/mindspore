@@ -1113,6 +1113,9 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
     case kNumberTypeComplex128:
       bytes = sizeof(double) * complex_factor;
       break;
+    case kObjectTypeString:
+      bytes = sizeof(std::string);
+      break;
     case kNumberTypeInt4:
     default:
       MS_LOG(EXCEPTION) << "Invalid types for UnitSizeInBytes : " << TypeIdToString(t);
