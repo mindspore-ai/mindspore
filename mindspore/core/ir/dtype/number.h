@@ -219,7 +219,7 @@ class MS_CORE_API Complex : public Number {
 
   std::string ToString() const override { return GetTypeName("Complex"); }
   std::string ToReprString() const override { return GetTypeName("complex"); }
-  std::string DumpText() const override { return std::string("C") + std::to_string(nbits()); }
+  std::string DumpText() const override { return std::string("Complex") + std::to_string(nbits()); }
 };
 
 GVAR_DEF(TypePtr, kBool, std::make_shared<Bool>());

@@ -102,9 +102,9 @@ class _MathBinaryOp(_BinaryOp):
                 (mstype.float64, mstype.complex128): mstype.tensor_type(mstype.complex128),
             }
             if (x_dtype.element_type(), y_dtype.element_type()) not in type_infer_dict.keys():
-                raise TypeError('Complex math binary op expecting Tensor [complex64, complex64],'
-                                + '[complex64, float32], [float32, complex64], [complex128, complex128],'
-                                + '[complex128, float64], [float64, complex128],'
+                raise TypeError('Complex math binary op expecting Tensor [Complex64, Complex64],'
+                                + '[Complex64, Float32], [Float32, Complex64], [Complex128, Complex128],'
+                                + '[Complex128, Float64], [Float64, Complex128],'
                                 + f'but got : [{format(x_dtype)},{format(y_dtype)}].')
             return type_infer_dict.get((x_dtype.element_type(), y_dtype.element_type()))
 
