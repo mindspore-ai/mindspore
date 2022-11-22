@@ -20,10 +20,6 @@ from mindspore import jit, context, Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_1():
     """
     Feature: list pop.
@@ -41,10 +37,6 @@ def test_list_pop_1():
     assert res_y == 4
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_2():
     """
     Feature: list pop.
@@ -62,10 +54,6 @@ def test_list_pop_2():
     assert res_y == 3
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_3():
     """
     Feature: list pop.
@@ -83,10 +71,6 @@ def test_list_pop_3():
     assert res_y == 2
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_4():
     """
     Feature: list pop.
@@ -105,10 +89,6 @@ def test_list_pop_4():
         print("res_y:", res_y)
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_5():
     """
     Feature: list pop.
@@ -127,10 +107,6 @@ def test_list_pop_5():
         print("res_y:", res_y)
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_6():
     """
     Feature: list pop.
@@ -149,10 +125,6 @@ def test_list_pop_6():
         print("res_y:", res_y)
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_7():
     """
     Feature: list pop.
@@ -173,10 +145,6 @@ def test_list_pop_7():
     assert res_y == 9
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_8():
     """
     Feature: list pop.
@@ -194,10 +162,6 @@ def test_list_pop_8():
     assert res_y == Tensor([3])
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_9():
     """
     Feature: list pop.
@@ -215,10 +179,6 @@ def test_list_pop_9():
     assert res_y == Tensor([3])
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_pop_type_error():
     """
     Feature: list pop.

@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_list_clear """
-import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
 
@@ -21,11 +20,6 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_clear_1():
     """
     Feature: list clear.
@@ -41,11 +35,6 @@ def test_list_clear_1():
     assert np.all(out.asnumpy() == ())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_clear_2():
     """
     Feature: list clear.
@@ -62,11 +51,6 @@ def test_list_clear_2():
     assert np.all(out.asnumpy() == ())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_clear_3():
     """
     Feature: list clear.
@@ -84,11 +68,6 @@ def test_list_clear_3():
     assert np.all(out.asnumpy() == ())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_clear_4():
     """
     Feature: list clear.

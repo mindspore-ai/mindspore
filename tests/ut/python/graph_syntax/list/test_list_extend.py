@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_list_extend """
-import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
 
@@ -21,11 +20,6 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_extend_1():
     """
     Feature: list extend.
@@ -42,11 +36,6 @@ def test_list_extend_1():
     assert np.all(out == (1, 2, 3, 4, 5, 6, 7))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_extend_2():
     """
     Feature: list extend.
@@ -66,11 +55,6 @@ def test_list_extend_2():
     assert np.all(out == (1, 2, 3, 4, ('bb', '2', 3), 20))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_extend_3():
     """
     Feature: list extend.
@@ -93,11 +77,6 @@ def test_list_extend_3():
         20, 4, Tensor(1), (1, 2), Tensor(1)))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_extend_4():
     """
     Feature: list extend.

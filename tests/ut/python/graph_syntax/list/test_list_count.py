@@ -20,11 +20,6 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_1():
     """
     Feature: list count.
@@ -40,11 +35,6 @@ def test_list_count_1():
     assert out == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_2():
     """
     Feature: list count.
@@ -60,11 +50,6 @@ def test_list_count_2():
     assert out == 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_3():
     """
     Feature: list count.
@@ -81,11 +66,6 @@ def test_list_count_3():
     assert out == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_4():
     """
     Feature: list count.
@@ -103,11 +83,6 @@ def test_list_count_4():
     assert out == 2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_5():
     """
     Feature: list count.
@@ -124,11 +99,6 @@ def test_list_count_5():
     assert out == 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_6():
     """
     Feature: list count.
@@ -145,11 +115,6 @@ def test_list_count_6():
     assert out == 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_7():
     """
     Feature: list count.
@@ -167,11 +132,6 @@ def test_list_count_7():
     assert out == 2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_8():
     """
     Feature: list count.
@@ -189,11 +149,6 @@ def test_list_count_8():
     assert out == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_9():
     """
     Feature: list count.
@@ -211,11 +166,6 @@ def test_list_count_9():
     assert out == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_10():
     """
     Feature: list count.
@@ -236,11 +186,6 @@ def test_list_count_10():
     assert "The list count not support variable scene now. The count data is Tensor type." in str(error_info)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_list_count_11():
     """
     Feature: list count.
