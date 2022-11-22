@@ -325,7 +325,7 @@ class Cell(Cell_):
         cells_compile_cache.pop(id(self), None)
         try:
             if self.compile_cache:
-                _cell_graph_executor.del_net_res(self.compile_cache)
+                _cell_graph_executor.del_net_res(self, self.compile_cache)
         except AttributeError:
             raise AttributeError(f"The '{type(self).__name__}' object does not inherit attribute from 'cell'. "
                                  f"Please use 'super().__init__()'.")
@@ -448,7 +448,7 @@ class Cell(Cell_):
 
     def _hook_fn_registered(self):
         '''Hook function in graph mode'''
-        #Check super().__init__() in graph mode.
+        # Check super().__init__() in graph mode.
         try:
             if self._enable_forward_pre_hook or self._enable_forward_hook or self._enable_backward_hook:
                 return True
@@ -840,7 +840,6 @@ class Cell(Cell_):
             This interface is deprecated.
         """
         logger.warning("'load_parameter_slice' function is deprecated.")
-
 
     def set_parallel_input_with_inputs(self, *inputs):
         """
