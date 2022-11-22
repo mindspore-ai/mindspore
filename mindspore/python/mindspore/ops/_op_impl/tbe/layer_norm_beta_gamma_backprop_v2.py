@@ -23,6 +23,7 @@ layer_norm_beta_gamma_backprop_v2_op_info = TBERegOp("LayerNormBetaGammaBackprop
     .compute_cost(10) \
     .kernel_name("layer_norm_beta_gamma_backprop_v2") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
     .attr("shape_gamma", "required", "listInt", "all") \
     .input(0, "dy", False, "required", "all") \
     .input(1, "res_for_gamma", False, "required", "all") \
