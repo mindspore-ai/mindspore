@@ -375,7 +375,7 @@ class COOTensor(COOTensor_):
             >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
             >>> x_shape = (3, 3)
             >>> coo_tensor = COOTensor(x_indices.transpose(), x_values, x_shape)
-            >>> res = coo_tensor.coalesce(x_indices, x_values, x_shape)
+            >>> res = coo_tensor.coalesce()
             >>> print(res)
             COOTensor(shape=[3, 3], dtype=Float32, indices=Tensor(shape=[2, 2], dtype=Int64,
                 value=[[0 1] [1 2]]), values=Tensor(shape=[2], dtype=Float32, value=[6.00000000e+00 4.00000000e+00]))
