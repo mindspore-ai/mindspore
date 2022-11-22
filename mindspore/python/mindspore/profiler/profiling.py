@@ -145,7 +145,6 @@ class Profiler:
         ...     # Profiler end
         ...     profiler.analyse()
     """
-    SIZE_LIMIT = 500 * 1024 * 1024  # 500MB
 
     _hwts_output_filename_target = "output_format_data_hwts_"
     _opcompute_output_filename_target = "output_op_compute_time_"
@@ -190,6 +189,8 @@ class Profiler:
         self._rank_size = 0
         self._rank_id = 0
         self._ascend_profiler = None
+        self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
+        self._parallel_strategy = True
         _environment_check()
         # default aicore_metrics type is ArithmeticUtilization
         self._aicore_metrics_id = 0
@@ -596,7 +597,7 @@ class Profiler:
             "profile_memory": profile_memory,
             "hccl": profiler_communication,
             "l2_cache": self._l2_cache,
-            "parallel_strategy": "on",
+            "parallel_strategy": "on" if self._parallel_strategy_enable else "off",
         }
 
         return profiling_options
@@ -690,7 +691,7 @@ class Profiler:
         timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
                                                     self._rank_size, context.get_context("mode"))
         timeline_analyser.init_pynative_timeline()
-        timeline_analyser.write_timeline(Profiler.SIZE_LIMIT)
+        timeline_analyser.write_timeline(self._timeline_size_limit_byte)
         timeline_analyser.write_timeline_summary()
 
     def _ascend_analyse(self):
@@ -974,7 +975,7 @@ class Profiler:
         try:
             timeline_generator = CpuTimelineGenerator(self._output_path, context.get_context("mode"))
             timeline_generator.init_timeline()
-            timeline_generator.write_timeline(Profiler.SIZE_LIMIT)
+            timeline_generator.write_timeline(self._timeline_size_limit_byte)
             timeline_generator.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
@@ -1070,7 +1071,7 @@ class Profiler:
         min_cycle_counter = min(aicpu_parser.min_cycle_counter, optime_parser.min_cycle_counter)
         timeline_analyser.init_timeline(all_reduce_info, framework_info, aicpu_info,
                                         min_cycle_counter, source_path)
-        timeline_analyser.write_timeline(Profiler.SIZE_LIMIT)
+        timeline_analyser.write_timeline(self._timeline_size_limit_byte)
         timeline_analyser.write_timeline_summary()
 
     def _generate_timeline(self, reduce_op_type):
@@ -1079,7 +1080,7 @@ class Profiler:
             timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id, self._rank_size,
                                                       context.get_context("mode"))
             timeline_generator.init_timeline(reduce_op_type)
-            self._timeline_meta = timeline_generator.write_timeline(Profiler.SIZE_LIMIT)
+            self._timeline_meta = timeline_generator.write_timeline(self._timeline_size_limit_byte)
             timeline_generator.write_timeline_summary()
             return timeline_generator
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
@@ -1310,6 +1311,17 @@ class Profiler:
         if not isinstance(self._data_process_enable, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter data_process_enable must be bool, "
                             f"but got type {type(self.data_process_enable)}")
+
+        timeline_limit_size = kwargs.pop("timeline_limit_size", 500)
+        if not isinstance(timeline_limit_size, int):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter timeline_limit_size must be int, "
+                            f"but got type {type(self.timeline_limit_size)}")
+        self._timeline_size_limit_byte = timeline_limit_size * 1024 * 1024
+
+        self._parallel_strategy_enable = kwargs.pop("parallel_strategy_enable", True)
+        if not isinstance(self._parallel_strategy_enable, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter parallel_strategy_enable must be bool, "
+                            f"but got type {type(self._parallel_strategy_enable)}")
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""
