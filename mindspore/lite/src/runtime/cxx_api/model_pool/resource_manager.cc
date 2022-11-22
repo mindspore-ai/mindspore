@@ -204,6 +204,10 @@ Status ResourceManager::DistinguishPhysicalAndLogicalByNuma(std::vector<std::vec
 }
 
 void InitWorkerThread::Destroy() {
+  if (model_worker_ != nullptr) {
+    predict_task_queue_->SetPredictTaskDone();
+    predict_task_queue_ = nullptr;
+  }
   std::unique_lock<std::mutex> l(mtx_init_);
   is_destroy_ = true;
   is_launch_ = true;

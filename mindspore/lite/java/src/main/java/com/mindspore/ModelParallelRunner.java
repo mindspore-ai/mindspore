@@ -68,6 +68,10 @@ public class ModelParallelRunner {
             rwLock.writeLock().unlock();
             return false;
         }
+        if (modelParallelRunnerPtr != 0L){
+            rwLock.writeLock().unlock();
+            return true;
+        }
         modelParallelRunnerPtr = this.init(modelPath, runnerConfig.getRunnerConfigPtr());
         rwLock.writeLock().unlock();
         return modelParallelRunnerPtr != 0L;
@@ -84,6 +88,10 @@ public class ModelParallelRunner {
         if (modelPath == null) {
             rwLock.writeLock().unlock();
             return false;
+        }
+        if (modelParallelRunnerPtr != 0L){
+            rwLock.writeLock().unlock();
+            return true;
         }
         modelParallelRunnerPtr = this.init(modelPath, 0L);
         rwLock.writeLock().unlock();
