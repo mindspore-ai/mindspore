@@ -179,7 +179,7 @@ int NetTrain::ReadInputFile() {
         return RET_ERROR;
       }
       auto tensor_data_size = cur_tensor.DataSize();
-      MS_ASSERT(tensor_byte_size != 0);
+      MS_ASSERT(tensor_data_size != 0);
       if (size == 0 || size % tensor_data_size != 0 || (batch_num_ != 0 && size / tensor_data_size != batch_num_)) {
         std::cerr << "Input binary file size error, required :N * " << tensor_data_size << ", in fact: " << size
                   << " ,file_name: " << file_name.c_str() << std::endl;

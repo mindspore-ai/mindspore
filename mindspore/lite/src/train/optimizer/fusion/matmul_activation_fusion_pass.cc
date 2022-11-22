@@ -21,9 +21,8 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "tools/common/meta_graph_utils.h"
+#include "src/train/optimizer/common/fusion_utils.h"
 namespace {
-constexpr int kNumMatchPathLen = 2;
-constexpr int kMatmulInputIndexSize = 3;
 constexpr std::string_view MatMulName = "MATMUL";
 constexpr std::string_view ActName = "ACTIVATION";
 }  // namespace
@@ -52,28 +51,23 @@ STATUS MatMulActivationFusionPass::DoFusion(
   MetaGraphT *graph, const std::string &pattern_name,
   const std::unordered_map<std::string, std::shared_ptr<Path>> &matched_path) {
   MS_CHECK_TRUE_RET(graph != nullptr, RET_NULL_PTR);
-  if (matched_path.size() != kNumMatchPathLen) {
+  if (matched_path.size() != opt::kMatchPathLenTwo) {
     MS_LOG(ERROR) << "MatMul-Activation-Fusion should have two NodeIndex in matchedPair";
     return RET_PARAM_INVALID;
   }
-  auto matmul_path_iter = matched_path.find(std::string(MatMulName));
-  MS_CHECK_TRUE_RET(matmul_path_iter != matched_path.end(), RET_ERROR);
-  auto &matmul_path = matmul_path_iter->second;
-  MS_CHECK_TRUE_RET(matmul_path != nullptr, RET_NULL_PTR);
-  auto act_path_iter = matched_path.find(std::string(ActName));
-  MS_CHECK_TRUE_RET(act_path_iter != matched_path.end(), RET_ERROR);
-  auto &act_path = act_path_iter->second;
-  MS_CHECK_TRUE_RET(act_path != nullptr, RET_NULL_PTR);
-  size_t matmul_index = matmul_path->nodeIdx;
-  MS_CHECK_TRUE_RET(matmul_index < graph->nodes.size(), RET_ERROR);
-  size_t act_index = act_path->nodeIdx;
-  MS_CHECK_TRUE_RET(act_index < graph->nodes.size(), RET_ERROR);
+
+  size_t matmul_index = 0;
+  auto ret = opt::GetMatchNodeIndex(graph, matched_path, std::string(MatMulName), &matmul_index);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "cannot get matmul_index");
   auto &matmul_node = graph->nodes.at(matmul_index);
-  MS_CHECK_TRUE_RET(matmul_node != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_MSG(matmul_node != nullptr, RET_NULL_PTR, "matmul_node is nullptr");
+  size_t act_index = 0;
+  ret = opt::GetMatchNodeIndex(graph, matched_path, std::string(ActName), &act_index);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "cannot get act_index");
   auto &act_node = graph->nodes.at(act_index);
-  MS_CHECK_TRUE_RET(act_node != nullptr, RET_NULL_PTR);
-  if (matmul_node->inputIndex.size() != kMatmulInputIndexSize ||
-      matmul_node->quantType == schema::QuantType_QUANT_ALL ||
+  MS_CHECK_TRUE_MSG(act_node != nullptr, RET_NULL_PTR, "act_node is nullptr");
+
+  if (matmul_node->quantType == schema::QuantType_QUANT_ALL ||
       matmul_node->quantType == schema::QuantType_QUANT_DYNAMIC) {
     MS_LOG(DEBUG) << "cannot fusion.";
     return RET_NO_CHANGE;
