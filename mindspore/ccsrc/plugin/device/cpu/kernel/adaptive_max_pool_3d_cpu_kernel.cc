@@ -27,41 +27,40 @@ namespace {
 
 namespace mindspore {
 namespace kernel {
-void AdaptiveMaxPool3DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  const size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  const size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, input number is " << input_num
-                      << ", but AdaptiveMaxPool3DCPUKernel needs " << kInputNum << " input.";
+bool AdaptiveMaxPool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
   }
-  if (output_num != kOutputNum) {
-    MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, output number is " << output_num
-                      << ", but AdaptiveMaxPool3DCPUKernel needs " << kOutputNum << " output.";
+  is_need_retrieve_output_shape_ = true;
+  return true;
+}
+
+int AdaptiveMaxPool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+    return ret;
   }
-  input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_num_dims_ = input_shape.size();
-  const size_t kNumDims4 = 4;
-  const size_t kNumDims5 = 5;
-  if (!(input_num_dims_ == kNumDims4 || input_num_dims_ == kNumDims5)) {
-    MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, input data dimensions should be equal to 4 or 5, but got "
-                      << input_num_dims_ << ".";
-  }
-  output_size_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (output_size_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, output size dimensions should be equal to 1, but got "
-                      << output_size_shape.size() << ".";
-  }
-  const size_t kOutputSizeElemNum = 3;
-  if (output_size_shape[0] != kOutputSizeElemNum) {
-    MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, output size elem number should be equal to 3, but got "
-                      << output_size_shape[0] << ".";
-  }
-  dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (AnfAlgo::GetInputDeviceDataType(kernel_node, 1) != kNumberTypeInt32) {
-    MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, output size dtype must be int32.";
-  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  outputs_ = outputs;
+  return KRET_OK;
+}
+
+void AdaptiveMaxPool3DCpuKernelMod::SyncData() {
+  outputs_[kIndex0]->SetShapeVector(output_shape_);
+  outputs_[kIndex1]->SetShapeVector(output_shape_);
 }
 
 std::vector<KernelAttr> AdaptiveMaxPool3DCpuKernelMod::GetOpSupport() {
@@ -128,9 +127,9 @@ bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
                                            const std::vector<AddressPtr> &outputs) {
   // Set Shape
   const size_t kInputNumDims5 = 5;
-  output_shape = {input_shape[0]};
+  output_shape_ = {input_shape_[0]};
   if (input_num_dims_ == kInputNumDims5) {
-    output_shape.push_back(input_shape[1]);
+    output_shape_.push_back(input_shape_[1]);
   }
   auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[1]->addr);
   const size_t kOutputSizeDims = 3;
@@ -140,12 +139,10 @@ bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
       MS_EXCEPTION(ValueError) << "For AdaptiveMaxPool3D, elements of output_size must be greater than 0, but got "
                                << elem << ".";
     }
-    output_shape.push_back(static_cast<size_t>(elem));
+    output_shape_.push_back(static_cast<size_t>(elem));
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape({dtype, kNumberTypeInt32}, {output_shape, output_shape},
-                                              node_wpt_.lock().get());
 
-  switch (dtype) {
+  switch (dtype_) {
     ADAPTIVE_MAX_POOL_3D_COMPUTE_CASE(kNumberTypeInt8, int8_t)
     ADAPTIVE_MAX_POOL_3D_COMPUTE_CASE(kNumberTypeInt16, int16_t)
     ADAPTIVE_MAX_POOL_3D_COMPUTE_CASE(kNumberTypeInt32, int32_t)
@@ -245,25 +242,25 @@ void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<A
   auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
   auto indices_data = reinterpret_cast<int32_t *>(outputs[1]->addr);
   const size_t kInputShapeDims4 = 4;
-  if (input_shape.size() == kInputShapeDims4) {
-    input_shape.insert(input_shape.begin(), 1);
-    output_shape.insert(output_shape.begin(), 1);
+  if (input_shape_.size() == kInputShapeDims4) {
+    input_shape_.insert(input_shape_.begin(), 1);
+    output_shape_.insert(output_shape_.begin(), 1);
   }
-  size_B_ = input_shape[dimB];
-  size_D_ = input_shape[dimD];
-  input_size_T_ = input_shape[dimT];
-  input_size_H_ = input_shape[dimH];
-  input_size_W_ = input_shape[dimW];
-  input_stride_B_ = ComputeStride(input_shape, dimB);
-  input_stride_D_ = ComputeStride(input_shape, dimD);
-  input_stride_T_ = ComputeStride(input_shape, dimT);
-  input_stride_H_ = ComputeStride(input_shape, dimH);
-  input_stride_W_ = ComputeStride(input_shape, dimW);
+  size_B_ = input_shape_[dimB];
+  size_D_ = input_shape_[dimD];
+  input_size_T_ = input_shape_[dimT];
+  input_size_H_ = input_shape_[dimH];
+  input_size_W_ = input_shape_[dimW];
+  input_stride_B_ = ComputeStride(input_shape_, dimB);
+  input_stride_D_ = ComputeStride(input_shape_, dimD);
+  input_stride_T_ = ComputeStride(input_shape_, dimT);
+  input_stride_H_ = ComputeStride(input_shape_, dimH);
+  input_stride_W_ = ComputeStride(input_shape_, dimW);
   const ptrdiff_t kIndexT = 3;
   const ptrdiff_t kIndexH = 2;
-  output_size_T_ = output_shape.cend()[-kIndexT];
-  output_size_H_ = output_shape.cend()[-kIndexH];
-  output_size_W_ = output_shape.cend()[-1];
+  output_size_T_ = output_shape_.cend()[-kIndexT];
+  output_size_H_ = output_shape_.cend()[-kIndexH];
+  output_size_W_ = output_shape_.cend()[-1];
 
   auto shard_adaptive_max_pool_3d = [&](int64_t start, int64_t end) {
     ComputeKernel(input_data, output_data, indices_data, start, end);

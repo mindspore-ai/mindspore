@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_MAX_POOL_3D_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_MAX_POOL_3D_CPU_KERNEL_H_
 
+#include <map>
 #include <algorithm>
 #include <iostream>
 #include <limits>
@@ -27,17 +28,24 @@
 
 namespace mindspore {
 namespace kernel {
-class AdaptiveMaxPool3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdaptiveMaxPool3DCpuKernelMod : public NativeCpuKernelMod {
  public:
   AdaptiveMaxPool3DCpuKernelMod() = default;
   ~AdaptiveMaxPool3DCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
+  void SyncData() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index);
@@ -45,9 +53,8 @@ class AdaptiveMaxPool3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void AdaptiveMaxPool3DCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void ComputeKernel(T *input_data, T *output_data, int32_t *indices_data, int64_t start_T, int64_t end_T);
-  std::vector<int64_t> input_shape;
-  std::vector<int64_t> output_size_shape;
-  std::vector<int64_t> output_shape;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
   const size_t dimB = 0;
   const size_t dimD = 1;
   const size_t dimT = 2;
@@ -69,8 +76,8 @@ class AdaptiveMaxPool3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   int64_t output_size_H_ = 0;
   int64_t output_size_W_ = 0;
   size_t input_num_dims_ = 0;
-  TypeId dtype;
-  CNodeWeakPtr node_wpt_;
+  TypeId dtype_;
+  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

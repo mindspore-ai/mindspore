@@ -30,15 +30,18 @@ constexpr int64_t kOutputSizeNumElem = 3;
 abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  const int64_t input_num_dims = SizeToLong(x_shape.size());
+  auto x_shape_ptr = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
   std::shared_ptr<mindspore::abstract::Shape> out_shape_ptr;
-  if (x_shape.size() == abstract::Shape::kDynamicRankLen && x_shape[0] == abstract::Shape::kShapeRankAny) {
+  if (x_shape_ptr->IsDimUnknown()) {
     ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
     out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  const int64_t input_num_dims = SizeToLong(x_shape.size());
+
   const int64_t output_size_dim = SizeToLong(output_size_shape.size());
   CheckAndConvertUtils::CheckInRange("rank of x", input_num_dims, kIncludeBoth, {kInputDims4, kInputDims5}, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of output_size", output_size_dim, kEqual, 1, prim_name);
