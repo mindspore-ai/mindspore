@@ -100,3 +100,4 @@ Utilities
     mindspore.dataset.vision.read_image
     mindspore.dataset.vision.write_file
     mindspore.dataset.vision.write_jpeg
+    mindspore.dataset.vision.write_png
