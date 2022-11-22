@@ -134,6 +134,47 @@ Sampler
     mindspore.dataset.SubsetSampler
     mindspore.dataset.WeightedRandomSampler
 
+Config
+-------
+
+The configuration module provides various functions to set and get the supported configuration parameters, and read a configuration file.
+
+.. autosummary::
+    :toctree: dataset
+    :nosignatures:
+    :template: classtemplate_dataset.rst
+
+    mindspore.dataset.config.set_sending_batches
+    mindspore.dataset.config.load
+    mindspore.dataset.config.set_seed
+    mindspore.dataset.config.get_seed
+    mindspore.dataset.config.set_prefetch_size
+    mindspore.dataset.config.get_prefetch_size
+    mindspore.dataset.config.set_num_parallel_workers
+    mindspore.dataset.config.get_num_parallel_workers
+    mindspore.dataset.config.set_numa_enable
+    mindspore.dataset.config.get_numa_enable
+    mindspore.dataset.config.set_monitor_sampling_interval
+    mindspore.dataset.config.get_monitor_sampling_interval
+    mindspore.dataset.config.set_callback_timeout
+    mindspore.dataset.config.get_callback_timeout
+    mindspore.dataset.config.set_auto_num_workers
+    mindspore.dataset.config.get_auto_num_workers
+    mindspore.dataset.config.set_enable_shared_mem
+    mindspore.dataset.config.get_enable_shared_mem
+    mindspore.dataset.config.set_enable_autotune
+    mindspore.dataset.config.get_enable_autotune
+    mindspore.dataset.config.set_autotune_interval
+    mindspore.dataset.config.get_autotune_interval
+    mindspore.dataset.config.set_auto_offload
+    mindspore.dataset.config.get_auto_offload
+    mindspore.dataset.config.set_enable_watchdog
+    mindspore.dataset.config.get_enable_watchdog
+    mindspore.dataset.config.set_fast_recovery
+    mindspore.dataset.config.get_fast_recovery
+    mindspore.dataset.config.set_multiprocessing_timeout_interval
+    mindspore.dataset.config.get_multiprocessing_timeout_interval
+
 Others
 -------
 
