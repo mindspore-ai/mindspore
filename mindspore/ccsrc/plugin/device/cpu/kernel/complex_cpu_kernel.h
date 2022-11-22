@@ -33,6 +33,10 @@ class ComplexCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> & /* outputs */) override;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -48,6 +52,13 @@ class ComplexCpuKernelMod : public NativeCpuKernelMod {
     std::function<bool(ComplexCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, ComplexLaunchFunc>> func_list_;
   ComplexLaunchFunc kernel_func_;
+
+  std::vector<int64_t> real_shape_;
+  std::vector<int64_t> image_shape_;
+  std::vector<int64_t> out_shape_;
+
+  std::vector<int64_t> real_bcast_;
+  std::vector<int64_t> image_bcast_;
 };
 }  // namespace kernel
 }  // namespace mindspore
