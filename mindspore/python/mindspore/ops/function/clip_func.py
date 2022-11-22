@@ -49,17 +49,22 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
         \end{array}\right.
 
     Note:
-        The data type of `x`, `clip_value_min` and `clip_value_max` should support implicit type conversion and cannot
-        be bool type.
+        - `clip_value_min` and `clip_value_max` cannot be None at the same time;
+        - When `clip_value_min` is None and `clip_value_max` is not None, the elements in Tensor
+          larger than `clip_value_max` will become `clip_value_max`;
+        - When `clip_value_min` is not None and `clip_value_max` is None, the elements in Tensor
+          smaller than `clip_value_min` will become `clip_value_min`;
+        - If `clip_value_min` is greater than `clip_value_max`, the value of all elements in Tensor
+          will be set to `clip_value_max`;
+        - The data type of `x`, `clip_value_min` and `clip_value_max` should support implicit type
+          conversion and cannot be bool type.
 
     Args:
           x (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of Tensor.
                                                          The shape of Tensor is :math:`(N,*)` where :math:`*` means,
                                                          any number of additional dimensions.
-          clip_value_min (Union(Tensor, float, int)): The minimum value. `clip_value_min` and `clip_value_max`
-                                                     cannot be all None. Default: None.
-          clip_value_max (Union(Tensor, float, int)): The maximum value. `clip_value_min` and `clip_value_max`
-                                                     cannot be all None. Default: None.
+          clip_value_min (Union(Tensor, float, int)): The minimum value. Default: None.
+          clip_value_max (Union(Tensor, float, int)): The maximum value. Default: None.
 
     Returns:
           (Union(Tensor, tuple[Tensor], list[Tensor])), a clipped Tensor or a tuple or a list of clipped Tensor.

@@ -1,7 +1,7 @@
 mindspore.ops.heaviside
 ========================
 
-.. py:function:: mindspore.ops.heaviside(x, values):
+.. py:function:: mindspore.ops.heaviside(x, values)
 
     计算输入中每​​个元素的 Heaviside 阶跃函数。公式定义如下：
 
@@ -14,7 +14,7 @@ mindspore.ops.heaviside
 
     参数：
         - **x** (Tensor) - 输入Tensor。需为实数类型。
-        - **values** (Tensor) - `x` 为零时填充的值。 `values` 可以被 `x` 广播。 `x` 需要与 'values' 数据类型相同。
+        - **values** (Tensor) - `x` 为零时填充的值。 `values` 可以被 `x` 广播。 `x` 需要与 `values` 数据类型相同。
 
     返回：
         Tensor，数据类型与输入 `x` 和 `values` 相同。
