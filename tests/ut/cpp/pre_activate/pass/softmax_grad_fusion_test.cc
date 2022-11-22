@@ -23,9 +23,19 @@ namespace mindspore {
 namespace opt {
 class TestSoftmaxGradFusionCpu : public BackendCommon {
  public:
-  TestSoftmaxGradFusionCpu() : get_py_fun_("gtest_input.pre_activate.softmax_grad_fusion_cpu", true) {}
-  ~TestSoftmaxGradFusionCpu() override = default;
+  TestSoftmaxGradFusionCpu() : get_py_fun_("gtest_input.pre_activate.softmax_grad_fusion_cpu", true) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    orig_deivce_ = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
+  }
+  ~TestSoftmaxGradFusionCpu() override {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    context->set_param<std::string>(MS_CTX_DEVICE_TARGET, orig_deivce_);
+  }
 
+  std::string orig_deivce_;
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
@@ -50,8 +60,8 @@ TEST_F(TestSoftmaxGradFusionCpu, test_softmax_grad_fusion_cpu) {
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_softmax_grad_fusion_cpu", "after");
-  // TODO(zuochuanyong) In cpu context, reduce sum not input to attr
-  // EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt
 }  // namespace mindspore

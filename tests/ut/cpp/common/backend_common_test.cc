@@ -92,14 +92,20 @@ std::shared_ptr<session::KernelGraph> BackendCommon::GetKernelGraph(const FuncGr
   auto kernel_graph = session->ConstructKernelGraph(applies, outs);
   kernel_graph->SetExecOrderByDefault();
 
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
-  optimizer->AddPassManager(pm);
-  optimizer->Optimize(kernel_graph);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device == kAscendDevice) {
+    auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    auto pm = std::make_shared<opt::PassManager>();
+    pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
+    optimizer->AddPassManager(pm);
+    optimizer->Optimize(kernel_graph);
 
-  MS_LOG(INFO) << "New Kernel Graph infos:";
-  PrintGraphNodeList(kernel_graph);
+    MS_LOG(INFO) << "New Kernel Graph infos:";
+    PrintGraphNodeList(kernel_graph);
+  }
+
   return kernel_graph;
 }
 
