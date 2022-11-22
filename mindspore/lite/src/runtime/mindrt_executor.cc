@@ -266,7 +266,7 @@ int MindrtExecutor::TransferGraphOutput() {
       }
       if (src_tensor->allocator() != nullptr) {
         dst_tensor->set_data(src_tensor->data());
-        dst_tensor->set_own_data(src_tensor->own_data());
+        dst_tensor->set_own_data(src_tensor->IsConst() ? false : src_tensor->own_data());
       } else {
         dst_tensor->set_data(src_tensor->data());
         src_tensor->set_data(nullptr);

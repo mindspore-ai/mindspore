@@ -114,11 +114,28 @@ class ShapeFusionPass {
                    [&](uint32_t idx) { return this->src_tensors_->at(idx); });
 #endif
   }
-  void FreeOutputTensorDataOfFusedShape() {
-#if !defined(RUNTIME_PASS_CLIP)
-    for (auto tensor : shape_fusion_outputs_) {
-      tensor->FreeData();
-      tensor->set_category(VAR);
+
+  void StoreStateAndReset() {
+#ifndef RUNTIME_PASS_CLIP
+    std::vector<lite::Tensor *> shape_fusion_outputs = shape_fusion_outputs_;
+    shape_fusion_outputs_.clear();
+    for (auto output : shape_fusion_outputs) {
+      if (output->IsConst()) {
+        shape_fusion_outputs_.push_back(output);
+        datas_.push_back(output->data());
+        output->set_data(nullptr);
+        output->set_category(VAR);
+      }
+    }
+#endif
+  }
+
+  void RestoreState() {
+#ifndef RUNTIME_PASS_CLIP
+    size_t count = std::min(shape_fusion_outputs_.size(), datas_.size());
+    for (size_t i = 0; i < count; ++i) {
+      shape_fusion_outputs_[i]->set_data(datas_[i]);
+      shape_fusion_outputs_[i]->set_category(CONST_TENSOR);
     }
 #endif
   }
@@ -141,6 +158,7 @@ class ShapeFusionPass {
  private:
   std::map<uint32_t, ShapeFusionMatrix> shape_fusion_matrices_;
   std::vector<lite::Tensor *> shape_fusion_outputs_;
+  std::vector<void *> datas_;
 #endif
   InnerContext *context_ = nullptr;
   LiteModel *lite_model_ = nullptr;

@@ -147,7 +147,7 @@ int ScatterNdUpdateCPUKernel::Run() {
   auto in_tensor = in_tensors().front();
   auto out_tensor = out_tensors().front();
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
-      in_tensor->own_data() == false || op_parameter_->is_train_session_) {
+      in_tensor->own_data() == false || in_tensor->IsConst() || op_parameter_->is_train_session_) {
     memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
   } else {
     out_tensor->FreeData();

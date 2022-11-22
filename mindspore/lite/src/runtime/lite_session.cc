@@ -1388,7 +1388,7 @@ void LiteSession::RuntimeAllocatorInitSubgraph() {
     for (auto kernel : kernel_list) {
       /* malloc for output */
       for (auto tensor : kernel->out_tensors()) {
-        if (tensor->allocator() != default_allocator) {
+        if (tensor->allocator() != default_allocator || tensor->IsConst()) {
           continue;
         }
         tensor->set_allocator(runtime_allocator_);

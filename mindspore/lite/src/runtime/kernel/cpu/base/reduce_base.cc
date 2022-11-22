@@ -215,7 +215,11 @@ int ReduceBaseCPUKernel::CopyInputToOutput() {
   out_tensor->FreeData();
   out_tensor->ResetRefCount();
   out_tensor->set_data(in_tensor->data());
-  out_tensor->set_own_data(in_tensor->own_data());
+  if (in_tensor->IsConst()) {
+    out_tensor->set_own_data(false);
+  } else {
+    out_tensor->set_own_data(in_tensor->own_data());
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

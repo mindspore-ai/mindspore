@@ -238,6 +238,10 @@ int Scheduler::InitKernels(std::vector<kernel::KernelExec *> &&dst_kernels) {
     for (auto node : subgraph_nodes) {
       for (auto *tensor : node->out_tensors()) {
         if (tensor->IsConst()) {
+          MS_CHECK_TRUE_MSG(node->op_parameter() != nullptr, RET_NULL_PTR, "node's op_parameter is invalid.");
+          if (node->op_parameter()->type_ == PrimType::PrimType_Inner_ShapeFusion) {
+            continue;
+          }
           MS_LOG(ERROR) << "Illegitimate kernel output tensor : " << tensor->tensor_name();
           continue;
         }
@@ -460,8 +464,7 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
       return ret;
     }
   }
-  shape_fusion_pass_->FreeOutputTensorDataOfFusedShape();
-
+  shape_fusion_pass_->StoreStateAndReset();
   ret = InitDelegateKernels(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
@@ -508,6 +511,7 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
     MS_LOG(ERROR) << "InitKernels failed.";
     return ret;
   }
+  shape_fusion_pass_->RestoreState();
   if (IsPrintDebug()) {
     MS_LOG(DEBUG) << "schedule kernels success.";
     for (auto subgraph : *dst_kernels) {
