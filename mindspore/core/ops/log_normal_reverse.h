@@ -35,8 +35,6 @@ class MIND_API LogNormalReverse : public BaseOperator {
 
 AbstractBasePtr LogNormalReverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args);
-
-using kPrimLogNormalReversePtr = std::shared_ptr<LogNormalReverse>;
 }  // namespace ops
 }  // namespace mindspore
 
