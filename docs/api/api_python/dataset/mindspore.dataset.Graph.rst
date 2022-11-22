@@ -9,13 +9,13 @@ mindspore.dataset.Graph
 
     参数：
         - **edges** (Union[list, numpy.ndarray]) - 以COO格式表示的边，shape为 [2, num_edges]。
-        - **node_feat** (dict, 可选) - 节点的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如'weight'等；value应该是shape为 [num_nodes, num_node_features] 的NumPy数组。
-        - **edge_feat** (dict, 可选) - 边的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如'weight'等；value应该是shape为 [num_edges, num_edge_features] 的NumPy数组。
+        - **node_feat** (dict, 可选) - 节点的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如 'weight'等；value应该是shape为 [num_nodes, num_node_features] 的NumPy数组。
+        - **edge_feat** (dict, 可选) - 边的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如 'weight'等；value应该是shape为 [num_edges, num_edge_features] 的NumPy数组。
         - **graph_feat** (dict, 可选) - 附加特征，不能分配给 `node_feat` 或者 `edge_feat` ，输入数据格式应该是dict，key是特征的类型，用字符串表示; value应该是NumPy数组，其shape可以不受限制。
         - **node_type** (Union[list, numpy.ndarray], 可选) - 节点的类型，每个元素都是字符串，表示每个节点的类型。如果未提供，则每个节点的默认类型为“0”。
         - **edge_type** (Union[list, numpy.ndarray], 可选) - 边的类型，每个元素都是字符串，表示每条边的类型。如果未提供，则每条边的默认类型为“0”。
         - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
-        - **working_mode** (str, 可选) - 设置工作模式，目前支持'local'/'client'/'server'。默认值：'local'。
+        - **working_mode** (str, 可选) - 设置工作模式，目前支持 'local'/'client'/'server'。默认值：'local'。
 
           - **local**：用于非分布式训练场景。
           - **client**：用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
@@ -34,7 +34,7 @@ mindspore.dataset.Graph
         - **TypeError** - 如果提供了 `node_type` 但不是list或NumPy array类型。
         - **TypeError** - 如果提供了 `edge_type` 但不是list或 NumPy array类型。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `working_mode` 参数取值不为'local', 'client' 或 'server'。
+        - **ValueError** - `working_mode` 参数取值不为 'local', 'client' 或 'server'。
         - **TypeError** - `hostname` 参数类型错误。
         - **ValueError** - `port` 参数不在范围[1024, 65535]内。
         - **ValueError** - `num_client` 参数不在范围[1, 255]内。

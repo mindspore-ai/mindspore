@@ -10,8 +10,8 @@ mindspore.dataset.SpeechCommandsDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'，'test'，'valid'或'all'。默认值：None，读取全部样本。
-          取值为'train'时将会读取84,843个训练样本，取值为'test'时将会读取11,005个测试样本，取值为'valid'时将会读取9,981个测试样本，取值为'all'时将会读取全部105,829个样本。默认值：None，读取全部样本。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'test'， 'valid'或 'all'。默认值：None，读取全部样本。
+          取值为 'train'时将会读取84,843个训练样本，取值为 'test'时将会读取11,005个测试样本，取值为 'valid'时将会读取9,981个测试样本，取值为 'all'时将会读取全部105,829个样本。默认值：None，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
@@ -59,7 +59,7 @@ mindspore.dataset.SpeechCommandsDataset
 
     **关于SpeechCommands数据集：**
 
-    SpeechCommands（语音命令）数据是用于有限词汇语音识别的数据集，包含105,829个'.wav'格式的音频样本。
+    SpeechCommands（语音命令）数据是用于有限词汇语音识别的数据集，包含105,829个 '.wav'格式的音频样本。
 
     以下是原始SpeechCommands的数据集结构。可以将数据集文件解压缩成此目录结构，并由MindSpore的API读取。
 

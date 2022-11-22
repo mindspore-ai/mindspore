@@ -8,7 +8,7 @@
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **annotation_file** (str) - 数据集标注JSON文件的路径。
-        - **task** (str, 可选) - 指定COCO数据的任务类型。支持的任务类型包括：'Detection'、'Stuff' 、'Panoptic'和'Keypoint'。默认值：'Detection'。
+        - **task** (str, 可选) - 指定COCO数据的任务类型。支持的任务类型包括：'Detection'、 'Stuff' 、 'Panoptic'和 'Keypoint'。默认值：'Detection'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，表2中会展示不同参数配置的预期行为。
@@ -70,7 +70,7 @@
         - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
     .. note::
-        - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列'_meta-filename'的前缀'_meta-'，
+        - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列 '_meta-filename'的前缀 '_meta-'，
           否则迭代得到的数据行中不会出现此额外数据列。
         - CocoDataset的 `sampler` 参数不支持指定PKSampler。
         - 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。

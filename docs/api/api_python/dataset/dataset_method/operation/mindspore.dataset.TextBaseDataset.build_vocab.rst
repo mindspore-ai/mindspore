@@ -14,7 +14,7 @@ mindspore.dataset.TextBaseDataset.build_vocab
           取值范围需满足：0 <= min_frequency <= max_frequency <= 单词总数，其中min_frequency、max_frequency的默认值分别设置为0、单词总数。
         - **top_k** (int) - 使用 `top_k` 个最常见的单词构建词汇表。假如指定了参数 `freq_range` ，则优先统计给定频率范围内的词汇，再根据参数 `top_k` 选取最常见的单词构建词汇表。
           如果 `top_k` 的值大于单词总数，则取所有单词构建词汇表。
-        - **special_tokens** (list[str]) - 指定词汇表的特殊标记（special token），如'[UNK]'、'[SEP]'。
+        - **special_tokens** (list[str]) - 指定词汇表的特殊标记（special token），如 '[UNK]'、 '[SEP]'。
         - **special_first** (bool) - 是否将参数 `special_tokens` 指定的特殊标记添加到词汇表的开头。如果为True则放到开头，否则放到词汇表的结尾。
 
     返回：

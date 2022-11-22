@@ -9,7 +9,7 @@ mindspore.dataset.SVHNDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'、'test'、'extra'或'all'。默认值：None，读取全部样本图片。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、 'test'、 'extra'或 'all'。默认值：None，读取全部样本图片。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：1，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。

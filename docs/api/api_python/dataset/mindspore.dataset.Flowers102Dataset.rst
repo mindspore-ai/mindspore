@@ -12,8 +12,8 @@ mindspore.dataset.Flowers102Dataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
-        - **task** (str, 可选) - 指定读取数据的任务类型，支持'Classification'和'Segmentation'。默认值：'Classification'。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'，'valid'，'test'或'all'。默认值：'all'，读取全部样本。
+        - **task** (str, 可选) - 指定读取数据的任务类型，支持 'Classification'和 'Segmentation'。默认值：'Classification'。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'valid'， 'test'或 'all'。默认值：'all'，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，所有图像样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：1。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。

@@ -9,9 +9,9 @@ mindspore.dataset.STL10Dataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'、'test'、'unlabeled'、'train+unlabeled'或'all'。
-          取值为'train'时将会读取5,000个样本，取值为'test'时将会读取8,000个样本，取值为'unlabeled'时将会读取100,000个样本，取值为'train+unlabeled'时将会读取10,5000个样本，
-          取值为'all'时将会读取全部类型的样本。默认值：None，读取全部样本图片。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、 'test'、 'unlabeled'、 'train+unlabeled'或 'all'。
+          取值为 'train'时将会读取5,000个样本，取值为 'test'时将会读取8,000个样本，取值为 'unlabeled'时将会读取100,000个样本，取值为 'train+unlabeled'时将会读取10,5000个样本，
+          取值为 'all'时将会读取全部类型的样本。默认值：None，读取全部样本图片。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。

@@ -6,14 +6,14 @@ mindspore.dataset.CityscapesDataset
     读取和解析Cityscapes数据集的源文件构建数据集。
 
     生成的数据集有两列 `[image, task]` 。
-    `image` 列的数据类型为uint8。`task` 列的数据类型根据参数 `task` 的值而定，当参数 `task` 取值为'polygon'，列的数据类型为string，其他取值下，列的数据类型为uint8。
+    `image` 列的数据类型为uint8。`task` 列的数据类型根据参数 `task` 的值而定，当参数 `task` 取值为 'polygon'，列的数据类型为string，其他取值下，列的数据类型为uint8。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集。当参数 `quality_mode` 取值为'fine'时，此参数可取值为'train'、'test'、'val'或'all'。
-          当参数 `quality_mode` 取值为'coarse'时，此参数可取值为'train'、'train_extra'、'val'或'all'。默认值：'train'，全部样本图片。
-        - **quality_mode** (str, 可选) - 指定数据集的质量模式，可取值为'fine'或'coarse'。默认值：'fine'。
-        - **task** (str, 可选) - 指定数据集的任务类型，可取值为'instance'、'semantic'、'polygon'或'color'。默认值：'instance'。
+        - **usage** (str, 可选) - 指定数据集的子集。当参数 `quality_mode` 取值为 'fine'时，此参数可取值为 'train'、 'test'、 'val'或 'all'。
+          当参数 `quality_mode` 取值为 'coarse'时，此参数可取值为 'train'、 'train_extra'、 'val'或 'all'。默认值：'train'，全部样本图片。
+        - **quality_mode** (str, 可选) - 指定数据集的质量模式，可取值为 'fine'或 'coarse'。默认值：'fine'。
+        - **task** (str, 可选) - 指定数据集的任务类型，可取值为 'instance'、 'semantic'、 'polygon'或 'color'。默认值：'instance'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
@@ -31,8 +31,8 @@ mindspore.dataset.CityscapesDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **ValueError** - `dataset_dir` 路径非法或不存在。
-        - **ValueError** - `task` 参数取值不为'instance'、'semantic'、'polygon'或'color'。
-        - **ValueError** - `quality_mode` 参数取值不为'fine'或'coarse'。
+        - **ValueError** - `task` 参数取值不为 'instance'、 'semantic'、 'polygon'或 'color'。
+        - **ValueError** - `quality_mode` 参数取值不为 'fine'或 'coarse'。
         - **ValueError** - `usage` 参数取值不在给定的字段中。
         - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
 
