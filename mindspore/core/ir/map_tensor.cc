@@ -55,7 +55,7 @@ std::string MapTensor::ToString() const {
   auto value_dtype = ValueDtype();
   return "MapTensor(key_dtype=" + (key_dtype == nullptr ? "<null>" : key_dtype->ToString()) +
          ", value_dtype=" + (value_dtype == nullptr ? "<null>" : value_dtype->ToString()) +
-         ", value_shape=" + tensor::ShapeToString(shape_) +
+         ", value_shape=" + tensor::ShapeToString(value_shape()) +
          ", default_value=" + (default_value_ == nullptr ? "<null>" : default_value_->ToString()) +
          ", permit_filter=" + (permit_filter_value_ == nullptr ? "<null>" : permit_filter_value_->ToString()) +
          ", evict_filter=" + (evict_filter_value_ == nullptr ? "<null>" : evict_filter_value_->ToString()) + ")";
