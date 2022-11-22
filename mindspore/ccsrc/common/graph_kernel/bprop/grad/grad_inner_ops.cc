@@ -182,7 +182,7 @@ REG_BPROP_BUILDER("FillV2").SetBody([](const BpropIRBuilder *ib) -> NodePtrList 
   return {ib->ZerosLike(shape), ib->Cast(dvalue, dout_typeptr)};
 });
 
-REG_BPROP_BUILDER(kTensorCopySlicesOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("TensorCopySlices").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto update = ib->GetInput(kIndex1);
   auto begin = ib->GetInput(kIndex2);
   auto end = ib->GetInput(kIndex3);

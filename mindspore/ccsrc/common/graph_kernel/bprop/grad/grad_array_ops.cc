@@ -41,7 +41,7 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
     }
     is_positive = ib->Reshape(is_positive, broadcastable_shape);
     auto gathered_shape = ib->GetShape(gathered);
-    is_positive = ib->Emit("LogicalAnd", {is_positive, ib->Fill(1.0, gathered_shape, TypeId::kNumberTypeBool)});
+    is_positive = ib->LogicalAnd(is_positive, ib->Fill(1.0, gathered_shape, TypeId::kNumberTypeBool));
   }
   auto zero_slice = ib->ZerosLike(gathered);
   return {ib->Select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive};
@@ -57,7 +57,7 @@ NodePtrList UnsortedSegmentMinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr 
   auto is_positive = temp_outs[2];
 
   auto tmp = ib->Equal(x, gathered_outputs);
-  auto is_selected = ib->Emit("LogicalAnd", {tmp, is_positive});
+  auto is_selected = ib->LogicalAnd(tmp, is_positive);
   auto num_selected =
     ib->Emit("UnsortedSegmentSum", {ib->Cast(is_selected, ib->GetDtype(dout)), segment_ids, num_segments});
   auto weighted_grads = ib->RealDiv(dout, num_selected);
@@ -98,8 +98,8 @@ REG_BPROP_BUILDER("GatherDGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtr
   auto element = (dim_before_axis * dim_at_axis_index) * dim_after_axis;
   auto index_type = ib->GetDtype(index);
   auto id = ib->Tensor(Range(element), index_type);
-  auto i = ib->Emit("FloorDiv", {id, ib->Tensor((dim_at_axis_index * dim_after_axis), index_type)});
-  auto k = ib->Emit("FloorMod", {id, ib->Tensor(dim_after_axis, index_type)});
+  auto i = ib->FloorDiv(id, ib->Tensor((dim_at_axis_index * dim_after_axis), index_type));
+  auto k = ib->FloorMod(id, ib->Tensor(dim_after_axis, index_type));
   auto less = ib->Less(index, ib->Tensor(0, index_type));
   auto j = ib->Cast(less, index_type);
   auto j_read = ib->Add((ib->Mul(ib->Tensor(dim_at_axis_index, index_type), j)), index);
@@ -137,7 +137,7 @@ REG_BPROP_BUILDER("GatherDGradV2").SetBody([](const BpropIRBuilder *ib) -> NodeP
   auto index_type = ib->GetDtype(index);
   auto id = ib->Tensor(ranges, index_type);
   auto i = ib->RealDiv(id, ib->Tensor((dim_at_axis_index * dim_after_axis), index_type));
-  auto k = ib->Emit("Mod", {id, ib->Tensor(dim_after_axis)});
+  auto k = ib->Mod(id, ib->Tensor(dim_after_axis));
   auto less = ib->Less(index, ib->Tensor(0, index_type));
   auto j = ib->Cast(less, ib->GetDtype(index));
   auto j_read = ib->Add((ib->Mul(ib->Tensor(dim_at_axis_index, index_type), j)), index);
@@ -399,7 +399,7 @@ REG_BPROP_BUILDER("Flatten").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {dx};
 });
 
-REG_BPROP_BUILDER(kReshapeOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Reshape").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto shp = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -485,7 +485,7 @@ REG_BPROP_BUILDER("TensorScatterAdd").SetBody([](const BpropIRBuilder *ib) -> No
   return {dout, ib->ZerosLike(indices), update_grad};
 });
 
-REG_BPROP_BUILDER(kConcatOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Concat").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto axis = ib->GetAttr<int64_t>(kAttrAxis);
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);

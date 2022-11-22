@@ -38,7 +38,7 @@ NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   return {ib->MakeTuple(result)};
 }
 
-REG_BPROP_BUILDER(kMatMulOpName).SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
+REG_BPROP_BUILDER("MatMul").SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
   auto ta = builder->GetAttr<bool>("transpose_a");
   auto tb = builder->GetAttr<bool>("transpose_b");
   auto x = builder->GetInput(kIndex0);
@@ -59,14 +59,14 @@ REG_BPROP_BUILDER(kMatMulOpName).SetBody([](const BpropIRBuilder *builder) -> No
   return {dx, dw};
 });
 
-REG_BPROP_BUILDER(kAddOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Add").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return BinopGradCommon(ib, x, y, dout, dout);
 });
 
-REG_BPROP_BUILDER(kMulOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Mul").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -75,14 +75,14 @@ REG_BPROP_BUILDER(kMulOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return BinopGradCommon(ib, x, y, bc_dx, bc_dy);
 });
 
-REG_BPROP_BUILDER(kSubOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Sub").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
 });
 
-REG_BPROP_BUILDER(kDivOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Div").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -92,9 +92,9 @@ REG_BPROP_BUILDER(kDivOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return BinopGradCommon(ib, x, y, bc_x, bc_y);
 });
 
-REG_BPROP_BUILDER(kLessOpName).SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("Less").SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER(kLessEqualOpName).SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("LessEqual").SetBody(CompareBpropExpander);
 
 REG_BPROP_BUILDER("LogicalNot").SetBody(CheckBpropExpander);
 
@@ -102,9 +102,9 @@ REG_BPROP_BUILDER("LogicalAnd").SetBody(CompareBpropExpander);
 
 REG_BPROP_BUILDER("LogicalOr").SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER(kAssignAddOpName).SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("AssignAdd").SetBody(CompareBpropExpander);
 
-REG_BPROP_BUILDER(kAssignSubOpName).SetBody(CompareBpropExpander);
+REG_BPROP_BUILDER("AssignSub").SetBody(CompareBpropExpander);
 
 REG_BPROP_BUILDER("Sin").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
@@ -306,7 +306,7 @@ REG_BPROP_BUILDER("Pow").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
 });
 
-REG_BPROP_BUILDER(kExpOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Exp").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto g = ib->Exp(x);
@@ -356,8 +356,8 @@ REG_BPROP_BUILDER("MulNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto dout = ib->GetInput(kIndex3);
   auto x_shape = ib->GetShape(x);
   auto y_shape = ib->GetShape(y);
-  auto dx = ib->Emit("MulNoNan", {dout, y});
-  auto dy = ib->Emit("MulNoNan", {x, dout});
+  auto dx = ib->MulNoNan(dout, y);
+  auto dy = ib->MulNoNan(x, dout);
   std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(x_shape, y_shape);
   auto broadcast_x = bc_axis[0];
   auto broadcast_y = bc_axis[1];
@@ -466,7 +466,7 @@ REG_BPROP_BUILDER("BesselY1").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dx};
 });
 
-REG_BPROP_BUILDER(kAddNOpName).SetBody(AddnGradFunc);
+REG_BPROP_BUILDER("AddN").SetBody(AddnGradFunc);
 
 REG_BPROP_BUILDER("AccumulateNV2").SetBody(AddnGradFunc);
 
@@ -506,14 +506,14 @@ REG_BPROP_BUILDER("Atanh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER(prim::kInv).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Inv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit(prim::kPrimInvGrad->name(), {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER(kLinSpaceOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("LinSpace").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto start = ib->GetInput(kIndex0);
   auto stop = ib->GetInput(kIndex1);
   auto num = ib->GetInput(kIndex2);
@@ -527,13 +527,6 @@ REG_BPROP_BUILDER("IndexAdd").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto axis = ib->EmitValue(ib->GetAttr(kAttrAxis));
   auto dy = ib->Emit(kGatherOpName, {dout, indices, axis});
   return {dout, ib->ZerosLike(indices), dy};
-});
-
-REG_BPROP_BUILDER("ACos").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  auto input_x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("ACosGrad", {input_x, dout});
-  return {dx};
 });
 
 REG_BPROP_BUILDER("Logit").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -646,12 +639,12 @@ REG_BPROP_BUILDER("MatrixInverse").SetBody([](const BpropIRBuilder *ib) -> NodeP
   return {-dx};
 });
 
-REG_BPROP_BUILDER(kNegOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Neg").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex2);
   return {-dout};
 });
 
-REG_BPROP_BUILDER(kRealDivOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("RealDiv").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -666,7 +659,7 @@ REG_BPROP_BUILDER("DivNoNan").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = ib->Emit("DivNoNan", {dout, y});
+  auto bc_x = ib->DivNoNan(dout, y);
   auto bc_y = -(bc_x * out);
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
@@ -677,8 +670,8 @@ REG_BPROP_BUILDER("Xdivy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex3);
   auto x_dtype = ib->GetDtype(x);
   auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
-  auto bc_x = (ib->Emit("Xdivy", {not_zero_x, y})) * dout;
-  auto bc_y = (ib->Emit("Xdivy", {-x, ib->Emit("Square", {y})})) * dout;
+  auto bc_x = (ib->Xdivy(not_zero_x, y)) * dout;
+  auto bc_y = (ib->Xdivy(-x, ib->Emit("Square", {y}))) * dout;
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
@@ -689,7 +682,7 @@ REG_BPROP_BUILDER("FloorMod").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto bc_x = dout;
-  auto bc_y = (-dout) * (ib->Emit("FloorDiv", {x, y}));
+  auto bc_y = (-dout) * (ib->FloorDiv(x, y));
   bc_x = ib->Cast(bc_x, ib->GetDtype(x));
   bc_y = ib->Cast(bc_y, ib->GetDtype(y));
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
@@ -711,18 +704,10 @@ REG_BPROP_BUILDER("Mod").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto bc_x = dout;
-  auto bc_y = (-dout) * (ib->Emit("FloorDiv", {x, y}));
+  auto bc_y = (-dout) * (ib->FloorDiv(x, y));
   bc_x = ib->Cast(bc_x, ib->GetDtype(x));
   bc_y = ib->Cast(bc_y, ib->GetDtype(y));
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
-});
-
-REG_BPROP_BUILDER("SquaredDifference").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Tensor(2) * dout * (x - y);
-  return {BinopGradCommon(ib, x, y, dx, -dx)};
 });
 
 REG_BPROP_BUILDER("Xlogy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -731,12 +716,12 @@ REG_BPROP_BUILDER("Xlogy").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex3);
   auto x_dtype = ib->GetDtype(x);
   auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
-  auto bc_x = ib->Emit("Xlogy", {not_zero_x, y}) * dout;
-  auto bc_y = ib->Emit("Xdivy", {x, y}) * dout;
+  auto bc_x = ib->Xlogy(not_zero_x, y) * dout;
+  auto bc_y = ib->Xdivy(x, y) * dout;
   return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
-REG_BPROP_BUILDER(kSqrtOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Sqrt").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("SqrtGrad", {out, dout});
@@ -754,14 +739,14 @@ REG_BPROP_BUILDER("SqrtGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrLis
   return {dy, dgrad};
 });
 
-REG_BPROP_BUILDER(kRsqrtOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Rsqrt").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("RsqrtGrad", {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER(kRsqrtGradOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("RsqrtGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto y = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -771,14 +756,14 @@ REG_BPROP_BUILDER(kRsqrtGradOpName).SetBody([](const BpropIRBuilder *ib) -> Node
   return {dy, dgrad};
 });
 
-REG_BPROP_BUILDER(kReciprocalOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Reciprocal").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("ReciprocalGrad", {out, dout});
   return {dx};
 });
 
-REG_BPROP_BUILDER(kLogOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Log").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto g = ib->Emit("Reciprocal", {x});
@@ -790,7 +775,7 @@ REG_BPROP_BUILDER("Floor").SetBody(CheckBpropExpander);
 
 REG_BPROP_BUILDER("Ceil").SetBody(CheckBpropExpander);
 
-REG_BPROP_BUILDER(kSquareOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Square").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = dout * x * ib->Tensor(2.0, ib->GetDtype(x));
@@ -805,7 +790,7 @@ REG_BPROP_BUILDER("SquaredDifference").SetBody([](const BpropIRBuilder *ib) -> N
   return {BinopGradCommon(ib, x, y, dx, -dx)};
 });
 
-REG_BPROP_BUILDER(kSquareSumAllOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("SquareSumAll").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -989,8 +974,8 @@ REG_BPROP_BUILDER("ComplexAbs").SetBody([](const BpropIRBuilder *ib) -> NodePtrL
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  return {ib->Emit("DivNoNan", {ib->Mul(ib->Emit("Complex", {dout, ib->ZerosLike(dout)}), x),
-                                ib->Emit("Complex", {out, ib->ZerosLike(out)})})};
+  return {ib->DivNoNan(ib->Mul(ib->Emit("Complex", {dout, ib->ZerosLike(dout)}), x),
+                       ib->Emit("Complex", {out, ib->ZerosLike(out)}))};
 });
 
 REG_BPROP_BUILDER("Real").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -1015,7 +1000,7 @@ REG_BPROP_BUILDER("Betainc").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   auto partial_x = ib->Exp(ib->Sub(
     (ib->Add(
       (ib->Mul((ib->Sub(input_b, ib->Tensor(1, ib->GetDtype(input_b)))), (ib->Emit("Log1p", {ib->Neg(input_x)})))),
-      (ib->Emit("Xlogy", {ib->Sub(input_a, ib->Tensor(1, ib->GetDtype(input_b))), input_x})))),
+      (ib->Xlogy(ib->Sub(input_a, ib->Tensor(1, ib->GetDtype(input_b))), input_x)))),
     log_beta));
   return {ib->ZerosLike(input_a), ib->ZerosLike(input_b), ib->Reshape(ib->Mul(partial_x, dout), sx)};
 });

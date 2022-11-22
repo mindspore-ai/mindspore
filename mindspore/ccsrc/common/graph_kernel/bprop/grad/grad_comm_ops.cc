@@ -19,7 +19,7 @@
 #include "ir/anf.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER(kAllReduceOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("AllReduce").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);

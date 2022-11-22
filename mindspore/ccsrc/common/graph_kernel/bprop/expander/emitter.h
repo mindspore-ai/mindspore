@@ -77,11 +77,19 @@ class Emitter {
   NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kMul, lhs, rhs); }
   NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kDivOpName, lhs, rhs); }
   NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(prim::kRealDiv, lhs, rhs); }
+  NodePtr Mod(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("Mod", lhs, rhs); }
   NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kPowOpName, lhs, rhs); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
   NodePtr BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false) const;
   NodePtr Maximum(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kMaximumOpName, lhs, rhs); }
   NodePtr Minimum(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit(kMinimumOpName, lhs, rhs); }
+  NodePtr FloorDiv(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("FloorDiv", lhs, rhs); }
+  NodePtr FloorMod(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("FloorMod", lhs, rhs); }
+  NodePtr DivNoNan(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("DivNoNan", lhs, rhs); }
+  NodePtr MulNoNan(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("MulNoNan", lhs, rhs); }
+  NodePtr Xdivy(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("Xdivy", lhs, rhs); }
+  NodePtr Xlogy(const NodePtr &lhs, const NodePtr &rhs) const { return UnifyDtypeAndEmit("Xlogy", lhs, rhs); }
+
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
     auto [a, b] = UnifyDtype2(lhs, rhs);
     return Emit(kSelectOpName, {cond, a, b});

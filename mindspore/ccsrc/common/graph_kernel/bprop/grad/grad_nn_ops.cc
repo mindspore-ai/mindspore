@@ -19,7 +19,7 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
-REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Conv2D").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -57,7 +57,7 @@ REG_BPROP_BUILDER(kConv2DOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtr
                       {"pad_list", ib->GetAttr("pad_list")}});
   return {dx, dw};
 });
-REG_BPROP_BUILDER(kMaxPoolOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("MaxPool").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -77,7 +77,7 @@ REG_BPROP_BUILDER(kMaxPoolOpName).SetBody([](const BpropIRBuilder *ib) -> NodePt
   return {dx};
 });
 
-REG_BPROP_BUILDER(kBiasAddOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("BiasAdd").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -90,14 +90,14 @@ REG_BPROP_BUILDER(kBiasAddOpName).SetBody([](const BpropIRBuilder *ib) -> NodePt
           ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}, {"data_format", MakeValue(format)}})};
 });
 
-REG_BPROP_BUILDER(kReLUOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("ReLU").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit(kReluGradOpName, {dout, out});
   return {dx};
 });
 
-REG_BPROP_BUILDER(kTopKOpName).SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
+REG_BPROP_BUILDER("TopK").SetBody([](const BpropIRBuilder *builder) -> NodePtrList {
   auto input_x = builder->GetInput(kIndex0);
   auto out = builder->GetInput(kIndex2);
   auto dout = builder->GetInput(kIndex3);
@@ -130,7 +130,7 @@ REG_BPROP_BUILDER(kTopKOpName).SetBody([](const BpropIRBuilder *builder) -> Node
   return {out_grad, grad_k};
 });
 
-REG_BPROP_BUILDER(kPReLUOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("PReLU").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -187,7 +187,7 @@ REG_BPROP_BUILDER("LRN").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   return {dx};
 });
 
-REG_BPROP_BUILDER(kDropoutOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Dropout").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto mask = ib->TupleGetItem(out, 1);
@@ -205,7 +205,7 @@ REG_BPROP_BUILDER("BinaryCrossEntropy").SetBody([](const BpropIRBuilder *ib) -> 
   return {dx, ib->ZerosLike(y), ib->ZerosLike(weight)};
 });
 
-REG_BPROP_BUILDER(kDropoutGradOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("DropoutGrad").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto mask = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto dy = dout;
@@ -1019,7 +1019,7 @@ REG_BPROP_BUILDER("Softmax").SetBody([](const BpropIRBuilder *ib) -> NodePtrList
   return {dx};
 });
 
-REG_BPROP_BUILDER(kSparseSoftmaxCrossEntropyWithLogitsOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogits").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto is_grad = ib->GetAttr<bool>(kAttrIsGrad);
   auto labels = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -1158,10 +1158,10 @@ NodePtrList Conv2DTransposeBpropExpander(const BpropIRBuilder *ib) {
                       {"pad_list", ib->GetAttr("pad_list")}});
   return {dx, dw, ib->ZerosLike(f_sizes)};
 }
-REG_BPROP_BUILDER(kConv2DTransposeOpName).SetBody(Conv2DTransposeBpropExpander);
-REG_BPROP_BUILDER(kConv2DBackpropInputOpName).SetBody(Conv2DTransposeBpropExpander);
+REG_BPROP_BUILDER("Conv2DTranspose").SetBody(Conv2DTransposeBpropExpander);
+REG_BPROP_BUILDER("Conv2DBackpropInput").SetBody(Conv2DTransposeBpropExpander);
 
-REG_BPROP_BUILDER(kConv2DBackpropFilterOpName).SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
+REG_BPROP_BUILDER("Conv2DBackpropFilter").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dy = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto filter_size = ib->GetInput(kIndex2);
