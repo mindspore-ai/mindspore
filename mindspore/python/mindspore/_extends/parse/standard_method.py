@@ -3233,7 +3233,9 @@ def list_count(self_, value):
 
 def dict_get(self_, key_index, default_value=None):
     """Get value by key from dict"""
-    return F.dict_getitem(self_, key_index, default_value)
+    if not _haskey(self_, key_index):
+        return default_value
+    return F.dict_getitem(self_, key_index)
 
 
 def dict_clear(self_):
