@@ -23,7 +23,7 @@
 
 template <typename DataType, typename IndexType>
 __global__ void SparseMatrixSoftmaxKernel(int rows, IndexType *indptr, DataType *values, DataType *softmax) {
-  for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < rows; id += blockDim.x * gridDim.x) {
+  for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < rows - 1; id += blockDim.x * gridDim.x) {
     IndexType begin = indptr[id];
     IndexType end = indptr[id + 1];
 
