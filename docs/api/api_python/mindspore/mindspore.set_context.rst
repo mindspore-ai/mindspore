@@ -95,7 +95,7 @@ mindspore.set_context
           配置Running Data Recorder：
 
           - **enable**：表示在发生故障时是否启用Running Data Recorder去收集和保存训练中的关键数据。设置为True时，将打开Running Data Recorder。设置为False时，将关闭Running Data Recorder。
-          - **mode**：指定在GRAPH_MODE(0)还是PYNATIVE_MODE(1)下运行，两种模式均支持所有后端。默认值：PYNATIVE_MODE(1)。
+          - **mode**：设置导出数据时的RDR模式。当设置为1时，RDR只在故障情况下输出数据。当设置为2时，RDR在故障情况和正常结束情况下输出数据。默认值：1。
           - **path**：设置Running Data Recorder保存数据的路径。当前路径必须是一个绝对路径。
 
           内存重用：
@@ -111,7 +111,7 @@ mindspore.set_context
           Default/net/net (reserve_class_name_in_scope=False)
 
         - **pynative_synchronize** (bool) - 表示是否在PyNative模式下启动设备同步执行。默认值：False。设置为False时，将在设备上异步执行算子。当算子执行出错时，将无法定位特定错误脚本代码的位置。当设置为True时，将在设备上同步执行算子。这将降低程序的执行性能。此时，当算子执行出错时，可以根据错误的调用栈来定位错误脚本代码的位置。
-        - **mode** (int) - 表示在GRAPH_MODE(0)或PYNATIVE_MODE(1)模式中的运行。默认值：GRAPH_MODE(0)。GRAPH_MODE或PYNATIVE_MODE可以通过 `mode` 属性设置，两种模式都支持所有后端。默认模式为GRAPH_MODE。
+        - **mode** (int) - 表示在GRAPH_MODE(0)或PYNATIVE_MODE(1)模式中运行，两种模式都支持所有后端。默认值：PYNATIVE_MODE。
         - **enable_graph_kernel** (bool) - 表示开启图算融合去优化网络执行性能。默认值：False。如果 `enable_graph_kernel` 设置为True，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/docs/zh-CN/master/design/graph_fusion_engine.html>`_ 。
         - **graph_kernel_flags** (str) - 图算融合的优化选项，当与enable_graph_kernel冲突时，它的优先级更高。其仅适用于有经验的用户。例如，mindspore.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")。一些常用选项：
 

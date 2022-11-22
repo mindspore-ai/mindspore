@@ -831,7 +831,7 @@ def set_context(**kwargs):
               When set to false, the RDR will be turned off.
             - mode: sets the mode of RDR on exporting data. When set to 1, the RDR only exports data
               in the fault scenario. When set to 2, the RDR exports data in the fault scenario and the
-              normal end scenario. Default is 1.
+              normal end scenario. Default: 1.
             - path: sets the path where RDR saves data. The current path must be absolute.
 
             Memory reuse:
@@ -856,9 +856,8 @@ def set_context(**kwargs):
             be located, when the value is set to True, the operator is executed synchronously on the device. It will
             reduce the execution performance of the program. At this time, when an error occurs in the execution of
             the operator, the location of the error script code can be located according to the call stack of the error.
-        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE(1).
-            GRAPH_MODE or PYNATIVE_MODE can be set by `mode` attribute and both modes support all backends, default
-            mode is PYNATIVE_MODE.
+        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1).
+            Both modes support all backends. Default: PYNATIVE_MODE.
         enable_graph_kernel (bool): Whether to enable graph kernel fusion to optimize network execution performance.
             Default: False.
             Indicates whether to enable image-computing convergence to optimize network execution performance.
