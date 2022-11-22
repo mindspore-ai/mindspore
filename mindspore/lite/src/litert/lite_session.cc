@@ -355,6 +355,16 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
       }
     }
   }
+
+  for (auto input_tensor : this->inputs_) {
+    MS_ASSERT(input_tensor != nullptr);
+    if (this->input_map_.find(input_tensor->tensor_name()) == this->input_map_.end()) {
+      this->input_map_[input_tensor->tensor_name()] = input_tensor;
+    }
+    if (this->input_shape_map_.find(input_tensor) == this->input_shape_map_.end()) {
+      this->input_shape_map_[input_tensor] = input_tensor->shape();
+    }
+  }
 }
 
 void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
