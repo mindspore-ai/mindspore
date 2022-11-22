@@ -520,6 +520,16 @@ void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node,
         std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, v_node->value(), FuncGraphPtr(nullptr));
       (void)anfnode_to_adjoin_.insert(std::make_pair(output_node, v_node_pynative_adjoint));
       return;
+    } else if (output_node->isa<Parameter>()) {
+      auto w = output_node->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(w);
+      const auto &default_param = w->default_param();
+      MS_EXCEPTION_IF_NULL(default_param);
+      MS_LOG(DEBUG) << "Build adjoint for weight param: " << output_node->ToString();
+      auto param_node_pynative_adjoint =
+        std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, default_param, FuncGraphPtr(nullptr));
+      (void)anfnode_to_adjoin_.insert(std::make_pair(output_node, param_node_pynative_adjoint));
+      return;
     }
     MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->DebugString();
   }

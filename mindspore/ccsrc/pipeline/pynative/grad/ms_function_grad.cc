@@ -158,8 +158,10 @@ void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNo
   MS_EXCEPTION_IF_NULL(grad_executor);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
     const auto &input_i_value = op_run_info->input_value[i];
-    MS_LOG(DEBUG) << "The input " << i << " value of ms_function graph is: " << input_i_value->ToString();
-    const auto &input_i_node = grad_executor->GetInput(input_i_value);
+    const auto &id = PyNativeAlgo::Common::GetIdByValue(input_i_value);
+    MS_LOG(DEBUG) << "The input " << i << " id " << id
+                  << " value of ms_function graph is: " << input_i_value->ToString();
+    const auto &input_i_node = grad_executor->GetInput(input_i_value, id);
     MS_EXCEPTION_IF_NULL(input_i_node);
     MS_LOG(DEBUG) << "The input " << i << " node of ms_function graph is: " << input_i_node->DebugString();
     (void)input_nodes->emplace_back(input_i_node);

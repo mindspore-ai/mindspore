@@ -87,6 +87,7 @@ struct InputArgsInfo {
   size_t input_size;
   std::string obj_id;
 
+  bool has_sens{false};
   PrimitivePyPtr custom_bprp_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string cell_id;
