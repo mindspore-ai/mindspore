@@ -78,12 +78,15 @@ class AdamWeightDecayInfer : public abstract::OpInferBase {
 
     const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,   kUInt32,
                                            kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex64};
-    std::map<std::string, TypePtr> type_dict;
-    type_dict.emplace("var", var_type);
-    type_dict.emplace("m", m_type);
-    type_dict.emplace("v", v_type);
-    type_dict.emplace("grad", grad_type);
-    CheckAndConvertUtils::CheckTensorTypeSame(type_dict, number_type, prim_name);
+    std::map<std::string, TypePtr> type_dict_var_grad;
+    type_dict_var_grad.emplace("var", var_type);
+    type_dict_var_grad.emplace("grad", grad_type);
+    CheckAndConvertUtils::CheckTensorTypeSame(type_dict_var_grad, number_type, prim_name);
+
+    std::map<std::string, TypePtr> type_dict_m_v;
+    type_dict_m_v.emplace("m", m_type);
+    type_dict_m_v.emplace("v", v_type);
+    CheckAndConvertUtils::CheckTensorTypeSame(type_dict_m_v, number_type, prim_name);
 
     std::set<TypePtr> float32_set = {kFloat32};
     std::map<std::string, TypePtr> type_dict1;
