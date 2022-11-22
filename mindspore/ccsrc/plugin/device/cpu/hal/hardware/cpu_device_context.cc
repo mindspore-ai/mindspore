@@ -401,13 +401,6 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
-  // Some CPU kernels can't initialize kernel and launch kernel in different thread, so reinitialize the kernels before
-  // launch.
-  if (IsOneOfNotSupportMultiThreadExec(common::AnfAlgo::GetCNodeName(kernel))) {
-    auto cpu_kernel_mod = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
-    MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
-    cpu_kernel_mod->InitKernel(kernel);
-  }
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);

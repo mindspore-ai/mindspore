@@ -849,7 +849,6 @@ COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfPosteriorOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfCacheBlackList(const std::string &name);
-COMMON_EXPORT bool IsOneOfNotSupportMultiThreadExec(const std::string &name);
 COMMON_EXPORT bool IsOneOf3DFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfNoPaddingFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &name);

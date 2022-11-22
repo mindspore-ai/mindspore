@@ -33,12 +33,6 @@ bool IsOneOfCacheBlackList(const std::string &name) {
   return iter != kOpCacheBlackList.end();
 }
 
-bool IsOneOfNotSupportMultiThreadExec(const std::string &name) {
-  const std::set<std::string> kOpNotSupportMultiThreadExecList = {};
-  auto iter = kOpNotSupportMultiThreadExecList.find(name);
-  return iter != kOpNotSupportMultiThreadExecList.end();
-}
-
 bool IsOneOf3DFormat(const std::string &format) {
   const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                               kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
