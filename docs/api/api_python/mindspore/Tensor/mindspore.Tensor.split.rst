@@ -1,6 +1,6 @@
 mindspore.Tensor.split
-======================
+=======================
 
-.. py:method:: mindspore.Tensor.split(axis=0, output_num=1)
+.. py:method:: mindspore.Tensor.split(split_size_or_sections, axis=0)
 
     详情请参考 :func:`mindspore.ops.split`。
