@@ -265,7 +265,7 @@ class HistogramSummary(PrimitiveWithInfer):
         >>> set_context(mode=mindspore.GRAPH_MODE)
         >>> summary = SummaryDemo()(Tensor([1, 2]), Tensor([3, 4]))
         >>> print(summary)
-        [3, 5]
+        [4 6]
     """
 
     @prim_attr_register
