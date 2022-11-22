@@ -3240,7 +3240,6 @@ def isreal(x):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -3595,18 +3594,17 @@ def logaddexp(x1, x2):
     """
     Computes the logarithm of the sum of exponentiations of the inputs.
 
-    Calculates ``log(exp(x1) + exp(x2))``. This function is useful in statistics, where the
-    computed probability of an event may be so small that it exceeds the range of a normal
-    floating point number. In this case, the logarithm of the calculated probability is stored.
-    This function allows to add probabilities stored in this way.
+    .. math::
+
+        out_i = log(exp(x1_i) + exp(x2_i))
 
     Args:
         x1 (Tensor): Input Tensor.
-        x2 (Tensor): Input Tensor. If ``x1.shape != x2.shape``, they must be broadcastable to
+        x2 (Tensor): Input Tensor. If the shape of `x1` is not equal to the shape of `x2`, they must be broadcastable to
             a common shape (which becomes the shape of the output).
 
     Returns:
-        Tensor or scalar. This is a scalar if both `x1` and `x2` are scalars.
+        Tensor.
 
     Raises:
         TypeError: If `x1`, `x2` is not a Tensor.
@@ -3624,7 +3622,6 @@ def logaddexp(x1, x2):
 
     log_op = _get_cache_prim(P.Log)()
     exp_op = _get_cache_prim(P.Exp)()
-
     y = log_op(exp_op(x1) + exp_op(x2))
     return y
 
@@ -3633,10 +3630,9 @@ def logaddexp2(x1, x2):
     """
     Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
 
-    Calculates ``log2(2**x1 + 2**x2)``. This function is useful in machine learning when the computed
-    probability of an event may be small beyond the range of normal floating point numbers.
-    In this case, the base-2 logarithm of the calculated probability can be used instead.
-    This function allows to add probabilities stored in this way.
+    .. math::
+
+        out_i = log_2(2^{x1_i} + 2^{x2_i})
 
     Args:
         x1 (Tensor): Input tensor.
@@ -3644,7 +3640,7 @@ def logaddexp2(x1, x2):
             a common shape (which becomes the shape of the output).
 
     Returns:
-        Tensor or scalar. This is a scalar if both `x1` and `x2` are scalars.
+        Tensor.
 
     Raises:
         TypeError: If `x1`, `x2` is not a Tensor.

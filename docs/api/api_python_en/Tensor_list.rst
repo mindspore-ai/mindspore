@@ -151,6 +151,9 @@
     mindspore.Tensor.log
     mindspore.Tensor.log10
     mindspore.Tensor.log2
+    mindspore.Tensor.logaddexp
+    mindspore.Tensor.logaddexp2
+    mindspore.Tensor.logsumexp
     mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.log1p
     mindspore.Tensor.logical_and
