@@ -178,26 +178,7 @@ class Expand(Primitive):
     """
     Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
 
-    Note:
-        Passing -1 as the size for a dimension means not changing the size of that dimension.
-        Tensor can be also expanded to a larger number of dimensions, and the new ones will be appended at the front.
-        For the new dimensions, the size cannot be set to -1.
-
-    Inputs:
-         - **x** (Tensor) - The shape of tensor is (x_1, x_2, ..., x_R).
-         - **shape** (Tensor) - The new shape of x.
-
-    Outputs:
-         - **y** (Tensor) - Tensor after expansion.
-
-    Raises:
-        TypeError: If any input is not Tensor.
-        TypeError: If the type of `shape` is not one of the following dtype: int16, int32, int64.
-        ValueError: If `shape` is not a 1-D tensor.
-        ValueError: If the size of `shape` is less than the size of `x.shape`.
-        ValueError: If the expanded `shape` is not equal to the existing shape of `x` at a dimension that is not 1.
-        ValueError: If the expanded size < 0 and it is in a leading, non-existing dimension.
-        ValueError: If the number of elements of output is more than 1000000.
+    Refer to :func:`mindspore.ops.expand` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -560,11 +541,11 @@ class Col2Im(Primitive):
     Args:
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two positive int
             for height and width. If type is int, it means that height equal with width. Must be specified.
-        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two positive int
+        dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two positive int
             for height and width. If type is int, it means that height equal with width. Default: 1.
-        padding (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+        padding (Union[int, tuple[int], list[int]], optional)): The size of the padding, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 0.
-        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two positive int
+        stride (Union[int, tuple[int], list[int]], optional)): The size of the stride, should be two positive int
             for height and width. If type is int, it means that height equal with width. Default: 1.
 
     Inputs:
@@ -3771,7 +3752,7 @@ class ResizeNearestNeighborV2(Primitive):
             tensors are aligned, preserving the values at the corner pixels. Defaults: False.
         half_pixel_centers (bool, optional): Whether half pixel center. If set to True,
             `align_corners` should be False. Default: False.
-        data_format (string, optional): An optional `string` that describes the
+        data_format (str, optional): An optional `string` that describes the
             format of the input `x`. Default: `NHWC`.
 
     Inputs:
@@ -5701,7 +5682,7 @@ class Sort(Primitive):
     """
     Sorts the elements of the input tensor along the given dimension in the specified order.
 
-    Refer to :func:'mindspore.ops.sort' for more details.
+    Refer to :func:`mindspore.ops.sort` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

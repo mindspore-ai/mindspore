@@ -90,7 +90,7 @@ class TruncatedNormal(Primitive):
         dtype (mindspore.dtype): Specified output data type. Must be one of the following types:
             mindspore.float16, mindspore.float32 and mindspore.float64. Default: mindspore.float32.
 
-    Inputs
+    Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
           mindspore.int32 and mindspore.int64.
 

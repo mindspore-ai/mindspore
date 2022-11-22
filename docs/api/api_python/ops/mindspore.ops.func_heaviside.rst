@@ -1,7 +1,7 @@
 mindspore.ops.heaviside
 ========================
 
-.. py:function:: mindspore.ops.heaviside(x, values):
+.. py:function:: mindspore.ops.heaviside(x, values)
 
     计算输入中每​​个元素的 Heaviside 阶跃函数。公式定义如下：
 
