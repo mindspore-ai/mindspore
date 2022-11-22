@@ -2484,6 +2484,7 @@ def pad(input_x, padding, mode='constant', value=None):
         raise TypeError(f"For 'pad', the type of 'input_x' must be Tensor, but got {type(input_x)}.")
     if not isinstance(padding, Tensor):
         _check_pad_inputs(padding)
+        padding = Tensor(padding)
     if mode == "constant":
         value = 0 if value is None else value
         if isinstance(value, (float, int)):
