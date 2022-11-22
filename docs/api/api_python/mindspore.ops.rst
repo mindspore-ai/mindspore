@@ -521,9 +521,12 @@ Array操作
     mindspore.ops.MaskedSelect
     mindspore.ops.MatrixBandPart
     mindspore.ops.MatrixDeterminant
+    mindspore.ops.MatrixDiagPartV3
+    mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixExp
     mindspore.ops.MatrixLogarithm
     mindspore.ops.MatrixPower
+    mindspore.ops.MatrixSetDiagV3
     mindspore.ops.MatrixSolve
     mindspore.ops.MatrixTriangularSolve
     mindspore.ops.Meshgrid
