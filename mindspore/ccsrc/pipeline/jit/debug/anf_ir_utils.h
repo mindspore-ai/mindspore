@@ -96,18 +96,21 @@ class AnfExporter {
 
   void OutputStatementComment(const CNodePtr &node, const FuncGraphPtr &func_graph, std::ostringstream &oss);
 
-  void OutputOrderList(std::ostringstream &oss, const FuncGraphPtr &func_graph) const;
-
   void OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                        std::map<AnfNodePtr, int> *const apply_map);
+
+  void OuputIrStyleCNodes(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes, int32_t total_para,
+                          std::ostringstream &oss, OrderedMap<AnfNodePtr, int32_t> *para_map);
 
   virtual void OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                            std::map<AnfNodePtr, int> *const apply_map);
 
-  void ExportOneFuncGraph(std::ostringstream &oss, const FuncGraphPtr &func_graph,
-                          const TaggedNodeMap &tagged_cnodes_map);
+  void ExportOneFuncGraph(const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map,
+                          std::ostringstream &oss, int32_t total_para = 0,
+                          OrderedMap<AnfNodePtr, int32_t> *para_map = nullptr);
 
   OrderedMap<FuncGraphPtr, ParamIndexMap> exported;
+  bool is_top_graph;
 
  private:
   void OutputCNodes(std::ostringstream &oss, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,

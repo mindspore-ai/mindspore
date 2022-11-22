@@ -344,7 +344,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
 
     current_context_ = node_config->context();  // Set current context.
     std::ostringstream buffer;
-    ExportOneFuncGraph(buffer, fg, tagged_func_graphs[fg]);
+    ExportOneFuncGraph(fg, tagged_func_graphs[fg], buffer);
     ofs << buffer.str() << "\n\n";
   }
 
