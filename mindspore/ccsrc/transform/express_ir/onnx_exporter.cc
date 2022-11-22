@@ -49,6 +49,7 @@ enum OpMergeMode {
   OP_MERGE_MAXPOOL_WITH_ARGMAX = 5,  // indicate `MindSpore MaxPoolWithArgmax(x)[0]` --> `ONNX MaxPool`
   OP_MERGE_LAYER_NORM = 6,           // indicate `MindSpore LayerNorm(x)[0]` --> `ONNX MeanVarianceNormalization`
   OP_MERGE_CONV2D_TRANSPOSE = 7,     // indicate `MindSpore ConvTranspose + BiasAdd` --> `ONNX ConvTranspose`
+  OP_MERGE_DYNAMIC_GRU_V2 = 8,       // indicate `MindSpore DynamicGRUV2(...)[0]` --> `ONNX GRU`
 };
 
 struct OpMergedInfo {
@@ -1263,7 +1264,8 @@ class OnnxExporter {
                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeConv2DTranspose(const FuncGraphPtr &, const CNodePtr &node,
                                   std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
-
+  void ExportMergeDynamicGRUV2(const FuncGraphPtr &, const CNodePtr &node,
+                               std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto);
   void ExportOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &return_arg,
                     std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   std::string GetNodeInputName(const AnfNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
@@ -1488,6 +1490,7 @@ void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNode
     {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, OP_MERGE_BATCH_NORM},
     {prim::kPrimTupleGetItem, prim::kPrimMaxPoolWithArgmax, OP_MERGE_MAXPOOL_WITH_ARGMAX},
     {prim::kPrimTupleGetItem, prim::kPrimLayerNorm, OP_MERGE_LAYER_NORM},
+    {prim::kPrimTupleGetItem, prim::kPrimDynamicGRUV2, OP_MERGE_DYNAMIC_GRU_V2},
   };
 
   auto rule = std::find_if(first_input_merge_rules.begin(), first_input_merge_rules.end(), [&cnode](const auto &rule) {
@@ -1542,8 +1545,8 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
     if (!node->isa<CNode>()) {
       continue;
     }
-    auto cnode = node->cast<CNodePtr>();
 
+    auto cnode = node->cast<CNodePtr>();
     auto iter = op_merged_infos.find(cnode);
     // the node is not referenced by any other nodes, skip it
     if (iter == op_merged_infos.end()) {
@@ -1576,6 +1579,9 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
         break;
       case OP_MERGE_CONV2D_TRANSPOSE:
         ExportMergeConv2DTranspose(func_graph, cnode, node_map_ptr, graph_proto);
+        break;
+      case OP_MERGE_DYNAMIC_GRU_V2:
+        ExportMergeDynamicGRUV2(func_graph, cnode, node_map_ptr, graph_proto);
         break;
       default:
         ExportCNode(func_graph, cnode, node_map_ptr, graph_proto);
@@ -2498,7 +2504,6 @@ void OnnxExporter::ExportPrimTupleGetItem(const FuncGraphPtr &, const CNodePtr &
                                           std::map<AnfNodePtr, std::string> *node_map_ptr,
                                           onnx::GraphProto *const graph_proto) {
   auto index = GetInt64Value(node->input(kTwoNum));
-
   auto input_node_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
   auto input_name = MakeOutputName(input_node_name, index);
 
@@ -3974,6 +3979,213 @@ void OnnxExporter::ExportMergeConv2DTranspose(const FuncGraphPtr &, const CNodeP
                                               onnx::GraphProto *const graph_proto) {
   auto conv_node = dyn_cast<CNode>(node->input(kOneNum));
   PrimConv2DTransposeExportHelper(conv_node, node, node_map_ptr, graph_proto);
+}
+
+void AddTransposeOp(const std::string &input, const std::string &output, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "Transpose";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(output + op_type);
+  node_proto->add_input(input);
+  node_proto->add_output(output);
+}
+
+void AddUnsqueezeOp(const std::string &input, const std::string &output, int64_t axis, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "Unsqueeze";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(output + op_type);
+  node_proto->add_input(input);
+  node_proto->add_output(output);
+
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INTS);
+  attr_proto->set_name("axes");
+  attr_proto->add_ints(axis);
+}
+
+void AddSqueezeOp(const std::string &input, const std::string &output, int64_t axis, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "Squeeze";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(output + op_type);
+  node_proto->add_input(input);
+  node_proto->add_output(output);
+
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INTS);
+  attr_proto->set_name("axes");
+  attr_proto->add_ints(axis);
+}
+
+void AddGRUOp(const std::vector<std::string> &inputs, const std::vector<std::string> &outputs, int64_t hidden_size,
+              int64_t linear_before_reset, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "GRU";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(outputs[0] + op_type);
+
+  for (const auto &in : inputs) {
+    node_proto->add_input(in);
+  }
+
+  for (const auto &out : outputs) {
+    node_proto->add_output(out);
+  }
+
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  attr_proto->set_name("linear_before_reset");
+  attr_proto->set_i(linear_before_reset);
+
+  onnx::AttributeProto *attr2_proto = node_proto->add_attribute();
+  attr2_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  attr2_proto->set_name("hidden_size");
+  attr2_proto->set_i(hidden_size);
+}
+
+void UnsqueezeInputOfGRU(std::string *in_name, const std::string &node_name, const std::string &suffix, int64_t axis,
+                         onnx::GraphProto *graph_proto) {
+  auto out_name = node_name + suffix;
+  AddUnsqueezeOp(*in_name, out_name, 0, graph_proto);
+  *in_name = out_name;
+}
+
+void GruRzh2Zrh(std::string *in_name, const std::string &node_name, const std::string &mid_name,
+                std::vector<std::string> tmp_out_names, const std::vector<int64_t> &hidden_sizes, int64_t axis,
+                onnx::GraphProto *graph_proto) {
+  const int kConcatNum = 6;
+  const int kIndexBiasHiddenR = 3;
+  const int kIndexBiasHiddenZ = 4;
+  auto out_name = node_name + mid_name + "_zrh";
+
+  AddSplitOp(*in_name, tmp_out_names, hidden_sizes, 0, graph_proto);
+  swap(tmp_out_names[0], tmp_out_names[1]);
+  if (tmp_out_names.size() == kConcatNum) {
+    swap(tmp_out_names[kIndexBiasHiddenR], tmp_out_names[kIndexBiasHiddenZ]);
+  }
+  AddConcatOp(tmp_out_names, out_name, 0, graph_proto);
+  *in_name = out_name;
+}
+
+/*
+  Mapping between the inputs of MindSpore DynamicGRUV2 and ONNX GRU operator.
+  +----------------------------------------------------------+----------------------------------------------+
+  |                          ONNX                            |                  MindSpore                   |
+  +==========================================================+==============================================+
+  | X: [seq_length, batch_size, input_size]                  | x: (num_step, batch_size, input_size)        |
+  +----------------------------------------------------------+----------------------------------------------+
+  | W: [num_directions, 3*hidden_size, input_size]           | weight_input: (input_size, 3*hidden_size)    |
+  +----------------------------------------------------------+----------------------------------------------+
+  | R: [num_directions, 3*hidden_size, hidden_size]          | weight_hidden: (hidden_size, 3*hidden_size)  |
+  +----------------------------------------------------------+----------------------------------------------+
+  |                                                          | bias_input:  (3*hidden_size)                 |
+  + B: [num_directiBBons, 6*hidden_size]                     +----------------------------------------------+
+  |                                                          | bias_hidden: (3*hidden_size)                 |
+  +----------------------------------------------------------+----------------------------------------------+
+  | sequence_lens: [batch_size]                              | seq_length: (hidden_size)                    |
+  +----------------------------------------------------------+----------------------------------------------+
+  | initial_h: [num_directions, batch_size, hidden_size]     | init_h: (batch_size, hidden_size)            |
+  +----------------------------------------------------------+----------------------------------------------+
+  | Y:[seq_length, num_directions, batch_size, hidden_size]  | y: (num_step, batch_size, hidden_size)       |
+  +----------------------------------------------------------+----------------------------------------------+
+*/
+void OnnxExporter::ExportMergeDynamicGRUV2(const FuncGraphPtr &, const CNodePtr &node,
+                                           std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                           onnx::GraphProto *const graph_proto) {
+  const int kInX = 1;
+  const int kInWeightInput = 2;
+  const int kInWeightHidden = 3;
+  const int kInBiasInput = 4;
+  const int kInBiasHidden = 5;
+  // The 6th input 'seq_length' now only support None, so it's not used.
+  const int kInInitH = 7;
+
+  const int kWeightHiddenDim = 2;
+  const int kNumberOfGates = 3;
+  const std::string kDefaultDir = "UNIDIRECTIONAL";
+  const std::string kDefaultAct = "tanh";
+  const std::vector<std::string> kGateOrderSupported{"rzh", "zrh"};
+
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto gru_node = dyn_cast<CNode>(node->input(1));
+
+  /* Get Attributes */
+  auto direction = GetOpAttribute<std::string>(gru_node, "direction");
+  auto activation = GetOpAttribute<std::string>(gru_node, "activation");
+  auto gate_order = GetOpAttribute<std::string>(gru_node, "gate_order");
+  auto reset_after = GetOpAttribute<bool>(gru_node, "reset_after");
+
+  int64_t linear_before_reset = reset_after ? 1 : 0;
+
+  if (direction != kDefaultDir) {
+    MS_LOG(EXCEPTION) << "'direction': " << direction << " is not in supported values[" << kDefaultDir << "]";
+  }
+  if (activation != kDefaultAct) {
+    MS_LOG(EXCEPTION) << "'activation': " << activation << " is not in supported values[" << kDefaultAct << "]";
+  }
+  if (gate_order != kGateOrderSupported[0] && gate_order != kGateOrderSupported[1]) {
+    std::string supported;
+    for (const auto &order : gate_order) {
+      supported += order;
+      supported += ", ";
+    }
+    MS_LOG(EXCEPTION) << "'gate_order': " << gate_order << " is not in supported values[" << supported << "]";
+  }
+
+  auto x = GetNodeInputName(gru_node->input(kInX), node_map_ptr, graph_proto);
+  auto weight_input = GetNodeInputName(gru_node->input(kInWeightInput), node_map_ptr, graph_proto);
+  auto weight_hidden = GetNodeInputName(gru_node->input(kInWeightHidden), node_map_ptr, graph_proto);
+  auto bias_input = GetNodeInputName(gru_node->input(kInBiasInput), node_map_ptr, graph_proto);
+  auto bias_hidden = GetNodeInputName(gru_node->input(kInBiasHidden), node_map_ptr, graph_proto);
+  auto init_h = GetNodeInputName(gru_node->input(kInInitH), node_map_ptr, graph_proto);
+
+  auto weight_hidden_shape = dyn_cast<abstract::Shape>(gru_node->input(kInWeightHidden)->Shape())->shape();
+  if (weight_hidden_shape.size() != kWeightHiddenDim) {
+    MS_LOG(EXCEPTION) << "The dim of input weight_hidden must be " << kWeightHiddenDim << ".";
+  }
+  int64_t hidden_size = weight_hidden_shape[1] / kNumberOfGates;
+
+  auto trans_w_i = node_name + "_trans_w_i";
+  AddTransposeOp(weight_input, trans_w_i, graph_proto);
+  weight_input = trans_w_i;
+
+  auto trans_w_h = node_name + "_trans_w_h";
+  AddTransposeOp(weight_hidden, trans_w_h, graph_proto);
+  weight_hidden = trans_w_h;
+
+  auto bias_i_h = node_name + "_bias_i_h";
+  AddConcatOp({bias_input, bias_hidden}, bias_i_h, 0, graph_proto);
+
+  // ONNX GRU only support "zrh"
+  if (gate_order == "rzh") {
+    MS_LOG(INFO) << "change gate order 'rzh' to 'zrh'.";
+    std::vector<int64_t> hidden_sizes(kNumberOfGates, hidden_size);
+    GruRzh2Zrh(&weight_input, node_name, "w_i", {node_name + "_w_i_r", node_name + "_w_i_z", node_name + "_w_i_h"},
+               hidden_sizes, 0, graph_proto);
+    GruRzh2Zrh(&weight_hidden, node_name, "w_h", {node_name + "_w_h_r", node_name + "_w_h_z", node_name + "_w_h_h"},
+               hidden_sizes, 0, graph_proto);
+
+    std::vector<int64_t> bias_hidden_sizes(kNumberOfGates + kNumberOfGates, hidden_size);
+    GruRzh2Zrh(&bias_i_h, node_name, "bias",
+               {node_name + "_b_i_r", node_name + "_b_i_z", node_name + "_b_i_h", node_name + "_b_h_r",
+                node_name + "_b_h_z", node_name + "_b_h_h"},
+               bias_hidden_sizes, 0, graph_proto);
+  }
+
+  std::vector<std::string *> input_names = {&weight_input, &weight_hidden, &bias_i_h, &init_h};
+  std::vector<std::string> suffixes = {"_unsqueeze_w_i", "_unsqueeze_w_h", "_unsqueeze_bias", "_unsqueeze_init_h"};
+  for (size_t i = 0; i < input_names.size(); i++) {
+    UnsqueezeInputOfGRU(input_names[i], node_name, suffixes[i], 0, graph_proto);
+  }
+
+  auto y = node_name + "_Y";
+  // 'seq_length' input of DynamicGRUV2 is None, so pass "" to ONNX GRU.
+  std::string sequence_lens = "";
+  AddGRUOp({x, weight_input, weight_hidden, bias_i_h, sequence_lens, init_h}, {y}, hidden_size, linear_before_reset,
+           graph_proto);
+
+  AddSqueezeOp(y, node_name, 1, graph_proto);
 }
 
 /*
