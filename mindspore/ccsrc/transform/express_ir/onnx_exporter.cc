@@ -1030,6 +1030,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Select, Where, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Log, Log, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Greater, Greater, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(LogicalAnd, And, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(LogicalOr, Or, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(ReverseSequence, ReverseSequence,
                              OpNameInfo()
                                .Attr("seq_dim", "time_axis", onnx::AttributeProto_AttributeType_INT,
@@ -1090,6 +1091,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(Less)());
   fn(OP_CONVERT_FUNCTION_NAME(Greater)());
   fn(OP_CONVERT_FUNCTION_NAME(LogicalAnd)());
+  fn(OP_CONVERT_FUNCTION_NAME(LogicalOr)());
   fn(OP_CONVERT_FUNCTION_NAME(ReverseSequence)());
   fn(OP_CONVERT_FUNCTION_NAME(TensorScatterUpdate)());
 
