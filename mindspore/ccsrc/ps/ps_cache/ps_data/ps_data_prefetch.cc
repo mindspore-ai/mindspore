@@ -69,15 +69,17 @@ bool PsDataPrefetch::PrefetchData(const std::string &channel_name, void *data, c
     MS_LOG(WARNING) << "No data prefetch.";
     return true;
   }
+
+  if (!need_wait_) {
+    return true;
+  }
+
   auto channel = ps_data_channel(channel_name);
   MS_ERROR_IF_NULL(channel);
   channel->set_data(data, data_size);
   std::unique_lock<std::mutex> locker(data_mutex_);
   data_ready_ = true;
   data_process_.notify_one();
-  if (!need_wait_) {
-    return true;
-  }
 
   for (size_t i = 0; i < kTimeoutLoopCount; ++i) {
     if (data_prefetch_.wait_for(locker, std::chrono::seconds(kLongestTimeToWait),
