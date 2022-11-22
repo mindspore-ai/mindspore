@@ -99,9 +99,6 @@ const char kFuncGraphFlagBackPropEntry[] = "back_prop_entry";
 const char kFuncGraphFlagReAutoMonad[] = "re_auto_monad";
 const char kFuncGraphFlagRecursive[] = "recursive";
 
-const char kFuncGraphTypeName[] = "FuncGraph";
-const char kKernelGraphTypeName[] = "KernelGraph";
-
 class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
  public:
   using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
@@ -385,15 +382,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_python_obj(const ValuePtr &python_obj) { python_obj_ = python_obj; }
   ValuePtr python_obj() const { return python_obj_; }
 
-  const std::vector<AnfNodePtr> &inputs() const;
-  bool IsDerived() const { return is_derived_; }
-
   const std::string &phase() const { return phase_; }
-
- protected:
-  std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
-  // Whether the instance is base or derived.
-  bool is_derived_ = false;
 
  private:
   // Only used for func_graph manager to control resource free.
