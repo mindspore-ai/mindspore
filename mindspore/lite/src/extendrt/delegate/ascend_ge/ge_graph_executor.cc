@@ -233,7 +233,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     // Release GIL before calling into (potentially long-running) C++ code
     mindspore::ScopedLongRunning long_running;
     MS_LOG(DEBUG) << "Run graph begin, inputs size is: " << inputs.size();
-    transform::Status ret = transform::RunGraph(graph_runner, run_options, ge_inputs, &ge_outputs);
+    transform::Status ret = transform::RunGraphAsync(graph_runner, run_options, ge_inputs, &ge_outputs);
     MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << ge_outputs.size();
     if (ret != transform::Status::SUCCESS) {
       MS_LOG(EXCEPTION) << "Exec graph failed";

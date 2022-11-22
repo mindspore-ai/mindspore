@@ -26,32 +26,27 @@
 #include "extendrt/utils/tensor_default_impl.h"
 #include "extendrt/session/optimizer/tensorrt_optimizer.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
+#ifdef ENABLE_HELPER
+#include "extendrt/delegate/ascend_ge/ge_device_context.h"
+#include "extendrt/delegate/ascend_ge/ge_utils.h"
+#endif
 
 namespace mindspore {
 namespace {
 constexpr auto kAscendProviderGe = "ge";
 std::mutex kernel_graph_mutex;
 }  // namespace
+Status GraphSinkSession::GeDeviceContextInit() {
+#ifdef ENABLE_HELPER
+  GeDeviceContext::GetInstance().Initialize();
+#endif
+  return kSuccess;
+}
 
 GraphSinkSession::~GraphSinkSession() {
 #ifdef ENABLE_HELPER
-  if (ge_context_ != nullptr) {
-    DelegateRegistry::GetInstance().UnRegDelegate(kAscend, kAscendProviderGe);
-    ge_context_->Destroy();
-  }
+  GeDeviceContext::GetInstance().Destroy();
 #endif
-}
-
-Status GraphSinkSession::GeDeviceContextInit() {
-#ifdef ENABLE_HELPER
-  ge_context_ = std::make_shared<GeDeviceContext>();
-  if (ge_context_ == nullptr) {
-    MS_LOG(ERROR) << "Create GeDeviceContext failed.";
-    return kLiteUninitializedObj;
-  }
-  ge_context_->Initialize();
-#endif
-  return kSuccess;
 }
 
 Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {

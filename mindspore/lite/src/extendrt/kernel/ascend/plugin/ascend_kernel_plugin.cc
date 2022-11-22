@@ -36,6 +36,7 @@ void AscendKernelPlugin::UpdateRegisterStatus(bool status) { is_registered_ = st
 
 void AscendKernelPlugin::Register() {
 #if !defined(_WIN32)
+  std::lock_guard<std::mutex> locker(mutex_);
   if (is_registered_) {
     MS_LOG(INFO) << "Create kernel map has been created.";
     return;

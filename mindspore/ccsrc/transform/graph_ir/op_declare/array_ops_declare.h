@@ -20,6 +20,7 @@
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/array_ops.h"
+#include "ops/selection_ops.h"
 
 namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Shape)
@@ -84,6 +85,9 @@ DECLARE_OP_USE_OUTPUT(Identity)
 
 DECLARE_OP_ADAPTER(IdentityN)
 DECLARE_OP_USE_DYN_OUTPUT(IdentityN)
+
+DECLARE_OP_ADAPTER(SelectV2)
+DECLARE_OP_USE_OUTPUT(SelectV2)
 
 DECLARE_OP_ADAPTER(Unique)
 DECLARE_OP_USE_OUTPUT(Unique)

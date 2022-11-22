@@ -160,6 +160,12 @@ REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
 
+// Where
+INPUT_MAP(SelectV2) = {{1, INPUT_DESC(condition)}, {2, INPUT_DESC(then)}, {3, INPUT_DESC(else)}};
+ATTR_MAP(SelectV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SelectV2) = {{0, OUTPUT_DESC(result)}};
+REG_ADPT_DESC(SelectV2, kNameWhere, ADPT_DESC(SelectV2))
+
 // Unique
 INPUT_MAP(Unique) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unique) = EMPTY_ATTR_MAP;
