@@ -65,8 +65,8 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   if ((data_format == static_cast<int64_t>(Format::NCDHW)) && input_shape.size() != x_max_rank &&
       (is_ascend || is_cpu)) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', NCDHW format only support 5-dims input in Ascend or CPU target, but got "
-                             << attr_value_str << ".";
+                             << "', NCDHW format only supports 5-D input on Ascend or CPU, but got a"
+                             << input_shape.size() << "-D input.";
   }
   if ((data_format == static_cast<int64_t>(Format::NHWC) || data_format == static_cast<int64_t>(Format::NCHW)) &&
       (input_shape.size() > x_max_rank || input_shape.size() < x_min_rank)) {

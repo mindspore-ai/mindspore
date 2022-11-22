@@ -1,7 +1,7 @@
 mindspore.ops.Eps
 =================
 
-.. py:class:: mindspore.ops.Eps()
+.. py:class:: mindspore.ops.Eps
 
     创建一个与输入数据类型和shape都相同的Tensor，元素值为对应数据类型能表达的最小值。
 

@@ -1,7 +1,7 @@
 mindspore.ops.Gather
 ======================
 
-.. py:class:: mindspore.ops.Gather()
+.. py:class:: mindspore.ops.Gather
 
     返回输入Tensor在指定 `axis` 上 `input_indices` 索引对应的元素组成的切片。
 

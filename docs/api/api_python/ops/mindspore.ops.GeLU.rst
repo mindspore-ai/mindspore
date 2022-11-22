@@ -1,7 +1,7 @@
 mindspore.ops.GeLU
 ==================
 
-.. py:class:: mindspore.ops.GeLU()
+.. py:class:: mindspore.ops.GeLU
 
     高斯误差线性单元激活函数（Gaussian Error Linear Units activation function）。
 

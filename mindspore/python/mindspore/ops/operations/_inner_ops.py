@@ -473,7 +473,8 @@ class Receive(PrimitiveWithInfer):
         shape (list[int]): A required list identifying the shape of the tensor to be received.
         dtype (Type): A required Type identifying the type of the tensor to be received. The supported types:
                        int8, int16, int32, float16, float32.
-        group (str, optional): The communication group to work on. Default: "hccl_world_group/nccl_world_group".
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

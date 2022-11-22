@@ -1,7 +1,7 @@
 mindspore.ops.BesselJ1
 ======================
 
-.. py:class:: mindspore.ops.BesselJ1()
+.. py:class:: mindspore.ops.BesselJ1
 
     逐元素计算输入数据的BesselJ1函数值。
 

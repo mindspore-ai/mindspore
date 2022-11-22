@@ -1,7 +1,7 @@
 mindspore.ops.BesselK1
 ======================
 
-.. py:class:: mindspore.ops.BesselK1()
+.. py:class:: mindspore.ops.BesselK1
 
     逐元素计算输入数据的BesselK1函数值。
 

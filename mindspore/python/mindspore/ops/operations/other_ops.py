@@ -27,7 +27,7 @@ class Assign(Primitive):
     """
     Assigns `Parameter` with a value.
 
-    Refer to :func:`mindspore.ops.assign` for more detail.
+    Refer to :func:`mindspore.ops.assign` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -329,10 +329,8 @@ class CheckValid(Primitive):
     """
     Checks bounding box.
 
-    Checks whether the bounding box cross data and data border are valid.
-
-    .. warning::
-        specifying the valid boundary (heights x ratio, weights x ratio).
+    Checks whether the bounding boxes specified by `bboxes` is valid.
+    Returns True if the box is within borders specified by `img_metas`, False if not.
 
     Inputs:
         - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). "N" indicates the number of
@@ -385,7 +383,7 @@ class IOU(Primitive):
     Computes the intersection over union (IOU) or the intersection over foreground (IOF) based on the ground-truth and
     predicted regions.
 
-    Refer to :func:`mindspore.ops.iou` for more detail.
+    Refer to :func:`mindspore.ops.iou` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -542,7 +540,7 @@ class StopGradient(Primitive):
     StopGradient is used for eliminating the effect of a value on the gradient,
     such as truncating the gradient propagation from an output of a function.
 
-    Refer to :func:`mindspore.ops.stop_gradient` for more detail.
+    Refer to :func:`mindspore.ops.stop_gradient` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -1,7 +1,7 @@
 mindspore.ops.Sub
 =================
 
-.. py:class:: mindspore.ops.Sub()
+.. py:class:: mindspore.ops.Sub
 
     逐元素用第一个输入Tensor减去第二个输入Tensor。
 

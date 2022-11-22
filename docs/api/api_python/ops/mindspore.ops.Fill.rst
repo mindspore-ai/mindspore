@@ -1,7 +1,7 @@
 mindspore.ops.Fill
 ==================
 
-.. py:class:: mindspore.ops.Fill()
+.. py:class:: mindspore.ops.Fill
 
     创建一个指定shape的Tensor，并用指定值填充。
 

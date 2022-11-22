@@ -3762,13 +3762,11 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     The full kernel has shape :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the group number to split the input in the channel dimension.
 
-    If the `pad_mode` is set to be "valid", the output height and width will be
-    :math:`\left \lfloor{
+    If the `pad_mode` is set to be "valid", the output height and width will be :math:`\left \lfloor{
     1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
     (\text{kernel_size[0]} - 1) \times(\text{dilation[0]} - 1)} {\text { stride[0] }}} \right \rfloor` and
 
-    :math:`\left \lfloor{
-    1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
+    :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
     (\text{kernel_size[1]} - 1) \times(\text{dilation[1]} - 1)} {\text { stride[1] }}} \right \rfloor` respectively.
 
     Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
@@ -3780,6 +3778,10 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
     `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
 
+    Note:
+        On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
+        That is, when `group>1`, condition `C_{in}` = `C_{out}` = `group` must be satisfied.
+
     Args:
         inputs (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
@@ -3789,9 +3791,8 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
 
             - same: Adopts the way of completion. The height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
-              left and right possiblily.
-              Otherwise, the last extra padding will be calculated from the bottom and the right side.
-              If this mode is set, `padding` must be 0.
+              left and right possiblily. Otherwise, the last extra padding will be calculated from the bottom
+              and the right side. If this mode is set, `padding` must be 0.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
               without padding. Extra pixels will be discarded. If this mode is set, `padding` must be 0.
@@ -3799,10 +3800,9 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
             - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
         padding (Union(int, tuple[int]), optional): Implicit paddings on both sides of the input `x`.
-            If `padding` is one integer,
-            the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
-            with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
-            padding[1], padding[2], and padding[3] accordingly. Default: 0.
+            If `padding` is one integer, the paddings of top, bottom, left and right are the same, equal to padding.
+            If `padding` is a tuple with four integers, the paddings of top, bottom, left and right will be equal
+            to padding[0], padding[1], padding[2], and padding[3] accordingly. Default: 0.
         stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
@@ -4063,7 +4063,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
             then "reserve_space_1" and "reserve_space_2" have the same value as "mean" and "variance" respectively.
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
-    .. note::
+    Note:
         - If `training` is `False`, `weight`, `bias`, `running_mean` and `running_var` are Tensors.
         - If `training` is `True`, `weight`, `bias`, `running_mean` and `running_var` are Parameters.
 
@@ -4230,6 +4230,10 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
 
     For more details, please refers to the paper `Gradient Based Learning Applied to Document
     Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ .
+
+    Note:
+        On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
+        That is, when `group>1`, condition `C_{in}` = `C_{out}` = `group` must be satisfied.
 
     Args:
         inputs (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.

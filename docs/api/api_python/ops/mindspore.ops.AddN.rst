@@ -1,7 +1,7 @@
 mindspore.ops.AddN
 ===================
 
-.. py:class:: mindspore.ops.AddN()
+.. py:class:: mindspore.ops.AddN
 
     逐元素将所有输入的Tensor相加。
 

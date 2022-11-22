@@ -1,7 +1,7 @@
 mindspore.ops.OnesLike
 ======================
 
-.. py:class:: mindspore.ops.OnesLike()
+.. py:class:: mindspore.ops.OnesLike
 
     返回值为1的Tensor，shape和数据类型与输入相同。
 

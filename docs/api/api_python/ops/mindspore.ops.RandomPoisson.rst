@@ -3,7 +3,7 @@ mindspore.ops.RandomPoisson
 
 .. py:class:: mindspore.ops.RandomPoisson(seed=0, seed2=0, dtype=mindspore.int64)
 
-    根据离散概率密度函数分布生成随机非负数浮点数i：
+    根据离散概率密度函数分布生成随机非负数浮点数i。函数定义如下：
 
     .. math::
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}

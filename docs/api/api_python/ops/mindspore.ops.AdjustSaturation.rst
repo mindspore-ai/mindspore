@@ -1,7 +1,7 @@
 mindspore.ops.AdjustSaturation
 ==============================
 
-.. py:class:: mindspore.ops.AdjustSaturation()
+.. py:class:: mindspore.ops.AdjustSaturation
 
     调整 RGB 图像的饱和度。
 

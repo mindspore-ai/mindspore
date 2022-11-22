@@ -1,7 +1,7 @@
 mindspore.ops.BesselI1e
 ========================
 
-.. py:class:: mindspore.ops.BesselI1e() 
+.. py:class:: mindspore.ops.BesselI1e
 
     逐元素计算输入数据的BesselI1e函数值。
 

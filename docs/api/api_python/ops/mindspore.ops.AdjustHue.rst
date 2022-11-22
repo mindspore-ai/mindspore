@@ -1,7 +1,7 @@
 mindspore.ops.AdjustHue
 =======================
 
-.. py:class:: mindspore.ops.AdjustHue()
+.. py:class:: mindspore.ops.AdjustHue
 
     调整 RGB 图像的色调。
 
