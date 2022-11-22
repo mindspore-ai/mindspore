@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import numpy as np
 import pytest
 
@@ -20,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from mindspore.train.serialization import export
 
 
 class SortNet(nn.Cell):
@@ -281,3 +283,32 @@ def test_sort_tensor_api_modes(mode):
     expected_2 = np.array([[2, 1, 0], [2, 0, 1], [0, 1, 2]])
     np.testing.assert_array_equal(output_1.asnumpy(), expected_1)
     np.testing.assert_array_equal(output_2.asnumpy(), expected_2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_sort_onnx():
+    """
+    Feature: test sort op in cpu
+    Description: test the ops onnx export
+    Expectation: expect correct result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    np_array = np.array([[0.62, 0.28, 0.43, 0.61], [0.22, 0.63, 0.18, 0.49]])
+    input_x = Tensor(np_array)
+    sort_net = SortNet(0, True)
+    ms_output = sort_net(input_x)
+    file = 'sort.onnx'
+    export(sort_net, input_x, file_name=file, file_format="onnx")
+    assert os.path.exists(file)
+
+    import onnxruntime as ort
+    import onnx
+    onnx_model = onnx.load_model(file)
+    sess = ort.InferenceSession(onnx_model.SerializeToString())
+    input_name = sess.get_inputs()[0].name
+    result = sess.run([], {input_name: np_array})
+    assert np.allclose(list(ms_output)[0].asnumpy(), result[0], rtol=1.e-3)
+    assert np.allclose(list(ms_output)[1].asnumpy(), result[1])
