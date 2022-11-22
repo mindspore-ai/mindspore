@@ -113,7 +113,7 @@ class GridSampler2DGpuKernelMod : public NativeGpuKernelMod {
     stride_compute(input_stride_, input_shape_);
     stride_compute(grid_stride_, grid_shape_);
     stride_compute(output_stride_, output_shape_);
-    size_ = input_shape_[kIndex0] * grid_shape_[kIndex1] * grid_shape_[kIndex2] * grid_shape_[kIndex3];
+    size_ = input_shape_[kIndex0] * grid_shape_[kIndex1] * grid_shape_[kIndex2];
     return KRET_OK;
   }
 
