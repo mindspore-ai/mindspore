@@ -17,6 +17,7 @@
 
 import numpy as np
 import mindspore.numpy as mnp
+from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.nn import LGamma
 from mindspore.ops import functional as F
@@ -124,6 +125,27 @@ def get_bprop_logit(self):
 
     def bprop(x, out, dout):
         dx = logitgrad(dout, x)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.Roll)
+def get_bprop_roll(self):
+    """Generate bprop for Roll"""
+    if context.get_context("device_target") == "GPU":
+        shift = []
+        axis = self.axis
+        for tmp in enumerate(self.shift):
+            shift.append(-tmp[1])
+        roll_grad = P.Roll(shift, axis)
+    else:
+        shift = self.shift
+        axis = self.axis
+        roll_grad = P.Roll(-shift, axis)
+
+    def bprop(x_input, out, dout):
+        dx = roll_grad(dout)
         return (dx,)
 
     return bprop

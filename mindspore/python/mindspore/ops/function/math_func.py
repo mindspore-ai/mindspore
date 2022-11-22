@@ -29,7 +29,7 @@ from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack
-from mindspore.ops.operations._inner_ops import Roll
+from mindspore.ops.operations.math_ops import Roll
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore._checkparam import Rel

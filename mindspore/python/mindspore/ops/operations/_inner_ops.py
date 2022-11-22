@@ -1281,69 +1281,6 @@ class TensorCopySlices(Primitive):
         self.init_prim_io_names(inputs=['x', 'value', 'begin', 'end', 'strides'], outputs=['y'])
 
 
-class Roll(Primitive):
-    """
-    Rolls the elements of a tensor along an axis.
-
-    The elements are shifted positively (towards larger indices) by the offset of `shift` along the dimension of `axis`.
-    Negative `shift` values will shift elements in the opposite direction. Elements that roll passed the last position
-    will wrap around to the first and vice versa. Multiple shifts along multiple axes may be specified.
-
-    Note:
-        This inner operation is valid only if the axis is equal to 0. If the shift and the axis are tuples or lists,
-        this inner operation is valid only for the first pair of elements.
-
-    Args:
-        shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
-            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
-            in the opposite direction.
-        axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled. The value is
-            forced to be zero in this operation.
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor.
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If `shift` is not an int, a tuple or a list.
-        TypeError: If `axis` is not an int, a tuple or a list.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
-    Examples:
-        >>> from mindspore.ops.operations import _inner_ops as inner
-        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-        >>> op = inner.Roll(shift=2, axis=0)
-        >>> output = op(input_x)
-        >>> print(output)
-        [3. 4. 0. 1. 2.]
-        >>> input_x = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
-        >>> op = inner.Roll(shift=-1, axis=0)
-        >>> output = op(input_x)
-        >>> print(output)
-        [[5. 6. 7. 8. 9.]
-         [0. 1. 2. 3. 4.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, shift, axis):
-        """Initialize Roll"""
-        if context.get_context("device_target") == "GPU":
-            validator.check_value_type("shift", shift, [int, tuple, list], self.name)
-            validator.check_value_type("axis", axis, [int, tuple, list], self.name)
-        else:
-            if isinstance(shift, (tuple, list)) and isinstance(axis, (tuple, list)):
-                validator.check_equal_int(len(shift), 1, "shift size", self.name)
-                validator.check_equal_int(len(axis), 1, "shift size", self.name)
-                validator.check_equal_int(axis[0], 0, "axis", self.name)
-            elif isinstance(shift, int) and isinstance(axis, int):
-                validator.check_equal_int(axis, 0, "axis", self.name)
-        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-
-
 class DSDMatmul(PrimitiveWithInfer):
     """
     The definition of the CusSquare primitive.
