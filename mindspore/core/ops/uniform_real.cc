@@ -53,6 +53,7 @@ abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, 
   const std::string &op_name = primitive->name();
   const int64_t kMinInputNum = 1;
   const int64_t kMaxInputNum = 3;
+  // Check Input
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, kMinInputNum,
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kLessEqual, kMaxInputNum,
@@ -60,13 +61,14 @@ abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, 
 
   ShapeVector shape;
   abstract::ShapePtr output_shape;
-  auto shape_value = input_args[0]->BuildValue();
+  auto shape_value = input_args[kInputIndex0]->BuildValue();
   if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
     shape = shape_value->isa<tensor::Tensor>()
               ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name)
               : CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name);
     output_shape = std::make_shared<abstract::Shape>(shape);
   } else {
+    // ToSupport Dynamic
     shape = {-2};  // unknown dimension.
     output_shape = std::make_shared<abstract::Shape>(shape);
   }
