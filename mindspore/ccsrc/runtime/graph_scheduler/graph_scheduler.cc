@@ -802,9 +802,11 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       }
       // Only the device tensor store not need cache output actor.
       if ((output_actor == nullptr) && (kernel_type != KernelTransformType::kDeviceTensorStore)) {
-        MS_LOG(WARNING) << "Graph " << graph_id << " output node:" << output_with_index.first->fullname_with_scope()
-                        << " with index:" << output_with_index.second
-                        << " is not actor, and the kernel type is:" << kernel_type;
+        MS_LOG(INFO) << "Graph " << graph_id << " output node:" << output_with_index.first->fullname_with_scope()
+                     << " with index:" << output_with_index.second
+                     << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
+                     << " with index:" << origin_output_with_index.second
+                     << " is not actor, and the kernel type is:" << kernel_type;
       }
 
       auto output_actor_name = (output_actor != nullptr) ? output_actor->GetAID().Name() : "";
