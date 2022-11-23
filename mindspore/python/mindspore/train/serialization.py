@@ -46,6 +46,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common.api import _get_parameter_layout
+from mindspore.common.api import _generate_pair_password
 from mindspore.common.initializer import initializer, One
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -517,7 +518,7 @@ def _check_customized_func(customized_func):
 
 
 def _check_obfuscate_params(obf_config):
-    """check obfuscation parameters, including obf_password, obf_ratio, customized_func"""
+    """Check obfuscation parameters, including obf_password, obf_ratio, customized_func"""
     if 'obf_password' not in obf_config.keys() and 'customized_func' not in obf_config.keys():
         raise ValueError(
             "At least one of 'obf_password' or 'customized_func' must be set in obf_config, but got None of them.")
@@ -617,12 +618,8 @@ def obfuscate_model(obf_config, **kwargs):
         for func in customized_funcs:
             add_opaque_predicate(func.__name__, func)
         append_password = 0
-    else:
-        seed_max = 2 ** 32 - 1
-        int_max = 2 ** 31 - 1
-        np.random.seed(obf_password % seed_max)
-        append_password = np.random.randint(int_max)
-        obf_password %= int_max
+    else:  # apply password mode
+        obf_password, append_password = _generate_pair_password(obf_password)
 
     if 'enc_key' in kwargs.keys():
         enc_key = Validator.check_isinstance('enc_key', kwargs.get('enc_key'), bytes)
