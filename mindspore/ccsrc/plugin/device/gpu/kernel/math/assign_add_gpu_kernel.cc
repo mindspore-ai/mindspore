@@ -38,7 +38,7 @@ bool AssignAddFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<int64_t>());
@@ -65,7 +65,7 @@ int AssignAddFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   ResetResource();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   for (int64_t i = 0; i < static_cast<int64_t>(input_shape_.size()); i++) {
     input_size_ *= input_shape_[i];
   }

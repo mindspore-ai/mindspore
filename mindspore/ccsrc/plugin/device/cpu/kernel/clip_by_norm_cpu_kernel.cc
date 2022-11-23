@@ -55,7 +55,7 @@ bool ClipByNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "For `" << kernel_name_ << "`, its input or output data types are not supported.";
     return false;
   }
-  data_type_ = std::make_pair(kernel_attr.GetInputAttr(0).first, kernel_attr.GetInputAttr(1).first);
+  data_type_ = std::make_pair(kernel_attr.GetInputAttr(0).dtype, kernel_attr.GetInputAttr(1).dtype);
   return true;
 }
 

@@ -37,7 +37,7 @@ bool TrilGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   }
   kernel_func_ = func_list_[index].second;
   diagonal_ = kernel_ptr_->get_diagonal();
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }
 

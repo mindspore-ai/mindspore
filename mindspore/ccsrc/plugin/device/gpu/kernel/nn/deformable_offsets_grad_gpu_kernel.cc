@@ -103,7 +103,7 @@ bool DeformableOffsetsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
+  type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).dtype);
   return true;
 }
 

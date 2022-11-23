@@ -96,7 +96,7 @@ bool FillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
                             const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
-  x_type_id_ = tensor_attr.GetInputAttr(kIndex1).first;
+  x_type_id_ = tensor_attr.GetInputAttr(kIndex1).dtype;
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

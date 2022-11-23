@@ -109,7 +109,7 @@ bool UpsampleTrilinear3DGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
-  t_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
+  t_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
   kernel_func_ = func_list_[index].second;
   return GetUpsampleTrilinear3DAttr(base_operator);
 }

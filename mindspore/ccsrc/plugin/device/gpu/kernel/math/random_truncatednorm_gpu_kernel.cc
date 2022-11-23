@@ -35,8 +35,8 @@ bool TruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   auto kernel_ptr = std::make_shared<ops::TruncatedNormal>(base_operator->GetPrim());
   seed_ = static_cast<int>(kernel_ptr->get_seed());
   seed2_ = static_cast<int>(kernel_ptr->get_seed2());
-  unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
+  unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
   return true;
 }
 

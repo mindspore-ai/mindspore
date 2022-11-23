@@ -58,7 +58,7 @@ bool AdjustSaturationGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
+  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).dtype);
   return true;
 }
 

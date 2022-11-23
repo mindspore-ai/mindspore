@@ -24,9 +24,9 @@ void AdadeltaGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
   input_size_list_.clear();
   output_size_list_.clear();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex3).first);
-  g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex6).first);
+  t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex3).dtype);
+  g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex6).dtype);
 
   std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                                               inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());

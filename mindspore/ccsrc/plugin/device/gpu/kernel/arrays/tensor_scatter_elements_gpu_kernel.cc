@@ -100,8 +100,8 @@ bool TensorScatterElementsGpuKernelMod::Init(const BaseOperatorPtr &base_operato
     return false;
   }
   kernel_func_ = func_list_[pair.second].second;
-  indices_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
-  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  indices_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
+  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
 
   return true;
 }

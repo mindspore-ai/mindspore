@@ -94,7 +94,7 @@ bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_opera
     return false;
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto type_id = kernel_attr.GetInputAttr(kIndex0).first;
+  auto type_id = kernel_attr.GetInputAttr(kIndex0).dtype;
   if ((type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128) && (kernel_name_ != kTensorScatterUpdate)) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the data type of input args not supports Complex.";
     return false;

@@ -82,7 +82,7 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_oper
                                                             inputs.at(i)->GetDeviceShapeAdaptively().end());
 
     size_t input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
-    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).first);
+    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).dtype);
 
     std::vector<size_t> temp{input_elements_, unit_size_};
     ele_size_vec.push_back(temp);
@@ -97,7 +97,7 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_oper
     std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(i)->GetDeviceShapeAdaptively().begin(),
                                                              outputs.at(i)->GetDeviceShapeAdaptively().end());
     size_t output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
-    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(i).first);
+    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(i).dtype);
     output_size_list_.push_back(output_elements_ * unit_size_);
   }
   return true;

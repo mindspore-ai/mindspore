@@ -50,7 +50,7 @@ bool KLDivLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
+  type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).dtype);
   return true;
 }
 

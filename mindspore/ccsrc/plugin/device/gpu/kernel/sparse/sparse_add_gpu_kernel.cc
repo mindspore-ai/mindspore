@@ -52,9 +52,9 @@ bool SparseAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   is_need_retrieve_output_shape_ = true;  // SparseAdd is a dynamic shape operator.
   kernel_func_ = func_list_[index].second;
-  indices_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex0).first);
-  values_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex1).first);
-  threshold_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex6).first);
+  indices_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex0).dtype);
+  values_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex1).dtype);
+  threshold_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseAddIndex6).dtype);
   return true;
 }
 

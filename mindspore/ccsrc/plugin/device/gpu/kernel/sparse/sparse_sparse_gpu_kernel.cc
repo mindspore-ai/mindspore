@@ -48,8 +48,8 @@ bool SparseSparseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
   kernel_func_ = func_list_[index].second;
   is_need_retrieve_output_shape_ = true;
-  indices_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseSparseIndex0).first);
-  values_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseSparseIndex1).first);
+  indices_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseSparseIndex0).dtype);
+  values_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseSparseIndex1).dtype);
   return true;
 }
 

@@ -29,7 +29,7 @@ void CheckDeviceSm(const KernelAttr &kernel_attr) {
   }
 
   for (size_t i = 0; i < kernel_attr.GetInputSize(); ++i) {
-    if (kernel_attr.GetInputAttr(i).first != kNumberTypeFloat16) {
+    if (kernel_attr.GetInputAttr(i).dtype != kNumberTypeFloat16) {
       continue;
     }
 
@@ -121,16 +121,16 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
     MS_EXCEPTION_IF_ZERO("kernel attr input size", attr_size);
     for (size_t iidx = 0; iidx < kernel_attr_to_check.GetInputSize(); iidx++) {
       auto cur_input_attr = kernel_attr_to_check.GetInputAttr(iidx);
-      const auto &type_id = cur_input_attr.first;
-      if (type_id == from_precision && cur_kernel_attr.GetInputAttr(iidx % attr_size).first == to_precision) {
+      const auto &type_id = cur_input_attr.dtype;
+      if (type_id == from_precision && cur_kernel_attr.GetInputAttr(iidx % attr_size).dtype == to_precision) {
         (void)input_reduce_index.emplace_back(iidx, from_precision, to_precision);
         MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast input " << iidx << " to int32.";
       }
     }
     for (size_t oidx = 0; oidx < kernel_attr_to_check.GetOutputSize(); oidx++) {
       auto cur_output_attr = kernel_attr_to_check.GetOutputAttr(oidx);
-      const auto &type_id = cur_output_attr.first;
-      if (type_id == from_precision && cur_kernel_attr.GetOutputAttr(oidx % attr_size).first == to_precision) {
+      const auto &type_id = cur_output_attr.dtype;
+      if (type_id == from_precision && cur_kernel_attr.GetOutputAttr(oidx % attr_size).dtype == to_precision) {
         (void)output_reduce_index.emplace_back(oidx, from_precision, to_precision);
         MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast output " << oidx << " to int32.";
       }
@@ -146,12 +146,12 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
   for (const auto &reduce_item : input_reduce_index) {
     auto reduce_idx = std::get<0>(reduce_item);
     auto cur_attr = reduce_kernel_attr.GetInputAttr(reduce_idx);
-    reduce_kernel_attr.SetInputAttr(reduce_idx, std::get<kTwo>(reduce_item), cur_attr.second);
+    reduce_kernel_attr.SetInputAttr(reduce_idx, std::get<kTwo>(reduce_item), cur_attr.format);
   }
   for (const auto &reduce_item : output_reduce_index) {
     auto reduce_idx = std::get<0>(reduce_item);
     auto cur_attr = reduce_kernel_attr.GetOutputAttr(reduce_idx);
-    reduce_kernel_attr.SetOutputAttr(reduce_idx, std::get<kTwo>(reduce_item), cur_attr.second);
+    reduce_kernel_attr.SetOutputAttr(reduce_idx, std::get<kTwo>(reduce_item), cur_attr.format);
   }
 
   MS_LOG(INFO) << "Kernel [" << kernel_name << "] reduce precision attr: " << reduce_kernel_attr;

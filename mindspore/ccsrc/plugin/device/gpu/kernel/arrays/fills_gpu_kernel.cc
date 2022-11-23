@@ -67,7 +67,7 @@ bool FillsGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto x_type_id = tensor_attr.GetInputAttr(kIndex0).first;
+  auto x_type_id = tensor_attr.GetInputAttr(kIndex0).dtype;
   unit_size_ = abstract::TypeIdSize(x_type_id);
   x_type_str_ = TypeIdToString(x_type_id);
   return true;

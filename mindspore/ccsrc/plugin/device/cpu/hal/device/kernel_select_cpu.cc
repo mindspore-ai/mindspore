@@ -19,7 +19,7 @@
 #include <memory>
 #include <algorithm>
 #include <set>
-#include "kernel/common_utils.h"
+#include <unordered_set>
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/oplib/oplib.h"
@@ -111,8 +111,8 @@ void GetOutputFormatsAndDtypes(const CNodePtr &kernel_node, const kernel::Kernel
                                std::vector<std::string> *output_formats, std::vector<TypeId> *output_types) {
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    output_formats->emplace_back(kernel_attr.GetOutputAttr(output_index).second);
-    auto dtype = kernel_attr.GetOutputAttr(output_index).first;
+    output_formats->emplace_back(kernel_attr.GetOutputAttr(output_index).format);
+    auto dtype = kernel_attr.GetOutputAttr(output_index).dtype;
     output_types->emplace_back(dtype);
   }
 }
@@ -140,8 +140,8 @@ int GetOutputDtypeMatchedNum(const kernel::KernelAttr &kernel_attr, const std::v
   int data_type_matched_num = 0;
   auto output_num = output_types.size();
   for (size_t i = 0; i < output_num; ++i) {
-    if (kernel_attr.GetOutputAttr(i).first != output_types[i]) {
-      MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetOutputAttr(i).first
+    if (kernel_attr.GetOutputAttr(i).dtype != output_types[i]) {
+      MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetOutputAttr(i).dtype
                     << ", actual output dtype:" << output_types[i];
     } else {
       data_type_matched_num++;
@@ -159,8 +159,8 @@ int GetInputDtypeFormatMatchedNum(const kernel::KernelAttr &kernel_attr, const s
   int data_type_matched_num = 0;
   auto input_num = input_types.size();
   for (size_t i = 0; i < input_num; ++i) {
-    if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).first, input_types[i], strict)) {
-      MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetInputAttr(i).first
+    if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], strict)) {
+      MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetInputAttr(i).dtype
                     << ", actual input dtype:" << input_types[i];
     } else {
       data_type_matched_num++;
@@ -183,14 +183,14 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_at
   std::vector<DataType> attr_list;
   size_t each_attr_input_num = input_num / attr_num;
   for (size_t i = 0; i < attr_num; ++i) {
-    TypeId input_dtype = kernel_attr->GetInputAttr(i).first;
+    TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
     for (size_t j = 0; j < each_attr_input_num; ++j) {
-      (void)attr_list.emplace_back(input_dtype, format);
+      (void)attr_list.emplace_back(DataType(input_dtype, format));
     }
   }
   kernel_attr->SetInputAttrList(attr_list);
 
-  TypeId output_dtype = kernel_attr->GetOutputAttr(0).first;
+  TypeId output_dtype = kernel_attr->GetOutputAttr(0).dtype;
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t i = 1; i < output_num; ++i) {
     (void)kernel_attr->AddOutputAttr(output_dtype);
@@ -221,7 +221,7 @@ void ExpandMultiDynamicAttr(const CNodePtr &kernel_node, const std::vector<int64
   std::string format = kOpFormat_DEFAULT;
   std::vector<DataType> input_attr_list;
   for (size_t input_index = 0; input_index < inpyt_attr_num; ++input_index) {
-    TypeId input_dtype = kernel_attr->GetInputAttr(input_index).first;
+    TypeId input_dtype = kernel_attr->GetInputAttr(input_index).dtype;
     int64_t dyn_input_num = dyn_input_sizes[input_index];
     if (dyn_input_num < 0) {
       dyn_input_num = 1;
@@ -244,7 +244,7 @@ void ExpandMultiDynamicAttr(const CNodePtr &kernel_node, const std::vector<int64
   // Expand output kernel attr, only support one dynamic output. TODO: support multi dynamic outputs
   std::vector<DataType> output_attr_list;
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    TypeId output_dtype = kernel_attr->GetOutputAttr(0).first;
+    TypeId output_dtype = kernel_attr->GetOutputAttr(0).dtype;
     (void)output_attr_list.emplace_back(output_dtype, format);
   }
   kernel_attr->SetOutputAttrList(output_attr_list);
@@ -436,24 +436,24 @@ kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::
   // Fill inputs info.
   for (size_t i = 0; i < input_num; ++i) {
     auto type_format = kernel_attr.GetInputAttr(i);
-    if (type_format.first == TypeId::kMetaTypeNone) {
-      type_format.first = input_types[i];
+    if (type_format.dtype == TypeId::kMetaTypeNone) {
+      type_format.dtype = input_types[i];
     }
-    if (type_format.second.empty()) {
-      type_format.second = kOpFormat_DEFAULT;
+    if (type_format.format.empty()) {
+      type_format.format = kOpFormat_DEFAULT;
     }
-    (void)result.AddInputAttr(type_format.first, type_format.second);
+    (void)result.AddInputAttr(type_format.dtype, type_format.format);
   }
   // Fill outputs info.
   for (size_t i = 0; i < output_num; ++i) {
     auto type_format = kernel_attr.GetOutputAttr(i);
-    if (type_format.first == TypeId::kMetaTypeNone) {
-      type_format.first = output_types[i];
+    if (type_format.dtype == TypeId::kMetaTypeNone) {
+      type_format.dtype = output_types[i];
     }
-    if (type_format.second.empty()) {
-      type_format.second = kOpFormat_DEFAULT;
+    if (type_format.format.empty()) {
+      type_format.format = kOpFormat_DEFAULT;
     }
-    (void)result.AddOutputAttr(type_format.first, type_format.second);
+    (void)result.AddOutputAttr(type_format.dtype, type_format.format);
   }
   return result;
 }
@@ -618,8 +618,8 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     MS_LOG(INFO) << "Input format and dtype is matched";
     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &selected_output_formats, &selected_output_types);
     for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
-      input_types[index] = selected_kernel_attr.GetInputAttr(index).first;
-      (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).second);
+      input_types[index] = selected_kernel_attr.GetInputAttr(index).dtype;
+      (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
     }
   }
   SetKernelBuildInfo(input_formats, input_types, selected_output_formats, selected_output_types, kernel_node.get());

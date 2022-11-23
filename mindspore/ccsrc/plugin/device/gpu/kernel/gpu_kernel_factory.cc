@@ -59,12 +59,12 @@ std::string NativeGpuKernelModFactory::SupportedTypeList(const std::string &kern
     std::string type_list = "input[";
     auto attr = (iter->second)[attr_index].first;
     for (size_t input_index = 0; input_index < attr.GetInputSize(); ++input_index) {
-      type_list = type_list + TypeIdToString(attr.GetInputAttr(input_index).first) +
+      type_list = type_list + TypeIdToString(attr.GetInputAttr(input_index).dtype) +
                   ((input_index == (attr.GetInputSize() - 1)) ? "" : " ");
     }
     type_list = type_list + "], output[";
     for (size_t input_index = 0; input_index < attr.GetOutputSize(); ++input_index) {
-      type_list = type_list + TypeIdToString(attr.GetOutputAttr(input_index).first) +
+      type_list = type_list + TypeIdToString(attr.GetOutputAttr(input_index).dtype) +
                   ((input_index == (attr.GetOutputSize() - 1)) ? "" : " ");
     }
     type_lists = type_lists + type_list + "]; ";
@@ -106,7 +106,7 @@ bool NativeGpuKernelModFactory::ReducePrecision(
     auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
       if (kernel_info->GetInputDeviceType(input_index) == kNumberTypeInt64 &&
-          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first == kNumberTypeInt32) {
+          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).dtype == kNumberTypeInt32) {
         builder->SetInputDeviceType(kNumberTypeInt32, input_index);
         reduce_flag_.first.push_back(input_index);
         MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast input " << input_index
@@ -115,7 +115,7 @@ bool NativeGpuKernelModFactory::ReducePrecision(
     }
     for (size_t output_index = 0; output_index < kernel_info->GetOutputNum(); output_index++) {
       if (kernel_info->GetOutputDeviceType(output_index) == kNumberTypeInt64 &&
-          (iter->second)[attr_index].first.GetOutputAttr(output_index % attr_size).first == kNumberTypeInt32) {
+          (iter->second)[attr_index].first.GetOutputAttr(output_index % attr_size).dtype == kNumberTypeInt32) {
         builder->SetOutputDeviceType(kNumberTypeInt32, output_index);
         MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast output " << output_index
                      << " to int32.";
@@ -180,7 +180,7 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
       NativeGpuKernelModFactory::CheckSM(kernel_info, input_index);
       if (kernel_info->GetInputDeviceType(input_index) !=
-          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first) {
+          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).dtype) {
         flag = false;
         break;
       }
@@ -195,7 +195,7 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
     // data type matching check of all output parameters of kernel
     for (size_t output_index = 0; output_index < kernel_info->GetOutputNum(); output_index++) {
       if (kernel_info->GetOutputDeviceType(output_index) !=
-          (iter->second)[attr_index].first.GetOutputAttr(output_index % attr_size).first) {
+          (iter->second)[attr_index].first.GetOutputAttr(output_index % attr_size).dtype) {
         flag = false;
         break;
       }
