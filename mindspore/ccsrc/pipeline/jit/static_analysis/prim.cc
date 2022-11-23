@@ -2222,14 +2222,15 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       const auto &local_abs = element.second;
       const auto &local_abs_val = local_abs->BuildValue();
       MS_EXCEPTION_IF_NULL(local_abs_val);
+      auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
       if (local_abs_val == kAnyValue) {
         MS_EXCEPTION(ValueError) << "When using JIT Fallback to handle script '" << script
-                                 << "', the inputs should be constant, but found variable '" << name
+                                 << "', the inputs should be constant, but found variable '" << py_data_name
                                  << "' to be nonconstant.";
       }
       if (local_abs->isa<abstract::AbstractTensor>()) {
-        MS_LOG(WARNING) << "When using JIT Fallback to handle script '" << script << "', found variable '" << name
-                        << "' to be a tensor.";
+        MS_LOG(WARNING) << "When using JIT Fallback to handle script '" << script << "', found variable '"
+                        << py_data_name << "' to be a tensor.";
       }
     }
   }
