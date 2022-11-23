@@ -40,16 +40,18 @@ __global__ void NudgeMinMaxPerChannel(float *input_min, float *input_max, const 
   float nudge_zp = 0.f;
 
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channel_num; i += blockDim.x * gridDim.x) {
+    float max_data = input_max[i];
+    float min_data = input_min[i];
     if (symmetric) {
-      input_max[i] = abs(input_min[i]) < input_max[i] ? input_max[i] : -input_min[i];
-      input_min[i] = abs(input_min[i]) < input_max[i] ? -input_max[i] : input_min[i];
+      max_data = abs(input_min[i]) < input_max[i] ? input_max[i] : -input_min[i];
+      min_data = abs(input_min[i]) < input_max[i] ? -input_max[i] : input_min[i];
     }
-    if ((quant_max - quant_min) == 0 || (input_max[i] - input_min[i]) == 0) {
+    if ((quant_max - quant_min) == 0 || (max_data - min_data) == 0) {
       scale[i] = 0.f;
       zp_from_min = 0.f;
     } else {
-      scale[i] = (input_max[i] - input_min[i]) / (quant_max - quant_min);
-      zp_from_min = quant_min - input_min[i] / scale[i];
+      scale[i] = (max_data - min_data) / (quant_max - quant_min);
+      zp_from_min = quant_min - min_data / scale[i];
     }
 
     if (zp_from_min <= quant_min) {
