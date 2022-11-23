@@ -32,7 +32,7 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
     MS_LOG(EXCEPTION) << "The rank size can not be zero.";
   }
   for (size_t i = 0; i < inputs_size; i++) {
-    std::vector<AnfNodePtr> split_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
+    std::vector<AnfNodePtr> split_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name()))};
     split_inputs.push_back(common::AnfAlgo::GetInputNode(node, i));
     auto split = NewCNode(split_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(split);

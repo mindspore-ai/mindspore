@@ -18,67 +18,13 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <map>
-#include <algorithm>
 #include <vector>
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
-namespace mindspore {
-namespace kernel {
-namespace tbe {
-namespace {
-bool ChangeDynamicAbsToActualAbs(const CNodePtr &cnode, const std::shared_ptr<OpInfo> &op_info) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(op_info);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  // Only support for PyNative
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    return true;
-  }
-
-  auto node_input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  auto node_output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
-  if (node_input_num != op_info->inputs_ptr().size() || node_output_num != op_info->outputs_ptr().size()) {
-    MS_LOG(DEBUG) << "node_input_num[" << node_input_num << "] is different with op_info->inputs_ptr size["
-                  << op_info->inputs_ptr().size() << "] or node_output_num[" << node_output_num
-                  << "] is different with op_info->outputs_ptr size[" << op_info->outputs_ptr().size()
-                  << "], node:" << cnode->DebugString();
-    return false;
-  }
-
-  MS_LOG(INFO) << "CNode is dynamic shape, but have no dynamic shape op, use static op instead" << cnode->DebugString();
-  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), cnode);
-  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), cnode);
-
-  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
-  auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid inputs.";
-  }
-  AbstractBasePtrList args_spec_list;
-  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
-  MS_EXCEPTION_IF_NULL(primitive);
-  // Get actual abs
-  for (size_t i = 0; i < input_size; ++i) {
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
-    auto real_input = input_node_with_index.first;
-    if (real_input->has_user_data(kActualAbstract)) {
-      const auto &actual_abs = real_input->user_data<abstract::AbstractTensor>(kActualAbstract);
-      real_input->set_abstract(actual_abs);
-    }
-    common::AnfAlgo::AddArgList(&args_spec_list, real_input, input_node_with_index.second);
-  }
-  // Infer real abstract
-  auto eval_result = mindspore::opt::CppInferShapeAndType(primitive, args_spec_list);
-  cnode->set_abstract(eval_result);
-  return true;
-}
-}  // namespace
-
+namespace mindspore::kernel::tbe {
 bool TbeDynamicShapeUtil::GetDynamicShapeAttr(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (anf_node->isa<CNode>()) {
@@ -110,11 +56,9 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
   auto is_dynamic_shape = GetDynamicShapeAttr(cnode);
   auto op_info = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kImplyTBE, is_dynamic_shape);
   // If have no dynamic shape op, get static shape op
-  if (op_info != nullptr && !op_info->dynamic_shape() && is_dynamic_shape) {
-    if (!ChangeDynamicAbsToActualAbs(cnode, op_info)) {
-      // The number of inputs and outputs is incorrect, and the op is not found.
-      return nullptr;
-    }
+  if (op_info != nullptr && !op_info->dynamic_shape_support() && is_dynamic_shape) {
+    MS_LOG(ERROR) << "Node(" << cnode->fullname_with_scope() << ") not support dynamic shape:" << cnode->DebugString();
+    return nullptr;
   }
   return op_info;
 }
@@ -214,6 +158,4 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
 
   return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
 }
-}  // namespace tbe
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::kernel::tbe

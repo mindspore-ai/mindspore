@@ -109,9 +109,10 @@ static bool CheckKLDivLoss(const CNodePtr &cnode) {
 bool TbePropertyChecker::CheckTbeProperties(const mindspore::CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   static std::map<std::string, CheckSupportFun> tbe_property_checker = {{kStridedSliceOpName, CheckStridedSlice},
+                                                                        {kStridedSliceDOpName, CheckStridedSlice},
                                                                         {kStridedSliceGradOpName, CheckStridedSlice},
                                                                         {kTopKOpName, CheckTopK},
-                                                                        {kKLDivLossOpName, CheckKLDivLoss}};
+                                                                        {kKLDivOpName, CheckKLDivLoss}};
   auto cnode_type = common::AnfAlgo::GetCNodeName(cnode);
   auto find_iter = tbe_property_checker.find(cnode_type);
   if (find_iter != tbe_property_checker.end()) {

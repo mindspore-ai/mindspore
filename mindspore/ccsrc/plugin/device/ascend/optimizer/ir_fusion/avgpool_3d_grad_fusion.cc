@@ -176,7 +176,7 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const ShapeVector
 
 const BaseRef AvgPool3DGradFusion::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimAvgPool3DGrad, Xs});
+  return VectorRef({prim::kPrimAvgPool3DGradD, Xs});
 }
 
 const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -208,7 +208,7 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
     MS_LOG(INFO) << "No need fusion";
     return nullptr;
   }
-  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3DGrad->name()))};
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3DGradD->name()))};
   (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_grad_node->inputs().cbegin() + 1,
                           avg_pool_3d_grad_node->inputs().cend());
   // assist node 1

@@ -247,7 +247,7 @@ def assemble_op_args(compute_op_info, is_single_op_build=False):
         attrs = []
         attrs_info = compute_op_info["attrs"] if "attrs" in compute_op_info.keys() else []
         for item in attrs_info:
-            if item["valid"] and item["name"] != "isRef":
+            if item["valid"]:
                 attrs.append(item)
     else:
         attrs = compute_op_info["attr_desc"] if "attr_desc" in compute_op_info.keys() else []
@@ -336,10 +336,10 @@ def get_module_name(compute_op_info):
     :param compute_op_info:
     :return:
     """
-    dynamic_compile_static = compute_op_info["dynamic_compile_static"]
+    is_dynamic_impl = compute_op_info["is_dynamic_impl"]
     unknown_shape = compute_op_info["unknown_shape"]
     op_module_name = compute_op_info["module_name"]
-    if dynamic_compile_static or unknown_shape:
+    if is_dynamic_impl or unknown_shape:
         d = ".dynamic."
         op_module_name = d.join((op_module_name.split(".")[0], op_module_name.split(".")[-1]))
     return op_module_name

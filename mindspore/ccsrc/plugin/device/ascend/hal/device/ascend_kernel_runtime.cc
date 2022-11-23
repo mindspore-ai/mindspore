@@ -38,6 +38,7 @@
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "kernel/oplib/op_info_utils.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
@@ -360,6 +361,11 @@ bool AscendKernelRuntime::Init() {
     SetCurrentContext();
     return true;
   }
+
+  auto soc_version = device::ascend::GetSocVersion();
+  if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version)) {
+    MS_LOG(EXCEPTION) << "Load op info form json config failed, version: " << soc_version;
+  }
   const auto error_manager_ret = ErrorManager::GetInstance().Init();
   if (error_manager_ret != 0) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
@@ -384,7 +390,6 @@ bool AscendKernelRuntime::Init() {
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
     }
-    auto soc_version = device::ascend::GetSocVersion();
     if (!PlatformInfoInitialization(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
     }

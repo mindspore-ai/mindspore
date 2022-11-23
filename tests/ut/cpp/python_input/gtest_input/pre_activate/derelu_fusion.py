@@ -18,7 +18,8 @@ from mindspore.ops import _constants as Constants
 
 relu = P.ReLU()
 relu_grad = Primitive('ReluGrad')
-relu_v2 = Primitive('ReLUV2')
+relu_v2 = Primitive('ReluV2')
+Relu = Primitive('Relu')
 relu_grad_v2 = Primitive('ReluGradV2')
 make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
@@ -51,7 +52,7 @@ def test_derelu_fusion(tag):
         relu_res = relu_v2(i1)
         item0 = tuple_getitem(relu_res, 0)
         item1 = tuple_getitem(relu_res, 1)
-        other = relu(item0)
+        other = Relu(item0)
         res = relu_grad_v2(i0, item1)
         res = make_tuple(res, other)
         return make_tuple(res)

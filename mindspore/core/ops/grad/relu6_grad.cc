@@ -62,6 +62,16 @@ class ReLU6GradInfer : public abstract::OpInferBase {
     return x_type;
   }
 };
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLU6Grad, prim::kPrimRelu6Grad, ReLU6GradInfer, false);
+
+abstract::AbstractBasePtr ReLU6GradInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  ReLU6GradInfer relu_6_grad;
+  auto type = relu_6_grad.InferType(primitive, input_args);
+  auto shape = relu_6_grad.InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReLU6Grad, prim::kPrimReLU6Grad, ReLU6GradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

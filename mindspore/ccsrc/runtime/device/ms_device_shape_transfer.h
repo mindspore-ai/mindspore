@@ -405,11 +405,11 @@ template <typename T>
 std::vector<T> PaddingShapeTo5d(const std::vector<T> &shape, const std::string &padding_str = {""}) {
   std::vector<Axis5D> padding_axis;
   StringToAxisVector5D(padding_str, &padding_axis);
-  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
+  if (padding_axis.empty() || shape.size() > padding_axis.size()) {
     return PaddingShapeTo5dDefault(shape);
   }
   std::vector<T> shape_5d(kNcdhw, 1);
-  for (size_t index = 0; index < padding_axis.size(); index++) {
+  for (size_t index = 0; index < shape.size(); index++) {
     shape_5d[padding_axis[index]] = shape[index];
   }
   return shape_5d;
@@ -422,11 +422,11 @@ template <typename T>
 std::vector<T> PaddingShapeTo4d(const std::vector<T> &shape, const std::string &padding_str = {""}) {
   std::vector<Axis> padding_axis;
   StringToAxisVector4D(padding_str, &padding_axis);
-  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
+  if (padding_axis.empty() || shape.size() > padding_axis.size()) {
     return PaddingShapeTo4dDefault(shape);
   }
   std::vector<T> shape_4d(kNchwDims, 1);
-  for (size_t index = 0; index < padding_axis.size(); index++) {
+  for (size_t index = 0; index < shape.size(); index++) {
     shape_4d[padding_axis[index]] = shape[index];
   }
   return shape_4d;

@@ -35,7 +35,7 @@ void Conv2DBackpropEltwiseFusionPass::MatchConv2DBackpropInputEltwise(const CNod
       fusion_id_allocator->HasFusionIdAttr(eltwise_input)) {
     return;
   }
-  if (common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimConv2DBackpropInput)) {
+  if (common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimConv2DBackpropInputD)) {
     (void)record.insert(eltwise_input);
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);

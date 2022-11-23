@@ -139,6 +139,6 @@ AbstractBasePtr ApplyPowerSignDInfer(const abstract::AnalysisEnginePtr &, const 
   auto infer_shape = ApplyPowerSignDInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ApplyPowerSign, prim::kPrimApplyPowerSignD, ApplyPowerSignDInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(ApplyPowerSign, prim::kPrimApplyPowerSign, ApplyPowerSignDInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

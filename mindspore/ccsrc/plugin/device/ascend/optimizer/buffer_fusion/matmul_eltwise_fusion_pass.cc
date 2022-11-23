@@ -48,7 +48,8 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
+        (AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE ||
+         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::BROAD_CAST) &&
         common::AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_SINGLE_OUTPUT_SIZE) {
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);

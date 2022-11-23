@@ -785,11 +785,11 @@ class Custom(ops.PrimitiveWithInfer):
                     if isinstance(item, dict) and item.get("value") is None:
                         reg_info["attr"][i]["value"] = "all"
             reg_info["async_flag"] = reg_info.get("async_flag", False)
-            reg_info["binfile_name"] = "%s.so" % self.func_name
+            reg_info["binfile"] = "%s.so" % self.func_name
             reg_info["compute_cost"] = reg_info.get("compute_cost", 10)
-            reg_info["kernel_name"] = self.func_name
+            reg_info["kernel"] = self.func_name
             reg_info["partial_flag"] = reg_info.get("partial_flag", True)
-            reg_info["need_check_supported"] = reg_info.get("need_check_supported", False)
+            reg_info["needCheckSupport"] = reg_info.get("need_check_supported", False)
         # Supplement necessary info for AKG if these information is missing in reg_info
         if reg_info["imply_type"] == "AKG":
             target_to_processor = {"Ascend": "AiCore", "GPU": "CUDA", "CPU": "CPU"}

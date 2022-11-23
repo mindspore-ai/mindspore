@@ -32,7 +32,7 @@ CNodePtr UnsortedSegmentSumFission::CreateConcatD(const FuncGraphPtr &graph, con
                                                   const size_t &pad_dim_size) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sum);
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName))};
   auto x_input = sum->input(kIndex1);
   for (size_t i = 0; i < pad_dim_size; ++i) {
     concat_inputs.push_back(x_input);

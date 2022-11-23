@@ -29,6 +29,8 @@
 #include "kernel/oplib/oplib.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/optimizer/helper.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
@@ -63,10 +65,12 @@ static const std::unordered_set<std::string> kAclKernelSet = {kConv2DOpName,
                                                               kMatMulOpName,
                                                               kBatchMatMulOpName,
                                                               kCastOpName,
-                                                              kReLUOpName};
+                                                              kReLUOpName,
+                                                              kReluOpName};
 static const std::unordered_set<std::string> kAclBlackList = {
-  kAddNOpName,   kTransposeNODOpName, kGatherV2OpName, kAvgPool3DOpName,  kResizeBilinearV2OpName, kIndexAddOpName,
-  kOneHotOpName, kTransDataOpName,    kCastOpName,     kROIAlignGradName, kSquareSumV1OpName};
+  kAddNOpName,   kGatherV2OpName,  kAvgPool3DOpName, kResizeBilinearV2OpName, kIndexAddOpName,
+  kOneHotOpName, kTransDataOpName, kCastOpName,      kROIAlignGradName,       kSquareSumV1OpName};
+
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
@@ -247,98 +251,6 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilteredKernelInfoByDtype(
     result.push_back(kernel_build_info);
   }
   return result;
-}
-
-bool CheckHitTargetDtype(const std::map<TypeId, TypeId> &type_map, const TypeId &in_dtype, const TypeId &device_dtype,
-                         bool *flag) {
-  auto iter = type_map.find(in_dtype);
-  // if infer dtype node in type_map and the infer dtype not equal kernel info dtype, return false
-  if (iter == type_map.end() && in_dtype != device_dtype) {
-    return false;
-  }
-  // infer dtype in type_map, but can not find dst dtype that supported raise or reduce,
-  // or infer dtype not equal kernel info dtype, return false
-  if (iter != type_map.end() && iter->second != device_dtype && in_dtype != device_dtype) {
-    return false;
-  }
-  if (in_dtype == kNumberTypeInt64 && device_dtype == kNumberTypeInt32) {
-    *flag = true;
-  }
-  return true;
-}
-
-bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info, const CNodePtr &cnode,
-                    const std::map<TypeId, TypeId> &type_map, bool *int64_flag) {
-  // filte kernel info that unsupported raise or reduce datatype
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(kernel_build_info);
-  for (size_t input_index = 0; input_index < kernel_build_info->GetInputNum(); ++input_index) {
-    auto in_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index);
-    auto device_dtype = kernel_build_info->GetInputDeviceType(input_index);
-    if (device_dtype == kNumberTypeFloat || device_dtype == kNumberTypeFloat32) {
-      device_dtype = kNumberTypeFloat32;
-    }
-    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, int64_flag)) {
-      return false;
-    }
-  }
-
-  for (size_t output_index = 0; output_index < kernel_build_info->GetOutputNum(); ++output_index) {
-    auto in_dtype = common::AnfAlgo::GetOutputInferDataType(cnode, output_index);
-    auto device_dtype = kernel_build_info->GetOutputDeviceType(output_index);
-    if (device_dtype == kNumberTypeFloat || device_dtype == kNumberTypeFloat32) {
-      device_dtype = kNumberTypeFloat32;
-    }
-
-    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, int64_flag)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecisionMatchedKernelInfo(
-  const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list,
-  bool *precision_reduce) {
-  MS_EXCEPTION_IF_NULL(precision_reduce);
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_kernel_info_list;
-  const std::map<TypeId, TypeId> raise_map = {{kNumberTypeFloat16, kNumberTypeFloat32}};
-  const std::map<TypeId, TypeId> reduce_map = {{kNumberTypeInt64, kNumberTypeInt32},
-                                               {kNumberTypeFloat, kNumberTypeFloat16},
-                                               {kNumberTypeFloat32, kNumberTypeFloat16}};
-  bool int64_reduce = false;
-  // raise precision
-  for (size_t info_index = 0; info_index < kernel_info_list.size(); ++info_index) {
-    MS_EXCEPTION_IF_NULL(kernel_info_list[info_index]);
-    if (TagRaiseReduce(kernel_info_list[info_index], cnode, raise_map, &int64_reduce)) {
-      filtered_kernel_info_list.push_back(kernel_info_list[info_index]);
-    }
-  }
-
-  if (!filtered_kernel_info_list.empty()) {
-    *precision_reduce = false;
-    return filtered_kernel_info_list;
-  }
-
-  // reduce precision
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION)) {
-    for (size_t info_index = 0; info_index < kernel_info_list.size(); ++info_index) {
-      MS_EXCEPTION_IF_NULL(kernel_info_list[info_index]);
-      if (TagRaiseReduce(kernel_info_list[info_index], cnode, reduce_map, &int64_reduce)) {
-        filtered_kernel_info_list.push_back(kernel_info_list[info_index]);
-      }
-    }
-  }
-  if (!filtered_kernel_info_list.empty()) {
-    *precision_reduce = true;
-  }
-  if (int64_reduce) {
-    MS_LOG(INFO) << "Operator:[" << cnode->fullname_with_scope()
-                 << "] don't support int64, reduce precision from int64 to int32.";
-  }
-  return filtered_kernel_info_list;
 }
 
 void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
@@ -771,6 +683,56 @@ void ConvertAttrToInput(const CNodePtr &kernel_node, std::vector<std::pair<strin
   kernel_node->set_inputs(new_inputs);
 }
 
+bool ConvertConstInputToAttr(const CNodePtr &cnode, const std::map<size_t, std::string> &input_to_attr_info) {
+  AnfNodePtrList new_inputs;
+  auto primitive = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto inputs = cnode->inputs();
+  new_inputs.push_back(inputs[0]);
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto iter = input_to_attr_info.find(i);
+    if (iter != input_to_attr_info.end() && input_node->isa<ValueNode>()) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto value = value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<tensor::Tensor>()) {
+        auto tensor = value->cast<tensor::TensorPtr>();
+        if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {
+          MS_LOG(DEBUG) << "Const input data ptr is null from op " << cnode->fullname_with_scope() << "'s input " << i;
+          return false;
+        }
+        value = opt::CreateValueFromTensor(tensor);
+        value = opt::UpdateValueByAttrDataType(value, iter->second);
+        MS_LOG(DEBUG) << "new attr value:" << value_node->ToString() << ", Type:" << value_node->type_name();
+      }
+
+      std::string attr_name = opt::GetInputName(cnode, i);
+      if (attr_name.empty()) {
+        return false;
+      }
+
+      if (cnode->HasAttr(attr_name)) {
+        auto origin_primitive = GetCNodePrimitive(cnode);
+        MS_EXCEPTION_IF_NULL(origin_primitive);
+        MS_LOG(ERROR) << "Origin op already has this attr " << attr_name
+                      << ". op attrs:" << origin_primitive->GetAttrsText() << ". DebugString:" << cnode->DebugString();
+        return false;
+      }
+
+      primitive->set_attr(attr_name, value);
+    } else {
+      new_inputs.push_back(inputs[i + 1]);
+    }
+  }
+  if (new_inputs.size() != inputs.size()) {
+    cnode->set_inputs(new_inputs);
+  }
+  return true;
+}
+
 std::string KernelInfoCandidateList(const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_core,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_cpu) {
   std::ostringstream buffer;
@@ -920,11 +882,30 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     GatherInputAndOutputInferType(aicore_in_out_info, kernel_node);
     MS_LOG(DEBUG) << "The node [" << kernel_node->fullname_with_scope()
                   << "] cannot find valid TBE kernel info, try to get ai_cpu kernel info";
+    if (common::AnfAlgo::HasNodeAttr(kAttrMeOpName, kernel_node)) {
+      std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+      auto me_op_name = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrMeOpName);
+      auto primitive = GetCNodePrimitive(kernel_node);
+      MS_EXCEPTION_IF_NULL(primitive);
+      primitive->set_name(me_op_name);
+      // reset full scope name
+      kernel_node->set_fullname_with_scope("");
+      MS_LOG(INFO) << "Rename op type from " << op_name << " to " << me_op_name << " for op "
+                   << kernel_node->fullname_with_scope() << " in aicpu kernel select.";
+    }
+
     std::vector<std::pair<string, size_t>> attr_to_input_infos;
     if (kernel::GetAicpuOpAttrToInputInfo(kernel_node, &attr_to_input_infos) &&
         !common::AnfAlgo::IsDynamicShape(kernel_node)) {
       ConvertAttrToInput(kernel_node, &attr_to_input_infos);
     }
+
+    std::map<size_t, std::string> input_to_attr_info;
+    if (kernel::GetAicpuOpInputToAttrInfo(kernel_node, &input_to_attr_info) &&
+        !common::AnfAlgo::IsDynamicShape(kernel_node)) {
+      ConvertConstInputToAttr(kernel_node, input_to_attr_info);
+    }
+
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
     common::AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), kernel_node);

@@ -43,6 +43,9 @@ bool CheckAICoreSupported(const AnfNodePtr &anf_node);
 bool CheckAICoreSupportedAny(const AnfNodePtr &anf_node);
 bool CheckAICoreSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
 bool CheckAICPUSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
+ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor);
+std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
+ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type);
 
 class KernelQuery {
  public:
@@ -80,13 +83,15 @@ class OpFinder {
 };
 using OpFinderPtr = std::shared_ptr<OpFinder>;
 
-void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
-                            const AnfNodePtr &trans_node, const std::string &reshape_type = {""},
-                            const TypeId &type_id = kTypeUnknown);
+void RefreshKernelBuildInfo(const KernelSelectPtr &kernel_select, const std::string &input_format,
+                            const std::string &output_format, const AnfNodePtr &trans_node,
+                            const std::string &reshape_type = {""}, const TypeId &type_id = kTypeUnknown);
 
 CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
                         const KernelSelectPtr &kernel_select, const bool need_padding, const std::string &op_name,
                         const std::vector<int64_t> &perm = std::vector<int64_t>{});
+
+ValueNodePtr CreatePermValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &perm);
 
 CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
                               const std::string &format, const TypeId &input_type, const TypeId &output_type,

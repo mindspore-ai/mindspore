@@ -23,7 +23,7 @@ namespace mindspore::kernel {
 class SingleTbeJsonCreator : public TbeJsonCreator {
  public:
   SingleTbeJsonCreator() = default;
-  virtual ~SingleTbeJsonCreator() = default;
+  ~SingleTbeJsonCreator() override = default;
   bool GenJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) override;
   bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 

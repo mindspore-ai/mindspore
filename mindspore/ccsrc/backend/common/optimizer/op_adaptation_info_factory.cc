@@ -25,14 +25,14 @@ OpAdaptationInfoRegister &OpAdaptationInfoRegister::GetInstance() {
   return inst;
 }
 
-std::string OpAdaptationInfoRegister::GenerateKey(const std::string &op_name, const std::string &device_name,
+std::string OpAdaptationInfoRegister::GenerateKey(const std::string &me_op_name, const std::string &device_name,
                                                   bool flag) {
   if (device_name != kCPUDevice && device_name != kGPUDevice && device_name != kAscendDevice) {
     MS_LOG(ERROR) << "Backend type is error, " << device_name;
   }
 
   std::string flag_str = flag ? "true" : "false";
-  return std::string(op_name + device_name + flag_str);
+  return std::string(me_op_name + device_name + flag_str);
 }
 
 std::map<std::string, OpAdaptationInfo *> &OpAdaptationInfoRegister::GetOpInfoMap() {
@@ -42,30 +42,30 @@ std::map<std::string, OpAdaptationInfo *> &OpAdaptationInfoRegister::GetOpInfoMa
 
 void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
   MS_EXCEPTION_IF_NULL(reg_info);
-  auto key = GenerateKey(reg_info->GetOriginOpName(), reg_info->GetDeviceName(), reg_info->GetFlag());
+  auto key = GenerateKey(reg_info->me_op_name(), reg_info->device_name(), reg_info->flag());
   auto find = GetOpInfoMap().find(key);
   if (find != GetOpInfoMap().end()) {
     MS_LOG(ERROR) << "This key (" << key << ")"
-                  << " has been registered in origin op info map.";
+                  << " has been registered in me op info map.";
     return;
   }
   MS_LOG(DEBUG) << "Reg op adaptation info to factory, key: " << key;
   GetOpInfoMap()[key] = reg_info;
 }
 
-OpAdaptationInfo *OpAdaptationInfoRegister::GetOpAdaptationInfo(const std::string &origin_op_name,
-                                                                const std::string &device_name, bool flag) {
-  auto key = GenerateKey(origin_op_name, device_name, flag);
+OpAdaptationInfo *OpAdaptationInfoRegister::GetOpAdaptationInfo(const std::string &me_op_name,
+                                                                const std::string &device_name, bool flag) const {
+  auto key = GenerateKey(me_op_name, device_name, flag);
   auto iter = GetOpInfoMap().find(key);
   if (iter == GetOpInfoMap().end()) {
-    MS_LOG(DEBUG) << "Can't find op adaptation for op " << origin_op_name << " on " << device_name << " when flag is "
+    MS_LOG(DEBUG) << "Can't find op adaptation for op " << me_op_name << " on " << device_name << " when flag is "
                   << flag;
     return nullptr;
   }
   return iter->second;
 }
 
-RegisterHelper::RegisterHelper(const string &name, const string &device_name, bool is_dynamic_shape, int len, ...) {
+RegisterHelper::RegisterHelper(const string &me_op_name, const string &device_name, bool flag, int len, ...) {
   mindspore::HashSet<size_t> input_to_attr;
   input_to_attr.reserve(static_cast<size_t>(IntToUint(len)));
   va_list var_ptr;
@@ -74,11 +74,10 @@ RegisterHelper::RegisterHelper(const string &name, const string &device_name, bo
     (void)input_to_attr.insert(static_cast<size_t>(IntToUint(va_arg(var_ptr, int))));
   }
   va_end(var_ptr);
-  op_adaptation_info_ = std::make_shared<OpAdaptationInfo>(name, device_name, is_dynamic_shape);
+  op_adaptation_info_ = std::make_shared<OpAdaptationInfo>(me_op_name, device_name, flag);
   MS_EXCEPTION_IF_NULL(op_adaptation_info_);
-  (void)op_adaptation_info_->SetTargetOpName(name);
   for (auto &index : input_to_attr) {
-    (void)op_adaptation_info_->SetInputAttrInfo(index);
+    (void)op_adaptation_info_->set_input_attr_info(index);
   }
   opt::OpAdaptationInfoRegister::GetInstance().RegOpAdaptationInfo(op_adaptation_info_.get());
 }
@@ -92,12 +91,12 @@ OpAdaptationInfo &OpAdaptationInfo::operator=(const OpAdaptationInfo &op_adaptat
   if (this == &op_adaptation_info) {
     return *this;
   }
-  origin_op_name_ = op_adaptation_info.origin_op_name_;
+  me_op_name_ = op_adaptation_info.me_op_name_;
+  backend_op_name_ = op_adaptation_info.backend_op_name_;
   target_op_name_ = op_adaptation_info.target_op_name_;
   pre_check_func_ = op_adaptation_info.pre_check_func_;
   need_tbe_check_supported_ = op_adaptation_info.need_tbe_check_supported_;
   input_attr_map_ = op_adaptation_info.input_attr_map_;
-  attr_name_map_ = op_adaptation_info.attr_name_map_;
   device_name_ = op_adaptation_info.device_name_;
   flag_ = op_adaptation_info.flag_;
   return *this;

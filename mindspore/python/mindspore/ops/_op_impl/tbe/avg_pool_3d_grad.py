@@ -16,7 +16,7 @@
 """AvgPool3DGrad op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-avg_pool_3d_grad_op_info = TBERegOp("AvgPool3DGrad") \
+avg_pool_3d_grad_op_info = TBERegOp("AvgPool3DGradD") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("avg_pool3d_grad_d.so") \

@@ -80,9 +80,10 @@ void ReduceEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    // Fusion squaresumv1 and sqrt will get worse performance in bert
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE &&
-        common::AnfAlgo::GetCNodeName(cnode) != kCastOpName) {
+        common::AnfAlgo::GetCNodeName(cnode) != kCastOpName && common::AnfAlgo::GetCNodeName(cnode) != kSqrtOpName) {
       MatchReduceEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

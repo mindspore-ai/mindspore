@@ -17,82 +17,20 @@
 
 #include <memory>
 #include <map>
+#include <utility>
 #include <fstream>
+#include "kernel/oplib/op_info_keys.h"
+#include "kernel/oplib/opinfo.h"
 #include "utils/log_adapter.h"
 #include "utils/overload.h"
 #include "utils/ms_context.h"
+#include "kernel/oplib/super_bar.h"
+#include "utils/file_utils.h"
 
-namespace mindspore {
-namespace kernel {
-constexpr auto kImplyType = "imply_type";
-constexpr auto kOpName = "op_name";
-constexpr auto kFusionType = "fusion_type";
-constexpr auto kAsyncFlag = "async_flag";
-constexpr auto kBinfileName = "binfile_name";
-constexpr auto kComputeCost = "compute_cost";
-constexpr auto kKernelName = "kernel_name";
-constexpr auto kPartialFlag = "partial_flag";
-constexpr auto kReshapeType = "reshape_type";
-constexpr auto kValueDepend = "value_depend";
-constexpr auto kOpPattern = "op_pattern";
-constexpr auto kIsDynamicFormat = "is_dynamic_format";
-constexpr auto kDynamicFormat = "dynamicFormat";
-constexpr auto kFormatAgnostic = "formatAgnostic";
-constexpr auto kNeedCheckSupported = "need_check_supported";
-constexpr auto kDynamicRankSupport = "dynamic_rank_support";
-constexpr auto kBroadcast = "broadcast";
-constexpr auto kReduce = "reduce";
-constexpr auto kDynamicShape = "dynamic_shape";
-constexpr auto kDynamicCompileStatic = "dynamic_compile_static";
-constexpr auto kDtypeFormat = "dtype_format";
-constexpr auto kUnknownShapeFormat = "unknown_shape_format";
-constexpr auto kInputToAttrIndex = "input_to_attr_index";
-constexpr auto kRealInputIndex = "real_input_index";
-constexpr auto kAttr = "attr";
-constexpr auto kIputs = "inputs";
-constexpr auto kOutputs = "outputs";
-constexpr auto kAiCPU = "AiCPU";
-constexpr auto kAiCore = "AiCore";
-constexpr auto kCUDA = "CUDA";
-constexpr auto kTbe = "TBE";
-constexpr auto kAkg = "AKG";
-constexpr auto kCpu = "CPU";
-constexpr auto kGpu = "GPU";
-constexpr auto kName = "name";
-constexpr auto kParamType = "param_type";
-constexpr auto kDtype = "dtype";
-constexpr auto kType = "type";
-constexpr auto kValue = "value";
-constexpr auto kDefaultValue = "default_value";
-constexpr auto kIndex = "index";
-constexpr auto kFormat = "format";
-constexpr auto kNeedCompile = "need_compile";
-constexpr auto kShape = "shape";
-constexpr auto kProcessor = "processor";
-
-static const std::map<std::string, OpImplyType> OpImplyTypeMap = {
-  {kTbe, kImplyTBE}, {kAkg, kImplyAKG}, {kAiCPU, kImplyAICPU}, {kCpu, kImplyCPU}, {kGpu, kImplyGPU}};
-
-static std::string ImplTypeToStr(OpImplyType impl_type) {
-  switch (impl_type) {
-    case kImplyTBE:
-      return kTbe;
-    case kImplyAKG:
-      return kAkg;
-    case kImplyAICPU:
-      return kAiCPU;
-    case kImplyCPU:
-      return kCpu;
-    case kImplyGPU:
-      return kGpu;
-    default:
-      return "unknown";
-  }
-}
-
+namespace mindspore::kernel {
 std::vector<std::string> SplitStrToVec(const std::string &input) {
-  static const std::map<std::string, std::string> kSpecFormat = {
-    {kOpFormat_NCHW, kOpFormat_DEFAULT}, {kOpFormat_ND, kOpFormat_DEFAULT}, {kOpFormat_NCDHW, kOpFormat_DEFAULT}};
+  static const std::map<std::string, std::string> kSpecFormat = {{kOpFormat_NCHW, kOpFormat_DEFAULT},
+                                                                 {kOpFormat_ND, kOpFormat_DEFAULT}};
   if (input.empty()) {
     MS_LOG(EXCEPTION) << "Op select ret item is null.";
   }
@@ -121,68 +59,75 @@ std::vector<std::string> SplitStrToVec(const std::string &input) {
 bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) {
   try {
     auto op_json = nlohmann::json::parse(json_string);
-    std::string imply_type_string = op_json.at(kImplyType);
-    auto find_iter = OpImplyTypeMap.find(imply_type_string);
-    if (find_iter == OpImplyTypeMap.end()) {
-      MS_LOG(ERROR) << "Not support imply_type, " << imply_type_string;
+    std::string op_name = op_json.at(kOpName);
+    std::string imply_type_str = op_json.at(kImplyType);
+    auto iter = kImplyTypeStrToEnumMap.find(imply_type_str);
+    if (iter == kImplyTypeStrToEnumMap.end()) {
+      MS_LOG(ERROR) << "Not support imply_type: " << imply_type_str;
       return false;
     }
-    if (!DecodeOpInfo(op_json, find_iter->second, impl_path)) {
-      MS_LOG(ERROR) << "RegOp failed: op_name: " << op_json.at(kOpName) << " imply_type " << imply_type_string;
+    auto imply_type = iter->second;
+    std::string key_suffix = imply_type_str;
+    if (imply_type_str == kImplyAKGStr) {
+      key_suffix = op_json.at(kProcessor);
+    }
+    auto key = op_name + key_suffix;
+    auto &op_infos = GetOpInfoMap();
+    auto op_infos_iter = op_infos.find(imply_type);
+    if (op_infos_iter != op_infos.end()) {
+      auto op_info_iter = op_infos_iter->second.find(key);
+      bool is_custom_op = (!impl_path.empty() || op_name.find(".so:") != std::string::npos);
+      if (op_info_iter != op_infos_iter->second.end() && !is_custom_op) {
+        MS_LOG(ERROR) << "Op: " << op_name << ", processor: " << key_suffix << ", imply type: " << imply_type_str
+                      << "input json: " << json_string << "has been registered.";
+        return false;
+      }
+    }
+    auto op_info = DecodeOpInfo(op_json, imply_type, impl_path);
+    op_info->set_processor(key_suffix);
+    if (op_info == nullptr) {
+      MS_LOG(ERROR) << "RegOp failed: op_name: " << op_name << " imply_type " << imply_type_str;
       return false;
     }
+    (void)op_infos[imply_type].insert(std::pair<std::string, OpInfoPtr>(key, op_info));
   } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "get op json elements failed: " << e.what();
+    MS_LOG(ERROR) << "Get op json elements failed: " << e.what();
   }
   return true;
 }
+
+bool OpLib::LoadSuperBarConfig(const std::string &suber_bar_config) { return SuperBar::LoadSBConfig(suber_bar_config); }
 
 void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
   const std::map<std::string, kernel::OpPattern> kOpPatternMap = {
     {kFormatAgnostic, kFormatAgnosticPattern}, {kBroadcast, kBroadcastPattern}, {kReduce, kReducePattern}};
   MS_EXCEPTION_IF_NULL(op_info);
-  op_info->set_async_flag(obj.at(kAsyncFlag));
-  op_info->set_binfile_name(obj.at(kBinfileName));
-  op_info->set_compute_cost(obj.at(kComputeCost));
-  op_info->set_kernel_name(obj.at(kKernelName));
-  op_info->set_partial_flag(obj.at(kPartialFlag));
-  op_info->set_need_check_supported(obj.at(kNeedCheckSupported));
-  if (obj.find(kDynamicRankSupport) != obj.end()) {
-    op_info->set_dynamic_rank_support(obj.at(kDynamicRankSupport));
+  op_info->set_async(obj.at(kAsyncFlag));
+  op_info->set_bin_file(obj.at(kBinfile));
+  op_info->set_compute(obj.at(kComputeCost));
+  op_info->set_kernel(obj.at(kKernel));
+  op_info->set_partial(obj.at(kPartialFlag));
+  op_info->set_need_check_supported(obj.at(kNeedCheckSupport));
+  if (obj.find(kDynamincRankSupport) != obj.end()) {
+    op_info->set_dynamic_rank_support(obj.at(kDynamincRankSupport));
   }
 
-  if (obj.find(kDynamicShape) != obj.end()) {
-    op_info->set_dynamic_shape(obj.at(kDynamicShape));
+  if (obj.find(kDynamicShapeSupport) != obj.end()) {
+    op_info->set_dynamic_shape_support(obj.at(kDynamicShapeSupport));
   }
 
   if (obj.find(kDynamicCompileStatic) != obj.end()) {
-    op_info->set_dynamic_compile_static_(obj.at(kDynamicCompileStatic));
+    op_info->set_dynamic_compile_static(obj.at(kDynamicCompileStatic));
   }
 
-  auto dynamic_iter = obj.find(kIsDynamicFormat);
+  auto dynamic_iter = obj.find(kDynamicFormat);
   if (dynamic_iter != obj.end()) {
     bool is_dynamic_format = dynamic_iter->get<bool>();
     if (is_dynamic_format) {
       op_info->set_op_pattern(kDynamicFormatPattern);
     }
-    op_info->set_is_dynamic_format(is_dynamic_format);
+    op_info->set_dynamic_format(is_dynamic_format);
   }
-
-  if (obj.find(kInputToAttrIndex) != obj.end()) {
-    op_info->set_input_to_attr_index(obj.at(kInputToAttrIndex));
-  }
-
-  if (obj.find(kRealInputIndex) != obj.end()) {
-    std::vector<size_t> real_input_index = obj.at(kRealInputIndex);
-    std::map<size_t, size_t> real_index;
-    std::map<size_t, size_t> ori_index;
-    for (size_t i = 0; i < real_input_index.size(); ++i) {
-      (void)real_index.emplace(std::pair{i, real_input_index.at(i)});
-      (void)ori_index.emplace(std::pair{real_input_index.at(i), i});
-    }
-    op_info->set_real_input_index(std::pair{real_index, ori_index});
-  }
-
   if (obj.find(kOpPattern) != obj.end()) {
     std::string op_pattern = obj.at(kOpPattern);
     auto find_iter = kOpPatternMap.find(op_pattern);
@@ -196,11 +141,6 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
   }
 }
 
-void OpLib::DecodeAKGSpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
-  MS_EXCEPTION_IF_NULL(op_info);
-  op_info->set_processor(obj.at(kProcessor));
-}
-
 bool OpLib::RegOpFromLocalInfo() {
   static bool has_load = false;
   if (has_load) {
@@ -210,35 +150,17 @@ bool OpLib::RegOpFromLocalInfo() {
   has_load = true;
   std::string dir = common::GetEnv("MINDSPORE_OP_INFO_PATH");
   if (dir.empty()) {
-    MS_LOG(INFO) << "MindSpore op info path does not been set. use op info from python pass.";
+    MS_LOG(INFO) << "MINDSPORE_OP_INFO_PATH has not been set, return.";
     return true;
   }
-  char real_path[PATH_MAX] = {0};
-  if (dir.size() >= PATH_MAX) {
-    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the path length should be smaller than "
-                  << PATH_MAX << ", but got " << dir;
+  auto real_path = FileUtils::GetRealPath(dir.c_str());
+  if (!real_path.has_value()) {
+    MS_LOG(INFO) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the path is: " << dir
+                 << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "
+                 << "(3) whether the path is too long. ";
     return false;
   }
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, common::SafeCStr(dir), PATH_MAX) == nullptr) {
-    MS_LOG(ERROR) << "Op info path is invalid: " << dir;
-    return false;
-  }
-#else
-  if (realpath(common::SafeCStr(dir), real_path) == nullptr) {
-    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the path is: " << dir
-                  << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "
-                  << "(3) whether the path is too long. ";
-    return false;
-  }
-  if (strlen(real_path) >= PATH_MAX) {
-    MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the absolute path length should be smaller"
-                  << " than " << PATH_MAX << ", but got " << real_path;
-    return false;
-  }
-#endif
-  MS_LOG(INFO) << "Start to read op info from local file.";
-  std::ifstream file(real_path);
+  std::ifstream file(real_path.value());
   if (!file.is_open()) {
     MS_LOG(ERROR) << "Find op info file failed.";
     return false;
@@ -254,24 +176,21 @@ bool OpLib::RegOpFromLocalInfo() {
   return true;
 }
 
-bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpImplyType &imply_type,
-                         const std::string &impl_path) {
+std::shared_ptr<OpInfo> OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpImplyType &imply_type,
+                                            const std::string &impl_path) {
   std::shared_ptr<OpInfo> op_info = std::make_shared<OpInfo>();
   MS_EXCEPTION_IF_NULL(op_info);
   op_info->set_op_name(obj.at(kOpName));
   op_info->set_impl_path(impl_path);
   op_info->set_imply_type(imply_type);
-  op_info->set_fusion_type(obj.at(kFusionType));
   if (imply_type == kImplyTBE) {
     DecodeTBESpecificInfo(obj, op_info);
-  } else if (imply_type == kImplyAKG) {
-    DecodeAKGSpecificInfo(obj, op_info);
   }
   auto attrs = obj.at(kAttr);
   for (const auto &attr : attrs) {
     if (!DecodeAttr(attr, imply_type, op_info)) {
       MS_LOG(ERROR) << "DecodeAttr Failed";
-      return false;
+      return nullptr;
     }
   }
   nlohmann::json dtype_format;
@@ -280,48 +199,23 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
   }
   auto inputs = obj.at(kIputs);
   for (const auto &input : inputs) {
-    if (!DecodeInputOutput(input, imply_type, kInput, op_info, dtype_format)) {
+    if (!DecodeInputOutput(input, imply_type, true, op_info, dtype_format)) {
       MS_LOG(ERROR) << "DecodeInputOutput Failed";
-      return false;
+      return nullptr;
     }
   }
   auto outputs = obj.at(kOutputs);
   for (const auto &output : outputs) {
-    if (!DecodeInputOutput(output, imply_type, kOutput, op_info, dtype_format)) {
+    if (!DecodeInputOutput(output, imply_type, false, op_info, dtype_format)) {
       MS_LOG(ERROR) << "DecodeInputOutput Failed";
-      return false;
+      return nullptr;
     }
-  }
-  if (obj.find(kUnknownShapeFormat) != obj.end()) {
-    auto unknown_shape_formats_obj = obj.at(kUnknownShapeFormat);
-    if (unknown_shape_formats_obj.size() != op_info->inputs_ptr().size() + op_info->outputs_ptr().size()) {
-      MS_LOG(ERROR) << "If unknown shape exist, the size should be equal (input size + output size).";
-      return false;
-    }
-    for (size_t i = 0; i < op_info->inputs_ptr().size(); ++i) {
-      auto unknown_shape_formats_str = unknown_shape_formats_obj.at(i);
-      auto unknown_shape_formats = SplitStrToVec(unknown_shape_formats_str);
-      op_info->inputs_ptr().at(i)->set_unknown_shape_formats(unknown_shape_formats);
-    }
-    for (size_t i = 0; i < op_info->outputs_ptr().size(); ++i) {
-      auto index = i + op_info->inputs_ptr().size();
-      auto unknown_shape_formats_str = unknown_shape_formats_obj.at(index);
-      auto unknown_shape_formats = SplitStrToVec(unknown_shape_formats_str);
-      op_info->outputs_ptr().at(i)->set_unknown_shape_formats(unknown_shape_formats);
-    }
-  }
-  if (CheckRepetition(op_info)) {
-    MS_LOG(WARNING) << "This op info has been already registered. op name: " << op_info->op_name()
-                    << ", impl type: " << ImplTypeToStr(op_info->imply_type())
-                    << ", impl path: " << op_info->impl_path();
-    return true;
   }
   if (!GetRefInfo(op_info)) {
     MS_LOG(ERROR) << "GetRefInfo Failed";
-    return false;
+    return nullptr;
   }
-  GetOpInfoMap().emplace(op_info->op_name(), op_info);
-  return true;
+  return op_info;
 }
 
 bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType &imply_type,
@@ -344,7 +238,7 @@ bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType &imply_type,
     }
     op_info->add_attrs_ptr(op_attr);
   } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "DecodeAttr failed:" << e.what();
+    MS_LOG(ERROR) << "DecodeAttr failed:" << e.what() << ", input: " << obj.dump();
     ret = false;
   }
   return ret;
@@ -370,7 +264,7 @@ bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::sha
   return ret;
 }
 
-bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType &imply_type, const OpIOType &io_type,
+bool OpLib::DecodeInputOutput(const nlohmann::json &obj, OpImplyType imply_type, bool is_input,
                               const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format) {
   MS_EXCEPTION_IF_NULL(op_info);
   bool ret = true;
@@ -384,9 +278,15 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType &impl
         MS_LOG(ERROR) << "Decode dtype format failed";
         return false;
       }
+      if (op_info->dynamic_shape_support()) {
+        op_io->set_unknown_shape_formats(op_io->formats());
+      }
     } else {
       op_io->set_dtypes(obj.at(kDtype));
       op_io->set_formats(obj.at(kFormat));
+      if (op_info->dynamic_shape_support()) {
+        op_io->set_unknown_shape_formats(obj.at(kFormat));
+      }
     }
     if (op_io->dtypes().size() != op_io->formats().size()) {
       MS_LOG(ERROR) << "op " << op_io->name() << " dtype size: " << op_io->dtypes()
@@ -403,17 +303,17 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType &impl
       if (obj.find(kShape) != obj.end()) {
         op_io->set_shape(obj.at(kShape));
       }
-      if (obj.find(kReshapeType) != obj.end()) {
-        op_io->set_reshape_type(obj.at(kReshapeType));
+      if (obj.find(kReshape_Type) != obj.end()) {
+        op_io->set_reshape_type(obj.at(kReshape_Type));
       }
       if (obj.find(kValueDepend) != obj.end()) {
         op_io->set_value_depend(obj.at(kValueDepend));
       }
     }
 
-    if (io_type == kInput) {
+    if (is_input) {
       op_info->add_inputs_ptr(op_io);
-    } else if (io_type == kOutput) {
+    } else {
       op_info->add_outputs_ptr(op_io);
     }
   } catch (const std::exception &e) {
@@ -427,46 +327,39 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   if (!OpLib::RegOpFromLocalInfo()) {
     MS_LOG(INFO) << "Warning reg local op info failed.";
   }
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-  if (is_gpu && (imply_type == kImplyTBE || imply_type == kImplyAICPU)) {
-    MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
-                 << ", current op num: " << GetOpInfoMap().size();
+  auto &op_infos = GetOpInfoMap();
+  auto op_infos_iter = op_infos.find(imply_type);
+  if (op_infos_iter == op_infos.end()) {
+    MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << imply_type
+                 << ", current imply type num: " << op_infos.size() << " is_dynamic_shape:" << is_dynamic_shape;
     return nullptr;
   }
-  std::string target_processor = is_gpu ? kCUDA : (is_cpu ? kCpu : kAiCore);
-  std::vector<std::shared_ptr<OpInfo>> op_info_list;
-  for (auto [iter, end] = GetOpInfoMap().equal_range(op_name); iter != end; ++iter) {
-    auto &op_info = (*iter).second;
-    MS_EXCEPTION_IF_NULL(op_info);
-    if (op_info->imply_type() != imply_type) {
-      continue;
-    }
-    if (imply_type == kImplyAKG && op_info->processor() != target_processor) {
-      continue;
-    }
-    // The dynamic shape operator is preferred
-    if (is_dynamic_shape && op_info->dynamic_shape()) {
-      MS_LOG(DEBUG) << "Find dynamic opinfo " << op_name;
-      return op_info;
-    }
-    // If not dynamic shape, get opinfo immediately
-    if (!is_dynamic_shape) {
-      MS_LOG(DEBUG) << "Find static opinfo " << op_name;
-      return op_info;
-    }
-    (void)op_info_list.emplace_back(op_info);
+  auto impl_type_iter = kImplyTypeEnumToStrMap.find(imply_type);
+  if (impl_type_iter == kImplyTypeEnumToStrMap.end()) {
+    MS_LOG(ERROR) << "FindOp failed: opname: " << op_name << ", imply_type: " << imply_type
+                  << ", current imply type num: " << op_infos.size() << " is_dynamic_shape:" << is_dynamic_shape;
+    return nullptr;
   }
-  // If is_dynamic_shape is true, but op_info have no dynamic shape, use first opinfo
-  if (!op_info_list.empty()) {
-    MS_LOG(DEBUG) << op_name << " get op info size " << op_info_list.size() << ", select first opinfo";
-    return op_info_list.front();
+  auto key_suffix = impl_type_iter->second;
+  if (key_suffix == kImplyAKGStr) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    auto processor_iter = kProcessorMap.find(device);
+    if (processor_iter == kProcessorMap.end()) {
+      return nullptr;
+    }
+    key_suffix = processor_iter->second;
   }
-  MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
-               << ", current op num: " << GetOpInfoMap().size() << " is_dynamic_shape:" << is_dynamic_shape;
-  return nullptr;
+  auto key = op_name + key_suffix;
+  auto op_info_iter = op_infos_iter->second.find(key);
+  if (op_info_iter == op_infos_iter->second.end()) {
+    MS_LOG(INFO) << "Note: Op: " << op_name << ", processor: " << key_suffix << ", imply type: " << imply_type
+                 << " is not exist, op info num: " << op_infos_iter->second.size();
+    return nullptr;
+  }
+
+  return op_info_iter->second;
 }
 
 bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
@@ -491,21 +384,8 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
   return true;
 }
 
-bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
-  MS_EXCEPTION_IF_NULL(op_info);
-  for (auto [iter, end] = GetOpInfoMap().equal_range(op_info->op_name()); iter != end; ++iter) {
-    auto &exist_op_info = (*iter).second;
-    MS_EXCEPTION_IF_NULL(exist_op_info);
-    if (exist_op_info->equals_to(op_info)) {
-      return true;
-    }
-  }
-  return false;
+std::map<mindspore::kernel::OpImplyType, std::map<std::string, std::shared_ptr<OpInfo>>> &OpLib::GetOpInfoMap() {
+  static std::map<mindspore::kernel::OpImplyType, std::map<std::string, std::shared_ptr<OpInfo>>> op_infos;
+  return op_infos;
 }
-
-std::multimap<std::string, std::shared_ptr<OpInfo>> &OpLib::GetOpInfoMap() {
-  static std::multimap<std::string, std::shared_ptr<OpInfo>> op_info;
-  return op_info;
-}
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::kernel

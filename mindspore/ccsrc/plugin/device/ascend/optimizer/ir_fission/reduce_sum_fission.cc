@@ -25,7 +25,7 @@ namespace mindspore {
 namespace opt {
 const BaseRef ReduceSumFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  auto reduce_sum_prim = std::make_shared<Primitive>(prim::kPrimReduceSum->name());
+  auto reduce_sum_prim = std::make_shared<Primitive>(prim::kPrimReduceSumD->name());
   return VectorRef({reduce_sum_prim, Xs});
 }
 
@@ -35,7 +35,7 @@ CNodePtr ReduceSumFission::AddReduceSumNode(const FuncGraphPtr &func_graph, cons
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
   auto input_type = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())),
+  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSumD->name())),
                                     input_node};
   CNodePtr reduce_sum = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(reduce_sum);

@@ -113,7 +113,7 @@ void PsEmbeddingCacheInserter::GetEmbeddingLookupNodes() {
     }
 
     const std::string kernel_name = common::AnfAlgo::GetCNodeName(node);
-    if (kernel_name != kGatherV2OpName && kernel_name != kSparseGatherV2OpName) {
+    if (kernel_name != kGatherOpName && kernel_name != kSparseGatherV2OpName) {
       return;
     }
 

@@ -105,7 +105,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_a
   }
 
   // Make a all_to_all_v CNode.
-  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllVOpName))};
+  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
   all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs.begin(), split_outputs.end());
   auto all_to_all_v = graph->NewCNode(all_to_all_v_input);
   MS_EXCEPTION_IF_NULL(all_to_all_v);

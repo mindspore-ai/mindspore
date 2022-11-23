@@ -169,7 +169,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddTConcatNode(const FuncGraphPtr &func_grap
                                                    const std::vector<AnfNodePtr> &gru_hidden_grad_nodes,
                                                    size_t concat_output_index) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   for (size_t i = 0; i < t_size; i++) {
     auto gru_hidden_grad_node_i = gru_hidden_grad_nodes[(t_size - 1) - i];
     MS_EXCEPTION_IF_NULL(gru_hidden_grad_node_i);
@@ -222,7 +222,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddHSplitNode(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dynamic_gru_v2_grad_cnode);
   auto input_h = dynamic_gru_v2_grad_cnode->input(input_index["h"]);
-  std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
+  std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name())),
                                           input_h};
   auto split_v = NewCNode(splitv_input, func_graph);
   // Set infer data type and shape
@@ -273,7 +273,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddHConcatNode(const FuncGraphPtr &func_grap
     MS_LOG(EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
                       << trace::DumpSourceLines(splitv);
   }
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   auto init_h_reshape = CreateHReshape(func_graph, dynamic_gru_v2_grad_cnode->input(input_index["init_h"]));
   (void)concat_inputs.emplace_back(init_h_reshape);
   (void)concat_inputs.emplace_back(splitv_outputs[kIndex0]);
@@ -318,7 +318,7 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDgateHSplitVDNode(const FuncGraphPtr &
                                                             const AnfNodePtr &dgate_h) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dgate_h);
-  std::vector<AnfNodePtr> splitvd_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
+  std::vector<AnfNodePtr> splitvd_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name()))};
   if (t_size == 1) {
     std::vector<AnfNodePtr> dgate_h_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, dgate_h, kGRUV2HiddenGradCellOutputNum, &dgate_h_outputs);
@@ -348,7 +348,7 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDgateXConcatDNode(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(dnt_x);
   std::vector<AnfNodePtr> split_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, split, kSplitVOutputNum, &split_outputs);
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name())),
                                            split_outputs[kIndex0]};
   if (t_size == 1) {
     std::vector<AnfNodePtr> dnt_x_outputs;
@@ -426,7 +426,7 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDwReduceSumDNode(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(matmul);
   MS_EXCEPTION_IF_NULL(gru_grad);
   // ReduceSumD for dw_x and dw_h
-  std::vector<AnfNodePtr> reducesum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())),
+  std::vector<AnfNodePtr> reducesum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSumD->name())),
                                               matmul};
   auto reduce_sumd = NewCNode(reducesum_inputs, graph);
   auto types = {common::AnfAlgo::GetOutputInferDataType(gru_grad, 0)};
@@ -444,7 +444,7 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDbReduceSumDNode(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node2);
   // ReduceSumD for db_x and db_h
-  std::vector<AnfNodePtr> reducesum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())),
+  std::vector<AnfNodePtr> reducesum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSumD->name())),
                                               node};
   auto reduce_sumd = NewCNode(reducesum_inputs, graph);
   MS_EXCEPTION_IF_NULL(reduce_sumd);

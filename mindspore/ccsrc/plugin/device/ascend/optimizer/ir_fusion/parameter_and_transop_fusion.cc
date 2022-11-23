@@ -38,7 +38,8 @@ const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr
       return nullptr;
     }
     if (op_name == prim::kPrimCast->name() || op_name == prim::kPrimTranspose->name() ||
-        op_name == prim::kPrimReshape->name() || op_name == kTransDataOpName) {
+        op_name == prim::kPrimTransposeD->name() || op_name == prim::kPrimReshape->name() ||
+        op_name == prim::kPrimTransData->name()) {
       auto users = manager->node_users()[node];
       if (users.size() > 1 && !first_flag) {
         return nullptr;
@@ -90,14 +91,15 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   bool changed = false;
   constexpr size_t kTransRoadSize = 3;
-  for (auto node : node_list) {
+  for (const auto &node : node_list) {
     if (node == nullptr || !node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     auto node_name = common::AnfAlgo::GetCNodeName(cnode);
     if (node_name == prim::kPrimCast->name() || node_name == prim::kPrimTranspose->name() ||
-        node_name == prim::kPrimReshape->name() || node_name == kTransDataOpName) {
+        node_name == prim::kPrimTransposeD->name() || node_name == prim::kPrimReshape->name() ||
+        node_name == prim::kPrimTransData->name()) {
       MS_LOG(DEBUG) << "Skip trans op";
       continue;
     }

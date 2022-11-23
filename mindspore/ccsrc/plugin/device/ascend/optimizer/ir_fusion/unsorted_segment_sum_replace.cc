@@ -67,19 +67,8 @@ const AnfNodePtr UnsortedSegmentSumReplace::Process(const FuncGraphPtr &func_gra
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
-  // check support
-  auto input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(new_cnode, 0);
-  auto segmentid_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(new_cnode, 1);
-  auto builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
-  std::vector<TypeId> inputs_device_type = {input_dtype, segmentid_dtype, num_segments_type->type_id()};
-  std::vector<TypeId> outputs_device_type = {input_dtype};
-  std::vector<std::string> inputs_format = {kOpFormat_DEFAULT, kOpFormat_DEFAULT, kOpFormat_DEFAULT};
-  std::vector<std::string> outputs_format = {kOpFormat_DEFAULT};
-  builder.SetInputsDeviceType(inputs_device_type);
-  builder.SetOutputsDeviceType(outputs_device_type);
-  builder.SetInputsFormat(inputs_format);
-  builder.SetOutputsFormat(outputs_format);
-  if (!CheckAICoreSupportedSpec(new_cnode, builder.Build())) {
+
+  if (!CheckAICoreSupportedAny(new_cnode)) {
     MS_LOG(INFO) << "Replace unsorted_segment_sum_d op to unsorted_segment_sum op failed.";
     return nullptr;
   }

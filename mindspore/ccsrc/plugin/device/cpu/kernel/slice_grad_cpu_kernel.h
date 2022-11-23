@@ -31,7 +31,6 @@ constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStridedSliceGrad = "StridedSliceGrad";
 constexpr auto kUnknown = "Unknown";
 constexpr auto kSecondIndex = 2;
-constexpr auto kIndex = 4;
 
 class SliceGradCpuKernelMod : public NativeCpuKernelMod {
  public:

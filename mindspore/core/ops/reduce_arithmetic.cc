@@ -58,8 +58,10 @@ class ReduceArithmeticInfer : public abstract::OpInferBase {
       {prim::kPrimReduceMax->name(), common_valid_types_with_complex_and_bool},
       {prim::kPrimReduceMin->name(), common_valid_types_with_complex_and_bool},
       {prim::kPrimReduceSum->name(), common_valid_types_with_complex_and_bool},
+      {prim::kPrimReduceSumD->name(), common_valid_types_with_complex_and_bool},
       {prim::kPrimReduceProd->name(), common_valid_types_with_complex},
       {prim::kPrimReduceMean->name(), common_valid_types_with_complex},
+      {prim::kPrimReduceMeanD->name(), common_valid_types_with_complex},
     };
     if (check_list_map.find(op_name) == check_list_map.end()) {
       MS_EXCEPTION(TypeError) << "For Primitive[" << op_name << "], the current ops do not support this operation.";
@@ -69,6 +71,16 @@ class ReduceArithmeticInfer : public abstract::OpInferBase {
 
   std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
+
+abstract::AbstractBasePtr ReduceArithmeticInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  ReduceArithmeticInfer reduce;
+  auto type = reduce.InferType(primitive, input_args);
+  auto shape = reduce.InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ReduceAll, prim::kPrimReduceAll, ReduceArithmeticInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ReduceAny, prim::kPrimReduceAny, ReduceArithmeticInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ReduceMax, prim::kPrimReduceMax, ReduceArithmeticInfer, false);

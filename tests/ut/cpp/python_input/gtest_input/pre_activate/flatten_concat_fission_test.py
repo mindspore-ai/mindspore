@@ -21,6 +21,7 @@ GetTupleItem = Primitive(Constants.kTupleGetItem)
 FlattenConcat = inner.FlattenConcat()
 Flatten = Primitive('Flatten')
 Concat = Primitive('Concat')
+ConcatD = Primitive('ConcatD')
 
 
 class FnDict:
@@ -53,8 +54,8 @@ def flatten_concat_fission_graph(tag):
         flatten2 = Flatten(input2)
         flatten3 = Flatten(input3)
         flatten4 = Flatten(input4)
-        concat0 = Concat(flatten0, flatten2, flatten4)
-        concat1 = Concat(flatten1, flatten3)
+        concat0 = ConcatD(flatten0, flatten2, flatten4)
+        concat1 = ConcatD(flatten1, flatten3)
         outputs = MakeTuple(concat0, concat1)
         multi_output_tuple = MakeTuple(GetTupleItem(outputs, 0), GetTupleItem(outputs, 1))
         final_tuple = MakeTuple(multi_output_tuple)

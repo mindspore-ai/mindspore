@@ -152,13 +152,13 @@ AnfNodePtr BuildReduceMin2(const PatternMap &m, const AnfNodePtr &default_node) 
 }
 
 void ReduceMinFission::DefineSrcPattern(SrcPattern *src_pattern) {
-  (void)(*src_pattern).AddVar(X).AddCNode(m_reduce_min, {prim::kPrimReduceMin, X});
+  (void)(*src_pattern).AddVar(X).AddCNode(m_reduce_min, {prim::kPrimReduceMinD, X});
 }
 
 void ReduceMinFission::DefineDstPattern(DstPattern *dst_pattern) {
   (void)(*dst_pattern)
-    .AddCNode(r_reduce_min1, {prim::kPrimReduceMin, X}, BuildReduceMin1)
-    .AddCNode(r_reduce_min2, {prim::kPrimReduceMin, r_reduce_min1}, BuildReduceMin2);
+    .AddCNode(r_reduce_min1, {prim::kPrimReduceMinD, X}, BuildReduceMin1)
+    .AddCNode(r_reduce_min2, {prim::kPrimReduceMinD, r_reduce_min1}, BuildReduceMin2);
 }
 }  // namespace opt
 }  // namespace mindspore

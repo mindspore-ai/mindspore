@@ -118,11 +118,11 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_conv2d_backprop_filter) {
   auto tbe_json_creator_build = std::make_shared<BuildTbeJsonCreator>();
   nlohmann::json kernel_json;
   EXPECT_TRUE(tbe_json_creator_select->GenJson(conv2d_backprop_filter, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 7656283680331759978U)
+  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 17946444238071335817U)
     << "Error json is:" << kernel_json
     << ", for expected json, see file: tbe_single_conv2d_backprop_filter_select.json";
   EXPECT_TRUE(tbe_json_creator_build->GenJson(conv2d_backprop_filter, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 3632095151624181824U)
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 11181111654621922738U)
     << "Error json is:" << kernel_json
     << ", for expected json, see file: tbe_single_conv2d_backprop_filter_build.json";
 }

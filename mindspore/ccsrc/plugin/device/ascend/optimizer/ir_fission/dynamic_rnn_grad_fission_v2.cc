@@ -22,6 +22,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "plugin/device/ascend/optimizer/create_node_helper.h"
 #include "utils/trace_base.h"
 #include "utils/tensor_construct_utils.h"
 
@@ -122,7 +123,7 @@ void DynamicRnnGradFissionV2::CreateTLoopNode(const FuncGraphPtr &func_graph, co
     }
 
     // Create split
-    std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
+    std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name()))};
     auto split_v = NewCNode(splitv_input, func_graph);
     auto split_v_output0_shape = Convert2Long({IntToSize(1), specs.batch_size, specs.input_size});
     auto split_v_output1_shape = Convert2Long({IntToSize(1), specs.batch_size, specs.hidden_size});
@@ -157,7 +158,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateLSTMSPlitV(const FuncGraphPtr &func_gr
                                                      const std::vector<ShapeVector> &split_shapes,
                                                      const std::vector<TypeId> &split_types,
                                                      const std::vector<int64_t> &size_split, size_t num_split_x) const {
-  std::vector<AnfNodePtr> lstm_split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
+  std::vector<AnfNodePtr> lstm_split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name())),
                                               input};
   auto lstm_split = NewCNode(lstm_split_input, func_graph);
   common::AnfAlgo::SetOutputInferTypeAndShape(split_types, split_shapes, lstm_split.get());
@@ -185,9 +186,9 @@ void DynamicRnnGradFissionV2::CreateTLoopNodeWithEdge(const FuncGraphPtr &func_g
   std::vector<AnfNodePtr> pre_basic_lstm_cell_c_state_grad_outputs;
   std::vector<AnfNodePtr> pre_split_outputs;
   std::vector<AnfNodePtr> lstm_x_concat_input(num_split_x + 1);
-  lstm_x_concat_input[0] = NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()));
+  lstm_x_concat_input[0] = NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()));
   std::vector<AnfNodePtr> lstm_gage_concat_input(num_split_x + 1);
-  lstm_gage_concat_input[0] = NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()));
+  lstm_gage_concat_input[0] = NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()));
   for (size_t i = 0; i < num_split_x; ++i) {
     size_t idx = num_split_x - i - 1;
     // Create basic_lstm_cell_c_state_grad
@@ -238,7 +239,7 @@ void DynamicRnnGradFissionV2::CreateTLoopNodeWithEdge(const FuncGraphPtr &func_g
     common::AnfAlgo::CopyNodeAttrs(matmul_nodes[i], matmul);
 
     // Create splitv
-    std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(kSplitVOpName)), matmul};
+    std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(kSplitVDOpName)), matmul};
     auto split_v = NewCNode(splitv_input, func_graph);
     split_v->set_abstract(split_nodes[i]->abstract());
     common::AnfAlgo::CopyNodeAttrs(split_nodes[i], split_v);
@@ -405,7 +406,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateSplitV(const FuncGraphPtr &func_graph,
   auto origin_input6 = dynamic_rnn_grad_cnode->input(kIndex7);
   auto origin_input6_dtype = common::AnfAlgo::GetOutputInferDataType(origin_input6, 0);
   auto origin_input6_shape = common::AnfAlgo::GetOutputInferShape(origin_input6, 0);
-  std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
+  std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitVD->name()))};
   if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
     std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), origin_input6};
     auto reshape = NewCNode(reshape_input, func_graph);
@@ -474,7 +475,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
   auto reshape = NewCNode(reshape_input, func_graph);
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_input4, 0)}, {shape_tmp},
                                               reshape.get());
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name())),
                                            reshape, splitv_outputs[0]};
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
@@ -504,7 +505,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcat(const FuncGraphPtr &func_graph,
   auto origin_input0 = dynamic_rnn_grad_cnode->input(1);
   auto origin_input0_dtype = common::AnfAlgo::GetOutputInferDataType(origin_input0, 0);
   auto origin_input0_shape = common::AnfAlgo::GetOutputInferShape(origin_input0, 0);
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
     std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), origin_input0};
     auto reshape = NewCNode(reshape_input, func_graph);
@@ -557,7 +558,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcatNodeT1(const FuncGraphPtr &func_
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
   // Create node
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   auto origin_input0 = dynamic_rnn_grad_cnode->input(kIndex1);
   auto origin_input0_dtype = common::AnfAlgo::GetOutputInferDataType(origin_input0, 0);
   auto origin_input0_shape = common::AnfAlgo::GetOutputInferShape(origin_input0, 0);
@@ -693,13 +694,16 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateMatMulNode2(const FuncGraphPtr &func_g
 CNodePtr DynamicRnnGradFissionV2::CreateTranspose(const FuncGraphPtr &func_graph, const AnfNodePtr &dw_reduce_sum,
                                                   const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
+  auto perm_value_input = CreatePermValueNode(func_graph, std::vector<int64_t>{1, 0, 2, 3});
   std::vector<AnfNodePtr> transpose_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimTranspose->name())),
-                                              dw_reduce_sum};
+                                              dw_reduce_sum, perm_value_input};
   auto transpose = NewCNode(transpose_inputs, func_graph);
+  std::vector<std::string> transpose_input_names{"x", "perm"};
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(transpose_input_names), transpose);
+  transpose = CreateNodeHelper::CreateNodeWithCheck(transpose)->cast<CNodePtr>();
   auto out_shape = Convert2Long({specs.input_size + specs.hidden_size, kDimMultiNum * specs.hidden_size});
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(dw_reduce_sum, 0)}, {out_shape},
                                               transpose.get());
-  common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0, 2, 3}), transpose);
   common::AnfAlgo::SetNodeAttr(kAttrInputSize, MakeValue(SizeToLong(specs.input_size)), transpose);
   common::AnfAlgo::SetNodeAttr(kAttrHiddenSize, MakeValue(SizeToLong(specs.hidden_size)), transpose);
   common::AnfAlgo::SetNodeAttr(kAttrFixedInputFormat, MakeValue(std::vector<string>{kOpFormat_FRAC_NZ}), transpose);
@@ -730,7 +734,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDwReduceSum(const FuncGraphPtr &func_g
     input_node = cast;
   }
   // Create node
-  std::vector<AnfNodePtr> reduce_sum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())),
+  std::vector<AnfNodePtr> reduce_sum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSumD->name())),
                                                input_node};
   auto reduce_sum = NewCNode(reduce_sum_inputs, func_graph);
   // Set infer data type and shape
@@ -828,7 +832,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDbReduceSum(const FuncGraphPtr &func_g
     return reshape;
   } else {
     std::vector<AnfNodePtr> reduce_sum_inputs = {
-      NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), matmul};
+      NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSumD->name())), matmul};
     auto reduce_sum = NewCNode(reduce_sum_inputs, func_graph);
     // Set infer data type and shape
     ShapeVector out_shape = {SizeToLong(kDimMultiNum * specs.hidden_size)};

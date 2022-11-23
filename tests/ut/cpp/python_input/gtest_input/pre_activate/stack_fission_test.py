@@ -19,6 +19,8 @@ from mindspore.ops import Primitive
 stack = P.Stack()
 concat = P.Concat()
 make_tuple = Primitive('MakeTuple')
+pack = Primitive('Pack')
+concatd = Primitive('ConcatD')
 
 
 class FnDict:
@@ -42,16 +44,16 @@ def test_stack_fission(tag):
 
     @fns
     def after_divided_by_3(input0, input1, input2, input3, input4, input5, input6, input7, input8):
-        stack1 = stack(input0, input1, input2)
-        stack2 = stack(input3, input4, input5)
-        stack3 = stack(input6, input7, input8)
-        return make_tuple(concat(stack1, stack2, stack3))
+        stack1 = pack(input0, input1, input2)
+        stack2 = pack(input3, input4, input5)
+        stack3 = pack(input6, input7, input8)
+        return make_tuple(concatd(stack1, stack2, stack3))
 
     @fns
     def after_divided_by_4(input0, input1, input2, input3, input4, input5, input6, input7, input8):
-        stack1 = stack(input0, input1, input2, input3)
-        stack2 = stack(input4, input5, input6, input7)
-        stack3 = stack(input8)
-        return make_tuple(concat(stack1, stack2, stack3))
+        stack1 = pack(input0, input1, input2, input3)
+        stack2 = pack(input4, input5, input6, input7)
+        stack3 = pack(input8)
+        return make_tuple(concatd(stack1, stack2, stack3))
 
     return fns[tag]

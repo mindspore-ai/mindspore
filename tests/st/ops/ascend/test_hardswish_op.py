@@ -76,7 +76,11 @@ def expect_hswish_forward_result(x):
 
 
 def expect_hswish_backward_result(x, dout):
-    return np.where(x <= -3, 0, np.where(x >= 3, 1, x / 3 + 0.5)) * dout
+    dtype = x.dtype
+    x = x.astype(np.float32)
+    dout = dout.astype(np.float32)
+    result = np.where(x <= -3, 0, np.where(x >= 3, 1, x / 3 + 0.5)) * dout
+    return result.astype(dtype)
 
 
 def judge_result_correct(result, expect):

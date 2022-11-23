@@ -42,7 +42,7 @@ bool CheckShapeDimInfo(const ShapeVector &shape) {
 
 const BaseRef TransposeReshapeFusion::DefinePattern() const {
   const auto prim_reshape = std::make_shared<Primitive>(prim::kPrimReshape->name());
-  VectorRef transpose({prim::kPrimTranspose, input_varptr_});
+  VectorRef transpose({prim::kPrimTransposeD, input_varptr_});
 
   return VectorRef({prim_reshape, transpose});
 }

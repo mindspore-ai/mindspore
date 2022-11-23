@@ -24,7 +24,7 @@
 namespace mindspore::device::ascend {
 class AscendLaunchAtomicClean : public AscendLaunchKernel {
  public:
-  AscendLaunchAtomicClean(void *stream, TypeId dtype, size_t total_size)
+  AscendLaunchAtomicClean(void *stream, TypeId dtype, int32_t total_size)
       : AscendLaunchKernel(stream),
         dtype_(dtype),
         total_size_(total_size),
@@ -44,7 +44,7 @@ class AscendLaunchAtomicClean : public AscendLaunchKernel {
 
  protected:
   TypeId dtype_;
-  size_t total_size_;
+  int32_t total_size_;
   std::shared_ptr<session::KernelGraph> atomic_clean_graph_;
   uint8_t *input_addr_;
 

@@ -529,7 +529,8 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel,
       }
       continue;
     }
-    if (common::AnfAlgo::GetCNodeName(kernel) == kApplyMomentumOpName) {
+    if (common::AnfAlgo::GetCNodeName(kernel) == kApplyMomentumOpName ||
+        common::AnfAlgo::GetCNodeName(kernel) == kApplyMomentumDOpName) {
       auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
       continue;

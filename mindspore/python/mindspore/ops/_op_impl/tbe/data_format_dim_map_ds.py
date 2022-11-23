@@ -24,6 +24,7 @@ data_format_dim_map_op_info = TBERegOp("DataFormatDimMap") \
     .kernel_name("data_format_dim_map") \
     .partial_flag(True) \
     .dynamic_shape(True) \
+    .dynamic_compile_static(True) \
     .attr("dst_format", "optional", "str", "all") \
     .attr("src_format", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \

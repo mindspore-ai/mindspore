@@ -15,8 +15,10 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
+
 #include <set>
 #include <string>
+#include <memory>
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
@@ -349,6 +351,17 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 
+void AscendGraphOptimization::OpAdaptation(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Status record: start op adaptation. graph id: " << graph->graph_id();
+  PROF_START(op_adaptation);
+  opt::AscendOpAdaptation(graph);
+  PROF_END(op_adaptation);
+  // must clear memo_ which holds kernel graph after using AscendGraphOptimization class.
+  memo_.clear();
+  MS_LOG(INFO) << "Status record: end op adaptation. graph id: " << graph->graph_id();
+}
+
 void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
   auto mng = graph->manager();
   if (mng == nullptr) {
@@ -370,6 +383,12 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
     } else {
       auto f = [](const CNodePtr &n) {
+        // change the kernel to static-shape kernel name. it's a temporary solution.
+        if (IsOneOfPrimitiveCNode(n, {prim::kPrimReduceSum, prim::kPrimReduceMin, prim::kPrimReduceMax})) {
+          auto primitive = GetCNodePrimitive(n);
+          auto new_prim = std::make_shared<Primitive>(primitive->name() + "D", primitive->attrs());
+          n->set_input(0, NewValueNode(new_prim));
+        }
         auto res = device::ascend::SelectKernelInfoWithMsg(n);
         constexpr int one = 1;
         return std::get<one>(res).empty();

@@ -29,7 +29,7 @@ class Conv2dBackpropInputDilationFusion : public PatternProcessPass {
       : PatternProcessPass("conv2d_backprop_input_dilation_fusion", multigraph) {
     x0_ = std::make_shared<Var>();
     x1_ = std::make_shared<Var>();
-    conv2d_bp_input_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimConv2DBackpropInput->name()));
+    conv2d_bp_input_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimConv2DBackpropInputD->name()));
   }
   ~Conv2dBackpropInputDilationFusion() override = default;
   const BaseRef DefinePattern() const override;

@@ -24,6 +24,7 @@ class BackendCommon : public UT::Common {
  public:
   BackendCommon() = default;
   ~BackendCommon() override = default;
+  void PrintGraphNodeList(const FuncGraphPtr &func_graph);
   virtual bool CheckEqualGraph(const FuncGraphPtr &a, const FuncGraphPtr &b);
   virtual std::shared_ptr<session::KernelGraph> GetKernelGraph(const FuncGraphPtr &func_graph,
                                                                const AbstractBasePtrList &args_spec_list,

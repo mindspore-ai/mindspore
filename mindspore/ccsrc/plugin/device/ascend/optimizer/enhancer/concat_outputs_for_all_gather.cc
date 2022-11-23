@@ -146,7 +146,7 @@ CNodePtr ConcatOutputsForAllGather::CreateNewConcat(const FuncGraphPtr &func_gra
                                                     const std::vector<AnfNodePtr> &concat_input_nodes,
                                                     const OutputInfo &concat_input_info, size_t begin_index,
                                                     int64_t offset) const {
-  std::vector<AnfNodePtr> concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
+  std::vector<AnfNodePtr> concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   size_t end_index = begin_index + static_cast<size_t>(offset);
   for (size_t i = begin_index; i < end_index; ++i) {
     concat_inputs.emplace_back(concat_input_nodes[i]);

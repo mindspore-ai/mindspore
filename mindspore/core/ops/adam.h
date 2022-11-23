@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <vector>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -48,6 +49,8 @@ class MIND_API Adam : public BaseOperator {
   bool get_use_nesterov() const;
 };
 using kPrimAdamPtr = std::shared_ptr<Adam>;
+abstract::AbstractBasePtr ApplyAdamDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

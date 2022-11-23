@@ -30,6 +30,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_min_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/fused_batch_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/layer_norm_grad_split.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/unsorted_segment_sum_replace.h"
 #include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_d_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/gather_v2_ds_fission.h"
@@ -88,10 +89,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/confusion_mul_grad_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_grad_ext_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/bn_reduce_grad_conv2d_backprop_filter_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/transposed_update_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_dilation_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/unsorted_segment_sum_replace.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
 #include "plugin/device/ascend/optimizer/format_type/dynamic_rnn_grad_reformat.h"
@@ -337,7 +336,6 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<TransOpFormatRefine>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  mixed_precision_pm->AddPass(std::make_shared<TransposedUpdateFusion>());
   mixed_precision_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
   mixed_precision_pm->AddPass(std::make_shared<RemoveInternalOutputCast>());
   optimizer->AddPassManager(mixed_precision_pm);
@@ -691,7 +689,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2UnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
 
   optimizer->AddPassManager(unify_mindir_pm);
@@ -700,6 +697,33 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
 #ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
+  }
+#endif
+}
+
+void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_before_op_adaptation_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
+    DumpIRProto(kernel_graph, "before_op_adaptation_hwopt_" + std::to_string(kernel_graph->graph_id()));
+  }
+#endif
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto op_adaptation_pm = std::make_shared<opt::PassManager>("op_adaptation_pm");
+  op_adaptation_pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
+
+  optimizer->AddPassManager(op_adaptation_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_op_adaptation_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
 #endif

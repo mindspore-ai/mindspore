@@ -69,7 +69,7 @@ const BaseRef BNReduceGradConv2dBackpropFilterFusion::DefinePattern() const {
   VarPtr dbn_inputs = std::make_shared<SeqVar>();
   VarPtr X = std::make_shared<Var>();
   VectorRef bnreducegrad({prim::kPrimBNTrainingReduceGrad, dbn_inputs});
-  VectorRef pattern({prim::kPrimConv2DBackpropFilter, bnreducegrad, X});
+  VectorRef pattern({prim::kPrimConv2DBackpropFilterD, bnreducegrad, X});
   return pattern;
 }
 

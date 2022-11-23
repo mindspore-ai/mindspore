@@ -24,7 +24,7 @@ const BaseRef DynamicRNNGradReformat::DefinePattern() const {
   VarPtr Xs2 = std::make_shared<Var>();
   MS_EXCEPTION_IF_NULL(Xs);
   MS_EXCEPTION_IF_NULL(Xs2);
-  const auto split = std::make_shared<Primitive>(prim::kPrimSplitV->name());
+  const auto split = std::make_shared<Primitive>(prim::kPrimSplitVD->name());
   return VectorRef({split, VectorRef({std::make_shared<Primitive>(prim::kPrimMatMul->name()), Xs, Xs2})});
 }
 

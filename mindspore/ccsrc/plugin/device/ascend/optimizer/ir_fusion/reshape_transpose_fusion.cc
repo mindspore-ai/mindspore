@@ -75,7 +75,7 @@ const BaseRef ReshapeTransposeFusion::DefinePattern() const {
   const auto prim_reshape = std::make_shared<Primitive>(prim::kPrimReshape->name());
   VectorRef reshape({prim_reshape, input_varptr_});
 
-  return VectorRef({prim::kPrimTranspose, reshape});
+  return VectorRef({prim::kPrimTransposeD, reshape});
 }
 
 const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,

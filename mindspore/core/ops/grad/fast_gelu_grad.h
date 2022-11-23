@@ -32,6 +32,8 @@ class MIND_API FastGeLUGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(FastGeLUGrad);
   FastGeLUGrad() : BaseOperator(kNameFastGeLUGrad) { InitIOName({"x"}, {"output"}); }
 };
+abstract::AbstractBasePtr FastGeLUGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

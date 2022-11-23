@@ -28,6 +28,7 @@
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -72,46 +73,14 @@ bool NeedUpdate(const CNodePtr &conv2d, ShapeVector in_shape, ShapeVector out_sh
   return true;
 }
 
-bool IsPynative() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) ||
-         (ms_context->get_param<int>(MS_CTX_ENABLE_PYNATIVE_INFER) != 0);
-}
-
-ValueNodePtr CreatePermValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &perm) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  std::vector<ValuePtr> axis_values{};
-  abstract::AbstractBasePtrList abs{};
-  for (const auto &axis : perm) {
-    axis_values.push_back(MakeValue(axis));
-    abs.push_back(std::make_shared<abstract::AbstractScalar>(axis));
-  }
-  auto perm_value_tuple = std::make_shared<ValueTuple>(axis_values);
-  MS_EXCEPTION_IF_NULL(perm_value_tuple);
-  auto abstract = std::make_shared<abstract::AbstractTuple>(abs);
-  MS_EXCEPTION_IF_NULL(abstract);
-  auto perm_value = kernel_graph->NewValueNode(abstract, perm_value_tuple);
-  MS_EXCEPTION_IF_NULL(perm_value);
-  kernel_graph->AddValueNodeToGraph(perm_value);
-  return perm_value;
-}
-
 CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, const AnfNodePtr &input_node,
                          bool need_trans_output, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(conv2d);
   MS_EXCEPTION_IF_NULL(input_node);
   auto perm = std::vector<int64_t>{1, 0, 2, 3};
-  std::vector<AnfNodePtr> transpose_inputs;
-  if (IsPynative()) {
-    transpose_inputs = {NewValueNode(std::make_shared<Primitive>(kTransposeOpName)), input_node};
-  } else {
-    transpose_inputs = {NewValueNode(std::make_shared<Primitive>(kTransposeOpName)), input_node,
-                        CreatePermValueNode(graph, perm)};
-  }
+  std::vector<AnfNodePtr> transpose_inputs = {NewValueNode(std::make_shared<Primitive>(kTransposeOpName)), input_node,
+                                              CreatePermValueNode(graph, perm)};
   auto transpose = pass.NewCNode(transpose_inputs, graph);
   MS_EXCEPTION_IF_NULL(transpose);
   transpose->set_scope(conv2d->scope());
@@ -146,9 +115,6 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
   auto output_names = std::vector<std::string>{"output"};
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), transpose);
   common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), transpose);
-  if (IsPynative()) {
-    common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), transpose);
-  }
   return transpose;
 }
 

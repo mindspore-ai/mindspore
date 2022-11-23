@@ -76,7 +76,7 @@ AnfNodePtr Conv2dBackpropInputDilationFusion::CreateConv2DbpInput(const FuncGrap
                                                                   const AnfNodePtr &node, const AnfNodePtr &grad,
                                                                   const EquivPtr &equiv) const {
   std::vector<AnfNodePtr> inputs;
-  (void)inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimConv2DBackpropInput->name())));
+  (void)inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimConv2DBackpropInputD->name())));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x0_));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x1_));
   auto new_node = NewCNode(inputs, func_graph);

@@ -16,8 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_FACTORY_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_FACTORY_H_
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 #include <memory>
 #include <map>
 
@@ -29,124 +29,89 @@
 #include "include/backend/visible.h"
 
 namespace mindspore::opt {
-class InputAttrInfo {
+class OpAdaptationInfo {
  public:
-  explicit InputAttrInfo(const size_t input_index, const std::string attr_name, const std::string attr_data_type)
-      : input_index_(input_index), attr_name_(attr_name), attr_data_type_(attr_data_type) {}
-  virtual ~InputAttrInfo() = default;
-
-  size_t GetInputIndex() const { return input_index_; }
-  std::string GetAttrName() const { return attr_name_; }
-  std::string GetAttrDataType() const { return attr_data_type_; }
-
- private:
-  size_t input_index_;
-  std::string attr_name_;
-  std::string attr_data_type_;
-};
-
-class BACKEND_EXPORT OpAdaptationInfo {
- public:
-  OpAdaptationInfo(const std::string &origin_op_name, const std::string &device_name, bool flag)
-      : origin_op_name_(origin_op_name), target_op_name_(origin_op_name), device_name_(device_name), flag_(flag) {}
-
-  explicit OpAdaptationInfo(const OpAdaptationInfo &op_adaptation_info)
-      : origin_op_name_(op_adaptation_info.origin_op_name_),
-        target_op_name_(op_adaptation_info.target_op_name_),
-        pre_check_func_(op_adaptation_info.pre_check_func_),
-        need_tbe_check_supported_(op_adaptation_info.need_tbe_check_supported_),
-        input_attr_map_(op_adaptation_info.input_attr_map_),
-        attr_name_map_(op_adaptation_info.attr_name_map_),
-        device_name_(op_adaptation_info.device_name_),
-        flag_(op_adaptation_info.flag_) {}
+  explicit OpAdaptationInfo(const std::string &me_op_name, std::string device_name, bool flag)
+      : me_op_name_(me_op_name),
+        backend_op_name_(me_op_name),
+        target_op_name_(me_op_name),
+        device_name_(std::move(device_name)),
+        flag_(flag) {}
 
   OpAdaptationInfo &operator=(const OpAdaptationInfo &op_adaptation_info);
   virtual ~OpAdaptationInfo() = default;
 
-  OpAdaptationInfo &SetTargetOpName(const std::string &target_op_name) {
+  OpAdaptationInfo &set_backend_op_name(const std::string &default_op_name) {
+    backend_op_name_ = default_op_name;
+    return *this;
+  }
+
+  OpAdaptationInfo &set_target_op_name(const std::string &target_op_name) {
     target_op_name_ = target_op_name;
     return *this;
   }
 
-  OpAdaptationInfo &SetPreCheckFunc(const std::function<bool(CNodePtr)> &pre_check_func) {
-    pre_check_func_ = pre_check_func;
+  OpAdaptationInfo &set_pre_check_func(std::function<bool(CNodePtr)> pre_check_func) {
+    pre_check_func_ = std::move(pre_check_func);
     return *this;
   }
 
-  OpAdaptationInfo &SetNeedTBECheckSupported(bool need_tbe_check_supported) {
+  OpAdaptationInfo &set_need_tbe_check_supported(bool need_tbe_check_supported) {
     need_tbe_check_supported_ = need_tbe_check_supported;
     return *this;
   }
 
-  OpAdaptationInfo &SetInputAttrInfo(size_t input_index, const std::string &attr_name = "",
-                                     const std::string &attr_data_type = "") {
+  OpAdaptationInfo &set_input_attr_info(size_t input_index, std::string attr_data_type = "") {
     auto find = input_attr_map_.find(input_index);
     if (find != input_attr_map_.end()) {
       MS_LOG(ERROR) << "This input index (" << input_index << ")"
                     << " has been registered.";
       return *this;
     }
-    (void)input_attr_map_.insert(std::make_pair(input_index, InputAttrInfo(input_index, attr_name, attr_data_type)));
+    input_attr_map_[input_index] = attr_data_type;
     return *this;
   }
 
-  OpAdaptationInfo &SetAttrNameInfo(const std::string &origin_attr_name, const std::string &target_attr_name) {
-    if (origin_attr_name.empty() || target_attr_name.empty()) {
-      MS_LOG(ERROR) << "Attr name is empty, origin attr name: " << origin_attr_name
-                    << ", target attr name:" << target_attr_name << ", origin op name:" << origin_op_name_;
-      return *this;
-    }
-
-    auto find = attr_name_map_.find(origin_attr_name);
-    if (find != attr_name_map_.end()) {
-      MS_LOG(ERROR) << "Attr name has been register, origin attr name: " << origin_attr_name
-                    << ", old target attr name:" << attr_name_map_[origin_attr_name]
-                    << ", new target attr name:" << target_attr_name << ", origin op name:" << origin_op_name_;
-    }
-    attr_name_map_[origin_attr_name] = target_attr_name;
-    return *this;
-  }
-
-  std::string GetOriginOpName() const { return origin_op_name_; }
-  std::string GetTargetOpName() const { return target_op_name_; }
-  std::function<bool(CNodePtr)> GetPreCheckFunc() const { return pre_check_func_; }
-  bool NeedTBECheck() const { return need_tbe_check_supported_; }
-  std::map<size_t, InputAttrInfo> GetInputAttrInfoMap() const { return input_attr_map_; }
-  mindspore::HashMap<std::string, std::string> GetAttrNameInfoMap() const { return attr_name_map_; }
-  std::string GetDeviceName() const { return device_name_; }
-  bool GetFlag() const { return flag_; }
+  std::string me_op_name() const { return me_op_name_; }
+  std::string backend_op_name() const { return backend_op_name_; }
+  std::string target_op_name() const { return target_op_name_; }
+  std::function<bool(CNodePtr)> pre_check_func() const { return pre_check_func_; }
+  bool need_tbe_check_supported() const { return need_tbe_check_supported_; }
+  std::map<size_t, std::string> input_attr_map() const { return input_attr_map_; }
+  std::string device_name() const { return device_name_; }
+  bool flag() const { return flag_; }
 
  private:
-  std::string origin_op_name_;
+  std::string me_op_name_;
+  std::string backend_op_name_;
   std::string target_op_name_;
   std::function<bool(CNodePtr)> pre_check_func_{nullptr};
   bool need_tbe_check_supported_{false};
-  std::map<size_t, InputAttrInfo> input_attr_map_;
-  mindspore::HashMap<std::string, std::string> attr_name_map_;
-  std::string device_name_{""};
+  std::map<size_t, std::string> input_attr_map_;
+  std::string device_name_;
   bool flag_{false};
 };
 
 class BACKEND_EXPORT OpAdaptationInfoRegister {
  public:
   static OpAdaptationInfoRegister &GetInstance();
-  static void RegOpAdaptationInfo(OpAdaptationInfo *reg_info);
-  [[nodiscard]] static OpAdaptationInfo *GetOpAdaptationInfo(const std::string &origin_op_name,
-                                                             const std::string &device_name, bool flag);
+  void RegOpAdaptationInfo(OpAdaptationInfo *reg_info);
+  [[nodiscard]] OpAdaptationInfo *GetOpAdaptationInfo(const std::string &me_op_name, const std::string &device_name,
+                                                      bool flag) const;
 
  private:
   OpAdaptationInfoRegister() = default;
   ~OpAdaptationInfoRegister() = default;
   DISABLE_COPY_AND_ASSIGN(OpAdaptationInfoRegister)
 
-  static std::string GenerateKey(const std::string &op_name, const std::string &device_name, bool flag);
+  static std::string GenerateKey(const std::string &me_op_name, const std::string &device_name, bool flag);
   // key: (op_name + device_name + flag), value: <OpAdaptationInfo *>
   static std::map<std::string, OpAdaptationInfo *> &GetOpInfoMap();
 };
 
 class BACKEND_EXPORT RegisterHelper {
  public:
-  RegisterHelper(const std::string &name, const std::string &device_name, bool is_dynamic_shape, int len, ...);
+  RegisterHelper(const std::string &me_op_name, const std::string &device_name, bool flag, int len, ...);
   RegisterHelper(const OpAdaptationInfo &op_adaptation_info);
   ~RegisterHelper() = default;
 
@@ -154,13 +119,12 @@ class BACKEND_EXPORT RegisterHelper {
   std::shared_ptr<OpAdaptationInfo> op_adaptation_info_{nullptr};
 };
 
-#define REG_OP_ADAPTATION_INFO(origin_op_name, device_name, flag)                                      \
-  static opt::RegisterHelper g_reg_##device_name##_##origin_op_name##_##flag __attribute__((unused)) = \
-    opt::OpAdaptationInfo(origin_op_name, device_name, flag)
+#define REG_OP_ADAPTATION_INFO(me_op_name, device_name, flag)                                      \
+  static opt::RegisterHelper g_reg_##device_name##_##flag##_##me_op_name __attribute__((unused)) = \
+    opt::OpAdaptationInfo(me_op_name, device_name, flag)
 
-#define RER_CONST_TO_ATTR_LIST(origin_op_name, backend, is_dynamic_shape, ...)                                 \
-  static opt::RegisterHelper g_reg_##backend##_##is_dynamic_shape##_##origin_op_name(                          \
-    origin_op_name, backend, is_dynamic_shape, std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value, \
-    __VA_ARGS__)
+#define RER_CONST_TO_ATTR_LIST(me_op_name, device_name, flag, ...)        \
+  static opt::RegisterHelper g_reg_##device_name##_##flag##_##me_op_name( \
+    me_op_name, device_name, flag, std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value, __VA_ARGS__)
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_FACTORY_H_

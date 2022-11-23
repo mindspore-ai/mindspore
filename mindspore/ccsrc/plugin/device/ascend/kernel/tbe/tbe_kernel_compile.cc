@@ -64,6 +64,9 @@ constexpr auto kOfflineTune = "offlineTune";
 constexpr auto kCheckSupport = "CheckSupport";
 constexpr auto kSelectFormat = "SelectFormat";
 constexpr auto kFullySupported = "FULLY_SUPPORTED";
+constexpr auto kNotSupported = "NOT_SUPPORTED";
+constexpr auto kPartiallySupported = "PARTIALLY_SUPPORTED";
+constexpr auto kUnSupportedReason = "The shape is not support now";
 constexpr auto kLevel = "level";
 constexpr auto kMessage = "message";
 constexpr auto kErrorCode = "errCode";
@@ -831,7 +834,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
 std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   auto full_name = node->fullname_with_scope();
-  MS_LOG(DEBUG) << "Op select format start for op [" << full_name << "]";
+  MS_LOG(INFO) << "Op select format start for op [" << full_name << "]";
   auto json_creator = std::make_shared<SelectTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
   nlohmann::json kernel_info;
@@ -842,6 +845,7 @@ std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) con
   JsonAssemble(kSelectFormat, kernel_info, &select_json);
   auto select_ret = DispatchCompileTask(select_json);
   auto json_ret = TurnStrToJson(select_ret);
+  MS_LOG(INFO) << "Op select format result: " << select_ret;
   return ParseSelectAndCheckResult(json_ret, node);
 }
 
@@ -859,10 +863,19 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   nlohmann::json check_json;
   JsonAssemble(kCheckSupport, *kernel_json, &check_json);
   auto check_ret = DispatchCompileTask(check_json);
-  auto json_ret = TurnStrToJson(check_ret);
-  std::string check_info = ParseSelectAndCheckResult(json_ret, node);
   compute_json[kJInputDesc] = inputs_json_tmp;
-  return check_info == kFullySupported;
+  auto json_ret = TurnStrToJson(check_ret);
+  MS_LOG(INFO) << "Check supported result: " << check_ret;
+  if (json_ret.at(kStatus) == kFailed) {
+    MS_LOG(DEBUG) << "Call check supported api failed, result info: " << check_ret;
+    return false;
+  }
+  auto check_result = json_ret.at(kResult);
+  if (check_result == kPartiallySupported || check_result == kFullySupported) {
+    return true;
+  }
+  MS_LOG(DEBUG) << "The shape is not support, result info: " << check_ret;
+  return false;
 }
 
 void TbeKernelCompileManager::LoadNotSupportOp() {

@@ -95,7 +95,7 @@ CNodePtr SquareSumFusion::GenerateSquareSumV2(const FuncGraphPtr &graph, const C
 const BaseRef SquareSumFusion::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
   MS_EXCEPTION_IF_NULL(X);
-  return VectorRef({prim::kPrimReduceSum, VectorRef({prim::kPrimSquare, X})});
+  return VectorRef({prim::kPrimReduceSumD, VectorRef({prim::kPrimSquare, X})});
 }
 
 const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {

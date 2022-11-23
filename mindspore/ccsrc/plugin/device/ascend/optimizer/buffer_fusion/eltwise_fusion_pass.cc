@@ -64,7 +64,9 @@ void EltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &ker
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
+        (AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE ||
+         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::BROAD_CAST) &&
+        cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
       MatchEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

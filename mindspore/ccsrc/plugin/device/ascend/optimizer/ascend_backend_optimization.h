@@ -28,6 +28,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 }  // namespace opt
 }  // namespace mindspore
 

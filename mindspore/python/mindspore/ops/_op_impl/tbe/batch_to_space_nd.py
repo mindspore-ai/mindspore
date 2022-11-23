@@ -16,7 +16,7 @@
 """BatchToSpaceND op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-batch_to_space_nd_op_info = TBERegOp("BatchToSpaceND") \
+batch_to_space_nd_op_info = TBERegOp("BatchToSpaceNDD") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("batch_to_space_nd_d.so") \

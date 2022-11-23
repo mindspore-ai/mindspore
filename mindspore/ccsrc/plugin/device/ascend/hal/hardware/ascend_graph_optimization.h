@@ -34,6 +34,7 @@ class AscendGraphOptimization {
   void OptimizeGraph(const KernelGraphPtr &graph);
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph);
   void UnifyMindIR(const KernelGraphPtr &graph);
+  void OpAdaptation(const KernelGraphPtr &graph);
   void Reset();
 
  private:

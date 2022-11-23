@@ -24,7 +24,7 @@ dynamic_atomic_addr_clean_op_info = TBERegOp("DynamicAtomicAddrClean") \
     .kernel_name("dynamic_atomic_addr_clean") \
     .partial_flag(True) \
     .dynamic_shape(True) \
-    .attr("automic_add_mem_size", "required", "listUInt64", "all") \
+    .attr("automic_add_mem_size", "required", "listInt", "all") \
     .get_op_info()
 
 

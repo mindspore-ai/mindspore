@@ -313,7 +313,9 @@ def check_support(job: TbeJob):
     py_module_path = compute_op_info["py_module_path"]
     _normalize_module_name(op_module_name, py_module_path)
     func_name = "check_supported"
-    res = call_op_func((inputs, outputs, attrs), op_module_name, func_name)
+    op_type = compute_op_info["type"]
+    impl_mode = {op_type: "high_performance"}
+    res = call_op_func((inputs, outputs, attrs), op_module_name, func_name, op_type, impl_mode)
     if isinstance(res, tuple):
         result, reason = res
         result_str = str(result)

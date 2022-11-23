@@ -73,7 +73,7 @@ ValueNodePtr CreateAssistNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
 const BaseRef Conv2dBackpropFilterMul::DefinePattern() const {
   VarPtr X1 = std::make_shared<Var>();
   VarPtr X2 = std::make_shared<Var>();
-  auto prim = std::make_shared<Primitive>(kConv2DBackpropFilterOpName);
+  auto prim = std::make_shared<Primitive>(kConv2DBackpropFilterDOpName);
   return VectorRef({prim, X1, X2});
 }
 

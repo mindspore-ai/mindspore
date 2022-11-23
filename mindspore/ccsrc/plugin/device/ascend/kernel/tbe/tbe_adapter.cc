@@ -44,8 +44,10 @@ constexpr int kFloat16 = 1;
 constexpr int kInt8 = 2;
 constexpr int kInt32 = 3;
 constexpr int kUint8 = 4;
+constexpr int kInt64 = 9;
 constexpr int kUint64 = 10;
 constexpr int kBool = 12;
+constexpr int kbFloat = 27;
 constexpr size_t kC0 = 16;
 constexpr size_t kShapeIndex0 = 0;
 constexpr size_t kShapeIndex1 = 1;
@@ -54,8 +56,8 @@ constexpr size_t kShapeIndex3 = 3;
 constexpr size_t kShapeIndex4 = 4;
 int TypeStrToDstType(const std::string &type_str) {
   std::unordered_map<std::string, int> type_name_type_id_map = {
-    {"Float", kFloat}, {"Float32", kFloat}, {"Float16", kFloat16}, {"Int8", kInt8},
-    {"Int32", kInt32}, {"UInt8", kUint8},   {"UInt64", kUint64},   {"Bool", kBool}};
+    {"Float", kFloat}, {"Float32", kFloat}, {"Float16", kFloat16}, {"Int8", kInt8}, {"Int32", kInt32},
+    {"UInt8", kUint8}, {"Int64", kInt64},   {"UInt64", kUint64},   {"Bool", kBool}};
   auto iter = type_name_type_id_map.find(type_str);
   if (iter != type_name_type_id_map.end()) {
     return iter->second;
@@ -65,22 +67,11 @@ int TypeStrToDstType(const std::string &type_str) {
   return kInvalid;
 }
 }  // namespace
-std::unordered_set<std::string> TbeAdapter::input_order_adjusted_ops_ = {kConv2DBackpropInputOpName,
-                                                                         kConv2DBackpropFilterOpName,
-                                                                         kLogSoftmaxGradOpName,
-                                                                         kLayerNormGradOpName,
-                                                                         kLayerNormXBackpropOpName,
-                                                                         kLayerNormXBackpropV2OpName,
-                                                                         kLayerNormBetaGammaBackpropOpName,
-                                                                         kMinimumGradOpName,
-                                                                         kMaximumGradOpName,
-                                                                         kStridedSliceGradOpName,
-                                                                         kApplyCenteredRMSPropOpName};
 
 bool TbeAdapter::IsSpecialFusionComputeNode(const std::vector<mindspore::AnfNodePtr> &compute_nodes) {
   auto result = std::find_if(compute_nodes.begin(), compute_nodes.end(), [](const auto &it) {
     auto op_name = common::AnfAlgo::GetCNodeName(it);
-    return (op_name == kConv2DBackpropInputOpName || op_name == kConv2DOpName);
+    return (op_name == kConv2DBackpropInputDOpName || op_name == kConv2DOpName);
   });
   return result != compute_nodes.end();
 }

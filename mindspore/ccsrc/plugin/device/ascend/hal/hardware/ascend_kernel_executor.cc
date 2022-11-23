@@ -106,6 +106,7 @@ void AscendKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  AscendGraphOptimization::GetInstance().OpAdaptation(kernel_graph);
   if (kernel_graph->is_from_single_op()) {
     AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(kernel_graph);
   } else {
@@ -270,7 +271,8 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
       is_host_reshape_op = kernel_mod->GetKernelModType() == kernel::KernelModType::HostKernelMod;
     }
     bool nop_op_is_not_dynamic_shape = !graph->is_dynamic_shape() && nop_nodes.find(op_name) != nop_nodes.end();
-    bool is_transpose_nop = op_name == prim::kPrimTranspose->name() && common::AnfAlgo::HasNodeAttr(kAttrNopOp, node);
+    bool is_transpose_nop = (op_name == prim::kPrimTranspose->name() || op_name == prim::kPrimTransposeD->name()) &&
+                            common::AnfAlgo::HasNodeAttr(kAttrNopOp, node);
     if (is_transpose_nop || (nop_op_is_not_dynamic_shape && !is_host_reshape_op)) {
       nop_op_to_memcpy_.insert(node);
     }

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ASCEND_CONVERT_CONST_INPUT_TO_ATTR_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ASCEND_CONVERT_CONST_INPUT_TO_ATTR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ASCEND_VM_OP_ADAPTER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ASCEND_VM_OP_ADAPTER_H_
 #include <string>
 #include <memory>
 #include <vector>
@@ -34,23 +34,8 @@ class AscendVmOpAdapter : public PatternProcessPass {
   ~AscendVmOpAdapter() override = default;
 
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
-
- private:
-  CNodePtr ConvertToTargetOp(const CNodePtr &origin_op, mindspore::opt::OpAdaptationInfo *op_adaptation_info) const;
-  CNodePtr CreateTargetOp(const CNodePtr &origin_op, const OpAdaptationInfo &op_adaptation_info) const;
-  CNodePtr ConvertNodeToCheck(const CNodePtr &origin_op, const OpAdaptationInfo &op_adaptation_info) const;
-  bool ConvertInputToAttr(const CNodePtr &origin_op, const string &target_op_name,
-                          const std::vector<std::string> &input_names_vec, size_t i,
-                          const std::shared_ptr<AnfNode> &input_node,
-                          const std::map<size_t, InputAttrInfo>::iterator &iter,
-                          const std::shared_ptr<Primitive> &target_primitive) const;
-  string GetAttrName(const string &target_op_name, const std::map<size_t, InputAttrInfo>::iterator &iter,
-                     const string &input_name) const;
-  ValuePtr UpdateAttrValueByDtype(const ValuePtr &value, const string &attr_data_type) const;
-  ValuePtr UpdateAttrValue(const CNodePtr &origin_op, const std::map<size_t, InputAttrInfo>::iterator &iter,
-                           const ValuePtr &value, const string &attr_name) const;
 };
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ASCEND_CONVERT_CONST_INPUT_TO_ATTR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ASCEND_VM_OP_ADAPTER_H_

@@ -51,7 +51,7 @@ void BatchMatmulDropoutDoMaskV3FusionPass::MatchSingleFusionPattern(const sessio
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
 
-    if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutDoMaskV3OpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kDropOutDoMaskV3DOpName) {
       MatchBatchMatmulDropoutDoMaskV3(cnode, candidate_fusion);
     }
   }

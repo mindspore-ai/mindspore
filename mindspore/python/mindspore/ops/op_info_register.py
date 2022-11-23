@@ -91,6 +91,63 @@ def op_info_register(op_info):
     return register_decorator
 
 
+def load_super_bar_config(super_bar_config):
+    r"""
+    A decorator which is used to adaptive front-end and back-end operator expression differences.
+
+    Note:
+        'super_bar_config' should represent front-end and back-end operator expression differences by string with json
+        format. The 'super_bar_config' will be loaded to super bar.
+
+    Args:
+        super_bar_config (str or dict):  front-end and back-end operator expression differences.
+
+    Examples:
+        >>> from mindspore.ops.op_info_register import load_super_bar_config
+        >>> super_bar_config =
+        ... {
+        ...    "NodeMap": {
+        ...       "OneHot": "OneHotD",
+        ...       "ReLUV2": "ReluV2"
+        ...     },
+        ...     "NodeAttrMap": {
+        ...       "Conv2D": {
+        ...         "strides": "stride",
+        ...         "pads": "pad_list",
+        ...         "dilations": "dilation"
+        ...       },
+        ...       "MaxPoolWithArgmax": {
+        ...         "ksize": "kernel_size",
+        ...         "padding": "pad_mode"
+        ...       }
+        ...     }
+        ...}
+        >>>
+        >>> @load_super_bar_config(super_bar_config)
+        ... def super_bar():
+        ...    return
+        ...
+
+    Returns:
+        Function, returns a decorator for load super bar config.
+    """
+
+    def load_super_bar_decorator(func):
+        if isinstance(super_bar_config, dict):
+            op_info_real = json.dumps(super_bar_config)
+        validator.check_value_type("op_info", op_info_real, [str])
+        op_lib = Oplib()
+        if not op_lib.load_super_bar_config(op_info_real):
+            raise ValueError('Invalid op info {}:\n'.format(op_info_real))
+
+        def wrapped_function(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return wrapped_function
+
+    return load_super_bar_decorator
+
+
 def custom_info_register(*reg_info):
     r"""
     A decorator which is used to bind the registration information to the `func` parameter of
@@ -291,9 +348,15 @@ class RegOp:
         op_info = {}
         for key, value in self.__dict__.items():
             if isinstance(key, str) and key.endswith('_'):
-                op_info[key.rstrip('_')] = value
-            else:
-                op_info[key] = value
+                key = key.rstrip('_')
+                key_dic = {"dynamic_shape_support": "dynamicShapeSupport",
+                           "dynamic_rank_support": "dynamicRankSupport",
+                           "dynamic_compile_static": "dynamicCompileStatic",
+                           "need_check_support": "needCheckSupport",
+                           "dynamic_format": "dynamicFormat"
+                           }
+                key = key_dic.get(key, key)
+            op_info[key] = value
         return op_info
 
 
@@ -315,7 +378,7 @@ class CpuRegOp(RegOp):
             kwargs (dict): Other information of the input.
         """
         param_list = [index, name, param_type]
-        key_list = ["index", "name", "param_type"]
+        key_list = ["index", "name", "paramType"]
         fn_list = [self._is_int, self._is_string, self._is_string]
         input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.inputs.append(input_dict)
@@ -332,7 +395,7 @@ class CpuRegOp(RegOp):
             kwargs (dict): Other information of the output.
         """
         param_list = [index, name, param_type]
-        key_list = ["index", "name", "param_type"]
+        key_list = ["index", "name", "paramType"]
         fn_list = [self._is_int, self._is_string, self._is_string]
         output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.outputs.append(output_dict)
@@ -375,7 +438,7 @@ class AkgRegOp(RegOp):
             kwargs (dict): Other information of the input.
         """
         param_list = [index, name, param_type]
-        key_list = ["index", "name", "param_type"]
+        key_list = ["index", "name", "paramType"]
         fn_list = [self._is_int, self._is_string, self._is_string]
         input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.inputs.append(input_dict)
@@ -408,7 +471,7 @@ class AkgRegOp(RegOp):
             kwargs (dict): Other information of the attribute.
         """
         param_list = [name, param_type, value_type]
-        key_list = ["name", "param_type", "type"]
+        key_list = ["name", "paramType", "type"]
         fn_list = [self._is_string]
         attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.attr_.append(attr_dict)
@@ -501,16 +564,16 @@ class TBERegOp(RegOp):
         super(TBERegOp, self).__init__(op_name)
         self.imply_type = "TBE"
         self.async_flag_ = False
-        self.binfile_name_ = ''
+        self.binfile_ = ''
         self.compute_cost_ = 10
-        self.kernel_name_ = ''
+        self.kernel_ = ''
         self.partial_flag_ = False
         self.reshape_type_ = ''
         self.dynamic_rank_support_ = False
-        self.dynamic_shape_ = False
+        self.dynamic_shape_support_ = False
         self.dynamic_compile_static_ = False
-        self.need_check_supported_ = False
-        self.is_dynamic_format_ = False
+        self.need_check_support_ = False
+        self.dynamic_format_ = False
         self.op_pattern_ = ""
         self.real_input_index_ = []
         self.input_to_attr_index_ = []
@@ -584,7 +647,7 @@ class TBERegOp(RegOp):
             binfile_name (str): The binary file name of the operator.
         """
         self._is_string(binfile_name)
-        self.binfile_name_ = binfile_name
+        self.binfile_ = binfile_name
         return self
 
     def compute_cost(self, compute_cost=10):
@@ -607,7 +670,7 @@ class TBERegOp(RegOp):
             kernel_name (str): Name of operator kernel.
         """
         self._is_string(kernel_name)
-        self.kernel_name_ = kernel_name
+        self.kernel_ = kernel_name
         return self
 
     def partial_flag(self, partial_flag=True):
@@ -642,7 +705,7 @@ class TBERegOp(RegOp):
             dynamic_shape (bool): Value of dynamic shape. Default: false.
         """
         self._is_bool(dynamic_shape)
-        self.dynamic_shape_ = dynamic_shape
+        self.dynamic_shape_support_ = dynamic_shape
         return self
 
     def dynamic_compile_static(self, dynamic_compile_static=False):
@@ -664,7 +727,7 @@ class TBERegOp(RegOp):
             need_check_supported (bool): Value of need_check_supported. Default: false.
         """
         self._is_bool(need_check_supported)
-        self.need_check_supported_ = need_check_supported
+        self.need_check_support_ = need_check_supported
         return self
 
     def is_dynamic_format(self, is_dynamic_format=False):
@@ -675,7 +738,7 @@ class TBERegOp(RegOp):
             is_dynamic_format (bool): Value of is_dynamic_format. Default: false.
         """
         self._is_bool(is_dynamic_format)
-        self.is_dynamic_format_ = is_dynamic_format
+        self.dynamic_format_ = is_dynamic_format
         return self
 
     def op_pattern(self, pattern=None):
@@ -702,7 +765,7 @@ class TBERegOp(RegOp):
             kwargs (dict): Other information of the attribute.
         """
         param_list = [name, param_type, value_type, value, default_value]
-        key_list = ["name", "param_type", "type", "value", "default_value"]
+        key_list = ["name", "paramType", "type", "value", "defaultValue"]
         fn_list = [self._is_string]
         attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.attr_.append(attr_dict)
@@ -722,7 +785,7 @@ class TBERegOp(RegOp):
             kwargs (dict): Other information of the input.
         """
         param_list = [index, name, need_compile, param_type, shape, value_depend]
-        key_list = ["index", "name", "need_compile", "param_type", "shape", "value_depend"]
+        key_list = ["index", "name", "needCompile", "paramType", "shape", "valueDepend"]
         fn_list = [self._is_int, self._is_string, self._is_bool, self._is_string, self._is_string, self._is_string]
         input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         value_depend_values = ("ignored", "optional", "required")
@@ -745,7 +808,7 @@ class TBERegOp(RegOp):
             kwargs (dict): Other information of the output.
         """
         param_list = [index, name, need_compile, param_type, shape]
-        key_list = ["index", "name", "need_compile", "param_type", "shape"]
+        key_list = ["index", "name", "need_compile", "paramType", "shape"]
         fn_list = [self._is_int, self._is_string, self._is_bool, self._is_string, self._is_string]
         output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.outputs.append(output_dict)
@@ -807,7 +870,7 @@ class CustomRegOp(RegOp):
             TypeError: If `param_type` is neither str nor None.
         """
         param_list = [index, name, param_type]
-        key_list = ["index", "name", "param_type"]
+        key_list = ["index", "name", "paramType"]
         fn_list = [self._is_int, self._is_string, self._is_string]
         input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.inputs.append(input_dict)
@@ -842,7 +905,7 @@ class CustomRegOp(RegOp):
             TypeError: If `param_type` is neither str nor None.
         """
         param_list = [index, name, param_type]
-        key_list = ["index", "name", "param_type"]
+        key_list = ["index", "name", "paramType"]
         fn_list = [self._is_int, self._is_string, self._is_string]
         output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.outputs.append(output_dict)
@@ -917,7 +980,7 @@ class CustomRegOp(RegOp):
             TypeError: If `default_value` is neither str nor None.
         """
         param_list = [name, param_type, value_type, default_value]
-        key_list = ["name", "param_type", "type", "default_value"]
+        key_list = ["name", "paramType", "type", "defaultValue"]
         fn_list = [self._is_string]
         attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.attr_.append(attr_dict)

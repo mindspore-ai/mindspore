@@ -53,8 +53,8 @@ TypePtr HSwishGradInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(HSwishGrad, BaseOperator);
-AbstractBasePtr HSwishGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args) {
+abstract::AbstractBasePtr HSwishGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args) {
   auto infer_type = HSwishGradInferType(primitive, input_args);
   auto infer_shape = HSwishGradInferShape(primitive, input_args);
   MS_EXCEPTION_IF_NULL(infer_shape);

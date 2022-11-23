@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include "kernel/oplib/op_info_keys.h"
 #include "ir/dtype.h"
 #include "ir/kernel_info_dev.h"
 #include "kernel/kernel.h"
@@ -35,7 +36,7 @@ class BACKEND_EXPORT KernelBuildInfo {
  public:
   class KernelBuildInfoBuilder;
 
-  KernelBuildInfo() {}
+  KernelBuildInfo() = default;
 
   ~KernelBuildInfo() = default;
 
@@ -50,8 +51,6 @@ class BACKEND_EXPORT KernelBuildInfo {
   TypeId GetOutputDeviceType(size_t output_index) const;
 
   std::string GetInputReshapeType(size_t input_index) const;
-
-  std::string GetInputValueDepend(size_t input_index) const;
 
   bool IsInputDefaultPadding() const;
 
@@ -119,7 +118,6 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::vector<TypeId> inputs_device_type_;
   std::vector<TypeId> outputs_device_type_;
   std::vector<nlohmann::json> output_data_desc_;
-  std::vector<std::string> input_value_depend_;
   FusionType fusion_type_{kernel::FusionType::OPAQUE};
   Processor processor_{AICORE};
 };
@@ -141,7 +139,6 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
       (void)kernel_build_info_->inputs_device_type_.emplace_back(kernel_build_info->GetInputDeviceType(index));
       (void)kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));
       (void)kernel_build_info_->input_reshape_type_.emplace_back(kernel_build_info->GetInputReshapeType(index));
-      (void)kernel_build_info_->input_value_depend_.emplace_back(kernel_build_info->GetInputValueDepend(index));
     }
     for (size_t index = 0; index < kernel_build_info->GetOutputNum(); ++index) {
       (void)kernel_build_info_->outputs_device_type_.emplace_back(kernel_build_info->GetOutputDeviceType(index));
@@ -165,8 +162,6 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
   void SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type);
 
   void SetInputsReshapeType(const std::vector<std::string> &input_reshape_type);
-
-  void SetInputsValueDepend(const std::vector<std::string> &input_value_depend);
 
   void SetOutputsReshapeType(const std::vector<std::string> &output_reshape_type);
 

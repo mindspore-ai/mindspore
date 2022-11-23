@@ -25,7 +25,8 @@ cast_ds_op_info = TBERegOp("Cast") \
     .partial_flag(True) \
     .need_check_supported(True) \
     .attr("dst_type", "required", "int", "all") \
-    .dynamic_shape(True)\
+    .dynamic_shape(True) \
+    .dynamic_compile_static(True) \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("formatAgnostic") \

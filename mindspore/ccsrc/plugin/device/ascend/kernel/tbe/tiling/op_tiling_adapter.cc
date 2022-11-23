@@ -32,6 +32,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "graph/utils/tensor_utils.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
+#include "kernel/oplib/super_bar.h"
 
 namespace mindspore {
 namespace device {
@@ -48,7 +49,7 @@ constexpr auto PARAM_DYNAMIC = "dynamic";
 constexpr auto EXT_ATTR_ATOMIC_WORKSPACE_INFO = "sub_node_workspace_info";
 
 bool SkipOpConvert(const std::string &op_type) {
-  static const std::unordered_set<std::string> kSkipOpTypeSet = {"Cast", "Pad"};
+  static const std::unordered_set<std::string> kSkipOpTypeSet = {kCastOpName, kPadOpName, kPadDOpName};
   if (kSkipOpTypeSet.count(op_type) != 0) {
     return true;
   }
@@ -76,7 +77,6 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"HSwish", "HardSwish"},
     {"HSwishGrad", "HardSwishGrad"},
     {"CeLU", "CeluV2"},
-    {"TransposeNOD", "Transpose"},
     {"IndexAdd", "InplaceIndexAdd"},
     {"KLDivLoss", "KLDiv"},
     {"Unstack", "Unpack"},
@@ -213,32 +213,30 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name_, node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   for (const auto &attr : op_info_ptr->attrs_ptr()) {
-    auto attr_name = attr->name();
-    auto value = primitive->GetAttr(attr_name);
+    auto kernel_attr_name = attr->name();
+    auto ms_attr_name = kernel::SuperBar::GetSBMSAttrByKernelAttr(primitive->name(), kernel_attr_name);
+    auto value = primitive->GetAttr(ms_attr_name);
     if (value == nullptr) {
+      MS_LOG(DEBUG) << "kernel attr: " << kernel_attr_name << ", ms attr: " << ms_attr_name << "s value is empty!";
       continue;
     }
 
-    auto iter = to_convert_attr.find(attr_name);
-    if (iter != to_convert_attr.end()) {
-      attr_name = iter->second;
-    }
     MS_EXCEPTION_IF_NULL(value);
     // Should add more types.
     if (value->isa<Int64Imm>()) {
-      (void)::ge::AttrUtils::SetInt(*(*op_desc), attr_name, GetValue<int64_t>(value));
+      (void)::ge::AttrUtils::SetInt(*(*op_desc), kernel_attr_name, GetValue<int64_t>(value));
     } else if (value->isa<StringImm>()) {
-      (void)::ge::AttrUtils::SetStr(*(*op_desc), attr_name, GetValue<string>(value));
+      (void)::ge::AttrUtils::SetStr(*(*op_desc), kernel_attr_name, GetValue<string>(value));
     } else if (value->isa<FP32Imm>()) {
-      (void)::ge::AttrUtils::SetFloat(*(*op_desc), attr_name, GetValue<float>(value));
+      (void)::ge::AttrUtils::SetFloat(*(*op_desc), kernel_attr_name, GetValue<float>(value));
     } else if (value->isa<BoolImm>()) {
-      (void)::ge::AttrUtils::SetBool(*(*op_desc), attr_name, GetValue<bool>(value));
+      (void)::ge::AttrUtils::SetBool(*(*op_desc), kernel_attr_name, GetValue<bool>(value));
     } else if (value->isa<ValueSequence>()) {
       auto value_seq = value->cast<ValueSequencePtr>();
       if (value_seq->size() == 0) {
-        MS_LOG(DEBUG) << "Current attr " << attr_name << " has no value, so cannot determine the dtype."
+        MS_LOG(DEBUG) << "Current attr " << kernel_attr_name << " has no value, so cannot determine the dtype."
                       << "Now default to call SetListInt.";
-        (void)::ge::AttrUtils::SetListInt(*(*op_desc), attr_name, GetValue<std::vector<int64_t>>(value));
+        (void)::ge::AttrUtils::SetListInt(*(*op_desc), kernel_attr_name, GetValue<std::vector<int64_t>>(value));
         return;
       }
       auto value0 = value_seq->value().front();
@@ -246,15 +244,15 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
       MS_EXCEPTION_IF_NULL(value0->type());
       auto data_type = value0->type()->number_type();
       if (data_type == kNumberTypeInt64) {
-        (void)::ge::AttrUtils::SetListInt(*(*op_desc), attr_name, GetValue<std::vector<int64_t>>(value));
+        (void)::ge::AttrUtils::SetListInt(*(*op_desc), kernel_attr_name, GetValue<std::vector<int64_t>>(value));
       } else if (data_type == kNumberTypeFloat32) {
-        (void)::ge::AttrUtils::SetListFloat(*(*op_desc), attr_name, GetValue<std::vector<float>>(value));
+        (void)::ge::AttrUtils::SetListFloat(*(*op_desc), kernel_attr_name, GetValue<std::vector<float>>(value));
       } else {
-        MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << attr_name
+        MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << kernel_attr_name
                           << "' with value: " << value->ToString() << ", perhaps you should add more supported type.";
       }
     } else {
-      MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << attr_name
+      MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << kernel_attr_name
                         << "' with value: " << value->ToString() << ", perhaps you should add more supported type.";
     }
   }

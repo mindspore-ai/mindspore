@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_RELU6_GRAD_H_
 #include <map>
 #include <string>
+#include <vector>
 #include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -31,6 +32,8 @@ class MIND_API ReLU6Grad : public BaseOperator {
   ReLU6Grad() : BaseOperator(kNameReLU6Grad) {}
   void Init() const {}
 };
+abstract::AbstractBasePtr ReLU6GradInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

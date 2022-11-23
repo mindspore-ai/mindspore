@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
-const std::set<std::string> InvalidOps = {kSplitOpName, kSplitVOpName, kConcatOpName};
+const std::set<std::string> InvalidOps = {kSplitOpName, kSplitDOpName, kSplitVOpName, kSplitVDOpName, kConcatDOpName};
 
 void GetSplitOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &node, std::vector<AnfNodePtr> *const out_nodes) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -166,9 +166,9 @@ bool NeedSkip(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_manager);
   int64_t split_dim = -1;
   auto op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name == prim::kPrimSplit->name()) {
+  if (op_name == prim::kPrimSplit->name() || op_name == prim::kPrimSplitD->name()) {
     split_dim = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrAxis);
-  } else if (op_name == prim::kPrimSplitV->name()) {
+  } else if (op_name == prim::kPrimSplitV->name() || op_name == prim::kPrimSplitVD->name()) {
     split_dim = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrSplitDim);
   }
   if (split_dim != 0) {
@@ -206,7 +206,8 @@ const AnfNodePtr SplitOpOptimizer::Process(const FuncGraphPtr &func_graph, const
   }
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name != prim::kPrimSplit->name() && op_name != prim::kPrimSplitV->name()) {
+  if (op_name != prim::kPrimSplit->name() && op_name != prim::kPrimSplitV->name() &&
+      op_name != prim::kPrimSplitD->name() && op_name != prim::kPrimSplitVD->name()) {
     return nullptr;
   }
 

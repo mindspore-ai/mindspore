@@ -16,7 +16,7 @@
 """IndexAdd op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-index_add_op_info = TBERegOp("IndexAdd") \
+inplace_index_add_op_info = TBERegOp("InplaceIndexAdd") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("inplace_index_add.so") \
@@ -39,7 +39,7 @@ index_add_op_info = TBERegOp("IndexAdd") \
     .get_op_info()
 
 
-@op_info_register(index_add_op_info)
-def _index_add_tbe():
+@op_info_register(inplace_index_add_op_info)
+def _inplace_index_add_tbe():
     """IndexAdd TBE register"""
     return

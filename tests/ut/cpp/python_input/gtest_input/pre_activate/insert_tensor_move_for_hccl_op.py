@@ -26,6 +26,7 @@ tuple_getitem = Primitive(Constants.kTupleGetItem)
 assign_add = P.AssignAdd()
 apply_momentun = P.ApplyMomentum()
 relu = P.ReLU()
+relu_tbe = Primitive('Relu')
 
 
 class FnDict:
@@ -112,7 +113,7 @@ def test_insert_tensor_move_for_hccl_op_cond4(tag):
 
     @fns
     def after(a, b):
-        x = relu(a)
+        x = relu_tbe(a)
         y1 = tensor_move(b)
         y2 = all_reduce(y1)
         res = depend(x, y2)
@@ -133,7 +134,7 @@ def test_insert_tensor_move_for_hccl_op_cond5(tag):
 
     @fns
     def after(a, b, c):
-        x = relu(a)
+        x = relu_tbe(a)
         m1 = tensor_move(b)
         m2 = tensor_move(c)
         y = broadcast(m1, m2)

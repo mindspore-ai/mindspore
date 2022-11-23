@@ -171,7 +171,6 @@ class COMMON_EXPORT AnfAlgo {
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.
   static TypeId GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx);
   static bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr);
-  static bool IsKernelDynamicImpl(const AnfNodePtr &node);
   static bool IsDynamicShape(const AnfNodePtr &node);
   static bool HasDynamicShapeFlag(const PrimitivePtr &prim);
   static bool IsCondControlKernel(const CNodePtr &node);

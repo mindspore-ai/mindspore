@@ -21,7 +21,7 @@
 namespace mindspore::opt {
 const BaseRef SplitVFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  auto split_prim = std::make_shared<Primitive>(kSplitVOpName);
+  auto split_prim = std::make_shared<Primitive>(kSplitVDOpName);
   return VectorRef({split_prim, Xs});
 }
 

@@ -32,6 +32,8 @@
 #include "include/common/utils/json_operation_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
+#include "kernel/oplib/super_bar.h"
 
 namespace mindspore::kernel {
 namespace {
@@ -354,32 +356,41 @@ void TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &o
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &attr_ptr : attrs_ptr) {
-    std::string attr_name = attr_ptr->name();
+    std::string op_info_attr_name = attr_ptr->name();
+    auto attr_name = SuperBar::GetSBMSAttrByKernelAttr(op_name, op_info_attr_name);
     nlohmann::json attr_obj;
-    attr_obj[kJName] = attr_name;
-    if (primitive->GetAttr(attr_name) != nullptr) {
+    attr_obj[kJName] = op_info_attr_name;
+    if (primitive->HasAttr(attr_name)) {
       if (!ParseAttrValue(attr_ptr->type(), primitive->GetAttr(attr_name), &attr_obj)) {
-        MS_LOG(EXCEPTION) << "op [ " << op_info->op_name() << " ]'s attr [ " << attr_name << " ] generates failed";
+        MS_LOG(EXCEPTION) << "Parse op [ " << op_info->op_name() << " ]'s kernel attr [ " << op_info_attr_name
+                          << " ], ms attr name [" << attr_name << "] "
+                          << ", attr text:" << primitive->GetAttrsText() << "node: " << anf_node->DebugString()
+                          << ", full name:" << anf_node->fullname_with_scope();
       }
       attr_obj[kJValid] = true;
     } else {
       auto default_value = attr_ptr->default_value();
-      if (!default_value.empty()) {
-        if (!ParseAttrDefaultValue(attr_ptr->type(), default_value, &attr_obj)) {
-          MS_LOG(EXCEPTION) << "op [ " << op_info->op_name() << " ]'s default attr [ " << attr_name
-                            << " ] generates failed";
-        }
-        attr_obj[kJValid] = true;
-      } else {
-        MS_LOG(DEBUG) << "Op " << op_name << "'s attr \"" << attr_name
-                      << "\" should have a default value, node:" << anf_node->fullname_with_scope();
-        if (!op_info->impl_path().empty() && attr_ptr->param_type() == kJParamRequred) {
-          MS_LOG(EXCEPTION) << "Op " << op_info->op_name() << "'s attr \"" << attr_name
-                            << "\" is required, but not set, node: " << anf_node->fullname_with_scope();
-        } else {
-          attr_obj[kJValid] = false;
-        }
+      if (default_value.empty()) {
+        default_value = kernel::SuperBar::GetSBNodeAttrDefaultValue(op_name, op_info_attr_name);
       }
+      if (default_value.empty()) {
+        if (attr_ptr->param_type() == kJParamRequred) {
+          MS_LOG(EXCEPTION) << "Get op [ " << op_info->op_name() << " ]'s kernel attr [ " << op_info_attr_name
+                            << " ], ms attr name [" << attr_name << "] "
+                            << ", attr text:" << primitive->GetAttrsText() << "node: " << anf_node->DebugString()
+                            << ", full name:" << anf_node->fullname_with_scope();
+        }
+        attr_obj[kJValid] = false;
+        continue;
+      }
+
+      if (!ParseAttrDefaultValue(attr_ptr->type(), default_value, &attr_obj)) {
+        MS_LOG(EXCEPTION) << "Get op [ " << op_info->op_name() << " ]'s kernel attr [ " << op_info_attr_name
+                          << " ], ms attr name [" << attr_name << "] "
+                          << ", attr text:" << primitive->GetAttrsText() << "node: " << anf_node->DebugString()
+                          << ", full name:" << anf_node->fullname_with_scope();
+      }
+      attr_obj[kJValid] = true;
     }
     (*attrs_json).push_back(attr_obj);
   }
@@ -404,7 +415,7 @@ void TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json
 
   nlohmann::json attrs_desc;
   for (const auto &attr : attrs_json) {
-    if (GetJsonValue<std::string>(attr, kJName) != kJIsRef && GetJsonValue<bool>(attr, kJValid)) {
+    if (GetJsonValue<bool>(attr, kJValid)) {
       attrs_desc.push_back(attr.at(kJValue));
     }
   }
@@ -420,7 +431,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
-  auto func_name = op_info_ptr->kernel_name();
+  auto func_name = op_info_ptr->kernel();
   (*compute_json)[kJFuncName] = func_name;
   auto python_module_path = op_info_ptr->impl_path();
   if (python_module_path.empty()) {
@@ -428,10 +439,8 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   }
 
   auto dynamic_compile_static = op_info_ptr->dynamic_compile_static();
-  auto is_dynamic = op_info_ptr->dynamic_shape() && tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
-  auto is_dynamic_impl = is_dynamic || dynamic_compile_static || common::AnfAlgo::IsKernelDynamicImpl(anf_node);
-  auto iter = tbe::opTypeAdapter.find(op_name);
-  (*compute_json)[kJType] = (iter != tbe::opTypeAdapter.end()) ? iter->second : op_name;
+  auto is_dynamic_impl = IsKernelDynamicImpl(anf_node);
+  (*compute_json)[kJType] = op_name;
   (*compute_json)[kJPyModulePath] = python_module_path;
   (*compute_json)[kJDynamicCompileStatic] = dynamic_compile_static;
   (*compute_json)[kJIsDynamicImpl] = is_dynamic_impl;
@@ -548,20 +557,46 @@ void ParseConstValue(const mindspore::ValuePtr &value, nlohmann::json *json_obj)
   }
 }
 
+size_t RealInputIdxToOpInfoIdx(const AnfNodePtr &anf_node, size_t real_input_index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    return real_input_index;
+  }
+  auto dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  size_t index = 0;
+  size_t ret = UINT_MAX;
+  for (size_t i = 0; i < dyn_input_sizes.size(); ++i) {
+    index += dyn_input_sizes[i] == -1 ? 1 : dyn_input_sizes[i];
+    if (index > real_input_index) {
+      ret = i;
+      break;
+    }
+  }
+
+  if (ret == UINT_MAX) {
+    MS_LOG(ERROR) << "Can't get op info index for node " << anf_node->fullname_with_scope()
+                  << ", real input index:" << real_input_index << ", dynamic input sizes:" << dyn_input_sizes;
+  }
+  return ret;
+}
+
 void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_input_index,
                                         nlohmann::json *input_desc) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_desc);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
-  auto value_depend = build_info->GetInputValueDepend(real_input_index);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto op_info_index = RealInputIdxToOpInfoIdx(anf_node, real_input_index);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
+  auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
+  auto op_io_info = op_info_ptr->inputs_ptr().at(op_info_index);
+  auto value_depend = op_io_info->value_depend();
   if (value_depend.empty() || value_depend == kIgnored) {
     return;
   }
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
   auto input_node = cnode->inputs()[real_input_index + 1];
   if (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
     input_node = common::AnfAlgo::VisitKernel(input_node, 0).first;

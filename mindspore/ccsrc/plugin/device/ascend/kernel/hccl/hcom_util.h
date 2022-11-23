@@ -31,15 +31,6 @@ namespace mindspore {
 using std::map;
 using std::string;
 using std::vector;
-
-constexpr auto kAllGather = "AllGather";
-constexpr auto kAllReduce = "AllReduce";
-constexpr auto kBroadcast = "Broadcast";
-constexpr auto kHcomSend = "Send";
-constexpr auto kReceive = "Receive";
-constexpr auto kReduceScatter = "ReduceScatter";
-constexpr auto kAllToAllv = "AllToAllv";
-
 /* Correspondence between data_type and hcom data type in Ascend */
 static map<int64_t, HcclDataType> kConstOpHcomDataTypeMap = {
   {TypeId::kNumberTypeFloat32, HCCL_DATA_TYPE_FP32},

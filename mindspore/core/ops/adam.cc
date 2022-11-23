@@ -17,6 +17,7 @@
 #include "ops/adam.h"
 
 #include <set>
+#include <functional>
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -149,6 +150,16 @@ bool Adam::get_use_nesterov() const {
   auto value_ptr = GetAttr(kUseNesterov);
   return GetValue<bool>(value_ptr);
 }
+
+abstract::AbstractBasePtr ApplyAdamDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  AdamInfer apply_adamd;
+  auto type = apply_adamd.InferType(primitive, input_args);
+  auto shape = apply_adamd.InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Adam, prim::kPrimAdam, AdamInfer, false);
 }  // namespace ops
 }  // namespace mindspore

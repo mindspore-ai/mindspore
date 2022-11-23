@@ -231,7 +231,7 @@ CNodePtr CreateDropoutDoMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr
   std::vector<AnfNodePtr> dropout_do_mask_inputs =
     use_v3 ? std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskV3OpName)), inputs[kIndex0],
                                      inputs[kIndex1]}
-           : std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)), inputs[kIndex0],
+           : std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(kDropOutDoMaskOpName)), inputs[kIndex0],
                                      inputs[kIndex1], inputs[kIndex2]};
   auto dropout_do_mask = opt::NewCNode(dropout_do_mask_inputs, func_graph, {dropout});
   MS_EXCEPTION_IF_NULL(dropout_do_mask);

@@ -44,7 +44,6 @@ TEST_F(TestHWOptimizeConfusionSoftmaxGradRule, test_confusion_softmax_grad_rule)
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
   pm->AddPass(std::make_shared<opt::ConfusionSoftmaxGradRule>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
