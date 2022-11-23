@@ -20,6 +20,7 @@ from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.common.dtype import dtype_to_nptype, get_py_obj_dtype
+from mindspore._c_expression import Tensor as CTensor
 
 
 def ScalarAdd(x, y):
@@ -103,8 +104,11 @@ def zeros_like_tensor(x):
 
 def OnesLike(x):
     """Implement `oneslike`."""
-    x = x.asnumpy()
-    value = Tensor(np.ones(x.shape).astype(x.dtype))
+    if isinstance(x, (Tensor, CTensor)):
+        x = x.asnumpy()
+        value = Tensor(np.ones(x.shape).astype(x.dtype))
+    else:
+        value = Tensor(1.0)
     return value
 
 
