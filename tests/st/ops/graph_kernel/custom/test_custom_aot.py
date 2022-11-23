@@ -15,6 +15,7 @@
 
 import os
 import platform
+import subprocess
 import numpy as np
 import pytest
 from mindspore import context, Tensor
@@ -42,6 +43,20 @@ class AOTSingleOutputWithAttrNet(Cell):
 
     def construct(self, x, y):
         return self.program(x, y, 0.7)
+
+
+def get_cuda_bare_metal_version():
+    raw_output = subprocess.check_output(["nvcc", "-V"],
+                                         universal_newlines=True)
+    output = raw_output.split()
+    release_idx = output.index("release") + 1
+    release = output[release_idx].split(".")
+    version_major = release[0]
+    version_idx = release_idx + 1
+    version = output[version_idx].split(".")
+    version_middle = version[1] if len(version) > 1 else 0
+    version_minor = version[2] if len(version) > 2 else 0
+    return int(version_major), int(version_middle), int(version_minor)
 
 
 def get_file_path_gpu(cuda, so):
@@ -162,8 +177,10 @@ def test_aot_single_output_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     aot_single_output(get_file_path_gpu, "add.cu", "add.so", None)
     aot_single_output_auto_compile("add.cu", None)
-    aot_single_output_with_attr("add_with_attr.cu", add_gpu_info)
-    aot_single_output_with_attr_only("add_with_attr.cu", add_gpu_info_attr_only)
+    v_major, v_mid, v_minor = get_cuda_bare_metal_version()
+    if v_major >= 11 or (v_mid >= 1 and v_minor >= 168):
+        aot_single_output_with_attr("add_with_attr.cu", add_gpu_info)
+        aot_single_output_with_attr_only("add_with_attr.cu", add_gpu_info_attr_only)
 
 
 add_cpu_info = CustomRegOp() \

@@ -112,11 +112,20 @@ def _compile_aot(file):
                 release_idx = output.index("release") + 1
                 release = output[release_idx].split(".")
                 version_major = release[0]
+                version_idx = release_idx + 1
+                version = output[version_idx].split(".")
+                version_middle = version[1] if len(version) > 1 else 0
+                version_minor = version[2] if len(version) > 2 else 0
 
-                return int(version_major)
+                return int(version_major), int(version_middle), int(version_minor)
 
-            if _get_cuda_bare_metal_version() >= 11:
+            v_major, v_mid, v_minor = _get_cuda_bare_metal_version()
+            if v_major >= 11:
                 cmd += ["-gencode", "arch=compute_80,code=sm_80", "--expt-extended-lambda"]
+            elif v_major == 10 and not(v_mid >= 1 and v_minor >= 168):
+                logger.warning("The current version of nvcc, V{}.{}.{},  might have unfixed issues with std string, "
+                               "which will lead to errors in aot custom op with attrs."
+                               "The version higher than V10.1.168 is recommended".format(v_major, v_mid, v_minor))
             cmd += [include_file, "-o", func_path, file]
         else:
             raise ValueError("The source file must be a cc/cpp/cu file, but get: {}".format(file))
@@ -673,6 +682,23 @@ class Custom(ops.PrimitiveWithInfer):
             raise TypeError("For '{}', 'func' must be of type function or str, but got {}"
                             .format(self.name, type(self.func)))
 
+    def _update_reg_attrs(self, reg_info):
+        """Update op attrs in reg_info."""
+        for _, item in enumerate(reg_info.get("outputs", [])):
+            output_name_list = []
+            if isinstance(item, dict) and item.get("name"):
+                output_name_list.append(item.get("name"))
+            self.add_prim_attr("output_names", output_name_list)
+
+        if isinstance(reg_info.get("op_name"), str):
+            self.add_prim_attr("reg_op_name", reg_info.get("op_name"))
+
+        if self.func_type == "aot":
+            if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
+                for item in reg_info["attr"]:
+                    if isinstance(item, dict) and item.get("value") is not None:
+                        self.add_prim_attr(item["name"], item["value"])
+
     def _register_info(self, info):
         """Register reg_info."""
         reg_info = info
@@ -695,14 +721,7 @@ class Custom(ops.PrimitiveWithInfer):
                     new_dtype_format.append(i + (DataType.I32_Default,))
                 reg_info["dtype_format"] = new_dtype_format
 
-            for _, item in enumerate(reg_info.get("outputs", [])):
-                output_name_list = []
-                if isinstance(item, dict) and item.get("name"):
-                    output_name_list.append(item.get("name"))
-                self.add_prim_attr("output_names", output_name_list)
-
-            if isinstance(reg_info.get("op_name"), str):
-                self.add_prim_attr("reg_op_name", reg_info.get("op_name"))
+            self._update_reg_attrs(reg_info)
 
             target = self._get_target(reg_info)
             # Reg info for func is only registered once for a certain target
@@ -794,11 +813,6 @@ class Custom(ops.PrimitiveWithInfer):
         if reg_info["imply_type"] == "AKG":
             target_to_processor = {"Ascend": "AiCore", "GPU": "CUDA", "CPU": "CPU"}
             reg_info["processor"] = reg_info.get("processor", target_to_processor.get(target))
-        if self.func_type == "aot":
-            if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
-                for item in reg_info["attr"]:
-                    if isinstance(item, dict) and item.get("value") is not None:
-                        self.add_prim_attr(item["name"], item["value"])
         return reg_info
 
     def _get_target(self, reg_info):

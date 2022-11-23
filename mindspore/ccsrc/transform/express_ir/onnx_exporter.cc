@@ -1266,6 +1266,8 @@ class OnnxExporter {
                           onnx::GraphProto *graph_proto);
   void ExportPrimSort(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
                       onnx::GraphProto *graph_proto);
+  void ExportPrimCustom(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                        onnx::GraphProto *graph_proto);
   void ExportMergeConv(const FuncGraphPtr &func_graph, const CNodePtr &node,
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeGemm(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -3556,6 +3558,77 @@ void OnnxExporter::ExportPrimSort(const FuncGraphPtr &, const CNodePtr &node,
   sorted_attr_proto->set_i(1);
 }
 
+void OnnxExporter::ExportPrimCustom(const FuncGraphPtr &, const CNodePtr &node,
+                                    std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_name("Custom_" + node_name);
+  mindspore::HashSet<size_t> input_attrs;
+
+  constexpr auto kAttrInputNames = "input_names";
+  constexpr auto kAttrAttrNames = "attr_names";
+  auto input_names_vec = GetOpAttribute<std::vector<std::string>>(node, kAttrInputNames);
+  auto primitive = GetPrimitive(node);
+  auto attr_names = primitive->GetAttr(kAttrAttrNames);
+  if (attr_names != nullptr) {
+    auto attr_names_vec = GetValue<std::vector<std::string>>(attr_names);
+    if (input_names_vec.size() >= attr_names_vec.size()) {
+      size_t offset = input_names_vec.size() - attr_names_vec.size();
+      for (size_t i = offset; i < input_names_vec.size(); ++i) {
+        if (input_names_vec[i] != attr_names_vec[i - offset]) {
+          MS_LOG(EXCEPTION) << primitive->name() << " found mismatching attr name " << input_names_vec[i]
+                            << "in input_names and " << attr_names_vec[i - offset] << " in attr_names";
+        }
+        (void)input_attrs.insert(i);
+      }
+    }
+  }
+
+  auto inputs = node->inputs();
+  std::vector<AnfNodePtr> real_inputs;
+
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>() && !HasAbstractMonad(input_node)) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto attr_value = value_node->value();
+      if (attr_value->isa<StringImm>()) {
+        auto str_attr = GetValue<std::string>(attr_value);
+        onnx::AttributeProto *str_proto = node_proto->add_attribute();
+        str_proto->set_name(input_names_vec[i]);
+        str_proto->set_type(onnx::AttributeProto_AttributeType_STRING);
+        str_proto->set_s(str_attr);
+      } else if (attr_value->isa<IntegerImm>()) {
+        int64_t int64_attr = attr_value->cast<Int64ImmPtr>()->value();
+        onnx::AttributeProto *int64_proto = node_proto->add_attribute();
+        int64_proto->set_name(input_names_vec[i]);
+        int64_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+        int64_proto->set_i(int64_attr);
+      } else if (attr_value->isa<FloatImm>()) {
+        int64_t fp32_attr = attr_value->cast<FP32ImmPtr>()->value();
+        onnx::AttributeProto *fp32_proto = node_proto->add_attribute();
+        fp32_proto->set_name(input_names_vec[i]);
+        fp32_proto->set_type(onnx::AttributeProto_AttributeType_FLOAT);
+        fp32_proto->set_i(fp32_attr);
+      } else {
+        MS_LOG(EXCEPTION) << "Unsupported attr input type: " << attr_value->ToString();
+      }
+    } else {
+      real_inputs.push_back(inputs[i + 1]);
+    }
+  }
+
+  for (size_t idx = 0; idx < real_inputs.size(); idx++) {
+    auto input_name = GetNodeInputName(real_inputs[idx], node_map_ptr, graph_proto);
+    node_proto->add_input(input_name);
+  }
+
+  node_proto->add_output(node_name);
+  node_proto->set_op_type(GetOpAttribute<std::string>(node, "reg_op_name"));
+}
+
 void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   using ExportFunc = std::function<void(OnnxExporter *, const FuncGraphPtr &, const CNodePtr &,
@@ -3609,6 +3682,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimFloorDiv, &OnnxExporter::ExportPrimFloorDiv},
     {prim::kPrimFloorMod, &OnnxExporter::ExportPrimFloorMod},
     {prim::kPrimSort, &OnnxExporter::ExportPrimSort},
+    {prim::kPrimCustom, &OnnxExporter::ExportPrimCustom},
   };
 
   auto iter = std::find_if(export_table.begin(), export_table.end(),
