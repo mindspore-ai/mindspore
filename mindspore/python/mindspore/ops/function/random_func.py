@@ -59,7 +59,8 @@ def random_gamma(shape, alpha, seed=0, seed2=0):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import ops
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> shape = Tensor(np.array([7, 5]), mindspore.int32)
         >>> alpha = Tensor(np.array([0.5, 1.5]), mindspore.float32)
         >>> output = ops.random_gamma(shape, alpha, seed=5)
@@ -369,8 +370,9 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor, ops
         >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: 1-D shape, 2-D rate, float64 output
         >>> shape = Tensor(np.array([2, 2]), mindspore.int64)
         >>> rate = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), mindspore.float32)

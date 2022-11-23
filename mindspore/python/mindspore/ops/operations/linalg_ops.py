@@ -47,9 +47,8 @@ class Geqrf(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations import linalg_ops as linalg
         >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
-        >>> geqrf = linalg.Geqrf()
+        >>> geqrf = ops.Geqrf()
         >>> y, tau = geqrf(input_x)
         >>> print(y)
         [[ 2.236068   1.7888544]

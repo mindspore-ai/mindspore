@@ -786,12 +786,12 @@ class ParameterTuple(tuple):
 
             init (Union[Tensor, str, numbers.Number]): Clone the shape and dtype of Parameters in ParameterTuple and
                 set  data according to `init`. Default: 'same'.
-                If `init` is a `Tensor` , set the new Parameter data to the input Tensor.
-                If `init` is `numbers.Number` , set the new Parameter data to the input number.
-                If `init` is a `str`, data will be seted according to the initialization method of the same name in
-                the `Initializer`.
-                If `init` is 'same', the new Parameter has the same value with the original Parameter.
 
+                - If `init` is a `Tensor` , set the new Parameter data to the input Tensor.
+                - If `init` is `numbers.Number` , set the new Parameter data to the input number.
+                - If `init` is a `str`, data will be seted according to the initialization method of the same name in
+                  the `Initializer`.
+                - If `init` is 'same', the new Parameter has the same value with the original Parameter.
 
         Returns:
             Tuple, the new Parameter tuple.

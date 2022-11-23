@@ -424,9 +424,8 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import dropout
         >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
-        >>> output, mask = dropout(x, p=0.5)
+        >>> output, mask = ops.dropout(x, p=0.5)
         >>> print(output.shape)
         (2, 2)
     """
@@ -515,7 +514,7 @@ def dropout2d(x, p=0.5):
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
-        >>> output, mask = dropout2d(input_x, 0.5)
+        >>> output, mask = ops.dropout2d(input_x, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
@@ -561,7 +560,7 @@ def dropout3d(x, p=0.5):
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
-        >>> output, mask = dropout3d(input_x, 0.5)
+        >>> output, mask = ops.dropout3d(input_x, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
@@ -1841,7 +1840,6 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> output = ops.smooth_l1_loss(logits, labels)

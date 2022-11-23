@@ -2599,7 +2599,6 @@ def tensor_scatter_max(input_x, indices, updates):
     Returns:
         Tensor, has the same shape and type as `input_x`.
 
-        Tensor, has the same shape and type as `input_x`.
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
@@ -2616,12 +2615,11 @@ def tensor_scatter_max(input_x, indices, updates):
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
         >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
-        >>> op = ops.TensorScatterMax()
+        >>> output = ops.tensor_scatter_max(input_x, indices, updates)
         >>> # 5, Perform the max operation for the first time:
         >>> #      first_input_x = Max(input_x[0][0], updates[0]) = [[1.0, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> # 6, Perform the max operation for the second time:
         >>> #      second_input_x = Max(input_x[0][0], updates[1]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[ 2.2  0.3  3.6]
          [ 0.4  0.5 -3.2]]
@@ -2731,7 +2729,6 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
         >>> input_x = Parameter(Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2, 4]]), mindspore.int32)
         >>> updates = Tensor(np.array([[8, 8]]), mindspore.float32)
@@ -3594,6 +3591,7 @@ def index_fill(x, dim, index, value):
 
     Examples:
         >>> import mindspore
+        >>> import numpy as np
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))

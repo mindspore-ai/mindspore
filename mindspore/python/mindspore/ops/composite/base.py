@@ -232,13 +232,10 @@ class GradOperation(GradOperation_):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ParameterTuple
-        >>> from mindspore.ops.composite import GradOperation
-        >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.matmul = P.MatMul()
+        ...         self.matmul = ops.MatMul()
         ...         self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
         ...     def construct(self, x, y):
         ...         x = x * self.z
@@ -249,7 +246,7 @@ class GradOperation(GradOperation_):
         ...     def __init__(self, net):
         ...         super(GradNetWrtX, self).__init__()
         ...         self.net = net
-        ...         self.grad_op = GradOperation()
+        ...         self.grad_op = ops.GradOperation()
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net)
         ...         return gradient_function(x, y)
@@ -265,7 +262,7 @@ class GradOperation(GradOperation_):
         ...     def __init__(self, net):
         ...         super(GradNetWrtXY, self).__init__()
         ...         self.net = net
-        ...         self.grad_op = GradOperation(get_all=True)
+        ...         self.grad_op = ops.GradOperation(get_all=True)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net)
         ...         return gradient_function(x, y)
@@ -285,7 +282,7 @@ class GradOperation(GradOperation_):
         ...     def __init__(self, net):
         ...         super(GradNetWrtXYWithSensParam, self).__init__()
         ...         self.net = net
-        ...         self.grad_op = GradOperation(get_all=True, sens_param=True)
+        ...         self.grad_op = ops.GradOperation(get_all=True, sens_param=True)
         ...         self.grad_wrt_output = Tensor([[0.1, 0.6, 0.2], [0.8, 1.3, 1.1]], dtype=mstype.float32)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net)
@@ -307,7 +304,7 @@ class GradOperation(GradOperation_):
         ...         super(GradNetWithWrtParams, self).__init__()
         ...         self.net = net
         ...         self.params = ParameterTuple(net.trainable_params())
-        ...         self.grad_op = GradOperation(get_by_list=True)
+        ...         self.grad_op = ops.GradOperation(get_by_list=True)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net, self.params)
         ...         return gradient_function(x, y)
@@ -323,7 +320,7 @@ class GradOperation(GradOperation_):
         ...         super(GradNetWrtInputsAndParams, self).__init__()
         ...         self.net = net
         ...         self.params = ParameterTuple(net.trainable_params())
-        ...         self.grad_op = GradOperation(get_all=True, get_by_list=True)
+        ...         self.grad_op = ops.GradOperation(get_all=True, get_by_list=True)
         ...     def construct(self, x, y):
         ...         gradient_function = self.grad_op(self.net, self.params)
         ...         return gradient_function(x, y)
