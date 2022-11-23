@@ -1266,10 +1266,9 @@ class Padding(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import Padding
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
-        >>> output = Padding(pad_dim_size)(x)
+        >>> output = ops.Padding(pad_dim_size)(x)
         >>> print(output)
         [[ 8.  0.  0.  0.]
          [10.  0.  0.  0.]]
@@ -1444,7 +1443,6 @@ class MatrixDiagV3(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import MatrixDiagV3
         >>> x = Tensor(np.array([[8, 9, 0],
         ...                      [1, 2, 3],
         ...                      [0, 4, 5]]), mindspore.float32)
@@ -1452,7 +1450,7 @@ class MatrixDiagV3(Primitive):
         >>> num_rows = Tensor(np.array(3), mindspore.int32)
         >>> num_cols = Tensor(np.array(3), mindspore.int32)
         >>> padding_value = Tensor(np.array(11), mindspore.float32)
-        >>> matrix_diag_v3 = MatrixDiagV3(align='LEFT_RIGHT')
+        >>> matrix_diag_v3 = ops.MatrixDiagV3(align='LEFT_RIGHT')
         >>> output = matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
         >>> print(output)
         [[ 1.  8. 11.]
@@ -1485,7 +1483,7 @@ class MatrixDiagPartV3(Primitive):
         ...                      [9, 8, 7, 6]]), mindspore.float32)
         >>> k =Tensor(np.array([1, 3]), mindspore.int32)
         >>> padding_value = Tensor(np.array(9), mindspore.float32)
-        >>> matrix_diag_part_v3 = ops.operations.array_ops.MatrixDiagPartV3(align='RIGHT_LEFT')
+        >>> matrix_diag_part_v3 = ops.MatrixDiagPartV3(align='RIGHT_LEFT')
         >>> output = matrix_diag_part_v3(x, k, padding_value)
         >>> print(output)
         [[9. 9. 4.]
@@ -3723,13 +3721,12 @@ class DiagPart(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend`` ``GPU``
 
-    Examples
+    Examples:
         >>> input_x = Tensor([[1, 0, 0, 0],
         ...                   [0, 2, 0, 0],
         ...                   [0, 0, 3, 0],
         ...                   [0, 0, 0, 4]])
-        >>> import mindspore.ops as P
-        >>> diag_part = P.DiagPart()
+        >>> diag_part = ops.DiagPart()
         >>> output = diag_part(input_x)
         >>> print(output)
         [1 2 3 4]
@@ -4961,11 +4958,10 @@ class ScatterNdMul(_ScatterNdOp):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import ScatterNdMul
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_mul = ScatterNdMul()
+        >>> scatter_nd_mul = ops.ScatterNdMul()
         >>> output = scatter_nd_mul(input_x, indices, updates)
         >>> print(output)
         [ 1. 16. 18.  4. 35.  6.  7. 72.]
@@ -4973,7 +4969,7 @@ class ScatterNdMul(_ScatterNdOp):
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-        >>> scatter_nd_mul = ScatterNdMul()
+        >>> scatter_nd_mul = ops.ScatterNdMul()
         >>> output = scatter_nd_mul(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]
@@ -5057,11 +5053,10 @@ class ScatterNdMax(_ScatterNdOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import ScatterNdMax
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_max = ScatterNdMax()
+        >>> scatter_nd_max = ops.ScatterNdMax()
         >>> output = scatter_nd_max(input_x, indices, updates)
         >>> print(output)
         [ 1. 8. 6.  4. 7.  6.  7. 9.]
@@ -5069,7 +5064,7 @@ class ScatterNdMax(_ScatterNdOp):
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-        >>> scatter_nd_max = ScatterNdMax()
+        >>> scatter_nd_max = ops.ScatterNdMax()
         >>> output = scatter_nd_max(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]

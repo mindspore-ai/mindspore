@@ -2343,7 +2343,7 @@ def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dila
     Examples:
         >>> dout = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
-        >>> output = conv3d_transpose(dout, weight)
+        >>> output = ops.conv3d_transpose(dout, weight)
         >>> print(output.shape)
         (32, 3, 13, 37, 33)
     """
@@ -2487,7 +2487,7 @@ def hardsigmoid(input_x):
 
     Examples:
         >>> x = Tensor(np.array([ -3.5,  0,  4.3]), mindspore.float32)
-        >>> output = F.hardsigmoid(x)
+        >>> output = ops.hardsigmoid(x)
         >>> print(output)
         [0.  0.5 1. ]
     """

@@ -1309,7 +1309,7 @@ class DataFormatVecPermute(Primitive):
         >>> class Net(nn.Cell):
         ...     def __init__(self, src_format="NHWC", dst_format="NCHW"):
         ...         super().__init__()
-        ...         self.op = P.nn_ops.DataFormatVecPermute(src_format, dst_format)
+        ...         self.op = ops.DataFormatVecPermute(src_format, dst_format)
         ...     def construct(self, x):
         ...         return self.op(x)
         ...
@@ -3027,9 +3027,9 @@ class L2Loss(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Examples
+    Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
-        >>> l2_loss = L2Loss()
+        >>> l2_loss = ops.L2Loss()
         >>> output = l2_loss(input_x)
         >>> print(output)
         7.0
@@ -6938,8 +6938,7 @@ class Dropout2D(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.nn_ops import Dropout2D
-        >>> dropout = Dropout2D(keep_prob=0.5)
+        >>> dropout = ops.Dropout2D(keep_prob=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
         >>> output, mask = dropout(x)
         >>> print(output.shape)

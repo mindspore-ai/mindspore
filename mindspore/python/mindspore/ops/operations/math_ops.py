@@ -5860,9 +5860,10 @@ class IsClose(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.math_ops import IsClose
+        >>> from mindspore.ops import IsClose
         >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
         >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
         >>> isclose = IsClose()
