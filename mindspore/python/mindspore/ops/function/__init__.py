@@ -541,6 +541,8 @@ from .sparse_unary_func import (
 )
 from .clip_func import (
     clip_by_value,
+    clamp,
+    clip,
 )
 
 __all__ = []

@@ -1744,64 +1744,18 @@ def ptp(x, axis=None, keepdims=False):
     return x.max(axis, keepdims) - x.min(axis, keepdims)
 
 
-def clip(x, xmin, xmax, dtype=None):
+def clamp(x, min=None, max=None):
     """
-    Clips (limits) the values in an array.
-
-    Given an interval, values outside the interval are clipped to the interval edges.
-    For example, if an interval of :math:`[0, 1]` is specified, values smaller than 0 become 0,
-    and values larger than 1 become 1.
-
-    Note:
-        Currently, clip with `nan` is not supported.
-
-    Args:
-        x (Tensor): Tensor containing elements to clip.
-        xmin (Tensor, scalar, None): Minimum value. If None, clipping is not performed
-            on lower interval edge. Not more than one of `xmin` and `xmax` may be None.
-        xmax (Tensor, scalar, None): Maximum value. If None, clipping is not performed
-            on upper interval edge. Not more than one of `xmin` and `xmax` may be None.
-            If `xmin` or `xmax` are tensors, then the three tensors will be broadcasted
-            to match their shapes.
-        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
-            output Tensor.
-
-    Returns:
-        Tensor, a tensor with the elements of `x`, but where values
-        < `xmin` are replaced with `xmin`, and those > `xmax` with `xmax`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor
-        >>> x = Tensor([1, 2, 3, -4, 0, 3, 2, 0]).astype("float32")
-        >>> output = x.clip(0, 2)
-        >>> print(output)
-        [1 2 2 0 0 2 2 0]
+    Clamps all elements in `x` into the range `[min, max]`.
     """
-    if xmin is None and xmax is None:
-        const_utils.raise_value_error("One of max or min must be given.")
-    is_scalar = False
-    if xmin is not None:
-        xmin = const_utils.make_tensor(xmin, x.dtype)
-        if x.ndim == 0 and xmin.ndim == 0:
-            x = F.maximum(x.reshape((1,)), xmin).squeeze()
-        else:
-            x = F.maximum(x, xmin)
-    if xmax is not None:
-        xmax = const_utils.make_tensor(xmax, x.dtype)
-        if x.ndim == 0 and xmax.ndim == 0:
-            x = F.minimum(x.reshape((1,)), xmax).squeeze()
-        else:
-            x = F.minimum(x, xmax)
-    if is_scalar:
-        return x.squeeze()
-    if dtype is not None:
-        dtype = check_astype_dtype_const(dtype)
-        if dtype != x.dtype:
-            return x.astype(dtype)
-    return x
+    return F.clamp(x, min, max)
+
+
+def clip(x, min=None, max=None):
+    """
+    Clamps all elements in `x` into the range `[min, max]`.
+    """
+    return F.clamp(x, min, max)
 
 
 def var(x, axis=None, ddof=0, keepdims=False):
