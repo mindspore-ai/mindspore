@@ -507,7 +507,7 @@ class AiCPURegOp(CpuRegOp):
         op_name (str):kernel name.
 
     Examples:
-        >>> from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
+        >>> from mindspore.ops import AiCPURegOp, DataType
         >>> stack_op_info = AiCPURegOp("Stack") \
         ...    .fusion_type("OPAQUE") \
         ...    .attr("axis", "int") \
@@ -542,7 +542,7 @@ class TBERegOp(RegOp):
         op_name (str):kernel name.
 
     Examples:
-        >>> from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+        >>> from mindspore.ops import TBERegOp, DataType
         >>> abs_op_info = TBERegOp("Abs") \
         ...    .fusion_type("ELEMWISE") \
         ...    .async_flag(False) \

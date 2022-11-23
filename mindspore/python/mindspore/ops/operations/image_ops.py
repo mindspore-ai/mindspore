@@ -56,7 +56,7 @@ class AdjustSaturation(Primitive):
       ...     [[7.0, 8.0, 9.0],
       ...       [10.0, 11.0, 12.0]]])
       >>> scale = Tensor(float(0.5))
-      >>> adjustsaturation = AdjustSaturation()
+      >>> adjustsaturation = ops.AdjustSaturation()
       >>> output = adjustsaturation(x, scale)
       >>> print(output)
              [[[ 2.         2.4999998  3.       ]
@@ -151,7 +151,7 @@ class AdjustHue(Primitive):
          >>> class AdjustHue(nn.Cell):
          ...   def __init__(self):
          ...     super(AdjustHue, self).__init__()
-         ...     self.adjustHue = P.AdjustHue()
+         ...     self.adjustHue = ops.AdjustHue()
          ...   def construct(self, image, delta):
          ...     return self.adjustHue(image, delta)
          ...
@@ -511,7 +511,7 @@ class HSVToRGB(Primitive):
 
     Examples:
         >>> image = np.array([0.5, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])
-        >>> hsv_to_rgb = P.HSVToRGB()
+        >>> hsv_to_rgb = ops.HSVToRGB()
         >>> output = hsv_to_rgb(Tensor(image))
         >>> print(output)
         [[[[0.25 0.5  0.5 ]]]]
@@ -721,7 +721,7 @@ class ResizeBilinearV2(Primitive):
 
     Examples:
         >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
-        >>> output = ResizeBilinearV2(x, (5, 5))
+        >>> output = ops.ResizeBilinearV2(x, (5, 5))
         >>> print(output)
         [[[[1. 2. 3. 4. 5.]
            [1. 2. 3. 4. 5.]
@@ -790,7 +790,7 @@ class ResizeBicubic(Primitive):
         ...         super(NetResizeBicubic, self).__init__()
         ...         align_corners = False
         ...         half_pixel_centers = False
-        ...         self.resize = P.ResizeBicubic(align_corners, half_pixel_centers)
+        ...         self.resize = ops.ResizeBicubic(align_corners, half_pixel_centers)
         ...
         ...     def construct(self, images, size):
         ...         return self.resize(images, size)
@@ -1048,7 +1048,7 @@ class ScaleAndTranslate(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> op = ScaleAndTranslate()
+        >>> op = ops.ScaleAndTranslate()
         >>> image = Tensor(np.array([[[[9.0], [5.0], [2.0], [1.0]],
         ...                           [[6.0], [1.0], [9.0], [7.0]]]]), mindspore.float32)
         >>> size = Tensor(np.array([2, 2]).astype(np.int32))
@@ -1137,7 +1137,7 @@ class CombinedNonMaxSuppression(Primitive):
         >>> max_total_size = Tensor(1, mstype.int32)
         >>> iou_threshold = Tensor(0, mstype.float32)
         >>> score_threshold = Tensor(0, mstype.float32)
-        >>> net = P.CombinedNonMaxSuppression()
+        >>> net = ops.CombinedNonMaxSuppression()
         >>> out = net(boxes, scores, max_output_size_per_class, max_total_size, iou_threshold, score_threshold)
         >>> print(out)
         (Tensor(shape=[1, 1, 4], dtype=Float32, value= [[[1.00000000e+00, 1.00000000e+00, 1.00000000e+00,
