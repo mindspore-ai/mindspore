@@ -3567,7 +3567,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Examplse:
+    Examples:
         >>> import numpy as np
         >>> import mindspore.common.dtype as mstype
         >>> import mindspore.ops as ops

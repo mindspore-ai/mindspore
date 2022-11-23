@@ -3141,7 +3141,6 @@ def approximate_equal(x, y, tolerance=1e-5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
         >>> tol = 1.5
         >>> x = Tensor(np.array([1, 2, 3]), mstype.float32)
         >>> y = Tensor(np.array([2, 4, 6]), mstype.float32)
