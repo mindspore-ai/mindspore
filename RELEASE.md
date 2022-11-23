@@ -126,7 +126,7 @@
 - [STABLE] When using the map operation for dataset objects and the parameters like: num_parallel_workers > 1 and python_multiprocessing=True, the multi-process mechanism is optimized, so that the data channel and child processes are mapped one by one, avoiding excessive file handle occupation, and closing_pool interface is also deleted.
 - [STABLE] Add a batch of Vision, Text and Audio data augmentation operations.
 - [STABLE] Fix a bug where the flat_map method of the Dataset class does not flatten the result.
-- [STABLE] Unify import paths of dataset augmentation APIs to provide more easier way to use. Refer to [latest api usages](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html).
+- [STABLE] Unify import paths of dataset augmentation APIs to provide more easier way to use. Refer to [latest api usages](https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.dataset.vision.html).
 
 ### API Change
 
