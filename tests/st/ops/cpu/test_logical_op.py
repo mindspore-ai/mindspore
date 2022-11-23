@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+import os
+import stat
 import numpy as np
 import pytest
 
@@ -22,6 +24,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
+from mindspore.train.serialization import export
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -61,6 +64,40 @@ def test_logicalor():
     outputs = op_wrapper(input_x, input_y)
 
     assert np.allclose(outputs.asnumpy(), (True, True, False))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_logicalor_onnx():
+    """
+    Feature: Test the function of exporting op LogicalOr to ONNX.
+    Description: Test the function of exporting LogicalOr to ONNX.
+    Expectation: The result match to the expect value.
+    """
+    op = P.LogicalOr()
+    op_wrapper = OpNetWrapper(op)
+
+    x_np = np.array([True, False, False])
+    y_np = np.array([True, True, False])
+    input_x = Tensor(x_np)
+    input_y = Tensor(y_np)
+    outputs = op_wrapper(input_x, input_y).asnumpy()
+
+    file_name = 'logical_or.onnx'
+    export(op_wrapper, input_x, input_y,
+           file_name=file_name, file_format='ONNX')
+    assert os.path.exists(file_name)
+
+    import onnxruntime
+    sess = onnxruntime.InferenceSession(file_name)
+    onnx_input_x = sess.get_inputs()[0].name
+    onnx_input_y = sess.get_inputs()[1].name
+    result = sess.run([], {onnx_input_x: x_np, onnx_input_y: y_np})[0]
+    assert np.all(outputs == result)
+
+    os.chmod(file_name, stat.S_IWRITE)
+    os.remove(file_name)
 
 
 @pytest.mark.level0
