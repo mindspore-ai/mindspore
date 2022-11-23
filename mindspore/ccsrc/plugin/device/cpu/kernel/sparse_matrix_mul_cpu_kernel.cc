@@ -74,8 +74,9 @@ int SparseMatrixMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool SparseMatrixMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+const bool SparseMatrixMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                     const std::vector<AddressPtr> &,
+                                                     const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   const auto a_shape = reinterpret_cast<T *>(inputs[kAShapeIdx]->addr);
