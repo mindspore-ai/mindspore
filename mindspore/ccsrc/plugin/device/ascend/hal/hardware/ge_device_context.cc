@@ -313,6 +313,13 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
+    MS_EXCEPTION_IF_NULL(output_node);
+
+    // Parameter's memory is allocated earlier, and there is no need to reallocate memory if Parameter is output.
+    if (output_node->isa<Parameter>()) {
+      continue;
+    }
+
     auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
     auto output_device_addr =
