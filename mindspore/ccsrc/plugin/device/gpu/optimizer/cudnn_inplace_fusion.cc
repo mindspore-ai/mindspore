@@ -195,7 +195,9 @@ void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cove
     MS_EXCEPTION_IF_NULL(new_input);
     new_input->set_abstract(acc_input->abstract());
     CopyKernelInfo(acc_input, new_input);
-    auto new_inplace_node = graph->NewCNode({acc_node->input(0), new_input, acc_node->input(2)});
+    std::vector<AnfNodePtr> new_inplace_input = acc_node->inputs();
+    new_inplace_input[1] = new_input;
+    auto new_inplace_node = graph->NewCNode(new_inplace_input);
     MS_EXCEPTION_IF_NULL(new_inplace_node);
     new_inplace_node->set_abstract(acc_node->abstract());
     CopyKernelInfo(acc_node, new_inplace_node);
