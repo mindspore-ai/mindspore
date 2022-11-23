@@ -2530,6 +2530,9 @@ bool AscendStreamAssign::IsHcom(const CNodePtr &cur_cnode_ptr) const {
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
   auto node_name = common::AnfAlgo::GetCNodeName(cur_cnode_ptr);
   static const auto send_recv_parallel = (common::GetEnv("SEND_RECV_PARALLEL") == "1");
+  if (cur_cnode_ptr->HasAttr(parallel::FIRST_RECEIVE)) {
+    return true;
+  }
   if ((node_name == kHcomSendOpName || node_name == kReceiveOpName) && !send_recv_parallel) {
     return false;
   }

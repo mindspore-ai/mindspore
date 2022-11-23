@@ -47,6 +47,7 @@
 #include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
 #include "frontend/optimizer/comm_op_reuse_tag.h"
+#include "frontend/optimizer/overlap_opt_shard_in_pipeline.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -636,6 +637,12 @@ bool AddCommOpReusePass(const ResourcePtr &resource) {
   return true;
 }
 
+bool OverlapOptShardInPipelinePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::OverlapOptShardInPipeline(resource->func_graph());
+  return true;
+}
+
 bool AddCacheEmbeddingPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -849,6 +856,7 @@ std::vector<PassItem> kVmPasses = {
   {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
   {"comm_op_add_attrs", CommOpAddAttrs},
   {"add_comm_op_reuse_tag", AddCommOpReusePass},
+  {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
 };
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
