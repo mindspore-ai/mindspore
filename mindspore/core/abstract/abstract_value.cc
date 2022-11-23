@@ -834,28 +834,29 @@ void AbstractSequence::set_dynamic_len_element_abs(const AbstractBasePtr &dynami
   dynamic_len_element_abs_ = BroadenAllValues(dynamic_len_element_abs);
 }
 
-bool AbstractSequence::operator==(const AbstractSequence &other) const {
+bool AbstractSequence::operator==(const AbstractBase &other) const {
   if (this == &other) {
     return true;
   }
   if (tid() != other.tid()) {
     return false;
   }
-  if (dynamic_len_ != other.dynamic_len()) {
+  const auto &other_sequence = dynamic_cast<const AbstractSequence &>(other);
+  if (dynamic_len_ != other_sequence.dynamic_len()) {
     // Variable length sequence and constant length sequence can not be the same.
     return false;
   }
 
   if (dynamic_len_) {
     // If the abstract of element for two variable sequence is the same, these two sequence is the same.
-    return IsEqual(dynamic_len_element_abs_, other.dynamic_len_element_abs());
+    return IsEqual(dynamic_len_element_abs_, other_sequence.dynamic_len_element_abs());
   }
 
-  if (elements_.size() != other.elements_.size()) {
+  if (elements_.size() != other_sequence.elements_.size()) {
     return false;
   }
   for (size_t i = 0; i < elements_.size(); ++i) {
-    if (!IsEqual(elements_[i], other.elements_[i])) {
+    if (!IsEqual(elements_[i], other_sequence.elements_[i])) {
       return false;
     }
   }
@@ -921,18 +922,6 @@ void AbstractTuple::set_shape(const BaseShapePtr &shape) {
   }
 }
 
-bool AbstractTuple::operator==(const AbstractTuple &other) const { return AbstractSequence::operator==(other); }
-
-bool AbstractTuple::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  if (!other.isa<AbstractTuple>()) {
-    return false;
-  }
-  return AbstractSequence::operator==(static_cast<const AbstractSequence &>(other));
-}
-
 bool AbstractTuple::ContainsAllBroadenTensors() const {
   if (dynamic_len_) {
     if (dynamic_len_element_abs_ != nullptr && dynamic_len_element_abs_->isa<AbstractTensor>()) {
@@ -969,7 +958,15 @@ bool AbstractTuple::ContainsAllConstants() const {
   return true;
 }
 
-bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequence::operator==(other); }
+bool AbstractTuple::operator==(const AbstractBase &other) const {
+  if (this == &other) {
+    return true;
+  }
+  if (!other.isa<AbstractTuple>()) {
+    return false;
+  }
+  return AbstractSequence::operator==(static_cast<const AbstractSequence &>(other));
+}
 
 bool AbstractList::operator==(const AbstractBase &other) const {
   if (this == &other) {
@@ -1081,13 +1078,6 @@ TypePtr AbstractSlice::BuildType() const {
   return std::make_shared<Slice>(start, stop, step);
 }
 
-bool AbstractSlice::operator==(const AbstractSlice &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return IsEqual(start_, other.start_) && IsEqual(stop_, other.stop_) && IsEqual(step_, other.step_);
-}
-
 bool AbstractSlice::operator==(const AbstractBase &other) const {
   if (this == &other) {
     return true;
@@ -1095,7 +1085,8 @@ bool AbstractSlice::operator==(const AbstractBase &other) const {
   if (!other.isa<AbstractSlice>()) {
     return false;
   }
-  return *this == static_cast<const AbstractSlice &>(other);
+  const auto &other_slice = dynamic_cast<const AbstractSlice &>(other);
+  return IsEqual(start_, other_slice.start_) && IsEqual(stop_, other_slice.stop_) && IsEqual(step_, other_slice.step_);
 }
 
 AbstractBasePtr AbstractSlice::Clone() const {
@@ -1325,20 +1316,6 @@ TypePtr AbstractDictionary::BuildType() const {
   return std::make_shared<Dictionary>(key_values);
 }
 
-bool AbstractDictionary::operator==(const AbstractDictionary &other) const {
-  if (key_values_.size() != other.key_values_.size()) {
-    return false;
-  }
-  for (size_t index = 0; index < key_values_.size(); ++index) {
-    auto &kv1 = key_values_[index];
-    auto &kv2 = other.key_values_[index];
-    if (!IsEqual(kv1.first, kv2.first) || !IsEqual(kv1.second, kv2.second)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 bool AbstractDictionary::operator==(const AbstractBase &other) const {
   if (this == &other) {
     return true;
@@ -1346,7 +1323,18 @@ bool AbstractDictionary::operator==(const AbstractBase &other) const {
   if (!other.isa<AbstractDictionary>()) {
     return false;
   }
-  return *this == static_cast<const AbstractDictionary &>(other);
+  const auto &other_dict = dynamic_cast<const AbstractDictionary &>(other);
+  if (key_values_.size() != other_dict.key_values_.size()) {
+    return false;
+  }
+  for (size_t index = 0; index < key_values_.size(); ++index) {
+    auto &kv1 = key_values_[index];
+    auto &kv2 = other_dict.key_values_[index];
+    if (!IsEqual(kv1.first, kv2.first) || !IsEqual(kv1.second, kv2.second)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 AbstractBasePtr AbstractDictionary::Clone() const {
@@ -1428,8 +1416,6 @@ AbstractBasePtr AbstractJTagged::Join(const AbstractBasePtr &other) {
   return std::make_shared<AbstractJTagged>(joined_elem);
 }
 
-bool AbstractJTagged::operator==(const AbstractJTagged &other) const { return IsEqual(element_, other.element_); }
-
 bool AbstractJTagged::operator==(const AbstractBase &other) const {
   if (this == &other) {
     return true;
@@ -1437,7 +1423,8 @@ bool AbstractJTagged::operator==(const AbstractBase &other) const {
   if (!other.isa<AbstractJTagged>()) {
     return false;
   }
-  return *this == static_cast<const AbstractJTagged &>(other);
+  const auto &other_jtagged = dynamic_cast<const AbstractJTagged &>(other);
+  return IsEqual(element_, other_jtagged.element_);
 }
 
 std::string AbstractJTagged::ToString() const {
@@ -1464,19 +1451,14 @@ TypePtr AbstractRefTensor::BuildType() const {
   return std::make_shared<RefType>(subtype);
 }
 
-bool AbstractRefTensor::operator==(const AbstractRefTensor &other) const {
+bool AbstractRefTensor::operator==(const AbstractBase &other) const {
   if (this == &other) {
     return true;
   }
-  // Check whether Tensor value is equal.
-  return AbstractTensor::equal_to(other);
-}
-
-bool AbstractRefTensor::operator==(const AbstractBase &other) const {
   if (!other.isa<AbstractRefTensor>()) {
     return false;
   }
-  return *this == static_cast<const AbstractRefTensor &>(other);
+  return AbstractTensor::equal_to(dynamic_cast<const AbstractTensor &>(other));
 }
 
 AbstractBasePtr AbstractRefTensor::Join(const std::shared_ptr<AbstractRefTensor> &other) {
@@ -1534,14 +1516,7 @@ std::string AbstractRefTensor::ToString() const {
 
 AbstractBasePtr AbstractRefTensor::PartialBroaden() const { return Clone(); }
 
-bool AbstractNone::operator==(const AbstractNone &) const { return true; }
-
-bool AbstractNone::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return other.isa<AbstractNone>();
-}
+bool AbstractNone::operator==(const AbstractBase &other) const { return other.isa<AbstractNone>(); }
 
 std::string AbstractNone::ToString() const {
   std::ostringstream buffer;
@@ -1551,14 +1526,7 @@ std::string AbstractNone::ToString() const {
 
 ValuePtr AbstractNone::RealBuildValue() const { return kNone; }
 
-bool AbstractNull::operator==(const AbstractNull &) const { return true; }
-
-bool AbstractNull::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return other.isa<AbstractNull>();
-}
+bool AbstractNull::operator==(const AbstractBase &other) const { return other.isa<AbstractNull>(); }
 
 std::string AbstractNull::ToString() const {
   std::ostringstream buffer;
@@ -1566,14 +1534,7 @@ std::string AbstractNull::ToString() const {
   return buffer.str();
 }
 
-bool AbstractTimeOut::operator==(const AbstractTimeOut &) const { return true; }
-
-bool AbstractTimeOut::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return other.isa<AbstractTimeOut>();
-}
+bool AbstractTimeOut::operator==(const AbstractBase &other) const { return other.isa<AbstractTimeOut>(); }
 
 std::string AbstractTimeOut::ToString() const {
   std::ostringstream buffer;
@@ -1582,14 +1543,7 @@ std::string AbstractTimeOut::ToString() const {
   return buffer.str();
 }
 
-bool AbstractEllipsis::operator==(const AbstractEllipsis &) const { return true; }
-
-bool AbstractEllipsis::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return other.isa<AbstractEllipsis>();
-}
+bool AbstractEllipsis::operator==(const AbstractBase &other) const { return other.isa<AbstractEllipsis>(); }
 
 std::string AbstractEllipsis::ToString() const {
   std::ostringstream buffer;
@@ -2045,13 +1999,9 @@ bool AbstractMapTensor::operator==(const AbstractBase &other) const {
   if (this == &other) {
     return true;
   }
-  if (tid() != other.tid()) {
+  if (!other.isa<AbstractMapTensor>()) {
     return false;
   }
-  return *this == (static_cast<const AbstractMapTensor &>(other));
-}
-
-bool AbstractMapTensor::operator==(const AbstractMapTensor &other) const {
   const auto &v1 = GetValueTrack();
   const auto &v2 = other.GetValueTrack();
   MS_EXCEPTION_IF_NULL(v1);
@@ -2064,9 +2014,10 @@ bool AbstractMapTensor::operator==(const AbstractMapTensor &other) const {
   if (!v2->isa<AnyValue>()) {
     return false;
   }
-  return common::IsEqual(GetTypeTrack(), other.GetTypeTrack()) &&
-         common::IsEqual(GetShapeTrack(), other.GetShapeTrack()) &&
-         common::IsEqual(default_value(), other.default_value());
+  const auto &other_map_tensor = dynamic_cast<const AbstractMapTensor &>(other);
+  return common::IsEqual(GetTypeTrack(), other_map_tensor.GetTypeTrack()) &&
+         common::IsEqual(GetShapeTrack(), other_map_tensor.GetShapeTrack()) &&
+         common::IsEqual(default_value(), other_map_tensor.default_value());
 }
 
 std::size_t AbstractMapTensor::hash() const {
@@ -2104,14 +2055,7 @@ AbstractBasePtr AbstractUMonad::Join(const AbstractBasePtr &other) {
   return shared_from_base<AbstractBase>();
 }
 
-bool AbstractUMonad::operator==(const AbstractUMonad &) const { return true; }
-
-bool AbstractUMonad::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return other.isa<AbstractUMonad>();
-}
+bool AbstractUMonad::operator==(const AbstractBase &other) const { return other.isa<AbstractUMonad>(); }
 
 AbstractBasePtr AbstractIOMonad::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
@@ -2125,14 +2069,7 @@ AbstractBasePtr AbstractIOMonad::Join(const AbstractBasePtr &other) {
   return shared_from_base<AbstractBase>();
 }
 
-bool AbstractIOMonad::operator==(const AbstractIOMonad &) const { return true; }
-
-bool AbstractIOMonad::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  return other.isa<AbstractIOMonad>();
-}
+bool AbstractIOMonad::operator==(const AbstractBase &other) const { return other.isa<AbstractIOMonad>(); }
 
 ValuePtr GetRefKeyValue(const AbstractBasePtr &abs) {
   auto abs_ref = abs->cast_ptr<AbstractRefTensor>();

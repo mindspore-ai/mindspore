@@ -868,7 +868,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \param[in] other The other instance of AbstractSequence.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  virtual bool operator==(const AbstractSequence &other) const;
+  bool operator==(const AbstractBase &other) const override;
 
   /// \brief Indicate whether the sequence is dynamic length.
   ///
@@ -961,8 +961,6 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   /// \param[in] other The other instance of AbstractTuple.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractTuple &other) const;
-
   bool operator==(const AbstractBase &other) const override;
 
  protected:
@@ -1009,8 +1007,6 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \param[in] other The other instance of AbstractList.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractList &other) const;
-
   bool operator==(const AbstractBase &other) const override;
 
  protected:
@@ -1031,13 +1027,6 @@ class MS_CORE_API AbstractDictionary final : public AbstractBase {
   MS_DECLARE_PARENT(AbstractDictionary, AbstractBase)
 
   TypePtr BuildType() const override;
-
-  /// \brief Overwrite the operator '==' to compare other abstract dictionary.
-  ///
-  /// \param[in] other The other instance of AbstractDictionary.
-  ///
-  /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractDictionary &other) const;
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -1087,8 +1076,6 @@ class MS_CORE_API AbstractSlice final : public AbstractBase {
   /// \param[in] other The other instance of AbstractSlice.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractSlice &other) const;
-
   bool operator==(const AbstractBase &other) const override;
 
   AbstractBasePtr Clone() const override;
@@ -1149,8 +1136,6 @@ class MS_CORE_API AbstractJTagged final : public AbstractBase {
   /// \param[in] other The other abstract to be joined.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractJTagged &other) const;
-
   bool operator==(const AbstractBase &other) const override;
 
   std::string ToString() const override;
@@ -1184,8 +1169,6 @@ class MS_CORE_API AbstractNone final : public AbstractBase {
   /// \param[in] other The other instance of AbstractNone.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractNone &) const;
-
   bool operator==(const AbstractBase &other) const override;
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractNone>(); }
@@ -1217,8 +1200,6 @@ class MS_CORE_API AbstractNull final : public AbstractBase {
   /// \param[in] other The other instance of AbstractNull.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractNull &) const;
-
   bool operator==(const AbstractBase &other) const override;
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractNull>(); }
@@ -1247,8 +1228,6 @@ class MS_CORE_API AbstractTimeOut final : public AbstractBase {
   /// \param[in] other The other instance of AbstractTimeOut.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractTimeOut &) const;
-
   bool operator==(const AbstractBase &other) const override;
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractTimeOut>(); }
@@ -1274,8 +1253,6 @@ class MS_CORE_API AbstractEllipsis final : public AbstractBase {
   /// \param[in] other The other instance of AbstractTimeOut.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractEllipsis &) const;
-
   bool operator==(const AbstractBase &other) const override;
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractEllipsis>(); }
@@ -1304,8 +1281,6 @@ class MS_CORE_API AbstractRefTensor final : public AbstractTensor {
   /// \param[in] other The other instance of AbstractTimeOut.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractRefTensor &other) const;
-
   bool operator==(const AbstractBase &other) const override;
 
   AbstractBasePtr Clone() const override;
@@ -1562,7 +1537,6 @@ class MS_CORE_API AbstractUMonad final : public AbstractMonad {
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractUMonad>(GetValueTrack()); }
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
-  bool operator==(const AbstractUMonad &) const;
   bool operator==(const AbstractBase &other) const override;
 };
 using AbstractUMonadPtr = std::shared_ptr<AbstractUMonad>;
@@ -1575,7 +1549,6 @@ class MS_CORE_API AbstractIOMonad final : public AbstractMonad {
 
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractIOMonad>(GetValueTrack()); }
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
-  bool operator==(const AbstractIOMonad &) const;
   bool operator==(const AbstractBase &other) const override;
 };
 using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
@@ -1608,7 +1581,6 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
   bool operator==(const AbstractBase &other) const override;
-  bool operator==(const AbstractMapTensor &) const;
   std::size_t hash() const override;
   std::string ToString() const override;
 
