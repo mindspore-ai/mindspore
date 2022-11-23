@@ -496,16 +496,22 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, co
     }
   }
 }
-void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, const session::BackendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &kernels = kernel_graph->execution_order();
-  for (const auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::GetCNodeName(kernel) == op_run_info->base_op_run_info.op_name) {
-      op_run_info->base_op_run_info.abstract = kernel->abstract();
-    }
+
+void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunInfoPtr &op_run_info) {
+  auto output_size = outputs.size();
+  if (output_size == 1) {
+    auto output_tensor = utils::cast<tensor::TensorPtr>(outputs[0]);
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    op_run_info->base_op_run_info.abstract = output_tensor->ToAbstract();
+    return;
   }
+  AbstractBasePtrList elements;
+  for (size_t i = 0; i < output_size; ++i) {
+    auto output_tensor = utils::cast<tensor::TensorPtr>(outputs[i]);
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    (void)elements.emplace_back(output_tensor->ToAbstract());
+  }
+  op_run_info->base_op_run_info.abstract = std::make_shared<abstract::AbstractTuple>(elements);
 }
 
 TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
@@ -1250,7 +1256,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   ClearInputDeviceAddress(graph, device_context);
 
   if (is_dynamic_shape) {
-    UpdateOutputAbstract(graph, op_run_info);
+    UpdateOutputAbstract(*outputs, op_run_info);
   }
   if (op_compiler_info->need_erase_) {
     EraseSingleOpCache(op_run_info->base_op_run_info.graph_info);
@@ -1289,7 +1295,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   ClearGraphDeviceAddressDynamic(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddressDynamic(graph, device_context);
   if (is_dynamic_shape) {
-    UpdateOutputAbstract(graph, op_run_info);
+    UpdateOutputAbstract(*outputs, op_run_info);
   }
   if (op_compiler_info->need_erase_) {
     EraseSingleOpCache(op_run_info->base_op_run_info.graph_info);

@@ -127,12 +127,8 @@ void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
     auto output_index = output_pair.second;
     auto &input_node = input_pair.first;
     auto input_node_output_index = input_pair.second;
-
     auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index, false);
-    auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(ref_node, output_index, false);
-    if (input_addr != ref_node_output_addr) {
-      AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
-    }
+    AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
   }
 }
 
