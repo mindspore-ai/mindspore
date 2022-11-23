@@ -799,12 +799,12 @@ int CheckInputShape(const std::shared_ptr<ConverterPara> &param) {
       std::vector<int64_t> dims = elem.second;
       if (dims.empty()) {
         MS_LOG(ERROR) << "INPUT MISSING: input tensor dim is empty";
-        return lite::RET_ERROR;
+        return lite::RET_INPUT_PARAM_INVALID;
       }
       bool has_negative_dim = std::any_of(dims.begin(), dims.end(), [](int64_t dim) { return dim < 0; });
       if (has_negative_dim) {
         MS_LOG(ERROR) << "INPUT ILLEGAL: Unsupported dim < 0.";
-        return lite::RET_ERROR;
+        return lite::RET_INPUT_PARAM_INVALID;
       }
     }
   }
