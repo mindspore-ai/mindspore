@@ -25,6 +25,7 @@
 #include "runtime/device/memory_manager.h"
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
+#include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 
 namespace mindspore {
 namespace device {
@@ -44,6 +45,11 @@ class GeDeviceResManager : public DeviceResManager {
                                        const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
 
   static void CreateSessionAndGraphRunner(bool is_training);
+
+  bool LoadCollectiveCommLib() override {
+    collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
+    return true;
+  }
 
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;

@@ -1663,15 +1663,18 @@ void ResetOpIdWithOffset() { mindspore::id_generator::reset_id_with_offset(); }
 void InitHccl() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
 #ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
+    if (!mindspore::distributed::Initialize()) {
+      MS_LOG(EXCEPTION) << "InitHccl failed.";
+    }
     InitPipeline();
     return;
   }
 #endif
   mindspore::python_adapter::set_python_env_flag(true);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (ms_context->backend_policy() == "ms" && device_name == kAscendDevice) {
     if (!mindspore::distributed::Initialize()) {
