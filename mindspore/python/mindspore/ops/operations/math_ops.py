@@ -5939,7 +5939,7 @@ class Angle(Primitive):
         TypeError: If the dtype of input is not one of: complex64, complex128.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
