@@ -113,7 +113,8 @@ std::mutex GraphExecutorPy::instance_lock_;
 
 std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBasePtrListHasher,
                    abstract::AbstractBasePtrListEqual>
-  g_args_cache;
+  kArgsCache;
+std::unordered_map<PyObject *, abstract::AbstractBasePtrList> kCellArgsMap;
 
 namespace {
 #ifdef ENABLE_DUMP_IR
@@ -305,7 +306,8 @@ void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
   }
 }
 
-py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool enable_tuple_broaden) {
+py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py::tuple &args,
+                                                 bool enable_tuple_broaden) {
   MS_LOG(DEBUG) << "GenerateArgumentsKey args size: " << args.size()
                 << ", enable_tuple_broaden: " << enable_tuple_broaden;
 
@@ -326,16 +328,30 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
   }
 
   // If cache matched no need CheckArgsValid
-  auto iter = g_args_cache.find(args_abs);
-  if (iter != g_args_cache.end()) {
+  auto iter = kArgsCache.find(args_abs);
+  if (iter != kArgsCache.end()) {
     return py::int_(iter->second);
   }
 
   static uint64_t key_counter = 0;
-  g_args_cache[args_abs] = key_counter;
+  kArgsCache[args_abs] = key_counter;
+  kCellArgsMap[obj.ptr()] = args_abs;
   MS_LOG(INFO) << "Generate a new compile key for new args, key: " << key_counter;
   return py::int_(key_counter++);
 }
+
+void ClearArgCache(const py::object &obj) {
+  if (py::isinstance<py::none>(obj)) {
+    return;
+  }
+  auto iter = kCellArgsMap.find(obj.ptr());
+  if (iter != kCellArgsMap.end()) {
+    (void)kArgsCache.erase(iter->second);
+    (void)kCellArgsMap.erase(iter);
+  }
+}
+
+void GraphExecutorPy::ClearCurConvertInput() { cur_convert_input_.clear(); }
 
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs) {
   MS_LOG(DEBUG) << "Verify args size:" << inputs.size();
@@ -433,12 +449,7 @@ compile::VmEvalFuncPtr GraphExecutorPy::GetVmEvalFunc(const std::string &phase) 
   return nullptr;
 }
 
-bool GraphExecutorPy::HasCompiled(const std::string &phase) const {
-  if (info_.count(phase) == 0) {
-    return false;
-  }
-  return true;
-}
+bool GraphExecutorPy::HasCompiled(const std::string &phase) const { return info_.count(phase) != 0; }
 
 py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std::string &ir_type) {
   FuncGraphPtr fg_ptr = GetFuncGraph(phase);
@@ -573,7 +584,7 @@ py::dict GraphExecutorPy::GetAllreduceFusion(const std::string &phase) {
 
 // Not support multi thread, not support nested call too.
 // Here using nested_called flg to avoid nested call.
-void GraphExecutorPy::DelNetRes(const py::set &id) {
+void GraphExecutorPy::DelNetRes(const py::object &source_obj, const py::set &id) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -581,6 +592,8 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
   if (device_target == kAscendDevice && backend == "ge") {
     FinalizeBackend();
   }
+  ClearArgCache(source_obj);
+  // Del all graphs by different phase
   for (auto item : id) {
     DelOneNetRes(item);
   }
@@ -867,9 +880,10 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
 }
 
 // Clean all resource not used in the future and cache generated during compiling.
-void CleanCompileRes(const ResourcePtr &resource) {
+void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource start";
   abstract::AnalysisContext::ClearContext();
+  ClearCurConvertInput();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
   ad::g_k_prims.clear();
   ad::DFunctor::Clear();
@@ -1823,7 +1837,8 @@ void MemoryRecycle() {
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
   abstract::AnalysisContext::ClearContext();
-  g_args_cache.clear();
+  kArgsCache.clear();
+  kCellArgsMap.clear();
   // clean static variable to prevent from crash. As static variable is released after
   // Python threads is released.
   parse::data_converter::ClearObjectCache();
@@ -1918,7 +1933,8 @@ void ClearResPart2() {
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif
-  g_args_cache.clear();
+  kArgsCache.clear();
+  kCellArgsMap.clear();
 }
 
 void ClearResPart3() {

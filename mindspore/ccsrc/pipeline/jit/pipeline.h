@@ -31,6 +31,7 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "pipeline/jit/action.h"
+#include "abstract/abstract_value.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/graph_compiler/transform.h"
 #include "pipeline/jit/base.h"
@@ -115,8 +116,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   size_t GetNumOpsInfo(const std::string &phase);
   void SetNumOpsInfo(size_t num_ops);
   py::dict GetAllreduceFusion(const std::string &phase);
-  void DelNetRes(const py::set &id);
+  void DelNetRes(const py::object &source_obj, const py::set &id);
   void ReleaseResource(const py::object &phase);
+  void CleanCompileRes(const ResourcePtr &resource);
   static void ClearRes();
   void set_queue_name(const std::string &queue_name) { queue_name_ = queue_name; }
   void set_enable_tuple_broaden(bool enable_tuple_broaden) { enable_tuple_broaden_ = enable_tuple_broaden; }
@@ -132,13 +134,14 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
     const std::string &phase);
 
   // Generate a key for mapping function graph
-  py::object GenerateArgumentsKey(const py::tuple &args, bool enable_tuple_broaden = false);
+  py::object GenerateArgumentsKey(const py::object &obj, const py::tuple &args, bool enable_tuple_broaden = false);
+
+  void ClearCurConvertInput();
 
  private:
   GraphExecutorPy() = default;
   void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
                      std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) const;
-  //
   void ParallelPostProcess(const string &phase);
   void GetGeBackendPolicy() const;
   // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after

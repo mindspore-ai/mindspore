@@ -346,7 +346,7 @@ class _MindsporeFunctionExecutor:
             self.enable_tuple_broaden = self.obj.enable_tuple_broaden
 
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        key = self._graph_executor.generate_arguments_key(compile_args, self.enable_tuple_broaden)
+        key = self._graph_executor.generate_arguments_key(self.fn, compile_args, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
         if phase in ms_compile_cache:
             return phase
@@ -1290,7 +1290,7 @@ class _CellGraphExecutor:
             self.enable_tuple_broaden = obj.enable_tuple_broaden
 
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        key = self._graph_executor.generate_arguments_key(args_list, self.enable_tuple_broaden)
+        key = self._graph_executor.generate_arguments_key(obj, args_list, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
 
@@ -1398,8 +1398,8 @@ class _CellGraphExecutor:
             return self._exec_pip(obj, *args, phase=phase_real)
         raise KeyError('{} graph is not exist.'.format(phase_real))
 
-    def del_net_res(self, net_id):
-        self._graph_executor.del_net_res(net_id)
+    def del_net_res(self, obj, net_id):
+        self._graph_executor.del_net_res(obj, net_id)
 
     def _get_func_graph_proto(self, obj, exec_id, ir_type="onnx_ir", use_prefix=False):
         """Get graph proto from pipeline."""
@@ -1460,11 +1460,11 @@ def ms_memory_recycle():
     To recycle these cached memory, users can call this function after training of one model.
     """
     if ms_compile_cache:
-        _cell_graph_executor.del_net_res(ms_compile_cache)
+        _cell_graph_executor.del_net_res(None, ms_compile_cache)
         ms_compile_cache.clear()
     for cell_cache in cells_compile_cache.values():
         if cell_cache:
-            _cell_graph_executor.del_net_res(cell_cache)
+            _cell_graph_executor.del_net_res(None, cell_cache)
             cell_cache.clear()
     _ms_memory_recycle()
 
