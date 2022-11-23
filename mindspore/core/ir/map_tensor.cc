@@ -142,13 +142,38 @@ MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &devic
   return {key_tensor(), value_tensor(), status_tensor()};
 }
 
-MapTensor::ExportData MapTensor::Export(bool full) {
-  MS_LOG(DEBUG) << (full ? "Full" : "Incremental") << " export MapTensor";
+// If the data on the host side is valid, the data on the host side will be exported.
+bool MapTensor::CheckData() {
+  // check key
+  if (key_tensor()->shape().size() != 1 || key_tensor()->shape()[0] < 1) {
+    MS_LOG(WARNING) << "Invalid key tensor shape: " << tensor::ShapeToString(key_tensor()->shape());
+    return false;
+  }
+  // check value
+  bool check_value =
+    std::any_of(value_shape().cbegin(), value_shape().cend(), [](const ShapeValueDType &shape) { return shape < 1; });
+  if (check_value) {
+    MS_LOG(WARNING) << "Invalid value tensor shape: " << tensor::ShapeToString(value_shape());
+    return false;
+  }
+  // check status
+  if (status_tensor()->shape().size() != 1 || status_tensor()->shape()[0] < 1) {
+    MS_LOG(WARNING) << "Invalid status tensor shape: " << tensor::ShapeToString(status_tensor()->shape());
+    return false;
+  }
+  return true;
+}
+
+MapTensor::ExportData MapTensor::Export(bool incremental) {
+  MS_LOG(DEBUG) << (incremental ? "Incremental" : "Full") << " export MapTensor";
 
   // Check device
   DeviceSyncPtr device_sync = device_address();
   if (device_sync != nullptr) {
     return ExportDataFromDevice(device_sync);
+  }
+  if (CheckData()) {
+    return {key_tensor(), value_tensor(), status_tensor()};
   }
   // Note: this is fake implementation.
   ShapeVector key_shape = {1};

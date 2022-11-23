@@ -68,9 +68,10 @@ void MapTensorPy::UpdateFromNumpy(const MapTensorPtr &map_tensor,
   map_tensor->Update(data);
 }
 
-std::tuple<py::array, py::array, py::array> MapTensorPy::ExportAsNumpy(const MapTensorPtr &map_tensor, bool full) {
+std::tuple<py::array, py::array, py::array> MapTensorPy::ExportAsNumpy(const MapTensorPtr &map_tensor,
+                                                                       bool incremental) {
   MS_EXCEPTION_IF_NULL(map_tensor);
-  auto data = map_tensor->Export(full);
+  auto data = map_tensor->Export(incremental);
   return std::make_tuple(TensorPy::AsNumpy(*data.key_tensor), TensorPy::AsNumpy(*data.value_tensor),
                          TensorPy::AsNumpy(*data.status_tensor));
 }
@@ -120,14 +121,12 @@ void RegMapTensor(py::module *m) {
                      const py::object &permit_filter_obj, const py::object &evict_filter_obj) {
            auto key_tensor_ptr = std::make_shared<tensor::Tensor>(key_tensor);
            auto value_tensor_ptr = std::make_shared<tensor::Tensor>(value_tensor);
-           auto key_dtype_id = key_tensor_ptr->Dtype()->type_id();
+           auto status_tensor_ptr = std::make_shared<Tensor>(kNumberTypeInt, key_tensor.shape());
            auto value_dtype = key_tensor_ptr->Dtype();
-           auto value_dtype_id = value_tensor_ptr->Dtype()->type_id();
-           auto value_shape = value_tensor_ptr->shape();
            ValuePtr default_value = ConvertMapTensorDefaultValue(default_value_obj, value_dtype);
            ValuePtr permit_filter_value = ConvertMapTensorFilterValue(permit_filter_obj);
            ValuePtr evict_filter_value = ConvertMapTensorFilterValue(evict_filter_obj);
-           return std::make_shared<MapTensor>(key_dtype_id, value_dtype_id, value_shape, default_value,
+           return std::make_shared<MapTensor>(key_tensor_ptr, value_tensor_ptr, status_tensor_ptr, default_value,
                                               permit_filter_value, evict_filter_value);
          }),
          py::arg("key_tensor"), py::arg("value_tensor"), py::arg("default_value"), py::arg("permit_filter_value"),

@@ -729,7 +729,7 @@ bool IrExportBuilder::ConvertMapParameterToMapTensorProto(const ParameterPtr &ma
     MS_LOG(ERROR) << "Export default value of MapTensor failed, default_value: " << default_value->ToString();
     return false;
   }
-  tensor::MapTensor::ExportData export_data = map_tensor->Export(!this->incremental_);
+  tensor::MapTensor::ExportData export_data = map_tensor->Export(this->incremental_);
   // key_tensor
   auto *key_tensor_proto = map_tensor_proto->mutable_key_tensor();
   MS_EXCEPTION_IF_NULL(key_tensor_proto);

@@ -1426,7 +1426,7 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         map_param_name = map_param_proto.name[map_param_proto.name.find(":") + 1:]
         if map_param_name in net_dict.keys():
             map_parameter = net_dict[map_param_name]
-            key_nparr, value_nparr, status_nparr = map_parameter.export_data(not incremental)
+            key_nparr, value_nparr, status_nparr = map_parameter.export_data(incremental)
             map_param_proto.key_tensor.raw_data = key_nparr.tobytes()
             map_param_proto.value_tensor.raw_data = value_nparr.tobytes()
             map_param_proto.status_tensor.raw_data = status_nparr.tobytes()

@@ -100,9 +100,19 @@ def test_export_update_api():
     Description: Test export update api for MapParameter.
     Expectation: Export update api works as expected.
     """
-    m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
-    data = m.export_data(full=True)
-    m.import_data(data)
+    m1 = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+    data1 = m1.export_data(incremental=False)
+    print("data1:", data1)
+    m1.import_data(data1)
+
+    keys = Tensor([1, 2], dtype=ms.int32)
+    values = Tensor([[1, 2], [1, 2]], dtype=ms.float32)
+    m2 = MapParameter(key_tensor=keys, value_tensor=values, default_value='zeros')
+    data2 = m2.export_data(incremental=False)
+    print("data2:", data2)
+    m1.import_data(data2)
+    new_data1 = m1.export_data(incremental=False)
+    print("new_data1:", new_data1)
 
 
 def test_map_parameter_clone():
