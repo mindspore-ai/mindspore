@@ -3700,6 +3700,42 @@ class _LogicBinaryOp(_BinaryOp):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, prim_name=self.name)
 
 
+class Quantile(Primitive):
+    r"""
+    Computes the q-th quantiles of all elements in the input tensor, doing a linear interpolation when the
+    q-th quantile lies between two data points.
+
+    Refer to :func:`mindspore.ops.quantile` and :func:`mindspore.ops.nanquantile` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> quantile = ops.Quantile()
+        >>> input = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
+        >>> q = Tensor(np.array([0, 0.5, 1]), mindspore.float32)
+        >>> output = quantile(input, q)
+        >>> print(output)
+        [-0.5446  0.07  0.9214]
+    """
+
+    @prim_attr_register
+    def __init__(self, dim=None, keep_dims=False, ignore_nan=False):
+        """Initialize Quantile"""
+        if dim is not None:
+            validator.check_value_type("dim", dim, [int], self.name)
+        else:
+            self.add_prim_attr("dim", 10000)
+        if keep_dims is not None:
+            validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
+        else:
+            self.add_prim_attr("keep_dims", False)
+        if ignore_nan is not None:
+            validator.check_value_type("ignore_nan", ignore_nan, [bool], self.name)
+        else:
+            self.add_prim_attr("ignore_nan", False)
+
+
 class Equal(Primitive):
     r"""
     Computes the equivalence between two tensors element-wise.
