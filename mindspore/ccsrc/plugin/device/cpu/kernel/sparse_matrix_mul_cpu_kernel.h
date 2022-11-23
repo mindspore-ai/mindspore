@@ -49,8 +49,8 @@ class SparseMatrixMulCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  const bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                          const std::vector<kernel::AddressPtr> &outputs);
 
   size_t row_ = 0;
   size_t col_ = 0;
