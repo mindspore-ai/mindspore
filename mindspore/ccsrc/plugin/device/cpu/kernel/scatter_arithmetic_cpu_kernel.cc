@@ -64,7 +64,7 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-template <typename T>
+template <typename T, typename S>
 bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
@@ -80,7 +80,7 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
   auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *indices = reinterpret_cast<int *>(inputs[1]->addr);
+  auto *indices = reinterpret_cast<S *>(inputs[1]->addr);
   auto *updates = reinterpret_cast<T *>(inputs[2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   auto func_iter = scatter_arithmetic_func_map.find(kernel_name_);
@@ -97,7 +97,7 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
                           << "), but got '" << indices[i] << "' in indices.";
       }
       for (size_t j = 0; j < inner_size_; j++) {
-        if (std::equal_to<T>()(updates[base_index_updates + j], 0)) {
+        if (std::equal_to<T>()(updates[base_index_updates + j], static_cast<T>(0))) {
           MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', updates must not contain 0";
         }
         input[base_index_input + j] = func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
@@ -131,17 +131,37 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   return true;
 }
 
-#define SCATTER_ARITHMETIC_CPU_REGISTER(IN_DT0, IN_DT1, IN_DT2, OUT_DT0, T)                                          \
+#define SCATTER_ARITHMETIC_CPU_REGISTER(IN_DT0, IN_DT1, IN_DT2, OUT_DT0, T, S)                                       \
   KernelAttr().AddInputAttr(IN_DT0).AddInputAttr(IN_DT1).AddInputAttr(IN_DT2).AddOutputAttr(OUT_DT0).AddOutInRef(0,  \
                                                                                                                  0), \
-    &ScatterArithmeticCpuKernelMod::LaunchKernel<T>
+    &ScatterArithmeticCpuKernelMod::LaunchKernel<T, S>
 
 const ScatterArithmeticCpuKernelMod::ScatterSupportListType &ScatterArithmeticCpuKernelMod::GetFuncList() const {
   static const ScatterArithmeticCpuKernelMod::ScatterSupportListType func_list = {
-    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                                     int)},
     {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32,
-                                     float)},
-    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+                                     float, int)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                                     int)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int8_t, int)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t,
+                                     int)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16,
+                                     float16, int)},
+
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16,
+                                     float16, int64_t)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                                     int64_t)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int8_t,
+                                     int64_t)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32,
+                                     float, int64_t)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t,
+                                     int64_t)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                                     int64_t)},
   };
   return func_list;
 }
