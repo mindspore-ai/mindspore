@@ -105,7 +105,7 @@ Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vec
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  for (auto f : dataset_files) {
+  for (const auto &f : dataset_files) {
     Path dataset_file(f);
     if (!dataset_file.Exists()) {
       std::string err_msg = dataset_name + ": " + file_name + ": [" + f + "] is invalid or does not exist.";

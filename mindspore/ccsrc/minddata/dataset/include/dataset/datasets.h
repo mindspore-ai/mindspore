@@ -5535,15 +5535,7 @@ TFRecord(const std::vector<std::string> &dataset_files, const T &schema = nullpt
                                            VectorStringToChar(columns_list), num_samples, shuffle, num_shards, shard_id,
                                            shard_equal_rows, cache, StringToChar(compression_type));
   } else {
-    std::string schema_path = schema;
-    if (!schema_path.empty()) {
-      struct stat sb {};
-      int rc = stat(schema_path.c_str(), &sb);
-      if (rc != 0) {
-        return nullptr;
-      }
-    }
-    ds = std::make_shared<TFRecordDataset>(VectorStringToChar(dataset_files), StringToChar(schema_path),
+    ds = std::make_shared<TFRecordDataset>(VectorStringToChar(dataset_files), StringToChar(schema),
                                            VectorStringToChar(columns_list), num_samples, shuffle, num_shards, shard_id,
                                            shard_equal_rows, cache, StringToChar(compression_type));
   }

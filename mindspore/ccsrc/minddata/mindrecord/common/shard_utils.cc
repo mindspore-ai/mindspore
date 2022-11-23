@@ -19,6 +19,10 @@
 #include "utils/ms_utils.h"
 #include "./securec.h"
 
+#ifdef _MSC_VER
+#define stat _stat64  //  for file size exceeds (1<<31)-1 bytes
+#endif
+
 namespace mindspore {
 namespace mindrecord {
 // split a string using a character
