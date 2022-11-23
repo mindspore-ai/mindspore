@@ -2693,7 +2693,7 @@ class Histogram(Primitive):
     Elements lower than min and higher than max are ignored.
 
     Args:
-        bins (int, optional) : Number of histogram bins, optional. Default 100. If specified, must be positive.
+        bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
         min (float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
         max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
 
@@ -5622,7 +5622,7 @@ class MatrixLogarithm(Primitive):
           Must be one of the following types:complex64, complex128. And shape must be 2D-7D.
 
     Outputs:
-        - **y** (Tensor), has the same shape and type as input.
+        - **y** (Tensor) - has the same shape and type as input.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -5803,8 +5803,8 @@ class ComplexAbs(Primitive):
         - **x** (Tensor) - A Tensor, types: complex64, complex128.
 
     Outputs:
-        - **y** (Tensor) - Tensor, has the same shape as x. If the type of x is complex64, the type of y is float32.
-          If the type of x is complex128, the type of y is float64.
+        Tensor, has the same shape as x. If the type of x is complex64, the type of output is float32.
+          If the type of x is complex128, the type of output is float64.
 
     Raises:
        TypeError: If the input is not a Tensor.
@@ -6593,17 +6593,17 @@ class RaggedRange(Primitive):
     """
     Returns a `RaggedTensor` containing the specified sequences of numbers.
 
-      Args:
+    Args:
         Tsplits (mindspore.dtype): An mindspore.dtype from: mindspore.int32, mindspore.int64.
 
-      Inputs:
+    Inputs:
         - **starts** (Tensor) - The starts of each range, whose type is int32, int64, float32 or float64,
           and shape is 0D or 1D.
         - **limits** (Tensor) - The limits of each range, whose type and shape should be same as input `starts`.
         - **deltas** (Tensor) - The deltas of each range, whose type and shape should be same as input `starts`,
           and each element in the tensor should not be equal to 0.
 
-      Outputs:
+    Outputs:
         - **rt_nested_splits** (Tensor) - The nested splits of the return `RaggedTensor`,
           and type of the tensor is `Tsplits`,
           shape of the tensor is equal to shape of input `starts` plus 1.
@@ -7547,7 +7547,7 @@ class Eig(Primitive):
     Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).
 
     Args:
-        compute_v (bool): If `True`, compute both eigenvalues and eigenvectors;
+        compute_v (bool, optional): If `True`, compute both eigenvalues and eigenvectors;
             If `False`, just eigenvalues will be computed. Default: False.
     Inputs:
         - **x** (Tensor) - Square matrices of shape :math:`(*, N, N)`,

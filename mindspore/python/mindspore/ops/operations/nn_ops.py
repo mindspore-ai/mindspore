@@ -8270,7 +8270,7 @@ class Dilation2D(Primitive):
                                       each sampling location. Its value must be greater or equal to 1 and bounded by
                                       the height and width of the input `x`.
 
-        pad_mode (str): Specifies padding mode. The optional values are
+        pad_mode (str, optional): Specifies padding mode. The optional values are
             "same", "valid". Default: "same". Both upper and lower case are supported.
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -8278,7 +8278,7 @@ class Dilation2D(Primitive):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
               without padding. Extra pixels will be discarded.
-        data_format (str): The value for data format, only 'NCHW' is supported at present. Default: "NCHW".
+        data_format (str, optional): The value for data format, only 'NCHW' is supported at present. Default: "NCHW".
 
     Inputs:
         - **x** (Tensor) - Input data. A four dimension tensor with float16 or float32 data type. The shape must be
@@ -9146,13 +9146,12 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
           Supported shape :math:`(N, C, 3)`
 
     Outputs:
-        Outputs:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3DWithFixedKsize.
-        Has the same data type with `x`.
-        Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
+          Has the same data type with `x`.
+          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
 
         - **argmax** (Tensor) - A tensor, the indices along with the outputs.
-        Has the same shape as the `y` and int32 or int64 data type.
+          Has the same shape as the `y` and int32 or int64 data type.
 
     Raises:
         TypeError: If `input_x` is not a 4D or 5D tensor.
@@ -9567,15 +9566,19 @@ class DeformableOffsets(Primitive):
 
 class GridSampler2D(Primitive):
     """
-    This operation samples 2d input_x by using interpolation based on flow field grid, which is usually gennerated by
+    This operation samples 2d input_x by using interpolation based on flow field grid,
+    which is usually gennerated by
     affine_grid.
 
     Args:
-        interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
+        interpolation_mode (str, optional): An optional string specifying the interpolation method.
+            The optional values are
             "bilinear" or "nearest". Default: "bilinear".
-        padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
+        padding_mode (str, optional): An optional string specifying the pad method.
+            The optional values are "zeros", "border" or
             "reflection". Default: "zeros".
-        align_corners (bool): An optional bool. When set to True, the centers of the corner pixels of the input
+        align_corners (bool, optional): An optional bool. When set to True,
+            the centers of the corner pixels of the input
             and output tensors are aligned. When set to False, it is not aligned. Defaults to False.
 
     Inputs:

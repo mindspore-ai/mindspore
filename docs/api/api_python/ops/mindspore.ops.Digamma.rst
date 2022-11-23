@@ -11,12 +11,12 @@
     .. warning::
         此算子为实验性算子，将来可能面临更改或删除。
 
-    输入:
+    输入：
         - **x** (Tensor) - 输入Tensor。数据类型为 `float16` 、 `float32` 或者 `float64` 。
 
-    输出:
+    输出：
         Tensor, 和输入 `x` 具有相同的数据类型。
 
-    异常:
+    异常：
         - **TypeError** - 如果输入 `x` 不是Tensor。
         - **TypeError** - 输入输入 `x` 的数据类型不是 `float16` 、 `float32` 或者 `float64` 。

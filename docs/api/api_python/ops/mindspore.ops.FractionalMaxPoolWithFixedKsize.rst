@@ -12,10 +12,10 @@ mindspore.ops.FractionalMaxPoolWithFixedKsize
     详细内容请参考论文 `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_ 。
 
     参数：
-        - **ksize** (Union[float, tuple]) - 用于取最大值的内核窗口的大小。目标 ksize 为 `H x W` 。ksize 可以是元组，也可以是 `K x K` 的单个K。
+        - **ksize** (Union[int, tuple[int]]) - 用于取最大值的内核窗口的大小。目标 ksize 为 `H x W` 。ksize 可以是元组，也可以是 `K x K` 的单个K。
           指明了输入Tensor的窗口大小 `(H, W)` 。
 
-        - **output_shape** (Union[int, tuple]) - 目标输出shape为 `H x W` ，输出shape可以是一个元组，或者 `H x H` 的单个H。
+        - **output_shape** (Union[int, tuple[int]]) - 目标输出shape为 `H x W` ，输出shape可以是一个元组，或者 `H x H` 的单个H。
           指明了输出tensor的大小 `(H, W)` 。
 
         - **data_format** (str，可选) - 可选的数据格式值，当前支持 `NCHW` ，默认为 `NCHW` 。

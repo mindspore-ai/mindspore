@@ -1077,10 +1077,11 @@ class CombinedNonMaxSuppression(Primitive):
     Greedily selects a subset of bounding boxes in descending order of score.
 
     Args:
-        clip_boxes (bool): If true, assume the box coordinates are between [0, 1] and clip the output boxes
+        clip_boxes (bool, optional): If true, assume the box coordinates are between [0, 1] and clip the output boxes
             if they fall beyond [0, 1]. If false, do not do clipping and output the box coordinates as it is.
             Defaults to true.
-        pad_per_class (bool): If false, the output nmsed boxes, scores and classes are padded/clipped to max_total_size.
+        pad_per_class (bool, optional): If false, the output nmsed boxes,
+            scores and classes are padded/clipped to max_total_size.
             If true, the output nmsed boxes, scores and classes are padded to be of length
             max_size_per_class * num_classes, unless it exceeds max_total_size in which case it is clipped to
             max_total_size. Defaults to false.
