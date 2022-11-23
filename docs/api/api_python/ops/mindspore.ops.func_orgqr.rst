@@ -1,5 +1,6 @@
 mindspore.ops.orgqr
 ====================
+
 .. py:function:: mindspore.ops.orgqr(x, tau)
 
     计算 `Householder <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_ 矩阵乘积的前 :math:`N` 列。
