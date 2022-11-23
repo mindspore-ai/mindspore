@@ -46,7 +46,8 @@ bool AscendCommunicationGroup::Finalize() {
   if (!initialized_) {
     return false;
   }
-  CHECK_RET(HcclCommDestroy(comm_), static_cast<int32_t>(HCCL_SUCCESS), "Failed to destroy HCCL communicator.");
+  RETURN_IF_FALSE_WITH_LOG(HcclCommDestroy(comm_) == static_cast<int32_t>(HCCL_SUCCESS),
+                           "Failed to destroy HCCL communicator.");
   initialized_ = false;
   comm_ = nullptr;
   return true;
