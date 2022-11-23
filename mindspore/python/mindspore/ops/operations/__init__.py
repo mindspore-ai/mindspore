@@ -85,7 +85,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        FFTWithSize, Heaviside, Histogram, Hypot, Lcm, LuUnpack, MatrixExp,
                        MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT,
                        NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
-                       CumulativeLogsumexp, Gcd, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta)
+                       CumulativeLogsumexp, Gcd, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta,
+                       Roll)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -112,7 +113,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      GridSampler3D, MaxPool3DWithArgmax, MaxUnpool2D, NuclearNorm, NthElement, MultilabelMarginLoss,
                      PSROIPooling, Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
-                     GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D)
+                     GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D, PadV3)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load, StopGradient,
                         CheckValid, Partial, Depend, identity, Push, Pull, PyFunc, _DynamicLossScale,
@@ -640,6 +641,8 @@ __all__ = [
     "UniqueConsecutive",
     "UnravelIndex",
     "Zeta",
+    "PadV3",
+    "Roll",
 ]
 
 __custom__ = [

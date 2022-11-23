@@ -28,7 +28,7 @@ from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive, Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
-from mindspore.ops.operations._inner_ops import Roll
+from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.composite.array_ops import repeat_interleave
 from mindspore.ops.composite.math_ops import mm
 
