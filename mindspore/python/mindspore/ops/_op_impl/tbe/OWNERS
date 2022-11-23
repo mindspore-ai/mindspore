@@ -1,0 +1,8 @@
+approvers:
+- jjfeing
+- laiyongqiang
+- yuchaojie
+- guoqi1024
+
+options:
+    no_parent_owners: true
