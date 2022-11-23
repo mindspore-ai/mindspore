@@ -158,11 +158,11 @@ bool ScatterNdArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
         size_t index_idx = batch_idx * slice_size_;
         for (size_t i = 0; i < slice_size_; i++) {
           auto index = indices[index_idx + i];
-          out_idx += batch_strides_[i] * LongToSize(index) * inner_size_;
           if (index < 0 || index >= static_cast<S>(input_shape_[i])) {
             invalid_index_pos = SizeToLong(index_idx);
             break;
           }
+          out_idx += batch_strides_[i] * LongToSize(index) * inner_size_;
         }
         if (invalid_index_pos != -1) {
           break;
