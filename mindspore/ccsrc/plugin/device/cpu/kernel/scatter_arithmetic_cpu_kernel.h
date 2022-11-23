@@ -49,7 +49,7 @@ class ScatterArithmeticCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  template <typename T>
+  template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
