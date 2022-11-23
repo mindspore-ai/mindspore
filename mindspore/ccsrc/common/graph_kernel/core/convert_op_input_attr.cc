@@ -17,6 +17,7 @@
 #include "mindspore/ccsrc/common/graph_kernel/core/graph_kernel_callback.h"
 
 #include "mindspore/core/ops/core_ops.h"
+#include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
@@ -45,8 +46,22 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_names = primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
-    MS_LOG(INFO) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
-    return false;
+    if (op_idx_info_.find(primitive->name()) == op_idx_info_.end()) {
+      MS_LOG(INFO) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
+      return false;
+    }
+    const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+    auto const iter = op_primc_fns.find(primitive->name());
+    if (iter == op_primc_fns.end()) {
+      MS_LOG(INFO) << "Can't find " << primitive->name() << " op's primitive in primitiveC!";
+      return false;
+    }
+    auto prim = iter->second();
+    if (prim != nullptr) {
+      input_names = prim->GetAttr(kAttrInputNames);
+      (void)primitive->AddAttr(kAttrInputNames, prim->GetAttr(kAttrInputNames));
+      (void)primitive->AddAttr(kAttrOutputNames, prim->GetAttr(kAttrOutputNames));
+    }
   }
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   auto inputs = cnode->inputs();
