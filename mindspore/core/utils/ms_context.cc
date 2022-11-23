@@ -40,6 +40,8 @@ std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior},
 std::atomic<bool> thread_1_must_end(false);
 
 MsContext::DeviceSeter MsContext::seter_ = nullptr;
+MsContext::LoadPluginError MsContext::load_plugin_error_ = nullptr;
+std::shared_ptr<MsContext> MsContext::inst_context_ = nullptr;
 
 MsContext::MsContext(const std::string &policy, const std::string &target) {
 #ifndef ENABLE_SECURITY
@@ -124,6 +126,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
+  static std::once_flag inst_context_init_flag_ = {};
   std::call_once(inst_context_init_flag_, [&]() {
     if (inst_context_ == nullptr) {
       MS_LOG(DEBUG) << "Create new mindspore context";

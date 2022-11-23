@@ -201,9 +201,8 @@ class MS_CORE_API MsContext {
 
  private:
   static DeviceSeter seter_;
-  inline static std::once_flag inst_context_init_flag_ = {};
-  inline static std::shared_ptr<MsContext> inst_context_ = nullptr;
-  inline static LoadPluginError load_plugin_error_ = nullptr;
+  static std::shared_ptr<MsContext> inst_context_;
+  static LoadPluginError load_plugin_error_;
 
   bool bool_params_[MsCtxParam::NUM_BOOL_PARAMS];
   int int_params_[MsCtxParam::NUM_INT_PARAMS];
