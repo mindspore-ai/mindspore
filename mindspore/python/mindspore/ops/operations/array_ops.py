@@ -1350,17 +1350,29 @@ class MatrixSetDiagV3(Primitive):
     Returns a batched matrix tensor with new batched diagonal values.
     Given x and diagonal, this operation returns a tensor with the same shape and values as x, except for the specified
     diagonals of the innermost matrices. These will be overwritten by the values in diagonal. Some diagonals are shorter
-    than max_diag_len and need to be padded.
-    The diagonal.shape[-2] must be equal to num_diags calculated by k[1] - k[0] + 1. The diagonal.shape[-1] must be
-    equal to the longest diagonal value max_diag_len calculated by min(x.shape[-2] + min(k[1], 0), x.shape[-1] +
-    min(-k[0], 0)). Let x have r + 1 dimensions [I, J, ..., L, M, N]. The diagonal tensor has rank r with shape [I, J,
-    ..., L, max_diag_len] when k is an integer or k[0] == k[1]. Otherwise, it has rank r + 1 with shape [I, J, ..., L,
-    num_diags, max_diag_len].
+    than `max_diag_len` and need to be padded, where `max_diag_len` is the longest diagonal value.
+    The diagonal.shape[-2] must be equal to num_diags calculated by :math:`k[1] - k[0] + 1` .
+    The diagonal.shape[-1] must be
+    equal to the longest diagonal value `max_diag_len` calculated
+    by :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
+    Let x have r + 1 dimensions [I, J, ..., L, M, N].
+    The diagonal tensor has rank r with shape :math:`[I, J, ..., L, max_diag_len]`
+    when k is an integer or :math:`k[0] == k[1]` . Otherwise, it has rank r + 1
+    with shape :math:`[I, J, ..., L, num_diags, max_diag_len]` .
 
     Args:
-        align (string): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT". Align
-            is a string specifying how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
-            aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
+        align (str, optional): An optional string from: "RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
+            Align is a string specifying how superdiagonals and subdiagonals should be aligned, respectively.
+            Default: "RIGHT_LEFT".
+
+            - "RIGHT_LEFT" aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left
+              (right-pads the row).
+            - "LEFT_RIGHT" aligns superdiagonals to the left (right-pads the row) and subdiagonals to the right
+              (left-pads the row).
+            - "LEFT_LEFT" aligns superdiagonals to the left (right-pads the row) and subdiagonals to the left
+              (right-pads the row).
+            - "RIGHT_RIGHT" aligns superdiagonals to the right (left-pads the row) and subdiagonals to the right
+              (left-pads the row).
 
     Inputs:
         - **x** (Tensor) - Rank r + 1, where r >= 1.
@@ -1368,14 +1380,14 @@ class MatrixSetDiagV3(Primitive):
           Otherwise, it has rank r + 1.
         - **k** (Tensor) - A Tensor of type int32. Diagonal offset(s). Positive value means superdiagonal, 0 refers to
           the main diagonal, and negative value means subdiagonals. k can be a single integer (for a single diagonal) or
-          a pair of integers specifying the low and high ends of a matrix band. k[0] must not be larger than k[1]. The
-          value of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]). Input k must be const
-          Tensor when taking Graph mode.
+          a pair of integers specifying the low and high ends of a matrix band. `k[0]` must not be larger than `k[1]` .
+          The value of `k` has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
+          Input k must be const Tensor when taking Graph mode.
 
     Outputs:
-        A Tensor. Has the same type as x.
-        Let x has r+1 dimensions [I, J, ..., L, M, N].
-        The output is a tensor of rank r+1 with dimensions [I, J, ..., L, M, N], the same as input x.
+        Tensor. The same type as x.
+        Let x has r+1 dimensions :math:`[I, J, ..., L, M, N]` .
+        The output is a tensor of rank r+1 with dimensions :math:`[I, J, ..., L, M, N]` , the same as input x.
 
     Raises:
         TypeError: If any input is not Tensor.
@@ -1385,13 +1397,13 @@ class MatrixSetDiagV3(Primitive):
         ValueError: If rank of `k` is not equal to 0 or 1.
         ValueError: If rank of `x` is not greater equal to 2.
         ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
+        ValueError: If `k[1]` is not greater equal to `k[0]` in case the size of `k` is 2.
         ValueError: If the `diagonal` rank size don't match with input `x` rank size.
         ValueError: If the `diagonal` shape value don't match with input `x` shape value.
-        ValueError: If the diagonal.shape[-2] is not equal to num_diags calculated by k[1] - k[0] + 1.
+        ValueError: If the diagonal.shape[-2] is not equal to num_diags calculated by :math:`k[1] - k[0] + 1` .
         ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
-        ValueError: If the diagonal.shape[-1] is not equal to the max_diag_len calculated by min(x.shape[-2] + min(k[1],
-            0), x.shape[-1] + min(-k[0], 0)).
+        ValueError: If the diagonal.shape[-1] is not equal to the max_diag_len calculated by
+            :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7231,24 +7243,6 @@ class IndexFill(Primitive):
     by selecting the indices in the order given in index.
 
     Refer to :func:`mindspore.ops.index_fill` for more details.
-
-    Inputs:
-        - **x** (Tensor) - Input tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **dim** (Union[int, Tensor]) - Dimension along which to fill the input tensor. Only supports
-          a 0-D tensor or an int number.
-        - **index** (Tensor) - Indices of the input tensor to fill in. Only supports a 0-D or 1-D tensor.
-        - **value** (Tensor) - Value to fill the returned tensor. Only supports a 0-D tensor or a scalar.
-
-    Outputs:
-        Tensor, has the same type and shape as input tensor.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `dim` is neither a int number nor a tensor.
-        TypeError: If `index` is not a Tensor.
-        TypeError: If `value` is not a Tensor/Scalar.
-        TypeError: If dtype of `index` is not int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

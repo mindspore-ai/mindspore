@@ -6175,24 +6175,6 @@ class MatrixExp(Primitive):
 
     Refer to :func:`mindspore.ops.matrix_exp` for more details.
 
-    .. math::
-
-        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.
-          Must be one of the following types: float64, float32, float16, complex64, complex128.
-
-    Outputs:
-        Tensor, has the same shape and dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If the dtype of `x` is not one of the following dtype:
-                   float16, float32, float64, complex64, complex128.
-        ValueError: If the rank of `x` is less than 2.
-        ValueError: If the last two dimensions of `x` are not equal.
-
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -7124,8 +7106,8 @@ class FFTWithSize(Primitive):
             - "ortho" has both direct and inverse transforms are scaled by 1/sqrt(n).
             - "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
 
-        onesided (bool): Controls whether the input is halved to avoid redundancy. Default: True.
-        signal_sizes (list): Size of the original signal (the signal before rfft, no batch dimension),
+        onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: True.
+        signal_sizes (list, optional): Size of the original signal (the signal before rfft, no batch dimension),
             only in irfft mode and set onesided=true requires the parameter. Default: [].
 
     Inputs:
