@@ -396,8 +396,10 @@ class DiGamma(Cell):
 eps_fp32 = Tensor(np.finfo(np.float32).eps, mstype.float32)
 
 
-def _while_helper_func(cond, body, vals):
-    while cond(vals).any():
+def _for_helper_func(cond, body, vals):
+    for _ in range(0, 0, 1):
+        if not cond(vals).any():
+            break
         vals = body(vals)
     return vals
 
@@ -444,7 +446,7 @@ def _igamma_series(ax, x, a, enabled):
     zeros = fill(dtype(a), shape(a), 0)
     vals = (enabled, a, ones, ones, x, zeros, zeros)
 
-    vals = _while_helper_func(cond, body, vals)
+    vals = _for_helper_func(cond, body, vals)
     ans = vals[3]
     return (ans * ax) / a
 
@@ -554,7 +556,7 @@ def _igammac_continued_fraction(ax, x, a, enabled):
     dqkm1_da = -x
     dans_da = (dpkm1_da - ans * dqkm1_da) / qkm1
     vals = (enabled, ans, t, y, z, c, pkm1, qkm1, pkm2, qkm2, dpkm2_da, dqkm2_da, dpkm1_da, dqkm1_da, dans_da)
-    vals = _while_helper_func(cond, body, vals)
+    vals = _for_helper_func(cond, body, vals)
     ans = vals[1]
     return ans * ax
 
