@@ -46,10 +46,13 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     auto x_shape_ptr = x_shape_BaseShapePtr->cast<abstract::ShapePtr>();
     auto y_shape_ptr = y_shape_BaseShapePtr->cast<abstract::ShapePtr>();
     auto weight_shape_ptr = weight_shape_BaseShapePtr->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(x_shape_ptr);
+    MS_EXCEPTION_IF_NULL(y_shape_ptr);
     if (!x_shape_ptr->IsDynamic() && !y_shape_ptr->IsDynamic()) {
       CheckAndConvertUtils::Check("logits shape", x_shape, kEqual, y_shape, prim_name, ValueError);
     }
     if (weight_shape.size() > 0) {
+      MS_EXCEPTION_IF_NULL(weight_shape_ptr);
       if (!y_shape_ptr->IsDynamic() && !weight_shape_ptr->IsDynamic()) {
         CheckAndConvertUtils::Check("labels shape", y_shape, kEqual, weight_shape, prim_name, ValueError);
       }
@@ -58,6 +61,7 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     auto out_shape = x_shape;
     bool reduction_is_none;
     auto reduction_ptr = primitive->GetAttr(kReduction);
+    MS_EXCEPTION_IF_NULL(reduction_ptr);
     if (reduction_ptr->isa<StringImm>()) {
       auto reduction = GetValue<std::string>(reduction_ptr);
       reduction_is_none = reduction == kNone;
