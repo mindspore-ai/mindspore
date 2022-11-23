@@ -82,8 +82,9 @@ Flags::Flags() {
           "Whether to do pre-inference after convert. "
           "true | false",
           "false");
-  AddFlag(&Flags::exportMindIR, "exportMindIR", "MINDIR | MINDIR_LITE", "MINDIR_LITE");
-  AddFlag(&Flags::noFusionStr, "NoFusion", "Avoid fusion optimization true|false", "false");
+  AddFlag(&Flags::exportMindIR, "exportMindIR", "MINDIR  | MINDIR_LITE", "MINDIR_LITE");
+  AddFlag(&Flags::noFusionStr, "NoFusion",
+          "Avoid fusion optimization true|false. NoFusion is true when exportMindIR is MINDIR.", "");
   AddFlag(&Flags::device, "device", "Set the target device, support Ascend310 or Ascend310P", "");
 }
 
@@ -234,7 +235,7 @@ int Flags::InitNoFusion() {
     this->disableFusion = true;
   } else if (this->noFusionStr == "false") {
     this->disableFusion = false;
-  } else {
+  } else if (!this->noFusionStr.empty()) {
     std::cerr << "INPUT ILLEGAL: NoFusion must be true|false " << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
