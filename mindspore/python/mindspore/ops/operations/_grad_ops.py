@@ -2129,6 +2129,7 @@ class SmoothL1LossGrad(Primitive):
 
     @prim_attr_register
     def __init__(self, beta=1.0, reduction='none'):
+        self.add_prim_attr('sigma', self.beta)
         self.reduction = validator.check_string(
             reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 

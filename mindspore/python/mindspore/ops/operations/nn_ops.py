@@ -2993,6 +2993,7 @@ class SmoothL1Loss(Primitive):
         validator.check('beta', beta, '', 0, Rel.GT, self.name)
         validator.check_string(
             reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.add_prim_attr('sigma', self.beta)
         self.init_prim_io_names(inputs=['prediction', 'target'], outputs=['output'])
 
 

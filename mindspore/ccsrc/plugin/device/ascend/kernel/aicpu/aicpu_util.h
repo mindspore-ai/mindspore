@@ -188,6 +188,8 @@ constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
 constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
 constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
+constexpr auto kSmoothL1Loss = "SmoothL1Loss";
+constexpr auto kSmoothL1LossGrad = "SmoothL1LossGrad";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -311,6 +313,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},
   {kSparseSoftmaxCrossEntropyWithLogitsV2, "SparseSoftmaxCrossEntropyWithLogits"},
   {kSparseToDenseV2, "SparseToDense"},
+  {kSmoothL1Loss, "SmoothL1LossV2"},
+  {kSmoothL1LossGrad, "SmoothL1LossGradV2"},
   {kAvgPoolV1, "AvgPool"},
   {kNonZero, "Where"},
   {kAvgPoolGradV1, "AvgPoolGrad"},
