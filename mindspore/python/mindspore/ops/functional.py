@@ -30,6 +30,7 @@ from mindspore.ops.operations.array_ops import UniqueConsecutive, Triu
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations._inner_ops import Roll
 from mindspore.ops.composite.array_ops import repeat_interleave
+from mindspore.ops.composite.math_ops import mm
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -296,6 +297,9 @@ tensor_operator_registry.register('dense_to_sparse_coo', dense_to_sparse_coo)
 tensor_operator_registry.register('csr_to_dense', csr_to_dense)
 tensor_operator_registry.register('narrow', narrow)
 tensor_operator_registry.register('sort', sort)
+tensor_operator_registry.register('msort', msort)
+tensor_operator_registry.register('mm', mm)
+tensor_operator_registry.register('nan_to_num', nan_to_num)
 tensor_operator_registry.register('csr_to_coo', csr_to_coo)
 tensor_operator_registry.register('zeros', zeros)
 tensor_operator_registry.register('unsorted_segment_min', unsorted_segment_min)

@@ -199,6 +199,7 @@ from .math_func import (
     matrix_solve,
     maximum,
     median,
+    nan_to_num,
     logaddexp,
     logaddexp2,
     logit,
@@ -390,6 +391,7 @@ from .nn_func import (
     lp_pool1d,
     lp_pool2d,
     mse_loss,
+    msort
 )
 from .linalg_func import (
     svd,
