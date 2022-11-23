@@ -513,6 +513,7 @@ Array操作
     mindspore.ops.Lcm
     mindspore.ops.LeftShift
     mindspore.ops.ListDiff
+    mindspore.ops.Lgamma
     mindspore.ops.LogMatrixDeterminant
     mindspore.ops.LogSpace
     mindspore.ops.LowerBound

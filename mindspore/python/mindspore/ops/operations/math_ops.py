@@ -6409,16 +6409,13 @@ class LuUnpack(Primitive):
 
 class Lgamma(Primitive):
     r"""
-    Computes the natural logarithm of the absolute value of the gamma function on `input`.
+    Computes the natural logarithm of the gamma function on input `x`.
 
     .. math::
-    \text{out}_{i} = \ln \Gamma(|\text{input}_{i}|)
-
-    Args:
-        input (Tensor): the tensor to compute the lgamma function.
+        \text{out}_{i} = \ln \Gamma(\text{input}_{i})
 
     Inputs:
-        - **x** (Tensor) - The input tensor, types: float16, float32, float64.
+        - **x** (Tensor) - The input tensor. The dtype can be float16, float32 or float64.
 
     Outputs:
         Tensor, has the same dtype as `x`.
