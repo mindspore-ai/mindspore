@@ -98,6 +98,7 @@
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
+#include "tools/optimizer/fusion/expanddims_reshape_fusion.h"
 #ifndef ENABLE_CLOUD_FUSION_INFERENCE
 #include "tools/converter/adapter/acl/acl_pass.h"
 #endif
@@ -311,7 +312,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::TensorDotFusion>(),
                                     std::make_shared<opt::MatMulActivationFusion>(param),
                                     std::make_shared<opt::MulActivationFusion>(),
-                                    std::make_shared<opt::AddActivationFusion>()};
+                                    std::make_shared<opt::AddActivationFusion>(),
+                                    std::make_shared<opt::ExpandDimsReshapeFusion>()};
 #ifdef ENABLE_CLOUD_FUSION_INFERENCE
   fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
 #endif
