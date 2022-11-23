@@ -52,8 +52,9 @@ def normal(shape, mean, stddev, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor, ops
         >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> shape = (3, 1, 2)
         >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
         >>> stddev = Tensor(1.0, mindspore.float32)
@@ -227,8 +228,9 @@ def gamma(shape, alpha, beta, seed=None):
         ``Ascend``
 
     Examples:
-        >>> from mindspore import Tensor, ops
         >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: alpha_shape is (2, 2)
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
@@ -362,8 +364,9 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         ``GPU``
 
     Examples:
-        >>> from mindspore import Tensor, ops
         >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> # case 1: The output is random, and the length of the output is the same as num_sample.
         >>> x = Tensor([0, 9, 4, 0], mindspore.float32)
         >>> output = ops.multinomial(x, 2)

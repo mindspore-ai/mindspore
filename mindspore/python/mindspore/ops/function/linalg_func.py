@@ -116,7 +116,6 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
         >>> x = Tensor([[2., 1.], [1., 2.]], mindspore.float32)
         >>> output = ops.pinv(x)
         >>> print(output)

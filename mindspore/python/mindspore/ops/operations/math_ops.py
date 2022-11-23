@@ -1375,7 +1375,8 @@ class Cdist(Primitive):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
         >>> input_y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
         >>> op = ops.Cdist(p=2.0)
@@ -1407,9 +1408,8 @@ class LpNorm(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import LpNorm
         >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-        >>> op = LpNorm(axis=[0, 1], p=2, keep_dims=False)
+        >>> op = ops.LpNorm(axis=[0, 1], p=2, keep_dims=False)
         >>> output = op(input_x)
         >>> print(output)
         [ 9.165152 10.954452]
@@ -1636,7 +1636,7 @@ class Betainc(Primitive):
         >>> a = Tensor(np.array([1, 1, 1]), mindspore.float32)
         >>> b = Tensor(np.array([1, 1, 1]), mindspore.float32)
         >>> x = Tensor(np.array([1, 1,1 ]), mindspore.float32)
-        >>> betainc = P.Betainc()
+        >>> betainc = ops.Betainc()
         >>> print(betainc(a, b, x))
         [1. 1. 1.]
     """
@@ -3170,10 +3170,9 @@ class DivNoNan(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import DivNoNan
         >>> x1 = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
         >>> x2 = Tensor(np.array([0., 0., 0., 2.0, 3.0]), mindspore.float32)
-        >>> div_no_nan = DivNoNan()
+        >>> div_no_nan = ops.DivNoNan()
         >>> output = div_no_nan(x1, x2)
         >>> print(output)
         [0.  0.  0.  2.5 2. ]
@@ -4007,10 +4006,9 @@ class Lerp(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import Lerp
         >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
         >>> end = Tensor(np.array([10., 10., 10., 10.]), mindspore.float32)
-        >>> lerp = Lerp()
+        >>> lerp = ops.Lerp()
         >>> output = lerp(start, end, 0.5)
         >>> print(output)
         [5.5 6. 6.5 7. ]
@@ -5354,8 +5352,7 @@ class Inv(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import Inv
-        >>> inv = Inv()
+        >>> inv = ops.Inv()
         >>> x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
         >>> output = inv(x)
         >>> print(output)
@@ -5377,8 +5374,7 @@ class Invert(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import Invert
-        >>> invert = Invert()
+        >>> invert = ops.Invert()
         >>> x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
         >>> output = invert(x)
         >>> print(output)
@@ -5571,9 +5567,8 @@ class MatrixDeterminant(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import MatrixDeterminant
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-        >>> op = MatrixDeterminant()
+        >>> op = ops.MatrixDeterminant()
         >>> output = op(input_x)
         >>> print(output)
         [-16.5 21. ]
@@ -5596,9 +5591,8 @@ class LogMatrixDeterminant(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import LogMatrixDeterminant
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-        >>> op = LogMatrixDeterminant()
+        >>> op = ops.LogMatrixDeterminant()
         >>> sign, output = op(input_x)
         >>> print(sign)
         [-1.   1.]
@@ -5635,7 +5629,7 @@ class MatrixLogarithm(Primitive):
 
     Examples:
         >>> x = Tensor([[1 + 2j, 2 + 1j], [4 + 1j, 5 + 2j]])
-        >>> matrix_logarithm = MatrixLogarithm()
+        >>> matrix_logarithm = ops.MatrixLogarithm()
         >>> y = matrix_logarithm(x)
         >>> print(y)
         [[0.69155775+1.71618359j 0.64665196-0.34928196j]
@@ -6146,9 +6140,10 @@ class IsClose(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.math_ops import IsClose
+        >>> from mindspore.ops import IsClose
         >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
         >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
         >>> isclose = IsClose()
@@ -6486,7 +6481,7 @@ class Digamma(Primitive):
 
     Examples:
         >>> x = Tensor(np.array([1.5, 0.5, 9]).astype(np.float16))
-        >>> digamma = P.Digamma()
+        >>> digamma = ops.Digamma()
         >>> output = digamma(x)
         >>> print(output)
         [ 0.0365 -1.964   2.14  ]
@@ -6634,6 +6629,7 @@ class RaggedRange(Primitive):
           - if type of the input `starts`, input `limits` and input `deltas`
             are float32 or float64, shape of the output `rt_dense_values` is equal to
             sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
+
     Raises:
         TypeError: If any input is not Tensor.
         TypeError: If the type of `starts` is not one of the following dtype: int32, int64, float32, float64.
@@ -6824,7 +6820,7 @@ class Zeta(Primitive):
     Examples:
         >>> x = Tensor(np.array([10.]), mindspore.float32)
         >>> q = Tensor(np.array([1.]), mindspore.float32)
-        >>> zeta = P.Zeta()
+        >>> zeta = ops.Zeta()
         >>> z = zeta(x, q)
         >>> print(z)
         [1.0009946]
@@ -6930,7 +6926,7 @@ class Renorm(Primitive):
 
     Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
-        >>> y = Renorm(p=1, dim=0, maxnorm=5.)(x)
+        >>> y = ops.Renorm(p=1, dim=0, maxnorm=5.)(x)
         >>> print(y)
         [[1.       1.        1.        ]
         [1.6666666 1.6666666 1.6666666 ]
@@ -6999,7 +6995,7 @@ class STFT(Primitive):
 
     Examples:
         >>> import mindspore as ms
-        >>> from mindspore.ops.operations.math_ops import STFT
+        >>> from mindspore.ops import STFT
         >>> import numpy as np
         >>> x = ms.Tensor(np.random.rand(2,7192), ms.float32)
         >>> window = ms.Tensor(np.random.rand(64), ms.float32)

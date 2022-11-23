@@ -205,7 +205,7 @@ class Expand(Primitive):
     Examples:
         >>> x = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
         >>> shape = Tensor(np.array([3,4]), mindspore.int32)
-        >>> expand = Expand()
+        >>> expand = ops.Expand()
         >>> y = expand(x, shape)
         >>> print(y)
         [[1. 1. 1. 1.]
@@ -478,7 +478,7 @@ class Im2Col(Primitive):
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
-        >>> im2col = P.Im2Col(ksizes=3, strides=1, dilations=1)
+        >>> im2col = ops.Im2Col(ksizes=3, strides=1, dilations=1)
         >>> y = im2col(x)
         >>> print(y.shape)
         (4, 36, 30, 30)
@@ -591,12 +591,11 @@ class Col2Im(Primitive):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.ops.operations.array_ops import Col2Im
         >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
         >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
-        >>> col2im = Col2Im(kernel_size=[2, 2], dilation=[2, 2], padding=[2, 2], stride=[2, 2])
+        >>> col2im = ops.Col2Im(kernel_size=[2, 2], dilation=[2, 2], padding=[2, 2], stride=[2, 2])
         >>> y = col2im(x, output_size)
         >>> print(y.shape)
         (16, 16, 8, 8)
@@ -861,10 +860,9 @@ class ConjugateTranspose(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import ConjugateTranspose
         >>> x = Tensor(np.array([[1 + 1j,2 + 2j], [3 + 3j, 4 + 4j]]), mindspore.complex64)
         >>> perm = (1, 0)
-        >>> conjugate_transpose = ConjugateTranspose()
+        >>> conjugate_transpose = ops.ConjugateTranspose()
         >>> output = conjugate_transpose(x, perm)
         >>> print(output)
             [[1.-1.j 3.-3.j]
@@ -951,7 +949,7 @@ class UniqueConsecutive(Primitive):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.ops.operations.array_ops import UniqueConsecutive
+        >>> from mindspore.ops import UniqueConsecutive
         >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1, 1, 2]), mstype.int32)
         >>> unique_consecutive = UniqueConsecutive(True, True, None)
         >>> output, idx, counts = unique_consecutive(x)
@@ -1109,10 +1107,9 @@ class Padding(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import Padding
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
-        >>> output = Padding(pad_dim_size)(x)
+        >>> output = ops.Padding(pad_dim_size)(x)
         >>> print(output)
         [[ 8.  0.  0.  0.]
          [10.  0.  0.  0.]]
@@ -1285,7 +1282,6 @@ class MatrixDiagV3(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import MatrixDiagV3
         >>> x = Tensor(np.array([[8, 9, 0],
         ...                      [1, 2, 3],
         ...                      [0, 4, 5]]), mindspore.float32)
@@ -1293,7 +1289,7 @@ class MatrixDiagV3(Primitive):
         >>> num_rows = Tensor(np.array(3), mindspore.int32)
         >>> num_cols = Tensor(np.array(3), mindspore.int32)
         >>> padding_value = Tensor(np.array(11), mindspore.float32)
-        >>> matrix_diag_v3 = MatrixDiagV3(align='LEFT_RIGHT')
+        >>> matrix_diag_v3 = ops.MatrixDiagV3(align='LEFT_RIGHT')
         >>> output = matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
         >>> print(output)
         [[ 1.  8. 11.]
@@ -1326,7 +1322,7 @@ class MatrixDiagPartV3(Primitive):
         ...                      [9, 8, 7, 6]]), mindspore.float32)
         >>> k =Tensor(np.array([1, 3]), mindspore.int32)
         >>> padding_value = Tensor(np.array(9), mindspore.float32)
-        >>> matrix_diag_part_v3 = ops.operations.array_ops.MatrixDiagPartV3(align='RIGHT_LEFT')
+        >>> matrix_diag_part_v3 = ops.MatrixDiagPartV3(align='RIGHT_LEFT')
         >>> output = matrix_diag_part_v3(x, k, padding_value)
         >>> print(output)
         [[9. 9. 4.]
@@ -1434,8 +1430,7 @@ class MatrixBandPart(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import MatrixBandPart
-        >>> matrix_band_part = MatrixBandPart()
+        >>> matrix_band_part = ops.MatrixBandPart()
         >>> x = np.ones([2, 4, 4]).astype(np.float32)
         >>> output = matrix_band_part(Tensor(x), 2, 1)
         >>> print(output)
@@ -3552,13 +3547,12 @@ class DiagPart(PrimitiveWithCheck):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Examples
+    Examples:
         >>> input_x = Tensor([[1, 0, 0, 0],
         ...                   [0, 2, 0, 0],
         ...                   [0, 0, 3, 0],
         ...                   [0, 0, 0, 4]])
-        >>> import mindspore.ops as P
-        >>> diag_part = P.DiagPart()
+        >>> diag_part = ops.DiagPart()
         >>> output = diag_part(input_x)
         >>> print(output)
         [1 2 3 4]
@@ -4368,7 +4362,7 @@ class Triu(Primitive):
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
         ...                      [14, 15, 16, 17]]))
-        >>> triu = P.Triu()
+        >>> triu = ops.Triu()
         >>> result = triu(x)
         >>> print(result)
         [[ 1  2  3  4]
@@ -4379,7 +4373,7 @@ class Triu(Primitive):
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
         ...                      [14, 15, 16, 17]]))
-        >>> triu = P.Triu(diagonal=1)
+        >>> triu = ops.Triu(diagonal=1)
         >>> result = triu(x)
         >>> print(result)
         [[ 0  2  3  4]
@@ -4390,7 +4384,7 @@ class Triu(Primitive):
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
         ...                      [14, 15, 16, 17]]))
-        >>> triu = P.Triu(diagonal=-1)
+        >>> triu = ops.Triu(diagonal=-1)
         >>> result = triu(x)
         >>> print(result)
         [[ 1  2  3  4]
@@ -4557,7 +4551,6 @@ class ScatterDiv(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mstype.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
@@ -4636,12 +4629,11 @@ class ScatterNdAdd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import ScatterNdAdd
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
         >>> use_locking = False
-        >>> scatter_nd_add = ScatterNdAdd(use_locking)
+        >>> scatter_nd_add = ops.ScatterNdAdd(use_locking)
         >>> output = scatter_nd_add(input_x, indices, updates)
         >>> print(output)
         [ 1. 10.  9.  4. 12.  6.  7. 17.]
@@ -4650,7 +4642,7 @@ class ScatterNdAdd(Primitive):
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
         >>> use_locking = False
-        >>> scatter_nd_add = ScatterNdAdd(use_locking)
+        >>> scatter_nd_add = ops.ScatterNdAdd(use_locking)
         >>> output = scatter_nd_add(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]
@@ -4697,12 +4689,11 @@ class ScatterNdSub(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import ScatterNdSub
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
         >>> use_locking = False
-        >>> scatter_nd_sub = ScatterNdSub(use_locking)
+        >>> scatter_nd_sub = ops.ScatterNdSub(use_locking)
         >>> output = scatter_nd_sub(input_x, indices, updates)
         >>> print(output)
         [ 1. -6. -3.  4. -2.  6.  7. -1.]
@@ -4711,7 +4702,7 @@ class ScatterNdSub(Primitive):
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
         >>> use_locking = False
-        >>> scatter_nd_sub = ScatterNdSub(use_locking)
+        >>> scatter_nd_sub = ops.ScatterNdSub(use_locking)
         >>> output = scatter_nd_sub(input_x, indices, updates)
         >>> print(output)
         [[[-1 -1 -1 -1]
@@ -4759,11 +4750,10 @@ class ScatterNdMul(_ScatterNdOp):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import ScatterNdMul
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_mul = ScatterNdMul()
+        >>> scatter_nd_mul = ops.ScatterNdMul()
         >>> output = scatter_nd_mul(input_x, indices, updates)
         >>> print(output)
         [ 1. 16. 18.  4. 35.  6.  7. 72.]
@@ -4771,7 +4761,7 @@ class ScatterNdMul(_ScatterNdOp):
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-        >>> scatter_nd_mul = ScatterNdMul()
+        >>> scatter_nd_mul = ops.ScatterNdMul()
         >>> output = scatter_nd_mul(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]
@@ -4855,11 +4845,10 @@ class ScatterNdMax(_ScatterNdOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.array_ops import ScatterNdMax
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_max = ScatterNdMax()
+        >>> scatter_nd_max = ops.ScatterNdMax()
         >>> output = scatter_nd_max(input_x, indices, updates)
         >>> print(output)
         [ 1. 8. 6.  4. 7.  6.  7. 9.]
@@ -4867,7 +4856,7 @@ class ScatterNdMax(_ScatterNdOp):
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-        >>> scatter_nd_max = ScatterNdMax()
+        >>> scatter_nd_max = ops.ScatterNdMax()
         >>> output = scatter_nd_max(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]
@@ -6717,7 +6706,7 @@ class ExtractVolumePatches(Primitive):
         >>> strides = (1, 1, 1, 1, 1)
         >>> padding = "VALID"
         >>> input_x = P.Reshape()(Tensor(np.arange(1, 28), mstype.float16), (1, 1, 3, 3, 3))
-        >>> output_y = P.ExtractVolumePatches(kernel_size, strides, padding)(input_x)
+        >>> output_y = ops.ExtractVolumePatches(kernel_size, strides, padding)(input_x)
         >>> print(output_y.shape)
         (1, 8, 2, 2, 2)
     """
@@ -7187,7 +7176,7 @@ class Tril(Primitive):
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
         ...                      [14, 15, 16, 17]]))
-        >>> tril = P.Tril()
+        >>> tril = ops.Tril()
         >>> result = tril(x)
         >>> print(result)
         [[ 1  0  0  0]
@@ -7198,7 +7187,7 @@ class Tril(Primitive):
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
         ...                      [14, 15, 16, 17]]))
-        >>> tril = P.Tril(diagonal=1)
+        >>> tril = ops.Tril(diagonal=1)
         >>> result = tril(x)
         >>> print(result)
         [[ 1  2  0  0]
@@ -7209,7 +7198,7 @@ class Tril(Primitive):
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
         ...                      [14, 15, 16, 17]]))
-        >>> tril = P.Tril(diagonal=-1)
+        >>> tril = ops.Tril(diagonal=-1)
         >>> result = tril(x)
         >>> print(result)
         [[ 0  0  0  0]
@@ -7254,9 +7243,7 @@ class IndexFill(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> from mindspore.ops.operations.array_ops import IndexFill
-        >>> index_fill = IndexFill()
+        >>> index_fill = ops.IndexFill()
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
         >>> index = Tensor([0, 2], mindspore.int32)
         >>> value = Tensor(-2.0, mindspore.float32)
@@ -7486,7 +7473,7 @@ class FillDiagonal(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        The data type must be float32, int32 or int64.
+          The data type must be float32, int32 or int64.
 
     Outputs:
         - **y** (Tensor) - Tensor, has the same shape and data type as the input `x`.
@@ -7502,7 +7489,7 @@ class FillDiagonal(Primitive):
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
         >>> fill_value = 9.9
-        >>> fill_diagonal = FillDiagonal(fill_value)
+        >>> fill_diagonal = ops.FillDiagonal(fill_value)
         >>> y = fill_diagonal(x)
         >>> print(y)
         [[9.9 2.  3. ]
@@ -7510,7 +7497,7 @@ class FillDiagonal(Primitive):
          [7.  8.  9.9]]
         >>> x = Tensor(np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5]]).astype(np.int32))
         >>> fill_value = 9.0
-        >>> fill_diagonal = FillDiagonal(fill_value)
+        >>> fill_diagonal = ops.FillDiagonal(fill_value)
         >>> y = fill_diagonal(x)
         >>> print(y)
         [[9 0 0]
@@ -7589,13 +7576,13 @@ class HammingWindow(Primitive):
     Examples:
         >>> # case 1: periodic=True.
         >>> length = Tensor(np.array([6]).astype(np.int32))
-        >>> hamming_window = HammingWindow(periodic=True)
+        >>> hamming_window = ops.HammingWindow(periodic=True)
         >>> y = hamming_window(length)
         >>> print(y)
         [0.08000001 0.31       0.77000004 1.         0.77000004 0.31      ]
         >>> # case 2: periodic=False.
         >>> length = Tensor(np.array([7]).astype(np.int32))
-        >>> hamming_window = HammingWindow(periodic=False)
+        >>> hamming_window = ops.HammingWindow(periodic=False)
         >>> y = hamming_window(length)
         >>> print(y)
         [0.08000001 0.31       0.77000004 1.         0.77000004 0.31       0.08000001]
@@ -7629,7 +7616,7 @@ class AffineGrid(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> affinegrid = AffineGrid(align_corners=False)
+        >>> affinegrid = ops.AffineGrid(align_corners=False)
         >>> theta = Tensor([[[0.8, 0.5, 0],[-0.5, 0.8, 0]]], mindspore.float32)
         >>> out_size = (1, 3, 2, 3)
         >>> output = affinegrid(theta, out_size)
@@ -7831,7 +7818,7 @@ class Bincount(Primitive):
         >>> array = Tensor(np.array([1, 2, 2, 3, 3, 3, 4, 4, 4, 4]), mindspore.int32)
         >>> size = Tensor(5, mindspore.int32)
         >>> weights = Tensor(np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]), mindspore.float32)
-        >>> bincount = P.Bincount()
+        >>> bincount = ops.Bincount()
         >>> bins = bincount(array, size, weights)
         >>> print(bins)
         [0. 1. 2. 3. 4.]

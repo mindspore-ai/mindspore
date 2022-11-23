@@ -198,7 +198,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
         >>> boxes = np.random.uniform(size=[NUM_BOXES, 4]).astype(np.float32)
         >>> box_indices = np.random.uniform(size=[NUM_BOXES], low=0, high=BATCH_SIZE).astype(np.int32)
         >>> crop_size = (24, 24)
-        >>> output = F.crop_and_resize(Tensor(image), Tensor(boxes), Tensor(box_indices), crop_size)
+        >>> output = ops.crop_and_resize(Tensor(image), Tensor(boxes), Tensor(box_indices), crop_size)
         >>> print(output.shape)
          (5, 24, 24, 3)
     """

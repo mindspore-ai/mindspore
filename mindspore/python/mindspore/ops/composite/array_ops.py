@@ -74,11 +74,11 @@ def repeat_interleave(x, repeats, dim=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor, ops
         >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-        >>> output = x.repeat_interleave(repeats=2, dims=0)
+        >>> output = ops.repeat_interleave(repeats=2, dims=0)
         >>> print(output)
         [[0 1 2]
          [0 1 2]
