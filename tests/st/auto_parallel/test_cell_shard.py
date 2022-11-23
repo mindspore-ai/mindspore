@@ -17,7 +17,7 @@ import os
 import pytest
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
@@ -31,7 +31,7 @@ def test_cell_shard_ascend():
     assert ret == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_cell_shard_gpu():
