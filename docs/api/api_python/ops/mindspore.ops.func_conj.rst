@@ -17,4 +17,4 @@
 
     异常：
         - **TypeError** -  如果 `input` 的数据类型不是数字类型。
-        - **ValueError** - 如果 `input` 不是Tensor。
+        - **TypeError** - 如果 `input` 不是Tensor。
