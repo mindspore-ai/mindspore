@@ -34,7 +34,7 @@ class PythonRuntimeContext : public RuntimeContext {
   /// Safe destructing the tree that includes python objects
   ~PythonRuntimeContext() override;
 
-  PythonIteratorConsumer *GetPythonConsumer();
+  TreeConsumer *GetPythonConsumer();
 
  private:
   /// Internal function to perform the termination

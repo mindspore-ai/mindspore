@@ -49,6 +49,27 @@ PYBIND_REGISTER(PythonIteratorConsumer, 1, ([](const py::module *m) {
                     });
                 }));
 
+PYBIND_REGISTER(
+  PythonPullBasedIteratorConsumer, 1, ([](const py::module *m) {
+    (void)py::class_<PythonPullBasedIteratorConsumer, TreeConsumer, std::shared_ptr<PythonPullBasedIteratorConsumer>>(
+      *m, "PythonPullBasedIteratorConsumer")
+      .def(py::init<int32_t>())
+      .def("Init",
+           [](PythonPullBasedIteratorConsumer &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+      .def("GetNextAsMap",
+           [](PythonPullBasedIteratorConsumer &self) {
+             py::dict output;
+             THROW_IF_ERROR(self.GetNextAsDict(&output));
+             return output;
+           })
+      .def("GetOffload", [](PythonPullBasedIteratorConsumer &self) { return self.GetOffload(); })
+      .def("GetNextAsList", [](PythonPullBasedIteratorConsumer &self) {
+        py::list output;
+        THROW_IF_ERROR(self.GetNextAsList(&output));
+        return output;
+      });
+  }));
+
 PYBIND_REGISTER(TreeGetters, 1, ([](const py::module *m) {
                   (void)py::class_<PythonTreeGetters, TreeConsumer, std::shared_ptr<PythonTreeGetters>>(*m,
                                                                                                         "TreeGetters")

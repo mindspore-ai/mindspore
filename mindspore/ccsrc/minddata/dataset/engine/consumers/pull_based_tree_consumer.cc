@@ -19,11 +19,9 @@
 #include <algorithm>
 
 namespace mindspore::dataset {
-PullBasedIteratorConsumer::PullBasedIteratorConsumer() { tree_adapter_lite_ = std::make_unique<TreeAdapterLite>(); }
-
 Status PullBasedIteratorConsumer::Init(std::shared_ptr<DatasetNode> root) {
   RETURN_UNEXPECTED_IF_NULL(root);
-  return tree_adapter_lite_->BuildTree(std::move(root));
+  return tree_adapter_lite_->Compile(std::move(root), num_epochs_);
 }
 
 std::vector<TensorRow> PullBasedIteratorConsumer::GetRows(int64_t num_rows) {
@@ -73,7 +71,6 @@ Status PullBasedIteratorConsumer::GetNextAsMap(std::unordered_map<std::string, T
 
 Status PullBasedIteratorConsumer::GetNextAsOrderedPair(
   std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) {
-  std::unique_ptr<TreeAdapter> tree_adapter = std::make_unique<TreeAdapter>();
   CHECK_FAIL_RETURN_UNEXPECTED(vec != nullptr && vec->empty(), "vec is null or non-empty.");
 
   TensorRow curr_row;
@@ -85,7 +82,7 @@ Status PullBasedIteratorConsumer::GetNextAsOrderedPair(
   if (column_order_.empty()) {
     const int32_t invalid_col_id = -1;
     column_order_.resize(num_cols, {std::string(), invalid_col_id});
-    for (const auto &itr : tree_adapter->GetColumnNameMap()) {
+    for (const auto &itr : tree_adapter_lite_->GetColumnNameMap()) {
       int32_t ind = itr.second;
       CHECK_FAIL_RETURN_UNEXPECTED(ind < num_cols && ind >= 0, "column id out of bounds.");
       column_order_[ind] = std::make_pair(itr.first, ind);

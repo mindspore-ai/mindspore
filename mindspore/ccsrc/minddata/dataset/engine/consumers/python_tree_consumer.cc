@@ -48,6 +48,35 @@ Status PythonIteratorConsumer::GetNextAsDict(const py::dict *out) {
   return Status::OK();
 }
 
+Status PythonPullBasedIteratorConsumer::GetNextAsList(const py::list *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  std::vector<TensorPtr> row;
+  {
+    py::gil_scoped_release gil_release;
+    RETURN_IF_NOT_OK(GetNextAsVector(&row));
+  }
+  for (auto el : row) {
+    (*out).append(el);
+  }
+  return Status::OK();
+}
+
+Status PythonPullBasedIteratorConsumer::GetNextAsDict(const py::dict *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> vec;
+  Status s;
+  {
+    py::gil_scoped_release gil_release;
+    s = GetNextAsOrderedPair(&vec);
+  }
+  RETURN_IF_NOT_OK(s);
+  // Generate Python dict, python dict maintains its insertion order
+  for (const auto &pair : vec) {
+    (*out)[common::SafeCStr(pair.first)] = pair.second;
+  }
+  return Status::OK();
+}
+
 Status PythonBuildVocabConsumer::Start() {
   py::gil_scoped_release gil_release;
   return BuildVocabConsumer::Start();

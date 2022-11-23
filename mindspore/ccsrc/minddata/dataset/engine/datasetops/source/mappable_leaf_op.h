@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <utility>
+#include <vector>
 #include "minddata/dataset/core/tensor.h"
 
 #include "minddata/dataset/engine/data_schema.h"
@@ -75,6 +77,10 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
 #endif
 
  protected:
+  TensorPtr sample_ids_;  // sample id pointer for pull mode
+  uint32_t curr_row_;     // current row number count for pull mode
+  bool prepared_data_;    // flag to indicate whether the data is prepared before LoadTensorRow for pull mode
+
   /// Initialize Sampler, calls sampler->Init() within
   /// @return Status The status code returned
   Status InitSampler();
@@ -104,6 +110,15 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   Status Reset() override;
   Status SendWaitFlagToWorker(int32_t worker_id) override;
   Status SendQuitFlagToWorker(int32_t worker_id) override;
+
+  ///  \brief In pull mode, gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
+  /// Initialize pull mode, calls PrepareData() within
+  /// @return Status The status code returned
+  virtual Status InitPullMode() { return PrepareData(); }
 };
 }  // namespace dataset
 }  // namespace mindspore

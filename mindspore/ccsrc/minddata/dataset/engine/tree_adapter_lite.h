@@ -44,6 +44,16 @@ class TreeAdapterLite {
 
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const { return tree_->root()->column_name_id_map(); }
 
+  // This function performs syntax checking, semantics checking, and then call BuildTree
+  Status Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs = -1);
+
+ protected:
+  // Run the mandatory pass checking the syntax and semantics of the IR tree
+  Status PrePass(std::shared_ptr<DatasetNode> ir);
+
+  std::shared_ptr<DatasetNode> input_ir_;
+  std::shared_ptr<DatasetNode> root_ir_;
+
  private:
   // This RECURSIVE function walks the (optimized) IR tree in DFS to build its corresponding Execution tree.
   Status BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);

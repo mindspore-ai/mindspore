@@ -66,5 +66,19 @@ Status TakeOp::GetNextRow(TensorRow *row) {
 
   return Status::OK();
 }
+
+Status TakeOp::GetNextRowPullMode(TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  if (take_count_ < max_takes_) {
+    RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+  }
+  if (take_count_ == max_takes_ || row->eoe()) {
+    UpdateRepeatAndEpochCounter();
+    take_count_ = 0;
+  } else {
+    take_count_++;
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -207,5 +207,44 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
 
   return Status::OK();
 }
+
+Status ConcatOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  bool is_not_mappable_or_second_ne_zero = true;
+
+  if (!children_flag_and_nums_.empty()) {
+    const bool is_not_mappable = children_flag_and_nums_[cur_child_].first != 0 ? true : false;
+    const bool second_ne_zero = children_flag_and_nums_[cur_child_].second == 0 ? true : false;
+    is_not_mappable_or_second_ne_zero = is_not_mappable || second_ne_zero;
+  }
+  RETURN_IF_NOT_OK(child_[static_cast<size_t>(cur_child_)]->GetNextRowPullMode(row));
+
+  if (row->eoe()) {
+    // if last child, send out eoe and reset epoch
+    if (cur_child_ == child_.size() - 1) {
+      // reset
+      cur_child_ = 0;
+      verified_ = false;
+      UpdateRepeatAndEpochCounter();
+      return Status::OK();
+    }
+    if (!is_not_mappable_or_second_ne_zero) {
+      sample_number_ += children_flag_and_nums_[cur_child_].second;
+    }
+    cur_child_++;
+    verified_ = false;
+    RETURN_IF_NOT_OK(GetNextRowPullMode(row));
+    return Status::OK();
+  } else {
+    if (!verified_) {
+      RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+    }
+    if (IgnoreSample()) {
+      RETURN_IF_NOT_OK(GetNextRowPullMode(row));
+    }
+    return Status::OK();
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

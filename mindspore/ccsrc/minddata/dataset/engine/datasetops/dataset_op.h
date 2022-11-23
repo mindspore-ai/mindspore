@@ -201,6 +201,12 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   //     before providing their own implementations.
   virtual Status PrepareOperator();
 
+  // \brief During tree prepare phase, operators may have specific post-operations to perform depending on
+  //     their role.
+  // \notes Derived versions of this function should always call its superclass version first
+  //     before providing their own implementations.
+  virtual Status PrepareOperatorPullBased();
+
   // \brief Getter function
   // \return The operator id
   int32_t id() const { return operator_id_; }

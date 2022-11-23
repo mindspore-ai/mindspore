@@ -24,6 +24,7 @@ import numpy as np
 import mindspore._c_dataengine as cde
 from mindspore.common.tensor import Tensor
 import mindspore.dataset.engine.offload as offload
+from mindspore.dataset.core.config import get_debug_mode
 
 from mindspore import log as logger
 
@@ -75,7 +76,10 @@ class Iterator:
 
         self._runtime_context = cde.PythonRuntimeContext()
         self._runtime_context.Init()
-        consumer = cde.PythonIteratorConsumer(num_epochs)
+        if get_debug_mode():
+            consumer = cde.PythonPullBasedIteratorConsumer(num_epochs)
+        else:
+            consumer = cde.PythonIteratorConsumer(num_epochs)
         consumer.Init(self.ir_tree)
         self._runtime_context.AssignConsumer(consumer)
         self._iterator = self._runtime_context.GetConsumer()

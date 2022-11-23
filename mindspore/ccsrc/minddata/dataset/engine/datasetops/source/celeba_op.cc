@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -313,6 +313,16 @@ Status CelebAOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
+}
+
+Status CelebAOp::InitPullMode() {
+  if (!image_labels_vec_.empty()) {
+    return Status::OK();
+  }
+  if (attr_info_queue_->empty()) {
+    RETURN_IF_NOT_OK(ParseAttrFile());
+  }
+  return PrepareData();
 }
 
 }  // namespace dataset

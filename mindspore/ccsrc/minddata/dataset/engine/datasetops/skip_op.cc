@@ -72,5 +72,30 @@ Status SkipOp::GetNextRow(TensorRow *row) {
   }
   return Status::OK();
 }
+
+Status SkipOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
+  bool eoe_received = false;
+  while (skip_count_ < max_skips_) {
+    RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+    if (row->eoe() && !once_only_) {
+      eoe_received = true;
+      break;
+    }
+    if (!row->eoe()) {
+      skip_count_++;
+    }
+  }
+  if (!eoe_received) {
+    RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
+  }
+  if (row->eoe()) {
+    UpdateRepeatAndEpochCounter();
+    if (!once_only_) {
+      skip_count_ = 0;
+    }
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

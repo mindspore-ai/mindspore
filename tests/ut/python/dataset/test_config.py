@@ -54,6 +54,7 @@ def test_basic():
     seed_original = ds.config.get_seed()
     monitor_sampling_interval_original = ds.config.get_monitor_sampling_interval()
     fast_recovery_original = ds.config.get_fast_recovery()
+    debug_mode = ds.config.get_debug_mode()
 
     ds.config.load('../data/dataset/declient.cfg')
 
@@ -63,6 +64,7 @@ def test_basic():
     assert ds.config.get_seed() == 5489
     assert ds.config.get_monitor_sampling_interval() == 15
     assert ds.config.get_fast_recovery()
+    assert ds.config.get_debug_mode()
 
     ds.config.set_num_parallel_workers(2)
     # ds.config.set_worker_connector_size(3)
@@ -70,6 +72,7 @@ def test_basic():
     ds.config.set_seed(5)
     ds.config.set_monitor_sampling_interval(45)
     ds.config.set_fast_recovery(False)
+    ds.config.set_debug_mode(False)
 
     assert ds.config.get_num_parallel_workers() == 2
     # assert ds.config.get_worker_connector_size() == 3
@@ -77,6 +80,7 @@ def test_basic():
     assert ds.config.get_seed() == 5
     assert ds.config.get_monitor_sampling_interval() == 45
     assert not ds.config.get_fast_recovery()
+    assert not ds.config.get_debug_mode()
 
     # Restore original configuration values
     ds.config.set_num_parallel_workers(num_parallel_workers_original)
@@ -84,6 +88,7 @@ def test_basic():
     ds.config.set_seed(seed_original)
     ds.config.set_monitor_sampling_interval(monitor_sampling_interval_original)
     ds.config.set_fast_recovery(fast_recovery_original)
+    ds.config.set_debug_mode(debug_mode)
 
 
 def test_get_seed():
@@ -516,6 +521,30 @@ def test_fast_recovery():
     assert "set_fast_recovery() missing 1 required positional argument: 'fast_recovery'" in str(error_info.value)
 
 
+def test_debug_mode():
+    """
+    Feature: Test the debug mode setter/getter function
+    Description: This function only accepts a boolean as input and outputs error otherwise
+    Expectation: TypeError will be raised when input argument is missing or is not a boolean
+    """
+    # set_debug_mode() to True and then check if the value is indeed True with get_debug_mode().
+    debug_mode_flag = True
+    ds.config.set_debug_mode(debug_mode_flag)
+    assert ds.config.get_debug_mode() == debug_mode_flag
+    # set_debug_mode will raise TypeError if input is an integer
+    config_error_func(ds.config.set_debug_mode, 0, TypeError, "debug_mode_flag isn't of type boolean.")
+    # set_debug_mode will raise TypeError if input is a string
+    config_error_func(ds.config.set_debug_mode, "True", TypeError, "debug_mode_flag isn't of type boolean.")
+    # set_debug_mode will raise TypeError if input is a tuple
+    config_error_func(ds.config.set_debug_mode, (True,), TypeError, "debug_mode_flag isn't of type boolean.")
+    # set_debug_mode will raise TypeError if input is None
+    config_error_func(ds.config.set_debug_mode, None, TypeError, "debug_mode_flag isn't of type boolean.")
+    # set_debug_mode will raise TypeError if no input is provided
+    with pytest.raises(TypeError) as error_info:
+        ds.config.set_debug_mode()
+    assert "set_debug_mode() missing 1 required positional argument: 'debug_mode_flag'" in str(error_info.value)
+
+
 if __name__ == '__main__':
     test_basic()
     test_get_seed()
@@ -532,3 +561,4 @@ if __name__ == '__main__':
     test_multiprocessing_timeout_interval()
     test_config_bool_type_error()
     test_fast_recovery()
+    test_debug_mode()

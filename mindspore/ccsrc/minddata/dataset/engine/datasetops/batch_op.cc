@@ -697,10 +697,10 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
     }
   }
   RETURN_UNEXPECTED_IF_NULL(table);
-  if (pad_) {
-    RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));
-  }  // do padding if needed
   if (!table->empty()) {
+    if (pad_) {
+      RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));
+    }  // do padding if needed
     RETURN_IF_NOT_OK(BatchRows(&table, row, table->size()));
     batch_cnt_++;
     batch_num_++;

@@ -255,6 +255,10 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
 
 Status DatasetOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  if (child_.empty()) {
+    MS_LOG(DEBUG) << "No child for operator [" << Name() << "].";
+    return Status::OK();
+  }
   RETURN_UNEXPECTED_IF_NULL(child_[0]);
   return child_[0]->GetNextRowPullMode(row);
 }
@@ -320,6 +324,14 @@ Status DatasetOp::PrepareOperator() {
   }
   RETURN_IF_NOT_OK(this->RegisterWorkerConnectors());
 
+  // Generate the column name map for the current op.
+  RETURN_IF_NOT_OK(this->ComputeColMap());
+
+  return Status::OK();
+}
+
+// During tree prepare phase, operators may have specific post-operations to perform depending on their role.
+Status DatasetOp::PrepareOperatorPullBased() {
   // Generate the column name map for the current op.
   RETURN_IF_NOT_OK(this->ComputeColMap());
 

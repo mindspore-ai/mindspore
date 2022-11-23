@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
+#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 #include "pybind11/pybind11.h"
 
 namespace mindspore::dataset {
@@ -33,6 +34,24 @@ class PythonIteratorConsumer : public IteratorConsumer {
   explicit PythonIteratorConsumer(int32_t num_epochs = -1) : IteratorConsumer(num_epochs) {}
 
   ~PythonIteratorConsumer() = default;
+  /// Returns the next row in a vector format
+  /// \param[out] out std::vector of Tensors
+  /// \return Status error code
+  Status GetNextAsList(const py::list *out);
+
+  /// Returns the next row in as a map
+  /// \param[out] out std::map of string to Tensor
+  /// \return Status error code
+  Status GetNextAsDict(const py::dict *out);
+};
+
+class PythonPullBasedIteratorConsumer : public PullBasedIteratorConsumer {
+ public:
+  /// Constructor which will call the base class default constructor.
+  /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
+  explicit PythonPullBasedIteratorConsumer(int32_t num_epochs = -1) : PullBasedIteratorConsumer() {}
+
+  ~PythonPullBasedIteratorConsumer() = default;
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code

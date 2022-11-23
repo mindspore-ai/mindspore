@@ -96,7 +96,8 @@ PullIterator::~PullIterator() = default;
 // Get the next row from the data pipeline.
 Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
-  CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "Consumer is nullptr. Please launch iterator fist.");
+  CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "Consumer is nullptr. Please launch iterator first.");
+  row->clear();
   for (int i = 0; i < num_rows; i++) {
     std::vector<std::shared_ptr<dataset::Tensor>> md_row;
     Status rc = pull_consumer_->GetNextAsVector(&md_row);
@@ -120,6 +121,7 @@ Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *const r
 Status PullIterator::GetNextRow(MSTensorVec *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "Consumer is nullptr.");
+  row->clear();
   std::vector<std::shared_ptr<dataset::Tensor>> md_row;
   Status rc = pull_consumer_->GetNextAsVector(&md_row);
   if (rc.IsError()) {
