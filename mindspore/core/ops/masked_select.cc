@@ -41,12 +41,15 @@ abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,
 
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
-  auto x_shape = x_shape_map[kMaxShape].empty() ? x_shape_map[kShape] : x_shape_map[kMaxShape];
-  auto y_shape = y_shape_map[kMaxShape].empty() ? y_shape_map[kShape] : y_shape_map[kMaxShape];
+  auto x_shape = x_shape_map[kShape];
+  auto y_shape = y_shape_map[kShape];
 
-  auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name, "input", "mask");
+  int64_t num = -1;
+  if (!IsDynamic(x_shape) && !IsDynamic(y_shape)) {
+    auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name, "input", "mask");
+    num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
+  }
 
-  auto num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
   ShapeVector output_shape = {abstract::Shape::kShapeDimAny};
   ShapeVector min_shape = {0};
   ShapeVector max_shape = {num};
