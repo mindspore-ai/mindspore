@@ -239,8 +239,7 @@ ValuePtr ConvertModuleNameSpace(const py::object &obj) {
   MS_LOG(DEBUG) << "Converting python module";
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object module_namespace = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MODULE_NAMESPACE, obj);
-  auto converted =
-    std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_MODULE, py::cast<py::module>(module_namespace), obj);
+  auto converted = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_MODULE, module_namespace, obj);
   MS_LOG(DEBUG) << "name_space: " << converted->ToString();
   return converted;
 }

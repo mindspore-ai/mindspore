@@ -1589,7 +1589,7 @@ tensor::TensorPtr GetDependValueByConstTensor(const AnfNodePtr &input_node, cons
   auto value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<tensor::Tensor>()) {
-    MS_EXCEPTION(ValueError) << "the cnode " << cnode_name << "'s input[" << i << "], must be tensor, but got "
+    MS_EXCEPTION(ValueError) << "The CNode " << cnode_name << "'s input[" << i << "], must be tensor, but got "
                              << value->ToString();
   }
   auto tensor = value->cast<tensor::TensorPtr>();

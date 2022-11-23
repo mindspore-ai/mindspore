@@ -174,7 +174,7 @@ def test_print_cnode_1():
         sys.stdout.flush()
         time.sleep(0.1)
 
-    patterns = {'res_sum: \nTensor(shape=[5], dtype=Int64, value=[ 2  4  6  8 10])\n\n'}
+    patterns = {'res_sum: \nTensor(shape=[5], dtype=Int64, value=[ 2  4  6  8 10])\n'}
     check_output(cap.output, patterns)
 
 
@@ -517,13 +517,11 @@ def test_print_exception():
             print("np_sum: ", np_sum, "tensor_sum: ", tensor_sum)
             return tensor_sum, ms.Tensor(np_sum)
 
-    with pytest.raises(ValueError,
-                       match="the inputs should be constant, but found variable 'tensor_sum' to be nonconstant."):
-        ms.set_context(mode=ms.GRAPH_MODE)
-        x = ms.Tensor(np.array([1, 2, 3, 4, 5]))
-        y = ms.Tensor(np.array([1, 2, 3, 4, 5]))
-        net = Net()
-        net(x, y)
+    ms.set_context(mode=ms.GRAPH_MODE)
+    x = ms.Tensor(np.array([1, 2, 3, 4, 5]))
+    y = ms.Tensor(np.array([1, 2, 3, 4, 5]))
+    net = Net()
+    net(x, y)
 
 
 @security_off_wrap

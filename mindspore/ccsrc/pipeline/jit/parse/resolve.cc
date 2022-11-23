@@ -481,7 +481,7 @@ py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symb
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
   }
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  auto &obj = name_space->obj();
+  auto &obj = name_space->namespace_obj();
   if (py::isinstance<py::none>(obj)) {
     MS_EXCEPTION(NameError) << "The name \'" << symbol << "\' is not defined.";
   }

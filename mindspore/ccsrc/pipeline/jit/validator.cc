@@ -58,6 +58,9 @@ void ValidateOperation(const AnfNodePtr &node) {
   if (prim->HasAttr("is_load")) {
     return;
   }
+  if (prim->name() == "PyExecute") {
+    return;
+  }
   if (prim->name() == "TensorMove") {
     return;
   }
@@ -127,7 +130,8 @@ void ValidateAbstract(const AnfNodePtr &node) {
                            abstract->isa<AbstractTuple>() || abstract->isa<AbstractList>() ||
                            abstract->isa<AbstractTensor>() || abstract->isa<AbstractRowTensor>() ||
                            abstract->isa<AbstractRefTensor>() || abstract->isa<AbstractMapTensor>() ||
-                           abstract->isa<abstract::AbstractNone>() || abstract->isa<abstract::AbstractMonad>();
+                           abstract->isa<abstract::AbstractNone>() || abstract->isa<abstract::AbstractMonad>() ||
+                           abstract->isa<abstract::AbstractScript>();
   if (is_legal_abstract) {
     return;
   }

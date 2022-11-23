@@ -254,7 +254,15 @@ PrimShapeDependMap &GetInferDependsMap() {
   return depends;
 }
 
-std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t input_num) {
+std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().empty()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs";
+  }
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -278,23 +286,25 @@ std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t 
     }
   }
 
-  if (!ori.empty()) {
-    (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
-                       [&](int64_t idx) { return idx < SizeToLong(input_num); });
+  if (ori.empty()) {
+    return res;
   }
-
+  // To support {-1}, filter all the real tensor input index here.
+  constexpr auto all_tensor_inputs = -1;
+  if (ori.size() == 1 && *(ori.cbegin()) == all_tensor_inputs) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      const auto &input = cnode->inputs()[i];
+      const auto &input_abstract = input->abstract();
+      if (input_abstract != nullptr && input_abstract->isa<abstract::AbstractTensor>()) {
+        (void)res.emplace(SizeToLong(i - 1));
+      }
+    }
+    return res;
+  }
+  size_t input_num = cnode->inputs().size() - 1;
+  (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
+                     [&](int64_t idx) { return idx < SizeToLong(input_num); });
   return res;
-}
-
-std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "Invalid inputs";
-  }
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->ToString();
-  return GetValueDependArgIndices(prim_name, cnode->inputs().size() - 1);
 }
 
 RegisterInferDependsHelper::RegisterInferDependsHelper(const std::string &name, const std::set<int64_t> &depends) {

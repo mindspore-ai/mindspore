@@ -376,8 +376,9 @@ AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
 }
 
 AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const SymbolPtr &resolve_symbol) {
-  MS_LOG(DEBUG) << "MakeResolve for " << (name_space ? (std::string)py::str(name_space->obj()) : "null namespace")
-                << " , " << (resolve_symbol ? (std::string)resolve_symbol->symbol() : "null resolve symbol.");
+  MS_LOG(DEBUG) << "MakeResolve for "
+                << (name_space ? (std::string)py::str(name_space->namespace_obj()) : "null namespace") << " , "
+                << (resolve_symbol ? (std::string)resolve_symbol->symbol() : "null resolve symbol.");
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(resolve_symbol);
   auto node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
@@ -388,7 +389,7 @@ AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const An
                                         const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node) {
   MS_LOG(DEBUG) << "MakeInterpret for " << script_text;
   MS_EXCEPTION_IF_NULL(orig_node);
-  ScriptPtr script = std::make_shared<Script>(script_text);
+  auto script = std::make_shared<Script>(script_text);
   auto script_node = NewValueNode(script);
   auto node = func_graph_->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
