@@ -38,7 +38,7 @@ AbstractBase::TraceNodeProvider AbstractBase::trace_node_provider_ = nullptr;
 
 std::string JoinSupplementaryInfo(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "\nInner Message:\nThis: " << abstract1->ToString() << ", other: " << abstract2->ToString();
+  oss << "#dmsg#Framework Error Message:#dmsg#This: " << abstract1->ToString() << ", other: " << abstract2->ToString();
   // Get trace info of node.
   AnfNodePtr node = nullptr;
   if (AbstractBase::trace_node_provider_ != nullptr) {
