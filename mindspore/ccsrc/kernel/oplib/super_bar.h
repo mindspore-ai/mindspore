@@ -20,6 +20,7 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <optional>
 #include <nlohmann/json.hpp>
 #include "include/backend/visible.h"
 namespace mindspore::kernel {

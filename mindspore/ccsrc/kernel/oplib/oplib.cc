@@ -84,11 +84,11 @@ bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) 
       }
     }
     auto op_info = DecodeOpInfo(op_json, imply_type, impl_path);
-    op_info->set_processor(key_suffix);
     if (op_info == nullptr) {
       MS_LOG(ERROR) << "RegOp failed: op_name: " << op_name << " imply_type " << imply_type_str;
       return false;
     }
+    op_info->set_processor(key_suffix);
     (void)op_infos[imply_type].insert(std::pair<std::string, OpInfoPtr>(key, op_info));
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Get op json elements failed: " << e.what();
