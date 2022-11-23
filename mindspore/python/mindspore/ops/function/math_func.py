@@ -6007,8 +6007,8 @@ def log2(x):
         y_i = log_2(x_i)
 
     .. warning::
-        If the input value of operator Log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affacted. If the input value of operator Log2 is less than or equal to 0, it will not raise Error.
+        If the input value of operator log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+        be affected.
 
     .. note::
         The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
@@ -6219,8 +6219,8 @@ def log10(x):
         y_i = log_{10}(x_i)
 
     .. warning::
-        If the input value of operator Log10 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affacted. If the input value of operator Log10 is less than or equal to 0, it will not raise Error.
+        If the input value of operator log10 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+        be affected.
 
     .. note::
         The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
