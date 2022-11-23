@@ -57,6 +57,7 @@ from mindspore.ops.operations.math_ops import (
     Sinc,
     NanToNum,
     SparseSegmentMean,
+    TrilIndices,
     TriuIndices,
     InplaceIndexAdd,
     InplaceUpdateV2,
@@ -4786,6 +4787,51 @@ def sparse_segment_mean(x, indices, segment_ids):
          [2. 4. 5.]]
     """
     return sparse_segment_mean_(x, indices, segment_ids)
+
+
+def tril_indices(row, col, offset=0, dtype=mstype.int64):
+    r"""
+    Returns the indices of the lower triangular part of a row-by- col matrix in a 2-by-N Tensor,
+    where the first row contains row coordinates of all indices and the second row contains column coordinates.
+    Indices are ordered based on rows and then columns.
+
+    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+
+    Note:
+        When running on CUDA, row * col must be less than 2^59 to prevent overflow during calculation.
+
+    Args:
+        row (int): number of rows in the 2-D matrix.
+        col (int): number of columns in the 2-D matrix.
+        offset (int): diagonal offset from the main diagonal. Default: 0.
+        dtype (:class:`mindspore.dtype`): The specified type of output tensor.
+            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
+
+    Outputs:
+        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type is specified by `dtype`.
+          The shape of output is :math:`(2, tril_size)`, where :math:`tril_size` is the number of elements in the
+          lower triangular matrix.
+
+    Raises:
+        TypeError: If `row`, `col` or `offset` is not an int.
+        TypeError: If `dtype` is neither int32 nor int64.
+        ValueError: If `row` or `col` < 0.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> net = ops.TrilIndices(4, 3, -1, mindspore.int64)
+        >>> output = net()
+        >>> print(output)
+        [[1 2 2 3 3 3]
+         [0 0 1 0 1 2]]
+        >>> print(output.dtype)
+        Int64
+    """
+
+    tril_indices_ = TrilIndices(row=row, col=col, offset=offset, dtype=dtype)
+    return tril_indices_()
 
 
 def triu_indices(row, col, offset=0, dtype=mstype.int64):
