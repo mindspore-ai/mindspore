@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+import os
+import stat
 import numpy as np
 import pytest
 
@@ -21,6 +23,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import operations as P
+from mindspore.train.serialization import export
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -89,3 +92,41 @@ def test_cos_tensor(dtype):
     print(output)
     expect = np.cos(np_array)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+def test_onnx_export_load_run_ops_cos():
+    """
+    Feature: Export onnx cos
+    Description: Export Onnx file and verify the result of onnx Cos
+    Expectation: success
+    """
+    import onnx
+    import onnxruntime as ort
+
+    x = Tensor(np.array([-1, -0.5, 0, 0.5, 1]), ms.float32)
+    net = NetCos()
+    ms_output = net(x)
+    onnx_file = "NetCos.onnx"
+    export(net, x, file_name=onnx_file, file_format='ONNX')
+
+    print('--------------------- onnx load ---------------------')
+    # Load the ONNX model
+    model = onnx.load(onnx_file)
+    # Check that the IR is well formed
+    onnx.checker.check_model(model)
+    # Print a human readable representation of the graph
+    g = onnx.helper.printable_graph(model.graph)
+    print(g)
+
+    print('------------------ onnxruntime run ------------------')
+    ort_session = ort.InferenceSession(onnx_file)
+    input_x = ort_session.get_inputs()[0].name
+    input_map = {input_x: x.asnumpy()}
+    onnx_outputs = ort_session.run(None, input_map)
+    print(onnx_outputs[0])
+    assert np.allclose(ms_output.asnumpy(), onnx_outputs[0])
+    assert os.path.exists(onnx_file)
+    os.chmod(onnx_file, stat.S_IWRITE)
+    os.remove(onnx_file)

@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -39,6 +39,13 @@ class ResizeBilinearGradAlignCornerF(nn.Cell):
 
     def construct(self, dy, size):
         return self.op(dy, size)
+
+
+class NetResizeBilinearFunc(nn.Cell):
+    def construct(self, inputs, size, align_corner=False, half_pixel_centers=False):
+        if align_corner and not half_pixel_centers:
+            return ops.interpolate(inputs, None, None, size, "align_corners", "bilinear")
+        return ops.interpolate(inputs, None, None, size, "half_pixel", "bilinear")
 
 
 def test_resize_bilinear_grad_align_corner():
@@ -115,3 +122,41 @@ def test_resize_bilinear_grad_dtype(mode, dtype):
     rnn = ResizeBilinearGradAlignCornerT()
     output = rnn(Tensor(dy), Tensor(orign_image))
     assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu_training
+def test_resize_bilinear_grad_half_pixel_centers():
+    """
+    Feature: Test ResizeBilinearGrad on CPU.
+    Description:  The half_pixel_centers is True.
+    Expectation: Assert that results are consistent with expect.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float16)
+
+    x = np.array([[[[1.1, 2.2, 3.2, 2.5],
+                    [3.3, 4.4, 5.7, 8.1],
+                    [3.3, 4.4, 5.7, 8.1],
+                    [3.3, 4.4, 5.7, 8.1]]]]).astype(np.float16)
+    expect = np.array([[[[0.25, 0.25, 0.5, 0.5],
+                         [0.25, 0.25, 0.5, 0.5],
+                         [0.75, 0.75, 1.0, 1.0],
+                         [0.75, 0.75, 1.0, 1.0]]]], dtype=np.float16)
+    net = NetResizeBilinearFunc(half_pixel_centers=True)
+    output = net(Tensor(dy), Tensor(x))
+    assert np.all(output.asnumpy() == expect)
+    dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
+
+    x = np.array([[[[1.1, 2.2, 3.2, 2.5],
+                    [3.3, 4.4, 5.7, 8.1],
+                    [3.3, 4.4, 5.7, 8.1],
+                    [3.3, 4.4, 5.7, 8.1]]]]).astype(np.float32)
+    expect = np.array([[[[0.25, 0.25, 0.5, 0.5],
+                         [0.25, 0.25, 0.5, 0.5],
+                         [0.75, 0.75, 1.0, 1.0],
+                         [0.75, 0.75, 1.0, 1.0]]]], dtype=np.float32)
+    net = NetResizeBilinearFunc(half_pixel_centers=True)
+    output = net(Tensor(dy), Tensor(x))
+    assert np.all(output.asnumpy() == expect)
+    
