@@ -5,6 +5,9 @@ mindspore.ops.SegmentSum
 
     计算Tensor的片段和。
 
+    .. warning::
+        如果 `input_x` 的数据类型是复数，则不能进行反向求导。
+
     计算一个Tensor，使得 :math:`output_i = \sum_j input\_x_j` ，其中求和是在j上，满足：:math:`segment\_ids[j] == i` 。如果给定 ID :math:`i` 的分段的和为空，则有 :math:`output[i] = 0` 。
 
     输入：

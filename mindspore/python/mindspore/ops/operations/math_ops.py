@@ -5957,6 +5957,12 @@ class Trunc(Primitive):
 
     Supported Platforms:
         ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]), mindspore.float32)
+        >>> output = ops.Trunc()(x)
+        >>> print(output)
+        [ 3.  0. -0. -3.]
     """
 
     @prim_attr_register
@@ -7295,7 +7301,7 @@ class TrilIndices(Primitive):
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
@@ -7311,7 +7317,7 @@ class TrilIndices(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> net = ops.TrilIndices(4, 3, -1, mindspore.int64)
+        >>> net = ops.TrilIndices(4, 3, -1, mstype.int64)
         >>> output = net()
         >>> print(output)
         [[1 2 2 3 3 3]
@@ -7518,8 +7524,8 @@ class TriuIndices(Primitive):
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
@@ -7535,7 +7541,7 @@ class TriuIndices(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> net = ops.TriuIndices(5, 4, 2, mindspore.int64)
+        >>> net = ops.TriuIndices(5, 4, 2, mstype.int64)
         >>> output = net()
         >>> print(output)
         [[0 0 1]
@@ -7795,3 +7801,40 @@ class Ormqr(Primitive):
         self.transpose = validator.check_value_type('transpose', transpose, [bool], self.name)
         self.add_prim_attr('left', self.left)
         self.add_prim_attr('transpose', self.transpose)
+
+
+class Roll(Primitive):
+    """
+    Rolls the elements of a tensor along an axis.
+
+    Refer to :func:`mindspore.ops.roll` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
+        >>> op = ops.Roll(shift=2, axis=0)
+        >>> output = op(input_x)
+        >>> print(output)
+        [3. 4. 0. 1. 2.]
+        >>> input_x = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
+        >>> op = ops.Roll(shift=-1, axis=0)
+        >>> output = op(input_x)
+        >>> print(output)
+    """
+
+    @prim_attr_register
+    def __init__(self, shift, axis):
+        """Initialize Roll"""
+        if context.get_context("device_target") == "GPU":
+            validator.check_value_type("shift", shift, [int, tuple, list], self.name)
+            validator.check_value_type("axis", axis, [int, tuple, list], self.name)
+        else:
+            if isinstance(shift, (tuple, list)) and isinstance(axis, (tuple, list)):
+                validator.check_equal_int(len(shift), 1, "shift size", self.name)
+                validator.check_equal_int(len(axis), 1, "shift size", self.name)
+                validator.check_equal_int(axis[0], 0, "axis", self.name)
+            elif isinstance(shift, int) and isinstance(axis, int):
+                validator.check_equal_int(axis, 0, "axis", self.name)
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
