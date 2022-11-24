@@ -69,4 +69,44 @@ ATTR_MAP(DecodeImage) = {{"channels", ATTR_DESC(channels, AnyTraits<int64_t>())}
                          {"expand_animations", ATTR_DESC(expand_animations, AnyTraits<bool>())}};
 OUTPUT_MAP(DecodeImage) = {{0, OUTPUT_DESC(image)}};
 REG_ADPT_DESC(DecodeImage, kNameDecodeImage, ADPT_DESC(DecodeImage))
+
+// SyncResizeBilinearV2Grad
+INPUT_MAP(SyncResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
+ATTR_MAP(SyncResizeBilinearV2Grad) = {{"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())},
+                                      {"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
+                                      {"src_start_w", ATTR_DESC(src_start_w, AnyTraits<int64_t>())},
+                                      {"dst_start_w", ATTR_DESC(dst_start_w, AnyTraits<int64_t>())},
+                                      {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                      {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+OUTPUT_MAP(SyncResizeBilinearV2Grad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SyncResizeBilinearV2Grad, prim::kPrimParallelResizeBilinearGrad->name(),
+              ADPT_DESC(SyncResizeBilinearV2Grad))
+
+// SyncResizeBilinearV2
+INPUT_MAP(SyncResizeBilinearV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
+ATTR_MAP(SyncResizeBilinearV2) = {{"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
+                                  {"split_size", ATTR_DESC(split_size, AnyTraits<std::vector<int64_t>>())},
+                                  {"src_start_w", ATTR_DESC(src_start_w, AnyTraits<int64_t>())},
+                                  {"dst_start_w", ATTR_DESC(dst_start_w, AnyTraits<int64_t>())},
+                                  {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                  {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+OUTPUT_MAP(SyncResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SyncResizeBilinearV2, prim::kPrimParallelResizeBilinear->name(), ADPT_DESC(SyncResizeBilinearV2))
+
+// RGBToHSV
+INPUT_MAP(RGBToHSV) = {{1, INPUT_DESC(images)}};
+ATTR_MAP(RGBToHSV) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(RGBToHSV) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RGBToHSV, prim::kPrimRGBToHSV->name(), ADPT_DESC(RGBToHSV))
+
+// NonMaxSuppressionWithOverlaps
+INPUT_MAP(NonMaxSuppressionWithOverlaps) = {{1, INPUT_DESC(overlaps)},
+                                            {2, INPUT_DESC(scores)},
+                                            {3, INPUT_DESC(max_output_size)},
+                                            {4, INPUT_DESC(overlap_threshold)},
+                                            {5, INPUT_DESC(score_threshold)}};
+ATTR_MAP(NonMaxSuppressionWithOverlaps) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(NonMaxSuppressionWithOverlaps) = {{0, OUTPUT_DESC(selected_indices)}};
+REG_ADPT_DESC(NonMaxSuppressionWithOverlaps, prim::kPrimNonMaxSuppressionWithOverlaps->name(),
+              ADPT_DESC(NonMaxSuppressionWithOverlaps))
 }  // namespace mindspore::transform

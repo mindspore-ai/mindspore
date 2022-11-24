@@ -122,4 +122,10 @@ ATTR_MAP(LpNorm) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
                     {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
 OUTPUT_MAP(LpNorm) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LpNorm, prim::kPrimLpNorm->name(), ADPT_DESC(LpNorm))
+
+// Trunc
+INPUT_MAP(Trunc) = {{1, INPUT_DESC(input_x)}};
+ATTR_MAP(Trunc) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Trunc) = {{0, OUTPUT_DESC(output_y)}};
+REG_ADPT_DESC(Trunc, prim::kPrimTrunc->name(), ADPT_DESC(Trunc))
 }  // namespace mindspore::transform
