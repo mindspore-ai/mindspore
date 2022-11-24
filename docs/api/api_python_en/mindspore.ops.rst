@@ -403,7 +403,6 @@ Array Operation
     mindspore.ops.normal
     mindspore.ops.nonzero
     mindspore.ops.numel
-    mindspore.ops.orgqr
     mindspore.ops.permute
     mindspore.ops.population_count
     mindspore.ops.range

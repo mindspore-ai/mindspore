@@ -7120,6 +7120,24 @@ class CTCGreedyDecoder(Primitive):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
+        >>>                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
+        >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
+        >>> decoded_indices, decoded_values, decoded_shape, log_probability = ops.CTCGreedyDecoder()(inputs,
+        >>>                                                                                          sequence_length)
+        >>> print(decoded_indices)
+        [[0 0]
+         [0 1]
+         [1 0]]
+        >>> print(decoded_values)
+        [0 1 0]
+        >>> print(decoded_shape)
+        [2 2]
+        >>> print(log_probability)
+        [[-1.2]
+         [-1.3]]
     """
 
     @prim_attr_register
