@@ -55,7 +55,7 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
       size_v.push_back(static_cast<int64_t>(*tensor_data));
       ++tensor_data;
     }
-  } else if (size_ptr->isa<ValueTuple>()) {
+  } else if (size_ptr->isa<ValueTuple>() && IsValueKnown(size_ptr)) {
     std::vector<ValuePtr> size_vec = size_ptr->cast<ValueTuplePtr>()->value();
     (void)std::transform(size_vec.begin(), size_vec.end(), std::back_inserter(size_v),
                          [](const ValuePtr e) { return GetValue<int64_t>(e); });

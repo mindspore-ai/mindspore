@@ -145,8 +145,12 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
     MS_EXCEPTION(TypeError) << "For " << prim_name << info;
   }
   if (x1_shape->isa<abstract::AbstractTuple>()) {
-    int64_t shape_len = static_cast<int64_t>(GetValue<std::vector<int64_t>>(x1_shape_value).size());
-    shape_shape = std::vector<int64_t>{shape_len};
+    if (IsValueKnown(x1_shape_value)) {
+      int64_t shape_len = static_cast<int64_t>(GetValue<std::vector<int64_t>>(x1_shape_value).size());
+      shape_shape = std::vector<int64_t>{shape_len};
+    } else {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1});
+    }
   }
   std::vector<std::vector<int64_t>> all_shapes = {indices_shape, values_shape, shape_shape, x2_shape};
   bool is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);

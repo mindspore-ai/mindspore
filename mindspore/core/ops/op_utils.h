@@ -100,6 +100,8 @@ ShapeVector ConvertToShapeVector(const abstract::AbstractTuplePtr &shape);
 template <typename T>
 std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list);
 
+bool IsValueKnown(const ValuePtr &value);
+
 constexpr auto kCSRAvgRows = "csr_avg_rows";
 constexpr auto kIsCSR = "is_csr";
 constexpr auto kCSRDenseShape = "dense_shape";

@@ -43,7 +43,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
 
   auto perm_value = input_args[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(perm_value);
-  if (perm_value->isa<AnyValue>()) {
+  if (!IsValueKnown(perm_value)) {
     std::vector<int64_t> output_shape(static_cast<int>(x_shape.size()), -1);
     return std::make_shared<abstract::Shape>(output_shape);
   }

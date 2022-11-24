@@ -72,7 +72,11 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
       return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
   } else {
-    multiples_v = CheckAndConvertUtils::CheckTupleInt("input[multiples]", multiple_value, prim_name);
+    if (IsValueKnown(multiple_value)) {
+      multiples_v = CheckAndConvertUtils::CheckTupleInt("input[multiples]", multiple_value, prim_name);
+    } else {
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    }
   }
 
   for (auto multiple : multiples_v) {

@@ -62,10 +62,8 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
     ShapeVector dynamic_shape(input_grad_shape), min_shape(input_grad_shape), max_shape(input_grad_shape);
     for (int64_t i = 1; i <= input_grad_dims; ++i) {
       dynamic_shape.end()[-i] = abstract::Shape::kShapeDimAny;
-      min_shape.end()[-i] = 0;
-      max_shape.end()[-i] = kMaxShapeAdaptiveAvgPool3DGrap;
     }
-    return std::make_shared<abstract::Shape>(dynamic_shape, min_shape, max_shape);
+    return std::make_shared<abstract::Shape>(dynamic_shape);
   } else {
     std::vector<int64_t> output_shape = input_grad_shape;
     for (int i = 1; i <= orig_input_shape_shape[0]; i++) {

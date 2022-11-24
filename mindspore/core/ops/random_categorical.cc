@@ -57,14 +57,14 @@ void AddNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   const auto &nun_sample_arg = input_args[kInputIndex1];
   if (nun_sample_arg->isa<abstract::AbstractScalar>()) {
     auto num_sample_input_type = nun_sample_arg->BuildType();
+    auto value = nun_sample_arg->BuildValue();
+    if (value->isa<AnyValue>()) {
+      return;
+    }
     if (num_sample_input_type->type_id() == kNumberTypeInt64) {
-      auto num_sample_ptr = nun_sample_arg->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(num_sample_ptr);
-      num_sample = GetValue<int64_t>(num_sample_ptr->BuildValue());
+      num_sample = GetValue<int64_t>(value);
     } else if (num_sample_input_type->type_id() == kNumberTypeInt32) {
-      auto num_sample_ptr = nun_sample_arg->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(num_sample_ptr);
-      num_sample = GetValue<int32_t>(num_sample_ptr->BuildValue());
+      num_sample = GetValue<int32_t>(value);
     } else {
       MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
                               << TypeIdToString(num_sample_input_type->type_id()) << ".";
@@ -103,14 +103,14 @@ void AddSeed(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input
   const auto &seed_arg = input_args[kInputIndex2];
   if (seed_arg->isa<abstract::AbstractScalar>()) {
     auto seed_input_type = seed_arg->BuildType();
+    auto value = seed_arg->BuildValue();
+    if (value->isa<AnyValue>()) {
+      return;
+    }
     if (seed_input_type->type_id() == kNumberTypeInt64) {
-      auto seed_ptr = seed_arg->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(seed_ptr);
-      seed = GetValue<int64_t>(seed_ptr->BuildValue());
+      seed = GetValue<int64_t>(value);
     } else if (seed_input_type->type_id() == kNumberTypeInt32) {
-      auto seed_ptr = seed_arg->cast<abstract::AbstractScalarPtr>();
-      MS_EXCEPTION_IF_NULL(seed_ptr);
-      seed = GetValue<int32_t>(seed_ptr->BuildValue());
+      seed = GetValue<int32_t>(value);
     } else {
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "' third input build type is invalid:" << TypeIdToString(seed_input_type->type_id())

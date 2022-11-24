@@ -43,9 +43,8 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
   int64_t k_v = 0;
-
-  if ((IsDynamicRank(x_shape)) || ((input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) &&
-                                   (!input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()))) {
+  auto input1_value = input_args[kInputIndex1]->BuildValue();
+  if ((IsDynamicRank(x_shape)) || !IsValueKnown(input1_value)) {
     auto unknown_shape_p = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{unknown_shape_p, unknown_shape_p});
@@ -53,15 +52,14 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
 
   // 2rd input is a Tensor when TopK is a dynamic shape operator
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    auto k_ptr = input_args[kInputIndex1]->BuildValue();
-    MS_EXCEPTION_IF_NULL(k_ptr);
-    if (k_ptr->isa<tensor::Tensor>()) {
-      auto k_tensor_ptr = k_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(input1_value);
+    if (input1_value->isa<tensor::Tensor>()) {
+      auto k_tensor_ptr = input1_value->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(k_tensor_ptr);
       k_v = *static_cast<int32_t *>(k_tensor_ptr->data_c());
     }
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
-    k_v = GetValue<int64_t>(input_args[kInputIndex1]->BuildValue());
+    k_v = GetValue<int64_t>(input1_value);
   } else {
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex1]->type_name();
   }

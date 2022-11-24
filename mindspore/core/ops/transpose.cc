@@ -52,7 +52,9 @@ ShapeVector CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args,
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto input_value = input_args[kInputIndex1]->BuildValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractTuple>()) {
-    return CheckAndConvertUtils::CheckTupleInt("perm", input_value, op_name);
+    if (IsValueKnown(input_value)) {
+      return CheckAndConvertUtils::CheckTupleInt("perm", input_value, op_name);
+    }
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     if (input_value->isa<tensor::Tensor>()) {
       return CheckAndConvertUtils::CheckTensorIntValue("perm", input_value, op_name);

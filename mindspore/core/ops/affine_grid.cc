@@ -49,8 +49,7 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
   (void)CheckAndConvertUtils::CheckInteger("rank of 'theta'", theta_rank, kEqual, RANK_THETA, prim_name);
   auto output_size_arg = input_args[kInputIndex1];
   auto output_size_value_ptr = output_size_arg->BuildValue();
-  if ((output_size_arg->isa<abstract::AbstractTuple>() && output_size_value_ptr->isa<ValueTuple>()) ||
-      (output_size_arg->isa<abstract::AbstractTensor>() && output_size_value_ptr->isa<tensor::Tensor>())) {
+  if (IsValueKnown(output_size_value_ptr)) {
     ShapeVector output_size_val;
     if (output_size_value_ptr->isa<ValueTuple>()) {
       output_size_val = CheckAndConvertUtils::CheckTupleInt("input[output_size]", output_size_value_ptr, prim_name);
@@ -95,7 +94,7 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
                                << "and the size of 'output_size' is " << output_size_val_size << ".";
     }
     return std::make_shared<abstract::Shape>(grid_shape);
-  } else if (output_size_arg->isa<abstract::AbstractTensor>()) {
+  } else if (output_size_arg->isa<abstract::AbstractTensor>() || output_size_arg->isa<abstract::AbstractTuple>()) {
     ShapeVector grid_shape = {-2};
     return std::make_shared<abstract::Shape>(grid_shape);
   } else {

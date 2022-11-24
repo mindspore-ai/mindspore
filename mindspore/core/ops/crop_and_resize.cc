@@ -68,7 +68,7 @@ class CropAndResizeInfer : public abstract::OpInferBase {
                                "For primitive[" + prim_name + "], the [crop_size] typeid is a nullptr.");
     auto value_ptr = input_args[kInputIndex3]->BuildValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
-    if (value_ptr->isa<AnyValue>()) {
+    if (!IsValueKnown(value_ptr)) {
       return std::make_shared<abstract::Shape>(
         ShapeVector{num_boxes, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, out_channel});
     }
