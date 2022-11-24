@@ -797,6 +797,13 @@ int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, cons
   MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr");
   MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
   MS_CHECK_TRUE_MSG(op_node != nullptr, RET_NULL_PTR, "op_node is nullptr");
+  auto value_node = cnode->input(index)->cast<ValueNodePtr>();
+  MS_ASSERT(value_node != nullptr);
+  auto key = std::make_pair(value_node, 0);
+  if (node_id_map_.find(key) != node_id_map_.end()) {
+    op_node->inputIndex.emplace_back(node_id_map_[key]);
+    return RET_OK;
+  }
   DataInfo data_info;
   auto status =
     FetchDataFromValueNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info, true);
@@ -809,13 +816,12 @@ int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, cons
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
   MS_CHECK_TRUE_MSG(schema_tensor != nullptr, RET_ERROR, "schema is nullptr");
-  schema_tensor->name = cnode->input(index)->fullname_with_scope();
+  schema_tensor->name = value_node->fullname_with_scope();
   schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->dataType = data_info.data_type_;
   schema_tensor->dims = data_info.shape_;
   schema_tensor->data = data_info.data_;
 
-  auto key = std::make_pair(cnode->input(index), 0);
   node_id_map_[key] = meta_graphT->allTensors.size();
   op_node->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
