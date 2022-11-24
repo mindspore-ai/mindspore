@@ -33,6 +33,15 @@ std::function<bool(const CNodePtr &)> check_node = [](const CNodePtr &cnode) {
   if (IsSpecialType(cnode) || CheckPrimitiveType(cnode, prim::kPrimTranspose)) {
     return true;
   }
+  if (CheckPrimitiveType(cnode, prim::kPrimConcat)) {
+    // if concat's pre node is MakeTuple, the shape is complex, not optimize this case
+    if (cnode->size() > 1) {
+      auto pre_node = cnode->input(1)->cast<CNodePtr>();
+      if (CheckPrimitiveType(pre_node, prim::kPrimMakeTuple)) {
+        return false;
+      }
+    }
+  }
   TransposeStrategy transpose_strategy;
   return transpose_strategy.CanChangeOpAxis(cnode);
 };
