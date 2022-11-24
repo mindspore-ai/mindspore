@@ -54,6 +54,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Conv3D
     mindspore.ops.Conv3DTranspose
     mindspore.ops.CTCGreedyDecoder
+    mindspore.ops.DataFormatVecPermute
     mindspore.ops.Dilation2D
     mindspore.ops.Dropout
     mindspore.ops.Dropout2D
@@ -269,6 +270,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
     mindspore.ops.Cross
+    mindspore.ops.CumulativeLogsumexp
     mindspore.ops.Gcd
 
 逐元素运算
@@ -675,6 +677,7 @@ Parameter操作算子
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.Assert
     mindspore.ops.HistogramSummary
     mindspore.ops.ImageSummary
     mindspore.ops.ScalarSummary
