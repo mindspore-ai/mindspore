@@ -77,3 +77,14 @@ Utils
     mindspore.train.get_metric_fn
     mindspore.train.names
     mindspore.train.rearrange_inputs
+
+Thor
+---------------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.train.ConvertModelUtils
+    mindspore.train.ConvertNetUtils
