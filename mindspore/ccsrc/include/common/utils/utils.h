@@ -886,6 +886,7 @@ constexpr auto kAttrNeedGradFlagOfInputs = "need_grad_flag_of_inputs";
 constexpr auto kAttrIsCNodeNeedGrad = "is_cnode_need_grad";
 constexpr auto kAttrJitLevel = "jit_level";
 constexpr auto kAttrJitLevelO2 = "O2";
+constexpr auto kAttrJitLevelO3 = "O3";
 constexpr auto kAttrCellJitConfigDict = "_jit_config_dict";
 constexpr auto kAttrBinaryOutput = "binary_output";
 constexpr auto kAttrMinLength = "minlength";

@@ -1740,5 +1740,16 @@ abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node
   }
   return elements[index];
 }
+
+std::string AnfAlgo::GetJitLevel(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (!func_graph->has_attr(kAttrJitLevel)) {
+    MS_LOG(INFO) << "The func_graph:" << func_graph->ToString() << " has no jit_level attr, return default: None.";
+    return "";
+  }
+  auto jit_level_value = func_graph->get_attr(kAttrJitLevel);
+  auto jit_level = GetValue<std::string>(jit_level_value);
+  return jit_level;
+}
 }  // namespace common
 }  // namespace mindspore

@@ -391,8 +391,9 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   }
 
   // todo: waiting for GraphExecutor
+  auto jit_level = common::AnfAlgo::GetJitLevel(func_graph);
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  if (MsContext::GetInstance()->backend_policy() == "ge") {
+  if (MsContext::GetInstance()->backend_policy() == "ge" && (jit_level == "O3" || jit_level == "")) {
     auto manager = MakeManager();
     MS_EXCEPTION_IF_NULL(manager);
     for (const auto &graph : all_graphs) {

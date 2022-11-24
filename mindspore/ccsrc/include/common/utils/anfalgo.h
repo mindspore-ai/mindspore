@@ -285,6 +285,9 @@ class COMMON_EXPORT AnfAlgo {
 
   static std::string GetTensorValueString(const tensor::TensorPtr &tensor);
   static abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
+
+  // Get jit level from func_graph
+  static std::string GetJitLevel(const FuncGraphPtr &func_graph);
 };
 }  // namespace common
 }  // namespace mindspore

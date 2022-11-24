@@ -311,9 +311,11 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   func_graph_to_kernel_graph_ids_.clear();
   control_nodes_.clear();
 
+  auto jit_level = common::AnfAlgo::GetJitLevel(func_graph);
   const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_}, jit_level);
   MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
   bool all_support = device_context->PartitionGraph(func_graph);
   if (all_support) {
     auto run_mode = device_context->GetRunMode(func_graph);
@@ -331,7 +333,8 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
-  if (ms_execution_mode_ == kGraphMode &&
+  if ((ms_execution_mode_ == kGraphMode ||
+       (ms_execution_mode_ == kPynativeMode && jit_level == "O3" && context_ptr->backend_policy() == "ge")) &&
       ((!graph_compiler_info->graphs_.empty()) || graph_compiler_info->control_nodes_.size() > 1)) {
     // Transform graph to actor DAG, and schedule the actor DAG.
     ParseControlNodes(*graph_compiler_info);

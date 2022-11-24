@@ -226,13 +226,14 @@ void DeviceContextManager::ClearDeviceContexts() {
   device_contexts_.clear();
 }
 
-DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key) {
+DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key,
+                                                              string jit_level /* ="" */) {
   std::string device_context_key_str = device_context_key.ToString();
   std::string name = device_context_key.device_name_;
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() == "ge") {
+  if (ms_context->backend_policy() == "ge" && (jit_level == kAttrJitLevelO3 || jit_level == "")) {
     name = "GE";
     device_context_key_str = "GE_0";
   }
