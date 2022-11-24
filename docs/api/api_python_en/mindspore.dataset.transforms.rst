@@ -155,6 +155,7 @@ Transforms
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.dataset.text.AddToken
     mindspore.dataset.text.BasicTokenizer
     mindspore.dataset.text.BertTokenizer
     mindspore.dataset.text.CaseFold

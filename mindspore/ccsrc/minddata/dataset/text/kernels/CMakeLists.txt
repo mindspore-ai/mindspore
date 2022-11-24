@@ -13,6 +13,7 @@ if(NOT (CMAKE_SYSTEM_NAME MATCHES "Windows"))
                 whitespace_tokenizer_op.cc)
 endif()
 add_library(text-kernels OBJECT
+        add_token_op.cc
         data_utils.cc
         lookup_op.cc
         jieba_tokenizer_op.cc

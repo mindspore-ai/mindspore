@@ -23,6 +23,16 @@
 
 namespace mindspore {
 namespace dataset {
+PYBIND_REGISTER(AddTokenOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<text::AddTokenOperation, TensorOperation, std::shared_ptr<text::AddTokenOperation>>(
+                    *m, "AddTokenOperation")
+                    .def(py::init([](const std::string &token, bool begin) {
+                      auto add_token = std::make_shared<text::AddTokenOperation>(token, begin);
+                      THROW_IF_ERROR(add_token->ValidateParams());
+                      return add_token;
+                    }));
+                }));
+
 #ifdef ENABLE_ICU4C
 
 PYBIND_REGISTER(

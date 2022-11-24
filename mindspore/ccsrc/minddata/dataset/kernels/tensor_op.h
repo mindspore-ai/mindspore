@@ -133,6 +133,7 @@ constexpr char kVerticalFlipOp[] = "VerticalFlipOp";
 constexpr char kDvppDecodeVideoOp[] = "DvppDecodeVideoOp";
 
 // text
+constexpr char kAddTokenOp[] = "AddTokenOp";
 constexpr char kBasicTokenizerOp[] = "BasicTokenizerOp";
 constexpr char kBertTokenizerOp[] = "BertTokenizerOp";
 constexpr char kCaseFoldOp[] = "CaseFoldOp";

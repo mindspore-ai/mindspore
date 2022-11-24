@@ -35,6 +35,7 @@ class Vocab;
 namespace text {
 constexpr int kStatusSum = 4;
 // Char arrays storing name of corresponding classes (in alphabetical order)
+constexpr char kAddTokenOperation[] = "AddToken";
 constexpr char kBasicTokenizerOperation[] = "BasicTokenizer";
 constexpr char kBertTokenizerOperation[] = "BertTokenizer";
 constexpr char kCaseFoldOperation[] = "CaseFold";
@@ -56,6 +57,28 @@ constexpr char kWhitespaceTokenizerOperation[] = "WhitespaceTokenizer";
 constexpr char kWordpieceTokenizerOperation[] = "WordpieceTokenizer";
 
 /* ####################################### Derived TensorOperation classes ################################# */
+
+class AddTokenOperation : public TensorOperation {
+ public:
+  /// \brief Constructor.
+  /// \param[in] token The token to be added.
+  /// \param[in] begin Whether to insert token at start or end of sequence.
+  AddTokenOperation(const std::string &token, bool begin);
+
+  ~AddTokenOperation();
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override;
+
+  Status to_json(nlohmann::json *out_json) override;
+
+ private:
+  std::string token_;
+  bool begin_;
+};
 
 #ifndef _WIN32
 class BasicTokenizerOperation : public TensorOperation {

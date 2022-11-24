@@ -49,7 +49,7 @@ import mindspore._c_dataengine as cde
 from mindspore.common import dtype as mstype
 
 from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType, SentencePieceVocab
-from .validators import check_lookup, check_jieba_add_dict, check_to_vectors, \
+from .validators import check_add_token, check_lookup, check_jieba_add_dict, check_to_vectors, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer, \
     check_wordpiece_tokenizer, check_regex_replace, check_regex_tokenizer, check_basic_tokenizer, check_ngram, \
     check_pair_truncate, check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow, \
@@ -89,6 +89,47 @@ DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
     SPieceTokenizerOutType.STRING: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KString,
     SPieceTokenizerOutType.INT: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KINT
 }
+
+
+class AddToken(TextTensorOperation):
+    """
+    Add token to beginning or end of sequence.
+
+    Args:
+        token (str): The token to be added.
+        begin (bool, optional): Whether to insert token at start or end of sequence. Default: True.
+
+    Raises:
+        TypeError: If `token` is not of type string.
+        TypeError: If `begin` is not of type bool.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> dataset = ds.NumpySlicesDataset(data={"text": [['a', 'b', 'c', 'd', 'e']]})
+        >>> # Data before
+        >>> # |           text            |
+        >>> # +---------------------------+
+        >>> # | ['a', 'b', 'c', 'd', 'e'] |
+        >>> # +---------------------------+
+        >>> add_token_op = text.AddToken(token='TOKEN', begin=True)
+        >>> dataset = dataset.map(operations=add_token_op)
+        >>> # Data after
+        >>> # |           text            |
+        >>> # +---------------------------+
+        >>> # | ['TOKEN', 'a', 'b', 'c', 'd', 'e'] |
+        >>> # +---------------------------+
+    """
+
+    @check_add_token
+    def __init__(self, token, begin=True):
+        super().__init__()
+        self.token = token
+        self.begin = begin
+
+    def parse(self):
+        return cde.AddTokenOperation(self.token, self.begin)
 
 
 class JiebaTokenizer(TextTensorOperation):

@@ -2984,3 +2984,19 @@ TEST_F(MindDataTestExecute, TestPerspective) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: AddToken op
+/// Description: Test basic usage of AddToken op
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestAddToken) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAddToken.";
+  std::vector<std::string> input_vectors = {"a", "b", "c", "d", "e"};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(input_vectors, &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> add_token_op = std::make_shared<text::AddToken>("Token", true);
+  // apply AddToken
+  mindspore::dataset::Execute trans({add_token_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}

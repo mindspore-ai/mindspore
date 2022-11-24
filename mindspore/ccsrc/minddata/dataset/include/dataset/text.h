@@ -234,6 +234,36 @@ class SentencePieceVocab {
 
 // Transform operations for text
 namespace text {
+/// \brief Add token to beginning or end of sequence.
+class DATASET_API AddToken final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] token The token to be added.
+  /// \param[in] begin Whether to insert token at start or end of sequence. Default: true.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto add_token_op = text::AddToken(token='TOKEN', begin=True);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({add_token_op},   // operations
+  ///                            {"text"});       // input columns
+  /// \endcode
+  explicit AddToken(const std::string &token, bool begin = true);
+
+  /// \brief Destructor.
+  ~AddToken() override = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 #ifndef _WIN32
 /// \brief Tokenize a scalar tensor of UTF-8 string by specific rules.
 /// \note BasicTokenizer is not supported on the Windows platform yet.

@@ -70,8 +70,8 @@ import platform
 
 from . import transforms
 from . import utils
-from .transforms import JiebaTokenizer, Lookup, Ngram, PythonTokenizer, SentencePieceTokenizer, SlidingWindow, \
-    ToNumber, ToVectors, TruncateSequencePair, UnicodeCharTokenizer, WordpieceTokenizer
+from .transforms import AddToken, JiebaTokenizer, Lookup, Ngram, PythonTokenizer, SentencePieceTokenizer, \
+    SlidingWindow, ToNumber, ToVectors, TruncateSequencePair, UnicodeCharTokenizer, WordpieceTokenizer
 from .utils import CharNGram, FastText, GloVe, JiebaMode, NormalizeForm, SentencePieceModel, SentencePieceVocab, \
     SPieceTokenizerLoadType, SPieceTokenizerOutType, Vectors, Vocab, to_bytes, to_str
 
