@@ -130,6 +130,14 @@ bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   auto *y = reinterpret_cast<T *>(inputs[kIndex2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   CheckParams();
+  // check indices's value is valid
+  auto axis = LongToSize(axis_);
+  for (int64_t i = 0; i < indices_shape[0]; ++i) {
+    if (indices[i] < 0 || indices[i] >= var_shape[axis]) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'indices' must be in range [" << 0 << ", "
+                        << var_shape[axis] << "), but got " << indices[i] << ".";
+    }
+  }
   size_t x_axis_inner_size = x_axis_size_ * inner_size_;
   size_t y_axis_inner_size = y_axis_size_ * inner_size_;
 
