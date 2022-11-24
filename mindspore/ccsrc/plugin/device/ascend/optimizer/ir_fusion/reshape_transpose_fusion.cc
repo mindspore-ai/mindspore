@@ -48,9 +48,8 @@ bool CheckMatmulNeighborNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &
 
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto user_list = manager->node_users();
-  auto iter = user_list.find(down_node);
-  if (iter != user_list.end()) {
+  auto iter = manager->node_users().find(down_node);
+  if (iter != manager->node_users().end()) {
     if (std::any_of(iter->second.begin(), iter->second.end(), [](const std::pair<AnfNodePtr, int64_t> &kernel) {
           return IsPrimitiveCNode(kernel.first, prim::kPrimMatMul) ||
                  IsPrimitiveCNode(kernel.first, prim::kPrimBatchMatMul);
