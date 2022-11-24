@@ -4875,6 +4875,11 @@ class ScatterNdMax(_ScatterNdOp):
           [1 1 1 1]]]
     """
 
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterNdMax"""
+        super().__init__(use_locking)
+
 
 class ScatterNdMin(_ScatterNdOp):
     r"""
@@ -4922,6 +4927,11 @@ class ScatterNdMin(_ScatterNdOp):
           [10 10 10 10]
           [10 10 10 10]]]
     """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterNdMin"""
+        super().__init__(use_locking)
 
 
 class ScatterNonAliasingAdd(Primitive):
