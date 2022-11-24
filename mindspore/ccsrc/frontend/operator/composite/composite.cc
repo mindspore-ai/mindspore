@@ -19,6 +19,7 @@
 #include "frontend/operator/composite/composite.h"
 #include <algorithm>
 #include <tuple>
+#include <regex>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
@@ -33,6 +34,7 @@
 #include "pipeline/jit/debug/trace.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -862,6 +864,22 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   if (fn == nullptr) {
     MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
                       << args_spec_list[0]->ToString();
+  }
+  if (fn->isa<abstract::PartialAbstractClosure>()) {
+    auto partial_abs = fn->cast<abstract::PartialAbstractClosurePtr>();
+    const auto &args = partial_abs->args();
+    if (!args.empty()) {
+      auto value = args[0]->BuildValue();
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<parse::MsClassObject>()) {
+        auto value_obj = dyn_cast_ptr<parse::MsClassObject>(value);
+        auto obj_name = std::regex_replace(value_obj->name(), std::regex("MsClassObject:"), "");
+        MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type "
+                          << "object, but got object with jit_class type" << obj_name << ".\n'GradOperation' "
+                          << "does not support '__call__' magic methods as object.\nFor more details, "
+                          << "please refer to https://www.mindspore.cn/search?inputValue=Gradoperation";
+      }
+    }
   }
 
   // Waiting for implementation.
