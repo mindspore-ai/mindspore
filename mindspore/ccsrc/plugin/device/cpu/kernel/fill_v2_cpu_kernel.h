@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -32,24 +33,23 @@ class FillV2CpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
-  template <typename T>
-  void LaunchKernel(AddressPtr *output, const AddressPtr &value);
-
-  template <typename T>
-  void CalculateDims(const AddressPtr &input, std::vector<int64_t> *dims) const;
-
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  TypeId output_dtype_{kTypeUnknown};
-  TypeId input1_dtype_{kTypeUnknown};
-  ShapeVector output_shape_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+
+  using FillV2LaunchFunc = std::function<bool(FillV2CpuKernelMod *, const std::vector<AddressPtr> &,
+                                              const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, FillV2LaunchFunc>> func_list_;
+  FillV2LaunchFunc kernel_func_;
 };
 }  // namespace kernel
 }  // namespace mindspore
