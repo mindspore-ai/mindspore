@@ -95,9 +95,9 @@ class FillV2(Primitive):
 
 
 class ExtractImagePatches(Primitive):
-    """
+    r"""
     Extracts patches from images.
-    The input tensor must be a 4-D tensor and the data format is NHWC.
+    The input tensor must be a 4-D tensor and the data format is NCHW.
 
     Args:
         ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
@@ -114,12 +114,26 @@ class ExtractImagePatches(Primitive):
             - valid: Means that the taken patch area must be completely covered in the original image.
 
     Inputs:
-        - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_row, in_col, in_depth] and
+        - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
           data type is number.
 
     Outputs:
         Tensor, a 4-D tensor whose data type is same as 'input_x',
-        and the shape is [out_batch, out_row, out_col, out_depth], the out_batch is the same as the in_batch.
+        and the shape is [out_batch, out_depth, out_row, out_col], Where the out_batch is the same as the in_batch
+        and
+        .. math::
+            out_depth=ksize\_row * ksize\_col * in\_depth
+        and
+        if 'padding' is "valid":
+        .. math::
+            out\_row=floor((in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) / stride\_row) + 1
+            out\_col=floor((in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) / stride\_col) + 1
+        if 'padding' is "same":
+        .. math::
+            out\_row=floor((in\_row - 1) / stride\_row) + 1
+            out\_col=floor((in\_col - 1) / stride\_col) + 1
+        Supported Platforms:
+        ``GPU`` ``Ascend``
     """
 
     @prim_attr_register
