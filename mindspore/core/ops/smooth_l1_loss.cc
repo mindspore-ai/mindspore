@@ -50,10 +50,7 @@ std::string SmoothL1Loss::get_reduction() const {
 namespace {
 abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto prediction = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   auto prediction_shape = prediction->shape();
@@ -69,33 +66,29 @@ abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
   if (reduction == kNone) {
     return prediction_shape;
   } else {
-    ShapeVector shape_out{1};
+    ShapeVector shape_out{};
     return std::make_shared<abstract::Shape>(shape_out);
   }
 }
 
 TypePtr SmoothL1LossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   // Infer type
-  std::set<TypePtr> valid_types{};
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-  if (is_ascend) {
-    valid_types = {kFloat16, kFloat32};
-  } else {
-    valid_types = {kFloat16, kFloat32, kFloat64};
-  }
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
 
   std::map<std::string, TypePtr> args;
   (void)args.emplace("scale", input_args[kInputIndex0]->BuildType());
   (void)args.emplace("bias", input_args[kInputIndex1]->BuildType());
-  auto prediction_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
-  return prediction_type;
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
+  return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
 
 AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto infer_type = SmoothL1LossInferType(primitive, input_args);
   auto infer_shape = SmoothL1LossInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
