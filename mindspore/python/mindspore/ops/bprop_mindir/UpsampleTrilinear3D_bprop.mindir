@@ -1,0 +1,38 @@
+
+0.1.1	MindSpore*2.0.0: 
+‹2get_bprop_upsample_trilinear_3d_grad.2:[CNode]13:12get_bprop_upsample_trilinear_3d_grad.2:[CNode]13:1"REF::bprop.4:Default/bprop.4-op0
+ð2get_bprop_upsample_trilinear_3d_grad.2:get_shape:22get_bprop_upsample_trilinear_3d_grad.2:get_shape:2"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op1
+A[ValueNode]14[ValueNode]14"Constant*
+value*output_size€
+Í
++get_bprop_upsample_trilinear_3d_grad.2:self
+[ValueNode]144get_bprop_upsample_trilinear_3d_grad.2:output_size:44get_bprop_upsample_trilinear_3d_grad.2:output_size:4"REF::getattr:5:Default/getattr-op3
+<[ValueNode]15[ValueNode]15"Constant*
+value*scales€
+Ã
++get_bprop_upsample_trilinear_3d_grad.2:self
+[ValueNode]15/get_bprop_upsample_trilinear_3d_grad.2:scales:6/get_bprop_upsample_trilinear_3d_grad.2:scales:6"REF::getattr:5:Default/getattr-op4
+C[ValueNode]16[ValueNode]16"Constant*
+value*align_corners€
+Ñ
++get_bprop_upsample_trilinear_3d_grad.2:self
+[ValueNode]166get_bprop_upsample_trilinear_3d_grad.2:align_corners:76get_bprop_upsample_trilinear_3d_grad.2:align_corners:7"REF::getattr:5:Default/getattr-op5&get_bprop_upsample_trilinear_3d_grad.2*-
++get_bprop_upsample_trilinear_3d_grad.2:self*0
+.get_bprop_upsample_trilinear_3d_grad.2:input_x*,
+*get_bprop_upsample_trilinear_3d_grad.2:out*-
++get_bprop_upsample_trilinear_3d_grad.2:dout24
+2get_bprop_upsample_trilinear_3d_grad.2:[CNode]13:1:@de557b6ab60e23e396148159c8aa5c5a3a0a77cf25b1b19f25b6e067c283d1e4J/grad_nn_ops.pyB 
+”
+.get_bprop_upsample_trilinear_3d_grad.2:input_xbprop.4:[CNode]1:3bprop.4:[CNode]1:3"7REF::get_bprop_upsample_trilinear_3d_grad.2:get_shape:2:2
+‹
+bprop.4:[CNode]1:3
+4get_bprop_upsample_trilinear_3d_grad.2:output_size:4
+/get_bprop_upsample_trilinear_3d_grad.2:scales:6
+6get_bprop_upsample_trilinear_3d_grad.2:align_corners:7bprop.4:input_grad:8bprop.4:input_grad:8"JREF::ClassType::mindspore.ops.operations._grad_ops.UpsampleTrilinear3DGrad:^Default/MindIRClassType:class 'mindspore.ops.operations._grad_ops.UpsampleTrilinear3DGrad'-op6
+g
++get_bprop_upsample_trilinear_3d_grad.2:doutbprop.4:dx:9bprop.4:dx:9"REF::bprop.4:input_grad:8:7
+p
+bprop.4:dx:9bprop.4:[CNode]3:10bprop.4:[CNode]3:10"REF::S-Prim-MakeTuple:11:Default/S-Prim-MakeTuple-op8bprop.42
+bprop.4:[CNode]3:10Pb
+	getattr:5getattrb'
+S-Prim-MakeTuple:11S-Prim-MakeTupleh

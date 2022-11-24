@@ -19,6 +19,10 @@
 
 #include <string>
 #include <memory>
+#include <utility>
+#include <vector>
+
+#include "ir/value.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -29,13 +33,70 @@ namespace irpass {
 class ClassTypeResolve : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsValueNode<parse::ClassType>(node)) {
+    if (!IsValueNode<parse::ClassType>(node) && !IsValueNode<ValueDictionary>(node) &&
+        !IsValueNode<ValueSequence>(node) && !IsValueNode<parse::NameSpace>(node)) {
       return nullptr;
     }
-    auto class_type = GetValueNode<parse::ClassTypePtr>(node)->name();
-    return NewValueNode(std::make_shared<MindIRClassType>(class_type));
+    bool need_convert = false;
+    auto value_node = node->cast<ValueNodePtr>();
+    auto value = value_node->value();
+    auto new_value = ConvertValue(value, &need_convert);
+    if (need_convert) {
+      return NewValueNode(new_value);
+    }
+    return nullptr;
   }
+
+ private:
+  ValuePtr ConvertValueSequence(const ValuePtr &value, bool *need_convert);
+  ValuePtr ConvertValue(const ValuePtr &value, bool *need_convert);
 };
+ValuePtr ClassTypeResolve::ConvertValue(const ValuePtr &value, bool *need_convert) {
+  if (value->isa<parse::ClassType>()) {
+    auto class_type = value->cast<parse::ClassTypePtr>()->name();
+    (*need_convert) = true;
+    return std::make_shared<MindIRClassType>(class_type);
+  }
+  if (value->isa<parse::NameSpace>()) {
+    auto name_space = value->cast<parse::NameSpacePtr>()->name();
+    (*need_convert) = true;
+    return std::make_shared<MindIRNameSpace>(name_space);
+  }
+  if (value->isa<ValueDictionary>()) {
+    auto dic = value->cast<ValueDictionaryPtr>();
+    auto dic_pairs = dic->value();
+    std::vector<std::pair<ValuePtr, ValuePtr>> convert_dict;
+    for (const auto &item : dic_pairs) {
+      (void)convert_dict.emplace_back(std::make_pair(item.first, ConvertValue(item.second, need_convert)));
+    }
+    if (need_convert) {
+      return std::make_shared<ValueDictionary>(convert_dict);
+    }
+  }
+  if (value->isa<ValueSequence>()) {
+    return ConvertValueSequence(value, need_convert);
+  }
+  return value;
+}
+
+ValuePtr ClassTypeResolve::ConvertValueSequence(const ValuePtr &value, bool *need_convert) {
+  MS_EXCEPTION_IF_NULL(value);
+  auto seq_value = value->cast<ValueSequencePtr>();
+  if (seq_value == nullptr) {
+    return nullptr;
+  }
+  auto vec_seq = std::vector<ValuePtr>();
+  for (size_t i = 0; i < seq_value->size(); ++i) {
+    (void)vec_seq.emplace_back(ConvertValue((*seq_value)[i], need_convert));
+  }
+  if (!need_convert) {
+    return value;
+  }
+  if (value->isa<ValueTuple>()) {
+    return std::make_shared<ValueTuple>(vec_seq);
+  }
+  return std::make_shared<ValueList>(vec_seq);
+}
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

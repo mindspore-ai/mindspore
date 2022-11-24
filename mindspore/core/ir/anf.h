@@ -903,7 +903,9 @@ class MS_CORE_API Value : public Base {
   /// \brief Get the abstract value of Value.
   ///
   /// \return Abstract value of Value.
-  virtual abstract::AbstractBasePtr ToAbstract() { MS_LOG(EXCEPTION) << "ToAbstract error"; }
+  virtual abstract::AbstractBasePtr ToAbstract() {
+    MS_LOG(EXCEPTION) << "ToAbstract error : The class " << type_name() << "has no implement ToAbstract yet.";
+  }
 
   /// \brief Check whether the input is the current Value object.
   ///

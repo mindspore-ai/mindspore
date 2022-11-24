@@ -1,17 +1,16 @@
 
-0.1.1	MindSpore*2.0.0:≥
-q!get_bprop_relu.1273:[CNode]1274:1!get_bprop_relu.1273:[CNode]1274:1"REF::bprop.1275:Default/bprop.1275-op987
-ƒ get_bprop_relu.1273:input_grad:2 get_bprop_relu.1273:input_grad:2";REF::ClassType::mindspore.ops.operations._grad_ops.ReluGrad:ADefault/class 'mindspore.ops.operations._grad_ops.ReluGrad'-op988get_bprop_relu.1273*
-get_bprop_relu.1273:self*
-get_bprop_relu.1273:x*
-get_bprop_relu.1273:out*
-get_bprop_relu.1273:dout2#
-!get_bprop_relu.1273:[CNode]1274:1:@92fe953ca276bba8b43b979895a017d6283e879df08b1a28bbae49b041d910b5J/grad_nn_ops.pyB¨
-Å
-get_bprop_relu.1273:dout
-get_bprop_relu.1273:outbprop.1275:dx:3bprop.1275:dx:3"%REF::get_bprop_relu.1273:input_grad:2:989
-~
-bprop.1275:dx:3bprop.1275:[CNode]1276:4bprop.1275:[CNode]1276:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op990
-bprop.12752
-bprop.1275:[CNode]1276:4Pb&
+0.1.1	MindSpore*2.0.0:í
+]get_bprop_relu.1:[CNode]8:1get_bprop_relu.1:[CNode]8:1"REF::bprop.3:Default/bprop.3-op0
+Ãget_bprop_relu.1:input_grad:2get_bprop_relu.1:input_grad:2";REF::ClassType::mindspore.ops.operations._grad_ops.ReluGrad:ODefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.ReluGrad'-op1get_bprop_relu.1*
+get_bprop_relu.1:self*
+get_bprop_relu.1:x*
+get_bprop_relu.1:out*
+get_bprop_relu.1:dout2
+get_bprop_relu.1:[CNode]8:1:@92fe953ca276bba8b43b979895a017d6283e879df08b1a28bbae49b041d910b5J/grad_nn_ops.pyBÄ
+p
+get_bprop_relu.1:dout
+get_bprop_relu.1:outbprop.3:dx:3bprop.3:dx:3""REF::get_bprop_relu.1:input_grad:2:2
+m
+bprop.3:dx:3bprop.3:[CNode]2:4bprop.3:[CNode]2:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.32
+bprop.3:[CNode]2:4Pb&
 S-Prim-MakeTuple:5S-Prim-MakeTupleh

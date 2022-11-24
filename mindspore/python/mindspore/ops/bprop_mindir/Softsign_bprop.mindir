@@ -1,0 +1,33 @@
+
+0.1.1	MindSpore*2.0.0:ð
+g get_bprop_softsign.2:[CNode]18:1 get_bprop_softsign.2:[CNode]18:1"REF::bprop.7:Default/bprop.7-op0
+ºget_bprop_softsign.2:mul:2get_bprop_softsign.2:mul:2"5REF::ClassType::mindspore.ops.operations.math_ops.Mul:IDefault/MindIRClassType:class 'mindspore.ops.operations.math_ops.Mul'-op1
+ºget_bprop_softsign.2:div:3get_bprop_softsign.2:div:3"5REF::ClassType::mindspore.ops.operations.math_ops.Div:IDefault/MindIRClassType:class 'mindspore.ops.operations.math_ops.Div'-op2
+Æget_bprop_softsign.2:square:4get_bprop_softsign.2:square:4"8REF::ClassType::mindspore.ops.operations.math_ops.Square:LDefault/MindIRClassType:class 'mindspore.ops.operations.math_ops.Square'-op3
+Äget_bprop_softsign.2:absolute:5get_bprop_softsign.2:absolute:5"5REF::ClassType::mindspore.ops.operations.math_ops.Abs:IDefault/MindIRClassType:class 'mindspore.ops.operations.math_ops.Abs'-op4get_bprop_softsign.2*
+get_bprop_softsign.2:self*
+get_bprop_softsign.2:x*
+get_bprop_softsign.2:out*
+get_bprop_softsign.2:dout2"
+ get_bprop_softsign.2:[CNode]18:1:@c01fde5841c04ea3da368f04a0559c317edc5a8328033ec7ca692b8c2ee0805aJ/grad_nn_ops.pyB¶
+i
+get_bprop_softsign.2:xbprop.7:[CNode]1:6bprop.7:[CNode]1:6"$REF::get_bprop_softsign.2:absolute:5:5
+6[ValueNode]19[ValueNode]19"Constant*
+value€
+|
+[ValueNode]19
+bprop.7:[CNode]1:6bprop.7:[CNode]3:7bprop.7:[CNode]3:7"REF::MetaFuncGraph::add:Default/S-Prim-add-op6
+c
+bprop.7:[CNode]3:7bprop.7:[CNode]4:8bprop.7:[CNode]4:8""REF::get_bprop_softsign.2:square:4:7
+6[ValueNode]20[ValueNode]20"Constant*
+value€
+o
+[ValueNode]20
+bprop.7:[CNode]4:8bprop.7:[CNode]5:9bprop.7:[CNode]5:9"REF::get_bprop_softsign.2:div:3:8
+q
+get_bprop_softsign.2:dout
+bprop.7:[CNode]5:9bprop.7:dx:10bprop.7:dx:10"REF::get_bprop_softsign.2:mul:2:9
+r
+bprop.7:dx:10bprop.7:[CNode]6:11bprop.7:[CNode]6:11"REF::S-Prim-MakeTuple:12:Default/S-Prim-MakeTuple-op10bprop.72
+bprop.7:[CNode]6:11Pb'
+S-Prim-MakeTuple:12S-Prim-MakeTupleh

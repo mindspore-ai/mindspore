@@ -28,6 +28,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "pipeline/jit/resource.h"
 #include "include/common/debug/draw.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "include/common/utils/convert_utils.h"
 
@@ -608,6 +609,41 @@ TEST_F(TestOptLib, test_sparse_tensor) {
   ASSERT_TRUE(CheckOpt(before_get_indices, after_get_indices, patterns));
   ASSERT_TRUE(CheckOpt(before_get_values, after_get_values, patterns));
   ASSERT_TRUE(CheckOpt(before_get_dense_shape, after_get_dense_shape, patterns));
+}
+
+namespace {
+FuncGraphPtr GetBeforeFuncGraph() {
+  auto func = std::make_shared<FuncGraph>();
+  auto prim = std::make_shared<Primitive>("test_prim");
+  prim->set_attr("test_attr", MakeValue(1));
+  auto test_prim_node = std::make_shared<ValueNode>(prim);
+  auto cnode = func->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>("getattr")), test_prim_node,
+                               std::make_shared<ValueNode>(MakeValue("get_attr_dict"))});
+  auto call_node = func->NewCNode({cnode});
+  auto last_node = func->NewCNode({std::make_shared<ValueNode>(std::make_shared<MindIRMetaFuncGraph>("getitem")),
+                                   call_node, std::make_shared<ValueNode>(MakeValue("test_attr"))});
+  func->set_output(last_node);
+  return func;
+}
+
+FuncGraphPtr GetCorrectFuncGraph() {
+  auto func = std::make_shared<FuncGraph>();
+  func->set_output(std::make_shared<ValueNode>(MakeValue(1)));
+  return func;
+}
+}  // namespace
+
+/// Feature: test MindIR converter pass
+/// Description: Test MindIR convert pass
+/// Expectation: success
+TEST_F(TestOptLib, TestMindIRPrimAttrResolve) {
+  auto before = GetBeforeFuncGraph();
+  DumpIR("before.ir", before);
+  FuncGraphPtr after = GetCorrectFuncGraph();
+  DumpIR("after.ir", after);
+  opt::irpass::BpropMindIRPassLib bp_irpass;
+  auto patterns = std::vector<SubstitutionPtr>({bp_irpass.reslove_primitive_attr_});
+  ASSERT_TRUE(CheckOpt(before, after, patterns));
 }
 }  // namespace opt
 }  // namespace mindspore

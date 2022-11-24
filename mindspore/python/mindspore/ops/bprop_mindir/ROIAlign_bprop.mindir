@@ -1,0 +1,84 @@
+
+0.1.1	MindSpore*2.0.0:î
+i!get_bprop_roi_align.2:[CNode]37:1!get_bprop_roi_align.2:[CNode]37:1"REF::bprop.3:Default/bprop.3-op0
+Ì get_bprop_roi_align.2:shape_op:2 get_bprop_roi_align.2:shape_op:2"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op1
+C[ValueNode]38[ValueNode]38"Constant*
+value*pooled_height€
+¥
+get_bprop_roi_align.2:self
+[ValueNode]38(get_bprop_roi_align.2:Ñ„pooled_height:11(get_bprop_roi_align.2:Ñ„pooled_height:11"REF::getattr:12:Default/getattr-op8
+B[ValueNode]39[ValueNode]39"Constant*
+value*pooled_width€
+£
+get_bprop_roi_align.2:self
+[ValueNode]39'get_bprop_roi_align.2:Ñ„pooled_width:13'get_bprop_roi_align.2:Ñ„pooled_width:13"REF::getattr:12:Default/getattr-op9
+C[ValueNode]40[ValueNode]40"Constant*
+value*spatial_scale€
+¦
+get_bprop_roi_align.2:self
+[ValueNode]40(get_bprop_roi_align.2:Ñ„spatial_scale:14(get_bprop_roi_align.2:Ñ„spatial_scale:14"REF::getattr:12:Default/getattr-op10
+@[ValueNode]41[ValueNode]41"Constant*
+value*
+sample_num€
+ 
+get_bprop_roi_align.2:self
+[ValueNode]41%get_bprop_roi_align.2:Ñ„sample_num:15%get_bprop_roi_align.2:Ñ„sample_num:15"REF::getattr:12:Default/getattr-op11
+Ý"get_bprop_roi_align.2:dyn_shape:21"get_bprop_roi_align.2:dyn_shape:21">REF::ClassType::mindspore.ops.operations.array_ops.TensorShape:SDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.TensorShape'-op16get_bprop_roi_align.2*
+get_bprop_roi_align.2:self*
+get_bprop_roi_align.2:inputs*
+get_bprop_roi_align.2:Ñ„rois*
+get_bprop_roi_align.2:out*
+get_bprop_roi_align.2:Ñ„dout2#
+!get_bprop_roi_align.2:[CNode]37:1:@f1d7ab5a5e46fa0789774272b3cad5aa016302ff938c06103b2343c7b0367fd8J/grad_nn_ops.pyBº
+x
+get_bprop_roi_align.2:inputsbprop.3:inputs_shape:3bprop.3:inputs_shape:3"%REF::get_bprop_roi_align.2:shape_op:2:2
+…
+bprop.3:inputs_shape:3bprop.3:[CNode]8:4bprop.3:[CNode]8:4"REF::S-Prim-is_shape_unknown:5:#Default/S-Prim-is_shape_unknown-op3
+a
+bprop.3:[CNode]8:4bprop.3:[CNode]9:6bprop.3:[CNode]9:6"REF::bool_.10:Default/bool_.10-op4
+{
+bprop.3:[CNode]9:6
+âœ“bprop.12
+âœ—bprop.13bprop.3:[CNode]11:7bprop.3:[CNode]11:7"REF::Switch:8:Default/Switch-op5
+Gbprop.3:[CNode]14:9bprop.3:[CNode]14:9"REF::bprop.3:[CNode]11:7:6
+l
+bprop.3:[CNode]14:9bprop.3:[CNode]15:10bprop.3:[CNode]15:10"REF::â†“bprop.16:Default/â†“bprop.16-op7bprop.32
+bprop.3:[CNode]15:10Bº
+í
+(get_bprop_roi_align.2:Ñ„pooled_height:11
+'get_bprop_roi_align.2:Ñ„pooled_width:13
+(get_bprop_roi_align.2:Ñ„spatial_scale:14
+%get_bprop_roi_align.2:Ñ„sample_num:15â†“bprop.16:[CNode]1:16â†“bprop.16:[CNode]1:16"?REF::ClassType::mindspore.ops.operations._grad_ops.ROIAlignGrad:TDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.ROIAlignGrad'-op12
+ 
+get_bprop_roi_align.2:Ñ„dout
+get_bprop_roi_align.2:Ñ„rois
+â†“bprop.16:Ñ„inputs_shapeâ†“bprop.16:dx:17â†“bprop.16:dx:17"REF::â†“bprop.16:[CNode]1:16:13
+°
+get_bprop_roi_align.2:Ñ„roisâ†“bprop.16:[CNode]4:18â†“bprop.16:[CNode]4:18".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op14
+—
+â†“bprop.16:dx:17
+â†“bprop.16:[CNode]4:18â†“bprop.16:[CNode]5:19â†“bprop.16:[CNode]5:19"REF::S-Prim-MakeTuple:20:Default/S-Prim-MakeTuple-op15â†“bprop.16*
+â†“bprop.16:Ñ„inputs_shape2
+â†“bprop.16:[CNode]5:19B
+after_block€	B'âœ—bprop.132
+bprop.3:inputs_shape:3B´
+…
+get_bprop_roi_align.2:inputsâœ“bprop.12:inputs_shape:22âœ“bprop.12:inputs_shape:22"'REF::get_bprop_roi_align.2:dyn_shape:21:17âœ“bprop.122
+âœ“bprop.12:inputs_shape:22B­
+>[ValueNode]42[ValueNode]42"Constant*
+value*__bool__€
+n
+
+bool_.10:x
+[ValueNode]42bool_.10:[CNode]6:23bool_.10:[CNode]6:23"REF::getattr:12:Default/getattr-op18
+Kbool_.10:[CNode]7:24bool_.10:[CNode]7:24"REF::bool_.10:[CNode]6:23:19bool_.10*
+
+bool_.10:x2
+bool_.10:[CNode]7:24Pb
+Switch:8Switchb
+
+getattr:12getattrb'
+S-Prim-MakeTuple:20S-Prim-MakeTuplebŽ
+S-Prim-is_shape_unknown:5S-Prim-is_shape_unknown1
+constexpr_module*mindspore.ops._utils.utils€%
+constexpr_name*is_shape_unknown€h

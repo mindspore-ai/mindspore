@@ -103,14 +103,14 @@ def get_bprop_bias_add_grad(self):
 @bprop_getters.register(P.Conv2D)
 def get_bprop_conv2d(self):
     """Grad definition for `Conv2D` operation."""
-    self.out_channel = self.get_attr_dict()["out_channel"]
-    self.pad_list = self.get_attr_dict()["pad_list"]
+    out_channel = self.get_attr_dict()["out_channel"]
+    pad_list = self.get_attr_dict()["pad_list"]
     input_grad = P.Conv2DBackpropInput(
-        self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
+        out_channel, self.kernel_size, self.pad_mode, self.pad, pad_list, mode=self.mode,
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     filter_grad = G.Conv2DBackpropFilter(
-        self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
+        out_channel, self.kernel_size, self.pad_mode, self.pad, pad_list, mode=self.mode,
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     get_shape = P.Shape()
@@ -1439,15 +1439,16 @@ def get_bprop_bce_with_logits_loss(self):
 @bprop_getters.register(P.KLDivLoss)
 def get_bprop_kl_div_loss(self):
     """Grad definition for `KLDivLoss` operation."""
-    if self.reduction == "mean":
-        grad = G.KLDivLossGrad("sum")
-    else:
-        grad = G.KLDivLossGrad(self.reduction)
-    size = P.Size()
-    shape = P.Shape()
     reduce_type = self.reduction
 
+    size = P.Size()
+    shape = P.Shape()
+
     def bprop(x, y, out, dout):
+        if reduce_type == "mean":
+            grad = G.KLDivLossGrad("sum")
+        else:
+            grad = G.KLDivLossGrad(self.reduction)
         dx = grad(dout, x, y)
         if reduce_type == "mean":
             x_size = dyn_size(x) if is_shape_unknown(shape(x)) else size(x)

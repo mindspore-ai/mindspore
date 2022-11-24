@@ -1,0 +1,23 @@
+
+0.1.1	MindSpore*2.0.0:î
+m#get_bprop_log_softmax.2:[CNode]11:1#get_bprop_log_softmax.2:[CNode]11:1"REF::bprop.4:Default/bprop.4-op0
+:[ValueNode]12[ValueNode]12"Constant*
+value*axis€
+š
+get_bprop_log_softmax.2:self
+[ValueNode]12"get_bprop_log_softmax.2:[CNode]1:2"get_bprop_log_softmax.2:[CNode]1:2"REF::getattr:3:Default/getattr-op1
+”
+"get_bprop_log_softmax.2:[CNode]1:2)get_bprop_log_softmax.2:logsoftmax_grad:4)get_bprop_log_softmax.2:logsoftmax_grad:4"AREF::ClassType::mindspore.ops.operations._grad_ops.LogSoftmaxGrad:UDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.LogSoftmaxGrad'-op2get_bprop_log_softmax.2*
+get_bprop_log_softmax.2:self*
+get_bprop_log_softmax.2:x*
+get_bprop_log_softmax.2:out*
+get_bprop_log_softmax.2:dout2%
+#get_bprop_log_softmax.2:[CNode]11:1:@7f476a8474e5f7146dea7e08261878ab5759007b0266d80df7d12ce8bd6fc4c7J/grad_nn_ops.pyB›
+Š
+get_bprop_log_softmax.2:out
+get_bprop_log_softmax.2:doutbprop.4:dx:5bprop.4:dx:5".REF::get_bprop_log_softmax.2:logsoftmax_grad:4:3
+m
+bprop.4:dx:5bprop.4:[CNode]3:6bprop.4:[CNode]3:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op4bprop.42
+bprop.4:[CNode]3:6Pb
+	getattr:3getattrb&
+S-Prim-MakeTuple:7S-Prim-MakeTupleh

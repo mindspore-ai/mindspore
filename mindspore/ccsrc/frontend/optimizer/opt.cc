@@ -96,7 +96,8 @@ static inline bool isTraversable(const AnfNodePtr &node) {
   const auto &value = value_node->value();
   return (value != nullptr) && (value->isa<FuncGraph>() || value->isa<RefKey>() || value->isa<MindIRClassType>() ||
                                 value->isa<MindIRMetaFuncGraph>() || value->isa<parse::ClassType>() ||
-                                value->isa<prim::DoSignaturePrimitive>());
+                                value->isa<prim::DoSignaturePrimitive>() || value->isa<ValueSequence>() ||
+                                value->isa<parse::NameSpace>() || value->isa<ValueDictionary>());
 }
 
 static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &node,

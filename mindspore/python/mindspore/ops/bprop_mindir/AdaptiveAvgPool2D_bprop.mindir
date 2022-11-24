@@ -1,0 +1,16 @@
+
+0.1.1	MindSpore*2.0.0:‹
+…/get_bprop_adaptive_avg_pool2d_grad.1:[CNode]8:1/get_bprop_adaptive_avg_pool2d_grad.1:[CNode]8:1"REF::bprop.3:Default/bprop.3-op0
+¤<get_bprop_adaptive_avg_pool2d_grad.1:adaptive_avgpool_grad:2<get_bprop_adaptive_avg_pool2d_grad.1:adaptive_avgpool_grad:2"HREF::ClassType::mindspore.ops.operations._grad_ops.AdaptiveAvgPool2DGrad:\Default/MindIRClassType:class 'mindspore.ops.operations._grad_ops.AdaptiveAvgPool2DGrad'-op1$get_bprop_adaptive_avg_pool2d_grad.1*+
+)get_bprop_adaptive_avg_pool2d_grad.1:self*(
+&get_bprop_adaptive_avg_pool2d_grad.1:x**
+(get_bprop_adaptive_avg_pool2d_grad.1:out*+
+)get_bprop_adaptive_avg_pool2d_grad.1:dout21
+/get_bprop_adaptive_avg_pool2d_grad.1:[CNode]8:1:@45f2f18dc8be9a173bf2f8d4d444148dbdf30ce72ecc47f3977b9fb2574819deJ/grad_nn_ops.pyBÆ
+µ
+&get_bprop_adaptive_avg_pool2d_grad.1:x
+)get_bprop_adaptive_avg_pool2d_grad.1:doutbprop.3:dx:3bprop.3:dx:3"AREF::get_bprop_adaptive_avg_pool2d_grad.1:adaptive_avgpool_grad:2:2
+m
+bprop.3:dx:3bprop.3:[CNode]2:4bprop.3:[CNode]2:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.32
+bprop.3:[CNode]2:4Pb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

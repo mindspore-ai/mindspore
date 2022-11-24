@@ -1,0 +1,35 @@
+
+0.1.1	MindSpore*2.0.0:ê
+_get_bprop_mish.2:[CNode]18:1get_bprop_mish.2:[CNode]18:1"REF::bprop.7:Default/bprop.7-op0
+²get_bprop_mish.2:tanh:2get_bprop_mish.2:tanh:2"4REF::ClassType::mindspore.ops.operations.nn_ops.Tanh:HDefault/MindIRClassType:class 'mindspore.ops.operations.nn_ops.Tanh'-op1
+Âget_bprop_mish.2:softplus:3get_bprop_mish.2:softplus:3"8REF::ClassType::mindspore.ops.operations.nn_ops.Softplus:LDefault/MindIRClassType:class 'mindspore.ops.operations.nn_ops.Softplus'-op2
+Ú get_bprop_mish.2:softplus_grad:7 get_bprop_mish.2:softplus_grad:7"?REF::ClassType::mindspore.ops.operations._grad_ops.SoftplusGrad:SDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.SoftplusGrad'-op6
+Êget_bprop_mish.2:tanh_grad:8get_bprop_mish.2:tanh_grad:8";REF::ClassType::mindspore.ops.operations._grad_ops.TanhGrad:ODefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.TanhGrad'-op7get_bprop_mish.2*
+get_bprop_mish.2:self*
+get_bprop_mish.2:x*
+get_bprop_mish.2:out*
+get_bprop_mish.2:dout2
+get_bprop_mish.2:[CNode]18:1:@5210604c845b3a7d7a09f7d80ce6b08fb6a151ff053fc1aedb3276d00e54f857J/grad_nn_ops.pyBµ
+a
+get_bprop_mish.2:xbprop.7:[CNode]1:4bprop.7:[CNode]1:4" REF::get_bprop_mish.2:softplus:3:3
+S
+bprop.7:[CNode]1:4bprop.7:dx1:5bprop.7:dx1:5"REF::get_bprop_mish.2:tanh:2:4
+
+bprop.7:dx1:5
+get_bprop_mish.2:doutbprop.7:[CNode]3:6bprop.7:[CNode]3:6"REF::MetaFuncGraph::mul:Default/S-Prim-mul-op5
+„
+get_bprop_mish.2:x
+get_bprop_mish.2:doutbprop.7:[CNode]4:9bprop.7:[CNode]4:9"REF::MetaFuncGraph::mul:Default/S-Prim-mul-op8
+s
+bprop.7:dx1:5
+bprop.7:[CNode]4:9bprop.7:[CNode]5:10bprop.7:[CNode]5:10"!REF::get_bprop_mish.2:tanh_grad:8:9
+t
+bprop.7:[CNode]5:10
+get_bprop_mish.2:xbprop.7:dx2:11bprop.7:dx2:11"%REF::get_bprop_mish.2:softplus_grad:7:10
+t
+bprop.7:[CNode]3:6
+bprop.7:dx2:11bprop.7:dx:12bprop.7:dx:12"REF::MetaFuncGraph::add:Default/S-Prim-add-op11
+r
+bprop.7:dx:12bprop.7:[CNode]6:13bprop.7:[CNode]6:13"REF::S-Prim-MakeTuple:14:Default/S-Prim-MakeTuple-op12bprop.72
+bprop.7:[CNode]6:13Pb'
+S-Prim-MakeTuple:14S-Prim-MakeTupleh

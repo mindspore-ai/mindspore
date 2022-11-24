@@ -1,0 +1,33 @@
+
+0.1.1	MindSpore*2.0.0:¼
+,get_bprop_binary_cross_entropy.2:[CNode]17:1,get_bprop_binary_cross_entropy.2:[CNode]17:1"REF::bprop.6:Default/bprop.6-op0
+?[ValueNode]18[ValueNode]18"Constant*
+value*	reduction€
+µ
+%get_bprop_binary_cross_entropy.2:self
+[ValueNode]18+get_bprop_binary_cross_entropy.2:[CNode]1:2+get_bprop_binary_cross_entropy.2:[CNode]1:2"REF::getattr:3:Default/getattr-op1
+©
++get_bprop_binary_cross_entropy.2:[CNode]1:2'get_bprop_binary_cross_entropy.2:grad:4'get_bprop_binary_cross_entropy.2:grad:4"IREF::ClassType::mindspore.ops.operations._grad_ops.BinaryCrossEntropyGrad:]Default/MindIRClassType:class 'mindspore.ops.operations._grad_ops.BinaryCrossEntropyGrad'-op2 get_bprop_binary_cross_entropy.2*'
+%get_bprop_binary_cross_entropy.2:self*$
+"get_bprop_binary_cross_entropy.2:x*$
+"get_bprop_binary_cross_entropy.2:y*)
+'get_bprop_binary_cross_entropy.2:weight*&
+$get_bprop_binary_cross_entropy.2:out*'
+%get_bprop_binary_cross_entropy.2:dout2.
+,get_bprop_binary_cross_entropy.2:[CNode]17:1:@ae043af2d528e56aa13b09b1bb8b1799c25e61a31aed38bbb97885ccd3c4ccf4J/grad_nn_ops.pyB€
+å
+"get_bprop_binary_cross_entropy.2:x
+"get_bprop_binary_cross_entropy.2:y
+%get_bprop_binary_cross_entropy.2:dout
+'get_bprop_binary_cross_entropy.2:weightbprop.6:dx:5bprop.6:dx:5",REF::get_bprop_binary_cross_entropy.2:grad:4:3
+«
+"get_bprop_binary_cross_entropy.2:ybprop.6:[CNode]3:6bprop.6:[CNode]3:6".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op4
+°
+'get_bprop_binary_cross_entropy.2:weightbprop.6:[CNode]4:7bprop.6:[CNode]4:7".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op5
+•
+bprop.6:dx:5
+bprop.6:[CNode]3:6
+bprop.6:[CNode]4:7bprop.6:[CNode]5:8bprop.6:[CNode]5:8"REF::S-Prim-MakeTuple:9:Default/S-Prim-MakeTuple-op6bprop.62
+bprop.6:[CNode]5:8Pb
+	getattr:3getattrb&
+S-Prim-MakeTuple:9S-Prim-MakeTupleh

@@ -1,0 +1,21 @@
+
+0.1.1	MindSpore*2.0.0:Ç
+ó8get_bprop_sigmoid_crossentropy_with_logits.1:[CNode]11:18get_bprop_sigmoid_crossentropy_with_logits.1:[CNode]11:1"REF::bprop.4:Default/bprop.4-op0
+¶1get_bprop_sigmoid_crossentropy_with_logits.1:op:21get_bprop_sigmoid_crossentropy_with_logits.1:op:2"TREF::ClassType::mindspore.ops.operations._grad_ops.SigmoidCrossEntropyWithLogitsGrad:hDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.SigmoidCrossEntropyWithLogitsGrad'-op1,get_bprop_sigmoid_crossentropy_with_logits.1*3
+1get_bprop_sigmoid_crossentropy_with_logits.1:self*0
+.get_bprop_sigmoid_crossentropy_with_logits.1:x*0
+.get_bprop_sigmoid_crossentropy_with_logits.1:y*2
+0get_bprop_sigmoid_crossentropy_with_logits.1:out*3
+1get_bprop_sigmoid_crossentropy_with_logits.1:dout2:
+8get_bprop_sigmoid_crossentropy_with_logits.1:[CNode]11:1:@c12ab21fd18c1beb413c8300f08421f10c141bf208c46f839e20b01231dcf3dcJ/grad_nn_ops.pyB 
+Í
+.get_bprop_sigmoid_crossentropy_with_logits.1:x
+.get_bprop_sigmoid_crossentropy_with_logits.1:y
+1get_bprop_sigmoid_crossentropy_with_logits.1:doutbprop.4:dx:3bprop.4:dx:3"6REF::get_bprop_sigmoid_crossentropy_with_logits.1:op:2:2
+∑
+.get_bprop_sigmoid_crossentropy_with_logits.1:ybprop.4:[CNode]2:4bprop.4:[CNode]2:4".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op3
+Å
+bprop.4:dx:3
+bprop.4:[CNode]2:4bprop.4:[CNode]3:5bprop.4:[CNode]3:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op4bprop.42
+bprop.4:[CNode]3:5Pb&
+S-Prim-MakeTuple:6S-Prim-MakeTupleh
