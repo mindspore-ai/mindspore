@@ -858,7 +858,7 @@ class ConjugateTranspose(Primitive):
         ValueError: If the same element exists in `perm`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.array_ops import ConjugateTranspose
