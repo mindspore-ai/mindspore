@@ -311,7 +311,7 @@ void DeformableOffsetsGradKernel::DeformableOffsetGradNHWCKernel(size_t num_kern
     }
   };
   const int64_t per_unit_size = UlongToLong(num_kernels / std::thread::hardware_concurrency());
-  SharderNonBlock::GetInstance().ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
+  ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
 }
 
 template <typename T>
@@ -366,7 +366,7 @@ void DeformableOffsetsGradKernel::DeformableOffsetGradNCHWKernel(size_t num_kern
     }
   };
   const int64_t per_unit_size = UlongToLong(num_kernels / std::thread::hardware_concurrency());
-  SharderNonBlock::GetInstance().ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
+  ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
 }
 
 uint32_t DeformableOffsetsGradKernel::ParseKernelParam() {
