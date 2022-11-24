@@ -295,6 +295,7 @@ class SparseSparseMaximum(Primitive):
         >>> print(y_values)
         [3. 4. 2.]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSparseMaximum."""
@@ -626,9 +627,13 @@ class SparseTensorDenseMatmul(Primitive):
             and shape of `dense` don't meet the parameter description.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as ops
+        >>> from mindspore.common import dtype as mstype
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mindspore.int32)
         >>> values = Tensor([1, 2], dtype=mindspore.float32)
         >>> sparse_shape = (3, 4)
@@ -653,45 +658,6 @@ class SparseTensorDenseMatmul(Primitive):
         validator.check_value_type("adjoint_st", adjoint_st, [bool], self.name)
         validator.check_value_type("adjoint_dt", adjoint_dt, [bool], self.name)
         self.set_const_input_indexes([2])
-
-    def __infer__(self, indices, values, sparse_shape, dense):
-        validator.check_tensor_dtype_valid('indices', indices['dtype'], [
-            mstype.int32, mstype.int64], self.name)
-        valid_types = (mstype.float16, mstype.float32,
-                       mstype.float64, mstype.int32, mstype.int64)
-        args = {'values': values['dtype'], 'dense': dense['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(
-            args, valid_types, self.name)
-        indices_shape = indices['shape']
-        if len(indices_shape) != 2 or indices_shape[1] != 2:
-            raise ValueError(f"For '{self.name}', the 'indices' must be a 2-D tensor and "
-                             f"the second dimension length must be 2, but got 'indices' shape: {indices_shape}.")
-        values_shape = values['shape']
-        if len(values_shape) != 1 or values_shape[0] != indices_shape[0]:
-            raise ValueError(f"For '{self.name}', the 'values' must be a 1-D tensor and "
-                             f"the first dimension length must be equal to the first dimension length of 'indices', "
-                             f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}.")
-        a_shape = sparse_shape['value'][::-1] if self.adjoint_st else sparse_shape['value']
-        b_shape = dense['shape'][::-1] if self.adjoint_dt else dense['shape']
-        for i in a_shape:
-            if isinstance(i, bool) or not isinstance(i, int) or i <= 0:
-                raise ValueError(f"For '{self.name}', all elements in 'sparse_shape' must be "
-                                 f"positive int number, but got 'sparse_shape': {sparse_shape['value']}.")
-        if len(a_shape) != 2 or len(b_shape) != 2:
-            raise ValueError(f"For '{self.name}', both the length of 'sparse_shape' and the tensor "
-                             f"rank of 'dense' must be equal to 2, but got the length of "
-                             f"'sparse_shape': {len(a_shape)}, "
-                             f"the tensor rank of 'dense': {len(b_shape)}.")
-        if a_shape[1] != b_shape[0]:
-            raise ValueError(f"For '{self.name}', the second dimension length of 'sparse_shape' must be equal to the "
-                             f"first dimension length of 'dense', but got "
-                             f"the tensor shape of 'sparse': {a_shape} and the tensor shape of 'dense': {b_shape}. "
-                             f"Don't meet the condition for matmul")
-        out_shape = [a_shape[0], b_shape[1]]
-        out = {'shape': tuple(out_shape),
-               'dtype': values['dtype'],
-               'value': None}
-        return out
 
 
 class CSRSparseMatrixToSparseTensor(Primitive):
@@ -1106,6 +1072,7 @@ class SparseConcat(Primitive):
          [3, 0],
          [4, 1]]), Tensor(shape=[4], dtype=Int32, value= [1, 2, 3, 4]), Tensor(shape=[2], dtype=Int64, value= [6, 4]))
     """
+
     @prim_attr_register
     def __init__(self, concat_dim=0):
         """Initialize SparseConcat."""
@@ -1568,6 +1535,7 @@ class SparseAdd(Primitive):
         Tensor(shape=[4], dtype=Int32, value=[3, 1, 4, 2]),
         Tensor(shape=[2], dtype=Int64, value=[3, 4]))
     """
+
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(
@@ -1776,6 +1744,7 @@ class SparseMatrixTranspose(Primitive):
         >>> print(output[4])
         [99.]
     """
+
     @prim_attr_register
     def __init__(self, conjugate=False):
         """Initialize SparseMatrixTranspose"""
@@ -2199,6 +2168,7 @@ class SparseMatrixAdd(Primitive):
          Tensor(shape=[2], dtype=Int32, values = [0, 1]),
          Tensor(shape=[2], dtype=Float32, values = [2.0, 4.0]))
     """
+
     @prim_attr_register
     def __init__(self):
         '''Initialize for SparseMatrixAdd'''
@@ -2244,6 +2214,7 @@ class SparseSplit(Primitive):
     Supported Platforms:
 
     """
+
     @prim_attr_register
     def __init__(self, num_split=1):
         """Initialize SparseSplit."""
@@ -2379,6 +2350,7 @@ class SparseReshape(Primitive):
         >>> print(y_shape)
         [9 4]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize SparseReshape."""
@@ -2443,6 +2415,7 @@ class SparseCountSparseOutput(Primitive):
         ``CPU``
 
     """
+
     @prim_attr_register
     def __init__(self, binary_output=False, minlength=-1, maxlength=-1):
         self.init_prim_io_names(

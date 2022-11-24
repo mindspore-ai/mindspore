@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SPARSE_TENSOR_DENSE_MAT_MUL_H_
-#define MINDSPORE_CORE_OPS_SPARSE_TENSOR_DENSE_MAT_MUL_H_
+#ifndef MINDSPORE_CORE_OPS_SPARSE_TENSOR_DENSE_MATMUL_H_
+#define MINDSPORE_CORE_OPS_SPARSE_TENSOR_DENSE_MATMUL_H_
 #include <memory>
 #include <vector>
 
@@ -31,7 +31,11 @@ class MIND_API SparseTensorDenseMatmul : public BaseOperator {
   SparseTensorDenseMatmul() : BaseOperator(kNameSparseTensorDenseMatmul) {
     InitIOName({"indices", "values", "sparse_shape", "dense"}, {"output"});
   }
-  void Init() const {}
+  void Init(const bool adjoint_st = false, bool adjoint_dt = false);
+  void set_adjoint_st(const bool adjoint_st);
+  bool get_adjoint_st() const;
+  void set_adjoint_dt(const bool adjoint_dt);
+  bool get_adjoint_dt() const;
 };
 abstract::AbstractBasePtr SparseTensorDenseMatmulInfer(const abstract::AnalysisEnginePtr &,
                                                        const PrimitivePtr &primitive,
@@ -39,4 +43,4 @@ abstract::AbstractBasePtr SparseTensorDenseMatmulInfer(const abstract::AnalysisE
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SPARSE_TENSOR_DENSE_MAT_MUL_H_
+#endif  // MINDSPORE_CORE_OPS_SPARSE_TENSOR_DENSE_MATMUL_H_
