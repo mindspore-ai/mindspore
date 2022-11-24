@@ -458,8 +458,7 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)py::class_<OpLib, std::shared_ptr<OpLib>>(m, "Oplib")
     .def(py::init())
-    .def_static("reg_op", &OpLib::RegOp, "Register op info.")
-    .def_static("load_super_bar_config", &OpLib::LoadSuperBarConfig, "Load super bar config.");
+    .def_static("reg_op", &OpLib::RegOp, "Register op info.");
 
   (void)py::class_<CollectiveManager, std::shared_ptr<CollectiveManager>>(m, "CollectiveManager")
     .def_static("get_instance", &CollectiveManager::instance, "Get collective manager instance.")

@@ -14,7 +14,6 @@
 # ============================================================================
 
 """tbe ops"""
-from .super_bar_config import _call_super_bar_config
 from .broadcast_to import _broadcast_to_tbe  # The name is occupied
 from .broadcast_to_ds import _broadcast_to_ds_tbe  # The name is occupied
 from .batch_to_space import _batch_to_space_tbe  # attr type is listInt，not listListInt

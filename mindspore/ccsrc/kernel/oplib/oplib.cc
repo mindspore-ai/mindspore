@@ -97,8 +97,6 @@ bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) 
   return true;
 }
 
-bool OpLib::LoadSuperBarConfig(const std::string &suber_bar_config) { return SuperBar::LoadSBConfig(suber_bar_config); }
-
 void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
   const std::map<std::string, kernel::OpPattern> kOpPatternMap = {
     {kFormatAgnostic, kFormatAgnosticPattern}, {kBroadcast, kBroadcastPattern}, {kReduce, kReducePattern}};
