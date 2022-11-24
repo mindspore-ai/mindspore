@@ -235,6 +235,20 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_LiteSession_free(JNIEn
   delete (lite_session_ptr);
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_resetBatchSize(JNIEnv *env, jobject thiz,
+                                                                                           jlong session_ptr,
+                                                                                           jint batch_size) {
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(pointer);
+  int ret = lite_session_ptr->ResetBatch(batch_size);
+  return (jboolean) (ret == mindspore::lite::RET_OK);
+}
+
+
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_resize(JNIEnv *env, jobject thiz,
                                                                                  jlong session_ptr, jlongArray inputs,
                                                                                  jobjectArray dims) {
@@ -272,7 +286,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_resize
     env->DeleteLocalRef(array);
   }
   int ret = lite_session_ptr->Resize(c_inputs, c_dims);
-  return (jboolean)(ret == mindspore::lite::RET_OK);
+  return (jboolean) (ret == mindspore::lite::RET_OK);
 }
 
 

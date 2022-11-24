@@ -1188,6 +1188,9 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels,
 #endif
       } else {
         auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+        if (set_batch_flg_) {
+          sub_graph->ConstBatchReset(origin_batch_, new_batch_);
+        }
         ret = sub_graph->ReSize();
       }
 #ifndef DELEGATE_CLIP
@@ -1308,6 +1311,45 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+int LiteSession::ResetBatch(int batch_size) {
+  std::vector<std::vector<int>> dims;
+  if (input_vec_.empty() && input_vec_[0]->shape().empty()) {
+    MS_LOG(ERROR) << "Inputs && Inputs Shape can't be empty ";
+    return RET_ERROR;
+  }
+
+  origin_batch_ = input_vec_[0]->shape()[0];
+
+  for (size_t i = 1; i < input_vec_.size(); i++) {
+    auto orig_shape = input_vec_[i]->shape();
+    if (orig_shape.empty() || orig_shape[0] != origin_batch_) {
+      MS_LOG(ERROR) << "Inputs Shape can't be empty and batch size must same. Got diff batch " << origin_batch_ << ": "
+                    << orig_shape[0];
+      return RET_ERROR;
+    }
+  }
+
+  // batch_size is same no need change;
+  if (batch_size == origin_batch_) {
+    return RET_OK;
+  }
+
+  new_batch_ = batch_size;
+  for (size_t i = 0; i < input_vec_.size(); ++i) {
+    auto orig_shape = input_vec_[i]->shape();
+    if (orig_shape.empty()) {
+      continue;
+    }
+    // batch size of all inputs must same
+    orig_shape[0] = new_batch_;
+    dims.push_back(orig_shape);
+  }
+  set_batch_flg_ = true;
+  auto ret = Resize(input_vec_, dims);
+  set_batch_flg_ = false;
+  return ret;
 }
 
 int LiteSession::PreCheck(Model *model) {

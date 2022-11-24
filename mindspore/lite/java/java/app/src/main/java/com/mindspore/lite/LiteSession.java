@@ -246,6 +246,16 @@ public class LiteSession {
     }
 
     /**
+     * reset inputs batch size, It will try to reset batch even match const tensor.
+     *
+     * @param inputs Model inputs.
+     * @return Whether the reset is successful.
+     */
+    public boolean resetBatchSize(int batch_size) {
+        return this.resetBatchSize(this.sessionPtr, batch_size);
+    }
+
+    /**
      * Export the model.
      *
      * @param modelFile        Name Model file name.
@@ -377,6 +387,8 @@ public class LiteSession {
     private native void free(long sessionPtr);
 
     private native boolean resize(long sessionPtr, long[] inputs, int[][] dims);
+
+    private native boolean resetBatchSize(long sessionPtr, int batch_size);
 
     private native boolean export(long sessionPtr, String modelFileName, int modelType, int quantizationType);
 

@@ -91,6 +91,10 @@ class SubGraphKernel : public LiteKernel {
   // called after Run
   int ReSize() override;
 
+  // const input tensor shape changed for batch modify
+  // just support for MS Federated
+  int ConstBatchReset(int orig_batch, int new_batch);
+
   void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) override;
 
   void InitInputTensorInitRefCount();
@@ -112,6 +116,16 @@ class SubGraphKernel : public LiteKernel {
   void SetSchemaVersion(int schema_version) { schema_version_ = schema_version; }
 
  protected:
+  struct DataInfo {
+    void *orig_data;
+    size_t orig_size;
+    std::shared_ptr<unsigned char> new_data;
+    size_t new_size;
+  };
+
+  // change Batch multi times
+  int ConstBatchResetAcc(int orig_batch, int new_batch);
+
   std::vector<LiteKernel *> nodes_{};
   // entry nodes in nodes
   std::vector<LiteKernel *> in_nodes_{};
@@ -119,6 +133,8 @@ class SubGraphKernel : public LiteKernel {
   std::vector<LiteKernel *> out_nodes_{};
   mindspore::lite::Executor *executor_ = nullptr;
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
+  // the const inputs whose batch changed.
+  std::map<lite::Tensor *, DataInfo> batch_changed_inputs_;
 };
 
 class CpuSubGraph : public SubGraphKernel {

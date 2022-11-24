@@ -75,6 +75,142 @@ int SubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &
   return lite::RET_OK;
 }
 
+int SubGraphKernel::ConstBatchResetAcc(int orig_batch, int new_batch) {
+  if (batch_changed_inputs_.empty()) {
+    MS_LOG(ERROR) << "The batch_changed_inputs_ can't be null while restore ";
+    return RET_ERROR;
+  }
+  for (auto kernel : nodes_) {
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "input kernel is nullptr!";
+      return RET_ERROR;
+    }
+    if (kernel->subgraph_type() != kernel::kNotSubGraph) {
+      MS_LOG(ERROR) << "all nodes in should be kernel";
+      return RET_ERROR;
+    }
+    std::vector<lite::Tensor *> inputs = kernel->in_tensors();
+    for (auto input : inputs) {
+      auto iter = batch_changed_inputs_.find(input);
+      if (iter == batch_changed_inputs_.end()) {
+        continue;
+      }
+
+      if ((kernel->type() == schema::PrimitiveType_Reshape || kernel->type() == schema::PrimitiveType_SliceFusion) &&
+          input->Size() > 0) {
+        int *data = static_cast<int *>(input->data());
+        if (data[0] == orig_batch) {
+          std::stringstream err_info;
+          err_info << "Const Tensor " << input->tensor_name() << " change value from " << input->ToString();
+          data[0] = new_batch;
+          err_info << " to " << input->ToString();
+          MS_LOG(WARNING) << err_info.str();
+        }
+        continue;
+      }
+
+      if (input->IsConst() && !input->shape().empty() && input->shape()[0] == orig_batch) {
+        void *data_orig = iter->second.orig_data;
+        size_t size_orig = iter->second.orig_size;
+        auto new_shape = input->shape();
+        new_shape[0] = new_batch;
+        MS_LOG(WARNING) << "Const tensor " << input->tensor_name() << " change shape from " << input->shape() << " to "
+                        << new_shape;
+        input->set_shape(new_shape);
+        size_t size_new = input->Size();
+        // need Create new buffer
+        if (size_new > iter->second.new_size && size_new > size_orig) {
+          if (size_new % size_orig != 0) {
+            MS_LOG(ERROR) << "New size error, size_new:" << size_new << " origin size:" << size_orig;
+            return RET_ERROR;
+          }
+          std::shared_ptr<unsigned char> data_new(new unsigned char[size_new], std::default_delete<unsigned char[]>());
+          for (size_t i = 0; i < size_new; i += size_orig) {
+            memcpy(data_new.get() + i, data_orig, size_orig);
+          }
+          input->set_data(data_new.get());
+          input->set_own_data(false);
+          iter->second.new_data = data_new;
+          iter->second.new_size = size_new;
+        }
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int SubGraphKernel::ConstBatchReset(int orig_batch, int new_batch) {
+  if (!batch_changed_inputs_.empty()) {
+    return ConstBatchResetAcc(orig_batch, new_batch);
+  }
+  std::map<lite::Tensor *, DataInfo> changed_inputs;
+  for (auto kernel : nodes_) {
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "input kernel is nullptr!";
+      return RET_ERROR;
+    }
+    if (kernel->subgraph_type() != kernel::kNotSubGraph) {
+      MS_LOG(ERROR) << "all nodes in should be kernel";
+      return RET_ERROR;
+    }
+    std::vector<lite::Tensor *> inputs = kernel->in_tensors();
+    for (auto input : inputs) {
+      if (input->IsConst() &&
+          (kernel->type() == schema::PrimitiveType_Reshape || kernel->type() == schema::PrimitiveType_SliceFusion) &&
+          input->Size() > 0) {
+        int *data = static_cast<int *>(input->data());
+        if (data[0] == orig_batch) {
+          std::stringstream err_info;
+          err_info << "Const Tensor " << input->tensor_name() << " change value from " << input->ToString();
+          data[0] = new_batch;
+          err_info << " to " << input->ToString();
+          MS_LOG(WARNING) << err_info.str();
+          DataInfo dataInfo{input->data(), input->Size(), nullptr, input->Size()};
+          changed_inputs.emplace(input, dataInfo);
+        }
+        continue;
+      }
+
+      if (input->IsConst() && !input->shape().empty() && input->shape()[0] == orig_batch) {
+        void *data_orig = input->data();
+        size_t size_orig = input->Size();
+        auto new_shape = input->shape();
+        new_shape[0] = new_batch;
+        MS_LOG(WARNING) << "Const tensor " << input->tensor_name() << " change shape from " << input->shape() << " to "
+                        << new_shape;
+        // const tensor never own data, origin data is from schema tensor
+        // so no need free origin data
+        MS_ASSERT((!input->own_data() || input->allocator() == nullptr));
+        input->set_shape(new_shape);
+        size_t size_new = input->Size();
+        // need Create new buffer
+        if (size_new > size_orig) {
+          if (size_new % size_orig != 0) {
+            MS_LOG(ERROR) << "New size error, size_new:" << size_new << " origin size:" << size_orig;
+            return RET_ERROR;
+          }
+          std::shared_ptr<unsigned char> data_new(new unsigned char[size_new], std::default_delete<unsigned char[]>());
+          for (size_t i = 0; i < size_new; i += size_orig) {
+            memcpy(data_new.get() + i, data_orig, size_orig);
+          }
+          input->set_data(data_new.get());
+          input->set_own_data(false);
+          DataInfo dataInfo{data_orig, size_orig, data_new, size_new};
+          changed_inputs.emplace(input, dataInfo);
+        } else {
+          // reuse origin buffer
+          DataInfo dataInfo{data_orig, size_orig, nullptr, size_orig};
+          changed_inputs.emplace(input, dataInfo);
+        }
+      }
+    }
+  }
+  if (batch_changed_inputs_.empty()) {
+    std::swap(batch_changed_inputs_, changed_inputs);
+  }
+  return RET_OK;
+}
+
 int SubGraphKernel::ReSize() {
   for (auto kernel : nodes_) {
     if (kernel == nullptr) {
