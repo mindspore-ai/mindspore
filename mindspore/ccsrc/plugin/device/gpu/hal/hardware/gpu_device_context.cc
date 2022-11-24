@@ -38,7 +38,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
-#include "backend/common/pass/clip_by_norm_fission.h"
+#include "plugin/device/gpu/optimizer/clip_by_norm_fission.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"

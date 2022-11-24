@@ -105,7 +105,6 @@
 #include "backend/common/pass/getitem_tuple.h"
 #include "backend/common/pass/optimize_dependence.h"
 #include "backend/common/pass/erase_visit_attr.h"
-#include "backend/common/pass/clip_by_norm_fission.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "backend/common/pass/eliminate_redundant_op.h"

@@ -49,6 +49,7 @@
 #include "plugin/device/gpu/optimizer/add_relu_grad_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/matmul_biasadd_fusion.h"
 #include "plugin/device/gpu/optimizer/neighbor_exchange_v2_fusion.h"
+#include "plugin/device/gpu/optimizer/clip_by_norm_fission.h"
 #ifdef ENABLE_GPU_INFER
 #include "plugin/device/gpu/optimizer/trt_pass/graph_converter.h"
 #endif
