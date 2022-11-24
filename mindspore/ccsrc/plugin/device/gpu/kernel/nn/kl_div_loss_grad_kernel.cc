@@ -73,6 +73,12 @@ bool KLDivLossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 std::vector<std::pair<KernelAttr, KLDivLossGradGpuKernelMod::KLDivLossLaunchFunc>>
   KLDivLossGradGpuKernelMod::func_list_ = {
     {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &KLDivLossGradGpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
