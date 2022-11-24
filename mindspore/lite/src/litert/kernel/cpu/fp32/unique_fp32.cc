@@ -53,6 +53,9 @@ int UniqueCPUKernel::Run() {
     UniqueFp16(static_cast<float16_t *>(input), in_tensors_[0]->ElementsNum(), static_cast<float16_t *>(output0),
                &output0_len, output1);
 #endif
+  } else if (in_tensors_[0]->data_type() == kNumberTypeInt32) {
+    UniqueInt(static_cast<int *>(input), in_tensors_[0]->ElementsNum(), static_cast<int *>(output0), &output0_len,
+              output1);
   } else {
     Unique(static_cast<float *>(input), in_tensors_[0]->ElementsNum(), static_cast<float *>(output0), &output0_len,
            output1);
