@@ -25,6 +25,7 @@
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "nnacl/op_base.h"
+#include "tools/optimizer/graph/specify_graph_input_format.h"
 
 namespace mindspore {
 namespace opt {
@@ -375,17 +376,20 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
   }
   auto HandleFunc = [this, &shape](const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index,
                                    FormatTransNodeType trans_type) -> STATUS {
+    STATUS ret = lite::RET_OK;
     auto before_perm = trans_type == kNHWC2NCHW ? kNH2NC : kNC2NH;
-    if (!cnode->input(index)->isa<CNode>()) {
-      if (ConvertTensorToNCOrNH(func_graph, cnode, index, fmk_type_, train_flag_, trans_type) != lite::RET_OK) {
-        MS_LOG(ERROR) << "ConvertTensorToNCOrNH failed.";
-        return lite::RET_ERROR;
+    if (IsNeedGenNewInput(func_graph, cnode, index)) {
+      ret = GenNewInput(func_graph, cnode, before_perm, true, index);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "GenNewInput failed";
       }
-    } else if (GenNewInput(func_graph, cnode, before_perm, true, index) != lite::RET_OK) {
-      MS_LOG(ERROR) << "generate a new input failed.";
-      return lite::RET_ERROR;
+    } else {
+      ret = ConvertTensorToNCOrNH(func_graph, cnode, index, fmk_type_, train_flag_, trans_type);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "ConvertTensorToNCOrNH faileded";
+      }
     }
-    return lite::RET_OK;
+    return ret;
   };
   for (size_t i = 1; i < cnode->size(); ++i) {
     MS_CHECK_TRUE_RET(cnode->input(i) != nullptr, lite::RET_NULL_PTR);
@@ -827,6 +831,28 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForMultiOp(const FuncGraphPtr &func
     }
   }
   return true;
+}
+
+bool DecreaseTransposeAlgo::IsNeedGenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index) {
+  if (cnode->input(index)->isa<CNode>()) {
+    MS_LOG(DEBUG) << "The input index" << index << " of " << cnode->fullname_with_scope() << " can cast cnode";
+    return true;
+  }
+  if (utils::isa<ParameterPtr>(cnode->input(index))) {
+    auto input_node = cnode->input(index)->cast<ParameterPtr>();
+    if (!input_node->has_default()) {
+      Format cur_input_format = DEFAULT_FORMAT;
+      if (!opt::SpecifyGraphInputFormat::GetCurGraphInputFormat(func_graph, fmk_type_, &cur_input_format)) {
+        MS_LOG(WARNING) << "Failed to get current format of graph input";
+        return false;
+      }
+      if (cur_input_format == NCHW) {
+        MS_LOG(DEBUG) << "Parameter is the input of graph and input format is NCHW";
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 bool DecreaseTransposeAlgo::Run(const FuncGraphPtr &func_graph) {
