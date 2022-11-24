@@ -354,7 +354,7 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
   };
   const int64_t total_unit = static_cast<int64_t>(byte_count >> 4);
   const int64_t perUnitSize = 1;  // shard unit size
-  aicpu::SharderNonBlock::GetInstance().ParallelFor(total_unit, perUnitSize, shards);
+  ParallelFor(total_unit, perUnitSize, shards);
   const int64_t margin = 1021;  // the margin of offset
   OffsetAdd(bit_count + margin, g_offset, g_offset);
   auto offset0 = reinterpret_cast<uint64_t *>(io_addrs_[2]);
