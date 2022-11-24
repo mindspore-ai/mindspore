@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -39,24 +40,14 @@ class ApplyGradientDescentCpuKernelMod : public NativeCpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddInputAttr(kNumberTypeFloat16)
-                                                     .AddOutputAttr(kNumberTypeFloat16),
-                                                   KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)};
-    return support_list;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   size_t input_size_;
@@ -65,6 +56,11 @@ class ApplyGradientDescentCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   void ComputeTask(T *x_data_addr, T *grid_data_addr, T *output_data_addr, const size_t &seq);
+
+  using ApplyGradientDescentLaunchFunc = std::function<bool(
+    ApplyGradientDescentCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, ApplyGradientDescentLaunchFunc>> func_list_;
+  ApplyGradientDescentLaunchFunc kernel_func_;
 };
 }  // namespace kernel
 }  // namespace mindspore

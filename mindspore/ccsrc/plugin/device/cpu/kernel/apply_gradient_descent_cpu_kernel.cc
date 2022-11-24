@@ -15,6 +15,8 @@
  */
 #include "plugin/device/cpu/kernel/apply_gradient_descent_cpu_kernel.h"
 #include <functional>
+#include <complex>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace {
@@ -27,6 +29,11 @@ constexpr size_t kApplyGradientDescentOutputsNum = 1;
 
 namespace mindspore {
 namespace kernel {
+namespace {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+}  // namespace
+
 bool ApplyGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
@@ -34,6 +41,17 @@ bool ApplyGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   kernel_name_ = base_operator->name();
   batch_rank_ = base_operator->get_batch_rank();
   dtype_ = inputs[kZero]->GetDtype();
+
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyGradientDescentInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyGradientDescentOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+
   return true;
 }
 
@@ -56,27 +74,8 @@ int ApplyGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return ret;
 }
 
-bool ApplyGradientDescentCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyGradientDescentInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyGradientDescentOutputsNum, kernel_name_);
-  if (input_size_ == 0) {
-    return true;
-  }
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', input dtype only support float16 and float32, but got ["
-                            << dtype_ << "].";
-  }
-  return true;
-}
-
 template <typename T>
-void ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+bool ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                     const std::vector<AddressPtr> &outputs) {
   auto var_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   auto alpha_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
@@ -91,6 +90,91 @@ void ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
     }
   };
   ParallelLaunch(task, input_size_, 0, this, pool_);
+  return true;
+}
+
+std::vector<std::pair<KernelAttr, ApplyGradientDescentCpuKernelMod::ApplyGradientDescentLaunchFunc>>
+  ApplyGradientDescentCpuKernelMod::func_list_ = {{KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<float>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddOutputAttr(kNumberTypeFloat16),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<float16>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt8)
+                                                     .AddInputAttr(kNumberTypeInt8)
+                                                     .AddInputAttr(kNumberTypeInt8)
+                                                     .AddOutputAttr(kNumberTypeInt8),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<int8_t>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddOutputAttr(kNumberTypeUInt8),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<uint8_t>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddOutputAttr(kNumberTypeInt16),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<int16_t>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddOutputAttr(kNumberTypeUInt16),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<uint16_t>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddOutputAttr(kNumberTypeUInt32),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<uint32_t>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<int64_t>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddOutputAttr(kNumberTypeUInt64),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<uint64_t>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddOutputAttr(kNumberTypeFloat64),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<double>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeComplex64)
+                                                     .AddInputAttr(kNumberTypeComplex64)
+                                                     .AddInputAttr(kNumberTypeComplex64)
+                                                     .AddOutputAttr(kNumberTypeComplex64),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<complex64>},
+                                                  {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeComplex128)
+                                                     .AddInputAttr(kNumberTypeComplex128)
+                                                     .AddInputAttr(kNumberTypeComplex128)
+                                                     .AddOutputAttr(kNumberTypeComplex128),
+                                                   &ApplyGradientDescentCpuKernelMod::LaunchKernel<complex128>}};
+
+std::vector<KernelAttr> ApplyGradientDescentCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, ApplyGradientDescentCpuKernelMod::ApplyGradientDescentLaunchFunc> &pair) {
+      return pair.first;
+    });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyGradientDescent, ApplyGradientDescentCpuKernelMod);
