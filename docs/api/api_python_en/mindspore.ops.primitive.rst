@@ -54,6 +54,7 @@ Neural Network
     mindspore.ops.Conv3D
     mindspore.ops.Conv3DTranspose
     mindspore.ops.CTCGreedyDecoder
+    mindspore.ops.DataFormatVecPermute
     mindspore.ops.Dilation2D
     mindspore.ops.Dropout
     mindspore.ops.Dropout2D
@@ -266,6 +267,7 @@ Mathematical Operators
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
     mindspore.ops.Cross
+    mindspore.ops.CumulativeLogsumexp
     mindspore.ops.Gcd
 
 Element-wise Operator
@@ -477,6 +479,7 @@ Array Operation
     mindspore.ops.Concat
     mindspore.ops.ConjugateTranspose
     mindspore.ops.Cummax
+    mindspore.ops.Cummin
     mindspore.ops.CumProd
     mindspore.ops.CumSum
     mindspore.ops.DataFormatDimMap
@@ -667,6 +670,7 @@ Debugging Operator
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.Assert
     mindspore.ops.HistogramSummary
     mindspore.ops.ImageSummary
     mindspore.ops.ScalarSummary
