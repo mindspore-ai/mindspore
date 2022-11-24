@@ -21,6 +21,7 @@
 #include <vector>
 #include "src/extendrt/infer_session.h"
 #include "extendrt/utils/kernel_graph_utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 /// \brief Single Op Session implementation, used in Ascend Device Context.
@@ -43,19 +44,18 @@ class SingleOpInferSession : public InferSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
-  Status UpdateKernelGraphInputs(const std::vector<std::vector<int64_t>> &dims, const std::vector<TypeId> &type_ids,
-                                 bool use_type_from_graph);
-  Status UpdateGraphInputsForDVPP(const std::vector<kernel::KernelTensorPtr> &inputs);
-  Status ResizeGraphInputs(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
+  Status OnNewInputShapes(const std::vector<ShapeVector> &new_shapes);
+  Status BuildCustomAscendKernel(const CNodePtr &node);
+  Status InitInputOutputInfos(const FuncGraphPtr &graph);
 
-  KernelGraphUtilsPtr kernel_graph_utils_;
-  KernelGraphPtr kernel_graph_;
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
   uint32_t device_id_ = 0;
-  bool is_dvpp_ = false;
+
+  kernel::KernelModPtr kernel_mod_ = nullptr;
+  kernel::KernelArgs kernel_args_;
 };
 }  // namespace mindspore
 

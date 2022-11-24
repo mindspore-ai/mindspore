@@ -29,11 +29,15 @@ namespace acl {
 struct AclModelOptions {
   int32_t device_id;
   std::string dump_cfg_path;
+
+  AclModelOptions() : device_id(0) {}
+};
+
+struct AclDynamicShapeOptions {
   std::set<uint64_t> batch_size;
   std::set<std::pair<uint64_t, uint64_t>> image_size;
   std::vector<Format> input_format;
-
-  AclModelOptions() : device_id(0) {}
+  std::vector<std::vector<int64_t>> input_shapes;
 };
 
 using AclModelOptionsPtr = std::shared_ptr<AclModelOptions>;
