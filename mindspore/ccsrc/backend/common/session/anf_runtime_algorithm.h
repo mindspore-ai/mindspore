@@ -45,6 +45,7 @@ using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
 using Address = kernel::Address;
 using AddressPtr = kernel::AddressPtr;
+using kernel::KernelObjectType;
 
 class BACKEND_EXPORT AnfRuntimeAlgorithm {
  public:
@@ -82,6 +83,10 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get input shapes for tbe build
   static std::vector<int64_t> GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t input_idx,
                                                              const std::string &format);
+  // get input kernel object type
+  static std::vector<KernelObjectType> GetInputKernelObjectTypes(const AnfNodePtr &node);
+  // get output kernel object type
+  static std::vector<KernelObjectType> GetOutputKernelObjectTypes(const AnfNodePtr &node);
   // Get Input Padding Axis
   static std::string GetInputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // Get Output Padding Axis
