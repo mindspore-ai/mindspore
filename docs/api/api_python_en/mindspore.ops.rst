@@ -212,6 +212,7 @@ Element-by-Element Operations
     mindspore.ops.log1p
     mindspore.ops.logaddexp
     mindspore.ops.logaddexp2
+    mindspore.ops.logdet
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
