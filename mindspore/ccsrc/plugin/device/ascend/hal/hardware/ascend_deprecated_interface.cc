@@ -212,12 +212,6 @@ void AscendDeprecatedInterface::ClearGraphWrapper() { transform::DfGraphManager:
 
 void AscendDeprecatedInterface::ClearOpAdapterMap() { transform::OpAdapterMap::get().clear(); }
 
-void AscendDeprecatedInterface::EraseGeResource() {
-  transform::DfGraphManager::GetInstance().DeleteGraphRunner();
-  transform::DfGraphManager::GetInstance().EraseAnfGraph();
-  transform::DfGraphManager::GetInstance().DeleteGeSession();
-}
-
 void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
   return profiler::ascend::ParallelStrategy::GetInstance()->DumpProfileParallelStrategy(func_graph);
 }

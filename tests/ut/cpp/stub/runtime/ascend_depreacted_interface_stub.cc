@@ -30,7 +30,6 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &, const std::st
 FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &, const pybind11::dict &) { return nullptr; }
 void AscendDeprecatedInterface::ClearGraphWrapper() {}
 void AscendDeprecatedInterface::ClearOpAdapterMap() {}
-void AscendDeprecatedInterface::EraseGeResource() {}
 void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &) {}
 
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &) { return true; }

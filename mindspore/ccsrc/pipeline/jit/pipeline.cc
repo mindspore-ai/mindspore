@@ -589,27 +589,11 @@ py::dict GraphExecutorPy::GetAllreduceFusion(const std::string &phase) {
 // Not support multi thread, not support nested call too.
 // Here using nested_called flg to avoid nested call.
 void GraphExecutorPy::DelNetRes(const py::object &source_obj, const py::set &id) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  std::string backend = ms_context->backend_policy();
-  if (device_target == kAscendDevice && backend == "ge") {
-    FinalizeBackend();
-  }
   ClearArgCache(source_obj);
   // Del all graphs by different phase
   for (auto item : id) {
     DelOneNetRes(item);
   }
-#ifdef WITH_BACKEND
-  if (backend == "ge" && !id.empty() && info_.size() == 0) {
-    DeviceContext *device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
-    MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-    // because Ge only support one Session exist at the same time ,so we delete the old one
-    device_context->GetDeprecatedInterface()->EraseGeResource();
-  }
-#endif
 }
 
 void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
