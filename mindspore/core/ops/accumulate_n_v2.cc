@@ -39,6 +39,15 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
   auto shape_0 = elements[0]->BuildShape();
   auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_0);
   for (size_t i = 0; i < elements.size(); ++i) {
+    auto shape_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    if (IsDynamicRank(shape_i)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    }
+    if (IsDynamic(shape_i)) {
+      element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+    }
+  }
+  for (size_t i = 0; i < elements.size(); ++i) {
     auto shape = elements[i]->BuildShape();
     if (shape->isa<abstract::Shape>() && shape_0->isa<abstract::Shape>()) {
       const auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();

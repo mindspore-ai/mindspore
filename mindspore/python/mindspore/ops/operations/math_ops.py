@@ -1768,7 +1768,7 @@ class AccumulateNV2(Primitive):
     Refer to :func:`mindspore.ops.accumulate_n` for more details.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> class NetAccumulateNV2(nn.Cell):
