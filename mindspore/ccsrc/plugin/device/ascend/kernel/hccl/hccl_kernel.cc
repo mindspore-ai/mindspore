@@ -138,7 +138,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
       return false;
     }
   }
-  if (op_name_ == kBroadcast) {
+  if (op_name_ == kBroadcastOpName) {
     if (!HcomUtil::GetHcomRootId(anf_node, &root_id_)) {
       MS_LOG(ERROR) << "GetHcomRootId fail!";
       return false;

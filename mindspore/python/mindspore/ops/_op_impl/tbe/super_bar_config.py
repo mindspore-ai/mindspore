@@ -253,6 +253,12 @@ super_bar_config = {
         },
         "SmoothL1LossGradV2": {
             "sigma": "beta"
+        },
+        "Centralization": {
+            "axes": "axis"
+        },
+        "MaxPool3DGradGradD": {
+            "ksize": "kernel_size"
         }
     },
     "AttrDefaultValue": {

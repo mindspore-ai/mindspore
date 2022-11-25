@@ -37,7 +37,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto parallel_context_instance = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context_instance);
-  if (parallel_context_instance->enable_parallel_optimizer() && op_name == kBroadcast) {
+  if (parallel_context_instance->enable_parallel_optimizer() && op_name == kBroadcastOpName) {
     return kOpFormat_DEFAULT;
   }
   if (op_name == kReceiveOpName || op_name == kHcomSendOpName || op_name == kAllToAllvOpName) {

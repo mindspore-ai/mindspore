@@ -121,7 +121,7 @@ def load_super_bar_config(super_bar_config):
         ...         "padding": "pad_mode"
         ...       }
         ...     }
-        ...}
+        ... }
         >>>
         >>> @load_super_bar_config(super_bar_config)
         ... def super_bar():
