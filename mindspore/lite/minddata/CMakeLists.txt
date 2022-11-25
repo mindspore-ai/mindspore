@@ -371,6 +371,21 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         Threads::Threads
         )
 
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE AND MSLITE_ENABLE_ACL)
+        target_link_libraries(minddata-lite
+            mindspore_core
+            mindspore::opencv_core
+            mindspore::opencv_imgcodecs
+            mindspore::opencv_imgproc
+            )
+        target_link_libraries(minddata-lite_static
+            mindspore_core
+            mindspore::opencv_core
+            mindspore::opencv_imgcodecs
+            mindspore::opencv_imgproc
+            )
+    endif()
+
     # ref: https://github.com/android/ndk/issues/1202
     if(ANDROID_NDK)
         if(PLATFORM_ARM32)
