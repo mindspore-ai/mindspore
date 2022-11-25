@@ -80,6 +80,10 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto out_shape_ptr = GetDeviceAddress<IndexType>(outputs, kIndex2);
   auto sum_count_ptr = GetDeviceAddress<int64_t>(workspace, kIndex0);
 
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kIndex0)->size, cuda_stream),
+    "For SparseSlice, failed to cudaMemset.");
+
   bool is_nullptr = (indices_ptr == nullptr) || (values_ptr == nullptr) || (x_ptr == nullptr) ||
                     (start_ptr == nullptr) || (size_ptr == nullptr) || (y_indices_ptr == nullptr) ||
                     (y_values_ptr == nullptr) || (out_shape_ptr == nullptr) || (sum_count_ptr == nullptr);
@@ -126,6 +130,26 @@ std::vector<std::pair<KernelAttr, SparseSliceGpuKernelMod::SparseSliceLaunchFunc
        .AddOutputAttr(kNumberTypeUInt16)
        .AddOutputAttr(kNumberTypeInt64),
      &SparseSliceGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt32)
+       .AddOutputAttr(kNumberTypeInt64),
+     &SparseSliceGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt64)
+       .AddOutputAttr(kNumberTypeInt64),
+     &SparseSliceGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
