@@ -94,12 +94,12 @@ TEST_F(DynamicSequenceTestUtils, test_generate_dynamic_length_empty_list) {
   AbstractScalarPtr test_abs = std::make_shared<AbstractScalar>(1);
   ASSERT_TRUE(*(abs_list->dynamic_len_element_abs()->BuildType()) == *(test_abs->BuildType()));
   ASSERT_TRUE(*(abs_list->dynamic_len_element_abs()->BuildShape()) == *(test_abs->BuildShape()));
-  try {
-    abs_list->set_dynamic_len_element_abs(int_abs);
-    FAIL();
-  } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("already set, this can not be reset") != std::string::npos);
-  }
+  AbstractScalarPtr float_abs = std::make_shared<AbstractScalar>(1.0);
+  abs_list->set_dynamic_len_element_abs(float_abs);
+  ASSERT_TRUE(abs_list->dynamic_len_element_abs() != nullptr);
+  test_abs = std::make_shared<AbstractScalar>(2.0);
+  ASSERT_TRUE(*(abs_list->dynamic_len_element_abs()->BuildType()) == *(test_abs->BuildType()));
+  ASSERT_TRUE(*(abs_list->dynamic_len_element_abs()->BuildShape()) == *(test_abs->BuildShape()));
 }
 
 /// Feature: AbstractList with dynamic length.
@@ -200,12 +200,12 @@ TEST_F(DynamicSequenceTestUtils, test_generate_dynamic_length_empty_tuple) {
   AbstractScalarPtr test_abs = std::make_shared<AbstractScalar>(1);
   ASSERT_TRUE(*(abs_tuple->dynamic_len_element_abs()->BuildType()) == *(test_abs->BuildType()));
   ASSERT_TRUE(*(abs_tuple->dynamic_len_element_abs()->BuildShape()) == *(test_abs->BuildShape()));
-  try {
-    abs_tuple->set_dynamic_len_element_abs(int_abs);
-    FAIL();
-  } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("already set, this can not be reset") != std::string::npos);
-  }
+  AbstractScalarPtr float_abs = std::make_shared<AbstractScalar>(1.0);
+  abs_tuple->set_dynamic_len_element_abs(float_abs);
+  ASSERT_TRUE(abs_tuple->dynamic_len_element_abs() != nullptr);
+  test_abs = std::make_shared<AbstractScalar>(2.0);
+  ASSERT_TRUE(*(abs_tuple->dynamic_len_element_abs()->BuildType()) == *(test_abs->BuildType()));
+  ASSERT_TRUE(*(abs_tuple->dynamic_len_element_abs()->BuildShape()) == *(test_abs->BuildShape()));
 }
 
 /// Feature: AbstractTuple with dynamic length.
@@ -274,8 +274,6 @@ TEST_F(DynamicSequenceTestUtils, test_dynamic_length_sequence_operator_getitem) 
 /// Description: AbstractSequence call function empty().
 /// Expectation: Runtime error.
 TEST_F(DynamicSequenceTestUtils, test_dynamic_length_sequence_function_empty) {
-  auto abs_empty_tuple = BuildDynamicAbstractTuple(AbstractBasePtrList{});
-  ASSERT_TRUE(abs_empty_tuple->empty());
   AbstractScalarPtr int_num1 = std::make_shared<AbstractScalar>(1);
   AbstractScalarPtr int_num2 = std::make_shared<AbstractScalar>(2);
   AbstractBasePtrList elements1{int_num1, int_num2};

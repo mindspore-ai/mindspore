@@ -27,8 +27,7 @@ from mindspore.parallel._utils import _sens_divided_by_device_num_if_recomputati
 from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
-    ListClear_, ListReverse_, ListExtend_, ListCount_, DictClear_, DictHasKey_, DictUpdate_, \
-    DictFromKeys_
+    ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -953,25 +952,6 @@ class _ListExtend(ListExtend_):
 
 
 _extend = _ListExtend("extend")
-
-
-class _ListCount(ListCount_):
-    """
-    A metafuncgraph class that count the number of times an element appears in list.
-
-    Args:
-        name (str): The name of the metafuncgraph object.
-    """
-
-    def __init__(self, name):
-        """Initialize _ListCount."""
-        ListCount_.__init__(self, name)
-
-    def __call__(self, *args):
-        pass
-
-
-_count = _ListCount("count")
 
 
 class _DictClear(DictClear_):

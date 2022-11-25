@@ -224,6 +224,7 @@ std::string Tuple::DumpContent(bool is_dumptext) const {
     buffer << type_name;
   } else {
     buffer << type_name;
+    buffer << "[";
     buffer << DumpTypeVector(elements_, is_dumptext, dynamic_len_, dynamic_element_type_);
     buffer << "]";
   }

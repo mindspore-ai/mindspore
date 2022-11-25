@@ -112,21 +112,6 @@ class ListReverse : public MetaFuncGraph {
   friend bool operator==(const ListReverse &lhs, const ListReverse &rhs) { return lhs.name_ == rhs.name_; }
 };
 using ListReversePtr = std::shared_ptr<ListReverse>;
-
-class ListCount : public MetaFuncGraph {
- public:
-  explicit ListCount(const std::string &name) : MetaFuncGraph(name) {}
-  ~ListCount() override = default;
-  MS_DECLARE_PARENT(ListCount, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
-  friend std::ostream &operator<<(std::ostream &os, const ListCount &list_count) {
-    os << list_count.name_;
-    return os;
-  }
-  friend bool operator==(const ListCount &lhs, const ListCount &rhs) { return lhs.name_ == rhs.name_; }
-  bool ComparesTwoValues(const ValuePtr &count_value, const ValuePtr &list_value);
-};
-using ListCountPtr = std::shared_ptr<ListCount>;
 }  // namespace prim
 }  // namespace mindspore
 

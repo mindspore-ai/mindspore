@@ -204,56 +204,5 @@ FuncGraphPtr ListReverse::GenerateFuncGraph(const abstract::AbstractBasePtrList 
   ret->set_output(ret->NewCNode(elems));
   return ret;
 }
-
-FuncGraphPtr ListCount::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
-  const size_t list_count_args_size = 2;
-  abstract::CheckArgsSize("ListCount", args_list, list_count_args_size);
-  auto &list_input = args_list[0];
-  auto &element_value = args_list[1];
-
-  auto arg_list = dyn_cast_ptr<abstract::AbstractList>(list_input);
-  MS_EXCEPTION_IF_NULL(arg_list);
-  FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ret->debug_info()->set_name("count");
-  (void)ret->add_parameter();
-  (void)ret->add_parameter();
-
-  ValuePtr count_value = element_value->BuildValue();
-  const auto &values = arg_list->elements();
-  int64_t count = 0;
-  for (auto value : values) {
-    if (ComparesTwoValues(count_value, value->BuildValue())) {
-      ++count;
-    }
-  }
-
-  auto out = NewValueNode(MakeValue(count));
-  ret->set_output(out);
-  return ret;
-}
-
-bool ListCount::ComparesTwoValues(const ValuePtr &count_value, const ValuePtr &list_value) {
-  MS_EXCEPTION_IF_NULL(count_value);
-  MS_EXCEPTION_IF_NULL(list_value);
-
-  if (count_value->isa<AnyValue>()) {
-    MS_EXCEPTION(TypeError) << "The list count not support variable scene now. The count data is Tensor type.";
-  }
-  if (list_value->isa<AnyValue>()) {
-    MS_EXCEPTION(TypeError) << "The list count not support variable scene now. Tensor type data exists in the list.";
-  }
-
-  if (!count_value->IsSameTypeId(list_value->tid())) {
-    return false;
-  }
-  if (count_value->isa<tensor::Tensor>()) {
-    auto list_tensor_value = list_value->cast_ptr<tensor::Tensor>();
-    MS_EXCEPTION_IF_NULL(list_tensor_value);
-    return count_value->cast_ptr<tensor::Tensor>()->ValueEqual(*list_tensor_value);
-  } else {
-    return *count_value == *list_value;
-  }
-}
 }  // namespace prim
 }  // namespace mindspore

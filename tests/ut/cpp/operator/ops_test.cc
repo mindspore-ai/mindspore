@@ -218,6 +218,22 @@ TEST_F(TestOps, ListAppendTest) {
   ASSERT_EQ(prim->name(), kPrimListAppend->name());
 }
 
+/// Feature: Generate primitive.
+/// Description: Generate primitive.
+/// Expectation: No exception.
+TEST_F(TestOps, SequenceAddTest) {
+  auto prim = std::make_shared<Primitive>("SequenceAdd");
+  ASSERT_EQ(prim->name(), kPrimSequenceAdd->name());
+}
+
+/// Feature: Generate primitive.
+/// Description: Generate primitive.
+/// Expectation: No exception.
+TEST_F(TestOps, SequenceCountTest) {
+  auto prim = std::make_shared<Primitive>("SequenceCount");
+  ASSERT_EQ(prim->name(), kPrimSequenceCount->name());
+}
+
 TEST_F(TestOps, GetAttrTest) {
   auto prim = std::make_shared<Primitive>("getattr");
   ASSERT_EQ(prim->name(), kPrimGetAttr->name());

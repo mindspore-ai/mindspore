@@ -24,7 +24,7 @@ from mindspore.ops.function.sparse_func import sparse_add
 import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
-    _count, _extend, _dict_clear, _haskey, _update, _fromkeys
+    _extend, _dict_clear, _haskey, _update, _fromkeys
 
 from ..._checkparam import Validator as validator
 from ..._checkparam import check_is_number
@@ -3289,11 +3289,6 @@ def list_reverse(self_):
 def list_extend(self_, obj):
     """Append obj to list"""
     return _extend(self_, obj)
-
-
-def list_count(self_, value):
-    """Count the num of value in list"""
-    return _count(self_, value)
 
 
 def dict_get(self_, key_index, default_value=None):

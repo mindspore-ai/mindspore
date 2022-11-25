@@ -28,7 +28,6 @@ namespace ops {
 AbstractBasePtr ListAppendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr size_t input_len = 2;
   constexpr size_t data_index = 0;

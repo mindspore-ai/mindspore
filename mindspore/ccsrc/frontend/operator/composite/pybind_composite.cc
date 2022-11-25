@@ -100,10 +100,6 @@ void RegCompositeOpsGroup(py::module *m) {
   (void)py::class_<ListExtend, MetaFuncGraph, std::shared_ptr<ListExtend>>(*m, "ListExtend_")
     .def(py::init<const std::string &>());
 
-  // Reg ListCount
-  (void)py::class_<ListCount, MetaFuncGraph, std::shared_ptr<ListCount>>(*m, "ListCount_")
-    .def(py::init<const std::string &>());
-
   // Reg DictClear
   (void)py::class_<DictClear, MetaFuncGraph, std::shared_ptr<DictClear>>(*m, "DictClear_")
     .def(py::init<const std::string &>());

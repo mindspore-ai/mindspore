@@ -21,6 +21,7 @@ from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops._constexpr_utils import make_tensor, check_equal
 from mindspore.common import CSRTensor, COOTensor
+from ...operations._sequence_ops import SequenceAdd
 
 
 add = base.MultitypeFuncGraph('add', True)
@@ -195,6 +196,8 @@ def _list_add_list(x, y):
         Returns:
             list, has the same dtype as x.
     """
+    if F.is_sequence_shape_unknown(x) or F.is_sequence_shape_unknown(y):
+        return SequenceAdd()(x, y)
     for i in y:
         x.append(i)
     return x
@@ -272,6 +275,8 @@ def _add_tuple(x, y):
     Returns:
         Tuple, consists of elements of x and elements of y.
     """
+    if F.is_sequence_shape_unknown(x) or F.is_sequence_shape_unknown(y):
+        return SequenceAdd()(x, y)
     return _tuple_add(x, y)
 
 
