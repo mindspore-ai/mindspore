@@ -4988,7 +4988,7 @@ def msort(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), ms.float16)
+        >>> x = ms.Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), ms.float16)
         >>> output = ops.msort(x)
         >>> print(output)
         [[4. 2. 1.]

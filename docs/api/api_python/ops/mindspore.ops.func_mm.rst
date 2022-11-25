@@ -15,8 +15,8 @@ mindspore.ops.mm
         - **mat2** (Tensor) - 矩阵相乘的第二个矩阵， `mat1` 的最后一维度必须和 `mat2` 的第一维度相等。
 
     返回：
-        Tensor或Scalar，输入的矩阵乘积。
+        Tensor，输入的矩阵乘积。
 
     异常：
-        - **ValueError** -  `mat1` 的最后一维度和 `mat2` 的倒数第二维度不相等。
+        - **ValueError** - `mat1` 的最后一维度和 `mat2` 的倒数第二维度不相等。
         - **ValueError** - `mat1` 或者 `mat2` 不是一个矩阵。
