@@ -90,6 +90,7 @@
 #include "ops/split.h"
 #include "ops/grad/gelu_grad.h"
 #include "ops/iou.h"
+#include "ops/sparse_apply_proximal_adagrad.h"
 
 namespace mindspore {
 namespace abstract {
@@ -442,6 +443,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimConcatD, R{InferImplConcat, nullptr, true}},
     {prim::kPrimPack, R{ops::StackInfer, nullptr, true}},
     {prim::kPrimApplyAdamD, R{ops::ApplyAdamDInfer, nullptr, true}},
+    {prim::kPrimSparseApplyProximalAdagradD, R{ops::SparseApplyProximalAdagradInfer, nullptr, true}},
     {prim::kPrimMul, R{ops::MulInfer, nullptr, true}},
     {prim::kPrimMod, R{ops::ModInfer, nullptr, true}},
     {prim::kPrimAdd, R{ops::AddInfer, nullptr, false}},
