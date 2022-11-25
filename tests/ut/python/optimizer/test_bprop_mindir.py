@@ -1247,7 +1247,7 @@ def test_adaptive_max_pool2d():
     input_x = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                                 [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                                 [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
-    net = Net(ops.AdaptiveMaxPool2D((None, 2), True))
+    net = Net(ops.AdaptiveMaxPool2D((None, 2)))
     grad = GradNet(net)
     grad.compile(input_x)
 

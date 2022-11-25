@@ -151,31 +151,6 @@ def test_net_nn():
     assert output.asnumpy().shape == expect_shape
 
 
-def test_tensor_interface_pynative():
-    """
-    Feature: test adaptivemaxpool2d op.
-    Description: test the ops in tensor interface in pynative mode.
-    Expectation: expect correct shape result.
-    """
-    x = Tensor(np.random.randn(1, 32, 9, 9), mindspore.float32)
-    y = x.adaptive_max_pool2d((3, 5), True)
-    expect_shape = (1, 32, 3, 5)
-    assert y[1].asnumpy().shape == expect_shape
-
-
-def test_tensor_interface_graph():
-    """
-    Feature: test adaptivemaxpool2d op.
-    Description: test the ops in tensor interface in graph mode.
-    Expectation: expect correct shape result.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    x = Tensor(np.random.randn(1, 32, 9, 9), mindspore.float32)
-    y = x.adaptive_max_pool2d((3, 5))
-    expect_shape = (1, 32, 3, 5)
-    assert y.asnumpy().shape == expect_shape
-
-
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

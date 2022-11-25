@@ -623,8 +623,11 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
           [[8. 9.]]
           [[8. 9.]]]]
     """
-    _adaptive_max_pool2d = _get_cache_prim(NN_OPS.AdaptiveMaxPool2D)(output_size, return_indices)
-    return _adaptive_max_pool2d(input_x)
+    validator.check_value_type("return_indices", return_indices, bool, "adaptive_max_pool2d")
+    _adaptive_max_pool2d = _get_cache_prim(NN_OPS.AdaptiveMaxPool2D)(output_size)
+    out = _adaptive_max_pool2d(input_x)
+    output = out if return_indices else out[0]
+    return output
 
 
 def adaptive_max_pool3d(x, output_size, return_indices=False):

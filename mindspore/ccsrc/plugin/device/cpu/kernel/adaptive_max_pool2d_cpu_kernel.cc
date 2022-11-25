@@ -39,7 +39,6 @@ bool AdaptiveMaxPool2dCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   // (H_out, W_out)
   auto output_size = kernel_ptr->output_size();
   (void)std::copy(output_size.begin(), output_size.end(), std::back_inserter(attr_output_size_));
-  attr_return_indices_ = kernel_ptr->return_indices();
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -80,33 +79,6 @@ bool AdaptiveMaxPool2dCpuKernelMod::ResizedOutputSize() {
   return true;
 }
 
-bool AdaptiveMaxPool2dCpuKernelMod::UpdateOutputSizeList(const std::vector<KernelTensorPtr> &outputs,
-                                                         size_t input_type_size) {
-  output_size_list_.clear();
-  // If return_indices is true, the outputs num should be 2, otherwise should be 1.
-  if ((outputs.size() == ops::kOutputSizeAttrSize - 1 && (!attr_return_indices_)) ||
-      (outputs.size() == ops::kOutputSizeAttrSize && attr_return_indices_)) {
-    MS_EXCEPTION_IF_NULL(outputs[0]);
-    auto output_shape = outputs[0]->GetShapeVector();
-    size_t output_number = 1;
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      output_number *= static_cast<size_t>(output_shape[i]);
-    }
-    // N * C * H * W * type_size
-    auto output_mem_size = output_number * input_type_size;
-    output_size_list_.push_back(output_mem_size);
-    if (outputs.size() == ops::kOutputSizeAttrSize) {
-      output_size_list_.push_back(output_number * sizeof(int64_t));
-    }
-    return true;
-  }
-
-  MS_LOG(ERROR) << "For primitive[AdaptiveMaxPool2D], the number of outputs should be 2 when return_indices is True,"
-                   " or that should be 1 when return_indices is False, but got the number of outputs : "
-                << outputs.size() << ", and return_indices: " << attr_return_indices_;
-  return false;
-}
-
 int AdaptiveMaxPool2dCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
@@ -132,11 +104,6 @@ int AdaptiveMaxPool2dCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
 
   if (!ResizedOutputSize()) {
-    return KRET_RESIZE_FAILED;
-  }
-
-  size_t input_type_size = abstract::TypeIdSize(inputs.at(0)->GetDtype());
-  if (!UpdateOutputSizeList(outputs, input_type_size)) {
     return KRET_RESIZE_FAILED;
   }
 
@@ -171,10 +138,7 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
                                                  const std::vector<AddressPtr> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  int64_t *indices_addr = nullptr;
-  if (outputs.size() > 1) {
-    indices_addr = GetDeviceAddress<int64_t>(outputs, kIndex1);
-  }
+  int64_t *indices_addr = GetDeviceAddress<int64_t>(outputs, kIndex1);
 
   auto task = [this, &input_addr, &output_addr, &indices_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
@@ -182,7 +146,7 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
       size_t output_offset = i * output_hw_;
       T *input_ptr = input_addr + input_offset;
       T *output_ptr = output_addr + output_offset;
-      int64_t *indices_ptr = (indices_addr == nullptr) ? indices_addr : indices_addr + output_offset;
+      int64_t *indices_ptr = indices_addr + output_offset;
 
       for (size_t oh_index = 0; oh_index < output_height_; ++oh_index) {
         size_t h_begin = start_index(oh_index, output_height_, input_height_);
@@ -205,9 +169,7 @@ bool AdaptiveMaxPool2dCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
           ComputeLocalMax(&max_indice, &max_val, lw, input_width_, input_ptr);
           size_t output_index = oh_index * output_width_ + ow_index;
           output_ptr[output_index] = max_val;
-          if (indices_addr != nullptr) {
-            indices_ptr[output_index] = SizeToLong(max_indice);
-          }
+          indices_ptr[output_index] = SizeToLong(max_indice);
         }
       }
     }

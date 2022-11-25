@@ -38,7 +38,6 @@ class MIND_API AdaptiveMaxPool2D : public BaseOperator {
   MIND_API_BASE_MEMBER(AdaptiveMaxPool2D);
   AdaptiveMaxPool2D() : BaseOperator(kAdaptiveMaxPool2D) { InitIOName({"input_x"}, {"output"}); }
   std::vector<int64_t> output_size() const;
-  bool return_indices() const;
 };
 
 abstract::AbstractBasePtr AdaptiveMaxPool2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

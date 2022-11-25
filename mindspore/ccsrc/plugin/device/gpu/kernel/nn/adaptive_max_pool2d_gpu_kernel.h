@@ -67,9 +67,7 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     int64_t *indices_addr = nullptr;
-    if (outputs.size() > 1) {
-      indices_addr = GetDeviceAddress<int64_t>(outputs, 1);
-    }
+    indices_addr = GetDeviceAddress<int64_t>(outputs, 1);
 
     ApplyAdaptiveMaxPool2D(size_, input_height_, input_width_, output_height_, output_width_, input_addr, output_addr,
                            indices_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -90,6 +88,10 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
 
   bool InitSize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
+    }
     auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(base_operator);
     if (kernel_ptr == nullptr) {
       MS_EXCEPTION(ValueError)
@@ -116,9 +118,6 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
       return false;
     }
 
-    input_size_list_.clear();
-    output_size_list_.clear();
-
     input_height_ = static_cast<size_t>(input_shape[len_ - ops::kOutputSizeAttrSize]);
     input_width_ = static_cast<size_t>(input_shape[len_ - ops::kOutputSizeAttrSize + 1]);
     size_ = static_cast<size_t>(len_ == ops::kFormatCHWShapeSize ? input_shape[0] : input_shape[0] * input_shape[1]);
@@ -126,7 +125,6 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     for (size_t i = 0; i < len_; i++) {
       input_size_ *= input_shape[i];
     }
-    input_size_list_.push_back(input_size_);
 
     auto output_size = kernel_ptr->output_size();
     if (output_size.size() == ops::kOutputSizeAttrSize) {
@@ -139,27 +137,7 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
         << output_size.size();
       return false;
     }
-
-    size_t output_num = 1;
-    // If return indices is true, the outputs num should be 2, otherwise should be 1.
-    if ((outputs.size() == ops::kOutputSizeAttrSize - 1 && (!kernel_ptr->return_indices())) ||
-        (outputs.size() == ops::kOutputSizeAttrSize && kernel_ptr->return_indices())) {
-      MS_EXCEPTION_IF_NULL(outputs[0]);
-      auto output_shape = outputs[0]->GetShapeVector();
-      for (size_t i = 0; i < output_shape.size(); i++) {
-        output_num *= output_shape[i];
-      }
-      output_size_ = output_num * sizeof(T);
-      output_size_list_.push_back(output_size_);
-      if (outputs.size() == ops::kOutputSizeAttrSize) {
-        output_size_list_.push_back(output_num * sizeof(int64_t));
-      }
-      return true;
-    }
-
-    MS_EXCEPTION(ValueError) << "For primitive[AdaptiveMaxPool2D], the size of attr[output_size] should be 2, but got:"
-                             << output_size.size();
-    return false;
+    return true;
   }
 
  private:

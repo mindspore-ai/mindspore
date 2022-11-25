@@ -1188,10 +1188,15 @@ class AdaptiveMaxPool2d(Cell):
     def __init__(self, output_size, return_indices=False):
         """Initialize AdaptiveMaxPool2d."""
         super(AdaptiveMaxPool2d, self).__init__()
-        self.adaptive_max_pool2d = AdaptiveMaxPool2D(output_size, return_indices)
+        validator.check_value_type('return_indices', return_indices, [bool], self.cls_name)
+        self.adaptive_max_pool2d = AdaptiveMaxPool2D(output_size)
+        self.return_indices = return_indices
 
     def construct(self, input_x):
-        return self.adaptive_max_pool2d(input_x)
+        output = self.adaptive_max_pool2d(input_x)
+        if self.return_indices:
+            return output
+        return output[0]
 
 
 class AdaptiveMaxPool3d(Cell):

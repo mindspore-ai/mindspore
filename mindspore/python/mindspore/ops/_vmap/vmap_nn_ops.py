@@ -1516,7 +1516,6 @@ def get_adaptive_max_pool_2d_vmap_rule(prim, axis_size):
     nchw_index = 4
     chw_reverse_index = -3
     hw_size = 2
-    return_indices = prim.return_indices
     output_size = prim.output_size
 
     @constexpr
@@ -1554,20 +1553,14 @@ def get_adaptive_max_pool_2d_vmap_rule(prim, axis_size):
             x_ori_shape = F.shape(x)
             x = F.reshape(x, (-1,) + x_ori_shape[chw_reverse_index:])
             output_shape = get_output_shape(x_ori_shape, output_size)
-            if return_indices:
-                out, indices = prim(x)
-                out = F.reshape(out, output_shape)
-                indices = F.reshape(indices, output_shape)
-                return (out, 0), (indices, 0)
-            out = prim(x)
-            out = F.reshape(out, output_shape)
-            return out, 0
-        # for the case of CHW
-        if return_indices:
             out, indices = prim(x)
+            out = F.reshape(out, output_shape)
+            indices = F.reshape(indices, output_shape)
             return (out, 0), (indices, 0)
-        out = prim(x)
-        return out, 0
+
+        # for the case of CHW
+        out, indices = prim(x)
+        return (out, 0), (indices, 0)
 
     return vmap_rule
 
