@@ -270,6 +270,31 @@ void MindRTBackendBase::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
   }
 }
 
+namespace {
+void ExchangeRealTupleGetItem(const FuncGraphPtr &root_graph) {
+  MS_EXCEPTION_IF_NULL(root_graph);
+  MS_EXCEPTION_IF_NULL(root_graph->manager());
+  FuncGraphSet graphs = root_graph->manager()->func_graphs();
+  for (const auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    auto nodes = TopoSort(graph->get_return());
+    for (const auto &node : nodes) {
+      if (node == nullptr || (!node->isa<CNode>())) {
+        continue;
+      }
+      const auto &cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      if (common::AnfAlgo::GetCNodeName(cnode) == prim::kTupleGetItem &&
+          cnode->inputs().size() == kTupleGetItemInputSize &&
+          (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>())) {
+        cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(prim::kRealTupleGetItem)));
+        MS_LOG(INFO) << "Exchange tuple get item to real tuple get item for node:" << cnode->DebugString();
+      }
+    }
+  }
+}
+}  // namespace
+
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -298,6 +323,9 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
   root_graph_ = root_graph;
+
+  ExchangeRealTupleGetItem(root_graph);
+
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
 
