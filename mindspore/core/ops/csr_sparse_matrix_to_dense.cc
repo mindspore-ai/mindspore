@@ -56,7 +56,7 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
     ShapeVector dense_shape = {-2};
     return std::make_shared<abstract::Shape>(dense_shape);
   }
-  if (rank != kDefalutRank && rank != kBatchRank) {
+  if (!IsDynamic(d_shape_shape) && rank != kDefalutRank && rank != kBatchRank) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', dense form of the input "
                              << "should have rank 2 or 3, but got " << d_shape_shape[kZero] << ".";
   }
