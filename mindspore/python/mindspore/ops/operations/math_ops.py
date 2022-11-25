@@ -542,7 +542,7 @@ class EuclideanNorm(Primitive):
     Reduces input along the dimensions given in axis.
 
     Args:
-        keep_dims (bool): If true, the reduceed dimensions are retained with length 1.
+        keep_dims (bool, optional): If true, the reduceed dimensions are retained with length 1.
                           If false, don't keep these dimensions. Default: False.
 
     Inputs:

@@ -13,5 +13,5 @@ mindspore.ops.angle
         Tensor，类型为float32或float64，shape与输入相同。
 
     异常：
-        TypeError：如果 `x` 不是Tensor。
-        TypeError：如果输入的数据类型不是complex64或complex128。
+        - **TypeError** - 如果 `x` 不是Tensor。
+        - **TypeError** - 如果输入的数据类型不是complex64或complex128。
