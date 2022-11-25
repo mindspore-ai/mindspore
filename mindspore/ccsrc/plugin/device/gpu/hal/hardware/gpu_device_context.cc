@@ -630,6 +630,8 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     auto expand_fg = GetCNodeFuncGraph(cnode);
     graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
     do_expand = true;
+#else
+    MS_EXCEPTION(etype) << msg;
 #endif
   }
 #if (defined(ENABLE_AKG) && !defined(_WIN32))
