@@ -50,6 +50,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     speech_commands_op.cc
     squad_op.cc
     stl10_op.cc
+    sun397_op.cc
     tedlium_op.cc
     text_file_op.cc
     udpos_op.cc

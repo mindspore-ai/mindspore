@@ -60,6 +60,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/squad_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/sun397_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/udpos_node.h"
@@ -705,6 +706,16 @@ PYBIND_REGISTER(STL10Node, 2, ([](const py::module *m) {
                         THROW_IF_ERROR(stl10->ValidateParams());
                         return stl10;
                       }));
+                }));
+
+PYBIND_REGISTER(SUN397Node, 2, ([](const py::module *m) {
+                  (void)py::class_<SUN397Node, DatasetNode, std::shared_ptr<SUN397Node>>(*m, "SUN397Node",
+                                                                                         "to create a SUN397Node")
+                    .def(py::init([](const std::string &dataset_dir, bool decode, const py::handle &sampler) {
+                      auto sun397 = std::make_shared<SUN397Node>(dataset_dir, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(sun397->ValidateParams());
+                      return sun397;
+                    }));
                 }));
 
 PYBIND_REGISTER(TedliumNode, 2, ([](const py::module *m) {

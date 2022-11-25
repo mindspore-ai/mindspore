@@ -51,6 +51,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         speech_commands_node.cc
         squad_node.cc
         stl10_node.cc
+        sun397_node.cc
         tedlium_node.cc
         text_file_node.cc
         tf_record_node.cc

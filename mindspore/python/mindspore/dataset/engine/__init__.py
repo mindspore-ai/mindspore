@@ -67,6 +67,7 @@ __all__ = ["Caltech101Dataset",        # Vision
            "SBUDataset",               # Vision
            "SemeionDataset",           # Vision
            "STL10Dataset",             # Vision
+           "SUN397Dataset",            # Vision
            "SVHNDataset",              # Vision
            "USPSDataset",              # Vision
            "VOCDataset",               # Vision
