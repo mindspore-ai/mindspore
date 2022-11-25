@@ -122,6 +122,8 @@
 #include "tools/converter/parser/conv2d_transpose_input_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
+#include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
+#include "backend/common/optimizer/graph_optimizer.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -579,6 +581,21 @@ STATUS AnfTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph,
     MS_LOG(ERROR) << "Add QuantCast error";
     return RET_ERROR;
   }
+
+  {
+    auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    CHECK_NULL_RETURN(optimizer);
+    auto fusion_pm = std::make_shared<opt::LitePassManager>("fusion pass manager after quant", false);
+    CHECK_NULL_RETURN(fusion_pm);
+    fusion_pm->AddPass(std::make_shared<opt::QuantDtypeCastFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
+    optimizer->AddPassManager(fusion_pm);
+    if (optimizer->Optimize(func_graph) == nullptr) {
+      MS_LOG(ERROR) << "run cast node fusion failed.";
+      return RET_ERROR;
+    }
+  }
+
   return RET_OK;
 }
 
