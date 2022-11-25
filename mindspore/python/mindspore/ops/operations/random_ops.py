@@ -277,9 +277,9 @@ class LogNormalReverse(Primitive):
 
     Args:
         mean (float, optional): the mean of normal distribution. With float data type.
-            Default: 2.0.
-        std (float, optional): the std of normal distribution. With float data type.
             Default: 1.0.
+        std (float, optional): the std of normal distribution. With float data type.
+            Default: 2.0.
 
     Inputs:
         - **input** (Tensor) - The tensor to be generated with log-normal distribution.
