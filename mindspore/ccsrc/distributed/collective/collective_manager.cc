@@ -33,6 +33,7 @@ using recovery::RecoveryContext;
 CollectiveManager::CollectiveManager()
     : inited_(false),
       finalized_(true),
+      need_init_(false),
       need_reinit_(false),
       host_ctx_(nullptr),
       device_ctx_(nullptr),
@@ -140,6 +141,7 @@ bool CheckUniqueIDLatest(const std::string &group_name, size_t root_info_size, c
 }  // namespace
 
 bool CollectiveManager::Initialize() {
+  need_init_ = true;
   if (inited_ && !need_reinit_) {
     return true;
   }
@@ -162,7 +164,8 @@ bool CollectiveManager::Initialize() {
     comm_lib_instance_ = host_comm_lib_instance_;
 
     // Step 2, 3 and 4 are for device communication library. So if the training job is only launched on CPU, they will
-    // not be necessary. Step 2: Assign local rank id(device id) for this process.
+    // not be necessary.
+    // Step 2: Assign local rank id(device id) for this process.
     RETURN_IF_FALSE_WITH_LOG(AssignLocalRank(), "Failed to assign local rank id.");
 
     // Step 3: Initialize device side collective communication.
@@ -349,6 +352,7 @@ bool CollectiveManager::Finalize() {
 
     inited_ = false;
     finalized_ = true;
+    need_init_ = false;
     return true;
   };
 

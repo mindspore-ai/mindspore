@@ -426,7 +426,9 @@ class Primitive(Primitive_):
                            The rank_id is unique in processes with the same role.
 
         Examples:
+            >>> from mindspore import context
             >>> import mindspore.ops as ops
+            >>> context.set_context(mode=context.GRAPH_MODE)
             >>> matmul = ops.MatMul()
             >>> matmul.place('MS_WORKER', 0)
         """
