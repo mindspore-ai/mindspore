@@ -179,14 +179,14 @@ INPUT_MAP(UnsortedSegmentProd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids
 ATTR_INPUT_MAP(UnsortedSegmentProd) = {{"num_segments", 3}};
 ATTR_MAP(UnsortedSegmentProd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentProd) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UnsortedSegmentProd, kNameUnsortedSegmentProdD, ADPT_DESC(UnsortedSegmentProd))
+REG_ADPT_DESC(UnsortedSegmentProd, kNameUnsortedSegmentProd, ADPT_DESC(UnsortedSegmentProd))
 
 // UnsortedSegmentMaxD
 INPUT_MAP(UnsortedSegmentMaxD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
 INPUT_ATTR_MAP(UnsortedSegmentMaxD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
 ATTR_MAP(UnsortedSegmentMaxD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentMaxD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(UnsortedSegmentMaxD, kNameUnsortedSegmentMaxD, ADPT_DESC(UnsortedSegmentMaxD))
+REG_ADPT_DESC(UnsortedSegmentMaxD, kNameUnsortedSegmentMax, ADPT_DESC(UnsortedSegmentMaxD))
 
 // UnsortedSegmentMin
 INPUT_MAP(UnsortedSegmentMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
@@ -211,4 +211,58 @@ INPUT_MAP(MaskedFill) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DE
 ATTR_MAP(MaskedFill) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MaskedFill) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaskedFill, prim::kPrimMaskedFill->name(), ADPT_DESC(MaskedFill))
+
+// InplaceAdd
+INPUT_MAP(InplaceAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
+ATTR_MAP(InplaceAdd) = EMPTY_ATTR_MAP;
+ATTR_INPUT_MAP(InplaceAdd) = {{"indices", 2}};
+OUTPUT_MAP(InplaceAdd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceAdd, kInplaceAddDOpName, ADPT_DESC(InplaceAdd))
+
+// InplaceSub
+INPUT_MAP(InplaceSub) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
+ATTR_MAP(InplaceSub) = EMPTY_ATTR_MAP;
+ATTR_INPUT_MAP(InplaceSub) = {{"indices", 2}};
+OUTPUT_MAP(InplaceSub) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceSub, kInplaceSubDOpName, ADPT_DESC(InplaceSub))
+
+// InplaceUpdate
+INPUT_MAP(InplaceUpdate) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
+ATTR_MAP(InplaceUpdate) = EMPTY_ATTR_MAP;
+ATTR_INPUT_MAP(InplaceUpdate) = {{"indices", 2}};
+OUTPUT_MAP(InplaceUpdate) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceUpdate, kInplaceUpdateDOpName, ADPT_DESC(InplaceUpdate))
+
+// Cummin
+INPUT_MAP(Cummin) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Cummin) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cummin) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(indices)}};
+REG_ADPT_DESC(Cummin, prim::kPrimCummin->name(), ADPT_DESC(Cummin))
+
+// StridedRead
+INPUT_MAP(StridedRead) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(StridedRead) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())},
+                         {"stride", ATTR_DESC(stride, AnyTraits<int64_t>())}};
+OUTPUT_MAP(StridedRead) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(StridedRead, prim::kPrimStridedRead->name(), ADPT_DESC(StridedRead))
+
+// StridedWrite
+INPUT_MAP(StridedWrite) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(StridedWrite) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())},
+                          {"stride", ATTR_DESC(stride, AnyTraits<int64_t>())}};
+OUTPUT_MAP(StridedWrite) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(StridedWrite, prim::kPrimStridedWrite->name(), ADPT_DESC(StridedWrite))
+
+// InplaceIndexAdd
+INPUT_MAP(InplaceIndexAdd) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(InplaceIndexAdd) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(InplaceIndexAdd) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(InplaceIndexAdd, prim::kPrimInplaceIndexAdd->name(), ADPT_DESC(InplaceIndexAdd))
+
+// UnsortedSegmentMax
+INPUT_MAP(UnsortedSegmentMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
+ATTR_INPUT_MAP(UnsortedSegmentMax) = {{"num_segments", 3}};
+ATTR_MAP(UnsortedSegmentMax) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UnsortedSegmentMax) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UnsortedSegmentMax, kUnsortedSegmentMaxDOpName, ADPT_DESC(UnsortedSegmentMax))
 }  // namespace mindspore::transform
