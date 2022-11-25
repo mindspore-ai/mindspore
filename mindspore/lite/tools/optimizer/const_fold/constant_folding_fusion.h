@@ -39,13 +39,13 @@ class ConstFoldPass : public Pass {
     if (fmk_type_ == converter::kFmkTypeMs) {
       auto fold_schedule = ConstFoldWithInferShape(fmk_type_, train_flag_);
       if (!fold_schedule.Run(func_graph)) {
-        MS_LOG(ERROR) << "Do constant fold failed.";
+        MS_LOG(WARNING) << "Do constant fold failed.";
         return false;
       }
     } else {
       auto fold_schedule = ConstFoldAlongInferShape(fmk_type_, train_flag_);
       if (!fold_schedule.Run(func_graph)) {
-        MS_LOG(ERROR) << "Do constant fold failed.";
+        MS_LOG(WARNING) << "Do constant fold failed.";
         return false;
       }
     }

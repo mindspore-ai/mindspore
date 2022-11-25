@@ -112,8 +112,8 @@ int GraphDefTransform::Transform(const std::shared_ptr<ConverterPara> &param) {
     }
   }
 
-  auto ret = QuantTransform(param, graph_defT_);
-  if (ret != RET_OK && status != RET_NO_CHANGE) {
+  status = QuantTransform(param, graph_defT_);
+  if (status != RET_OK && status != RET_NO_CHANGE) {
     return status;
   }
 
