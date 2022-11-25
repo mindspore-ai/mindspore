@@ -290,14 +290,10 @@ int Scheduler::SchedulePreProcess() {
     return *is_infershape_;
   }
 
-  if (context_->enable_parallel_ || context_->inter_op_parallel_num_ > 1) {
+  if (context_->enable_parallel_) {
 #ifndef AUTO_PARALLEL_CLIP
-    if (context_->enable_parallel_) {
-      if (*is_infershape_ != RET_INFER_INVALID) {
-        search_sub_graph.SubGraphSplit();
-      }
-    } else {
-      search_sub_graph.SubGraphSplitByOperator();
+    if (*is_infershape_ != RET_INFER_INVALID) {
+      search_sub_graph.SubGraphSplit();
     }
 #else
     MS_LOG(ERROR) << unsupport_auto_parallel_log;

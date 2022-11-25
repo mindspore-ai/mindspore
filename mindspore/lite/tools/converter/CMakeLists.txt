@@ -248,6 +248,7 @@ if(MSLITE_ENABLE_MINDRT)
             ${LITE_SRC}
             ${MINDRT_SRC}
             ${SRC_DIR}/runtime/lite_mindrt.cc
+            ${SRC_DIR}/runtime/parallel_lite_actor.cc
             ${SRC_DIR}/runtime/mindrt_executor.cc
             ${SRC_DIR}/control_flow/control_actor_creator.cc
             )

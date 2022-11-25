@@ -352,7 +352,10 @@ void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
   }
 }
 
-void LiteOpActor::AddResultIndex(size_t index) { results_index_.push_back(index); }
+void LiteOpActor::AddResultIndex(size_t index, size_t tensor_index) {
+  results_index_.push_back(index);
+  results_tensor_index_.push_back(tensor_index);
+}
 
 void LiteOpActor::SetOutputData(OpContext<Tensor> *context) {
   for (auto index : results_index_) {

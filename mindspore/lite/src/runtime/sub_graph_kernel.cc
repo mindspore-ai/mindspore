@@ -341,6 +341,71 @@ void SubGraphKernel::DropNode(KernelExec *node) {
   lite::VectorErase(&out_nodes_, node);
 }
 
+int SubGraphKernel::SubGraphSplitByOperator(KernelsArray *kernels_array) {
+  kernels_array->units.clear();
+  auto graph_input = this->in_tensors();
+  std::vector<KernelExec *> nodes_tmp = nodes_;
+  size_t kernels_num = nodes_tmp.size();
+  for (size_t kernel_index = 0; kernel_index < kernels_num; kernel_index++) {
+    auto kernel = nodes_tmp[kernel_index];
+    if (kernel == nullptr) {
+      continue;
+    }
+    MS_ASSERT(kernel->subgraph_type() != kernel::kNotSubGraph);
+    kernels_array->units.push_back({});
+    size_t now_index = kernels_array->units.size() - 1;
+    kernels_array->units.at(now_index).kernels.push_back(kernel);
+    for (auto in_kernel : kernel->in_kernels()) {
+      for (size_t i = 0; i < now_index; i++) {
+        if (lite::IsContain(kernels_array->units.at(i).kernels, in_kernel)) {
+          kernels_array->units.at(now_index).input_indexs.push_back(i);
+          kernels_array->units.at(i).output_indexs.push_back(now_index);
+        }
+      }
+    }
+    bool is_graph_input = true;
+    for (auto &in_tensor : kernel->in_tensors()) {
+      if (!(lite::IsContain(graph_input, in_tensor) || in_tensor->IsGraphInput() || in_tensor->IsConst())) {
+        is_graph_input = false;
+      }
+    }
+    if (is_graph_input) {
+      if (kernel->in_kernels().size() != 0) {
+        MS_LOG(ERROR) << "graph input node in_kernels num invalid!";
+        return RET_ERROR;
+      }
+      kernels_array->graph_input.push_back(now_index);
+    } else if (kernel->in_kernels().size() == 0) {
+      MS_LOG(ERROR) << "graph input node invalid!";
+      return RET_ERROR;
+    }
+    MS_ASSERT(std::find_if(kernel->in_kernels().begin(), kernel->in_kernels().end(), [kernel](KernelExec *in_kernel) {
+                return !lite::IsContain(in_kernel->out_kernels(), kernel);
+              }) == kernel->in_kernels().end());
+    MS_ASSERT(
+      std::find_if(kernel->out_kernels().begin(), kernel->out_kernels().end(), [kernel](KernelExec *out_kernel) {
+        return !lite::IsContain(out_kernel->in_kernels(), kernel);
+      }) == kernel->out_kernels().end());
+    while ((kernel->out_kernels().size() == 1) && (kernel->out_kernels().front()->in_kernels().size() == 1)) {
+      kernel = kernel->out_kernels().front();
+      size_t i;
+      for (i = kernel_index + 1; i < kernels_num; i++) {
+        if (nodes_tmp[i] == kernel) {
+          break;
+        }
+      }
+      if (i < kernels_num) {
+        nodes_tmp[i] = nullptr;
+      } else {
+        MS_LOG(ERROR) << "graph structure invalid!";
+        return RET_ERROR;
+      }
+      kernels_array->units.at(now_index).kernels.push_back(kernel);
+    }
+  }
+  return RET_OK;
+}
+
 int CustomSubGraph::Prepare() {
   auto ret = SubGraphKernel::Prepare();
   if (ret != RET_OK) {
