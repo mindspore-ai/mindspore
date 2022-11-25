@@ -4082,8 +4082,8 @@ class LSTM(PrimitiveWithInfer):
     Inputs:
         - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
           (batch_size, seq_len, `input_size`).
-        - **h** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-        - **c** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **h** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **c** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
         - **w** (Tensor) - A weight Tensor.
 
     Outputs:

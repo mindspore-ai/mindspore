@@ -31,15 +31,14 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kGRUV2InputMinDim = 1;
 constexpr size_t kGRUV2InputSize = 3;
 constexpr size_t kGRUV2HSize = 3;
 constexpr size_t kGRUV2SeqLenSize = 1;
 constexpr int64_t kGRUV2InputNum = 4;
-constexpr auto kRealNumLayers = "real_num_layers";
-constexpr auto kRealHiddenSize = "real_hidden_size";
+constexpr auto kGRUV2RealNumLayers = "real_num_layers";
+constexpr auto kGRUV2RealHiddenSize = "real_hidden_size";
 
-std::unordered_map<std::string, int64_t> GetAttrMap(const PrimitivePtr &primitive) {
+std::unordered_map<std::string, int64_t> GRUV2GetAttrMap(const PrimitivePtr &primitive) {
   std::unordered_map<std::string, int64_t> attr_map;
   auto input_size_ptr = primitive->GetAttr(kInputSize);
   MS_EXCEPTION_IF_NULL(input_size_ptr);
@@ -59,8 +58,8 @@ std::unordered_map<std::string, int64_t> GetAttrMap(const PrimitivePtr &primitiv
   bool bidirectional = GetValue<bool>(bidirectional_ptr);
   auto real_hidden_size = bidirectional ? hidden_size * 2 : hidden_size;
   auto real_num_layers = bidirectional ? num_layers * 2 : num_layers;
-  attr_map[kRealNumLayers] = real_num_layers;
-  attr_map[kRealHiddenSize] = real_hidden_size;
+  attr_map[kGRUV2RealNumLayers] = real_num_layers;
+  attr_map[kGRUV2RealHiddenSize] = real_hidden_size;
   return attr_map;
 }
 
@@ -68,7 +67,7 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kGRUV2InputNum, op_name);
-  auto attr_map = GetAttrMap(primitive);
+  auto attr_map = GRUV2GetAttrMap(primitive);
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
@@ -84,8 +83,8 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
   auto batch_size = x_shape[1];
   auto input_size = attr_map[kInputSize];
   auto hidden_size = attr_map[kHiddenSize];
-  auto real_num_layers = attr_map[kRealNumLayers];
-  auto real_hidden_size = attr_map[kRealHiddenSize];
+  auto real_num_layers = attr_map[kGRUV2RealNumLayers];
+  auto real_hidden_size = attr_map[kGRUV2RealHiddenSize];
   if (h_shape[kInputIndex1] != batch_size || seq_lengths_shape[kInputIndex0] != batch_size) {
     MS_LOG(EXCEPTION) << "For dynamic rnn, the batch_size should be the same between input, h, and seq_lengths.";
   }

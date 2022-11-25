@@ -319,6 +319,90 @@ class GRUV2(PrimitiveWithInfer):
         return x_dtype, x_dtype, x_dtype, x_dtype
 
 
+class LSTMV2(Primitive):
+    """
+    Performs the Long Short-Term Memory (LSTM) on the input.
+
+    For detailed information, please refer to :class:`mindspore.nn.LSTM`.
+
+    Args:
+        input_size (int): Number of features of input.
+        hidden_size (int):  Number of features of hidden layer.
+        num_layers (int): Number of layers of stacked LSTM.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`.
+        bidirectional (bool): Specifies whether it is a bidirectional LSTM.
+        dropout (float, optional): If not 0, append `Dropout` layer on the outputs of each
+            LSTM layer except the last layer. The range of dropout is [0.0, 1.0]. Default: 0.0.
+        is_train (bool): Specifies whether it is training mode or inference mode.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`).
+        - **h** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **c** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **w** (Tensor) - The input tensor which states for weights.
+        - **seq_lengths** (Tensor) - The Tensor[Int32] of shape (batch_size, ),
+          indicates the seq_length of each batch dim.
+
+    Outputs:
+        Tuple, a tuple contains (`output`, `h_n`, `c_n`, `reserve`, `state`).
+
+        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
+        - **h_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **c_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **reserve** (Tensor) - Tensor of shape (r, 1).
+        - **state** (Tensor) - Random number generator state and its shape is (s, 1).
+
+    Raises:
+        TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
+        TypeError: If `has_bias` or `bidirectional` is not a bool.
+        TypeError: If `dropout` is not a float.
+        ValueError: If `dropout` is not in range [0.0, 1.0].
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input_size = 10
+        >>> hidden_size = 2
+        >>> num_layers = 1
+        >>> max_seq_len = 5
+        >>> batch_size = 2
+        >>>
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> net = rl_ops.LSTMV2(input_size, hidden_size, num_layers, True, False, 0.0)
+        >>> input_tensor = Tensor(np.ones([max_seq_len, batch_size, input_size]).astype(np.float32))
+        >>> h0 = Tensor(np.ones([num_layers, batch_size, hidden_size]).astype(np.float32))
+        >>> c0 = Tensor(np.ones([num_layers, batch_size, hidden_size]).astype(np.float32))
+        >>> w = Tensor(np.ones([112, 1, 1]).astype(np.float32))
+        >>> seq_lengths = Tensor(np.array([4, 3]).astype(np.int32))
+        >>> output, hn, cn, _, _ = net(input_tensor, h0, c0, w, seq_lengths)
+        >>> print(output)
+        Tensor(shape=[5, 2, 2], dtype=Float32, value=
+        [[[ 9.64026690e-01, 9.64026690e-01],
+        [ 9.64026690e-01, 9.64026690e-01]],
+        [[ 9.95053887e-01, 9.95053887e-01],
+        [ 9.95053887e-01, 9.95053887e-01]],
+        [[ 9.99328434e-01, 9.99328434e-01],
+        [ 9.99328434e-01, 9.99328434e-01]],
+        [[ 9.99908388e-01, 9.99908388e-01],
+        [ 0.00000000e+00, 0.00000000e+00]],
+        [[ 0.00000000e+00, 0.00000000e+00],
+        [ 0.00000000e+00, 0.00000000e+00]]])
+    """
+
+    @prim_attr_register
+    def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout, is_train=True):
+        """Initialize GRU."""
+        validator.check_positive_int(input_size, "input_size", self.name)
+        validator.check_positive_int(hidden_size, "hidden_size", self.name)
+        validator.check_positive_int(num_layers, "num_layers", self.name)
+        validator.check_value_type("has_bias", has_bias, (bool,), self.name)
+        validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)
+        validator.check_value_type("dropout", dropout, [float], self.name)
+        validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        validator.check_value_type("is_train", is_train, (bool,), self.name)
+
+
 class CudnnGRU(PrimitiveWithInfer):
     """
     Performs the Stacked GRU (Gated Recurrent Unit) on the input.
