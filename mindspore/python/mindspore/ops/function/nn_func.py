@@ -1086,9 +1086,8 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import dropout
         >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
-        >>> output, mask = dropout(x, p=0.5)
+        >>> output, mask = ops.dropout(x, p=0.5)
         >>> print(output.shape)
         (2, 2)
     """
@@ -1176,7 +1175,7 @@ def dropout1d(x, p=0.5, training=True):
 
     Examples:
         >>> input_x = Tensor(np.random.randn(4, 3), mindspore.float32)
-        >>> output = dropout1d(input_x, 0.5)
+        >>> output = ops.dropout1d(input_x, 0.5)
         >>> print(output.shape)
         (4, 3)
     """
@@ -1239,7 +1238,7 @@ def dropout2d(x, p=0.5):
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
-        >>> output, mask = dropout2d(input_x, 0.5)
+        >>> output, mask = ops.dropout2d(input_x, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
@@ -1285,7 +1284,7 @@ def dropout3d(x, p=0.5):
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
-        >>> output, mask = dropout3d(input_x, 0.5)
+        >>> output, mask = ops.dropout3d(input_x, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
@@ -2972,7 +2971,6 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> output = ops.smooth_l1_loss(logits, labels)
@@ -4321,7 +4319,7 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     Examples:
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
-        >>> output = conv3d(x, weight)
+        >>> output = ops.conv3d(x, weight)
         >>> print(output.shape)
         (16, 32, 7, 30, 30)
     """

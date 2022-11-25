@@ -84,7 +84,6 @@ def coo_cos(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -119,7 +118,6 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -155,7 +153,6 @@ def coo_tan(x: COOTensor) -> COOTensor:
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -190,7 +187,6 @@ def csr_exp(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -226,7 +222,6 @@ def coo_exp(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -261,7 +256,6 @@ def csr_inv(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -382,7 +376,6 @@ def coo_relu(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -418,7 +411,6 @@ def csr_expm1(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -492,7 +484,6 @@ def csr_isfinite(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -531,7 +522,6 @@ def coo_isfinite(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -567,7 +557,6 @@ def csr_asin(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -604,7 +593,6 @@ def coo_asin(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -639,7 +627,6 @@ def csr_sqrt(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -675,7 +662,6 @@ def coo_sqrt(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -715,7 +701,6 @@ def csr_log(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -756,7 +741,6 @@ def coo_log(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -796,7 +780,6 @@ def csr_isnan(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -837,7 +820,6 @@ def coo_isnan(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -874,7 +856,6 @@ def csr_acos(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -912,7 +893,6 @@ def coo_acos(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -949,7 +929,6 @@ def csr_floor(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -987,7 +966,6 @@ def coo_floor(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1023,7 +1001,6 @@ def csr_atan(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1060,7 +1037,6 @@ def coo_atan(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1095,7 +1071,6 @@ def csr_square(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1131,7 +1106,6 @@ def coo_square(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1169,7 +1143,6 @@ def csr_relu6(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1208,7 +1181,6 @@ def coo_relu6(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1243,7 +1215,6 @@ def csr_sinh(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1279,7 +1250,6 @@ def coo_sinh(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1315,7 +1285,6 @@ def csr_ceil(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1352,7 +1321,6 @@ def coo_ceil(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1390,7 +1358,6 @@ def csr_cosh(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1429,7 +1396,6 @@ def coo_cosh(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1466,7 +1432,6 @@ def csr_softsign(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1504,7 +1469,6 @@ def coo_softsign(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1540,7 +1504,6 @@ def csr_log1p(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1576,7 +1539,6 @@ def coo_log1p(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1611,7 +1573,6 @@ def csr_round(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1647,7 +1608,6 @@ def coo_round(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1687,7 +1647,6 @@ def csr_tanh(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1762,7 +1721,6 @@ def csr_asinh(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1798,7 +1756,6 @@ def coo_asinh(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1833,7 +1790,6 @@ def csr_neg(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1869,7 +1825,6 @@ def coo_neg(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1908,7 +1863,6 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -1948,7 +1902,6 @@ def coo_acosh(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -1988,7 +1941,6 @@ def csr_isinf(x: CSRTensor) -> CSRTensor:
         ``CPU`` ``GPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -2029,7 +1981,6 @@ def coo_isinf(x: COOTensor) -> COOTensor:
         ``CPU`` ``GPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -2069,7 +2020,6 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -2110,7 +2060,6 @@ def coo_atanh(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -2150,7 +2099,6 @@ def csr_sigmoid(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -2191,7 +2139,6 @@ def coo_sigmoid(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -2226,7 +2173,6 @@ def csr_abs(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -2262,7 +2208,6 @@ def coo_abs(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
@@ -2299,7 +2244,6 @@ def csr_sin(x: CSRTensor) -> CSRTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indptr = Tensor([0, 1, 2, 2], dtype=mstype.int32)
         >>> indices = Tensor([3, 0], dtype=mstype.int32)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
@@ -2337,7 +2281,6 @@ def coo_sin(x: COOTensor) -> COOTensor:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops, Tensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values = Tensor([-1, 2], dtype=mstype.float32)
         >>> shape = (3, 4)
