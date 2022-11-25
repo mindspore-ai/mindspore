@@ -7120,7 +7120,7 @@ class CTCGreedyDecoder(Primitive):
     Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register

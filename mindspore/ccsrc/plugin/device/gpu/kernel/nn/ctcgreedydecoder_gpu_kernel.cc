@@ -1,0 +1,226 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <utility>
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <set>
+#include <numeric>
+#include <iostream>
+
+#include "kernel/common_utils.h"
+#include "plugin/device/gpu/kernel/nn/ctcgreedydecoder_gpu_kernel.h"
+#include "mindspore/core/ops/ctc_greedy_decoder.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/ctcgreedydecoder_impl.cuh"
+
+namespace mindspore {
+namespace kernel {
+constexpr size_t kInputNum = 2;
+constexpr size_t kOutputNum = 4;
+constexpr size_t kInputsRank = 3;
+constexpr size_t kDecodedIndicesRank = 2;
+constexpr size_t kSeqLenRank = 1;
+
+void CTCGreedyDecoderGpuKernelMod::ResetResource() {
+  stream_ptr_ = nullptr;
+  is_null_input_ = false;
+  input_size_list_.clear();
+  workspace_size_list_.clear();
+  output_size_list_.clear();
+}
+
+void CTCGreedyDecoderGpuKernelMod::InitSizeLists() {
+  auto input_elements_ = inputs_x_shape_[kIndex0] * inputs_x_shape_[kIndex1] * inputs_x_shape_[kIndex2];
+  max_time_ = inputs_x_shape_[kIndex0];
+  batch_size_ = inputs_x_shape_[kIndex1];
+  bound_ = inputs_x_shape_[kIndex2];
+
+  input_size_list_.push_back(input_elements_ * data_unit_size_);
+  input_size_list_.push_back(sequence_shape_[kIndex0] * sizeof(int32_t));
+
+  workspace_size_list_.push_back(sizeof(int64_t));
+  workspace_size_list_.push_back(batch_size_ * sizeof(int64_t));
+  workspace_size_list_.push_back(max_time_ * batch_size_ * sizeof(int64_t));
+
+  output_size_list_.push_back(max_time_ * batch_size_ * sizeof(int64_t) * kDecodedIndicesRank);
+  output_size_list_.push_back(max_time_ * batch_size_ * sizeof(int64_t));
+  output_size_list_.push_back(kDecodedIndicesRank * sizeof(int64_t));
+  output_size_list_.push_back(max_time_ * batch_size_ * data_unit_size_);
+}
+
+bool CTCGreedyDecoderGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
+  outputs_ = outputs;
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto kernel_ptr = std::make_shared<ops::CTCGreedyDecoder>(base_operator->GetPrim());
+  merge_repeated_ = kernel_ptr->get_merge_repeated();
+  is_need_retrieve_output_shape_ = true;
+
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+
+  kernel_func_ = func_list_[index].second;
+  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  return true;
+}
+
+int CTCGreedyDecoderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (inputs.empty() || outputs.empty()) {
+    return false;
+  }
+  for (const auto &input : inputs) {
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+  // std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
+  //                                                 inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+
+  ResetResource();
+
+  inputs_x_shape_ = inputs[kIndex0]->GetShapeVector();
+  sequence_shape_ = inputs[kIndex1]->GetShapeVector();
+
+  if (inputs_x_shape_.size() != kInputsRank) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', inputs's dim must be 3, but got: " << inputs_x_shape_.size()
+                      << ".";
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (sequence_shape_.size() != kSeqLenRank) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', sequence_length's dims must be 1, but got: " << sequence_shape_.size() << ".";
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (inputs_x_shape_[1] != sequence_shape_[0]) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', inputs batch_size must be the same with sequence_length batch_size"
+                      << ".";
+    return KRET_RESIZE_FAILED;
+  }
+
+  InitSizeLists();
+
+  if (input_size_list_.size() != kInputNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', Input size list should be " << kInputNum << ", but got "
+                  << input_size_list_.size() << ".";
+    return KRET_RESIZE_FAILED;
+  }
+
+  return KRET_OK;
+}
+
+template <typename T>
+bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                const std::vector<AddressPtr> &workspace,
+                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
+  stream_ptr_ = stream_ptr;
+  T *inputs_x = GetDeviceAddress<T>(inputs, kIndex0);
+  int *sequence_length = GetDeviceAddress<int>(inputs, kIndex1);
+  // int64_t *element_cnt = GetDeviceAddress<int64_t>(workspace, kIndex0);
+  int64_t *nums_count = GetDeviceAddress<int64_t>(workspace, kIndex1);
+  int64_t *decoded_values_temp = GetDeviceAddress<int64_t>(workspace, kIndex2);
+
+  int64_t *decoded_indices = GetDeviceAddress<int64_t>(outputs, kIndex0);
+  int64_t *decoded_values = GetDeviceAddress<int64_t>(outputs, kIndex1);
+  int64_t *decoded_shape = GetDeviceAddress<int64_t>(outputs, kIndex2);
+  T *log_probability = GetDeviceAddress<T>(outputs, kIndex3);
+
+  int seq_host[sequence_shape_[0]];
+  cudaMemcpyAsync(&seq_host, sequence_length, sequence_shape_[0] * sizeof(int32_t), cudaMemcpyDeviceToHost,
+                  reinterpret_cast<cudaStream_t>(stream_ptr_));
+  for (int b = 0; b < sequence_shape_[0]; b++) {
+    if (seq_host[b] > static_cast<int>(max_time_)) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', sequence_length[" << b << "] " << seq_host[b]
+                    << " should be less than " << max_time_ << ".";
+    }
+  }
+
+  CalCTCGreedyDecoder(inputs_x, bound_, max_time_ * batch_size_, batch_size_, decoded_values_temp, log_probability,
+                      device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+  Calmerge(decoded_values_temp, sequence_length, batch_size_, bound_, merge_repeated_, log_probability, nums_count,
+           device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+  element_cnt_ = Calindices(decoded_values_temp, nums_count, batch_size_, decoded_indices, decoded_values,
+                            decoded_shape, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  return true;
+}
+
+void CTCGreedyDecoderGpuKernelMod::SyncData() {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                     "cudaStreamSynchronized failed");
+
+  std::vector<int64_t> indices_shape = outputs_[kIndex0]->GetShapeVector();
+  indices_shape[kIndex0] = element_cnt_;
+  outputs_[kIndex0]->SetShapeVector(std::vector<int64_t>(indices_shape.begin(), indices_shape.end()));
+
+  std::vector<int64_t> values_shape = outputs_[kIndex1]->GetShapeVector();
+  values_shape[kIndex0] = element_cnt_;
+  outputs_[kIndex1]->SetShapeVector(std::vector<int64_t>(values_shape.begin(), values_shape.end()));
+
+  std::vector<int64_t> log_shape = outputs_[kIndex3]->GetShapeVector();
+  log_shape[kIndex0] = inputs_x_shape_[1];
+  outputs_[kIndex3]->SetShapeVector(std::vector<int64_t>(log_shape.begin(), log_shape.end()));
+}
+
+std::vector<std::pair<KernelAttr, CTCGreedyDecoderGpuKernelMod::CTCGreedyDecoderFunc>>
+  CTCGreedyDecoderGpuKernelMod::func_list_ = {{KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat32)
+                                                 .AddInputAttr(kNumberTypeInt32)
+                                                 .AddOutputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeFloat32),
+                                               &CTCGreedyDecoderGpuKernelMod::LaunchKernel<float>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat64)
+                                                 .AddInputAttr(kNumberTypeInt32)
+                                                 .AddOutputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeFloat64),
+                                               &CTCGreedyDecoderGpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> CTCGreedyDecoderGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, CTCGreedyDecoderFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, CTCGreedyDecoder, CTCGreedyDecoderGpuKernelMod);
+}  // namespace kernel
+}  // namespace mindspore
