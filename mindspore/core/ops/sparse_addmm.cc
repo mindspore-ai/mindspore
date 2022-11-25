@@ -40,7 +40,8 @@ abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
   const int kDimensionOne = 1;
   std::vector<ShapeVector> all_shapes = {indices_shape, values_shape, shape_shape, x2_shape, x3_shape};
   bool is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
-  if (!is_dynamic) {
+  bool is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
+  if (!is_dynamic && !is_dynamic_rank) {
     if (indices_shape.size() != kDimensionTwo) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input indices should "
                                << "have rank 2, but got " << indices_shape.size() << ".";
@@ -112,7 +113,6 @@ TypePtr SparseAddmmInferType(const PrimitivePtr &primitive, const std::vector<Ab
   return tensor_element;
 }
 }  // namespace
-
 AbstractBasePtr SparseAddmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -124,7 +124,6 @@ AbstractBasePtr SparseAddmmInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infer_shape = SparseAddmmInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);
 }
-
 MIND_API_OPERATOR_IMPL(SparseAddmm, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseAddmm, prim::kPrimSparseAddmm, SparseAddmmInfer, nullptr, true);
 }  // namespace ops
