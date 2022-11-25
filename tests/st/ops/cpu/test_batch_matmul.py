@@ -269,16 +269,9 @@ class BatchMatMul(Cell):
 
 class BatchMatMulTestNet(Cell):
     def __init__(self, inputs=None):
-        self.ms_type = inputs[0].dtype
-
+        super().__init__()
         self.input_x1 = inputs[0]
-        self.input_x1_np = inputs[0].asnumpy()
-        self.input_x1_shape = inputs[0].shape
-
         self.input_x2 = inputs[1]
-        self.input_x2_np = inputs[1].asnumpy()
-        self.input_x2_shape = inputs[1].shape
-        self.loss = 1e-3
 
     def forward_mindspore_impl(self):
         input_x1 = Tensor(self.input_x1)

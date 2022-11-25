@@ -310,6 +310,7 @@ class BatchMatMul(Cell):
 
 class BatchMatMulTestNet(Cell):
     def __init__(self, inputs=None):
+        super().__init__()
         self.input_x1 = inputs[0]
         self.input_x2 = inputs[1]
 
