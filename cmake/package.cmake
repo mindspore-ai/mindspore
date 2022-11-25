@@ -269,6 +269,12 @@ install(
     COMPONENT mindspore
 )
 
+file(GLOB NOTICE ${CMAKE_SOURCE_DIR}/Third_Party_Open_Source_Software_Notice)
+install(
+    FILES ${NOTICE}
+    DESTINATION ${INSTALL_PY_DIR}
+    COMPONENT mindspore
+)
 install(
     DIRECTORY
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/nn

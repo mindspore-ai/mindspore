@@ -123,7 +123,8 @@ package_data = {
         'include/*',
         'include/*/*',
         'include/*/*/*',
-        'include/*/*/*/*'
+        'include/*/*/*/*',
+        'Third_Party_Open_Source_Software_Notice'
     ]
 }
 
