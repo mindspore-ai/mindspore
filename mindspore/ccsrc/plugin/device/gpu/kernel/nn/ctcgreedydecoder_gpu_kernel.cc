@@ -21,6 +21,7 @@
 #include <set>
 #include <numeric>
 #include <iostream>
+#include <vector>
 
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/nn/ctcgreedydecoder_gpu_kernel.h"
@@ -158,8 +159,8 @@ bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   int64_t *decoded_shape = GetDeviceAddress<int64_t>(outputs, kIndex2);
   T *log_probability = GetDeviceAddress<T>(outputs, kIndex3);
 
-  int seq_host[sequence_shape_[0]];
-  cudaMemcpyAsync(&seq_host, sequence_length, sequence_shape_[0] * sizeof(int32_t), cudaMemcpyDeviceToHost,
+  std::vector<int> seq_host(sequence_shape_[0]);
+  cudaMemcpyAsync(seq_host.data(), sequence_length, sequence_shape_[0] * sizeof(int32_t), cudaMemcpyDeviceToHost,
                   reinterpret_cast<cudaStream_t>(stream_ptr_));
   for (int b = 0; b < sequence_shape_[0]; b++) {
     if (seq_host[b] > static_cast<int>(max_time_)) {
