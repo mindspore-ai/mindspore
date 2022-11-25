@@ -177,6 +177,7 @@ from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseAddmm
 from mindspore.ops.operations.sparse_ops import SparseConcat
+from mindspore.ops.operations.sparse_ops import SparseCross
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseSparseMaximum
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
@@ -4840,6 +4841,18 @@ test_case_sparse_ops = [
                         (Tensor([0, 3, 3, 7, 9], mstype.int32),)],
         'skip': ['backward'],
     }),
+    ('SparseCross', {
+        'block': SparseCross(hashed_output=True, num_buckets=1, hash_key=1,
+                             out_type=mstype.int64, internal_type=mstype.int64),
+        'desc_inputs': [(Tensor([[0, 0], [1, 0], [1, 1]], mstype.int64),
+                         Tensor([[0, 0], [1, 0]], mstype.int64)),
+                        (Tensor([1, 2, 3], mstype.int64),
+                         Tensor([4, 5], mstype.int64)),
+                        (Tensor([2, 2], mstype.int64),
+                         Tensor([2, 1], mstype.int64)),
+                        (Tensor([[6], [7]], mstype.int64),
+                         Tensor([[6], [7]], mstype.int64))],
+        'skip': ['backward']}),
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,

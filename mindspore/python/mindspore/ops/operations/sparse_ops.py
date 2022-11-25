@@ -2585,3 +2585,86 @@ class RaggedTensorToTensor(Primitive):
         validator.check_value_type("row_partition_types", row_partition_types, [list], self.name)
         self.init_prim_io_names(inputs=['shape', 'values', 'default_value', 'row_partition_tensors'],
                                 outputs=['result'])
+
+
+class SparseCross(Primitive):
+    """
+    Generates sparse cross from a list of sparse and dense tensors.
+
+    Args:
+        hashed_output (bool): If true, returns the hash of the cross instead of the string. This will allow us
+                              avoiding string manipulations.
+        num_buckets (int): An int that is >= 0. It is used if "hashed_output" is true.output = hashed_value%num_buckets
+                           if num_buckets > 0 else "hashed_value".
+        hash_key (int): Specify the hash_key that will be used by the "FingerprintCat64" function to combine the
+                        crosses fingerprints.
+        out_type (mindspore.dtype): The output data type. Defaults to "int64".
+        internal_type (mindspore.dtype): An type int64.
+
+    Inputs:
+        - **indices** (list(Tensor)) - A list of Tensor objects with type int64. 2-D.
+          Indices of each input SparseTensor.
+        - **values** (list(Tensor)) - A list of Tensor objects with types from: int64.
+          1-D. values of each SparseTensor.
+        - **shapes** (list(Tensor)) - A list with the same length as indices of Tensor objects with type int64.
+          1-D. Shapes of each SparseTensor.
+        - **dense_inputs** (list(Tensor)) - A list of Tensor objects with types from: int64.
+          2-D. Columns represented by dense Tensor.
+
+    Outputs:
+        - **output_indices** (Tensor) - A Tensor of type int64. 2-D. Indices of the concatenated SparseTensor.
+        - **output_values** (Tensor) - A Tensor of type "out_type". 1-D.
+          Non-empty values of the concatenated or hashed SparseTensor.
+        - **output_shape** (Tensor) - A Tensor of type int64. 1-D. Shape of the concatenated SparseTensor.
+
+    Raises:
+        TypeError: The indices shape rank is not equal to the shape rank.
+        TypeError: The indices element number is not equal to the value element number.
+        TypeError: The indices shape rank should be 2.
+        TypeError: The denses shape rank should be 2.
+        TypeError: The shapes rank should be 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.sparse_ops import SparseCross
+        >>> indice1 = Tensor([[0,0],[1,0],[1,1]], dtype=mstype.int64)
+        >>> value1 = Tensor([1, 2, 3], dtype=mstype.int64)
+        >>> shape1 = Tensor([2, 2], dtype=mstype.int64)
+        >>> dense1 = Tensor([[1],[2]], dtype=mstype.int64)
+        >>> indice2 = Tensor([[0,0],[1,0],[1,1]], dtype=mstype.int64)
+        >>> value2 = Tensor([1, 2, 3], dtype=mstype.int64)
+        >>> shape2 = Tensor([2, 2], dtype=mstype.int64)
+        >>> dense2 = Tensor([[1],[2]], dtype=mstype.int64)
+        >>> indices = [indice1, indice2]
+        >>> values = [value1, value2]
+        >>> shapes = [shape1, shape2]
+        >>> dense_inputs = [dense1, dense2]
+        >>> hashed_output=True
+        >>> hash_key= 2
+        >>> out_type= mstype.int64
+        >>> internal_type = mstype.int64
+        >>> num_buckets=0
+        >>> sparse_cross = SparseCross(hashed_output, hash_key, out_type, internal_type, num_buckets)
+        >>> out = sparse_cross(indices, values, shapes, dense_inputs)
+        >>> print(out)
+        (Tensor(shape=[5, 2], dtype=Int64, value=
+        [[0, 0],
+        [1, 0],
+        [1, 1],
+        [1, 2],
+        [1, 3]]), Tensor(shape=[5], dtype=Int64, value= [1350190460805457680, 6319552725219729347,
+        4652439303631496997, 7670687697825594049,  174086171018132662]), Tensor(shape=[2], dtype=Int64, value= [2, 4]))
+    """
+
+    @prim_attr_register
+    def __init__(self, hashed_output, hash_key, out_type, internal_type, num_buckets=0):
+        """Initialize SparseCross."""
+        self.init_prim_io_names(inputs=["indices", "values", "shapes", "dense_inputs"],
+                                outputs=["output_indices", "output_values", "output_shape"])
+        validator.check_value_type("hashed_output", hashed_output, [bool], self.name)
+        validator.check_value_type("hash_key", hash_key, [int], self.name)
+        validator.check_value_type("out_type", out_type, [mstype.Type], self.name)
+        validator.check_value_type("internal_type", internal_type, [mstype.Type], self.name)
+        validator.check_value_type("num_buckets", num_buckets, [int], self.name)
