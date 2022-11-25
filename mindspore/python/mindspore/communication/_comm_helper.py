@@ -350,7 +350,12 @@ def _create_group_helper(group, rank_ids):
     if _hccl_test():
         hccl.create_group(group, rank_size, rank_ids)
     else:
-        CollectiveManager.get_instance().create_group(group, rank_ids)
+        result = CollectiveManager.get_instance().create_group(group, rank_ids)
+        if not result:
+            raise RuntimeError("Failed to create communication group for {} with rank ids {}. "
+                               "If NCCL is used, 'export NCCL_DEBUG=INFO' "
+                               "is suggested before launching jobs.".format(group, rank_ids))
+
     _ExistingGroup.ITEMS[group] = rank_ids
 
 

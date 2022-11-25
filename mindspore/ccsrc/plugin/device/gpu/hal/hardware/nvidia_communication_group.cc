@@ -36,8 +36,9 @@ bool NvidiaCommunicationGroup::Initialize(void *root_info) {
   uint32_t group_rank = GetGroupRank(global_rank_);
   // Initialize the NCCL communicator while the group created. Pay attention that 'ncclCommInitRank' should be called
   // after GPU device id is set.
-  CHECK_RET(ncclCommInitRank(&comm_, static_cast<int>(size_), unique_id_, static_cast<int>(group_rank)), ncclSuccess,
-            "Initializing NCCL communicator failed.");
+  if (ncclCommInitRank(&comm_, static_cast<int>(size_), unique_id_, static_cast<int>(group_rank)) != ncclSuccess) {
+    return false;
+  }
   initialized_ = true;
   return true;
 }
@@ -50,7 +51,9 @@ bool NvidiaCommunicationGroup::Finalize() {
   // Finalize could be called after any exception is thrown. So we use 'ncclCommAbort' instead of 'ncclCommDestroy'
   // because 'ncclCommAbort' will abort any uncompleted operations before destroying the communicator, e.g.,
   // ncclAllReduce.
-  CHECK_RET(ncclCommAbort(comm_), ncclSuccess, "Failed to abort NCCL communicator.");
+  if (ncclCommAbort(comm_) != ncclSuccess) {
+    return false;
+  }
   initialized_ = false;
   return true;
 }
