@@ -134,19 +134,18 @@ int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (padding == "VALID") {
     output_rows_ = std::ceil((input_row_size_ - patch_rows_eff + 1.f) / static_cast<float>(stride_row_));
     output_cols_ = std::ceil((input_col_size_ - patch_cols_eff + 1.f) / static_cast<float>(stride_col_));
-    constexpr int64_t zero_value = 0;
-    row_padding_top_ =
-      std::max(zero_value, ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / kMidDividend);
-    col_padding_left_ =
-      std::max(zero_value, ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / kMidDividend);
   } else if (padding == "SAME") {
     output_rows_ = std::ceil(input_row_size_ / static_cast<float>(stride_row_));
     output_cols_ = std::ceil(input_col_size_ / static_cast<float>(stride_col_));
-    row_padding_top_ = ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / kMidDividend;
-    col_padding_left_ = ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / kMidDividend;
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'padding' must be 'VALID' or 'SAME', but got " << padding;
   }
+
+  constexpr int64_t zero_value = 0;
+  row_padding_top_ =
+    std::max(zero_value, ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / kMidDividend);
+  col_padding_left_ =
+    std::max(zero_value, ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / kMidDividend);
 
   row_stride_ = ksize_col_;
   patch_stride_ = row_stride_ * ksize_row_ * input_depth;
