@@ -46,6 +46,15 @@ Status SlidingWindowHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr
 /// \return Status return code
 Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std::vector<uint32_t> &offsets_limit,
                            TensorRow *output);
+
+/// \brief Helper method that add token on input tensor.
+/// \param[in] input Input tensor.
+/// \param[in] token The token to be added.
+/// \param[in] begin Whether to insert token at start or end of sequence.
+/// \param[out] output Output tensor.
+/// \return Status return code.
+Status AddToken(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &token,
+                bool begin);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TEXT_DATA_UTILS_H_

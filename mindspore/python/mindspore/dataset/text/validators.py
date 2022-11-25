@@ -27,6 +27,19 @@ from ..core.validator_helpers import parse_user_args, type_check, type_check_lis
     INT32_MAX, check_value, check_positive, check_pos_int32, check_filename, check_non_negative_int32
 
 
+def check_add_token(method):
+    """Wrapper method to check the parameters of add token."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [token, begin], _ = parse_user_args(method, *args, **kwargs)
+        type_check(token, (str,), "token")
+        type_check(begin, (bool,), "begin")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_unique_list_of_words(words, arg_name):
     """Check that words is a list and each element is a str without any duplication"""
 

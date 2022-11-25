@@ -22,6 +22,7 @@
 #include "minddata/dataset/core/pybind_support.h"
 #include "minddata/dataset/kernels/data/slice_op.h"
 #include "minddata/dataset/kernels/data/concatenate_op.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -63,6 +64,38 @@ Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std
 
   output->push_back(offsets_start_tensor);
   output->push_back(offsets_limit_tensor);
+  return Status::OK();
+}
+
+Status AddToken(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &token,
+                bool begin) {
+  if (input->Rank() == 1) {
+    std::shared_ptr<Tensor> append;
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(std::vector<std::string>({token}), &append));
+    TensorRow in({input}), out;
+    RETURN_IF_NOT_OK(Concatenate(in, &out, 0, begin ? append : nullptr, begin ? nullptr : append));
+    *output = out[0];
+  } else {
+    std::vector<std::string> output_vector;
+    int dim = input->shape()[0];
+    int shape = input->shape()[-1];
+    int count = 0;
+    for (auto it = input->begin<std::string_view>(); it != input->end<std::string_view>(); ++it) {
+      if (count >= shape) {
+        count = 0;
+      }
+      if (begin && count == 0) {
+        output_vector.emplace_back(token);
+      }
+      output_vector.emplace_back(*it);
+      if (!begin && count == shape - 1) {
+        output_vector.emplace_back(token);
+      }
+      count++;
+    }
+    shape++;
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(output_vector, TensorShape({dim, shape}), output));
+  }
   return Status::OK();
 }
 }  // namespace dataset

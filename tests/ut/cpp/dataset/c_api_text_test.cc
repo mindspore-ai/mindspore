@@ -5239,3 +5239,59 @@ TEST_F(MindDataTestPipeline, TestCharNGramsWithNotExistFile) {
   Status s = CharNGram::BuildFromFile(&char_n_gram, vectors_dir);
   EXPECT_NE(s, Status::OK());
 }
+
+/// Feature: AddToken op
+/// Description: Test input 1d of AddToken op successfully
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestAddTokenPipelineSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAddTokenPipelineSuccess.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(1);
+  EXPECT_NE(ds, nullptr);
+
+  // Create white_tokenizer operation on ds
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
+  EXPECT_NE(white_tokenizer, nullptr);
+
+  // Create add_token operation on ds
+  std::shared_ptr<TensorTransform> add_token = std::make_shared<text::AddToken>("TOKEN", true);
+  EXPECT_NE(add_token, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({white_tokenizer, add_token}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<std::string> expected = {"TOKEN", "This", "is", "a", "text", "file."};
+  std::shared_ptr<Tensor> de_expected_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
+  mindspore::MSTensor expected_tensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}

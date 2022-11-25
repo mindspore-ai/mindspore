@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
 
+#include "minddata/dataset/text/kernels/add_token_op.h"
 #ifndef _WIN32
 #include "minddata/dataset/text/kernels/basic_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/bert_tokenizer_op.h"
@@ -55,6 +56,34 @@ namespace text {
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
+
+// AddToken
+AddTokenOperation::AddTokenOperation(const std::string &token, bool begin) : token_(token), begin_(begin) {}
+
+AddTokenOperation::~AddTokenOperation() = default;
+
+std::shared_ptr<TensorOp> AddTokenOperation::Build() {
+  std::shared_ptr<AddTokenOp> tensor_op = std::make_shared<AddTokenOp>(token_, begin_);
+  return tensor_op;
+}
+
+Status AddTokenOperation::ValidateParams() {
+  if (token_.empty()) {
+    std::string err_msg = "AddToken: Parameter token is not provided.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::string AddTokenOperation::Name() const { return kAddTokenOperation; }
+
+Status AddTokenOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["token"] = token_;
+  args["begin"] = begin_;
+  *out_json = args;
+  return Status::OK();
+}
 
 #ifndef _WIN32
 // BasicTokenizerOperation

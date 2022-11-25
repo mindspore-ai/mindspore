@@ -36,6 +36,19 @@ constexpr size_t kMaxLoggedRows = 10;
 // FUNCTIONS TO CREATE TEXT OPERATIONS
 // (In alphabetical order)
 
+// AddToken
+struct AddToken::Data {
+  Data(const std::string &token, bool begin) : token_(token), begin_(begin) {}
+  std::string token_;
+  bool begin_;
+};
+
+AddToken::AddToken(const std::string &token, bool begin) : data_(std::make_shared<Data>(token, begin)) {}
+
+std::shared_ptr<TensorOperation> AddToken::Parse() {
+  return std::make_shared<AddTokenOperation>(data_->token_, data_->begin_);
+}
+
 #ifndef _WIN32
 // BasicTokenizer
 struct BasicTokenizer::Data {
