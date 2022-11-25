@@ -1,41 +1,7 @@
 mindspore.ops
-=============
+==============
 
-operators that can be used for constructor function of Cell
-
-.. code-block::
-
-    import mindspore.ops as ops
-
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `API Updates <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates.md>`_ .
-
-Operator Primitives
--------------------
-
-.. autosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Primitive
-    mindspore.ops.PrimitiveWithCheck
-    mindspore.ops.PrimitiveWithInfer
-
-Decorators
-----------
-
-.. autosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.constexpr
-    mindspore.ops.custom_info_register
-    mindspore.ops.kernel
-    mindspore.ops.op_info_register
-    mindspore.ops.prim_attr_register
-
-Neural Network Layer Operators
+Neural Network Layer Functions
 ------------------------------
 
 Neural Network
@@ -46,399 +12,288 @@ Neural Network
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.AvgPool
-    mindspore.ops.AvgPool3D
-    mindspore.ops.BatchNorm
-    mindspore.ops.Conv2D
-    mindspore.ops.Conv2DTranspose
-    mindspore.ops.Conv3D
-    mindspore.ops.Conv3DTranspose
-    mindspore.ops.CTCGreedyDecoder
-    mindspore.ops.DataFormatVecPermute
-    mindspore.ops.Dilation2D
-    mindspore.ops.Dropout
-    mindspore.ops.Dropout2D
-    mindspore.ops.Dropout3D
-    mindspore.ops.DynamicGRUV2
-    mindspore.ops.DynamicRNN
-    mindspore.ops.Flatten
-    mindspore.ops.FractionalAvgPool
-    mindspore.ops.FractionalMaxPool
-    mindspore.ops.FractionalMaxPoolWithFixedKsize
-    mindspore.ops.FractionalMaxPool3DWithFixedKsize
-    mindspore.ops.GridSampler3D
-    mindspore.ops.LayerNorm
-    mindspore.ops.LRN
-    mindspore.ops.LSTM
-    mindspore.ops.MaxPool
-    mindspore.ops.MaxPool3D
-    mindspore.ops.MaxPool3DWithArgmax
-    mindspore.ops.MaxPoolWithArgmax
-    mindspore.ops.MaxUnpool2D
-    mindspore.ops.MirrorPad
-    mindspore.ops.NthElement
-    mindspore.ops.NuclearNorm
-    mindspore.ops.Pad
-    mindspore.ops.EmbeddingLookup
-    mindspore.ops.Padding
-    mindspore.ops.PadV3
-    mindspore.ops.ResizeNearestNeighbor
-    mindspore.ops.ResizeBilinear
-    mindspore.ops.UpsampleNearest3D
-    mindspore.ops.UpsampleTrilinear3D
+    mindspore.ops.adaptive_avg_pool1d
+    mindspore.ops.adaptive_avg_pool2d
+    mindspore.ops.adaptive_avg_pool3d
+    mindspore.ops.adaptive_max_pool1d
+    mindspore.ops.adaptive_max_pool3d
+    mindspore.ops.avg_pool1d
+    mindspore.ops.avg_pool2d
+    mindspore.ops.avg_pool3d
+    mindspore.ops.batch_norm
+    mindspore.ops.bias_add
+    mindspore.ops.conv2d
+    mindspore.ops.conv3d
+    mindspore.ops.ctc_greedy_decoder
+    mindspore.ops.crop_and_resize
+    mindspore.ops.deformable_conv2d
+    mindspore.ops.dropout
+    mindspore.ops.dropout1d
+    mindspore.ops.dropout2d
+    mindspore.ops.dropout3d
+    mindspore.ops.flatten
+    mindspore.ops.fractional_max_pool2d
+    mindspore.ops.fractional_max_pool3d
+    mindspore.ops.interpolate
+    mindspore.ops.lp_pool1d
+    mindspore.ops.lp_pool2d
+    mindspore.ops.lrn
+    mindspore.ops.margin_ranking_loss
+    mindspore.ops.max_pool3d
+    mindspore.ops.max_unpool1d
+    mindspore.ops.max_unpool2d
+    mindspore.ops.max_unpool3d
+    mindspore.ops.multi_margin_loss
+    mindspore.ops.multi_label_margin_loss
+    mindspore.ops.kl_div
+    mindspore.ops.pad
+    mindspore.ops.padding
+    mindspore.ops.pdist
+    mindspore.ops.prelu
+    mindspore.ops.relu
+    mindspore.ops.relu6
 
-Loss Function
-^^^^^^^^^^^^^
+
+Loss Functions
+^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.BCEWithLogitsLoss
-    mindspore.ops.BinaryCrossEntropy
-    mindspore.ops.CTCLoss
-    mindspore.ops.CTCLossV2
-    mindspore.ops.KLDivLoss
-    mindspore.ops.L2Loss
-    mindspore.ops.MultilabelMarginLoss
-    mindspore.ops.MultiMarginLoss
-    mindspore.ops.NLLLoss
-    mindspore.ops.RNNTLoss
-    mindspore.ops.SigmoidCrossEntropyWithLogits
-    mindspore.ops.SmoothL1Loss
-    mindspore.ops.SoftMarginLoss
-    mindspore.ops.SoftmaxCrossEntropyWithLogits
-    mindspore.ops.SparseSoftmaxCrossEntropyWithLogits
-    mindspore.ops.TripletMarginLoss
+    mindspore.ops.binary_cross_entropy
+    mindspore.ops.binary_cross_entropy_with_logits
+    mindspore.ops.cross_entropy
+    mindspore.ops.gaussian_nll_loss
+    mindspore.ops.hinge_embedding_loss
+    mindspore.ops.mse_loss
+    mindspore.ops.nll_loss
+    mindspore.ops.smooth_l1_loss
 
-Activation Function
+Activation Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.celu
+    mindspore.ops.elu
+    mindspore.ops.fast_gelu
+    mindspore.ops.gelu
+    mindspore.ops.glu
+    mindspore.ops.gumbel_softmax
+    mindspore.ops.hardshrink
+    mindspore.ops.hardswish
+    mindspore.ops.log_softmax
+    mindspore.ops.mish
+    mindspore.ops.selu
+    mindspore.ops.softsign
+    mindspore.ops.soft_shrink
+    mindspore.ops.softmax
+    mindspore.ops.tanh
+
+Sampling Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.grid_sample
+    mindspore.ops.log_uniform_candidate_sampler
+    mindspore.ops.uniform_candidate_sampler
+
+Distance Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.cdist
+
+Mathematical Functions
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.bmm
+    mindspore.ops.cholesky
+    mindspore.ops.cholesky_inverse
+    mindspore.ops.conj
+    mindspore.ops.cross
+    mindspore.ops.cumprod
+    mindspore.ops.erfinv
+    mindspore.ops.less_equal
+    mindspore.ops.igamma
+    mindspore.ops.igammac
+    mindspore.ops.is_floating_point
+    mindspore.ops.pinv
+
+Element-by-Element Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.abs
+    mindspore.ops.absolute
+    mindspore.ops.accumulate_n
+    mindspore.ops.acos
+    mindspore.ops.acosh
+    mindspore.ops.add
+    mindspore.ops.addcdiv
+    mindspore.ops.addcmul
+    mindspore.ops.addn
+    mindspore.ops.addr
+    mindspore.ops.angle
+    mindspore.ops.arccos
+    mindspore.ops.arccosh
+    mindspore.ops.arcsin
+    mindspore.ops.arctan
+    mindspore.ops.arctan2
+    mindspore.ops.asin
+    mindspore.ops.asinh
+    mindspore.ops.atan
+    mindspore.ops.atan2
+    mindspore.ops.atanh
+    mindspore.ops.baddbmm
+    mindspore.ops.bernoulli
+    mindspore.ops.bessel_i0
+    mindspore.ops.bessel_i0e
+    mindspore.ops.bessel_i1
+    mindspore.ops.bessel_i1e
+    mindspore.ops.bessel_j0
+    mindspore.ops.bessel_j1
+    mindspore.ops.bessel_k0
+    mindspore.ops.bessel_k0e
+    mindspore.ops.bessel_k1
+    mindspore.ops.bessel_k1e
+    mindspore.ops.bessel_y0
+    mindspore.ops.bessel_y1
+    mindspore.ops.bitwise_and
+    mindspore.ops.bitwise_or
+    mindspore.ops.bitwise_xor
+    mindspore.ops.ceil
+    mindspore.ops.copysign
+    mindspore.ops.cos
+    mindspore.ops.cosh
+    mindspore.ops.deg2rad
+    mindspore.ops.div
+    mindspore.ops.divide
+    mindspore.ops.erf
+    mindspore.ops.erfc
+    mindspore.ops.exp
+    mindspore.ops.expm1
+    mindspore.ops.floor
+    mindspore.ops.floor_div
+    mindspore.ops.floor_mod
+    mindspore.ops.heaviside
+    mindspore.ops.hypot
+    mindspore.ops.i0
+    mindspore.ops.inv
+    mindspore.ops.invert
+    mindspore.ops.lcm
+    mindspore.ops.ldexp
+    mindspore.ops.lerp
+    mindspore.ops.log
+    mindspore.ops.log2
+    mindspore.ops.log10
+    mindspore.ops.log1p
+    mindspore.ops.logaddexp
+    mindspore.ops.logaddexp2
+    mindspore.ops.logical_and
+    mindspore.ops.logical_not
+    mindspore.ops.logical_or
+    mindspore.ops.logical_xor
+    mindspore.ops.logit
+    mindspore.ops.log_matrix_determinant
+    mindspore.ops.matrix_determinant
+    mindspore.ops.mul
+    mindspore.ops.multiply
+    mindspore.ops.mvlgamma
+    mindspore.ops.neg
+    mindspore.ops.negative
+    mindspore.ops.positive
+    mindspore.ops.pow
+    mindspore.ops.rad2deg
+    mindspore.ops.remainder
+    mindspore.ops.roll
+    mindspore.ops.round
+    mindspore.ops.sin
+    mindspore.ops.sinh
+    mindspore.ops.sqrt
+    mindspore.ops.square
+    mindspore.ops.sub
+    mindspore.ops.subtract
+    mindspore.ops.svd
+    mindspore.ops.tan
+    mindspore.ops.true_divide
+    mindspore.ops.trunc
+    mindspore.ops.truncate_div
+    mindspore.ops.truncate_mod
+    mindspore.ops.xdivy
+    mindspore.ops.xlogy
+
+Reduction Functions
 ^^^^^^^^^^^^^^^^^^^
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.amax
+    mindspore.ops.amin
+    mindspore.ops.argmax
+    mindspore.ops.argmin
+    mindspore.ops.cummax
+    mindspore.ops.cummin
+    mindspore.ops.cumsum
+    mindspore.ops.logsumexp
+    mindspore.ops.max
+    mindspore.ops.mean
+    mindspore.ops.median
+    mindspore.ops.min
+    mindspore.ops.norm
+    mindspore.ops.prod
+    mindspore.ops.std
+
+Comparison Functions
+^^^^^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.CeLU
-    mindspore.ops.Elu
-    mindspore.ops.FastGeLU
-    mindspore.ops.GeLU
-    mindspore.ops.HShrink
-    mindspore.ops.HSigmoid
-    mindspore.ops.HSwish
-    mindspore.ops.LogSoftmax
-    mindspore.ops.Mish
-    mindspore.ops.PReLU
-    mindspore.ops.ReLU
-    mindspore.ops.ReLU6
-    mindspore.ops.SeLU
-    mindspore.ops.Sigmoid
-    mindspore.ops.Softmax
-    mindspore.ops.Softplus
-    mindspore.ops.SoftShrink
-    mindspore.ops.Softsign
-    mindspore.ops.Tanh
+    mindspore.ops.approximate_equal
+    mindspore.ops.equal
+    mindspore.ops.ge
+    mindspore.ops.greater
+    mindspore.ops.greater_equal
+    mindspore.ops.gt
+    mindspore.ops.intopk
+    mindspore.ops.isclose
+    mindspore.ops.isfinite
+    mindspore.ops.isinf
+    mindspore.ops.isnan
+    mindspore.ops.le
+    mindspore.ops.less
+    mindspore.ops.maximum
+    mindspore.ops.minimum
+    mindspore.ops.ne
 
-Optimizer
-^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Adam
-    mindspore.ops.AdamWeightDecay
-    mindspore.ops.AdaptiveAvgPool2D
-    mindspore.ops.AdaptiveAvgPool3D
-    mindspore.ops.AdaptiveMaxPool2D
-    mindspore.ops.AdaptiveMaxPool3D
-    mindspore.ops.ApplyAdadelta
-    mindspore.ops.ApplyAdagrad
-    mindspore.ops.ApplyAdagradDA
-    mindspore.ops.ApplyAdagradV2
-    mindspore.ops.ApplyAdaMax
-    mindspore.ops.ApplyAddSign
-    mindspore.ops.ApplyCenteredRMSProp
-    mindspore.ops.ApplyFtrl
-    mindspore.ops.ApplyGradientDescent
-    mindspore.ops.ApplyMomentum
-    mindspore.ops.ApplyPowerSign
-    mindspore.ops.ApplyProximalAdagrad
-    mindspore.ops.ApplyProximalGradientDescent
-    mindspore.ops.ApplyRMSProp
-    mindspore.ops.LARSUpdate
-    mindspore.ops.SparseApplyAdagradV2
-    mindspore.ops.SparseApplyProximalAdagrad
-    mindspore.ops.SGD
-    mindspore.ops.SparseApplyFtrl
-    mindspore.ops.SparseApplyFtrlV2
-
-Distance Function
-^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Cdist
-    mindspore.ops.EditDistance
-    mindspore.ops.LpNorm
-    
-Sampling Operator
-^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-    
-    mindspore.ops.ComputeAccidentalHits
-    mindspore.ops.GridSampler2D
-    mindspore.ops.LogUniformCandidateSampler
-    mindspore.ops.UniformCandidateSampler
-    
-Image Processing
-^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-    
-    mindspore.ops.AdjustHue
-    mindspore.ops.AdjustSaturation
-    mindspore.ops.BoundingBoxDecode
-    mindspore.ops.BoundingBoxEncode
-    mindspore.ops.CheckValid
-    mindspore.ops.CombinedNonMaxSuppression
-    mindspore.ops.CropAndResize
-    mindspore.ops.ExtractGlimpse
-    mindspore.ops.ExtractVolumePatches
-    mindspore.ops.HSVToRGB
-    mindspore.ops.IOU
-    mindspore.ops.L2Normalize
-    mindspore.ops.NMSWithMask
-    mindspore.ops.NonMaxSuppressionV3
-    mindspore.ops.NonMaxSuppressionWithOverlaps
-    mindspore.ops.PSROIPooling
-    mindspore.ops.RGBToHSV
-    mindspore.ops.ResizeArea
-    mindspore.ops.ResizeBicubic
-    mindspore.ops.ResizeBilinearV2
-    mindspore.ops.ROIAlign
-    mindspore.ops.SampleDistortedBoundingBoxV2
-    mindspore.ops.ScaleAndTranslate
-
-Text Processing
-^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.NoRepeatNGram
-
-Mathematical Operators
-------------------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.BesselJ0
-    mindspore.ops.BesselJ1
-    mindspore.ops.BesselK0
-    mindspore.ops.BesselK0e
-    mindspore.ops.BesselK1
-    mindspore.ops.BesselK1e
-    mindspore.ops.BesselY0
-    mindspore.ops.BesselY1
-    mindspore.ops.Betainc
-    mindspore.ops.Bincount
-    mindspore.ops.Bucketize
-    mindspore.ops.Cauchy
-    mindspore.ops.Cholesky
-    mindspore.ops.CholeskyInverse
-    mindspore.ops.CholeskySolve
-    mindspore.ops.CompareAndBitpack
-    mindspore.ops.Complex
-    mindspore.ops.ComplexAbs
-    mindspore.ops.Cross
-    mindspore.ops.CumulativeLogsumexp
-    mindspore.ops.Gcd
-
-Element-wise Operator
-^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Abs
-    mindspore.ops.AccumulateNV2
-    mindspore.ops.ACos
-    mindspore.ops.Acosh
-    mindspore.ops.Add
-    mindspore.ops.Addcdiv
-    mindspore.ops.Addcmul
-    mindspore.ops.AddN
-    mindspore.ops.Asin
-    mindspore.ops.Asinh
-    mindspore.ops.Atan
-    mindspore.ops.Atan2
-    mindspore.ops.Atanh
-    mindspore.ops.BesselI0e
-    mindspore.ops.BesselI1e
-    mindspore.ops.BitwiseAnd
-    mindspore.ops.BitwiseOr
-    mindspore.ops.BitwiseXor
-    mindspore.ops.Ceil
-    mindspore.ops.Conj
-    mindspore.ops.Cos
-    mindspore.ops.Cosh
-    mindspore.ops.Digamma
-    mindspore.ops.Div
-    mindspore.ops.DivNoNan
-    mindspore.ops.Einsum
-    mindspore.ops.Erf
-    mindspore.ops.Erfc
-    mindspore.ops.Erfinv
-    mindspore.ops.Exp
-    mindspore.ops.Expm1
-    mindspore.ops.Floor
-    mindspore.ops.FloorDiv
-    mindspore.ops.FloorMod
-    mindspore.ops.Geqrf
-    mindspore.ops.Imag
-    mindspore.ops.Inv
-    mindspore.ops.Invert
-    mindspore.ops.Lerp
-    mindspore.ops.Log
-    mindspore.ops.Log1p
-    mindspore.ops.LogicalAnd
-    mindspore.ops.LogicalNot
-    mindspore.ops.LogicalOr
-    mindspore.ops.Mod
-    mindspore.ops.Mul
-    mindspore.ops.MulNoNan
-    mindspore.ops.Neg
-    mindspore.ops.NextAfter
-    mindspore.ops.Pow
-    mindspore.ops.Real
-    mindspore.ops.RealDiv
-    mindspore.ops.Reciprocal
-    mindspore.ops.Rint
-    mindspore.ops.Round
-    mindspore.ops.Rsqrt
-    mindspore.ops.Sign
-    mindspore.ops.Sin
-    mindspore.ops.Sinh
-    mindspore.ops.Sqrt
-    mindspore.ops.Square
-    mindspore.ops.SquaredDifference
-    mindspore.ops.SquareSumAll
-    mindspore.ops.Sub
-    mindspore.ops.Tan
-    mindspore.ops.Trunc
-    mindspore.ops.TruncateDiv
-    mindspore.ops.TruncateMod
-    mindspore.ops.Xdivy
-    mindspore.ops.Xlogy
-    mindspore.ops.Zeta
-    
-
-Reduction Operator
-^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Argmax
-    mindspore.ops.ArgMaxWithValue
-    mindspore.ops.Argmin
-    mindspore.ops.ArgMinWithValue
-    mindspore.ops.EuclideanNorm
-    mindspore.ops.ReduceAll
-    mindspore.ops.ReduceAny
-    mindspore.ops.ReduceMax
-    mindspore.ops.ReduceMean
-    mindspore.ops.ReduceMin
-    mindspore.ops.ReduceProd
-    mindspore.ops.ReduceStd
-    mindspore.ops.ReduceSum
-
-Comparison Operator
-^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.ApproximateEqual
-    mindspore.ops.Equal
-    mindspore.ops.EqualCount
-    mindspore.ops.Greater
-    mindspore.ops.GreaterEqual
-    mindspore.ops.InTopK
-    mindspore.ops.IsFinite
-    mindspore.ops.IsInf
-    mindspore.ops.IsNan
-    mindspore.ops.Less
-    mindspore.ops.LessEqual
-    mindspore.ops.Maximum
-    mindspore.ops.Minimum
-    mindspore.ops.NotEqual
-    mindspore.ops.TopK
-
-Linear Algebraic Operator
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.BatchMatMul
-    mindspore.ops.BiasAdd
-    mindspore.ops.Ger
-    mindspore.ops.MatMul
-    mindspore.ops.MatrixInverse
-    mindspore.ops.Orgqr
-    mindspore.ops.Svd
-    mindspore.ops.TridiagonalMatMul
-    mindspore.ops.Qr
-
-Tensor Operation Operator
---------------------------
-
-Tensor Construction
-^^^^^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Eps
-    mindspore.ops.Eye
-    mindspore.ops.Fill
-    mindspore.ops.LinSpace
-    mindspore.ops.OneHot
-    mindspore.ops.Ones
-    mindspore.ops.OnesLike
-    mindspore.ops.Zeros
-    mindspore.ops.ZerosLike
-
-Random Generation Operator
+Linear Algebraic Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
@@ -446,21 +301,57 @@ Random Generation Operator
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.Gamma
-    mindspore.ops.LogNormalReverse
-    mindspore.ops.Multinomial
-    mindspore.ops.NonDeterministicInts
-    mindspore.ops.ParameterizedTruncatedNormal
-    mindspore.ops.RandomCategorical
-    mindspore.ops.RandomChoiceWithMask
-    mindspore.ops.RandomGamma
-    mindspore.ops.RandomPoisson
-    mindspore.ops.Randperm
-    mindspore.ops.StandardLaplace
-    mindspore.ops.StandardNormal
-    mindspore.ops.TruncatedNormal
-    mindspore.ops.UniformInt
-    mindspore.ops.UniformReal
+    mindspore.ops.addbmm
+    mindspore.ops.addmm
+    mindspore.ops.adjoint
+    mindspore.ops.batch_dot
+    mindspore.ops.dot
+    mindspore.ops.matmul
+    mindspore.ops.matrix_solve
+    mindspore.ops.mm
+    mindspore.ops.ger
+    mindspore.ops.renorm
+    mindspore.ops.tensor_dot
+
+Tensor Operation Functions
+--------------------------
+
+Tensor Building
+^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.eye
+    mindspore.ops.fill
+    mindspore.ops.fills
+    mindspore.ops.linspace
+    mindspore.ops.narrow
+    mindspore.ops.one_hot
+    mindspore.ops.ones
+    mindspore.ops.ones_like
+
+Randomly Generating Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.choice_with_mask
+    mindspore.ops.gamma
+    mindspore.ops.laplace
+    mindspore.ops.multinomial
+    mindspore.ops.random_poisson
+    mindspore.ops.random_categorical
+    mindspore.ops.random_gamma
+    mindspore.ops.shuffle
+    mindspore.ops.standard_laplace
+    mindspore.ops.standard_normal
+    mindspore.ops.uniform
 
 Array Operation
 ^^^^^^^^^^^^^^^
@@ -470,135 +361,87 @@ Array Operation
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.AffineGrid
-    mindspore.ops.BatchToSpace
-    mindspore.ops.BatchToSpaceND
-    mindspore.ops.BroadcastTo
-    mindspore.ops.Cast
-    mindspore.ops.CheckNumerics
-    mindspore.ops.Coalesce
-    mindspore.ops.Col2Im
-    mindspore.ops.Concat
-    mindspore.ops.ConjugateTranspose
-    mindspore.ops.Cummax
-    mindspore.ops.CumProd
-    mindspore.ops.CumSum
-    mindspore.ops.DataFormatDimMap
-    mindspore.ops.DepthToSpace
-    mindspore.ops.DiagPart
-    mindspore.ops.DType
-    mindspore.ops.Eig
-    mindspore.ops.Expand
-    mindspore.ops.ExpandDims
-    mindspore.ops.FFTWithSize
-    mindspore.ops.FloatStatus
-    mindspore.ops.FillDiagonal
-    mindspore.ops.Gather
-    mindspore.ops.GatherD
-    mindspore.ops.GatherNd
-    mindspore.ops.HammingWindow
-    mindspore.ops.Heaviside
-    mindspore.ops.Histogram
-    mindspore.ops.HistogramFixedWidth
-    mindspore.ops.Hypot
-    mindspore.ops.Identity
-    mindspore.ops.IdentityN
-    mindspore.ops.Im2Col
-    mindspore.ops.IndexAdd
-    mindspore.ops.IndexFill
-    mindspore.ops.InplaceAdd
-    mindspore.ops.InplaceSub
-    mindspore.ops.InplaceUpdate
-    mindspore.ops.InvertPermutation
-    mindspore.ops.IsClose
-    mindspore.ops.Lcm
-    mindspore.ops.LeftShift
-    mindspore.ops.ListDiff
-    mindspore.ops.Lgamma
-    mindspore.ops.LogMatrixDeterminant
-    mindspore.ops.LogSpace
-    mindspore.ops.LowerBound
-    mindspore.ops.Lstsq
-    mindspore.ops.LuSolve
-    mindspore.ops.LuUnpack
-    mindspore.ops.MaskedFill
-    mindspore.ops.MaskedSelect
-    mindspore.ops.MatrixBandPart
-    mindspore.ops.MatrixDeterminant
-    mindspore.ops.MatrixDiagPartV3
-    mindspore.ops.MatrixDiagV3
-    mindspore.ops.MatrixExp
-    mindspore.ops.MatrixLogarithm
-    mindspore.ops.MatrixPower
-    mindspore.ops.MatrixSetDiagV3
-    mindspore.ops.MatrixSolve
-    mindspore.ops.MatrixTriangularSolve
-    mindspore.ops.Meshgrid
-    mindspore.ops.Mvlgamma
-    mindspore.ops.Nonzero
-    mindspore.ops.ParallelConcat
-    mindspore.ops.PopulationCount
-    mindspore.ops.RaggedRange
-    mindspore.ops.Range
-    mindspore.ops.Rank
-    mindspore.ops.Renorm
-    mindspore.ops.Reshape
-    mindspore.ops.ResizeNearestNeighborV2
-    mindspore.ops.ReverseSequence
-    mindspore.ops.ReverseV2
-    mindspore.ops.RightShift
-    mindspore.ops.Roll
-    mindspore.ops.ScatterAddWithAxis
-    mindspore.ops.ScatterNd
-    mindspore.ops.ScatterNdDiv
-    mindspore.ops.ScatterNdMax
-    mindspore.ops.ScatterNdMin
-    mindspore.ops.ScatterNdMul
-    mindspore.ops.SearchSorted
-    mindspore.ops.SegmentMax
-    mindspore.ops.SegmentMean
-    mindspore.ops.SegmentMin
-    mindspore.ops.SegmentProd
-    mindspore.ops.SegmentSum
-    mindspore.ops.Select
-    mindspore.ops.Shape
-    mindspore.ops.Size
-    mindspore.ops.Slice
-    mindspore.ops.Sort
-    mindspore.ops.SpaceToBatchND
-    mindspore.ops.SpaceToDepth
-    mindspore.ops.SparseGatherV2
-    mindspore.ops.Split
-    mindspore.ops.SplitV
-    mindspore.ops.Squeeze
-    mindspore.ops.Stack
-    mindspore.ops.STFT
-    mindspore.ops.StridedSlice
-    mindspore.ops.TensorScatterAdd
-    mindspore.ops.TensorScatterDiv
-    mindspore.ops.TensorScatterMax
-    mindspore.ops.TensorScatterMin
-    mindspore.ops.TensorScatterMul
-    mindspore.ops.TensorScatterSub
-    mindspore.ops.TensorScatterUpdate
-    mindspore.ops.TensorShape
-    mindspore.ops.Tile
-    mindspore.ops.Trace
-    mindspore.ops.Transpose
-    mindspore.ops.Tril
-    mindspore.ops.TrilIndices
-    mindspore.ops.Triu
-    mindspore.ops.TriuIndices
-    mindspore.ops.Unique
-    mindspore.ops.UniqueConsecutive
-    mindspore.ops.UniqueWithPad
-    mindspore.ops.UnravelIndex
-    mindspore.ops.UnsortedSegmentMax
-    mindspore.ops.UnsortedSegmentMin
-    mindspore.ops.UnsortedSegmentProd
-    mindspore.ops.UnsortedSegmentSum
-    mindspore.ops.Unstack
-    mindspore.ops.UpperBound
+    mindspore.ops.adaptive_max_pool2d
+    mindspore.ops.affine_grid
+    mindspore.ops.arange
+    mindspore.ops.batch_to_space_nd
+    mindspore.ops.broadcast_to
+    mindspore.ops.col2im
+    mindspore.ops.concat
+    mindspore.ops.count_nonzero
+    mindspore.ops.diag
+    mindspore.ops.diagonal
+    mindspore.ops.dyn_shape
+    mindspore.ops.expand
+    mindspore.ops.expand_dims
+    mindspore.ops.flip
+    mindspore.ops.fliplr
+    mindspore.ops.flipud
+    mindspore.ops.fold
+    mindspore.ops.gather
+    mindspore.ops.gather_d
+    mindspore.ops.gather_elements
+    mindspore.ops.gather_nd
+    mindspore.ops.index_add
+    mindspore.ops.index_fill
+    mindspore.ops.inplace_add
+    mindspore.ops.inplace_sub
+    mindspore.ops.inplace_update
+    mindspore.ops.masked_fill
+    mindspore.ops.masked_select
+    mindspore.ops.matrix_band_part
+    mindspore.ops.matrix_diag
+    mindspore.ops.matrix_diag_part
+    mindspore.ops.matrix_set_diag
+    mindspore.ops.meshgrid
+    mindspore.ops.msort
+    mindspore.ops.nan_to_num
+    mindspore.ops.normal
+    mindspore.ops.nonzero
+    mindspore.ops.numel
+    mindspore.ops.orgqr
+    mindspore.ops.permute
+    mindspore.ops.population_count
+    mindspore.ops.range
+    mindspore.ops.rank
+    mindspore.ops.repeat_elements
+    mindspore.ops.repeat_interleave
+    mindspore.ops.reshape
+    mindspore.ops.reverse
+    mindspore.ops.reverse_sequence
+    mindspore.ops.scatter_nd
+    mindspore.ops.select
+    mindspore.ops.sequence_mask
+    mindspore.ops.shape
+    mindspore.ops.size
+    mindspore.ops.slice
+    mindspore.ops.space_to_batch_nd
+    mindspore.ops.sparse_segment_mean
+    mindspore.ops.split
+    mindspore.ops.squeeze
+    mindspore.ops.stack
+    mindspore.ops.strided_slice
+    mindspore.ops.tensor_scatter_add
+    mindspore.ops.tensor_scatter_min
+    mindspore.ops.tensor_scatter_max
+    mindspore.ops.tensor_scatter_div
+    mindspore.ops.tensor_scatter_mul
+    mindspore.ops.tensor_scatter_sub
+    mindspore.ops.tensor_scatter_elements
+    mindspore.ops.tile
+    mindspore.ops.top_k
+    mindspore.ops.transpose
+    mindspore.ops.unbind
+    mindspore.ops.unfold
+    mindspore.ops.unique
+    mindspore.ops.unique_consecutive
+    mindspore.ops.unique_with_pad
+    mindspore.ops.unsorted_segment_max
+    mindspore.ops.unsorted_segment_min
+    mindspore.ops.unsorted_segment_prod
+    mindspore.ops.unsorted_segment_sum
+    mindspore.ops.unsqueeze
+    mindspore.ops.unstack
 
 Type Conversion
 ^^^^^^^^^^^^^^^
@@ -608,66 +451,179 @@ Type Conversion
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.ScalarCast
-    mindspore.ops.ScalarToTensor
-    mindspore.ops.TupleToArray
-    
-Parameter Operation Operator
-----------------------------
+    mindspore.ops.scalar_cast
+    mindspore.ops.scalar_to_tensor
+    mindspore.ops.tuple_to_array
+
+Sparse Functions
+^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.Assign
-    mindspore.ops.AssignAdd
-    mindspore.ops.AssignSub
-    mindspore.ops.ScatterAdd
-    mindspore.ops.ScatterDiv
-    mindspore.ops.ScatterMax
-    mindspore.ops.ScatterMin
-    mindspore.ops.ScatterMul
-    mindspore.ops.ScatterNdAdd
-    mindspore.ops.ScatterNdSub
-    mindspore.ops.ScatterNdUpdate
-    mindspore.ops.ScatterNonAliasingAdd
-    mindspore.ops.ScatterSub
-    mindspore.ops.ScatterUpdate
+    mindspore.ops.dense_to_sparse_coo
+    mindspore.ops.dense_to_sparse_csr
+    mindspore.ops.csr_to_coo
 
-Data Operation Operator
------------------------
+COO Functions
+++++++++++++++++
 
 .. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.GetNext
+    mindspore.ops.coo_cos
+    mindspore.ops.coo_tan
+    mindspore.ops.coo_exp
+    mindspore.ops.coo_inv
+    mindspore.ops.coo_relu
+    mindspore.ops.coo_expm1
+    mindspore.ops.coo_isfinite
+    mindspore.ops.coo_asin
+    mindspore.ops.coo_sqrt
+    mindspore.ops.coo_log
+    mindspore.ops.coo_isnan
+    mindspore.ops.coo_acos
+    mindspore.ops.coo_floor
+    mindspore.ops.coo_atan
+    mindspore.ops.coo_square
+    mindspore.ops.coo_relu6
+    mindspore.ops.coo_sinh
+    mindspore.ops.coo_ceil
+    mindspore.ops.coo_cosh
+    mindspore.ops.coo_softsign
+    mindspore.ops.coo_log1p
+    mindspore.ops.coo_round
+    mindspore.ops.coo_tanh
+    mindspore.ops.coo_asinh
+    mindspore.ops.coo_neg
+    mindspore.ops.coo_acosh
+    mindspore.ops.coo_isinf
+    mindspore.ops.coo_atanh
+    mindspore.ops.coo_sigmoid
+    mindspore.ops.coo_abs
+    mindspore.ops.coo_sin
+    mindspore.ops.sparse_add
 
-Communication Operator
+CSR Functions
+++++++++++++++++
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.csr_cos
+    mindspore.ops.csr_tan
+    mindspore.ops.csr_exp
+    mindspore.ops.csr_inv
+    mindspore.ops.csr_relu
+    mindspore.ops.csr_expm1
+    mindspore.ops.csr_isfinite
+    mindspore.ops.csr_asin
+    mindspore.ops.csr_sqrt
+    mindspore.ops.csr_log
+    mindspore.ops.csr_isnan
+    mindspore.ops.csr_acos
+    mindspore.ops.csr_floor
+    mindspore.ops.csr_atan
+    mindspore.ops.csr_square
+    mindspore.ops.csr_relu6
+    mindspore.ops.csr_sinh
+    mindspore.ops.csr_ceil
+    mindspore.ops.csr_cosh
+    mindspore.ops.csr_softsign
+    mindspore.ops.csr_log1p
+    mindspore.ops.csr_round
+    mindspore.ops.csr_tanh
+    mindspore.ops.csr_asinh
+    mindspore.ops.csr_neg
+    mindspore.ops.csr_acosh
+    mindspore.ops.csr_isinf
+    mindspore.ops.csr_atanh
+    mindspore.ops.csr_sigmoid
+    mindspore.ops.csr_abs
+    mindspore.ops.csr_sin
+    mindspore.ops.csr_add
+    mindspore.ops.csr_mm
+    mindspore.ops.csr_softmax
+
+Gradient Clipping
+^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.clip_by_global_norm
+    mindspore.ops.clip_by_value
+
+Parameter Operation Functions
+-----------------------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.assign
+    mindspore.ops.assign_add
+    mindspore.ops.assign_sub
+    mindspore.ops.scatter_add
+    mindspore.ops.scatter_div
+    mindspore.ops.scatter_min
+    mindspore.ops.scatter_max
+    mindspore.ops.scatter_mul
+    mindspore.ops.scatter_nd_add
+    mindspore.ops.scatter_nd_div
+    mindspore.ops.scatter_nd_max
+    mindspore.ops.scatter_nd_min
+    mindspore.ops.scatter_nd_mul
+    mindspore.ops.scatter_nd_sub
+    mindspore.ops.scatter_update
+
+Differential Functions
 ----------------------
 
-Note that the APIs in the following list need to preset communication environment variables. For
-the Ascend devices, users need to prepare the rank table, set rank_id and device_id. Please see the `Ascend tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#configuring-distributed-environment-variables>`_ for more details.
-For the GPU device, users need to prepare the host file and mpi, please see the `GPU tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_.
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.derivative
+    mindspore.ops.jet
+    mindspore.ops.stop_gradient
+
+Debugging Functions
+-------------------
 
 .. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.AllGather
-    mindspore.ops.AllReduce
-    mindspore.ops.AlltoAll
-    mindspore.ops.Broadcast
-    mindspore.ops.NeighborExchangeV2
-    mindspore.ops.ReduceOp
-    mindspore.ops.ReduceScatter
+    mindspore.ops.print_
 
-Debugging Operator
+Image Functions
+---------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.bounding_box_decode
+    mindspore.ops.bounding_box_encode
+    mindspore.ops.check_valid
+    mindspore.ops.iou
+    mindspore.ops.pixel_shuffle
+    mindspore.ops.pixel_unshuffle
+
+Spectral Functions
 ------------------
 
 .. msplatformautosummary::
@@ -675,78 +631,5 @@ Debugging Operator
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.Assert
-    mindspore.ops.HistogramSummary
-    mindspore.ops.ImageSummary
-    mindspore.ops.ScalarSummary
-    mindspore.ops.TensorSummary
-    mindspore.ops.Print
-    mindspore.ops.NPUAllocFloatStatus
-    mindspore.ops.NPUClearFloatStatus
-    mindspore.ops.NPUGetFloatStatus
-
-Sparse Operator
----------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-    
-    mindspore.ops.SparseTensorDenseAdd
-    mindspore.ops.SparseTensorDenseMatmul
-    mindspore.ops.SparseToDense
-
-Frame Operators
----------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Depend
-    mindspore.ops.GradOperation
-    mindspore.ops.HookBackward
-    mindspore.ops.HyperMap
-    mindspore.ops.InsertGradientOf
-    mindspore.ops.Map
-    mindspore.ops.MultitypeFuncGraph
-    mindspore.ops.Partial
-    mindspore.ops.StopGradient
-
-Operator Information Registration
----------------------------------
-
-.. autosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.AiCPURegOp
-    mindspore.ops.CustomRegOp
-    mindspore.ops.DataType
-    mindspore.ops.TBERegOp
-    mindspore.ops.get_vm_impl_fn
-
-Customizing Operator
---------------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Custom
-
-Spectral Operator
------------------
-
-.. msplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.BartlettWindow
-    mindspore.ops.BlackmanWindow
-
+    mindspore.ops.bartlett_window
+    mindspore.ops.blackman_window
