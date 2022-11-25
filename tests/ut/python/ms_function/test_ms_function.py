@@ -22,6 +22,7 @@ from mindspore import context, Tensor
 from mindspore.common.api import jit
 
 grad_all = C.GradOperation(get_all=True)
+grad_by_list = C.GradOperation(get_by_list=True)
 
 
 class CellBprop(nn.Cell):
@@ -68,6 +69,6 @@ def test_ms_func_decorate_forward():
     context.set_context(mode=context.PYNATIVE_MODE)
     input_x = Tensor(np.random.randn(1, 1, 2, 2).astype(np.float32))
     net = ConvNet()
-    grad_out = grad_all(net)(input_x)
+    grad_out = grad_by_list(net, net.trainable_params())(input_x)
     opt = MomentumWithMsFunc(net)
     opt(grad_out)
