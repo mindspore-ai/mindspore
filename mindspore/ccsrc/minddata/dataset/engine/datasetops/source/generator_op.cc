@@ -227,7 +227,9 @@ Status GeneratorOp::operator()() {
 
         // Restore exception to python
         e.restore();
-        if (num_rows_sampled != -1 && num_rows_sampled != generator_counter_) {
+
+        // Check whether the number of samples is sufficient only when the first epoch
+        if (num_rows_sampled != -1 && num_rows_sampled != generator_counter_ && op_current_epochs_ == 0) {
           if (generator_counter_ == 0) {
             std::string msg =
               "Unable to fetch data from GeneratorDataset, try iterate the source function of GeneratorDataset or check"

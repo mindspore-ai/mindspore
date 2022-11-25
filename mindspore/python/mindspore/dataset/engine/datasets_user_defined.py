@@ -678,6 +678,10 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         if hasattr(self.source, "__len__"):
             self.source_len = len(self.source)
 
+            # if user defined sampler, update the self.source_len
+            if isinstance(self.sampler, samplers.Sampler) or hasattr(self.sampler, "__iter__"):
+                self.source_len = len(list(sampler))
+
         self.max_rowsize = max_rowsize
         self.sample_fn = None
 
