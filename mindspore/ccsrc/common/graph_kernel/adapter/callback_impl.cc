@@ -72,6 +72,26 @@ std::string CallbackImpl::GetTargetFromContext() {
   return context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
 
+void CallbackImpl::CollectInputTypesAndFormats(const AnfNodePtr &node, std::vector<TypeId> *input_types,
+                                               std::vector<std::string> *input_formats) {
+  auto kernel_with_index = AnfUtils::VisitKernel(node, 0);
+  if (kernel_with_index.first->isa<ValueNode>()) {
+    auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
+    MS_EXCEPTION_IF_NULL(tensor);
+    (void)input_formats->emplace_back(kOpFormat_DEFAULT);
+    (void)input_types->emplace_back(tensor->data_type());
+  } else if (kernel_with_index.first->isa<Parameter>()) {
+    (void)input_formats->emplace_back(kOpFormat_DEFAULT);
+    auto input_type = GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
+    (void)input_types->emplace_back(input_type);
+  } else {
+    auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+    (void)input_formats->emplace_back(std::move(input_format));
+    auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+    (void)input_types->emplace_back(input_type);
+  }
+}
+
 void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   std::vector<std::string> graph_input_format;
   std::vector<TypeId> graph_input_type;
@@ -83,22 +103,7 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(fg);
   auto &inputs = cnode->inputs();
   for (size_t i = 1; i < inputs.size(); ++i) {
-    auto kernel_with_index = AnfUtils::VisitKernel(inputs[i], 0);
-    if (kernel_with_index.first->isa<ValueNode>()) {
-      auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
-      MS_EXCEPTION_IF_NULL(tensor);
-      (void)graph_input_format.emplace_back(kOpFormat_DEFAULT);
-      (void)graph_input_type.emplace_back(tensor->data_type());
-    } else if (kernel_with_index.first->isa<Parameter>()) {
-      (void)graph_input_format.emplace_back(kOpFormat_DEFAULT);
-      auto input_type = GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
-      (void)graph_input_type.emplace_back(input_type);
-    } else {
-      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-      (void)graph_input_format.emplace_back(std::move(input_format));
-      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-      (void)graph_input_type.emplace_back(input_type);
-    }
+    CollectInputTypesAndFormats(inputs[i], &graph_input_type, &graph_input_format);
     fg->parameters()[i - 1]->set_kernel_info(std::make_shared<device::KernelInfo>());
     kernel::KernelBuildInfo::KernelBuildInfoBuilder para_info_builder;
     para_info_builder.SetOutputsFormat({graph_input_format.back()});
@@ -141,11 +146,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   if (cnode != nullptr) {
     auto &inputs = cnode->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
-      auto kernel_with_index = common::AnfAlgo::VisitKernel(inputs[i], 0);
-      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-      input_formats.push_back(input_format);
-      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-      input_types.push_back(input_type);
+      CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats);
     }
   }
 

@@ -100,6 +100,10 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   }
   if (new_inputs.size() != inputs.size()) {
     cnode->set_inputs(new_inputs);
+    auto cb = Callback::Instance();
+    MS_EXCEPTION_IF_NULL(cb);
+    cb->SetBasicNodeKernelInfo(
+      cnode, {{cb->GetOutputShape(cnode, 0), cb->GetOutputType(cnode, 0), cb->GetOutputFormat(cnode, 0)}});
   }
   return true;
 }
