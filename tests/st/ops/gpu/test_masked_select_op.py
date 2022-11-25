@@ -44,12 +44,12 @@ def maskedselect_tensor():
 
 
 def maskedselect_dynamic_shape():
-    x = np.array([1, 2, 3, 4, 1, 2, 3, 4]).astype(np.int32)
-    mask = np.array([[[0], [1], [0], [1]], [[0], [1], [0], [1]]]).astype(np.bool)
-    net = P.MaskedSelect()
-    unique = P.Unique()
-    unique_out, _ = unique(Tensor(x))
-    return net(unique_out, Tensor(mask))
+    x = np.array([0, 1, 1, 1]).astype(np.int32)
+    mask = np.array([1, 1, 0, 0]).astype(np.bool)
+    mask2 = np.array([1, 1]).astype(np.bool)
+    out = F.masked_select(Tensor(x), Tensor(mask))
+    out = F.masked_select(out, Tensor(mask2))
+    return out
 
 
 def maskedselect_for_type(x, mask):
@@ -168,7 +168,7 @@ def test_maskedselect_dynamic_shape():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     y = maskedselect_dynamic_shape()
-    expect = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+    expect = [0, 1]
     assert (y.asnumpy() == expect).all()
 
 
