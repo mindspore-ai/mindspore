@@ -102,6 +102,26 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   }
   return cnodes;
 }
+
+std::unique_ptr<schema::TensorT> CreateTensorFromDataInfo(const lite::DataInfo &data_info, const std::string &name,
+                                                          const bool has_default) {
+  auto schema_tensor = std::make_unique<schema::TensorT>();
+  MS_CHECK_TRUE_MSG(schema_tensor != nullptr, nullptr, "schema_tensor is nullptr");
+  schema_tensor->format = static_cast<schema::Format>(data_info.format_);
+  schema_tensor->name = name;
+  schema_tensor->dims = data_info.shape_;
+  schema_tensor->dataType = data_info.data_type_;
+  schema_tensor->data = data_info.data_;
+  if (has_default) {
+    schema_tensor->nodeType = NodeType_ValueNode;
+  } else {
+    schema_tensor->nodeType = NodeType_CNode;
+  }
+  schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
+  schema_tensor->weightQuantCompressType =
+    static_cast<mindspore::schema::WeightQuantCompressType>(data_info.compress_type_);
+  return schema_tensor;
+}
 }  // namespace
 
 int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
@@ -211,16 +231,7 @@ int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaG
     MS_LOG(ERROR) << "FetchFromDefaultParam failed.";
     return RET_ERROR;
   }
-  auto schema_tensor = std::make_unique<schema::TensorT>();
-  MS_CHECK_TRUE_MSG(schema_tensor != nullptr, RET_ERROR, "schema_tensor is nullptr");
-  schema_tensor->format = static_cast<schema::Format>(data_info.format_);
-  schema_tensor->name = param_node->name();
-  schema_tensor->dims = data_info.shape_;
-  schema_tensor->dataType = data_info.data_type_;
-  schema_tensor->data = data_info.data_;
-  schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
-  schema_tensor->weightQuantCompressType = static_cast<schema::WeightQuantCompressType>(data_info.compress_type_);
-  schema_tensor->nodeType = NodeType_CNode;
+  auto schema_tensor = CreateTensorFromDataInfo(data_info, param_node->name(), param_node->has_default());
   auto key = std::make_pair(input, 0);
   node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
@@ -283,6 +294,11 @@ int AnfExporter::SetSubGraphOutputIndex(const CNodePtr &cnode, const size_t subg
           return RET_ERROR;
         }
         return_node->inputIndex.emplace_back(meta_graphT->allTensors.size() - 1);
+      }
+      if (IsContain(graph_inputs_, input_node->cast<AnfNodePtr>()) &&
+          graph_inputs_has_exported_.find(input_node) == graph_inputs_has_exported_.end()) {
+        graph_inputs_has_exported_.insert(input_node);
+        graph_inputs_map_[input_node] = meta_graphT->allTensors.size() - 1;
       }
     } else {
       MS_LOG(ERROR) << "the node " << input_node->fullname_with_scope().c_str() << "is not output node";
@@ -769,21 +785,7 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
     MS_LOG(ERROR) << "parse const node failed.";
     return RET_ERROR;
   }
-  auto schema_tensor = std::make_unique<schema::TensorT>();
-  MS_CHECK_TRUE_MSG(schema_tensor != nullptr, RET_ERROR, "schema_tensor is nullptr");
-  schema_tensor->format = static_cast<schema::Format>(data_info.format_);
-  schema_tensor->name = param_node->name();
-  schema_tensor->dims = data_info.shape_;
-  schema_tensor->dataType = data_info.data_type_;
-  schema_tensor->data = data_info.data_;
-  if (param_node->has_default()) {
-    schema_tensor->nodeType = NodeType_ValueNode;
-  } else {
-    schema_tensor->nodeType = NodeType_CNode;
-  }
-  schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
-  schema_tensor->weightQuantCompressType =
-    static_cast<mindspore::schema::WeightQuantCompressType>(data_info.compress_type_);
+  auto schema_tensor = CreateTensorFromDataInfo(data_info, param_node->name(), param_node->has_default());
   node_id_map_[key] = meta_graphT->allTensors.size();
   op_node->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
