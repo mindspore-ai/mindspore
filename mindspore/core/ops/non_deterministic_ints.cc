@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include "ir/dtype/number.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -27,6 +28,22 @@
 namespace mindspore {
 namespace ops {
 namespace {
+template <typename T>
+void GetOutShape(int *shape_m, std::vector<int64_t> *out_shape, const string &name, int shape_v_0,
+                 tensor::TensorPtr input_shape_tensor) {
+  auto input_shape_ptr = reinterpret_cast<T *>(input_shape_tensor->data_c());
+  for (auto i = 0; i < shape_v_0; ++i) {
+    if (input_shape_ptr[i] > 0) {
+      (*out_shape).push_back(input_shape_ptr[i]);
+      (*shape_m) *= input_shape_ptr[i];
+    } else {
+      MS_EXCEPTION(ValueError) << "For '" << name
+                               << "', each dimension of input must be greater than 0, but got input_shape[" << i
+                               << "]: " << input_shape_ptr[i] << ".";
+    }
+  }
+}
+
 abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
@@ -61,37 +78,21 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', input tensor must be a 1-D tensor, but got shape size: " << shape_v.size() << ".";
   }
-  if (shape_v[0] < kInpuSizes) {
+  if (shape_v[0] != -1 && shape_v[0] < kInpuSizes) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input tensor must have a least 2 elements, but got "
                              << shape_v[0] << ".";
   }
   if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
-    int64_t shape_m = 1;
+    auto shape_m = 1;
     if (input_type_element->type_id() == kNumberTypeInt32) {
-      auto input_shape_ptr = reinterpret_cast<int32_t *>(input_shape_tensor->data_c());
-      for (auto i = 0; i < shape_v[0]; ++i) {
-        if (input_shape_ptr[i] > 0) {
-          out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
-        } else {
-          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', each dimension of input must be greater than 0, but got input_shape[" << i
-                                   << "]: " << input_shape_ptr[i] << ".";
-        }
-      }
+      GetOutShape<int32_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
     } else if (input_type_element->type_id() == kNumberTypeInt64) {
-      auto input_shape_ptr = reinterpret_cast<int64_t *>(input_shape_tensor->data_c());
-      for (auto i = 0; i < shape_v[0]; ++i) {
-        if (input_shape_ptr[i] > 0) {
-          out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
-        } else {
-          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', each dimension of input must be greater than 0, but got input_shape[" << i
-                                   << "]: " << input_shape_ptr[i] << ".";
-        }
-      }
+      GetOutShape<int64_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
+    } else if (input_type_element->type_id() == kNumberTypeUInt32) {
+      GetOutShape<uint32_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
+    } else if (input_type_element->type_id() == kNumberTypeUInt64) {
+      GetOutShape<uint64_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
     }
     if (shape_m > max_length) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
@@ -101,26 +102,22 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    std::vector<int64_t> output_shape;
-    for (int i = 0; i < shape_v[0]; i++) {
-      output_shape.push_back(abstract::Shape::kShapeDimAny);
-    }
-    return std::make_shared<abstract::Shape>(output_shape);
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
 }
 
 TypePtr NonDeterministicIntsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  const std::set<TypePtr> valid_input_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  const std::set<TypePtr> valid_input_types = {kInt32, kInt64, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[0]->BuildType(), valid_input_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "The dtype of NonDeterministicInts is invalid!";
   }
   auto output_type = dtype_value->cast<TypePtr>();
-  const std::set<TypePtr> valid_output_types = {kInt32, kInt64};
+  const std::set<TypePtr> valid_output_types = {kInt32, kInt64, kUInt32, kUInt64};
   return CheckAndConvertUtils::CheckSubClass("dtype", output_type, valid_output_types, prim_name);
 }
 }  // namespace
