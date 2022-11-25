@@ -191,7 +191,7 @@ uint32_t SliceGradKernel::SliceGradTask() {
     block_num *= dy_shape_[i];
   }
   const int64_t per_unit_size = block_num / std::thread::hardware_concurrency();
-  SharderNonBlock::GetInstance().ParallelFor(block_num, per_unit_size, block_task);
+  ParallelFor(block_num, per_unit_size, block_task);
 
   return kAicpuKernelStateSucess;
 }
