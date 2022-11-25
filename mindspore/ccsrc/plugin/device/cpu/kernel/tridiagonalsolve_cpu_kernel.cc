@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "plugin/device/cpu/kernel/tridiagonalsolve_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/tridiagonal_solve.h"
 #include "Eigen/Core"
 #include "Eigen/LU"
 
@@ -32,24 +33,41 @@ constexpr size_t LastSecondRowOfU = 2;
 constexpr int64_t ParallelDataNumSameShape = 8 * 1024;
 }  // namespace
 
-void TridiagonalSolveCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  diag_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  rhs_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  partial_pivoting_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "partial_pivoting");
-  input0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  input1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  n_ = input0_shape[input0_shape.size() - 1];
-  batch_ = input1_shape[input1_shape.size() - 1];
-  diags_size_ = AxisNumber * batch_;
-  rhs_size_ = batch_ * n_;
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool TridiagonalSolveCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+
+  diag_dtype_ = inputs.at(kIndex0)->GetDtype();
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::TridiagonalSolve>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  partial_pivoting_ = kernel_ptr->get_partial_pivoting();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_EXCEPTION(TypeError) << "For TridiagonalSolve, does not support this kernel data type: " << kernel_attr << ".";
   }
-
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int TridiagonalSolveCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input0_shape = inputs.at(kIndex0)->GetShapeVector();
+  input1_shape = inputs.at(kIndex1)->GetShapeVector();
+  n_ = input0_shape[input0_shape.size() - 1];
+  batch_ = input1_shape[input1_shape.size() - 1];
+  diags_size_ = AxisNumber * batch_;
+  rhs_size_ = batch_ * n_;
+  return KRET_OK;
 }
 
 template <typename T>
@@ -317,6 +335,7 @@ bool TridiagonalSolveCPUKernelMod::LaunchKernel(const std::vector<kernel::Addres
   }
   return res_;
 }
+
 std::vector<std::pair<KernelAttr, TridiagonalSolveCPUKernelMod::TridiagonalSolveFunc>>
   TridiagonalSolveCPUKernelMod::func_list_ = {
     {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

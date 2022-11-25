@@ -18,21 +18,26 @@
 
 #include <complex>
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <utility>
-
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class TridiagonalSolveCPUKernelMod : public DeprecatedNativeCpuKernelMod {
+class TridiagonalSolveCPUKernelMod : public NativeCpuKernelMod {
  public:
   TridiagonalSolveCPUKernelMod() = default;
   ~TridiagonalSolveCPUKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -42,11 +47,9 @@ class TridiagonalSolveCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  CNodeWeakPtr node_wpt_;
   bool partial_pivoting_{false};
   bool res_{false};
   TypeId diag_dtype_{kTypeUnknown};
-  TypeId rhs_dtype_{kTypeUnknown};
   TypeId dtype_{kTypeUnknown};
   int batch_{0};
   int n_{0};
@@ -59,6 +62,7 @@ class TridiagonalSolveCPUKernelMod : public DeprecatedNativeCpuKernelMod {
     TridiagonalSolveCPUKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, TridiagonalSolveFunc>> func_list_;
   TridiagonalSolveFunc kernel_func_;
+
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   bool CheckInputValue_(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

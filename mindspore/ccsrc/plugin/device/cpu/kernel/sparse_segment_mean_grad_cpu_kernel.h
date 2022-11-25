@@ -17,35 +17,50 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_MEAN_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_MEAN_GRAD_CPU_KERNEL_H_
 #include <functional>
+#include <numeric>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class SparseSegmentMeanGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseSegmentMeanGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseSegmentMeanGradCpuKernelMod() = default;
 
   ~SparseSegmentMeanGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) const;
+  using SparseSegmentMeanGradLaunchFunc = std::function<bool(
+    SparseSegmentMeanGradCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SparseSegmentMeanGradLaunchFunc>> func_list_;
+  SparseSegmentMeanGradLaunchFunc kernel_func_;
+
   ShapeVector x_shape_;
   ShapeVector segment_ids_shape_;
   ShapeVector y_shape_;
-  TypeId x_dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

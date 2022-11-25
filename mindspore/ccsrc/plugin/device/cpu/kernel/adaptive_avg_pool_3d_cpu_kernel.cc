@@ -15,10 +15,11 @@
  */
 
 #include <cmath>
-#include "plugin/device/cpu/kernel/adaptiveavgpool3d_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/adaptive_avg_pool_3d_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/adaptive_avg_pool_3d.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -58,17 +59,35 @@ inline int64_t EndIndex(int64_t offset, int64_t out_size, int64_t in_size) {
 }
 }  // namespace
 
-void AdaptiveAvgPool3DCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  node_wpt_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  input_dim_sizes_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_size_data_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_size");
+bool AdaptiveAvgPool3DCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool3D>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  output_size_data_ = kernel_ptr->get_output_size();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int AdaptiveAvgPool3DCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_dim_sizes_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  return KRET_OK;
 }
 
 template <typename SCALAR_T>
@@ -117,38 +136,11 @@ CTask AdaptiveAvgPool3DOutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
   return shard_frame;
 }
 
-bool AdaptiveAvgPool3DCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeUInt8) {
-    LaunchKernel<uint8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt8) {
-    LaunchKernel<int8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt16) {
-    LaunchKernel<int16_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION)
-      << "For '" << kernel_name_
-      << "', the dtype of 'input_x' should be uint8, int8, int16, int32, int64, float16, float32, or float64, but got "
-      << TypeIdLabel(dtype_);
-    return false;
-  }
-  return true;
-}
-
 template <typename SCALAR_T>
 bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto input_size_iter = input_dim_sizes_.rbegin();
   auto output_size_iter = output_size_data_.rbegin();
   for (; output_size_iter != output_size_data_.rend(); output_size_iter++, input_size_iter++) {
@@ -161,11 +153,6 @@ bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
   size_t input_dims = input_dim_sizes_.size();
   auto input_x = reinterpret_cast<SCALAR_T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_x);
-
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For AdaptiveAvgPool3D node_wpt_, it should not be expired.";
-  }
 
   auto output_y = reinterpret_cast<SCALAR_T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_y);
@@ -211,18 +198,36 @@ bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
   return true;
 }
 
+std::vector<std::pair<KernelAttr, AdaptiveAvgPool3DCPUKernelMod::AdaptiveAvgPool3DLaunchFunc>>
+  AdaptiveAvgPool3DCPUKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &AdaptiveAvgPool3DCPUKernelMod::LaunchKernel<double>},
+};
+
 std::vector<KernelAttr> AdaptiveAvgPool3DCPUKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {
-    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
-  return kernel_attr_list;
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, AdaptiveAvgPool3DCPUKernelMod::AdaptiveAvgPool3DLaunchFunc> &pair) {
+      return pair.first;
+    });
+  return support_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdaptiveAvgPool3D, AdaptiveAvgPool3DCPUKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
