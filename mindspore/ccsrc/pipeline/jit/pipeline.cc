@@ -451,7 +451,8 @@ compile::VmEvalFuncPtr GraphExecutorPy::GetVmEvalFunc(const std::string &phase) 
 
 bool GraphExecutorPy::HasCompiled(const std::string &phase) const { return info_.count(phase) != 0; }
 
-py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std::string &ir_type) {
+py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std::string &ir_type,
+                                             const bool &incremental) {
   FuncGraphPtr fg_ptr = GetFuncGraph(phase);
   if (fg_ptr == nullptr) {
     for (const auto &item : info_) {
@@ -478,7 +479,7 @@ py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std
 
   if (ir_type == IR_TYPE_MINDIR) {
     // obfuscate model
-    std::string proto_str = GetBinaryProtoString(fg_ptr);
+    std::string proto_str = GetBinaryProtoString(fg_ptr, incremental);
     if (proto_str.empty()) {
       MS_LOG(EXCEPTION) << "Export MINDIR format model failed.";
     }
@@ -488,8 +489,9 @@ py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std
   MS_LOG(EXCEPTION) << "Unknown ir type: " << ir_type;
 }
 
-py::bytes GraphExecutorPy::GetObfuscateFuncGraphProto(const std::string &phase, const float obf_ratio,
-                                                      const int obf_password, const int append_password) {
+py::bytes GraphExecutorPy::GetObfuscateFuncGraphProto(const std::string &phase, const bool &incremental,
+                                                      const float obf_ratio, const int obf_password,
+                                                      const int append_password) {
   FuncGraphPtr fg_ptr = GetFuncGraph(phase);
   // obfuscate model
   if (obf_password == 0) {
@@ -499,7 +501,7 @@ py::bytes GraphExecutorPy::GetObfuscateFuncGraphProto(const std::string &phase, 
   mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, obf_password, append_password);
   mindspore::FuncGraphPtr obfuscated_graph = dynamic_obfuscator.ObfuscateMindIR(fg_ptr);
 
-  std::string proto_str = GetBinaryProtoString(obfuscated_graph);
+  std::string proto_str = GetBinaryProtoString(obfuscated_graph, incremental);
   if (proto_str.empty()) {
     MS_LOG(EXCEPTION) << "GetBinaryProtoString failed.";
   }

@@ -24,7 +24,7 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) { return "";
 
 std::string GetOnnxProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
-std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) { return ""; }
+std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &incremental) { return ""; }
 
 bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_path,
                      const FuncGraphPtr &param_layout_fg) {

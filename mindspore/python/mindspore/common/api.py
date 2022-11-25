@@ -1422,7 +1422,7 @@ class _CellGraphExecutor:
             obf_password, append_password = _generate_pair_password(obf_password)
         return obf_password, append_password
 
-    def _get_func_graph_proto(self, obj, exec_id, ir_type="onnx_ir", use_prefix=False):
+    def _get_func_graph_proto(self, obj, exec_id, ir_type="onnx_ir", use_prefix=False, incremental=False):
         """Get graph proto from pipeline."""
         if use_prefix:
             exec_id = exec_id + '.' + obj.arguments_key
@@ -1430,9 +1430,10 @@ class _CellGraphExecutor:
             return None
         if self.obfuscate_config is not None:
             obf_password, append_password = self._get_obf_pair_password()
-            return self._graph_executor.get_obfuscate_func_graph_proto(exec_id, self.obfuscate_config['obf_ratio'],
-                                                                       obf_password, append_password)
-        return self._graph_executor.get_func_graph_proto(exec_id, ir_type)
+            return self._graph_executor.get_obfuscate_func_graph_proto(exec_id, incremental,
+                                                                       self.obfuscate_config['obf_ratio'], obf_password,
+                                                                       append_password)
+        return self._graph_executor.get_func_graph_proto(exec_id, ir_type, incremental)
 
     def get_optimize_graph_proto(self, obj):
         """Return optimize graph binary proto."""

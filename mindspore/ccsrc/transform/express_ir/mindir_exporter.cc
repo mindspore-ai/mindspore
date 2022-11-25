@@ -110,7 +110,8 @@ using IrExporterPtr = std::shared_ptr<IrExporter>;
 
 class IrExportBuilder {
  public:
-  IrExportBuilder() : model_(std::make_shared<mind_ir::ModelProto>()) {}
+  explicit IrExportBuilder(const bool &incremental = false)
+      : model_(std::make_shared<mind_ir::ModelProto>()), incremental_(incremental) {}
   ~IrExportBuilder() = default;
   std::string GetProtoString() const;
   void BuildModelInfo();
@@ -181,6 +182,7 @@ class IrExportBuilder {
   size_t unique_id_{0};
   bool top_graph{true};
   std::map<FuncGraphPtr, mind_ir::GraphProto *> graph_protos_;
+  bool incremental_{false};
 };
 
 bool IrExportBuilder::SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
@@ -727,7 +729,7 @@ bool IrExportBuilder::ConvertMapParameterToMapTensorProto(const ParameterPtr &ma
     MS_LOG(ERROR) << "Export default value of MapTensor failed, default_value: " << default_value->ToString();
     return false;
   }
-  tensor::MapTensor::ExportData export_data = map_tensor->Export(true);
+  tensor::MapTensor::ExportData export_data = map_tensor->Export(!this->incremental_);
   // key_tensor
   auto *key_tensor_proto = map_tensor_proto->mutable_key_tensor();
   MS_EXCEPTION_IF_NULL(key_tensor_proto);
@@ -1504,8 +1506,8 @@ bool IrExportBuilder::SetDictToAttributeProto(const ValueDictionaryPtr &value_di
   return true;
 }
 
-std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) {
-  auto builder = std::make_shared<IrExportBuilder>();
+std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &incremental) {
+  auto builder = std::make_shared<IrExportBuilder>(incremental);
   if (builder == nullptr) {
     MS_LOG(ERROR) << "Create ir exporter failed!";
     return "";
