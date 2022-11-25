@@ -57,6 +57,7 @@ void InsertReshape(const FuncGraphPtr &graph, const AnfNodePtr &node, const Type
   MS_EXCEPTION_IF_NULL(reshape);
   common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(infer_shape), reshape);
   common::AnfAlgo::SetOutputInferTypeAndShape({infer_type}, {infer_shape}, reshape.get());
+  reshape->set_kernel_info(std::make_shared<device::KernelInfo>());
   auto graph_sel_info =
     BuildSelectKernelBuildInfo({kOpFormat_DEFAULT}, {device_type}, {kOpFormat_DEFAULT}, {device_type});
   AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, reshape.get());
