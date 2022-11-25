@@ -1,8 +1,11 @@
 mindspore
 =========
 
+Data Presentation
+------------------
+
 Tensor
-------
+^^^^^^^
 
 .. autosummary::
     :toctree: mindspore
@@ -16,7 +19,7 @@ Tensor
     mindspore.SparseTensor
 
 Parameter
----------
+^^^^^^^^^^
 
 .. autosummary::
     :toctree: mindspore
@@ -27,7 +30,7 @@ Parameter
     mindspore.ParameterTuple
 
 DataType
---------
+^^^^^^^^^
 
 .. class:: mindspore.dtype
 
@@ -141,42 +144,6 @@ DataType
     mindspore.pytype_to_dtype
     mindspore.get_py_obj_dtype
 
-Seed
-----
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.set_seed
-    mindspore.get_seed
-
-Automatic Differentiation
----------------------------------
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.grad
-    mindspore.value_and_grad
-    mindspore.jacfwd
-    mindspore.jacrev
-    mindspore.jvp
-    mindspore.vjp
-
-Automatic Vectorization
----------------------------------
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.vmap
-
 Context
 --------
 
@@ -198,27 +165,16 @@ Context
     mindspore.get_algo_parameters
     mindspore.reset_algo_parameters
 
-Parallel
----------------
+Seed
+----
 
 .. autosummary::
     :toctree: mindspore
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.shard
-
-Dataset Helper
----------------
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.DatasetHelper
-    mindspore.connect_network_with_dataset
-    mindspore.data_sink
+    mindspore.set_seed
+    mindspore.get_seed
 
 Serialization
 -------------
@@ -246,6 +202,44 @@ Serialization
     mindspore.transform_checkpoint_by_rank
     mindspore.transform_checkpoints
 
+Automatic Differentiation
+---------------------------------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.grad
+    mindspore.value_and_grad
+    mindspore.jacfwd
+    mindspore.jacrev
+    mindspore.jvp
+    mindspore.vjp
+
+Parallel Optimization
+-----------------------
+
+Automatic Vectorization
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.vmap
+
+Parallel
+^^^^^^^^^^
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.shard
+
 JIT
 ---
 
@@ -259,31 +253,26 @@ JIT
     mindspore.jit_class
     mindspore.ms_class
     mindspore.ms_function
+    mindspore.ms_memory_recycle
     mindspore.mutable
 
-Log
----
+Tool
+-----
+
+Dataset Helper
+^^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: mindspore
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.get_level
-    mindspore.get_log_config
-
-Installation Verification
---------------------------
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.run_check
+    mindspore.DatasetHelper
+    mindspore.connect_network_with_dataset
+    mindspore.data_sink
 
 Debugging and Tuning
---------------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: mindspore
@@ -294,25 +283,25 @@ Debugging and Tuning
     mindspore.SummaryCollector
     mindspore.SummaryLandscape
     mindspore.SummaryRecord
-    mindspore.set_dump
+    mindspore.set_dump 
 
-Memory Recycle
---------------------------
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ms_memory_recycle
-
-Thor
----------------
+Log
+^^^^
 
 .. autosummary::
     :toctree: mindspore
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ConvertModelUtils
-    mindspore.ConvertNetUtils
+    mindspore.get_level
+    mindspore.get_log_config
+
+Installation Verification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.run_check

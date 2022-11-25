@@ -1,8 +1,11 @@
 mindspore
 =========
 
+数据表达
+---------
+
 张量
-------
+^^^^^
 
 .. mscnautosummary::
     :toctree: mindspore
@@ -14,7 +17,7 @@ mindspore
     mindspore.SparseTensor
 
 参数
----------
+^^^^^
 
 .. mscnautosummary::
     :toctree: mindspore
@@ -23,7 +26,7 @@ mindspore
     mindspore.ParameterTuple
 
 数据类型
---------
+^^^^^^^^^
 
 .. mscnautosummary::
     :toctree: mindspore
@@ -33,36 +36,6 @@ mindspore
     mindspore.dtype_to_pytype
     mindspore.pytype_to_dtype
     mindspore.get_py_obj_dtype
-
-随机种子
----------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.set_seed
-    mindspore.get_seed
-
-自动微分
-----------------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.grad
-    mindspore.value_and_grad
-    mindspore.jacfwd
-    mindspore.jacrev
-    mindspore.jvp
-    mindspore.vjp
-
-自动向量化
-----------------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.vmap
 
 运行环境
 ---------
@@ -83,23 +56,14 @@ mindspore
     mindspore.get_algo_parameters
     mindspore.reset_algo_parameters
 
-并行
--------------------
+随机种子
+---------
 
 .. mscnautosummary::
     :toctree: mindspore
 
-    mindspore.shard
-
-数据处理工具
--------------------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.DatasetHelper
-    mindspore.connect_network_with_dataset
-    mindspore.data_sink
+    mindspore.set_seed
+    mindspore.get_seed
 
 序列化
 -------
@@ -125,17 +89,37 @@ mindspore
     mindspore.transform_checkpoint_by_rank
     mindspore.transform_checkpoints
 
-调试调优
-----------
+自动微分
+----------------
 
 .. mscnautosummary::
     :toctree: mindspore
 
-    mindspore.Profiler
-    mindspore.SummaryCollector
-    mindspore.SummaryLandscape
-    mindspore.SummaryRecord
-    mindspore.set_dump
+    mindspore.grad
+    mindspore.value_and_grad
+    mindspore.jacfwd
+    mindspore.jacrev
+    mindspore.jvp
+    mindspore.vjp
+
+并行优化
+---------
+
+自动向量化
+^^^^^^^^^^^
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.vmap
+
+并行
+^^^^^
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.shard
 
 即时编译
 --------
@@ -148,10 +132,36 @@ mindspore
     mindspore.jit_class
     mindspore.ms_class
     mindspore.ms_function
+    mindspore.ms_memory_recycle
     mindspore.mutable
 
+工具
+-----
+
+数据处理工具
+^^^^^^^^^^^^^
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.DatasetHelper
+    mindspore.connect_network_with_dataset
+    mindspore.data_sink
+
+调试调优
+^^^^^^^^^
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.Profiler
+    mindspore.SummaryCollector
+    mindspore.SummaryLandscape
+    mindspore.SummaryRecord
+    mindspore.set_dump
+
 日志
-----
+^^^^^
 
 .. mscnautosummary::
     :toctree: mindspore
@@ -161,26 +171,9 @@ mindspore
 
 
 安装验证
---------
+^^^^^^^^^
 
 .. mscnautosummary::
     :toctree: mindspore
 
     mindspore.run_check
-
-内存回收
-----------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.ms_memory_recycle
-
-二阶优化
-----------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.ConvertModelUtils
-    mindspore.ConvertNetUtils
