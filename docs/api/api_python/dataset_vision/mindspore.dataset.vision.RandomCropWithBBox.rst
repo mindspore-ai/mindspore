@@ -26,8 +26,6 @@ mindspore.dataset.vision.RandomCropWithBBox
           - **Border.REFLECT** - 以各边的边界为轴进行镜像填充，忽略边界像素值。
           - **Border.SYMMETRIC** - 以各边的边界为轴进行对称填充，包括边界像素值。
 
-    .. note:: 当 `padding` 输入长度为2的序列时的行为未来将从使用第一个值填充左/上边界，使用第二个值填充右/下边界，变为使用第一个值填充左/右边界，使用第二个值填充上/下边界。你也可以直接输入长度为4的序列来分别指定左、上、右和下边界的填充长度。
-
     异常：
         - **TypeError** - 如果 `size` 不是int或Sequence[int]类型。
         - **TypeError** - 如果 `padding` 不是int或Sequence[int]类型。
