@@ -37,10 +37,17 @@ constexpr auto kVersion910APath =
   "/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
 constexpr auto kVersion920APath =
   "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
+constexpr auto kVersion910ATPath =
+  "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/config/ascend910/"
+  "aic-ascend910-ops-info.json";
+
 static const std::map<std::string, std::string> kVersionPathMap = {{kVersion910A, kVersion910APath},
                                                                    {kVersion910ProA, kVersion910APath},
                                                                    {kVersion910PremiumA, kVersion910APath},
                                                                    {kVersion920A, kVersion920APath}};
+static const std::map<std::string, std::string> kVersionPathTMap = {
+  {kVersion910A, kVersion910ATPath}, {kVersion910ProA, kVersion910ATPath}, {kVersion910PremiumA, kVersion910ATPath}};
+
 static const std::map<std::string, OpPattern> kPatternMap = {
   {kFormatAgnostic, kFormatAgnosticPattern},
   {kBroadcast, kBroadcastPattern},
@@ -66,7 +73,7 @@ bool OpInfoUtils::GenerateOpInfos(const std::string &version) {
     const std::string &op_name = item.key();
     // hard code
     if (SuperBar::IsSkipNode(op_name)) {
-      MS_LOG(WARNING) << "Skip node: " << op_name;
+      MS_LOG(INFO) << "Note: Skip node: " << op_name;
       continue;
     }
     // Step2. Parse common item
@@ -111,6 +118,7 @@ bool OpInfoUtils::GenerateOpInfos(const std::string &version) {
 bool OpInfoUtils::LoadOpInfoJson(const std::string &version, nlohmann::json *js_) {
   std::string dir = common::GetEnv("MINDSPORE_OP_INFO_JSON_PATH");
   if (dir.empty()) {
+    // normal path
     auto iter = kVersionPathMap.find(version);
     if (iter != kVersionPathMap.end()) {
       dir = iter->second;
@@ -120,6 +128,13 @@ bool OpInfoUtils::LoadOpInfoJson(const std::string &version, nlohmann::json *js_
     }
   }
   auto real_path = FileUtils::GetRealPath(dir.c_str());
+  if (!real_path.has_value()) {
+    // ascend tool path
+    auto iter = kVersionPathTMap.find(version);
+    if (iter != kVersionPathTMap.end()) {
+      real_path = FileUtils::GetRealPath(iter->second.c_str());
+    }
+  }
   if (!real_path.has_value()) {
     MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_OP_INFO_JSON_PATH', the path is: " << dir
                   << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "

@@ -886,7 +886,7 @@ void TbeKernelCompileManager::LoadNotSupportOp() {
     std::ifstream file_read;
     file_read.open(cache_file.c_str());
     if (!file_read.is_open()) {
-      MS_LOG(WARNING) << "File is not open. File: " << cache_file;
+      MS_LOG(INFO) << "Note: File is not open. File: " << cache_file;
       return;
     }
     std::string json_name;
