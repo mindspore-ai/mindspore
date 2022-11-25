@@ -37,7 +37,7 @@ def print_(*input_x):
         `Summary <https://www.mindspore.cn/mindinsight/docs/en/master/summary_record.html?highlight=summary#>`_.
 
     Args:
-        input_x (Union[Tensor, bool, int, float, str]): The inputs of print_.
+        input_x (Union[Tensor, bool, int, float, str, tuple, list]): The inputs of print_.
             Supports multiple inputs which are separated by ','.
 
     Returns:

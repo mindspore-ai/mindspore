@@ -9134,7 +9134,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
             output_shape can be a tuple, or a single H for H x H x H.
             specifying the size (D, H, W) of the output tensor.
 
-        data_format (str) : The optional value for data format.
+        data_format (str, optional) : The optional value for data format.
             Currently support 'NCDHW' and 'NHDWC'. Default: 'NCDHW'.
 
     Inputs:
@@ -10198,7 +10198,7 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
         output_shape (Union[int, tuple[int]]): The target output size is H x W.
             output_shape can be a tuple, or a single H for H x H.
             specifying the size (H, W) of the output tensor.
-        data_format (str): The optional value for data format, is 'NCHW'.
+        data_format (str, optional): The optional value for data format, is 'NCHW'.
             Default: "NCHW".
 
     Inputs:

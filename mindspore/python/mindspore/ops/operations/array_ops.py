@@ -441,9 +441,6 @@ class Im2Col(Primitive):
     Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
     Raises:
         TypeError: If `ksizes` data type is not in Union[int, tuple[int], list[int]].
         TypeError: If `strides` data type is not in Union[int, tuple[int], list[int]].
@@ -456,6 +453,9 @@ class Im2Col(Primitive):
         ValueError: If `dilations` value is not greater than zero or elements number more than 2.
         ValueError: If `padding_mode` value is not in ["SAME", "VALID", "CALCULATED"].
         ValueError: If `pads` value is not greater than zero.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
@@ -555,9 +555,6 @@ class Col2Im(Primitive):
     Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
 
-    Supported Platforms:
-        ``CPU``
-
     Raises:
         TypeError: If :attr:`kernel_size` data type is not in Union[int, tuple[int], list[int]].
         TypeError: If :attr:`dilation` data type is not in Union[int, tuple[int], list[int]].
@@ -569,6 +566,9 @@ class Col2Im(Primitive):
         ValueError: If :attr:`stride` value is not greater than zero or elements number more than 2.
         ValueError: If x.shape[2] != kernel_size[0] * kernel_size[1].
         ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -7451,7 +7451,7 @@ class FillDiagonal(Primitive):
 
     Args:
         fill_value (float): The fill value.
-        wrap (bool): the diagonal ‘wrapped’ after N columns for tall matrices. Default: False.
+        wrap (bool, optional): the diagonal ‘wrapped’ after N columns for tall matrices. Default: False.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

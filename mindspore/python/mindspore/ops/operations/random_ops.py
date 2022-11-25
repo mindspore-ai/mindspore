@@ -86,7 +86,7 @@ class TruncatedNormal(Primitive):
         seed (int, optional): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
             the seed is set by the given seed. Otherwise, it is seeded by a random seed.
         seed2 (int, optional): An optional int. Defaults to 0. A second seed to avoid seed collision.
-        dtype (mindspore.dtype): Specified output data type. Must be one of the following types:
+        dtype (mindspore.dtype, optional): Specified output data type. Must be one of the following types:
             mindspore.float16, mindspore.float32 and mindspore.float64. Default: mindspore.float32.
 
     Inputs:
