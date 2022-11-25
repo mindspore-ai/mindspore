@@ -19,7 +19,7 @@
 
 #include <string>
 #include "utils/hash_set.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 class MS_CORE_API InterpretNodeRecorder {

@@ -20,7 +20,7 @@
 #include <set>
 #include <mutex>
 #include "utils/ms_utils.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 namespace mindspore {
 class ExceptionListener {
  public:

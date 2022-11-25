@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include <stack>
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 class Scope;

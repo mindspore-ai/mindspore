@@ -25,7 +25,7 @@
 #include <utility>
 #include <unordered_map>
 
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #include "utils/hashing.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"

@@ -23,7 +23,7 @@
 #include <vector>
 
 #include "base/base.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #include "ir/scope.h"
 #include "utils/trace_info.h"
 namespace mindspore {

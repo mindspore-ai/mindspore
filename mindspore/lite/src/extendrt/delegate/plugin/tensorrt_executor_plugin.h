@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_TENSORRT_EXECUTOR_PLUGIN_H_
 #include "include/api/status.h"
 #include "utils/log_adapter.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore::lite {
 class MS_API TensorRTExecutorPlugin {

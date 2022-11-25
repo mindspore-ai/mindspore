@@ -37,7 +37,7 @@ int EliminateRedundantCastPass::RemoveCastOp(const AnfNodePtr &anf_node, const F
   second_type = static_cast<TypeId>(static_cast<int *>(tensor_info->data_c())[0]);
   if (first_type == second_type) {
     MS_LOG(DEBUG) << "Cast node " << anf_node->fullname_with_scope() << " is eliminated.";
-    this->remove_cnode_.insert(anf_node);
+    (void)this->remove_cnode_.insert(anf_node);
     return manager->Replace(anf_node, cast_cnode->input(1)) ? RET_OK : RET_ERROR;
   }
   return lite::RET_NO_CHANGE;

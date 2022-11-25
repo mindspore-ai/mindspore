@@ -84,6 +84,9 @@ FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
   auto impl = func_graph->impl();
   return std::dynamic_pointer_cast<FuncGraph>(impl);
 }
+
+// Deal with early release of 3rd-party plugin library.
+static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
 }  // namespace
 
 STATUS StoreConverterParameters(const std::shared_ptr<ConverterPara> &param) {
@@ -202,7 +205,6 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
     return RET_ERROR;
   }
   // load plugin
-  static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
   if (!param->plugins_path.empty()) {
     for (auto &path : param->plugins_path) {
       auto dl_loader = std::make_shared<DynamicLibraryLoader>();

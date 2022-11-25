@@ -26,7 +26,7 @@
 #include "abstract/utils.h"
 #include "utils/any.h"
 #include "ir/primitive.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 namespace abstract {

@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 class MS_CORE_API PhaseManager {

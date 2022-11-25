@@ -27,7 +27,7 @@
 #include <utility>
 #include <algorithm>
 #include "utils/hashing.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"

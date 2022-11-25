@@ -18,7 +18,7 @@
 
 #include <memory>
 #include "include/api/status.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 // Now we separate the link from mindspore binary with numa,

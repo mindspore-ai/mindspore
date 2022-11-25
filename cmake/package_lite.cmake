@@ -213,7 +213,7 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/return.h
             ${TOP_DIR}/mindspore/core/ops/pad.h
-            DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ops
+            DESTINATION ${CONVERTER_ROOT_DIR}/include/ops
             COMPONENT ${RUNTIME_COMPONENT_NAME}
             )
     install(FILES
@@ -246,7 +246,7 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/fusion/sub_fusion.h
             ${TOP_DIR}/mindspore/core/ops/fusion/tile_fusion.h
             ${TOP_DIR}/mindspore/core/ops/fusion/topk_fusion.h
-            DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ops/fusion
+            DESTINATION ${CONVERTER_ROOT_DIR}/include/ops/fusion
             COMPONENT ${RUNTIME_COMPONENT_NAME}
             )
 endfunction()
@@ -504,27 +504,15 @@ if(PLATFORM_ARM64)
                     ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_ENABLE_CONVERTER)
-            install(FILES ${TOP_DIR}/mindspore/lite/include/converter.h DESTINATION ${CONVERTER_ROOT_DIR}/include
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/registry/ DESTINATION
                     ${CONVERTER_ROOT_DIR}/include/registry COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${API_HEADER}  DESTINATION ${CONVERTER_ROOT_DIR}/include/api
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${MINDAPI_BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/mindapi/base
+            install(FILES ${MINDAPI_BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/mindapi/base
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${MINDAPI_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/mindapi/ir
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${ABSTRACT_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${IR_DTYPE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir/dtype
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir
+            install(FILES ${MINDAPI_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/mindapi/ir
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_white_list_ops()
-            install(FILES ${UTILS_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/schema/
                     DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
                     COMPONENT ${RUNTIME_COMPONENT_NAME}
@@ -543,6 +531,8 @@ if(PLATFORM_ARM64)
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${TOP_DIR}/third_party/proto/ DESTINATION ${CONVERTER_ROOT_DIR}/third_party/proto
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib
                     RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -734,8 +724,6 @@ elseif(WIN32)
     file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll
             ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_*-1.dll)
     if(MSLITE_ENABLE_CONVERTER)
-        install(FILES ${TOP_DIR}/mindspore/lite/include/converter.h DESTINATION ${CONVERTER_ROOT_DIR}/include
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/converter_lite/converter_lite.exe
                 DESTINATION ${CONVERTER_ROOT_DIR}/converter COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/libmindspore_converter.dll
@@ -899,30 +887,20 @@ else()
     if(MSLITE_ENABLE_CONVERTER)
         install(FILES ${TOP_DIR}/mindspore/lite/include/kernel_interface.h DESTINATION ${CONVERTER_ROOT_DIR}/include
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/include/converter.h DESTINATION ${CONVERTER_ROOT_DIR}/include
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/registry/ DESTINATION ${CONVERTER_ROOT_DIR}/include/registry
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${API_HEADER}  DESTINATION ${CONVERTER_ROOT_DIR}/include/api
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${MINDAPI_BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/mindapi/base
+        install(FILES ${MINDAPI_BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/mindapi/base
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${MINDAPI_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/mindapi/ir
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${ABSTRACT_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${IR_DTYPE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir/dtype
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir
+        install(FILES ${MINDAPI_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/mindapi/ir
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         __install_white_list_ops()
-        install(FILES ${UTILS_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/schema/ DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "schema_generated.h" EXCLUDE)
         install(DIRECTORY ${flatbuffers_INC}/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/third_party/proto/ DESTINATION ${CONVERTER_ROOT_DIR}/third_party/proto
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/glog
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")

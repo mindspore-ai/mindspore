@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 typedef unsigned char Byte;
 namespace mindspore {

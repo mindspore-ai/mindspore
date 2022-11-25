@@ -66,5 +66,4 @@ set(UTILS_HEADER
         ${CORE_DIR}/utils/shape_utils.h
         ${CORE_DIR}/utils/signal.h
         ${CORE_DIR}/utils/trace_info.h
-        ${CORE_DIR}/utils/macros.h
         )

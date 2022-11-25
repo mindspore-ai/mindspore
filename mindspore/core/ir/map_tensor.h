@@ -26,7 +26,7 @@
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ir/scalar.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {

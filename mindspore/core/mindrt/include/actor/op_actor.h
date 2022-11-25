@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 #include "utils/hash_map.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 #include "actor/actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"

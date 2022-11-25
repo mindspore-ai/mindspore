@@ -29,7 +29,7 @@
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "utils/label.h"
-#include "utils/macros.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
