@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/matrix_calculation_ops_declare.h"
+#include <string>
 
 namespace mindspore::transform {
 // TensorScatterUpdate
@@ -115,6 +116,25 @@ INPUT_MAP(MatrixSetDiagD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(diagonal)}, {3, 
 ATTR_MAP(MatrixSetDiagD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixSetDiagD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixSetDiagD, kNameMatrixSetDiagD, ADPT_DESC(MatrixSetDiagD))
+
+// MatrixDiagPart
+INPUT_MAP(MatrixDiagPart) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MatrixDiagPart) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixDiagPart) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixDiagPart, kMatrixDiagPartDOpName, ADPT_DESC(MatrixDiagPart))
+
+// MatrixSetDiag
+INPUT_MAP(MatrixSetDiag) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MatrixSetDiag) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixSetDiag) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixSetDiag, kMatrixSetDiagDOpName, ADPT_DESC(MatrixSetDiag))
+
+// ConfusionMatrix
+INPUT_MAP(ConfusionMatrix) = {{1, INPUT_DESC(labels)}, {2, INPUT_DESC(predictions)}, {3, INPUT_DESC(weights)}};
+ATTR_MAP(ConfusionMatrix) = {{"num_classes", ATTR_DESC(num_classes, AnyTraits<int64_t>())},
+                             {"dtype", ATTR_DESC(dtype, AnyTraits<std::string>())}};
+OUTPUT_MAP(ConfusionMatrix) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ConfusionMatrix, kNameConfusionMatrix, ADPT_DESC(ConfusionMatrix))
 
 // DiagPart
 INPUT_MAP(DiagPart) = {{1, INPUT_DESC(x)}};

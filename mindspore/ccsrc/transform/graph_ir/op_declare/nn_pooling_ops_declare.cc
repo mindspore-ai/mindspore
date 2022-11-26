@@ -191,4 +191,29 @@ INPUT_MAP(AdaptiveMaxPool2d) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AdaptiveMaxPool2d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(AdaptiveMaxPool2d) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
 REG_ADPT_DESC(AdaptiveMaxPool2d, kNameAdaptiveMaxPool2d, ADPT_DESC(AdaptiveMaxPool2d))
+
+// AvgPool3DGrad
+INPUT_MAP(AvgPool3DGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(grads)}};
+ATTR_MAP(AvgPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+                           {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
+                           {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int64_t>())},
+                           {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+ATTR_INPUT_MAP(AvgPool3DGrad) = {{"origin_input_shape", 1}};
+OUTPUT_MAP(AvgPool3DGrad) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(AvgPool3DGrad, kAvgPool3DGradDOpName, ADPT_DESC(AvgPool3DGrad))
+
+// Dilation2DBackpropFilter
+INPUT_MAP(Dilation2DBackpropFilter) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(out_backprop)}};
+ATTR_MAP(Dilation2DBackpropFilter) = {{"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
+                                      {"rates", ATTR_DESC(rates, AnyTraits<std::vector<int64_t>>())},
+                                      {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                                      {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                                      {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+                                      {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(Dilation2DBackpropFilter) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Dilation2DBackpropFilter, prim::kPrimDilation2DBackpropFilter->name(),
+              ADPT_DESC(Dilation2DBackpropFilter))
 }  // namespace mindspore::transform

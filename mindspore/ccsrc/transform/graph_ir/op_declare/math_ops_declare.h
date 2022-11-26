@@ -19,6 +19,7 @@
 
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "ops/math_ops.h"
 
 namespace mindspore::transform {
@@ -66,5 +67,20 @@ DECLARE_OP_USE_OUTPUT(LpNorm)
 
 DECLARE_OP_ADAPTER(Trunc)
 DECLARE_OP_USE_OUTPUT(Trunc)
+
+DECLARE_OP_ADAPTER(HistogramFixedWidth)
+DECLARE_OP_USE_OUTPUT(HistogramFixedWidth)
+
+DECLARE_OP_ADAPTER(Pdist)
+DECLARE_OP_USE_OUTPUT(Pdist)
+
+DECLARE_OP_ADAPTER(SoftMarginLossGrad)
+DECLARE_OP_USE_OUTPUT(SoftMarginLossGrad)
+
+DECLARE_OP_ADAPTER(Cdist)
+DECLARE_OP_USE_OUTPUT(Cdist)
+
+DECLARE_OP_ADAPTER(CdistGrad)
+DECLARE_OP_USE_OUTPUT(CdistGrad)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_

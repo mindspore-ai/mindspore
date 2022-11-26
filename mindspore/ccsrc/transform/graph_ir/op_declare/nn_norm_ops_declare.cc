@@ -182,4 +182,18 @@ INPUT_MAP(Roll) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Roll) = {{"shift", ATTR_DESC(shifts, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Roll) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Roll, prim::kRoll, ADPT_DESC(Roll))
+
+// Renorm
+INPUT_MAP(Renorm) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Renorm) = {{"p", ATTR_DESC(p, AnyTraits<float>())},
+                    {"dim", ATTR_DESC(dim, AnyTraits<int64_t>())},
+                    {"maxnorm", ATTR_DESC(maxnorm, AnyTraits<float>())}};
+OUTPUT_MAP(Renorm) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Renorm, prim::kPrimRenorm->name(), ADPT_DESC(Renorm))
+
+// SoftMarginLoss
+INPUT_MAP(SoftMarginLoss) = {{1, INPUT_DESC(input_x)}, {2, INPUT_DESC(input_y)}};
+ATTR_MAP(SoftMarginLoss) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+OUTPUT_MAP(SoftMarginLoss) = {{0, OUTPUT_DESC(output_z)}};
+REG_ADPT_DESC(SoftMarginLoss, prim::kPrimSoftMarginLoss->name(), ADPT_DESC(SoftMarginLoss))
 }  // namespace mindspore::transform
