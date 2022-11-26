@@ -116,6 +116,8 @@ std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBa
   kArgsCache;
 std::unordered_map<PyObject *, abstract::AbstractBasePtrList> kCellArgsMap;
 
+static bool kDidAtexitFlag = False;
+
 namespace {
 #ifdef ENABLE_DUMP_IR
 std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) {
@@ -629,7 +631,7 @@ void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
     (void)info_.erase(phase);
     MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
   }
-  if (clear) {
+  if (clear && !kDidAtexitFlag) {
     // Do clear here to avoid any pointer for resource.
     FuncGraphLoopBreaker::Inst().ClearCellGraphs(phase);
   }
@@ -1990,6 +1992,7 @@ void ClearSingleton() {
 
 void ClearResAtexit() {
   MS_LOG(INFO) << "Pipeline clear all resource";
+  kDidAtexitFlag = True;
   ClearResPart1();
   ClearResPart2();
   ClearResPart3();
