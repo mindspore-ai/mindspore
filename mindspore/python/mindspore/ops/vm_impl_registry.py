@@ -51,8 +51,7 @@ def get_vm_impl_fn(prim):
         function, vm function
 
     Examples:
-        >>> from mindspore.ops import vm_impl_registry
-        >>> from mindspore.ops.vm_impl_registry import get_vm_impl_fn
+        >>> from mindspore.ops import vm_impl_registry, get_vm_impl_fn
         ...
         >>> @vm_impl_registry.register("Type")
         ... def vm_impl_dtype(self):
