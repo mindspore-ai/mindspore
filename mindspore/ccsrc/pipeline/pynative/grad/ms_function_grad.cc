@@ -240,13 +240,13 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
   // Connect grad graph of ms_function to context.
   auto auto_grad_cell_ptr = top_cell->auto_grad_cell_ptr();
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
-  auto grad_param =
-    std::make_shared<ad::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value, grad_graph);
+  auto grad_param = std::make_shared<ad::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
+                                                    grad_graph, !top_cell->is_high_order_top_cell());
   if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
                       << ms_function_cnode->DebugString();
   }
-  top_cell->set_ms_function_flag(true);
+  top_cell->set_need_do_final_opt(true);
   return ms_function_cnode;
 }
 

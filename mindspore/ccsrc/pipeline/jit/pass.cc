@@ -200,6 +200,16 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
     irpass.depend_value_elim_,
   });
   OptPassGroupMap map({{"ad_final_opt", bg_final_opt}});
+  if (pynative::PyNativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
+    (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+    opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
+    (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
+    opt::OptPassConfig environ_eliminate = opt::OptPassConfig({
+      irpass.incorporate_call_,
+      irpass.incorporate_call_switch_,
+    });
+    (void)map.emplace_back(std::make_pair("environ_eliminate", environ_eliminate));
+  }
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", resource, map);
   MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();

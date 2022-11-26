@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_switch_simplify_avoid_dead_node():

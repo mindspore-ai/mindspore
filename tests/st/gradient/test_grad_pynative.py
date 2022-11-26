@@ -148,7 +148,7 @@ def test_grad_multiple_inputs_multiple_outputs_cell_pynative():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_iteration_function_pynative():
