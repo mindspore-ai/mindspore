@@ -370,3 +370,13 @@ Dynamic LR函数
 
     mindspore.nn.ChannelShuffle
     mindspore.nn.Flatten
+
+数学运算
+----------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.Moments

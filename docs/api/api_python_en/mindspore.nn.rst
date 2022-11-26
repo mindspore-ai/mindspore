@@ -373,3 +373,13 @@ Tools
 
     mindspore.nn.ChannelShuffle
     mindspore.nn.Flatten
+
+Mathematical Operations
+-----------------------
+
+.. msplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.Moments
