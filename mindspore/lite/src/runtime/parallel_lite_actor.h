@@ -41,7 +41,7 @@ class ParallelLiteActor : public LiteOpActor {
   void RunOpData(OpData<lite::Tensor> *input_data, mindspore::OpContext<lite::Tensor> *context = nullptr) override;
   int PostInit() override;
   mindspore::OpContext<lite::Tensor> *OpContext() const { return op_context_; }
-  void SetOpContext(mindspore::OpContext<lite::Tensor> *op_context) { op_context_ = op_context; }
+  inline void SetOpContext(mindspore::OpContext<lite::Tensor> *op_context) { op_context_ = op_context; }
   void AddKernelsActor(const std::shared_ptr<KernelsActor> &kernels_actor) { kernels_actors_.push_back(kernels_actor); }
   void SetBeginReadlyIndexs(const std::vector<size_t> &readly_indexs) { begin_readly_indexs_ = readly_indexs; }
   void CheckReadyActors(const std::vector<size_t> &indices);
@@ -104,7 +104,7 @@ class KernelsActor : public ActorBase {
   std::vector<DataArrowPtr> output_data_arrows_;
   std::vector<OpDataPtr<Tensor>> outputs_data_{};
 
-  std::atomic<int> ready_ = 0;  // 添加该标志是为了防止重复进入
+  std::atomic<int> ready_ = 0;  // This flag is used to reduce message communication
   bool is_single_in_ = false;
   int in_actors_num_ = 0;
 
