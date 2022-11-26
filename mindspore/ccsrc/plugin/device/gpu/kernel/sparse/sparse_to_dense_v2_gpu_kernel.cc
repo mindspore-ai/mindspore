@@ -46,8 +46,8 @@ bool SparseToDenseV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  indice_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  value_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
+  indice_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  value_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
   return true;
 }
 

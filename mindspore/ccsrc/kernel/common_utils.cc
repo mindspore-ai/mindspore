@@ -1122,13 +1122,23 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
   return bytes;
 }
 
+KernelAttr &KernelAttr::AddInputAttr(const TypeId &object_type, const TypeId &ms_type, const std::string &format) {
+  (void)input_type_.emplace_back(DataType(ms_type, format, object_type));
+  return *this;
+}
+
+KernelAttr &KernelAttr::AddOutputAttr(const TypeId &object_type, const TypeId &ms_type, const std::string &format) {
+  (void)output_type_.emplace_back(DataType(ms_type, format, object_type));
+  return *this;
+}
+
 KernelAttr &KernelAttr::AddInputAttr(const TypeId &ms_type, const std::string &format) {
-  (void)input_type_.emplace_back(ms_type, format);
+  (void)input_type_.emplace_back(DataType(ms_type, format));
   return *this;
 }
 
 KernelAttr &KernelAttr::AddOutputAttr(const TypeId &ms_type, const std::string &format) {
-  (void)output_type_.emplace_back(ms_type, format);
+  (void)output_type_.emplace_back(DataType(ms_type, format));
   return *this;
 }
 
@@ -1156,14 +1166,14 @@ void KernelAttr::SetInputAttr(const size_t index, const TypeId &ms_type, const s
   if (index >= input_type_.size()) {
     MS_LOG(EXCEPTION) << "Invalid index for input: " << index << ", out of range.";
   }
-  input_type_[index] = std::make_pair(ms_type, format);
+  input_type_[index] = DataType(ms_type, format);
 }
 
 void KernelAttr::SetOutputAttr(const size_t index, const TypeId &ms_type, const std::string &format) {
   if (index >= output_type_.size()) {
     MS_LOG(EXCEPTION) << "Invalid index for output: " << index << ", out of range.";
   }
-  output_type_[index] = std::make_pair(ms_type, format);
+  output_type_[index] = DataType(ms_type, format);
 }
 
 void KernelAttr::SetInputAttrList(const std::vector<DataType> &addr_list) {
@@ -1181,7 +1191,7 @@ std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
   if (input_num > 0) {
     ss << ", input(";
     for (size_t i = 0; i < input_num; ++i) {
-      ss << TypeIdLabel(kernel_attr.GetInputAttr(i).first);
+      ss << TypeIdLabel(kernel_attr.GetInputAttr(i).dtype);
       if (i != input_num - 1) {
         ss << ",";
       }
@@ -1192,7 +1202,7 @@ std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
   if (output_num > 0) {
     ss << ", output(";
     for (size_t i = 0; i < output_num; ++i) {
-      ss << TypeIdLabel(kernel_attr.GetOutputAttr(i).first);
+      ss << TypeIdLabel(kernel_attr.GetOutputAttr(i).dtype);
       if (i != output_num - 1) {
         ss << ",";
       }
@@ -1222,9 +1232,9 @@ std::pair<bool, size_t> MatchMultiDynamicKernelAttr(const KernelAttr &kernel_att
       if (dyn_input_size < 0) {
         dyn_input_size = 1;
       }
-      auto dtype = cur_kernel_attr.GetInputAttr(i).first;
+      auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
       for (size_t j = 0; j < LongToSize(dyn_input_size); ++j) {
-        if (kernel_attr.GetInputAttr(input_index).first != dtype) {
+        if (kernel_attr.GetInputAttr(input_index).dtype != dtype) {
           mis_match = true;
           break;
         }
@@ -1240,8 +1250,8 @@ std::pair<bool, size_t> MatchMultiDynamicKernelAttr(const KernelAttr &kernel_att
 
     // only support one dynamic output. TODO: support multi dynamic output.
     for (size_t i = 0; i < output_num; ++i) {
-      auto dtype = cur_kernel_attr.GetOutputAttr(i).first;
-      if (kernel_attr.GetInputAttr(i).first != dtype) {
+      auto dtype = cur_kernel_attr.GetOutputAttr(i).dtype;
+      if (kernel_attr.GetInputAttr(i).dtype != dtype) {
         mis_match = true;
         break;
       }
@@ -1272,8 +1282,8 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
 
     bool mis_match = false;
     for (size_t i = 0; i < input_num; ++i) {
-      auto dtype = cur_kernel_attr.GetInputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).first;
-      if (kernel_attr.GetInputAttr(i).first != dtype) {
+      auto dtype = cur_kernel_attr.GetInputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).dtype;
+      if (kernel_attr.GetInputAttr(i).dtype != dtype) {
         mis_match = true;
         break;
       }
@@ -1283,8 +1293,8 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
     }
 
     for (size_t i = 0; i < output_num; ++i) {
-      auto dtype = cur_kernel_attr.GetOutputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).first;
-      if (kernel_attr.GetOutputAttr(i).first != dtype) {
+      auto dtype = cur_kernel_attr.GetOutputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).dtype;
+      if (kernel_attr.GetOutputAttr(i).dtype != dtype) {
         mis_match = true;
         break;
       }

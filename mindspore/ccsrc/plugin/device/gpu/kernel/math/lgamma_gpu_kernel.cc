@@ -38,7 +38,7 @@ bool LgammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }
 

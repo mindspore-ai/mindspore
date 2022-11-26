@@ -34,7 +34,7 @@ bool LogSpaceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   steps_ = kernel_ptr_->get_steps();
   base_ = kernel_ptr_->get_base();
   if (steps_ < 0) {

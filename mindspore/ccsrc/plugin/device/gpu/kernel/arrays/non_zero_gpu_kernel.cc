@@ -43,8 +43,8 @@ bool NonZeroGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   is_need_retrieve_output_shape_ = true;  // NonZero is a dynamic shape operator.
   kernel_func_ = func_list_[index].second;
-  data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  index_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
+  data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  index_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
   return true;
 }
 

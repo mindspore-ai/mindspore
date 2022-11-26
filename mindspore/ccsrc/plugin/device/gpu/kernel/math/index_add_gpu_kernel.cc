@@ -49,7 +49,7 @@ bool IndexAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-  t_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
+  t_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
   return true;
 }
 

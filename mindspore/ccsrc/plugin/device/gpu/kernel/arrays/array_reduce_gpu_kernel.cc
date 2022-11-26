@@ -138,7 +138,7 @@ bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
   kernel_func_ = kernel_attr_list_[kernel_type_][index].second;
 
-  auto type_id = kernel_attr.GetInputAttr(kIndex0).first;
+  auto type_id = kernel_attr.GetInputAttr(kIndex0).dtype;
   auto type_name = TypeIdLabel(type_id);
   if (type_id == kNumberTypeComplex64) {
     data_type_ = CUDNN_DATA_FLOAT;

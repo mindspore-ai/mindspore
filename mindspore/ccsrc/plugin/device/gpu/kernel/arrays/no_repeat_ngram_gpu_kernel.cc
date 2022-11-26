@@ -46,8 +46,8 @@ bool NoRepeatNGramGpuKernelMode::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(WARNING) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
     return false;
   }
-  state_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  logit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
+  state_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  logit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   kernel_func_ = func_list_[index].second;
 
   return true;

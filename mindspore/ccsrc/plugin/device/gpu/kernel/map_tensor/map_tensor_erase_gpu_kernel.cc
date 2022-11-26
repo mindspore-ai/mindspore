@@ -62,7 +62,7 @@ bool MapTensorEraseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 
   // Get kernel launch function.
   kernel_launch_func_ = map_tensor_erase_func_list_[index].second;
-  input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
+  input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   return true;
 }
 

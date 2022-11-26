@@ -108,9 +108,9 @@ bool AdamaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   }
 
   kernel_func_ = func_list_[index].second;
-  t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex3).first);
-  g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex8).first);
+  t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex3).dtype);
+  g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex8).dtype);
 
   InOutputResize(base_operator, inputs, outputs);
   outputs_ = outputs;

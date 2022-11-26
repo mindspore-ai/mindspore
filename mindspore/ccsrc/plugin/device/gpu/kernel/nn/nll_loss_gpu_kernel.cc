@@ -47,8 +47,8 @@ bool NLLLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   kernel_func_ = func_list_[index].second;
 
-  logits_data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  weight_data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
+  logits_data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  weight_data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
   return true;
 }
 

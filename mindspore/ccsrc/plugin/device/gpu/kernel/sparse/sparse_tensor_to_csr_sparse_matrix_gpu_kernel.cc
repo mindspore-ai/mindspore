@@ -64,19 +64,19 @@ int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const BaseOperatorPtr &bas
                                                             inputs.at(i)->GetDeviceShapeAdaptively().end());
     size_t input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
     elements[i] = input_elements_;
-    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).first);
+    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).dtype);
     input_size_list_.push_back(input_elements_ * unit_size_);
     if (i == kTwo) {
       x_dense_shape_ptr_test.resize(input_elements_);
     }
   }
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).first);
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).dtype);
   workspace_size_list_.push_back(elements[kOne] * unit_size_);
   for (size_t i = 0; i < outputs.size(); i++) {
     std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(i)->GetDeviceShapeAdaptively().begin(),
                                                              outputs.at(i)->GetDeviceShapeAdaptively().end());
     size_t output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
-    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(i).first);
+    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(i).dtype);
     output_size_list_.push_back(output_elements_ * unit_size_);
     if (i == 1) {
       y_batch_pointers_ptr_test.resize(output_elements_);

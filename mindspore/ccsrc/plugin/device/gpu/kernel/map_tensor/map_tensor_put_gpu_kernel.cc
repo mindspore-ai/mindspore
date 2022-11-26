@@ -64,8 +64,8 @@ bool MapTensorPutGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
 
   // Get kernel launch function.
   kernel_launch_func_ = map_tensor_put_func_list_[index].second;
-  input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
-  input_value_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
+  input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
+  input_value_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
 
   return true;
 }

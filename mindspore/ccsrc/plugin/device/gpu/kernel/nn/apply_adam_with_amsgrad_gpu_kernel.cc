@@ -62,7 +62,7 @@ bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   }
 
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndexVar).first);
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndexVar).dtype);
   return true;
 }
 

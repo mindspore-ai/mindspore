@@ -121,12 +121,12 @@ std::string GetSupportedTypesStr(const CNodePtr &kernel_node, KernelType kernel_
           std::string type_list = "input[";
           auto attr = kernel_attr_list[attr_index];
           for (size_t input_index = 0; input_index < attr.GetInputSize(); ++input_index) {
-            type_list = type_list + TypeIdToString(attr.GetInputAttr(input_index).first) +
+            type_list = type_list + TypeIdToString(attr.GetInputAttr(input_index).dtype) +
                         ((input_index == (attr.GetInputSize() - 1)) ? "" : " ");
           }
           type_list = type_list + "], output[";
           for (size_t input_index = 0; input_index < attr.GetOutputSize(); ++input_index) {
-            type_list = type_list + TypeIdToString(attr.GetOutputAttr(input_index).first) +
+            type_list = type_list + TypeIdToString(attr.GetOutputAttr(input_index).dtype) +
                         ((input_index == (attr.GetOutputSize() - 1)) ? "" : " ");
           }
           supported_type_lists = supported_type_lists + type_list + "]; ";

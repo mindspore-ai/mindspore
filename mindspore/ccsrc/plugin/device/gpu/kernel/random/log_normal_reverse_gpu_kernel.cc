@@ -79,7 +79,7 @@ bool LogNormalReverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   input_std_ = GetValue<float>(base_operator->GetAttr("std"));
 
   kernel_func_ = func_list_[pair.second].second;
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
 
   if (!states_init_) {
     int64_t seed = time(NULL);

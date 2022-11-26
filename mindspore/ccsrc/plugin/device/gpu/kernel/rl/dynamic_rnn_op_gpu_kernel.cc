@@ -48,7 +48,7 @@ bool DynamicRnnOpBaseMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
 
   auto input_shape = inputs[kIndex0]->GetShapeVector();
-  input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   max_seq_len_ = static_cast<int>(input_shape[0]);
   auto input_size = static_cast<int>(input_shape[kIndexTwo]);
   input_size_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("input_size")));

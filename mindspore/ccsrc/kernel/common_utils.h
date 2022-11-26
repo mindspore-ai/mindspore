@@ -337,14 +337,26 @@ BACKEND_EXPORT size_t GetCopySize(const std::vector<int64_t> &dim_offset, const 
                                   const std::vector<int64_t> &stop);
 BACKEND_EXPORT size_t UnitSizeInBytes(const mindspore::TypeId &t);
 
+struct DataType {
+  explicit DataType(const TypeId &dtype, const string &format = kOpFormat_DEFAULT,
+                    const TypeId &object_type = kObjectTypeTensorType)
+      : dtype(dtype), format(format), object_type(object_type) {}
+  TypeId dtype;
+  std::string format;
+  TypeId object_type;
+};
+
 class BACKEND_EXPORT KernelAttr {
  public:
-  using DataType = std::pair<TypeId, std::string>;
   KernelAttr() = default;
   ~KernelAttr() = default;
 
   KernelAttr &AddInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
   KernelAttr &AddOutputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
+  KernelAttr &AddInputAttr(const TypeId &object_type, const TypeId &ms_type,
+                           const std::string &formatt = kOpFormat_DEFAULT);
+  KernelAttr &AddOutputAttr(const TypeId &object_type, const TypeId &ms_type,
+                            const std::string &formatt = kOpFormat_DEFAULT);
   KernelAttr &AddAllSameAttr(const bool &all_same);
   KernelAttr &AddSkipCheckAttr(const bool &skip_check);
   KernelAttr &AddOutInRef(size_t output_index, size_t input_index);

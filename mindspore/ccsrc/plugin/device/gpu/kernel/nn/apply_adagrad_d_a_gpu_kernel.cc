@@ -74,7 +74,7 @@ bool ApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto x_type_id = kernel_attr.GetInputAttr(kVarIndex).first;
+  auto x_type_id = kernel_attr.GetInputAttr(kVarIndex).dtype;
   unit_size_ = abstract::TypeIdSize(x_type_id);
   return true;
 }

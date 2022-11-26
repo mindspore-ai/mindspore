@@ -68,8 +68,8 @@ bool MapTensorGetDataGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   // Get kernel launch function.
   kernel_launch_func_ = map_tensor_get_data_func_list_[index].second;
 
-  output_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
-  output_value_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex1).first);
+  output_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
+  output_value_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex1).dtype);
 
   return true;
 }
