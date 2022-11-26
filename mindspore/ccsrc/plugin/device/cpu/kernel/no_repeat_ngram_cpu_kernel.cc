@@ -122,6 +122,13 @@ bool NoRepeatNGramCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     for (int64_t j = 0; j < state_dim_ - ngram_size_ + 1; j++) {
       if (equal(array_ngram.begin(), array_ngram.end(), array_dim.begin() + j)) {
         int64_t output_index_j = static_cast<int64_t>(array_dim[LongToSize(j + ngram_size_ - 1)]);
+        if (output_index_j < 0) {
+          MS_LOG(EXCEPTION) << "For NoRepeatNGram, There is negative values in the state input tensor, "
+                               "please check the state input is no-negative. "
+                               "The find negative value is "
+                            << output_index_j << " .";
+          return false;
+        }
         output[output_index_i + output_index_j] = -(std::numeric_limits<T>::max)();
       }
     }
