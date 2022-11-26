@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/scatter_nd_functor_gpu_kernel.h"
+#include <complex>
 #include <type_traits>
 #include <numeric>
 #include <functional>
@@ -166,6 +167,9 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 #define DTYPE_REGISTER(INPUT, INDICES, UPDATES, OUTPUT, T, S)                                           \
   {                                                                                                     \
     KernelAttr().AddInputAttr(INPUT).AddInputAttr(INDICES).AddInputAttr(UPDATES).AddOutputAttr(OUTPUT), \
@@ -210,6 +214,15 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorGPUKern
     // Data type: bool, only for scatter_nd_update
     DTYPE_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, bool, int),
     DTYPE_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, bool, int64_t),
+    // Data type: complex64, only for scatter_nd_update
+    DTYPE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeComplex64, complex64, int),
+    DTYPE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeComplex64, complex64,
+                   int64_t),
+    // Data type: complex128, only for scatter_nd_update
+    DTYPE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeComplex128, kNumberTypeComplex128, complex128,
+                   int),
+    DTYPE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeComplex128, complex128,
+                   int64_t),
   };
   return func_list;
 }
