@@ -142,7 +142,7 @@ class SubGraphKernel : public KernelExec {
 
   inline bool GetGraphChanged() const { return graph_changed_; }
 
-  void SetGraphChanged(bool flag) { graph_changed_ = flag; }
+  inline void SetGraphChanged(bool flag) { graph_changed_ = flag; }
 
  protected:
   std::vector<KernelExec *> nodes_{};

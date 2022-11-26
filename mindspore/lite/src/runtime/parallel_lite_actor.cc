@@ -36,20 +36,20 @@ void ParallelLiteActor::RunOpData(OpData<lite::Tensor> *inputs, mindspore::OpCon
   InitInputData();
   SetOpContext(context);
   auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
-  if (subgraph_kernel->GetGraphChanged()) {
+  if (MS_UNLIKELY(subgraph_kernel->GetGraphChanged())) {
     if (PostInit() != RET_OK) {
       MS_LOG(ERROR) << "KernelActorInit failed, name: " << kernel_->name();
       context->SetFailed(RET_ERROR);
       return;
     }
-  } else if (!finish_) {
+  }
+  if (MS_UNLIKELY(!finish_)) {
     // It is uniformly cleared to prevent the residual count caused by the failure of the last run from affecting this
     // run
     for (auto &kernels_actor : kernels_actors_) {
       kernels_actor->ClearReady();
     }
   }
-
   finish_ = false;
   output_data_count_ = 0;
 
@@ -123,6 +123,7 @@ int ParallelLiteActor::KernelActorInit() {
 
   int kernels_actor_num = 0;
   DelKernelsActors();
+  std::string kernels_actor_name = "_" + std::to_string(split_kernels.units.size()) + "_" + GetAID().Name();
   for (auto &unit : split_kernels.units) {
     if (unit.kernels.size() == 0) {
       MS_LOG(ERROR) << "kernels size is 0.";
@@ -130,7 +131,7 @@ int ParallelLiteActor::KernelActorInit() {
       break;
     }
     auto kernels_actor = std::make_shared<KernelsActor>(
-      this, subgraph_kernel->name() + unit.kernels.front()->name() + std::to_string(kernels_actor_num++), unit.kernels);
+      this, std::to_string(kernels_actor_num++) + kernels_actor_name + unit.kernels.front()->name(), unit.kernels);
     if (kernels_actor == nullptr) {
       MS_LOG(ERROR) << "new kernels_actor failed.";
       ret = RET_ERROR;
@@ -200,7 +201,7 @@ void KernelsActor::Run() {
   for (auto *kernel : nodes_) {
     MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Execute(*before, *after);
-    if (ret != RET_OK) {
+    if (MS_UNLIKELY(ret != RET_OK)) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       context->SetFailed(ret);
       return;
