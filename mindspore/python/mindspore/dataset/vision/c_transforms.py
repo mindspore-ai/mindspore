@@ -1307,7 +1307,7 @@ class RandomCrop(ImageTensorOperation):
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range [0, 255].
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU``

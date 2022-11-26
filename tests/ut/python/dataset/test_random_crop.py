@@ -615,6 +615,40 @@ def test_random_crop_09_c():
         num_iter += 1
 
 
+def test_random_crop_high_dimensions():
+    """
+    Feature: RandomCrop
+    Description: Use randomly generated tensors and batched dataset as video inputs
+    Expectation: Cropped images should in correct shape
+    """
+
+    # use randomly generated tensor for testing
+    video_frames = np.random.randint(0, 255, size=(32, 64, 64, 3), dtype=np.uint8)
+    random_crop_op = vision.RandomCrop(32)
+    video_frames = random_crop_op(video_frames)
+    assert video_frames.shape[1] == 32
+    assert video_frames.shape[2] == 32
+
+    # use a batch of real image for testing
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = vision.Decode()
+    random_crop_op = vision.RandomCrop([32, 32])
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1_batch = data1.batch(batch_size=2)
+
+    for item in data1_batch.create_dict_iterator(num_epochs=1, output_numpy=True):
+        original_channel = item["image"].shape[-1]
+
+    data1_batch = data1_batch.map(
+        operations=random_crop_op, input_columns=["image"])
+
+    for item in data1_batch.create_dict_iterator(num_epochs=1, output_numpy=True):
+        shape = item["image"].shape
+        assert shape[-3] == 32
+        assert shape[-2] == 32
+        assert shape[-1] == original_channel
+
+
 if __name__ == "__main__":
     test_random_crop_01_c()
     test_random_crop_02_c()
@@ -637,3 +671,4 @@ if __name__ == "__main__":
     test_random_crop_op_py(True)
     test_random_crop_comp(True)
     test_random_crop_09_c()
+    test_random_crop_high_dimensions()
