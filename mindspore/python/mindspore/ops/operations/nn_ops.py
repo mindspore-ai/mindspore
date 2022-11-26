@@ -10209,12 +10209,14 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
         - **y** (Tensor) - Has the same type as the `input_x`.
           Has the shape :math:`(N, C, output\underline{~}shape{H}, output\underline{~}shape{W})`.
         - **argmax** (Tensor) -A tensor whose data type must be int64. Has the same shape as the `y`.
+
     Raises:
         TypeError: If data type of `input_x` is not one of the following: float16, float32, float64, int32, int64.
         TypeError: If data type of `random_samples` is not one of the following: float16, float32, float64.
         ValueError: If `ksize` is not a number and `ksize` is not a tuple of length 2.
         ValueError: If `output_shape` is not a number and `output_shape` is not a tuple of length 2.
-        ValueError: If the sum of `ksize`,`output_shape` and -1 is larger than the corresponding dimension of `input_x`.
+        ValueError: If the sum of `ksize`, `output_shape` and -1 is larger than the corresponding
+            dimension of `input_x`.
         ValueError: If the dimension of `random_samples` is not 3.
         ValueError: If the first dimension size of `input_x` and `random_samples` is not equal.
         ValueError: If the second dimension size of `input_x` and `random_samples` is not equal.

@@ -7457,7 +7457,7 @@ class FillDiagonal(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        The data type must be float32, int32 or int64.
+          The data type must be float32, int32 or int64.
 
     Outputs:
         - **y** (Tensor) - Tensor, has the same shape and data type as the input `x`.
