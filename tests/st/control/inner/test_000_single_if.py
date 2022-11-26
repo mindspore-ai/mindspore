@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.st.control.cases_register import case_register
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -71,11 +71,9 @@ def control_flow_single_if(input_net, x, y, expect1, expect2):
     assert graph_backward_res == expect2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_if():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
@@ -84,11 +82,9 @@ def test_single_if():
     control_flow_single_if(SingleIfNet, x, y, expect1, expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_if_01():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
@@ -97,9 +93,8 @@ def test_single_if_01():
     control_flow_single_if(SingleIfNet1, x, y, expect1, expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_single_if_any():
     """
     Feature: compile and run control flow with if statement

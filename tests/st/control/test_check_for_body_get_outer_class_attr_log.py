@@ -14,12 +14,11 @@
 # ============================================================================
 
 import os
-import pytest
+from tests.st.control.cases_register import case_register
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_catch_exception_stack_trace_log():
     """
     Feature: Resolve.

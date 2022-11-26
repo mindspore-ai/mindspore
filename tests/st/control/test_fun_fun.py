@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.st.control.cases_register import case_register
 import mindspore.context as context
 from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype
@@ -34,10 +34,9 @@ def hof(x):
     ret = g(x)(x)
     return ret
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@case_register.level1
+@case_register.target_ascend
 def test_fun_fun():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([10], mstype.int32)

@@ -14,6 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
+from tests.st.control.cases_register import case_register
 from mindspore import context, jit
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
@@ -25,11 +26,9 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_for_01():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -69,11 +68,9 @@ def test_single_for_01():
     assert graph_backward_res == (Tensor([15], mstype.int32), Tensor([40], mstype.int32), Tensor([5], mstype.int32))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_for_02():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -113,11 +110,9 @@ def test_single_for_02():
     assert graph_backward_res == (Tensor([25], mstype.int32), Tensor([64], mstype.int32), Tensor([5], mstype.int32))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_for_03():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -166,11 +161,9 @@ def test_single_for_03():
     assert graph_backward_res == (Tensor([64], mstype.int32), Tensor([1], mstype.int32))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_for_04():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -211,11 +204,9 @@ def test_single_for_04():
     assert graph_backward_res == (Tensor([0], mstype.int32),)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_for_05():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -256,11 +247,8 @@ def test_single_for_05():
     assert graph_backward_res == (Tensor([1], mstype.int32),)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_single_for():
     """
     Feature: The else branches of for loops aren't supported.
@@ -283,11 +271,8 @@ def test_single_for():
         print("res:", res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_single_for_with_not_iterable_object():
     """
     Feature: The else branches of for loops aren't supported.

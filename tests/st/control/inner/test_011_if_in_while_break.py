@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
@@ -79,11 +79,9 @@ class BackwardNetReplaceBreak(nn.Cell):
         return grads
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_forward():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
@@ -95,10 +93,8 @@ def test_forward():
 
 
 # Problem: Exceed function call depth limit 1000.
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_backward():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
@@ -110,11 +106,9 @@ def test_backward():
     assert graph_grads == Tensor(np.array(21), mstype.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_forward_replace_break():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
@@ -126,11 +120,9 @@ def test_forward_replace_break():
 
 
 # Problem: Exceed function call depth limit 1000.
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_backward_replace_break():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array(1), mstype.int32)
@@ -142,11 +134,9 @@ def test_backward_replace_break():
     assert graph_grads == Tensor(np.array(21), mstype.int32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_forward_if_elif_elif_else_break():
     """
     Feature: Parallel if transformation with break
@@ -187,11 +177,9 @@ def test_forward_if_elif_elif_else_break():
     assert graph_mode_out == Tensor(np.array(80), mstype.int32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_forward_if_elif_elif_break_else():
     """
     Feature: Parallel if transformation with break
@@ -232,11 +220,9 @@ def test_forward_if_elif_elif_break_else():
     assert graph_mode_out == Tensor(np.array(100), mstype.int32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_forward_if_elif_elif_else_continue():
     """
     Feature: Parallel if transformation with continue
@@ -277,11 +263,9 @@ def test_forward_if_elif_elif_else_continue():
     assert graph_mode_out == Tensor(np.array(100), mstype.int32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_forward_if_elif_elif_continue_else():
     """
     Feature: Parallel if transformation with continue

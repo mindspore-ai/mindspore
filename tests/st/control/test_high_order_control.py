@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test high order control flow """
-import pytest
+from tests.st.control.cases_register import case_register
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype
 import mindspore.ops.functional as F
@@ -21,9 +21,8 @@ import mindspore.ops.operations as P
 import numpy as np
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_high_control_while():
     """
     Feature: High-order differential function.
@@ -45,9 +44,8 @@ def test_high_control_while():
     assert order_grad == 0.0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_high_control_for_while():
     """
     Feature: High-order differential function.
@@ -82,9 +80,8 @@ def test_high_control_for_while():
     assert result == 0.0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_high_control_for_complex():
     """
     Feature: High-order differential function.

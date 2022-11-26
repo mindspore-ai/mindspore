@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_cont_break """
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 from mindspore import Tensor, Model, context
 from mindspore.nn import Cell
@@ -129,9 +129,8 @@ class PassBranch(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_cpu
 def test_cont_break():
     count = 20
     dev = 'CPU'

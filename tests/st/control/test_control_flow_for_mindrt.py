@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 import mindspore
 from mindspore import context, nn, ops, Tensor, CSRTensor, Parameter, jit, mutable
 from mindspore.ops import functional as F
@@ -47,9 +47,8 @@ class Net(nn.Cell):
         return self.param_b
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_repeat_control_arrow_for_stack_actor():
     """
     Feature: Runtime.
@@ -71,9 +70,8 @@ def switch_op(x, y):
     return F.switch(x, z1, z2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_switch_op():
     """
     Feature: Runtime.
@@ -92,9 +90,8 @@ def switch_single_op(x, y, z):
     return F.switch(x, y, z)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_switch_single_op():
     """
     Feature: Runtime.
@@ -117,9 +114,8 @@ class TupleNet(nn.Cell):
         return z
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_tuple_parameter():
     """
     Feature: Runtime.
@@ -145,9 +141,8 @@ class CSRNet(nn.Cell):
         return z
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_csr_parameter():
     """
     Feature: Runtime.

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
@@ -24,11 +24,9 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_if_01():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -71,11 +69,9 @@ def test_for_in_if_01():
     assert graph_backward_res == (Tensor([64], mstype.int32),)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_if_02():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -122,11 +118,9 @@ def test_for_in_if_02():
     assert graph_backward_res == (Tensor([1], mstype.float32),)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_if_03():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -174,11 +168,9 @@ def test_for_in_if_03():
     assert graph_backward_res == (Tensor([3], mstype.float32),)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_if_04():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -223,11 +215,9 @@ def test_for_in_if_04():
     assert graph_backward_res == (Tensor([9], mstype.int32),)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_if_05():
     class ForInIfNet(nn.Cell):
         def __init__(self):

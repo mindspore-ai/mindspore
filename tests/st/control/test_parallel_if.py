@@ -12,15 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.context as context
 from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype, Parameter
 from mindspore.nn import Cell
 import pytest
-
-
-def setup_module():
-    context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_while_return_in_else():

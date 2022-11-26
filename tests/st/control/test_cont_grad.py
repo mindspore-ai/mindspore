@@ -14,7 +14,7 @@
 # ============================================================================
 """ test control ops """
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 from mindspore import dtype as ms
 from mindspore import Tensor
@@ -29,10 +29,9 @@ grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_grad():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -73,10 +72,9 @@ def test_while_grad():
     assert np.allclose(graph_output[2].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_const_param_grad():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -110,10 +108,9 @@ def test_while_with_const_param_grad():
     assert np.allclose(graph_output[1].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_variable_grad():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -147,10 +144,9 @@ def test_while_with_variable_grad():
     assert np.allclose(graph_output[1].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_forward():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -180,10 +176,9 @@ def test_while_with_param_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_endless_case():
     """endless case when optimization"""
 
@@ -214,10 +209,9 @@ def test_while_endless_case():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_grad():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -256,10 +250,9 @@ def test_while_with_param_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_forward_with_const_branch():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -293,10 +286,9 @@ def test_while_with_param_forward_with_const_branch():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_opt_endless():
     """endless during optimization case"""
 
@@ -344,10 +336,8 @@ def test_while_opt_endless():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_no_while_call():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -379,10 +369,9 @@ def test_no_while_call():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_grad_with_const_branch():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -425,10 +414,8 @@ def test_while_with_param_grad_with_const_branch():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_for_while_with_param_grad_with_const_branch():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -474,10 +461,9 @@ def test_for_while_with_param_grad_with_const_branch():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_for_while_with_param_grad_basic():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -519,10 +505,9 @@ def test_for_while_with_param_grad_basic():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_for_while_with_param_grad_normal():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -564,10 +549,9 @@ def test_for_while_with_param_grad_normal():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_basic_grad():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -606,10 +590,9 @@ def test_while_with_param_basic_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_basic_grad_mul():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -648,10 +631,9 @@ def test_while_with_param_basic_grad_mul():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_basic_grad_two():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -695,10 +677,9 @@ def test_while_with_param_basic_grad_two():
     assert np.allclose(graph_output[1].asnumpy(), expect2, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_with_param_basic_grad_three():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -745,10 +726,9 @@ def test_while_with_param_basic_grad_three():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_while_if_with_param_grad():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -789,10 +769,8 @@ def test_while_if_with_param_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_while_with_param_grad_not_enter_while():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -829,10 +807,9 @@ def test_while_with_param_grad_not_enter_while():
     assert np.allclose(graph_output[0].asnumpy(), 1, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_with_param_if_by_if_forward():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -866,10 +843,9 @@ def test_with_param_if_by_if_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_with_param_if_by_if_grad_inputs():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -911,10 +887,9 @@ def test_with_param_if_by_if_grad_inputs():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_with_param_if_by_if_grad_parameter():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -954,10 +929,9 @@ def test_with_param_if_by_if_grad_parameter():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_with_param_if_by_if_grad_param_excute_null():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -995,10 +969,9 @@ def test_with_param_if_by_if_grad_param_excute_null():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_if_by_if_return_inside_grad():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1038,10 +1011,9 @@ def test_if_by_if_return_inside_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_if_by_if_forward():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1080,10 +1052,9 @@ def test_if_by_if_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_if_by_if_forward_control_tuple_switch():
     """tuple_get from  switch op will generate new switch inside to eliminate tuple_get"""
 
@@ -1149,10 +1120,9 @@ def test_if_by_if_forward_control_tuple_switch():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
 def test_if_by_if_forward_control_inside_net():
     class Branch3Net(nn.Cell):
         def __init__(self):
@@ -1216,10 +1186,8 @@ def test_if_by_if_forward_control_inside_net():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_by_if_forward_use_namespace():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1258,10 +1226,8 @@ def test_if_by_if_forward_use_namespace():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_by_if_forward_use_global_op():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1305,10 +1271,8 @@ def test_if_by_if_forward_use_global_op():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_for_with_if_by_if_forward():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1339,10 +1303,8 @@ def test_for_with_if_by_if_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_for_with_if_by_if_forward_namespace():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1375,10 +1337,8 @@ def test_for_with_if_by_if_forward_namespace():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_by_if_forward_const_branch_inner():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1422,10 +1382,8 @@ def test_if_by_if_forward_const_branch_inner():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_by_if_forward_all_const_branch():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
@@ -1469,9 +1427,8 @@ def test_if_by_if_forward_all_const_branch():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_if_const_grad():
     class MyNet(nn.Cell):
         def __init__(self):
@@ -1504,9 +1461,8 @@ def test_if_const_grad():
     net(a, b)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_if_by_if_const_grad():
     class MyNet(nn.Cell):
         def __init__(self):
@@ -1543,9 +1499,8 @@ def test_if_by_if_const_grad():
     net(a, b)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_while_const_grad():
     class MyNet(nn.Cell):
         def __init__(self):
@@ -1576,9 +1531,8 @@ def test_while_const_grad():
     net(a, b)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_if_by_while_const_grad():
     class MyNet(nn.Cell):
         def __init__(self):

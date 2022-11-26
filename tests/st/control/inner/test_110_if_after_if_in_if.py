@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.st.control.cases_register import case_register
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -143,11 +143,9 @@ def control_flow_if_after_if_in_if(input_net, x, expect1, expect2):
     assert graph_backward_res == expect2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_after_if_in_if():
     x = Tensor(2, mstype.int32)
     expect1 = Tensor(14, mstype.int32)
@@ -156,11 +154,9 @@ def test_if_after_if_in_if():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet, x, expect1, expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_after_if_in_if_01():
     x = Tensor(2, mstype.int32)
     expect1 = Tensor(14, mstype.int32)
@@ -168,9 +164,8 @@ def test_if_after_if_in_if_01():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet1, x, expect1, expect2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
 def test_if_after_if_in_if_02():
     x = Tensor(2, mstype.int32)
     expect1 = Tensor(12, mstype.int32)
@@ -178,10 +173,8 @@ def test_if_after_if_in_if_02():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x, expect1, expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_after_if_in_if_02_ascend():
     x = Tensor(2, mstype.int32)
     expect1 = Tensor(12, mstype.int32)
@@ -189,11 +182,9 @@ def test_if_after_if_in_if_02_ascend():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x, expect1, expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_after_if_in_if_03():
     x = Tensor(2, mstype.int32)
     expect1 = Tensor(6, mstype.int32)

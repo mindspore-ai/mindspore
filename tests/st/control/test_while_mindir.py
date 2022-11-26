@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import numpy as np
-import pytest
+from tests.st.control.cases_register import case_register
 
 import mindspore.nn as nn
 from mindspore import context, jit
@@ -30,11 +30,9 @@ class SingleWhileNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_while():
     context.set_context(mode=context.GRAPH_MODE)
     network = SingleWhileNet()
@@ -54,11 +52,9 @@ def test_single_while():
     assert origin_out == outputs_after_load
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_jit_function_while():
     """
     Features: Control flow.
@@ -99,11 +95,9 @@ class SingleWhileInlineNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_while_inline_export():
     context.set_context(mode=context.GRAPH_MODE)
     network = SingleWhileInlineNet()
@@ -117,11 +111,9 @@ def test_single_while_inline_export():
     assert os.path.exists(mindir_name)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_while_inline_load():
     context.set_context(mode=context.GRAPH_MODE)
     network = SingleWhileInlineNet()
@@ -136,11 +128,9 @@ def test_single_while_inline_load():
     load(mindir_name)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_while_inline():
     context.set_context(mode=context.GRAPH_MODE)
     network = SingleWhileInlineNet()

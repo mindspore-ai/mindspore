@@ -13,13 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test_tensor_in_list """
-import pytest
-from mindspore import nn, Tensor, context
+from tests.st.control.cases_register import case_register
+from mindspore import nn, Tensor
 from mindspore import dtype as mstype
-
-
-def setup_module():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
@@ -35,10 +31,8 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_tensor_in_list():
     net = Net()
     output = net(Tensor([1], mstype.int32))

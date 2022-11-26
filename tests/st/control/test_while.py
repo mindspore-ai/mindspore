@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.context as context
 from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype
 
@@ -27,7 +26,6 @@ def t1_while(x, y):
 
 
 def test_net():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     c1 = Tensor([2], mstype.int32)
     c2 = Tensor([14], mstype.int32)
     expect = Tensor([21], mstype.int32)

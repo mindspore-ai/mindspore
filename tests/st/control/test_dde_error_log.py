@@ -14,7 +14,7 @@
 # ============================================================================
 import os
 import subprocess
-import pytest
+from tests.st.control.cases_register import case_register
 
 
 def run_watch_dde_network(file_name, log_file_name):
@@ -37,9 +37,8 @@ def run_watch_dde_network(file_name, log_file_name):
     os.remove(log_file_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
 def test_watch_dde_error_log():
     """
     Feature: DDE.
