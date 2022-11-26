@@ -477,7 +477,7 @@ class ParameterizedTruncatedNormal(Primitive):
         ValueError: If `shape` is not a 1-D tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)
