@@ -60,6 +60,9 @@ using CudaAtomicInt = cuda::atomic<int32_t, cuda::thread_scope_device>;
 constexpr static int kEmptyKey = -1;
 constexpr static int kEmptyValue = -1;
 constexpr static int kErasedKey = -2;
+
+constexpr static uint64_t kMinPermitThreshold = 1;
+constexpr static uint64_t kMaxEvictThreshold = INT64_MAX;
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

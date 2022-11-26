@@ -49,8 +49,10 @@ class CudaDynamicMap;
 template <typename Key, typename Value, typename Allocator = GPUAllocator<char>>
 class GPUHashTable : public HashTable<Key, Value> {
  public:
-  GPUHashTable(int32_t value_dim, const std::string &initializer, const Allocator &alloc = Allocator());
-  GPUHashTable(int32_t value_dim, const Value &default_value, const Allocator &alloc = Allocator());
+  GPUHashTable(int32_t value_dim, const std::string &initializer, uint64_t permit_threshold = kMinPermitThreshold,
+               uint64_t evict_threshold = kMaxEvictThreshold, const Allocator &alloc = Allocator());
+  GPUHashTable(int32_t value_dim, const Value &default_value, uint64_t permit_threshold = kMinPermitThreshold,
+               uint64_t evict_threshold = kMaxEvictThreshold, const Allocator &alloc = Allocator());
   ~GPUHashTable();
 
   // The Allocator type used allocate gpu memory for 'Key' type.
@@ -68,6 +70,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   bool Find(const Key *keys, size_t key_num, bool insert_default_value, Value *outputs, void *stream) override;
 
   // Insert elements with specific keys. If key exists, update the value of the key.
+  // If permission is enable, all keys for `Insert` should be contained in gpu hash table already.
   bool Insert(const Key *keys, size_t key_num, const Value *value, void *stream) override;
 
   // Erase elements with specific keys.
@@ -152,12 +155,12 @@ class GPUHashTable : public HashTable<Key, Value> {
 
   // Count the number for expired elememts in hash table.
   // If the elements in the hash table are not used or updated within the time interval indicated by the
-  // `max_time_interval_to_evict_`, these elements will be expired.
+  // `evict_threshold_`, these elements will be expired.
   bool CountExpiredElements(cudaStream_t stream, size_t *expired_num);
 
   // Find all keys and indices for expired elememts in hash table.
   // If the elements in the hash table are not used or updated within the time interval indicated by the
-  // `max_time_interval_to_evict_`, these elements will be expired.
+  // `evict_threshold_`, these elements will be expired.
   bool FindExpiredElements(Key *expired_keys, int *expired_indices, cudaStream_t stream);
 
   // Erase expired elememts in hash table.
@@ -261,12 +264,14 @@ class GPUHashTable : public HashTable<Key, Value> {
 
   // Permission threshold: When an element is accessed more than this threshold, it will be actually inserted into
   // the hash table.
-  size_t min_lookup_cnt_before_permit_{1};
+  // If permit_threshold_ is less than or equal to kMinPermitThreshold, feature permission is disable.
+  uint64_t permit_threshold_;
 
   // Element eviction time interval threshold: evict elements that are not frequently accessed automatically,
   // if the elements in the hash table are not used or updated within the time interval indicated by the threshold,
   // these elements will be removed from the hash table.
-  size_t max_time_interval_to_evict_{SIZE_MAX};
+  // If evict_threshold_ is greater than kMaxEvictThreshold, feature eviction is disable.
+  uint64_t evict_threshold_;
 
   // Global timestamp, which is currently recorded when the hash table is updated.
   size_t global_timestamp_{0};

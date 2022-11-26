@@ -58,14 +58,27 @@ std::vector<size_t> GPUHashTable<Key, Value, Allocator>::lookup_counter_initiali
 
 template <typename Key, typename Value, typename Allocator>
 GPUHashTable<Key, Value, Allocator>::GPUHashTable(int32_t value_dim, const std::string &initializer,
+                                                  uint64_t permit_threshold, uint64_t evict_threshold,
                                                   const Allocator &alloc)
-    : value_dim_(value_dim), initializer_(initializer), default_value_(0), char_alloc_(alloc) {
+    : value_dim_(value_dim),
+      initializer_(initializer),
+      default_value_(0),
+      char_alloc_(alloc),
+      permit_threshold_(permit_threshold),
+      evict_threshold_(evict_threshold) {
   Initialize(alloc);
 }
 
 template <typename Key, typename Value, typename Allocator>
-GPUHashTable<Key, Value, Allocator>::GPUHashTable(int32_t value_dim, const Value &default_value, const Allocator &alloc)
-    : value_dim_(value_dim), initializer_(""), default_value_(default_value), char_alloc_(alloc) {
+GPUHashTable<Key, Value, Allocator>::GPUHashTable(int32_t value_dim, const Value &default_value,
+                                                  uint64_t permit_threshold, uint64_t evict_threshold,
+                                                  const Allocator &alloc)
+    : value_dim_(value_dim),
+      initializer_(""),
+      default_value_(default_value),
+      char_alloc_(alloc),
+      permit_threshold_(permit_threshold),
+      evict_threshold_(evict_threshold) {
   Initialize(alloc);
 }
 
@@ -203,7 +216,7 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
 
   // 2. Insert default value into map by specific value.
   InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(
-    value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, min_lookup_cnt_before_permit_, default_value,
+    value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, permit_threshold_, default_value,
     idle_flags_ptr_, blocks_ptr_);
 
   // 3. Get all values by indices in blocks.
@@ -238,7 +251,7 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *keys, size_t key_num
   // 2. Insert values into map by indices in blocks.
   size_t total_insert_size = value_dim_ * key_num;
   InsertValues<<<GET_BLOCKS(total_insert_size), GET_THREADS, 0, cuda_stream>>>(
-    value_dim_, total_insert_size, indices, value, elements_per_block_, lookup_cnts_ptr_, min_lookup_cnt_before_permit_,
+    value_dim_, total_insert_size, indices, value, elements_per_block_, lookup_cnts_ptr_, permit_threshold_,
     global_timestamp_, update_timestamps_ptr_, statuses_ptr_, idle_flags_ptr_, blocks_ptr_);
 
   is_dirty_ = true;
@@ -502,7 +515,8 @@ bool GPUHashTable<Key, Value, Allocator>::GetKeysAndValues(Key *keys, Value *val
 
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::EvictExpiredElements(cudaStream_t stream) {
-  if (max_time_interval_to_evict_ == SIZE_MAX) {
+  // If evict_threshold_ is greater than or equal to kMaxEvictThreshold, eviction is disable.
+  if (evict_threshold_ >= kMaxEvictThreshold) {
     return true;
   }
 
@@ -558,8 +572,8 @@ bool GPUHashTable<Key, Value, Allocator>::CountExpiredElements(cudaStream_t stre
 
   // 2. Count the number for expired elements.
   CountExpiredNum<block_size><<<grid_size, block_size, 0, stream>>>(
-    blocks_.size(), min_lookup_cnt_before_permit_, global_timestamp_, max_time_interval_to_evict_, elements_per_block_,
-    idle_flags_ptr_, lookup_cnts_ptr_, update_timestamps_ptr_, device_expired_counter);
+    blocks_.size(), permit_threshold_, global_timestamp_, evict_threshold_, elements_per_block_, idle_flags_ptr_,
+    lookup_cnts_ptr_, update_timestamps_ptr_, device_expired_counter);
 
   CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemcpyAsync(&host_expired_counter, device_expired_counter,
                                                    sizeof(CudaAtomicSize), cudaMemcpyDeviceToHost, stream),
@@ -605,9 +619,9 @@ bool GPUHashTable<Key, Value, Allocator>::FindExpiredElements(Key *expired_keys,
 
   // 3. Find all keys and indices for expired elememts in hash table.
   FindExpiredKeysAndIndices<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(
-    size, elements_per_block_, min_lookup_cnt_before_permit_, global_timestamp_, max_time_interval_to_evict_,
-    idle_flags_ptr_, lookup_cnts_ptr_, update_timestamps_ptr_, all_keys, all_indices, device_expired_counter,
-    expired_keys, expired_indices);
+    size, elements_per_block_, permit_threshold_, global_timestamp_, evict_threshold_, idle_flags_ptr_,
+    lookup_cnts_ptr_, update_timestamps_ptr_, all_keys, all_indices, device_expired_counter, expired_keys,
+    expired_indices);
 
   CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
   FreeMemory(all_keys);
@@ -1046,8 +1060,8 @@ template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::UpdateSize(size_t key_num, const int *indices, cudaStream_t stream,
                                                      bool update_lookup_count) {
   size_t old_size = size_;
-  if (min_lookup_cnt_before_permit_ == 1) {
-    // Elements permission is disable.
+  // If permit_threshold_ is less than or equal to kMinPermitThreshold, permission is disable.
+  if (permit_threshold_ <= kMinPermitThreshold) {
     MS_EXCEPTION_IF_NULL(cuda_dynamic_map_);
     auto &dynamic_map = cuda_dynamic_map_->dynamic_map_;
     size_ = dynamic_map.get_size();
@@ -1058,6 +1072,8 @@ bool GPUHashTable<Key, Value, Allocator>::UpdateSize(size_t key_num, const int *
   }
 
   if (!update_lookup_count) {
+    // Note: if need not to update lookup count and permission is enable, the size of gpu hash table could not change.
+    // For example, all keys for `Insert` should be contained in gpu hash table already.
     return true;
   }
 
@@ -1078,7 +1094,7 @@ bool GPUHashTable<Key, Value, Allocator>::UpdateSize(size_t key_num, const int *
 
   // Launch kernel to count new permitted elements number.
   CountPermissionNum<block_size><<<grid_size, block_size, 0, stream>>>(
-    elements_per_block_, key_num, indices, lookup_cnts_ptr_, min_lookup_cnt_before_permit_, insert_success_number_);
+    elements_per_block_, key_num, indices, lookup_cnts_ptr_, permit_threshold_, insert_success_number_);
   CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
 
   // Update hash table size.
@@ -1105,18 +1121,18 @@ bool GPUHashTable<Key, Value, Allocator>::InsertDefaultValueByInitializer(size_t
     Value stddev = static_cast<Value>(0.01);
 
     InsertNormalDistRandomValue<<<random_gen_block_count_, random_gen_threads_per_block_, 0, stream>>>(
-      value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, min_lookup_cnt_before_permit_, mean, stddev,
+      value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, permit_threshold_, mean, stddev,
       random_gen_state_, idle_flags_ptr_, blocks_ptr_);
   } else if (initializer == kOnesDistribution) {
     // One distribution.
     InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, stream>>>(
-      value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, min_lookup_cnt_before_permit_,
-      static_cast<Value>(1.0), idle_flags_ptr_, blocks_ptr_);
+      value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, permit_threshold_, static_cast<Value>(1.0),
+      idle_flags_ptr_, blocks_ptr_);
   } else if (initializer == kZerosDistribution) {
     // Zero distribution.
     InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, stream>>>(
-      value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, min_lookup_cnt_before_permit_,
-      static_cast<Value>(0), idle_flags_ptr_, blocks_ptr_);
+      value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, permit_threshold_, static_cast<Value>(0),
+      idle_flags_ptr_, blocks_ptr_);
   } else {
     MS_LOG(ERROR) << "Unsupported initializer: " << initializer;
     return false;
