@@ -23,6 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore::device::ascend {
 namespace {
@@ -80,6 +81,16 @@ void AscendLaunchTransData::LaunchOpKernel() {
   kernel_inputs.push_back(input);
   // obtain kernel outputs
   auto kernel_outputs = ObtainKernelOutputs(kernel_mod_->GetOutputSizeList());
+  if (kernel_type_ == KernelType::AICPU_KERNEL) {
+    // aicpu transdata need to clear output
+    for (auto &out : kernel_outputs) {
+      auto acl_ret = aclrtMemset(out->addr, out->size, 0, out->size);
+      if (acl_ret != ACL_RT_SUCCESS) {
+        MS_LOG(EXCEPTION) << "Clear transdata's output failed, aclrtMemset size = " << out->size
+                          << ", ret = " << acl_ret;
+      }
+    }
+  }
   // obtain kernel workspaces
   auto kernel_workspace = ObtainKernelWorkspaces(kernel_mod_->GetWorkspaceSizeList());
   // launch
@@ -118,6 +129,7 @@ void AscendLaunchTransData::ConstructKernelGraphAndSetAttr() {
     // set build info
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     builder->SetKernelType(KernelType::TBE_KERNEL);
+    kernel_type_ = KernelType::TBE_KERNEL;
     std::vector<TypeId> device_type = {dtype_};
     builder->SetInputsDeviceType(device_type);
     builder->SetOutputsDeviceType(device_type);
@@ -133,6 +145,7 @@ void AscendLaunchTransData::ConstructKernelGraphAndSetAttr() {
     common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups_), transdata_node);
     if (!TbeCheckSupported(transdata_node)) {
       builder->SetKernelType(KernelType::AICPU_KERNEL);
+      kernel_type_ = KernelType::AICPU_KERNEL;
     }
   }
 }
