@@ -19,6 +19,7 @@
 "mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
 "mindspore/mindspore/ccsrc/runtime/hardware/device_context.h"                                                "readability/braces"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/gather_grad_kernels.cc"      "build/include"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/gemm_mask_avx512/" "runtime/int"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

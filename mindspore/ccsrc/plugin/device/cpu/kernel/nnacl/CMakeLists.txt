@@ -90,6 +90,7 @@ file(GLOB KERNEL_SRC
 )
 
 set(KERNEL_AVX512_FILE  ${NNACL_DIR}/fp32/matmul_avx512_fp32.c
+                        ${NNACL_DIR}/fp32/matmul_avx512_mask_fp32.c
                         ${NNACL_DIR}/fp32/conv_im2col_avx512_fp32.c
 )
 list(REMOVE_ITEM KERNEL_SRC ${KERNEL_AVX512_FILE})
@@ -188,7 +189,9 @@ endif()
 
 if("${X86_64_SIMD}" STREQUAL "avx512")
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        file(GLOB HPC_SRC ${NNACL_DIR}/experimental/HPC-generator/gemm_avx512/*.c)
+        file(GLOB HPC_SRC ${NNACL_DIR}/experimental/HPC-generator/gemm_avx512/*.c
+                          ${NNACL_DIR}/experimental/HPC-generator/gemm_mask_avx512/*.c)
+
         set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
     endif()
 
