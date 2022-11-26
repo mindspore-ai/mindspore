@@ -85,7 +85,7 @@ bool CTCGreedyDecoderGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
 
   kernel_func_ = func_list_[index].second;
-  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }
 
