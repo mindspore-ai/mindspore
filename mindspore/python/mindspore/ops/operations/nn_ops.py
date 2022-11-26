@@ -1405,9 +1405,9 @@ class DataFormatVecPermute(Primitive):
     Permute input tensor from src_format to dst_format.
 
     Args:
-        src_format (str): An optional value for source data format. The format can be 'NHWC' and 'NCHW'.
+        src_format (str, optional): An optional value for source data format. The format can be 'NHWC' and 'NCHW'.
             Default: 'NHWC'.
-        dst_format (str): An optional value for destination data format. The format can be 'NHWC' and 'NCHW'.
+        dst_format (str, optional): An optional value for destination data format. The format can be 'NHWC' and 'NCHW'.
             Default: 'NCHW'.
 
     Inputs:
@@ -10215,8 +10215,8 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
         TypeError: If data type of `random_samples` is not one of the following: float16, float32, float64.
         ValueError: If `ksize` is not a number and `ksize` is not a tuple of length 2.
         ValueError: If `output_shape` is not a number and `output_shape` is not a tuple of length 2.
-        ValueError: If the sum of `ksize`, `output_shape` and -1 is larger than the corresponding
-            dimension of `input_x`.
+        ValueError: If the sum of `ksize` , `output_shape` and
+          -1 is larger than the corresponding dimension of `input_x`.
         ValueError: If the dimension of `random_samples` is not 3.
         ValueError: If the first dimension size of `input_x` and `random_samples` is not equal.
         ValueError: If the second dimension size of `input_x` and `random_samples` is not equal.

@@ -55,4 +55,4 @@
         - **ValueError** - 如果参数 `stride` 的取值范围不是 `[1, 255]` 。
         - **ValueError** - 如果参数 `dilation` 的值小于1。
         - **ValueError** - 如果参数 `pad_mode` 不是 `same` 、 `valid` 、 `SAME` 或者 `VALID`。
-        - **ValueError** - 如果参数 `data_format` 不是字符串`NCHW`。
+        - **ValueError** - 如果参数 `data_format` 不是字符串 `NCHW` 。

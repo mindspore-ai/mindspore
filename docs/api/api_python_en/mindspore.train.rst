@@ -82,7 +82,7 @@ Thor
 ---------------
 
 .. autosummary::
-    :toctree: mindspore
+    :toctree: train
     :nosignatures:
     :template: classtemplate.rst
 

@@ -40,6 +40,6 @@ mindspore.ops.Lstsq
         - **TypeError** - 若输入 `x` 或 `a` 不是Tensor。
         - **TypeError** - 若 `x` 或 `a` 的数据类型不是以下之一：float16、float32、float64。
         - **TypeError** - 若 `x` 或 `a` 的数据类型不同。
-        - **TypeError** - 若 `x` 的维度不等于2。
+        - **ValueError** - 若 `x` 的维度不等于2。
         - **ValueError** - 若 `a` 的维度不等于2或1。
         - **ValueError** - 若 `x` 与 `a` shape的第0维不相等。

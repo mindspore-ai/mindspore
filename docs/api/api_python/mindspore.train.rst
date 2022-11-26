@@ -78,7 +78,7 @@ mindspore.train
 ----------
 
 .. mscnautosummary::
-    :toctree: mindspore
+    :toctree: train
 
     mindspore.train.ConvertModelUtils
     mindspore.train.ConvertNetUtils
