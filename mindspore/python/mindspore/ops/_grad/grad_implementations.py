@@ -225,3 +225,9 @@ def bprop_scalar_calc(x, y, out, dout):
 def bprop_scalar_not(x, out, dout):
     """Backpropagator for primitive `bool_not` and `string_not`."""
     return (C.zeros_like(x),)
+
+
+@bprops.register("TensorMove")
+def bprop_tensor_move(x, out, dout):
+    """Backpropagator for primitive `mutable`."""
+    return (dout,)

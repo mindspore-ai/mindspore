@@ -126,6 +126,7 @@ constexpr char REDUCE_OP_ALL[] = "prod";
 constexpr char REDUCE_OP_PROD[] = "prod";
 constexpr char OP_PATH[] = "mindspore.ops.operations";
 constexpr char INNER_OP_PATH[] = "mindspore.ops.operations._inner_ops";
+constexpr char GRAD_OP_PATH[] = "mindspore.ops.operations._grad_ops";
 constexpr char FUNCTIONAL_OP_PATH[] = "mindspore.ops.functional";
 constexpr char GET_OP_FUNCTION_PATH[] = "mindspore.parallel._utils";
 constexpr char GET_OP_FUNCTION[] = "_get_python_op";

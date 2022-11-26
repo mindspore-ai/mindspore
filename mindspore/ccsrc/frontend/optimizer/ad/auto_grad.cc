@@ -278,24 +278,30 @@ AutoGradCellImpl::AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std:
   }
 }
 
-bool AutoGradCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(out);
+bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
+  MS_EXCEPTION_IF_NULL(grad_param);
 
-  MS_LOG(DEBUG) << "Forward cnode: " << cnode->DebugString();
-  auto prim = GetCNodePrimitive(cnode);
+  MS_LOG(DEBUG) << "Forward cnode: " << grad_param->cnode->DebugString();
+  auto prim = GetCNodePrimitive(grad_param->cnode);
   if (prim == nullptr) {
-    MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Should be primitive, but: " << grad_param->cnode->DebugString();
   }
   if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) ||
       IsPrimitiveEquals(prim, prim::kPrimStopGradient) || IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
+    MS_LOG(DEBUG) << "Prim " << prim->name() << " not need do op grad";
     return true;
   }
   // anfnode_to_variable_adjoint_ hold out value, to avoid device not release, clear its device_address
-  auto cloned_value = ShallowCopyTensorValue(out);
+  auto cloned_value = ShallowCopyTensorValue(grad_param->out);
   ClearDeviceAddress(cloned_value);
   AnfNodePtr dout = BuildSpecialLikeValue(tape_, cloned_value, SpecialType::kZerosLikeType);
-  CNodePtr input_node = ConstructBpropGraphInput(cnode, op_args, out, dout);
+  auto fn = std::make_shared<FunctionNode>(tape_, dout);
+  auto variable_adjoint = std::make_shared<VariableNode>(fn, cloned_value);
+  if (!grad_param->grad_by_value) {
+    BuildKNode(grad_param, variable_adjoint);
+    need_do_manager_replace_ = true;
+  }
+  CNodePtr input_node = ConstructBpropGraphInput(grad_param, dout);
   MS_LOG(DEBUG) << "Construct input cnode: " << input_node->DebugString();
   std::vector<CNodePtr> outputs;
 #ifndef ENABLE_TEST
@@ -304,7 +310,7 @@ bool AutoGradCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &op
   } else {
     mindspore::BuildBprop(input_node, &outputs, &users_);
     if (outputs.empty()) {
-      MS_LOG(DEBUG) << "The bprop output should not be empty" << cnode->DebugString();
+      MS_LOG(DEBUG) << "The bprop output should not be empty" << grad_param->cnode->DebugString();
       BuildCustomBpropCNode(input_node, &outputs);
     }
   }
@@ -316,15 +322,12 @@ bool AutoGradCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &op
   }
 #endif
   if (outputs.empty()) {
-    MS_LOG(EXCEPTION) << "the bprop output should not be empty" << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "The bprop output should not be empty" << grad_param->cnode->DebugString();
   }
-  auto fn = std::make_shared<FunctionNode>(tape_, dout);
-  auto variable_adjoint = std::make_shared<VariableNode>(fn, cloned_value);
-  UpdateNextEdges(fn, cnode, outputs, op_args);
-  anfnode_to_variable_adjoint_.insert(std::make_pair(cnode, variable_adjoint));
-
+  UpdateNextEdges(fn, grad_param->cnode, outputs, grad_param->op_args);
+  anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
   // record last_node for brackpropagate
-  last_node_ = cnode;
+  last_node_ = grad_param->cnode;
   return true;
 }
 
@@ -350,15 +353,8 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
     }
     bprop_cnode = GetBPropFromFProp(grad_param->fprop_fg, args_node_list, grad_param->out, &dout);
   } else {
-    // Set current knode for cnode
-    k_node = BuildKNode(grad_param);
-    const auto it = anfnode_to_variable_adjoint_.find(grad_param->cnode);
-    if (it == anfnode_to_variable_adjoint_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find cnode " << grad_param->cnode->DebugString();
-    }
-    // Get current cnode all inputs knode
-    const auto &k_node_list = BuildKNodeListFromPrimalCNode(grad_param->cnode, it->second);
-    bprop_cnode = GetBPropFromFProp(grad_param->fprop_fg, k_node_list, grad_param->out, &dout);
+    BuildKNodeListFromPrimalCNode(grad_param->cnode, grad_param->op_args, &args_node_list);
+    bprop_cnode = GetBPropFromFProp(grad_param->fprop_fg, args_node_list, grad_param->out, &dout);
   }
 
   std::vector<CNodePtr> outputs;
@@ -373,48 +369,8 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
   variable_adjoint->set_k_node(k_node);
   UpdateNextEdges(fn, grad_param->cnode, outputs, grad_param->op_args);
   anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
-  has_fbprop_ = true;
+  need_do_manager_replace_ = true;
   return true;
-}
-
-AnfNodePtr AutoGradCellImpl::BuildKNode(const GradParamPtr &grad_param) {
-  AnfNodePtrList node_list;
-  MS_EXCEPTION_IF_NULL(grad_param);
-  for (size_t i = 0; i < grad_param->cnode->inputs().size(); ++i) {
-    (void)node_list.emplace_back(BuildKNodeForCNodeInput(grad_param->op_args, grad_param->cnode->input(i), i));
-  }
-  auto k_node = tape_->NewCNode(node_list);
-  k_node->set_abstract(grad_param->out->ToAbstract()->Broaden());
-  return k_node;
-}
-
-AnfNodePtrList AutoGradCellImpl::BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const VariableNodePtr &adjoint) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(adjoint);
-  AnfNodePtrList node_list;
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-    const auto input_adjoint_iter = anfnode_to_variable_adjoint_.find(cnode->input(i));
-    if (input_adjoint_iter == anfnode_to_variable_adjoint_.end()) {
-      MS_LOG(EXCEPTION) << "Cannot find input in adjoint map, inp: " << cnode->input(i)->DebugString();
-    }
-    MS_EXCEPTION_IF_NULL(input_adjoint_iter->second->k_node());
-    (void)node_list.emplace_back(input_adjoint_iter->second->k_node());
-  }
-  return node_list;
-}
-
-AnfNodePtr AutoGradCellImpl::BuildKNodeForCNodeInput(const ValuePtrList &op_args, const AnfNodePtr &input_node,
-                                                     size_t input_index) {
-  MS_EXCEPTION_IF_NULL(input_node);
-  if (input_node->isa<CNode>()) {
-    const auto input_adjoint_iter = anfnode_to_variable_adjoint_.find(input_node);
-    if (input_adjoint_iter == anfnode_to_variable_adjoint_.end()) {
-      MS_LOG(EXCEPTION) << "cannot find input in adjoint map, inp: " << input_node->DebugString();
-    }
-    return input_adjoint_iter->second->k_node();
-  } else {
-    return input_node;
-  }
 }
 
 CNodePtr AutoGradCellImpl::GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args,
@@ -464,7 +420,7 @@ void AutoGradCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, 
 }
 
 FuncGraphPtr AutoGradCellImpl::Finish(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
-                                      const GradAttr &grad_attr, bool build_formal_param) {
+                                      const GradAttr &grad_attr) {
   // Set sens node and weights node
   SetSensAndWeights(weights, grad_attr.has_sens);
 
@@ -483,41 +439,84 @@ FuncGraphPtr AutoGradCellImpl::Finish(const AnfNodePtrList &weights, const std::
   return tape_;
 }
 
-CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const CNodePtr &cnode, const ValuePtrList &op_args,
-                                                    const ValuePtr &out, const AnfNodePtr &dout) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(out);
-  MS_EXCEPTION_IF_NULL(dout);
-
-  if (cnode->size() == 0) {
-    MS_LOG(EXCEPTION) << "cnode do not have inputs";
-  }
-  std::vector<AnfNodePtr> node_lists;
-  (void)node_lists.emplace_back(cnode->input(0));
-  for (size_t i = 0; i < op_args.size(); ++i) {
-    auto v = op_args[i];
-    auto node = cnode->input(i + 1);
-    if (node->isa<Parameter>()) {
-      node_lists.emplace_back(node);
-      node->set_abstract(v->ToAbstract());
-      continue;
+CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout) {
+  MS_EXCEPTION_IF_NULL(grad_param);
+  std::vector<AnfNodePtr> node_list;
+  (void)node_list.emplace_back(grad_param->cnode->input(0));
+  if (grad_param->grad_by_value) {
+    for (size_t i = 0; i < grad_param->op_args.size(); ++i) {
+      const auto &v = grad_param->op_args[i];
+      auto node = grad_param->cnode->input(i + 1);
+      if (node->isa<Parameter>()) {
+        node_list.emplace_back(node);
+        node->set_abstract(v->ToAbstract());
+        continue;
+      }
+      auto v_node = NewValueNode(grad_param->op_args[i]);
+      v_node->set_abstract(grad_param->op_args[i]->ToAbstract());
+      node_list.emplace_back(v_node);
     }
-    auto v_node = NewValueNode(op_args[i]);
-    v_node->set_abstract(op_args[i]->ToAbstract());
-    node_lists.emplace_back(v_node);
+  } else {
+    // Input is a Parameter or cnode, not a value node
+    BuildKNodeListFromPrimalCNode(grad_param->cnode, grad_param->op_args, &node_list);
   }
-  auto out_node = NewValueNode(out);
-  out_node->set_abstract(out->ToAbstract());
-  node_lists.emplace_back(out_node);
-  node_lists.emplace_back(dout);
-  CNodePtr input_node = tape_->NewCNode(node_lists);
-  input_node->set_abstract(out->ToAbstract()->Broaden());
+  auto out_node = NewValueNode(grad_param->out);
+  auto out_abs = grad_param->out->ToAbstract()->Broaden();
+  out_node->set_abstract(out_abs);
+  // set out
+  node_list.emplace_back(out_node);
+  // set dout
+  node_list.emplace_back(dout);
+  auto input_node = tape_->NewCNode(node_list);
+  input_node->set_abstract(out_abs);
   return input_node;
 }
 
-bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const CNodePtr &cnode, const ValuePtrList &op_args,
-                    const ValuePtr &out) {
-  return k_cell->KPynativeOp(cnode, op_args, out);
+void AutoGradCellImpl::BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const ValuePtrList &op_args,
+                                                     std::vector<AnfNodePtr> *const node_list) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    MS_LOG(DEBUG) << "Find input knode of node " << cnode->input(i)->DebugString();
+    if (cnode->input(i)->isa<CNode>()) {
+      const auto input_adjoint_iter = anfnode_to_variable_adjoint_.find(cnode->input(i));
+      if (input_adjoint_iter == anfnode_to_variable_adjoint_.end()) {
+        MS_LOG(EXCEPTION) << "Cannot find input in adjoint map, inp: " << cnode->input(i)->DebugString();
+      }
+      MS_EXCEPTION_IF_NULL(input_adjoint_iter->second->k_node());
+      (void)node_list->emplace_back(input_adjoint_iter->second->k_node());
+    } else {
+      cnode->input(i)->set_abstract(op_args[i - 1]->ToAbstract());
+      (void)node_list->emplace_back(cnode->input(i));
+    }
+  }
+}
+
+void AutoGradCellImpl::BuildKNode(const GradParamPtr &grad_param, const VariableNodePtr &VariableNode) {
+  MS_EXCEPTION_IF_NULL(grad_param);
+  AnfNodePtrList node_list;
+  for (size_t i = 0; i < grad_param->cnode->inputs().size(); ++i) {
+    (void)node_list.emplace_back(BuildKNodeForCNodeInput(grad_param->cnode->input(i)));
+  }
+  auto k_node = tape_->NewCNode(node_list);
+  k_node->set_abstract(grad_param->out->ToAbstract()->Broaden());
+  VariableNode->set_k_node(k_node);
+}
+
+AnfNodePtr AutoGradCellImpl::BuildKNodeForCNodeInput(const AnfNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (input_node->isa<CNode>()) {
+    const auto input_adjoint_iter = anfnode_to_variable_adjoint_.find(input_node);
+    if (input_adjoint_iter == anfnode_to_variable_adjoint_.end()) {
+      MS_LOG(EXCEPTION) << "cannot find input in adjoint map, inp: " << input_node->DebugString();
+    }
+    return input_adjoint_iter->second->k_node();
+  } else {
+    return input_node;
+  }
+}
+
+bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_param) {
+  return k_cell->KPynativeOp(grad_param);
 }
 
 void AutoGradCellImpl::UpdateNextEdges(const FunctionNodePtr &fn, const CNodePtr &cnode,
@@ -992,7 +991,7 @@ void AutoGradCellImpl::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new
     return;
   }
   auto &old_node_users = users_[old_node];
-  for (auto pair_node : old_node_users) {
+  for (const auto &pair_node : old_node_users) {
     auto cnode = pair_node.first;
     size_t index = pair_node.second;
     if (index >= cnode->size()) {
@@ -1034,7 +1033,7 @@ void AutoGradCellImpl::ClearDeviceAddress(const ValuePtr &out) {
 void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg) {
   const auto &parameters = tape_->parameters();
   auto cell_inputs_size = cell_inputs_.size();
-  if (has_fbprop_) {
+  if (need_do_manager_replace_) {
     MS_LOG(DEBUG) << "Do parameter replace by manager";
     auto mng = MakeManager({tape_}, false);
     auto tr = mng->Transact();
@@ -1051,7 +1050,7 @@ void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, boo
       (void)tr.Replace(weights[i], parameters[weight_offset + i]);
     }
     tr.Commit();
-    has_fbprop_ = false;
+    need_do_manager_replace_ = false;
   } else {
     for (size_t i = 0; i < cell_inputs_size; ++i) {
       Replace(cell_inputs_[i], parameters[i]);
@@ -1093,9 +1092,8 @@ AutoGradCellImplPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
 }
 
 FuncGraphPtr GradPynativeCellEnd(const AutoGradCellImplPtr &auto_grad_cell, const AnfNodePtrList &weights,
-                                 const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
-                                 bool build_formal_param) {
-  return auto_grad_cell->Finish(weights, grad_position, grad_attr, build_formal_param);
+                                 const std::vector<size_t> &grad_position, const GradAttr &grad_attr) {
+  return auto_grad_cell->Finish(weights, grad_position, grad_attr);
 }
 }  // namespace ad
 }  // namespace mindspore

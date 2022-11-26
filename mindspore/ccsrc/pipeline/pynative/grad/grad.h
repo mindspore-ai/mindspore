@@ -103,17 +103,13 @@ class GradExecutor {
   TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id);
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   void AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
-  void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
-  void EndGraphImpl(const InputArgsInfoPtr &input_args_info);
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
-  void AsyncEndGraphImpl(const InputArgsInfoPtr input_args_info);
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
   void UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPtr &op_run_info) const;
   void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor,
                            const std::vector<tensor::TensorPtr> &pre_tensors) const;
   void ClearRes();
   void WorkerJoin() { async_executor_->WorkerJoin(); }
-
   void CheckGraphDynamic(const CNodePtr &cnode, const size_t &node_idx, bool is_ms_function_node = false,
                          const std::string &graph_phase = "") const;
 
@@ -126,10 +122,8 @@ class GradExecutor {
   void SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
                          const CNodePtr &cnode) const;
   void DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNodePtr &cnode, const ValuePtr &op_out) const;
-  void GradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr, const CNodePtr &cnode,
-                      const ValuePtrList &cloned_op_args, const ValuePtr &cloned_out) const;
-  void AsyncGradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr, const CNodePtr &cnode,
-                           const ValuePtrList &cloned_op_args, const ValuePtr &cloned_out) const;
+  void GradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr, const ad::GradParamPtr &grad_param) const;
+  void AsyncGradPynativeOp(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr, const ad::GradParamPtr &grad_param) const;
   void AsyncUpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &cloned_value) const;
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void SetBpropGraphJitLevel(const py::object &obj) const;
@@ -168,6 +162,9 @@ class GradExecutor {
   InputArgsInfoPtr GetInputArgsInfo(const py::object &obj, const py::args &args);
   void NewGraphImpl(const InputArgsInfoPtr &input_args_info);
   void AsyncNewGraphImpl(const InputArgsInfoPtr &input_args_info);
+  void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
+  void EndGraphImpl(const InputArgsInfoPtr &input_args_info);
+  void AsyncEndGraphImpl(const InputArgsInfoPtr &input_args_info);
   void SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const;
   void GetCustomBpropPrim(const py::object &obj, const py::args &args, const py::object &out,
                           const InputArgsInfoPtr &input_args_info);
@@ -195,10 +192,7 @@ class GradExecutor {
                                             const std::string &graph_phase) const;
   bool IsGraphDynamic(const CNodePtr &cnode, const size_t &node_idx, bool is_ms_function_node,
                       const std::string &graph_phase) const;
-  bool IsCnodeInputsDynamic(const DynamicDetectNodeInfoPtr &old_node_info,
-                            const std::vector<AnfNodePtr> &new_anf_inputs) const;
-  bool IsDynamicDetectNodeInfoChange(const DynamicDetectNodeInfoPtr &old_node_info, const CNodePtr &new_cnode,
-                                     bool is_ms_function_node, const std::string &graph_phase) const;
+
   bool grad_flag_{false};
   bool grad_is_running_{false};
   bool need_renormalize_{false};
@@ -209,7 +203,7 @@ class GradExecutor {
 
   // Used in sub thread
   size_t cell_order_{0};
-  std::string cur_cell_id_{""};
+  std::string cur_cell_id_;
 
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};

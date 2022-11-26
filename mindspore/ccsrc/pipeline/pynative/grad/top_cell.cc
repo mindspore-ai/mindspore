@@ -68,8 +68,7 @@ void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
   //   else:
   //        x = x + self.p
   //   return x
-  for (size_t i = 0; i < op_run_info->base_op_run_info.input_tensor.size(); i++) {
-    const auto &t = op_run_info->base_op_run_info.input_tensor[i];
+  for (auto &t : op_run_info->base_op_run_info.input_tensor) {
     MS_EXCEPTION_IF_NULL(t);
     if (t->is_parameter() && t->param_info() != nullptr && t->param_info()->requires_grad()) {
       input_args_info += "w";
@@ -127,6 +126,22 @@ void TopCellInfo::ClearDeviceMemory() const {
   }
 }
 
+void TopCellInfo::Clear() {
+  MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
+  hook_changed_ = false;
+  is_init_kpynative_ = false;
+  need_compile_graph_ = false;
+  forward_already_run_ = false;
+  op_index_ = 0;
+  resource_ = nullptr;
+  fg_ = nullptr;
+  graph_info_map_.clear();
+  op_info_with_tensor_id_.clear();
+  tensor_id_with_tensor_object_.clear();
+  op_info_with_ms_func_forward_tensors_.clear();
+  cnode_hash_with_op_index_.clear();
+}
+
 void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) {
   auto &graph_info = graph_info_map().at(g);
   MS_EXCEPTION_IF_NULL(graph_info);
@@ -145,12 +160,12 @@ void TopCellInfo::SetParamNodeMapInGraphInfoMap(const std::string &id, const Par
 }
 
 void TopCellInfo::SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index,
-                                           bool save_flag) const {
+                                           bool need_save_sub_id) const {
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   // For example, set id of ((A,B),C) = {CNode, -1}
-  if (save_flag) {
+  if (need_save_sub_id) {
     SetMultipleOutputToGraphInfoMap(id, node);
   }
 }
@@ -186,23 +201,6 @@ void TopCellInfo::SetNestedMultipleOutputToGraphInfoMap(const string &id, const 
     // If output have more nested tuple or list
     SetNestedMultipleOutputToGraphInfoMap(id_vec[i], node, tmp);
   }
-}
-
-void TopCellInfo::Clear() {
-  MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
-  hook_changed_ = false;
-  ms_function_flag_ = false;
-  is_init_kpynative_ = false;
-  need_compile_graph_ = false;
-  forward_already_run_ = false;
-  op_index_ = 0;
-  resource_ = nullptr;
-  fg_ = nullptr;
-  graph_info_map_.clear();
-  op_info_with_tensor_id_.clear();
-  tensor_id_with_tensor_object_.clear();
-  op_info_with_ms_func_forward_tensors_.clear();
-  cnode_hash_with_op_index_.clear();
 }
 
 void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const AnfNodePtr &node,

@@ -33,9 +33,11 @@ std::string GetOpPythonPath(const OperatorName &op_name) {
   // almost all ops are defined in two main paths
   const std::string ops_module = OP_PATH;
   const std::string inner_ops_module = INNER_OP_PATH;
+  const std::string grad_ops_module = GRAD_OP_PATH;
   const std::string functional_op_module = FUNCTIONAL_OP_PATH;
   py::module mod = py::module::import(common::SafeCStr(ops_module));
   py::module inner_mod = py::module::import(common::SafeCStr(inner_ops_module));
+  py::module grad_mod = py::module::import(common::SafeCStr(grad_ops_module));
   py::module functional_mod = py::module::import(common::SafeCStr(functional_op_module));
 
   if (py::hasattr(inner_mod, common::SafeCStr(op_name))) {
@@ -44,9 +46,12 @@ std::string GetOpPythonPath(const OperatorName &op_name) {
   if (py::hasattr(mod, common::SafeCStr(op_name))) {
     return ops_module;
   }
+  if (py::hasattr(grad_mod, common::SafeCStr(op_name))) {
+    return grad_ops_module;
+  }
   if (!py::hasattr(functional_mod, common::SafeCStr(op_name))) {
-    MS_LOG(EXCEPTION) << ops_module << " and " << inner_ops_module << " and " << functional_op_module
-                      << " don't have op:" << op_name;
+    MS_LOG(EXCEPTION) << ops_module << " and " << inner_ops_module << " and " << grad_ops_module << " and "
+                      << functional_op_module << " don't have op:" << op_name;
   }
   return functional_op_module;
 }

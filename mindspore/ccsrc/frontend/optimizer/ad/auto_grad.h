@@ -42,8 +42,9 @@ struct GradAttr {
 };
 
 struct GradParam {
-  GradParam(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out, FuncGraphPtr fprop_fg = nullptr)
-      : cnode(cnode), op_args(op_args), out(out), fprop_fg(std::move(fprop_fg)) {}
+  GradParam(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out, FuncGraphPtr fprop_fg,
+            bool grad_by_value)
+      : cnode(cnode), op_args(op_args), out(out), fprop_fg(std::move(fprop_fg)), grad_by_value(grad_by_value) {}
 
   // Primal CNode create by op forward process
   const CNodePtr cnode;
@@ -111,7 +112,7 @@ class AutoGradCellImpl {
   AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values);
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
-  bool KPynativeOp(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out);
+  bool KPynativeOp(const GradParamPtr &grad_param);
   // Reverse connect ms_function or higher order sub bprop funcgraph
   bool KPynativeWithFProp(const GradParamPtr &grad_param);
   CNodePtr GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args, const ValuePtr &out,
@@ -121,7 +122,7 @@ class AutoGradCellImpl {
   // Build a back propagate funcgraph, each cnode in primal funcgraph is replaced by value node or formal cnode, so it
   // can be grad again.
   FuncGraphPtr Finish(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
-                      const GradAttr &grad_attr, bool build_formal_param);
+                      const GradAttr &grad_attr);
 
  private:
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
@@ -139,14 +140,13 @@ class AutoGradCellImpl {
   // Record cnode's input map for tape_
   UserType users_;
   // Flag for ms_funtcion and high order
-  bool has_fbprop_{false};
+  bool need_do_manager_replace_{false};
 
   bool IsCNodeNeedGrad(const AnfNodePtr &node_ptr) const;
   std::vector<bool> GetNeedGradFlags(const CNodePtr &cnode);
 
   // construct input as cnode for expander
-  CNodePtr ConstructBpropGraphInput(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
-                                    const AnfNodePtr &dout);
+  CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout);
   // Back propagate for one node;
   void UpdateNextEdges(const FunctionNodePtr &fn, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &op_args);
@@ -182,9 +182,10 @@ class AutoGradCellImpl {
   void ClearDeviceAddress(const ValuePtr &out);
 
   // Fbprop
-  AnfNodePtr BuildKNode(const GradParamPtr &grad_param);
-  AnfNodePtrList BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const VariableNodePtr &adjoint);
-  AnfNodePtr BuildKNodeForCNodeInput(const ValuePtrList &op_args, const AnfNodePtr &input_node, size_t input_index);
+  void BuildKNode(const GradParamPtr &grad_param, const VariableNodePtr &VariableNode);
+  void BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const ValuePtrList &op_args,
+                                     std::vector<AnfNodePtr> *const node_list);
+  AnfNodePtr BuildKNodeForCNodeInput(const AnfNodePtr &input_node);
 };
 using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 
@@ -209,15 +210,13 @@ AutoGradCellImplPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
 // else:
 // each cnode in primal funcgraph is replaced by value node
 FuncGraphPtr GradPynativeCellEnd(const AutoGradCellImplPtr &k_cell, const AnfNodePtrList &weights,
-                                 const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
-                                 bool build_formal_param = false);
+                                 const std::vector<size_t> &grad_position, const GradAttr &grad_attr);
 
 // Grad for each operation.
 // c_node: CNode with contains the prim (index 0) and the formal input parameters of that prim.
 // op_args: the arguments list of each input parameters.
 // out: the op result.
-bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const CNodePtr &cnode, const ValuePtrList &op_args,
-                    const ValuePtr &out);
+bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_param);
 
 // adjoint bprop form ms_function and high grad
 void GradPynativeFBprop(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
