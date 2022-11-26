@@ -268,6 +268,40 @@ def eye(n, m, t):
     return eye_(n, m, t)
 
 
+def where(condition, x, y):
+    r"""
+    Returns a tensor whose elements are selected from either `x` or `y` depending on `condition`.
+
+    ..math::
+        output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
+
+    Args:
+        condition (Bool Tensor, bool, scalar): If True, yield `x` otherwise yield `y`.
+        x (Union[Tensor, Scalar]): Value (if `x` is a scalar) or values selected at indices where condition is True.
+        y (Union[Tensor, Scalar]): Value (if `y` is a scalar) or values selected at indices where condition is False.
+
+    Returns:
+        Tensor, elements are selected from `x` and `y`.
+
+    Raises:
+        ValueError: If `condition` can not be broadcast to the shape of `x`.
+
+    Examples:
+        >>> a = Tensor(np.arange(4).reshape((2, 2)), mstype.float32)
+        >>> b = Tensor(np.ones((2, 2)), mstype.float16)
+        >>> condition = a < 3
+        >>> output = ops.where(condition, a, b)
+        >>> print(output)
+        [[0. 1.]
+         [2. 1.]]
+    """
+    not_op = P.LogicalNot()
+    x_mask = cast_(condition, mstype.bool_)
+    y_mask = not_op(x_mask)
+    output = x * x_mask + y * y_mask
+    return output
+
+
 def reverse(x, axis):
     """
     Reverses specific dimensions of a tensor.
@@ -5224,6 +5258,7 @@ __all__ = [
     'one_hot',
     'masked_fill',
     'masked_select',
+    'where',
     'narrow',
     'scatter_add',
     'scatter_mul',

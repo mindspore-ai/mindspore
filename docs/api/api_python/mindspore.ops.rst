@@ -442,6 +442,7 @@ Array操作
     mindspore.ops.unsorted_segment_sum
     mindspore.ops.unsqueeze
     mindspore.ops.unstack
+    mindspore.ops.where
 
 类型转换
 ^^^^^^^^^^^^^^^^

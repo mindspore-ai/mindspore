@@ -256,6 +256,7 @@
     mindspore.Tensor.unsqueeze
     mindspore.Tensor.var
     mindspore.Tensor.view
+    mindspore.Tensor.where
     mindspore.Tensor.xdivy
     mindspore.Tensor.xlogy
 

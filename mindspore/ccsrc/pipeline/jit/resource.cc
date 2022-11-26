@@ -413,6 +413,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"sinh", std::string("sinh")},                                      // sinh()
        {"sort", std::string("sort")},                                      // sort()
        {"trunc", std::string("trunc")},                                    // trunc()
+       {"where", std::string("where")},                                    // where()
        {"imag", std::string("imag")},                                      // imag()
      }},
     {kObjectTypeRowTensorType,

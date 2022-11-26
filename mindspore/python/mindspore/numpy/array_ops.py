@@ -711,8 +711,7 @@ def where(condition, x=None, y=None):
         x = F.cast(x, dtype)
     if not _check_same_type(dtype2, dtype):
         y = F.cast(y, dtype)
-    is_bool = _check_same_type(dtype1, mstype.bool_) and _check_same_type(
-        dtype2, mstype.bool_)
+    is_bool = _check_same_type(dtype1, mstype.bool_) and _check_same_type(dtype2, mstype.bool_)
     if is_bool:
         # select does not support bool type for x or y
         x = F.cast(x, mstype.float32)
