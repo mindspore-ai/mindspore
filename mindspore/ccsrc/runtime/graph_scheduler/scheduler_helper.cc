@@ -185,23 +185,37 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
 
 void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActor *const to_actor,
                                      const AnfNodePtr &from_kernel, size_t from_output_index, size_t output_position) {
-  MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_kernel);
 
-  auto result_arrow = std::make_shared<DataArrow>(from_output_index, to_actor->GetAID(), output_position);
-  (void)from_actor->output_data_arrows_.insert(from_actor->output_data_arrows_.begin(), result_arrow);
-  (void)from_actor->output_data_nodes_.insert(from_actor->output_data_nodes_.begin(), from_kernel);
-  to_actor->input_datas_num_++;
-  (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), result_arrow.get()));
+  if (from_actor == nullptr) {
+    (void)to_actor->device_tensor_store_keys_.emplace_back(output_position, from_kernel);
+  } else {
+    auto result_arrow = std::make_shared<DataArrow>(from_output_index, to_actor->GetAID(), output_position);
+    (void)from_actor->output_data_arrows_.insert(from_actor->output_data_arrows_.begin(), result_arrow);
+    (void)from_actor->output_data_nodes_.insert(from_actor->output_data_nodes_.begin(), from_kernel);
+    to_actor->input_datas_num_++;
+    (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), result_arrow.get()));
+  }
 
+  if (!AnfAlgo::OutputAddrExist(from_kernel, from_output_index, false)) {
+    MS_LOG(WARNING) << from_kernel->DebugString() << " device address not exit";
+    return;
+  }
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
   // The output actor need use the relevant information of node to create output tensor.
   device_tensor->SetNodeIndex(from_kernel, from_output_index);
-
   // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
   UpdateRefCount(device_tensor.get(), true);
+
+  // Set the device contexts of to_actor.
+  if (output_position >= to_actor->device_contexts_.size()) {
+    MS_LOG(EXCEPTION) << "The output position is out of range.";
+  }
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_tensor->device_name(), device_tensor->device_id()});
+  to_actor->device_contexts_[output_position] = device_context;
 }
 
 void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor) {
