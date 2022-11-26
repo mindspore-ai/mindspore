@@ -37,13 +37,26 @@ class LogUniformCandidateSamplerInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     int64_t num_sampled = GetValue<int64_t>(primitive->GetAttr(kNumSampled));
-    auto sampled_candidate_shape = std::make_shared<abstract::Shape>(ShapeVector({num_sampled}));
-    auto true_expected_shape = input_args[0]->BuildShape();
+    auto sampled_candidate_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector({num_sampled}));
+    auto true_expected_shape_ptr = input_args[0]->BuildShape();
+    auto true_classes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(true_expected_shape_ptr)[kShape];
+    const size_t true_classes_shape_rank = 2;
+    if (!IsDynamicRank(true_classes_shape) && true_classes_shape.size() != true_classes_shape_rank) {
+      MS_EXCEPTION(ValueError) << "LogUniformCandidateSampler input true_classes dims should be 2.";
+    }
+    if (!IsDynamic(true_classes_shape)) {
+      auto num_true = GetValue<int64_t>(primitive->GetAttr(kNumTrue));
+      if (true_classes_shape[1] != num_true) {
+        MS_EXCEPTION(ValueError)
+          << "LogUniformCandidateSampler input true_classes dim[1] should equal to num_true, true_classes.dim[1] = "
+          << true_classes_shape[1] << ", num_true = " << num_true;
+      }
+    }
 
     std::vector<abstract::BaseShapePtr> shape_tuple;
-    (void)shape_tuple.emplace_back(sampled_candidate_shape);
-    (void)shape_tuple.emplace_back(true_expected_shape);
-    (void)shape_tuple.emplace_back(sampled_candidate_shape);
+    (void)shape_tuple.emplace_back(sampled_candidate_shape_ptr);
+    (void)shape_tuple.emplace_back(true_expected_shape_ptr);
+    (void)shape_tuple.emplace_back(sampled_candidate_shape_ptr);
     return std::make_shared<abstract::TupleShape>(shape_tuple);
   }
 
