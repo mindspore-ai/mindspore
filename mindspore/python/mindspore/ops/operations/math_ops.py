@@ -694,9 +694,8 @@ class CumulativeLogsumexp(Primitive):
         Tensor, has the same dtype and shape as the `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `x` or `axis` not a Tensor.
         TypeError: If dtype of `x` is not in [float16, float32, float64].
-        TypeError: If `axis` is not a Tensor.
         TypeError: If dtype of `axis` is not in [int16, int32, int64].
         TypeError: If `exclusive` or `reverse` is not a bool.
         ValueError: If the dimension of `x` is not greater than 0.

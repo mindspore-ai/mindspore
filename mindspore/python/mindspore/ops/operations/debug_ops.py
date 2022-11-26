@@ -503,13 +503,14 @@ class Print(Primitive):
 class Assert(PrimitiveWithInfer):
     """
     Asserts whether the given condition is True.
-    If input condition is evaluated to be false, print a list of the tensor in data.
+    If input condition is identified to be false, print a list of the tensor in data.
 
     Args:
-        summarize (int): The number of entries to be printed in each tensor.
+        summarize (int, optional): The number of entries to be printed in each tensor while the given condition is
+        identified to be False. Default: None.
 
     Inputs:
-        - **condition** (Union[Tensor[bool], bool]) - The condition to be evaluated.
+        - **condition** (Union[Tensor[bool], bool]) - The condition to be identified.
         - **input_data** (Union[tuple[Tensor], list[Tensor]]) - The tensors to be printed out when the condition
         is false.
 

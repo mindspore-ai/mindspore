@@ -5,6 +5,16 @@
 
     将一组通过滑窗获得的数组组合成一个大的Tensor。其中 `dilation` 、 `padding` 和 `stride` 决定了滑窗如何滑动与检索元素。
 
+    假设输入为一个包含多个滑窗的Tensor，例如，图像的补丁，其shape为(N, C, \prod(\text{kernel\_size}), L)，分别代表Batch数量、Channel数量、滑窗大小与滑窗总数。Col2Im通过对这些滑窗重叠的部分进行加和来将输入组合成shape为(N, C, \text{output\_size}[0], \text{output\_size}[1], \dots)的Tensor作为输出。
+
+    输入与输出的shape之间的关系可以表示为：
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{output\_size}[d] + 2 \times \text{padding}[d] %
+            - \text{dilation}[d] \times (\text{kernel\_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor
+
+    式中d代表高度与宽度上两个维度。
+
     参数：
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑窗大小，由两个正整数组成，分别代表滑窗的高度与宽度。如果数据类型为int，代表不同方向上的填充大小相等。取值必须由用户指定。
         - **dilation** (Union[int, tuple[int], list[int]], 可选) - 滑窗之间的间距，由两个正整数组成，分别代表横向与纵向上滑窗移动时与上一个滑窗间的距离。如果数据类型为int，代表不同方向上的填充大小相等。默认值：1。

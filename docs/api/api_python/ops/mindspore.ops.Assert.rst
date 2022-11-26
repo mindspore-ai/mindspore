@@ -1,12 +1,12 @@
 ﻿mindspore.ops.Assert
 =====================
 
-.. py:class:: mindspore.ops.Assert(summarize)
+.. py:class:: mindspore.ops.Assert(summarize=None)
 
-    判断给定条件是否为True，如果不为True的话则以list的形式打印 `input_data` 中的Tensor，否则继续往下运行代码。
+    判断给定条件是否为True，若不为True则以list的形式打印 `input_data` 中的Tensor，否则继续往下运行代码。
 
     参数：
-        - **summarize** (int) - 当判断结果为False时，打印 `input_data` 中的Tensor的数目。
+        - **summarize** (int, 可选) - 当判断结果为False时，打印 `input_data` 中每个Tensor的条目的数量。默认值：None。
 
     输入：
         - **condition** ([Union[Tensor[bool], bool]]) - 需要进行判断的条件。

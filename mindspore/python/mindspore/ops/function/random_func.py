@@ -467,7 +467,7 @@ def shuffle(x, seed=None):
     return output
 
 
-def log_uniform_candidate_sampler(true_classes, num_true, num_sampled, unique, range_max, seed=0):
+def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
     r"""
     Generates random labels with a log-uniform distribution for sampled_candidates.
 
