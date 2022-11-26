@@ -2153,8 +2153,8 @@ class Cell(Cell_):
         set_inputs_len = len(self._dynamic_shape_inputs)
         inputs_len = len(inputs)
         if set_inputs_len != inputs_len:
-            raise ValueError("The number of 'set_input' Tensor must be equal to network's inputs."
-                             f"but got 'set_inputs': {set_inputs_len} and network's input: {inputs_len}.")
+            raise ValueError("The number of 'set_inputs' Tensor must be equal to network's inputs,"
+                             f" but got 'set_inputs': {set_inputs_len} and network's input: {inputs_len}.")
         for index, (net_input, set_input) in enumerate(zip(inputs, self._dynamic_shape_inputs)):
             if isinstance(set_input, Tensor):
                 if not isinstance(net_input, Tensor):
