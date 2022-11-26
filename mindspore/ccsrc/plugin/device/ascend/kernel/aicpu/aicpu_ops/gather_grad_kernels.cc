@@ -66,7 +66,7 @@ static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim
   };
 
   const int64_t per_unit_size = number / std::thread::hardware_concurrency();
-  SharderNonBlock::GetInstance().ParallelFor(number, per_unit_size, shard_gather_grad);
+  ParallelFor(number, per_unit_size, shard_gather_grad);
   if (status) {
     return kAicpuKernelStateFailed;
   }
