@@ -995,6 +995,7 @@ class RandomShuffle(Primitive):
     def __init__(self, seed=0, seed2=0):
         """Initialize RandomShuffle"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+        self.add_prim_attr("side_effect_hidden", True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 

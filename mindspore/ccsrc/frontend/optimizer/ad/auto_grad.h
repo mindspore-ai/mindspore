@@ -86,9 +86,9 @@ class FunctionNode {
 };
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 
-class VariableNode {
+class VariableAdjoint {
  public:
-  VariableNode(const FunctionNodePtr &fn, const ValuePtr &out_value) : fn_(fn), out_value_(out_value) {}
+  VariableAdjoint(const FunctionNodePtr &fn, const ValuePtr &out_value) : fn_(fn), out_value_(out_value) {}
 
   ValuePtr out_value() const { return out_value_; }
   FunctionNodePtr fn() const { return fn_; }
@@ -114,7 +114,7 @@ class VariableNode {
   // K mapped cnode for primal CNode; primal CNode is owned by primal funcgraph, this is owned by tape_;
   AnfNodePtr k_node_{nullptr};
 };
-using VariableNodePtr = std::shared_ptr<VariableNode>;
+using VariableAdjointPtr = std::shared_ptr<VariableAdjoint>;
 
 class AutoGradCellImpl {
  public:
@@ -143,10 +143,10 @@ class AutoGradCellImpl {
   // Top cell inputs
   AnfNodePtrList cell_inputs_;
   // These weights need to calculate gradient.
-  mindspore::HashSet<AnfNodePtr> need_grad_weights_;
+  mindspore::HashSet<std::string> need_grad_weights_;
   // Bprop dins of each variable or middle out
-  OrderedMap<AnfNodePtr, VariableNodePtr> anfnode_to_variable_adjoint_;
-  AnfNodePtrList weights_;
+  OrderedMap<AnfNodePtr, VariableAdjointPtr> anfnode_to_variable_adjoint_;
+  AnfNodePtrList weights_used_in_graph_;
   // Record cnode's input map for tape_
   UserType users_;
   // Flag for ms_funtcion and high order
@@ -156,7 +156,8 @@ class AutoGradCellImpl {
   std::vector<bool> GetNeedGradFlags(const CNodePtr &cnode);
 
   // construct input as cnode for expander
-  CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout);
+  CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
+                                    const VariableAdjointPtr &variable_adjoint);
   // Back propagate for one node;
   void UpdateNextEdges(const FunctionNodePtr &fn, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &op_args);
@@ -176,7 +177,7 @@ class AutoGradCellImpl {
   // Set sens and weights parameter nodes by user input info
   void SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg);
   // get last reverse iterator
-  OrderedMap<AnfNodePtr, VariableNodePtr>::reverse_iterator GetLastNodeReverseIter();
+  OrderedMap<AnfNodePtr, VariableAdjointPtr>::reverse_iterator GetLastNodeReverseIter();
 
   void BackPropagate();
   // Set return node according to grad flag
@@ -184,14 +185,12 @@ class AutoGradCellImpl {
   AnfNodePtr GetGradNodeByIndex(const AnfNodePtrList &node_list, size_t index);
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
   AnfNodePtr GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights, bool weight_param_is_tuple);
-  bool IsOutputBothEmpty(const AnfNodePtr &inputs_grad, const AnfNodePtr &weights_grad) const;
-  AnfNodePtr GenerateEmptyTupleValue();
   void AddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index);
   void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
   void ElimateTupleGetItem();
 
   // Fbprop
-  void BuildKNode(const GradParamPtr &grad_param, const VariableNodePtr &VariableNode);
+  void BuildKNode(const GradParamPtr &grad_param, const VariableAdjointPtr &variable_adjoint);
   void BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const ValuePtrList &op_args,
                                      std::vector<AnfNodePtr> *const node_list);
   AnfNodePtr BuildKNodeForCNodeInput(const AnfNodePtr &input_node);

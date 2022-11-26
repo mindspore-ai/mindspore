@@ -58,11 +58,11 @@ using GraphInfoPtr = std::shared_ptr<GraphInfo>;
 class TopCellInfo {
  public:
   ~TopCellInfo() = default;
-  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string c_cell_id, std::string cellid,
+  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string obj_id_with_grad_order, std::string cellid,
               std::string already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg)
       : is_high_order_top_cell_(is_high_order_top_cell),
         grad_order_(grad_order),
-        c_cell_id_(std::move(c_cell_id)),
+        obj_id_with_grad_order_(std::move(obj_id_with_grad_order)),
         cell_id_(std::move(cellid)),
         already_run_cell_id_(std::move(already_run_cell_id)),
         resource_(std::move(r)),
@@ -81,6 +81,7 @@ class TopCellInfo {
   inline void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
   inline bool need_compile_graph() const { return need_compile_graph_; }
   inline void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
+  inline bool vm_compile() const { return vm_compile_; }
   inline bool is_high_order_top_cell() const { return is_high_order_top_cell_; }
   inline void set_need_do_final_opt(bool need_do_final_opt) { need_do_final_opt_ = need_do_final_opt; }
   inline bool need_do_final_opt() const { return need_do_final_opt_; }
@@ -91,7 +92,7 @@ class TopCellInfo {
   }
   inline void set_fg(const FuncGraphPtr &fg) { fg_ = fg; }
   inline const std::string &cell_id() const { return cell_id_; }
-  inline const std::string &c_cell_id() const { return c_cell_id_; }
+  inline const std::string &obj_id_with_grad_order() const { return obj_id_with_grad_order_; }
   inline const std::string &already_run_cell_id() const { return already_run_cell_id_; }
   inline void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
   inline const std::string &input_args_id() const { return input_args_id_; }
@@ -124,10 +125,11 @@ class TopCellInfo {
   inline void set_cnode_hash_with_op_index(const size_t &node_hash, const size_t &op_index) {
     cnode_hash_with_op_index_[node_hash] = op_index;
   }
-  inline size_t get_op_index_by_cnode_hash(const size_t &node_hash) const {
+  inline size_t get_op_index_by_cnode_hash(const size_t node_hash, const size_t node_idx) const {
     const auto iter = cnode_hash_with_op_index_.find(node_hash);
     if (iter == cnode_hash_with_op_index_.end()) {
-      MS_LOG(EXCEPTION) << "hash:" << node_hash << " is not found in cnode_hash_with_op_index_";
+      MS_LOG(DEBUG) << "hash:" << node_hash << " is not found in cnode_hash_with_op_index_";
+      return node_idx;
     }
     return iter->second;
   }
@@ -136,6 +138,7 @@ class TopCellInfo {
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
   void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1,
                                 bool need_save_sub_id = true) const;
+  void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile);
   void ClearDeviceMemory() const;
   void Clear();
 
@@ -150,11 +153,13 @@ class TopCellInfo {
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
   bool need_compile_graph_{false};
-  size_t op_index_{0};
+  bool vm_compile_{false};
+  bool is_run_cell_{false};
   bool is_high_order_top_cell_{false};
   bool need_do_final_opt_{false};
   size_t grad_order_{0};
-  std::string c_cell_id_;
+  size_t op_index_{0};
+  std::string obj_id_with_grad_order_;
   std::string cell_id_;
   std::string already_run_cell_id_;
   std::string input_args_id_;

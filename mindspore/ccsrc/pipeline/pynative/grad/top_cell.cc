@@ -90,6 +90,12 @@ void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
   ++op_index_;
 }
 
+void TopCellInfo::UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile) {
+  need_compile_graph_ = need_compile_graph;
+  forward_already_run_ = forward_already_run;
+  vm_compile_ = vm_compile;
+}
+
 void TopCellInfo::ClearDeviceMemory() const {
   MS_LOG(DEBUG) << "Clear device memory in value nodes of bprop graph, top cell: " << cell_id_;
   auto ms_context = MsContext::GetInstance();
@@ -132,6 +138,7 @@ void TopCellInfo::Clear() {
   is_init_kpynative_ = false;
   need_compile_graph_ = false;
   forward_already_run_ = false;
+  vm_compile_ = false;
   op_index_ = 0;
   resource_ = nullptr;
   fg_ = nullptr;

@@ -88,12 +88,16 @@ struct InputArgsInfo {
   bool has_custom_bprop;
   size_t input_size;
   std::string obj_id;
+
   bool has_sens{false};
   bool use_dynamic_shape_process = false;
   PrimitivePyPtr custom_bprp_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string cell_id;
+  std::string already_run_cell_id;
   std::string input_args_id;
+  // Cell unique id, cell_id + cell_order;
+  std::string obj_order_id;
   size_t custom_bprop_cell_count = 0;
   size_t grad_order = 0;
   std::vector<std::string> input_arg_id_vec;
