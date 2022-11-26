@@ -33,6 +33,7 @@ struct Common {
   static std::string GetIdByValue(const ValuePtr &v);
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
+  static ValuePtr FilterSensValues(const ValuePtr &value);
   static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
   static void SetForwardOutputFlag(const ValuePtr &v);
   static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);

@@ -110,6 +110,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
                                       device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(device_context);
+  py::gil_scoped_acquire acquire_gil;
   auto graph_info = op_run_info->base_op_run_info.graph_info;
   auto iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
@@ -160,7 +161,6 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   auto op_compiler_info =
     std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index, device_context, false);
 
-  py::gil_scoped_acquire acquire_gil;
   op_compiler_infos_[graph_info] = op_compiler_info;
   return op_compiler_info;
 }

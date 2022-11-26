@@ -91,6 +91,12 @@ void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
   ++op_index_;
 }
 
+void TopCellInfo::UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile) {
+  need_compile_graph_ = need_compile_graph;
+  forward_already_run_ = forward_already_run;
+  vm_compile_ = vm_compile;
+}
+
 void TopCellInfo::ClearDeviceMemory() const {
   MS_LOG(DEBUG) << "Clear device memory in value nodes of bprop graph, top cell: " << cell_id_;
   auto ms_context = MsContext::GetInstance();
@@ -125,6 +131,23 @@ void TopCellInfo::ClearDeviceMemory() const {
       tensor->set_device_address(nullptr);
     }
   }
+}
+
+void TopCellInfo::Clear() {
+  MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
+  hook_changed_ = false;
+  is_init_kpynative_ = false;
+  need_compile_graph_ = false;
+  forward_already_run_ = false;
+  vm_compile_ = false;
+  op_index_ = 0;
+  resource_ = nullptr;
+  fg_ = nullptr;
+  graph_info_map_.clear();
+  op_info_with_tensor_id_.clear();
+  tensor_id_with_tensor_object_.clear();
+  op_info_with_ms_func_forward_tensors_.clear();
+  cnode_hash_with_op_index_.clear();
 }
 
 void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) {
@@ -186,22 +209,6 @@ void TopCellInfo::SetNestedMultipleOutputToGraphInfoMap(const string &id, const 
     // If output have more nested tuple or list
     SetNestedMultipleOutputToGraphInfoMap(id_vec[i], node, tmp);
   }
-}
-
-void TopCellInfo::Clear() {
-  MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
-  hook_changed_ = false;
-  is_init_kpynative_ = false;
-  need_compile_graph_ = false;
-  forward_already_run_ = false;
-  op_index_ = 0;
-  resource_ = nullptr;
-  fg_ = nullptr;
-  graph_info_map_.clear();
-  op_info_with_tensor_id_.clear();
-  tensor_id_with_tensor_object_.clear();
-  op_info_with_ms_func_forward_tensors_.clear();
-  cnode_hash_with_op_index_.clear();
 }
 
 void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const AnfNodePtr &node,
