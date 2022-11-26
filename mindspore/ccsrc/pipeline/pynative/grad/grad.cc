@@ -26,6 +26,7 @@
 #include "backend/common/optimizer/helper.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "frontend/optimizer/ad/grad.h"
+#include "frontend/optimizer/expander.h"
 #include "pipeline/jit/pass.h"
 
 namespace mindspore {
@@ -135,7 +136,8 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v) {
     int64_t input = v->cast<Int64ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input, kInt64);
   } else {
-    MS_LOG(EXCEPTION) << "Output is " << v->ToString() << ", abstract " << v->ToAbstract()->Broaden();
+    MS_LOG(DEBUG) << "Output is " << v->ToString() << ", abstract " << v->ToAbstract()->Broaden();
+    return v;
   }
 }
 
@@ -358,8 +360,8 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   fg->debug_info()->set_name("pynative_forward_graph");
   auto resource = std::make_shared<pipeline::Resource>();
   const auto &already_run_cell_id = input_args_info->cell_id + std::to_string(input_args_info->grad_order);
-  top_cell_ = std::make_shared<TopCellInfo>(input_args_info->grad_order, input_args_info->cell_id, already_run_cell_id,
-                                            resource, fg);
+  top_cell_ = std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
+                                            input_args_info->cell_id, already_run_cell_id, resource, fg);
   top_cell_->set_forward_already_run(true);
   top_cell_->set_input_args_id(input_args_info->input_args_id);
   PushHighOrderGraphStack(top_cell_);
@@ -385,8 +387,7 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v, const std::string &
   // Set last output abstract and will be used for sens
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
-  auto sens_v = ConvertOutputValueToTensor(v);
-  auto cloned_value = ShallowCopyTensorValue(sens_v);
+  auto cloned_value = ShallowCopyTensorValue(v);
   auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(output_node, cloned_value);
 }
 
@@ -417,9 +418,11 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   const auto &cell_id = input_args_info->cell_id;
   MS_LOG(DEBUG) << "EndGraphInner start " << input_args_info->input_size << ", cell_id " << cell_id
                 << ", input args info ptr " << input_args_info.get();
-  const auto &out_value = input_args_info->out_value;
-  MS_EXCEPTION_IF_NULL(out_value);
-  const auto &out_id = PyNativeAlgo::Common::GetIdByValue(out_value);
+  bool is_top_cell_end = (cell_id == top_cell()->cell_id());
+  if (is_top_cell_end) {
+    input_args_info->out_value = ConvertOutputValueToTensor(input_args_info->out_value);
+  }
+  const auto &out_id = PyNativeAlgo::Common::GetIdByValue(input_args_info->out_value);
   DoGradForCustomBprop(input_args_info, out_id);
   // Update bprop grad stack
   if (grad_is_running_ && !bprop_grad_stack_.empty()) {
@@ -432,16 +435,15 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
     }
   }
   // Just only dump the last forward graph
-  bool is_top_cell_end = cell_id == top_cell()->cell_id();
   if (is_top_cell_end && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    curr_g()->set_output(GetInput(out_value, out_id));
+    curr_g()->set_output(GetInput(input_args_info->out_value, out_id));
     PyNativeAlgo::Common::DumpGraphIR("fg.ir", curr_g());
   }
   // Reset grad flag and update output node of the outermost cell
   if (input_args_info->is_grad_topest_cell && is_top_cell_end) {
     MS_LOG(DEBUG) << "Cur top last cell " << cell_id;
     (void)PopHighOrderGraphStack();
-    SetForwardLastNodeInfo(out_value, out_id);
+    SetForwardLastNodeInfo(input_args_info->out_value, out_id);
     top_cell()->ClearCellHookOp();
     cell_order_ = 0;
     // set_grad_flag(false);
@@ -450,7 +452,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   if (is_top_cell_end) {
     // In high grad cases, the output of the internal graph may be a tuple, and node needs to be created in the getobj
     if (!input_args_info->is_grad_topest_cell) {
-      SetForwardLastNodeInfo(out_value, out_id);
+      SetForwardLastNodeInfo(input_args_info->out_value, out_id);
     }
     top_cell()->CheckSubCellHookChanged();
     top_input_args_info_ = input_args_info;
@@ -555,7 +557,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     if (top_input_args_info_->input_arg_value_vec.size() == args.size()) {
       top_input_args_info_->input_arg_value_vec.pop_back();
     }
-    (void)top_input_args_info_->input_arg_value_vec.emplace_back(ShallowCopyTensorValue(sens_v));
+    (void)top_input_args_info_->input_arg_value_vec.emplace_back(ShallowCopyTensorValue(sens_tensor));
     top_input_args_info_->has_sens = true;
   }
 
@@ -678,12 +680,14 @@ void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
   MS_EXCEPTION_IF_NULL(bprop_graph);
   std::vector<ValuePtr> tensor_args;
   size_t input_size = has_sens ? input_args.size() - 1 : input_args.size();
-  // Sens may be a value tuple not a single tensor
+  // Sens may be a value tuple not a single tensor; bprop gradph have only one ses params, so tuple sens can not be
+  // flatten
   for (size_t i = 0; i < input_size; ++i) {
     if (PyNativeAlgo::Common::IsTensor(input_args[i])) {
       (void)tensor_args.emplace_back(input_args[i]);
     }
   }
+  // No flatten
   if (has_sens) {
     (void)tensor_args.emplace_back(input_args[input_size]);
   }
@@ -721,15 +725,9 @@ void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
 FuncGraphPtr GradExecutor::GetBpropGraph(const ad::GradAttr &grad_attr, const vector<AnfNodePtr> &w_args,
                                          const vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
-  bool build_formal_param = false;
-  if (!top_input_args_info_->has_custom_bprop && !top_input_args_info_->is_grad_topest_cell && IsNestedGrad()) {
-    build_formal_param = true;
-    need_renormalize_ = true;
-  }
-
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
-  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(auto_grad_cell_ptr, w_args, p_args, grad_attr, build_formal_param);
+  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(auto_grad_cell_ptr, w_args, p_args, grad_attr);
   MS_EXCEPTION_IF_NULL(bprop_graph);
 
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
@@ -738,7 +736,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const ad::GradAttr &grad_attr, const ve
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
   UpdateParamAbsByArgs(top_input_args_info_->input_arg_value_vec, bprop_graph, grad_attr.has_sens);
-  if (top_cell()->ms_function_flag()) {
+  if (top_cell()->need_do_final_opt()) {
     bprop_graph = BpropGraphFinalOpt(bprop_graph);
   }
   if (top_input_args_info_->is_grad_topest_cell) {
@@ -830,14 +828,15 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     MS_LOG(DEBUG) << "Bprop nested";
   }
   MS_EXCEPTION_IF_NULL(first_grad_fg);
-  PyNativeAlgo::Common::DumpGraphIR("first_grad_fg.ir", first_grad_fg);
-
   std::vector<AnfNodePtr> inputs{NewValueNode(first_grad_fg)};
   ValuePtrList weights_args;
   DoParameterReplace(first_grad_fg, forward_args, &inputs, &weights_args);
 
-  pipeline::ResourcePtr r = std::make_shared<pipeline::Resource>();
-  r->manager()->AddFuncGraph(first_grad_fg);
+  if (!opt::ConvertPrimToPrimPy(first_grad_fg)) {
+    MS_LOG(EXCEPTION) << "Convert PrimitiveC to PrimitivePy failed";
+  }
+
+  auto r = std::make_shared<pipeline::Resource>();
   set_eliminate_forward(false);
   (void)first_grad_fg->transforms().erase(kGrad);
   // Do high order
@@ -861,10 +860,12 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     std::vector<ValuePtr> out_v{out_value};
     out_value = std::make_shared<ValueTuple>(out_v);
   }
-  auto grad_param = std::make_shared<ad::GradParam>(cnode, input_args, out_value, second_grad_fg);
+  auto grad_param = std::make_shared<ad::GradParam>(cnode, input_args, out_value, second_grad_fg,
+                                                    !top_cell()->is_high_order_top_cell());
   if (!top_cell()->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for second grad graph " << cnode->ToString();
   }
+  top_cell()->set_need_do_final_opt(true);
   need_renormalize_ = true;
 }
 
@@ -1175,12 +1176,9 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
                        std::back_inserter(cloned_op_args),
                        [](const ValuePtr &value) { return ShallowCopyTensorValue(value); });
   ValuePtr cloned_out = ShallowCopyTensorValue(op_out);
-  std::vector<tensor::TensorPtr> tensors;
-  TensorValueToTensor(cloned_out, &tensors);
-  for (auto tensor : tensors) {
-    tensor->set_is_forward_output(true);
-  }
-  if (!ad::GradPynativeOp(top_cell()->auto_grad_cell_ptr(), cnode, cloned_op_args, cloned_out)) {
+  auto grad_param =
+    std::make_shared<ad::GradParam>(cnode, cloned_op_args, cloned_out, nullptr, !top_cell()->is_high_order_top_cell());
+  if (!ad::GradPynativeOp(top_cell()->auto_grad_cell_ptr(), grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for op " << op_run_info->base_op_run_info.op_name;
   }
 }

@@ -55,9 +55,10 @@ using GraphInfoPtr = std::shared_ptr<GraphInfo>;
 class TopCellInfo {
  public:
   ~TopCellInfo() = default;
-  TopCellInfo(size_t grad_order, std::string cellid, std::string already_run_cell_id, pipeline::ResourcePtr r,
-              FuncGraphPtr fg)
-      : grad_order_(grad_order),
+  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string cellid, std::string already_run_cell_id,
+              pipeline::ResourcePtr r, FuncGraphPtr fg)
+      : is_high_order_top_cell_(is_high_order_top_cell),
+        grad_order_(grad_order),
         cell_id_(std::move(cellid)),
         already_run_cell_id_(std::move(already_run_cell_id)),
         resource_(std::move(r)),
@@ -71,10 +72,11 @@ class TopCellInfo {
   inline const CellIdWithBackwardHookOp &cell_backward_hook_op() const { return cell_backward_hook_op_; }
   void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
   inline void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
-  inline bool ms_function_flag() const { return ms_function_flag_; }
-  inline void set_ms_function_flag(bool ms_function_flag) { ms_function_flag_ = ms_function_flag; }
   inline bool forward_already_run() const { return forward_already_run_; }
   inline void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
+  inline bool is_high_order_top_cell() const { return is_high_order_top_cell_; }
+  inline void set_need_do_final_opt(bool need_do_final_opt) { need_do_final_opt_ = need_do_final_opt; }
+  inline bool need_do_final_opt() const { return need_do_final_opt_; }
   inline pipeline::ResourcePtr resource() const { return resource_; }
   inline FuncGraphPtr fg() const {
     MS_EXCEPTION_IF_NULL(fg_);
@@ -108,9 +110,10 @@ class TopCellInfo {
                                      const std::vector<int64_t> &index) const;
 
   bool hook_changed_{false};
-  bool ms_function_flag_{false};
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
+  bool is_high_order_top_cell_{false};
+  bool need_do_final_opt_{false};
   size_t grad_order_{0};
   std::string cell_id_;
   std::string already_run_cell_id_;

@@ -33,14 +33,17 @@
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
-  static const std::map<std::string, std::vector<std::string>> op2attrs = {
-    {prim::kPrimBroadcastTo->name(), {kAttrShape}},
-    {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
-    {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
-    {prim::kPrimReduceSum->name(), {kAttrKeepDims}}};
+namespace {
+const std::map<std::string, std::vector<std::string>> op2attrs = {{prim::kPrimBroadcastTo->name(), {kAttrShape}},
+                                                                  {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
+                                                                  {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
+                                                                  {prim::kPrimReduceSum->name(), {kAttrKeepDims}}};
+}
 
+bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto todos = TopoSort(graph->get_return());
+  auto mng = MakeManager({graph}, false);
   for (const auto &node : todos) {
     if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
       continue;
@@ -66,7 +69,8 @@ bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
     AnfNodePtrList inputs = {NewValueNode(new_prim)};
     auto cnode = dyn_cast_ptr<CNode>(node);
     (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
-    cnode->set_inputs(inputs);
+    auto new_cnode = graph->NewCNodeInOrder(inputs);
+    (void)mng->Replace(node, new_cnode);
   }
   return true;
 }
