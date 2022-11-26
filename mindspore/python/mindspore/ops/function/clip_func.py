@@ -22,6 +22,8 @@ from mindspore.common.tensor import Tensor
 
 __all__ = [
     'clip_by_value',
+    'clamp',
+    'clip',
 ]
 
 hyper_map = C.HyperMap()
@@ -81,6 +83,7 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
 
     Examples:
         >>> # case 1: the data type of x is Tensor
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> min_value = Tensor(5, mindspore.float32)
@@ -131,3 +134,80 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
     if isinstance(x, tuple):
         results = tuple(results)
     return results
+
+
+def clamp(x, min=None, max=None):
+    r"""
+    Clamps tensor values to a specified min and max.
+
+    Limits the value of :math:`x` to a range, whose lower limit is `min` and upper limit is `max` .
+
+    .. math::
+
+        out_i= \left\{
+        \begin{array}{align}
+            max & \text{ if } x_i\ge  max \\
+            x_i & \text{ if } min \lt x_i \lt max \\
+            min & \text{ if } x_i \le min \\
+        \end{array}\right.
+
+    Note:
+        - `min` and `max` cannot be None at the same time;
+        - When `min` is None and `max` is not None, the elements in Tensor larger than `max` will become `max`;
+        - When `min` is not None and `max` is None, the elements in Tensor smaller than `min` will become `min`;
+        - If `min` is greater than `max`, the value of all elements in Tensor will be set to `max`;
+        - The data type of `x`, `min` and `max` should support implicit type conversion and cannot be bool type.
+
+    Args:
+          x (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of Tensor.
+                                                         The shape of Tensor is :math:`(N,*)` where :math:`*` means,
+                                                         any number of additional dimensions.
+          min (Union(Tensor, float, int)): The minimum value. Default: None.
+          max (Union(Tensor, float, int)): The maximum value. Default: None.
+
+    Returns:
+          (Union(Tensor, tuple[Tensor], list[Tensor])), a clipped Tensor or a tuple or a list of clipped Tensor.
+          The data type and shape are the same as x.
+
+    Raises:
+          ValueError: If both `min` and `max` are None.
+          TypeError: If the type of `x` is not in Tensor or list[Tensor] or tuple[Tensor].
+          TypeError: If the type of `min` is not in None, Tensor, float or int.
+          TypeError: If the type of `max` is not in None, Tensor, float or int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> # case 1: the data type of x is Tensor
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> min_value = Tensor(5, mindspore.float32)
+        >>> max_value = Tensor(20, mindspore.float32)
+        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> output = ops.clamp(x, min_value, max_value)
+        >>> print(output)
+        [[ 5. 20.  5.  7.]
+         [ 5. 11.  6. 20.]]
+        >>> # case 2: the data type of x is list[Tensor]
+        >>> min_value = 5
+        >>> max_value = 20
+        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> output = ops.clamp([x,y], min_value, max_value)
+        >>> print(output)
+        [[[ 5. 20.  5.  7.]
+          [ 5. 11.  6. 20.]],
+         [[ 5. 20.  5.  7.]
+          [ 5. 11.  6. 20.]]]
+    """
+    return clip_by_value(x, min, max)
+
+
+def clip(x, min=None, max=None):
+    """
+    Alias for ops.clamp.
+    For details, please refer to :func:`mindspore.ops.clamp`.
+    """
+    return clamp(x, min, max)

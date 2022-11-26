@@ -2286,68 +2286,18 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get('minimum')()(self, other)
 
-    def clip(self, xmin, xmax, dtype=None):
+    def clamp(self, min=None, max=None):
+        r"""
+        For details, please refer to :func:`mindspore.ops.clamp`.
         """
-        Clips (limits) the values in a Tensor.
+        self._init_check()
+        return tensor_operator_registry.get('clamp')(self, min, max)
 
-        Given an interval, values outside the interval are clipped to the interval edges.
-        For example, if an interval of :math:`[0, 1]` is specified, values smaller than 0 become 0,
-        and values larger than 1 become 1.
-
-        Note:
-            Currently, clip with `xmin=nan` or `xmax=nan` is not supported.
-
-        Args:
-            xmin (Tensor, scalar, None): Minimum value. If None, clipping is not performed
-                on the lower interval edge. Not more than one of `xmin` and `xmax` may be None.
-            xmax (Tensor, scalar, None): Maximum value. If None, clipping is not performed
-                on the upper interval edge. Not more than one of `xmin` and `xmax` may be None.
-                If `xmin` or `xmax` are tensors, then `xmin`, `xmax` and the given tensor
-                will be broadcasted to match their shapes.
-            dtype (:class:`mindspore.dtype`, optional): Overrides the dtype of the
-                output Tensor. Default is None.
-
-        Returns:
-            Tensor, a tensor with the elements of the input tensor, but where values
-            < `xmin` are replaced with `xmin`, and those > `xmax` with `xmax`.
-
-        Raises:
-            TypeError: If inputs have types not specified above.
-            ValueError: If the shapes of `x1` and `x2` cannot broadcast, or both `xmin` and `xmax` are `None`.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> x = Tensor([1, 2, 3, -4, 0, 3, 2, 0]).astype("float32")
-            >>> y = x.clip(0, 2)
-            >>> print(y)
-            [1. 2. 2. 0. 0. 2. 2. 0.]
-            >>> t = Tensor([1, 1, 1, 1, 1, 1, 1, 1])
-            >>> y = x.clip(t, 2)
-            >>> print(y)
-            [1. 2. 2. 1. 1. 2. 2. 1.]
+    def clip(self, min=None, max=None):
+        r"""
+        Alias for :func:`mindspore.Tensor.clamp`.
         """
-        if xmin is None and xmax is None:
-            raise ValueError("For 'Tensor.clip', the argument 'xmin' and 'xman' cannot all be None.")
-        x = self
-        # F.maximum/minimum does not support when both operands are scalar
-        if xmin is not None:
-            xmin = Tensor(xmin).astype(x.dtype)
-            if x.ndim == 0 and xmin.ndim == 0:
-                x = tensor_operator_registry.get("maximum")(x.reshape((1,)), xmin).squeeze()
-            else:
-                x = tensor_operator_registry.get("maximum")(x, xmin)
-        if xmax is not None:
-            xmax = Tensor(xmax).astype(x.dtype)
-            if x.ndim == 0 and xmax.ndim == 0:
-                x = tensor_operator_registry.get("minimum")()(x.reshape((1,)), xmax).squeeze()
-            else:
-                x = tensor_operator_registry.get("minimum")()(x, xmax)
-        if dtype is not None and dtype != x.dtype:
-            return x.astype(dtype)
-        return x
+        return self.clamp(min, max)
 
     def _init_check(self):
         if self.has_init:

@@ -272,7 +272,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"fill", std::string("fill")},                                      // P.fill()
        {"fills", std::string("fills")},                                    // P.fills
        {"ptp", std::string("ptp")},                                        // P.reduce_max() - P.reduce_min()
-       {"clip", std::string("clip")},                                      // P.maximum(P.minimum)
+       {"clamp", std::string("clamp")},                                    // clamp()
+       {"clip", std::string("clamp")},                                     // clamp()
        {"__bool__", std::string("tensor_bool")},                           // C.tensor_bool
        {"argmax", std::string("argmax")},                                  // P.Argmax()
        {"argmin", std::string("argmin")},                                  // P.Argmax()

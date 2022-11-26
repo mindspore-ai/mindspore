@@ -184,6 +184,8 @@ mindspore.ops
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor
     mindspore.ops.ceil
+    mindspore.ops.clamp
+    mindspore.ops.clip
     mindspore.ops.copysign
     mindspore.ops.cos
     mindspore.ops.cosh
