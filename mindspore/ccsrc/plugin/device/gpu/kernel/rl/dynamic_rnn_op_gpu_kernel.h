@@ -110,6 +110,9 @@ class DynamicRnnOpBaseMod : public NativeGpuKernelMod {
 
   virtual const std::vector<std::pair<KernelAttr, DynamicRnnOpBaseFunc>> &GetSupportFuncList() = 0;
   std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
  protected:
   void InitResource() override {
@@ -124,10 +127,6 @@ class DynamicRnnOpBaseMod : public NativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateDropoutDescriptor(&dropout_desc_), "Create dropout_desc failed");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateRNNDescriptor(&rnn_desc_), "Create rnn_desc failed");
   }
-
-  template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
   cudnnRNNMode_t rnn_mode_;
   size_t inputs_num_;
