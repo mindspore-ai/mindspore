@@ -226,9 +226,12 @@ mindspore.ops
     mindspore.ops.positive
     mindspore.ops.pow
     mindspore.ops.rad2deg
+    mindspore.ops.real
+    mindspore.ops.reciprocal
     mindspore.ops.remainder
     mindspore.ops.roll
     mindspore.ops.round
+    mindspore.ops.rsqrt
     mindspore.ops.sin
     mindspore.ops.sinh
     mindspore.ops.sqrt

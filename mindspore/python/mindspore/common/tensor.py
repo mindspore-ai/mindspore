@@ -1214,6 +1214,27 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('exp')()(self)
 
+    def real(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.real`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('real')(self)
+
+    def rsqrt(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.rsqrt`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('rsqrt')(self)
+
+    def reciprocal(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.reciprocal`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('reciprocal')(self)
+
     def sqrt(self):
         """
         For details, please refer to :func:`mindspore.ops.sqrt`.
@@ -3389,7 +3410,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('heaviside')(self, values)
-
 
     def hypot(self, other):
         r"""

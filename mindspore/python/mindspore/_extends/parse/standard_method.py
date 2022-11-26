@@ -2719,6 +2719,27 @@ def exp(x):
     return F.exp(x)
 
 
+def real(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.real`.
+    """
+    return F.real(x)
+
+
+def rsqrt(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.rsqrt`.
+    """
+    return F.rsqrt(x)
+
+
+def reciprocal(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.reciprocal`.
+    """
+    return F.reciprocal(x)
+
+
 def sqrt(x):
     """Returns sqrt of a tensor element-wise."""
     return F.sqrt(x)

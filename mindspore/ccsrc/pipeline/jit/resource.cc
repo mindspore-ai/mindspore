@@ -301,6 +301,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"unsorted_segment_max", std::string("unsorted_segment_max")},      // P.UnsortedSegmentMax()
        {"unsorted_segment_prod", std::string("unsorted_segment_prod")},    // P.UnsortedSegmentProd()
        {"renorm", std::string("renorm")},                                  // renorm()
+       {"real", std::string("real")},                                      // real()
+       {"reciprocal", std::string("reciprocal")},                          // reciprocal()
+       {"rsqrt", std::string("rsqrt")},                                    // rsqrt()
        {"trace", std::string("trace")},                                    // P.Eye()
        {"var", std::string("var")},                                        // P.ReduceSum
        {"std", std::string("std")},                                        // P.ReduceSum
