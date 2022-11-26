@@ -280,7 +280,7 @@ int MindrtExecutor::TransferGraphOutput() {
 }
 
 void MindrtExecutor::FreeOutputTensor() {
-  for (auto tensor_map : *isolate_output_map_) {
+  for (auto &&tensor_map : *isolate_output_map_) {
     auto src_tensor = tensor_map.first;
     auto dst_tensor = tensor_map.second;
     if (dst_tensor->data_type() == kNumberTypeGLUInt && src_tensor->data_type() == kNumberTypeGLUInt) {
