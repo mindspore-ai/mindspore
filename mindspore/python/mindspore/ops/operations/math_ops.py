@@ -6286,6 +6286,52 @@ class MatrixSolveLs(Primitive):
         validator.check_value_type('fast', fast, [bool], self.name)
 
 
+class Lu(Primitive):
+    """
+    Computes the LU decomposition of one or more square matrices.
+
+    Args:
+        output_idx_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
+            Default: `mindspore.dtype.int32`.
+
+    Inputs:
+        - **input** (Tensor) - A tensor of shape `[..., M, M]` whose inner-most 2 dimensions form
+          matrices of size `[M, M]`, with data type float32, float64, complex64, complex128.
+
+    Outputs:
+        - **lu** (Tensor) - A tensor of shape `[..., M, M]` whose strictly lower triangular part denotes the lower
+          triangular factor `L` with unit diagonal. Upper triangular part denotes the upper triangular factor `U`.
+        - **p** (Tensor) - Permutation of the rows encoded as a list of indices in `0..M-1`, shape is `[..., M]`.
+
+    Raises:
+        TypeError: If the dtype of `input` is not one of the following dtype:
+            float32, float64, complex64, complex128.
+        TypeError: If `output_idx_type` is neither int32 nor int64.
+        ValueError: If `input` rank is less than 2.
+        ValueError: If input[-1] is not equal to input[-2].
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[2.5,3.1,3.5], [4.7,1.9,0.2], [1.1,3.6,2.0]]), mindspore.float32)
+        >>> lu, p = ops.Lu(output_idx_type=mindspore.int32)(input)
+        >>> print(lu)
+        [[4.7        1.9        0.2       ]
+         [0.23404257 3.155319   1.9531915 ]
+         [0.5319149  0.6621713  2.1002696 ]]
+        >>> print(p)
+        [1 2 0]
+    """
+
+    @prim_attr_register
+    def __init__(self, output_idx_type):
+        super().__init__(name="Lu")
+        self.init_prim_io_names(inputs=['input'], outputs=['lu', 'p'])
+        validator.check_type_name("output_idx_type", output_idx_type, [mstype.int32, mstype.int64], self.name)
+        self.add_prim_attr('output_idx_type', output_idx_type)
+
+
 class LuSolve(Primitive):
     r"""
     Return the solution of the linear equation :math:`Ax = b` .

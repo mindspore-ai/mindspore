@@ -15,22 +15,315 @@
  */
 
 #include "plugin/device/gpu/kernel/math/lu_gpu_kernel.h"
+#include <iostream>
+#include <functional>
+#include <utility>
+#include <string>
+#include <algorithm>
+#include "abstract/utils.h"
+#include "kernel/common_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_transpose_impl.cuh"
+
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(LU,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      LUGpuKernelMod, float)
+bool LuGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                          const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
+  cublas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
+  return true;
+}
 
-MS_REG_GPU_KERNEL_ONE(LU,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddOutputAttr(kNumberTypeFloat64)
-                        .AddOutputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      LUGpuKernelMod, double)
+int LuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                           const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  auto in_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(in_shape_), LongToSize);
+  if (!CheckLuShape()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input shape init failed.";
+    return KRET_RESIZE_FAILED;
+  }
+  // a device addr to place lu factor return code
+  workspace_size_list_.push_back(sizeof(int));
+
+  // transpose workspace
+  workspace_size_list_.push_back(batch_size_ * m_ * n_ * unit_size_);
+  workspace_size_list_.push_back(batch_size_ * n_ * sizeof(int));
+
+  // The workspace for device return info.
+  workspace_size_list_.push_back(batch_size_ * sizeof(void *));
+  workspace_size_list_.push_back(batch_size_ * sizeof(int));
+  return KRET_OK;
+}
+
+void LuGpuKernelMod::ResetResource() noexcept {
+  is_null_input_ = false;
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+}
+
+template <typename T>
+void LuGpuKernelMod::BufferSize(T *batch_output_addr, int *lwork) {
+  if constexpr (std::is_same_v<T, float>) {
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnSgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, lwork),
+                                           "cusolver query lu work size fail");
+  } else if constexpr (std::is_same_v<T, double>) {
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnDgetrf_bufferSize(handle_, m_, n_, batch_output_addr, lda_, lwork),
+                                           "cusolver query lu work size fail");
+  } else if constexpr (std::is_same_v<T, utils::Complex<float>>) {
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+      cusolverDnCgetrf_bufferSize(handle_, m_, n_, reinterpret_cast<cuComplex *>(batch_output_addr), lda_, lwork),
+      "cusolver query lu work size fail");
+  } else {
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+      cusolverDnZgetrf_bufferSize(handle_, m_, n_, reinterpret_cast<cuDoubleComplex *>(batch_output_addr), lda_, lwork),
+      "cusolver query lu work size fail");
+  }
+}
+
+template <typename T, typename S>
+void LuGpuKernelMod::LaunchKernel_CuSolve(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<AddressPtr> &workspace,
+                                          const std::vector<AddressPtr> &outputs) {
+  CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                "cusolverDnSetStream failed");
+  T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
+  T *batch_output_addr = GetDeviceAddress<T>(outputs, kDim0);
+  T *d_work_ = nullptr;
+  S *batch_piv_output_addr = nullptr;
+  if (pivot_on_) {
+    batch_piv_output_addr = GetDeviceAddress<S>(outputs, kDim1);
+  }
+  int *info_output_addr = GetDeviceAddress<int>(workspace, kDim0);
+  T *dev_work = GetDeviceAddress<T>(workspace, kDim1);
+  int *dev_batch_piv = GetDeviceAddress<int>(workspace, kDim2);
+  // query working space of getrf
+  BufferSize(batch_output_addr, &lwork_);
+  // Transpose input data from rowMajor to colMajor.
+  MatrixTranspose(batch_input_addr, SizeToInt(input_elements_), m_, m_, dev_work, device_id_,
+                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  // malloc device working space of getrf
+  d_work_ = reinterpret_cast<T *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(unit_size_ * lwork_));
+  for (size_t batch = 0; batch < batch_size_; ++batch) {
+    S *piv_output_addr = batch_piv_output_addr + batch * k_;
+    int *dev_piv = dev_batch_piv + batch * k_;
+    if constexpr (std::is_same_v<T, float>) {
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnSgetrf(handle_, m_, n_, dev_work + batch * m_ * n_, lda_, d_work_, dev_piv, info_output_addr),
+        "cusolver lu fail");
+    } else if constexpr (std::is_same_v<T, double>) {
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnDgetrf(handle_, m_, n_, dev_work + batch * m_ * n_, lda_, d_work_, dev_piv, info_output_addr),
+        "cusolver lu fail");
+    } else if constexpr (std::is_same_v<T, utils::Complex<float>>) {
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnCgetrf(handle_, m_, n_, reinterpret_cast<cuComplex *>(dev_work + batch * m_ * n_), lda_,
+                         reinterpret_cast<cuComplex *>(d_work_), dev_piv, info_output_addr),
+        "cusolver lu fail");
+    } else {
+      CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+        cusolverDnZgetrf(handle_, m_, n_, reinterpret_cast<cuDoubleComplex *>(dev_work + batch * m_ * n_), lda_,
+                         reinterpret_cast<cuDoubleComplex *>(d_work_), dev_piv, info_output_addr),
+        "cusolver lu fail");
+    }
+
+    std::vector<int> host_permuted(k_, 0);
+    std::vector<int> host_pivots(k_, 0);
+    std::vector<S> host_p(k_, 0);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(host_pivots.data(), dev_piv, sizeof(int) * k_, cudaMemcpyDeviceToHost,
+                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
+      "cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots to host.");
+    // cal pivots && permutation major by row.
+    for (size_t i = 0; i < k_; ++i) {
+      host_pivots[i] -= 1;
+      host_permuted[i] = i;
+    }
+    for (size_t i = 0; i < k_; ++i) {
+      int tmp_value = host_permuted[i];
+      host_permuted[i] = host_permuted[host_pivots[i]];
+      host_permuted[host_pivots[i]] = tmp_value;
+    }
+    for (size_t i = 0; i < k_; ++i) {
+      host_p[i] = host_permuted[i];
+    }
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(piv_output_addr, host_p.data(), sizeof(S) * k_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
+      "cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots array.");
+  }
+  MatrixTranspose(dev_work, SizeToInt(input_elements_), m_, m_, batch_output_addr, device_id_,
+                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work_);
+}
+
+template <typename T, typename S>
+void LuGpuKernelMod::LaunchKernel_Cublas(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs) {
+  T *batch_input_addr = GetDeviceAddress<T>(inputs, kDim0);
+  T *batch_output_addr = GetDeviceAddress<T>(outputs, kDim0);
+  S *batch_piv_output_addr = nullptr;
+  if (pivot_on_) {
+    batch_piv_output_addr = GetDeviceAddress<S>(outputs, kDim1);
+  }
+  T *dev_transpose_work = GetDeviceAddress<T>(workspace, kDim1);
+  auto dev_batch_piv = GetDeviceAddress<int>(workspace, kDim2);
+  auto batch_lu_device_address = GetDeviceAddress<T *>(workspace, kDim3);
+  auto info = GetDeviceAddress<int>(workspace, kDim4);
+  std::vector<T *> batch_lu_address_data;
+  for (size_t i = 0; i < batch_size_; i++) {
+    batch_lu_address_data.emplace_back(dev_transpose_work + i * m_ * m_);
+  }
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemcpyAsync(batch_lu_device_address, batch_lu_address_data.data(), sizeof(T *) * batch_size_,
+                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "LuGpuKernelMod cudaMemcpyAsync Fail");
+  CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                       "For LuGpuKernelMod cublasSetStream Fail");
+  // Transpose input data from rowMajor to colMajor.
+  MatrixTranspose(batch_input_addr, SizeToInt(input_elements_), m_, m_, dev_transpose_work, device_id_,
+                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  if constexpr (std::is_same_v<T, float>) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasSgetrfBatched(cublas_handle_, m_, reinterpret_cast<float **>(batch_lu_device_address), m_, dev_batch_piv,
+                          info, SizeToInt(batch_size_)),
+      "LuGpuKernelMod cublasSgetrfBatched Fail");
+  } else if constexpr (std::is_same_v<T, double>) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasDgetrfBatched(cublas_handle_, m_, reinterpret_cast<double **>(batch_lu_device_address), m_, dev_batch_piv,
+                          info, SizeToInt(batch_size_)),
+      "LuGpuKernelMod cublasDgetrfBatched Fail");
+  } else if constexpr (std::is_same_v<T, utils::Complex<float>>) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasCgetrfBatched(cublas_handle_, m_, reinterpret_cast<cuComplex **>(batch_lu_device_address), m_,
+                          dev_batch_piv, info, SizeToInt(batch_size_)),
+      "LuGpuKernelMod cublasCgetrfBatched Fail");
+  } else if constexpr (std::is_same_v<T, utils::Complex<double>>) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasZgetrfBatched(cublas_handle_, m_, reinterpret_cast<cuDoubleComplex **>(batch_lu_device_address), m_,
+                          dev_batch_piv, info, SizeToInt(batch_size_)),
+      "LuGpuKernelMod cublasZgetrfBatched Fail");
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', it's the input data type must be float32, float64, complex64 or complex128.";
+  }
+  MatrixTranspose(dev_transpose_work, SizeToInt(input_elements_), m_, m_, batch_output_addr, device_id_,
+                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  std::vector<int> host_permuted(batch_size_ * k_, 0);
+  std::vector<int> host_pivots(batch_size_ * k_, 0);
+  std::vector<S> host_p(batch_size_ * k_, 0);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(host_pivots.data(), dev_batch_piv, sizeof(int) * batch_size_ * k_, cudaMemcpyDeviceToHost,
+                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots to host.");
+  for (size_t i = 0; i < batch_size_; ++i) {
+    for (size_t j = 0; j < k_; ++j) {
+      host_permuted[i * k_ + j] = j;
+      host_pivots[i * k_ + j] -= 1;
+    }
+    for (size_t j = 0; j < k_; ++j) {
+      int tmp_value = host_permuted[i * k_ + j];
+      host_permuted[i * k_ + j] = host_permuted[i * k_ + host_pivots[i * k_ + j]];
+      host_permuted[i * k_ + host_pivots[i * k_ + j]] = tmp_value;
+    }
+  }
+  for (size_t i = 0; i < batch_size_; ++i) {
+    for (size_t j = 0; j < k_; ++j) {
+      host_p[i * k_ + j] = host_permuted[i * k_ + j];
+    }
+  }
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(batch_piv_output_addr, host_p.data(), sizeof(S) * batch_size_ * k_, cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "cudaMemcpyAsync failed in LuGpuKernelMod::Launch copy pivots array.");
+}
+
+template <typename T, typename S>
+bool LuGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                  const std::vector<AddressPtr> &outputs) {
+  // If m_ / batch_size_ <= 128 :
+  // We use batched cublas api is faster by empiricism, for small matrices or large batch.
+  // Otherwise:
+  // We use no-batched cusolver api is faster by empiricism, For small batch sizes.
+  const size_t kNumber128 = 128;
+  if (m_ / batch_size_ <= kNumber128) {
+    LaunchKernel_Cublas<T, S>(inputs, workspace, outputs);
+  } else {
+    LaunchKernel_CuSolve<T, S>(inputs, workspace, outputs);
+  }
+  return true;
+}
+
+bool LuGpuKernelMod::CheckLuShape() {
+  constexpr size_t lu_min_dim = 1;
+  if (in_shape_.size() <= lu_min_dim) {
+    MS_LOG(ERROR) << kernel_name_ << " input shape is " << in_shape_.size() << " which is invalid.";
+    return false;
+  }
+  constexpr size_t lu_reverse_row_dim = 2;
+  lu_row_ = in_shape_.at(in_shape_.size() - lu_reverse_row_dim);
+  lu_col_ = in_shape_.at(in_shape_.size() - 1);
+  input_elements_ = std::accumulate(in_shape_.begin(), in_shape_.end(), size_t(1), std::multiplies<size_t>());
+  batch_size_ = lu_min_dim;
+  for (int batch = 0; batch < static_cast<int>(in_shape_.size() - lu_reverse_row_dim); ++batch) {
+    batch_size_ *= in_shape_.at(batch);
+  }
+  // set matrix row or col to be lead dimension
+  m_ = SizeToInt(lu_row_);
+  n_ = SizeToInt(lu_col_);
+  k_ = std::min(lu_row_, lu_col_);
+  lda_ = m_;
+  ldb_ = n_;
+  return true;
+}
+
+const std::vector<std::pair<KernelAttr, LuGpuKernelMod::KernelRunFunc>> &LuGpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, LuGpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+     &LuGpuKernelMod::LaunchKernel<float, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+     &LuGpuKernelMod::LaunchKernel<double, int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &LuGpuKernelMod::LaunchKernel<utils::Complex<float>, int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeInt32),
+     &LuGpuKernelMod::LaunchKernel<utils::Complex<double>, int>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+     &LuGpuKernelMod::LaunchKernel<float, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+     &LuGpuKernelMod::LaunchKernel<double, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeInt64),
+     &LuGpuKernelMod::LaunchKernel<utils::Complex<float>, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeInt64),
+     &LuGpuKernelMod::LaunchKernel<utils::Complex<double>, int64_t>},
+  };
+  return func_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Lu, LuGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
