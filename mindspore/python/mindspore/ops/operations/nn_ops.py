@@ -7468,7 +7468,7 @@ class InTopK(Primitive):
         validator.check_value_type("k", k, [int], self.name)
 
 
-class LRN(PrimitiveWithInfer):
+class LRN(Primitive):
     r"""
     Local Response Normalization.
 

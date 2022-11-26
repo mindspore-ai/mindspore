@@ -2442,7 +2442,7 @@ class InvGrad(Primitive):
         self.init_prim_io_names(inputs=['x', 'grad'], outputs=['y'])
 
 
-class LRNGrad(PrimitiveWithInfer):
+class LRNGrad(Primitive):
     """Computes gradients for LRN operation."""
 
     @prim_attr_register
@@ -2452,14 +2452,6 @@ class LRNGrad(PrimitiveWithInfer):
         validator.check_value_type("bias", bias, [float], self.name)
         validator.check_value_type("alpha", alpha, [float], self.name)
         validator.check_value_type("beta", beta, [float], self.name)
-
-    def infer_dtype(self, grads, x, y):
-        args = {"grads": grads, "x": x, "y": y}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32,), self.name)
-        return x
-
-    def infer_shape(self, grads, x, y):
-        return x
 
 
 class MvlgammaGrad(Primitive):
