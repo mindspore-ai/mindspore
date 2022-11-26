@@ -18,6 +18,7 @@
 #include <functional>
 #include <limits>
 #include <algorithm>
+#include <map>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -28,18 +29,33 @@ constexpr size_t kLogitGradInputsNum = 2;
 constexpr size_t kLogitGradOutputsNum = 1;
 }  // namespace
 
-void LogitGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  // grad_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kLogitGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kLogitGradOutputsNum, kernel_name_);
-  MS_EXCEPTION_IF_NULL(kernel_node);
+bool LogitGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  MS_ERROR_IF_NULL(prim);
+  eps = GetValue<float>(prim->GetAttr("eps"));
+  return true;
+}
+
+int LogitGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  return KRET_OK;
 }
 
 bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -61,12 +77,6 @@ bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 
 bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
-  auto eps = common::AnfAlgo::GetNodeAttr<float>(node_, "eps");
-  int64_t input_elem_num = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<int>());
   float16 *grad = reinterpret_cast<float16 *>(inputs[0]->addr);
   float16 *input = reinterpret_cast<float16 *>(inputs[1]->addr);
   float16 *output = reinterpret_cast<float16 *>(outputs[0]->addr);
@@ -75,14 +85,14 @@ bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inpu
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
   if (eps < 0) {
-    for (int64_t i = 0; i < input_elem_num; i++) {
+    for (size_t i = 0; i < input_elements_; i++) {
       output[i] = (input[i] < float16(0) || input[i] > float16(1))
                     ? float16(std::numeric_limits<float>::quiet_NaN())
                     : float16(static_cast<float>(grad[i]) / static_cast<float>(input[i]) /
                               (static_cast<float>(1) - static_cast<float>(input[i])));
     }
   } else {
-    for (int64_t i = 0; i < input_elem_num; i++) {
+    for (size_t i = 0; i < input_elements_; i++) {
       output[i] = (static_cast<float>(input[i]) < static_cast<float>(eps) ||
                    static_cast<float>(input[i]) > static_cast<float>(1 - eps))
                     ? float16(0)
@@ -96,12 +106,6 @@ bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inpu
 template <typename T>
 bool LogitGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
-  auto eps = common::AnfAlgo::GetNodeAttr<float>(node_, "eps");
-  int64_t input_elem_num = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<int>());
   T *grad = reinterpret_cast<T *>(inputs[0]->addr);
   T *input = reinterpret_cast<T *>(inputs[1]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
@@ -110,12 +114,12 @@ bool LogitGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
   if (eps < 0) {
-    for (int64_t i = 0; i < input_elem_num; i++) {
+    for (size_t i = 0; i < input_elements_; i++) {
       output[i] = (input[i] < T(0) || input[i] > T(1)) ? std::numeric_limits<T>::quiet_NaN()
                                                        : (grad[i] / input[i] / (T(1) - input[i]));
     }
   } else {
-    for (int64_t i = 0; i < input_elem_num; i++) {
+    for (size_t i = 0; i < input_elements_; i++) {
       output[i] = (input[i] < static_cast<T>(eps) || input[i] > T(1) - static_cast<T>(eps))
                     ? T(0)
                     : (grad[i] / input[i] / (T(1) - input[i]));
