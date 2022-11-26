@@ -388,6 +388,7 @@ if(MSLITE_ENABLE_MINDRT)
     add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
     set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/lite_mindrt.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/litert/parallel_lite_actor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/mindrt_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_actor_creator.cc
         )
