@@ -209,8 +209,11 @@ bool ActivationGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   constexpr bool use_unary =
     std::is_same_v<T, double> || std::is_same_v<T, utils::Complex<float>> || std::is_same_v<T, utils::Complex<double>>;
   if constexpr (use_unary) {
-    TanhGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
-    SigmoidGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    if (kernel_name_ == kTanhGrad) {
+      TanhGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    } else {
+      SigmoidGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    }
     return true;
   }
 
