@@ -31,49 +31,37 @@ std::unique_ptr<cukernel::GpuKernelHelperBase> CreateAdaptiveMaxPoolGradKernelPt
 using AdaptiveMaxPoolGradPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
+#define REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(TypeId1, TypeId2, Type1, Type2)                            \
+  {                                                                                                        \
+    KernelAttr().AddInputAttr(TypeId1).AddInputAttr(TypeId1).AddInputAttr(TypeId2).AddOutputAttr(TypeId1), \
+      CreateAdaptiveMaxPoolGradKernelPtr<Type1, Type2>                                                     \
+  }
+
 const std::vector<std::pair<KernelAttr, AdaptiveMaxPoolGradPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat16),
-   CreateAdaptiveMaxPoolGradKernelPtr<half, int>},
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeFloat16, kNumberTypeInt32, half, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t),
 
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateAdaptiveMaxPoolGradKernelPtr<float, int>},
-
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat64),
-   CreateAdaptiveMaxPoolGradKernelPtr<double, int>},
-
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat16),
-   CreateAdaptiveMaxPoolGradKernelPtr<half, int64_t>},
-
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat32),
-   CreateAdaptiveMaxPoolGradKernelPtr<float, int64_t>},
-
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   CreateAdaptiveMaxPoolGradKernelPtr<double, int64_t>},
-};
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeFloat16, kNumberTypeInt64, half, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t),
+  REG_ADAPTIVE_MAX_POOL3D_GRAD_GPU_KERNEL(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t),
+};  // namespace
 }  // namespace
 
 bool AdaptiveMaxPool3DGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,

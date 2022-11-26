@@ -38,30 +38,31 @@ void CalAdaptiveMaxPool3DGrad(const T *input_grad, const S *input_argmax, const 
     input_grad, input_argmax, output_stride, argmax_stride, batch, output_data);
 }
 
-template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<half, int>(const half *input_grad, const int *input_argmax,
-                                                                  const int output_stride, const int argmax_stride,
-                                                                  const int batch, half *output_data,
-                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+#define REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(type1, type2)                                                   \
+  template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<type1, type2>(                                   \
+    const type1 *input_grad, const type2 *input_argmax, const int output_stride, const int argmax_stride, \
+    const int batch, type1 *output_data, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<float, int>(const float *input_grad, const int *input_argmax,
-                                                                   const int output_stride, const int argmax_stride,
-                                                                   const int batch, float *output_data,
-                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(half, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(float, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(double, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int8_t, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int16_t, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int32_t, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int64_t, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint8_t, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint16_t, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint32_t, int32_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint64_t, int32_t);
 
-template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<double, int>(const double *input_grad, const int *input_argmax,
-                                                                    const int output_stride, const int argmax_stride,
-                                                                    const int batch, double *output_data,
-                                                                    const uint32_t &device_id,
-                                                                    cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<half, int64_t>(
-  const half *input_grad, const int64_t *input_argmax, const int output_stride, const int argmax_stride,
-  const int batch, half *output_data, const uint32_t &device_id, cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<float, int64_t>(
-  const float *input_grad, const int64_t *input_argmax, const int output_stride, const int argmax_stride,
-  const int batch, float *output_data, const uint32_t &device_id, cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad<double, int64_t>(
-  const double *input_grad, const int64_t *input_argmax, const int output_stride, const int argmax_stride,
-  const int batch, double *output_data, const uint32_t &device_id, cudaStream_t cuda_stream);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(half, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(float, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(double, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int8_t, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int16_t, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int32_t, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(int64_t, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint8_t, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint16_t, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint32_t, int64_t);
+REG_ADAPTIVE_MAX_POOL3D_GRAD_CUDA(uint64_t, int64_t);
