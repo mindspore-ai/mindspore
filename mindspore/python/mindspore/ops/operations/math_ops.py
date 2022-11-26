@@ -6607,6 +6607,7 @@ class RaggedRange(Primitive):
           - if type of the input `starts`, input `limits` and input `deltas`
             are float32 or float64, shape of the output `rt_dense_values` is equal to
             sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
+
     Raises:
         TypeError: If any input is not Tensor.
         TypeError: If the type of `starts` is not one of the following dtype: int32, int64, float32, float64.

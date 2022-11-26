@@ -512,7 +512,7 @@ class Assert(PrimitiveWithInfer):
     Inputs:
         - **condition** (Union[Tensor[bool], bool]) - The condition to be identified.
         - **input_data** (Union[tuple[Tensor], list[Tensor]]) - The tensors to be printed out when the condition
-        is false.
+          is false.
 
     Raises:
         TypeError: If `summarize` is not an int.
