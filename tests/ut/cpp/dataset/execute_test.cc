@@ -3000,3 +3000,41 @@ TEST_F(MindDataTestExecute, TestAddToken) {
   Status status = trans(input_ms, &input_ms);
   EXPECT_TRUE(status.IsOk());
 }
+
+/// Feature: LFCC op
+/// Description: Test basic usage of LFCC op
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestLFCCEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestLFCC.";
+  // Original waveform
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
+                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> lfcc_op =
+    std::make_shared<audio::LFCC>(16000, 128, 4, 0.0, 10000.0, 2, NormMode::kOrtho, true);
+  // apply LFCC
+  mindspore::dataset::Execute trans({lfcc_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+/// Feature: LFCC op
+/// Description: Wrong dct_type of LFCC op
+/// Expectation: Get false status
+TEST_F(MindDataTestExecute, TestLFCCWrongArgsDctType) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestLFCCWrongArgsDctType.";
+  // Original waveform
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
+                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> lfcc_op =
+    std::make_shared<audio::LFCC>(16000, 128, 4, 0.0, 10000.0, -2, NormMode::kOrtho, true);
+  // apply LFCC
+  mindspore::dataset::Execute trans({lfcc_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_FALSE(status.IsOk());
+}

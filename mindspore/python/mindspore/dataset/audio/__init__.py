@@ -67,10 +67,10 @@ from mindspore.dataset.audio import utils
 from mindspore.dataset.audio.transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, \
     BandpassBiquad, BandrejectBiquad, BassBiquad, Biquad, \
     ComplexNorm, ComputeDeltas, Contrast, DBToAmplitude, DCShift, DeemphBiquad, DetectPitchFrequency, Dither, \
-    EqualizerBiquad, Fade, Flanger, FrequencyMasking, Gain, GriffinLim, HighpassBiquad, InverseMelScale, LFilter, \
-    LowpassBiquad, Magphase, MaskAlongAxis, MaskAlongAxisIID, MelScale, MuLawDecoding, MuLawEncoding, Overdrive, \
-    Phaser, PhaseVocoder, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, TimeMasking, \
-    TimeStretch, TrebleBiquad, Vad, Vol
+    EqualizerBiquad, Fade, Flanger, FrequencyMasking, Gain, GriffinLim, HighpassBiquad, InverseMelScale, LFCC, \
+    LFilter, LowpassBiquad, Magphase, MaskAlongAxis, MaskAlongAxisIID, MelScale, MuLawDecoding, MuLawEncoding, \
+    Overdrive, Phaser, PhaseVocoder, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, \
+    TimeMasking, TimeStretch, TrebleBiquad, Vad, Vol
 from mindspore.dataset.audio.utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
     MelType, Modulation, NormMode, NormType, ResampleMethod, ScaleType, WindowType, create_dct, linear_fbanks, \
     melscale_fbanks

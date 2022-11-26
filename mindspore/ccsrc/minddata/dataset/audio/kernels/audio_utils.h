@@ -2112,6 +2112,34 @@ Status Filtfilt(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 /// \return Status return code.
 Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float orig_freq, float des_freq,
                 ResampleMethod resample_method, int32_t lowpass_filter_width, float rolloff, float beta);
+
+/// \brief Create LFCC for a raw audio signal.
+/// \param[in] input Input tensor.
+/// \param[out] output Output tensor.
+/// \param[in] sample_rate Sample rate of audio signal.
+/// \param[in] n_filter Number of linear filters to apply.
+/// \param[in] n_lfcc Number of lfc coefficients to retain.
+/// \param[in] dct_type Type of DCT (discrete cosine transform) to use.
+/// \param[in] log_lf Whether to use log-lf spectrograms instead of db-scaled.
+/// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins.
+/// \param[in] win_length Window size.
+/// \param[in] hop_length Length of hop between STFT windows.
+/// \param[in] f_min Minimum frequency.
+/// \param[in] f_max Maximum frequency.
+/// \param[in] pad Two sided padding of signal.
+/// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+/// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2 for power, etc.
+/// \param[in] normalized Whether to normalize by magnitude after stft.
+/// \param[in] center Whether to pad waveform on both sides so that the tt-th frame is centered at time t
+///     t*hop_length.
+/// \param[in] pad_mode Controls the padding method used when center is True.
+/// \param[in] onesided Controls whether to return half of results to avoid redundancy.
+/// \param[in] norm Norm to use.
+/// \return Status code.
+Status LFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+            int32_t n_filter, int32_t n_lfcc, int32_t dct_type, bool log_lf, int32_t n_fft, int32_t win_length,
+            int32_t hop_length, float f_min, float f_max, int32_t pad, WindowType window, float power, bool normalized,
+            bool center, BorderType pad_mode, bool onesided, NormMode norm);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

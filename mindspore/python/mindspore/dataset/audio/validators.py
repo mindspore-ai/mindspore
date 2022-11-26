@@ -23,7 +23,7 @@ from mindspore.dataset.core.validator_helpers import check_float32, check_float3
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
 from mindspore.dataset.audio.utils import BorderType, DensityFunction, FadeShape, GainType, \
-    Interpolation, MelType, Modulation, NormType, ResampleMethod, ScaleType, WindowType
+    Interpolation, MelType, Modulation, NormMode, NormType, ResampleMethod, ScaleType, WindowType
 
 
 def check_amplitude_to_db(method):
@@ -945,6 +945,46 @@ def check_resample(method):
 
         type_check(rolloff, (float,), "rolloff")
         check_value(rolloff, [0, 1.0], "rolloff", True, False)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_lfcc(method):
+    """Wrapper method to check the parameters of LFCC."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, n_filter, n_lfcc, f_min, f_max, dct_type, norm, log_lf, speckwargs], _ = parse_user_args(
+            method, *args, **kwargs)
+        type_check(sample_rate, (int,), "sample_rate")
+        check_non_negative_int32(sample_rate, "sample_rate")
+        type_check(n_filter, (int,), "n_filter")
+        check_value(n_filter, [1, 2147483645], "n_filter")
+        type_check(n_lfcc, (int,), "n_lfcc")
+        check_pos_int32(n_lfcc, "n_lfcc")
+        type_check(log_lf, (bool,), "log_lf")
+        type_check(norm, (NormMode,), "norm")
+        type_check(f_min, (int, float), "f_min")
+        check_non_negative_float32(f_min, "f_min")
+        if f_max is not None:
+            type_check(f_max, (int, float), "f_max")
+            check_non_negative_float32(f_max, "f_max")
+            if f_min > f_max:
+                raise ValueError("LFCC: f_max should be greater than or equal to f_min.")
+        else:
+            if f_min >= sample_rate // 2:
+                raise ValueError("LFCC: sample_rate // 2 should be greater than f_min when f_max is set to None.")
+        if dct_type != 2:
+            raise ValueError("dct_type must be 2, but got : {0}.".format(dct_type))
+        if speckwargs is not None:
+            type_check(speckwargs, (dict,), "speckwargs")
+            window = speckwargs["window"]
+            pad_mode = speckwargs["pad_mode"]
+
+            type_check(window, (WindowType,), "window")
+            type_check(pad_mode, (BorderType,), "pad_mode")
+
         return method(self, *args, **kwargs)
 
     return new_method

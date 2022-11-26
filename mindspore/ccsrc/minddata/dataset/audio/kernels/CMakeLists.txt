@@ -28,6 +28,7 @@ add_library(audio-kernels OBJECT
         griffin_lim_op.cc
         highpass_biquad_op.cc
         inverse_mel_scale_op.cc
+        lfcc_op.cc
         lfilter_op.cc
         lowpass_biquad_op.cc
         magphase_op.cc
