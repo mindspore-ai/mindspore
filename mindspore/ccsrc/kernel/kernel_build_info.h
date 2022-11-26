@@ -32,6 +32,13 @@
 
 namespace mindspore {
 namespace kernel {
+enum KernelObjectType : int {
+  TENSOR = 0,
+  SCALAR,
+  TUPLE,
+  TUPLE_UNFOLD,
+};
+
 class BACKEND_EXPORT KernelBuildInfo {
  public:
   class KernelBuildInfoBuilder;
@@ -67,6 +74,10 @@ class BACKEND_EXPORT KernelBuildInfo {
   const std::vector<TypeId> &GetAllInputDeviceTypes() const;
 
   const std::vector<TypeId> &GetAllOutputDeviceTypes() const;
+
+  const std::vector<KernelObjectType> &GetAllInputKernelObjectTypes() const;
+
+  const std::vector<KernelObjectType> &GetAllOutputKernelObjectTypes() const;
 
   std::vector<std::string> GetAllOutputReshapeType() const;
 
@@ -117,6 +128,8 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::vector<std::string> output_reshape_type_;
   std::vector<TypeId> inputs_device_type_;
   std::vector<TypeId> outputs_device_type_;
+  std::vector<KernelObjectType> inputs_kernel_object_type_;
+  std::vector<KernelObjectType> outputs_kernel_object_type_;
   std::vector<nlohmann::json> output_data_desc_;
   FusionType fusion_type_{kernel::FusionType::OPAQUE};
   Processor processor_{AICORE};
