@@ -42,8 +42,9 @@ class MIND_API SparseMatrixTranspose : public BaseOperator {
   bool get_conjugate() const;
 };
 
-abstract::AbstractBasePtr SparseMatrixTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseMatrixTransposeInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseMatrixTransposePtr = std::shared_ptr<SparseMatrixTranspose>;
 }  // namespace ops
 }  // namespace mindspore

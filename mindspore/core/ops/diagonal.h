@@ -29,8 +29,8 @@ class MIND_API Diagonal : public BaseOperator {
   MIND_API_BASE_MEMBER(Diagonal);
   Diagonal() : BaseOperator(kNameDiagonal) { InitIOName({"x"}, {"y"}); }
 };
-abstract::AbstractBasePtr DiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

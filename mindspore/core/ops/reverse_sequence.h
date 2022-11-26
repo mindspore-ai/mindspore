@@ -47,8 +47,9 @@ class MIND_API ReverseSequence : public BaseOperator {
   /// \return batch_dim.
   int64_t get_batch_dim() const;
 };
-abstract::AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimReverseSequence = std::shared_ptr<ReverseSequence>;
 }  // namespace ops
 }  // namespace mindspore

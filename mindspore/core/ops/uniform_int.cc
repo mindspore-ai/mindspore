@@ -91,7 +91,7 @@ abstract::AbstractBasePtr UniformIntInfer(const abstract::AnalysisEnginePtr &, c
   return abstract::MakeAbstract(output_shape, kInt32);
 }
 
-REGISTER_HOST_DEPENDS(kNameUniformInt, {0});
+REGISTER_INFER_DEPENDS(kNameUniformInt, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(UniformInt, prim::kPrimUniformInt, UniformIntInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

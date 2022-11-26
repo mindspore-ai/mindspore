@@ -33,8 +33,8 @@ class MIND_API GeLU : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GeLU for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GELU_H_

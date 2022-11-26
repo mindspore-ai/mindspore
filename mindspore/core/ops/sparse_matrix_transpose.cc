@@ -145,6 +145,6 @@ AbstractBasePtr SparseMatrixTransposeInfer(const abstract::AnalysisEnginePtr &, 
 MIND_API_OPERATOR_IMPL(SparseMatrixTranspose, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixTranspose, prim::kPrimSparseMatrixTranspose, SparseMatrixTransposeInfer,
                              nullptr, true);
-REGISTER_HOST_DEPENDS(kNameSparseMatrixTranspose, {0});
+REGISTER_INFER_DEPENDS(kNameSparseMatrixTranspose, {0});
 }  // namespace ops
 }  // namespace mindspore

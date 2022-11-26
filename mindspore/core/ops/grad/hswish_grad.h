@@ -28,7 +28,7 @@ class MIND_API HSwishGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(HSwishGrad);
   HSwishGrad() : BaseOperator(kNameHSwishGrad) { InitIOName({"y_grad", "x"}, {"output"}); }
 };
-abstract::AbstractBasePtr HSwishGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr HSwishGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_HSWISH_GRAD_H_

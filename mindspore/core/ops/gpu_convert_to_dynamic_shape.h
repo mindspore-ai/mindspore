@@ -37,9 +37,9 @@ class MIND_API GpuConvertToDynamicShape : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr GpuConvertToDynamicShapeInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GpuConvertToDynamicShapeInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGpuConvertToDynamicShapePtr = std::shared_ptr<GpuConvertToDynamicShape>;
 }  // namespace ops
 }  // namespace mindspore

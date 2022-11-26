@@ -36,8 +36,8 @@ class MIND_API AsinGrad : public BaseOperator {
   AsinGrad() : BaseOperator(kNameAsinGrad) { InitIOName({"y", "dy"}, {"z"}); }
 };
 
-abstract::AbstractBasePtr AsinGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AsinGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAsinGradPtr = std::shared_ptr<AsinGrad>;
 }  // namespace ops
 }  // namespace mindspore

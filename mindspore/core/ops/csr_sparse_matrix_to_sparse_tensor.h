@@ -33,9 +33,9 @@ class MIND_API CSRSparseMatrixToSparseTensor : public BaseOperator {
                {"indices", "values", "dense_shape"});
   }
 };
-abstract::AbstractBasePtr CSRSparseMatrixToSparseTensorInfer(const abstract::AnalysisEnginePtr &,
-                                                             const PrimitivePtr &primitive,
-                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CSRSparseMatrixToSparseTensorInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCSRSparseMatrixToSparseTensorPtr = std::shared_ptr<CSRSparseMatrixToSparseTensor>;
 }  // namespace ops
 }  // namespace mindspore

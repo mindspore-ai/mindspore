@@ -70,8 +70,9 @@ class MIND_API FusedAdaFactorWithGlobalNorm : public FusedAdaFactor {
   FusedAdaFactorWithGlobalNorm() : FusedAdaFactor(kNameFusedAdaFactorWithGlobalNorm) {}
 };
 
-abstract::AbstractBasePtr FusedAdaFactorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FusedAdaFactorInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

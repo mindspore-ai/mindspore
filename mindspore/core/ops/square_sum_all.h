@@ -37,8 +37,8 @@ class MIND_API SquareSumAll : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr SquareSumAllInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SquareSumAllInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

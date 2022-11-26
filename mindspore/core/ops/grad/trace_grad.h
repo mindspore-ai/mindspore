@@ -31,8 +31,8 @@ class MIND_API TraceGrad : public BaseOperator {
   TraceGrad() : BaseOperator(kNameTraceGrad) {}
   void Init() const {}
 };
-abstract::AbstractBasePtr TraceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TraceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_TRACE_GRAD_H_

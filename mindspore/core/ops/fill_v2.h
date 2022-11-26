@@ -33,8 +33,8 @@ class MIND_API FillV2 : public BaseOperator {
   FillV2() : BaseOperator(kNameFillV2) { InitIOName({"shape", "value"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr FillV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FillV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimFillV2Ptr = std::shared_ptr<FillV2>;
 }  // namespace ops

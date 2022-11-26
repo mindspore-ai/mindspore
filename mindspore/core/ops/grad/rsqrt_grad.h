@@ -34,8 +34,8 @@ class MIND_API RsqrtGrad : public BaseOperator {
   RsqrtGrad() : BaseOperator(kNameRsqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRsqrtGradPtr = std::shared_ptr<RsqrtGrad>;
 }  // namespace ops
 }  // namespace mindspore

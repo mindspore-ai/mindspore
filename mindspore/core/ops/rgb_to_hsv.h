@@ -34,8 +34,8 @@ class MIND_API RGBToHSV : public BaseOperator {
   MIND_API_BASE_MEMBER(RGBToHSV);
   RGBToHSV() : BaseOperator(kNameRGBToHSV) { InitIOName({"images"}, {"y"}); }
 };
-abstract::AbstractBasePtr RGBToHSVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RGBToHSVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

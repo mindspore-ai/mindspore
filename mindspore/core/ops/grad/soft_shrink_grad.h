@@ -38,8 +38,9 @@ class MIND_API SoftShrinkGrad : public BaseOperator {
   /// \brief Method to get lambd.
   float get_lambd() const;
 };
-abstract::AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SOFTSHRINK_GRAD_H_

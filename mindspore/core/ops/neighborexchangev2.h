@@ -32,8 +32,9 @@ class MIND_API NeighborExchangeV2 : public BaseOperator {
 };
 using kPrimNeighborExchangeV2Ptr = std::shared_ptr<NeighborExchangeV2>;
 
-abstract::AbstractBasePtr NeighborExchangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr NeighborExchangeV2Infer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

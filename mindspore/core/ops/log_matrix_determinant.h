@@ -30,8 +30,9 @@ class MIND_API LogMatrixDeterminant : public BaseOperator {
   LogMatrixDeterminant() : BaseOperator(kNameLogMatrixDeterminant) { InitIOName({"x"}, {"sign", "output"}); }
 };
 
-abstract::AbstractBasePtr LogMatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LogMatrixDeterminantInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLogMatrixDeterminantPtr = std::shared_ptr<LogMatrixDeterminant>;
 }  // namespace ops
 }  // namespace mindspore

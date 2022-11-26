@@ -58,8 +58,9 @@ class MIND_API ApplyMomentum : public BaseOperator {
   /// \return gradient_scale.
   float get_gradient_scale() const;
 };
-abstract::AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyMomentumPtr = std::shared_ptr<ApplyMomentum>;
 }  // namespace ops
 }  // namespace mindspore

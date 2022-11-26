@@ -50,8 +50,8 @@ class MIND_API LpNorm : public BaseOperator {
   float get_epsilon() const;
 };
 
-abstract::AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimLpNormPtr = std::shared_ptr<LpNorm>;
 }  // namespace ops

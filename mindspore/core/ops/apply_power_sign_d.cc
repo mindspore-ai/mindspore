@@ -21,6 +21,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <utility>
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -120,13 +121,13 @@ TuplePtr ApplyPowerSignDInferType(const PrimitivePtr &prim, const std::vector<Ab
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(ApplyPowerSign, BaseOperator);
-AbstractBasePtr ApplyPowerSignDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr ApplyPowerSignInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto infer_type = ApplyPowerSignDInferType(primitive, input_args);
   auto infer_shape = ApplyPowerSignDInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ApplyPowerSign, prim::kPrimApplyPowerSign, ApplyPowerSignDInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(ApplyPowerSign, prim::kPrimApplyPowerSign, ApplyPowerSignInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

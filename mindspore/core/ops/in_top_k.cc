@@ -71,7 +71,6 @@ class InTopKInfer : public abstract::OpInferBase {
     return std::make_shared<TensorType>(kBool);
   }
 };
-
 abstract::AbstractBasePtr InTopKInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

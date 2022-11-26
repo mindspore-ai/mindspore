@@ -35,8 +35,8 @@ class MIND_API LogitGrad : public BaseOperator {
   void set_eps(const float eps);
   float get_eps() const;
 };
-abstract::AbstractBasePtr LogitGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LogitGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

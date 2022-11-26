@@ -32,8 +32,8 @@ class MIND_API LARSUpdate : public BaseOperator {
   MIND_API_BASE_MEMBER(LARSUpdate);
   explicit LARSUpdate(const std::string &name = kNameLARSUpdate) : BaseOperator(name) {}
 };
-abstract::AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLARSUpdatePtr = std::shared_ptr<LARSUpdate>;
 }  // namespace ops
 }  // namespace mindspore

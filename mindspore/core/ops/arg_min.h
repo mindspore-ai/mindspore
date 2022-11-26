@@ -51,8 +51,8 @@ class MIND_API ArgMin : public BaseOperator {
   /// \return output_type.
   TypeId get_output_type() const;
 };
-abstract::AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimArgMin = std::shared_ptr<ArgMin>;
 }  // namespace ops
 }  // namespace mindspore

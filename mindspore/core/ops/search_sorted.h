@@ -36,8 +36,8 @@ class MIND_API SearchSorted : public BaseOperator {
   bool get_right() const;
 };
 
-abstract::AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

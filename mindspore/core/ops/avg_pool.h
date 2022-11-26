@@ -78,8 +78,8 @@ class MIND_API AvgPool : public BaseOperator {
   RoundMode get_round_mode() const;
 };
 
-abstract::AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimAvgPoolPtr = std::shared_ptr<AvgPool>;
 }  // namespace ops
 }  // namespace mindspore

@@ -45,8 +45,8 @@ class MIND_API CeLU : public BaseOperator {
   float get_alpha() const;
 };
 
-abstract::AbstractBasePtr CeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCeLUPtr = std::shared_ptr<CeLU>;
 }  // namespace ops
 }  // namespace mindspore

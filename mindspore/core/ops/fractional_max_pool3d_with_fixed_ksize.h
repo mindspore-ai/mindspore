@@ -56,7 +56,7 @@ class MIND_API FractionalMaxPool3DWithFixedKsize : public BaseOperator {
   /// \return data format attributes.
 };
 
-abstract::AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(
+MIND_API abstract::AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalMaxPool3DWithFixedKsizePtr = std::shared_ptr<FractionalMaxPool3DWithFixedKsize>;

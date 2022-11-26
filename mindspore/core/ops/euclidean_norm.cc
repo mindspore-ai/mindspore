@@ -154,7 +154,7 @@ bool EuclideanNorm::get_keep_dims() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_HOST_DEPENDS(kNameEuclideanNorm, {1});
+REGISTER_INFER_DEPENDS(kNameEuclideanNorm, {1});
 REGISTER_PRIMITIVE_EVAL_IMPL(EuclideanNorm, prim::kPrimEuclideanNorm, EuclideanNormInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

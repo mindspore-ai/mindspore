@@ -33,8 +33,8 @@ class MIND_API LowerBound : public BaseOperator {
   MIND_API_BASE_MEMBER(LowerBound);
   LowerBound() : BaseOperator(kNameLowerBound) { InitIOName({"sorted_x", "values"}, {"y"}); }
 };
-abstract::AbstractBasePtr LowerBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LowerBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLowerBound = std::shared_ptr<LowerBound>;
 }  // namespace ops
 }  // namespace mindspore

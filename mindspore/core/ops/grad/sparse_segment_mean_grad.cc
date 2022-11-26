@@ -104,8 +104,8 @@ AbstractBasePtr SparseSegmentMeanGradInfer(const abstract::AnalysisEnginePtr &, 
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_HOST_DEPENDS(kNameSparseSegmentMeanGrad, {3});
 MIND_API_OPERATOR_IMPL(SparseSegmentMeanGrad, BaseOperator);
+REGISTER_INFER_DEPENDS(kNameSparseSegmentMeanGrad, {3});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentMeanGrad, prim::kPrimSparseSegmentMeanGrad, SparseSegmentMeanGradInfer,
                              nullptr, true);
 }  // namespace ops

@@ -63,8 +63,9 @@ class MIND_API ExtractVolumePatches : public BaseOperator {
   std::string get_padding() const;
 };
 
-abstract::AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimExtractVolumePatchesPtr = std::shared_ptr<ExtractVolumePatches>;
 }  // namespace ops
 }  // namespace mindspore

@@ -43,8 +43,9 @@ class MIND_API MatrixDiagPartV3 : public BaseOperator {
   std::string get_align() const;
 };
 
-abstract::AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimMatrixDiagPartV3Ptr = std::shared_ptr<MatrixDiagPartV3>;
 }  // namespace ops

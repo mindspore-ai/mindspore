@@ -36,8 +36,8 @@ class MIND_API ResizeArea : public BaseOperator {
   void set_align_corners(const bool align_corners);
   bool get_align_corners() const;
 };
-abstract::AbstractBasePtr ResizeAreaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ResizeAreaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimResizeAreaPtr = std::shared_ptr<ResizeArea>;
 }  // namespace ops
 }  // namespace mindspore

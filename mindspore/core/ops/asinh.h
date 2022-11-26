@@ -38,8 +38,8 @@ class MIND_API Asinh : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr AsinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AsinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimAsinhPtr = std::shared_ptr<Asinh>;
 }  // namespace ops

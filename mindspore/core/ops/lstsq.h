@@ -31,8 +31,8 @@ class MIND_API Lstsq : public BaseOperator {
   MIND_API_BASE_MEMBER(Lstsq);
   Lstsq() : BaseOperator(kNameLstsq) { InitIOName({"matrix", "rhs"}, {"y"}); }
 };
-abstract::AbstractBasePtr LstsqInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LstsqInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLstsqPtr = std::shared_ptr<Lstsq>;
 }  // namespace ops
 }  // namespace mindspore

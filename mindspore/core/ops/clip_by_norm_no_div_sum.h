@@ -37,8 +37,9 @@ class MIND_API ClipByNormNoDivSum : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr ClipByNormNoDivSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ClipByNormNoDivSumInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimClipByNormNoDivSumPtr = std::shared_ptr<ClipByNormNoDivSum>;
 }  // namespace ops
 }  // namespace mindspore

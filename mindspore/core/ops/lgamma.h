@@ -32,8 +32,8 @@ class MIND_API Lgamma : public BaseOperator {
   MIND_API_BASE_MEMBER(Lgamma);
   Lgamma() : BaseOperator(kNameLgamma) { InitIOName({"x"}, {"y"}); }
 };
-abstract::AbstractBasePtr LgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimLgammaPtr = std::shared_ptr<Lgamma>;
 }  // namespace ops

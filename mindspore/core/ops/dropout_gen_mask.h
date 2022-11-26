@@ -49,8 +49,9 @@ class MIND_API StatelessDropOutGenMask : public DropoutGenMask {
   StatelessDropOutGenMask() : DropoutGenMask(kNameStatelessDropOutGenMask) {}
 };
 
-abstract::AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

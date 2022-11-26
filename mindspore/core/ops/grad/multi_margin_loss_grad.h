@@ -48,8 +48,9 @@ class MIND_API MultiMarginLossGrad : public BaseOperator {
   string get_reduction() const;
 };
 
-abstract::AbstractBasePtr MultiMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MultiMarginLossGradInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMultiMarginLossGradPtr = std::shared_ptr<MultiMarginLossGrad>;
 }  // namespace ops
 }  // namespace mindspore

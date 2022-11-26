@@ -35,8 +35,9 @@ class MIND_API AdjustContrastv2 : public BaseOperator {
   AdjustContrastv2() : BaseOperator(kNameAdjustContrastv2) { InitIOName({"images", "contrast_factor"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr AdjustContrastv2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AdjustContrastv2Infer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAdjustContrastv2Ptr = std::shared_ptr<AdjustContrastv2>;
 }  // namespace ops
 }  // namespace mindspore

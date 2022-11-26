@@ -130,7 +130,7 @@ AbstractBasePtr CSRSparseMatrixToDenseInfer(const abstract::AnalysisEnginePtr &,
   auto shapes = CSRSparseMatrixToDenseInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameCSRSparseMatrixToDense, {0});
+REGISTER_INFER_DEPENDS(kNameCSRSparseMatrixToDense, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(CSRSparseMatrixToDense, prim::kPrimCSRSparseMatrixToDense, CSRSparseMatrixToDenseInfer,
                              nullptr, true);
 }  // namespace ops

@@ -37,8 +37,8 @@ class MIND_API Floor : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Floor for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimFloorPtr = std::shared_ptr<Floor>;
 }  // namespace ops

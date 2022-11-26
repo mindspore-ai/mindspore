@@ -37,8 +37,8 @@ class MIND_API HSwish : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr HSwishInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr HSwishInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace mindspore::ops
 
 #endif  // MINDSPORE_CORE_OPS_HSWISH_H_

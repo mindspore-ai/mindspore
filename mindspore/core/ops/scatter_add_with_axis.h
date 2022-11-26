@@ -40,8 +40,9 @@ class MIND_API ScatterAddWithAxis : public BaseOperator {
   /// \brief Get axis.
   int64_t get_axis() const;
 };
-abstract::AbstractBasePtr ScatterAddWithAxisInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ScatterAddWithAxisInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimScatterAddWithAxisPtr = std::shared_ptr<ScatterAddWithAxis>;
 }  // namespace ops
 }  // namespace mindspore

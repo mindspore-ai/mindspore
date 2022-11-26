@@ -50,8 +50,9 @@ class MIND_API RandomShuffle : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr RandomShuffleInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RandomShuffleInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRandomShufflePtr = std::shared_ptr<RandomShuffle>;
 }  // namespace ops
 }  // namespace mindspore

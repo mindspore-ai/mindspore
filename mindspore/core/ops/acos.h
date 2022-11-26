@@ -37,8 +37,8 @@ class MIND_API ACos : public BaseOperator {
   ACos() : BaseOperator(kNameACos) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr ACosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ACosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimACosPtr = std::shared_ptr<ACos>;
 }  // namespace ops

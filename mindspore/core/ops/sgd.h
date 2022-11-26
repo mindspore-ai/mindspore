@@ -54,8 +54,8 @@ class MIND_API SGD : public BaseOperator {
   /// \return nesterov.
   bool get_nesterov() const;
 };
-abstract::AbstractBasePtr SGDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SGDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSGD = std::shared_ptr<SGD>;
 }  // namespace ops
 }  // namespace mindspore

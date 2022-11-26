@@ -43,8 +43,8 @@ class MIND_API ClipByNorm : public BaseOperator {
   std::vector<int64_t> GetAxis() const;
 };
 
-abstract::AbstractBasePtr ClipByNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args_abs);
+MIND_API abstract::AbstractBasePtr ClipByNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args_abs);
 
 using ClipByNormPtr = std::shared_ptr<ClipByNorm>;
 }  // namespace ops

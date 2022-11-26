@@ -107,6 +107,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/backend/common/somas/somas_solver_pre.cc
         ${CCSRC_DIR}/backend/common/somas/somas_solver_core.cc
         ${CCSRC_DIR}/backend/common/somas/somas_solver_alg.cc
+        ${CCSRC_DIR}/backend/operator/ops_backend_infer_function.cc
         ${CCSRC_DIR}/backend/graph_compiler/graph_partition.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mock/segment_runner.cc
         ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
@@ -156,6 +157,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_dependencies(mindspore-extendrt_static mindspore-kernel-graph)
 
     add_subdirectory(${CCSRC_DIR}/backend/common/pass common_pass)
+    add_subdirectory(${CCSRC_DIR}/backend/operator backend_operator)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
     target_link_libraries(mindspore-extendrt mindspore_infer_shared_lib_obj)
     target_link_libraries(mindspore-extendrt mindspore-infer-anfalgo
@@ -165,7 +167,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     target_link_libraries(mindspore-extendrt_static mindspore_infer_shared_lib_obj)
     target_link_libraries(mindspore-extendrt_static mindspore-infer-anfalgo
             mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
-            _mindspore_backend_common_pass_obj)
+            _mindspore_backend_common_pass_obj _mindspore_backend_operator_obj)
     target_link_libraries(mindspore-extendrt_static mindspore_core mindspore::protobuf)
     add_dependencies(mindspore-extendrt_static msplugin-ge-litert)
     target_link_libraries(mindspore-extendrt_static msplugin-ge-litert)

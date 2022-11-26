@@ -35,8 +35,8 @@ class MIND_API Polar : public BaseOperator {
   Polar() : BaseOperator(kNamePolar) { InitIOName({"abs", "angle"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr PolarInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr PolarInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimPolarPtr = std::shared_ptr<Polar>;
 }  // namespace ops
 }  // namespace mindspore

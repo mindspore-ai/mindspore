@@ -31,8 +31,9 @@ class MIND_API MakeCOOTensor : public BaseOperator {
   /// \brief Constructor.
   MakeCOOTensor() : BaseOperator(kNameMakeCOOTensor) {}
 };
-abstract::AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &args_spec_list);
+MIND_API abstract::AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &args_spec_list);
 }  // namespace ops
 }  // namespace mindspore
 

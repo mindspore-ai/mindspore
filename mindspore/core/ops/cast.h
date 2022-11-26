@@ -33,8 +33,8 @@ class MIND_API Cast : public BaseOperator {
   /// \brief Constructor.
   Cast() : BaseOperator(kNameCast) { InitIOName({"x", "dst_type"}, {"output"}); }
 };
-abstract::AbstractBasePtr CastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCast = std::shared_ptr<Cast>;
 }  // namespace ops
 }  // namespace mindspore

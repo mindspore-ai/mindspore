@@ -38,8 +38,9 @@ class MIND_API InplaceUpdateV2 : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr InplaceUpdateV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr InplaceUpdateV2Infer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimInplaceUpdateV2Ptr = std::shared_ptr<InplaceUpdateV2>;
 }  // namespace ops
 }  // namespace mindspore

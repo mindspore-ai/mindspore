@@ -37,8 +37,8 @@ class MIND_API ScatterNdMul : public BaseOperator {
   bool get_use_locking() const;
 };
 
-abstract::AbstractBasePtr ScatterNdMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ScatterNdMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimScatterNdMulPtr = std::shared_ptr<ScatterNdMul>;
 }  // namespace ops
 }  // namespace mindspore

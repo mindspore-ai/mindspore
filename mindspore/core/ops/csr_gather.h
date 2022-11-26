@@ -35,8 +35,8 @@ class MIND_API CSRGather : public BaseOperator {
   /// \brief Constructor.
   CSRGather() : BaseOperator(kNameCSRGather) { InitIOName({"indptr", "indices", "dense", "dense_shape"}, {"output"}); }
 };
-abstract::AbstractBasePtr CSRGatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CSRGatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

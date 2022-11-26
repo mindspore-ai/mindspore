@@ -123,7 +123,7 @@ AbstractBasePtr SparseSegmentSqrtNWithNumSegmentsInfer(const abstract::AnalysisE
   auto shapes = SparseSegmentSqrtNWithNumSegmentsInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameSparseSegmentSqrtNWithNumSegments, {3});
+REGISTER_INFER_DEPENDS(kNameSparseSegmentSqrtNWithNumSegments, {3});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSqrtNWithNumSegments, prim::kPrimSparseSegmentSqrtNWithNumSegments,
                              SparseSegmentSqrtNWithNumSegmentsInfer, nullptr, true);
 }  // namespace ops

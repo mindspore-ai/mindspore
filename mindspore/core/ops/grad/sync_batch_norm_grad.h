@@ -43,8 +43,9 @@ class MIND_API SyncBatchNormGrad : public BaseOperator {
   void set_device_num(const int64_t device_num);
 };
 
-abstract::AbstractBasePtr SyncBatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SyncBatchNormGradInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

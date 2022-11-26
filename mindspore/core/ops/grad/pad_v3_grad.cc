@@ -151,7 +151,7 @@ std::vector<int64_t> PadV3Grad::get_paddings() const {
   return GetValue<std::vector<int64_t>>(GetAttr("padding_switched"));
 }
 
-REGISTER_HOST_DEPENDS(kNamePadV3Grad, {kInputIndex1});
+REGISTER_INFER_DEPENDS(kNamePadV3Grad, {kInputIndex1});
 MIND_API_OPERATOR_NAME_IMPL(PadV3Grad, kNamePadV3Grad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(PadV3Grad, prim::kPrimPadV3Grad, PadV3GradInfer, nullptr, true);
 }  // namespace ops

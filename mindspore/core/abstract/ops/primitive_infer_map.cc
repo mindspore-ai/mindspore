@@ -97,9 +97,9 @@ namespace mindspore {
 namespace abstract {
 using ops::InferImplDropout;
 
-PrimShapeDependMap &GetHostDependsMap() {
+PrimShapeDependMap &GetInferDependsMap() {
   // Registration directly by the host_depends map will be deprecated and
-  // should be registered by the REGISTER_HOST_DEPENDS
+  // should be registered by the REGISTER_INFER_DEPENDS
   using ShapeSet = std::set<int64_t>;
   static const auto &kMirrorPad = prim::kPrimMirrorPad->name();
   static const auto &kAdaptiveAvgPool3D = prim::kPrimAdaptiveAvgPool3D->name();
@@ -172,86 +172,86 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSparseToDense = prim::kPrimSparseToDense->name();
   static const auto &kParameterizedTruncatedNormal = prim::kPrimParameterizedTruncatedNormal->name();
   // Common host depends.
-  static PrimShapeDependMap host_depends{{prim::kPrimArgMax->name(), ShapeSet{1}},
-                                         {prim::kPrimArgmin->name(), ShapeSet{1}},
-                                         {kExtractGlimpse, ShapeSet{1}},
-                                         {kMirrorPad, ShapeSet{1}},
-                                         {kSegmentMax, ShapeSet{1}},
-                                         {kSegmentMin, ShapeSet{1}},
-                                         {kSegmentSum, ShapeSet{1}},
-                                         {kSegmentMean, ShapeSet{1}},
-                                         {kSegmentProd, ShapeSet{1}},
-                                         {kUnsortedSegmentSum, ShapeSet{2}},
-                                         {kFractionalAvgPoolGrad, ShapeSet{0}},
-                                         {kUnsortedSegmentMin, ShapeSet{2}},
-                                         {kUnsortedSegmentMax, ShapeSet{2}},
-                                         {kUnsortedSegmentProd, ShapeSet{2}},
-                                         {kMatrixDiagV3, ShapeSet{1, 2, 3, 4}},
-                                         {kMatrixDiagPartV3, ShapeSet{1, 2}},
-                                         {kMatrixSetDiagV3, ShapeSet{2}},
-                                         {kGather, ShapeSet{2}},
-                                         {kGatherV2, ShapeSet{2}},
-                                         {kGatherD, ShapeSet{1}},
-                                         {kRangeV2, ShapeSet{0, 1, 2}},
-                                         {kResizeBicubic, ShapeSet{1}},
-                                         {kConv2DBackpropFilter, ShapeSet{2}},
-                                         {kConv2DBackpropInput, ShapeSet{2}},
-                                         {kCol2Im, ShapeSet{1}},
-                                         {kOneHot, ShapeSet{1, 3}},
-                                         {kDropoutGenMask, ShapeSet{0}},
-                                         {prim::kStatelessDropOutGenMask, ShapeSet{0}},
-                                         {kStridedSlice, ShapeSet{1, 2, 3}},
-                                         {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
-                                         {kStridedSliceV2, ShapeSet{1, 2, 3}},
-                                         {kStridedSliceV2Grad, ShapeSet{0}},
-                                         {kTensorCopySlices, ShapeSet{2, 3, 4}},
-                                         {kTile, ShapeSet{1}},
-                                         {kTopK, ShapeSet{1}},
-                                         {kReshape, ShapeSet{1}},
-                                         {kResizeNearestNeighborV2, ShapeSet{1}},
-                                         {kResizeNearestNeighborV2Grad, ShapeSet{1}},
-                                         {kScatterNd, ShapeSet{2}},
-                                         {kSparseToDenseV2, ShapeSet{1}},
-                                         {prim::kPrimSparseTensorDenseMatmul->name(), ShapeSet{2}},
-                                         {kSliceGrad, ShapeSet{2, 3}},
-                                         {kFillV2, ShapeSet{0}},
-                                         {kRandomCategorical, ShapeSet{1}},
-                                         {kRandomGamma, ShapeSet{0, 1}},
-                                         {kDynamicBroadcastTo, ShapeSet{1}},
-                                         {kNonDeterministicInts, ShapeSet{0}},
-                                         {prim::kPrimArgminV2->name(), ShapeSet{1}},
-                                         {prim::kPrimArgMin->name(), ShapeSet{1}},
-                                         {kAffineGrid, ShapeSet{1}},
-                                         {prim::kPrimInplaceUpdateV2->name(), ShapeSet{1}},
-                                         {kTruncatedNormal, ShapeSet{0}},
-                                         {kRaggedRange, ShapeSet{0, 1, 2}},
-                                         {kTranspose, ShapeSet{1}},
-                                         {kAdaptiveAvgPool3D, ShapeSet{1}},
-                                         {kAdaptiveAvgPool3DGrad, ShapeSet{1}},
-                                         {kResizeLinear1D, ShapeSet{1}},
-                                         {kBlackmanWindow, ShapeSet{0}},
-                                         {kHammingWindow, ShapeSet{0}},
-                                         {kResizeArea, ShapeSet{1}},
-                                         {kExpand, ShapeSet{1}},
-                                         {kSspaddmm, ShapeSet{0, 2, 3, 5, 7}},
-                                         {kBartlettWindow, ShapeSet{0}},
-                                         {kResizeNearestNeighborGrad, ShapeSet{1}},
-                                         {kTraceGrad, ShapeSet{1}},
-                                         {kStandardNormal, ShapeSet{0}},
-                                         {kStandardLaplace, ShapeSet{0}},
-                                         {kCropAndResizeGradImage, ShapeSet{3}},
-                                         {prim::kPrimCumSum->name(), ShapeSet{1}},
-                                         {prim::kPrimCumsum->name(), ShapeSet{1}},
-                                         {kSetSize, ShapeSet{2}},
-                                         {kDynamicStitch, ShapeSet{0}},
-                                         {kSparseTensorDenseMatmul, ShapeSet{2}},
-                                         {kSparseSegmentMeanWithNumSegments, ShapeSet{3}},
-                                         {kSparseSegmentSqrtN, ShapeSet{2}},
-                                         {kSparseSegmentSqrtnWithNumSegments, ShapeSet{3}},
-                                         {kSparseMatrixTranspose, ShapeSet{0}},
-                                         {kParameterizedTruncatedNormal, ShapeSet{0}},
-                                         {kSparseToDense, ShapeSet{2}}};
-  return host_depends;
+  static PrimShapeDependMap depends{{prim::kPrimArgMax->name(), ShapeSet{1}},
+                                    {prim::kPrimArgmin->name(), ShapeSet{1}},
+                                    {kExtractGlimpse, ShapeSet{1}},
+                                    {kMirrorPad, ShapeSet{1}},
+                                    {kSegmentMax, ShapeSet{1}},
+                                    {kSegmentMin, ShapeSet{1}},
+                                    {kSegmentSum, ShapeSet{1}},
+                                    {kSegmentMean, ShapeSet{1}},
+                                    {kSegmentProd, ShapeSet{1}},
+                                    {kUnsortedSegmentSum, ShapeSet{2}},
+                                    {kFractionalAvgPoolGrad, ShapeSet{0}},
+                                    {kUnsortedSegmentMin, ShapeSet{2}},
+                                    {kUnsortedSegmentMax, ShapeSet{2}},
+                                    {kUnsortedSegmentProd, ShapeSet{2}},
+                                    {kMatrixDiagV3, ShapeSet{1, 2, 3, 4}},
+                                    {kMatrixDiagPartV3, ShapeSet{1, 2}},
+                                    {kMatrixSetDiagV3, ShapeSet{2}},
+                                    {kGather, ShapeSet{2}},
+                                    {kGatherV2, ShapeSet{2}},
+                                    {kGatherD, ShapeSet{1}},
+                                    {kRangeV2, ShapeSet{0, 1, 2}},
+                                    {kResizeBicubic, ShapeSet{1}},
+                                    {kConv2DBackpropFilter, ShapeSet{2}},
+                                    {kConv2DBackpropInput, ShapeSet{2}},
+                                    {kCol2Im, ShapeSet{1}},
+                                    {kOneHot, ShapeSet{1, 3}},
+                                    {kDropoutGenMask, ShapeSet{0}},
+                                    {prim::kStatelessDropOutGenMask, ShapeSet{0}},
+                                    {kStridedSlice, ShapeSet{1, 2, 3}},
+                                    {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
+                                    {kStridedSliceV2, ShapeSet{1, 2, 3}},
+                                    {kStridedSliceV2Grad, ShapeSet{0}},
+                                    {kTensorCopySlices, ShapeSet{2, 3, 4}},
+                                    {kTile, ShapeSet{1}},
+                                    {kTopK, ShapeSet{1}},
+                                    {kReshape, ShapeSet{1}},
+                                    {kResizeNearestNeighborV2, ShapeSet{1}},
+                                    {kResizeNearestNeighborV2Grad, ShapeSet{1}},
+                                    {kScatterNd, ShapeSet{2}},
+                                    {kSparseToDenseV2, ShapeSet{1}},
+                                    {prim::kPrimSparseTensorDenseMatmul->name(), ShapeSet{2}},
+                                    {kSliceGrad, ShapeSet{2, 3}},
+                                    {kFillV2, ShapeSet{0}},
+                                    {kRandomCategorical, ShapeSet{1}},
+                                    {kRandomGamma, ShapeSet{0, 1}},
+                                    {kDynamicBroadcastTo, ShapeSet{1}},
+                                    {kNonDeterministicInts, ShapeSet{0}},
+                                    {prim::kPrimArgminV2->name(), ShapeSet{1}},
+                                    {prim::kPrimArgMin->name(), ShapeSet{1}},
+                                    {kAffineGrid, ShapeSet{1}},
+                                    {prim::kPrimInplaceUpdateV2->name(), ShapeSet{1}},
+                                    {kTruncatedNormal, ShapeSet{0}},
+                                    {kRaggedRange, ShapeSet{0, 1, 2}},
+                                    {kTranspose, ShapeSet{1}},
+                                    {kAdaptiveAvgPool3D, ShapeSet{1}},
+                                    {kAdaptiveAvgPool3DGrad, ShapeSet{1}},
+                                    {kResizeLinear1D, ShapeSet{1}},
+                                    {kBlackmanWindow, ShapeSet{0}},
+                                    {kHammingWindow, ShapeSet{0}},
+                                    {kResizeArea, ShapeSet{1}},
+                                    {kExpand, ShapeSet{1}},
+                                    {kSspaddmm, ShapeSet{0, 2, 3, 5, 7}},
+                                    {kBartlettWindow, ShapeSet{0}},
+                                    {kResizeNearestNeighborGrad, ShapeSet{1}},
+                                    {kTraceGrad, ShapeSet{1}},
+                                    {kStandardNormal, ShapeSet{0}},
+                                    {kStandardLaplace, ShapeSet{0}},
+                                    {kCropAndResizeGradImage, ShapeSet{3}},
+                                    {prim::kPrimCumSum->name(), ShapeSet{1}},
+                                    {prim::kPrimCumsum->name(), ShapeSet{1}},
+                                    {kSetSize, ShapeSet{2}},
+                                    {kDynamicStitch, ShapeSet{0}},
+                                    {kSparseTensorDenseMatmul, ShapeSet{2}},
+                                    {kSparseSegmentMeanWithNumSegments, ShapeSet{3}},
+                                    {kSparseSegmentSqrtN, ShapeSet{2}},
+                                    {kSparseSegmentSqrtnWithNumSegments, ShapeSet{3}},
+                                    {kSparseMatrixTranspose, ShapeSet{0}},
+                                    {kParameterizedTruncatedNormal, ShapeSet{0}},
+                                    {kSparseToDense, ShapeSet{2}}};
+  return depends;
 }
 
 std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t input_num) {
@@ -265,14 +265,17 @@ std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t 
 
   std::set<int64_t> res = {};
   std::set<int64_t> ori = {};
-  auto iter = GetHostDependsMap().find(prim_name);
-  if (iter != GetHostDependsMap().end()) {
+  auto iter = GetInferDependsMap().find(prim_name);
+  if (iter != GetInferDependsMap().end()) {
     ori = iter->second;
   }
 
-  auto op_infer = GetPrimitiveInferImpl(std::make_shared<Primitive>(prim_name)).Get();
-  if (op_infer != nullptr && ori.empty()) {
-    ori = op_infer->GetValueDependArgIndices();
+  auto op_infer_opt = GetPrimitiveInferImpl(std::make_shared<Primitive>(prim_name));
+  if (op_infer_opt.has_value()) {
+    auto op_infer = op_infer_opt.value().Get();
+    if (op_infer != nullptr && ori.empty()) {
+      ori = op_infer->GetValueDependArgIndices();
+    }
   }
 
   if (!ori.empty()) {
@@ -294,219 +297,33 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
   return GetValueDependArgIndices(prim_name, cnode->inputs().size() - 1);
 }
 
-void RegisterHostDependsImpl(const std::string &prim_name, const std::set<int64_t> &host_depends) {
-  auto &host_depends_map = GetHostDependsMap();
-  host_depends_map[prim_name] = host_depends;
+RegisterInferDependsHelper::RegisterInferDependsHelper(const std::string &name, const std::set<int64_t> &depends) {
+  auto &depends_map = GetInferDependsMap();
+  depends_map[name] = depends;
 }
 
-PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
-  using R = PrimitiveEvalImplMap::mapped_type;
+PrimitiveEvalImplMap *GetPrimitiveInferMapPtr() {
+  // using R = PrimitiveEvalImplMap::mapped_type;
   static PrimitiveEvalImplMap prim_eval_implement_map{
-    // Statements
-    {prim::kPrimReturn, R{InferImplReturn, nullptr, true}},
-    {prim::kPrimSwitch, R{InferImplSwitch, nullptr, true}},
-    {prim::kPrimSwitchLayer, R{InferImplSwitchLayer, nullptr, true}},
-    {prim::kPrimIs_, R{InferImplIs_, nullptr, true}},
-    {prim::kPrimIsNot, R{InferImplIsNot, nullptr, true}},
-    {prim::kPrimInDict, R{InferImplInDict, nullptr, true}},
-    {prim::kPrimNotInDict, R{InferImplNotInDict, nullptr, true}},
-    {prim::kPrimIsConsant, R{InferImplIsConstant, nullptr, true}},
-    // Maths
-    {prim::kPrimMatMul, R{InferImplMatMul, nullptr, true}},
-    {prim::kPrimRealInner, R{InferImplReal, nullptr, true}},
-    // Array
-    {prim::kPrimArrayToScalar, R{InferImplArrayToScalar, nullptr, true}},
-    {prim::kPrimBroadcastShape, R{InferImplBroadCastShape, nullptr, true}},
-    {prim::kPrimUnique, R{InferImplUnique, nullptr, true}},
-    {prim::kPrimUniqueGrad, R{InferImplUniqueGrad, nullptr, true}},
-    {prim::kPrimEmbeddingLookup, R{InferImplEmbeddingLookup, nullptr, true}},
-    {prim::kPrimUnsortedSegmentMax, R{InferImplUnsortedSegmentMax, nullptr, true}},
-    {prim::kPrimUnsortedSegmentMin, R{InferImplUnsortedSegmentMin, nullptr, true}},
-    {prim::kPrimScatterAdd, R{InferImplScatterAdd, nullptr, true}},
-    {prim::kPrimScatterSub, R{InferImplScatterSub, nullptr, true}},
-    {prim::kPrimSubAndFilter, R{InferImplSubAndFilter, nullptr, true}},
-    {prim::kPrimMapCacheIdx, R{InferImplMapCacheIdx, nullptr, true}},
-    {prim::kPrimDynamicAssign, R{InferImplDynamicAssign, nullptr, true}},
-    {prim::kPrimCacheSwapTable, R{InferImplCacheSwapTable, nullptr, true}},
-    {prim::kPrimUpdateCache, R{InferImplUpdateCache, nullptr, true}},
-    {prim::kPrimComputeAccidentalHits, R{InferImplComputeAccidentalHits, nullptr, true}},
-    {prim::kPrimPadAndShift, R{InferImplPadAndShift, nullptr, true}},
-    {prim::kPrimMapUniform, R{InferImplMapUniform, nullptr, true}},
-    {prim::kPrimSplit, R{InferImplSplit, nullptr, true}},
-    {prim::kPrimSequenceMask, R{InferImplSequenceMask, nullptr, true}},
-    {prim::kPrimTensorCopySlices, R{InferImplTensorCopySlices, nullptr, true}},
-    {prim::kPrimFlattenConcat, R{InferImplFlattenConcat, nullptr, true}},
-    {prim::kPrimOCRRecognitionPreHandle, R{InferImplOCRRecognitionPreHandle, nullptr, true}},
-    // Structure
-    {prim::kPrimMakeTuple, R{InferImplMakeTuple, nullptr, true}},
-    {prim::kPrimMakeList, R{InferImplMakeList, nullptr, true}},
-    {prim::kPrimMakeDict, R{InferImplMakeDict, nullptr, true}},
-    {prim::kPrimMakeKeywordArg, R{InferImplMakeKwarg, nullptr, true}},
-    {prim::kPrimExtractKeywordArg, R{InferImplExtractKwarg, nullptr, true}},
-    {prim::kPrimTupleGetItem, R{InferImplTupleGetItem, nullptr, true}},
-    {prim::kPrimListGetItem, R{InferImplListGetItem, nullptr, true}},
-    {prim::kPrimTupleSetItem, R{InferImplTupleSetItem, nullptr, true}},
-    {prim::kPrimListSetItem, R{InferImplListSetItem, nullptr, true}},
-    {prim::kPrimDictGetItem, R{InferImplDictGetItem, nullptr, true}},
-    {prim::kPrimDictSetItem, R{InferImplDictSetItem, nullptr, true}},
-    {prim::kPrimDictGetKeys, R{InferImplDictGetKeys, nullptr, true}},
-    {prim::kPrimDictGetValues, R{InferImplDictGetValues, nullptr, true}},
-    {prim::kPrimDictItems, R{InferImplDictItems, nullptr, true}},
-    {prim::kPrimSequenceLen, R{InferImplSequenceLen, nullptr, true}},
-    {prim::kPrimArrayLen, R{InferImplArrayLen, nullptr, true}},
-    // NN
-    {prim::kPrimPooling, R{InferImplPooling, nullptr, true}},
-    {prim::kPrimPoolingGrad, R{InferImplPoolingGrad, nullptr, true}},
-    {prim::kPrimBatchNorm, R{InferImplBatchNorm, nullptr, true}},
-    {prim::kPrimBpropCut, R{InferImplBpropCut, nullptr, true}},
-    {prim::kPrimBiasDropoutAdd, R{InferImplBiasDropoutAdd, nullptr, true}},
-    {prim::kPrimSparseApplyProximalAdagrad, R{InferImplSparseApplyProximalAdagrad, nullptr, true}},
-    // Others
-    {prim::kPrimIdentity, R{InferImplIdentity, nullptr, true}},
-    {prim::kPrimLoad, R{InferImplLoad, nullptr, true}},
-    {prim::kPrimMutable, R{InferImplMutable, nullptr, true}},
-    {prim::kPrimOpaquePredicate, R{ops::OpaquePredicateInfer, nullptr, true}},
-    // Set impl to null as it will use PartialEvaluator;
-    {prim::kPrimPartial, R{nullptr, nullptr, true}},
-    {prim::kPrimEnvironCreate, R{InferImplEnvironCreate, nullptr, true}},
-    {prim::kPrimEnvironGet, R{InferImplEnvironGet, nullptr, true}},
-    {prim::kPrimEnvironSet, R{InferImplEnvironSet, nullptr, true}},
-    {prim::kPrimEnvironAdd, R{InferImplEnvironAdd, nullptr, true}},
-    {prim::kPrimEnvironDestroyAll, R{InferImplEnvironDestroyAll, nullptr, true}},
-    {prim::kPrimStateSetItem, R{InferImplStateSetItem, nullptr, true}},
-    {prim::kPrimDepend, R{InferImplDepend, nullptr, true}},
-    {prim::kPrimUpdateState, R{InferImplUpdateState, nullptr, true}},
-    // Debug
-    {prim::kPrimDebug, R{InferImplDebug, nullptr, true}},
-    // Dynamic Shape
-    {prim::kPrimIsDimUnknown, R{InferImplIsDimUnknown, nullptr, false}},
-    {prim::kPrimIsShapeUnknown, R{InferImplIsShapeUnknown, nullptr, false}},
-    // RowTensor
-    {prim::kPrimMakeRowTensor, R{InferImplMakeRowTensor, nullptr, true}},
-    {prim::kPrimRowTensorGetValues, R{InferImplRowTensorGetValues, nullptr, true}},
-    {prim::kPrimRowTensorGetIndices, R{InferImplRowTensorGetIndices, nullptr, true}},
-    {prim::kPrimRowTensorGetDenseShape, R{InferImplRowTensorGetDenseShape, nullptr, true}},
-    {prim::kPrimRowTensorAdd, R{InferImplRowTensorAdd, nullptr, false}},
-    // MapTensor
-    {prim::kPrimMapTensorGetDefaultValue, R{InferImplMapTensorGetDefaultValue, nullptr, true}},
-    {prim::kPrimMapTensorGetPermitFilterValue, R{InferImplMapTensorGetPermitFilterValue, nullptr, true}},
-    {prim::kPrimMapTensorGetEvictFilterValue, R{InferImplMapTensorGetEvictFilterValue, nullptr, true}},
-    // Comm Ops
-    {prim::kPrimAllSwap, R{InferImplAllSwap, nullptr, true}},
-    {prim::kPrimMemCpyAsync, R{InferImplMemCpyAsync, nullptr, true}},
-    {prim::kPrimFusedPushWeight, R{nullptr, nullptr, true}},
-    {prim::kPrimFusedPullWeight, R{nullptr, nullptr, true}},
-    // RL Ops
-    {prim::kPrimTensorArrayStack, R{InferImplTensorArrayStack, nullptr, true}},
-    {prim::kPrimKMeansCentroids, R{InferImplKMeansCentroids, nullptr, true}},
+    // core/ops infer
+    // Do not add anything in this initializer anymore since it will be removed soon, core/ops prim should register its
+    // infer in its cc file.
   };
-  return prim_eval_implement_map;
+  return &prim_eval_implement_map;
 }
+const PrimitiveEvalImplMap &GetPrimitiveInferMap() { return *GetPrimitiveInferMapPtr(); }
 
-PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
-  using R = PrimitiveEvalImplMap::mapped_type;
-  static PrimitiveEvalImplMap prim_backend_eval_implement_map = {
-    {prim::kPrimAcosGrad, R{ops::ACosGradInfer, nullptr, true}},
-    {prim::kPrimApplyAdadeltaD, R{ops::ApplyAdadeltaInfer, nullptr, true}},
-    {prim::kPrimApplyAdagradD, R{ops::ApplyAdagradInferFunc, nullptr, true}},
-    {prim::kPrimApplyAdagradV2D, R{ops::ApplyAdagradV2Infer, nullptr, true}},
-    {prim::kPrimApplyAdaMaxD, R{ops::ApplyAdaMaxInfer, nullptr, true}},
-    {prim::kPrimApplyAddSignD, R{ops::ApplyAddSignInfer, nullptr, true}},
-    {prim::kPrimApplyPowerSignD, R{ops::ApplyPowerSignDInfer, nullptr, true}},
-    {prim::kPrimFastGelu, R{ops::FastGeLUInfer, nullptr, true}},
-    {prim::kPrimFastGeluGrad, R{ops::FastGeLUGradInfer, nullptr, true}},
-    {prim::kPrimGelu, R{ops::GeLUInfer, nullptr, true}},
-    {prim::kPrimHardSwish, R{ops::HSwishInfer, nullptr, true}},
-    {prim::kPrimLarsV2Update, R{ops::LARSUpdateInfer, nullptr, true}},
-    {prim::kPrimLogSoftmaxV2, R{ops::LogSoftmaxInfer, nullptr, true}},
-    {prim::kPrimRelu6Grad, R{ops::ReLU6GradInferFunc, nullptr, true}},
-    {prim::kPrimSelu, R{ops::SeLUInfer, nullptr, true}},
-    {prim::kPrimGeluGrad, R{ops::GeLUGradInfer, nullptr, true}},
-    {prim::kPrimIou, R{ops::IouInferFunc, nullptr, true}},
-    {prim::kPrimSplitD, R{ops::SplitInfer, nullptr, true}},
-    {prim::kPrimArgMin, R{ops::ArgminV2Infer, nullptr, true}},
-    {prim::kPrimCeluV2, R{ops::CeLUInfer, nullptr, true}},
-    {prim::kPrimCumsum, R{ops::CumSumInfer, nullptr, true}},
-    {prim::kPrimDropOutDoMask, R{ops::DropoutDoMaskInfer, nullptr, true}},
-    {prim::kPrimGatherV2, R{ops::GatherInfer, nullptr, true}},
-    {prim::kPrimHardSwishGrad, R{ops::HSwishGradInfer, nullptr, true}},
-    {prim::kPrimInplaceIndexAdd, R{ops::IndexAddInfer, nullptr, true}},
-    {prim::kPrimPRelu, R{ops::PReLUInfer, nullptr, true}},
-    {prim::kPrimReduceSumD, R{ops::ReduceArithmeticInferFunc, nullptr, true}},
-    {prim::kPrimReduceMeanD, R{ops::ReduceArithmeticInferFunc, nullptr, true}},
-    {prim::kPrimRelu, R{ops::ReLUInferFunc, nullptr, true}},
-    {prim::kPrimResizeBilinearV2Grad, R{ops::ResizeBilinearGradInfer, nullptr, true}},
-    {prim::kPrimSigmoidCrossEntropyWithLogitsV2, R{ops::BCEWithLogitsLossInfer, nullptr, true}},
-    {prim::kPrimSplitVD, R{ops::SplitVInfer, nullptr, true}},
-    {prim::kPrimSparseApplyFtrlD, R{ops::SparseApplyFtrlInfer, nullptr, true}},
-    {prim::kPrimSoftmaxV2, R{ops::SoftmaxInfer, nullptr, true}},
-    {prim::kPrimPadD, R{InferImplPad, nullptr, true}},
-    {prim::kPrimConcatD, R{InferImplConcat, nullptr, true}},
-    {prim::kPrimPack, R{ops::StackInfer, nullptr, true}},
-    {prim::kPrimApplyAdamD, R{ops::ApplyAdamDInfer, nullptr, true}},
-    {prim::kPrimSparseApplyProximalAdagradD, R{ops::SparseApplyProximalAdagradInfer, nullptr, true}},
-    {prim::kPrimInTopKD, R{ops::InTopKInferFunc, nullptr, true}},
-    {prim::kPrimMul, R{ops::MulInfer, nullptr, true}},
-    {prim::kPrimMod, R{ops::ModInfer, nullptr, true}},
-    {prim::kPrimAdd, R{ops::AddInfer, nullptr, false}},
-    {prim::kPrimArgmin, R{ops::ArgMinInfer, nullptr, true}},
-    {prim::kPrimSqrtGrad, R{InferImplSqrtGrad, nullptr, true}},
-    {prim::kPrimSub, R{ops::SubInfer, nullptr, false}},
-    {prim::kPrimNeg, R{ops::NegInfer, nullptr, false}},
-    {prim::kPrimTile, R{ops::TileInfer, nullptr, true}},
-    {prim::kPrimEqual, R{ops::EqualInfer, nullptr, true}},
-    {prim::kPrimGreater, R{ops::GreaterInfer, nullptr, true}},
-    {prim::kPrimGreaterEqual, R{ops::GreaterEqualInfer, nullptr, true}},
-    {prim::kPrimNotEqual, R{ops::NotEqualInfer, nullptr, true}},
-    {prim::kPrimLog, R{ops::LogInfer, nullptr, true}},
-    {prim::kPrimReciprocal, R{ops::ReciprocalInfer, nullptr, true}},
-    {prim::kPrimBiasAddGrad, R{InferImplBiasAddGrad, nullptr, true}},
-    {prim::kPrimReduceScatter, R{InferImplReduceScatter, nullptr, true}},
-    {prim::kPrimCast, R{InferImplCast, nullptr, true}},
-    {prim::kPrimExp, R{ops::ExpInfer, nullptr, true}},
-    {prim::kPrimAllReduce, R{InferImplAllReduce, nullptr, true}},
-    {prim::kPrimBroadcast, R{InferImplBroadcast, nullptr, true}},
-    {prim::kPrimAllGather, R{InferImplAllGather, nullptr, true}},
-    {prim::kPrimMinimum, R{InferImplMinimum, nullptr, true}},
-    {prim::kPrimDivNoNan, R{InferImplDivNoNan, nullptr, true}},
-    {prim::kPrimLinSpace, R{InferImplLinSpace, nullptr, true}},
-    {prim::kPrimLess, R{InferImplLess, nullptr, true}},
-    {prim::kPrimPad, R{InferImplPad, nullptr, true}},
-    {prim::kPrimUnsortedSegmentSum, R{InferImplUnsortedSegmentSum, nullptr, true}},
-    {prim::kPrimDiv, R{InferImplDiv, nullptr, true}},
-    {prim::kPrimRealDiv, R{ops::RealDivInfer, nullptr, false}},
-    {prim::kPrimTranspose, R{InferImplTranspose, nullptr, true}},
-    {prim::kPrimStridedSlice, R{ops::StridedSliceInfer, nullptr, true}},
-    {prim::kPrimSlice, R{ops::SliceInfer, nullptr, true}},
-    {prim::kPrimSliceGrad, R{ops::SliceGradInfer, nullptr, true}},
-    {prim::kPrimConcat, R{InferImplConcat, nullptr, true}},
-    {prim::kPrimConcatOffset, R{InferImplConcatOffset, nullptr, true}},
-    {prim::kPrimTransData, R{InferImplTransData, nullptr, true}},
-    {prim::kPrimTensorMove, R{InferImplTensorMove, nullptr, true}},
-    {prim::kPrimLstm, R{ops::LstmInfer, nullptr, true}},
-    {prim::kPrimStack, R{ops::StackInfer, nullptr, true}},
-    {prim::kPrimRpcRecv, R{ops::RpcRecvInfer, nullptr, true}},
-    {prim::kPrimRpcSend, R{ops::RpcSendInfer, nullptr, true}},
-    {prim::kPrimAdamApplyOne, R{InferImplAdamApplyOne, nullptr, true}},
-    {prim::kPrimAdamApplyOneWithDecay, R{InferImplAdamApplyOneWithDecay, nullptr, true}},
-    {prim::kPrimTensorScatterUpdate, R{ops::TensorScatterArithmeticInfer, nullptr, true}},
-    {prim::kPrimMaxPool, R{ops::MaxPoolInfer, nullptr, true}},
-    {prim::kPrimMaxPoolGrad, R{ops::MaxPoolGradInfer, nullptr, true}}};
-  return prim_backend_eval_implement_map;
-}
-
-StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const auto iter = GetPrimitiveToEvalImplMap().find(primitive);
-  if (iter != GetPrimitiveToEvalImplMap().end()) {
+std::optional<StandardPrimitiveImplReg> GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
+  auto iter = GetPrimitiveInferMap().find(primitive);
+  if (iter != GetPrimitiveInferMap().end()) {
     return iter->second;
   }
-  return {nullptr, nullptr, false};
-}
 
-void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg) {
-  auto &prim_eval_map = GetPrimitiveToEvalImplMap();
-  prim_eval_map[primitive] = impl_reg;
+  iter = GetDeprecatedPrimitiveInferMap().find(primitive);
+  if (iter != GetDeprecatedPrimitiveInferMap().end()) {
+    return iter->second;
+  }
+  return std::optional<StandardPrimitiveImplReg>();
 }
 
 class OpInferCommon : public OpInferBase {

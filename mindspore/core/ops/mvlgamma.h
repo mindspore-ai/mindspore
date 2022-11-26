@@ -44,8 +44,8 @@ class MIND_API Mvlgamma : public BaseOperator {
   int64_t get_p() const;
 };
 
-abstract::AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args);
 using PrimMvlgammaPtr = std::shared_ptr<Mvlgamma>;
 }  // namespace ops
 }  // namespace mindspore

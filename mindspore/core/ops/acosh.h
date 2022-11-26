@@ -37,8 +37,8 @@ class MIND_API Acosh : public BaseOperator {
   Acosh() : BaseOperator(kNameAcosh) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimAcoshPtr = std::shared_ptr<Acosh>;
 }  // namespace ops

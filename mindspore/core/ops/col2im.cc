@@ -175,7 +175,7 @@ AbstractBasePtr Col2ImInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_HOST_DEPENDS(kNameCol2Im, {1});
+REGISTER_INFER_DEPENDS(kNameCol2Im, {1});
 MIND_API_OPERATOR_IMPL(Col2Im, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Col2Im, prim::kPrimCol2Im, Col2ImInfer, nullptr, true);
 }  // namespace ops

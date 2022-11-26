@@ -141,6 +141,6 @@ AbstractBasePtr SparseTensorToCSRSparseMatrixInfer(const abstract::AnalysisEngin
 
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseTensorToCSRSparseMatrix, prim::kPrimSparseTensorToCSRSparseMatrix,
                              SparseTensorToCSRSparseMatrixInfer, nullptr, true);
-REGISTER_HOST_DEPENDS(kNameSparseTensorToCSRSparseMatrix, {2});
+REGISTER_INFER_DEPENDS(kNameSparseTensorToCSRSparseMatrix, {2});
 }  // namespace ops
 }  // namespace mindspore

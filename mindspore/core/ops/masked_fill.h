@@ -34,8 +34,8 @@ class MIND_API MaskedFill : public BaseOperator {
   MaskedFill() : BaseOperator(kNameMaskedFill) { InitIOName({"input", "mask", "value"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_MASKED_FILL_H_

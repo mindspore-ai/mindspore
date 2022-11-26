@@ -34,8 +34,8 @@ class MIND_API LuUnpack : public BaseOperator {
   MIND_API_BASE_MEMBER(LuUnpack);
   LuUnpack() : BaseOperator(kNameLuUnpack) { InitIOName({"LU_data", "LU_pivots"}, {"pivots", "L", "U"}); }
 };
-abstract::AbstractBasePtr LuUnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LuUnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLuUnpackPtr = std::shared_ptr<LuUnpack>;
 }  // namespace ops
 }  // namespace mindspore

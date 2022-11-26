@@ -33,8 +33,8 @@ class MIND_API Xlogy : public BaseOperator {
   MIND_API_BASE_MEMBER(Xlogy);
   Xlogy() : BaseOperator(kNameXlogy) { InitIOName({"x", "y"}, {"output"}); }
 };
-abstract::AbstractBasePtr XlogyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr XlogyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimXlogyPtr = std::shared_ptr<Xlogy>;
 }  // namespace ops

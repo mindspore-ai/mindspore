@@ -31,8 +31,9 @@ class MIND_API COOTensorGetValues : public BaseOperator {
   /// \brief Constructor.
   COOTensorGetValues() : BaseOperator(kNameCOOTensorGetValues) {}
 };
-abstract::AbstractBasePtr COOTensorGetValuesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &args_spec_list);
+MIND_API abstract::AbstractBasePtr COOTensorGetValuesInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &args_spec_list);
 }  // namespace ops
 }  // namespace mindspore
 

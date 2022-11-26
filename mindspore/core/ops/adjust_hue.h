@@ -35,8 +35,8 @@ class MIND_API AdjustHue : public BaseOperator {
   AdjustHue() : BaseOperator(kNameAdjustHue) { InitIOName({"images", "delta"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr AdjustHueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AdjustHueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args);
 using PrimAdjustHuePtr = std::shared_ptr<AdjustHue>;
 }  // namespace ops
 }  // namespace mindspore

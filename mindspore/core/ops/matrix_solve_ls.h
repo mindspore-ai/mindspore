@@ -35,8 +35,9 @@ class MIND_API MatrixSolveLs : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr MatrixSolveLsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MatrixSolveLsInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimMatrixSolveLsPtr = std::shared_ptr<MatrixSolveLs>;
 }  // namespace ops

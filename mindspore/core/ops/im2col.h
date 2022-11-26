@@ -59,8 +59,8 @@ class MIND_API Im2Col : public BaseOperator {
   std::vector<int64_t> get_pads() const;
 };
 
-abstract::AbstractBasePtr Im2ColInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr Im2ColInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<AbstractBasePtr> &input_args);
 using PrimIm2ColPtr = std::shared_ptr<Im2Col>;
 }  // namespace ops
 }  // namespace mindspore

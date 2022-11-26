@@ -29,8 +29,8 @@ class MIND_API Geqrf : public BaseOperator {
   MIND_API_BASE_MEMBER(Geqrf);
   Geqrf() : BaseOperator(kNameGeqrf) { InitIOName({"x"}, {"y", "tau"}); }
 };
-abstract::AbstractBasePtr GeqrfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GeqrfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GEQRF_H_

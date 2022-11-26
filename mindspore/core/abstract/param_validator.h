@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cassert>
 #include "abstract/abstract_value.h"
 #include "abstract/utils.h"
 #include "utils/any.h"

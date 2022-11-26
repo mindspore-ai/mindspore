@@ -35,8 +35,8 @@ class MIND_API IndexFill : public BaseOperator {
   IndexFill() : BaseOperator(kNameIndexFill) { InitIOName({"x", "dim", "index", "value"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr IndexFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr IndexFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

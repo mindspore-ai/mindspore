@@ -46,9 +46,9 @@ class MIND_API FakeQuantWithMinMaxVars : public BaseOperator {
   /// \return num_bits.
   int64_t get_num_bits() const;
 };
-abstract::AbstractBasePtr FakeQuantWithMinMaxVarsInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FakeQuantWithMinMaxVarsInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

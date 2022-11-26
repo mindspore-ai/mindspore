@@ -43,8 +43,8 @@ class MIND_API InplaceSub : public BaseOperator {
   std::vector<int64_t> get_indices() const;
 };
 
-abstract::AbstractBasePtr InplaceSubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr InplaceSubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimInplaceSubPtr = std::shared_ptr<InplaceSub>;
 }  // namespace ops
 }  // namespace mindspore

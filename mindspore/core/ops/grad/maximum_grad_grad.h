@@ -39,8 +39,9 @@ class MIND_API MaximumGradGrad : public BaseOperator {
   bool get_grad_y() const;
 };
 
-abstract::AbstractBasePtr MaximumGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MaximumGradGradInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

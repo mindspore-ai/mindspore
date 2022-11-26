@@ -33,8 +33,8 @@ class MIND_API Digamma : public BaseOperator {
   Digamma() : BaseOperator(kNameDigamma) { InitIOName({"input"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr DigammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DigammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DIGAMMA_H

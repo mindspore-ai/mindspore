@@ -67,8 +67,8 @@ class MIND_API FFTWithSize : public BaseOperator {
   /// \brief Get signal_sizes.
   std::vector<int64_t> get_signal_sizes() const;
 };
-abstract::AbstractBasePtr FFTWithSizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FFTWithSizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFFTWithSizePtr = std::shared_ptr<FFTWithSize>;
 }  // namespace ops
 }  // namespace mindspore

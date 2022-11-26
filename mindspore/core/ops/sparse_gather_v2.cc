@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(SparseGatherV2, BaseOperator);
-REGISTER_HOST_DEPENDS(kNameSparseGatherV2, {2});
+REGISTER_INFER_DEPENDS(kNameSparseGatherV2, {2});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseGatherV2, prim::kPrimSparseGatherV2, GatherInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

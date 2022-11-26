@@ -31,6 +31,25 @@
 #include "abstract/ops/infer_functions.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
+#include "ops/exp.h"
+#include "ops/log.h"
+#include "ops/reciprocal.h"
+#include "ops/real_div.h"
+#include "ops/add.h"
+#include "ops/arg_min.h"
+#include "ops/equal.h"
+#include "ops/greater_equal.h"
+#include "ops/greater.h"
+#include "ops/not_equal.h"
+#include "ops/neg.h"
+#include "ops/mul.h"
+#include "ops/mod.h"
+#include "ops/sub.h"
+#include "ops/strided_slice.h"
+#include "ops/strided_slice_v2.h"
+#include "ops/grad/strided_slice_v2_grad.h"
+#include "abstract/abstract_function.h"
+#include "utils/ms_context.h"
 #ifdef _MSC_VER
 #include "include/common/pybind_api/api_register.h"
 #endif
@@ -1075,6 +1094,24 @@ AbstractBasePtr InferImplStringGetItem(const AnalysisEnginePtr &, const Primitiv
   (void)res.append(1, str.at(num));
   return std::make_shared<AbstractScalar>(res);
 }
+// using R = PrimitiveEvalImplMap::mapped_type;
+static PrimitiveEvalImplMap frontend_prim_infer_map{
+  // frontend
+};
+PrimitiveEvalImplMap *GetFrontendPrimitiveInferMapPtr() { return &frontend_prim_infer_map; }
+const PrimitiveEvalImplMap &GetFrontendPrimitiveInferMap() { return frontend_prim_infer_map; }
+std::optional<StandardPrimitiveImplReg> GetFrontendPrimitiveInferImpl(const PrimitivePtr &primitive) {
+  auto iter = GetFrontendPrimitiveInferMap().find(primitive);
+  if (iter != GetFrontendPrimitiveInferMap().end()) {
+    return iter->second;
+  }
+
+  auto find = abstract::GetPrimitiveInferImpl(primitive);
+  if (find.has_value()) {
+    return find.value();
+  }
+  return std::optional<StandardPrimitiveImplReg>();
+}
 
 #ifndef _MSC_VER
 // String
@@ -1116,42 +1153,68 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Lower, prim::kPrimLower, InferImplLower, null
 #else
 void RegPrimitiveFrontEval() {
   // String
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimStringMul, InferImplStringMul, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimStringGetItem, InferImplStringGetItem, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimStringMul,
+                                                InferImplStringMul, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimStringGetItem,
+                                                InferImplStringGetItem, nullptr);
   // Tuple
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleReversed, InferImplTupleReversed, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleDiv, InferImplTupleDiv, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleToArray, InferImplTuple2Array, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleEqual, InferImplTupleEqual, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTupleReversed,
+                                                InferImplTupleReversed, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTupleDiv,
+                                                InferImplTupleDiv, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTupleToArray,
+                                                InferImplTuple2Array, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTupleEqual,
+                                                InferImplTupleEqual, nullptr);
   // List
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimListReduce, InferImplListReduce, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimListEqual, InferImplListEqual, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimListReduce,
+                                                InferImplListReduce, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimListEqual,
+                                                InferImplListEqual, nullptr);
   // Dict
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimDictLen, InferImplDictLen, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimDictLen,
+                                                InferImplDictLen, nullptr);
   // Slice
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimMakeSlice, InferImplMakeSlice, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimSliceGetItem, InferImplSliceGetItem, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimMakeSlice,
+                                                InferImplMakeSlice, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimSliceGetItem,
+                                                InferImplSliceGetItem, nullptr);
   // Type
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTypeOf, InferImplTypeof, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTopTypeOf, InferImplTopTypeof, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimHasType, InferImplHasType, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimIsInstance, InferImplIsInstance, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTypeOf,
+                                                InferImplTypeof, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTopTypeOf,
+                                                InferImplTopTypeof, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimHasType,
+                                                InferImplHasType, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimIsInstance,
+                                                InferImplIsInstance, nullptr);
   // Shape
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimReducedShape, InferImplReduceShape, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimShapeMul, InferImplShapeMul, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimReducedShape,
+                                                InferImplReduceShape, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimShapeMul,
+                                                InferImplShapeMul, nullptr);
   // Auto-Grad
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimStopGradient, InferImplStopGradient, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimFakeBprop, InferImplFakeBprop, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimJ, InferImplJ, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimBroadcastGradientArgs, InferImplBroadcastGradientArgs,
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimStopGradient,
+                                                InferImplStopGradient, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimFakeBprop,
+                                                InferImplFakeBprop, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimJ, InferImplJ,
+                                                nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(),
+                                                prim::kPrimBroadcastGradientArgs, InferImplBroadcastGradientArgs,
                                                 nullptr);
   // Other
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimMakeRange, InferImplMakeRange, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTaylor, InferImplTaylor, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimShard, InferImplShard, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimVmap, InferImplVmap, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimLower, InferImplLower, nullptr);
-}
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimMakeRange,
+                                                InferImplMakeRange, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimTaylor,
+                                                InferImplTaylor, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimShard,
+                                                InferImplShard, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimVmap,
+                                                InferImplVmap, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimLower,
+                                                InferImplLower, nullptr);
+}  // namespace abstract
 #endif
 }  // namespace abstract
 }  // namespace mindspore

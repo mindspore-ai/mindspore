@@ -130,7 +130,7 @@ AbstractBasePtr ParameterizedTruncatedNormalInfer(const abstract::AnalysisEngine
   auto infer_shape = ParameterizedTruncatedNormalInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_HOST_DEPENDS(kParameterizedTruncatedNormal, {0});
+REGISTER_INFER_DEPENDS(kParameterizedTruncatedNormal, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(ParameterizedTruncatedNormal, prim::kPrimParameterizedTruncatedNormal,
                              ParameterizedTruncatedNormalInfer, nullptr, true);
 }  // namespace ops

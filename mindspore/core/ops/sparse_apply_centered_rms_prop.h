@@ -43,9 +43,9 @@ class MIND_API SparseApplyCenteredRMSProp : public BaseOperator {
   bool get_use_locking();
 };
 
-abstract::AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &,
-                                                          const PrimitivePtr &primitive,
-                                                          const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &,
+                                                                   const PrimitivePtr &primitive,
+                                                                   const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

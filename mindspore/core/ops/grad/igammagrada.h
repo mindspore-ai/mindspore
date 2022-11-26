@@ -34,8 +34,8 @@ class MIND_API IgammaGradA : public BaseOperator {
   IgammaGradA() : BaseOperator(kNameIgammaGradA) { InitIOName({"a", "x"}, {"z"}); }
 };
 
-abstract::AbstractBasePtr IgammaGradAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr IgammaGradAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimIgammaGradAPtr = std::shared_ptr<IgammaGradA>;
 }  // namespace ops
 }  // namespace mindspore

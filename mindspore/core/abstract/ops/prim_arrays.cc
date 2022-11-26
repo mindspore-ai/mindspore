@@ -84,7 +84,7 @@ AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const Primitiv
   return arg->element();
 }
 
-AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tuples.
   const std::string op_name = primitive->name();
@@ -516,8 +516,8 @@ AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &prim
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(out_shape));
 }
 
-AbstractBasePtr InferImplRealDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplRealInnerDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   const size_t size_expected = 2;
   CheckArgsSize(op_name, args_spec_list, size_expected);

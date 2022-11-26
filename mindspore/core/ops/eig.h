@@ -37,8 +37,8 @@ class MIND_API Eig : public BaseOperator {
   /// \brief Constructor.
   Eig() : BaseOperator(kNameEig) { InitIOName({"x"}, {"eigen_values", "eigen_vectors"}); }
 };
-abstract::AbstractBasePtr EigInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr EigInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

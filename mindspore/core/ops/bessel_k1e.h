@@ -33,8 +33,8 @@ class MIND_API BesselK1e : public BaseOperator {
   BesselK1e() : BaseOperator(kNameBesselK1e) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr BesselK1eInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BesselK1eInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Bessel_K1e_H_

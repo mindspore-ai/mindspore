@@ -133,7 +133,7 @@ AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   return res;
 }
 
-REGISTER_HOST_DEPENDS(kNameAvgPool3DGrad, {0});
+REGISTER_INFER_DEPENDS(kNameAvgPool3DGrad, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(AvgPool3DGrad, prim::kPrimAvgPool3DGrad, AvgPool3DGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

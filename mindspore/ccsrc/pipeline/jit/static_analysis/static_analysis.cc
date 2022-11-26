@@ -34,6 +34,7 @@
 #include "pipeline/jit/debug/trace.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
+#include "frontend/operator/ops_front_infer_function.h"
 
 namespace mindspore {
 namespace abstract {
@@ -516,10 +517,13 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   }
 
   // Find prim infer function in the prim function map return a standard evaluator
-  auto eval_impl = GetPrimitiveInferImpl(prim);
-  if (eval_impl.IsImplInferShapeAndType() && prim->name() != prim::kPrimMakeTuple->name() &&
-      prim->name() != prim::kPrimMakeList->name()) {  // Refactoring infer routine soon.
-    return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+  auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
+  if (eval_impl_opt.has_value()) {
+    auto eval_impl = eval_impl_opt.value();
+    if (eval_impl.IsImplInferShapeAndType() && prim->name() != prim::kPrimMakeTuple->name() &&
+        prim->name() != prim::kPrimMakeList->name()) {  // Refactoring infer routine soon.
+      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+    }
   }
 
   // Use python infer function if the infer function not founded in the map return a python evaluator

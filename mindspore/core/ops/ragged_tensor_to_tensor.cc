@@ -133,6 +133,6 @@ AbstractBasePtr RaggedTensorToTensorInfer(const abstract::AnalysisEnginePtr &, c
 
 REGISTER_PRIMITIVE_EVAL_IMPL(RaggedTensorToTensor, prim::kPrimRaggedTensorToTensor, RaggedTensorToTensorInfer, nullptr,
                              true);
-REGISTER_HOST_DEPENDS(kNameRaggedTensorToTensor, {0});
+REGISTER_INFER_DEPENDS(kNameRaggedTensorToTensor, {0});
 }  // namespace ops
 }  // namespace mindspore

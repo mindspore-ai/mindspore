@@ -31,8 +31,8 @@ class MIND_API L2Loss : public BaseOperator {
   L2Loss() : BaseOperator(kNameL2Loss) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimL2LossPtr = std::shared_ptr<L2Loss>;
 }  // namespace ops
 }  // namespace mindspore

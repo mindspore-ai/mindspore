@@ -154,7 +154,7 @@ class RandpermInfer : public abstract::OpInferBase {
     return out_type;
   }
 };
-REGISTER_HOST_DEPENDS(kNameRandperm, {0});
+REGISTER_INFER_DEPENDS(kNameRandperm, {0});
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Randperm, prim::kPrimRandperm, RandpermInfer, false);
 }  // namespace ops
 }  // namespace mindspore

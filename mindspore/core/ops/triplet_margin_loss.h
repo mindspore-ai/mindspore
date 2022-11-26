@@ -46,8 +46,9 @@ class MIND_API TripletMarginLoss : public BaseOperator {
   std::string get_reduction() const;
 };
 
-abstract::AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimTripletMarginLossPtr = std::shared_ptr<TripletMarginLoss>;
 }  // namespace ops
 }  // namespace mindspore

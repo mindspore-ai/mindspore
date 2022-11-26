@@ -33,8 +33,9 @@ class MIND_API ApproximateEqual : public BaseOperator {
   void set_tolerance(const float tolerance);
   float get_tolerance() const;
 };
-abstract::AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApproximateEqualPtr = std::shared_ptr<ApproximateEqual>;
 }  // namespace ops
 }  // namespace mindspore

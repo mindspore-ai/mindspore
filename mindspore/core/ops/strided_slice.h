@@ -73,8 +73,8 @@ class MIND_API StridedSlice : public BaseOperator {
   std::vector<int64_t> get_strides() const;
 };
 
-abstract::AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimStridedSlicePtr = std::shared_ptr<StridedSlice>;
 }  // namespace ops
 }  // namespace mindspore

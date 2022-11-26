@@ -42,8 +42,8 @@ class MIND_API MvlgammaGrad : public BaseOperator {
   // MS_DECLARE_PARENT(MvlgammaGrad, PrimitiveC);
 };
 
-abstract::AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<AbstractBasePtr> &input_args);
 using PrimMvlgammaGradPtr = std::shared_ptr<MvlgammaGrad>;
 }  // namespace ops
 }  // namespace mindspore

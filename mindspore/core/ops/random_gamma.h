@@ -51,8 +51,8 @@ class MIND_API RandomGamma : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr GammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGammaPtr = std::shared_ptr<RandomGamma>;
 }  // namespace ops
 }  // namespace mindspore

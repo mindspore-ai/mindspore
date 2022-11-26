@@ -37,9 +37,9 @@ class MIND_API SparseSegmentSqrtNGrad : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseSegmentSqrtNGradInfer(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseSegmentSqrtNGradInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSegmentSqrtNGradPtr = std::shared_ptr<SparseSegmentSqrtNGrad>;
 }  // namespace ops
 }  // namespace mindspore

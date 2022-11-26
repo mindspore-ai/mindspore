@@ -36,8 +36,9 @@ class MIND_API ApplyKerasMomentum : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr ApplyKerasMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ApplyKerasMomentumInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimApplyKerasMomentumPtr = std::shared_ptr<ApplyKerasMomentum>;
 }  // namespace ops

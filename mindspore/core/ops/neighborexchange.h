@@ -34,8 +34,9 @@ class MIND_API NeighborExchange : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NeighborExchange for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

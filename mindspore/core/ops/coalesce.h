@@ -36,8 +36,8 @@ class MIND_API Coalesce : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCoalescePtr = std::shared_ptr<Coalesce>;
 }  // namespace ops
 }  // namespace mindspore

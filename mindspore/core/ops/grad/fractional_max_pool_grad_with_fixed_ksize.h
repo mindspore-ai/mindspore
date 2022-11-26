@@ -50,7 +50,7 @@ class MIND_API FractionalMaxPoolGradWithFixedKsize : public BaseOperator {
   /// \return data format attributes.
 };
 
-abstract::AbstractBasePtr FractionalMaxPoolGradWithFixedKsizeInfer(
+MIND_API abstract::AbstractBasePtr FractionalMaxPoolGradWithFixedKsizeInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

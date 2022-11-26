@@ -43,8 +43,8 @@ class MIND_API AffineGrid : public BaseOperator {
   /// \return align_corners.
   bool get_align_corners() const;
 };
-abstract::AbstractBasePtr AffineGridInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AffineGridInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAffineGridPtr = std::shared_ptr<AffineGrid>;
 }  // namespace ops
 }  // namespace mindspore

@@ -69,8 +69,8 @@ class MIND_API IFMR : public BaseOperator {
   /// \return with_offset.
   bool get_with_offset() const;
 };
-abstract::AbstractBasePtr IFMRInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr IFMRInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_IFMR_H_

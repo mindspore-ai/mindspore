@@ -36,8 +36,9 @@ class MIND_API BNTrainingUpdateGrad : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr BNTrainingUpdateGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BNTrainingUpdateGradInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimBNTrainingUpdateGradPtr = std::shared_ptr<BNTrainingUpdateGrad>;
 }  // namespace ops

@@ -35,8 +35,9 @@ class MIND_API BartlettWindow : public BaseOperator {
   bool get_periodic() const;
 };
 
-abstract::AbstractBasePtr BartlettWindowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BartlettWindowInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

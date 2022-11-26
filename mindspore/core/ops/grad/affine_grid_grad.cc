@@ -143,7 +143,7 @@ bool AffineGridGrad::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_HOST_DEPENDS(kNameAffineGridGrad, {1});
+REGISTER_INFER_DEPENDS(kNameAffineGridGrad, {1});
 MIND_API_OPERATOR_IMPL(AffineGridGrad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(AffineGridGrad, prim::kPrimAffineGridGrad, AffineGridGradInfer, nullptr, true);
 }  // namespace ops

@@ -33,8 +33,8 @@ class MIND_API Lcm : public BaseOperator {
   /// \brief Constructor.
   Lcm() : BaseOperator(kNameLcm) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr LcmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LcmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LCM_H_

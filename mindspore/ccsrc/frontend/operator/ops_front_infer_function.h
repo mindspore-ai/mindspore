@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPERATE_OPS_FRONT_INFER_FUNCTION_H_
 #include <string>
 #include <vector>
+#include <optional>
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
 namespace mindspore {
@@ -80,8 +81,14 @@ AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &pr
                                const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplVmap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const AbstractBasePtrList &args_spec_list);
-#define REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(name, primitive, infer_impl, infer_value_impl) \
-  auto helper_##name = abstract::RegisterStandardPrimitiveEvalHelper(primitive, infer_impl, infer_value_impl, false);
+
+const PrimitiveEvalImplMap &GetFrontendPrimitiveInferMap();
+PrimitiveEvalImplMap *GetFrontendPrimitiveInferMapPtr();
+// get prim infer from core/ops infer map or frontend infer map
+std::optional<StandardPrimitiveImplReg> GetFrontendPrimitiveInferImpl(const PrimitivePtr &primitive);
+#define REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(name, primitive, infer_impl, infer_value_impl)                         \
+  auto helper_##name = abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), \
+                                                                     primitive, infer_impl, infer_value_impl, false);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPERATE_OPS_FRONT_INFER_FUNCTION_H_

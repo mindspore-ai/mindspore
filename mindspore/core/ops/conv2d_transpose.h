@@ -112,8 +112,9 @@ class MIND_API Conv2DTranspose : public BaseOperator {
   /// \return pad_list.
   std::vector<int64_t> get_pad_list() const;
 };
-abstract::AbstractBasePtr Conv2DTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr Conv2DTransposeInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_H_

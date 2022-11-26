@@ -53,8 +53,8 @@ class MIND_API Split : public BaseOperator {
   /// \return output_num.
   int64_t get_output_num() const;
 };
-abstract::AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSplit = std::shared_ptr<Split>;
 }  // namespace ops
 }  // namespace mindspore

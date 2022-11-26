@@ -31,8 +31,9 @@ class MIND_API RandomGammaGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(RandomGammaGrad);
   RandomGammaGrad() : BaseOperator(kRandomGammaGrad) { InitIOName({"alpha", "sample"}, {"output"}); }
 };
-abstract::AbstractBasePtr RandomGammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RandomGammaGradInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

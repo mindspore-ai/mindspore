@@ -37,8 +37,9 @@ class MIND_API SmoothL1LossGrad : public BaseOperator {
   void set_reduction(const std::string reduction);
   std::string get_reduction() const;
 };
-abstract::AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSmoothL1LossGradPtr = std::shared_ptr<SmoothL1LossGrad>;
 }  // namespace ops
 }  // namespace mindspore

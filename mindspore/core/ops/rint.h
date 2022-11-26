@@ -31,8 +31,8 @@ class MIND_API Rint : public BaseOperator {
   Rint() : BaseOperator(kNameRint) { InitIOName({"x"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr RintInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RintInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimRintPtr = std::shared_ptr<Rint>;
 }  // namespace ops

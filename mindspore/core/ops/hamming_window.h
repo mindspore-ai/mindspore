@@ -46,8 +46,9 @@ class MIND_API HammingWindow : public BaseOperator {
   float get_beta() const;
 };
 
-abstract::AbstractBasePtr HammingWindowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr HammingWindowInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_HAMMING_WINDOW_H_

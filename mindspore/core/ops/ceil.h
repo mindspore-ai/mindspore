@@ -34,8 +34,8 @@ class MIND_API Ceil : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Ceil for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CEIL_H_

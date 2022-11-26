@@ -32,8 +32,9 @@ class MIND_API AdaptiveAvgPool2DGrad : public BaseOperator {
   AdaptiveAvgPool2DGrad() : BaseOperator(kNameAdaptiveAvgPool2DGrad) { InitIOName({"x1_shape"}, {"grad_shape"}); }
 };
 
-abstract::AbstractBasePtr AdaptiveAvgPool2DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AdaptiveAvgPool2DGradInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAdaptiveAvgPool2DGradPtr = std::shared_ptr<AdaptiveAvgPool2DGrad>;
 }  // namespace ops
 }  // namespace mindspore

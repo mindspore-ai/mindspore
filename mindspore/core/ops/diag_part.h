@@ -33,8 +33,8 @@ class MIND_API DiagPart : public BaseOperator {
   /// \brief Constructor.
   DiagPart() : BaseOperator(kNameDiagPart) { InitIOName({"input_x"}, {"output"}); }
 };
-abstract::AbstractBasePtr DiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

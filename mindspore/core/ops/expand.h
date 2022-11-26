@@ -37,8 +37,8 @@ class MIND_API Expand : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr ExpandInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ExpandInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimExpand = std::shared_ptr<Expand>;
 }  // namespace ops

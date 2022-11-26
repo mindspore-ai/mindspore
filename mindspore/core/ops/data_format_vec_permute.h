@@ -47,8 +47,9 @@ class MIND_API DataFormatVecPermute : public BaseOperator {
   std::string get_dst_format() const;
 };
 
-abstract::AbstractBasePtr DataFormatVecPermuteInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DataFormatVecPermuteInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimDataFormatVecPermutePtr = std::shared_ptr<DataFormatVecPermute>;
 }  // namespace ops

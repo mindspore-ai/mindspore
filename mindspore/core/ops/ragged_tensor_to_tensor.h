@@ -41,8 +41,9 @@ class MIND_API RaggedTensorToTensor : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr RaggedTensorToTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RaggedTensorToTensorInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRaggedTensorToTensorPtr = std::shared_ptr<RaggedTensorToTensor>;
 }  // namespace ops
 }  // namespace mindspore

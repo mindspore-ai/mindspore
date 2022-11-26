@@ -107,7 +107,7 @@ AbstractBasePtr SparseSegmentSqrtNInfer(const abstract::AnalysisEnginePtr &, con
   auto shapes = SparseSegmentSqrtNInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameSparseSegmentSqrtN, {2});
+REGISTER_INFER_DEPENDS(kNameSparseSegmentSqrtN, {2});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSqrtN, prim::kPrimSparseSegmentSqrtN, SparseSegmentSqrtNInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -79,7 +79,7 @@ AbstractBasePtr BincountInfer(const abstract::AnalysisEnginePtr &, const Primiti
 }
 
 MIND_API_OPERATOR_IMPL(Bincount, BaseOperator);
-REGISTER_HOST_DEPENDS(kNameBincount, {1});
+REGISTER_INFER_DEPENDS(kNameBincount, {1});
 REGISTER_PRIMITIVE_EVAL_IMPL(Bincount, prim::kPrimBincount, BincountInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -389,6 +389,7 @@ set(BACKEND_SUB_COMP
         backend/common/somas
         common/graph_kernel
         backend/graph_compiler
+        backend/operator
         runtime/collective
         runtime/device
         runtime/graph_scheduler

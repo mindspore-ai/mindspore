@@ -73,8 +73,9 @@ class MIND_API FractionalAvgPool : public BaseOperator {
   ///
   /// \return seed2 attributes.
 };
-abstract::AbstractBasePtr FractionalAvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FractionalAvgPoolInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalAvgPool = std::shared_ptr<FractionalAvgPool>;
 }  // namespace ops
 }  // namespace mindspore

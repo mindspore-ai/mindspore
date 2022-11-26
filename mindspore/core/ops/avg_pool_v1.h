@@ -36,8 +36,8 @@ class MIND_API AvgPoolV1 : public BaseOperator {
   MIND_API_BASE_MEMBER(AvgPoolV1);
 };
 
-abstract::AbstractBasePtr AvgPoolV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AvgPoolV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args);
 using PrimAvgPoolV1Ptr = std::shared_ptr<AvgPoolV1>;
 }  // namespace ops
 }  // namespace mindspore

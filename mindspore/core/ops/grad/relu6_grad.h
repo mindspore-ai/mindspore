@@ -32,8 +32,9 @@ class MIND_API ReLU6Grad : public BaseOperator {
   ReLU6Grad() : BaseOperator(kNameReLU6Grad) {}
   void Init() const {}
 };
-abstract::AbstractBasePtr ReLU6GradInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ReLU6GradInferFunc(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

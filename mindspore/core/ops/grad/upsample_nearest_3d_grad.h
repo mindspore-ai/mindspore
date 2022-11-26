@@ -37,8 +37,9 @@ class MIND_API UpsampleNearest3DGrad : public BaseOperator {
   std::vector<float> get_scale_factors() const;
 };
 
-abstract::AbstractBasePtr UpsampleNearest3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr UpsampleNearest3DGradInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimUpsampleNearest3DGrad = std::shared_ptr<UpsampleNearest3DGrad>;
 }  // namespace ops
 }  // namespace mindspore

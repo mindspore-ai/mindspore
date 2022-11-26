@@ -31,8 +31,8 @@ class MIND_API GeLUGrad : public BaseOperator {
   GeLUGrad() : BaseOperator(kNameGeLUGrad) { InitIOName({"dy", "x", "y"}, {"z"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr GeLUGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GeLUGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

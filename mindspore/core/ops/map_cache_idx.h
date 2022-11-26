@@ -37,8 +37,8 @@ class MIND_API MapCacheIdx : public BaseOperator {
                {"cache_idx", "old_emb_idx", "miss_emb_idx", "swap_cache_idx"});
   }
 };
-abstract::AbstractBasePtr MapCacheIdxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MapCacheIdxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMapCacheIdxPtr = std::shared_ptr<MapCacheIdx>;
 }  // namespace ops
 }  // namespace mindspore

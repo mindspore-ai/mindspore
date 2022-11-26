@@ -36,8 +36,8 @@ class MIND_API Round : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimRoundPtr = std::shared_ptr<Round>;
 }  // namespace ops
 }  // namespace mindspore

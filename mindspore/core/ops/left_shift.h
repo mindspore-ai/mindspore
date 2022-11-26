@@ -32,8 +32,8 @@ class MIND_API LeftShift : public BaseOperator {
   /// \brief Constructor.
   LeftShift() : BaseOperator(kNameLeftShift) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr LeftShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LeftShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLeftShift = std::shared_ptr<LeftShift>;
 }  // namespace ops
 }  // namespace mindspore

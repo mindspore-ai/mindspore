@@ -35,8 +35,8 @@ class MIND_API ACosGrad : public BaseOperator {
   ACosGrad() : BaseOperator(kNameACosGrad) { InitIOName({"y", "dy"}, {"z"}); }
 };
 
-abstract::AbstractBasePtr ACosGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ACosGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimACosGradPtr = std::shared_ptr<ACosGrad>;
 }  // namespace ops
 }  // namespace mindspore

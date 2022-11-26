@@ -33,8 +33,8 @@ class MIND_API MaxUnpool3D : public BaseOperator {
   std::string get_format() const;
 };
 
-abstract::AbstractBasePtr MaxUnpool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MaxUnpool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxUnpool3DPtr = std::shared_ptr<MaxUnpool3D>;
 }  // namespace ops
 }  // namespace mindspore

@@ -34,9 +34,9 @@ class MIND_API SparseFillEmptyRowsGrad : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr SparseFillEmptyRowsGradInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseFillEmptyRowsGradInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif

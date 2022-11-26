@@ -32,8 +32,9 @@ class MIND_API AdaptiveMaxPool3D : public BaseOperator {
   MIND_API_BASE_MEMBER(AdaptiveMaxPool3D);
   AdaptiveMaxPool3D() : BaseOperator(kNameAdaptiveMaxPool3D) { InitIOName({"x", "output_size"}, {"y", "argmax"}); }
 };
-abstract::AbstractBasePtr AdaptiveMaxPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AdaptiveMaxPool3DInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using AdaptiveMaxPool3DPtr = std::shared_ptr<AdaptiveMaxPool3D>;
 }  // namespace ops
 }  // namespace mindspore

@@ -32,8 +32,8 @@ class MIND_API Erfinv : public BaseOperator {
   Erfinv() : BaseOperator(kNameErfinv) { InitIOName({"input_x"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

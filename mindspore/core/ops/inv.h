@@ -30,8 +30,8 @@ class MIND_API Inv : public BaseOperator {
   Inv() : BaseOperator(kNameInv) { InitIOName({"x"}, {"y"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr InvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr InvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimInvPtr = std::shared_ptr<Inv>;
 }  // namespace ops
 }  // namespace mindspore

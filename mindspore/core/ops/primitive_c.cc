@@ -25,7 +25,7 @@ void PrimitiveC::InitIOName(const std::vector<std::string> &inputs_name, const s
 }
 
 AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {
-  auto infer_map = abstract::GetPrimitiveToEvalImplMap();
+  auto infer_map = abstract::GetPrimitiveInferMap();
   auto iter = infer_map.find(std::make_shared<Primitive>(this->name()));
   if (iter == infer_map.end()) {
     MS_EXCEPTION(NotExistsError) << "Can not find the " << this->name() << "infer function in the infer map!";

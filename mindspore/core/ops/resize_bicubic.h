@@ -38,12 +38,14 @@ class MIND_API ResizeBicubic : public BaseOperator {
   void set_half_pixel_centers(const bool half_pixel_centers);
   bool get_align_corners() const;
   bool get_half_pixel_centers() const;
-  abstract::AbstractBasePtr ResizeBicubicInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args);
+  MIND_API abstract::AbstractBasePtr ResizeBicubicInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<AbstractBasePtr> &input_args);
   using PrimResizeBicubic = std::shared_ptr<ResizeBicubic>;
 };
-abstract::AbstractBasePtr ResizeBicubicInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ResizeBicubicInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

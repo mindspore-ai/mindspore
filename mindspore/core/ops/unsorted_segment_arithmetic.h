@@ -22,9 +22,9 @@
 
 namespace mindspore {
 namespace ops {
-abstract::AbstractBasePtr UnsortedSegmentArithmeticInfer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr UnsortedSegmentArithmeticInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 
 int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

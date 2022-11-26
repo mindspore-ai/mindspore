@@ -35,7 +35,7 @@ class MIND_API SparseSegmentSqrtNWithNumSegments : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseSegmentSqrtNWithNumSegmentsInfer(
+MIND_API abstract::AbstractBasePtr SparseSegmentSqrtNWithNumSegmentsInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSegmentSqrtNWithNumSegmentsPtr = std::shared_ptr<SparseSegmentSqrtNWithNumSegments>;

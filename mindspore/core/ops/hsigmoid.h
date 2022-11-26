@@ -33,8 +33,8 @@ class MIND_API HSigmoid : public BaseOperator {
   HSigmoid() : BaseOperator(kNameHSigmoid) { InitIOName({"input_x"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -34,8 +34,8 @@ class MIND_API TensorMove : public BaseOperator {
   /// \brief Constructor.
   TensorMove() : BaseOperator(kNameTensorMove) { InitIOName({"input"}, {"output"}); }
 };
-abstract::AbstractBasePtr TensorMoveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TensorMoveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimTensorMovePtr = std::shared_ptr<TensorMove>;
 }  // namespace ops
 }  // namespace mindspore

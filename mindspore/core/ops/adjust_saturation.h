@@ -36,8 +36,9 @@ class MIND_API AdjustSaturation : public BaseOperator {
   AdjustSaturation() : BaseOperator(kNameAdjustSaturation) { InitIOName({"image", "scale"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr AdjustSaturationInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AdjustSaturationInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<AbstractBasePtr> &input_args);
 using PrimAdjustSaturationPtr = std::shared_ptr<AdjustSaturation>;
 }  // namespace ops
 }  // namespace mindspore

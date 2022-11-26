@@ -38,8 +38,9 @@ class MIND_API MaxPool3DGrad : public PoolGrad {
   std::vector<int64_t> get_pad_list() const;
 };
 
-abstract::AbstractBasePtr MaxPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MaxPool3DGradInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxPool3DGradPtr = std::shared_ptr<MaxPool3DGrad>;
 }  // namespace ops
 }  // namespace mindspore

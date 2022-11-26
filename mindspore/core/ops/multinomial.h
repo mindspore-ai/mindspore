@@ -52,8 +52,8 @@ class MIND_API Multinomial : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr MultinomialInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MultinomialInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args);
 using PrimMultinomial = std::shared_ptr<Multinomial>;
 }  // namespace ops
 }  // namespace mindspore

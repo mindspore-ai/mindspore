@@ -51,8 +51,8 @@ class MIND_API Argmax : public BaseOperator {
   /// \return output_type.
   TypeId get_output_type() const;
 };
-abstract::AbstractBasePtr ArgMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ArgMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimArgMax = std::shared_ptr<Argmax>;
 }  // namespace ops
 }  // namespace mindspore

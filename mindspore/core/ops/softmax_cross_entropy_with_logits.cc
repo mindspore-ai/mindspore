@@ -79,6 +79,6 @@ class SoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
 };
 MIND_API_OPERATOR_IMPL(SoftmaxCrossEntropyWithLogits, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SoftmaxCrossEntropyWithLogits, prim::kPrimSoftmaxCrossEntropyWithLogits,
-                                 SoftmaxCrossEntropyWithLogitsInfer, false);
+                                 SoftmaxCrossEntropyWithLogitsInfer, true);
 }  // namespace ops
 }  // namespace mindspore
