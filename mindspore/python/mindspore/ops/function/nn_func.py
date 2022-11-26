@@ -1902,7 +1902,7 @@ def _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transfo
     validator.check_value_type("mode", mode, [str], prim_name)
     if mode == "linear":
         validator.check_int(input_dims, 3, Rel.EQ, "input dims", prim_name)
-    elif mode in ["bilinear", "bicubic"]:
+    elif mode == "bilinear":
         validator.check_int(input_dims, 4, Rel.EQ, "input dims", prim_name)
     else:
         raise ValueError(f"{msg_prefix} mode must be 'linear' or 'bilinear', but got {mode}")
@@ -1937,16 +1937,12 @@ def _interpolate_output_shape(shape, scales, sizes, mode):
     if sizes is not None:
         if mode == "bilinear":
             return sizes
-        if mode == "bicubic":
-            return Tensor(sizes, dtype=mstype.int32)
         return Tensor(sizes)
     ret = ()
     for i in range(2, len(shape)):
         ret = ret + (int(scales[i] * shape[i]),)
     if mode == "bilinear":
         return ret
-    if mode == "bicubic":
-        return Tensor(ret, dtype=mstype.int32)
     return Tensor(ret)
 
 
@@ -1989,7 +1985,7 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
 
                 old_i = new_length != 0 ? new_i * old_length / new_length : 0  # if set to 'asymmetric'
 
-        mode (str): The method used to interpolate: 'linear' | 'bilinear' | 'bicubic'. Default is 'linear'.
+        mode (str): The method used to interpolate: 'linear' | 'bilinear'. Default is 'linear'.
 
     Returns:
         Resized tensor, with the same data type as input `x`.
@@ -2030,26 +2026,26 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         raise TypeError("For interpolate, the input x must be tensor")
     input_shape = x.shape
     input_dims = len(input_shape)
-    _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transformation_mode, mode, "interpolate")
+    _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transformation_mode, mode,
+                              "interpolate")
     output_size = _interpolate_output_shape(input_shape, scales, sizes, mode)
+
     if mode == "linear":
         resize_linear_inner = _get_cache_prim(IMG.ResizeLinear1D)(
             coordinate_transformation_mode=coordinate_transformation_mode)
         return resize_linear_inner(x, output_size)
-    if mode in ["bilinear", "bicubic"]:
+    if mode == "bilinear":
         align_corners = False
         half_pixel_centers = False
         if coordinate_transformation_mode == "align_corners":
             align_corners = True
         elif coordinate_transformation_mode == "half_pixel":
             half_pixel_centers = True
-        if mode == "bilinear":
-            resize_bilinear_inner = _get_cache_prim(IMG.ResizeBilinearV2)(align_corners, half_pixel_centers)
-            return resize_bilinear_inner(x, output_size)
-        if mode == "bicubic":
-            resize_bicubic_inner = _get_cache_prim(IMG.ResizeBicubic)(align_corners, half_pixel_centers)
-            return resize_bicubic_inner(x.transpose((0, 2, 3, 1)), output_size).transpose((0, 3, 1, 2))
-    raise TypeError("Input Error: For interpolate,  {} mode is not support now".format(mode))
+        resize_bilinear_inner = _get_cache_prim(IMG.ResizeBilinearV2)(align_corners, half_pixel_centers)
+        return resize_bilinear_inner(x, output_size)
+
+    raise TypeError(
+        "Input Error: For interpolate,  {} mode is not support now".format(mode))
 
 
 def softsign(x):
