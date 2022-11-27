@@ -52,21 +52,79 @@ enum MatchCountPriority : size_t {
   MATCH_OUTPUT_DTYPE_COUNT,
   MATCH_COUNT_PRIORITY_END
 };
-static const std::unordered_set<std::string> kAclKernelSet = {kConv2DOpName,
-                                                              kConv2DBackpropFilterOpName,
-                                                              kConv2DBackpropInputOpName,
+static const std::unordered_set<std::string> kAclKernelSet = {kAssignOpName,
+                                                              kAssignAddOpName,
+                                                              kBatchMatMulOpName,
                                                               kBNInferOpName,
                                                               kBNTrainingUpdateGradOpName,
                                                               kBNTrainingReduceGradOpName,
                                                               kBNTrainingReduceOpName,
                                                               kBNTrainingUpdateOpName,
-                                                              kMatMulOpName,
-                                                              kBatchMatMulOpName,
+                                                              kBiasAddOpName,
+                                                              kBiasAddGradOpName,
+                                                              kBroadcastToOpName,
                                                               kCastOpName,
-                                                              kReLUOpName};
+                                                              kConcatOpName,
+                                                              kConcatDOpName,
+                                                              kConv2DOpName,
+                                                              kConv2DBackpropFilterOpName,
+                                                              kConv2DBackpropInputOpName,
+                                                              kDivOpName,
+                                                              kDropoutDoMaskOpName,
+                                                              kDropoutGradOpName,
+                                                              kEqualOpName,
+                                                              kExpOpName,
+                                                              kExpandDimsOpName,
+                                                              kGatherOpName,
+                                                              kGreaterOpName,
+                                                              kLayerNormOpName,
+                                                              kLayerNormGradOpName,
+                                                              kLessOpName,
+                                                              kLogOpName,
+                                                              kLogicalAndOpName,
+                                                              kLogicalOrOpName,
+                                                              kLogicalNotOpName,
+                                                              kLogSoftmaxGradOpName,
+                                                              kMatMulOpName,
+                                                              kMaximumGradOpName,
+                                                              kMaximumOpName,
+                                                              kMaxPoolOpName,
+                                                              kMaxPoolGradOpName,
+                                                              kMinimumGradOpName,
+                                                              kMinimumOpName,
+                                                              kMulOpName,
+                                                              kNegOpName,
+                                                              kNotEqualOpName,
+                                                              kPowOpName,
+                                                              kRealDivOpName,
+                                                              kReciprocalOpName,
+                                                              kReduceMaxOpName,
+                                                              kReduceMeanOpName,
+                                                              kReduceSumOpName,
+                                                              kReLUOpName,
+                                                              kReluGradOpName,
+                                                              kReshapeOpName,
+                                                              kResizeNearestNeighborGradOpName,
+                                                              kResizeNearestNeighborOpName,
+                                                              kSelectOpName,
+                                                              kSigmoidOpName,
+                                                              kSliceOpName,
+                                                              kSoftmaxOpName,
+                                                              kSplitOpName,
+                                                              kSqrtOpName,
+                                                              kSquareSumV1OpName,
+                                                              kStackOpName,
+                                                              kStridedSliceOpName,
+                                                              kStridedSliceGradOpName,
+                                                              kSubOpName,
+                                                              kTanhOpName,
+                                                              kTanhGradOpName,
+                                                              kTileOpName,
+                                                              kUnsortedSegmentMaxOpName};
 static const std::unordered_set<std::string> kAclBlackList = {
-  kAddNOpName,   kTransposeNODOpName, kGatherV2OpName, kAvgPool3DOpName,  kResizeBilinearV2OpName, kIndexAddOpName,
-  kOneHotOpName, kTransDataOpName,    kCastOpName,     kROIAlignGradName, kSquareSumV1OpName};
+  kAddNOpName,        kTransposeOpName,  kGatherV2OpName,      kAvgPool3DOpName,   kResizeBilinearV2OpName,
+  kIndexAddOpName,    kOneHotOpName,     kTransDataOpName,     kCastOpName,        kROIAlignGradName,
+  kSquareSumV1OpName, kDynamicRNNOpName, kKLDivLossGradOpName, kTransDataRNNOpName};
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
@@ -845,20 +903,19 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
     MS_LOG(INFO) << "Current mode or device don't support acl kernel launch! Node info:" << kernel_node->DebugString();
     return;
   }
+  if (!common::AnfAlgo::IsDynamicShape(kernel_node)) {
+    return;
+  }
   if (common::AnfAlgo::IsGraphKernel(kernel_node) || IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     MS_LOG(INFO) << "Current node is graph kernel or custom io! Node info:" << kernel_node->DebugString();
     return;
   }
-  if (!common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    MS_LOG(INFO) << "Current node isn't a dynamic node! Node info:" << kernel_node->DebugString();
-    return;
-  }
   auto op_type = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kAclKernelSet.count(op_type) == 0) {
-    MS_LOG(INFO) << "Current node not in acl kernel list! Node info:" << kernel_node->DebugString();
+  if (kAclBlackList.count(op_type) != 0) {
+    MS_LOG(INFO) << "Current node in acl black list! Node info:" << kernel_node->DebugString();
     return;
   }
-  if (kAclBlackList.count(op_type) != 0) {
+  if (kAclKernelSet.count(op_type) == 0) {
     MS_LOG(INFO) << "Current node in acl black list! Node info:" << kernel_node->DebugString();
     return;
   }

@@ -454,6 +454,28 @@ class OpAdapter : public BaseOpAdapter {
     MS_LOG(EXCEPTION) << "Value should be ValueTuple or Scalar, but got " << value->type_name();
   }
 
+  static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>>, const AnyTraits<int64_t>) {
+    MS_EXCEPTION_IF_NULL(value);
+    MS_LOG(INFO) << "Value: " << value->type_name();
+    std::vector<int64_t> list;
+    if (value->isa<ValueSequence>()) {
+      auto vec = value->cast<ValueSequencePtr>();
+      MS_EXCEPTION_IF_NULL(vec);
+      for (auto &it : vec->value()) {
+        list.push_back(static_cast<int64_t>(GetValue<int64_t>(it)));
+      }
+      if (list.size() > 1) {
+        MS_LOG(EXCEPTION) << "ERROR SIZE";
+      }
+      return list[0];
+    }
+    if (value->isa<Scalar>()) {
+      list.push_back(static_cast<int64_t>(GetValue<int64_t>(value)));
+      return list[0];
+    }
+    MS_LOG(EXCEPTION) << "Value should be ValueTuple or Scalar, but got " << value->type_name();
+  }
+
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>> anyTraitsVec,
                                 const AnyTraits<std::string> anyTraitsStr) {
     return ConvertAnyUtil(value, anyTraitsVec, anyTraitsStr);

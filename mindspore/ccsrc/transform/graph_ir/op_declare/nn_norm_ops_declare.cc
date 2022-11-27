@@ -33,6 +33,13 @@ OUTPUT_MAP(SoftmaxGrad) = {{0, OUTPUT_DESC(grad_x)}};
 ATTR_MAP(SoftmaxGrad) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(SoftmaxGrad, kNameSoftmaxGrad, ADPT_DESC(SoftmaxGrad))
 
+// SoftmaxGradExt
+INPUT_MAP(SoftmaxGradExt) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}};
+OUTPUT_MAP(SoftmaxGradExt) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(SoftmaxGradExt) = {{"axis", ATTR_DESC(axes, AnyTraits<int64_t>(), AnyTraits<int64_t>())},
+                            {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>(), AnyTraits<bool>())}};
+REG_ADPT_DESC(SoftmaxGradExt, kSoftmaxGradExtOpName, ADPT_DESC(SoftmaxGradExt))
+
 // SoftmaxCrossEntropyWithLogits
 INPUT_MAP(SoftmaxCrossEntropyWithLogits) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(labels)}};
 ATTR_MAP(SoftmaxCrossEntropyWithLogits) = EMPTY_ATTR_MAP;
@@ -182,4 +189,10 @@ INPUT_MAP(Roll) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Roll) = {{"shift", ATTR_DESC(shifts, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Roll) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Roll, prim::kRoll, ADPT_DESC(Roll))
+
+// ConfusionSoftmaxGrad
+INPUT_MAP(ConfusionSoftmaxGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(ConfusionSoftmaxGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ConfusionSoftmaxGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ConfusionSoftmaxGrad, "ConfusionSoftmaxGrad", ADPT_DESC(ConfusionSoftmaxGrad))
 }  // namespace mindspore::transform

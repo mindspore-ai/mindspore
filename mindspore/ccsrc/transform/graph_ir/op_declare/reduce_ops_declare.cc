@@ -52,71 +52,53 @@ ATTR_MAP(BNTrainingUpdateGrad) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float
 OUTPUT_MAP(BNTrainingUpdateGrad) = {{0, OUTPUT_DESC(diff_scale)}, {1, OUTPUT_DESC(diff_offset)}};
 REG_ADPT_DESC(BNTrainingUpdateGrad, kNameBNTrainingUpdateGrad, ADPT_DESC(BNTrainingUpdateGrad))
 
-// ReduceAnyD
-INPUT_MAP(ReduceAnyD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceAnyD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceAnyD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceAnyD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceAnyD, kNameReduceAnyD, ADPT_DESC(ReduceAnyD))
+// ReduceAny
+INPUT_MAP(ReduceAny) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceAny) = {{"axis", 2}};
+ATTR_MAP(ReduceAny) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceAny) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceAny, prim::kPrimReduceAny->name(), ADPT_DESC(ReduceAny))
 
-// ReduceSumD
-INPUT_MAP(ReduceSumD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceSumD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceSumD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceSumD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceSumD, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSumD))
+// ReduceSum
+INPUT_MAP(ReduceSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceSum) = {{"axis", 2}};
+ATTR_MAP(ReduceSum) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceSum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceSum, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSum))
 
-// ReduceProdD
-INPUT_MAP(ReduceProdD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceProdD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceProdD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceProdD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceProdD, kNameReduceProd, ADPT_DESC(ReduceProdD))
+// ReduceProd
+INPUT_MAP(ReduceProd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceProd) = {{"axis", 2}};
+ATTR_MAP(ReduceProd) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceProd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceProd, kNameReduceProd, ADPT_DESC(ReduceProd))
 
-// ReduceAllD
-INPUT_MAP(ReduceAllD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceAllD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceAllD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceAllD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceAllD, prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAllD))
+// ReduceAll
+INPUT_MAP(ReduceAll) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceAll) = {{"axis", 2}};
+ATTR_MAP(ReduceAll) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceAll) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceAll, prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAll))
 
 // ReduceMean
 INPUT_MAP(ReduceMean) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
 ATTR_INPUT_MAP(ReduceMean) = {{"axis", 2}};
-ATTR_MAP(ReduceMean) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+ATTR_MAP(ReduceMean) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())},
+                        {"noop_with_empty_axes", ATTR_DESC(noop_with_empty_axes, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMean) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMean, prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMean))
-REG_ADPT_DESC(ReduceMeanV1, "ReduceMeanV1", ADPT_DESC(ReduceMean))
 
-// ReduceMinD
-INPUT_MAP(ReduceMinD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceMinD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceMinD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceMinD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceMinD, prim::kPrimReduceMin->name(), ADPT_DESC(ReduceMinD))
+// ReduceMin
+INPUT_MAP(ReduceMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceMin) = {{"axis", 2}};
+ATTR_MAP(ReduceMin) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceMin) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceMin, prim::kPrimReduceMin->name(), ADPT_DESC(ReduceMin))
 
-// ReduceMaxD
-INPUT_MAP(ReduceMaxD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ReduceMaxD) = {
-  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ReduceMaxD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceMaxD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceMaxD, prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMaxD))
-
+// ReduceMax
 INPUT_MAP(ReduceMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceMax) = {{"axis", 2}};
 ATTR_MAP(ReduceMax) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMax) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReduceMax, "ReduceMaxV1", ADPT_DESC(ReduceMax))
-
-// ReduceStd
-INPUT_MAP(ReduceStd) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ReduceStd) = {{"axis", ATTR_DESC(dim, AnyTraits<std::vector<int64_t>>())},
-                       {"unbiased", ATTR_DESC(unbiased, AnyTraits<bool>())},
-                       {"keep_dims", ATTR_DESC(keepdim, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceStd) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
+REG_ADPT_DESC(ReduceMax, prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMax))
 }  // namespace mindspore::transform

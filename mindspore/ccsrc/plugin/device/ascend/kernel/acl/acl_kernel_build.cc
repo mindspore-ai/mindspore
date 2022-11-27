@@ -27,8 +27,17 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-static const std::unordered_set<std::string> kAclStaticList = {kPackOpName, kTensorMoveOpName, kConcatDOpName,
-                                                               kCheckValidOpName};
+static const std::unordered_set<std::string> kAclStaticList = {kPackOpName,
+                                                               kTensorMoveOpName,
+                                                               kConcatDOpName,
+                                                               kCheckValidOpName,
+                                                               kBiasAddOpName,
+                                                               kBiasAddGradOpName,
+                                                               kConv3DTransposeOpName,
+                                                               kTileOpName,
+                                                               kROIAlignName,
+                                                               kDynamicGRUV2OpName,
+                                                               kSoftmaxCrossEntropyWithLogitsOpName};
 bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
                     std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -70,6 +79,12 @@ bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &inpu
       input_size_list->push_back(LongToSize(size_i));
     }
   }
+  auto acl_input_size = GeOpConvertor::GetAclInputSize(anf_node);
+  if (acl_input_size > input_num) {
+    for (size_t i = input_num; i < acl_input_size; i++) {
+      (void)input_size_list->emplace_back(SIZE_MAX);
+    }
+  }
   common::AnfAlgo::SetNodeAttr(kAttrUselessInput, MakeValue(useless_input_lists), anf_node);
   return true;
 }
@@ -98,8 +113,36 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
     }
     output_size_list.push_back(LongToSize(size_i));
   }
+  auto acl_output_size = GeOpConvertor::GetAclOutputSize(anf_node);
+  if (acl_output_size > output_num) {
+    for (size_t i = output_num; i < acl_output_size; i++) {
+      (void)output_size_list.emplace_back(SIZE_MAX);
+    }
+  }
   kernel_mod_ptr->SetOutputSizeList(output_size_list);
   return true;
+}
+
+void UpdateReduceOpsAttr(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const std::set<std::string> reduce_ops = {prim::kPrimReduceMean->name(), prim::kPrimReduceSum->name(),
+                                            prim::kPrimReduceMax->name(), prim::kPrimReduceMin->name()};
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
+  if (!reduce_ops.count(op_name)) {
+    return;
+  }
+  if (common::AnfAlgo::IsDynamicShape(node) || !common::AnfAlgo::HasNodeAttr("axis", node->cast<CNodePtr>())) {
+    return;
+  }
+  ShapeVector axes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "axis");
+  if (!axes.empty()) {
+    return;
+  }
+  auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  for (size_t i = 0; i < in_shape.size(); i++) {
+    (void)axes.emplace_back(i);
+  }
+  common::AnfAlgo::SetNodeAttr("axis", MakeValue(axes), node);
 }
 
 void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mod_ptr) {
@@ -107,6 +150,7 @@ void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mod_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   auto op_type = GeOpConvertor::GetOpType(node, true);
   kernel_mod_ptr->SetOpType(op_type);
+  UpdateReduceOpsAttr(node);
   const auto &input_desc_list = AclUtils::GetInputTensorDesc(node);
   const auto &output_desc_list = AclUtils::GetOutputTensorDesc(node);
   kernel_mod_ptr->SetInputDescList(input_desc_list);

@@ -25,10 +25,11 @@ ATTR_MAP(ResizeNearestNeighborV2D) = {
   {"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeNearestNeighborV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeNearestNeighborV2D, kNameResizeNearestNeighborD, ADPT_DESC(ResizeNearestNeighborV2D))
+REG_ADPT_DESC(ResizeNearestNeighborV2D, kNameResizeNearestNeighbor, ADPT_DESC(ResizeNearestNeighborV2D))
 
 // ResizeNearestNeighborV2
 INPUT_MAP(ResizeNearestNeighborV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
+ATTR_INPUT_MAP(ResizeNearestNeighborV2) = {{"size", 2}};
 ATTR_MAP(ResizeNearestNeighborV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
                                      {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeNearestNeighborV2) = {{0, OUTPUT_DESC(y)}};
@@ -36,9 +37,12 @@ REG_ADPT_DESC(ResizeNearestNeighborV2, kNameResizeNearestNeighborV2, ADPT_DESC(R
 
 // ResizeNearestNeighborV2Grad
 INPUT_MAP(ResizeNearestNeighborV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(size)}};
-ATTR_MAP(ResizeNearestNeighborV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_INPUT_MAP(ResizeNearestNeighborV2Grad) = {{"size", 2}};
+ATTR_MAP(ResizeNearestNeighborV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                         {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeNearestNeighborV2Grad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeNearestNeighborV2Grad, kNameResizeNearestNeighborV2Grad, ADPT_DESC(ResizeNearestNeighborV2Grad))
+REG_ADPT_DESC(ResizeNearestNeighborGrad, kNameResizeNearestNeighborGrad, ADPT_DESC(ResizeNearestNeighborV2Grad))
 
 // ResizeBilinearV2Grad
 INPUT_MAP(ResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};

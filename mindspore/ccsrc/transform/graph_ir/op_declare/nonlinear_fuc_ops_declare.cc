@@ -156,6 +156,12 @@ ATTR_MAP(Gelu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Gelu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Gelu, prim::kPrimGeLU->name(), ADPT_DESC(Gelu))
 
+// CeluV2
+INPUT_MAP(CeluV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(CeluV2) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())}};
+OUTPUT_MAP(CeluV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CeluV2, prim::kPrimCeLU->name(), ADPT_DESC(CeluV2))
+
 // GeLUGrad
 INPUT_MAP(GeluGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(y)}};
 ATTR_MAP(GeluGrad) = EMPTY_ATTR_MAP;

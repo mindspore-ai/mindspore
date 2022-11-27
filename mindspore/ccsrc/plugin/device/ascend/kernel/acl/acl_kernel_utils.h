@@ -110,6 +110,7 @@ class AclUtils {
   static std::vector<std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
   static std::vector<std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
   static std::set<std::string> GetUselessOutputs(const AnfNodePtr &node);
+  static std::set<std::string> GetUselessInputs(const AnfNodePtr &node);
 };
 }  // namespace kernel
 }  // namespace mindspore

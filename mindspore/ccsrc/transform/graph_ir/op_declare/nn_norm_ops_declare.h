@@ -67,6 +67,9 @@ DECLARE_OP_USE_OUTPUT(SoftmaxV2)
 DECLARE_OP_ADAPTER(SoftmaxGrad)
 DECLARE_OP_USE_OUTPUT(SoftmaxGrad)
 
+DECLARE_OP_ADAPTER(SoftmaxGradExt)
+DECLARE_OP_USE_OUTPUT(SoftmaxGradExt)
+
 DECLARE_OP_ADAPTER(BinaryCrossEntropy)
 DECLARE_OP_USE_OUTPUT(BinaryCrossEntropy)
 
@@ -90,5 +93,8 @@ DECLARE_OP_USE_OUTPUT(MultilabelMarginLoss)
 
 DECLARE_OP_ADAPTER(Roll)
 DECLARE_OP_USE_OUTPUT(Roll)
+
+DECLARE_OP_ADAPTER(ConfusionSoftmaxGrad)
+DECLARE_OP_USE_OUTPUT(ConfusionSoftmaxGrad)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
