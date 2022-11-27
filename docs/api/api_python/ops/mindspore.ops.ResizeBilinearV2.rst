@@ -7,8 +7,6 @@ mindspore.ops.ResizeBilinearV2
 
     调整过程只改变输入图像最低量维度的数据，分别代表高和宽。
 
-    .. warning::
-        在CPU后端，不支持将 `half_pixel_centers` 设为True。
 
     参数：
         - **align_corners** (bool，可选) - 如果为True，则使用比例 :math:`(new\_height - 1) / (height - 1)` 对输入进行缩放，此时输入图像和输出图像的四个角严格对齐。如果为False，使用比例 :math:`new\_height / height` 输入进行缩放。默认值：False。

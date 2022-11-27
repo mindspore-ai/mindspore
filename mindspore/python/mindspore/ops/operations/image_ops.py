@@ -688,8 +688,6 @@ class ResizeBilinearV2(Primitive):
 
     The resizing only affects the lower two dimensions which represent the height and width.
 
-    .. warning::
-        On CPU, setting `half_pixel_centers` to True is currently not supported.
 
     Args:
         align_corners (bool, optional): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
@@ -741,9 +739,6 @@ class ResizeBilinearV2(Primitive):
                                                              half_pixel_centers, [bool], self.name)
         if half_pixel_centers and align_corners:
             raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
-        target = context.get_context("device_target")
-        if half_pixel_centers and target == "CPU":
-            raise ValueError(f"Currently `half_pixel_centers`=True is not supported in CPU device_target")
 
 
 class ResizeBicubic(Primitive):

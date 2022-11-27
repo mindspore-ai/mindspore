@@ -9,7 +9,6 @@ mindspore.ops.interpolate
         - 实验特性，接口可能发生变化。
         - `roi` 是保留输入， `crop_and_resize` 坐标变换模式下生效，当前不支持。
         - Ascend平台下，当前不支持将 `mode` 设置为"linear"。
-        - CPU平台下，当 `mode` 是"bilinear"时，当前不支持将 `coordinate_transformation_mode` 设置为"half_pixel"。
 
     参数：
         - **x** (Tensor) - 输入Tensor。当 `mode` 是"linear"时， `x` 为3维Tensor。当 `mode` 是"bilinear"时， `x` 为4维Tensor。

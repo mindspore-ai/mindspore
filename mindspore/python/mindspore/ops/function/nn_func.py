@@ -1959,8 +1959,6 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
         - The `roi` is reserved interface for 'crop_and_resize' coordinate transformation mode,
           which is not support now.
         - The Ascend platforms is currently not supported when `mode` is "linear".
-        - The 'half_pixel' coordinate_transformation_mode is currently not supported on CPU device
-          when mode is "bilinear".
 
     Args:
         x (Tensor): a tensor which to resize. `x` is a 3-D tensor when `mode` is "linear". `x` is a 4-D tensor when
