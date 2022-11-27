@@ -31,6 +31,7 @@ layer_norm_x_backprop_v2_op_info = TBERegOp("LayerNormXBackpropV2") \
     .output(0, "pd_x", False, "required", "all") \
     .output(1, "res_for_gamma", False, "required", "all") \
     .is_dynamic_format(True) \
+    .dynamic_compile_static(True) \
     .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None, DataType.F16_None,
                   DataType.F16_None, DataType.F16_None, DataType.F32_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None, DataType.F32_None,
