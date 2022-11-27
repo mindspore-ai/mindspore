@@ -207,6 +207,8 @@ void KernelsActor::Run() {
       return;
     }
   }
+  parallel_lite_actor_->CheckReadyActors(out_actors_indexs_);
+
   if (have_output_) {
     auto output_size = output_data_arrows_.size();
     for (size_t i = 0; i < output_size; ++i) {
@@ -219,6 +221,5 @@ void KernelsActor::Run() {
       context->SetResult(index, RET_OK);
     }
   }
-  parallel_lite_actor_->CheckReadyActors(out_actors_indexs_);
 }
 }  // namespace mindspore::lite
