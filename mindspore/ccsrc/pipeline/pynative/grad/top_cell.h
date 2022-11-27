@@ -42,6 +42,9 @@ namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
 class GradExecutor;
+using OpInfoWithTensorId = mindspore::HashMap<std::string, std::vector<std::string>>;
+using TensorIdWithTensorObject = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
+using OpInfoWithMsFuncForwardTensors = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
 using CellIdWithBackwardHookOp = mindspore::HashMap<std::string, std::vector<AnfNodePtr>>;
 
 struct GraphInfo {
@@ -55,10 +58,11 @@ using GraphInfoPtr = std::shared_ptr<GraphInfo>;
 class TopCellInfo {
  public:
   ~TopCellInfo() = default;
-  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string cellid, std::string already_run_cell_id,
-              pipeline::ResourcePtr r, FuncGraphPtr fg)
+  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string c_cell_id, std::string cellid,
+              std::string already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg)
       : is_high_order_top_cell_(is_high_order_top_cell),
         grad_order_(grad_order),
+        c_cell_id_(std::move(c_cell_id)),
         cell_id_(std::move(cellid)),
         already_run_cell_id_(std::move(already_run_cell_id)),
         resource_(std::move(r)),
@@ -71,12 +75,15 @@ class TopCellInfo {
   inline void set_sub_cell_hook_changed(const std::string &sub_cell) { (void)sub_cell_hook_changed_.emplace(sub_cell); }
   inline const CellIdWithBackwardHookOp &cell_backward_hook_op() const { return cell_backward_hook_op_; }
   void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
+  void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info);
   inline void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
   inline bool forward_already_run() const { return forward_already_run_; }
   inline void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
   inline bool is_high_order_top_cell() const { return is_high_order_top_cell_; }
   inline void set_need_do_final_opt(bool need_do_final_opt) { need_do_final_opt_ = need_do_final_opt; }
   inline bool need_do_final_opt() const { return need_do_final_opt_; }
+  inline bool need_compile_graph() const { return need_compile_graph_; }
+  inline void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
   inline pipeline::ResourcePtr resource() const { return resource_; }
   inline FuncGraphPtr fg() const {
     MS_EXCEPTION_IF_NULL(fg_);
@@ -84,18 +91,51 @@ class TopCellInfo {
   }
   inline void set_fg(const FuncGraphPtr &fg) { fg_ = fg; }
   inline const std::string &cell_id() const { return cell_id_; }
+  inline const std::string &c_cell_id() const { return c_cell_id_; }
   inline const std::string &already_run_cell_id() const { return already_run_cell_id_; }
   inline void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
   inline const std::string &input_args_id() const { return input_args_id_; }
+  const std::string &grad_operation() const { return grad_operation_; }
+  void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
   inline void CheckSubCellHookChanged() { sub_cell_hook_changed_.clear(); }
   inline void SetGraphInfoMap(const FuncGraphPtr &fg, const GraphInfoPtr &graph_info) {
     graph_info_map_[fg] = graph_info;
   }
+  inline void set_is_run_cell(bool is_run_cell) { is_run_cell_ = is_run_cell; }
+  inline bool is_run_cell() { return is_run_cell_; }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
-  inline ad::AutoGradCellImplPtr auto_grad_cell_ptr() const { return auto_grad_cell_ptr_; }
+  inline ad::AutoGradCellImplPtr auto_grad_cell_ptr() const {
+    MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
+    return auto_grad_cell_ptr_;
+  }
   void set_auto_grad_cell_ptr(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr) {
     auto_grad_cell_ptr_ = auto_grad_cell_ptr;
   }
+  inline const OpInfoWithTensorId &op_info_with_tensor_id() const { return op_info_with_tensor_id_; }
+  void set_opinfo_with_tensor_id(const std::string &op_info, const std::vector<tensor::TensorPtr> &op_out_tensors);
+  inline const TensorIdWithTensorObject &tensor_id_with_tensor_object() const { return tensor_id_with_tensor_object_; }
+  inline void set_tensor_id_with_tensor_object(const std::string &id, const tensor::TensorPtr &tensor) {
+    (void)tensor_id_with_tensor_object_[id].emplace_back(tensor);
+  }
+  inline const OpInfoWithMsFuncForwardTensors &op_info_with_ms_func_forward_tensors() const {
+    return op_info_with_ms_func_forward_tensors_;
+  }
+  inline size_t op_index() const { return op_index_; }
+  inline void IncreaseOpIndex() { op_index_++; }
+
+  inline void set_cnode_hash_with_op_index(const size_t &node_hash, const size_t &op_index) {
+    cnode_hash_with_op_index_[node_hash] = op_index;
+  }
+  inline size_t get_op_index_by_cnode_hash(const size_t &node_hash) {
+    auto iter = cnode_hash_with_op_index_.find(node_hash);
+    if (iter == cnode_hash_with_op_index_.end()) {
+      MS_LOG(EXCEPTION) << "hash:" << node_hash << " is not found in cnode_hash_with_op_index_";
+    }
+    return iter->second;
+  }
+
+  void Clear();
+
   void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id);
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
   void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1,
@@ -114,7 +154,11 @@ class TopCellInfo {
   bool forward_already_run_{false};
   bool is_high_order_top_cell_{false};
   bool need_do_final_opt_{false};
+  bool need_compile_graph_{false};
+  bool is_run_cell_{false};
+  size_t op_index_{0};
   size_t grad_order_{0};
+  std::string c_cell_id_;
   std::string cell_id_;
   std::string already_run_cell_id_;
   std::string input_args_id_;
@@ -129,6 +173,10 @@ class TopCellInfo {
   // Record backward hook ops for each cell object.
   // Each cell object has two backward hook ops.
   CellIdWithBackwardHookOp cell_backward_hook_op_;
+  OpInfoWithTensorId op_info_with_tensor_id_;
+  TensorIdWithTensorObject tensor_id_with_tensor_object_;
+  OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
+  mindspore::HashMap<size_t, size_t> cnode_hash_with_op_index_;
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 }  // namespace pynative

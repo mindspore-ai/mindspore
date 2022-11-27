@@ -22,6 +22,7 @@
 #include <map>
 #include <utility>
 #include <stack>
+#include <vector>
 #include "pipeline/pynative/forward/do_cast.h"
 #include "pipeline/pynative/forward/do_infer.h"
 #include "backend/graph_compiler/backend.h"
@@ -71,6 +72,10 @@ class ForwardExecutor {
     MS_EXCEPTION_IF_NULL(infer_operation_);
     return infer_operation_;
   }
+  inline void set_is_ms_function_compiling(bool is_ms_function_compiling) {
+    is_ms_function_compiling_ = is_ms_function_compiling;
+  }
+  inline std::string device_target() { return device_target_; }
 
  private:
   GradExecutorPtr grad() const;
@@ -94,6 +99,7 @@ class ForwardExecutor {
  private:
   bool init_{false};
   bool lazy_build_{false};
+  bool is_ms_function_compiling_{false};
   uint32_t device_id_{0};
   std::string last_target_{"Unknown"};
   std::string device_target_;
@@ -103,6 +109,7 @@ class ForwardExecutor {
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
   bool enable_async_ = false;
+  mutable std::vector<PrimitivePyPtr> op_run_prim_py_list_;
 };
 }  // namespace pynative
 }  // namespace mindspore

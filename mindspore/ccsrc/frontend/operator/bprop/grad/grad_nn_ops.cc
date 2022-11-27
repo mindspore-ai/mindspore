@@ -1030,7 +1030,6 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogits").SetBody([](const BpropI
   auto logits = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
   auto grad = ib->Emit(kSparseSoftmaxCrossEntropyWithLogitsOpName, {logits, labels}, {{kAttrIsGrad, MakeValue(true)}});
-  grad = ib->Emit("Depend", {grad, out});
   grad = ib->Mul(grad, dout);
   return {grad, ib->ZerosLike(labels)};
 });

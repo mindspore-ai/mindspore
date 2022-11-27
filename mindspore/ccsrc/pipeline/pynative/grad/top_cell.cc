@@ -57,6 +57,40 @@ void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const 
   }
 }
 
+void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  std::string input_args_info;
+  // Record input args info (weight or data)
+  // self.p = Parameter();
+  // def construct(x, y)
+  //   if y:
+  //        x = x + x
+  //   else:
+  //        x = x + self.p
+  //   return x
+  for (size_t i = 0; i < op_run_info->base_op_run_info.input_tensor.size(); i++) {
+    const auto &t = op_run_info->base_op_run_info.input_tensor[i];
+    MS_EXCEPTION_IF_NULL(t);
+    if (t->is_parameter() && t->param_info() != nullptr && t->param_info()->requires_grad()) {
+      input_args_info += "w";
+    } else {
+      input_args_info += "d";
+    }
+  }
+  // Record op name and index
+  op_run_info->op_info.clear();
+  op_run_info->op_info +=
+    op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_) + "-" + input_args_info;
+  const auto &out_abs = op_run_info->base_op_run_info.abstract;
+  auto shape = out_abs->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (!shape->isa<abstract::NoShape>() && !shape->IsDimZero()) {
+    op_run_info->op_info += "-" + shape->ToString();
+  }
+  op_run_info->op_index = op_index_;
+  ++op_index_;
+}
+
 void TopCellInfo::ClearDeviceMemory() const {
   MS_LOG(DEBUG) << "Clear device memory in value nodes of bprop graph, top cell: " << cell_id_;
   auto ms_context = MsContext::GetInstance();
@@ -154,11 +188,39 @@ void TopCellInfo::SetNestedMultipleOutputToGraphInfoMap(const string &id, const 
   }
 }
 
+void TopCellInfo::Clear() {
+  MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
+  hook_changed_ = false;
+  is_init_kpynative_ = false;
+  need_compile_graph_ = false;
+  forward_already_run_ = false;
+  op_index_ = 0;
+  resource_ = nullptr;
+  fg_ = nullptr;
+  graph_info_map_.clear();
+  op_info_with_tensor_id_.clear();
+  tensor_id_with_tensor_object_.clear();
+  op_info_with_ms_func_forward_tensors_.clear();
+  cnode_hash_with_op_index_.clear();
+}
+
 void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const AnfNodePtr &node,
                                                 const std::vector<int64_t> &index) const {
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, index);
+}
+
+void TopCellInfo::set_opinfo_with_tensor_id(const std::string &op_info,
+                                            const std::vector<tensor::TensorPtr> &op_out_tensors) {
+  if (op_info_with_tensor_id_.find(op_info) != op_info_with_tensor_id_.end()) {
+    MS_LOG(EXCEPTION) << "Top cell: " << cell_id_ << " records op info with tensor id, but get op info " << op_info
+                      << " in op_info_with_tensor_id map";
+  }
+  // Record the relationship between the forward op and its output tensor id
+  (void)std::for_each(op_out_tensors.begin(), op_out_tensors.end(), [this, &op_info](const tensor::TensorPtr &tensor) {
+    (void)op_info_with_tensor_id_[op_info].emplace_back(tensor->id());
+  });
 }
 }  // namespace pynative
 }  // namespace mindspore
