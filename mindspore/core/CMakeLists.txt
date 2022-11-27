@@ -22,13 +22,13 @@ if(NOT ENABLE_COVERAGE AND (CMAKE_SIZEOF_VOID_P EQUAL 4 OR NOT BUILD_LITE))
 else()
     include(${TOP_DIR}/mindspore/lite/cmake/merge.cmake)
     if(ENABLE_SECURITY)
-        merge_files(${CMAKE_CURRENT_SOURCE_DIR}/ops/ ${CMAKE_BINARY_DIR}/merge/mindspore/core/ops_merge.cc
+        merge_files(${CMAKE_CURRENT_SOURCE_DIR}/ops/ ${CMAKE_BINARY_DIR}/merge/mindspore/core ops_merge
                     "_summary.cc$")
     else()
-        merge_files(${CMAKE_CURRENT_SOURCE_DIR}/ops/ ${CMAKE_BINARY_DIR}/merge/mindspore/core/ops_merge.cc "")
+        merge_files(${CMAKE_CURRENT_SOURCE_DIR}/ops/ ${CMAKE_BINARY_DIR}/merge/mindspore/core ops_merge "")
     endif()
     file(GLOB_RECURSE CORE_OPS_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "${CMAKE_BINARY_DIR}/merge/mindspore/core/ops_merge.cc")
+        "${CMAKE_BINARY_DIR}/merge/mindspore/core/ops_merge*.cc")
 endif()
 
 file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
