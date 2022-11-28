@@ -43,6 +43,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/fake_image_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/fashion_mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/food101_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/gtzan_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
@@ -323,6 +324,18 @@ PYBIND_REGISTER(FlickrNode, 2, ([](const py::module *m) {
                                                                  toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(flickr->ValidateParams());
                       return flickr;
+                    }));
+                }));
+
+PYBIND_REGISTER(Food101Node, 2, ([](const py::module *m) {
+                  (void)py::class_<Food101Node, DatasetNode, std::shared_ptr<Food101Node>>(*m, "Food101Node",
+                                                                                           "to create a Food101Node")
+                    .def(py::init([](const std::string &dataset_dir, const std::string &usage, bool decode,
+                                     const py::handle &sampler) {
+                      auto food101 =
+                        std::make_shared<Food101Node>(dataset_dir, usage, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(food101->ValidateParams());
+                      return food101;
                     }));
                 }));
 

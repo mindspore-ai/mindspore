@@ -2737,6 +2737,99 @@ inline std::shared_ptr<FlickrDataset> DATASET_API Flickr(const std::string &data
                                          cache);
 }
 
+/// \class Food101Dataset
+/// \brief A source dataset for reading and parsing Food101 dataset.
+class DATASET_API Food101Dataset : public Dataset {
+ public:
+  /// \brief Constructor of Food101Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  Food101Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                 const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of Food101Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  Food101Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                 const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of Food101Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  Food101Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                 const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of Food101Dataset.
+  ~Food101Dataset() override = default;
+};
+
+/// \brief Function to create a Food101Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all". Default: "all".
+/// \param[in] decode Decode the images after reading. Default: false.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset. Default: RandomSampler().
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the Food101Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/Food101_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Food101(dataset_path);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In Food101 dataset, each data dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<Food101Dataset> DATASET_API
+Food101(const std::string &dataset_dir, const std::string &usage = "all", bool decode = false,
+        const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+        const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Food101Dataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a Food101Dataset
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all" .
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the Food101Dataset.
+inline std::shared_ptr<Food101Dataset> DATASET_API Food101(const std::string &dataset_dir, const std::string &usage,
+                                                           bool decode, const Sampler *sampler,
+                                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Food101Dataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a Food101Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test" or "all".
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the Food101Dataset.
+inline std::shared_ptr<Food101Dataset> DATASET_API Food101(const std::string &dataset_dir, const std::string &usage,
+                                                           bool decode, const std::reference_wrapper<Sampler> &sampler,
+                                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Food101Dataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
 /// \class GTZANDataset
 /// \brief A source dataset for reading and parsing GTZAN dataset.
 class DATASET_API GTZANDataset : public Dataset {

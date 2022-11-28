@@ -95,6 +95,7 @@ constexpr char kEnWik9Node[] = "EnWik9Dataset";
 constexpr char kFakeImageNode[] = "FakeImageDataset";
 constexpr char kFashionMnistNode[] = "FashionMnistDataset";
 constexpr char kFlickrNode[] = "FlickrDataset";
+constexpr char kFood101Node[] = "Food101Dataset";
 constexpr char kGeneratorNode[] = "GeneratorDataset";
 constexpr char kGTZANNode[] = "GTZANDataset";
 constexpr char kImageFolderNode[] = "ImageFolderDataset";

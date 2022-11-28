@@ -24,6 +24,7 @@ Vision
     mindspore.dataset.FashionMnistDataset
     mindspore.dataset.FlickrDataset
     mindspore.dataset.Flowers102Dataset
+    mindspore.dataset.Food101Dataset
     mindspore.dataset.ImageFolderDataset
     mindspore.dataset.KMnistDataset
     mindspore.dataset.ManifestDataset

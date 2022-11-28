@@ -22,6 +22,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     fake_image_op.cc
     fashion_mnist_op.cc
     flickr_op.cc
+    food101_op.cc
     gtzan_op.cc
     image_folder_op.cc
     imdb_op.cc
