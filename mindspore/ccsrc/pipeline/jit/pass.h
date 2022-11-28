@@ -55,6 +55,7 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource,
                                 const std::vector<bool> &need_grad_flags);
 FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource);
+FuncGraphPtr OptGradGraphPass(const ResourcePtr &resource);
 }  // namespace pipeline
 }  // namespace mindspore
 

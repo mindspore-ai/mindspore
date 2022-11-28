@@ -14,37 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_
-#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_
-
+#include "pipeline/pynative/grad/bprop_task.h"
+#include "utils/log_adapter.h"
 namespace mindspore {
 namespace pynative {
-enum TaskType {
-  kUnknownTask = 0,
-  kOpRunTask,
-  kOpBuildTask,
-  kBpropTask,
-  kExitTask,
-};
-class AsyncTask {
- public:
-  explicit AsyncTask(TaskType task_type) : task_type_(task_type) {}
-  virtual ~AsyncTask() = default;
-  virtual void Run() = 0;
-
-  TaskType task_type() const { return task_type_; }
-
- private:
-  TaskType task_type_;
-};
-
-class ExitTask : public AsyncTask {
- public:
-  ExitTask() : AsyncTask(kExitTask) {}
-  ~ExitTask() override = default;
-  void Run() override {}
-};
+void BpropTask::Run() {
+  MS_LOG(DEBUG) << "run construct bprop task";
+  run_task_();
+  MS_LOG(DEBUG) << "finish construct bprop task";
+}
 }  // namespace pynative
 }  // namespace mindspore
-
-#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_

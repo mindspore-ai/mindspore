@@ -184,7 +184,11 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
     GetOutput(op_run_info);
   }
   // 4. Do op grad and record op info
-  grad()->ProcessOpGradInfo(op_run_info);
+  if (enable_async_) {
+    grad()->AsyncProcessOpGradInfo(op_run_info);
+  } else {
+    grad()->ProcessOpGradInfo(op_run_info);
+  }
 }
 
 FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) const {
@@ -194,6 +198,7 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   // Used for async run
   op_run_info->grad_flag = grad()->grad_flag();
+  op_run_info->custom_bprop_cell_count = grad()->custom_bprop_cell_count();
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
@@ -236,6 +241,7 @@ void ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
       op_run_info->out_value = result_v_list->value().front();
     }
   }
+
   // Not use GetNext abs
   if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
     op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);

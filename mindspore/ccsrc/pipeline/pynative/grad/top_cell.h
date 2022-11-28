@@ -32,7 +32,7 @@
 #include "pybind11/pytypes.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "ir/anf.h"
-#include "frontend/optimizer/ad/kpynative.h"
+#include "frontend/optimizer/ad/auto_grad.h"
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/pynative/base.h"
@@ -90,16 +90,14 @@ class TopCellInfo {
     graph_info_map_[fg] = graph_info;
   }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
-  inline ad::KPynativeCellPtr k_pynative_cell_ptr() const {
-    MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr_);
-    return k_pynative_cell_ptr_;
-  }
-  inline void set_k_pynative_cell_ptr(const ad::KPynativeCellPtr &k_pynative_cell_ptr) {
-    k_pynative_cell_ptr_ = k_pynative_cell_ptr;
+  inline ad::AutoGradCellImplPtr auto_grad_cell_ptr() const { return auto_grad_cell_ptr_; }
+  void set_auto_grad_cell_ptr(const ad::AutoGradCellImplPtr &auto_grad_cell_ptr) {
+    auto_grad_cell_ptr_ = auto_grad_cell_ptr;
   }
   void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id);
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
-  void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1) const;
+  void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1,
+                                bool save_flag = true) const;
   void ClearDeviceMemory() const;
 
  private:
@@ -120,7 +118,7 @@ class TopCellInfo {
   std::string grad_operation_;
   pipeline::ResourcePtr resource_{nullptr};
   FuncGraphPtr fg_{nullptr};
-  ad::KPynativeCellPtr k_pynative_cell_ptr_{nullptr};
+  ad::AutoGradCellImplPtr auto_grad_cell_ptr_{nullptr};
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   // Record `register hook` or `remove hook` function has been called by sub cell
   // The record range between the begin and end of top cell.
