@@ -668,14 +668,14 @@ std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node) {
 
 abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index) {
   MS_EXCEPTION_IF_NULL(abstract);
-  if (!abstract->isa<abstract::AbstractTuple>()) {
+  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(abstract)) {
     if (index != 0) {
       MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
     }
     return abstract;
   }
 
-  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+  auto tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   const auto &sub_abstracts = tuple_abstract->elements();
   size_t real_index = index;
@@ -723,11 +723,11 @@ bool IsPartialInput(const AnfNodePtr &node) {
 
   if (branch_abstract->isa<abstract::AbstractFunction>()) {
     return true;
-  } else if (branch_abstract->isa<abstract::AbstractTuple>()) {
+  } else if (branch_abstract->isa<abstract::AbstractSequence>()) {
     // In switch layer, the true branch input is a make tuple.
-    auto tuple_abstract = branch_abstract->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_abstract);
-    const auto &sub_abstracts = tuple_abstract->elements();
+    auto sequence_abstract = branch_abstract->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_abstract);
+    const auto &sub_abstracts = sequence_abstract->elements();
     if (sub_abstracts.empty() || sub_abstracts[0] == nullptr) {
       MS_LOG(WARNING) << "Failed to get abstract by true branch input of switch node:" << node->DebugString();
       return true;
@@ -1736,7 +1736,11 @@ void ControlNodeParser::ParseAllRealParameterByFormalParameter(const KernelWithI
     if (func_graph == root_func_graph_) {
       return;
     }
-    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << formal_parameter.first->DebugString();
+    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
+                      << ", maybe there is no call node for funcgraph:"
+                      << (formal_parameter.first->func_graph() == nullptr
+                            ? "null"
+                            : formal_parameter.first->func_graph()->ToString());
   }
   const auto &real_parameters = src_iter->second;
   for (const auto &real_parameter : real_parameters) {

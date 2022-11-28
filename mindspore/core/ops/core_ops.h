@@ -438,6 +438,15 @@ constexpr auto kMutable = "mutable";
 constexpr auto kSetSize = "SetSize";
 constexpr auto kStandardLaplace = "StandardLaplace";
 
+constexpr auto kScalarToTensor = "ScalarToTensor";
+constexpr auto kTupleToTensor = "TupleToTensor";
+constexpr auto kTensorToTuple = "TensorToTuple";
+constexpr auto kRealMakeTuple = "RealMakeTuple";
+constexpr auto kRealTupleGetItem = "RealTupleGetItem";
+constexpr auto kRealMakeList = "RealMakeList";
+constexpr auto kRealListGetItem = "RealListGetItem";
+constexpr auto kTupleSetItem = "TupleSetItem";
+
 GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //
 // Here list all primitives used in backend or some special primitives used by core.

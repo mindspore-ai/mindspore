@@ -350,11 +350,11 @@ size_t AnfAlgo::GetOutputNumByAbstract(const AbstractBasePtr &node_abstract) {
   MS_EXCEPTION_IF_NULL(node_abstract);
   size_t result = 0;
 
-  if (!node_abstract->isa<abstract::AbstractTuple>()) {
+  if (!node_abstract->isa<abstract::AbstractSequence>() || IsDynamicSequence(node_abstract)) {
     return 1;
   }
 
-  auto tuple_abstract = node_abstract->cast<abstract::AbstractTuplePtr>();
+  auto tuple_abstract = node_abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   const auto &sub_abstracts = tuple_abstract->elements();
   for (const auto &sub_abstract : sub_abstracts) {
@@ -1750,6 +1750,17 @@ std::string AnfAlgo::GetJitLevel(const FuncGraphPtr &func_graph) {
   auto jit_level_value = func_graph->get_attr(kAttrJitLevel);
   auto jit_level = GetValue<std::string>(jit_level_value);
   return jit_level;
+}
+
+bool AnfAlgo::IsDynamicSequence(const abstract::AbstractBasePtr &abstract) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (!abstract->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+
+  const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abstract);
+  return sequence_abstract->dynamic_len();
 }
 }  // namespace common
 }  // namespace mindspore

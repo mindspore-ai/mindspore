@@ -288,6 +288,7 @@ class COMMON_EXPORT AnfAlgo {
 
   // Get jit level from func_graph
   static std::string GetJitLevel(const FuncGraphPtr &func_graph);
+  static bool IsDynamicSequence(const abstract::AbstractBasePtr &abstract);
 };
 }  // namespace common
 }  // namespace mindspore

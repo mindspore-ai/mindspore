@@ -690,10 +690,10 @@ AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr &abstract, con
 
 AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
   MS_EXCEPTION_IF_NULL(abstract);
-  if (!abstract->isa<abstract::AbstractTuple>()) {
+  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(abstract)) {
     return NewParameter(abstract);
   }
-  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+  auto tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(tuple_abstract);
   std::vector<AnfNodePtr> make_tuple_inputs = {
     mindspore::NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
