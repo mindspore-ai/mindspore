@@ -4246,24 +4246,7 @@ class IsInf(Primitive):
     r"""
     Determines which elements are inf or -inf for each position.
 
-    .. math::
-
-        out_i = \begin{cases}
-        & \text{ if } x_{i} = \text{Inf},\ \ True \\
-        & \text{ if } x_{i} \ne \text{Inf},\ \ False
-        \end{cases}
-
-    where :math:`Inf` means not a number.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape of input, and the dtype is bool.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.isinf` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

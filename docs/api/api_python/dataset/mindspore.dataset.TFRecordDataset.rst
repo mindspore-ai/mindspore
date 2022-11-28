@@ -1,7 +1,7 @@
 mindspore.dataset.TFRecordDataset
 =================================
 
-.. py:class:: mindspore.dataset.TFRecordDataset(dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False, cache=None)
+.. py:class:: mindspore.dataset.TFRecordDataset(dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False, cache=None, compression_type=None)
 
     读取和解析TFData格式的数据文件构建数据集。生成的数据集的列名和列类型取决于TFRecord文件中的保存的列名与类型。
 
@@ -27,6 +27,8 @@ mindspore.dataset.TFRecordDataset
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
         - **shard_equal_rows** (bool, 可选) - 分布式训练时，为所有分片获取等量的数据行数。默认值：False。如果 `shard_equal_rows` 为False，则可能会使得每个分片的数据条目不相等，从而导致分布式训练失败。因此当每个TFRecord文件的数据数量不相等时，建议将此参数设置为True。注意，只有当指定了 `num_shards` 时才能指定此参数。
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
+        - **compression_type** (str, 可选) - 用于所有文件的压缩类型，必须是“”，“GZIP”，或“ZLIB”。默认值:None，即空字符串。
+          这将自动为所有分片获得相等的行数( `shard_equal_rows` 被认为是True)，从而不能有 `num_samples` 为None的情况。
 
     异常：
         - **ValueError** - `dataset_files` 参数所指向的文件无效或不存在。
@@ -34,6 +36,8 @@ mindspore.dataset.TFRecordDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
-
+        - **ValueError** - `compression_type` 不是''，'GZIP'，'ZLIB'三者之一。
+        - **ValueError** - `compression_type` 有效但是数据集文件数量小于 `num_shards` 。
+        - **ValueError** - `compression_type` 有效但是 `num_samples` 没有提供或者小于0。
 
 .. include:: mindspore.dataset.api_list_nlp.rst
