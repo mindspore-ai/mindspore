@@ -20,7 +20,7 @@ mindspore.ops.clamp
         - 当 `min` 为None，`max` 不为None时，Tensor中大于 `max` 的元素会变为 `max`；
         - 当 `min` 不为None，`max` 为None时，Tensor中小于 `min` 的元素会变为 `min`；
         - 当 `min` 大于 `max` 时，Tensor中所有元素的值会被置为 `max`；
-        -  :math:`x` ， `min` 和 `max` 的数据类型需支持隐式类型转换，且不能为布尔型。
+        - `x`，`min` 和 `max` 的数据类型需支持隐式类型转换，且不能为布尔型。
 
     参数：
         - **x** (Union(Tensor, list[Tensor], tuple[Tensor])) - `clamp` 的输入，类型为Tensor、Tensor的列表或元组。支持任意维度的Tensor。

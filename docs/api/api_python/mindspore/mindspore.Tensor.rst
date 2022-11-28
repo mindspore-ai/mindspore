@@ -182,6 +182,7 @@ mindspore.Tensor
     mindspore.Tensor.numel
     mindspore.Tensor.nonzero
     mindspore.Tensor.norm
+    mindspore.Tensor.not_equal
     mindspore.Tensor.permute
     mindspore.Tensor.positive
     mindspore.Tensor.pow

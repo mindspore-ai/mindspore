@@ -4359,6 +4359,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('ne')(self, other)
 
+    def not_equal(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.not_equal`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('not_equal')(self, other)
+
     def sinh(self):
         r"""
         Computes hyperbolic sine of the input element-wise.

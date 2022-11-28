@@ -3912,6 +3912,13 @@ def ne(input, other):
     return F.ne(input, other)
 
 
+def not_equal(x, other):
+    r"""
+    Computes the non-equivalence of two tensors element-wise.
+    """
+    return F.not_equal(x, other)
+
+
 def sinh(input):
     r"""
     Computes hyperbolic sine of the input element-wise.
