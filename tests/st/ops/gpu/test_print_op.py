@@ -199,3 +199,28 @@ def test_print_op_tuple():
     net = PrintTupleNet()
     x = Tensor([6, 7, 8, 9, 10])
     net(x)
+
+
+@security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_print_tensor_dtype_in_nested_tuple(mode):
+    """
+    Feature: Print op.
+    Description: test Print with tensor dtype in nested tuple.
+    Expectation: success.
+    """
+    class PrintDtypeNet(nn.Cell):
+        def construct(self, x, y):
+            dtype_tuple = (x.dtype, y)
+            dtype_tuple_tuple = (x, dtype_tuple)
+            print("Tensor type in tuple:", dtype_tuple_tuple)
+            return x + y
+
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([3, 4], dtype=ms.int32)
+    y = Tensor([1, 2], dtype=ms.int32)
+    net = PrintDtypeNet()
+    net(x, y)

@@ -228,6 +228,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   print_tuple_wrapper_ =
     MakeSubstitution(std::make_shared<PrintTupleWrapper>(), "print_tuple_wrapper", prim::kPrimPrint);
 
+  print_const_string_wrapper_ =
+    MakeSubstitution(std::make_shared<PrintConstStringWrapper>(), "print_const_string_wrapper", prim::kPrimPrint);
+
   // tuple parameter graph transform
   call_graph_tuple_transform_ =
     MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transform", IsNode);

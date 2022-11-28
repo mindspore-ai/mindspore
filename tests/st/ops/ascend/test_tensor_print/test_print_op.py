@@ -70,3 +70,52 @@ def test_print_op_dynamic_shape(mode):
     x_dyn = Tensor(shape=[None, None, None], dtype=ms.float32)
     net.set_inputs(x_dyn)
     net(x)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_print_tensor_dtype(mode):
+    """
+    Feature: Print op.
+    Description: test Print with tensor dtype.
+    Expectation: success.
+    """
+    class PrintDtypeNet(nn.Cell):
+        def construct(self, x, y):
+            print(f"Tensor x type: {x.dtype}")
+            print("Tensor y type:", y.dtype)
+            return x, y
+
+    context.set_context(mode=mode, device_target="Ascend")
+    x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
+    y = Tensor([1, 2], dtype=ms.int32)
+    net = PrintDtypeNet()
+    net(x, y)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_print_tensor_dtype_in_nested_tuple(mode):
+    """
+    Feature: Print op.
+    Description: test Print with tensor dtype in nested tuple.
+    Expectation: success.
+    """
+    class PrintDtypeNet(nn.Cell):
+        def construct(self, x, y):
+            dtype_tuple = (x.dtype, y)
+            dtype_tuple_tuple = (x, dtype_tuple)
+            print("Tensor type in tuple:", dtype_tuple_tuple)
+            return x + y
+
+    context.set_context(mode=mode, device_target="Ascend")
+    x = Tensor([3, 4], dtype=ms.int32)
+    y = Tensor([1, 2], dtype=ms.int32)
+    net = PrintDtypeNet()
+    net(x, y)

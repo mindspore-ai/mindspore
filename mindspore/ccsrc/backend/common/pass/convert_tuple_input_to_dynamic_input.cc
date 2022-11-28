@@ -42,6 +42,11 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
       // using for graph kernel
       auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
       MS_EXCEPTION_IF_NULL(dyn_input_node);
+      // Handle tuple nested scenes.
+      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
+        input_size += SplitTupleInputs(graph, dyn_input_node, plant_inputs);
+        continue;
+      }
       (void)plant_inputs->emplace_back(dyn_input_node);
     }
     return input_size;
@@ -61,6 +66,7 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     return nullptr;
   }
   bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimBpropCut);
+  bool cnode_is_print = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPrint);
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
   plant_inputs.push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
@@ -68,8 +74,11 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
+    bool output_is_tuple = common::AnfAlgo::IsTupleOutput(input_node);
     bool skip = (is_bprop_cut && input_node->abstract()->isa<abstract::AbstractSparseTensor>());
-    if (common::AnfAlgo::IsTupleOutput(input_node) && !skip) {
+    if (output_is_tuple && cnode_is_print) {
+      (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
+    } else if (output_is_tuple && !skip) {
       auto dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
       if (dyn_input_size == 0) {
         dyn_input_sizes.push_back(-1);
