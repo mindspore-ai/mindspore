@@ -463,6 +463,16 @@ class NanToNumFunc(nn.Cell):
         return y
 
 
+class RandpermFunc(nn.Cell):
+    def __init__(self):
+        super(RandpermFunc, self).__init__()
+        self.randperm = ops.function.random_func.randperm
+
+    def construct(self, n, seed, offset, dtype):
+        y = self.randperm(n, seed, offset, dtype)
+        return y
+
+
 class Moments(nn.Cell):
     """Moments net definition"""
 
@@ -4251,6 +4261,12 @@ test_case_other_ops = [
     ('TruncatedNormal', {
         'block': TruncatedNormal(dtype=mstype.float32, seed=1, seed2=1),
         'desc_inputs': [Tensor(np.array([2, 2]), mstype.int32)],
+        'skip': ['backward']}),
+    ('Randperm', {
+        'block': RandpermFunc(),
+        'desc_inputs': [Tensor(np.random.randint(1, 20, (1)).astype(np.int64), mstype.int64),
+                        Tensor(np.array([0]), mstype.int64),
+                        Tensor(np.array([0]), mstype.int64), mstype.int64],
         'skip': ['backward']}),
     ('MultinomialWithReplacement', {
         'block': MultinomialWithReplacement(numsamples=3, replacement=True),

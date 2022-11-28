@@ -188,6 +188,7 @@ constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
 constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
 constexpr auto kRaggedTensorToSparse = "RaggedTensorToSparse";
 constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
+constexpr auto kRandpermV2 = "RandpermV2";
 constexpr auto kSmoothL1Loss = "SmoothL1Loss";
 constexpr auto kSmoothL1LossGrad = "SmoothL1LossGrad";
 constexpr auto kSparseCross = "SparseCross";
@@ -336,6 +337,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kGLU, "Glu"},
   {kStridedSliceV2, "StridedSlice"},
   {kAdaptiveMaxPool3D, "AdaptiveMaxPool3d"},
+  {kRandpermV2, "StatelessRandperm"},
   {kStridedSliceV2Grad, "StridedSliceGrad"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
