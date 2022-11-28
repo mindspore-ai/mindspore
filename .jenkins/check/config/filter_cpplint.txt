@@ -85,3 +85,4 @@
 "mindspore/mindspore/lite/src/litert/delegate/nnapi/nnapi_implementation.h"                        "build/include_order"
 "mindspore/mindspore/lite/src/litert/delegate/nnapi/nnapi_implementation.cc"                       "build/include_order"
 "mindspore/mindspore/lite/src/extendrt/cxx_api/model/model_impl.cc"                                "whitespace/parens"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/gemm_mask_avx512/" "runtime/int"
