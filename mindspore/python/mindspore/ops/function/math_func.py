@@ -4071,30 +4071,30 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     """
     Executes the outer-product of `vec1` and `vec2` and adds it to the matrix `x`.
 
-    If `vec1` is a vector of size :vec1:`N` and `vec2` is a vector of size :vec1:`M`, then `x` must be broadcastable
-    with a matrix of size :vec1:`(N, M)` and `out` will be a matrix of size :vec1:`(N, M)`.
+    If `vec1` is a vector of size :math:`N` and `vec2` is a vector of size :math:`M`, then `x` must be broadcastable
+    with a matrix of size :math:`(N, M)` and `out` will be a matrix of size :math:`(N, M)`.
 
     The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
     and the added matrix `x` respectively. If `beta` is 0, then `x` will be ignored.
 
-    .. vec1::
+    .. math::
         output = β x + α (vec1 ⊗ vec2)
 
     Args:
-        x (Tensor): Vector to be added. The shape of the tensor is :vec1:`(N, M)`.
-        vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :vec1:`(N,)`.
-        vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :vec1:`(M,)`.
+        x (Tensor): Vector to be added. The shape of the tensor is :math:`(N, M)`.
+        vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N,)`.
+        vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
         beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
             float or bool, Default: 1.
         alpha (scalar[int, float, bool], optional): Multiplier for `vec1` ⊗ `vec2` (α). The `alpha` must
             be int or float or bool, Default: 1.
 
     Returns:
-        Tensor, the shape of the output tensor is :vec1:`(N, M)`, has the same dtype as `x`.
+        Tensor, the shape of the output tensor is :math:`(N, M)`, has the same dtype as `x`.
 
     Raises:
         TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
-        TypeError: If inputs `x`, `vec1`, 'vec2' are not the same dtype.
+        TypeError: If inputs `x`, `vec1`, `vec2` are not the same dtype.
         ValueError: If `x` is not a 2-D Tensor.
             If `vec1`, `vec2` is not a 1-D Tensor.
 
