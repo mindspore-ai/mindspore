@@ -24,7 +24,7 @@ mindspore.ops.TruncatedNormal
     异常：
         - **TypeError** - `shape` 不是Tensor。
         - **TypeError** - `dtype` 或 `shape` 的数据类型不支持。
-        - **ValueError** -  `seed` 不是整数。
+        - **TypeError** -  `seed` 不是整数。
         - **ValueError** - `shape` 的元素不全大于零。
         - **ValueError** - `shape` 不是一维Tensor。
         - **ValueError** - 输出Tensor的元素个数大于1000000。

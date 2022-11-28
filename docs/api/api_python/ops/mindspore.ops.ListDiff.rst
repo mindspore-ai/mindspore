@@ -10,7 +10,7 @@ mindspore.ops.ListDiff
     表示每个 `out` 元素在 `x` 中的位置。即： :math:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` 。
 
     参数：
-        - **out_idx** ( :class:`mindspore.dtype` ，可选) - `idx` 的数据类型，可选值： `mindspore.dtype.int32` 和 `mindspore.dtype.int64` 。默认值： `mindspore.dtype.int32` 。
+        - **out_idx** (:class:`mindspore.dtype`, 可选) - `idx` 的数据类型，可选值： `mindspore.dtype.int32` 和 `mindspore.dtype.int64` 。默认值： `mindspore.dtype.int32` 。
 
     输入：
         - **x** (Tensor) - 一个1-D Tensor。保留的值。类型支持：[float16, float32, float64, uint8, uint16, int8, int16, int32, int64]。

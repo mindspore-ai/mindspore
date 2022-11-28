@@ -388,7 +388,7 @@ def angle(x):
     is the imaginary part. The argument returned by this function is of the form atan2(b,a).
 
     Args:
-        x (Tensor) - The input tensor. types: complex64, complex128.
+        x (Tensor): The input tensor. types: complex64, complex128.
 
     Returns:
         Tensor, has the float32 or float64 type and the same shape as input.

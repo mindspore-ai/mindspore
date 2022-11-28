@@ -21,7 +21,7 @@ mindspore.ops.NonDeterministicInts
 
     异常：
         - **TypeError** - `shape` 不是Tensor。
-        - **ValueError** - `dtype` 不是mindspore.int32或mindspore.int64。
+        - **TypeError** - `dtype` 不是mindspore.int32或mindspore.int64。
         - **ValueError** - `shape` 中含有负数。
         - **ValueError** - `shape` 元素个数少于2。
         - **ValueError** - `shape` 不是一维Tensor。
