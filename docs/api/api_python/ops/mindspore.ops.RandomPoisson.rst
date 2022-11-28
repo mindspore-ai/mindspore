@@ -23,5 +23,5 @@ mindspore.ops.RandomPoisson
     异常：
         - **TypeError** - `shape` 不是Tensor或数据类型不是int32或int64。
         - **TypeError** - `dtype` 数据类型不是int32或int64。
-        - **TypeError** - `shape` 不是一维Tensor。
+        - **ValueError** - `shape` 不是一维Tensor。
         - **ValueError** - `shape` 的元素存在负数。

@@ -507,7 +507,7 @@ class Assert(PrimitiveWithInfer):
 
     Args:
         summarize (int, optional): The number of entries to be printed in each tensor while the given condition is
-        identified to be False. Default: None.
+            identified to be False. Default: None.
 
     Inputs:
         - **condition** (Union[Tensor[bool], bool]) - The condition to be identified.
