@@ -184,15 +184,15 @@ class ExtractGlimpse(Primitive):
         If the window and input image tensor not overlap, random noise is filled.
 
     Args:
-        centered (bool): An optional `bool`. Indicates if the offset coordinates
+        centered (bool, optional): An optional `bool`. Indicates if the offset coordinates
             are centered relative to the image, in which case the (0, 0) offset is relative to the center of
             the center of the input images. If false, the (0, 0) offset corresponds to the upper left corner
             of the input images. Defaults to `True`.
-        normalized (bool): An optional `bool`. indicates if the offset
+        normalized (bool, optional): An optional `bool`. indicates if the offset
             coordinates are normalized. Defaults to `True`.
-        uniform_noise (bool): An optional `bool`. indicates if the noise should be
+        uniform_noise (bool, optional): An optional `bool`. indicates if the noise should be
             generated using a uniform distribution or a Gaussian distribution. Defaults to `True`.
-        noise (str): An optional string. The value can be 'uniform', 'gaussian'
+        noise (str, optional): An optional string. The value can be 'uniform', 'gaussian'
             and 'zero'. The window is determined by size and offsets.
             When the window and input image tensor not overlap, random noise is filled.
             The result is variable when noise is equal to 'uniform' and 'gaussian'.
@@ -352,7 +352,7 @@ class CropAndResize(Primitive):
 
 class NonMaxSuppressionV3(Primitive):
     r"""
-        Greedily selects a subset of bounding boxes in descending order of score.
+    Greedily selects a subset of bounding boxes in descending order of score.
 
     .. warning::
         When input "max_output_size" is negative, it will be treated as 0.
@@ -384,7 +384,7 @@ class NonMaxSuppressionV3(Primitive):
         TypeError: If the dtype of `boxes` and `scores` is different.
         TypeError: If the dtype of `iou_threshold` and `score_threshold` is different.
         TypeError: If `boxes` is not tensor or its dtype is not float16 or float32.
-        TypeEroor: If `scores` is not tensor or its dtype is not float16 or float32.
+        TypeError: If `scores` is not tensor or its dtype is not float16 or float32.
         TypeError: If `max_output_size` is not tensor or scalar.If `max_output_size` is not int32 or int64.
         TypeError: If `iou_threshold` is not tensor or scalar. If its type is not float16 or float32.
         TypeError: If `score_threshold` is not tensor or scalar. If its type is not float16 or float32.

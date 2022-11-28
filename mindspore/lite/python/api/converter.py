@@ -97,7 +97,7 @@ class Converter:
             corresponding to `model_file` parameter; 'model.Caffemodel' is model weight value file, corresponding to
             `weight_file` parameter. For example, "/home/user/model.caffemodel". Default: "".
         config_file (str, optional): Set the path of the configuration file of Converter can be used to post-training,
-            offline split op to parallel, disable op fusion ability and set plugin so path. `config_file' uses the
+            offline split op to parallel, disable op fusion ability and set plugin so path. `config_file` uses the
             `key = value` method to define the related parameters.
             For the configuration parameters related to post training quantization, please refer to
             `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
