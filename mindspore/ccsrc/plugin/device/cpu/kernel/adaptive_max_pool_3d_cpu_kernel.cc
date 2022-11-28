@@ -54,6 +54,7 @@ int AdaptiveMaxPool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   dtype_ = inputs[kIndex0]->GetDtype();
   input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_num_dims_ = input_shape_.size();
   outputs_ = outputs;
   return KRET_OK;
 }
