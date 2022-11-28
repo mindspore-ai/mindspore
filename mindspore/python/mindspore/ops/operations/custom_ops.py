@@ -318,7 +318,7 @@ class Custom(ops.PrimitiveWithInfer):
         >>> import mindspore.ops as ops
         >>> import numpy as np
         >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, kernel
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> from mindspore.nn import Cell
         >>> input_x = Tensor(np.ones([16, 16]).astype(np.float32))
         >>> input_y = Tensor(np.ones([16, 16]).astype(np.float32))

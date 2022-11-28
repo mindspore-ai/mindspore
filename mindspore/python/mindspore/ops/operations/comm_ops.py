@@ -63,9 +63,8 @@ class ReduceOp:
             This example should be run with multiple devices.
 
         >>> from mindspore.communication import init
-        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Tensor, ops, nn
         >>> from mindspore.ops import ReduceOp
-        >>> import mindspore.nn as nn
         >>>
         >>> init()
         >>> class Net(nn.Cell):

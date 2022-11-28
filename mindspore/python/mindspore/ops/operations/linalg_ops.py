@@ -49,9 +49,8 @@ class Geqrf(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations import linalg_ops as linalg
         >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
-        >>> geqrf = linalg.Geqrf()
+        >>> geqrf = ops.Geqrf()
         >>> y, tau = geqrf(input_x)
         >>> print(y)
         [[ 2.236068   1.7888544]
@@ -97,10 +96,9 @@ class Svd(Primitive):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, set_context
-        >>> from mindspore.ops.operations import linalg_ops as linalg
+        >>> from mindspore import Tensor, ops, set_context
         >>> set_context(device_target="CPU")
-        >>> svd = linalg.Svd(full_matrices=True, compute_uv=True)
+        >>> svd = ops.Svd(full_matrices=True, compute_uv=True)
         >>> a = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
         >>> s, u, v = svd(a)
         >>> print(s)

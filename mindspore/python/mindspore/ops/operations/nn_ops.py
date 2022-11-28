@@ -155,8 +155,9 @@ class AdaptiveAvgPool3D(Primitive):
 
     Examples:
         >>> import mindspore
+        >>> import numpy as np
         >>> from mindspore import nn, Tensor
-        >>> from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
+        >>> from mindspore.ops import AdaptiveAvgPool3D
         >>> class AdaptiveAvgPool3DNet(nn.Cell):
         ...     def __init__(self, output_size):
         ...         super(AdaptiveAvgPool3DNet, self).__init__()
@@ -543,9 +544,8 @@ class Softsign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.nn_ops import Softsign
         >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
-        >>> softsign = Softsign()
+        >>> softsign = ops.Softsign()
         >>> output = softsign(input_x)
         >>> print(output)
         [ 0.        -0.5         0.6666667  0.9677419 -0.9677419]
@@ -696,9 +696,8 @@ class SeLU(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.nn_ops import SeLU
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> selu = SeLU()
+        >>> selu = ops.SeLU()
         >>> output = selu(input_x)
         >>> print(output)
         [[-1.1113307 4.202804 -1.7575096]
@@ -1430,7 +1429,7 @@ class DataFormatVecPermute(Primitive):
         >>> class Net(nn.Cell):
         ...     def __init__(self, src_format="NHWC", dst_format="NCHW"):
         ...         super().__init__()
-        ...         self.op = P.nn_ops.DataFormatVecPermute(src_format, dst_format)
+        ...         self.op = ops.DataFormatVecPermute(src_format, dst_format)
         ...     def construct(self, x):
         ...         return self.op(x)
         ...
@@ -2120,7 +2119,7 @@ class MaxUnpool2D(Primitive):
     Examples:
         >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
         >>> argmax = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
-        >>> maxunpool2d = P.MaxUnpool2D(ksize=1, strides=1, pads=0)
+        >>> maxunpool2d = ops.MaxUnpool2D(ksize=1, strides=1, pads=0)
         >>> output = maxunpool2d(x, argmax)
         >>> print(output.asnumpy())
         [[[[0. 1.]
@@ -3097,7 +3096,7 @@ class L2Loss(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Examples
+    Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
         >>> l2_loss = L2Loss()
         >>> output = l2_loss(input_x)
@@ -3770,12 +3769,12 @@ class UpsampleTrilinear3D(Primitive):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> ops = P.UpsampleTrilinear3D(output_size=[4, 64, 48])
+        >>> ops = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
         >>> out = ops(Tensor(input_data=np.random.randn(2, 3, 4, 512, 256)))
         >>> print(out.shape)
         (2, 3, 4, 64, 48)
         ...
-        >>> ops = P.UpsampleTrilinear3D(output_size=[2, 4, 4])
+        >>> ops = ops.UpsampleTrilinear3D(output_size=[2, 4, 4])
         >>> in_x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
         >>> out = ops(in_x)
         >>> print(out)
@@ -6976,8 +6975,7 @@ class Dropout2D(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.nn_ops import Dropout2D
-        >>> dropout = Dropout2D(keep_prob=0.5)
+        >>> dropout = ops.Dropout2D(keep_prob=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
         >>> output, mask = dropout(x)
         >>> print(output.shape)
@@ -8490,7 +8488,7 @@ class ApplyAdagradDA(Primitive):
         >>> class ApplyAdagradDANet(nn.Cell):
         ...     def __init__(self, use_locking=False):
         ...         super(ApplyAdagradDANet, self).__init__()
-        ...         self.apply_adagrad_d_a = P.ApplyAdagradDA(use_locking)
+        ...         self.apply_adagrad_d_a = ops.ApplyAdagradDA(use_locking)
         ...         self.var = Parameter(Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32)), name="var")
         ...         self.gradient_accumulator = Parameter(Tensor(np.array([[0.1, 0.3],
         ...                                                                [0.1, 0.5]]).astype(np.float32)),
@@ -9042,7 +9040,7 @@ class GridSampler3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> gridsampler = GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+        >>> gridsampler = ops.GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(np.float32))
         >>> output = gridsampler(input_x, grid)
@@ -9363,7 +9361,7 @@ class NthElement(Primitive):
     Examples:
         >>> input = Tensor(np.array([[1,2,3],[4,5,6]]) , mstype.int8)
         >>> n = 1
-        >>> net = P.NthElement()
+        >>> net = ops.NthElement()
         >>> out = net(input, n)
         >>> print(out)
         [2 5]
@@ -9418,8 +9416,7 @@ class PSROIPooling(Primitive):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations import nn_ops
+        >>> from mindspore import Tensor, ops
         >>> features = np.random.randn(4, 3 * 7 * 7, 80, 48)
         >>> features = Tensor.from_numpy(features).astype(mindspore.float32)
         >>> rois = Tensor.from_numpy(
@@ -9443,7 +9440,7 @@ class PSROIPooling(Primitive):
         ...                [387.4919],
         ...                [778.7322],
         ...                [562.7321]]])).astype(mindspore.float32)
-        >>> psROIPooling = nn_ops.PSROIPooling(spatial_scale=1.0/16, output_dim=3,
+        >>> psROIPooling = ops.PSROIPooling(spatial_scale=1.0/16, output_dim=3,
         ...                                       group_size=7)
         >>> out = psROIPooling(features, rois)
         >>> print(out.shape)
@@ -9645,7 +9642,7 @@ class GridSampler2D(Primitive):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> gridsampler = GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+        >>> gridsampler = ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))
         >>> output = gridsampler(input_x, grid)
@@ -10249,6 +10246,7 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
         - **y** (Tensor) - Has the same type as the `input_x`.
           Has the shape :math:`(N, C, output\underline{~}shape{H}, output\underline{~}shape{W})`.
         - **argmax** (Tensor) -A tensor whose data type must be int64. Has the same shape as the `y`.
+
     Raises:
         TypeError: If data type of `input_x` is not one of the following: float16, float32, float64, int32, int64.
         TypeError: If data type of `random_samples` is not one of the following: float16, float32, float64.
@@ -10266,10 +10264,6 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
 
     Examples:
         >>> # the ksize is an int number and the output_shape is a tuple.
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations import nn_ops
         >>> ksize = 2
         >>> output_shape = (2,2)
         >>> data_format = "NCHW"
@@ -10279,7 +10273,7 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
         ...                            0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
         ...                            0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([1, 1, 5, 5]), mstype.float32)
         >>> random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
-        >>> net = nn_ops.FractionalMaxPoolWithFixedKsize(ksize, output_shape, data_format)
+        >>> net = ops.FractionalMaxPoolWithFixedKsize(ksize, output_shape, data_format)
         >>> y, argmax = net(input_x, random_samples)
         >>> print(y)
         [[[[0.9545 0.8764]

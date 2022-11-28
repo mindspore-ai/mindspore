@@ -727,7 +727,7 @@ def subtract(x, other, *, alpha=1):
     Examples:
         >>> x = Tensor(np.array([4, 5, 6]), mindspore.float32)
         >>> y = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> z = subtract(x, y, alpha=1)
+        >>> z = ops.subtract(x, y, alpha=1)
         >>> print(z)
         [3. 3. 3.]
     """
@@ -3141,7 +3141,6 @@ def approximate_equal(x, y, tolerance=1e-5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
         >>> tol = 1.5
         >>> x = Tensor(np.array([1, 2, 3]), mstype.float32)
         >>> y = Tensor(np.array([2, 4, 6]), mstype.float32)
@@ -3608,6 +3607,7 @@ def heaviside(x, values):
 
     Supported Platforms:
         ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([-1.5, 0., 2.]))
         >>> values = Tensor(np.array([0.5]))
@@ -4105,7 +4105,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         >>> x = Tensor(np.array([[2., 2.], [3., 2.], [3., 4.]], np.float32))
         >>> vec1 = Tensor(np.array([2., 3., 2.], np.float32))
         >>> vec2 = Tensor(np.array([3, 4], np.float32))
-        >>> output = addr(x, vec1, vec2)
+        >>> output = ops.addr(x, vec1, vec2)
         >>> print(output)
         [[ 8. 10.]
          [12. 14.]
@@ -4474,8 +4474,7 @@ def deg2rad(x):
 
     Examples:
         >>> x = Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]]).astype(np.float32))
-        >>> op = nn.Deg2Rad()
-        >>> output = op(x)
+        >>> output = ops.deg2Rad(x)
         >>> print(output)
         [[ 1.5707964 -1.5707964]
          [ 3.1415927 -3.1415927]
@@ -4515,7 +4514,7 @@ def rad2deg(x):
         >>> from mindspore import Tensor
         >>> import mindspore.ops as ops
         >>> x = Tensor([[6.283, -3.142],[1.570, -6.283],[3.142, -1.570]], mindspore.float32)
-        >>> output = rad2deg(x)
+        >>> output = ops.rad2deg(x)
         >>> print(output)
         [[ 359.98935 -180.02333]
          [  89.95438 -359.98935]
@@ -5825,8 +5824,6 @@ def matmul(x1, x2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor, ops
-        >>> import mindspore
         >>> # case 1 : Reasonable application of broadcast mechanism
         >>> x1 = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
         >>> x2 = Tensor(np.arange(4*5).reshape(4, 5), mindspore.float32)
