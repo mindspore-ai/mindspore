@@ -27,6 +27,7 @@ class SoftmaxGradFusionCpu : public PatternProcessPass {
     reduce_sum_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimReduceSum->name()));
     input0_ = std::make_shared<Var>();
     input1_ = std::make_shared<Var>();
+    axis_ = std::make_shared<Var>();
   }
   ~SoftmaxGradFusionCpu() override = default;
   const BaseRef DefinePattern() const override;
@@ -36,6 +37,7 @@ class SoftmaxGradFusionCpu : public PatternProcessPass {
   VarPtr reduce_sum_;
   VarPtr input0_;
   VarPtr input1_;
+  VarPtr axis_;
 };
 }  // namespace opt
 }  // namespace mindspore
