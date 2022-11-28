@@ -177,7 +177,7 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
       if (!(-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
         MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 'strides[" << j << "]' cannot be "
                                  << "negative number and 'begin[" << j << "]' must be in [-" << x_shape[i] << ", "
-                                 << x_shape[i] << "] when 'shrink_axis_mask' is greater than 0, but got 'strides[" << j
+                                 << x_shape[i] << ") when 'shrink_axis_mask' is greater than 0, but got 'strides[" << j
                                  << "]': " << strides << ", 'begin[" << j << "]': " << start << ".";
       }
       j += 1;
@@ -237,7 +237,7 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
         if (!(-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 'strides[" << j << "]' cannot be "
                                    << "negative number and 'begin[" << j << "]' must be in [-" << x_shape[i] << ", "
-                                   << x_shape[i] << "] when 'shrink_axis_mask' is greater than 0, but got 'strides["
+                                   << x_shape[i] << ") when 'shrink_axis_mask' is greater than 0, but got 'strides["
                                    << j << "]': " << strides << ", 'begin[" << j << "]': " << start << ".";
         }
         j += 1;
