@@ -488,7 +488,7 @@ class _Reduce(PrimitiveWithCheck):
     Definition of base class of reduction class operators.
 
     Args:
-         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
                            If false, don't keep these dimensions. Default: False.
     """
 
@@ -7358,7 +7358,7 @@ class MatrixTriangularSolve(Primitive):
     Raises:
         TypeError: If `matrix` or `rhs` is not a Tensor.
         TypeError: If `lower` or `adjoint` is not bool.
-        ValueError: If the batch sizes of `matrix`and `rhs` are not equal.
+        ValueError: If the batch sizes of `matrix` and `rhs` are not equal.
         ValueError: If the inner-most 2 dimensions of `matrix` are not equal.
         ValueError: If the second-last dimensions of `matrix` and `rhs` are not equal.
 
