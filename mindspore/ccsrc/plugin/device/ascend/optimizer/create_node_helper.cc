@@ -50,13 +50,13 @@ CNodePtr CreateNodeHelper::ConvertToTargetOp(const CNodePtr &origin_op, OpAdapta
   MS_EXCEPTION_IF_NULL(origin_op);
   MS_EXCEPTION_IF_NULL(op_adaptation_info);
   auto me_op_name = op_adaptation_info->me_op_name();
-  auto default_op_name = op_adaptation_info->backend_op_name();
+  auto backend_op_name = op_adaptation_info->backend_op_name();
   auto pre_check_func = op_adaptation_info->pre_check_func();
   auto need_tbe_check = op_adaptation_info->need_tbe_check_supported();
   auto input_to_attr_map = op_adaptation_info->input_attr_map();
   // Step1: rename to default op name
   common::AnfAlgo::SetNodeAttr(kAttrMeOpName, MakeValue(me_op_name), origin_op);
-  RenamePrimitiveName(origin_op, me_op_name, default_op_name);
+  RenamePrimitiveName(origin_op, me_op_name, backend_op_name);
   // Step2: pre_check
   if (pre_check_func) {
     if (!pre_check_func(origin_op)) {
@@ -113,19 +113,19 @@ CNodePtr CreateNodeHelper::ConvertToTargetOp(const CNodePtr &origin_op, OpAdapta
 }
 
 void CreateNodeHelper::RenamePrimitiveName(const CNodePtr &origin_op, const string &me_op_name,
-                                           const string &default_op_name) {
+                                           const string &backend_op_name) {
   MS_EXCEPTION_IF_NULL(origin_op);
-  if (default_op_name == me_op_name) {
+  if (backend_op_name == me_op_name) {
     return;
   }
   auto primitive = GetCNodePrimitive(origin_op);
   MS_EXCEPTION_IF_NULL(primitive);
-  primitive->set_name(default_op_name);
+  primitive->set_name(backend_op_name);
   // reset full scope name
   origin_op->set_fullname_with_scope("");
-  MS_LOG(INFO) << "Rename op type from " << me_op_name << " to " << default_op_name << " for op "
+  MS_LOG(INFO) << "Rename op type from " << me_op_name << " to " << backend_op_name << " for op "
                << origin_op->fullname_with_scope();
-  if (default_op_name == kSparseGatherV2OpName) {
+  if (me_op_name == kSparseGatherV2OpName) {
     common::AnfAlgo::SetNodeAttr(kAttrIsSparse, MakeValue(true), origin_op);
   }
   common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), origin_op);

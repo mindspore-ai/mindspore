@@ -542,6 +542,7 @@ GVAR_DEF(PrimitivePtr, kPrimBroadcastTo, std::make_shared<Primitive>("BroadcastT
 GVAR_DEF(PrimitivePtr, kPrimLogNormalReverse, std::make_shared<Primitive>("LogNormalReverse"));
 GVAR_DEF(PrimitivePtr, kPrimTopK, std::make_shared<Primitive>(kTopK));
 GVAR_DEF(PrimitivePtr, kPrimInTopK, std::make_shared<Primitive>("InTopK"));
+GVAR_DEF(PrimitivePtr, kPrimInTopKD, std::make_shared<Primitive>("InTopKD"));
 GVAR_DEF(PrimitivePtr, kPrimArrayToScalar, std::make_shared<Primitive>("array_to_scalar"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastShape, std::make_shared<Primitive>("broadcast_shape"));
 GVAR_DEF(PrimitivePtr, kPrimArrayMap, std::make_shared<Primitive>("array_map"));

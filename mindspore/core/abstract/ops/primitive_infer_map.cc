@@ -91,6 +91,7 @@
 #include "ops/grad/gelu_grad.h"
 #include "ops/iou.h"
 #include "ops/sparse_apply_proximal_adagrad.h"
+#include "ops/in_top_k.h"
 
 namespace mindspore {
 namespace abstract {
@@ -444,6 +445,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimPack, R{ops::StackInfer, nullptr, true}},
     {prim::kPrimApplyAdamD, R{ops::ApplyAdamDInfer, nullptr, true}},
     {prim::kPrimSparseApplyProximalAdagradD, R{ops::SparseApplyProximalAdagradInfer, nullptr, true}},
+    {prim::kPrimInTopKD, R{ops::InTopKInferFunc, nullptr, true}},
     {prim::kPrimMul, R{ops::MulInfer, nullptr, true}},
     {prim::kPrimMod, R{ops::ModInfer, nullptr, true}},
     {prim::kPrimAdd, R{ops::AddInfer, nullptr, false}},
