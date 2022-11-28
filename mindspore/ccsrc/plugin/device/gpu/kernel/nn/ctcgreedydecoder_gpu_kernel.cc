@@ -85,7 +85,7 @@ bool CTCGreedyDecoderGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
 
   kernel_func_ = func_list_[index].second;
-  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  data_unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
   return true;
 }
 
@@ -102,8 +102,6 @@ int CTCGreedyDecoderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  // std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-  //                                                 inputs[kIndex0]->GetDeviceShapeAdaptively().end());
 
   ResetResource();
 
@@ -150,7 +148,6 @@ bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   stream_ptr_ = stream_ptr;
   T *inputs_x = GetDeviceAddress<T>(inputs, kIndex0);
   int *sequence_length = GetDeviceAddress<int>(inputs, kIndex1);
-  // int64_t *element_cnt = GetDeviceAddress<int64_t>(workspace, kIndex0);
   int64_t *nums_count = GetDeviceAddress<int64_t>(workspace, kIndex1);
   int64_t *decoded_values_temp = GetDeviceAddress<int64_t>(workspace, kIndex2);
 

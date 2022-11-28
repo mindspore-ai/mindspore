@@ -70,7 +70,9 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   }
 
   (void)CheckAndConvertUtils::CheckInteger("n_value", n_val, kGreaterEqual, 0, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("n_value", n_val, kLessThan, input_shape.back(), primitive->name());
+  if (input_shape.back() > 0) {
+    (void)CheckAndConvertUtils::CheckInteger("n_value", n_val, kLessThan, input_shape.back(), primitive->name());
+  }
   ShapeVector out_shape;
   int64_t len = SizeToLong(input_shape.size());
   for (int64_t i = 0; i < len - 1; i++) {

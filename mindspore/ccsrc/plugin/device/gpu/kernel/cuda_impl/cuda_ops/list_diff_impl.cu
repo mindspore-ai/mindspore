@@ -44,8 +44,11 @@ int ListDiff(int *count_number, size_t x_size, size_t y_size, const T *x, const 
              int *workspace_flag, const uint32_t &device_id, cudaStream_t cuda_stream) {
   int count_out = 0;
   cudaMemset(workspace_flag, 0, sizeof(int) * x_size);
-  InitListDiff<<<CUDA_BLOCKS(device_id, x_size * y_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(x_size, y_size, x,
-                                                                                                     y, workspace_flag);
+  int thread_num = 256 < x_size * y_size ? 256 : x_size * y_size;
+
+  InitListDiff<<<CUDA_BLOCKS_CAL(device_id, x_size * y_size, thread_num), thread_num, 0, cuda_stream>>>(
+    x_size, y_size, x, y, workspace_flag);
+  cudaStreamSynchronize(cuda_stream);
   std::vector<int> workspace_flag_host(x_size);
   cudaMemcpy(workspace_flag_host.data(), workspace_flag, x_size * sizeof(int), cudaMemcpyDeviceToHost);
   for (size_t idx = 0; idx < x_size; ++idx) {

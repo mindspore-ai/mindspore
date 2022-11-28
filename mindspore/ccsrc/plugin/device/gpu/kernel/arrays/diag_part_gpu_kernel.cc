@@ -56,11 +56,11 @@ int DiagPartGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
   int64_t input_dims = input_shape.size();
   int kNumberTwo = 2;
   output_dims = input_dims / kNumberTwo;
+  output_elements_ = 1;
   for (int i = 0; i < output_dims; i++) {
     output_elements_ *= input_shape[i];
   }
