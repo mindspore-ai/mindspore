@@ -35,6 +35,7 @@
 #include "minddata/dataset/text/kernels/sliding_window_op.h"
 #include "minddata/dataset/text/kernels/to_number_op.h"
 #include "minddata/dataset/text/kernels/to_vectors_op.h"
+#include "minddata/dataset/text/kernels/truncate_op.h"
 #include "minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
@@ -47,6 +48,7 @@
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/validators.h"
 
+#include "minddata/dataset/audio/ir/validators.h"
 #include "minddata/dataset/text/ir/validators.h"
 
 namespace mindspore {
@@ -581,6 +583,27 @@ Status ToVectorsOperation::ValidateParams() {
 std::shared_ptr<TensorOp> ToVectorsOperation::Build() {
   std::shared_ptr<ToVectorsOp> tensor_op = std::make_shared<ToVectorsOp>(vectors_, unk_init_, lower_case_backup_);
   return tensor_op;
+}
+
+// TruncateOperation
+TruncateOperation::TruncateOperation(int32_t max_seq_len) : max_seq_len_(max_seq_len) {}
+
+Status TruncateOperation::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("Truncate", "max_seq_len", max_seq_len_));
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> TruncateOperation::Build() {
+  std::shared_ptr<TruncateOp> tensor_op = std::make_shared<TruncateOp>(max_seq_len_);
+  return tensor_op;
+}
+
+Status TruncateOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["max_seq_len"] = max_seq_len_;
+  *out_json = args;
+  return Status::OK();
 }
 
 // TruncateSequencePairOperation

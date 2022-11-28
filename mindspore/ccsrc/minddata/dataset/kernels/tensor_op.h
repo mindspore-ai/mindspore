@@ -147,6 +147,7 @@ constexpr char kRegexReplaceOp[] = "RegexReplaceOp";
 constexpr char kRegexTokenizerOp[] = "RegexTokenizerOp";
 constexpr char kToNumberOp[] = "ToNumberOp";
 constexpr char kToVectorsOp[] = "ToVectorsOp";
+constexpr char kTruncateOp[] = "TruncateOp";
 constexpr char kTruncateSequencePairOp[] = "TruncateSequencePairOp";
 constexpr char kUnicodeCharTokenizerOp[] = "UnicodeCharTokenizerOp";
 constexpr char kUnicodeScriptTokenizerOp[] = "UnicodeScriptTokenizerOp";

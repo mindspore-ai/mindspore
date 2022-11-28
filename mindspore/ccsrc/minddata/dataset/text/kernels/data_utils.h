@@ -55,6 +55,11 @@ Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std
 /// \return Status return code.
 Status AddToken(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &token,
                 bool begin);
+
+/// \brief Truncate the input sequence so that it does not exceed the maximum length.
+/// \param[in] max_seq_len Maximum allowable length.
+/// \param[out] output Output Tensor.
+Status Truncate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int max_seq_len);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TEXT_DATA_UTILS_H_

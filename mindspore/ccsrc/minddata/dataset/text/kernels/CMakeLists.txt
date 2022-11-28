@@ -22,6 +22,7 @@ add_library(text-kernels OBJECT
         ngram_op.cc
         sliding_window_op.cc
         wordpiece_tokenizer_op.cc
+        truncate_op.cc
         truncate_sequence_pair_op.cc
         to_number_op.cc
         to_vectors_op.cc

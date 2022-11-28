@@ -5295,3 +5295,85 @@ TEST_F(MindDataTestPipeline, TestAddTokenPipelineSuccess) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+/// Feature: Truncate
+/// Description: Test Truncate basic usage max_seq_len less length
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestTruncateSuccess1D) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateSuccess1D.";
+  // Testing basic Truncate
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create white_tokenizer operation on ds
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
+  EXPECT_NE(white_tokenizer, nullptr);
+
+  // Create a truncate operation on ds
+  std::shared_ptr<TensorTransform> truncate = std::make_shared<text::Truncate>(3);
+  EXPECT_NE(truncate, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({white_tokenizer, truncate}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<std::vector<std::string>> expected = {
+    {"This", "is", "a"}, {"Be", "happy", "every"}, {"Good", "luck", "to"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: Truncate
+/// Description: Test the incorrect parameter of Truncate interface
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
+TEST_F(MindDataTestPipeline, TestTruncateFail) {
+  // Testing the incorrect parameter of Truncate interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateFail.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Testing the parameter max_seq_len less than 0
+  // Create a truncate operation on ds
+  std::shared_ptr<TensorTransform> truncate = std::make_shared<text::Truncate>(-1);
+  EXPECT_NE(truncate, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({truncate});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Truncate input (The parameter max_seq_len must be greater than  0)
+  EXPECT_EQ(iter, nullptr);
+}

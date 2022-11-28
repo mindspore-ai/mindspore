@@ -293,6 +293,7 @@ API样例中常用的导入模块如下：
     mindspore.dataset.text.SlidingWindow
     mindspore.dataset.text.ToNumber
     mindspore.dataset.text.ToVectors
+    mindspore.dataset.text.Truncate
     mindspore.dataset.text.TruncateSequencePair
     mindspore.dataset.text.UnicodeCharTokenizer
     mindspore.dataset.text.UnicodeScriptTokenizer

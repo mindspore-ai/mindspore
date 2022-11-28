@@ -3038,3 +3038,18 @@ TEST_F(MindDataTestExecute, TestLFCCWrongArgsDctType) {
   Status status = trans(input_ms, &input_ms);
   EXPECT_FALSE(status.IsOk());
 }
+
+/// Feature: Truncate
+/// Description: Test basic usage of Truncate op
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestTruncateOpStr) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTruncateOpStr.";
+  std::shared_ptr<Tensor> input;
+  Tensor::CreateFromVector(std::vector<std::string>({"hello", "hhx", "hyx", "world", "this", "is"}), &input);
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> truncate_op = std::make_shared<text::Truncate>(3);
+  // apply Truncate
+  mindspore::dataset::Execute trans({truncate_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}

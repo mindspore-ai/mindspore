@@ -98,5 +98,16 @@ Status AddToken(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   }
   return Status::OK();
 }
+
+Status Truncate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int max_seq_len) {
+  if (input->shape().Rank() == 1) {
+    return input->Slice(output, {SliceOption(Slice(max_seq_len))});
+  } else {
+    int dim = input->shape()[0];
+    Slice slice_dim = Slice(dim);
+    Slice slice_len = Slice(max_seq_len);
+    return input->Slice(output, {SliceOption(slice_dim), SliceOption(slice_len)});
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -456,6 +456,18 @@ def check_ngram(method):
     return new_method
 
 
+def check_truncate(method):
+    """Wrapper method to check the parameters of number of truncate."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [max_seq_len], _ = parse_user_args(method, *args, **kwargs)
+        check_pos_int32(max_seq_len, "max_seq_len")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_pair_truncate(method):
     """Wrapper method to check the parameters of number of pair truncate."""
 
