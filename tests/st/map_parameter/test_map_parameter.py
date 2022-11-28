@@ -68,7 +68,7 @@ def test_maptensor_put_get_export(ms_type):
             self.values = Tensor([[11, 11, 11], [22, 22, 22]], dtype=ms.float32)
 
         def construct(self, ms_type):
-            self.m.put(self.keys, self.values)
+            self.m[self.keys] = self.values
             key1 = Tensor([3], dtype=ms_type)
             value1 = self.m.get(key1, True)
             key2 = Tensor([4], dtype=ms_type)
@@ -84,3 +84,5 @@ def test_maptensor_put_get_export(ms_type):
         print("out3:", out3)
         data = net.m.export_data()
         print("data:", data)
+        assert len(data) == 3
+        assert len(data[0]) == 4

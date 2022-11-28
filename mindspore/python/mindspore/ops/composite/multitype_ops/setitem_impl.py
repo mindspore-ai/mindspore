@@ -849,4 +849,5 @@ def _map_tensor_setitem(map_tensor, key_tensor, value_tensor):
     Outputs:
         MapTensor, the map tensor be updated.
     """
-    return _map_tensor_ops.put(map_tensor, key_tensor, value_tensor)
+    _map_tensor_ops.put(map_tensor, key_tensor, value_tensor)
+    return map_tensor

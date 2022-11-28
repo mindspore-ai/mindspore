@@ -169,9 +169,9 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   /// \brief Exported MapTensor data.
   ///
-  /// \param[in] full [bool] True for full export, false for incremental export.
+  /// \param[in] incremental [bool] False for incremental export, true for full export.
   /// \return The exported data.
-  ExportData Export(bool full = false);
+  ExportData Export(bool incremental = false);
 
   /// \brief Exported MapTensor data from device.
   ///
@@ -205,6 +205,8 @@ class MS_CORE_API MapTensor final : public Tensor {
   void set_value_tensor(const TensorPtr value_tensor) { value_tensor_ = value_tensor; }
 
   void set_status_tensor(const TensorPtr status_tensor) { status_tensor_ = status_tensor; }
+
+  bool CheckData();
 
  private:
   // Data type of the keys.

@@ -241,17 +241,20 @@ class MapParameter(Parameter):
         self._map_tensor.erase(key_tensor)
         return self
 
-    def export_data(self, full=False):
+    def export_data(self, incremental=False):
         """
         Export data from this map parameter.
 
         Args:
-            full (bool): True for full export, otherwise for incremental export. Default: False.
+            incremental (bool): False for full export, otherwise for incremental export. Default: False.
+            When exporting data incrementally, the value_array does not contain erased data, so the length of the
+            key_array and the length of the value_array may be inconsistent.The length of the key_array and the length
+            of the status_array are consistent.
 
         Returns:
             Tuple(key_array, value_array, status_array), The exported data as a tuple.
         """
-        return self._map_tensor.export_data(full)
+        return self._map_tensor.export_data(incremental)
 
     def import_data(self, data):
         """
