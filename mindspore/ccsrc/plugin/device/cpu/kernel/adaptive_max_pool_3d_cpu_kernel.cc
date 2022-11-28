@@ -27,6 +27,9 @@ namespace {
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNumDims5 = 5;
+constexpr size_t kInputShapeDims4 = 4;
+
 bool AdaptiveMaxPool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
@@ -54,7 +57,26 @@ int AdaptiveMaxPool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   dtype_ = inputs[kIndex0]->GetDtype();
   input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_num_dims_ = input_shape_.size();
   outputs_ = outputs;
+
+  if (!(input_num_dims_ == kInputNumDims5 || input_num_dims_ == kInputShapeDims4)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input data dimensions should be equal to 4 or 5, but got "
+                  << input_num_dims_ << ".";
+    return KRET_RESIZE_FAILED;
+  }
+  auto output_size_shape = inputs[kIndex1]->GetShapeVector();
+  if (output_size_shape.size() != 1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output size dimensions should be equal to 1, but got "
+                  << output_size_shape.size() << ".";
+    return KRET_RESIZE_FAILED;
+  }
+  const size_t kOutputSizeElemNum = 3;
+  if (output_size_shape[0] != kOutputSizeElemNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output size elem number should be equal to 3, but got "
+                  << output_size_shape[0] << ".";
+    return KRET_RESIZE_FAILED;
+  }
   return KRET_OK;
 }
 
@@ -126,7 +148,6 @@ bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
                                            const std::vector<AddressPtr> &workspace,
                                            const std::vector<AddressPtr> &outputs) {
   // Set Shape
-  const size_t kInputNumDims5 = 5;
   output_shape_ = {input_shape_[0]};
   if (input_num_dims_ == kInputNumDims5) {
     output_shape_.push_back(input_shape_[1]);
@@ -241,10 +262,8 @@ void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<A
   auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
   auto indices_data = reinterpret_cast<int32_t *>(outputs[1]->addr);
-  const size_t kInputShapeDims4 = 4;
   if (input_shape_.size() == kInputShapeDims4) {
     input_shape_.insert(input_shape_.begin(), 1);
-    output_shape_.insert(output_shape_.begin(), 1);
   }
   size_B_ = input_shape_[dimB];
   size_D_ = input_shape_[dimD];
@@ -265,7 +284,7 @@ void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<A
   auto shard_adaptive_max_pool_3d = [&](int64_t start, int64_t end) {
     ComputeKernel(input_data, output_data, indices_data, start, end);
   };
-  CPUKernelUtils::ParallelFor(shard_adaptive_max_pool_3d, output_size_T_);
+  ParallelLaunchAutoSearch(shard_adaptive_max_pool_3d, output_size_T_, this, &parallel_search_info_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdaptiveMaxPool3D, AdaptiveMaxPool3DCpuKernelMod);
