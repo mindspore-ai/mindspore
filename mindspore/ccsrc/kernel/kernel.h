@@ -106,6 +106,7 @@ enum FusionType {
   DROPOUT_DOMASKV3D,
   TRANSDATA,
   NORM,
+  TRANSPOSE,
   UNKNOWN_FUSION_TYPE = -1,
 };
 

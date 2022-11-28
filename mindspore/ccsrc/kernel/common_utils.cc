@@ -99,6 +99,7 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
   {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
   {FusionType::TRANSDATA, "Transdata"},
   {FusionType::NORM, "Norm"},
+  {FusionType::TRANSPOSE, "Transpose"},
   {FusionType::UNKNOWN_FUSION_TYPE, ""}};
 
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
