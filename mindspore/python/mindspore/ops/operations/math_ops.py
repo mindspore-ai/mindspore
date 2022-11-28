@@ -5797,7 +5797,7 @@ class ComplexAbs(Primitive):
 
     Outputs:
         Tensor, has the same shape as x. If the type of x is complex64, the type of output is float32.
-          If the type of x is complex128, the type of output is float64.
+        If the type of x is complex128, the type of output is float64.
 
     Raises:
        TypeError: If the input is not a Tensor.
@@ -7332,7 +7332,7 @@ class MatrixTriangularSolve(Primitive):
     Raises:
         TypeError: If `matrix` or `rhs` is not a Tensor.
         TypeError: If `lower` or `adjoint` is not bool.
-        ValueError: If the batch sizes of `matrix`and `rhs` are not equal.
+        ValueError: If the batch sizes of `matrix` and `rhs` are not equal.
         ValueError: If the inner-most 2 dimensions of `matrix` are not equal.
         ValueError: If the second-last dimensions of `matrix` and `rhs` are not equal.
 
