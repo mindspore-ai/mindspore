@@ -37,9 +37,14 @@ std::function<bool(const CNodePtr &)> check_node = [](const CNodePtr &cnode) {
   if (CheckPrimitiveType(cnode, prim::kPrimConcat)) {
     // if concat's pre node is MakeTuple, the shape is complex, not optimize this case
     if (cnode->size() > 1) {
-      auto pre_node = cnode->input(1)->cast<CNodePtr>();
-      if (CheckPrimitiveType(pre_node, prim::kPrimMakeTuple)) {
-        return false;
+      auto tuple_node = cnode->input(1)->cast<CNodePtr>();
+      if (CheckPrimitiveType(tuple_node, prim::kPrimMakeTuple)) {
+        for (size_t i = 1; i < tuple_node->size(); ++i) {
+          auto input_node = tuple_node->input(i);
+          if (utils::isa<ValueNodePtr>(input_node) || utils::isa<Parameter>(input_node)) {
+            return false;
+          }
+        }
       }
     }
   }
