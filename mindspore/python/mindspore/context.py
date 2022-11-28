@@ -549,8 +549,9 @@ def set_auto_parallel_context(**kwargs):
                        it is better using 'dataset_strategy' to replace it.
         dataset_strategy (Union[str, tuple]): Dataset sharding strategy. Default: "data_parallel".
                        dataset_strategy="data_parallel" is equal to full_batch=False, dataset_strategy="full_batch" is
-                       equal to full_batch=True. For dataset load into net by model parallel strategy likes
-                       ds_stra ((1, 8), (1, 8)), it requires using set_auto_parallel_context(dataset_strategy=ds_stra).
+                       equal to full_batch=True. For execution mode is 'GRAPH_MODE' and dataset load into net by model
+                       parallel strategy likes ds_stra ((1, 8), (1, 8)), it requires using
+                       set_auto_parallel_context(dataset_strategy=ds_stra).
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
                        parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
