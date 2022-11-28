@@ -85,6 +85,8 @@ class BACKEND_EXPORT CollectiveManager {
 
   uint32_t local_rank_id() const;
 
+  bool need_init() const { return need_init_.load(); }
+
   // Set whether need reinitialize collective communication.
   void set_need_reinit(bool need_reinit) { need_reinit_ = need_reinit; }
   // Get whether need reinitialize collective communication.
@@ -111,6 +113,10 @@ class BACKEND_EXPORT CollectiveManager {
 
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
+
+  // Whether collective communication library should be initialized. This is represents this process is launched as
+  // distributed job.
+  std::atomic_bool need_init_;
 
   // Whether need reinitialize collective communication, this value should be set to true once a training process
   // exits unexpectedly is detected.
