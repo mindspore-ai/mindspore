@@ -68,9 +68,12 @@ class GeOpConvertor {
 
   static mindspore::HashSet<size_t> GetNeedRemoveInput(const AnfNodePtr &node, const bool training);
 
-  static std::map<std::string, unsigned int> GetNeedAddInput(const AnfNodePtr &node, const bool training);
+  static mindspore::HashMap<std::string, std::string> GetNeedAddInput(const AnfNodePtr &node, const bool training);
+
   static bool IsDynamicInput(const AnfNodePtr &node, const size_t idx);
+
   static size_t GetAclInputSize(const AnfNodePtr &node);
+
   static size_t GetAclOutputSize(const AnfNodePtr &node);
 };
 

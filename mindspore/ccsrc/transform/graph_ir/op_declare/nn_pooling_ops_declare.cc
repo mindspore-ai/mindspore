@@ -201,7 +201,7 @@ ATTR_MAP(AvgPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>()
                            {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
                            {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int64_t>())},
                            {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
-ATTR_INPUT_MAP(AvgPool3DGrad) = {{"origin_input_shape", 1}};
+ATTR_INPUT_MAP(AvgPool3DGrad) = {{"origin_input_shape", "orig_input_shape"}};
 OUTPUT_MAP(AvgPool3DGrad) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(AvgPool3DGrad, kAvgPool3DGradDOpName, ADPT_DESC(AvgPool3DGrad))
 

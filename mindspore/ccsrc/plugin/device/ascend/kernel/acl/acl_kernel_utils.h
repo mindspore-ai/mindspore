@@ -45,13 +45,12 @@ typedef enum { SET_ACL_ATTR, SET_ACL_INPUT } ProcessAttrMode;
 
 class AclOpDesc {
  public:
-  explicit AclOpDesc(const std::string &op_type);
+  AclOpDesc(const std::string &op_type, const AnfNodePtr &anf_node_ptr);
   ~AclOpDesc();
 
   void AddTensorDesc(const std::vector<GeTensorDescPtr> &inputs, const std::vector<GeTensorDescPtr> &outputs);
   void AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
                   const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list);
-  void AddConstInputTensor(const AnfNodePtr &anf_node);
   void ProcessAclAttrs(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
 
   std::vector<aclTensorDesc *> input_tensor_desc() const { return input_tensor_desc_; }
@@ -63,7 +62,6 @@ class AclOpDesc {
  protected:
   aclTensorDesc *CreateTensorDesc(const GeTensorDescPtr &tensor_desc);
   aclDataBuffer *CreateDataBuf(const AddressPtr &address, const size_t op_size);
-  void CreateNullAclTensor(const size_t idx, const bool is_input);
 
   void GetListAttr(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
   void GetListListAttr(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
@@ -83,7 +81,10 @@ class AclOpDesc {
   template <typename T>
   void CallAclAttrFunc(const T &val, const TypeId type, const std::string &attr_name);
 
+  void CreateNullAclTensor(const size_t idx, const bool is_input);
+
  private:
+  AnfNodeWeakPtr anf_node_;
   void *attr_to_input_{nullptr};
   size_t attr_data_offset_{0};
   std::string op_type_;
@@ -92,7 +93,6 @@ class AclOpDesc {
   std::vector<aclTensorDesc *> output_tensor_desc_{};
   std::vector<aclDataBuffer *> input_tensor_data_{};
   std::vector<aclDataBuffer *> output_tensor_data_{};
-  std::map<std::string, unsigned int> attr_to_input_maps_;
 };
 
 class AclUtils {

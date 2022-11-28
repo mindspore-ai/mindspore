@@ -39,7 +39,7 @@ REG_ADPT_DESC(Conv2D, prim::kPrimConv2D->name(), ADPT_DESC(Conv2D))
 
 // Conv2DBackpropInput
 INPUT_MAP(Conv2DBackpropInput) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(input_size)}};
-ATTR_INPUT_MAP(Conv2DBackpropInput) = {{"input_sizes", 1}};
+ATTR_INPUT_MAP(Conv2DBackpropInput) = {{"input_sizes", "input_size"}};
 ATTR_MAP(Conv2DBackpropInput) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
@@ -98,7 +98,7 @@ REG_ADPT_DESC(Conv2DTransposeD, kNameConv2DTransposeD, ADPT_DESC(Conv2DTranspose
 
 // Conv2DBackpropFilter
 INPUT_MAP(Conv2DBackpropFilter) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(filter_size)}};
-ATTR_INPUT_MAP(Conv2DBackpropFilter) = {{"filter_sizes", 2}};
+ATTR_INPUT_MAP(Conv2DBackpropFilter) = {{"filter_sizes", "filter_size"}};
 ATTR_MAP(Conv2DBackpropFilter) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},

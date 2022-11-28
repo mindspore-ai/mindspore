@@ -144,7 +144,7 @@ class BaseOpAdapter {
                                 const AnfNodePtr &node) = 0;
   virtual const mindspore::HashMap<int, InputDesc> &getInputMap() = 0;
   virtual const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() = 0;
-  virtual const std::map<std::string, unsigned int> &getAttrInputMap() = 0;
+  virtual const mindspore::HashMap<std::string, std::string> &getAttrInputMap() = 0;
   virtual const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() = 0;
   virtual const mindspore::HashMap<int, OutputDesc> &getOutputMap() = 0;
   virtual const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() = 0;

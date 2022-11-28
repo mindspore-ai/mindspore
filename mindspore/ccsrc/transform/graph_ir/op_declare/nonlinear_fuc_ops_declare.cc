@@ -46,7 +46,8 @@ REG_ADPT_DESC(EluGrad, kNameEluGrad, ADPT_DESC(EluGrad))
 INPUT_MAP(PRelu) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(weight)}};
 ATTR_MAP(PRelu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(PRelu) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(PRelu, kNamePrelu, ADPT_DESC(PRelu))
+REG_ADPT_DESC(PReLU, kPReLUOpName, ADPT_DESC(PRelu))
+REG_ADPT_DESC(PRelu, kPReluOpName, ADPT_DESC(PRelu))
 
 // PReluGrad
 INPUT_MAP(PReluGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(features)}, {3, INPUT_DESC(weights)}};
@@ -82,7 +83,8 @@ REG_ADPT_DESC(HardSwish, kNameHSwish, ADPT_DESC(HardSwish))
 INPUT_MAP(HardSwishGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}};
 ATTR_MAP(HardSwishGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(HardSwishGrad) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(HardSwishGrad, kNameHSwishGrad, ADPT_DESC(HardSwishGrad))
+REG_ADPT_DESC(HSwishGrad, kNameHSwishGrad, ADPT_DESC(HardSwishGrad))
+REG_ADPT_DESC(HardSwishGrad, kHardSwishGradOpName, ADPT_DESC(HardSwishGrad))
 
 // HSigmoid
 INPUT_MAP(HardSigmoid) = {{1, INPUT_DESC(input_x)}};
@@ -163,6 +165,12 @@ ATTR_MAP(GeluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GeluGrad) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(GeluGrad, prim::kPrimGeLUGrad->name(), ADPT_DESC(GeluGrad))
 
+// CeluV2
+INPUT_MAP(CeluV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(CeluV2) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())}};
+OUTPUT_MAP(CeluV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CeluV2, kCeluV2OpName, ADPT_DESC(CeluV2))
+
 // FastGeLU
 INPUT_MAP(FastGelu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(FastGelu) = EMPTY_ATTR_MAP;
@@ -180,4 +188,35 @@ INPUT_MAP(LeakyRelu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LeakyRelu) = {{"alpha", ATTR_DESC(negative_slope, AnyTraits<float>())}};
 OUTPUT_MAP(LeakyRelu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LeakyRelu, prim::kPrimLeakyRelu->name(), ADPT_DESC(LeakyRelu))
+
+// HardShrink
+INPUT_MAP(HardShrink) = {{1, INPUT_DESC(input_x)}};
+ATTR_MAP(HardShrink) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
+OUTPUT_MAP(HardShrink) = {{0, OUTPUT_DESC(output_y)}};
+REG_ADPT_DESC(HardShrink, prim::kPrimHShrink->name(), ADPT_DESC(HardShrink))
+
+// SoftShrink
+INPUT_MAP(SoftShrink) = {{1, INPUT_DESC(input_x)}};
+ATTR_MAP(SoftShrink) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
+OUTPUT_MAP(SoftShrink) = {{0, OUTPUT_DESC(output_y)}};
+REG_ADPT_DESC(SoftShrink, prim::kPrimSoftShrink->name(), ADPT_DESC(SoftShrink))
+
+// SoftShrinkGrad
+INPUT_MAP(SoftShrinkGrad) = {{1, INPUT_DESC(input_grad)}, {2, INPUT_DESC(input_x)}};
+ATTR_MAP(SoftShrinkGrad) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
+OUTPUT_MAP(SoftShrinkGrad) = {{0, OUTPUT_DESC(output_y)}};
+REG_ADPT_DESC(SoftShrinkGrad, prim::kPrimSoftShrinkGrad->name(), ADPT_DESC(SoftShrinkGrad))
+
+// LogSigmoid
+INPUT_MAP(LogSigmoid) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(LogSigmoid) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LogSigmoid) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LogSigmoid, prim::kPrimLogSigmoid->name(), ADPT_DESC(LogSigmoid))
+
+// HardSigmoidGrad
+INPUT_MAP(HardSigmoidGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(input_x)}};
+ATTR_MAP(HardSigmoidGrad) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())},
+                             {"beta", ATTR_DESC(beta, AnyTraits<float>())}};
+OUTPUT_MAP(HardSigmoidGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(HardSigmoidGrad, prim::kPrimHSigmoidGrad->name(), ADPT_DESC(HardSigmoidGrad))
 }  // namespace mindspore::transform

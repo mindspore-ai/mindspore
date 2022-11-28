@@ -157,7 +157,7 @@ namespace mindspore::transform {
 
 #define ATTR_INPUT_MAP(T) \
   template <>             \
-  const std::map<std::string, unsigned int> OpAdapter<T>::attr_input_map_
+  const mindspore::HashMap<std::string, std::string> OpAdapter<T>::attr_input_map_
 
 #define OUTPUT_MAP(T) \
   template <>         \

@@ -86,11 +86,11 @@ REG_ADPT_DESC(ReduceAllD, prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAllD))
 
 // ReduceMean
 INPUT_MAP(ReduceMean) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_INPUT_MAP(ReduceMean) = {{"axis", 2}};
+ATTR_INPUT_MAP(ReduceMean) = {{"axis", "axes"}};
 ATTR_MAP(ReduceMean) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMean) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMean, prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMean))
-REG_ADPT_DESC(ReduceMeanV1, "ReduceMeanV1", ADPT_DESC(ReduceMean))
+REG_ADPT_DESC(ReduceMeanD, prim::kPrimReduceMeanD->name(), ADPT_DESC(ReduceMean))
 
 // ReduceMinD
 INPUT_MAP(ReduceMinD) = {{1, INPUT_DESC(x)}};

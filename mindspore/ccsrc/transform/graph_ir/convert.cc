@@ -2968,7 +2968,8 @@ mindspore::HashSet<size_t> GeOpConvertor::GetNeedRemoveInput(const AnfNodePtr &n
   return remove_input_index;
 }
 
-std::map<std::string, unsigned int> GeOpConvertor::GetNeedAddInput(const AnfNodePtr &node, const bool training) {
+mindspore::HashMap<std::string, std::string> GeOpConvertor::GetNeedAddInput(const AnfNodePtr &node,
+                                                                            const bool training) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training);
   if (adpt == nullptr) {

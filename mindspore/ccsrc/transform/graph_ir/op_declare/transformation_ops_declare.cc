@@ -103,14 +103,14 @@ REG_ADPT_DESC(BatchToSpaceD, kNameBatchToSpace, ADPT_DESC(BatchToSpaceD))
 
 // BatchToSpace
 INPUT_MAP(BatchToSpace) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(crops)}};
-ATTR_INPUT_MAP(BatchToSpace) = {{"crops", 2}};
+ATTR_INPUT_MAP(BatchToSpace) = {{"crops", "crops"}};
 ATTR_MAP(BatchToSpace) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())}};
 OUTPUT_MAP(BatchToSpace) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpace, kBatchToSpaceDOpName, ADPT_DESC(BatchToSpace))
 
 // SpaceToBatch
 INPUT_MAP(SpaceToBatch) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
-ATTR_INPUT_MAP(SpaceToBatch) = {{"paddings", 2}};
+ATTR_INPUT_MAP(SpaceToBatch) = {{"paddings", "paddings"}};
 ATTR_MAP(SpaceToBatch) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())}};
 OUTPUT_MAP(SpaceToBatch) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SpaceToBatch, kSpaceToBatchDOpName, ADPT_DESC(SpaceToBatch))

@@ -134,7 +134,7 @@ INPUT_MAP(HistogramFixedWidth) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(range)}, {3
 ATTR_MAP(HistogramFixedWidth) = {
   {"dtype", ATTR_DESC(dtype, AnyTraits<int32_t>())},
 };
-ATTR_INPUT_MAP(HistogramFixedWidth) = {{"nbins", 3}};
+ATTR_INPUT_MAP(HistogramFixedWidth) = {{"nbins", "nbins"}};
 OUTPUT_MAP(HistogramFixedWidth) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(HistogramFixedWidth, kHistogramFixedWidthDOpName, ADPT_DESC(HistogramFixedWidth))
 

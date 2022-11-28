@@ -50,13 +50,14 @@ static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatM
                                                                      {"MatMul", ACL_FORMAT_ND}};
 }  // namespace
 
-AclOpDesc::AclOpDesc(const std::string &op_type) {
+AclOpDesc::AclOpDesc(const std::string &op_type, const AnfNodePtr &anf_node_ptr) {
   op_type_ = op_type;
   acl_attr_ = aclopCreateAttr();
   auto ret = aclrtMallocHost(&attr_to_input_, kMaxAttrToInputSize);
   if (ret != ACL_SUCCESS) {
     MS_LOG(WARNING) << "Malloc acl attr memory failed! error info:" << ret;
   }
+  anf_node_ = anf_node_ptr;
 }
 
 AclOpDesc::~AclOpDesc() {
@@ -371,9 +372,22 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
     return;
   }
   auto data_buf = aclCreateDataBuffer(current_addr, real_size);
-  auto index = attr_to_input_maps_[attr_name];
-  input_tensor_desc_.insert(input_tensor_desc_.begin() + index - 1, tensor_desc);
-  input_tensor_data_.insert(input_tensor_data_.begin() + index - 1, data_buf);
+
+  // Set by input name
+  auto node = anf_node_.lock();
+  const auto &attr_to_input_maps = GeOpConvertor::GetNeedAddInput(node, true);
+  auto to_input_name = attr_to_input_maps.at(attr_name);
+  const auto &input_names = kernel::AclUtils::GetOpInputAnchorNames(node);
+  auto iter = std::find(input_names.begin(), input_names.end(), to_input_name);
+  if (iter == input_names.end()) {
+    MS_LOG(EXCEPTION) << "Error input name!" << to_input_name;
+  }
+  size_t index = iter - input_names.begin();
+  if (index >= input_tensor_desc_.size() || index >= input_tensor_desc_.size()) {
+    MS_LOG(EXCEPTION) << "Please check before operator of acl tensor of index " << index;
+  }
+  input_tensor_desc_[index] = tensor_desc;
+  input_tensor_data_[index] = data_buf;
 }
 
 aclError AclOpDesc::AclSetAttrListListInt(const std::string &attr_name,
@@ -441,30 +455,6 @@ void AclOpDesc::CallAclAttrFunc(const T &val, const TypeId type, const std::stri
   }
 }
 
-void AclOpDesc::AddConstInputTensor(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto prim = GetValueNode<PrimitivePtr>(cnode->inputs()[0]);
-  MS_EXCEPTION_IF_NULL(prim);
-
-  attr_to_input_maps_ = GeOpConvertor::GetNeedAddInput(anf_node, true);
-  auto input_anchors = AclUtils::GetOpInputAnchorNames(anf_node);
-  for (const auto &[attr_name, index] : attr_to_input_maps_) {
-    if (std::count(input_anchors.begin(), input_anchors.end(), attr_name)) {
-      MS_LOG(INFO) << "This attr no need convert to const input";
-      continue;
-    }
-    auto value = prim->GetAttr(attr_name);
-    if (value == nullptr) {
-      MS_LOG(WARNING) << "Attr name " << attr_name
-                      << " isn't in current node, please check adaptor's attr name and index:" << index;
-      continue;
-    }
-    ProcessAclAttrs(attr_name, value, SET_ACL_INPUT);
-  }
-}
-
 aclDataType AclUtils::ConvertTypeIdToAclType(const ::ge::DataType &type) {
   auto iter = kMsTypeToAclType.find(type);
   if (iter == kMsTypeToAclType.end()) {
@@ -511,7 +501,6 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
   }
 
   std::vector<GeTensorDescPtr> res;
-  std::set<size_t> already_add_index;
   auto useless_inputs = GetUselessInputs(anf_node);
   auto input_anchor_names = GetOpInputAnchorNames(anf_node);
   for (size_t i = 0; i < input_num; ++i) {
@@ -539,7 +528,6 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
       (void)res.emplace_back(desc);
       continue;
     }
-    (void)already_add_index.insert(index + 1);
     auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, index);
     auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, index);
     auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, index);
@@ -555,13 +543,6 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
       auto desc = std::make_shared<GeTensorDesc>(GeShape(), GeFormat::FORMAT_ND, GeDataType::DT_UNDEFINED);
       MS_EXCEPTION_IF_NULL(desc);
       (void)res.emplace_back(desc);
-    }
-  }
-  const auto &add_index_info = GeOpConvertor::GetNeedAddInput(anf_node, true);
-  for (const auto &[attr_name, index] : add_index_info) {
-    if (already_add_index.count(index) != 0) {
-      MS_LOG(WARNING) << "Current node's input " << index
-                      << " is convert from attr, but already set input, please check adaptor of attr " << attr_name;
     }
   }
   return res;
@@ -631,8 +612,8 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
 
 std::shared_ptr<OpInfo> AclUtils::GetKernelOpInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto node_name = common::AnfAlgo::GetCNodeName(node);
-  auto op_info_ptr = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE);
+  auto op_type = GeOpConvertor::GetOpType(node, true);
+  auto op_info_ptr = kernel::OpLib::FindOp(op_type, kernel::kImplyTBE);
   return op_info_ptr;
 }
 

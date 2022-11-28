@@ -49,9 +49,9 @@ const AnfNodePtr ConvertDataTypeForCNodeInput(const AnfNodePtr &node, size_t inp
   } else if (infer_type == src_type) {
     // Create cast primitive.
     PrimitivePtr cast_prim = std::make_shared<Primitive>(prim::kPrimCast->name());
-    (void)cast_prim->AddAttr("dst_type", MakeValue(static_cast<size_t>(dest_type)));
-    (void)cast_prim->AddAttr("DstT", MakeValue(static_cast<size_t>(dest_type)));
-    (void)cast_prim->AddAttr("SrcT", MakeValue(static_cast<size_t>(src_type)));
+    (void)cast_prim->AddAttr("dst_type", TypeIdToType(dest_type));
+    (void)cast_prim->AddAttr("DstT", TypeIdToType(dest_type));
+    (void)cast_prim->AddAttr("SrcT", TypeIdToType(src_type));
     // Create dest type node.
     auto dest_type_ptr = TypeIdToType(dest_type);
     auto dest_type_node = NewValueNode(dest_type_ptr);

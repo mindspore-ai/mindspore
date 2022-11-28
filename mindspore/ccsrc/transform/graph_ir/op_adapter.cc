@@ -684,12 +684,13 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const AnfNode
     (void)attr_list.emplace(it.second.name, const_value);
   }
 
-  // remove attr from convert to input
+  // Get need convert to input's attr
   for (auto &it : attr_input_map_) {
-    auto iter = attr_list.find(it.first);
-    if (iter != attr_list.end()) {
-      (void)attr_list.erase(iter);
+    auto value = prim->GetAttr(it.first);
+    if (value == nullptr) {
+      continue;
     }
+    (void)attr_list.emplace(it.first, value);
   }
   return attr_list;
 }

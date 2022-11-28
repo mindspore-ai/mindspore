@@ -115,23 +115,46 @@ bool AclKernelMod::SkipUnRunNode(const std::vector<AddressPtr> &inputs, const st
   return false;
 }
 
+void AclKernelMod::ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr) {
+  auto node = anf_node_.lock();
+  const auto &attr_to_input_maps = GeOpConvertor::GetNeedAddInput(node, true);
+  const auto &input_names = kernel::AclUtils::GetOpInputAnchorNames(node);
+  for (auto &[attr_name, value] : attr_list_) {
+    if (value == nullptr) {
+      MS_LOG(WARNING) << "Current node's attr [" << attr_name << "] is nullptr";
+      continue;
+    }
+    MS_LOG(INFO) << attr_name << " --- " << value->ToString();
+    if (attr_to_input_maps.count(attr_name) != 0) {
+      auto to_input_name = attr_to_input_maps.at(attr_name);
+      MS_LOG(INFO) << to_input_name << " --- " << input_names;
+      auto iter = std::find(input_names.begin(), input_names.end(), to_input_name);
+      if (iter == input_names.end()) {
+        MS_LOG(EXCEPTION) << "Adaptor's attr name " << to_input_name << " isn't match any input name:" << input_names;
+      }
+      op_desc_ptr->ProcessAclAttrs(attr_name, value, SET_ACL_INPUT);
+      continue;
+    }
+    op_desc_ptr->ProcessAclAttrs(attr_name, value, SET_ACL_ATTR);
+  }
+}
+
 bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
-  auto op_desc_ptr = std::make_unique<AclOpDesc>(op_type_);
+  auto node = anf_node_.lock();
+  auto op_desc_ptr = std::make_shared<AclOpDesc>(op_type_, node);
   MS_EXCEPTION_IF_NULL(op_desc_ptr);
   op_desc_ptr->AddTensorDesc(input_desc_list_, output_desc_list_);
   op_desc_ptr->AddDataBuf(inputs, input_size_list_, outputs, output_size_list_);
   if (SkipUnRunNode(inputs, outputs, stream_ptr, op_desc_ptr->input_tensor_desc().size())) {
     return true;
   }
-  for (auto &[attr_name, value] : attr_list_) {
-    op_desc_ptr->ProcessAclAttrs(attr_name, value, SET_ACL_ATTR);
-  }
-  op_desc_ptr->AddConstInputTensor(anf_node_.lock());
+  ProcessAttribute(op_desc_ptr);
+
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   // Current enable binary->fuzz->stable mode.

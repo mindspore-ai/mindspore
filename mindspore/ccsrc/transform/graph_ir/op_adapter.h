@@ -38,7 +38,7 @@ class OpAdapterImpl {
                 const mindspore::HashMap<std::string, AttrDesc> &attr_map,
                 const mindspore::HashMap<std::string, int> &enum_map,
                 const mindspore::HashMap<unsigned int, AttrDesc> &input_attr_map,
-                const std::map<std::string, unsigned int> &attr_input_map,
+                const mindspore::HashMap<std::string, std::string> &attr_input_map,
                 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *cus_input_map,
                 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *cus_output_map,
                 mindspore::HashMap<std::string, ValuePtr> *extra_attr,
@@ -115,7 +115,7 @@ class OpAdapterImpl {
   const mindspore::HashMap<std::string, AttrDesc> &attr_map_;
   const mindspore::HashMap<std::string, int> &enum_map_;
   const mindspore::HashMap<unsigned int, AttrDesc> &input_attr_map_;
-  const std::map<std::string, unsigned int> &attr_input_map_;
+  const mindspore::HashMap<std::string, std::string> &attr_input_map_;
   mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *const cus_input_map_;
   mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *const cus_output_map_;
   mindspore::HashMap<std::string, ValuePtr> *const extra_attr_;
@@ -233,7 +233,7 @@ class OpAdapter : public BaseOpAdapter {
   }
   const mindspore::HashMap<int, InputDesc> &getInputMap() override { return input_map_; }
   const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
-  const std::map<std::string, unsigned int> &getAttrInputMap() override { return attr_input_map_; }
+  const mindspore::HashMap<std::string, std::string> &getAttrInputMap() override { return attr_input_map_; }
   const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
   const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() override { return subgraph_map_; }
   const mindspore::HashMap<int, OutputDesc> &getOutputMap() override { return output_map_; }
@@ -523,7 +523,7 @@ class OpAdapter : public BaseOpAdapter {
   static const mindspore::HashMap<std::string, int> enum_map_;
   // convert input from anf graph to Attr in Operators
   static const mindspore::HashMap<unsigned int, AttrDesc> input_attr_map_;
-  static const std::map<std::string, unsigned int> attr_input_map_;
+  static const mindspore::HashMap<std::string, std::string> attr_input_map_;
   static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_input_map_;
   static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_output_map_;
   mindspore::HashMap<std::string, ValuePtr> extra_attr_;
@@ -550,7 +550,7 @@ const mindspore::HashMap<std::string, int> OpAdapter<T>::enum_map_;
 template <typename T>
 const mindspore::HashMap<unsigned int, AttrDesc> OpAdapter<T>::input_attr_map_;
 template <typename T>
-const std::map<std::string, unsigned int> OpAdapter<T>::attr_input_map_;
+const mindspore::HashMap<std::string, std::string> OpAdapter<T>::attr_input_map_;
 template <typename T>
 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<T>::cus_input_map_;
 template <typename T>
