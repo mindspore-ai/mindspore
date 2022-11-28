@@ -187,6 +187,8 @@ from .math_func import (
     equal,
     not_equal,
     ne,
+    isneginf,
+    isposinf,
     isfinite,
     isnan,
     isclose,

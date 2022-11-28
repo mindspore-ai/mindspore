@@ -1464,6 +1464,24 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('isclose')(self, x2, rtol, atol, equal_nan)
 
+    def isneginf(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.isneginf`.
+        """
+        return tensor_operator_registry.get('isneginf')(self)
+
+    def isposinf(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.isposinf`.
+        """
+        return tensor_operator_registry.get('isposinf')(self)
+
+    def isreal(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.isreal`.
+        """
+        return tensor_operator_registry.get('isreal')(self)
+
     def isfinite(self):
         r"""
         For details, please refer to :func:`mindspore.ops.isfinite`.
