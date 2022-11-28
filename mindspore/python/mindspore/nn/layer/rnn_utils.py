@@ -15,18 +15,9 @@
 """Utils for RNNs CPU version, like Reverse operators."""
 from __future__ import absolute_import
 
-import numpy as np
-
 import mindspore.common.dtype as mstype
 import mindspore.ops as P
-from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
-from mindspore.common.tensor import Tensor
-
-
-@constexpr
-def arange(start, stop, step):
-    return Tensor(np.arange(start, stop, step), mstype.int32)
 
 
 class _Reverse(Cell):
@@ -37,7 +28,7 @@ class _Reverse(Cell):
 
     def construct(self, input_x):
         dim_size = input_x.shape[self.dim]
-        reversed_indexes = arange(dim_size-1, -1, -1)
+        reversed_indexes = P.arange(dim_size-1, -1, -1)
         output = P.Gather()(input_x, reversed_indexes, self.dim)
         return output
 

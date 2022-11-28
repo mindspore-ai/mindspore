@@ -1244,19 +1244,6 @@ def tile(a, reps):
     return F.tile(a, reps)
 
 
-@constexpr
-def _check_can_broadcast_to(shape, target_shape):
-    """Determines if shape can be broadcast to target_shape."""
-    ndim = len(shape)
-    ndim_target = len(target_shape)
-    if ndim > ndim_target:
-        return False
-    for i, j in zip(reversed(shape), reversed(target_shape)):
-        if i not in (1, j):
-            return False
-    return True
-
-
 def broadcast_to(array, shape):
     """
     Broadcasts an array to a new shape.
@@ -1283,9 +1270,6 @@ def broadcast_to(array, shape):
         [1 2 3]
         [1 2 3]]
     """
-    shape_a = F.shape(array)
-    if not _check_can_broadcast_to(shape_a, shape):
-        return _raise_value_error('cannot broadcast with ', shape)
     return _broadcast_to_shape(array, shape)
 
 
