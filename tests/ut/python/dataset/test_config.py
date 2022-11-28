@@ -527,6 +527,7 @@ def test_debug_mode():
     Description: This function only accepts a boolean as input and outputs error otherwise
     Expectation: TypeError will be raised when input argument is missing or is not a boolean
     """
+    origin_debug_mode_flag = ds.config.get_debug_mode()
     # set_debug_mode() to True and then check if the value is indeed True with get_debug_mode().
     debug_mode_flag = True
     ds.config.set_debug_mode(debug_mode_flag)
@@ -543,6 +544,8 @@ def test_debug_mode():
     with pytest.raises(TypeError) as error_info:
         ds.config.set_debug_mode()
     assert "set_debug_mode() missing 1 required positional argument: 'debug_mode_flag'" in str(error_info.value)
+    # restore to original debug_mode_flag
+    ds.config.set_debug_mode(origin_debug_mode_flag)
 
 
 if __name__ == '__main__':
