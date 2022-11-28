@@ -811,9 +811,12 @@ class Dataset:
         `output_columns` , and if not specified, the column name of output column is same as that of `input_columns` .
 
         - If you use transformations (
-          `vision transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_ ,
-          `nlp transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_ ,
-          `audio transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_ )
+          `vision transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          dataset.transforms.html#module-mindspore.dataset.vision>`_ ,
+          `nlp transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          dataset.transforms.html#module-mindspore.dataset.text>`_ ,
+          `audio transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
+          dataset.transforms.html#module-mindspore.dataset.audio>`_ )
           provided by mindspore dataset, please use the following parameters:
 
           .. image:: map_parameter_en.png

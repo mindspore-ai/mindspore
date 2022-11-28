@@ -73,3 +73,12 @@ mindspore.train
     mindspore.train.get_metric_fn
     mindspore.train.names
     mindspore.train.rearrange_inputs
+
+二阶优化
+----------
+
+.. mscnautosummary::
+    :toctree: train
+
+    mindspore.train.ConvertModelUtils
+    mindspore.train.ConvertNetUtils

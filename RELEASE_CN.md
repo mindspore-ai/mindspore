@@ -191,7 +191,7 @@ AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bing
 - [STABLE] 对于数据集对象使用map操作时，同时num_parallel_workers>1并且python_multiprocessing=True时，进行了多进程的机制优化，使得数据通道与子进程一一映射，避免了过多的文件句柄占用，同时close_pool这个接口也被删除。
 - [STABLE] 新增一批Vision、Text和Audio类数据增强操作。
 - [STABLE] 修复数据集类的flat_map方法未将结果展平的错误。
-- [STABLE] 统一数据集增强API的导入路径，提供更简单的使用方法，请参阅[最新的API用法](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.vision.html)。
+- [STABLE] 统一数据集增强API的导入路径，提供更简单的使用方法，请参阅[最新的API用法](https://www.mindspore.cn/docs/zh-CN/r1.8/api_python/mindspore.dataset.vision.html)。
 
 ### API变更
 
