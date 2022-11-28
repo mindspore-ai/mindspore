@@ -43,7 +43,7 @@ class COMMON_EXPORT CallbackImpl : public Callback {
 
  private:
   void CollectInputTypesAndFormats(const AnfNodePtr &node, std::vector<TypeId> *input_types,
-                                   std::vector<std::string> *input_formats);
+                                   std::vector<std::string> *input_formats, bool is_basic_node = false);
 };
 class COMMON_EXPORT CallbackImplWithInferShape : public CallbackImpl {
  public:

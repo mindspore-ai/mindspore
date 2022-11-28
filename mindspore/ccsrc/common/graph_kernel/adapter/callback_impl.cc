@@ -73,7 +73,7 @@ std::string CallbackImpl::GetTargetFromContext() {
 }
 
 void CallbackImpl::CollectInputTypesAndFormats(const AnfNodePtr &node, std::vector<TypeId> *input_types,
-                                               std::vector<std::string> *input_formats) {
+                                               std::vector<std::string> *input_formats, bool is_basic_node) {
   auto kernel_with_index = AnfUtils::VisitKernel(node, 0);
   if (kernel_with_index.first->isa<ValueNode>()) {
     auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
@@ -81,9 +81,16 @@ void CallbackImpl::CollectInputTypesAndFormats(const AnfNodePtr &node, std::vect
     (void)input_formats->emplace_back(kOpFormat_DEFAULT);
     (void)input_types->emplace_back(tensor->data_type());
   } else if (kernel_with_index.first->isa<Parameter>()) {
-    (void)input_formats->emplace_back(kOpFormat_DEFAULT);
-    auto input_type = GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
-    (void)input_types->emplace_back(input_type);
+    if (is_basic_node == false) {
+      (void)input_formats->emplace_back(kOpFormat_DEFAULT);
+      auto input_type = GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
+      (void)input_types->emplace_back(input_type);
+    } else {
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      (void)input_formats->emplace_back(std::move(input_format));
+      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+      (void)input_types->emplace_back(input_type);
+    }
   } else {
     auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
     (void)input_formats->emplace_back(std::move(input_format));
@@ -146,7 +153,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   if (cnode != nullptr) {
     auto &inputs = cnode->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
-      CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats);
+      CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
     }
   }
 
