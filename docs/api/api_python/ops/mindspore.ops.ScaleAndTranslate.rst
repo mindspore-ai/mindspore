@@ -29,8 +29,7 @@ mindspore.ops.ScaleAndTranslate
         - **TypeError** - `size` 不是int32类型。
         - **TypeError** - `scale` 不是float32类型、。
         - **TypeError** - `translation` 不是Tensor或者数据类型不是float32。
-        - **ValueError** - `kernel_type` 不在列表里面：["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle",
-                    "keyscubic", "mitchellcubic"]。
+        - **ValueError** - `kernel_type` 不在列表里面：["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle", "keyscubic", "mitchellcubic"]。
         - **ValueError** - `images` 的秩不等于4。
         - **ValueError** - `size` 的shape不是 :math:`(2,)` 。
         - **ValueError** - `scale` 的shape不是 :math:`(2,)` 

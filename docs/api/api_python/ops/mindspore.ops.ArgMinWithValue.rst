@@ -28,5 +28,6 @@
         - **values** (Tensor) - 输入Tensor的最小值，其shape与索引相同。
 
     异常：
+        - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `keep_dims` 不是bool。
         - **TypeError** - `axis` 不是int。
