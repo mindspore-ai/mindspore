@@ -15,11 +15,21 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/gather_grad_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 namespace {
+#define V2REGISTER(X1, X2, X3, X4, OUTPUT, T1, T2)                                                          \
+  {                                                                                                         \
+    KernelAttr().AddInputAttr(X1).AddInputAttr(X2).AddInputAttr(X3).AddInputAttr(X4).AddOutputAttr(OUTPUT), \
+      &GatherGradGpuKernelMod::LaunchKernel<T1, T2>                                                         \
+  }
+
 constexpr auto kGatherDGrad = "GatherDGrad";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
 constexpr size_t kStaticSize = 2;
@@ -199,314 +209,107 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
        &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint32_t>}}},
     {kGatherDGradV2,
-     {{KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &GatherGradGpuKernelMod::LaunchKernel<int, double>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, double>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, float>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, float>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &GatherGradGpuKernelMod::LaunchKernel<int, half>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, half>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int8_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int8_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt16)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt16)
-         .AddOutputAttr(kNumberTypeInt16),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int16_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt16)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt16)
-         .AddOutputAttr(kNumberTypeInt16),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int16_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int64_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int64_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int, uchar>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uchar>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, uint>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeBool)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeBool)
-         .AddOutputAttr(kNumberTypeBool),
-       &GatherGradGpuKernelMod::LaunchKernel<int, bool>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeBool)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeBool)
-         .AddOutputAttr(kNumberTypeBool),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, bool>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, uint32_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint32_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &GatherGradGpuKernelMod::LaunchKernel<int, double>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, double>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, float>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, float>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &GatherGradGpuKernelMod::LaunchKernel<int, half>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, half>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int8_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int8_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt16)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt16)
-         .AddOutputAttr(kNumberTypeInt16),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int16_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt16)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt16)
-         .AddOutputAttr(kNumberTypeInt16),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int16_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &GatherGradGpuKernelMod::LaunchKernel<int, int64_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int64_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int, uchar>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uchar>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, uint>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeBool)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeBool)
-         .AddOutputAttr(kNumberTypeBool),
-       &GatherGradGpuKernelMod::LaunchKernel<int, bool>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeBool)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeBool)
-         .AddOutputAttr(kNumberTypeBool),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, bool>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int, uint32_t>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint32_t>}}}};
+     {V2REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex128,
+                 kNumberTypeComplex128, int, Complex<double>),
+      V2REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex128,
+                 kNumberTypeComplex128, int64_t, Complex<double>),
+      V2REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeComplex64,
+                 int, Complex<float>),
+      V2REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeComplex64,
+                 int64_t, Complex<float>),
+      V2REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, int,
+                 double),
+      V2REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64,
+                 int64_t, double),
+      V2REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int,
+                 float),
+      V2REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32,
+                 int64_t, float),
+      V2REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int,
+                 half),
+      V2REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16,
+                 int64_t, half),
+      V2REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int,
+                 int64_t),
+      V2REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                 int64_t),
+      V2REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int),
+      V2REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t,
+                 int),
+      V2REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int,
+                 int16_t),
+      V2REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int64_t,
+                 int16_t),
+      V2REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int, int8_t),
+      V2REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int, int8_t),
+      V2REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, int,
+                 uint64_t),
+      V2REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, int64_t,
+                 uint64_t),
+      V2REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, int,
+                 uint32_t),
+      V2REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, int64_t,
+                 uint32_t),
+      V2REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, int,
+                 uint16_t),
+      V2REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, int64_t,
+                 uint16_t),
+      V2REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, int, uchar),
+      V2REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, int64_t,
+                 uchar),
+      V2REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int, bool),
+      V2REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t, bool),
+      V2REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeComplex128,
+                 kNumberTypeComplex128, int, Complex<double>),
+      V2REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeComplex128,
+                 kNumberTypeComplex128, int64_t, Complex<double>),
+      V2REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeComplex64,
+                 int, Complex<float>),
+      V2REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeComplex64,
+                 int64_t, Complex<float>),
+      V2REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, int,
+                 double),
+      V2REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64,
+                 int64_t, double),
+      V2REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int,
+                 float),
+      V2REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32,
+                 int64_t, float),
+      V2REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int,
+                 half),
+      V2REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16,
+                 int64_t, half),
+      V2REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int,
+                 int64_t),
+      V2REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                 int64_t),
+      V2REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int),
+      V2REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t,
+                 int),
+      V2REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int,
+                 int16_t),
+      V2REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int64_t,
+                 int16_t),
+      V2REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int, int8_t),
+      V2REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int, int8_t),
+      V2REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, int,
+                 uint64_t),
+      V2REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, int64_t,
+                 uint64_t),
+      V2REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, int,
+                 uint32_t),
+      V2REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, int64_t,
+                 uint32_t),
+      V2REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, int,
+                 uint16_t),
+      V2REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, int64_t,
+                 uint16_t),
+      V2REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, int, uchar),
+      V2REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, int64_t,
+                 uchar),
+      V2REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int, bool),
+      V2REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t,
+                 bool)}}};
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, GatherDGrad,
                                  []() { return std::make_shared<GatherGradGpuKernelMod>(kGatherDGrad); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, GatherDGradV2,

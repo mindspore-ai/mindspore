@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/gather_d_cpu_kernel.h"
 #include <algorithm>
+#include <complex>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -23,6 +24,12 @@ namespace kernel {
 namespace {
 constexpr size_t kGatherDInputsNum = 3;
 constexpr size_t kGatherDOutputsNum = 1;
+
+#define REGISTER(X1, X2, X3, OUTPUT, T1, T2)                                               \
+  {                                                                                        \
+    KernelAttr().AddInputAttr(X1).AddInputAttr(X2).AddInputAttr(X3).AddOutputAttr(OUTPUT), \
+      &GatherDCpuKernelMod::LaunchKernel<T1, T2>                                           \
+  }
 
 int64_t get_element_num(const std::vector<size_t> &shape) {
   size_t size = 1;
@@ -169,66 +176,38 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 
 const std::vector<std::pair<KernelAttr, GatherDCpuKernelMod::KernelRunFunc>> &GatherDCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, GatherDCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &GatherDCpuKernelMod::LaunchKernel<float, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &GatherDCpuKernelMod::LaunchKernel<float, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &GatherDCpuKernelMod::LaunchKernel<float16, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &GatherDCpuKernelMod::LaunchKernel<float16, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &GatherDCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt32),
-     &GatherDCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt64),
-     &GatherDCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt64),
-     &GatherDCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeBool)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeBool),
-     &GatherDCpuKernelMod::LaunchKernel<bool, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeBool)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeBool),
-     &GatherDCpuKernelMod::LaunchKernel<bool, int64_t>}};
+    REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex64, std::complex<float>,
+             int32_t),
+    REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex64, std::complex<float>,
+             int64_t),
+    REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex128, std::complex<double>,
+             int32_t),
+    REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex128, std::complex<double>,
+             int64_t),
+    REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat64, double, int32_t),
+    REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat64, double, int64_t),
+    REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat32, float, int32_t),
+    REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32, float, int64_t),
+    REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat16, float16, int32_t),
+    REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat16, float16, int64_t),
+    REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt8, uint8_t, int32_t),
+    REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt8, uint8_t, int64_t),
+    REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt8, int8_t, int32_t),
+    REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt8, int8_t, int64_t),
+    REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt16, uint16_t, int32_t),
+    REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt16, uint16_t, int64_t),
+    REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt16, int16_t, int32_t),
+    REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt16, int16_t, int64_t),
+    REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt32, uint32_t, int32_t),
+    REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t, int64_t),
+    REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+    REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t, int64_t),
+    REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt64, uint64_t, int32_t),
+    REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int64_t),
+    REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, int64_t, int32_t),
+    REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+    REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeBool, bool, int32_t),
+    REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool, bool, int64_t)};
 
   return func_list;
 }
