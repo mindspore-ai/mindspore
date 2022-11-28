@@ -2943,18 +2943,18 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         \end{cases}
 
     Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
-    Its default value is 1.0. :math:`N` is the batch size.
+    :math:`\text{beta}>0` , its default value is 1.0. :math:`N` is the batch size.
 
     Args:
         logits (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         labels (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `logits`.
-        beta (float): A parameter used to control the point where the function will change from
-            quadratic to linear. Default: 1.0.
+        beta (float): A parameter used to control the point where the function will change between
+            L1 to L2 loss. The value should be greater than zero. Default: 1.0.
         reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: 'none'.
 
     Returns:
         Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
-        Otherwise the shape of output tensor is `(1,)`.
+        Otherwise, the shape of output tensor is `(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
