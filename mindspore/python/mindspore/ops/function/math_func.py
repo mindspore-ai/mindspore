@@ -712,8 +712,8 @@ def subtract(x, other, *, alpha=1):
         output[i] = x[i] - alpha * y[i]
 
     Args:
-        x (Union[Tensor, number.Number]): The tensor or number to be subtracted.
-        other (Union[Tensor, number.Number]): The tensor or number to subtract.
+        x (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
+        other (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
 
     Keyword Args:
         alpha (Number): The multiplier for `other`. Default: 1.
@@ -1105,6 +1105,33 @@ def log(x):
         [0.        0.6931472 1.3862944]
     """
     return log_(x)
+
+
+def logdet(x):
+    r"""
+    Calculates log determinant of a square matrix or batches of square matrices.
+
+    Args:
+        x (Tensor): Input Tensor of any dimension.
+
+    Returns:
+        Tensor, the log determinant of `x`. If the matrix determinant is smaller than 0, nan will be returned. If the
+            matrix determinant is 0, -inf will be returned.
+
+    Raises:
+        TypeError: If dtype of `x` is not float32, float64, Complex64 or Complex128.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = Tensor([[[8, 9], [1, 2]], [[5, 6], [3, 4]]], mindspore.float32)
+        >>> output = ops.logdet(a)
+        >>> print(output)
+        [1.9459091 0.6931454]
+    """
+    det = matrix_determinant(x)
+    return log_(det)
 
 
 def floor(x):
@@ -7508,6 +7535,7 @@ __all__ = [
     'isneginf',
     'isposinf',
     'log',
+    'logdet',
     'log_matrix_determinant',
     'matrix_determinant',
     'linspace',

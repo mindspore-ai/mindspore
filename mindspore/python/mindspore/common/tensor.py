@@ -1443,6 +1443,13 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get('logsumexp')(self, dim, keepdim)
 
+    def logdet(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.logdet`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('logdet')(self)
+
     def log_matrix_determinant(self):
         r"""
         For details, please refer to :func:`mindspore.ops.log_matrix_determinant`.

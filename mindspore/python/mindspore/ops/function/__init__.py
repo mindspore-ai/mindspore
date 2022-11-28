@@ -196,6 +196,7 @@ from .math_func import (
     heaviside,
     gcd,
     log,
+    logdet,
     log_matrix_determinant,
     matrix_determinant,
     linspace,
