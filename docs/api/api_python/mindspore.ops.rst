@@ -203,6 +203,7 @@ mindspore.ops
     mindspore.ops.hypot
     mindspore.ops.i0
     mindspore.ops.inv
+    mindspore.ops.inverse
     mindspore.ops.invert
     mindspore.ops.lcm
     mindspore.ops.ldexp

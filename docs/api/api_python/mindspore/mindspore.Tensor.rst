@@ -129,6 +129,7 @@ mindspore.Tensor
     mindspore.Tensor.inplace_update
     mindspore.Tensor.int
     mindspore.Tensor.inv
+    mindspore.Tensor.inverse
     mindspore.Tensor.invert
     mindspore.Tensor.isclose
     mindspore.Tensor.isfinite

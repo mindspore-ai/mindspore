@@ -44,7 +44,7 @@ def test_fractional_maxpool2d_normal(mode):
     """
     ms.set_context(mode=mode)
     net = FractionalMaxPool2dNet()
-    input_x = Tensor(np.random.rand(25).reshape([1, 1, 5, 5]), mstype.float32)
+    input_x = Tensor(np.random.rand(25).reshape([1, 5, 5]), mstype.float32)
     output1, output2 = net(input_x)
     assert output1[0].shape == output1[1].shape == (1, 1, 2, 2)
     assert output2[0].shape == output2[1].shape == (1, 1, 2, 2)
@@ -88,11 +88,11 @@ def test_fractional_maxpool3d_normal(mode):
     Expectation: Success
     """
     ms.set_context(mode=mode)
-    input_x = Tensor(np.random.rand(16).reshape([1, 1, 2, 2, 4]), mstype.float32)
+    input_x = Tensor(np.random.rand(16).reshape([1, 2, 2, 4]), mstype.float32)
     net = FractionalMaxPool3dNet()
     output1, output2 = net(input_x)
-    assert output1[0].shape == output1[1].shape == (1, 1, 1, 1, 2)
-    assert output2[0].shape == output2[1].shape == (1, 1, 1, 1, 2)
+    assert output1[0].shape == output1[1].shape == (1, 1, 1, 2)
+    assert output2[0].shape == output2[1].shape == (1, 1, 1, 2)
     input_x = Tensor([[[[[5.76273143e-001, 7.97047436e-001, 5.05385816e-001, 7.98332036e-001],
                          [5.79880655e-001, 9.75979388e-001, 3.17571498e-002, 8.08261558e-002]],
                         [[3.82758647e-001, 7.09801614e-001, 4.39641386e-001, 5.71077049e-001],

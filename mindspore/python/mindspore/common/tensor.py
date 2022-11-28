@@ -1503,6 +1503,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('inv')(self)
 
+    def inverse(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.inverse`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('inverse')(self)
+
     def invert(self):
         r"""
         For details, please refer to :func:`mindspore.ops.invert`.
