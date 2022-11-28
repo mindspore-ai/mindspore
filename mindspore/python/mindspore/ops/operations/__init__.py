@@ -60,7 +60,7 @@ from .custom_ops import (Custom)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Print, Assert)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
-                        NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBicubic, ResizeBilinearV2, ExtractGlimpse,
+                        NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBilinearV2, ExtractGlimpse,
                         CombinedNonMaxSuppression, RGBToHSV, ScaleAndTranslate)
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
@@ -584,7 +584,6 @@ __all__ = [
     "NonZero",
     "PSROIPooling",
     "ResizeArea",
-    "ResizeBicubic",
     "ResizeBilinearV2",
     "Qr",
     "ParameterizedTruncatedNormal",
