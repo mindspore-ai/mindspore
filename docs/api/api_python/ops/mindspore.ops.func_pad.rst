@@ -10,9 +10,9 @@ mindspore.ops.pad
         - **padding** (Union[tuple[int], list[int], Tensor]) - pad的填充位置。
           :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` 维度的 `input_x` 将会被填充。
 
-          - 示例：若只需要填充输入tensor的最后一个维度，则 `padding` 则的填充方式为 :math:`(\text{padding\_left}, \text{padding\_right})`;
-          - 示例：若只需要填充输入tensor的最后两个维度，则 `padding` 则的填充方式为 :math:`(\text{padding\_left}, \text{padding\_right}, \text{padding\_top}, \text{padding\_bottom})`;
-          - 示例：若只需要填充输入tensor的最后三个维度，则 `padding` 则的填充方式为 :math:`(\text{padding\_left}, \text{padding\_right}, \text{padding\_top}, \text{padding\_bottom}, \text{padding\_front}, \text{padding\_back}))`;
+          - 示例：若只需要填充输入tensor的最后一个维度，则 `padding` 则的填充方式为 :math:`(\text{padding_left}, \text{padding_right})`;
+          - 示例：若只需要填充输入tensor的最后两个维度，则 `padding` 则的填充方式为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`;
+          - 示例：若只需要填充输入tensor的最后三个维度，则 `padding` 则的填充方式为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back}))`;
 
           以此类推。
 
