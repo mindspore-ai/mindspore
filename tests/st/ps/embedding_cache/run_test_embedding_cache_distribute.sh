@@ -45,7 +45,7 @@ do
   rm -rf ${self_path}/server_$i/
   mkdir ${self_path}/server_$i/
   cd ${self_path}/server_$i/ || exit
-  python ${self_path}/test_embedding_cache_distribute.py --device_target=$DEVICE_TARGET >server_$i.log 2>&1 &
+  python ${self_path}/test_embedding_cache_distribute.py --device_target=$DEVICE_TARGET --sparse=$SPARSE >server_$i.log 2>&1 &
   server_pids[${i}]=`echo $!`
 done
 
