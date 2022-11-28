@@ -161,6 +161,7 @@ from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.nn_ops import GLU
 from mindspore.ops.operations.sparse_ops import RaggedTensorToTensor
+from mindspore.ops.operations.sparse_ops import RaggedTensorToSparse
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToDense
 from mindspore.ops.operations.sparse_ops import SetSize
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
@@ -4826,6 +4827,15 @@ test_case_sparse_ops = [
         'desc_bprop': [Tensor(np.array([[0, 1], [1, 2], [1, 3]]).astype(np.int64)),
                        Tensor(np.array([1, 2, 3]).astype(np.int64)),
                        Tensor(np.array([2, 3]).astype(np.int64))]}),
+    ('RaggedTensorToSparse', {
+        'block': RaggedTensorToSparse(Tsplits=mstype.int64),
+        'desc_inputs': [(Tensor(np.array([0, 2, 4]).astype(np.int64)),
+                         Tensor(np.array([0, 3, 3, 5, 6]).astype(np.int64))),
+                        Tensor(np.array([1, 2, 3, 4, 5, 6]).astype(np.int64))],
+        'desc_bprop': [Tensor(np.array([[2, 0, 2], [0, 1, -1], [0, 0, -1],
+                                        [0, 0, 2], [0, 0, 1], [0, 1, 0]]).astype(np.int64)),
+                       Tensor(np.array([0, 1, 0, 0, 0, 0]).astype(np.int64)),
+                       Tensor(np.array([2, -1, 0]).astype(np.int64))]}),
     ('SparseSliceGrad', {
         'block': SparseSliceGrad(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.int64)),

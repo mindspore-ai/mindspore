@@ -186,6 +186,7 @@ constexpr auto kRange = "Range";
 constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
 constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
+constexpr auto kRaggedTensorToSparse = "RaggedTensorToSparse";
 constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
 constexpr auto kSmoothL1Loss = "SmoothL1Loss";
 constexpr auto kSmoothL1LossGrad = "SmoothL1LossGrad";
@@ -277,6 +278,7 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kRange};
 const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
                                              kSparseCross,
+                                             kRaggedTensorToSparse,
                                              kPrint,
                                              kPack,
                                              kMeshgrid,
