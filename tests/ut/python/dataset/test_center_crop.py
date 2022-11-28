@@ -165,6 +165,44 @@ def test_center_crop_errors():
                str(e)
 
 
+def test_center_crop_high_dimensions():
+    """
+    Feature: CenterCrop
+    Description: Use randomly generated tensors and batched dataset as video inputs
+    Expectation: Cropped images should in correct shape
+    """
+    logger.info("Test CenterCrop using video inputs.")
+    # use randomly generated tensor for testing
+    video_frames = np.random.randint(
+        0, 255, size=(32, 64, 64, 3), dtype=np.uint8)
+    center_crop_op = vision.CenterCrop([32, 32])
+    video_frames = center_crop_op(video_frames)
+    assert video_frames.shape[1] == 32
+    assert video_frames.shape[2] == 32
+
+    # use a batch of real image for testing
+    # First dataset
+    height = 200
+    width = 200
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = vision.Decode()
+    center_crop_op = vision.CenterCrop([height, width])
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1_batch = data1.batch(batch_size=2)
+
+    for item in data1_batch.create_dict_iterator(num_epochs=1, output_numpy=True):
+        original_channel = item["image"].shape[-1]
+
+    data1_batch = data1_batch.map(
+        operations=center_crop_op, input_columns=["image"])
+
+    for item in data1_batch.create_dict_iterator(num_epochs=1, output_numpy=True):
+        shape = item["image"].shape
+        assert shape[-3] == height
+        assert shape[-2] == width
+        assert shape[-1] == original_channel
+
+
 if __name__ == "__main__":
     test_center_crop_op(600, 600, plot=True)
     test_center_crop_op(300, 600)
@@ -172,3 +210,4 @@ if __name__ == "__main__":
     test_center_crop_md5()
     test_center_crop_comp(plot=True)
     test_crop_grayscale()
+    test_center_crop_high_dimensions()

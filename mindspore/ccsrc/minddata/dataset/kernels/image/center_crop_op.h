@@ -43,6 +43,10 @@ class CenterCropOp : public TensorOp {
   std::string Name() const override { return kCenterCropOp; }
 
  private:
+  Status CenterCropImg(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
+  Status ConstructShape(const TensorShape &in_shape, std::shared_ptr<TensorShape> *out_shape);
+
   int32_t crop_het_;
   int32_t crop_wid_;
 };

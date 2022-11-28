@@ -14,4 +14,4 @@ mindspore.dataset.vision.CenterCrop
     异常：
         - **TypeError** - 如果 `size` 不是int或sequence类型。
         - **ValueError** - 如果 `size` 小于或等于 0。
-        - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。
+        - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <..., H, W, C>。
