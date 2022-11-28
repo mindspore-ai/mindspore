@@ -19,6 +19,7 @@
 
 #include <tuple>
 #include <memory>
+#include <vector>
 #include <string>
 #include <utility>
 #include "ir/anf.h"
@@ -30,7 +31,7 @@
 #include "utils/shape_utils.h"
 
 namespace mindspore {
-using DataLenPair = std::pair<void *, size_t>;
+using HashTableExportData = std::vector<std::shared_ptr<std::vector<char>>>;
 namespace tensor {
 class MapTensor;
 // Smart pointer for MapTensor.
@@ -175,15 +176,14 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   /// \brief Exported MapTensor data from device.
   ///
-  /// \param[in] full [bool] True for full export, false for incremental export.
+  /// \param[in] incremental [bool] True for incremental export, false for full export.
   /// \return The exported data.
-  ExportData ExportDataFromDevice(const DeviceSyncPtr &device_sync);
+  ExportData ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental);
 
   /// \brief Get three tensor length from device data with tensor shape and type.
   ///
-  /// \param[in] data_size [size_t] The size of device data.
-  /// \return The length of tensor data.
-  std::tuple<DataLenPair, DataLenPair, DataLenPair> GetTensorDataLen(size_t data_size);
+  /// \param[in] export_data [HashTableExportData] The export data buffer from device side.
+  void TransExportDataToTensor(const HashTableExportData &export_data);
 
   /// \brief Get the key tensor of MapTensor data.
   ///

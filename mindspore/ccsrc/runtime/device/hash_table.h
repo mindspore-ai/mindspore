@@ -16,22 +16,26 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_HASH_TABLE_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_HASH_TABLE_H_
 
+#include <vector>
 #include <string>
+#include <memory>
 #include <utility>
 
 namespace mindspore {
 using DataLenPair = std::pair<void *, size_t>;
+using HashTableExportData = std::vector<std::shared_ptr<std::vector<char>>>;
+
+enum class HashTableElementStatus {
+  kUnchanged = 0,
+  kModified = 1,
+  kErased = 2,
+};
+
 namespace device {
 // The base class of device hash table.
 template <typename Key, typename Value>
 class HashTable {
  public:
-  enum class Status {
-    kUnchanged = 0,
-    kModified = 1,
-    kErased = 2,
-  };
-
   HashTable() = default;
   virtual ~HashTable() = default;
 
@@ -58,14 +62,20 @@ class HashTable {
   // Import keys, values into the hash map.
   virtual bool Import(const DataLenPair &input_data) = 0;
 
-  // Export all keys, values and status.
-  virtual bool Export(const DataLenPair &keys, const DataLenPair &values, const DataLenPair &status) = 0;
+  // Export keys, values and status.
+  // Argument `incremental` mean the flag that determine whether export hash table in incremental or full manner, true
+  // for incremental export, false for full export.
+  virtual HashTableExportData Export(bool incremental) = 0;
 
   // Get the max number of elements the container could hold.
   virtual size_t capacity() const = 0;
 
   // Get the number of elements in the map.
   virtual size_t size() const = 0;
+
+  // Gets whether the elements of the hash table have changed since the last export, true means that there has been a
+  // change.
+  virtual bool is_dirty() const = 0;
 
   // Clear all elements of hash table.
   virtual bool Clear() = 0;
