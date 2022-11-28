@@ -37,22 +37,18 @@ class ModelInfer {
   ModelInfer(const Buffer &om_data, const AclModelOptionsPtr &options);
   ~ModelInfer() = default;
 
-  STATUS Init();
-  STATUS Finalize();
-  STATUS Load();
-  STATUS Inference(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  // need to be called after model load
-  std::set<uint64_t> GetDynamicBatch();
-  // need to be called after model load
-  std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
+  bool Init();
+  bool Finalize();
+  bool Load();
+  bool Inference(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
   std::vector<Format> GetInputFormat();
   const std::vector<ShapeVector> GetOutputShape();
   const std::vector<ShapeVector> GetInputShape();
   const std::vector<TypeId> GetInputDataType();
 
- private:
-  STATUS LoadAclModel(const Buffer &om_data);
+  bool Resize(const std::vector<ShapeVector> &new_shapes);
 
+ private:
   bool init_flag_;
   bool load_flag_;
   std::string device_type_;

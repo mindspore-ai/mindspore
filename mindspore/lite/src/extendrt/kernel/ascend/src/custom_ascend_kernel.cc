@@ -16,6 +16,7 @@
 
 #include "extendrt/kernel/ascend/src/custom_ascend_kernel.h"
 #include <utility>
+#include <algorithm>
 #include "acl/acl_base.h"
 #include "acl/acl_rt.h"
 #include "include/registry/register_kernel.h"
@@ -30,12 +31,11 @@
 namespace mindspore::kernel {
 namespace acl {
 CustomAscendKernelMod::CustomAscendKernelMod()
-    : load_model_(false), acl_options_(nullptr), dyn_shape_proc_(nullptr), model_infer_(nullptr), input_data_idx_(0) {}
+    : load_model_(false), acl_options_(nullptr), model_infer_(nullptr), input_data_idx_(0) {}
 
 CustomAscendKernelMod::~CustomAscendKernelMod() {
   if (load_model_) {
-    int ret = model_infer_->Finalize();
-    if (ret != lite::RET_OK) {
+    if (!model_infer_->Finalize()) {
       MS_LOG(ERROR) << "Model finalize failed.";
     }
   }
@@ -95,17 +95,6 @@ bool CustomAscendKernelMod::InitParam(const std::vector<KernelTensorPtr> &inputs
     MS_LOG(ERROR) << "Create ModelInfer failed.";
     return false;
   }
-  RecordInputDataIndex(inputs);
-  dyn_shape_proc_ = std::make_shared<DynShapeProcess>(acl_options_, input_data_idx_);
-  if (dyn_shape_proc_ == nullptr) {
-    MS_LOG(ERROR) << "Create DynShapeProcess failed.";
-    return false;
-  }
-  if (inputs[idx]->GetData()->addr != nullptr) {
-    free(inputs[idx]->GetData()->addr);
-    inputs[idx]->GetData()->addr = nullptr;
-    inputs[idx]->GetData()->size = 0;
-  }
   return true;
 }
 
@@ -113,7 +102,7 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   if (load_model_) {
     MS_LOG(INFO) << "Om has been loaded in custom kernel.";
-    return lite::RET_OK;
+    return true;
   }
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Custom>(base_operator);
@@ -125,32 +114,28 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "Init param failed.";
     return false;
   }
-  if (LoadModel() != lite::RET_OK) {
+  if (!LoadModel()) {
     MS_LOG(ERROR) << "Load model failed.";
     return false;
   }
-
   load_model_ = true;
   return true;
 }
 
-int CustomAscendKernelMod::LoadModel() {
-  int ret = model_infer_->Init();
-  if (ret != lite::RET_OK) {
+bool CustomAscendKernelMod::LoadModel() {
+  if (!model_infer_->Init()) {
     MS_LOG(ERROR) << "Model infer init failed.";
-    return lite::RET_ERROR;
+    return false;
   }
-  ret = model_infer_->Load();
-  if (ret != lite::RET_OK) {
+  if (!model_infer_->Load()) {
     MS_LOG(ERROR) << "Load om data failed.";
-    return lite::RET_ERROR;
+    return false;
   }
-  acl_options_->batch_size = model_infer_->GetDynamicBatch();
-  acl_options_->image_size = model_infer_->GetDynamicImage();
-  acl_options_->input_format = model_infer_->GetInputFormat();
+  UpdateInputKernelTensorInfo();
+  (void)RetrieveOutputShape();
 
   MS_LOG(INFO) << "Load om data success.";
-  return lite::RET_OK;
+  return true;
 }
 
 int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -167,24 +152,26 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "inputs size is less than one.";
     return lite::RET_ERROR;
   }
-  original_data_ = inputs_;
-  inputs_.assign(inputs.begin(), inputs.end() - 1);
+  if (!OnNewInputShapes(inputs)) {
+    MS_LOG(ERROR) << "Failed to resize inputs";
+    return lite::RET_ERROR;
+  }
   return lite::RET_OK;
 }
 
 template <typename T, typename U>
-static int UpdateCheckInputNums(const std::vector<T> &update_info, const std::vector<U> &inputs,
-                                size_t input_weight = 0) {
+static bool UpdateCheckInputNums(const std::vector<T> &update_info, const std::vector<U> &inputs,
+                                 size_t input_weight = 0) {
   if (update_info.empty()) {
     MS_LOG(ERROR) << "check update info size empty";
-    return lite::RET_ERROR;
+    return false;
   }
   if (update_info.size() + input_weight != inputs.size()) {
     MS_LOG(ERROR) << "update info size and inputs size check failed. update info size: " << update_info.size()
                   << ". inputs' size: " << inputs.size() << ". input weight: " << input_weight;
-    return lite::RET_ERROR;
+    return false;
   }
-  return lite::RET_OK;
+  return true;
 }
 
 // In DVPP, model input shape and data type get modified
@@ -197,9 +184,8 @@ void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
   const std::vector<TypeId> types = model_infer_->GetInputDataType();
   const std::vector<Format> formats = model_infer_->GetInputFormat();
   MS_LOG(INFO) << "check input kernel tensor info nums";
-  if ((UpdateCheckInputNums(shapes, inputs_) != lite::RET_OK) ||
-      (UpdateCheckInputNums(types, inputs_) != lite::RET_OK) ||
-      (UpdateCheckInputNums(formats, inputs_) != lite::RET_OK)) {
+  if (!UpdateCheckInputNums(shapes, inputs_) || !UpdateCheckInputNums(types, inputs_) ||
+      !UpdateCheckInputNums(formats, inputs_)) {
     return;
   }
 
@@ -218,80 +204,64 @@ std::vector<KernelTensorPtr> CustomAscendKernelMod::GetInputKernelTensor() {
   return inputs_;
 }
 
-int CustomAscendKernelMod::SetInputAndOutputAddr(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) {
-  if ((inputs_.size() + 1) != inputs.size()) {
-    MS_LOG(ERROR) << "Size of inputs in init [" << (inputs_.size() + 1) << "] and "
-                  << "size of inputs in launch [" << inputs.size() << "] are not equal.";
-    return lite::RET_ERROR;
-  }
-  if (outputs_.size() != outputs.size()) {
-    MS_LOG(ERROR) << "Size of outputs in init (" << outputs_.size() << ") and "
-                  << "size of outputs in launch (" << outputs.size() << ") are not equal.";
-    return lite::RET_ERROR;
+bool CustomAscendKernelMod::ResetInputOutputShapes() {
+  auto input_shapes = model_infer_->GetInputShape();
+  if (input_shapes.size() != inputs_.size()) {
+    MS_LOG(ERROR) << "The number of input shapes size " << input_shapes.size() << " != the number of inputs "
+                  << inputs_.size();
+    return false;
   }
   for (size_t i = 0; i < inputs_.size(); ++i) {
-    if (inputs[i] == nullptr || inputs_[i] == nullptr) {
-      MS_LOG(ERROR) << "Input " << i << " is nullptr.";
-      return lite::RET_ERROR;
-    }
-    if (inputs[i]->addr == nullptr || inputs[i]->size == 0) {
-      MS_LOG(ERROR) << "Input " << i << " addr is invalid.";
-      return lite::RET_ERROR;
-    }
-    inputs_[i]->SetData(inputs[i]);
+    inputs_[i]->SetShapeVector(input_shapes[i]);
+  }
+  auto output_shapes = model_infer_->GetOutputShape();
+  if (output_shapes.size() != outputs_.size()) {
+    MS_LOG(ERROR) << "The number of output shapes size " << output_shapes.size() << " != the number of outputs "
+                  << outputs_.size();
+    return false;
   }
   for (size_t i = 0; i < outputs_.size(); ++i) {
-    if (outputs[i] == nullptr || outputs_[i] == nullptr) {
-      MS_LOG(ERROR) << "Output " << i << " is nullptr.";
-      return lite::RET_ERROR;
-    }
-    outputs_[i]->SetData(outputs[i]);
-  }
-  return lite::RET_OK;
-}
-
-bool CustomAscendKernelMod::IsDynamicInput() {
-  if (acl_options_->batch_size.empty() && acl_options_->image_size.empty()) {
-    MS_LOG(INFO) << "Inputs are not dynamic mode.";
-    return false;
+    outputs_[i]->SetShapeVector(output_shapes[i]);
   }
   return true;
 }
 
-void CustomAscendKernelMod::UpdateOutputAddr(const std::vector<AddressPtr> &outputs) {
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    if ((outputs[i]->addr != outputs_[i]->GetData()->addr) || (outputs[i]->size != outputs_[i]->GetData()->size)) {
-      outputs[i]->addr = outputs_[i]->GetData()->addr;
-      outputs[i]->size = outputs_[i]->GetData()->size;
+bool CustomAscendKernelMod::OnNewInputShapes(const std::vector<KernelTensorPtr> &new_inputs) {
+  auto input_shapes = model_infer_->GetInputShape();
+  if (input_shapes.size() != new_inputs.size()) {
+    MS_LOG(ERROR) << "Invalid new input size " << new_inputs.size() << ", expect input size " << input_shapes.size();
+    return false;
+  }
+  bool input_shape_changed = false;
+  for (size_t i = 0; i < new_inputs.size(); i++) {
+    auto new_shape = new_inputs[i]->GetShapeVector();
+    if (input_shapes[i] != new_shape) {
+      input_shape_changed = true;
     }
   }
+  if (!input_shape_changed) {
+    return true;
+  }
+  std::vector<ShapeVector> new_shapes;
+  std::transform(new_inputs.begin(), new_inputs.end(), std::back_inserter(new_shapes),
+                 [](auto &t) { return t->GetShapeVector(); });
+  if (!model_infer_->Resize(new_shapes)) {
+    MS_LOG(ERROR) << "Failed to Resize";
+    return false;
+  }
+  return ResetInputOutputShapes();
 }
 
-bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &, void *) {
   if (!load_model_) {
     MS_LOG(ERROR) << "Init custom ascend kernel has been not ready.";
     return false;
   }
-  if (SetInputAndOutputAddr(inputs, outputs) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Check input and output param failed.";
-    return false;
-  }
-  if (IsDynamicInput()) {
-    if (dyn_shape_proc_->ProcDynamicInput(&original_data_, &inputs_) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Proc dynamic batch size input failed.";
-      return false;
-    }
-  }
-  if (model_infer_->Inference(inputs_, outputs_) != lite::RET_OK) {
+  if (!model_infer_->Inference(inputs_, outputs_)) {
     MS_LOG(ERROR) << "Custom kernel execute failed.";
     return false;
   }
-  if (IsDynamicInput()) {
-    dyn_shape_proc_->DestroyDynamicInput(&inputs_);
-  }
-  UpdateOutputAddr(outputs);
   return true;
 }
 

@@ -46,20 +46,6 @@ static TypeId TransToDataType(aclDataType data_type) {
   }
 }
 
-template <class T>
-inline static void ClearIfNotNull(T *vec) {
-  if (vec != nullptr) {
-    vec->clear();
-  }
-}
-
-template <class T, class U = std::vector<T>>
-inline static void PushbackIfNotNull(U *vec, T &&item) {
-  if (vec != nullptr) {
-    vec->emplace_back(item);
-  }
-}
-
 static std::string ShapeToString(const std::vector<int64_t> &shape) {
   std::string result = "[";
   for (size_t i = 0; i < shape.size(); ++i) {
@@ -72,24 +58,36 @@ static std::string ShapeToString(const std::vector<int64_t> &shape) {
   return result;
 }
 
-STATUS ModelProcess::PreInitModelResource() {
+bool ModelProcess::PreInitModelResource() {
   model_desc_ = aclmdlCreateDesc();
   aclError acl_ret = aclmdlGetDesc(model_desc_, model_id_);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Read model desc failed, ret = " << acl_ret;
-    return lite::RET_ERROR;
+    return false;
   }
-  STATUS ret = InitInputsBuffer();
-  if (ret != lite::RET_OK) {
+  if (!InitInputsBuffer()) {
     MS_LOG(ERROR) << "Create input buffer failed.";
-    return ret;
+    return false;
   }
-  ret = InitOutputsBuffer();
-  if (ret != lite::RET_OK) {
+  if (!InitOutputsBuffer()) {
     MS_LOG(ERROR) << "Create output buffer failed.";
-    return ret;
+    return false;
   }
-  return lite::RET_OK;
+  dynamic_shape_options_.batch_size = GetDynamicBatch();
+  dynamic_shape_options_.image_size = GetDynamicImage();
+  data_input_num_ = input_infos_.size();
+  if (IsDynamicShape() && data_input_num_ > 0) {
+    data_input_num_ -= 1;
+  }
+
+  dynamic_shape_options_.input_format = GetInputFormat();
+  dynamic_shape_options_.input_shapes = GetInputShape();
+
+  if (!dyn_shape_proc_.Init(dynamic_shape_options_, 0)) {
+    MS_LOG(ERROR) << "Init DynShapeProcess failed.";
+    return false;
+  }
+  return true;
 }
 
 std::set<uint64_t> ModelProcess::GetDynamicBatch() {
@@ -114,48 +112,6 @@ std::set<uint64_t> ModelProcess::GetDynamicBatch() {
   return batch;
 }
 
-std::vector<Format> ModelProcess::GetInputFormat() {
-  if (model_desc_ == nullptr) {
-    MS_LOG(ERROR) << " Model desc is nullptr.";
-    return std::vector<Format>();
-  }
-  std::vector<Format> input_formats;
-  static const std::map<aclFormat, enum Format> acl_format_map = {
-    {ACL_FORMAT_NCHW, NCHW}, {ACL_FORMAT_NHWC, NHWC}, {ACL_FORMAT_ND, NCHW}};
-  size_t input_size = aclmdlGetNumInputs(model_desc_);
-  for (size_t i = 0; i < input_size; ++i) {
-    aclFormat format = aclmdlGetInputFormat(model_desc_, i);
-    auto iter = acl_format_map.find(format);
-    if (iter != acl_format_map.end()) {
-      input_formats.emplace_back(iter->second);
-    }
-    MS_LOG(DEBUG) << "Format of Input " << i << " is " << static_cast<int32_t>(format);
-  }
-  return input_formats;
-}
-
-const std::vector<ShapeVector> ModelProcess::GetOutputShape() {
-  std::vector<ShapeVector> shapes;
-  if (model_desc_ == nullptr) {
-    MS_LOG(ERROR) << " Model desc is nullptr.";
-    return shapes;
-  }
-  size_t output_size = aclmdlGetNumOutputs(model_desc_);
-  for (size_t i = 0; i < output_size; ++i) {
-    aclError ret;
-    aclmdlIODims dims;
-    ret = aclmdlGetCurOutputDims(model_desc_, i, &dims);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Get index: " << i << " output shape failed, ret = " << ret;
-      return shapes;
-    }
-
-    ShapeVector shape(dims.dims, dims.dims + dims.dimCount);
-    shapes.emplace_back(shape);
-  }
-  return shapes;
-}
-
 std::set<std::pair<uint64_t, uint64_t>> ModelProcess::GetDynamicImage() {
   if (model_desc_ == nullptr) {
     MS_LOG(ERROR) << " Model desc is nullptr.";
@@ -178,70 +134,72 @@ std::set<std::pair<uint64_t, uint64_t>> ModelProcess::GetDynamicImage() {
   return image;
 }
 
-const std::vector<ShapeVector> ModelProcess::GetInputShape() {
-  std::vector<ShapeVector> shapes = {};
+std::vector<Format> ModelProcess::GetInputFormat() {
   if (model_desc_ == nullptr) {
     MS_LOG(ERROR) << " Model desc is nullptr.";
-    return shapes;
+    return std::vector<Format>();
   }
-  size_t input_size = aclmdlGetNumInputs(model_desc_);
-  for (size_t i = 0; i < input_size; ++i) {
-    aclError ret;
-    aclmdlIODims dims;
-
-    // To get correct dims with static AIPP configured, same result as aclmdlGetInputDims without static AIPP
-    ret = aclmdlGetInputDimsV2(model_desc_, i, &dims);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Get input shape failed, ret = " << ret;
-      return shapes;
+  std::vector<Format> input_formats;
+  static const std::map<aclFormat, enum Format> acl_format_map = {
+    {ACL_FORMAT_NCHW, NCHW}, {ACL_FORMAT_NHWC, NHWC}, {ACL_FORMAT_ND, NCHW}};
+  for (size_t i = 0; i < data_input_num_; ++i) {
+    aclFormat format = aclmdlGetInputFormat(model_desc_, i);
+    auto iter = acl_format_map.find(format);
+    if (iter != acl_format_map.end()) {
+      input_formats.emplace_back(iter->second);
     }
+    MS_LOG(DEBUG) << "Format of Input " << i << " is " << static_cast<int32_t>(format);
+  }
+  return input_formats;
+}
 
-    ShapeVector shape(dims.dims, dims.dims + dims.dimCount);
-    shapes.emplace_back(shape);
+const std::vector<ShapeVector> ModelProcess::GetOutputShape() {
+  std::vector<ShapeVector> shapes;
+  for (size_t i = 0; i < output_infos_.size(); ++i) {
+    shapes.emplace_back(output_infos_[i].dims);
+  }
+  return shapes;
+}
+
+const std::vector<ShapeVector> ModelProcess::GetInputShape() {
+  std::vector<ShapeVector> shapes;
+  for (size_t i = 0; i < data_input_num_; ++i) {
+    shapes.push_back(input_infos_[i].dims);
   }
   return shapes;
 }
 
 const std::vector<TypeId> ModelProcess::GetInputDataType() {
-  std::vector<TypeId> data_types = {};
-  if (model_desc_ == nullptr) {
-    MS_LOG(ERROR) << " Model desc is nullptr.";
-    return data_types;
-  }
-  size_t input_size = aclmdlGetNumInputs(model_desc_);
-  for (size_t i = 0; i < input_size; ++i) {
-    aclDataType acl_data_type = aclmdlGetInputDataType(model_desc_, i);
-    TypeId data_type = TransToDataType(acl_data_type);
+  std::vector<TypeId> data_types;
+  for (size_t i = 0; i < data_input_num_; ++i) {
+    TypeId data_type = TransToDataType(input_infos_[i].data_type);
     data_types.emplace_back(data_type);
   }
   return data_types;
 }
 
-STATUS ModelProcess::InitInputsBuffer() {
+bool ModelProcess::InitInputsBuffer() {
   aclError ret;
+  inputs_ = aclmdlCreateDataset();
+  if (inputs_ == nullptr) {
+    MS_LOG(ERROR) << "Create input dataset failed";
+    return false;
+  }
   size_t input_size = aclmdlGetNumInputs(model_desc_);
   MS_LOG(INFO) << "input_size = " << input_size;
   for (size_t i = 0; i < input_size; ++i) {
-    auto buffer_size = aclmdlGetInputSizeByIndex(model_desc_, i);
-    void *data_mem_buffer = nullptr;
-    if (!is_run_on_device_) {  // need to copy input/output to/from device
-      ret = aclrtMalloc(&data_mem_buffer, buffer_size, ACL_MEM_MALLOC_NORMAL_ONLY);
-      if (ret != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "Malloc device input buffer failed , input size " << buffer_size;
-        return lite::RET_ERROR;
-      }
-    }
-
     aclmdlIODims dims;
-
     // To get correct dims with static AIPP configured, same result as aclmdlGetInputDims without static AIPP
     ret = aclmdlGetInputDimsV2(model_desc_, i, &dims);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Get input shape failed, ret = " << ret;
-      if (!is_run_on_device_) {
-        aclrtFree(data_mem_buffer);
-      }
-      return lite::RET_ERROR;
+      return false;
+    }
+    auto buffer_size = aclmdlGetInputSizeByIndex(model_desc_, i);
+    void *data_mem_buffer = nullptr;
+    if (!CreateDataBuffer(&data_mem_buffer, buffer_size, inputs_)) {
+      MS_LOG(ERROR) << "Add input data buffer failed, buffer size " << buffer_size;
+      return false;
     }
     aclDataType data_type = aclmdlGetInputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
@@ -251,16 +209,54 @@ STATUS ModelProcess::InitInputsBuffer() {
     }
     MS_LOG(INFO) << "Name of input " << i << " is " << input_name;
     input_infos_.emplace_back(
-      AclTensorInfo{data_mem_buffer, data_mem_buffer, buffer_size, data_type, shape, input_name});
+      AclTensorInfo{data_mem_buffer, data_mem_buffer, buffer_size, buffer_size, data_type, shape, input_name});
   }
   MS_LOG(INFO) << "Create model inputs success";
-  return lite::RET_OK;
+  return true;
 }
 
-STATUS ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset) {
+bool ModelProcess::InitOutputsBuffer() {
+  aclError ret;
+  outputs_ = aclmdlCreateDataset();
+  if (outputs_ == nullptr) {
+    MS_LOG(ERROR) << "Create output dataset failed";
+    return false;
+  }
+  size_t output_size = aclmdlGetNumOutputs(model_desc_);
+  MS_LOG(INFO) << "Output_size = " << output_size;
+  for (size_t i = 0; i < output_size; ++i) {
+    aclmdlIODims dims;
+    ret = aclmdlGetOutputDims(model_desc_, i, &dims);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Get output shape failed";
+      return true;
+    }
+    auto buffer_size = aclmdlGetOutputSizeByIndex(model_desc_, i);
+    void *data_mem_buffer = nullptr;
+    if (!CreateDataBuffer(&data_mem_buffer, buffer_size, outputs_)) {
+      MS_LOG(ERROR) << "Add output data buffer failed, buffer size " << buffer_size;
+      return false;
+    }
+    aclFormat format = aclmdlGetOutputFormat(model_desc_, i);
+    MS_LOG(DEBUG) << "The output format of om is " << format;
+    aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
+    std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
+    std::string output_name = aclmdlGetOutputNameByIndex(model_desc_, i);
+    if (output_name.empty()) {
+      MS_LOG(WARNING) << "Get name of output " << i << " failed.";
+    }
+    MS_LOG(INFO) << "Name of om output " << i << " is " << output_name << "Buffer size " << buffer_size;
+    output_infos_.emplace_back(
+      AclTensorInfo{data_mem_buffer, data_mem_buffer, buffer_size, buffer_size, data_type, shape, output_name});
+  }
+  MS_LOG(INFO) << "Create model output success.";
+  return true;
+}
+
+bool ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset) {
   if (data_mem_buffer == nullptr) {
     MS_LOG(ERROR) << "Data mem buffer is nullptr.";
-    return lite::RET_ERROR;
+    return false;
   }
   aclError ret;
   auto free_data_buffer = [this](void *dataMemBuffer) {
@@ -275,13 +271,13 @@ STATUS ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size
     ret = aclrtMalloc(data_mem_buffer, buffer_size, ACL_MEM_MALLOC_NORMAL_ONLY);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Malloc device buffer failed , buffer size " << buffer_size;
-      return lite::RET_ERROR;
+      return false;
     }
   } else {
     ret = aclrtMallocHost(data_mem_buffer, buffer_size);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Malloc host buffer failed , buffer size " << buffer_size;
-      return lite::RET_ERROR;
+      return false;
     }
   }
 
@@ -289,63 +285,28 @@ STATUS ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size
   if (data_buffer == nullptr) {
     MS_LOG(ERROR) << "Create Data Buffer failed";
     free_data_buffer(*data_mem_buffer);
-    return lite::RET_ERROR;
+    return false;
   }
   ret = aclmdlAddDatasetBuffer(dataset, data_buffer);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "add data buffer failed";
     free_data_buffer(*data_mem_buffer);
     aclDestroyDataBuffer(data_buffer);
-    return lite::RET_ERROR;
+    return false;
   }
-  return lite::RET_OK;
+  return true;
 }
 
-STATUS ModelProcess::InitOutputsBuffer() {
-  aclError ret;
-  outputs_ = aclmdlCreateDataset();
-  if (outputs_ == nullptr) {
-    MS_LOG(ERROR) << "Create output dataset failed";
-    return lite::RET_ERROR;
+void ModelProcess::DestroyInputsBuffer() {
+  for (const auto &item : input_infos_) {
+    if (!is_run_on_device_) {
+      aclrtFree(item.device_data);
+    } else {
+      aclrtFreeHost(item.device_data);
+    }
   }
-  size_t output_size = aclmdlGetNumOutputs(model_desc_);
-  MS_LOG(INFO) << "Output_size = " << output_size;
-  for (size_t i = 0; i < output_size; ++i) {
-    auto buffer_size = aclmdlGetOutputSizeByIndex(model_desc_, i);
+  input_infos_.clear();
 
-    void *data_mem_buffer = nullptr;
-    if (CreateDataBuffer(&data_mem_buffer, buffer_size, outputs_) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Add output data buffer failed, buffer size " << buffer_size;
-      return lite::RET_ERROR;
-    }
-    aclmdlIODims dims;
-    ret = aclmdlGetOutputDims(model_desc_, i, &dims);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Get output shape failed";
-      if (!is_run_on_device_) {
-        aclrtFree(data_mem_buffer);
-      } else {
-        aclrtFreeHost(data_mem_buffer);
-      }
-      return lite::RET_OK;
-    }
-    aclFormat format = aclmdlGetOutputFormat(model_desc_, i);
-    MS_LOG(DEBUG) << "The output format of om is " << format;
-    aclDataType data_type = aclmdlGetOutputDataType(model_desc_, i);
-    std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
-    std::string output_name = aclmdlGetOutputNameByIndex(model_desc_, i);
-    if (output_name.empty()) {
-      MS_LOG(WARNING) << "Get name of output " << i << " failed.";
-    }
-    MS_LOG(INFO) << "Name of om output " << i << " is " << output_name << "Buffer size " << buffer_size;
-    output_infos_.emplace_back(
-      AclTensorInfo{data_mem_buffer, data_mem_buffer, buffer_size, data_type, shape, output_name});
-  }
-  MS_LOG(INFO) << "Create model output success.";
-  return lite::RET_OK;
-}
-
-void ModelProcess::DestroyInputsDataset() {
   if (inputs_ == nullptr) {
     return;
   }
@@ -355,20 +316,6 @@ void ModelProcess::DestroyInputsDataset() {
   }
   aclmdlDestroyDataset(inputs_);
   inputs_ = nullptr;
-}
-
-void ModelProcess::DestroyInputsDataMem() {
-  if (!is_run_on_device_) {
-    for (const auto &item : input_infos_) {
-      aclrtFree(item.device_data);
-    }
-  }
-  input_infos_.clear();
-}
-
-void ModelProcess::DestroyInputsBuffer() {
-  DestroyInputsDataMem();
-  DestroyInputsDataset();
 }
 
 void ModelProcess::DestroyOutputsBuffer() {
@@ -392,228 +339,361 @@ void ModelProcess::DestroyOutputsBuffer() {
   outputs_ = nullptr;
 }
 
-STATUS ModelProcess::UnLoad() {
+bool ModelProcess::Load(const Buffer &om_data) {
+  MS_LOG(INFO) << "Start load model model.";
+  // model load model
+  auto acl_ret = aclmdlLoadFromMem(om_data.Data(), om_data.DataSize(), &model_id_);
+  if (acl_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed, ret = " << acl_ret;
+    return false;
+  }
+  // model init model resource
+  if (!PreInitModelResource()) {
+    (void)aclmdlUnload(model_id_);
+    MS_LOG(ERROR) << "Pre init model resource failed.";
+    return false;
+  }
+  loaded_ = true;
+  MS_LOG(INFO) << "Load model model success.";
+  return true;
+}
+
+bool ModelProcess::UnLoad() {
+  if (!loaded_) {
+    MS_LOG(ERROR) << "Model has not been loaded";
+    return false;
+  }
+  loaded_ = false;
   auto ret = aclmdlUnload(model_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Unload model failed, ret = " << ret;
-    return lite::RET_ERROR;
+    return false;
   }
   if (model_desc_ != nullptr) {
     ret = aclmdlDestroyDesc(model_desc_);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Unload model failed, ret = " << ret;
-      return lite::RET_ERROR;
+      return false;
     }
     model_desc_ = nullptr;
   }
   DestroyInputsBuffer();
   DestroyOutputsBuffer();
   MS_LOG(INFO) << "End unload model " << model_id_;
-  return lite::RET_OK;
-}
-
-STATUS ModelProcess::SetBatchSize(const std::vector<KernelTensorPtr> &inputs) {
-  auto batch_size_tensor = inputs[inputs.size() - 1];
-  size_t data_type_size = lite::DataTypeSize(batch_size_tensor->GetDtype());
-  size_t num = 0;
-  if (data_type_size != 0) {
-    num = batch_size_tensor->GetData()->size / data_type_size;
-  }
-  if (num != kBatchSizeNum) {
-    MS_LOG(ERROR) << "Batch size num should be " << kBatchSizeNum << ",real num " << num;
-    return lite::RET_ERROR;
-  }
-  auto *ptr = reinterpret_cast<const int32_t *>(batch_size_tensor->GetData()->addr);
-  CHECK_NULL_RETURN(ptr);
-  auto batch_size = ptr[0];
-  aclError ret;
-  size_t index;
-  ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Get index failed";
-    return lite::RET_ERROR;
-  }
-  MS_LOG(INFO) << "Set Batch size(" << batch_size << ") of input " << index << ".";
-  ret = aclmdlSetDynamicBatchSize(model_id_, inputs_, index, batch_size);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-STATUS ModelProcess::SetImageSize(const std::vector<KernelTensorPtr> &inputs) {
-  auto image_size_tensor = inputs[inputs.size() - 1];
-  size_t data_type_size = lite::DataTypeSize(image_size_tensor->GetDtype());
-  size_t num = 0;
-  if (data_type_size != 0) {
-    num = image_size_tensor->GetData()->size / data_type_size;
-  }
-  if (num != kImageSizeHwNum) {
-    MS_LOG(ERROR) << "Image size hw num should be " << kImageSizeHwNum << ", real num " << num;
-    return lite::RET_ERROR;
-  }
-  auto *hw = reinterpret_cast<const int32_t *>(image_size_tensor->GetData()->addr);
-  CHECK_NULL_RETURN(hw);
-  int32_t height = hw[0];
-  int32_t width = hw[1];
-  size_t index;
-  aclError ret = ACL_ERROR_NONE;
-  ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Get index failed";
-    return lite::RET_ERROR;
-  }
-  MS_LOG(INFO) << "Set Image size(" << height << "," << width << ") of input " << index << ".";
-  ret = aclmdlSetDynamicHWSize(model_id_, inputs_, index, height, width);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-STATUS ModelProcess::CheckTensorByTensorInfo(const std::vector<KernelTensorPtr> &tensor,
-                                             const std::vector<AclTensorInfo> &tensor_info) {
-  if (!IsDynamicShape()) {
-    for (size_t i = 0; i < tensor_info.size(); ++i) {
-      if (tensor[i]->GetShapeVector() != tensor_info[i].dims) {
-        MS_LOG(WARNING) << "Note: input " << i << " shape not match, required " << ShapeToString(tensor_info[i].dims)
-                        << ", given " << ShapeToString(tensor[i]->GetShapeVector()) << "."
-                        << "Please check input shape has been modified by DVPP method.";
-      }
-      if (tensor[i]->GetDtype() != TransToDataType(tensor_info[i].data_type)) {
-        MS_LOG(ERROR) << "Note: input " << i << " data type not match, required "
-                      << static_cast<int>(TransToDataType(tensor_info[i].data_type)) << ", given "
-                      << static_cast<int>(tensor[i]->GetDtype());
-        return lite::RET_ERROR;
-      }
-      if (tensor[i]->GetData()->size != tensor_info[i].buffer_size) {
-        MS_LOG(ERROR) << "Input " << i << " data size not match, required size " << tensor_info[i].buffer_size
-                      << ", given count " << tensor[i]->GetData()->size;
-        return lite::RET_ERROR;
-      }
-    }
-  }
-  return lite::RET_OK;
-}
-
-STATUS ModelProcess::ProcDynamicShape(const std::vector<KernelTensorPtr> &inputs) {
-  if (!IsDynamicShape()) {
-    MS_LOG(DEBUG) << "Input is not dynamic shape";
-    return lite::RET_OK;
-  }
-  if (IsDynamicBatchSize()) {
-    if (SetBatchSize(inputs) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Set dynamic batch size failed.";
-      return lite::RET_ERROR;
-    }
-  }
-  if (IsDynamicImageSize()) {
-    if (SetImageSize(inputs) != lite::RET_OK) {
-      MS_LOG(ERROR) << "Set dynamic image size failed.";
-      return lite::RET_ERROR;
-    }
-  }
-  if (ResetOutputSize() != lite::RET_OK) {
-    MS_LOG(ERROR) << "Reset output size failed";
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
+  return true;
 }
 
 bool ModelProcess::IsDynamicShape() { return IsDynamicBatchSize() || IsDynamicImageSize(); }
 
-bool ModelProcess::IsDynamicBatchSize() { return !GetDynamicBatch().empty(); }
+bool ModelProcess::IsDynamicBatchSize() { return !dynamic_shape_options_.batch_size.empty(); }
 
-bool ModelProcess::IsDynamicImageSize() { return !GetDynamicImage().empty(); }
+bool ModelProcess::IsDynamicImageSize() { return !dynamic_shape_options_.image_size.empty(); }
 
-void ModelProcess::UpdateBufferSize(const std::vector<KernelTensorPtr> &inputs) {
-  if (IsDynamicShape()) {
-    for (size_t i = 0; i < inputs.size(); i++) {
-      input_infos_[i].buffer_size = inputs[i]->GetData()->size;
-    }
-  }
-}
-
-STATUS ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs) {
-  aclError ret;
-  inputs_ = aclmdlCreateDataset();
-  // check inputs
-  if (CheckTensorByTensorInfo(inputs, input_infos_) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Check input tensor failed.";
-    return lite::RET_ERROR;
-  }
-  UpdateBufferSize(inputs);
-  // copy inputs
-  for (size_t i = 0; i < input_infos_.size(); ++i) {
-    auto &info = input_infos_[i];
-    auto input = inputs[i];
-    void *data = input->GetData()->addr;
-    void *input_buffer = nullptr;
-    if (!is_run_on_device_) {
-      info.cur_device_data = info.device_data;
-      ret =
-        aclrtMemcpy(info.cur_device_data, info.buffer_size, data, input->GetData()->size, ACL_MEMCPY_HOST_TO_DEVICE);
-      if (ret != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "Acl memcpy input " << i
-                      << " data to device failed, src input size: " << input->GetData()->size
-                      << ", dst device buffer size: " << info.buffer_size;
-        return lite::RET_ERROR;
+bool ModelProcess::ResetInputSize(const std::vector<ShapeVector> &new_shapes) {
+  for (size_t index = 0; index < new_shapes.size(); index++) {
+    std::vector<int64_t> shape = new_shapes[index];
+    size_t elem_count = 1;
+    for (size_t i = 0; i < shape.size(); i++) {
+      if (shape[i] < 0) {
+        elem_count = 0;
+        break;
       }
-      input_buffer = info.cur_device_data;
-    } else {
-      input_buffer = data;
+      elem_count *= shape[i];
     }
-    auto data_buffer = aclCreateDataBuffer(input_buffer, info.buffer_size);
-    if (data_buffer == nullptr) {
-      MS_LOG(ERROR) << "Create Data Buffer failed";
-      return lite::RET_ERROR;
-    }
-    ret = aclmdlAddDatasetBuffer(inputs_, data_buffer);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Add data buffer failed";
-      aclDestroyDataBuffer(data_buffer);
-      return lite::RET_ERROR;
-    }
+    auto data_type = aclmdlGetInputDataType(model_desc_, index);
+    input_infos_[index].dims = shape;
+    input_infos_[index].buffer_size = elem_count * aclDataTypeSize(data_type);
   }
-  if (ProcDynamicShape(inputs) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Proc input dynamic shape failed.";
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
+  return true;
 }
 
-STATUS ModelProcess::ResetOutputSize() {
-  aclDataType output_type;
+bool ModelProcess::ResetOutputSize() {
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return false;
+  }
+  aclDataType data_type;
   aclError ret;
   size_t output_size = aclmdlGetNumOutputs(model_desc_);
   for (size_t index = 0; index < output_size; index++) {
-    size_t dims = 1;
-    struct aclmdlIODims output_dims;
-    ret = aclmdlGetCurOutputDims(model_desc_, index, &output_dims);
+    struct aclmdlIODims dims;
+    ret = aclmdlGetCurOutputDims(model_desc_, index, &dims);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "get output dim error.";
-      return lite::RET_ERROR;
+      return false;
     }
-    std::vector<int64_t> shape(output_dims.dims, output_dims.dims + output_dims.dimCount);
-    for (size_t i = 0; i < output_dims.dimCount; i++) {
-      dims *= output_dims.dims[i];
+    std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
+    size_t elem_count = 1;
+    for (size_t i = 0; i < dims.dimCount; i++) {
+      if (dims.dims[i] < 0) {
+        elem_count = 0;
+        break;
+      }
+      elem_count *= dims.dims[i];
     }
-    output_type = aclmdlGetOutputDataType(model_desc_, index);
+    data_type = aclmdlGetOutputDataType(model_desc_, index);
     output_infos_[index].dims = shape;
-    output_infos_[index].buffer_size = dims * aclDataTypeSize(output_type);
+    output_infos_[index].buffer_size = elem_count * aclDataTypeSize(data_type);
   }
-  return lite::RET_OK;
+  return true;
 }
 
-STATUS ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  STATUS ret = CheckAndInitInput(inputs);
-  if (ret != lite::RET_OK) {
+bool ModelProcess::Resize(const std::vector<ShapeVector> &new_shapes) {
+  if (!loaded_) {
+    MS_LOG(ERROR) << "Model has not been loaded";
+    return false;
+  }
+  auto input_shapes = GetInputShape();
+  if (input_shapes.size() != new_shapes.size()) {
+    MS_LOG(ERROR) << "Invalid new input size " << new_shapes.size() << ", expect input size " << input_shapes.size();
+    return false;
+  }
+  bool input_shape_changed = false;
+  for (size_t i = 0; i < new_shapes.size(); i++) {
+    auto new_shape = new_shapes[i];
+    if (std::any_of(new_shape.begin(), new_shape.end(), [](auto dim) { return dim < 0; })) {
+      MS_LOG(ERROR) << "New shape of input " << i << " cannot be dynamic, new shape: " << new_shape;
+      return false;
+    }
+    if (input_shapes[i] != new_shape) {
+      input_shape_changed = true;
+    }
+  }
+  if (!input_shape_changed) {
+    return true;
+  }
+  if (!IsDynamicShape()) {
+    MS_LOG(ERROR) << "Not support dynamic input";
+    return false;
+  }
+  if (model_desc_ == nullptr || inputs_ == nullptr) {
+    MS_LOG(ERROR) << "Model is not inited";
+    return false;
+  }
+  size_t index;
+  auto ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Get index of dynamic tensor failed";
+    return false;
+  }
+  if (IsDynamicBatchSize()) {
+    int32_t batch_size = 0;
+    if (!dyn_shape_proc_.CheckAndGetBatchSize(new_shapes, &batch_size)) {
+      MS_LOG(ERROR) << "Failed to check batch size";
+      return false;
+    }
+    MS_LOG(INFO) << "Set Batch size(" << batch_size << ") of input " << index << ".";
+    ret = aclmdlSetDynamicBatchSize(model_id_, inputs_, index, batch_size);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
+      return false;
+    }
+  } else if (IsDynamicImageSize()) {
+    int32_t height = 0;
+    int32_t width = 0;
+    if (!dyn_shape_proc_.CheckAndGetImageSize(new_shapes, &height, &width)) {
+      MS_LOG(ERROR) << "Failed to check image size";
+      return false;
+    }
+    MS_LOG(INFO) << "Set Image size(" << height << "," << width << ") of input " << index << ".";
+    ret = aclmdlSetDynamicHWSize(model_id_, inputs_, index, height, width);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
+      return false;
+    }
+  } else {
+    MS_LOG(ERROR) << "Not support dynamic input";
+    return false;
+  }
+  if (!ResetInputSize(new_shapes)) {
+    MS_LOG(ERROR) << "Reset input size failed";
+    return false;
+  }
+  if (!ResetOutputSize()) {
+    MS_LOG(ERROR) << "Reset output size failed";
+    return false;
+  }
+  return true;
+}
+
+bool ModelProcess::CheckInputTensors(const std::vector<KernelTensorPtr> &input_tensors) {
+  if (data_input_num_ != input_tensors.size()) {
+    MS_LOG(ERROR) << "Expect input size to be " << data_input_num_ << ", but got " << input_tensors.size();
+    return false;
+  }
+  for (size_t i = 0; i < input_tensors.size(); ++i) {
+    auto &tensor = input_tensors[i];
+    auto &info = input_infos_[i];
+    if (tensor->GetShapeVector() != info.dims) {
+      MS_LOG(WARNING) << "Note: input " << i << " shape not match, required " << ShapeToString(info.dims) << ", given "
+                      << ShapeToString(tensor->GetShapeVector()) << "."
+                      << "Please check input shape has been modified by DVPP method.";
+    }
+    if (tensor->GetDtype() != TransToDataType(info.data_type)) {
+      MS_LOG(ERROR) << "Note: input " << i << " data type not match, required "
+                    << static_cast<int>(TransToDataType(info.data_type)) << ", given "
+                    << static_cast<int>(tensor->GetDtype());
+      return false;
+    }
+    auto device_data = tensor->GetData();
+    auto host_data = tensor->GetHostData();
+    if (device_data != nullptr && device_data->addr != nullptr) {
+      if (device_data->size != info.buffer_size) {
+        MS_LOG(ERROR) << "Input " << i << " data size not match, required size " << info.buffer_size << ", given count "
+                      << device_data->size;
+        return false;
+      }
+    } else if (host_data != nullptr && host_data->addr != nullptr) {
+      if (host_data->size != info.buffer_size) {
+        MS_LOG(ERROR) << "Input " << i << " data size not match, required size " << info.buffer_size << ", given count "
+                      << host_data->size;
+        return false;
+      }
+    } else {
+      MS_LOG(ERROR) << "Failed to get data from input " << i;
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensorPtr> &outputs) {
+  if (outputs.size() != output_infos_.size()) {
+    MS_LOG(ERROR) << "Actual tensor count not match, required count " << output_infos_.size() << ", given count "
+                  << outputs.size();
+    return false;
+  }
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto &tensor = outputs[i];
+    auto &info = output_infos_[i];
+    if (tensor->GetShapeVector() != info.dims) {
+      MS_LOG(WARNING) << "Note: output " << i << " shape not match, required " << ShapeToString(info.dims) << ", given "
+                      << ShapeToString(tensor->GetShapeVector()) << "."
+                      << "Please check input shape has been modified by DVPP method.";
+    }
+    if (tensor->GetDtype() != TransToDataType(info.data_type)) {
+      MS_LOG(ERROR) << "Note: output " << i << " data type not match, required "
+                    << static_cast<int>(TransToDataType(info.data_type)) << ", given "
+                    << static_cast<int>(tensor->GetDtype());
+      return false;
+    }
+    auto device_data = tensor->GetData();
+    auto host_data = tensor->GetHostData();
+    if (device_data != nullptr && device_data->addr != nullptr) {
+      if (device_data->size != info.buffer_size) {
+        MS_LOG(ERROR) << "Output " << i << " device data size not match, required size " << info.buffer_size
+                      << ", given count " << tensor->GetData()->size;
+        return false;
+      }
+    } else if (host_data != nullptr && host_data->addr != nullptr) {
+      if (host_data->size != info.buffer_size) {
+        MS_LOG(ERROR) << "Output " << i << " host data size not match, required size " << info.buffer_size
+                      << ", given count " << tensor->GetData()->size;
+        return false;
+      }
+    } else {
+      MS_LOG(ERROR) << "Failed to get data from output " << i;
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs) {
+  // check inputs
+  if (!CheckInputTensors(inputs)) {
+    MS_LOG(ERROR) << "Check input tensor failed.";
+    return false;
+  }
+  aclError ret;
+  // copy inputs
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto &info = input_infos_[i];
+    auto input = inputs[i];
+    void *input_buffer = nullptr;
+    auto device_data = input->GetData();
+    auto host_data = input->GetHostData();
+    if (device_data && device_data->addr) {
+      input_buffer = device_data->addr;
+    } else {
+      auto data = host_data->addr;
+      auto size = host_data->size;
+      if (!is_run_on_device_) {
+        ret = aclrtMemcpy(info.device_data, info.buffer_size, data, size, ACL_MEMCPY_HOST_TO_DEVICE);
+        if (ret != ACL_ERROR_NONE) {
+          MS_LOG(ERROR) << "Acl memcpy input " << i << " data to device failed, src input size: " << size
+                        << ", dst device buffer size: " << info.buffer_size;
+          return false;
+        }
+        input_buffer = info.device_data;
+      } else {
+        input_buffer = data;
+      }
+    }
+    auto data_buffer = aclmdlGetDatasetBuffer(inputs_, i);
+    if (data_buffer == nullptr) {
+      MS_LOG(ERROR) << "Failed to get dataset buffer of input " << i;
+      return false;
+    }
+    ret = aclUpdateDataBuffer(data_buffer, input_buffer, info.buffer_size);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Failed to update Data Buffer of input " << i << ", buffer size: " << info.buffer_size
+                    << ", input shape: " << input->GetShapeVector();
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensorPtr> &outputs) {
+  // check outputs
+  if (!CheckOutputTensors(outputs)) {
+    MS_LOG(ERROR) << "Check output tensor failed.";
+    return false;
+  }
+  aclError ret;
+  // copy inputs
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto &info = output_infos_[i];
+    auto output = outputs[i];
+    void *output_buffer = nullptr;
+    auto device_data = output->GetData();
+    auto host_data = output->GetHostData();
+    if (device_data && device_data->addr) {
+      output_buffer = device_data->addr;
+    } else if (host_data && host_data->addr && is_run_on_device_) {
+      output_buffer = host_data->addr;
+    } else {
+      output_buffer = info.device_data;
+    }
+    auto data_buffer = aclmdlGetDatasetBuffer(outputs_, i);
+    if (data_buffer == nullptr) {
+      MS_LOG(ERROR) << "Failed to get dataset buffer of output " << i;
+      return false;
+    }
+    ret = aclUpdateDataBuffer(data_buffer, output_buffer, info.buffer_size);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Failed to update Data Buffer of output " << i << ", buffer size: " << info.buffer_size
+                    << ", output shape: " << output->GetShapeVector();
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  if (!loaded_) {
+    MS_LOG(ERROR) << "Model has not been loaded";
+    return false;
+  }
+  if (!CheckAndInitInput(inputs)) {
     MS_LOG(ERROR) << "Check or init input failed";
-    DestroyInputsDataset();
-    return ret;  // forward status error
+    return false;
+  }
+  if (!CheckAndInitOutput(outputs)) {
+    MS_LOG(ERROR) << "Check output tensor failed";
+    return false;
   }
 
   aclError acl_ret;
@@ -632,98 +712,44 @@ STATUS ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   } else {
     acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
   }
-
-  DestroyInputsDataset();
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret;
-    return lite::RET_ERROR;
+    return false;
   }
-  ret = GetOutputs(outputs);
-  if (ret != lite::RET_OK) {
+  if (!GetOutputs(outputs)) {
     MS_LOG(ERROR) << "Build outputs failed";
-    return ret;
+    return false;
   }
   MS_LOG(INFO) << "Execute model success";
-  return lite::RET_OK;
+  return true;
 }
 
-void ModelProcess::UpdateOutputInfo(const std::vector<KernelTensorPtr> &outputs) {
-  if (model_desc_ == nullptr) {
-    MS_LOG(ERROR) << " Model desc is nullptr.";
-    return;
-  }
-  if (outputs.size() != output_infos_.size()) {
-    MS_LOG(ERROR) << "Actual tensor count not match, required count " << output_infos_.size() << ", given count "
-                  << outputs.size();
-    return;
-  }
-  for (size_t i = 0; i < output_infos_.size(); ++i) {
-    struct aclmdlIODims output_dims;
-    auto ret = aclmdlGetCurOutputDims(model_desc_, i, &output_dims);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "get output " << i << " dim error.";
-      return;
-    }
-    std::vector<int64_t> shape(output_dims.dims, output_dims.dims + output_dims.dimCount);
-    bool is_dynamic =
-      std::any_of(output_infos_[i].dims.begin(), output_infos_[i].dims.end(), [](int64_t dim) { return dim < 0; });
-    if (is_dynamic) {
-      size_t dims = 1;
-      for (size_t j = 0; j < output_dims.dimCount; ++j) {
-        dims *= output_dims.dims[j];
-      }
-      aclDataType output_type = aclmdlGetOutputDataType(model_desc_, i);
-      output_infos_[i].dims = shape;
-      output_infos_[i].buffer_size = dims * aclDataTypeSize(output_type);
-    }
-    outputs[i]->SetShapeVector(shape);
-  }
-  MS_LOG(DEBUG) << "Update output shape success.";
-}
-
-STATUS ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
-  if (outputs.empty()) {
-    MS_LOG(ERROR) << "Ms tensor outputs is empty.";
-    return lite::RET_ERROR;
-  }
-
-  UpdateOutputInfo(outputs);
-
-  if (ConstructTensor(outputs) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Construct ms tensor failed.";
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-STATUS ModelProcess::ConstructTensor(const std::vector<KernelTensorPtr> &outputs) {
+bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
   aclrtMemcpyKind kind = is_run_on_device_ ? ACL_MEMCPY_HOST_TO_HOST : ACL_MEMCPY_DEVICE_TO_HOST;
   for (size_t i = 0; i < output_infos_.size(); ++i) {
-    if (output_infos_[i].cur_device_data == nullptr) {
+    auto &output = outputs[i];
+    auto &output_info = output_infos_[i];
+    if (output_info.cur_device_data == nullptr) {
       MS_LOG(WARNING) << "Output device add is nullptr.";
       continue;
     }
-    void *output_addr = nullptr;
-    if (outputs[i]->GetData()->size != output_infos_[i].buffer_size) {
-      output_addr = malloc(output_infos_[i].buffer_size);
-      if (output_addr == nullptr) {
-        MS_LOG(ERROR) << "Failed to malloc output " << i << " memory size " << output_infos_[i].buffer_size;
-        return lite::RET_ERROR;
+    auto host_data = output->GetHostData();
+    if (host_data && host_data->addr && !is_run_on_device_) {
+      if (host_data->size != output_info.buffer_size) {
+        MS_LOG(ERROR) << "Specified output host data size " << host_data->size << " != execute output data size "
+                      << output_info.buffer_size << ", output shape: " << output_info.dims;
+        return false;
       }
-    } else {
-      output_addr = outputs[i]->GetData()->addr;
+      auto ret =
+        aclrtMemcpy(host_data->addr, host_data->size, output_info.cur_device_data, output_info.buffer_size, kind);
+      if (ret != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "Memcpy input " << i << " from " << (is_run_on_device_ ? "host" : "device")
+                      << " to host failed, memory size " << output_info.buffer_size;
+        return false;
+      }
     }
-    auto ret = aclrtMemcpy(output_addr, output_infos_[i].buffer_size, output_infos_[i].cur_device_data,
-                           output_infos_[i].buffer_size, kind);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Memcpy input " << i << " from " << (is_run_on_device_ ? "host" : "device")
-                    << " to host failed, memory size " << output_infos_[i].buffer_size;
-      return lite::RET_ERROR;
-    }
-    outputs[i]->GetData()->addr = output_addr;
-    outputs[i]->GetData()->size = output_infos_[i].buffer_size;
   }
-  return lite::RET_OK;
+  return true;
 }
 }  // namespace acl
 }  // namespace mindspore::kernel
