@@ -22,13 +22,13 @@ their training models.
 import numpy as np
 
 import mindspore._c_dataengine as cde
-from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
-    ResampleMethod, ScaleType, WindowType
+from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormMode, \
+    NormType, ResampleMethod, ScaleType, WindowType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_griffin_lim, \
-    check_highpass_biquad, check_inverse_mel_scale, check_lfilter, check_lowpass_biquad, check_magphase, \
+    check_highpass_biquad, check_inverse_mel_scale, check_lfcc, check_lfilter, check_lowpass_biquad, check_magphase, \
     check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mu_law_coding, \
     check_overdrive, check_phase_vocoder, check_phaser, check_resample, check_riaa_biquad, check_sliding_window_cmn, \
     check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vad, check_vol
@@ -1179,6 +1179,91 @@ class InverseMelScale(AudioTensorOperation):
         return cde.InverseMelScaleOperation(self.n_stft, self.n_mels, self.sample_rate, self.f_min, self.f_max,
                                             self.max_iter, self.tolerance_loss, self.tolerance_change, self.sgdargs,
                                             DE_C_NORM_TYPE.get(self.norm), DE_C_MEL_TYPE.get(self.mel_type))
+
+
+DE_C_NORM_MODE = {NormMode.ORTHO: cde.NormMode.DE_NORM_MODE_ORTHO,
+                  NormMode.NONE: cde.NormMode.DE_NORM_MODE_NONE}
+
+
+class LFCC(AudioTensorOperation):
+    """
+    Create LFCC for a raw audio signal.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
+
+    Args:
+        sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
+        n_filter (int, optional) : Number of linear filters to apply. Default: 128.
+        n_lfcc (int, optional) : Number of lfc coefficients to retain. Default: 40.
+        f_min (float, optional): Minimum frequency. Default: 0.0.
+        f_max (float, optional): Maximum frequency. Default: None, will be set to `sample_rate // 2` .
+        dct_type (int, optional) : Type of DCT to use. The value can only be 2. Default: 2.
+        norm (NormMode, optional) : Norm to use. Default: NormMode.ORTHO.
+        log_lf (bool, optional) : Whether to use log-lf spectrograms instead of db-scaled. Default: False.
+        speckwargs (dict, optional) : Arguments for Spectrogram. Default: None, will be set to
+            `{'n_fft': 400, 'win_length': n_fft, 'hop_length': win_length // 2, 'pad': 0,
+            'window': WindowType.HANN, 'power': 2.0, 'normalized': False, 'center': True,
+            'pad_mode': BorderType.REFLECT, 'onesided': True}` .
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        TypeError: If `n_filter` is not of type int.
+        TypeError: If `n_lfcc` is not of type int.
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormMode` .
+        TypeError: If `log_lf` is not of type bool.
+        TypeError: If `speckwargs` is not of type dict.
+        ValueError: If `sample_rate` is 0.
+        ValueError: If `f_min` is greater than `f_max` .
+        ValueError: If `f_min` is greater than `sample_rate // 2` when `f_max` is set to None.
+        ValueError: If `dct_type` is not 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
+        >>>
+        >>> waveform = np.random.random([1, 1, 300])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.LFCC()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_lfcc
+    def __init__(self, sample_rate=16000, n_filter=128, n_lfcc=40, f_min=0.0, f_max=None, dct_type=2,
+                 norm=NormMode.ORTHO, log_lf=False, speckwargs=None):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.n_filter = n_filter
+        self.n_lfcc = n_lfcc
+        self.f_min = f_min
+        self.f_max = f_max if f_max is not None else sample_rate // 2
+        self.dct_type = dct_type
+        self.norm = norm
+        self.log_lf = log_lf
+        self.speckwargs = speckwargs
+        if speckwargs is None:
+            self.speckwargs = {}
+        self.speckwargs.setdefault("n_fft", 400)
+        self.speckwargs.setdefault("win_length", self.speckwargs.get("n_fft"))
+        self.speckwargs.setdefault("hop_length", self.speckwargs.get("win_length") // 2)
+        self.speckwargs.setdefault("pad", 0)
+        self.speckwargs.setdefault("window", WindowType.HANN)
+        self.speckwargs.setdefault("power", 2.0)
+        self.speckwargs.setdefault("normalized", False)
+        self.speckwargs.setdefault("center", True)
+        self.speckwargs.setdefault("pad_mode", BorderType.REFLECT)
+        self.speckwargs.setdefault("onesided", True)
+        self.window = self.speckwargs.get("window")
+        self.pad_mode = self.speckwargs.get("pad_mode")
+
+    def parse(self):
+        return cde.LFCCOperation(self.sample_rate, self.n_filter, self.n_lfcc, self.f_min, self.f_max,
+                                 self.dct_type, DE_C_NORM_MODE.get(self.norm), self.log_lf, self.speckwargs,
+                                 DE_C_WINDOW_TYPE.get(self.window), DE_C_BORDER_TYPE.get(self.pad_mode))
 
 
 class LFilter(AudioTensorOperation):

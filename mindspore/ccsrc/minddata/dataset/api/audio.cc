@@ -41,6 +41,7 @@
 #include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/inverse_mel_scale_ir.h"
+#include "minddata/dataset/audio/ir/kernels/lfcc_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
@@ -523,6 +524,63 @@ std::shared_ptr<TensorOperation> InverseMelScale::Parse() {
   return std::make_shared<InverseMelScaleOperation>(
     data_->n_stft_, data_->n_mels_, data_->sample_rate_, data_->f_min_, data_->f_max_, data_->max_iter_,
     data_->tolerance_loss_, data_->tolerance_change_, data_->sgdargs_, data_->norm_, data_->mel_type_);
+}
+
+// LFCC Transform Operation.
+struct LFCC::Data {
+  Data(int32_t sample_rate, int32_t n_filter, int32_t n_lfcc, float f_min, float f_max, int32_t dct_type, NormMode norm,
+       bool log_lf, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window, float power,
+       bool normalized, bool center, BorderType pad_mode, bool onesided)
+      : sample_rate_(sample_rate),
+        n_filter_(n_filter),
+        n_lfcc_(n_lfcc),
+        f_min_(f_min),
+        f_max_(f_max),
+        dct_type_(dct_type),
+        norm_(norm),
+        log_lf_(log_lf),
+        n_fft_(n_fft),
+        win_length_(win_length),
+        hop_length_(hop_length),
+        pad_(pad),
+        window_(window),
+        power_(power),
+        normalized_(normalized),
+        center_(center),
+        pad_mode_(pad_mode),
+        onesided_(onesided) {}
+  int32_t sample_rate_;
+  int32_t n_filter_;
+  int32_t n_lfcc_;
+  float f_min_;
+  float f_max_;
+  int32_t dct_type_;
+  NormMode norm_;
+  bool log_lf_;
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  int32_t pad_;
+  WindowType window_;
+  float power_;
+  bool normalized_;
+  bool center_;
+  BorderType pad_mode_;
+  bool onesided_;
+};
+
+LFCC::LFCC(int32_t sample_rate, int32_t n_filter, int32_t n_lfcc, float f_min, float f_max, int32_t dct_type,
+           NormMode norm, bool log_lf, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad,
+           WindowType window, float power, bool normalized, bool center, BorderType pad_mode, bool onesided)
+    : data_(std::make_shared<Data>(sample_rate, n_filter, n_lfcc, f_min, f_max, dct_type, norm, log_lf, n_fft,
+                                   win_length, hop_length, pad, window, power, normalized, center, pad_mode,
+                                   onesided)) {}
+
+std::shared_ptr<TensorOperation> LFCC::Parse() {
+  return std::make_shared<LFCCOperation>(
+    data_->sample_rate_, data_->n_filter_, data_->n_lfcc_, data_->f_min_, data_->f_max_, data_->dct_type_, data_->norm_,
+    data_->log_lf_, data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_, data_->window_, data_->power_,
+    data_->normalized_, data_->center_, data_->pad_mode_, data_->onesided_);
 }
 
 // LFilter Transform Operation.

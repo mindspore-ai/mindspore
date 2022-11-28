@@ -45,6 +45,7 @@
 #include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/inverse_mel_scale_ir.h"
+#include "minddata/dataset/audio/ir/kernels/lfcc_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
@@ -385,6 +386,28 @@ PYBIND_REGISTER(InverseMelScaleOperation, 1, ([](const py::module *m) {
                         toStringFloatMap(sgdargs), norm, mel_type);
                       THROW_IF_ERROR(inverse_mel_scale->ValidateParams());
                       return inverse_mel_scale;
+                    }));
+                }));
+
+PYBIND_REGISTER(LFCCOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::LFCCOperation, TensorOperation, std::shared_ptr<audio::LFCCOperation>>(
+                    *m, "LFCCOperation")
+                    .def(py::init([](int32_t sample_rate, int32_t n_filter, int32_t n_lfcc, float f_min, float f_max,
+                                     int32_t dct_type, NormMode norm, bool log_lf, const py::dict &speckwargs,
+                                     WindowType window, BorderType pad_mode) {
+                      int32_t n_fft = py::cast<int>(speckwargs["n_fft"]);
+                      int32_t win_length = py::cast<int>(speckwargs["win_length"]);
+                      int32_t hop_length = py::cast<int>(speckwargs["hop_length"]);
+                      int32_t pad = py::cast<int>(speckwargs["pad"]);
+                      float power = py::cast<float>(speckwargs["power"]);
+                      bool normalized = py::cast<bool>(speckwargs["normalized"]);
+                      bool center = py::cast<bool>(speckwargs["center"]);
+                      bool onesided = py::cast<bool>(speckwargs["onesided"]);
+                      auto lfcc = std::make_shared<audio::LFCCOperation>(
+                        sample_rate, n_filter, n_lfcc, f_min, f_max, dct_type, norm, log_lf, n_fft, win_length,
+                        hop_length, pad, window, power, normalized, center, pad_mode, onesided);
+                      THROW_IF_ERROR(lfcc->ValidateParams());
+                      return lfcc;
                     }));
                 }));
 

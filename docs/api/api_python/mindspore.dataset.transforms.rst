@@ -380,6 +380,7 @@ API样例中常用的导入模块如下：
     mindspore.dataset.audio.GriffinLim
     mindspore.dataset.audio.HighpassBiquad
     mindspore.dataset.audio.InverseMelScale
+    mindspore.dataset.audio.LFCC
     mindspore.dataset.audio.LFilter
     mindspore.dataset.audio.LowpassBiquad
     mindspore.dataset.audio.Magphase

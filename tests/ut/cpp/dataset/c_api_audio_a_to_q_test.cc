@@ -3095,3 +3095,56 @@ TEST_F(MindDataTestPipeline, TestResampleWithInvalidArg) {
   // Expect failure, new_freq can not be negative.
   EXPECT_EQ(iter_02, nullptr);
 }
+
+/// Feature: LFCC op
+/// Description: Test pipeline for LFCC op
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestLFCCPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFCCPipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 300}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto lfcc_op1 = audio::LFCC(16000, 128, 40, 0.0, 10000.0, 2, NormMode::kOrtho, true);
+  ds = ds->Map({lfcc_op1});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {1, 1, 40, 2};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 4);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+}
+
+/// Feature: LFCC op
+/// Description: Test wrong arguments for LFCC op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
+TEST_F(MindDataTestPipeline, TestLFCCWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFCCWrongArgs.";
+  // LFCC: negative sample_rate.
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 300}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto lfcc_op0 = audio::LFCC(-1);
+  ds = ds->Map({lfcc_op0});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

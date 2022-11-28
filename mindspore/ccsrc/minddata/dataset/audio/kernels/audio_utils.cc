@@ -2142,5 +2142,93 @@ Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   }
   return Status::OK();
 }
+
+Status LFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+            int32_t n_filter, int32_t n_lfcc, int32_t dct_type, bool log_lf, int32_t n_fft, int32_t win_length,
+            int32_t hop_length, float f_min, float f_max, int32_t pad, WindowType window, float power, bool normalized,
+            bool center, BorderType pad_mode, bool onesided, NormMode norm) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
+  std::shared_ptr<Tensor> spectrogram;
+  std::shared_ptr<Tensor> filter_mat;
+  std::shared_ptr<Tensor> dct_mat;
+  RETURN_IF_NOT_OK(Spectrogram(input, &spectrogram, pad, window, n_fft, hop_length, win_length, power, normalized,
+                               center, pad_mode, onesided));
+  RETURN_IF_NOT_OK(
+    CreateLinearFbanks(&filter_mat, static_cast<int32_t>(floor(n_fft / TWO)) + 1, f_min, f_max, n_filter, sample_rate));
+  RETURN_IF_NOT_OK(Dct(&dct_mat, n_lfcc, n_filter, norm));
+  std::shared_ptr<Tensor> spectrogramxfilter;
+  std::shared_ptr<Tensor> specgram_temp;
+
+  TensorShape specgram_shape = spectrogram->shape();
+  TensorShape specgram_reshape(
+    {spectrogram->Size() / specgram_shape[-1] / specgram_shape[-2], specgram_shape[-2], specgram_shape[-1]});
+  RETURN_IF_NOT_OK(spectrogram->Reshape(specgram_reshape));
+  auto filter_mat_ptr = &*filter_mat->begin<float>();
+  Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> matrix_fm(
+    filter_mat_ptr, n_filter, static_cast<int32_t>(floor(n_fft / TWO)) + 1);
+  auto dct_mat_ptr = &*dct_mat->begin<float>();
+  Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> matrix_dm(dct_mat_ptr, n_lfcc, n_filter);
+
+  int rows = specgram_reshape[1];
+  int cols = specgram_reshape[TWO];
+
+  std::vector<float> sf_temp;
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mat_res;
+
+  for (int c = 0; c < specgram_reshape[0]; c++) {
+    Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(
+      &*spectrogram->begin<float>() + rows * cols * c, cols, rows);
+    mat_res.noalias() = (matrix_c * matrix_fm.transpose());
+    std::vector<float> vec_c(mat_res.data(), mat_res.data() + mat_res.size());
+    sf_temp.insert(sf_temp.end(), vec_c.begin(), vec_c.end());
+  }
+  // unpack
+  std::vector<int64_t> sf_shape_vec = specgram_shape.AsVector();
+  sf_shape_vec[specgram_shape.Size() - 1] = cols;
+  sf_shape_vec[specgram_shape.Size() - TWO] = n_filter;
+  TensorShape sf_shape(sf_shape_vec);
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(sf_temp, sf_shape, &spectrogramxfilter));
+
+  if (log_lf == true) {
+    float log_offset = 1e-6;
+    for (auto itr = spectrogramxfilter->begin<float>(); itr != spectrogramxfilter->end<float>(); ++itr) {
+      *itr = log(*itr + log_offset);
+    }
+    specgram_temp = spectrogramxfilter;
+  } else {
+    std::shared_ptr<Tensor> amplitude_to_db;
+    float multiplier = 10.0;
+    float db_multiplier = 0.0;
+    float amin = 1e-10;
+    float top_db = 80.0;
+    RETURN_IF_NOT_OK(AmplitudeToDB(spectrogramxfilter, &amplitude_to_db, multiplier, amin, db_multiplier, top_db));
+    specgram_temp = amplitude_to_db;
+  }
+
+  TensorShape st_shape = specgram_temp->shape();
+  TensorShape st_reshape({specgram_temp->Size() / st_shape[-1] / st_shape[-2], st_shape[-2], st_shape[-1]});
+  RETURN_IF_NOT_OK(specgram_temp->Reshape(st_reshape));
+
+  rows = st_reshape[1];
+  cols = st_reshape[TWO];
+  std::vector<float> out_temp;
+
+  for (int c = 0; c < st_reshape[0]; c++) {
+    Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(
+      &*specgram_temp->begin<float>() + rows * cols * c, cols, rows);
+    mat_res.noalias() = (matrix_c * matrix_dm.transpose());
+    std::vector<float> vec_c(mat_res.data(), mat_res.data() + mat_res.size());
+    out_temp.insert(out_temp.end(), vec_c.begin(), vec_c.end());
+  }
+  // unpack
+  std::vector<int64_t> output_shape_vec = st_shape.AsVector();
+  output_shape_vec[st_shape.Size() - 1] = cols;
+  output_shape_vec[st_shape.Size() - TWO] = n_lfcc;
+  TensorShape output_shape(output_shape_vec);
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_temp, output_shape, output));
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

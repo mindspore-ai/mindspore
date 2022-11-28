@@ -652,6 +652,52 @@ class DATASET_API InverseMelScale final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Create LFCC for a raw audio signal.
+class DATASET_API LFCC final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sample rate of audio signal. Default: 16000.
+  /// \param[in] n_filter Number of linear filters to apply. Default: 128.
+  /// \param[in] n_lfcc Number of lfc coefficients to retain. Default: 40.
+  /// \param[in] f_min Minimum frequency. Default: 0.
+  /// \param[in] f_max Maximum frequency. Default: 0, will be set to sample_rate // 2.
+  /// \param[in] dct_type Type of DCT (discrete cosine transform) to use. Default: 2.
+  /// \param[in] norm Norm to use. Default: NormMode::kOrtho.
+  /// \param[in] log_lf Whether to use log-lf spectrograms instead of db-scaled. Default: false.
+  /// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
+  /// \param[in] win_length Window size. Default: 0, will be set to n_fft.
+  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to win_length // 2.
+  /// \param[in] pad Two sided padding of signal. Default: 0.
+  /// \param[in] window A function to create a window tensor that is applied/multiplied to
+  ///     each frame/window. Default: WindowType::kHann.
+  /// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2
+  ///     for power, etc. Default: 2.0.
+  /// \param[in] normalized Whether to normalize by magnitude after stft. Default: false
+  /// \param[in] center Whether to pad waveform on both sides so that the tt-th frame is centered at
+  ///     time t t*hop_length. Default: true.
+  /// \param[in] pad_mode Controls the padding method used when center is True. Default:
+  ///     BorderType::kReflect.
+  /// \param[in] onesided Controls whether to return half of results to avoid
+  ///     redundancy. Default: true.
+  LFCC(int32_t sample_rate = 16000, int32_t n_filter = 128, int32_t n_lfcc = 40, float f_min = 0.0, float f_max = 0.0,
+       int32_t dct_type = 2, NormMode norm = NormMode::kOrtho, bool log_lf = false, int32_t n_fft = 400,
+       int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0, WindowType window = WindowType::kHann,
+       float power = 2.0, bool normalized = false, bool center = true, BorderType pad_mode = BorderType::kReflect,
+       bool onesided = true);
+
+  /// \brief Destructor.
+  ~LFCC() override = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Design filter. Similar to SoX implementation.
 class DATASET_API LFilter final : public TensorTransform {
  public:
