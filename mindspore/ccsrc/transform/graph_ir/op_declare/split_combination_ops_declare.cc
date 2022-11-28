@@ -23,7 +23,13 @@ INPUT_MAP(SplitD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(SplitD) = {{"axis", ATTR_DESC(split_dim, AnyTraits<int64_t>())},
                     {"output_num", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
 DYN_OUTPUT_MAP(SplitD) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(SplitD, kNameSplitD, ADPT_DESC(SplitD))
+REG_ADPT_DESC(SplitD, kNameSplit, ADPT_DESC(SplitD))
+
+// Split
+INPUT_MAP(Split) = {{1, INPUT_DESC(split_dim)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(Split) = {{"num_split", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
+DYN_OUTPUT_MAP(Split) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Split, kSplitDOpName, ADPT_DESC(Split))
 
 // Pack
 INPUT_MAP(Pack) = EMPTY_INPUT_MAP;
@@ -51,6 +57,14 @@ ATTR_MAP(ConcatD) = {
 };
 OUTPUT_MAP(ConcatD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ConcatD, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
+
+// Concat
+INPUT_MAP(Concat) = {{1, INPUT_DESC(concat_dim)}};
+DYN_INPUT_MAP(Concat) = {{2, DYN_INPUT_DESC(x)}};
+ATTR_INPUT_MAP(Concat) = {{"axis", 1}};
+ATTR_MAP(Concat) = {{"inputNums", ATTR_DESC(N, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Concat) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Concat, prim::kPrimConcatD->name(), ADPT_DESC(ConcatD))
 
 // ConcatV2 Inference for tf
 DYN_INPUT_MAP(ConcatV2) = {{1, DYN_INPUT_DESC(x)}};

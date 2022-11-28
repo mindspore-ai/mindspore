@@ -49,6 +49,15 @@ ATTR_MAP(TransData) = {{"src_format", ATTR_DESC(src_format, AnyTraits<std::strin
 OUTPUT_MAP(TransData) = {{0, OUTPUT_DESC(dst)}};
 REG_ADPT_DESC(TransData, kNameTransData, ADPT_DESC(TransData))
 
+// TransDataRNN
+INPUT_MAP(TransDataRNN) = {{1, INPUT_DESC(src)}};
+ATTR_MAP(TransDataRNN) = {{"src_format", ATTR_DESC(src_format, AnyTraits<std::string>())},
+                          {"dst_format", ATTR_DESC(dst_format, AnyTraits<std::string>())},
+                          {"input_size", ATTR_DESC(input_size, AnyTraits<int64_t>())},
+                          {"hidden_size", ATTR_DESC(hidden_size, AnyTraits<int64_t>())}};
+OUTPUT_MAP(TransDataRNN) = {{0, OUTPUT_DESC(dst)}};
+REG_ADPT_DESC(TransDataRNN, prim::kPrimTransDataRNN->name(), ADPT_DESC(TransDataRNN))
+
 // Transpose
 INPUT_MAP(Transpose) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(perm)}};
 ATTR_MAP(Transpose) = EMPTY_ATTR_MAP;
@@ -91,6 +100,29 @@ ATTR_MAP(BatchToSpaceD) = {
   {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(BatchToSpaceD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceD, kNameBatchToSpace, ADPT_DESC(BatchToSpaceD))
+
+// BatchToSpace
+INPUT_MAP(BatchToSpace) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(crops)}};
+ATTR_INPUT_MAP(BatchToSpace) = {{"crops", 2}};
+ATTR_MAP(BatchToSpace) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())}};
+OUTPUT_MAP(BatchToSpace) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BatchToSpace, kBatchToSpaceDOpName, ADPT_DESC(BatchToSpace))
+
+// SpaceToBatch
+INPUT_MAP(SpaceToBatch) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_INPUT_MAP(SpaceToBatch) = {{"paddings", 2}};
+ATTR_MAP(SpaceToBatch) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())}};
+OUTPUT_MAP(SpaceToBatch) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SpaceToBatch, kSpaceToBatchDOpName, ADPT_DESC(SpaceToBatch))
+
+// ExtractVolumePatches
+INPUT_MAP(ExtractVolumePatches) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ExtractVolumePatches) = {
+  {"ksizes", ATTR_DESC(ksizes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(ExtractVolumePatches) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ExtractVolumePatches, prim::kPrimExtractVolumePatches->name(), ADPT_DESC(ExtractVolumePatches))
 
 // BatchToSpaceND
 INPUT_MAP(BatchToSpaceND) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(block_shape)}, {3, INPUT_DESC(crops)}};
