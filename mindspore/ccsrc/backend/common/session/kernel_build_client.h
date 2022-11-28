@@ -86,7 +86,6 @@ class BACKEND_EXPORT KernelBuildClient {
     if (!init_) {
       MS_LOG(EXCEPTION) << "Try to send request before Open()";
     }
-    MS_LOG(DEBUG) << "\t[" << req << "]";
     *dp_ << req;
   }
   std::string Response() {
@@ -113,7 +112,6 @@ class BACKEND_EXPORT KernelBuildClient {
       ReplaceStr(&res, kLF, '\n');
       ReplaceStr(&res, kSP, ' ');
     }
-    MS_LOG(DEBUG) << "\t[" << res << "]";
     return res;
   }
 

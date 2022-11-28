@@ -95,7 +95,6 @@ void DuplexPipe::Write(const std::string &buf, bool flush) const {
       return;
     }
   }
-  DP_DEBUG << "<< [" << buf << "]";
 }
 
 std::string DuplexPipe::Read() {
@@ -115,7 +114,6 @@ std::string DuplexPipe::Read() {
       break;
     }
   }
-  DP_DEBUG << ">> [" << buf << "]";
   return buf;
 }
 
