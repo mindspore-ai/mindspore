@@ -21,19 +21,24 @@ export MS_WORKER_NUM=1
 export MS_SERVER_NUM=1
 export MS_SCHED_HOST=$2
 export MS_SCHED_PORT=$3
+export SPARSE=$4
+
+if [[ ! -n "$4" ]]; then
+  export SPARSE=0
+fi
 
 export MS_ROLE=MS_SCHED
 rm -rf ${self_path}/sched/
 mkdir ${self_path}/sched/
 cd ${self_path}/sched/ || exit
-python ${self_path}/test_embedding_cache_standalone.py --device_target=$DEVICE_TARGET >sched.log 2>&1 &
+python ${self_path}/test_embedding_cache_standalone.py --device_target=$DEVICE_TARGET --sparse=$SPARSE >sched.log 2>&1 &
 sched_pid=`echo $!`
 
 export MS_ROLE=MS_PSERVER
 rm -rf ${self_path}/server/
 mkdir ${self_path}/server/
 cd ${self_path}/server/ || exit
-python ${self_path}/test_embedding_cache_standalone.py --device_target=$DEVICE_TARGET >server.log 2>&1 &
+python ${self_path}/test_embedding_cache_standalone.py --device_target=$DEVICE_TARGET --sparse=$SPARSE >server.log 2>&1 &
 server_pid=`echo $!`
 
 export MS_ROLE=MS_WORKER
@@ -41,7 +46,7 @@ rm -rf ${self_path}/worker/
 mkdir ${self_path}/worker/
 cd ${self_path}/worker/ || exit
 export RANK_ID=0
-python ${self_path}/test_embedding_cache_standalone.py --device_target=$DEVICE_TARGET &>worker.log 2>&1 &
+python ${self_path}/test_embedding_cache_standalone.py --device_target=$DEVICE_TARGET --sparse=$SPARSE &>worker.log 2>&1 &
 worker_pid=`echo $!`
 
 wait ${worker_pid}

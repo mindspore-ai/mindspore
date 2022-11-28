@@ -23,13 +23,16 @@ from src.model import ModelExecutor
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="test_embedding_cache_standalone")
     parser.add_argument("--device_target", type=str, default="Ascend")
+    parser.add_argument("--sparse", type=int, default=0, help="Enable sparse or not")
     args, _ = parser.parse_known_args()
     device_target = args.device_target
+    sparse = bool(args.sparse)
+
     context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
     context.set_ps_context(enable_ps=True)
     init()
 
     dataset = create_dataset(resize_height=32, resize_width=32, scale=30.0)
-    executor = ModelExecutor(dataset=dataset, sparse=False, vocab_cache_size=5000, in_channels=30720,
+    executor = ModelExecutor(dataset=dataset, sparse=sparse, vocab_cache_size=5000, in_channels=30720,
                              out_channels=12, input_shape=[32, 3, 32, 32])
     executor.run_embedding_cache()
