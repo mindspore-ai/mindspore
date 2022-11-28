@@ -348,6 +348,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
        {"unique_with_pad", std::string("unique_with_pad")},                // P.UniqueWithPad()
        {"diag", std::string("diag")},                                      // P.Diag()
+       {"digamma", std::string("digamma")},                                // digamma()
+       {"lgamma", std::string("lgamma")},                                  // lgamma()
        {"adaptive_max_pool2d", std::string("adaptive_max_pool2d")},        // P.AdaptiveMaxPool2D
        {"to_coo", std::string("to_coo")},                                  // dense_to_sparse_coo()
        {"to_csr", std::string("to_csr")},                                  // dense_to_sparse_csr()

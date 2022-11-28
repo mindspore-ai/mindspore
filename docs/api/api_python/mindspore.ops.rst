@@ -208,6 +208,7 @@ mindspore.ops
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.deg2rad
+    mindspore.ops.digamma
     mindspore.ops.div
     mindspore.ops.divide
     mindspore.ops.erf
@@ -228,6 +229,7 @@ mindspore.ops
     mindspore.ops.lcm
     mindspore.ops.ldexp
     mindspore.ops.lerp
+    mindspore.ops.lgamma
     mindspore.ops.log
     mindspore.ops.log2
     mindspore.ops.log10

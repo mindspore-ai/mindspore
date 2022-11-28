@@ -1368,6 +1368,20 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     return res.astype(dtype)
 
 
+def digamma(x):
+    """
+    Computes the logarithmic derivative of the gamma function on input.
+    """
+    return F.digamma(x)
+
+
+def lgamma(x):
+    """
+    Computes the natural logarithm of the absolute value of the gamma function on input.
+    """
+    return F.lgamma(x)
+
+
 def i0(x):
     """
     For details, please refer to :func:`mindspore.ops.i0`.
