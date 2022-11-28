@@ -272,11 +272,11 @@ def where(condition, x, y):
     r"""
     Returns a tensor whose elements are selected from either `x` or `y` depending on `condition`.
 
-    ..math::
+    .. math::
         output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
 
     Args:
-        condition (Bool Tensor, bool, scalar): If True, yield `x` otherwise yield `y`.
+        condition (Union[Bool Tensor, bool, scalar]): If True, yield `x` otherwise yield `y`.
         x (Union[Tensor, Scalar]): Value (if `x` is a scalar) or values selected at indices where condition is True.
         y (Union[Tensor, Scalar]): Value (if `y` is a scalar) or values selected at indices where condition is False.
 
