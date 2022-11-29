@@ -1866,14 +1866,14 @@ def hardswish(x):
     where :math:`x_i` is an element of the input Tensor.
 
     Args:
-        x (Tensor): The input to compute the Hard Swish with data type of float16 or float32.
+        x (Tensor): The input to compute the Hard Swish.
 
     Returns:
         Tensor, has the same data type and shape as the input.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

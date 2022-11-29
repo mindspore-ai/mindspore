@@ -94,8 +94,12 @@ std::vector<std::pair<KernelAttr, HSwishCpuKernelMod::HSwishFunc>> HSwishCpuKern
    &HSwishCpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
    &HSwishCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &HSwishCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &HSwishCpuKernelMod::LaunchKernel<float>}};
+   &HSwishCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &HSwishCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> HSwishCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

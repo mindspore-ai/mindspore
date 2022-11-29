@@ -68,11 +68,20 @@ bool HSwishGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
 }
 
 std::vector<std::pair<KernelAttr, HSwishGpuKernelMod::HSwishGpuLaunchFunc>> HSwishGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &HSwishGpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &HSwishGpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &HSwishGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &HSwishGpuKernelMod::LaunchKernel<int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
    &HSwishGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &HSwishGpuKernelMod::LaunchKernel<float>},
-};
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &HSwishGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> HSwishGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
