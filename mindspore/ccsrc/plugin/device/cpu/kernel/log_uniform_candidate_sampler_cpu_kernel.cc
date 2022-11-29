@@ -77,11 +77,6 @@ int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_oper
     return ret;
   }
   auto true_classes_shape = input_shapes_.at(0);
-  if (true_classes_shape.size() != 2) {
-    MS_LOG(ERROR) << "input true_classes dims should be 2.";
-    return KRET_RESIZE_FAILED;
-  }
-
   if (true_classes_shape[1] != num_true_) {
     MS_LOG(ERROR) << "input true_classes dim[1] should equal to num_true, true_classes.dim[1] = "
                   << true_classes_shape[1] << ", num_true = " << num_true_;
