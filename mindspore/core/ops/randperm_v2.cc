@@ -17,6 +17,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <climits>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
