@@ -59,6 +59,7 @@
 #include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/class_type_resolve.h"
 #include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/do_signature_resolve.h"
 #include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/resolve_node_resolve.h"
+#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/reslove_primitive_attr.h"
 
 namespace mindspore {
 namespace opt {
@@ -293,14 +294,16 @@ BpropMindIRPassLib::BpropMindIRPassLib() {
   get_sub_func_graph_ =
     MakeSubstitution(std::make_shared<GetSubFuncGraph>(), "get_sub_func_graph", {prim::kPrimResolve});
 
-  class_type_resolve_ =
-    MakeSubstitution(std::make_shared<ClassTypeResolve>(), "class_type_resolve", IsValueNode<parse::ClassType>);
+  class_type_resolve_ = MakeSubstitution(std::make_shared<ClassTypeResolve>(), "class_type_resolve", IsVNode);
 
   do_signature_resolve_ =
     MakeSubstitution(std::make_shared<DoSignatureResolve>(), "do_signature_resolve", IsCNodeDoSignature);
 
   resolve_node_resolve_ =
     MakeSubstitution(std::make_shared<ResolveNodeResolve>(), "resolve_node_resolve", {prim::kPrimResolve});
+
+  reslove_primitive_attr_ =
+    MakeSubstitution(std::make_shared<ReslovePrimitiveAttr>(), "resolve_primitive_attr_", IsCNode);
 }
 }  // namespace irpass
 }  // namespace opt

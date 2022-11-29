@@ -1,0 +1,32 @@
+
+0.1.1	MindSpore*2.0.0:ç	
+‡0get_bprop_upsample_nearest_3d_grad.2:[CNode]13:10get_bprop_upsample_nearest_3d_grad.2:[CNode]13:1"REF::bprop.4:Default/bprop.4-op0
+ì0get_bprop_upsample_nearest_3d_grad.2:get_shape:20get_bprop_upsample_nearest_3d_grad.2:get_shape:2"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op1
+A[ValueNode]14[ValueNode]14"Constant*
+value*output_size€
+Ç
+)get_bprop_upsample_nearest_3d_grad.2:self
+[ValueNode]142get_bprop_upsample_nearest_3d_grad.2:output_size:42get_bprop_upsample_nearest_3d_grad.2:output_size:4"REF::getattr:5:Default/getattr-op3
+<[ValueNode]15[ValueNode]15"Constant*
+value*scales€
+½
+)get_bprop_upsample_nearest_3d_grad.2:self
+[ValueNode]15-get_bprop_upsample_nearest_3d_grad.2:scales:6-get_bprop_upsample_nearest_3d_grad.2:scales:6"REF::getattr:5:Default/getattr-op4$get_bprop_upsample_nearest_3d_grad.2*+
+)get_bprop_upsample_nearest_3d_grad.2:self*.
+,get_bprop_upsample_nearest_3d_grad.2:input_x**
+(get_bprop_upsample_nearest_3d_grad.2:out*+
+)get_bprop_upsample_nearest_3d_grad.2:dout22
+0get_bprop_upsample_nearest_3d_grad.2:[CNode]13:1:@89f303661abc4ca7469d2cbbfdc77c210c2a3053877fbd2b8ab19c9b86f6f56aJ/grad_nn_ops.pyB×
+
+,get_bprop_upsample_nearest_3d_grad.2:input_xbprop.4:[CNode]1:3bprop.4:[CNode]1:3"5REF::get_bprop_upsample_nearest_3d_grad.2:get_shape:2:2
+Ë
+bprop.4:[CNode]1:3
+2get_bprop_upsample_nearest_3d_grad.2:output_size:4
+-get_bprop_upsample_nearest_3d_grad.2:scales:6bprop.4:input_grad:7bprop.4:input_grad:7"HREF::ClassType::mindspore.ops.operations._grad_ops.UpsampleNearest3DGrad:\Default/MindIRClassType:class 'mindspore.ops.operations._grad_ops.UpsampleNearest3DGrad'-op5
+e
+)get_bprop_upsample_nearest_3d_grad.2:doutbprop.4:dx:8bprop.4:dx:8"REF::bprop.4:input_grad:7:6
+n
+bprop.4:dx:8bprop.4:[CNode]3:9bprop.4:[CNode]3:9"REF::S-Prim-MakeTuple:10:Default/S-Prim-MakeTuple-op7bprop.42
+bprop.4:[CNode]3:9Pb
+	getattr:5getattrb'
+S-Prim-MakeTuple:10S-Prim-MakeTupleh

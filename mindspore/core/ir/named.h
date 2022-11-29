@@ -20,6 +20,8 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <utility>
+#include <vector>
 
 #include "ir/anf.h"
 
@@ -158,14 +160,17 @@ class MS_CORE_API MindIRClassType final : public Named {
   ~MindIRClassType() override = default;
   MS_DECLARE_PARENT(MindIRClassType, Named);
   abstract::AbstractBasePtr ToAbstract() override;
+  std::string ToString() const override { return type_name() + ":" + name(); }
 };
 using MindIRClassTypePtr = std::shared_ptr<MindIRClassType>;
 
-class MindIRMetaFuncGraph final : public Named {
+class MS_CORE_API MindIRMetaFuncGraph final : public Named {
  public:
   explicit MindIRMetaFuncGraph(const std::string &name) : Named(name) {}
   ~MindIRMetaFuncGraph() override = default;
   MS_DECLARE_PARENT(MindIRMetaFuncGraph, Named);
+  abstract::AbstractBasePtr ToAbstract() override;
+  std::string ToString() const override { return type_name() + ":" + name(); }
 };
 using MindIRMetaFuncGraphPtr = std::shared_ptr<MindIRMetaFuncGraph>;
 
@@ -176,6 +181,7 @@ class MS_CORE_API MindIRNameSpace final : public Named {
   MS_DECLARE_PARENT(MindIRNameSpace, Named);
   const std::string &name_space() const { return name_space_; }
   abstract::AbstractBasePtr ToAbstract() override;
+  std::string ToString() const override { return type_name() + ":" + name(); }
 
  private:
   std::string name_space_;
@@ -189,6 +195,7 @@ class MS_CORE_API MindIRSymbol final : public Named {
   MS_DECLARE_PARENT(MindIRSymbol, Named);
   const std::string &symbol() const { return symbol_; }
   abstract::AbstractBasePtr ToAbstract() override;
+  std::string ToString() const override { return type_name() + ":" + name(); }
 
  private:
   std::string symbol_;

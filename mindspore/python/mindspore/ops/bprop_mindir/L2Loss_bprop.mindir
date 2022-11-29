@@ -1,0 +1,15 @@
+
+0.1.1	MindSpore*2.0.0:Û
+cget_bprop_l2_loss.3:[CNode]6:1get_bprop_l2_loss.3:[CNode]6:1"REF::bprop.2:Default/bprop.2-op0get_bprop_l2_loss.3*
+get_bprop_l2_loss.3:self*
+get_bprop_l2_loss.3:x*
+get_bprop_l2_loss.3:out*
+get_bprop_l2_loss.3:dout2 
+get_bprop_l2_loss.3:[CNode]6:1:@b46308cc07962d9a50e3c3dabeee1d84e9069ba3921349473bea7d13157543fdJ/grad_nn_ops.pyBŽ
+~
+get_bprop_l2_loss.3:x
+get_bprop_l2_loss.3:doutbprop.2:dx:2bprop.2:dx:2"REF::MetaFuncGraph::mul:Default/S-Prim-mul-op1
+m
+bprop.2:dx:2bprop.2:[CNode]1:3bprop.2:[CNode]1:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op2bprop.22
+bprop.2:[CNode]1:3Pb&
+S-Prim-MakeTuple:4S-Prim-MakeTupleh

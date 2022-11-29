@@ -1,0 +1,29 @@
+
+0.1.1	MindSpore*2.0.0: 	
+u'get_bprop_resize_bilinear.3:[CNode]12:1'get_bprop_resize_bilinear.3:[CNode]12:1"REF::bprop.5:Default/bprop.5-op0
+C[ValueNode]13[ValueNode]13"Constant*
+value*align_cornersÄ
+¶
+ get_bprop_resize_bilinear.3:self
+[ValueNode]13&get_bprop_resize_bilinear.3:[CNode]1:2&get_bprop_resize_bilinear.3:[CNode]1:2"REF::getattr:3:Default/getattr-op1
+H[ValueNode]14[ValueNode]14"Constant*
+value*half_pixel_centersÄ
+¶
+ get_bprop_resize_bilinear.3:self
+[ValueNode]14&get_bprop_resize_bilinear.3:[CNode]2:4&get_bprop_resize_bilinear.3:[CNode]2:4"REF::getattr:3:Default/getattr-op2
+»
+&get_bprop_resize_bilinear.3:[CNode]1:2
+&get_bprop_resize_bilinear.3:[CNode]2:4)get_bprop_resize_bilinear.3:resize_grad:5)get_bprop_resize_bilinear.3:resize_grad:5"EREF::ClassType::mindspore.ops.operations._grad_ops.ResizeBilinearGrad:YDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.ResizeBilinearGrad'-op3get_bprop_resize_bilinear.3*"
+ get_bprop_resize_bilinear.3:self*
+get_bprop_resize_bilinear.3:x*!
+get_bprop_resize_bilinear.3:out*"
+ get_bprop_resize_bilinear.3:dout2)
+'get_bprop_resize_bilinear.3:[CNode]12:1:@370ff5707313c5e131415389ff0348937ca55590b96b7b0d04b23dab994a7ddeJ/grad_nn_ops.pyB°
+ê
+ get_bprop_resize_bilinear.3:dout
+get_bprop_resize_bilinear.3:xbprop.5:dx:6bprop.5:dx:6".REF::get_bprop_resize_bilinear.3:resize_grad:5:4
+m
+bprop.5:dx:6bprop.5:[CNode]4:7bprop.5:[CNode]4:7"REF::S-Prim-MakeTuple:8:Default/S-Prim-MakeTuple-op5bprop.52
+bprop.5:[CNode]4:7Pb
+	getattr:3getattrb&
+S-Prim-MakeTuple:8S-Prim-MakeTupleh

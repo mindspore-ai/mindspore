@@ -45,6 +45,8 @@ class GetMetaFg : public AnfVisitor {
       {"dout_cast", {"dout_cast", "mindspore.ops._grad.grad_array_ops"}},
       {"equal", {"equal", "mindspore.ops.composite.multitype_ops.equal_impl"}},
       {"floordiv", {"floordiv", "mindspore.ops.composite.multitype_ops.floordiv_impl"}},
+      {"div", {"div", "mindspore.ops.composite.multitype_ops.div_impl"}},
+      {"not_equal", {"not_equal", "mindspore.ops.composite.multitype_ops.not_equal_impl"}},
     };
     static mindspore::HashMap<std::string, MetaFuncGraphPtr> meta_fgs{
       {"unpack_call", std::make_shared<prim::UnpackCall>("unpack_call")},

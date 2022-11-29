@@ -438,6 +438,7 @@ constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
 constexpr auto kMutable = "mutable";
 constexpr auto kSetSize = "SetSize";
 constexpr auto kStandardLaplace = "StandardLaplace";
+constexpr auto kLower = "Lower";
 
 constexpr auto kScalarToTensor = "ScalarToTensor";
 constexpr auto kTupleToTensor = "TupleToTensor";
@@ -1669,6 +1670,7 @@ GVAR_DEF(PrimitivePtr, kPrimMultinomial, std::make_shared<Primitive>("Multinomia
 GVAR_DEF(PrimitivePtr, kPrimMultinomialWithReplacement, std::make_shared<Primitive>("MultinomialWithReplacement"));
 GVAR_DEF(PrimitivePtr, kPrimRandomChoiceWithMask, std::make_shared<Primitive>("RandomChoiceWithMask"));
 GVAR_DEF(PrimitivePtr, kPrimUniform, std::make_shared<Primitive>(kUniform));
+GVAR_DEF(PrimitivePtr, kPrimLower, std::make_shared<Primitive>(kLower));
 
 // RL Ops
 GVAR_DEF(PrimitivePtr, kPrimTensorArrayStack, std::make_shared<Primitive>("TensorArrayStack"));

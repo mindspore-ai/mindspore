@@ -1,0 +1,16 @@
+
+0.1.1	MindSpore*2.0.0:¶
+cget_bprop_sigmoid.1:[CNode]8:1get_bprop_sigmoid.1:[CNode]8:1"REF::bprop.3:Default/bprop.3-op0
+Ø get_bprop_sigmoid.1:input_grad:2 get_bprop_sigmoid.1:input_grad:2">REF::ClassType::mindspore.ops.operations._grad_ops.SigmoidGrad:RDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.SigmoidGrad'-op1get_bprop_sigmoid.1*
+get_bprop_sigmoid.1:self*
+get_bprop_sigmoid.1:x*
+get_bprop_sigmoid.1:out*
+get_bprop_sigmoid.1:dout2 
+get_bprop_sigmoid.1:[CNode]8:1:@b4ee8c49faa18bc2190a334ef0a9c4b173a2ed82e2154af4fb8a300186888417J/grad_nn_ops.pyB‰
+y
+get_bprop_sigmoid.1:out
+get_bprop_sigmoid.1:doutbprop.3:dx:3bprop.3:dx:3"%REF::get_bprop_sigmoid.1:input_grad:2:2
+m
+bprop.3:dx:3bprop.3:[CNode]2:4bprop.3:[CNode]2:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.32
+bprop.3:[CNode]2:4Pb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

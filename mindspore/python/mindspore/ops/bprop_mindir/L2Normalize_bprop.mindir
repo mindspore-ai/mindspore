@@ -1,0 +1,30 @@
+
+0.1.1	MindSpore*2.0.0:æ
+m#get_bprop_l2normalize.3:[CNode]12:1#get_bprop_l2normalize.3:[CNode]12:1"REF::bprop.5:Default/bprop.5-op0
+:[ValueNode]13[ValueNode]13"Constant*
+value*axis€
+š
+get_bprop_l2normalize.3:self
+[ValueNode]13"get_bprop_l2normalize.3:[CNode]1:2"get_bprop_l2normalize.3:[CNode]1:2"REF::getattr:3:Default/getattr-op1
+=[ValueNode]14[ValueNode]14"Constant*
+value*epsilon€
+š
+get_bprop_l2normalize.3:self
+[ValueNode]14"get_bprop_l2normalize.3:[CNode]2:4"get_bprop_l2normalize.3:[CNode]2:4"REF::getattr:3:Default/getattr-op2
+°
+"get_bprop_l2normalize.3:[CNode]1:2
+"get_bprop_l2normalize.3:[CNode]2:4$get_bprop_l2normalize.3:input_grad:5$get_bprop_l2normalize.3:input_grad:5"BREF::ClassType::mindspore.ops.operations._grad_ops.L2NormalizeGrad:VDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.L2NormalizeGrad'-op3get_bprop_l2normalize.3*
+get_bprop_l2normalize.3:self*
+get_bprop_l2normalize.3:x*
+get_bprop_l2normalize.3:out*
+get_bprop_l2normalize.3:dout2%
+#get_bprop_l2normalize.3:[CNode]12:1:@7e47f004aec6bcc3089a2660bb2aa9135fef290ebe1e49df666a1fc7d6c96d05J/grad_nn_ops.pyB±
+ 
+get_bprop_l2normalize.3:x
+get_bprop_l2normalize.3:out
+get_bprop_l2normalize.3:doutbprop.5:dx:6bprop.5:dx:6")REF::get_bprop_l2normalize.3:input_grad:5:4
+m
+bprop.5:dx:6bprop.5:[CNode]4:7bprop.5:[CNode]4:7"REF::S-Prim-MakeTuple:8:Default/S-Prim-MakeTuple-op5bprop.52
+bprop.5:[CNode]4:7Pb
+	getattr:3getattrb&
+S-Prim-MakeTuple:8S-Prim-MakeTupleh

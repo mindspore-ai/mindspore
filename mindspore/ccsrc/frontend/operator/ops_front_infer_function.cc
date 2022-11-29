@@ -214,6 +214,24 @@ AbstractBasePtr InferImplTopTypeof(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractType>(TypeIdToType(type_id));
 }
 
+AbstractBasePtr InferImplLower(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << "The lower must has one input at least.";
+  }
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  auto input = args_spec_list[0]->BuildValue();
+  if (input == nullptr || !input->isa<StringImm>()) {
+    auto type = args_spec_list[0]->BuildType();
+    MS_LOG(ERROR) << "Function lower should be call using a string type but got:" << type->ToString();
+  }
+  auto str = input->cast<StringImmPtr>()->value();
+  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+  auto new_str = MakeValue(str);
+  return new_str->ToAbstract();
+}
+
 AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -1094,6 +1112,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRange, prim::kPrimMakeRange, InferImplMak
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Lower, prim::kPrimLower, InferImplLower, nullptr);
 #else
 void RegPrimitiveFrontEval() {
   // String
@@ -1131,6 +1150,7 @@ void RegPrimitiveFrontEval() {
   abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTaylor, InferImplTaylor, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimShard, InferImplShard, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimVmap, InferImplVmap, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimLower, InferImplLower, nullptr);
 }
 #endif
 }  // namespace abstract

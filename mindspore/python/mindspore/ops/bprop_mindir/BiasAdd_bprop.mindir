@@ -1,0 +1,24 @@
+
+0.1.1	MindSpore*2.0.0:Ó
+g get_bprop_bias_add.3:[CNode]12:1 get_bprop_bias_add.3:[CNode]12:1"REF::bprop.5:Default/bprop.5-op0
+A[ValueNode]13[ValueNode]13"Constant*
+value*data_format€
+‘
+get_bprop_bias_add.3:self
+[ValueNode]13get_bprop_bias_add.3:[CNode]1:2get_bprop_bias_add.3:[CNode]1:2"REF::getattr:3:Default/getattr-op1
+ù
+get_bprop_bias_add.3:[CNode]1:2 get_bprop_bias_add.3:bias_grad:4 get_bprop_bias_add.3:bias_grad:4">REF::ClassType::mindspore.ops.operations._grad_ops.BiasAddGrad:RDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.BiasAddGrad'-op2get_bprop_bias_add.3*
+get_bprop_bias_add.3:self*
+get_bprop_bias_add.3:x*
+get_bprop_bias_add.3:w*
+get_bprop_bias_add.3:out*
+get_bprop_bias_add.3:dout2"
+ get_bprop_bias_add.3:[CNode]12:1:@bb60fd260d3ef4ddcc66def38153515987d8927fb4701af4a701ca11958fb768J/grad_nn_ops.pyBŸ
+m
+get_bprop_bias_add.3:doutbprop.5:[CNode]2:5bprop.5:[CNode]2:5"%REF::get_bprop_bias_add.3:bias_grad:4:3
+Ž
+get_bprop_bias_add.3:dout
+bprop.5:[CNode]2:5bprop.5:[CNode]4:6bprop.5:[CNode]4:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op4bprop.52
+bprop.5:[CNode]4:6Pb
+	getattr:3getattrb&
+S-Prim-MakeTuple:7S-Prim-MakeTupleh

@@ -193,6 +193,7 @@ class BpropMindIRPassLib {
   SubstitutionPtr class_type_resolve_;
   SubstitutionPtr do_signature_resolve_;
   SubstitutionPtr resolve_node_resolve_;
+  SubstitutionPtr reslove_primitive_attr_;
 };
 
 // predicate functions

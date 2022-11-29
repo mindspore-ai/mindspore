@@ -1,0 +1,21 @@
+
+0.1.1	MindSpore*2.0.0:Œ
+]get_bprop_selu.2:[CNode]9:1get_bprop_selu.2:[CNode]9:1"REF::bprop.4:Default/bprop.4-op0
+Æget_bprop_selu.2:elu_grad:2get_bprop_selu.2:elu_grad:2":REF::ClassType::mindspore.ops.operations._grad_ops.EluGrad:NDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.EluGrad'-op1get_bprop_selu.2*
+get_bprop_selu.2:self*
+get_bprop_selu.2:x*
+get_bprop_selu.2:out*
+get_bprop_selu.2:dout2
+get_bprop_selu.2:[CNode]9:1:@146006fa1a8e11ca14d265bd747e7d4e48584537addaaa2b07498222e7e5445fJ/grad_nn_ops.pyBŸ
+z
+get_bprop_selu.2:dout
+get_bprop_selu.2:outbprop.4:[CNode]1:3bprop.4:[CNode]1:3" REF::get_bprop_selu.2:elu_grad:2:2
+)scalescale"Constant*
+value_}†?€
+h
+bprop.4:[CNode]1:3
+scalebprop.4:dx:4bprop.4:dx:4"REF::MetaFuncGraph::mul:Default/S-Prim-mul-op3
+m
+bprop.4:dx:4bprop.4:[CNode]3:5bprop.4:[CNode]3:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op4bprop.42
+bprop.4:[CNode]3:5Pb&
+S-Prim-MakeTuple:6S-Prim-MakeTupleh

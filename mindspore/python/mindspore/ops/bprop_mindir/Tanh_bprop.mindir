@@ -1,0 +1,66 @@
+
+0.1.1	MindSpore*2.0.0:Ó
+aget_bprop_tanh.9:[CNode]33:1get_bprop_tanh.9:[CNode]33:1"REF::bprop.10:Default/bprop.10-op0
+Ìget_bprop_tanh.9:tanh_grad:14get_bprop_tanh.9:tanh_grad:14";REF::ClassType::mindspore.ops.operations._grad_ops.TanhGrad:ODefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.TanhGrad'-op9
+¹get_bprop_tanh.9:conj:16get_bprop_tanh.9:conj:16"6REF::ClassType::mindspore.ops.operations.math_ops.Conj:KDefault/MindIRClassType:class 'mindspore.ops.operations.math_ops.Conj'-op11get_bprop_tanh.9*
+get_bprop_tanh.9:self*
+get_bprop_tanh.9:x*
+get_bprop_tanh.9:out*
+get_bprop_tanh.9:dout2
+get_bprop_tanh.9:[CNode]33:1:@9347c56cf78023e2150873f4c7aa5ee3cd0a267b5a83edb9f7899e9ec5b50988J/grad_nn_ops.pyBƒ
+;[ValueNode]34[ValueNode]34"Constant*
+value*dtype€
+r
+get_bprop_tanh.9:x
+[ValueNode]34bprop.10:[CNode]4:2bprop.10:[CNode]4:2"REF::getattr:3:Default/getattr-op1
+@[ValueNode]35[ValueNode]35"Constant*
+valueb
+:value0€
+@[ValueNode]36[ValueNode]36"Constant*
+valueb
+:value0€
+
+[ValueNode]35
+[ValueNode]36bprop.10:[CNode]5:4bprop.10:[CNode]5:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op2
+ƒ
+bprop.10:[CNode]4:2
+bprop.10:[CNode]5:4bprop.10:[CNode]6:6bprop.10:[CNode]6:6"REF::MetaFuncGraph::in:Default/S-Prim-in-op3
+b
+bprop.10:[CNode]6:6bprop.10:[CNode]7:7bprop.10:[CNode]7:7"REF::bool_.8:Default/bool_.8-op4
+~
+bprop.10:[CNode]7:7
+âœ“bprop.12
+âœ—bprop.13bprop.10:[CNode]11:8bprop.10:[CNode]11:8"REF::Switch:9:Default/Switch-op5
+Lbprop.10:[CNode]14:10bprop.10:[CNode]14:10"REF::bprop.10:[CNode]11:8:6
+p
+bprop.10:[CNode]14:10bprop.10:[CNode]15:11bprop.10:[CNode]15:11"REF::â†“bprop.16:Default/â†“bprop.16-op7bprop.102
+bprop.10:[CNode]15:11BÎ
+|
+â†“bprop.16:Ñ„dxâ†“bprop.16:[CNode]1:12â†“bprop.16:[CNode]1:12"REF::S-Prim-MakeTuple:13:Default/S-Prim-MakeTuple-op8â†“bprop.16*
+â†“bprop.16:Ñ„dx2
+â†“bprop.16:[CNode]1:12B
+after_block€	BŸ
+{
+get_bprop_tanh.9:out
+get_bprop_tanh.9:doutâœ—bprop.13:dx:15âœ—bprop.13:dx:15""REF::get_bprop_tanh.9:tanh_grad:14:10âœ—bprop.132
+âœ—bprop.13:dx:15Bá
+d
+get_bprop_tanh.9:doutâœ“bprop.12:dout:17âœ“bprop.12:dout:17"REF::get_bprop_tanh.9:conj:16:12
+y
+get_bprop_tanh.9:out
+âœ“bprop.12:dout:17âœ“bprop.12:dx:18âœ“bprop.12:dx:18""REF::get_bprop_tanh.9:tanh_grad:14:13
+\
+âœ“bprop.12:dx:18âœ“bprop.12:dx:19âœ“bprop.12:dx:19"REF::get_bprop_tanh.9:conj:16:14âœ“bprop.122
+âœ“bprop.12:dx:19B£
+>[ValueNode]37[ValueNode]37"Constant*
+value*__bool__€
+j
+	bool_.8:x
+[ValueNode]37bool_.8:[CNode]2:20bool_.8:[CNode]2:20"REF::getattr:3:Default/getattr-op15
+Hbool_.8:[CNode]3:21bool_.8:[CNode]3:21"REF::bool_.8:[CNode]2:20:16bool_.8*
+	bool_.8:x2
+bool_.8:[CNode]3:21Pb
+Switch:9Switchb
+	getattr:3getattrb'
+S-Prim-MakeTuple:13S-Prim-MakeTupleb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

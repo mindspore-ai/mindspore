@@ -1,0 +1,29 @@
+
+0.1.1	MindSpore*2.0.0:×
+i!get_bprop_rnnt_loss.6:[CNode]15:1!get_bprop_rnnt_loss.6:[CNode]15:1"REF::bprop.5:Default/bprop.5-op0get_bprop_rnnt_loss.6*
+get_bprop_rnnt_loss.6:self*
+get_bprop_rnnt_loss.6:acts*
+get_bprop_rnnt_loss.6:labels* 
+get_bprop_rnnt_loss.6:act_lens*"
+ get_bprop_rnnt_loss.6:label_lens*
+get_bprop_rnnt_loss.6:out*
+get_bprop_rnnt_loss.6:dout2#
+!get_bprop_rnnt_loss.6:[CNode]15:1:@c5ca317f0d15161d88394d373d38353366b60f34b0dbcb563febc297a7c9b003J/grad_nn_ops.pyB‰
+6[ValueNode]16[ValueNode]16"Constant*
+value€
+ƒ
+get_bprop_rnnt_loss.6:out
+[ValueNode]16bprop.5:grad:2bprop.5:grad:2"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op1
+¥
+get_bprop_rnnt_loss.6:labelsbprop.5:[CNode]1:3bprop.5:[CNode]1:3".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op2
+§
+get_bprop_rnnt_loss.6:act_lensbprop.5:[CNode]2:4bprop.5:[CNode]2:4".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op3
+©
+ get_bprop_rnnt_loss.6:label_lensbprop.5:[CNode]3:5bprop.5:[CNode]3:5".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op4
+«
+bprop.5:grad:2
+bprop.5:[CNode]1:3
+bprop.5:[CNode]2:4
+bprop.5:[CNode]3:5bprop.5:[CNode]4:6bprop.5:[CNode]4:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op5bprop.52
+bprop.5:[CNode]4:6Pb&
+S-Prim-MakeTuple:7S-Prim-MakeTupleh

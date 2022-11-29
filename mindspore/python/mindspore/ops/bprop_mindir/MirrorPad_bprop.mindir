@@ -1,0 +1,27 @@
+
+0.1.1	MindSpore*2.0.0:Å
+k"get_bprop_mirror_pad.2:[CNode]14:1"get_bprop_mirror_pad.2:[CNode]14:1"REF::bprop.5:Default/bprop.5-op0
+:[ValueNode]15[ValueNode]15"Constant*
+value*modeÄ
+ó
+get_bprop_mirror_pad.2:self
+[ValueNode]15!get_bprop_mirror_pad.2:[CNode]1:2!get_bprop_mirror_pad.2:[CNode]1:2"REF::getattr:3:Default/getattr-op1
+è
+!get_bprop_mirror_pad.2:[CNode]1:2(get_bprop_mirror_pad.2:mirror_pad_grad:4(get_bprop_mirror_pad.2:mirror_pad_grad:4"@REF::ClassType::mindspore.ops.operations._grad_ops.MirrorPadGrad:TDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.MirrorPadGrad'-op2get_bprop_mirror_pad.2*
+get_bprop_mirror_pad.2:self*
+get_bprop_mirror_pad.2:x*!
+get_bprop_mirror_pad.2:paddings*
+get_bprop_mirror_pad.2:out*
+get_bprop_mirror_pad.2:dout2$
+"get_bprop_mirror_pad.2:[CNode]14:1:@36d33f400ad334c867dd1e0358493be69f5934de922dd05f1c7a17caf93b032cJ/grad_nn_ops.pyB›
+å
+get_bprop_mirror_pad.2:dout
+get_bprop_mirror_pad.2:paddingsbprop.5:dx:5bprop.5:dx:5"-REF::get_bprop_mirror_pad.2:mirror_pad_grad:4:3
+®
+get_bprop_mirror_pad.2:paddingsbprop.5:[CNode]3:6bprop.5:[CNode]3:6".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op4
+Å
+bprop.5:dx:5
+bprop.5:[CNode]3:6bprop.5:[CNode]4:7bprop.5:[CNode]4:7"REF::S-Prim-MakeTuple:8:Default/S-Prim-MakeTuple-op5bprop.52
+bprop.5:[CNode]4:7Pb
+	getattr:3getattrb&
+S-Prim-MakeTuple:8S-Prim-MakeTupleh

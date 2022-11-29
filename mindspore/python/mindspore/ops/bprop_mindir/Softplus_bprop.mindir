@@ -1,0 +1,16 @@
+
+0.1.1	MindSpore*2.0.0:»
+eget_bprop_softplus.1:[CNode]8:1get_bprop_softplus.1:[CNode]8:1"REF::bprop.3:Default/bprop.3-op0
+‚$get_bprop_softplus.1:softplus_grad:2$get_bprop_softplus.1:softplus_grad:2"?REF::ClassType::mindspore.ops.operations._grad_ops.SoftplusGrad:SDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.SoftplusGrad'-op1get_bprop_softplus.1*
+get_bprop_softplus.1:self*
+get_bprop_softplus.1:x*
+get_bprop_softplus.1:out*
+get_bprop_softplus.1:dout2!
+get_bprop_softplus.1:[CNode]8:1:@3a7cb85a47fbe925db20ce152e09968888e09f915fa9ab78b0f0a85185434ed3J/grad_nn_ops.pyBç
+}
+get_bprop_softplus.1:dout
+get_bprop_softplus.1:xbprop.3:dx:3bprop.3:dx:3")REF::get_bprop_softplus.1:softplus_grad:2:2
+m
+bprop.3:dx:3bprop.3:[CNode]2:4bprop.3:[CNode]2:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.32
+bprop.3:[CNode]2:4Pb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

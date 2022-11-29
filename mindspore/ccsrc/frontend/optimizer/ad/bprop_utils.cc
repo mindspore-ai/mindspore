@@ -189,10 +189,11 @@ void OptimizeBpropFromMindIR(const FuncGraphPtr &fg, const pipeline::ResourceBas
                              const PrimitivePtr &prim) {
   auto res = (resources != nullptr) ? resources : std::make_shared<pipeline::Resource>();
   EliminateParameterSelf(fg, res, prim);
-
   opt::irpass::BpropMindIRPassLib irpass;
-  std::vector<opt::SubstitutionPtr> opt_list{irpass.get_constexpr_ops_, irpass.get_class_type_, irpass.get_meta_fg_,
-                                             irpass.get_primal_attr_, irpass.get_sub_func_graph_};
+
+  std::vector<opt::SubstitutionPtr> opt_list{irpass.reslove_primitive_attr_, irpass.get_constexpr_ops_,
+                                             irpass.get_class_type_,         irpass.get_meta_fg_,
+                                             irpass.get_primal_attr_,        irpass.get_sub_func_graph_};
   opt::OptPassGroupMap map({
     {"bprop_mindir_opt", opt::OptPassConfig(opt_list)},
   });
@@ -222,9 +223,9 @@ FuncGraphPtr LiftParameter(const FuncGraphPtr &func_graph) {
 FuncGraphPtr RemovePyObj(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res) {
   opt::irpass::BpropMindIRPassLib irpass;
   opt::OptPassGroupMap map({
+    {"remove_resolve", opt::OptPassConfig({irpass.resolve_node_resolve_})},
     {"remove_class_type", opt::OptPassConfig({irpass.class_type_resolve_})},
     {"resolve_do_signature_prim", opt::OptPassConfig({irpass.do_signature_resolve_})},
-    {"remove_resolve", opt::OptPassConfig({irpass.resolve_node_resolve_})},
   });
   opt::OptimizerPtr export_mindir_opt =
     opt::Optimizer::MakeOptimizer("export_mindir_opt", res, map, false, false, false);

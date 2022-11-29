@@ -1,0 +1,16 @@
+
+0.1.1	MindSpore*2.0.0:Ã
+g get_bprop_fast_gelu.1:[CNode]8:1 get_bprop_fast_gelu.1:[CNode]8:1"REF::bprop.3:Default/bprop.3-op0
+ﬁ"get_bprop_fast_gelu.1:input_grad:2"get_bprop_fast_gelu.1:input_grad:2"?REF::ClassType::mindspore.ops.operations._grad_ops.FastGeLUGrad:SDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.FastGeLUGrad'-op1get_bprop_fast_gelu.1*
+get_bprop_fast_gelu.1:self*
+get_bprop_fast_gelu.1:x*
+get_bprop_fast_gelu.1:out*
+get_bprop_fast_gelu.1:dout2"
+ get_bprop_fast_gelu.1:[CNode]8:1:@88bc9dfe9d183465357f52f1af4a211e0c693a0d1db9208ca7282c9ccb25049eJ/grad_nn_ops.pyBç
+}
+get_bprop_fast_gelu.1:dout
+get_bprop_fast_gelu.1:xbprop.3:dx:3bprop.3:dx:3"'REF::get_bprop_fast_gelu.1:input_grad:2:2
+m
+bprop.3:dx:3bprop.3:[CNode]2:4bprop.3:[CNode]2:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.32
+bprop.3:[CNode]2:4Pb&
+S-Prim-MakeTuple:5S-Prim-MakeTupleh

@@ -35,7 +35,8 @@ BuiltInTypeMap &GetMethodMap() {
     {kObjectTypeString,
      {{"__bool__", std::string("str_bool")},  // C.str_bool
       {"format", std::string("_format")},
-      {"__ms_iter__", prim::kPrimIdentity}}},
+      {"__ms_iter__", prim::kPrimIdentity},
+      {"lower", prim::kPrimLower}}},
     {kMetaTypeNone,
      {
        {"__bool__", std::string("none_bool")}  // C.none_bool
