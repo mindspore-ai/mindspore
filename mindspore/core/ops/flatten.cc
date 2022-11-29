@@ -35,7 +35,11 @@ abstract::ShapePtr FlattenInferShape(const PrimitivePtr &primitive, const std::v
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                            prim_name);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  const auto &shape = input_args[0]->BuildShape();
+  if (shape->IsDimZero()) {
+    MS_LOG(EXCEPTION) << "Unsupported input shape dimension. The shape should not be empty.";
+  }
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape);
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(
