@@ -29,6 +29,8 @@
 namespace mindspore {
 namespace opt {
 bool FuncGraphHasTupleInput(const FuncGraphPtr &fg);
+bool FuncGraphHasConstantTupleInput(const FuncGraphPtr &fg);
+bool IsConstantTuple(const AnfNodePtr &param);
 std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
                                                const abstract::AbstractTuplePtr &abs);
 bool ContainSparseTensor(const abstract::AbstractBasePtr &abs);
@@ -75,7 +77,8 @@ class GraphTupleParamTransform {
     mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
     for (auto &param : params) {
       auto abs = param->abstract();
-      if (abs != nullptr && abs->isa<abstract::AbstractTuple>() && !common::AnfAlgo::CheckAbsSparseTensor(abs)) {
+      if (abs != nullptr && abs->isa<abstract::AbstractTuple>() && !common::AnfAlgo::CheckAbsSparseTensor(abs) &&
+          !abs->cast<abstract::AbstractTuplePtr>()->dynamic_len()) {
         auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
         std::vector<AnfNodePtr> tuple_params;
         repl.emplace(param, GenerateTupleParams(tuple_abs, new_fg, &tuple_params));
