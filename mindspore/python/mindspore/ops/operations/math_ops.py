@@ -1875,7 +1875,7 @@ class InplaceUpdateV2(Primitive):
         return output
 
 
-class InplaceUpdate(PrimitiveWithInfer):
+class InplaceUpdate(Primitive):
     r"""
     Updates specified rows with values in `v`.
 
@@ -1923,14 +1923,14 @@ class InplaceUpdate(PrimitiveWithInfer):
             validator.check_value_type("item of indices", item, [int], self.name)
 
 
-class InplaceAdd(PrimitiveWithInfer):
+class InplaceAdd(Primitive):
     """
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
     Refer to :func:`mindspore.ops.inplace_add` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1957,26 +1957,6 @@ class InplaceAdd(PrimitiveWithInfer):
             self.indices = (indices,)
         for item in self.indices:
             validator.check_value_type("item of indices", item, [int], self.name)
-
-    def infer_dtype(self, x_dtype, v_dtype):
-        args = {'x': x_dtype, 'v': v_dtype}
-        valid_type = [mstype.int32, mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
-        return x_dtype
-
-    def infer_shape(self, x_shape, v_shape):
-        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
-        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
-                        Rel.EQ, self.name)
-        for i in self.indices:
-            if i < 0 or i >= x_shape[0]:
-                raise ValueError(f"For '{self.name}', the value of 'indices' must be "
-                                 f"in [0, {x_shape[0]}), but got {i}.")
-        x_rank = len(x_shape)
-        for idx in range(x_rank)[1:]:
-            validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
-
-        return x_shape
 
 
 class InplaceIndexAdd(Primitive):
@@ -2015,14 +1995,14 @@ class InplaceIndexAdd(Primitive):
         validator.check_value_type('axis', axis, [int], self.name)
 
 
-class InplaceSub(PrimitiveWithInfer):
+class InplaceSub(Primitive):
     """
     Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
 
     Refer to :func:`mindspore.ops.inplace_sub` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2050,26 +2030,6 @@ class InplaceSub(PrimitiveWithInfer):
         for item in self.indices:
             validator.check_value_type("item of indices", item, [int], self.name)
         self.add_prim_attr("indices", self.indices)
-
-    def infer_dtype(self, x_dtype, v_dtype):
-        args = {'x': x_dtype, 'v': v_dtype}
-        valid_type = [mstype.int32, mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
-        return x_dtype
-
-    def infer_shape(self, x_shape, v_shape):
-        validator.check("x", len(x_shape), "v", len(v_shape), Rel.EQ, self.name)
-        validator.check("size of indices", len(self.indices), "v's first dimension", v_shape[0],
-                        Rel.EQ, self.name)
-        for i in self.indices:
-            if i < 0 or i >= x_shape[0]:
-                raise ValueError(f"For '{self.name}', the value of 'indices' must be "
-                                 f"in [0, {x_shape[0]}), but got {i}.")
-        x_rank = len(x_shape)
-        for idx in range(x_rank)[1:]:
-            validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
-
-        return x_shape
 
 
 class Sub(_MathBinaryOp):
@@ -4835,6 +4795,7 @@ class Atan2(_MathBinaryOp):
         >>> print(output)
         [0.        0.7853982]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize Atan2"""
@@ -7402,6 +7363,7 @@ class MatrixTriangularSolve(Primitive):
          [ 0.6666666   5.        ]
          [-2.3333333  -4.        ]]
     """
+
     @prim_attr_register
     def __init__(self, lower=True, adjoint=False):
         """Initialize MatrixTriangularSolve"""

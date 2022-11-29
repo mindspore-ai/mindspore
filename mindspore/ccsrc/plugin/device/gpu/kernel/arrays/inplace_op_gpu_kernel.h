@@ -24,19 +24,21 @@
 #include <functional>
 #include <map>
 #include "mindspore/core/ops/inplace_update.h"
+#include "mindspore/core/ops/inplace_add.h"
+#include "mindspore/core/ops/inplace_sub.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/inplace_update_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/inplace_op_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-class InplaceUpdateGpuKernelMod : public NativeGpuKernelMod {
+class InplaceOpGpuKernelMod : public NativeGpuKernelMod {
  public:
-  InplaceUpdateGpuKernelMod() { ResetResource(); }
-  ~InplaceUpdateGpuKernelMod() override = default;
+  InplaceOpGpuKernelMod() { ResetResource(); }
+  ~InplaceOpGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
@@ -61,20 +63,21 @@ class InplaceUpdateGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  using InplaceUpdateFunc =
-    std::function<bool(InplaceUpdateGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using InplaceOpFunc =
+    std::function<bool(InplaceOpGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
  private:
   std::vector<int64_t> indices_;
+  int kernel_type_{-1};
   size_t unit_size_{1};
   size_t input_elements_x;
   size_t input_elements_v;
   int64_t band_size_;
-  InplaceUpdateFunc kernel_func_{};
+  InplaceOpFunc kernel_func_{};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
-  static std::vector<std::pair<KernelAttr, InplaceUpdateFunc>> func_list_;
+  static std::vector<std::pair<KernelAttr, InplaceOpFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
