@@ -90,6 +90,9 @@ function Convert() {
           fi
           export_mindir="MINDIR"
           target_device="Ascend310"
+          if [[ ${extra_info} =~ "online_convert" ]]; then
+            target_device=""
+          fi
           if [ ${model_fmk} != "TF" ]; then
             input_format="NHWC"
           fi
