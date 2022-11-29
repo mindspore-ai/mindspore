@@ -125,6 +125,7 @@
 #include "tools/converter/parser/unify_format.h"
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "backend/common/optimizer/graph_optimizer.h"
+#include "tools/optimizer/fusion/squeeze_expanddims_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -315,7 +316,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::MatMulActivationFusion>(param),
                                     std::make_shared<opt::MulActivationFusion>(),
                                     std::make_shared<opt::AddActivationFusion>(),
-                                    std::make_shared<opt::ExpandDimsReshapeFusion>()};
+                                    std::make_shared<opt::ExpandDimsReshapeFusion>(),
+                                    std::make_shared<opt::SqueezeExpandDimsFusion>()};
 #ifdef ENABLE_CLOUD_FUSION_INFERENCE
   fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
 #endif
