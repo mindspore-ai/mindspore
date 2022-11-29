@@ -61,8 +61,10 @@ abstract::ShapePtr ParameterizedTruncatedNormalInferShape(const PrimitivePtr &pr
 
   (void)CheckAndConvertUtils::CheckInteger("rank of argument[shape]", SizeToLong(shape_shape.size()), kEqual, 1,
                                            op_name);
-  (void)CheckAndConvertUtils::CheckInteger("size of argument[shape]", shape_shape[0], kGreaterEqual, kShapeSize,
-                                           op_name);
+  if (shape_shape[0] > 0) {
+    (void)CheckAndConvertUtils::CheckInteger("size of argument[shape]", shape_shape[0], kGreaterEqual, kShapeSize,
+                                             op_name);
+  }
 
   auto shape_value = input_args[kInputIndex0]->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_value);
