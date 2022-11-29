@@ -4080,7 +4080,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
     and the added matrix `x` respectively. If `beta` is 0, then `x` will be ignored.
 
-    .. vec1::
+    .. math::
         output = β x + α (vec1 ⊗ vec2)
 
     Args:
