@@ -789,8 +789,7 @@ class Multinomial(Primitive):
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
-          dimensions. Must be one of the following types: float16, float32, float64. CPU and GPU
-          supports x 1 or 2 dimensions and Ascend only supports 2 dimensions.
+          dimensions. CPU and GPU supports x 1 or 2 dimensions and Ascend only supports 2 dimensions.
         - **num_samples** (int) - number of samples to draw, must be a nonnegative number.
 
     Outputs:
@@ -798,7 +797,6 @@ class Multinomial(Primitive):
 
     Raises:
         TypeError: If neither `seed` nor `seed2` is an int.
-        TypeError: If `x` is not a Tensor whose dtype is float16, float32, float64.
         TypeError: If dtype of `num_samples` is not int.
         TypeError: If `dtype` is not int32 or int64.
         ValueError: If `seed` or `seed2` is less than 0.

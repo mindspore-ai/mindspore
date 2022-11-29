@@ -74,11 +74,11 @@ bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   return true;
 }
 
-template <typename T>
+template <typename T, typename S>
 void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
-  int *output_addr = GetDeviceAddress<int>(outputs, 0);
   T *probs_addr = GetDeviceAddress<T>(inputs, 0);
+  S *output_addr = GetDeviceAddress<S>(outputs, 0);
   int64_t *num_sample_addr = GetDeviceAddress<int64_t>(inputs, 1);
   if (distributions_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', divide by zero. the distributions_ is 0.";
@@ -103,8 +103,50 @@ void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
 }
 
 std::vector<std::pair<KernelAttr, MultinomialGpuKernelMod::LaunchFunc>> MultinomialGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<half, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-   &MultinomialGpuKernelMod::LaunchKernel<float>}};
+   &MultinomialGpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<double, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<int8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<int16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<int32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<int64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialGpuKernelMod::LaunchKernel<uint64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<half, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<double, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<int8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<int16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialGpuKernelMod::LaunchKernel<uint64_t, int64_t>}};
 
 std::vector<KernelAttr> MultinomialGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

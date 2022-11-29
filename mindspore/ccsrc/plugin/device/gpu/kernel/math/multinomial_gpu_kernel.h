@@ -31,7 +31,6 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/multinomial_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumsum_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -59,7 +58,7 @@ class MultinomialGpuKernelMod : public NativeGpuKernelMod {
   bool rand_state_init_{false};
   curandState *rand_state_{nullptr};
 
-  template <typename T>
+  template <typename T, typename S>
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
                     void *stream_ptr);
   using LaunchFunc = std::function<void(MultinomialGpuKernelMod *, const std::vector<kernel::AddressPtr> &,

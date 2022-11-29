@@ -111,7 +111,8 @@ TypePtr MultinomialInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   auto prim_name = prim->name();
   auto x_type = input_args[0]->BuildType();
   auto num_samples_type = input_args[1]->BuildType();
-  const std::set valid_types_1 = {kFloat16, kFloat32, kFloat64};
+  const std::set valid_types_1 = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
+                                  kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
   const std::set valid_types_2 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types_1, prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("num_samples", num_samples_type, valid_types_2, prim_name);
@@ -165,6 +166,8 @@ class MIND_API AGMultinomialInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return MultinomialInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Multinomial, prim::kPrimMultinomial, AGMultinomialInfer, false);
