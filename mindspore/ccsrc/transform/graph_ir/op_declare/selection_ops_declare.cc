@@ -59,6 +59,7 @@ REG_ADPT_DESC(InTopKD, kNameInTopKD, ADPT_DESC(InTopKD))
 
 // OneHot
 INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(on_value)}, {4, INPUT_DESC(off_value)}};
+ATTR_INPUT_MAP(OneHot) = {{"depth", 2}};
 ATTR_MAP(OneHot) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(OneHot) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(OneHot, prim::kPrimOneHot->name(), ADPT_DESC(OneHot))
@@ -68,7 +69,7 @@ INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_D
 ATTR_INPUT_MAP(GatherV2) = {{"axis", 3}};
 ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
+REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
 
 // ScatterNd

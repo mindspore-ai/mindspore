@@ -495,6 +495,46 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
 #endif
 }
 
+void RunOpIRFissionForAcl(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
+    MS_LOG(INFO) << "IRFusion is not enable, skip";
+    return;
+  }
+#ifdef ENABLE_DUMP_IR
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    DumpIR("hwopt_d_ir_fusion_before.ir", kernel_graph);
+  }
+#endif
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto ir_fusion_pm = std::make_shared<PassManager>("ir_fission_pm");
+  ir_fusion_pm->AddPass(std::make_shared<ClipByNormFission>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterAddFission>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterSubFission>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMinFission>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  const auto &pass_creators =
+    opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
+  for (const auto &pass_creator : pass_creators) {
+    ir_fusion_pm->AddPass(pass_creator.second());
+  }
+
+  optimizer->AddPassManager(ir_fusion_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (save_graphs) {
+    DumpIR("hwopt_d_ir_fusion_after.ir", kernel_graph);
+  }
+#endif
+}
+
 void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // data layout optimization

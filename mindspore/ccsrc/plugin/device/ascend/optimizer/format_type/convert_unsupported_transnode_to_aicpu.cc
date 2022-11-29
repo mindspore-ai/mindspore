@@ -28,9 +28,13 @@ const BaseRef ConvertUnSupportNodeToAICPU::DefinePattern() const {
   return VectorRef({X, Xs});
 }
 
-const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraphPtr &,
+const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraphPtr &graph,
                                                       const mindspore::AnfNodePtr &node,
                                                       const mindspore::EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (graph->has_flag(kAttrMutableKernel)) {
+    return nullptr;
+  }
   if (node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }

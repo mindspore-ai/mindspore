@@ -30,7 +30,8 @@ INPUT_MAP(Pack) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(Pack) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(Pack) = {{"num", ATTR_DESC(N, AnyTraits<int64_t>())}, {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Pack) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Pack, prim::kStack, ADPT_DESC(Pack))
+REG_ADPT_DESC(Pack1, prim::kStack, ADPT_DESC(Pack))
+REG_ADPT_DESC(Pack2, prim::kPack, ADPT_DESC(Pack))
 
 // ParallelConcat
 INPUT_MAP(ParallelConcat) = EMPTY_INPUT_MAP;

@@ -27,12 +27,12 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 
 namespace mindspore::opt {
-const AnfNodePtr AscendVmOpAdapter::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
+const AnfNodePtr AscendVmOpAdapter::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
   auto op_name = common::AnfAlgo::GetCNodeName(node);
-  auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(node) || graph->has_flag(kAttrMutableKernel);
   auto op_adaptation_info =
     OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, kAscendDevice, is_dynamic);
   if (op_adaptation_info == nullptr) {

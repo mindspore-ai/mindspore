@@ -84,9 +84,6 @@ int HostKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTenso
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
-  }
 
   if (!Init(cnode)) {
     MS_LOG(EXCEPTION) << "Init failed, node:" << cnode->fullname_with_scope();

@@ -444,9 +444,8 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   std::ostringstream buf;
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
   MS_EXCEPTION_IF_NULL(prim);
-  buf << GetOpRunDeviceTarget(prim) << "_";
-  buf << prim->id() << "_";
-  bool has_const_input = false;
+  buf << GetOpRunDeviceTarget(prim) << "_dynamic" << op_run_info->base_op_run_info.use_dynamic_shape_process << "_";
+  buf << prim->name() << "_";
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto &tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(tensor);
@@ -472,7 +471,6 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
     }
     // For constant input
     if (input_tensors_mask[i] == kValueNodeTensorMask) {
-      has_const_input = true;
       buf << common::AnfAlgo::GetTensorValueString(tensor);
     }
     buf << "_";
@@ -483,20 +481,6 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   (void)std::for_each(attr_map.begin(), attr_map.end(),
                       [&buf](const auto &element) { buf << element.second->ToString(); });
 
-  // Generally, different inputs can have different output; but different constant inputs may lead to different output
-  if (has_const_input) {
-    buf << "_";
-    const AbstractBasePtr &abstract = kernel->abstract();
-    MS_EXCEPTION_IF_NULL(abstract);
-    auto build_shape = abstract->BuildShape();
-    MS_EXCEPTION_IF_NULL(build_shape);
-    auto build_type = abstract->BuildType();
-    MS_EXCEPTION_IF_NULL(build_type);
-    // Get output shape
-    buf << build_shape->ToString();
-    // Get output dtype
-    buf << build_type->type_id();
-  }
   *graph_info = buf.str();
 }
 
@@ -840,6 +824,10 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      InputTensorInfo *input_tensor_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto is_mutable = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode);
   std::vector<size_t> const_input_attr_index = {};
   GetConstValueDepend(cnode, &const_input_attr_index);
   const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
@@ -866,8 +854,13 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
           is_forward_output = true;
         }
       }
-      input_tensor_info->input_tensors_mask.emplace_back(
-        (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
+      if (is_mutable && device_target == kAscendDevice) {
+        input_tensor_info->input_tensors_mask.emplace_back(
+          (is_value_node && !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
+      } else {
+        input_tensor_info->input_tensors_mask.emplace_back(
+          (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
+      }
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
@@ -1276,6 +1269,11 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   // set execution order
   auto cnode = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
+  auto is_mutable_kernel = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode) &&
+                           common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrMutableKernel);
+  if (is_mutable_kernel) {
+    graph->set_flag(kAttrMutableKernel, true);
+  }
   // set abstract,which include inferred shapes and types
   cnode->set_abstract(op_run_info->base_op_run_info.abstract);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info->base_op_run_info.has_dynamic_output),
@@ -1288,7 +1286,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);
-  if (is_ascend) {
+  if (is_ascend && !is_mutable_kernel) {
     graph->set_output(cnode);
   } else {
     CreateOutputNode(cnode, graph);

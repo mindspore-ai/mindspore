@@ -61,9 +61,6 @@ int DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
-  }
   if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
     auto wingman_queue = device::GetTdtWingManQueue(cnode);
     std::vector<device::DataQueueItem> data;
@@ -142,11 +139,6 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "Start launch of node: " << cnode->fullname_with_scope();
 
-  // is dynamic shape
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
-  }
-
   // copy extinfo to device
   AllocateExtInfoDeviceAddr(cnode);
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
@@ -186,10 +178,6 @@ void DynamicAicpuOpKernelMod::SyncData() {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "Aicpu " << cnode->fullname_with_scope() << " PostExecute";
-  // is dynamic shape
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
-  }
 
   if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE ||
       common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {

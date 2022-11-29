@@ -682,9 +682,13 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
     }
 
+    auto is_mutable = graph->has_flag(kAttrMutableKernel);
     bool use_dynamic_shape_process = root_graph_->has_flag(kFlagUseDynamicShapeProcess);
     py::gil_scoped_release release;
     for (const auto &kernel : graph->execution_order()) {
+      if (is_mutable) {
+        common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), kernel);
+      }
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
@@ -712,6 +716,9 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, use_dynamic_shape_process,
                                                         &op_run_info, &graph_info, &graph_output_info);
         if (use_dynamic_shape_process) {
+          op_run_info->op_prim->AddAttr(kAttrMutableKernel, MakeValue(true));
+          op_run_info->op_prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
+          op_run_info->op_prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
           RunOpDynamic(op_run_info, &op_outputs);
         } else {
           RunOp(op_run_info, &op_outputs);
@@ -724,6 +731,9 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
     }
     WaitTaskFinish();
+  }
+  if (is_dynamic_ || root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
+    ClearResource();
   }
 }
 
@@ -1397,6 +1407,16 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
     outputs->emplace_back(output_tensor);
   }
+}
+
+void MindRTBackend::ClearResource() {
+  graph_compiler_ = std::make_shared<GraphCompiler>();
+  graph_id_to_device_context_.clear();
+  func_graph_to_kernel_graph_ids_.clear();
+  graph_info_to_device_context_.clear();
+  control_nodes_.clear();
+  actor_to_graph_compiler_info_.clear();
+  cnode_ref_counts_.clear();
 }
 }  // namespace compile
 }  // namespace mindspore

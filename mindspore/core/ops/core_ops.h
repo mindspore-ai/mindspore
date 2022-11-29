@@ -166,6 +166,7 @@ constexpr auto kDynamicShape = "DynamicShape";
 constexpr auto kTensorShape = "TensorShape";
 constexpr auto kCheckNumerics = "CheckNumerics";
 constexpr auto kStack = "Stack";
+constexpr auto kPack = "Pack";
 constexpr auto kLogNormalReverse = "LogNormalReverse";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";

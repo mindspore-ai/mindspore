@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <map>
+#include "runtime/rt.h"
 #include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
@@ -36,20 +37,18 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
-  }
-
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   std::vector<size_t> useless_input_lists;
   // Update input size list
-  for (size_t i = 0; i < input_size_list_.size(); ++i) {
+  for (size_t i = 0; i < input_num; ++i) {
     auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
     if (index >= input_size_list_.size()) {
       MS_LOG(EXCEPTION) << "Error real index:" << index;
     }
-    TypeId type_id = AnfAlgo::GetInputDeviceDataType(node, index);
+    auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(node, index);
+    auto type_id = AnfAlgo::GetOutputDeviceDataType(input, idx);
     auto type_size = GetTypeByte(TypeIdToType(type_id));
-    auto shape = AnfAlgo::GetInputDeviceShape(node, index);
+    auto shape = AnfAlgo::GetOutputDeviceShape(input, idx);
     if (IsDynamic(shape)) {
       MS_LOG(ERROR) << "Please check infer op shape before resize, error input index is:" << i;
       return 1;
@@ -65,10 +64,24 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
       (void)useless_input_lists.emplace_back(i);
     }
   }
+
+  auto acl_input_size = GeOpConvertor::GetAclInputSize(cnode);
+  if (acl_input_size > input_num) {
+    for (size_t i = input_num; i < acl_input_size; i++) {
+      input_size_list_[i] = SIZE_MAX;
+    }
+  }
   common::AnfAlgo::SetNodeAttr(kAttrUselessInput, MakeValue(useless_input_lists), node);
 
   // Update output size list
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   AscendKernelMod::UpdateOutputSizeList();
+  auto acl_output_size = GeOpConvertor::GetAclOutputSize(cnode);
+  if (acl_output_size > output_num) {
+    for (size_t i = output_num; i < acl_output_size; i++) {
+      output_size_list_[i] = SIZE_MAX;
+    }
+  }
 
   if (!AclUtils::UpdateTensorDesc(node, &input_desc_list_, &output_desc_list_)) {
     MS_LOG(EXCEPTION) << "Fail to update op desc: " << node->fullname_with_scope();
@@ -157,6 +170,10 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     MS_LOG(ERROR) << "Acl compile and execute failed! op_name is " << op_type_ << " and op info is "
                   << anf_node_.lock()->DebugString();
     return false;
+  }
+
+  if (rtStreamSynchronize(stream_ptr) != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclopCompileAndExecute sync failed";
   }
 
   MS_LOG(INFO) << "Success launch of node: " << op_type_;

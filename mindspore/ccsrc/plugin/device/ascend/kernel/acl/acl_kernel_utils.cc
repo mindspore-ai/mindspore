@@ -25,6 +25,8 @@
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 
+#include "plugin/device/ascend/hal/device/ge_types_convert.h"
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -537,10 +539,11 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
       continue;
     }
     (void)already_add_index.insert(index + 1);
-    auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, index);
-    auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, index);
-    auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, index);
-    auto input_format = AnfAlgo::GetInputFormat(anf_node, index);
+    auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
+    auto ori_shape = common::AnfAlgo::GetOutputInferShape(input, idx);
+    auto input_shape = AnfAlgo::GetOutputDeviceShape(input, idx);
+    auto input_type = AnfAlgo::GetOutputDeviceDataType(input, idx);
+    auto input_format = AnfAlgo::GetOutputFormat(input, idx);
     auto ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
@@ -591,6 +594,7 @@ std::set<std::string> AclUtils::GetUselessOutputs(const AnfNodePtr &node) {
 
 std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   std::vector<GeTensorDescPtr> res;
   auto useless_outputs = GetUselessOutputs(anf_node);
@@ -630,6 +634,9 @@ std::shared_ptr<OpInfo> AclUtils::GetKernelOpInfo(const AnfNodePtr &node) {
   auto node_name = common::AnfAlgo::GetCNodeName(node);
   auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
   auto op_info_ptr = kernel::OpLib::FindOp(node_name, kernel::kImplyTBE, is_dynamic_shape);
+  if (op_info_ptr == nullptr) {
+    return kernel::OpLib::FindOp(node_name, kernel::kImplyAICPU);
+  }
   return op_info_ptr;
 }
 
@@ -666,6 +673,7 @@ std::vector<std::string> AclUtils::GetOpInputAnchorNames(const AnfNodePtr &node)
 
 std::vector<std::string> AclUtils::GetOpOutputAnchorNames(const AnfNodePtr &node) {
   auto op_info_ptr = GetKernelOpInfo(node);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto outputs_ptr = op_info_ptr->outputs_ptr();
   std::vector<std::string> output_names;
   for (const auto &out_item : outputs_ptr) {

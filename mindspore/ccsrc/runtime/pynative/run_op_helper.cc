@@ -127,12 +127,13 @@ void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
     auto output_index = output_pair.second;
     auto &input_node = input_pair.first;
     auto input_node_output_index = input_pair.second;
-
-    auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index, false);
-    auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(ref_node, output_index, false);
-    if (input_addr != ref_node_output_addr) {
-      AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
+    if (!AnfAlgo::OutputAddrExist(input_node, input_node_output_index, false)) {
+      MS_LOG(WARNING) << "Output address not exist, node " << input_node->fullname_with_scope() << " index "
+                      << input_node_output_index;
+      continue;
     }
+    auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index, false);
+    AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
   }
 }
 
@@ -503,7 +504,7 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     auto workspaces = CreateKernelWorkspaceAddressDynamic(runtime_info, device_context, node);
 
     if (!MallocForKernelOutput(runtime_info, node, device_context)) {
-      MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "Malloc for kernel output failed, node:" << node->fullname_with_scope();
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
     const size_t stream_id = AnfAlgo::GetStreamId(node);

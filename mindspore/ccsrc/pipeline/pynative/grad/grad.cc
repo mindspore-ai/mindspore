@@ -674,8 +674,7 @@ void GradExecutor::GetGradGraph(const ad::GradAttr &grad_attr, const std::vector
   auto bprop_graph = GetBpropGraph(grad_attr, w_args, p_args);
   MS_EXCEPTION_IF_NULL(bprop_graph);
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
-  bool use_dynamic_shape_process = (forward()->device_target() == kAscendDevice ? false : use_dynamic_shape_process_);
-  bprop_graph->set_flag(kFlagUseDynamicShapeProcess, use_dynamic_shape_process);
+  bprop_graph->set_flag(kFlagUseDynamicShapeProcess, use_dynamic_shape_process_);
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   bprop_graph->set_attr(kAttrFuncGraphCellId, MakeValue(top_input_args_info_->obj_id));
   auto resource = top_cell()->resource();
@@ -1750,12 +1749,12 @@ bool GradExecutor::IsDynamicDetectNodeInfoChange(const DynamicDetectNodeInfoPtr 
   MS_EXCEPTION_IF_NULL(old_node_info);
 
   // 1.Detect ms_function phase
-  if (is_ms_function_node != old_node_info->is_graph_node ||
-      (is_ms_function_node && graph_phase != old_node_info->graph_phase)) {
-    MS_LOG(DEBUG) << "graph is dynamic, old is_graph_node:" << old_node_info->is_graph_node
+  if (is_ms_function_node) {
+    MS_LOG(DEBUG) << "Graph info, old is_graph_node:" << old_node_info->is_graph_node
                   << " new is_graph_node:" << is_ms_function_node << " old graph_phase" << old_node_info->graph_phase
                   << " new graph_phase:" << graph_phase;
-    return true;
+    return is_ms_function_node != old_node_info->is_graph_node ||
+           (is_ms_function_node && graph_phase != old_node_info->graph_phase);
   }
 
   // 2.Detect cnode prim

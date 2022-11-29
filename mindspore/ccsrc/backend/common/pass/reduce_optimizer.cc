@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/pass/reduce_sum_optimizer.h"
+#include "backend/common/pass/reduce_optimizer.h"
 #include <vector>
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
@@ -25,7 +25,7 @@ namespace {
 constexpr int axis_input_index = 2;
 }  // namespace
 
-AnfNodePtr ReduceSumOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
+AnfNodePtr ReduceOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> rank_inputs;
@@ -39,7 +39,7 @@ AnfNodePtr ReduceSumOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGr
   return rank_op;
 }
 
-AnfNodePtr ReduceSumOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const {
+AnfNodePtr ReduceOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(rank_op);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> range_inputs;
@@ -68,15 +68,15 @@ AnfNodePtr ReduceSumOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const Kerne
   return range_op;
 }
 
-AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &) const {
+AnfNodePtr ReduceOptimizer::InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &) const {
   // the input dim is unknown, need rank + range, don't supported now;
   MS_LOG(EXCEPTION)
     << "Can not support the case that input is dim unknown and axis is empty or axis contain value less 0. node: "
     << trace::DumpSourceLines(cnode);
 }
 
-AnfNodePtr ReduceSumOptimizer::CreateValueNodeWithVector(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
-                                                         const std::vector<int64_t> &axis) const {
+AnfNodePtr ReduceOptimizer::CreateValueNodeWithVector(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
+                                                      const std::vector<int64_t> &axis) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto new_value_node = NewValueNode(MakeValue<std::vector<int64_t>>(axis));
@@ -92,8 +92,8 @@ AnfNodePtr ReduceSumOptimizer::CreateValueNodeWithVector(const CNodePtr &cnode, 
   return new_node;
 }
 
-AnfNodePtr ReduceSumOptimizer::HandleAxisWithEmptyTensor(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
-                                                         const AnfNodePtr &axis_input) const {
+AnfNodePtr ReduceOptimizer::HandleAxisWithEmptyTensor(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
+                                                      const AnfNodePtr &axis_input) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(axis_input);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -125,7 +125,7 @@ AnfNodePtr ReduceSumOptimizer::HandleAxisWithEmptyTensor(const CNodePtr &cnode, 
 // 2: the value of axis_input contain the value less 0,
 // the new tensor of the new value node should be "shape.size() + the_old_value_less_0",
 // the shape is the first input'shape of ReduceSum;
-AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
+AnfNodePtr ReduceOptimizer::NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
   // axis is a tuple ,maybe empty or contain a value less 0;
   if (cnode->inputs().size() <= axis_input_index) {
     return nullptr;
@@ -170,18 +170,18 @@ AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const K
   return nullptr;
 }
 
-const AnfNodePtr ReduceSumOptimizer::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                             const EquivPtr &) const {
+const AnfNodePtr ReduceOptimizer::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                          const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (op_name != kReduceSumOpName) {
+  if (op_name != kReduceSumOpName && op_name != kReduceMeanOpName) {
     MS_LOG(DEBUG) << "Current node is not: " << kReduceSumOpName << ", skip!";
     return nullptr;
   }
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode) && !common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
     MS_LOG(DEBUG) << "Current node is not dynamic shape, skip!";
     return nullptr;
   }
@@ -191,7 +191,7 @@ const AnfNodePtr ReduceSumOptimizer::Process(const FuncGraphPtr &func_graph, con
   return NewAssistValueNode(cnode, kernel_graph);
 }
 
-const BaseRef ReduceSumOptimizer::DefinePattern() const {
+const BaseRef ReduceOptimizer::DefinePattern() const {
   std::shared_ptr<Var> V = std::make_shared<CondVar>(UnVisited);
   std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
   return VectorRef({V, Xs});

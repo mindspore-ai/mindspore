@@ -432,7 +432,8 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
     return;
   }
 
-  if (!common::AnfAlgo::IsDynamicShape(anf_node)) {
+  if (!common::AnfAlgo::IsDynamicShape(anf_node) &&
+      !common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, anf_node->cast<CNodePtr>())) {
     return;
   }
 
@@ -476,7 +477,8 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
     op_name = kInitData;
   }
   std::shared_ptr<AicpuOpKernelMod> kernel_mod_ptr;
-  if (common::AnfAlgo::IsDynamicShape(anf_node)) {
+  if (common::AnfAlgo::IsDynamicShape(anf_node) ||
+      common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, anf_node->cast<CNodePtr>())) {
     kernel_mod_ptr = std::make_shared<DynamicAicpuOpKernelMod>(anf_node);
   } else {
     kernel_mod_ptr = std::make_shared<AicpuOpKernelMod>(anf_node);
