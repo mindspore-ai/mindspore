@@ -758,7 +758,6 @@ class ResizeBicubic(Primitive):
         half_pixel_centers (bool, optional): Whether to use half-pixel center alignment. If set to True,
             `align_corners` should be False. Default: False.
 
-
     Inputs:
         - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, height, width, channels)`.
           The format must be NHWC.
@@ -779,7 +778,6 @@ class ResizeBicubic(Primitive):
         ValueError: If `size` size is not 2.
         ValueError: If any `size` value is not positive.
         ValueError: If `align_corners` and `half_pixel_centers` value are both True.
-
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``

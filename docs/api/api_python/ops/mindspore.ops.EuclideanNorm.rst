@@ -1,7 +1,7 @@
 ﻿mindspore.ops.EuclideanNorm
 ============================
 
-.. py:class:: mindspore.ops.EuclideanNorm(keep_dims=False):
+.. py:class:: mindspore.ops.EuclideanNorm(keep_dims=False)
 
     计算Tensor维度上元素的欧几里得范数，根据给定的轴对输入进行规约操作。
 
