@@ -57,7 +57,7 @@ class NonDeterministicInts(Primitive):
 
     Examples:
         >>> shape = Tensor((3,4), mstype.int32)
-        >>> ndints = P.NonDeterministicInts(dtype=mstype.int32)
+        >>> ndints = ops.NonDeterministicInts(dtype=mstype.int32)
         >>> output = ndints(shape)
         >>> print(output.shape)
         (3, 4)

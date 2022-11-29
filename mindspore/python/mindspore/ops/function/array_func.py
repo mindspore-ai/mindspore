@@ -3834,8 +3834,6 @@ def broadcast_to(x, shape):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
         >>> shape = (2, 3)
         >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> output = ops.broadcast_to(x, shape)

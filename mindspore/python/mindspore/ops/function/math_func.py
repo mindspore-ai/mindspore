@@ -7255,10 +7255,11 @@ def cumprod(input, dim, dtype=None):
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
 
-    >>> x = Tensor(np.array([1, 2, 3], np.float32))
-    >>> output = ops.cumprod(x, 0)
-    >>> print(output)
-    [1. 2. 6.]
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3], np.float32))
+        >>> output = ops.cumprod(x, 0)
+        >>> print(output)
+        [1. 2. 6.]
     """
     cumprod_op = _get_cache_prim(P.CumProd)()
     output = cumprod_op(input, dim)

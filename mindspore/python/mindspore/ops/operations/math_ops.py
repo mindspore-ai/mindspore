@@ -1152,7 +1152,7 @@ class Bucketize(Primitive):
         >>> class Bucketize(nn.Cell):
         ...     def __init__(self, boundaries):
         ...         super().__init__()
-        ...         self.bucketize = op.Bucketize(boundaries=boundaries)
+        ...         self.bucketize = ops.Bucketize(boundaries=boundaries)
         ...     def construct(self, input):
         ...         return self.bucketize(input)
         >>> input = Tensor(np.array([[3, 6, 9], [3, 6, 9]]).astype(np.int32))
