@@ -46,13 +46,11 @@ void ResetFunctionCallDepth();
 void IncreaseFunctionCallDepth();
 void DecreaseFunctionCallDepth();
 size_t FunctionCallDepth();
-size_t FunctionCallMaxDepth();
 
 void ResetStackFrameDepth();
 void IncreaseStackFrameDepth();
 void DecreaseStackFrameDepth();
 size_t StackFrameDepth();
-size_t StackFrameMaxDepth();
 
 // define attribute value map
 using AttrValueMap = mindspore::HashMap<std::string, ValuePtr>;

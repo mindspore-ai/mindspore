@@ -23,14 +23,13 @@
 #include <set>
 #include <unordered_set>
 #include <utility>
+#include <atomic>
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
-#include "utils/symbolic.h"
 #include "utils/ms_exception.h"
 #include "ir/func_graph_cloner.h"
-#include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "pipeline/jit/debug/trace.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -39,41 +38,23 @@
 namespace mindspore {
 namespace abstract {
 // Record current depth of function call stack, including `stack_frame_depth`.
-thread_local size_t function_call_depth;
-thread_local size_t function_call_max_depth;
+std::atomic<size_t> function_call_depth;
 // Record current depth of stack frames call.
-thread_local size_t stack_frame_depth;
-thread_local size_t stack_frame_max_depth;
+std::atomic<size_t> stack_frame_depth;
 
-void ResetFunctionCallDepth() {
-  function_call_depth = 0;
-  function_call_max_depth = 0;
-}
-void IncreaseFunctionCallDepth() {
-  function_call_depth++;
-  if (function_call_max_depth < function_call_depth) {
-    function_call_max_depth = function_call_depth;
-  }
-}
+void ResetFunctionCallDepth() { function_call_depth = 0; }
+void IncreaseFunctionCallDepth() { ++function_call_depth; }
 void DecreaseFunctionCallDepth() {
   if (function_call_depth == 0) {
     MS_LOG(EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
   }
   function_call_depth--;
 }
-size_t FunctionCallDepth() { return function_call_depth; }
-size_t FunctionCallMaxDepth() { return function_call_max_depth; }
 
-void ResetStackFrameDepth() {
-  stack_frame_depth = 0;
-  stack_frame_max_depth = 0;
-}
-void IncreaseStackFrameDepth() {
-  stack_frame_depth++;
-  if (stack_frame_max_depth < stack_frame_depth) {
-    stack_frame_max_depth = stack_frame_depth;
-  }
-}
+size_t FunctionCallDepth() { return function_call_depth; }
+
+void ResetStackFrameDepth() { stack_frame_depth = 0; }
+void IncreaseStackFrameDepth() { ++stack_frame_depth; }
 void DecreaseStackFrameDepth() {
   if (stack_frame_depth == 0) {
     MS_LOG(EXCEPTION) << "Current stack frame depth is already 0, can not decrease it.";
@@ -81,7 +62,6 @@ void DecreaseStackFrameDepth() {
   stack_frame_depth--;
 }
 size_t StackFrameDepth() { return stack_frame_depth; }
-size_t StackFrameMaxDepth() { return stack_frame_max_depth; }
 
 EvalResultPtr PrimitiveEvalCache::Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
   MS_EXCEPTION_IF_NULL(prim);
