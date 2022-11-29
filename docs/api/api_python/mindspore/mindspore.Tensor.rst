@@ -195,6 +195,8 @@ mindspore.Tensor
     mindspore.Tensor.rad2deg
     mindspore.Tensor.random_categorical
     mindspore.Tensor.ravel
+    mindspore.Tensor.real
+    mindspore.Tensor.reciprocal
     mindspore.Tensor.remainder
     mindspore.Tensor.renorm
     mindspore.Tensor.repeat
@@ -207,6 +209,7 @@ mindspore.Tensor
     mindspore.Tensor.round
     mindspore.Tensor.roll
     mindspore.Tensor.rot90
+    mindspore.Tensor.rsqrt
     mindspore.Tensor.scatter_add
     mindspore.Tensor.scatter_div
     mindspore.Tensor.scatter_max

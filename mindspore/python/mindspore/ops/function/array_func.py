@@ -4927,9 +4927,9 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         (16, 16, 8, 8)
     """
     kernel_size = _check_fold_param(kernel_size, "kernel_size")
-    dilation = _check_fold_param(kernel_size, "dilation")
-    padding = _check_fold_param(kernel_size, "padding")
-    stride = _check_fold_param(kernel_size, "stride")
+    dilation = _check_fold_param(dilation, "dilation")
+    padding = _check_fold_param(padding, "padding")
+    stride = _check_fold_param(stride, "stride")
     fold_op = _get_cache_prim(Col2Im)(kernel_size, dilation, padding, stride)
     return fold_op(input, output_size)
 

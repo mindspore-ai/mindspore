@@ -3813,6 +3813,100 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
     return output
 
 
+def real(x):
+    r"""
+    Returns a Tensor that is the real part of the input.
+    If input is real, it is returned unchanged.
+
+    Args:
+        x (Tensor): The input tensor to compute to.
+
+    Returns:
+        Tensor, the shape is the same as the `x`.
+
+    Raises:
+       TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.asarray(np.complex(1.3+0.4j)), ms.complex64)
+        >>> output = ops.real(x)
+        >>> print(output)
+        1.3
+    """
+    return _get_cache_prim(ops.Real)()(x)
+
+
+def reciprocal(x):
+    r"""
+    Returns reciprocal of a tensor element-wise.
+
+    .. math::
+
+        out_{i} =  \frac{1}{x_{i}}
+
+    Args:
+        x (Tensor): The input tensor.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([1.0, 2.0, 4.0]), ms.float32)
+        >>> output = ops.reciprocal(x)
+        >>> print(output)
+        [1.   0.5  0.25]
+    """
+    return _get_cache_prim(ops.Reciprocal)()(x)
+
+
+def rsqrt(x):
+    r"""
+    Computes reciprocal of square root of input tensor element-wise.
+
+    .. math::
+
+        out_{i} =  \frac{1}{\sqrt{x_{i}}}
+
+    Args:
+        x (Tensor): The input of rsqrt. Its rank must be in [0, 7] inclusive and
+            each element must be a non-negative number, if an element is negative, the calculation result is nan.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> x = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
+        >>> output = ops.rsqrt(x)
+        >>> print(output)
+        [       nan 1.8349396  0.80530024        nan]
+    """
+    return _get_cache_prim(ops.Rsqrt)()(x)
+
+
 def sqrt(x):
     """
     Returns sqrt of a tensor element-wise.
@@ -7582,6 +7676,9 @@ __all__ = [
     'logit',
     'logsumexp',
     'ldexp',
+    'rsqrt',
+    'reciprocal',
+    'real',
     'sqrt',
     'square',
     'sin',
