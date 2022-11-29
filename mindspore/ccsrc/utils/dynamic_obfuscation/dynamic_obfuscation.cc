@@ -29,6 +29,18 @@
 #include "ops/core_ops.h"
 
 namespace mindspore {
+namespace {
+ParameterPtr AddObfuscatedParam(FuncGraphPtr func_graph) {
+  auto params = func_graph->parameters();
+  auto add_param = std::make_shared<Parameter>(func_graph);
+  std::vector<AnfNodePtr> new_para_list(params.begin(), params.begin() + params.size() - func_graph->fv_param_count());
+  (void)new_para_list.emplace_back(add_param);
+  new_para_list.insert(new_para_list.cend(), params.begin() + params.size() - func_graph->fv_param_count(),
+                       params.end());
+  func_graph->set_parameters(new_para_list);
+  return add_param;
+}
+}  // namespace
 using Tensor = mindspore::tensor::Tensor;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
@@ -299,10 +311,10 @@ CNodePtr DynamicObfuscator::PasswordModeControl(FuncGraphPtr func_graph) {
   tensor::TensorPtr y_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeInt32, y_shape);
   if (!has_build_appended_input) {
     MS_LOG(INFO) << "Build parameter y_password and y_append.";
-    auto y = func_graph->add_parameter();
+    auto y = AddObfuscatedParam(func_graph);
     y->set_name("y_password");
     y->set_abstract(y_tensor->ToAbstract());
-    auto y_append = func_graph->add_parameter();
+    auto y_append = AddObfuscatedParam(func_graph);
     y_append->set_name("y_append");
     y_append->set_abstract(y_tensor->ToAbstract());
     has_build_appended_input = true;

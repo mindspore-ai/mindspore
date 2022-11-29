@@ -185,7 +185,7 @@ AbstractBasePtr InferImplLower(const AnalysisEnginePtr &, const PrimitivePtr &pr
   auto input = args_spec_list[0]->BuildValue();
   if (input == nullptr || !input->isa<StringImm>()) {
     auto type = args_spec_list[0]->BuildType();
-    MS_LOG(ERROR) << "Function lower should be call using a string type but got:" << type->ToString();
+    MS_EXCEPTION(TypeError) << "Function lower should be call using a string type but got:" << type->ToString();
   }
   auto str = input->cast<StringImmPtr>()->value();
   std::transform(str.begin(), str.end(), str.begin(), ::tolower);

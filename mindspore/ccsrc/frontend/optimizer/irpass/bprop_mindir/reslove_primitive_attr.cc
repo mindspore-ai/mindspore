@@ -41,15 +41,6 @@ inline CNode *GetCallNode(const AnfNodePtr &node) {
   return func_c_node;
 }
 
-inline bool IsGetAttrPrimNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto primitive = GetValuePtr<Primitive>(node);
-  if (primitive == nullptr) {
-    return false;
-  }
-  return primitive->name() == "getattr";
-}
-
 inline Primitive *GetPrimNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto primitive = GetValuePtr<Primitive>(node);
@@ -94,9 +85,8 @@ bool ReslovePrimitiveAttr::IsCNodeMinIRMetaGraphGetItem(const AnfNodePtr &node) 
   if (meta_func->name() != "getitem") {
     return false;
   }
-
-  auto dict_node = cnode->input(1);
-  auto string_node = cnode->input(2);
+  auto dict_node = cnode->input(kIndex1);
+  auto string_node = cnode->input(kIndex2);
   return IsStringAttrValueNode(string_node) && IsCallPrimitiveAttrDictNode(dict_node);
 }
 
@@ -109,7 +99,8 @@ bool ReslovePrimitiveAttr::IsGetAttrDictFuncNode(const CNode *node) {
   auto prim_node = node->input(1);
   auto attr_name_node = node->input(2);
   primitive_ = GetPrimNode(prim_node);
-  return IsGetAttrPrimNode(attr_prim_node) && primitive_ != nullptr && IsGetAttrDictStringImmValueNode(attr_name_node);
+  return IsPrimitive(attr_prim_node, prim::kPrimGetAttr) && primitive_ != nullptr &&
+         IsGetAttrDictStringImmValueNode(attr_name_node);
 }
 }  // namespace irpass
 }  // namespace opt
