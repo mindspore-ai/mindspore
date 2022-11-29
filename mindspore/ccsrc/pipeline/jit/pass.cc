@@ -651,11 +651,11 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &resource) {
   HashCache hash_cache;
   HashValue hashes;
   // Remove duplicated value nodes across all graphs in manager
-  auto node_user_map = manager->node_users();
+  const auto &node_user_map = manager->node_users();
   for (auto &fg : manager->func_graphs()) {
     auto value_nodes = fg->value_nodes();
     for (const auto &value_pair : value_nodes) {
-      auto users = node_user_map[value_pair.first];
+      auto &users = node_user_map.at(value_pair.first);
       // For data parallel with some parameters redundant, the allreduce will share the same value node
       // which will raise an error when do allreduce fusion, so the solution is to make the allreduce's value node
       // not be removed, if we found the fusion tag.

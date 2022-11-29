@@ -576,12 +576,12 @@ void ReplaceNoRefToParams(const FuncGraphPtr &graph, const AnfMap &no_ref_pipe_p
                           const AnfNodePtr &sparse_gatherv2_indices) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto node_users = manager->node_users();
+  const auto &node_users = manager->node_users();
   // add other no ref pipe param and unique index dense
   for (auto &ele : no_ref_pipe_param_map) {
-    auto user_set = node_users[ele.first];
+    const auto &user_set = node_users.at(ele.first);
     auto assign_status = CreateAssign(graph, ele.second, ele.first);
-    for (auto user_node : user_set) {
+    for (const auto &user_node : user_set) {
       CreateControlDepend(graph, user_node.first, assign_status);
     }
     if (!manager->Replace(ele.first, ele.second)) {
@@ -591,8 +591,8 @@ void ReplaceNoRefToParams(const FuncGraphPtr &graph, const AnfMap &no_ref_pipe_p
 
   // add cache idx param
   auto dynamic_assgin_status = CreateAssign(graph, cache_idx_param, cache_idx, true);
-  auto indices_user_set = node_users[sparse_gatherv2_indices];
-  for (auto &user_node : indices_user_set) {
+  const auto &indices_user_set = node_users.at(sparse_gatherv2_indices);
+  for (const auto &user_node : indices_user_set) {
     CreateControlDepend(graph, user_node.first, dynamic_assgin_status);
   }
   if (!manager->Replace(sparse_gatherv2_indices, cache_idx_param)) {

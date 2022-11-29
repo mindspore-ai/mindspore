@@ -1406,7 +1406,7 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   } else {
     auto pre_node = node;
     AnfNodePtr pre_node_ = node;
-    auto node_user_map = manager->node_users();
+    auto &node_user_map = manager->node_users();
     TypePtr next_node_dtype = FindChildCastWithFP32ToFP16(cnode, node_user_map);
     if (next_node_dtype) {
       MS_LOG(INFO) << "Inserting Cast from float32 to float16 for node " << node->fullname_with_scope() << " for saving"
@@ -2444,7 +2444,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     }
   }
 
-  auto node_users_map = manager->node_users();
+  const auto &node_users_map = manager->node_users();
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
@@ -2952,7 +2952,7 @@ static void InsertAllReduceForNormValue(const AnfNodePtr &res_node) {
   MS_EXCEPTION_IF_NULL(graphs);
   auto manager = graphs->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto node_user_map = manager->node_users();
+  auto &node_user_map = manager->node_users();
   if (!IsSomePrimitive(cnode, EXPAND_DIMS)) {
     MS_LOG(ERROR) << "Expected the operator expand_dims, but found the " << GetPrimName(cnode)
                   << "This may cause the calculation of the global norm incorrect";
@@ -3093,7 +3093,7 @@ static AnfNodePtr GetMirrorOp(const NodeUsersMap &node_user_map, const AnfNodePt
 
 static void HandlGlobalNormScale(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   auto parameters = root->parameters();
-  auto node_user_map = manager->node_users();
+  const auto &node_user_map = manager->node_users();
   MS_LOG(INFO) << "Start to process the global norm";
 
   for (auto &parameter : parameters) {

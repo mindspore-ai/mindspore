@@ -182,6 +182,7 @@ static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<Anf
     FuncGraphManagerPtr manager = forward_graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     std::vector<AnfNodePtr> graph_inputs = forward_graph->get_inputs();
+    // SetEdge will be called later, so deep copy is required.
     auto node_user_map = manager->node_users();
     auto virtual_dataset_node = CreateVirtualDataset(forward_graph);
     std::map<size_t, CNodePtr> parameter_index_map;
