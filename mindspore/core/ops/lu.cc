@@ -15,68 +15,67 @@
  */
 
 #include "ops/lu.h"
-#include <algorithm>
 #include "ops/op_utils.h"
+#include "mindapi/ir/type.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kLUInputsNum = 1;
-constexpr size_t kXDim = 2;
-constexpr size_t kLastDim = 1;
-constexpr size_t kPenultimateDim = 2;
-abstract::TupleShapePtr LUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr LuInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto x_shape = x_shape_map[kShape];
-
-  auto x_output = std::make_shared<abstract::Shape>(x_shape);
-  if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_output, x_output, x_output});
+  constexpr int64_t number1 = 1;
+  constexpr int64_t number2 = 2;
+  const int64_t input_num = 1;
+  const int64_t rank = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           prim_name);
+  auto input_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
+  auto input_shape = input_shape_ptr->shape();
+  if (IsDynamicRank(input_shape)) {
+    abstract::ShapePtr rank_shape = std::make_shared<abstract::Shape>(ShapeVector({-2}));
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{rank_shape, rank_shape});
   }
-
-  size_t x_shape_size = x_shape.size();
-  if (x_shape_size < kXDim) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "',"
-                             << " the dimension of hashmap must be greater than or equal to 2, but got: "
-                             << x_shape_size << ".";
+  std::vector<int64_t> p_shape(input_shape.begin(), (input_shape.end() - number1));
+  abstract::ShapePtr p_shape_ptr = std::make_shared<abstract::Shape>(p_shape);
+  auto input_rank = SizeToLong(input_shape.size());
+  CheckAndConvertUtils::CheckInteger("input rank", input_rank, kGreaterEqual, rank, prim_name);
+  int64_t size1 = input_shape[input_shape.size() - number1];
+  int64_t size2 = input_shape[input_shape.size() - number2];
+  if (size1 != size2) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', input_shape[-1] and input_shape[-2] must be same, but got " << size1 << " vs "
+                             << size2;
   }
-
-  auto k_shape = std::min(x_shape[x_shape_size - kLastDim], x_shape[x_shape_size - kPenultimateDim]);
-  ShapeVector top_k_shape(x_shape.begin(), x_shape.end() - kPenultimateDim);
-  ShapeVector pivots_shape = top_k_shape;
-  pivots_shape.push_back(k_shape);
-  ShapeVector permutation_shape = pivots_shape;
-  permutation_shape.push_back(k_shape);
-
-  auto pivots_output = std::make_shared<abstract::Shape>(pivots_shape);
-  auto permutation_output = std::make_shared<abstract::Shape>(permutation_shape);
-  return std::make_shared<abstract::TupleShape>(
-    std::vector<abstract::BaseShapePtr>{x_output, pivots_output, permutation_output});
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape_ptr, p_shape_ptr});
 }
 
-TuplePtr LUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[0]->BuildType();
-  return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, kInt32, kInt32});
+TypePtr LuInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const std::set<TypePtr> lu_types = {kFloat32, kFloat64, kComplex64, kComplex128};
+  auto input_type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input type", input_type, lu_types, prim->name());
+  const std::set<TypePtr> out_valid_types = {kInt32, kInt64};
+  ValuePtr out_type_value = prim->GetAttr("output_idx_type");
+  TypePtr type = dyn_cast<Type>(out_type_value);
+  (void)CheckAndConvertUtils::CheckTypeValid("p type", type, out_valid_types, prim->name());
+  return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, type});
 }
 }  // namespace
 
-AbstractBasePtr LUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+MIND_API_OPERATOR_IMPL(Lu, BaseOperator);
+AbstractBasePtr LuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kLUInputsNum, primitive->name());
-  auto infer_type = LUInferType(primitive, input_args);
-  auto infer_shape = LUInferShape(primitive, input_args);
+  auto infer_type = LuInferType(primitive, input_args);
+  auto infer_shape = LuInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-MIND_API_OPERATOR_IMPL(LU, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(LU, prim::kPrimLU, LUInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(Lu, prim::kPrimLu, LuInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

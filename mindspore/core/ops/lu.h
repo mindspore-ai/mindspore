@@ -18,25 +18,24 @@
 #define MINDSPORE_CORE_OPS_LU_H_
 
 #include <map>
-#include <vector>
 #include <set>
 #include <string>
 #include <memory>
-
+#include <vector>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLU = "LU";
-class MIND_API LU : public BaseOperator {
+constexpr auto kNameLu = "Lu";
+class MIND_API Lu : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(LU);
-  LU() : BaseOperator(kNameLU) { InitIOName({"x"}, {"lu", "pivots", "permutation"}); }
+  MIND_API_BASE_MEMBER(Lu);
+  Lu() : BaseOperator(kNameLu) { InitIOName({"input"}, {"lu", "p"}); }
 };
-abstract::AbstractBasePtr LUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+abstract::AbstractBasePtr LuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimLUPtr = std::shared_ptr<LU>;
+using PrimLuPtr = std::shared_ptr<Lu>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LU_H_
