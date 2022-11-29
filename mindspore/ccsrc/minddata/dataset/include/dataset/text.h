@@ -894,6 +894,35 @@ class DATASET_API ToVectors final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Truncate the input sequence so that it does not exceed the maximum length.
+class DATASET_API Truncate final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] max_seq_len Maximum allowable length.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto truncate_op = text::Truncate(5);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({truncate_op},   // operations
+  ///                            {"text"});       // input columns
+  /// \endcode
+  explicit Truncate(int32_t max_seq_len);
+
+  /// \brief Destructor.
+  ~Truncate() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Truncate a pair of rank-1 tensors such that the total length is less than max_length.
 class DATASET_API TruncateSequencePair final : public TensorTransform {
  public:

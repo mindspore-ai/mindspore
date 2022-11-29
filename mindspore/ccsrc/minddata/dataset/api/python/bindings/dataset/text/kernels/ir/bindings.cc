@@ -241,6 +241,16 @@ PYBIND_REGISTER(
         }));
   }));
 
+PYBIND_REGISTER(TruncateOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<text::TruncateOperation, TensorOperation, std::shared_ptr<text::TruncateOperation>>(
+                    *m, "TruncateOperation")
+                    .def(py::init([](int32_t max_seq_len) {
+                      auto truncate = std::make_shared<text::TruncateOperation>(max_seq_len);
+                      THROW_IF_ERROR(truncate->ValidateParams());
+                      return truncate;
+                    }));
+                }));
+
 PYBIND_REGISTER(TruncateSequencePairOperation, 1, ([](const py::module *m) {
                   (void)py::class_<text::TruncateSequencePairOperation, TensorOperation,
                                    std::shared_ptr<text::TruncateSequencePairOperation>>(

@@ -394,6 +394,16 @@ std::shared_ptr<TensorOperation> ToVectors::Parse() {
   return std::make_shared<ToVectorsOperation>(data_->vectors_, data_->unk_init_, data_->lower_case_backup_);
 }
 
+// Truncate
+struct Truncate::Data {
+  explicit Data(int32_t max_seq_len) : max_seq_len_(max_seq_len) {}
+  int32_t max_seq_len_;
+};
+
+Truncate::Truncate(int32_t max_seq_len) : data_(std::make_shared<Data>(max_seq_len)) {}
+
+std::shared_ptr<TensorOperation> Truncate::Parse() { return std::make_shared<TruncateOperation>(data_->max_seq_len_); }
+
 // TruncateSequencePair
 struct TruncateSequencePair::Data {
   explicit Data(int32_t max_length) : max_length_(max_length) {}

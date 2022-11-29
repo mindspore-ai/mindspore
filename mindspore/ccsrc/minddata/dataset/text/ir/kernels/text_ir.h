@@ -50,6 +50,7 @@ constexpr char kSentencepieceTokenizerOperation[] = "SentencepieceTokenizer";
 constexpr char kSlidingWindowOperation[] = "SlidingWindow";
 constexpr char kToNumberOperation[] = "ToNumber";
 constexpr char kToVectorsOperation[] = "ToVectors";
+constexpr char kTruncateOperation[] = "Truncate";
 constexpr char kTruncateSequencePairOperation[] = "TruncateSequencePair";
 constexpr char kUnicodeCharTokenizerOperation[] = "UnicodeCharTokenizer";
 constexpr char kUnicodeScriptTokenizerOperation[] = "UnicodeScriptTokenizer";
@@ -351,6 +352,24 @@ class ToVectorsOperation : public TensorOperation {
   std::shared_ptr<Vectors> vectors_;
   std::vector<float> unk_init_;
   bool lower_case_backup_;
+};
+
+class TruncateOperation : public TensorOperation {
+ public:
+  explicit TruncateOperation(int32_t max_seq_len);
+
+  ~TruncateOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kTruncateOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+ private:
+  int32_t max_seq_len_;
 };
 
 class TruncateSequencePairOperation : public TensorOperation {

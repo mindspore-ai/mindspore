@@ -53,7 +53,7 @@ from .validators import check_add_token, check_lookup, check_jieba_add_dict, che
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer, \
     check_wordpiece_tokenizer, check_regex_replace, check_regex_tokenizer, check_basic_tokenizer, check_ngram, \
     check_pair_truncate, check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow, \
-    check_sentence_piece_tokenizer
+    check_sentence_piece_tokenizer, check_truncate
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..transforms.py_transforms_util import Implementation
@@ -618,6 +618,46 @@ class ToVectors(TextTensorOperation):
 
     def parse(self):
         return cde.ToVectorsOperation(self.vectors, self.unk_init, self.lower_case_backup)
+
+
+class Truncate(TextTensorOperation):
+    """
+    Truncate the input sequence so that it does not exceed the maximum length.
+
+    Args:
+        max_seq_len (int): Maximum allowable length.
+
+    Raises:
+        TypeError: If `max_length_len` is not of type int.
+        ValueError: If value of `max_length_len` is not greater than or equal to 0.
+        RuntimeError: If the input tensor is not of dtype bool, int, float, double or str.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> dataset = ds.NumpySlicesDataset(data=[['a', 'b', 'c', 'd', 'e']], column_names=["text"], shuffle=False)
+        >>> # Data before
+        >>> # |           col1            |
+        >>> # +---------------------------+
+        >>> # | ['a', 'b', 'c', 'd', 'e'] |
+        >>> # +---------------------------+
+        >>> truncate = text.Truncate(4)
+        >>> dataset = dataset.map(operations=truncate, input_columns=["text"])
+        >>> # Data after
+        >>> # |          col1          |
+        >>> # +------------------------+
+        >>> # |  ['a', 'b', 'c', 'd']  |
+        >>> # +------------------------+
+    """
+
+    @check_truncate
+    def __init__(self, max_seq_len):
+        super().__init__()
+        self.max_seq_len = max_seq_len
+
+    def parse(self):
+        return cde.TruncateOperation(self.max_seq_len)
 
 
 class TruncateSequencePair(TextTensorOperation):
