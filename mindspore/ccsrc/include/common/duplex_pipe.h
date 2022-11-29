@@ -27,7 +27,6 @@
 #include "utils/os.h"
 #include "include/common/visible.h"
 
-#define DP_DEBUG MS_LOG(DEBUG) << "[DuplexPipe] "
 #define DP_INFO MS_LOG(INFO) << "[DuplexPipe] "
 #define DP_ERROR MS_LOG(ERROR) << "[DuplexPipe] "
 #define DP_EXCEPTION MS_LOG(EXCEPTION) << "[DuplexPipe] "

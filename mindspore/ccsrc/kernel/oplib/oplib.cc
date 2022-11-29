@@ -32,7 +32,8 @@ std::vector<std::string> SplitStrToVec(const std::string &input) {
   static const std::map<std::string, std::string> kSpecFormat = {{kOpFormat_NCHW, kOpFormat_DEFAULT},
                                                                  {kOpFormat_ND, kOpFormat_DEFAULT}};
   if (input.empty()) {
-    MS_LOG(EXCEPTION) << "Op select ret item is null.";
+    MS_LOG(INFO) << "Input string is empty.";
+    return {};
   }
   // remove blank elem
   std::string input_tmp = input;

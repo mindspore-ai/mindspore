@@ -185,13 +185,16 @@ void TbeKernelSelect::AddKernelBuildInfoToCache() {
   if (op_info_->op_pattern() == kFormatAgnosticPattern) {
     return;
   }
+
+  std::vector<std::shared_ptr<KernelBuildInfo>> cache_kernel_list;
   if (kernel_info_list_->empty()) {
-    select_cache_[kernel_hash_name_] = {};
-    return;
+    cache_kernel_list = {};
+  } else {
+    cache_kernel_list = *kernel_info_list_;
   }
-  select_cache_[kernel_hash_name_] = *kernel_info_list_;
+  select_cache_[kernel_hash_name_] = cache_kernel_list;
   MS_LOG(INFO) << "Add select kernel cache " << kernel_hash_name_ << " from node " << cnode_ptr_->fullname_with_scope()
-               << ", cache size: " << select_cache_.size();
+               << ", kernel info size: " << cache_kernel_list.size() << ", cache size: " << select_cache_.size();
 }
 
 void TbeKernelSelect::FilterInvalidKernelInfo() {

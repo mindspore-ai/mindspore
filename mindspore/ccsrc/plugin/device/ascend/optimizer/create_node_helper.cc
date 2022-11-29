@@ -87,6 +87,7 @@ CNodePtr CreateNodeHelper::ConvertToTargetOp(const CNodePtr &origin_op, OpAdapta
 
     auto ret = CheckAICoreSupported(target_op);
     if (!ret) {
+      MS_LOG(DEBUG) << "Target op " << target_op->fullname_with_scope() << " is supported in this configuration";
       return origin_op;
     }
 
@@ -172,6 +173,7 @@ CNodePtr CreateNodeHelper::CreateTargetOp(const CNodePtr &origin_op, const OpAda
   target_op->set_scope(origin_op->scope());
   target_op->set_primal_attrs(origin_op->primal_attrs());
   target_op->set_attrs(origin_op->attrs());
+  target_op->set_primal_debug_infos(origin_op->primal_debug_infos());
   common::AnfAlgo::EraseNodeAttr(kAttrIsKernelDynamicImpl, target_op);
   if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, origin_op)) {
     common::AnfAlgo::CopyNodeAttr(kAttrCustAicpu, origin_op, target_op);
