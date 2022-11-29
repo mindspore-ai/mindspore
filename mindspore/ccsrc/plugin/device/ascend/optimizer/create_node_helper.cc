@@ -153,9 +153,18 @@ CNodePtr CreateNodeHelper::CreateTargetOp(const CNodePtr &origin_op, const OpAda
     }
 
     auto iter = input_attr_info_map.find(i);
-    if (iter != input_attr_info_map.end() && input_node->isa<ValueNode>() && !HasAbstractMonad(input_node)) {
+    if (iter != input_attr_info_map.end()) {
+      auto is_value_node = input_node->isa<ValueNode>();
+      auto is_monad = HasAbstractMonad(input_node);
+      if (!is_value_node || is_monad) {
+        MS_LOG(INFO) << "Convert " << origin_op->fullname_with_scope() << "'s input " << i
+                     << " to attr failed. input is value node: " << is_value_node << ", is monad: " << is_monad;
+        return nullptr;
+      }
+
       auto ret = ConvertInputToAttr(origin_op, i, input_node, iter->second, target_primitive);
       if (!ret) {
+        MS_LOG(INFO) << "Convert " << origin_op->fullname_with_scope() << "'s input " << i << " to attr failed.";
         return nullptr;
       }
     } else {
@@ -213,6 +222,7 @@ bool CreateNodeHelper::ConvertInputToAttr(const CNodePtr &origin_op, size_t i,
 
   std::string attr_name = GetInputName(origin_op, i);
   if (attr_name.empty()) {
+    MS_LOG(DEBUG) << "Attr name is empty.";
     return false;
   }
 
