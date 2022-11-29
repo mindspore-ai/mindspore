@@ -33,6 +33,25 @@ using AicpuTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::AicpuTaskI
 
 namespace mindspore {
 namespace kernel {
+namespace {
+// todo: delete
+bool IsTransDataGroupsMoreThanOne(const AnfNodePtr &anf_node) {
+  if (anf_node == nullptr) {
+    return false;
+  }
+
+  if (!IsPrimitiveCNode(anf_node, prim::kPrimTransData)) {
+    return false;
+  }
+
+  if (common::AnfAlgo::GetAttrGroups(anf_node, 0) == 1) {
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
 AicpuOpKernelMod::AicpuOpKernelMod() {}
 
 AicpuOpKernelMod::AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {
@@ -70,7 +89,7 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
   MS_LOG(INFO) << "CreateCpuKernelInfoOffline start";
 
   if (!cust_kernel_) {
-    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end()) {
+    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end() || IsTransDataGroupsMoreThanOne(anf_node_.lock())) {
       node_so_ = kLibCpuKernelSoName;
       node_name_ = kCpuRunApi;
     } else if (kCacheKernelOps.find(node_name_) != kCacheKernelOps.end()) {
@@ -186,7 +205,7 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
 
   stream_id_ = stream_id;
   if (!cust_kernel_) {
-    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end()) {
+    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end() || IsTransDataGroupsMoreThanOne(anf_node_.lock())) {
       node_so_ = kLibCpuKernelSoName;
       node_name_ = kCpuRunApi;
     } else if (kCacheKernelOps.find(node_name_) != kCacheKernelOps.end()) {

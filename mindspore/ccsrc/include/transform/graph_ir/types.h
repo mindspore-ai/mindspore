@@ -87,7 +87,7 @@ struct GraphRunnerOptions {
   std::string target{"default_graph_runner"};
   SessionOptions options;
   // if sess_ptr is nullptr, GraphRunner will create a new ge session
-  std::shared_ptr<ge::Session> sess_ptr{nullptr};
+  std::shared_ptr<::ge::Session> sess_ptr{nullptr};
 };
 
 struct RunOptions {

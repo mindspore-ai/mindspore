@@ -86,6 +86,10 @@ class AscendDeviceAddress : public DeviceAddress {
                                                       const std::string &dst_format) const;
   mutable std::shared_ptr<LaunchKernel> launch_transdata_{nullptr};
   void BindDevice() const;
+
+  // The 'const' for this class is irrational, but I abide by it
+  int64_t GetGroupsWithCache() const;
+  mutable int64_t groups_ = 1;
 };
 using AscendDeviceAddressPtr = std::shared_ptr<AscendDeviceAddress>;
 }  // namespace ascend
