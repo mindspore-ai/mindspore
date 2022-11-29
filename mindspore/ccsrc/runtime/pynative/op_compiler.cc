@@ -28,6 +28,55 @@ namespace mindspore {
 using runtime::DeviceAddressUtils;
 namespace pynative {
 namespace {
+static const mindspore::HashSet<std::string> kDynamicProcessOp = {
+  kExpandDimsOpName,
+  kConv2DOpName,
+  kReLUOpName,
+  kTransposeOpName,
+  kReshapeOpName,
+  kCastOpName,
+  kMatMulOpName,
+  kBiasAddOpName,
+  kStridedSliceOpName,
+  kMulOpName,
+  kAddOpName,
+  kDropoutOpName,
+  kBatchMatMulOpName,
+  kSoftmaxOpName,
+  kLayerNormOpName,
+  kGatherOpName,
+  kSubOpName,
+  kNotEqualOpName,
+  kEqualOpName,
+  kOneHotOpName,
+  kDivOpName,
+  kRealDivOpName,
+  kLogOpName,
+  kReduceSumOpName,
+  kCTCLossOpName,
+  kReduceMeanOpName,
+  kZerosLikeOpName,
+  kTileOpName,
+  kLayerNormGradOpName,
+  kBiasAddGradOpName,
+  kReciprocalOpName,
+  kDropoutDoMaskOpName,
+  kNegOpName,
+  kReluGradOpName,
+  kUnsortedSegmentSumOpName,
+  kConv2DBackpropFilterOpName,
+  kConv2DBackpropInputOpName,
+  kLogSoftmaxOpName,
+  kLogSoftmaxGradOpName,
+  kMaximumOpName,
+  kSelectOpName,
+  kLessEqualOpName,
+  kLogicalOrOpName,
+  kAssignOpName,
+  kLogicalNotOpName,
+  kLogicalAndOpName,
+};
+
 void UpdateRefInfoBeforeCreateKernel(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph) {
   // Building Graph and Create Kernel is async, under pynative mode.Ref info is bind with kernel.
   // So need to get ref info to generate output addr, before create kernel.
@@ -137,5 +186,14 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
 void OpCompiler::ClearOpCache(const GraphInfo &graph_info) { (void)op_compiler_infos_.erase(graph_info); }
 
 void OpCompiler::ClearAllCache() { op_compiler_infos_.clear(); }
+
+bool OpCompiler::NeedEnableDynamicProcess(const std::string &op_name) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    return true;
+  }
+  return kDynamicProcessOp.count(op_name) != 0;
+}
 }  // namespace pynative
 }  // namespace mindspore

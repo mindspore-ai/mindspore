@@ -72,6 +72,8 @@ class BACKEND_EXPORT OpCompiler {
   // Clear anf resources before process exit.
   void ClearAllCache();
 
+  bool NeedEnableDynamicProcess(const std::string &op_name);
+
  private:
   OpCompiler();
   ~OpCompiler() = default;
