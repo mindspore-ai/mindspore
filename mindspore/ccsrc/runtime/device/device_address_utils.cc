@@ -69,6 +69,8 @@ void DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(const DeviceContext 
   user_data->set(kHashTableValueType, std::make_shared<TypeId>(map_tensor_type->value_dtype()->type_id()));
   user_data->set(kHashTableShapeVector, std::make_shared<ShapeVector>(shape_vector));
   user_data->set(kHashTableDefaultValue, abstract->default_value());
+  user_data->set(kHashTablePermitFilter, abstract->permit_filter_value());
+  user_data->set(kHashTableEvictFilter, abstract->evict_filter_value());
   // Create device for map tensor node and the ptr size is 1 byte.
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, 1, kOpFormat_DEFAULT, TypeId::kNumberTypeInt8, ShapeVector(), user_data);

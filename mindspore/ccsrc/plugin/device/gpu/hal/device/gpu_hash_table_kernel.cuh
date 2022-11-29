@@ -121,7 +121,7 @@ __global__ void InitNormalDisRandomGen(uint32_t seed, curandStatePhilox4_32_10_t
 template <typename Value>
 __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
                                             size_t elements_per_block, size_t *const *lookup_cnts_ptr,
-                                            size_t min_lookup_cnt, const Value mean, const Value stddev,
+                                            size_t permit_threshold, const Value mean, const Value stddev,
                                             curandStatePhilox4_32_10_t *state, bool **idle_flags_ptr,
                                             Value *const *blocks_ptr) {
   size_t total_thread_num = blockDim.x * gridDim.x;
@@ -129,8 +129,8 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
 
-    bool enable_permission = min_lookup_cnt > 1;
-    bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == min_lookup_cnt;
+    bool enable_permission = permit_threshold > kMinPermitThreshold;
+    bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == permit_threshold;
     // Need not to initialize if the current slot is not idle and does not meet the permission condition.
     if (!idle_flags_ptr[block_idx][offset_in_block] && (!(enable_permission && meet_permit_cond))) {
       continue;
@@ -175,15 +175,15 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
 // Insert default value into map by specific value.
 template <typename Value>
 __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_elements_num, const int *indices,
-                                   size_t elements_per_block, size_t *const *lookup_cnts_ptr, size_t min_lookup_cnt,
+                                   size_t elements_per_block, size_t *const *lookup_cnts_ptr, size_t permit_threshold,
                                    const Value default_value, bool **idle_flags_ptr, Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num;
        pos += blockDim.x * gridDim.x) {
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
 
-    bool enable_permission = min_lookup_cnt > 1;
-    bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == min_lookup_cnt;
+    bool enable_permission = permit_threshold > kMinPermitThreshold;
+    bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == permit_threshold;
     // Need not to initialize if the current slot is not idle and does not meet the permission condition.
     if (!idle_flags_ptr[block_idx][offset_in_block] && (!(enable_permission && meet_permit_cond))) {
       continue;
@@ -231,7 +231,7 @@ __global__ void GetValues(size_t value_dim, size_t total_size, const int *indice
 template <typename Value>
 __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const int *indices, const Value *insert_values,
                              const size_t elements_per_block, const size_t *const *lookup_cnts_ptr,
-                             size_t min_lookup_cnt, size_t global_timestamp, size_t *const *update_timestamps_ptr,
+                             size_t permit_threshold, size_t global_timestamp, size_t *const *update_timestamps_ptr,
                              Status *const *statuses_ptr, bool *const *idle_flags_ptr, Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / value_dim;
@@ -243,7 +243,7 @@ __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const i
     const size_t block_idx = indices[index] / elements_per_block;
     const size_t offset_in_block = indices[index] % elements_per_block;
 
-    if (min_lookup_cnt > 1 && lookup_cnts_ptr[block_idx][offset_in_block] < min_lookup_cnt) {
+    if (permit_threshold > kMinPermitThreshold && lookup_cnts_ptr[block_idx][offset_in_block] < permit_threshold) {
       continue;
     }
 
@@ -269,7 +269,7 @@ __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const i
 
 template <uint32_t block_size>
 __global__ void CountPermissionNum(size_t elements_per_block, size_t key_num, const int *indices,
-                                   size_t *const *lookup_cnts_ptr, size_t min_lookup_cnt,
+                                   size_t *const *lookup_cnts_ptr, size_t permit_threshold,
                                    CudaAtomicSize *insert_counter) {
   typedef cub::BlockReduce<size_t, block_size> BlockReduce;
   __shared__ typename BlockReduce::TempStorage temp_storage;
@@ -280,7 +280,7 @@ __global__ void CountPermissionNum(size_t elements_per_block, size_t key_num, co
     const size_t offset_in_block = indices[pos] % elements_per_block;
     lookup_cnts_ptr[block_idx][offset_in_block] += 1;
 
-    if (lookup_cnts_ptr[block_idx][offset_in_block] == min_lookup_cnt) {
+    if (lookup_cnts_ptr[block_idx][offset_in_block] == permit_threshold) {
       // Insert a new element.
       local_counter++;
     }
@@ -293,8 +293,8 @@ __global__ void CountPermissionNum(size_t elements_per_block, size_t key_num, co
 }
 
 template <uint32_t block_size>
-__global__ void CountExpiredNum(size_t blocks_num, size_t min_lookup_cnt, size_t global_timestamp,
-                                size_t max_time_interval, size_t elements_per_block, bool *const *idle_flags_ptr,
+__global__ void CountExpiredNum(size_t blocks_num, size_t permit_threshold, size_t global_timestamp,
+                                uint64_t evict_threshold, size_t elements_per_block, bool *const *idle_flags_ptr,
                                 size_t *const *lookup_cnts_ptr, size_t *const *update_timestamps_ptr,
                                 CudaAtomicSize *expired_counter) {
   typedef cub::BlockReduce<size_t, block_size> BlockReduce;
@@ -304,13 +304,13 @@ __global__ void CountExpiredNum(size_t blocks_num, size_t min_lookup_cnt, size_t
   for (size_t i = 0; i < blocks_num; i++) {
     for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < elements_per_block; pos += blockDim.x * gridDim.x) {
       // Ignore elements at idle slot or ones that have not been really inserted into hash table yet.
-      if (idle_flags_ptr[i][pos] || lookup_cnts_ptr[i][pos] < min_lookup_cnt) {
+      if (idle_flags_ptr[i][pos] || lookup_cnts_ptr[i][pos] < permit_threshold) {
         continue;
       }
 
       // Counter expired element.
       size_t timestamp = update_timestamps_ptr[i][pos];
-      if (global_timestamp > timestamp && (global_timestamp - timestamp) > max_time_interval) {
+      if (global_timestamp > timestamp && (global_timestamp - timestamp) > evict_threshold) {
         local_expired_counter++;
       }
     }
@@ -323,8 +323,8 @@ __global__ void CountExpiredNum(size_t blocks_num, size_t min_lookup_cnt, size_t
 }
 
 template <typename Key>
-__global__ void FindExpiredKeysAndIndices(size_t key_num, size_t elements_per_block, size_t min_lookup_cnt,
-                                          size_t global_timestamp, size_t max_time_interval,
+__global__ void FindExpiredKeysAndIndices(size_t key_num, size_t elements_per_block, size_t permit_threshold,
+                                          size_t global_timestamp, uint64_t evict_threshold,
                                           bool *const *idle_flags_ptr, size_t *const *lookup_cnts_ptr,
                                           size_t *const *update_timestamps_ptr, const Key *all_keys,
                                           const int *all_indices, CudaAtomicSize *expired_counter, Key *expired_keys,
@@ -337,13 +337,13 @@ __global__ void FindExpiredKeysAndIndices(size_t key_num, size_t elements_per_bl
     const size_t offset_in_block = index % elements_per_block;
 
     // Ignore elements at idle slot or ones that have not been really inserted into hash table yet.
-    if (idle_flags_ptr[block_idx][offset_in_block] || lookup_cnts_ptr[block_idx][offset_in_block] < min_lookup_cnt) {
+    if (idle_flags_ptr[block_idx][offset_in_block] || lookup_cnts_ptr[block_idx][offset_in_block] < permit_threshold) {
       continue;
     }
 
     // Record expired keys and indices.
     size_t timestamp = update_timestamps_ptr[block_idx][offset_in_block];
-    if (global_timestamp > timestamp && (global_timestamp - timestamp) > max_time_interval) {
+    if (global_timestamp > timestamp && (global_timestamp - timestamp) > evict_threshold) {
       size_t expired_index = expired_counter->fetch_add(1, cuda::std::memory_order_relaxed);
       expired_keys[expired_index] = key;
       expired_indices[expired_index] = index;

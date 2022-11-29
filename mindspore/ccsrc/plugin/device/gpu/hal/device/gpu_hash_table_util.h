@@ -36,8 +36,22 @@ void SetHashTable(const UserDataPtr &user_data) {
   MS_EXCEPTION_IF_NULL(user_data);
   auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
   auto default_value = user_data->get<Value>(kHashTableDefaultValue);
+  auto permit_filter_value = user_data->get<Value>(kHashTablePermitFilter);
+  auto evict_filter_value = user_data->get<Value>(kHashTableEvictFilter);
   MS_EXCEPTION_IF_NULL(shape_vector);
   MS_EXCEPTION_IF_NULL(default_value);
+  MS_EXCEPTION_IF_NULL(permit_filter_value);
+  MS_EXCEPTION_IF_NULL(evict_filter_value);
+  if (!permit_filter_value->isa<Int64Imm>()) {
+    MS_LOG(EXCEPTION) << "Invalid type for permit filter value: "
+                      << TypeIdLabel(permit_filter_value->type()->type_id());
+  }
+  if (!evict_filter_value->isa<Int64Imm>()) {
+    MS_LOG(EXCEPTION) << "Invalid type for evict filter value: " << TypeIdLabel(evict_filter_value->type()->type_id());
+  }
+  auto permit_threshold = LongToUlong(GetValue<int64_t>(permit_filter_value));
+  auto evict_threshold = LongToUlong(GetValue<int64_t>(evict_filter_value));
+
   int32_t value_size = 1;
   for (size_t i = 0; i < (*shape_vector).size(); ++i) {
     value_size *= (*shape_vector)[i];
@@ -47,11 +61,12 @@ void SetHashTable(const UserDataPtr &user_data) {
   }
   if (default_value->isa<StringImm>()) {
     user_data->set<GPUHashTable<KeyType, ValueType>>(
-      kUserDataData,
-      std::make_shared<GPUHashTable<KeyType, ValueType>>(value_size, GetValue<std::string>(default_value)));
+      kUserDataData, std::make_shared<GPUHashTable<KeyType, ValueType>>(
+                       value_size, GetValue<std::string>(default_value), permit_threshold, evict_threshold));
   } else if (default_value->isa<FloatImm>()) {
     user_data->set<GPUHashTable<KeyType, ValueType>>(
-      kUserDataData, std::make_shared<GPUHashTable<KeyType, float>>(value_size, GetValue<float>(default_value)));
+      kUserDataData, std::make_shared<GPUHashTable<KeyType, float>>(value_size, GetValue<float>(default_value),
+                                                                    permit_threshold, evict_threshold));
   } else {
     MS_LOG(EXCEPTION) << "Invalid default value:" << default_value;
   }
