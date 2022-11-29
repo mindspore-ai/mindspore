@@ -64,7 +64,7 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
       param->aclModelOptionCfgParam.buffer_optimize = ascend_info->GetBufferOptimizeMode();
       param->aclModelOptionCfgParam.insert_op_config_file_path = ascend_info->GetInsertOpConfigPath();
       param->aclModelOptionCfgParam.dynamic_image_size = ascend_info->GetDynamicImageSize();
-      param->device = "Ascend";
+      param->device = "Ascend310";
     } else {
       continue;
     }
