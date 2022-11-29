@@ -253,7 +253,7 @@ class Tensor {
  protected:
   TensorC tensor_c_;
   std::string tensor_name_;
-  Category category_;
+  Category category_{CONST_TENSOR};
   std::atomic_int ref_count_ = {0};
   int init_ref_count_ = 0;
   std::vector<LiteQuantParam> quant_params_;
