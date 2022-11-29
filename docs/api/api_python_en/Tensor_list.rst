@@ -157,17 +157,18 @@
     mindspore.Tensor.less_equal
     mindspore.Tensor.log
     mindspore.Tensor.log10
+    mindspore.Tensor.log1p
     mindspore.Tensor.log2
+    mindspore.Tensor.log_matrix_determinant
     mindspore.Tensor.logaddexp
     mindspore.Tensor.logaddexp2
-    mindspore.Tensor.logsumexp
-    mindspore.Tensor.log_matrix_determinant
-    mindspore.Tensor.log1p
+    mindspore.Tensor.logdet
     mindspore.Tensor.logical_and
     mindspore.Tensor.logical_not
     mindspore.Tensor.logical_or
     mindspore.Tensor.logical_xor
     mindspore.Tensor.logit
+    mindspore.Tensor.logsumexp
     mindspore.Tensor.long
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
