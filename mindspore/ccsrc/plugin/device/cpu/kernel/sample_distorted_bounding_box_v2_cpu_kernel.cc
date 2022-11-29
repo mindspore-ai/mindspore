@@ -202,8 +202,35 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_
   seed_ = op_prim->get_seed();
   seed2_ = op_prim->get_seed2();
   aspect_ratio_range_ = op_prim->get_aspect_ratio_range();
+  if (aspect_ratio_range_.size() != kShapeSize2) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range field must specify 2 dimensions.";
+    return false;
+  }
+  if (aspect_ratio_range_[kIndex1] <= kFloatNum0 || aspect_ratio_range_[kIndex0] <= kFloatNum0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range must be positive: ["
+                  << aspect_ratio_range_[kIndex0] << "], [" << aspect_ratio_range_[kIndex1] << "].";
+    return false;
+  }
   area_range_ = op_prim->get_area_range();
+  if (area_range_.size() != kShapeSize2) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range field must specify 2 dimensions.";
+    return false;
+  }
+  if (area_range_[kIndex1] <= kFloatNum0 || area_range_[kIndex0] <= kFloatNum0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range must be positive: [" << area_range_[kIndex0] << "], ["
+                  << area_range_[kIndex1] << "].";
+    return false;
+  }
+  if (area_range_[kIndex1] > kFloatNum1 || area_range_[kIndex0] > kFloatNum1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range must be less then or equal to 1.0: ["
+                  << area_range_[kIndex0] << "], [" << area_range_[kIndex1] << "].";
+    return false;
+  }
   max_attempts_ = op_prim->get_max_attempts();
+  if (max_attempts_ <= SizeToLong(kNumber0)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', max_attempts must be positive: [" << max_attempts_ << "].";
+    return false;
+  }
   use_image_if_no_bounding_boxes_ = op_prim->get_use_image();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -247,34 +274,6 @@ int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base
   if (LongToSize(shape_bounding_boxes[shape_dim_bounding_boxes - 1]) != kShapeSize4) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', bounding_boxes must have shape [4], got: ["
                   << shape_bounding_boxes[shape_dim_bounding_boxes - 1] << "].";
-    return KRET_RESIZE_FAILED;
-  }
-
-  if (max_attempts_ <= SizeToLong(kNumber0)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', max_attempts must be positive: [" << max_attempts_ << "].";
-    return KRET_RESIZE_FAILED;
-  }
-  if (aspect_ratio_range_[kIndex1] <= kFloatNum0 || aspect_ratio_range_[kIndex0] <= kFloatNum0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range must be positive: ["
-                  << aspect_ratio_range_[kIndex0] << "], [" << aspect_ratio_range_[kIndex1] << "].";
-    return KRET_RESIZE_FAILED;
-  }
-  if (area_range_[kIndex1] <= kFloatNum0 || area_range_[kIndex0] <= kFloatNum0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range must be positive: [" << area_range_[kIndex0] << "], ["
-                  << area_range_[kIndex1] << "].";
-    return KRET_RESIZE_FAILED;
-  }
-  if (area_range_[kIndex1] > kFloatNum1 || area_range_[kIndex0] > kFloatNum1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range must be less then or equal to 1.0: ["
-                  << area_range_[kIndex0] << "], [" << area_range_[kIndex1] << "].";
-    return KRET_RESIZE_FAILED;
-  }
-  if (aspect_ratio_range_.size() != kShapeSize2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range field must specify 2 dimensions.";
-    return KRET_RESIZE_FAILED;
-  }
-  if (area_range_.size() != kShapeSize2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range field must specify 2 dimensions.";
     return KRET_RESIZE_FAILED;
   }
   return KRET_OK;
