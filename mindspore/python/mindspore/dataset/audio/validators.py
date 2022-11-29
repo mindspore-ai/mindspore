@@ -960,7 +960,7 @@ def check_lfcc(method):
         type_check(sample_rate, (int,), "sample_rate")
         check_non_negative_int32(sample_rate, "sample_rate")
         type_check(n_filter, (int,), "n_filter")
-        check_value(n_filter, [1, 2147483645], "n_filter")
+        check_pos_int32(n_filter, "n_filter")
         type_check(n_lfcc, (int,), "n_lfcc")
         check_pos_int32(n_lfcc, "n_lfcc")
         type_check(log_lf, (bool,), "log_lf")
@@ -971,20 +971,38 @@ def check_lfcc(method):
             type_check(f_max, (int, float), "f_max")
             check_non_negative_float32(f_max, "f_max")
             if f_min > f_max:
-                raise ValueError("LFCC: f_max should be greater than or equal to f_min.")
+                raise ValueError(
+                    "f_max should be greater than or equal to f_min, but got f_min: {0} and f_max: {1}.".format(
+                        f_min, f_max))
         else:
             if f_min >= sample_rate // 2:
-                raise ValueError("LFCC: sample_rate // 2 should be greater than f_min when f_max is set to None.")
+                raise ValueError(
+                    "Input sample_rate // 2 should be greater than f_min when f_max is set to None, but got f_min: {0} "
+                    "and sample_rate: {1}.".format(f_min, sample_rate))
         if dct_type != 2:
-            raise ValueError("dct_type must be 2, but got : {0}.".format(dct_type))
+            raise ValueError("Input dct_type must be 2, but got : {0}.".format(dct_type))
         if speckwargs is not None:
             type_check(speckwargs, (dict,), "speckwargs")
             window = speckwargs["window"]
             pad_mode = speckwargs["pad_mode"]
-
+            n_fft = speckwargs["n_fft"]
+            win_length = speckwargs["win_length"]
+            pad = speckwargs["pad"]
+            power = speckwargs["power"]
             type_check(window, (WindowType,), "window")
             type_check(pad_mode, (BorderType,), "pad_mode")
-
+            type_check(pad, (int,), "pad")
+            check_non_negative_int32(pad, "pad")
+            type_check(power, (float,), "power")
+            check_non_negative_float32(power, "power")
+            if n_fft < n_lfcc:
+                raise ValueError(
+                    "n_fft should be greater than or equal to n_lfcc, but got n_fft: {0} and n_lfcc: {1}.".format(
+                        n_fft, n_lfcc))
+            if win_length > n_fft:
+                raise ValueError(
+                    "win_length must be less than or equal to n_fft, but got win_length: {0} and n_fft: {1}.".format(
+                        win_length, n_fft))
         return method(self, *args, **kwargs)
 
     return new_method

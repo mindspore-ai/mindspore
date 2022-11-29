@@ -100,7 +100,7 @@ def test_lfcc_invalid_input():
         _ = audio.LFCC(n_filter=-1)
     except ValueError as error:
         logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "Input n_filter is not within the required interval of [1, 2147483645]." in str(error)
+        assert "Input n_filter is not within the required interval of [1, 2147483647]." in str(error)
     try:
         _ = audio.LFCC(n_filter=1.1)
     except TypeError as error:
@@ -135,7 +135,7 @@ def test_lfcc_invalid_input():
         _ = audio.LFCC(f_min=10000)
     except ValueError as error:
         logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "sample_rate // 2 should be greater than f_min when f_max is set to None." in str(error)
+        assert "sample_rate // 2 should be greater than f_min when f_max is set to None" in str(error)
     try:
         _ = audio.LFCC(f_min=False)
     except TypeError as error:
@@ -145,7 +145,7 @@ def test_lfcc_invalid_input():
         _ = audio.LFCC(f_min=2, f_max=1)
     except ValueError as error:
         logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "f_max should be greater than or equal to f_min." in str(error)
+        assert "f_max should be greater than or equal to f_min" in str(error)
     try:
         _ = audio.LFCC(f_max=False)
     except TypeError as error:
@@ -171,51 +171,47 @@ def test_lfcc_invalid_input():
         logger.info("Got an exception in LFCC: {}".format(str(error)))
         assert "Argument pad_mode with value BorderType.REFLECT is not of type [<enum 'BorderType'>]" in str(error)
     try:
-        wav = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]])
-        _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": -1, "hop_length": 8, "pad": 0,
-                                   "window": WindowType.HANN, "power": 2.0, "normalized": False, "center": True,
-                                   "pad_mode": BorderType.REFLECT, "onesided": True})(wav)
-    except RuntimeError as error:
-        logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "'win_length' must be greater than or equal to 0, got: -1" in str(error)
-    try:
-        wav = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]])
-        _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": 16, "hop_length": -1, "pad": 0,
-                                   "window": WindowType.HANN, "power": 2.0, "normalized": False, "center": True,
-                                   "pad_mode": BorderType.REFLECT, "onesided": True})(wav)
-    except RuntimeError as error:
-        logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "'hop_length' must be greater than or equal to 0, got: -1" in str(error)
-    try:
-        wav = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]])
         _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": 16, "hop_length": 8, "pad": -1,
                                    "window": WindowType.HANN, "power": 2.0, "normalized": False, "center": True,
-                                   "pad_mode": BorderType.REFLECT, "onesided": True})(wav)
-    except RuntimeError as error:
+                                   "pad_mode": BorderType.REFLECT, "onesided": True})
+    except ValueError as error:
         logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "'pad' must be greater than or equal to 0, got: -1" in str(error)
+        assert "Input pad is not within the required interval of [0, 2147483647]" in str(error)
     try:
-        wav = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]])
-        _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": 16, "hop_length": 8, "pad": 0,
-                                   "window": WindowType.HANN, "power": -1, "normalized": False, "center": True,
-                                   "pad_mode": BorderType.REFLECT, "onesided": True})(wav)
-    except RuntimeError as error:
-        logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "'power' must be greater than or equal to 0.000000, got: -1.000000." in str(error)
-    try:
-        wav = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]])
-        _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": 401, "hop_length": 8, "pad": 0,
+        _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": 16, "hop_length": 8, "pad": 1.1,
                                    "window": WindowType.HANN, "power": 2.0, "normalized": False, "center": True,
-                                   "pad_mode": BorderType.REFLECT, "onesided": True})(wav)
-    except RuntimeError as error:
+                                   "pad_mode": BorderType.REFLECT, "onesided": True})
+    except TypeError as error:
+        logger.info("Got an exception in LFCC: {}".format(str(error)))
+        assert "Argument pad with value 1.1 is not of type [<class 'int'>]" in str(error)
+    try:
+        _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": 16, "hop_length": 8, "pad": 0,
+                                   "window": WindowType.HANN, "power": -1.0, "normalized": False, "center": True,
+                                   "pad_mode": BorderType.REFLECT, "onesided": True})
+    except ValueError as error:
+        logger.info("Got an exception in LFCC: {}".format(str(error)))
+        assert "Input power is not within the required interval of [0, 16777216]" in str(error)
+    try:
+        _ = audio.LFCC(speckwargs={"n_fft": 400, "win_length": 16, "hop_length": 8, "pad": 0,
+                                   "window": WindowType.HANN, "power": 2, "normalized": False, "center": True,
+                                   "pad_mode": BorderType.REFLECT, "onesided": True})
+    except TypeError as error:
+        logger.info("Got an exception in LFCC: {}".format(str(error)))
+        assert "Argument power with value 2 is not of type [<class 'float'>]" in str(error)
+    try:
+        _ = audio.LFCC(speckwargs={"n_fft": 40, "win_length": 41, "hop_length": 8, "pad": 0,
+                                   "window": WindowType.HANN, "power": 2.0, "normalized": False, "center": True,
+                                   "pad_mode": BorderType.REFLECT, "onesided": True})
+    except ValueError as error:
         logger.info("Got an exception in LFCC: {}".format(str(error)))
         assert "win_length must be less than or equal to n_fft" in str(error)
     try:
-        wav = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]]])
-        _ = audio.LFCC(n_lfcc=401)(wav)
-    except RuntimeError as error:
+        _ = audio.LFCC(speckwargs={"n_fft": 16, "win_length": 16, "hop_length": 8, "pad": 0,
+                                   "window": WindowType.HANN, "power": 2.0, "normalized": False, "center": True,
+                                   "pad_mode": BorderType.REFLECT, "onesided": True})
+    except ValueError as error:
         logger.info("Got an exception in LFCC: {}".format(str(error)))
-        assert "Cannot select more LFCC coefficients than # fft bins." in str(error)
+        assert "n_fft should be greater than or equal to n_lfcc" in str(error)
 
 
 if __name__ == '__main__':

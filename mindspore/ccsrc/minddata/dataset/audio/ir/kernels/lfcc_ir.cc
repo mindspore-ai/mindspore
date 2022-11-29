@@ -56,7 +56,9 @@ Status LFCCOperation::ValidateParams() {
   CHECK_FAIL_RETURN_UNEXPECTED(dct_type_ == TWO,
                                "LFCC: dct_type must be equal to 2, but got: " + std::to_string(dct_type_));
   RETURN_IF_NOT_OK(ValidateFloatScalarNonNegative("LFCC", "f_max", f_max_));
-  CHECK_FAIL_RETURN_UNEXPECTED(n_lfcc_ < n_fft_, "LFCC: Cannot select more LFCC coefficients than # fft bins.");
+  CHECK_FAIL_RETURN_UNEXPECTED(n_lfcc_ <= n_fft_,
+                               "LFCC: n_fft should be greater than or equal to n_lfcc, but got n_lfcc: " +
+                                 std::to_string(n_lfcc_) + " and n_fft: " + std::to_string(n_fft_));
 
   // Spectrogram params
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("LFCC", "n_fft", n_fft_));
@@ -64,13 +66,16 @@ Status LFCCOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("LFCC", "hop_length", hop_length_));
   RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("LFCC", "pad", pad_));
   RETURN_IF_NOT_OK(ValidateFloatScalarNonNegative("LFCC", "power", power_));
-  CHECK_FAIL_RETURN_UNEXPECTED(pad_mode_ != BorderType::kEdge, "LFCC: pad_mode can only be Reflect or Constant.");
+  CHECK_FAIL_RETURN_UNEXPECTED(pad_mode_ != BorderType::kEdge, "LFCC: invalid BorderType, kEdge is not supported.");
   if (f_max_ != 0) {
     RETURN_IF_NOT_OK(ValidateFloatScalarNonNegative("LFCC", "f_max", f_max_));
-    CHECK_FAIL_RETURN_UNEXPECTED(f_min_ <= f_max_, "LFCC: f_max must be greater than or equal to f_min.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      f_min_ <= f_max_, "LFCC: f_max must be greater than or equal to f_min, but got f_max: " + std::to_string(f_max_) +
+                          " and f_min: " + std::to_string(f_min_));
   } else {
     CHECK_FAIL_RETURN_UNEXPECTED(f_min_ < (sample_rate_ / TWO),
-                                 "LFCC: f_min must be less than half of sample_rate when f_max is 0.");
+                                 "LFCC: f_min must be less than half of sample_rate when f_max is 0, but got f_min: " +
+                                   std::to_string(f_min_) + " and sample_rate: " + std::to_string(sample_rate_));
   }
   CHECK_FAIL_RETURN_UNEXPECTED(win_length_ <= n_fft_,
                                "LFCC: win_length must be less than or equal to n_fft, but got win_length: " +
