@@ -7841,3 +7841,33 @@ class Bincount(Primitive):
     def __init__(self):
         """Initialize Bincount"""
         self.init_prim_io_names(inputs=['array', 'size', 'weights'], outputs=['bins'])
+
+
+class CountNonZero(Primitive):
+    """
+    Counts the number of non-zero values in the input tensor along the given dims.
+    If no dim is specified then all non-zeros in the tensor are counted.
+
+    Refer to :func:`mindspore.ops.count_nonzero` for more detail.
+
+    Supported Platforms:
+         ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0, 0, 1], [1, 1, 2], [0, 0, 1]], dtype=mindspore.int64)
+        >>> countnonzero = ops.CountNonZero(dims=[1])
+        >>> y = countnonzero(x)
+        >>> print(y)
+        [1 3 1]
+    """
+
+    @prim_attr_register
+    def __init__(self, dims=None):
+        dims = [] if dims is None else dims
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        validator.check_value_type('dims', dims, [int, list, tuple], "CountNonZero")
+        if isinstance(dims, (list, tuple)):
+            for i, each in enumerate(dims):
+                validator.check_value_type(f'dims[{i}]', each, [int], "CountNonZero")
+        self.dims = dims
+        self.add_prim_attr("dims", self.dims)
