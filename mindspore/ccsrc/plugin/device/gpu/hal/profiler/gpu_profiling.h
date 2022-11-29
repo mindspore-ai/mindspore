@@ -114,7 +114,7 @@ class GPU_EXPORT GPUProfiler : public Profiler {
   static std::shared_ptr<GPUProfiler> GetInstance();
 
   GPUProfiler() = default;
-  ~GPUProfiler() { StopCUPTI(); }
+  ~GPUProfiler();
   GPUProfiler(const GPUProfiler &) = delete;
   GPUProfiler &operator=(const GPUProfiler &) = delete;
 
