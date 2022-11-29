@@ -135,6 +135,7 @@ mindspore.ops
     mindspore.ops.igamma
     mindspore.ops.igammac
     mindspore.ops.is_floating_point
+    mindspore.ops.is_complex
     mindspore.ops.pinv
 
 逐元素运算
@@ -199,6 +200,8 @@ mindspore.ops
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
+    mindspore.ops.float_power
+    mindspore.ops.fmod
     mindspore.ops.heaviside
     mindspore.ops.hypot
     mindspore.ops.i0

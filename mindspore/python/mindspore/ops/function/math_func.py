@@ -16,6 +16,7 @@
 """Defines math operators with functional form."""
 
 import math
+import numbers
 from itertools import zip_longest
 from collections import deque
 import numpy as np
@@ -112,6 +113,7 @@ tensor_ge = P.GreaterEqual()
 not_equal_ = P.NotEqual()
 size_ = P.Size()
 transpose_ = P.Transpose()
+cast_ = P.Cast()
 
 #####################################
 # Private Operation Functions.
@@ -867,6 +869,59 @@ def divide(x, other, *, rounding_mode=None):
     return div(x, other, rounding_mode)
 
 
+def float_power(x, exponent):
+    """
+    Computes `x` to the power of the exponent.
+    For the real number type, use mindspore.float64 to calculate.
+    For the complex type, use the same type of calculation as the input data.
+
+    .. Note::
+        On GPU, complex dtypes are not supported.
+
+    Args:
+        x (Union[Tensor, Number]): The first input is a tensor or a number.
+        exponent (Union[Tensor, Number]): The second input, if the first input is Tensor,
+            the second input can be Number or Tensor. Otherwise, it must be a Tensor.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting. For the complex type,
+        the return value type is the same as the input type. For the real number type,
+        the return value type is mindspore.float64.
+
+    Raises:
+        TypeError: If neither `x` nor `exponent` is a Tensor.
+        TypeError: If the data type of `x` or `exponent` is not in Tensor and Number.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1.5, 0., 2.]))
+        >>> output = ops.float_power(x, 2)
+        >>> print(output)
+        [2.25 0.   4.  ]
+    """
+    if not (isinstance(x, (Tensor, Tensor_)) or isinstance(exponent, (Tensor, Tensor_))):
+        raise TypeError("At least one of the types of inputs must be tensor, " + \
+                        f"but the type of 'x' got is {type(x)}, " + \
+                        f"and the type of 'exponent' is {type(exponent)}.")
+    if not isinstance(x, (Tensor, Tensor_, numbers.Number)):
+        raise TypeError(f"The type of 'x' must be Tensor or Number, but got {type(x)}.")
+    if not isinstance(exponent, (Tensor, Tensor_, numbers.Number)):
+        raise TypeError(f"The type of 'exponent' must be Tensor or Number, but got {type(exponent)}.")
+
+    if isinstance(x, (Tensor, Tensor_)) and is_complex(x) and isinstance(exponent, numbers.Number):
+        exponent = cast_(exponent, x.dtype)
+    elif isinstance(exponent, (Tensor, Tensor_)) and is_complex(exponent) and isinstance(x, numbers.Number):
+        x = cast_(x, exponent.dtype)
+    # If both x and exponent are complex Tensor, no processing is required.
+    elif not (isinstance(x, (Tensor, Tensor_)) and is_complex(x) and \
+            isinstance(exponent, (Tensor, Tensor_)) and is_complex(exponent)):
+        x = cast_(x, mstype.float64)
+        exponent = cast_(exponent, mstype.float64)
+    return pow(x, exponent)
+
+
 def floor_div(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
@@ -908,6 +963,44 @@ def floor_div(x, y):
         [ 0  1 -1]
     """
     return tensor_floordiv(x, y)
+
+
+def fmod(x, other):
+    """
+    Computes the floating-point remainder of the division operation x/other.
+
+    .. math::
+
+        out = x - n * other
+
+    Where :math:`n` is :math:`x/other` with its fractional part truncated.
+    The returned value has the same sign as `x` and is less than `other` in magnitude.
+
+    Args:
+        x (Union[Tensor, Number]): the dividend.
+        other (Union[Tensor, Number]): the divisor.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If neither `x` nor `other` is a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-3., -2, -1, 1, 2, 3]), mindspore.float32)
+        >>> output = ops.fmod(x, 1.5)
+        >>> print(output)
+        [ 0.  -0.5 -1.   1.   0.5  0. ]
+    """
+    if not (isinstance(x, (Tensor, Tensor_)) or isinstance(other, (Tensor, Tensor_))):
+        raise TypeError("At least one of the types of inputs must be tensor, " + \
+                        f"but the type of 'x' got is {type(x)}, " + \
+                        f"and the type of 'other' is {type(other)}.")
+    return x - div(x, other, rounding_mode="trunc") * other
 
 
 def pow(x, y):
@@ -2838,7 +2931,7 @@ def ldexp(x, other):
 
     Note:
         Typically this function can create floating point numbers
-        by multiplying mantissas in input with powers of intger 2
+        by multiplying mantissas in input with powers of integer 2
         from the exponents in `other`.
 
     Args:
@@ -3409,6 +3502,34 @@ def isreal(x):
 
     imag_op = _get_cache_prim(P.Imag)()
     return imag_op(x) == 0
+
+
+def is_complex(x):
+    '''
+    Return True if the data type of the tensor is complex, otherwise return False.
+
+    Args:
+        x (Tensor) - The input tensor.
+
+    Returns:
+        Bool, return whether the data type of the tensor is complex.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import ops
+        >>> x = Tensor([1, 1+1j, 2+2j], mstype.complex64)
+        >>> output = ops.is_complex(x)
+        >>> print(output)
+        True
+    '''
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("The input x must be Tensor!")
+    return x.dtype in mstype.complex_type
 
 
 def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
@@ -7515,7 +7636,7 @@ def isinf(input):
 
 
 def _is_sign_inf(x, fn):
-    """Tests element-wise for inifinity with sign."""
+    """Tests element-wise for infinity with sign."""
     shape = x.shape
     zeros_tensor = _get_cache_prim(P.Zeros)()(shape, mstype.float32)
     ones_tensor = _get_cache_prim(P.Ones)()(shape, mstype.float32)
@@ -7685,6 +7806,8 @@ __all__ = [
     'tensor_floordiv',
     'floor_div',
     'floordiv',
+    'float_power',
+    'fmod',
     'xdivy',
     'tensor_pow',
     'pow',
@@ -7711,6 +7834,7 @@ __all__ = [
     'isreal',
     'isneginf',
     'isposinf',
+    'is_complex',
     'log',
     'logdet',
     'log_matrix_determinant',

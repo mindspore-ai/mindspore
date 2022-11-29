@@ -1418,6 +1418,20 @@ def flipud(x):
     return F.flipud(x)
 
 
+def float_power(x, exponent):
+    """
+    For details, please refer to :func:`mindspore.ops.float_power`.
+    """
+    return F.float_power(x, exponent)
+
+
+def fmod(x, other):
+    """
+    For details, please refer to :func:`mindspore.ops.fmod`.
+    """
+    return F.fmod(x, other)
+
+
 def is_floating_point(x):
     """
     For details, please refer to :func:`mindspore.ops.is_floating_point`.
@@ -1430,6 +1444,13 @@ def is_signed(x):
     For details, please refer to :func:`mindspore.ops.is_signed`.
     """
     return x.dtype in mstype.signed_type
+
+
+def is_complex(x):
+    """
+    For details, please refer to :func:`mindspore.ops.is_complex`.
+    """
+    return F.is_complex(x)
 
 
 def inv(x):

@@ -103,8 +103,10 @@ mindspore.Tensor
     mindspore.Tensor.fliplr
     mindspore.Tensor.flipud
     mindspore.Tensor.float
+    mindspore.Tensor.float_power
     mindspore.Tensor.floor
     mindspore.Tensor.flush_from_cache
+    mindspore.Tensor.fmod
     mindspore.Tensor.fold
     mindspore.Tensor.from_numpy
     mindspore.Tensor.gather
@@ -133,6 +135,7 @@ mindspore.Tensor
     mindspore.Tensor.invert
     mindspore.Tensor.isclose
     mindspore.Tensor.isfinite
+    mindspore.Tensor.is_complex
     mindspore.Tensor.is_floating_point
     mindspore.Tensor.isinf
     mindspore.Tensor.isnan
