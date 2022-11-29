@@ -686,4 +686,50 @@ INPUT_MAP(Erfinv) = {{1, INPUT_DESC(input_x)}};
 ATTR_MAP(Erfinv) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Erfinv) = {{0, OUTPUT_DESC(output_y)}};
 REG_ADPT_DESC(Erfinv, prim::kPrimErfinv->name(), ADPT_DESC(Erfinv))
+
+// ArgMin
+INPUT_MAP(ArgMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
+ATTR_INPUT_MAP(ArgMin) = {{"axis", 2}};
+ATTR_MAP(ArgMin) = {{"output_dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+OUTPUT_MAP(ArgMin) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ArgMin, kArgMinDOpName, ADPT_DESC(ArgMin))
+
+// Threshold
+INPUT_MAP(Threshold) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Threshold) = {{"threshold", ATTR_DESC(threshold, AnyTraits<float>())}};
+OUTPUT_MAP(Threshold) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Threshold, kNameThreshold, ADPT_DESC(Threshold))
+
+// Addcdiv
+INPUT_MAP(Addcdiv) = {{1, INPUT_DESC(input_data)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}, {4, INPUT_DESC(value)}};
+ATTR_MAP(Addcdiv) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Addcdiv) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Addcdiv, prim::kAddcdiv, ADPT_DESC(Addcdiv))
+
+// Addcmul
+INPUT_MAP(Addcmul) = {{1, INPUT_DESC(input_data)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}, {4, INPUT_DESC(value)}};
+ATTR_MAP(Addcmul) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Addcmul) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Addcmul, prim::kAddcmul, ADPT_DESC(Addcmul))
+
+// Lerp
+INPUT_MAP(Lerp) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(end)}, {3, INPUT_DESC(weight)}};
+ATTR_MAP(Lerp) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Lerp) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Lerp, prim::kPrimLerp->name(), ADPT_DESC(Lerp))
+
+// IsClose
+INPUT_MAP(IsClose) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(IsClose) = {{"rtol", ATTR_DESC(rtol, AnyTraits<float>())},
+                     {"atol", ATTR_DESC(atol, AnyTraits<float>())},
+                     {"equal_nan", ATTR_DESC(equal_nan, AnyTraits<bool>())}};
+OUTPUT_MAP(IsClose) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IsClose, prim::kPrimIsClose->name(), ADPT_DESC(IsClose))
+
+// CosineSimilarity
+INPUT_MAP(CosineSimilarity) = {{1, INPUT_DESC(input_x1)}, {2, INPUT_DESC(input_x2)}};
+ATTR_MAP(CosineSimilarity) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())},
+                              {"eps", ATTR_DESC(eps, AnyTraits<float>())}};
+OUTPUT_MAP(CosineSimilarity) = {{0, OUTPUT_DESC(output_y)}};
+REG_ADPT_DESC(CosineSimilarity, kNameCosineSimilarity, ADPT_DESC(CosineSimilarity))
 }  // namespace mindspore::transform

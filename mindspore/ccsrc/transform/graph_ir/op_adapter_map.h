@@ -401,6 +401,8 @@ constexpr const char kNameIndexAdd[] = "IndexAdd";
 constexpr const char kNameUnique[] = "Unique";
 constexpr const char kNameDynamicBroadcastGradientArgs[] = "DynamicBroadcastGradientArgs";
 constexpr const char kNameDynamicStitch[] = "DynamicStitch";
+constexpr const char kNameThreshold[] = "Threshold";
+constexpr const char kNameCosineSimilarity[] = "CosineSimilarity";
 
 class OpAdapterDesc;
 
