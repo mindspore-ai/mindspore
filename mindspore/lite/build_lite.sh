@@ -236,6 +236,7 @@ build_python_wheel_package() {
     cp ../python/setup.py  package/
     export TOP_DIR=${BASEPATH}
     cd package
+    rm -rf dist/mindspore_lite-*.whl
     python setup.py bdist_wheel
     local minor_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'` || true
     local py_tags="cp${python_version}${minor_version}-cp${python_version}${minor_version}"
