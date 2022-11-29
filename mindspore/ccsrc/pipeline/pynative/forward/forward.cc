@@ -183,10 +183,21 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   if (!op_run_info->output_get_by_infer_value) {
     GetOutput(op_run_info);
   }
+  if (!op_run_info->grad_flag) {
+    MS_LOG(DEBUG) << "Grad flag is false";
+    return;
+  }
+
+  // Set forward output flag for release memory,
+  // Because tensor address may change, it should set in main thread to ensure consistency.
+  PyNativeAlgo::Common::SetForwardOutputFlag(op_run_info->out_value);
+
+  // Const value no need do op grad
+  if (op_run_info->output_get_by_infer_value) {
+    return;
+  }
   // 4. Do op grad and record op info
-  if (enable_async_) {
-    grad()->AsyncProcessOpGradInfo(op_run_info);
-  } else {
+  if (!is_ms_function_compiling_) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
 }
@@ -199,10 +210,13 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   // Used for async run
   op_run_info->grad_flag = grad()->grad_flag();
   op_run_info->custom_bprop_cell_count = grad()->custom_bprop_cell_count();
+  op_run_info->base_op_run_info.use_dynamic_shape_process =
+    (device_target_ == kAscendDevice ? false : grad()->use_dynamic_shape_process());
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)]);
+  (void)op_run_prim_py_list_.emplace_back(op_run_info->op_prim);
   return op_run_info;
 }
 
@@ -412,6 +426,7 @@ void ForwardExecutor::Sync() {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->SyncStream();
   }
+  op_run_prim_py_list_.clear();
 }
 
 ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
@@ -466,6 +481,7 @@ void ForwardExecutor::ClearRes() {
   infer_operation()->ClearConstFlagPrimCache();
   std::stack<CellPtr>().swap(forward_cell_stack_);
   mindrt_backends_.clear();
+  op_run_prim_py_list_.clear();
 }
 }  // namespace pynative
 }  // namespace mindspore

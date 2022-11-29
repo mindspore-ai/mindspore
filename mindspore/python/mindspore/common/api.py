@@ -296,7 +296,9 @@ class _MindsporeFunctionExecutor:
         args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
+        _pynative_executor.set_ms_function_compile_status(True)
         phase = self.compile(args_list, self.fn.__name__)
+        _pynative_executor.set_ms_function_compile_status(False)
         if context.get_context("precompile_only"):
             return None
         new_inputs = self._generate_run_args(args_list)
@@ -428,6 +430,7 @@ class _MindsporeFunctionExecutor:
                     self.input_signature.append(args_list[-1])
                 Validator.check_dynamic_shape(self.input_signature, args_list)
                 compile_args = tuple(self.input_signature)
+                _pynative_executor.set_dynamic_input(self.obj, *compile_args)
         return compile_args
 
     def _generate_run_args(self, args_list):
@@ -1012,7 +1015,7 @@ class _PyNativeExecutor:
         """
         self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
-    def check_run(self, grad, obj, *args, **kwargs):
+    def check_run(self, grad, obj, grad_hash_id, *args, **kwargs):
         """
         Whether the forward graph need to construct.
 
@@ -1026,7 +1029,7 @@ class _PyNativeExecutor:
         Return:
             bool, specifies whether the forward graph need to construct.
         """
-        return self._executor.check_run(grad, obj, *args, *(kwargs.values()))
+        return self._executor.check_run(grad, obj, grad_hash_id, *args, *(kwargs.values()))
 
     def grad(self, obj, grad, weights, grad_position, *args, **kwargs):
         """
@@ -1121,6 +1124,30 @@ class _PyNativeExecutor:
             None.
         """
         self._executor.set_grad_flag(flag)
+
+    def set_ms_function_compile_status(self, status):
+        """
+        Set ms_function is compiling
+
+        Args:
+            status(bool): ms_function compile status
+        Return:
+            None.
+        """
+        self._executor.set_ms_function_compile_status(status)
+
+    def set_dynamic_input(self, obj, *args):
+        """
+        Set dynamic shape tensor of input arguments.
+
+        Args:
+            obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell dynamic input arguments.
+
+        Return:
+            None.
+        """
+        self._executor.set_dynamic_input(obj, *args)
 
     def is_first_cell(self):
         """
