@@ -5956,6 +5956,12 @@ class Trunc(Primitive):
 
     Supported Platforms:
         ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]), mindspore.float32)
+        >>> output = ops.Trunc()(x)
+        >>> print(output)
+        [ 3.  0. -0. -3.]
     """
 
     @prim_attr_register
@@ -7319,7 +7325,7 @@ class TrilIndices(Primitive):
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
@@ -7335,7 +7341,7 @@ class TrilIndices(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> net = ops.TrilIndices(4, 3, -1, mindspore.int64)
+        >>> net = ops.TrilIndices(4, 3, -1, mstype.int64)
         >>> output = net()
         >>> print(output)
         [[1 2 2 3 3 3]
@@ -7543,7 +7549,7 @@ class TriuIndices(Primitive):
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int32`.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
@@ -7559,7 +7565,7 @@ class TriuIndices(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> net = ops.TriuIndices(5, 4, 2, mindspore.int64)
+        >>> net = ops.TriuIndices(5, 4, 2, mstype.int64)
         >>> output = net()
         >>> print(output)
         [[0 0 1]
@@ -7825,30 +7831,7 @@ class Roll(Primitive):
     """
     Rolls the elements of a tensor along an axis.
 
-    The elements are shifted positively (towards larger indices) by the offset of `shift` along the dimension of `axis`.
-    Negative `shift` values will shift elements in the opposite direction. Elements that roll passed the last position
-    will wrap around to the first and vice versa. Multiple shifts along multiple axes may be specified.
-
-    Note:
-        This inner operation is valid only if the axis is equal to 0. If the shift and the axis are tuples or lists,
-        this inner operation is valid only for the first pair of elements.
-
-    Args:
-        shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
-            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
-            in the opposite direction.
-        axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled. The value is
-            forced to be zero in this operation.
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor.
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If `shift` is not an int, a tuple or a list.
-        TypeError: If `axis` is not an int, a tuple or a list.
+    Refer to :func:`mindspore.ops.roll` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

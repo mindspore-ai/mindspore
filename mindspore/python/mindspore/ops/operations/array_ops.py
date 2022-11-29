@@ -5399,6 +5399,21 @@ class BroadcastTo(Primitive):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> shape = (2, 3)
+        >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> output = ops.BroadcastTo(shape=shape)(x)
+        >>> print(output)
+        [[1. 2. 3.]
+         [1. 2. 3.]]
+
+        >>> shape = (-1, 2)
+        >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
+        >>> output = ops.BroadcastTo(shape=shape)(x)
+        >>> print(output)
+        [[1. 1.]
+         [2. 2.]]
     """
 
     @prim_attr_register
@@ -7736,6 +7751,12 @@ class PopulationCount(Primitive):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor([0, 1, 3], mindspore.int16)
+        >>> output = ops.PopulationCount()(input_x)
+        >>> print(output)
+        [0 1 2]
     """
 
     @prim_attr_register
