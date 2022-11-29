@@ -157,6 +157,7 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
   } else if (target_ == kARM64) {
     Collect(context, {}, {},
             {
+              "BigMatmulFp32Opt.S",
               "MatmulFp32.S",
               "MatmulFp32Opt.S",
               "MatmulFp32OptRow4.S",
