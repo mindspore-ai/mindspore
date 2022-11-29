@@ -39,6 +39,9 @@ class ActivationTensorRT : public TensorRTOp {
     nvinfer1::ITensor *trt_in_tensor, uint32_t device_id = 0,
     schema::QuantType quant_type = schema::QuantType_QUANT_NONE,
     RuntimePrecisionMode runtime_precision_mode = RuntimePrecisionMode::RuntimePrecisionMode_FP32);
+
+ private:
+  static nvinfer1::ILayer *AddGeluActivation(TensorRTContext *ctx, nvinfer1::ITensor *trt_in_tensor);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_
