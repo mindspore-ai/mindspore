@@ -480,6 +480,7 @@ Array Operation
     mindspore.ops.Concat
     mindspore.ops.ConjugateTranspose
     mindspore.ops.Cummax
+    mindspore.ops.Cummin
     mindspore.ops.CumProd
     mindspore.ops.CumSum
     mindspore.ops.DataFormatDimMap
