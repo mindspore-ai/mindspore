@@ -33,7 +33,7 @@ bool CheckHash(const std::string &json_file, const std::string &bin_file, const 
   std::string sha256_cal = system::sha256::GetHashFromFile(bin_file);
   std::string sha256_str = js["sha256"];
   if (sha256_cal.empty() || sha256_cal != sha256_str) {
-    MS_LOG(ERROR) << "Cal sha256 of " << bin_file << " failed.";
+    MS_LOG(WARNING) << "Check sha256 for [" << bin_file << "] failed, it will try to rebuild the op.";
     return false;
   }
   return true;
