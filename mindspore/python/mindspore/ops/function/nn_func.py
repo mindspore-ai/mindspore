@@ -1063,7 +1063,8 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
     """
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of
-    reducing neuron correlation and avoid overfitting.
+    reducing neuron correlation and avoid overfitting. The meaning of probability
+    here is opposite to that in `ops.dropout` and `nn.dropout`.
 
     Args:
         x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
@@ -1073,8 +1074,8 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
         seed1 (int, optional): seed1 value for random generating. Default: 0.
 
     Returns:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - With the same shape as `x`.
+        - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `x`.
+        - **mask** (Tensor) - Mask for zeroing, bitwise compression and alignment are performed internally.
 
     Raises:
         TypeError: If `p` is not a float.
@@ -1088,8 +1089,8 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
     Examples:
         >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
         >>> output, mask = ops.dropout(x, p=0.5)
-        >>> print(output.shape)
-        (2, 2)
+        >>> print(output.shape, mask.shape, mask.dtype)
+        (2, 2) (16,) UInt8
     """
     keep_prob = 1 - p
     dropout_ = P.Dropout(keep_prob=keep_prob, Seed0=seed0, Seed1=seed1)

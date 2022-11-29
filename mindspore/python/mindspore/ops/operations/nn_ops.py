@@ -6940,11 +6940,11 @@ class Dropout(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dropout = ops.Dropout3D(keep_prob=0.5)
+        >>> dropout = ops.Dropout(keep_prob=0.5)
         >>> x = Tensor(np.ones([1, 2, 3, 4, 5]), mindspore.float32)
         >>> output, mask = dropout(x)
-        >>> print(output.shape)
-        (1, 2, 3, 4, 5)
+        >>> print(output.shape, mask.shape, mask.dtype)
+        (1, 2, 3, 4, 5) (16,) UInt8
     """
 
     @prim_attr_register
