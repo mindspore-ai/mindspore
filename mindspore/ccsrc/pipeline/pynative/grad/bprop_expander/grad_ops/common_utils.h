@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_GRAD_COMMON_UTILS_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_GRAD_COMMON_UTILS_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_GRAD_OPS_COMMON_UTILS_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_GRAD_OPS_COMMON_UTILS_H_
 
 #include <cmath>
 #include <vector>
 #include <utility>
 #include <set>
 #include "expander/node.h"
-#include "frontend/operator/bprop/bprop_irbuilder.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 
 namespace mindspore::expander::bprop {
 inline const auto pi = std::acos(-1.0);
@@ -84,4 +84,4 @@ bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_type
 ShapeVector PoolToNHWC(const ShapeVector &v);
 ShapeVector ConvToNHWC(const ShapeVector &v);
 }  // namespace mindspore::expander::bprop
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_GRAD_COMMON_UTILS_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_GRAD_OPS_COMMON_UTILS_H_

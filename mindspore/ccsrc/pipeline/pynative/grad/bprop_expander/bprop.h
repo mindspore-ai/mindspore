@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_BPROP_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_BPROP_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_H_
 
 #include <map>
 #include <vector>
 #include <utility>
 #include "ir/anf.h"
-#include "frontend/operator/bprop/bprop_irbuilder.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "include/common/visible.h"
 
 namespace mindspore {
@@ -31,4 +31,4 @@ void BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, DoutUserType *dout
 using UserType = std::map<AnfNodePtr, std::vector<std::pair<CNodePtr, int>>>;
 bool BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users);
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_BPROP_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_H_

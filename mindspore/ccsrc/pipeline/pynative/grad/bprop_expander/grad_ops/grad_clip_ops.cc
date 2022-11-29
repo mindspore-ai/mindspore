@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "frontend/operator/bprop/bprop_irbuilder.h"
-#include "frontend/operator/bprop/grad/common_utils.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
+#include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {

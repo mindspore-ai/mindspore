@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_BPROP_IRBUILDER_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_BPROP_IRBUILDER_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_IRBUILDER_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_IRBUILDER_H_
 
 #include <memory>
 #include <vector>
@@ -112,4 +112,4 @@ class BpropIRBuilderRegHelper {
 }  // namespace bprop
 }  // namespace expander
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_BPROP_BPROP_IRBUILDER_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_BPROP_IRBUILDER_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/operator/bprop/bprop_irbuilder.h"
+#include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
