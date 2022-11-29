@@ -119,6 +119,7 @@ TypePtr TruncatedNormalInferType(const PrimitivePtr &prim, const std::vector<Abs
   const std::set<TypePtr> valid_input_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[0]->BuildType(), valid_input_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
+  MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "The dtype of " + prim_name + " is invalid!";
   }
