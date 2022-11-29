@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/math/logical_not_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -47,7 +47,7 @@ bool LogicalNotGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &outputs) {
   auto input_addr = GetDeviceAddress<T>(inputs, 0);
   auto output_addr = GetDeviceAddress<bool>(outputs, 0);
-  LogicalNot(input_num_, input_addr, output_addr, stream_ptr_);
+  LogicalNot(input_addr, output_addr, static_cast<size_t>(input_num_), stream_ptr_);
   return true;
 }
 

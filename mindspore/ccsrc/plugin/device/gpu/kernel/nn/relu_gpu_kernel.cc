@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/nn/relu_gpu_kernel.h"
 #include <functional>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/relu_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -55,7 +55,7 @@ bool ReLUFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
   T *output = GetDeviceAddress<T>(outputs, 0);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
-  CalReLU(input_length_, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CalReLU(input, output, static_cast<size_t>(input_length_), reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 

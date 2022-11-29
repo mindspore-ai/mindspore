@@ -15,7 +15,7 @@
  */
 #include "plugin/device/gpu/kernel/arrays/oneslike_gpu_kernel.h"
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/oneslike_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
@@ -62,7 +62,7 @@ bool OnesLikeGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(output);
-  CalOnesLike(output_elements_, input, output, reinterpret_cast<cudaStream_t>(cuda_stream));
+  CalOnesLike(input, output, output_elements_, reinterpret_cast<cudaStream_t>(cuda_stream));
   return true;
 }
 
