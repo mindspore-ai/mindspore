@@ -535,7 +535,7 @@ Array Operation
     mindspore.ops.MatrixTriangularSolve
     mindspore.ops.Meshgrid
     mindspore.ops.Mvlgamma
-    mindspore.ops.Nonzero
+    mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
     mindspore.ops.RaggedRange
