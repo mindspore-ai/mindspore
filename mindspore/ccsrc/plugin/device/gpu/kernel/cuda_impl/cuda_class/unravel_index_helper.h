@@ -66,7 +66,7 @@ class UnravelIndexHelperGpuKernel : public GpuKernelHelperBase {
     if (is_null_input_) {
       return 0;
     }
-    size_t indices_size = input_indices_shape_[0];
+    size_t indices_size = input_indices_shape_.size() == 0 ? 1 : input_indices_shape_[0];
     size_t dims_size = input_dims_shape_[0];
 
     T *input_indices_ptr = nullptr;
@@ -74,25 +74,10 @@ class UnravelIndexHelperGpuKernel : public GpuKernelHelperBase {
     T *output_ptr = nullptr;
     T *check_dims_ptr = nullptr;
 
-    int flag = GetDeviceAddress<T>(input_ptrs, 0, kernel_name_, &input_indices_ptr);
-    if (flag != 0) {
-      return flag;
-    }
-
-    flag = GetDeviceAddress<T>(input_ptrs, 1, kernel_name_, &input_dims_ptr);
-    if (flag != 0) {
-      return flag;
-    }
-
-    flag = GetDeviceAddress<T>(output_ptrs, 0, kernel_name_, &output_ptr);
-    if (flag != 0) {
-      return flag;
-    }
-
-    flag = GetDeviceAddress<T>(work_ptrs, 0, kernel_name_, &check_dims_ptr);
-    if (flag != 0) {
-      return flag;
-    }
+    (void)GetDeviceAddress<T>(input_ptrs, 0, kernel_name_, &input_indices_ptr);
+    (void)GetDeviceAddress<T>(input_ptrs, 1, kernel_name_, &input_dims_ptr);
+    (void)GetDeviceAddress<T>(output_ptrs, 0, kernel_name_, &output_ptr);
+    (void)GetDeviceAddress<T>(work_ptrs, 0, kernel_name_, &check_dims_ptr);
 
     // call cuda kernel
     CalUnravelIndex(input_indices_ptr, input_dims_ptr, indices_size, dims_size, output_ptr, device_id_,
