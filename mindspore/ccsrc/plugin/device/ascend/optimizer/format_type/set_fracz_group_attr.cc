@@ -128,7 +128,7 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
   auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
-  auto node_user = manager->node_users();
+  auto &node_user = manager->node_users();
   std::vector<KernelWithIndex> ret;
   if (node_name == kDependName || node_name == kLoadName) {
     if (index != 0) {
@@ -173,7 +173,7 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
 std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &manager, const AnfNodePtr &node,
                                                    size_t index, int64_t groups) {
   std::vector<KernelWithIndex> ret;
-  auto node_user = manager->node_users();
+  auto &node_user = manager->node_users();
   if (node->isa<Parameter>()) {
     std::transform(node_user[node].begin(), node_user[node].end(), std::back_inserter(ret),
                    [](const KernelWithIndex &node_index) {

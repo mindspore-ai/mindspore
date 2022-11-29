@@ -26,7 +26,7 @@ namespace opt {
 bool DropoutGenMaskFusion::DoFusion(const std::vector<CNodePtr> &genmasks, const std::set<int64_t> fusion_set,
                                     const FuncGraphManagerPtr &manager) const {
   // Fusion of masks with the same fusion_id
-  auto node_users_map = manager->node_users();
+  auto &node_users_map = manager->node_users();
   std::vector<CNodePtr> temp;
   for (auto &fusion : fusion_set) {
     temp.clear();

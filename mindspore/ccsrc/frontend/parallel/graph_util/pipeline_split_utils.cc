@@ -523,7 +523,7 @@ void BroadCastNeedGrad(const AnfNodePtr &node, NodeUsersMap *node_user_map, cons
 // Label node that need backpropagation
 void LabelNeedGrad(const FuncGraphManagerPtr &manager, const FuncGraphPtr &root) {
   auto parameters = root->parameters();
-  auto node_user_map = manager->node_users();
+  auto &node_user_map = manager->node_users();
   for (auto &parameter : parameters) {
     if (!ParameterRequireGrad(parameter)) {
       continue;
@@ -602,7 +602,7 @@ ValuePtr Micro(const CNodePtr &cnode, NodeUsersMap *node_users_map, size_t max_d
 }
 
 void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager) {
-  auto node_users_map = manager->node_users();
+  auto &node_users_map = manager->node_users();
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -618,7 +618,7 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
 }
 
 void HandleMicroBatch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager) {
-  auto node_users_map = manager->node_users();
+  auto &node_users_map = manager->node_users();
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
       continue;
