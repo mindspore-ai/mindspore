@@ -119,7 +119,7 @@
 #include "nnacl/infer/scatter_nd_update_infer.h"
 #include "nnacl/infer/select_infer.h"
 #include "nnacl/infer/sgd_infer.h"
-#ifdef MSLITE_ENABLE_RUNTIME_PASS
+#ifndef RUNTIME_PASS_CLIP
 #include "nnacl/infer/shape_fusion_infer.h"
 #endif
 #include "nnacl/infer/shape_infer.h"
@@ -400,7 +400,7 @@ void RegAllInferFunc5() {
   // fused operators.
   g_inner_op_infer_func[PrimType_Inner_GltextureToOpencl - PrimType_InnerOpMin] = NULL;
   g_inner_op_infer_func[PrimType_Inner_Identity - PrimType_InnerOpMin] = NULL;
-#ifdef MSLITE_ENABLE_RUNTIME_PASS
+#ifndef RUNTIME_PASS_CLIP
   g_inner_op_infer_func[PrimType_Inner_ShapeFusion - PrimType_InnerOpMin] = ShapeFusionInferShape;
 #endif
   g_inner_op_infer_func[PrimType_Inner_ToFormat - PrimType_InnerOpMin] = NULL;
