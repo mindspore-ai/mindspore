@@ -195,12 +195,12 @@ void ParallelLiteActor::CheckReadyActors(const std::vector<size_t> &indices) {
 
 void KernelsActor::Run() {
   mindspore::OpContext<lite::Tensor> *context = parallel_lite_actor_->OpContext();
-  const KernelCallBack *before = reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_);
-  const KernelCallBack *after = reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_);
+  const KernelCallBack &before = *reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_);
+  const KernelCallBack &after = *reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_);
 
   for (auto *kernel : nodes_) {
     MS_ASSERT(kernel != nullptr);
-    auto ret = kernel->Execute(*before, *after);
+    auto ret = kernel->Execute(before, after);
     if (MS_UNLIKELY(ret != RET_OK)) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       context->SetFailed(ret);
