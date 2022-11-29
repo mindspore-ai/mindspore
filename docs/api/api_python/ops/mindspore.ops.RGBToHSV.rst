@@ -6,7 +6,7 @@ mindspore.ops.RGBToHSV
     将一张或多张图片由RGB格式转换为HSV格式。
     输出与输入有相同shape的Tensor，含有每个像素的HSV值。输出值仅在[0,1]范围内才是被有效定义的。
 
-    .. warning::
+    .. note::
         输入图片的最后一维长度必须为3。
 
     输入：

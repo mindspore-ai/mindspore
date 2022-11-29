@@ -28,3 +28,4 @@ mindspore.ops.TruncatedNormal
         - **ValueError** - `shape` 的元素不全大于零。
         - **ValueError** - `shape` 不是一维Tensor。
         - **ValueError** - 输出Tensor的元素个数大于1000000。
+
