@@ -379,13 +379,7 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
       CHECK_NULL_RETURN(node);
       auto para = node->cast<ParameterPtr>();
       CHECK_NULL_RETURN(para);
-      std::string name = para->name();
-      for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
-        name = name.substr(0, pos) + "_" + name.substr(pos + 1);
-        MS_LOG(INFO) << "Input name: " << name;
-      }
-      para->set_name(name);
-      input_names.push_back(name);
+      input_names.push_back(para->name());
     }
     options_->RenameInput(input_names);
   }
