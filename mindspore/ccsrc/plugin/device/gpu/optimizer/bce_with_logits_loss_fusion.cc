@@ -57,7 +57,7 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   MS_EXCEPTION_IF_NULL(axis_node);
   axis_node->set_abstract(axis_tensor->ToAbstract());
   axis_node = kernel_graph->NewValueNode(axis_node);
-  kernel_graph->AddValueNode(axis_node);
+  kernel_graph->AddValueNodeToGraph(axis_node);
   if (reduction == "sum") {
     reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), new_cnode, axis_node};
   } else if (reduction == "mean") {
