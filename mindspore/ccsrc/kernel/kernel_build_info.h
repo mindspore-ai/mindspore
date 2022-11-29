@@ -33,7 +33,8 @@
 namespace mindspore {
 namespace kernel {
 enum KernelObjectType : int {
-  TENSOR = 0,
+  UNKNOWN_TYPE = 0,
+  TENSOR,
   SCALAR,
   TUPLE,
   TUPLE_UNFOLD,
@@ -78,6 +79,10 @@ class BACKEND_EXPORT KernelBuildInfo {
   const std::vector<KernelObjectType> &GetAllInputKernelObjectTypes() const;
 
   const std::vector<KernelObjectType> &GetAllOutputKernelObjectTypes() const;
+
+  void SetOutputsKernelObjectType(const std::vector<KernelObjectType> &outputs_kernel_object_type);
+
+  void SetInputsKernelObjectType(const std::vector<KernelObjectType> &inputs_kernel_object_type);
 
   std::vector<std::string> GetAllOutputReshapeType() const;
 
@@ -177,6 +182,10 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
   void SetInputsReshapeType(const std::vector<std::string> &input_reshape_type);
 
   void SetOutputsReshapeType(const std::vector<std::string> &output_reshape_type);
+
+  void SetInputsKernelObjectType(const std::vector<KernelObjectType> &input_kernel_object_type);
+
+  void SetOutputsKernelObjectType(const std::vector<KernelObjectType> &output_kernel_object_type);
 
   void SetCoreType(const std::string &core_type);
 

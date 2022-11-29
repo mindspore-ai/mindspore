@@ -72,6 +72,14 @@ const std::vector<KernelObjectType> &KernelBuildInfo::GetAllInputKernelObjectTyp
   return inputs_kernel_object_type_;
 }
 
+void KernelBuildInfo::SetOutputsKernelObjectType(const std::vector<KernelObjectType> &outputs_kernel_object_type) {
+  outputs_kernel_object_type_ = outputs_kernel_object_type;
+}
+
+void KernelBuildInfo::SetInputsKernelObjectType(const std::vector<KernelObjectType> &inputs_kernel_object_type) {
+  inputs_kernel_object_type_ = inputs_kernel_object_type;
+}
+
 void KernelBuildInfo::SetOutputFormat(const std::string &format, size_t index) {
   if (index >= outputs_format_.size()) {
     MS_LOG(EXCEPTION) << "The index [" << index << "] is exceed the number of output";
@@ -114,6 +122,7 @@ std::string KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
   }
   return input_reshape_type_[input_index];
 }
+
 std::string KernelBuildInfo::GetOutputReshapeType(size_t output_index) const {
   if (output_reshape_type_.empty()) {
     return "";
@@ -218,6 +227,18 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputDataDesc(const std::vecto
 void KernelBuildInfo::KernelBuildInfoBuilder::SetProcessor(Processor processor) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->processor_ = processor;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsKernelObjectType(
+  const std::vector<KernelObjectType> &inputs_kernel_object_type) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->inputs_kernel_object_type_ = inputs_kernel_object_type;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputsKernelObjectType(
+  const std::vector<KernelObjectType> &outputs_kernel_object_type) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->outputs_kernel_object_type_ = outputs_kernel_object_type;
 }
 
 std::shared_ptr<KernelBuildInfo> KernelBuildInfo::KernelBuildInfoBuilder::Build() { return kernel_build_info_; }

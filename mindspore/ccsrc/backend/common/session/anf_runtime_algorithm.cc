@@ -734,6 +734,17 @@ void AnfRuntimeAlgorithm::SetSelectKernelBuildInfo(const KernelBuildInfoPtr &sel
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
+  if (kernel_info->has_build_info()) {
+    auto ori_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+    auto input_object_types = ori_kernel_build_info->GetAllInputKernelObjectTypes();
+    auto output_object_types = ori_kernel_build_info->GetAllOutputKernelObjectTypes();
+    if (!input_object_types.empty() && select_kernel_build_info->GetAllInputKernelObjectTypes().empty()) {
+      select_kernel_build_info->SetInputsKernelObjectType(input_object_types);
+    }
+    if (!output_object_types.empty() && select_kernel_build_info->GetAllOutputKernelObjectTypes().empty()) {
+      select_kernel_build_info->SetOutputsKernelObjectType(output_object_types);
+    }
+  }
   return kernel_info->set_select_kernel_build_info(select_kernel_build_info);
 }
 

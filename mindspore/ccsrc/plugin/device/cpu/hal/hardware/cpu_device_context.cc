@@ -141,6 +141,7 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     // Update Graph Dynamic Shape Attr.
     opt::AddDynamicShapeAttrPass(kernel_graph);
 
+    kernel_graph->SetKernelObjectTypesForUnrealNodes();
     SetOperatorInfo(kernel_graph);
     OptimizeGraphImpl(kernel_graph);
 

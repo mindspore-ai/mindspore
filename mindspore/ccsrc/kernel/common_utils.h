@@ -428,6 +428,15 @@ inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cn
   }
   return std::map<uint32_t, tensor::TensorPtr>();
 }
+void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
+                                  const std::vector<KernelObjectType> &input_kernel_object_types,
+                                  const std::vector<KernelObjectType> &output_kernel_object_types);
+void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr);
+bool MatchObjectType(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr, bool strict);
+std::vector<kernel::KernelAttr> SelectKernelObjectType(
+  const CNodePtr &kernel_node, const std::vector<kernel::KernelAttr> &selected_kernel_attr_list);
+KernelObjectType TypeIdToKernelObjectType(const TypeId &object_type);
+std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &object_types);
 
 template <typename Derived>
 class MatchKernelHelper {

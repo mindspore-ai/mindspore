@@ -679,6 +679,69 @@ TypeId AnfAlgo::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx
   return GetOutputInferDataType(node->Type(), output_idx);
 }
 
+TypeId AnfAlgo::GetAbstractObjectType(const AbstractBasePtr &abstract) {
+  if (abstract == nullptr) {
+    return kTypeUnknown;
+  }
+  if (abstract->isa<AbstractTensor>()) {
+    return kObjectTypeTensorType;
+  }
+  if (abstract->isa<AbstractTuple>()) {
+    return kObjectTypeTuple;
+  }
+  if (abstract->isa<abstract::AbstractList>()) {
+    return kObjectTypeList;
+  }
+  if (abstract->isa<abstract::AbstractScalar>()) {
+    // scalar input may not converted to tensor
+    return kObjectTypeNumber;
+  }
+  return kTypeUnknown;
+}
+
+TypeId AnfAlgo::GetOutputObjectType(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto abstract = node->abstract();
+  if (abstract->isa<AbstractTuple>()) {
+    auto tuple_abs = abstract->cast<abstract::AbstractTuplePtr>();
+    auto items = tuple_abs->elements();
+    MS_EXCEPTION_IF_CHECK_FAIL(output_idx < items.size(), "invalid output_idx");
+    return AnfAlgo::GetAbstractObjectType(items[output_idx]);
+  }
+  if (output_idx != 0) {
+    MS_LOG(EXCEPTION) << node->DebugString() << "invalid output_idx" << trace::DumpSourceLines(node);
+  }
+  return AnfAlgo::GetAbstractObjectType(abstract);
+}
+
+TypeId AnfAlgo::GetInputObjectType(const AnfNodePtr &node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
+  return AnfAlgo::GetOutputObjectType(input_node_with_index.first, input_node_with_index.second);
+}
+
+std::vector<TypeId> AnfAlgo::GetAllInputObjectType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << node->DebugString() << "anf_node is not CNode." << trace::DumpSourceLines(node);
+  }
+  std::vector<TypeId> obj_types;
+  auto input_num = AnfAlgo::GetInputTensorNum(node->cast<CNodePtr>());
+  for (size_t index = 0; index < input_num; ++index) {
+    obj_types.push_back(AnfAlgo::GetInputObjectType(node, index));
+  }
+  return obj_types;
+}
+
+std::vector<TypeId> AnfAlgo::GetAllOutputObjectType(const AnfNodePtr &node) {
+  std::vector<TypeId> obj_types;
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t index = 0; index < output_num; ++index) {
+    obj_types.push_back(AnfAlgo::GetOutputObjectType(node, index));
+  }
+  return obj_types;
+}
+
 TypeId AnfAlgo::GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx) {
   KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
   return AnfAlgo::GetOutputInferDataType(kernel_with_index.first, kernel_with_index.second);

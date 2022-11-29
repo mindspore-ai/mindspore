@@ -583,6 +583,8 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     types.push_back(is_weight ? kTypeUnknown : common::AnfAlgo::GetOutputInferDataType(parameter, 0));
   }
   // set parameter initaial device data type
+  auto abs_type = common::AnfAlgo::GetAbstractObjectType(node->abstract());
+  kernel_build_info_builder->SetOutputsKernelObjectType({kernel::TypeIdToKernelObjectType(abs_type)});
   kernel_build_info_builder->SetOutputsFormat(formats);
   kernel_build_info_builder->SetOutputsDeviceType(types);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), node.get());
@@ -1313,6 +1315,34 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
                  << " with index: " << backend_output_node.second
                  << " map to front node: " << front_output_node.first->fullname_with_scope()
                  << " with index: " << front_output_node.second;
+  }
+}
+
+void KernelGraph::SetKernelObjectTypesForUnrealNodes() {
+  auto SetKernelObjectTypesForUnrealNode = [](const AnfNodePtr &node) {
+    std::vector<kernel::KernelObjectType> output_kernel_object_types;
+    std::vector<kernel::KernelObjectType> input_kernel_object_types;
+    if (node->isa<CNode>()) {
+      if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+        auto input_object_types = common::AnfAlgo::GetAllInputObjectType(node);
+        input_kernel_object_types = kernel::TypeIdToKernelObjectType(input_object_types);
+        output_kernel_object_types = {kernel::KernelObjectType::TUPLE_UNFOLD};
+      }
+      if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+        auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(node);
+        output_kernel_object_types = kernel::TypeIdToKernelObjectType(output_object_types);
+        input_kernel_object_types = {kernel::KernelObjectType::TUPLE_UNFOLD};
+      }
+    }
+    if (output_kernel_object_types.empty() && input_kernel_object_types.empty()) {
+      return;
+    }
+    kernel::SetKernelObjectTypeBuildInfo(node, input_kernel_object_types, output_kernel_object_types);
+  };
+
+  auto node_list = TopoSort(get_return());
+  for (auto &node : node_list) {
+    SetKernelObjectTypesForUnrealNode(node);
   }
 }
 

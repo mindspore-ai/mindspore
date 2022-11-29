@@ -126,7 +126,12 @@ class COMMON_EXPORT AnfAlgo {
   // get output data type inferred by ME of anf node
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
   static TypeId GetOutputInferDataType(const TypePtr &type, size_t output_idx);
-
+  // get output abstract type of anf node
+  static TypeId GetAbstractObjectType(const AbstractBasePtr &abstract);
+  static TypeId GetOutputObjectType(const AnfNodePtr &node, size_t output_idx);
+  static TypeId GetInputObjectType(const AnfNodePtr &node, size_t input_idx);
+  static std::vector<TypeId> GetAllInputObjectType(const AnfNodePtr &node);
+  static std::vector<TypeId> GetAllOutputObjectType(const AnfNodePtr &node);
   // get all output infer data type
   static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
   // get output original data type from prev node,input_index is the input index of current node related to prev node

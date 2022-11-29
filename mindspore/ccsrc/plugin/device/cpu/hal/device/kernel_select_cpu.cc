@@ -107,16 +107,6 @@ void GetInputFormat(const CNodePtr &kernel_node, std::vector<std::string> *input
   }
 }
 
-void GetOutputFormatsAndDtypes(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr,
-                               std::vector<std::string> *output_formats, std::vector<TypeId> *output_types) {
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    output_formats->emplace_back(kernel_attr.GetOutputAttr(output_index).format);
-    auto dtype = kernel_attr.GetOutputAttr(output_index).dtype;
-    output_types->emplace_back(dtype);
-  }
-}
-
 bool InputDtypeMatch(TypeId InputAttr, TypeId input_type, bool strict) {
   if (InputAttr == input_type) {
     return true;
@@ -131,42 +121,38 @@ bool InputDtypeMatch(TypeId InputAttr, TypeId input_type, bool strict) {
   return false;
 }
 
-int GetOutputDtypeMatchedNum(const kernel::KernelAttr &kernel_attr, const std::vector<TypeId> &output_types) {
+bool OutputDtypeMatched(const kernel::KernelAttr &kernel_attr, const std::vector<TypeId> &output_types) {
   if (kernel_attr.GetOutputSize() != output_types.size()) {
     MS_LOG(DEBUG) << "required output num:" << kernel_attr.GetInputSize()
                   << ", actual output num:" << output_types.size();
-    return 0;
+    return false;
   }
-  int data_type_matched_num = 0;
   auto output_num = output_types.size();
   for (size_t i = 0; i < output_num; ++i) {
     if (kernel_attr.GetOutputAttr(i).dtype != output_types[i]) {
       MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetOutputAttr(i).dtype
                     << ", actual output dtype:" << output_types[i];
-    } else {
-      data_type_matched_num++;
+      return false;
     }
   }
-  return data_type_matched_num;
+  return true;
 }
 
-int GetInputDtypeFormatMatchedNum(const kernel::KernelAttr &kernel_attr, const std::vector<TypeId> &input_types,
-                                  bool strict) {
+bool InputDtypeFormatMatched(const kernel::KernelAttr &kernel_attr, const std::vector<TypeId> &input_types,
+                             bool strict) {
   if (kernel_attr.GetInputSize() != input_types.size()) {
     MS_LOG(DEBUG) << "required input num:" << kernel_attr.GetInputSize() << ", actual input num:" << input_types.size();
-    return 0;
+    return false;
   }
-  int data_type_matched_num = 0;
   auto input_num = input_types.size();
   for (size_t i = 0; i < input_num; ++i) {
     if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], strict)) {
       MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetInputAttr(i).dtype
                     << ", actual input dtype:" << input_types[i];
-    } else {
-      data_type_matched_num++;
+      return false;
     }
   }
-  return data_type_matched_num;
+  return true;
 }
 
 void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_attr) {
@@ -262,10 +248,31 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node);
 }
 
-std::pair<std::string, ExceptionType> KernelNotSupportWarning(const AnfNodePtr &kernel_node,
-                                                              const std::vector<TypeId> &input_types,
-                                                              const std::vector<TypeId> &infer_output_types,
-                                                              bool is_kernel_exist) {
+void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
+  std::vector<std::string> output_formats;
+  std::vector<TypeId> output_types;
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t index = 0; index < output_num; ++index) {
+    output_formats.emplace_back(selected_kernel_attr.GetOutputAttr(index).format);
+    output_types.emplace_back(selected_kernel_attr.GetOutputAttr(index).dtype);
+  }
+  std::vector<std::string> input_formats;
+  std::vector<TypeId> input_types;
+  for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
+    input_types.emplace_back(selected_kernel_attr.GetInputAttr(index).dtype);
+    input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
+  }
+  SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
+  kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, selected_kernel_attr);
+}
+
+std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &kernel_node, bool is_kernel_exist) {
+  std::vector<TypeId> input_types;
+  std::vector<TypeId> infer_output_types;
+  GetInputDtypes(kernel_node, &input_types);
+  GetOutputDtypes(kernel_node, &infer_output_types);
+  auto input_object_types = common::AnfAlgo::GetAllInputObjectType(kernel_node);
+  auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(kernel_node);
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (!is_kernel_exist) {
     std::stringstream ss;
@@ -282,6 +289,7 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const AnfNodePtr &
     operator_info << " input(";
     for (size_t i = 0; i < input_num; ++i) {
       operator_info << TypeIdLabel(input_types[i]);
+      operator_info << "(" << TypeIdLabel(input_object_types[i]) << ")";
       if (i != input_num - 1) {
         operator_info << ",";
       }
@@ -293,6 +301,7 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const AnfNodePtr &
     operator_info << "output(";
     for (size_t i = 0; i < output_num; ++i) {
       operator_info << TypeIdLabel(infer_output_types[i]);
+      operator_info << "(" << TypeIdLabel(output_object_types[i]) << ")";
       if (i != output_num - 1) {
         operator_info << ",";
       }
@@ -411,7 +420,7 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
                                return CheckKernelInfo(alternative_kernel_info, builder->Build());
                              });
     if (!match) {
-      auto [msg, etype] = KernelNotSupportWarning(kernel_node, input_types, output_types, true);
+      auto [msg, etype] = KernelNotSupportWarning(kernel_node, true);
       MS_EXCEPTION(etype) << msg;
     }
   }
@@ -480,15 +489,16 @@ bool IsDynamicParamKernel(const std::string &op_name) {
 
 bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kernel_attr,
                   const std::vector<kernel::KernelAttr> &kernel_attrs, const std::vector<TypeId> &input_types,
-                  const std::vector<TypeId> &output_types, std::pair<bool, bool> *matched, bool strict) {
+                  const std::vector<TypeId> &output_types, bool strict) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_attr);
-  MS_EXCEPTION_IF_NULL(matched);
   MS_LOG(DEBUG) << "Select kernel for op: " << common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<int64_t> dyn_input_sizes = {};
   if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
     dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrDynInputSizes);
   }
+  std::vector<kernel::KernelAttr> selected_kernel_attr_list;
+  std::vector<kernel::KernelAttr> input_dtype_matched_attr_list;
   for (auto kernel_attr : kernel_attrs) {
     if (kernel_attr.GetAllSame()) {
       ExpandKernelAttr(kernel_node, &kernel_attr);
@@ -501,19 +511,25 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
       MS_LOG(DEBUG) << "Output num is not equal!";
       continue;
     }
-
     auto new_kernel_attr = FillNoneInKernelAttr(kernel_node, input_types, output_types, kernel_attr);
-    int input_dtype_matched_num = GetInputDtypeFormatMatchedNum(new_kernel_attr, input_types, strict);
-    int output_dtype_matched_num = GetOutputDtypeMatchedNum(new_kernel_attr, output_types);
+    bool input_dtype_matched = InputDtypeFormatMatched(new_kernel_attr, input_types, strict);
+    bool output_dtype_matched = OutputDtypeMatched(new_kernel_attr, output_types);
     // All formats and data types matched
-    if (input_dtype_matched_num == SizeToInt(input_types.size())) {
-      *selected_kernel_attr = new_kernel_attr;
-      matched->first = true;
-      if (output_dtype_matched_num == SizeToInt(output_types.size())) {
-        matched->second = true;
-        return true;
-      }
+    if (input_dtype_matched && output_dtype_matched) {
+      selected_kernel_attr_list.push_back(new_kernel_attr);
+    } else if (input_dtype_matched) {
+      input_dtype_matched_attr_list.push_back(new_kernel_attr);
     }
+  }
+  selected_kernel_attr_list.insert(selected_kernel_attr_list.end(), input_dtype_matched_attr_list.rbegin(),
+                                   input_dtype_matched_attr_list.rend());
+  if (selected_kernel_attr_list.empty()) {
+    return false;
+  }
+  auto selected_result = kernel::SelectKernelObjectType(kernel_node, selected_kernel_attr_list);
+  if (!selected_result.empty()) {
+    *selected_kernel_attr = selected_result[0];
+    return true;
   }
   return false;
 }
@@ -586,16 +602,12 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     return {};
   }
 
-  std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;
-  std::vector<std::string> selected_output_formats;
   std::vector<TypeId> output_types;
-  std::vector<TypeId> selected_output_types;
   MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << op_name;
   GetInputDtypes(kernel_node, &input_types);
   GetOutputDtypes(kernel_node, &output_types);
   kernel::KernelAttr selected_kernel_attr;
-  std::pair<bool, bool> matched = std::make_pair(false, false);
   auto kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
   // If GetSkipCheck is true, that means we do not check the build info between input and registered.
   // Take the input attrs to build the kernel.
@@ -603,26 +615,14 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     kernel_attrs[0] = BuildKernelFromInput(input_types, output_types, kernel_attrs[0]);
     MS_LOG(DEBUG) << "Build kernel form input for " << op_name;
   }
-  if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, output_types, &matched, true)) {
-    if (op_name == "Cast") {
-      return KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
-    }
-    matched = std::make_pair(false, false);
-    (void)SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, output_types, &matched, false);
-    if (!matched.first) {
-      return KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
+  if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, output_types, true)) {
+    if (op_name == "Cast" ||
+        !SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, output_types, false)) {
+      return KernelNotSupportWarning(kernel_node, !kernel_attrs.empty());
     }
   }
-
-  if (matched.first) {
-    MS_LOG(INFO) << "Input format and dtype is matched";
-    GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &selected_output_formats, &selected_output_types);
-    for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
-      input_types[index] = selected_kernel_attr.GetInputAttr(index).dtype;
-      (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
-    }
-  }
-  SetKernelBuildInfo(input_formats, input_types, selected_output_formats, selected_output_types, kernel_node.get());
+  MS_LOG(INFO) << "Input format and dtype is matched";
+  SetKernelBuildInfoWithSelectedAttr(kernel_node, selected_kernel_attr);
   return {};
 }
 

@@ -295,6 +295,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
                                             const std::vector<AnfNodePtr> &front_outputs);
   AnfWithOutIndex GetFrontNodeWithIndexByGraphOutput(const AnfWithOutIndex &backend_graph_output_with_index) const;
 
+  void SetKernelObjectTypesForUnrealNodes();
+
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
   void UpdateChildGraphOrder();
