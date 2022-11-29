@@ -275,7 +275,11 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
   dev_bin.version = 0;
   auto ret = has_kernel_list ? rtRegisterAllKernel(&dev_bin, module) : rtDevBinaryRegister(&dev_bin, module);
   if (RT_ERROR_NONE != ret) {
-    MS_LOG(INFO) << "Call runtime rtDevBinaryRegister error.";
+    MS_LOG(INFO) << "Call runtime rtDevBinaryRegister error, ret: [" << ret
+                 << "], error message: " << device::ascend::GetErrorMessage(true)
+                 << ". Try to delete kernel compile cache files, and restart you project again.(These cache files in "
+                    "the custom directory if you used the environment variable 'MS_COMPILER_CACHE_PATH', otherwise in "
+                    "the current directory).";
     return -1;
   }
   return 0;
@@ -329,7 +333,10 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
   uintptr_t func_stub = ++kernel_stub_gen_;
   if (RT_ERROR_NONE !=
       rtFunctionRegister(module, reinterpret_cast<void *>(func_stub), func_name.c_str(), func_name.c_str(), 0)) {
-    MS_LOG(INFO) << "Call runtime rtFunctionRegister error.";
+    MS_LOG(INFO) << "Call runtime rtFunctionRegister error, message:" << device::ascend::GetErrorMessage(true)
+                 << ". Try to delete kernel compile cache files, and restart you project again.(These cache files in "
+                    "the custom directory if you used the environment variable 'MS_COMPILER_CACHE_PATH', otherwise in "
+                    "the current directory).";
     return 0;
   }
   // cache the registered kernelmeta.
