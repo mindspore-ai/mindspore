@@ -324,8 +324,8 @@ class Custom(ops.PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
         >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, kernel
         >>> from mindspore import dtype as mstype
         >>> from mindspore.nn import Cell

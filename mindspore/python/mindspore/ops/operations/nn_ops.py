@@ -8004,7 +8004,7 @@ class CTCLossV2(Primitive):
         >>> targets = Tensor(np.array([[0, 1]]), mstype.int32)
         >>> input_lengths = Tensor(np.array([2]), mstype.int32)
         >>> target_lengths = Tensor(np.array([1]), mstype.int32)
-        >>> CTCLossV2 = op.CTCLossV2(blank=0, reduction='none', zero_infinity=False)
+        >>> CTCLossV2 = ops.CTCLossV2(blank=0, reduction='none', zero_infinity=False)
         >>> neg_log_hood, log_alpha = CTCLossV2(
         ...     log_probs, targets, input_lengths, target_lengths)
         >>> print(neg_log_hood)
