@@ -89,11 +89,15 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const i
   float epsilon = std::numeric_limits<float>::min();
   for (size_t i = 0; i < batch_size_; ++i) {
     if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "Label value must >= 0";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "' got error label! label[index] must >= 0, but got  index = " << i
+                        << " label[index] = " << labels[i];
     }
     size_t label = IntToSize(labels[i]);
     if (label > class_num_) {
-      MS_LOG(EXCEPTION) << "Error label input!";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "' got error label! label[index] must <= class_num, but got index = " << i
+                        << " label[index] = " << label << " and class_num = " << class_num_;
     }
     total_loss -= logf(losses[i * class_num_ + label] <= 0.0 ? epsilon : losses[i * class_num_ + label]);
   }
