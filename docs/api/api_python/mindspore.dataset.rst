@@ -124,6 +124,7 @@ mindspore.dataset
     mindspore.dataset.SBUDataset
     mindspore.dataset.SemeionDataset
     mindspore.dataset.STL10Dataset
+    mindspore.dataset.SUN397Dataset
     mindspore.dataset.SVHNDataset
     mindspore.dataset.USPSDataset
     mindspore.dataset.VOCDataset

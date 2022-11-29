@@ -38,7 +38,7 @@ from .validators import check_caltech101_dataset, check_caltech256_dataset, chec
     check_kittidataset, check_lfw_dataset, check_lsun_dataset, check_manifestdataset, check_mnist_cifar_dataset, \
     check_omniglotdataset, check_photo_tour_dataset, check_places365_dataset, check_qmnist_dataset, \
     check_random_dataset, check_sb_dataset, check_sbu_dataset, check_semeion_dataset, check_stl10_dataset, \
-    check_svhn_dataset, check_usps_dataset, check_vocdataset, check_wider_face_dataset
+    check_svhn_dataset, check_usps_dataset, check_vocdataset, check_wider_face_dataset, check_sun397_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -4435,6 +4435,150 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
 
     def parse(self, children=None):
         return cde.STL10Node(self.dataset_dir, self.usage, self.sampler)
+
+
+class SUN397Dataset(MappableDataset, VisionBaseDataset):
+    """
+    A source dataset that reads and parses SUN397 dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the mindspore.dataset.config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table below.
+        decode (bool, optional): Whether or not to decode the images after reading. Default: False.
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset. Default: None, expected order behavior shown in the table below.
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into. When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard. Default: None.
+        shard_id (int, optional): The shard ID within `num_shards` . This
+            argument can only be specified when `num_shards` is also specified. Default: None.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
+
+    Raises:
+        RuntimeError: If `dataset_dir` does not contain data files.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+
+    Note:
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> sun397_dataset_dir = "/path/to/sun397_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (image files) in sun397_dataset_dir with 8 threads
+        >>> dataset = ds.SUN397Dataset(dataset_dir=sun397_dataset_dir, num_parallel_workers=8)
+
+    About SUN397Dataset:
+
+    The SUN397 or Scene UNderstanding (SUN) is a dataset for scene recognition consisting of 397 categories with
+    108,754 images.The number of images varies across categories, but there are at least 100 images per category.
+    Images are in jpg, png, or gif format.
+
+    Here is the original SUN397 dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── sun397_dataset_directory
+            ├── ClassName.txt
+            ├── README.txt
+            ├── a
+            │   ├── abbey
+            │   │   ├── sun_aaaulhwrhqgejnyt.jpg
+            │   │   ├── sun_aacphuqehdodwawg.jpg
+            │   │   ├── ...
+            │   ├── apartment_building
+            │   │   └── outdoor
+            │   │       ├── sun_aamyhslnsnomjzue.jpg
+            │   │       ├── sun_abbjzfrsalhqivis.jpg
+            │   │       ├── ...
+            │   ├── ...
+            ├── b
+            │   ├── badlands
+            │   │   ├── sun_aabtemlmesogqbbp.jpg
+            │   │   ├── sun_afbsfeexggdhzshd.jpg
+            │   │   ├── ...
+            │   ├── balcony
+            │   │   ├── exterior
+            │   │   │   ├── sun_aaxzaiuznwquburq.jpg
+            │   │   │   ├── sun_baajuldidvlcyzhv.jpg
+            │   │   │   ├── ...
+            │   │   └── interior
+            │   │       ├── sun_babkzjntjfarengi.jpg
+            │   │       ├── sun_bagjvjynskmonnbv.jpg
+            │   │       ├── ...
+            │   └── ...
+            ├── ...
+
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{xiao2010sun,
+        title        = {Sun database: Large-scale scene recognition from abbey to zoo},
+        author       = {Xiao, Jianxiong and Hays, James and Ehinger, Krista A and Oliva, Aude and Torralba, Antonio},
+        booktitle    = {2010 IEEE computer society conference on computer vision and pattern recognition},
+        pages        = {3485--3492},
+        year         = {2010},
+        organization = {IEEE}
+        }
+    """
+
+    @check_sun397_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, decode=False,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.SUN397Node(self.dataset_dir, self.decode, self.sampler)
 
 
 class _SVHNDataset:

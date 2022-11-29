@@ -69,6 +69,7 @@ class DATASET_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class SemeionDataset;
   friend class SpeechCommandsDataset;
   friend class STL10Dataset;
+  friend class SUN397Dataset;
   friend class TedliumDataset;
   friend class TextFileDataset;
   friend class TFRecordDataset;

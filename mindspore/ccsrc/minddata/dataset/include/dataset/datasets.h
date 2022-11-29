@@ -5314,6 +5314,94 @@ inline std::shared_ptr<STL10Dataset> DATASET_API STL10(const std::string &datase
   return std::make_shared<STL10Dataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class SUN397Dataset.
+/// \brief A source dataset that reads and parses SUN397 dataset.
+class DATASET_API SUN397Dataset : public Dataset {
+ public:
+  /// \brief Constructor of SUN397Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  SUN397Dataset(const std::vector<char> &dataset_dir, bool decode, const std::shared_ptr<Sampler> &sampler,
+                const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of SUN397Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  SUN397Dataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
+                const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of SUN397Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  SUN397Dataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> &sampler,
+                const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of SUN397Dataset.
+  ~SUN397Dataset() override = default;
+};
+
+/// \brief Function to create a SUN397Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] decode Decode the images after reading. Default: true.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples
+///     be used to randomly iterate the entire dataset. Default: RandomSampler().
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the current SUN397Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/sun397_dataset_directory";
+///      std::shared_ptr<Dataset> ds = SUN397(folder_path, false, std::make_shared<RandomSampler>(false, 5));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In SUN397 dataset dataset, each dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<SUN397Dataset> DATASET_API
+SUN397(const std::string &dataset_dir, bool decode = true,
+       const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SUN397Dataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
+/// \brief Function to create a SUN397Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the current SUN397Dataset.
+inline std::shared_ptr<SUN397Dataset> DATASET_API SUN397(const std::string &dataset_dir, bool decode,
+                                                         const Sampler *sampler,
+                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SUN397Dataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
+/// \brief Function to create a SUN397Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the current SUN397Dataset.
+inline std::shared_ptr<SUN397Dataset> DATASET_API SUN397(const std::string &dataset_dir, bool decode,
+                                                         const std::reference_wrapper<Sampler> &sampler,
+                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SUN397Dataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
 /// \class TedliumDataset
 /// \brief A source dataset for reading and parsing tedlium dataset.
 class DATASET_API TedliumDataset : public Dataset {
