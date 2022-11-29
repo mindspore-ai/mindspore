@@ -53,6 +53,8 @@ void CPUSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPt
     tensors[tensors.size() - 1]->aligned_size_ += need_aligned;
   }
 }
+
+bool CPUSomas::NeedContiguous(const std::vector<size_t> &inputs) const { return inputs.size() > ALONE; }
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

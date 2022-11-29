@@ -1174,13 +1174,15 @@ void Somas::CommunicationNodeProcess() {
         MS_LOG(EXCEPTION) << node->scope_full_name_
                           << " has same input tensors, please double check node input tensors.";
       }
+      if (!NeedContiguous(inputs)) {
+        continue;
+      }
       contiguous_tensors_list_.push_back(inputs);
     }
 
     // Contiguous output
     if ((!node->output_tensors_.empty()) && (!node->output_tensors_[0]->contiguous_)) {
       CommunicationTensorProcess(node->output_tensors_);
-
       std::vector<size_t> outputs;
       for (const auto &output_tensor : node->output_tensors_) {
         MS_EXCEPTION_IF_NULL(output_tensor);
@@ -1191,6 +1193,9 @@ void Somas::CommunicationNodeProcess() {
       if (outputs.size() != (std::set<size_t>(outputs.begin(), outputs.end())).size()) {
         MS_LOG(EXCEPTION) << node->scope_full_name_
                           << " has same output tensor, please double check node output tensors.";
+      }
+      if (!NeedContiguous(outputs)) {
+        continue;
       }
       contiguous_tensors_list_.push_back(outputs);
     }

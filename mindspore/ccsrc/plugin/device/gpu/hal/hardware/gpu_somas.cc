@@ -148,6 +148,8 @@ void GPUSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPt
     }
   }
 }
+
+bool GPUSomas::NeedContiguous(const std::vector<size_t> &inputs) const { return inputs.size() > ALONE; }
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
