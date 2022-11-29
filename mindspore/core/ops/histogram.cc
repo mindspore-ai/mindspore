@@ -78,7 +78,7 @@ AbstractBasePtr HistogramInfer(const abstract::AnalysisEnginePtr &, const Primit
   return abstract::MakeAbstract(shapes, types);
 }
 
-MIND_API_BASE_IMPL(Histogram, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Histogram, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Histogram, prim::kPrimHistogram, HistogramInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
