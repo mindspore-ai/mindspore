@@ -30,9 +30,6 @@ class SelectCPUKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  int CheckTensor();
 };
 }  // namespace mindspore::kernel
 

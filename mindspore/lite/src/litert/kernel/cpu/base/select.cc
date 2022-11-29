@@ -27,6 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Select;
 
 namespace mindspore::kernel {
+constexpr static int kConditionIdx = 0;
 constexpr static int kFirstIdx = 1;
 constexpr static int kSecondIdx = 2;
 
@@ -106,6 +107,25 @@ int MoveData(const std::vector<lite::Tensor *>::iterator &dst_begin,
   return RET_OK;
 }
 
+template <typename T>
+int SelectRun(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors) {
+  MS_CHECK_TRUE_MSG(in_tensors.at(kFirstIdx)->Size() == out_tensors.at(0)->Size(), RET_ERROR,
+                    "The tensor size should be the same.");
+  auto size = in_tensors.at(kFirstIdx)->ElementsNum();
+  MS_CHECK_GT(size, 0, RET_ERROR);
+  auto condition = static_cast<bool *>(in_tensors.at(kConditionIdx)->data());
+  auto input1 = static_cast<T *>(in_tensors.at(kFirstIdx)->data());
+  auto input2 = static_cast<T *>(in_tensors.at(kSecondIdx)->data());
+  auto output = static_cast<T *>(out_tensors.at(0)->data());
+  if (condition == nullptr || input1 == nullptr || input2 == nullptr || output == nullptr) {
+    return RET_NULL_PTR;
+  }
+  for (int i = 0; i < size; i++) {
+    output[i] = condition[i] ? input1[i] : input2[i];
+  }
+  return RET_OK;
+}
+
 // inputs: bool*1 true-data*n false-data*n
 // output: data*n
 int SelectCPUKernel::Run() {
@@ -138,52 +158,32 @@ int SelectCPUKernel::Run() {
       }
     }
   } else {
-    MS_CHECK_TRUE_MSG(bool_tensor->shape().size() == in_tensors_.at(1)->shape().size(), RET_ERROR,
+    MS_CHECK_TRUE_MSG(bool_tensor->shape().size() == in_tensors_.at(kFirstIdx)->shape().size(), RET_ERROR,
                       "The tensor size should be the same.");
-    for (size_t i = 0; i < in_tensors_.at(1)->shape().size(); i++) {
-      if (bool_tensor->shape()[i] != in_tensors_.at(1)->shape()[i]) {
+    for (size_t i = 0; i < in_tensors_.at(kFirstIdx)->shape().size(); i++) {
+      if (bool_tensor->shape()[i] != in_tensors_.at(kFirstIdx)->shape()[i]) {
         MS_LOG(ERROR) << "Tensor shapes differ in dim: " << i << " in_tensors_.at(0): " << bool_tensor->shape()[i]
-                      << " in_tensors_.at(1): " << in_tensors_.at(1)->shape()[i];
+                      << " in_tensors_.at(1): " << in_tensors_.at(kFirstIdx)->shape()[i];
         return RET_ERROR;
       }
     }
-    MS_CHECK_TRUE_MSG(in_tensors_.at(1)->Size() == out_tensors_.at(0)->Size(), RET_ERROR,
-                      "The tensor size should be the same.");
-    auto size = in_tensors_.at(1)->ElementsNum();
-    MS_CHECK_GT(size, 0, RET_ERROR);
-    auto condition = static_cast<bool *>(bool_tensor->data());
-    auto input1 = static_cast<float *>(in_tensors_.at(kFirstIdx)->data());
-    auto input2 = static_cast<float *>(in_tensors_.at(kSecondIdx)->data());
-    auto output = static_cast<float *>(out_tensors_.at(0)->data());
-    if (condition == nullptr || input1 == nullptr || input2 == nullptr || output == nullptr) {
-      return RET_NULL_PTR;
+    switch (in_tensors_.at(kFirstIdx)->data_type()) {
+      case kNumberTypeInt32:
+        if (SelectRun<int>(in_tensors_, out_tensors_) != RET_OK) {
+          MS_LOG(ERROR) << "Select Run with integer failed";
+          return RET_ERROR;
+        }
+        break;
+      case kNumberTypeFloat32:
+        if (SelectRun<float>(in_tensors_, out_tensors_) != RET_OK) {
+          MS_LOG(ERROR) << "Select Run with float failed";
+          return RET_ERROR;
+        }
+        break;
+      default:
+        MS_LOG(ERROR) << "Unsupported data type for select " << in_tensors_.at(kFirstIdx)->data_type();
+        return RET_ERROR;
     }
-    auto ret = CheckTensor();
-    if (ret != RET_OK) {
-      return ret;
-    }
-    for (int i = 0; i < size; i++) {
-      output[i] = condition[i] ? input1[i] : input2[i];
-    }
-  }
-  return RET_OK;
-}
-
-int SelectCPUKernel::CheckTensor() {
-  auto condition = in_tensors_.at(FIRST_INPUT);
-  if (condition->data_type() != kNumberTypeBool) {
-    MS_LOG(ERROR) << "wrong data type!";
-    return RET_ERROR;
-  }
-  auto input1_tensor = in_tensors_.at(SECOND_INPUT);
-  if (input1_tensor->data_type() != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "wrong data type!";
-    return RET_ERROR;
-  }
-  auto input2_tensor = in_tensors_.at(THIRD_INPUT);
-  if (input2_tensor->data_type() != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "wrong data type!";
-    return RET_ERROR;
   }
   return RET_OK;
 }

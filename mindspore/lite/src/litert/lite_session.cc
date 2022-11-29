@@ -1704,12 +1704,9 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
   }
+  (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(keep_model_buf_);
   auto ret = CompileGraph(model);
   model->buf = nullptr;
-  // if (buf_model_type == mindspore::ModelType::kMindIR) {
-  //   delete[] lite_buf;
-  //   lite_buf = nullptr;
-  // }
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
     delete model;
