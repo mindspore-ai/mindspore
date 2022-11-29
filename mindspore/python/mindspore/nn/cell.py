@@ -2244,6 +2244,7 @@ class GraphCell(Cell):
                 raise ValueError(
                     "'obf_password' must be larger than 0, and less or equal than int64 ({}),"
                     "but got {}.".format(int_64_max, obf_password))
+            self._obf_password, self._append_password = _generate_pair_password(self.obf_password)
         params_init = {} if params_init is None else params_init
         if not isinstance(params_init, dict):
             raise TypeError(f"For 'GraphCell', the argument 'params_init' must be a dict, but got {type(params_init)}.")
@@ -2265,9 +2266,8 @@ class GraphCell(Cell):
         self._add_attr("graph_load_from_mindir", self.graph)
         if not self.obf_password:
             return self.compile_and_run(*inputs)
-        obf_password, append_password = _generate_pair_password(self.obf_password)
-        append_input_1 = Tensor((numpy.ones((1, 1)) * obf_password).astype(numpy.int32))
-        append_input_2 = Tensor((numpy.ones((1, 1)) * append_password).astype(numpy.int32))
+        append_input_1 = Tensor((numpy.ones((1, 1)) * self._obf_password).astype(numpy.int32))
+        append_input_2 = Tensor((numpy.ones((1, 1)) * self._append_password).astype(numpy.int32))
         return self.compile_and_run(*inputs, append_input_1, append_input_2)
 
 
