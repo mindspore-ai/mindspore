@@ -62,6 +62,8 @@ class ReduceOp:
 
             This example should be run with multiple devices.
 
+        >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor, ops, nn
         >>> from mindspore.ops import ReduceOp
