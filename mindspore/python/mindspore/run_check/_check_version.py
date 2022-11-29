@@ -255,14 +255,14 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["1.83"]
+        self.version = ["1.84"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/compiler/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/compiler/version.info"
         hisi_fwk_version = "/usr/local/Ascend/latest/compiler/version.info"
         if os.path.exists(atlas_nnae_version):
             # atlas default path
             self.fwk_path = "/usr/local/Ascend/nnae/latest"
-            self.op_impl_path = "/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe"
+            self.op_impl_path = "/usr/local/Ascend/nnae/latest/opp/built-in/op_impl/ai_core/tbe"
             self.tbe_path = self.fwk_path + "/lib64"
             self.cce_path = self.fwk_path + "/compiler/ccec_compiler/bin"
             self.fwk_version = atlas_nnae_version
@@ -271,7 +271,7 @@ class AscendEnvChecker(EnvChecker):
         elif os.path.exists(atlas_toolkit_version):
             # atlas default path
             self.fwk_path = "/usr/local/Ascend/ascend-toolkit/latest"
-            self.op_impl_path = "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe"
+            self.op_impl_path = "/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe"
             self.tbe_path = self.fwk_path + "/lib64"
             self.cce_path = self.fwk_path + "/compiler/ccec_compiler/bin"
             self.fwk_version = atlas_toolkit_version
@@ -280,7 +280,7 @@ class AscendEnvChecker(EnvChecker):
         elif os.path.exists(hisi_fwk_version):
             # hisi default path
             self.fwk_path = "/usr/local/Ascend/latest"
-            self.op_impl_path = "/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe"
+            self.op_impl_path = "/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe"
             self.tbe_path = self.fwk_path + "/lib64"
             self.cce_path = self.fwk_path + "/compiler/ccec_compiler/bin"
             self.fwk_version = hisi_fwk_version
@@ -305,7 +305,7 @@ class AscendEnvChecker(EnvChecker):
 
         # check content
         self.path_check = "/compiler/ccec_compiler/bin"
-        self.python_path_check = "opp/op_impl/built-in/ai_core/tbe"
+        self.python_path_check = "opp/built-in/op_impl/ai_core/tbe"
         self.ld_lib_path_check_fwk = "/lib64"
         self.ld_lib_path_check_addons = "/add-ons"
         self.ascend_opp_path_check = "/op"

@@ -187,11 +187,11 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(MINDSPORE_SHARED_LIB_RPATH
             ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_SHARED_LIB_RPATH
-            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/nnae/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
         set(MINDSPORE_SHARED_LIB_RPATH "${MINDSPORE_SHARED_LIB_RPATH}\
-            :/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling")
+            :/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling")
         set(MINDSPORE_SHARED_LIB_RPATH
-            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+            ${MINDSPORE_SHARED_LIB_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
         set(MINDSPORE_SHARED_LIB_RPATH "${MINDSPORE_SHARED_LIB_RPATH}\
             :/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling")
         set(MINDSPORE_SHARED_LIB_RPATH

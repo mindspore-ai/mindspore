@@ -48,6 +48,7 @@ constexpr auto kStridedSliceMaxDims = 8;
 constexpr auto kQuad = 4;
 constexpr size_t kInputFirstIndex = 0;
 constexpr char kOperatorOriginFormat[] = "operator_origin_format";
+
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
   // Other abstract class, such as AbstractCSRTensor and AbstractCOOTensor, is converted to AbstractTensor early time.
   abstract::BaseShapePtr res_shape;

@@ -252,7 +252,7 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
       auto value = GetValue<std::string>(value_ptr);
       input_shape.push_back(1);
       input_shape.push_back(static_cast<int64_t>(value.size()));
-      input_data_type = AicpuOpUtil::MsTypeToProtoType(kTypeUnknown);
+      input_data_type = AicpuOpUtil::MsTypeToProtoType(kObjectTypeString);
     } else {
       input_shape = AnfAlgo::GetInputDeviceShape(anf_node, input_index);
       input_data_type = AicpuOpUtil::MsTypeToProtoType(input_type);
@@ -379,7 +379,7 @@ uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
       auto value = GetValue<std::string>(value_ptr);
       input_shape.push_back(1);
       input_shape.push_back(static_cast<int64_t>(value.size()));
-      input_data_type = AicpuOpUtil::MsTypeToProtoType(kTypeUnknown);
+      input_data_type = AicpuOpUtil::MsTypeToProtoType(kObjectTypeString);
     } else {
       input_shape = AnfAlgo::GetInputDeviceShape(anf_node, input_index);
       input_data_type = AicpuOpUtil::MsTypeToProtoType(input_type);

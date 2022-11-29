@@ -34,6 +34,7 @@
 namespace mindspore::kernel {
 constexpr int64_t kDynamicInvalidNum = -1;
 constexpr size_t kDynamicFirstInputIndex = 0;
+constexpr size_t kMatMulInputSize = 3;
 
 bool IsSkipStaticImplCheck(const std::string &op_name) {
   const std::set<std::string> only_has_dynamic_impl = {kUnsortedSegmentSumOpName};
@@ -208,6 +209,9 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
     if (!FilterInvalidShape(kernel_build_info, dynamic_inputs)) {
       continue;
     }
+    if (!FilterUnspportedMatMul(kernel_build_info)) {
+      continue;
+    }
     // Skip check for ACL op.
     if (!common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode_ptr_)) {
       if (!TbeCheckSupported(kernel_build_info)) {
@@ -220,6 +224,21 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
     MS_LOG(DEBUG) << "After tbe check supported, all valid AI CORE kernel infos were filtered out. Node:" << full_name_;
   }
   (*kernel_info_list_).swap(kernel_info_list);
+}
+
+bool TbeKernelSelect::FilterUnspportedMatMul(const KernelBuildInfoPtr &kernel_build_info) {
+  // A MatMul op is unsupported if it has a bias and bias is fp32
+  // we need to filter it out or it will cause compile error.
+  if (common::AnfAlgo::GetCNodeName(cnode_ptr_) != prim::kPrimMatMul->name() ||
+      !common::AnfAlgo::IsDynamicShape(cnode_ptr_)) {
+    return true;
+  }
+  const auto &input_dtypes = kernel_build_info->GetAllInputDeviceTypes();
+  if (input_dtypes.size() < kMatMulInputSize) {
+    return true;
+  }
+  const auto bias_dtype = input_dtypes[kMatMulInputSize - 1];
+  return !(bias_dtype == TypeId::kNumberTypeFloat32 || bias_dtype == TypeId::kNumberTypeFloat);
 }
 
 bool TbeKernelSelect::FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info,
@@ -258,6 +277,12 @@ bool TbeKernelSelect::IsShapeMatchFormat(const ShapeVector &shape, const std::st
     return false;
   }
   // if format is default, it means support all format
+  if (common::AnfAlgo::GetCNodeName(cnode_ptr_) == prim::kPrimBNTrainingReduce->name() ||
+      common::AnfAlgo::GetCNodeName(cnode_ptr_) == prim::kPrimBNTrainingUpdate->name()) {
+    if ((format == kOpFormat_DEFAULT) && common::AnfAlgo::IsDynamicShape(cnode_ptr_)) {
+      return false;
+    }
+  }
   if (format == kOpFormat_DEFAULT) {
     return true;
   }
