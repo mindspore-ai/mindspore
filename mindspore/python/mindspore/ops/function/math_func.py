@@ -108,7 +108,7 @@ tensor_lt = P.Less()
 tensor_le = P.LessEqual()
 tensor_gt = P.Greater()
 tensor_ge = P.GreaterEqual()
-not_equal = P.NotEqual()
+not_equal_ = P.NotEqual()
 size_ = P.Size()
 transpose_ = P.Transpose()
 
@@ -3163,7 +3163,18 @@ def ne(x, y):
         >>> print(output)
         [False False  True]
     """
-    return not_equal(x, y)
+    return not_equal_(x, y)
+
+
+def not_equal(x, other):
+    r"""
+    Alias for ops.ne.
+    For details, please refer to :func:`mindspore.ops.ne`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return ne(x, other)
 
 
 def approximate_equal(x, y, tolerance=1e-5):

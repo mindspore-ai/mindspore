@@ -420,6 +420,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"nan_to_num", std::string("nan_to_num")},                          // nan_to_num()
        {"neg", std::string("neg")},                                        // neg()
        {"ne", std::string("ne")},                                          // ne()
+       {"not_equal", std::string("not_equal")},                            // not_equal()
        {"sinh", std::string("sinh")},                                      // sinh()
        {"sort", std::string("sort")},                                      // sort()
        {"trunc", std::string("trunc")},                                    // trunc()

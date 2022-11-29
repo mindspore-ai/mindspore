@@ -299,6 +299,7 @@ Comparison Functions
     mindspore.ops.maximum
     mindspore.ops.minimum
     mindspore.ops.ne
+    mindspore.ops.not_equal
 
 Linear Algebraic Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

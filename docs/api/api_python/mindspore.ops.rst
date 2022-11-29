@@ -299,6 +299,7 @@ Reduction函数
     mindspore.ops.maximum
     mindspore.ops.minimum
     mindspore.ops.ne
+    mindspore.ops.not_equal
 
 线性代数函数
 ^^^^^^^^^^^^^

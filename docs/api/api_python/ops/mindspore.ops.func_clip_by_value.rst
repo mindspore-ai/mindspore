@@ -20,7 +20,7 @@
         - 当 `clip_value_min` 为None，`clip_value_max` 不为None时，Tensor中大于 `clip_value_max` 的元素会变为 `clip_value_max`；
         - 当 `clip_value_min` 不为None，`clip_value_max` 为None时，Tensor中小于 `clip_value_min` 的元素会变为 `clip_value_min`；
         - 当 `clip_value_min` 大于 `clip_value_max` 时，Tensor中所有元素的值会被置为 `clip_value_max`；
-        -  :math:`x` ， `clip_value_min` 和 `clip_value_max` 的数据类型需支持隐式类型转换，且不能为布尔型。
+        - `x`，`clip_value_min` 和 `clip_value_max` 的数据类型需支持隐式类型转换，且不能为布尔型。
 
     参数：
         - **x** (Union(Tensor, list[Tensor], tuple[Tensor])) - `clip_by_value` 的输入，类型为Tensor、Tensor的列表或元组。支持任意维度的Tensor。
