@@ -15,53 +15,54 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/maxpool_with_argmax_gpu_kernel.h"
-#include "mindspore/core/ops/max_pool_with_argmax.h"
+#include <functional>
+#include <memory>
+#include "include/curand.h"
+#include "mindspore/core/abstract/utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kMaxPoolWithArgmaxInputsNum = 1;
 constexpr size_t kMaxPoolWithArgmaxOutputsNum = 2;
+constexpr size_t Index2 = 2;
+constexpr size_t Index3 = 3;
 }  // namespace
+
+void MaxPoolWithArgmaxGpuKernelMod::SetPad() {
+  MS_EXCEPTION_IF_ZERO("stride height", stride_height_);
+  MS_EXCEPTION_IF_ZERO("stride width", stride_width_);
+
+  int tmp_height = (input_height_ / stride_height_) * stride_height_ == input_height_
+                     ? (input_height_ / stride_height_)
+                     : (input_height_ / stride_height_) + 1;
+  pad_height_ = std::max<int>(0, (tmp_height - 1) * stride_height_ + window_height_ - input_height_);
+
+  int tmp_width = (input_width_ / stride_width_) * stride_width_ == input_width_ ? (input_width_ / stride_width_)
+                                                                                 : (input_width_ / stride_width_) + 1;
+  pad_width_ = std::max<int>(0, (tmp_width - 1) * stride_width_ + window_width_ - input_width_);
+  pad_top_ = pad_height_ / Index2;
+  pad_left_ = pad_width_ / Index2;
+}
 
 bool MaxPoolWithArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast MaxPoolWithArgmax ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolWithArgmaxInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolWithArgmaxOutputsNum, kernel_name_);
-  std::vector<int> window;
-  std::vector<int64_t> window_me = kernel_ptr->get_kernel_size();
-  (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  if (window.size() < kDim3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 3, but got "
-                      << window.size();
-  }
-  window_height_ = window[kIndex1];
-  window_width_ = window[kIndex2];
-  std::vector<int> stride;
-
-  std::vector<int64_t> stride_me = kernel_ptr->get_strides();
-  (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  if (stride.size() < kDim3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 3, but got "
-                      << stride.size();
-  }
-  stride_height_ = stride[kIndex1];
-  stride_width_ = stride[kIndex2];
-  pad_mode_ = kernel_ptr->get_pad_mode();
-  pad_top_ = 0;
-  pad_left_ = 0;
-  device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != kMaxPoolWithArgmaxInputsNum || outputs.size() != kMaxPoolWithArgmaxOutputsNum) {
+    MS_LOG(EXCEPTION) << kernel_name_ << ": input and output size must be " << kMaxPoolWithArgmaxInputsNum << " and "
+                      << kMaxPoolWithArgmaxOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!pair.first) {
+    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[pair.second].second;
   return true;
 }
 
@@ -69,17 +70,21 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast MaxPoolWithArgmax ops failed!";
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolWithArgmaxInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolWithArgmaxOutputsNum, kernel_name_);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  int ret = 0;
+  if (ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[kIndex0]->GetShapeVector();
-  auto output_shape = outputs[kIndex0]->GetShapeVector();
+
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<std::vector<int64_t>> output_shapes;
+  std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
+  std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
+
+  is_null_input_ =
+    CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
+  if (is_null_input_) {
+    return KRET_RESIZE_FAILED;
+  }
   if (input_shape.size() < kInputDimLowerLimit || output_shape.size() < kOutputDimLowerLimit) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output cannot be less than 4, but "
                       << "got the dimension of input: " << input_shape.size()
@@ -91,21 +96,87 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_width_ = LongToInt(input_shape[kInputIndexForW]);
   output_height_ = LongToInt(output_shape[kOutputIndexForH]);
   output_width_ = LongToInt(output_shape[kOutputIndexForW]);
-  if (pad_mode_ == PadMode::SAME) {
+  std::vector<int> window;
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  std::vector<int64_t> window_me = kernel_ptr->get_kernel_size();
+  (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  if (window.size() < Index3) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 3, but got "
+                      << window.size();
+  }
+  window_height_ = window[1];
+  window_width_ = window[Index2];
+
+  std::vector<int> stride;
+  std::vector<int64_t> stride_me = kernel_ptr->get_strides();
+  (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  if (stride.size() < Index3) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 3, but got "
+                      << stride.size();
+  }
+  stride_height_ = stride[1];
+  stride_width_ = stride[Index2];
+
+  auto pad_mode_ = kernel_ptr->get_pad_mode();
+  pad_top_ = 0;
+  pad_left_ = 0;
+  if (pad_mode_ == SAME) {
     SetPad();
   }
-  return static_cast<int>(KRET_OK);
+  return KRET_OK;
+}
+template <typename T, typename S>
+bool MaxPoolWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                 const std::vector<AddressPtr> &workspace,
+                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  T *input_addr = GetDeviceAddress<T>(inputs, 0);
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  S *index_addr = GetDeviceAddress<S>(outputs, 1);
+  CalMaxPoolWithArgmax(input_addr, n_, c_, input_height_, input_width_, window_height_, window_width_, stride_height_,
+                       stride_width_, pad_top_, pad_left_, output_height_, output_width_, output_addr, index_addr,
+                       device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  return true;
+}
+bool MaxPoolWithArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
+  return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
 }
 
-using KernelRunFunc = MaxPoolWithArgmaxGpuKernelMod::KernelRunFunc;
-// int the python api description, input data type is number but CalExtractImagePatchesNHWC only support four type.
-const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MaxPoolWithArgmaxGpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<float, int>},
+std::vector<std::pair<KernelAttr, MaxPoolWithArgmaxGpuKernelMod::MaxPoolWithArgmaxFunc>>
+  MaxPoolWithArgmaxGpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<int8_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<int16_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<int64_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<uint64_t, int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<half, int>}};
-  return func_list;
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<half, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<float, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+     &MaxPoolWithArgmaxGpuKernelMod::LaunchKernel<double, int32_t>},
+};
+std::vector<KernelAttr> MaxPoolWithArgmaxGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MaxPoolWithArgmaxFunc> &pair) { return pair.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MaxPoolWithArgmax, MaxPoolWithArgmaxGpuKernelMod);

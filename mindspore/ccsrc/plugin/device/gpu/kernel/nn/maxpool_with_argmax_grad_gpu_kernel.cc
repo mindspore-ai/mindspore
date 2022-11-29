@@ -15,99 +15,173 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/maxpool_with_argmax_grad_gpu_kernel.h"
-#include "mindspore/core/ops/grad/max_pool_grad_with_argmax.h"
+#include <functional>
+#include <memory>
+#include "mindspore/core/abstract/utils.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
 constexpr size_t kMaxPoolGradWithArgmaxInputsNum = 3;
 constexpr size_t kMaxPoolGradWithArgmaxOutputsNum = 1;
-int MaxPoolWithArgmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+constexpr size_t kXDimLowerLimit = 4;
+constexpr size_t kDyDimLowerLimit = 4;
+constexpr size_t kXIndexForN = 0;
+constexpr size_t kXIndexForC = 1;
+constexpr size_t kXIndexForH = 2;
+constexpr size_t kXIndexForW = 3;
+constexpr size_t kDyIndexForH = 2;
+constexpr size_t kDyIndexForW = 3;
+constexpr size_t Index2 = 2;
+}  // namespace
+
+template <typename T, typename S>
+bool MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                     const std::vector<AddressPtr> &workspace,
+                                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  T *dy_addr = GetDeviceAddress<T>(inputs, 1);
+  S *index_addr = GetDeviceAddress<S>(inputs, Index2);
+  T *dx_addr = GetDeviceAddress<T>(outputs, 0);
+  CalMaxPoolWithArgmaxGrad(dy_addr, index_addr, n_, c_, x_height_, x_width_, dy_height_, dy_width_, dx_addr,
+                           reinterpret_cast<cudaStream_t>(stream_ptr));
+  return true;
+}
+
+bool MaxPoolGradWithArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                               const std::vector<AddressPtr> &workspace,
+                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
+  return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+}
+
+bool MaxPoolGradWithArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != kMaxPoolGradWithArgmaxInputsNum || outputs.size() != kMaxPoolGradWithArgmaxOutputsNum) {
+    MS_LOG(EXCEPTION) << kernel_name_ << ": input and output size must be " << kMaxPoolGradWithArgmaxInputsNum
+                      << " and " << kMaxPoolGradWithArgmaxOutputsNum << ", but get " << inputs.size() << " and "
+                      << outputs.size();
+    return false;
+  }
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!pair.first) {
+    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[pair.second].second;
+  return true;
+}
+
+int MaxPoolGradWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs,
                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  input_size_list_.clear();
-  output_size_list_.clear();
-  size_t input_num = inputs.size();
-  if (input_num != kMaxPoolGradWithArgmaxInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
+  // modified
+  int ret = 0;
+  if (ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  size_t output_num = outputs.size();
-  if (output_num != kMaxPoolGradWithArgmaxOutputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-  }
-  auto x_shape = inputs[kIndex0]->GetShapeVector();
-  auto dy_shape = inputs[kIndex1]->GetShapeVector();
-  auto index_shape = inputs[kIndex2]->GetShapeVector();
-  auto dx_shape = outputs[kIndex0]->GetShapeVector();
-  if (!IsValidShape(x_shape) || !IsValidShape(dy_shape) || !IsValidShape(index_shape) || !IsValidShape(dx_shape)) {
-    return static_cast<int>(KRET_UNKNOWN_SHAPE);
+
+  std::vector<int64_t> x_shape = inputs[0]->GetShapeVector();
+  std::vector<int64_t> dy_shape = inputs[1]->GetShapeVector();
+  std::vector<int64_t> index_shape = inputs[Index2]->GetShapeVector();
+  std::vector<int64_t> dx_shape = outputs[0]->GetShapeVector();
+
+  is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy") ||
+                   CHECK_SHAPE_NULL(index_shape, kernel_name_, "index") ||
+                   CHECK_SHAPE_NULL(dx_shape, kernel_name_, "dx");
+  if (is_null_input_) {
+    return true;
   }
   if (x_shape.size() < kXDimLowerLimit || dy_shape.size() < kDyDimLowerLimit) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of x and dy cannot be less than 4, but got "
                       << "the dimension of x: " << x_shape.size() << ", the dimension of dy: " << dy_shape.size();
   }
-  x_size_ = x_type_size_ * SizeOf(x_shape);
-  dy_size_ = dy_type_size_ * SizeOf(dy_shape);
-  index_size_ = idx_type_size_ * SizeOf(index_shape);
-  dx_size_ = dx_type_size_ * SizeOf(dx_shape);
-
   n_ = LongToSizeClipNeg(x_shape[kXIndexForN]);
   c_ = LongToSizeClipNeg(x_shape[kXIndexForC]);
   x_height_ = LongToSizeClipNeg(x_shape[kXIndexForH]);
   x_width_ = LongToSizeClipNeg(x_shape[kXIndexForW]);
   dy_height_ = LongToSizeClipNeg(dy_shape[kDyIndexForH]);
   dy_width_ = LongToSizeClipNeg(dy_shape[kDyIndexForW]);
-  input_size_list_.push_back(dy_size_);
-  input_size_list_.push_back(index_size_);
-  output_size_list_.push_back(dx_size_);
-  return static_cast<int>(KRET_OK);
+  return KRET_OK;
 }
 
-bool MaxPoolWithArgmaxGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradWithArgmax>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast MaxPoolGradWithArgmax ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  size_t input_num = inputs.size();
-  if (input_num != kMaxPoolGradWithArgmaxInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
-  }
-  size_t output_num = outputs.size();
-  if (output_num != kMaxPoolGradWithArgmaxOutputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-  }
-  x_type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
-  dy_type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex1]->GetDtype()));
-  idx_type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex2]->GetDtype()));
-  dx_type_size_ = GetTypeByte(TypeIdToType(outputs[kIndex0]->GetDtype()));
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
-    return false;
-  }
-  return true;
-}
-
-using KernelRunFunc = MaxPoolWithArgmaxGradGpuKernelMod::KernelRunFunc;
-// int the python api description, input data type is number but CalExtractImagePatchesNHWC only support four type.
-const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MaxPoolWithArgmaxGradGpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+std::vector<std::pair<KernelAttr, MaxPoolGradWithArgmaxGpuKernelMod::MaxPoolGradWithArgmaxFunc>>
+  MaxPoolGradWithArgmaxGpuKernelMod::func_list_ = {
     {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kNumberTypeInt8)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &MaxPoolWithArgmaxGradGpuKernelMod::LaunchKernel<float, int>},
+       .AddOutputAttr(kNumberTypeInt8),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<int8_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt16),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<int16_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt64),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<int64_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeUInt8),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeUInt16),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeUInt32),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeUInt64),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<uint64_t, int32_t>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeFloat16),
-     &MaxPoolWithArgmaxGradGpuKernelMod::LaunchKernel<half, int>}};
-  return func_list;
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<half, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<float, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &MaxPoolGradWithArgmaxGpuKernelMod::LaunchKernel<double, int32_t>},
+};
+std::vector<KernelAttr> MaxPoolGradWithArgmaxGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MaxPoolGradWithArgmaxFunc> &pair) { return pair.first; });
+  return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MaxPoolGradWithArgmax, MaxPoolWithArgmaxGradGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MaxPoolGradWithArgmax, MaxPoolGradWithArgmaxGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

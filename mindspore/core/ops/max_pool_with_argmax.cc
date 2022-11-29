@@ -200,8 +200,9 @@ TypePtr MaxPoolWithArgmaxInferType(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                             << "', the input args used for infer shape and type is necessary, but missing it.";
   }
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
-  auto input_type = input_args[kMaxPoolIdx0]->BuildType();
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt64,   kUInt8,   kUInt16,
+                                         kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+  auto input_type = input_args[kDim0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, primitive->name());
   std::vector<TypePtr> type_list = {input_type, kInt32};
   return std::make_shared<Tuple>(type_list);

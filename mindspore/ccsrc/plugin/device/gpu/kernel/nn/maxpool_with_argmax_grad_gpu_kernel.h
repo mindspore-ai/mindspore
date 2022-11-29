@@ -14,34 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOLWITHARGMAX_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOLWITHARGMAX_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_MAXPOOL_WITH_ARGMAX_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_MAXPOOL_WITH_ARGMAX_GRAD_GPU_KERNEL_H_
 
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <map>
 #include <utility>
+#include <map>
+#include "mindspore/core/utils/ms_context.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/maxpool_with_argmax_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "mindspore/core/ops/grad/max_pool_grad_with_argmax.h"
+#include "plugin/factory/ms_factory.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kXDimLowerLimit = 4;
-constexpr size_t kDyDimLowerLimit = 4;
-constexpr size_t kXIndexForN = 0;
-constexpr size_t kXIndexForC = 1;
-constexpr size_t kXIndexForH = 2;
-constexpr size_t kXIndexForW = 3;
-constexpr size_t kDyIndexForH = 2;
-constexpr size_t kDyIndexForW = 3;
-
-class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod,
-                                          public MatchKernelHelper<MaxPoolWithArgmaxGradGpuKernelMod> {
+class MaxPoolGradWithArgmaxGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MaxPoolWithArgmaxGradGpuKernelMod()
+  MaxPoolGradWithArgmaxGpuKernelMod()
       : n_(0),
         c_(0),
         x_height_(0),
@@ -53,36 +47,31 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod,
         dy_size_(0),
         index_size_(0),
         dx_size_(0) {}
-  ~MaxPoolWithArgmaxGradGpuKernelMod() override = default;
-  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  ~MaxPoolGradWithArgmaxGpuKernelMod() override = default;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    stream_ptr_ = stream_ptr;
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
-
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-
  protected:
-  template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs) {
-    T *dy_addr = GetDeviceAddress<T>(inputs, 1);
-    S *index_addr = GetDeviceAddress<S>(inputs, 2);
-    T *dx_addr = GetDeviceAddress<T>(outputs, 0);
-    CalMaxPoolWithArgmaxGrad(dy_addr, index_addr, n_, c_, x_height_, x_width_, dy_height_, dy_width_, dx_addr,
-                             reinterpret_cast<cudaStream_t>(stream_ptr_));
-    return true;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  using MaxPoolGradWithArgmaxFunc =
+    std::function<bool(MaxPoolGradWithArgmaxGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  MaxPoolGradWithArgmaxFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, MaxPoolGradWithArgmaxFunc>> func_list_;
+  std::string kernel_name_{};
   int n_;
   int c_;
   int x_height_;
@@ -104,4 +93,4 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod,
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOLWITHARGMAX_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_MAXPOOL_WITH_ARGMAX_GRAD_GPU_KERNEL_H_
