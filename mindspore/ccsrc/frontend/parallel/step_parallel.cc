@@ -1065,6 +1065,9 @@ CNodePtr SkipTrivialNodesMoveUp(CNodePtr node) {
   MS_EXCEPTION_IF_NULL(node);
   while (True) {
     if (IsPrimitiveCNode(node, prim::kPrimLoad) || IsInTrivialNodeList(node) || IsInAllGatherNodeList(node)) {
+      if (IsPrimitiveCNode(node->input(1), prim::kPrimMicroStepAllGather)) {
+        return node;
+      }
       if (node->input(1)->isa<Parameter>()) {
         return node;
       }
