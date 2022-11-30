@@ -49,9 +49,7 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   }
 
   MS_EXCEPTION_IF_NULL(host_ptr);
-  auto &stream = GPUDeviceManager::GetInstance().default_stream();
-  MS_EXCEPTION_IF_NULL(stream);
-  auto ret = GPUDeviceManager::GetInstance().SyncStream(stream);
+  auto ret = GPUDeviceManager::GetInstance().SyncAllStreams();
   if (!ret) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();

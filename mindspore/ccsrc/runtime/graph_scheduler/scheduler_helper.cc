@@ -199,8 +199,7 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
   }
 
   if (!AnfAlgo::OutputAddrExist(from_kernel, from_output_index, false)) {
-    MS_LOG(WARNING) << from_kernel->DebugString() << " device address not exit";
-    return;
+    MS_LOG(EXCEPTION) << from_kernel->DebugString() << " device address not exit";
   }
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
