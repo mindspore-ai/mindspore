@@ -37,7 +37,7 @@ mindspore.nn.Lamb
              /(\sqrt{\hat{\boldsymbol{v}}_{t}}+\epsilon) \\
             &\hspace{5mm}\boldsymbol{w}_{t+1}^{(i)}=\boldsymbol{w}_{t}^{(i)}- \gamma_{t}
              \frac{\boldsymbol{\phi}\left(\left\|\boldsymbol{w}_{t}^{(i)}\right\|\right)}
-             {\left\|\boldsymbol{w}_{t}^{(i)}+\lambda \boldsymbol{w}_{t}^{(i)}\right\|}\left(\boldsymbol{r}_{t}^{(i)}+
+             {\left\|\boldsymbol{r}_{t}^{(i)}+\lambda \boldsymbol{w}_{t}^{(i)}\right\|}\left(\boldsymbol{r}_{t}^{(i)}+
              \lambda \boldsymbol{w}_{t}^{(i)}\right) \\
             &\textbf{end for} \\[-1.ex]
             &\newline
