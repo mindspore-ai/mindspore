@@ -342,8 +342,13 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
   ++recompute_id;
   recomputed_node->AddAttr(kAttrRecomputeId, MakeValue(recompute_id));
   origin_node->AddAttr(kAttrRecomputeId, MakeValue(recompute_id));
-  if (IsPrimitiveCNode(origin_node, prim::kPrimDropout) && origin_node->HasPrimalAttr(kAttrFusion)) {
-    recomputed_node->AddPrimalAttr(kAttrFusion, origin_node->GetPrimalAttr(kAttrFusion));
+  static const PrimitiveSet dropout_prims = {prim::kPrimDropout, prim::kPrimDropoutDoMask, prim::kPrimDropoutDoMaskV3};
+  static const std::vector<std::string> need_primal_attr = {kAttrFusion, kPrimalAttrUniqueId,
+                                                            kPrimalAttrForwardUniqueId};
+  if (IsOneOfPrimitiveCNode(origin_node, dropout_prims)) {
+    for (auto &primal_attr : need_primal_attr) {
+      recomputed_node->AddPrimalAttr(primal_attr, origin_node->GetPrimalAttr(primal_attr));
+    }
   }
   return recomputed_node;
 }

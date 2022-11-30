@@ -238,8 +238,12 @@ CNodePtr CreateDropoutDoMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr
   dropout_do_mask->set_abstract(abstract);
   dropout_do_mask->set_scope(dropout->scope());
   common::AnfAlgo::CopyNodeAttr(kAttrKeepProb, dropout, dropout_do_mask);
-  if (dropout->HasPrimalAttr(kAttrMicro)) {
-    dropout_do_mask->AddPrimalAttr(kAttrMicro, dropout->GetPrimalAttr(kAttrMicro));
+
+  std::vector<std::string> need_primal_attr = {kAttrMicro, kPrimalAttrUniqueId, kPrimalAttrForwardUniqueId};
+  for (auto &primal_attr : need_primal_attr) {
+    if (dropout->HasPrimalAttr(primal_attr)) {
+      dropout_do_mask->AddPrimalAttr(primal_attr, dropout->GetPrimalAttr(primal_attr));
+    }
   }
   return dropout_do_mask;
 }

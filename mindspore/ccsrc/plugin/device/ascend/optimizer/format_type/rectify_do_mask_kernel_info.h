@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+
 namespace mindspore {
 namespace opt {
 class RectifyDoMaskKernelInfo : public PatternProcessPass {
@@ -31,16 +32,12 @@ class RectifyDoMaskKernelInfo : public PatternProcessPass {
       : PatternProcessPass("rectify_do_mask_kernel_info", multigraph),
         kernel_selecter(std::make_shared<KernelSelect>()) {}
   ~RectifyDoMaskKernelInfo() override = default;
+
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
-  void RectifyKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const FuncGraphPtr &graph) const;
-  AnfNodePtr RectifyKernelInfoInPynativeProcess(const AnfNodePtr &node) const;
-  std::string GetConvertFormat(const std::map<std::string, size_t> &format_counter) const;
-  void RectifyDropOutDoMaskKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const std::string &format,
-                                      const FuncGraphPtr &graph) const;
-  void ReSelecChildNodeKernelInfo(const CNodePtr &cnode, const FuncGraphPtr &graph) const;
+  void ReSelectChildNodeKernelInfo(const CNodePtr &cnode, const FuncGraphPtr &graph) const;
   KernelSelectPtr kernel_selecter;
 };
 }  // namespace opt
