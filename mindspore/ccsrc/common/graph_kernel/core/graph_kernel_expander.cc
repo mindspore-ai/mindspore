@@ -52,11 +52,6 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
         !AnfUtils::IsRealKernel(node) || !CanExpand(node)) {
       continue;
     }
-    auto all_op_index_info = ConvertOpUtils::GetOpIndexInfo();
-    auto iter = all_op_index_info.find(GetCNodePrimitive(node)->name());
-    if (iter != all_op_index_info.end()) {
-      (void)ConvertOpUtils::ConstInputToAttr(node, iter->second);
-    }
     MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope();
     auto newnode = InitExpander(node)->Run(node);
     if (newnode == nullptr) {

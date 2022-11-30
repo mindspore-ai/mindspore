@@ -40,6 +40,10 @@ class COMMON_EXPORT CallbackImpl : public Callback {
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
   void SetEmptyKernelInfo(const AnfNodePtr &node) override;
   void ResetKernelInfo(const AnfNodePtr &node) override;
+
+ private:
+  void CollectInputTypesAndFormats(const AnfNodePtr &node, std::vector<TypeId> *input_types,
+                                   std::vector<std::string> *input_formats, bool is_basic_node = false);
 };
 class COMMON_EXPORT CallbackImplWithInferShape : public CallbackImpl {
  public:
