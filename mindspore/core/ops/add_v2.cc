@@ -23,6 +23,7 @@
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
@@ -30,16 +31,21 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr AddV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("input_shape", x_shape, kEqual, y_shape, primitive->name(), ValueError);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  if (!is_gpu) {
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    CheckAndConvertUtils::Check("input_shape", x_shape, kEqual, y_shape, primitive->name(), ValueError);
+  }
   return BroadCastInferShape(primitive->name(), input_args);
 }
 
 TypePtr AddV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
-  const std::set<TypePtr> valid_types = {kInt8,    kInt16,   kInt32,   kInt64,     kUInt8,     kFloat,
-                                         kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16, kInt32,   kInt64,   kUInt8,   kUInt16,    kUInt32,
+                                         kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());

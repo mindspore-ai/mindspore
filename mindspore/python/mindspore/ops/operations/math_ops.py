@@ -365,7 +365,7 @@ class AddV2(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.math_ops import AddV2
