@@ -363,7 +363,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   bool modify_output() const { return modify_output_; }
   void set_modify_output(bool modify_output) { modify_output_ = modify_output; }
-  const mindspore::HashSet<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
+  const mindspore::OrderedSet<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
   void set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes);
   void ClearUsedForwardNodes() { used_forward_nodes_.clear(); }
 
@@ -471,7 +471,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // If the graph is decorated with @jit and runs grad process in pynative mode,
   // forward nodes used in grad graph will be added to output for holding output values.
   bool modify_output_ = false;
-  mindspore::HashSet<AnfNodePtr> used_forward_nodes_;
+  mindspore::OrderedSet<AnfNodePtr> used_forward_nodes_;
   // If the func_graph is input of switch node, and the condition of switch is AbstractTensor, need set true.
   bool is_tensor_condition_branch_ = false;
   // Corresponding python obj.
