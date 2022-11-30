@@ -31,7 +31,7 @@ void EltwiseFusionPass::MatchEltwise(const CNodePtr &cnode, const session::Kerne
   mindspore::HashSet<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
-  while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
+  while (CheckEltWiseOrBroadCastNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     if (record.size() == MAX_ELTWISE_SIZE) {
       break;
@@ -40,7 +40,7 @@ void EltwiseFusionPass::MatchEltwise(const CNodePtr &cnode, const session::Kerne
     MS_EXCEPTION_IF_NULL(input_cnode);
     eltwise_input = input_cnode->input(kIndex1);
   }
-  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input)) {
+  if (CheckDoubleInEltWiseOrBroadCastNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
   }
   if (record.size() < MIN_ELTWISE_SIZE) {
@@ -70,6 +70,39 @@ void EltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &ker
       MatchEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }
+}
+
+bool EltwiseFusionPass::CheckEltWiseOrBroadCastNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+  auto manager = kernel_graph.manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
+  return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
+         (AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE ||
+          AnfAlgo::GetFusionType(node) == kernel::FusionType::BROAD_CAST) &&
+         not_updatestate_nums == ELTWISE_USE && cnode->inputs().size() == ELTWISE_INPUT_SIZE;
+}
+
+bool EltwiseFusionPass::CheckDoubleInEltWiseOrBroadCastNode(const session::KernelGraph &kernel_graph,
+                                                            const AnfNodePtr &node) {
+  auto manager = kernel_graph.manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node)) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
+  return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
+         (AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE ||
+          AnfAlgo::GetFusionType(node) == kernel::FusionType::BROAD_CAST) &&
+         not_updatestate_nums == ELTWISE_USE && cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE;
 }
 }  // namespace opt
 }  // namespace mindspore

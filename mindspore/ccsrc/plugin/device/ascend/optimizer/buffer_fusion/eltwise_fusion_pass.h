@@ -38,6 +38,8 @@ class EltwiseFusionPass : public FusionBasePass {
 
  private:
   void MatchEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
+  bool CheckEltWiseOrBroadCastNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+  bool CheckDoubleInEltWiseOrBroadCastNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
 };
 }  // namespace opt
 }  // namespace mindspore
