@@ -1,7 +1,7 @@
 mindspore.ops.TruncatedNormal
 ==============================
 
-.. py:class:: mindspore.ops.TruncatedNormal(seed=0, seed2=0, dtype=mindspore.float32)
+.. py:class:: mindspore.ops.TruncatedNormal(seed=0, seed2=0, dtype=mstype.float32)
 
     返回一个具有指定shape的Tensor，其数值取自正态分布。
 

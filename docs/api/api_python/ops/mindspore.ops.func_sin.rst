@@ -16,3 +16,4 @@ mindspore.ops.sin
 
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。
+        - **TypeError** - 如果 `x` 的数据类型不是float16、float32或者float64、complex64、complex128。

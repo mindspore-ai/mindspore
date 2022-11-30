@@ -1,7 +1,7 @@
 mindspore.ops.UpperBound
 =========================
 
-.. py:class:: mindspore.ops.UpperBound(out_type=mindspore.dtype.int32)
+.. py:class:: mindspore.ops.UpperBound(out_type=mstype.int32)
 
     返回一个Tensor，该Tensor包含用于查找 `values` 的值的在升序排列的 `sorted_x` 中上界的索引。
 
