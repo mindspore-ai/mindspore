@@ -1,7 +1,7 @@
 mindspore.ops.coo_isinf
 ========================
 
-.. py:function:: mindspore.ops.coo_isinf(input: COOTensor)
+.. py:function:: mindspore.ops.coo_isinf(x: COOTensor)
 
     确定输入COOTensor每个位置上的元素是否为无穷大或无穷小。
 
@@ -14,10 +14,10 @@ mindspore.ops.coo_isinf
     其中 :math:`Inf` 表示不是一个数字。
 
     参数：
-        - **input** (COOTensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **x** (COOTensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
 
     返回：
         COOTensor，shape与相同的输入，数据的类型为bool。
 
     异常：
-        - **TypeError** - 如果 `input` 不是COOTensor。
+        - **TypeError** - 如果 `x` 不是COOTensor。

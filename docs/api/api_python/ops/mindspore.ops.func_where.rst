@@ -18,4 +18,4 @@ mindspore.ops.where
         Tensor，其中的元素从 `x` 和 `y` 中选取。
 
     异常：
-        -**ValueError** - `condition` 不可以被广播成 `x` 的shape。
+        - **ValueError** - `condition` 不可以被广播成 `x` 的shape。

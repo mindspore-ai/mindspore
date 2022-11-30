@@ -2195,7 +2195,7 @@ def inverse(x):
     """
     Compute the inverse of the input matrix.
 
-    Inputs:
+    Args:
         - **x** (Tensor) - A matrix to be calculated. Input `x` must be at least two dimensions, and the size of
           the last two dimensions must be the same size.
 
