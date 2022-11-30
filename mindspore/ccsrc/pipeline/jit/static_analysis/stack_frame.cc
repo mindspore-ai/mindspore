@@ -59,7 +59,7 @@ AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr 
 }
 
 // Inner jump implementation.
-StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr current_cnode,
+StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr &current_cnode,
                                  const AbstractFunctionPtr &graph_func) {
   MS_EXCEPTION_IF_NULL(engine);
   MS_EXCEPTION_IF_NULL(current_cnode);
@@ -69,6 +69,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   if (fg_evaluator == nullptr) {
     MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
   }
+  fg_evaluator->set_bound_node(current_cnode);
 
   // Evaluate the inputs firstly. Build arguments for the func graph.
   AbstractBasePtrList args_abs_list = GenerateArgsAbsList(engine, evaluator, current_cnode);

@@ -30,6 +30,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
+#include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
 
 namespace mindspore {
 namespace ad {
@@ -316,6 +317,18 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
 
   // Firstly we get bprop from mindir. If failed, parse the python function registered.
   FuncGraphPtr func_graph = nullptr;
+  if (common::GetEnv("MS_DEV_GET_PYTHON_BPROP") != "1") {
+    const auto &bprop_impl_map = graph_bprop::GetPrimitiveBpropImplMap();
+    auto iter = bprop_impl_map.find(prim);
+    if (iter != bprop_impl_map.end()) {
+      func_graph = iter->second(prim);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP)) {
+        func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
+      }
+      return func_graph;
+    }
+  }
 #ifndef _WIN32
   if (IsSerializableBprop(prim->name())) {
     func_graph = ImportBpropFromMindIR(prim);

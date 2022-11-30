@@ -968,6 +968,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
 
   EvaluatorPtr eval = engine_->GetEvaluatorFor(func_abs);
   MS_EXCEPTION_IF_NULL(eval);
+  eval->set_bound_node(cnode);
   AbstractBasePtrList argvals = eval->NormalizeArgs(args);
 
   std::pair<AbstractBasePtrList, AbstractBasePtr> result;
