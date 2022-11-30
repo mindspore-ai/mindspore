@@ -399,6 +399,7 @@ constexpr auto kSparseSegmentSqrtN = "SparseSegmentSqrtN";
 constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
 constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
 constexpr auto kRaggedTensorToSparse = "RaggedTensorToSparse";
+constexpr auto kChannelShuffle = "ChannelShuffle";
 
 // Sparse Grad ops
 constexpr auto kSparseAddGrad = "SparseAddGrad";
@@ -1090,6 +1091,7 @@ GVAR_DEF(PrimitivePtr, kPrimSparseApplyMomentum, std::make_shared<Primitive>(kSp
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyProximalGradientDescent,
          std::make_shared<Primitive>(kSparseApplyProximalGradientDescent));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool3DGrad, std::make_shared<Primitive>("AdaptiveMaxPool3DGrad"));
+GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffle));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

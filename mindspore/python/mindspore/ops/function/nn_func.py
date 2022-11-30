@@ -34,6 +34,7 @@ from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_e
 from mindspore.ops.operations.nn_ops import MaxUnpool2D, MaxUnpool3D
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations.nn_ops import PadV3
+from mindspore.ops.operations.nn_ops import ChannelShuffle
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -4723,6 +4724,48 @@ def gelu(input_x, approximate='none'):
         output = output * input_x * Tensor([0.5])
 
     return output
+
+
+def channel_shuffle(x, groups):
+    r"""
+    Divide the channels in a tensor of shape (*, C, H, W) into g groups and
+    rearrange them as (*, C/g, g, H*W), while keeping the original tensor shapes.
+
+    Args:
+        group (int): Number of groups to divide channels in.
+        x (Tensor): Tensor of shape :math:`(*, C, H, W)`,
+          with float16, float32, int8, int16, int32, int64, uint8, uint16, uint32, uint64 data type.
+
+    Returns:
+        A Tensor, has the same type as the `x`, and has the shape :math:`(*, C, H, W)`.
+
+    Raises:
+        TypeError: If data type of `x` is not one of the following:
+                   float16, float32, int8, int16, int32, int64, uint8, uint16, uint32, uint64.
+        TypeError: If dim of `x` is < 4.
+        ValueError: If `group` is not a positive number.
+        ValueError: If number of channels can not be divisible by `group`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> group = 2
+        >>> x = Tensor(np.arange(1* 4 * 2 * 2).reshape(1, 4, 2, 2).astype(np.int16))
+        >>> y = mindspore.ops.channel_shuffle(x, group)
+        >>> print(y)
+        [[[[ 0  1]
+           [ 2  3]]
+           [[ 8  9]
+           [10 11]]
+           [[ 4  5]
+           [ 6  7]]
+           [[12 13]
+           [14 15]]]]
+    """
+    channel_shuffle_func = ChannelShuffle(group=groups)
+    y = channel_shuffle_func(x)
+    return y
 
 
 @constexpr

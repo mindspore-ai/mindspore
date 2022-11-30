@@ -192,6 +192,7 @@ constexpr auto kRandpermV2 = "RandpermV2";
 constexpr auto kSmoothL1Loss = "SmoothL1Loss";
 constexpr auto kSmoothL1LossGrad = "SmoothL1LossGrad";
 constexpr auto kSparseCross = "SparseCross";
+constexpr auto kChannelShuffle = "ChannelShuffle";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -335,10 +336,12 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kArgmax, "ArgMax"},
   {kArgmin, "ArgMin"},
   {kGLU, "Glu"},
+  {kChannelShuffle, "ShuffleChannel"},
   {kStridedSliceV2, "StridedSlice"},
   {kAdaptiveMaxPool3D, "AdaptiveMaxPool3d"},
   {kRandpermV2, "StatelessRandperm"},
   {kStridedSliceV2Grad, "StridedSliceGrad"}};
+
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number
