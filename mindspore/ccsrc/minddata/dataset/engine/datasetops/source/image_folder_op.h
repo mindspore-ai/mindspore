@@ -126,6 +126,11 @@ class ImageFolderOp : public MappableLeafOp {
   //// \return Status of the function
   Status GetNumClasses(int64_t *num_classes) override;
 
+  //// \brief Gets the class indexing
+  //// \param[out] output_class_indexing The index mapping of dataset
+  //// \return Status The status code return
+  Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) override;
+
  protected:
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row

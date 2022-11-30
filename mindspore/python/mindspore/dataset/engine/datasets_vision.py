@@ -2458,6 +2458,26 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing,
                                    self.decrypt)
 
+    def get_class_indexing(self):
+        """
+        Get the class index.
+
+        Returns:
+            dict, a str-to-int mapping from label name to index.
+
+        Examples:
+            >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
+            >>>
+            >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir)
+            >>> class_indexing = dataset.get_class_indexing()
+        """
+        if self.class_indexing is None or not self.class_indexing:
+            runtime_getter = self._init_tree_getters()
+            _class_indexing = runtime_getter[0].GetClassIndexing()
+            for pair in _class_indexing:
+                self.class_indexing[pair[0]] = pair[1][0]
+        return self.class_indexing
+
 
 class KITTIDataset(MappableDataset):
     """

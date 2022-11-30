@@ -352,5 +352,50 @@ Status ImageFolderOp::InitPullMode() {
   }
   return PrepareData();
 }
+
+Status ImageFolderOp::GetClassIndexing(
+  std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  RETURN_UNEXPECTED_IF_NULL(output_class_indexing);
+  output_class_indexing->clear();
+
+  // if class_index_ exist, return directly
+  if (!class_index_.empty()) {
+    (void)std::transform(
+      class_index_.begin(), class_index_.end(), std::back_inserter(*output_class_indexing),
+      [](const auto &elem) { return std::pair<std::string, std::vector<int32_t>>(elem.first, {elem.second}); });
+    return Status::OK();
+  }
+
+  // Iter folder path
+  Path dir(folder_path_);
+  if (!dir.Exists() || !dir.IsDirectory()) {
+    RETURN_STATUS_UNEXPECTED("Invalid dataset_dir, " + folder_path_ + " does not exist or not a directory.");
+  }
+
+  std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(&dir);
+  RETURN_UNEXPECTED_IF_NULL(dir_itr);
+  std::vector<std::string> folder_names;
+  while (dir_itr->HasNext()) {
+    Path subdir = dir_itr->Next();
+    if (subdir.IsDirectory()) {
+      folder_names.push_back(subdir.Basename());
+    }
+  }
+  if (folder_names.empty()) {
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + DatasetName(true) +
+                             "Dataset API can't read the data file (interface mismatch or no data found). Check " +
+                             DatasetName() + " file path: " + folder_path_);
+  }
+
+  std::sort(folder_names.begin(), folder_names.end());
+  int32_t label_count = 0;
+  (void)std::transform(folder_names.begin(), folder_names.end(), std::back_inserter(*output_class_indexing),
+                       [&label_count](const auto &elem) {
+                         auto p = std::pair<std::string, std::vector<int32_t>>(elem, {label_count});
+                         label_count++;
+                         return p;
+                       });
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

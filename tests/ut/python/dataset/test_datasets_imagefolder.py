@@ -1098,6 +1098,23 @@ def test_imagefolder_error_sample_mapop():
     test_config(1, "../data/dataset/testImageNetError/Sample3_text/train")
 
 
+def test_imagefolder_classindexing():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset get class indexing
+    Expectation: The dataset is processed as expected
+    """
+    # define ImageFolderDataset with different class_indexing
+    data1 = ds.ImageFolderDataset(DATA_DIR, class_indexing=None)
+    index1 = data1.get_class_indexing()
+    assert index1 == {'class1': 0, 'class2': 1, 'class3': 2, 'class4': 3}
+
+    data2 = ds.ImageFolderDataset(DATA_DIR, class_indexing={"class1": 4, "class2": 0})
+    data2 = data2.repeat(2)
+    index2 = data2.get_class_indexing()
+    assert index2 == {'class1': 4, 'class2': 0}
+
+
 if __name__ == '__main__':
     test_imagefolder_basic()
     test_imagefolder_numsamples()
@@ -1130,3 +1147,4 @@ if __name__ == '__main__':
     test_imagefolder_decrypt()
     test_imagefolder_error_sample_sourceop()
     test_imagefolder_error_sample_mapop()
+    test_imagefolder_classindexing()
