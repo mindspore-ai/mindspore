@@ -30,7 +30,7 @@ namespace {
 bool TbeCheckSupported(const CNodePtr &transdata_node) {
   MS_EXCEPTION_IF_NULL(transdata_node);
   auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
-  auto json_creator = std::make_shared<kernel::SelectTbeJsonCreator>();
+  auto json_creator = std::make_shared<kernel::BuildTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
   nlohmann::json kernel_json;
   auto ret = json_creator->GenJson(transdata_node, &kernel_json);
