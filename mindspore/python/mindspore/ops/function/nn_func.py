@@ -2396,7 +2396,7 @@ def _check_pad_inputs(padding):
 
 def pad(input_x, padding, mode='constant', value=None):
     r"""
-    Pads the input tensor according to the paddings.
+    Pads the input tensor according to the padding.
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
@@ -2478,6 +2478,8 @@ def pad(input_x, padding, mode='constant', value=None):
     """
     if not isinstance(input_x, Tensor):
         raise TypeError(f"For 'pad', the type of 'input_x' must be Tensor, but got {type(input_x)}.")
+    if (isinstance(padding, (tuple, list)) and not padding) or (isinstance(padding, Tensor) and padding.shape == (0,)):
+        return input_x
     if not isinstance(padding, Tensor):
         _check_pad_inputs(padding)
         padding = Tensor(padding)
