@@ -49,7 +49,7 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
   auto gen_mask_output_nodes = GetRealNodeUsedList(graph, cnode);
   MS_EXCEPTION_IF_NULL(gen_mask_output_nodes);
   for (const auto &output_node : *gen_mask_output_nodes) {
-    if (common::AnfAlgo::GetCNodeName(output_node.first) == prim::kPrimDropoutDoMask->name()) {
+    if (common::AnfAlgo::GetCNodeName(output_node.first) == prim::kPrimDropOutDoMask->name()) {
       MS_EXCEPTION_IF_NULL(output_node.first);
       auto output_cnode = output_node.first->cast<CNodePtr>();
       do_mask_node_list.push_back(output_cnode);
@@ -128,7 +128,7 @@ AnfNodePtr RectifyDoMaskKernelInfo::RectifyKernelInfoInPynativeProcess(const Anf
   if (cnode == nullptr) {
     return nullptr;
   }
-  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutDoMask->name()) {
+  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropOutDoMask->name()) {
     return nullptr;
   }
   auto do_mask_input_format = AnfAlgo::GetInputFormat(node, 0);

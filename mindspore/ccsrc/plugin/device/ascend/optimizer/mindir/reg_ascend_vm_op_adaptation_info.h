@@ -110,13 +110,12 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeBilinearGradOpName).set_backend_op_name(
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSeLUOpName).set_backend_op_name(kSeluOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSmoothL1LossOpName).set_backend_op_name(kSmoothL1LossV2OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSmoothL1LossGradOpName).set_backend_op_name(kSmoothL1LossGradV2OpName);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSoftmaxOpName).set_backend_op_name(kSoftMaxV2OpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSoftmaxOpName).set_backend_op_name(kSoftmaxV2OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSoftmaxV2WithDropoutDoMaskV3OpName)
-  .set_backend_op_name(kSoftmaxV2WithDropoutDoMaskV3DOpName);
+  .set_backend_op_name(kSoftmaxV2WithDropOutDoMaskV3DOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyAdagradOpName)
   .set_target_op_name(kSparseApplyAdagradDOpName)
   .set_input_attr_info(2, "float");
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseGatherV2OpName).set_backend_op_name(kGatherV2OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyProximalAdagradOpName)
   .set_backend_op_name(kSparseApplyProximalAdagradDOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kStackOpName).set_backend_op_name(kPackOpName);
@@ -284,7 +283,14 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillV2OpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(0, "listInt");
 
+// In hisi code, first check dynamic impl in GatherV2
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherOpName)
+  .set_backend_op_name(kGatherV2OpName)
+  .set_target_op_name(kGatherV2DOpName)
+  .set_need_tbe_check_supported(true)
+  .set_input_attr_info(2, "int");
+
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseGatherV2OpName)
   .set_backend_op_name(kGatherV2OpName)
   .set_target_op_name(kGatherV2DOpName)
   .set_need_tbe_check_supported(true)
@@ -310,10 +316,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kInplaceUpdateOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "listInt");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kInTopKOpName)
-  .set_target_op_name(kInTopKDOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(2, "int");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kInTopKOpName).set_backend_op_name(kInTopKDOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kMaxPoolV2OpName)
   .set_target_op_name(kMaxPoolExt2OpName)

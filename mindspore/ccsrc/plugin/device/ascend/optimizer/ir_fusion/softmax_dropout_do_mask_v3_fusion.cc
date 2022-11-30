@@ -77,7 +77,7 @@ const AnfNodePtr SoftmaxDropoutDoMaskV3Fusion::Process(const FuncGraphPtr &graph
 
   // create SoftmaxV2WithDropoutDoMaskV3D
   std::vector<AnfNodePtr> softmax_dropout_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kSoftmaxV2WithDropoutDoMaskV3DOpName)), softmax->input(kIndex1),
+    NewValueNode(std::make_shared<Primitive>(kSoftmaxV2WithDropOutDoMaskV3DOpName)), softmax->input(kIndex1),
     dropout->input(kIndex2)};
   auto softmax_dropout = NewCNode(softmax_dropout_inputs, graph);
   MS_EXCEPTION_IF_NULL(softmax_dropout);

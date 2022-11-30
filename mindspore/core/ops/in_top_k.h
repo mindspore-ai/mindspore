@@ -44,6 +44,9 @@ class MIND_API InTopK : public BaseOperator {
   /// \return k.
   int64_t get_k() const;
 };
+
+abstract::AbstractBasePtr InTopKInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

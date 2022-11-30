@@ -71,6 +71,15 @@ class InTopKInfer : public abstract::OpInferBase {
     return std::make_shared<TensorType>(kBool);
   }
 };
+
+abstract::AbstractBasePtr InTopKInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  InTopKInfer in_topk;
+  auto type = in_topk.InferType(primitive, input_args);
+  auto shape = in_topk.InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
 REGISTER_PRIMITIVE_OP_INFER_IMPL(InTopK, prim::kPrimInTopK, InTopKInfer, false);
 }  // namespace ops
 }  // namespace mindspore

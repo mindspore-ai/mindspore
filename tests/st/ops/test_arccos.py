@@ -44,4 +44,4 @@ def test_arccos(mode):
     net = Net()
     output = net(x)
     expect_output = np.array([0.737726, 1.5307857, 1.2661036, 0.9764105], dtype=np.float32)
-    assert np.allclose(output.asnumpy(), expect_output)
+    assert np.allclose(output.asnumpy(), expect_output, rtol=5e-03, atol=1.e-8)

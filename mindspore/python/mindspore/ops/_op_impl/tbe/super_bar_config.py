@@ -314,7 +314,8 @@ super_bar_config = {
         "FusionOp_Conv2DBackpropInputD_AddN_ReluGradV2": [1, 0, 2, 3],
         "FusionOp_Conv2DBackpropInputD_ReluGradV2": [1, 0, 2]
     },
-    "SkipDynamicCompileStatic": ["SoftMaxV2", "TransData", "PRelu", "Trunc", "AccumulateNV2"],
+    "SkipDynamicCompileStatic": ["SoftmaxV2", "PRelu", "Trunc", "AccumulateNV2",
+                                 "SoftmaxCrossEntropyWithLogits"],
     # BroadcastTo: The name is occupied
     # DynamicBroadcastTo: The name is occupied
     # BatchToSpaceD: attr type is listInt，not listListInt
@@ -338,10 +339,14 @@ super_bar_config = {
     # AvgPool3DGradD second device format is facz_3d, but in json, the key is ndhwc
     # DataFormatDimMap:  attr order swap
     # DepthwiseConv2D: Accuracy issues(second format is error in python)
+    # ACos: dynamic impl errpr
+    # TransData: support boll
+    # ScatterNdD: Accuracy issues
+    # Trace: Hadn't adapted tbe implementation
     "SkipNodes": ["BroadcastTo", "DynamicBroadcastTo", "BatchToSpaceD", "BatchToSpaceNDD", "SpaceToBatchD",
                   "SpaceToBatchNDD", "DynamicGRUV2", "DynamicRNN", "KLDivLossGrad", "ScatterNdUpdate", "ScatterNdAdd",
                   "ConcatOffset", "MirrorPad", "InplaceIndexAdd", "Expand", "ExpandD", "Cross", "LinSpaceD", "Cast",
-                  "AvgPool3DGradD", "DataFormatDimMap", "DepthwiseConv2D"]
+                  "AvgPool3DGradD", "DataFormatDimMap", "DepthwiseConv2D", "Trace", "ACos", "TransData", "ScatterNdD"]
 }
 
 

@@ -32,3 +32,6 @@ from .cast_ds import _cast_ds_tbe  # Accuracy issues
 from .avg_pool_3d_grad import _avg_pool_3d_grad_tbe  # Second device format is facz_3d, but in json, the key is ndhwc
 from .data_format_dim_map_ds import _data_format_dim_map_ds_tbe  # attr order swap
 from .depthwise_conv2d import _depthwise_conv2d_tbe  # Accuracy issues(second format is error in python)
+from .acos import _acos_tbe # Accuracy issues(task error in parallel)
+from .trans_data_ds import _trans_data_ds_tbe # support bool
+from .scatter_nd_d import _scatter_nd_d_tbe # # in python no check supported

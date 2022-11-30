@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#include "backend/common/pass/clip_by_norm_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/ascend_clip_by_norm_fission.h"
 #include <algorithm>
 #include "ir/anf.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::opt {
 namespace {
 ShapeVector GetOutputInferShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -63,8 +62,8 @@ std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, co
 }
 }  // namespace
 
-AnfNodePtr ClipByNormFission::CreateCNodeBase(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &inps,
-                                              const std::string &op_name, const AnfNodePtr &node) const {
+AnfNodePtr AscendClipByNormFission::CreateCNodeBase(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &inps,
+                                                    const std::string &op_name, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(std::make_shared<Primitive>(op_name))};
@@ -79,8 +78,8 @@ AnfNodePtr ClipByNormFission::CreateCNodeBase(const FuncGraphPtr &func_graph, co
   return new_node;
 }
 
-AnfNodePtr ClipByNormFission::CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
-                                               const ShapeVector &shape_vec, const TypeId &type_id) const {
+AnfNodePtr AscendClipByNormFission::CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
+                                                     const ShapeVector &shape_vec, const TypeId &type_id) const {
   auto square = CreateCNodeBase(func_graph, {inp}, kSquareOpName, inp);
   MS_EXCEPTION_IF_NULL(square);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
@@ -88,10 +87,10 @@ AnfNodePtr ClipByNormFission::CreateSquareNode(const FuncGraphPtr &func_graph, c
   return square;
 }
 
-AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square,
-                                                  const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
-                                                  const TypeId &type_id) const {
-  auto reduce_sum = CreateCNodeBase(func_graph, {square}, kReduceSumOpName, square);
+AnfNodePtr AscendClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square,
+                                                        const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
+                                                        const TypeId &type_id) const {
+  auto reduce_sum = CreateCNodeBase(func_graph, {square}, kReduceSumDOpName, square);
   MS_EXCEPTION_IF_NULL(reduce_sum);
   // Sync the attribute of `ClipByNorm` to `ReduceSum`
   auto clip_by_norm_prim = common::AnfAlgo::GetCNodePrimitive(clip_by_norm);
@@ -133,9 +132,9 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
   return reduce_sum;
 }
 
-AnfNodePtr ClipByNormFission::CreateConstantNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
-                                                 const ShapeVector &shape_vec, const TypeId &type_id,
-                                                 const std::string &op_name) const {
+AnfNodePtr AscendClipByNormFission::CreateConstantNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
+                                                       const ShapeVector &shape_vec, const TypeId &type_id,
+                                                       const std::string &op_name) const {
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape_vec);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -151,8 +150,8 @@ AnfNodePtr ClipByNormFission::CreateConstantNode(const FuncGraphPtr &func_graph,
   return constant_node;
 }
 
-AnfNodePtr ClipByNormFission::CreateGreaterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp_a,
-                                                const AnfNodePtr &inp_b, const ShapeVector &shape_vec) const {
+AnfNodePtr AscendClipByNormFission::CreateGreaterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp_a,
+                                                      const AnfNodePtr &inp_b, const ShapeVector &shape_vec) const {
   auto greater = CreateCNodeBase(func_graph, {inp_a, inp_b}, kGreaterOpName, inp_a);
   MS_EXCEPTION_IF_NULL(greater);
   auto abs = std::make_shared<abstract::AbstractTensor>(kBool, shape_vec);
@@ -160,9 +159,9 @@ AnfNodePtr ClipByNormFission::CreateGreaterNode(const FuncGraphPtr &func_graph, 
   return greater;
 }
 
-AnfNodePtr ClipByNormFission::CreateSelectNode(const FuncGraphPtr &func_graph, const AnfNodePtr &cond,
-                                               const AnfNodePtr &inp_a, const AnfNodePtr &inp_b,
-                                               const ShapeVector &shape_vec, const TypeId &type_id) const {
+AnfNodePtr AscendClipByNormFission::CreateSelectNode(const FuncGraphPtr &func_graph, const AnfNodePtr &cond,
+                                                     const AnfNodePtr &inp_a, const AnfNodePtr &inp_b,
+                                                     const ShapeVector &shape_vec, const TypeId &type_id) const {
   auto select = CreateCNodeBase(func_graph, {cond, inp_a, inp_b}, kSelectOpName, inp_a);
   MS_EXCEPTION_IF_NULL(select);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
@@ -170,8 +169,8 @@ AnfNodePtr ClipByNormFission::CreateSelectNode(const FuncGraphPtr &func_graph, c
   return select;
 }
 
-AnfNodePtr ClipByNormFission::CreateSqrtNode(const FuncGraphPtr &func_graph, const AnfNodePtr &reduce_sum,
-                                             const TypeId &type_id) const {
+AnfNodePtr AscendClipByNormFission::CreateSqrtNode(const FuncGraphPtr &func_graph, const AnfNodePtr &reduce_sum,
+                                                   const TypeId &type_id) const {
   auto sqrt = CreateCNodeBase(func_graph, {reduce_sum}, kSqrtOpName, reduce_sum);
   MS_EXCEPTION_IF_NULL(sqrt);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), GetOutputInferShape(reduce_sum));
@@ -179,8 +178,8 @@ AnfNodePtr ClipByNormFission::CreateSqrtNode(const FuncGraphPtr &func_graph, con
   return sqrt;
 }
 
-AnfNodePtr ClipByNormFission::CreateMaxNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &y,
-                                            const TypeId &type_id) const {
+AnfNodePtr AscendClipByNormFission::CreateMaxNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x,
+                                                  const AnfNodePtr &y, const TypeId &type_id) const {
   auto max = CreateCNodeBase(func_graph, {x, y}, kMaximumOpName, y);
   MS_EXCEPTION_IF_NULL(max);
   auto x_shape = GetOutputInferShape(x);
@@ -191,9 +190,9 @@ AnfNodePtr ClipByNormFission::CreateMaxNode(const FuncGraphPtr &func_graph, cons
   return max;
 }
 
-AnfNodePtr ClipByNormFission::CreateMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x,
-                                            const AnfNodePtr &clip_norm, const ShapeVector &shape_vec,
-                                            const TypeId &type_id) const {
+AnfNodePtr AscendClipByNormFission::CreateMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x,
+                                                  const AnfNodePtr &clip_norm, const ShapeVector &shape_vec,
+                                                  const TypeId &type_id) const {
   auto mul = CreateCNodeBase(func_graph, {x, clip_norm}, kMulOpName, x);
   MS_EXCEPTION_IF_NULL(mul);
   auto output_shape = shape_vec;
@@ -207,19 +206,19 @@ AnfNodePtr ClipByNormFission::CreateMulNode(const FuncGraphPtr &func_graph, cons
   return mul;
 }
 
-AnfNodePtr ClipByNormFission::CreateDivNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dividend,
-                                            const AnfNodePtr &divisor, const ShapeVector &shape_vec,
-                                            const TypeId &type_id) const {
-  auto div = CreateCNodeBase(func_graph, {dividend, divisor}, kDivOpName, divisor);
+AnfNodePtr AscendClipByNormFission::CreateDivNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dividend,
+                                                  const AnfNodePtr &divisor, const ShapeVector &shape_vec,
+                                                  const TypeId &type_id) const {
+  auto div = CreateCNodeBase(func_graph, {dividend, divisor}, kTruncateDivOpName, divisor);
   MS_EXCEPTION_IF_NULL(div);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
   div->set_abstract(abs);
   return div;
 }
 
-AnfNodePtr ClipByNormFission::CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
-                                             const ShapeVector &shape_vec, const TypeId &src_type_id,
-                                             const TypeId &dst_type_id) const {
+AnfNodePtr AscendClipByNormFission::CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
+                                                   const ShapeVector &shape_vec, const TypeId &src_type_id,
+                                                   const TypeId &dst_type_id) const {
   if (src_type_id == dst_type_id) {
     return inp;
   }
@@ -240,13 +239,13 @@ AnfNodePtr ClipByNormFission::CreateCastNode(const FuncGraphPtr &func_graph, con
   return cast;
 }
 
-const BaseRef ClipByNormFission::DefinePattern() const {
+const BaseRef AscendClipByNormFission::DefinePattern() const {
   VarPtr seq_xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimClipByNorm, seq_xs});
 }
 
-const AnfNodePtr ClipByNormFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                            const EquivPtr &) const {
+const AnfNodePtr AscendClipByNormFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                  const EquivPtr &) const {
   // Get `ClipByNorm` cnode
   MS_EXCEPTION_IF_NULL(node);
   auto clip_by_norm = node->cast<CNodePtr>();
@@ -292,5 +291,4 @@ const AnfNodePtr ClipByNormFission::Process(const FuncGraphPtr &func_graph, cons
   auto div = CreateDivNode(func_graph, mul, max, shape_vec, dst_type_id);
   return div;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::opt
