@@ -7241,7 +7241,7 @@ class Polar(Primitive):
         ValueError: If `abs`'s shape is not the same as `angle`.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> polar = ops.Polar()
