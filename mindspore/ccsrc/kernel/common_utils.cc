@@ -932,8 +932,12 @@ std::string GetProcessorStr(const AnfNodePtr &anf_node) {
       processor = kProcessorCuda;
       break;
 
+    case Processor::CPU:
+      processor = kProcessorCpu;
+      break;
+
     default:
-      MS_LOG(ERROR) << "Unknown processor type.";
+      MS_LOG(DEBUG) << "Unknown processor type.";
       break;
   }
 
