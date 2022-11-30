@@ -3,7 +3,7 @@ mindspore.ops.pad
 
 .. py:function:: mindspore.ops.pad(input_x, padding, mode='constant', value=None)
 
-    根据参数 `paddings` 对输入进行填充。
+    根据参数 `padding` 对输入进行填充。
 
     参数：
         - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(N, *)`， :math:`*` 代表任意附加维度。
