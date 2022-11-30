@@ -249,7 +249,7 @@ int ConjugateTransposeCpuKernelMod::DoTranspose(const T *in_data, T *out_data, c
   const int *perm = transpose_param->perm_;
   const int *strides = transpose_param->strides_;
   const int *out_strides = transpose_param->out_strides_;
-  int data_size = static_cast<int32_t>(transpose_param->data_num_) * static_cast<int32_t>(sizeof(T));
+  data_size = static_cast<int32_t>(transpose_param->data_num_) * static_cast<int32_t>(sizeof(T));
   int num_axes = transpose_param->num_axes_;
   bool needTranspose = false;
   for (size_t i = 1; i < static_cast<uint32_t>(num_axes); ++i) {
@@ -349,8 +349,11 @@ void ConjugateTransposeCpuKernelMod::TransposeDim4(const T *in_data, T *out_data
         size_t out_stride2_k = k * out_stride2;
         size_t stride2_k = k * stride2;
         for (size_t m = 0; m < static_cast<uint32_t>(output3); ++m) {
-          out_data[out_stride0_i + out_stride1_j + out_stride2_k + m] =
-            in_data[stride0_i + stride1_j + stride2_k + m * stride3];
+          int num = stride0_i + stride1_j + stride2_k + m * stride3;
+          if (num >= data_size) {
+            MS_LOG(EXCEPTION) << "For 'ConjugateTranspose', dimension of input data exceed data size." << num;
+          }
+          out_data[out_stride0_i + out_stride1_j + out_stride2_k + m] = in_data[num];
         }
       }
     }
