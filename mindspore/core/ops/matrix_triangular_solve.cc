@@ -22,34 +22,70 @@
 #include "ops/matrix_triangular_solve.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
+std::vector<int64_t> MatrixTriangularSolveBcastHelper(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape) {
+  if (x_shape == y_shape) {
+    return x_shape;
+  }
+  constexpr int dynamic_rank_len = 1;
+  constexpr int dynamic_rank_value = -2;
+  if ((x_shape.size() == dynamic_rank_len && x_shape[0] == dynamic_rank_value) ||
+      (y_shape.size() == dynamic_rank_len && y_shape[0] == dynamic_rank_value)) {
+    return std::vector<int64_t>({dynamic_rank_value});
+  }
+  auto x_length = static_cast<int64_t>(x_shape.size());
+  auto y_length = static_cast<int64_t>(y_shape.size());
+  auto length = x_length < y_length ? x_length : y_length;
+  std::vector<int64_t> broadcast_shape;
+  if (x_length == length) {
+    (void)std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
+  } else {
+    (void)std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
+  }
+  for (int64_t i = -length; i < 0; i++) {
+    if (x_shape[LongToSize(x_length + i)] == 1) {
+      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
+    } else if (y_shape[LongToSize(y_length + i)] == 1) {
+      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
+    } else if (x_shape[LongToSize(x_length + i)] == y_shape[LongToSize(y_length + i)]) {
+      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
+    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::kShapeDimAny) ||
+               (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
+      broadcast_shape.push_back(abstract::Shape::kShapeDimAny);
+    } else {
+      MS_EXCEPTION(ValueError)
+        << "For 'MatrixTriangularSolve', the batch dimensions of 'matrix' and 'rhs' should satisfy"
+        << "the broadcast rules, but got " << x_shape << " and " << y_shape << " .";
+    }
+  }
+  return broadcast_shape;
+}
+
 abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  if (IsDynamic(matrix_shape) || IsDynamic(rhs_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("input matrix rank", SizeToLong(matrix_shape.size()), kGreaterEqual, 2L,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("input rhs rank", SizeToLong(rhs_shape.size()), kGreaterEqual, 2L,
                                            prim_name);
-  constexpr size_t offset = 2;
-  std::vector<int> matrix_last(matrix_shape.end() - offset, matrix_shape.end());
-  std::vector<int> rhs_last(rhs_shape.end() - offset, rhs_shape.end());
-  int64_t matrix_row = matrix_last[0];
-  int64_t matrix_col = matrix_last[1];
-  int64_t rhs_row = rhs_last[0];
-  for (size_t i = 0; i < matrix_shape.size() - offset; ++i) {
-    if (matrix_shape[i] != rhs_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << " shapes in batch dimension should be same, dim[" << i
-                               << "] are not the same, "
-                               << "while matrix is " << matrix_shape[i] << ", rhs is " << rhs_shape[i];
-    }
-  }
+  constexpr size_t kIndex1 = 1;
+  constexpr size_t kIndex2 = 2;
+  int64_t matrix_row = matrix_shape[matrix_shape.size() - kIndex2];
+  int64_t matrix_col = matrix_shape[matrix_shape.size() - kIndex1];
+  int64_t rhs_row = rhs_shape[rhs_shape.size() - kIndex2];
+  int64_t rhs_col = rhs_shape[rhs_shape.size() - kIndex1];
   if (matrix_row != rhs_row) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << " evaluator shapes of inputs can not do this operator, "
                              << "got " << matrix_row << " and " << rhs_row << " , with matrix row " << matrix_row
@@ -61,7 +97,35 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
                              << ", matrix col " << matrix_col
                              << ". Inner-most 2 demision of input matrix must be square";
   }
-  return std::make_shared<abstract::Shape>(rhs_shape);
+  std::vector<int64_t> output_shape;
+  const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target == kGPUDevice) {
+    if (matrix_shape.size() > kIndex2 && rhs_shape.size() > kIndex2) {
+      std::vector<int64_t> matrix_batch_dims(matrix_shape.begin(), matrix_shape.end() - kIndex2);
+      std::vector<int64_t> rhs_batch_dims(rhs_shape.begin(), rhs_shape.end() - kIndex2);
+      output_shape = MatrixTriangularSolveBcastHelper(matrix_batch_dims, rhs_batch_dims);
+      output_shape.emplace_back(rhs_row);
+      output_shape.emplace_back(rhs_col);
+    } else if (matrix_shape.size() > kIndex2 && rhs_shape.size() == kIndex2) {
+      std::vector<int64_t> matrix_batch_dimensions(matrix_shape.begin(), matrix_shape.end() - kIndex2);
+      output_shape = matrix_batch_dimensions;
+      output_shape.emplace_back(rhs_row);
+      output_shape.emplace_back(rhs_col);
+    } else {
+      output_shape = rhs_shape;
+    }
+  } else {
+    for (size_t i = 0; i < matrix_shape.size() - kIndex2; ++i) {
+      if (matrix_shape[i] != rhs_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For " << prim_name << " shapes in batch dimension should be same, dim[" << i
+                                 << "] are not the same, "
+                                 << "while matrix is " << matrix_shape[i] << ", rhs is " << rhs_shape[i];
+      }
+    }
+    output_shape = rhs_shape;
+  }
+
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr MatrixTriangularSolveInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
