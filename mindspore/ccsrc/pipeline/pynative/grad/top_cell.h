@@ -58,9 +58,10 @@ using GraphInfoPtr = std::shared_ptr<GraphInfo>;
 class TopCellInfo {
  public:
   ~TopCellInfo() = default;
-  TopCellInfo(size_t grad_order, std::string c_cell_id, std::string cellid, std::string already_run_cell_id,
-              pipeline::ResourcePtr r, FuncGraphPtr fg)
-      : grad_order_(grad_order),
+  TopCellInfo(bool is_high_order_top_cell, size_t grad_order, std::string c_cell_id, std::string cellid,
+              std::string already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg)
+      : is_high_order_top_cell_(is_high_order_top_cell),
+        grad_order_(grad_order),
         c_cell_id_(std::move(c_cell_id)),
         cell_id_(std::move(cellid)),
         already_run_cell_id_(std::move(already_run_cell_id)),
@@ -76,12 +77,13 @@ class TopCellInfo {
   void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
   void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info);
   inline void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
-  inline bool ms_function_flag() const { return ms_function_flag_; }
-  inline void set_ms_function_flag(bool ms_function_flag) { ms_function_flag_ = ms_function_flag; }
   inline bool forward_already_run() const { return forward_already_run_; }
   inline void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
   inline bool need_compile_graph() const { return need_compile_graph_; }
   inline void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
+  inline bool is_high_order_top_cell() const { return is_high_order_top_cell_; }
+  inline void set_need_do_final_opt(bool need_do_final_opt) { need_do_final_opt_ = need_do_final_opt; }
+  inline bool need_do_final_opt() const { return need_do_final_opt_; }
   inline pipeline::ResourcePtr resource() const { return resource_; }
   inline FuncGraphPtr fg() const {
     MS_EXCEPTION_IF_NULL(fg_);
@@ -100,7 +102,7 @@ class TopCellInfo {
     graph_info_map_[fg] = graph_info;
   }
   inline void set_is_run_cell(bool is_run_cell) { is_run_cell_ = is_run_cell; }
-  inline bool is_run_cell() { return is_run_cell_; }
+  inline bool is_run_cell() const { return is_run_cell_; }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
   inline ad::AutoGradCellImplPtr auto_grad_cell_ptr() const {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
@@ -119,26 +121,25 @@ class TopCellInfo {
     return op_info_with_ms_func_forward_tensors_;
   }
   inline size_t op_index() const { return op_index_; }
-  inline void IncreaseOpIndex() { op_index_++; }
+  inline void IncreaseOpIndex() { ++op_index_; }
 
   inline void set_cnode_hash_with_op_index(const size_t &node_hash, const size_t &op_index) {
     cnode_hash_with_op_index_[node_hash] = op_index;
   }
-  inline size_t get_op_index_by_cnode_hash(const size_t &node_hash) {
-    auto iter = cnode_hash_with_op_index_.find(node_hash);
+  inline size_t get_op_index_by_cnode_hash(const size_t &node_hash) const {
+    const auto iter = cnode_hash_with_op_index_.find(node_hash);
     if (iter == cnode_hash_with_op_index_.end()) {
       MS_LOG(EXCEPTION) << "hash:" << node_hash << " is not found in cnode_hash_with_op_index_";
     }
     return iter->second;
   }
 
-  void Clear();
-
   void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id);
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
   void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1,
-                                bool save_flag = true) const;
+                                bool need_save_sub_id = true) const;
   void ClearDeviceMemory() const;
+  void Clear();
 
  private:
   void SetMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node) const;
@@ -148,12 +149,13 @@ class TopCellInfo {
                                      const std::vector<int64_t> &index) const;
 
   bool hook_changed_{false};
-  bool ms_function_flag_{false};
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
   bool need_compile_graph_{false};
   bool is_run_cell_{false};
   size_t op_index_{0};
+  bool is_high_order_top_cell_{false};
+  bool need_do_final_opt_{false};
   size_t grad_order_{0};
   std::string c_cell_id_;
   std::string cell_id_;

@@ -24,6 +24,7 @@ namespace opt {
  * Try Expand cnode for front end graph.
  */
 AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node);
+bool ConvertPrimToPrimPy(const FuncGraphPtr &graph);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_EXPANDER_H
