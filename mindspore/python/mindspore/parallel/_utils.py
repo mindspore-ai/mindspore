@@ -52,9 +52,8 @@ def _is_in_hybrid_parallel_mode():
 
 
 def _is_pynative_parallel():
-    run_mode = context.get_context('mode')
     parallel_mode = context.get_auto_parallel_context('parallel_mode')
-    return run_mode == context.PYNATIVE_MODE and parallel_mode in (
+    return context.get_context('mode') == context.PYNATIVE_MODE and parallel_mode in (
         context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL)
 
 

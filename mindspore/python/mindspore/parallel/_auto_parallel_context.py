@@ -521,6 +521,9 @@ class _AutoParallelContext:
                 if not isinstance(dim, int):
                     raise TypeError("For 'set_auto_parallel_context', the element of argument "
                                     "'dataset_strategy' must be int type, but got the type : {} .".format(type(dim)))
+        if context.get_context('mode') == context.PYNATIVE_MODE:
+            raise ValueError("In PyNative mode, the setting value of 'dataset_strategy' must be either 'full_batch' "
+                             f"or 'data_parallel', but got {dataset_strategy}.")
         self._dataset_strategy_using_str = False
         self._context_handle.set_dataset_strategy(dataset_strategy)
 
@@ -531,7 +534,11 @@ class _AutoParallelContext:
             if self._context_handle.get_full_batch():
                 return "full_batch"
             return "data_parallel"
-        return self._context_handle.get_dataset_strategy()
+        dataset_strategy = self._context_handle.get_dataset_strategy()
+        if context.get_context('mode') == context.PYNATIVE_MODE:
+            raise ValueError("In PyNative mode, the value of 'dataset_strategy' must be either 'full_batch' "
+                             f"or 'data_parallel', but got the setting value is {dataset_strategy}.")
+        return dataset_strategy
 
     def set_grad_accumulation_step(self, grad_accumulation_step):
         """
