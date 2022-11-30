@@ -179,6 +179,8 @@ void ArrayReduceGpuKernelMod::InitCudnnResource() {
 int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  need_skip_execute_ = false;
+  all_match_ = false;
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret != KRET_OK) {
     InitCudnnResource();
