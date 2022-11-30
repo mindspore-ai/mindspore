@@ -67,29 +67,9 @@ class Geqrf(Primitive):
 
 class Svd(Primitive):
     """
+    Computes the singular value decompositions of one or more matrices.
+
     Refer to :func:`mindspore.ops.svd` for more details.
-
-    Args:
-        full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
-                                        only the leading P singular vectors. P is the minimum of M and N.
-                                        M, N is the row, col of the input matrix. Default: False.
-        compute_uv (bool, optional): If true, compute the left and right singular vectors.
-                                     If false, compute only the singular values. Default: True.
-
-    Inputs:
-        - **a**  (Tensor): Tensor of the matrices to be decomposed. The shape should be :math:`(*, M, N)`.
-
-    Outputs:
-        - **s**  (Tensor) - Singular values. The shape is :math:`(*, P)`.
-        - **u**  (Tensor) - Left singular vectors. If compute_uv is False, u will be an empty tensor.
-          The shape is :math:`(*, M, P)`. If full_matrices is True, the shape will be :math:`(*, M, M)`.
-        - **v**  (Tensor) - Right singular vectors. If compute_uv is False, v will be an empty tensor.
-          The shape is :math:`(*, N, P)`. If full_matrices is True, the shape will be :math:`(*, N, N)`.
-
-    Raises:
-        TypeError: If full_matrices or compute_uv is not the type of bool.
-        TypeError: If the rank of input less than 2.
-        TypeError: If the type of input is not one of the following dtype: mstype.float32, mstype.float64.
 
     Supported Platforms:
         ``GPU``

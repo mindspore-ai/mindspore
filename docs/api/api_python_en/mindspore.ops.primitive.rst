@@ -512,6 +512,8 @@ Array Operation
     mindspore.ops.LeftShift
     mindspore.ops.ListDiff
     mindspore.ops.LogMatrixDeterminant
+    mindspore.ops.MatrixDiagPartV3
+    mindspore.ops.MatrixDiagV3
     mindspore.ops.LogSpace
     mindspore.ops.LowerBound
     mindspore.ops.Lstsq
@@ -524,6 +526,7 @@ Array Operation
     mindspore.ops.MatrixExp
     mindspore.ops.MatrixLogarithm
     mindspore.ops.MatrixPower
+    mindspore.ops.MatrixSetDiagV3
     mindspore.ops.MatrixSolve
     mindspore.ops.MatrixTriangularSolve
     mindspore.ops.Meshgrid
