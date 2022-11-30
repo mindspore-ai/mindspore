@@ -1634,14 +1634,14 @@ def csr_tanh(x: CSRTensor) -> CSRTensor:
     where :math:`x_i` is an element of the input CSRTensor.
 
     Args:
-        input_x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
+        x (CSRTensor): Input CSRTensor, with float16 or float32 data type.
 
     Returns:
-        CSRTensor, with the same type and shape as the `input_x`.
+        CSRTensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        TypeError: If `input_x` is not a CSRTensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `x` is not a CSRTensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -1674,14 +1674,14 @@ def coo_tanh(x: COOTensor) -> COOTensor:
     where :math:`x_i` is an element of the input COOTensor.
 
     Args:
-        input_x (COOTensor): Input COOTensor, with float16 or float32 data type.
+        x (COOTensor): Input COOTensor, with float16 or float32 data type.
 
     Returns:
-        COOTensor, with the same type and shape as the `input_x`.
+        COOTensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        TypeError: If `input_x` is not a COOTensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `x` is not a COOTensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -1929,13 +1929,13 @@ def csr_isinf(x: CSRTensor) -> CSRTensor:
     where :math:`Inf` means not a number.
 
     Args:
-        input (CSRTensor): The input csr_tensor.
+        x (CSRTensor): The input csr_tensor.
 
     Returns:
         CSRTensor, has the same shape of input, and the dtype is bool.
 
     Raises:
-        TypeError: If `input` is not a CSRTensor.
+        TypeError: If `x` is not a CSRTensor.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -1969,13 +1969,13 @@ def coo_isinf(x: COOTensor) -> COOTensor:
     where :math:`Inf` means not a number.
 
     Args:
-        input (COOTensor): The input coo_tensor.
+        x (COOTensor): The input coo_tensor.
 
     Returns:
         COOTensor, has the same shape of input, and the dtype is bool.
 
     Raises:
-        TypeError: If `input` is not a COOTensor.
+        TypeError: If `x` is not a COOTensor.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -2083,17 +2083,17 @@ def csr_sigmoid(x: CSRTensor) -> CSRTensor:
 
         \text{csr_sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
 
-    where :math:`x_i` is an element of the input_x.
+    where :math:`x_i` is an element of the x.
 
     Args:
-        input_x (CSRTensor): Input CSRTensor, the data type is float16, float32, float64, complex64 or complex128.
+        x (CSRTensor): Input CSRTensor, the data type is float16, float32, float64, complex64 or complex128.
 
     Returns:
-        CSRTensor, with the same type and shape as the input_x.
+        CSRTensor, with the same type and shape as the x.
 
     Raises:
-        TypeError: If dtype of `input_x` is not float16, float32, float64, complex64 or complex128.
-        TypeError: If `input_x` is not a CSRTensor.
+        TypeError: If dtype of `x` is not float16, float32, float64, complex64 or complex128.
+        TypeError: If `x` is not a CSRTensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2123,17 +2123,17 @@ def coo_sigmoid(x: COOTensor) -> COOTensor:
 
         \text{coo_sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
 
-    where :math:`x_i` is an element of the input_x.
+    where :math:`x_i` is an element of the x.
 
     Args:
-        input_x (COOTensor): Input COOTensor, the data type is float16, float32, float64, complex64 or complex128.
+        x (COOTensor): Input COOTensor, the data type is float16, float32, float64, complex64 or complex128.
 
     Returns:
-        COOTensor, with the same type and shape as the input_x.
+        COOTensor, with the same type and shape as the x.
 
     Raises:
-        TypeError: If dtype of `input_x` is not float16, float32, float64, complex64 or complex128.
-        TypeError: If `input_x` is not a COOTensor.
+        TypeError: If dtype of `x` is not float16, float32, float64, complex64 or complex128.
+        TypeError: If `x` is not a COOTensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

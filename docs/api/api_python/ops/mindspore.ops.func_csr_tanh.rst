@@ -1,7 +1,7 @@
 ﻿mindspore.ops.csr_tanh
 =======================
 
-.. py:function:: mindspore.ops.csr_tanh(input_x: CSRTensor)
+.. py:function:: mindspore.ops.csr_tanh(x: CSRTensor)
 
     Tanh激活函数。
 
@@ -13,11 +13,11 @@
     其中 :math:`x_i` 是输入CSRTensor的元素。
 
     参数：
-        - **input_x** (CSRTensor) - Tanh的输入，任意维度的CSRTensor，其数据类型为float16或float32。
+        - **x** (CSRTensor) - Tanh的输入，任意维度的CSRTensor，其数据类型为float16或float32。
 
     返回：
-        CSRTensor，数据类型和shape与 `input_x` 相同。
+        CSRTensor，数据类型和shape与 `x` 相同。
 
     异常：
-        - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
-        - **TypeError** - `input_x` 不是CSRTensor。
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `x` 不是CSRTensor。
