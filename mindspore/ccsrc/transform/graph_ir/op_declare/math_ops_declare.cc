@@ -128,4 +128,45 @@ INPUT_MAP(Trunc) = {{1, INPUT_DESC(input_x)}};
 ATTR_MAP(Trunc) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Trunc) = {{0, OUTPUT_DESC(output_y)}};
 REG_ADPT_DESC(Trunc, prim::kPrimTrunc->name(), ADPT_DESC(Trunc))
+
+// HistogramFixedWidth
+INPUT_MAP(HistogramFixedWidth) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(range)}, {3, INPUT_DESC(nbins)}};
+ATTR_MAP(HistogramFixedWidth) = {
+  {"dtype", ATTR_DESC(dtype, AnyTraits<int32_t>())},
+};
+ATTR_INPUT_MAP(HistogramFixedWidth) = {{"nbins", 3}};
+OUTPUT_MAP(HistogramFixedWidth) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(HistogramFixedWidth, kHistogramFixedWidthDOpName, ADPT_DESC(HistogramFixedWidth))
+
+// Pdist
+INPUT_MAP(Pdist) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Pdist) = {
+  {"p", ATTR_DESC(p, AnyTraits<float>())},
+};
+OUTPUT_MAP(Pdist) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Pdist, prim::kPrimPdist->name(), ADPT_DESC(Pdist))
+
+// SoftMarginLossGrad
+INPUT_MAP(SoftMarginLossGrad) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}, {3, INPUT_DESC(dout)}};
+ATTR_MAP(SoftMarginLossGrad) = {
+  {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())},
+};
+OUTPUT_MAP(SoftMarginLossGrad) = {{0, OUTPUT_DESC(gradient)}};
+REG_ADPT_DESC(SoftMarginLossGrad, prim::kPrimSoftMarginLossGrad->name(), ADPT_DESC(SoftMarginLossGrad))
+
+// Cdist
+INPUT_MAP(Cdist) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Cdist) = {
+  {"p", ATTR_DESC(p, AnyTraits<float>())},
+};
+OUTPUT_MAP(Cdist) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Cdist, prim::kPrimCdist->name(), ADPT_DESC(Cdist))
+
+// CdistGrad
+INPUT_MAP(CdistGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}, {4, INPUT_DESC(cdist)}};
+ATTR_MAP(CdistGrad) = {
+  {"p", ATTR_DESC(p, AnyTraits<float>())},
+};
+OUTPUT_MAP(CdistGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CdistGrad, prim::kPrimCdistGrad->name(), ADPT_DESC(CdistGrad))
 }  // namespace mindspore::transform

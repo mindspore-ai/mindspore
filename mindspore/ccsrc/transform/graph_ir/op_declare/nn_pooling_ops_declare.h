@@ -19,6 +19,7 @@
 
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "ops/nn_ops.h"
 #include "ops/nn_pooling_ops.h"
 
@@ -76,5 +77,11 @@ DECLARE_OP_USE_OUTPUT(GlobalAveragePool)
 
 DECLARE_OP_ADAPTER(Upsample)
 DECLARE_OP_USE_OUTPUT(Upsample)
+
+DECLARE_OP_ADAPTER(AvgPool3DGrad)
+DECLARE_OP_USE_OUTPUT(AvgPool3DGrad)
+
+DECLARE_OP_ADAPTER(Dilation2DBackpropFilter)
+DECLARE_OP_USE_OUTPUT(Dilation2DBackpropFilter)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_

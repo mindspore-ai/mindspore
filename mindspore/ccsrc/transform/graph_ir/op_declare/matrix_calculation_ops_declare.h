@@ -19,6 +19,7 @@
 
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "ops/matrix_calculation_ops.h"
 
 namespace mindspore::transform {
@@ -90,5 +91,14 @@ DECLARE_OP_USE_OUTPUT(FullyConnection)
 
 DECLARE_OP_ADAPTER(IndexAdd)
 DECLARE_OP_USE_OUTPUT(IndexAdd)
+
+DECLARE_OP_ADAPTER(ConfusionMatrix)
+DECLARE_OP_USE_OUTPUT(ConfusionMatrix)
+
+DECLARE_OP_ADAPTER(MatrixDiagPart)
+DECLARE_OP_USE_OUTPUT(MatrixDiagPart)
+
+DECLARE_OP_ADAPTER(MatrixSetDiag)
+DECLARE_OP_USE_OUTPUT(MatrixSetDiag)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_

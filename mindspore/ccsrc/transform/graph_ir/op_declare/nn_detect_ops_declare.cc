@@ -84,4 +84,12 @@ ATTR_MAP(ROIAlignGrad) = {
   {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
   {"sample_num", ATTR_DESC(sample_num, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(ROIAlignGrad, kNameROIAlignGrad, ADPT_DESC(ROIAlignGrad))
+
+// PSROIPooling
+INPUT_MAP(PSROIPooling) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(rois)}};
+ATTR_MAP(PSROIPooling) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int32_t>())},
+                          {"group_size", ATTR_DESC(group_size, AnyTraits<int32_t>())},
+                          {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())}};
+OUTPUT_MAP(PSROIPooling) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(PSROIPooling, prim::kPrimPSROIPooling->name(), ADPT_DESC(PSROIPooling))
 }  // namespace mindspore::transform
