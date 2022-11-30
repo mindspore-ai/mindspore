@@ -2837,7 +2837,25 @@ class ApplyMomentum(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        Please refer to the usage in :class:`mindspore.nn.Momentum`.
+        >>> class Net(nn.Cell):
+        ...    def __init__(self):
+        ...        super(Net, self).__init__()
+        ...        self.apply_momentum = ops.ApplyMomentum()
+        ...        self.variable = Parameter(Tensor(np.array([[0.6, 0.4],
+        ...                                            [0.1, 0.5]]).astype(np.float32)), name="variable")
+        ...        self.accumulate = Parameter(Tensor(np.array([[0.6, 0.5],
+        ...                                            [0.2, 0.6]]).astype(np.float32)), name="accumulate")
+        ...    def construct(self, lr, grad, moment):
+        ...        out = self.apply_momentum(self.variable, self.accumulate, lr, grad, moment)
+        ...        return out
+        >>> net = Net()
+        >>> lr = Tensor(0.1, mindspore.float32)
+        >>> moment = Tensor(0.9, mindspore.float32)
+        >>> grad = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
+        >>> output = net(lr, grad, moment)
+        >>> print(output)
+        [[0.51600003 0.285     ]
+        [0.072      0.366     ]]
     """
     __mindspore_signature__ = (
         sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
