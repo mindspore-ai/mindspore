@@ -147,14 +147,14 @@ void AscendGraphOptimization::AclOpOptimize(const KernelGraphPtr &graph) {
     opt::AscendMixPrecision(graph);
   }
 
-  // Replace all TBE_KERNEL with ACL_KERNEL.
+  // Replace TBE_KERNEL and Cast with ACL_KERNEL.
   for (const auto &node : graph->execution_order()) {
-    if (AnfAlgo::GetKernelType(node) == TBE_KERNEL) {
+    if (AnfAlgo::GetKernelType(node) == TBE_KERNEL || common::AnfAlgo::GetCNodeName(node) == kCastOpName) {
       auto new_builder =
         std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
       MS_EXCEPTION_IF_NULL(new_builder);
       new_builder->SetKernelType(ACL_KERNEL);
-      MS_LOG(INFO) << "SUCCESS SET ACL KERNEL FOR" << node->DebugString();
+      MS_LOG(INFO) << "SUCCESS SET ACL KERNEL FOR " << node->DebugString();
       AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), node.get());
     }
   }
