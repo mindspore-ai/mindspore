@@ -294,6 +294,9 @@ Reduction函数
     mindspore.ops.isfinite
     mindspore.ops.isinf
     mindspore.ops.isnan
+    mindspore.ops.isneginf
+    mindspore.ops.isposinf
+    mindspore.ops.isreal
     mindspore.ops.le
     mindspore.ops.less
     mindspore.ops.maximum
