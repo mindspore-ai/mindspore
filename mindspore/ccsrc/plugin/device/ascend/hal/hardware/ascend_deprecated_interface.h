@@ -46,7 +46,6 @@ class AscendDeprecatedInterface : public DeprecatedInterface {
   FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) override;
   void ClearGraphWrapper() override;
   void ClearOpAdapterMap() override;
-  void EraseGeResource() override;
   void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) override;
 
   bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) override;

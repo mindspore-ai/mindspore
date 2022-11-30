@@ -142,11 +142,6 @@ AnfGraphPtr DfGraphManager::GetAnfGraph(uint32_t graph_id) {
   return iter->second;
 }
 
-void DfGraphManager::EraseAnfGraph() {
-  std::lock_guard<std::mutex> lg(lock_);
-  anf_graphs_.clear();
-}
-
 void DfGraphManager::SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr) {
   std::lock_guard<std::mutex> lg(lock_);
   if (sess_ptr == nullptr) {

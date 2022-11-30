@@ -51,7 +51,6 @@ class BACKEND_EXPORT DfGraphManager {
   void SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr);
   std::shared_ptr<::ge::Session> GetGeSession();
   void DeleteGeSession() noexcept;
-  void EraseAnfGraph();
 
  private:
   DfGraphManager();

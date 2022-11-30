@@ -47,7 +47,6 @@ class DeprecatedInterface {
   }
   virtual void ClearGraphWrapper() {}
   virtual void ClearOpAdapterMap() {}
-  virtual void EraseGeResource() {}
 
   // ascend
   virtual void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}
