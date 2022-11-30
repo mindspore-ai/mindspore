@@ -21,6 +21,7 @@
 #include <utility>
 #include <map>
 #include <vector>
+#include <string>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 
@@ -91,8 +92,12 @@ class VariableNode {
 
   ValuePtr out_value() const { return out_value_; }
   FunctionNodePtr fn() const { return fn_; }
-  bool is_need_grad() const { return is_need_grad_; }
-  void set_is_need_grad(bool is_need_grad) { is_need_grad_ = is_need_grad; }
+  const string &fake_prim_name() const { return fake_prim_name_; }
+  void set_fake_prim_name(const string &fake_prim_name) { fake_prim_name_ = fake_prim_name; }
+  bool is_fake_bprop() const { return is_fake_bprop_; }
+  void set_is_fake_bprop(bool is_fake_bprop) { is_fake_bprop_ = is_fake_bprop; }
+  bool is_need_propagate() const { return is_need_propagate_; }
+  void set_is_need_propagate(bool is_need_grad) { is_need_propagate_ = is_need_grad; }
   AnfNodePtr k_node() const { return k_node_; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
 
@@ -100,8 +105,13 @@ class VariableNode {
   // Abstract bprop function
   FunctionNodePtr fn_;
   ValuePtr out_value_;
-  bool is_need_grad_{false};
-  // k mapped cnode for primal CNode; primal CNode is owned by primal funcgraph, this is owned by tape_;
+  // If node has not bprop, we record its prim name
+  std::string fake_prim_name_;
+  // Record this node is a fake bprop
+  bool is_fake_bprop_{false};
+  // Flag to judge need to propagrate
+  bool is_need_propagate_{false};
+  // K mapped cnode for primal CNode; primal CNode is owned by primal funcgraph, this is owned by tape_;
   AnfNodePtr k_node_{nullptr};
 };
 using VariableNodePtr = std::shared_ptr<VariableNode>;
@@ -179,7 +189,6 @@ class AutoGradCellImpl {
   void AddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index);
   void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
   void ElimateTupleGetItem();
-  void ClearDeviceAddress(const ValuePtr &out);
 
   // Fbprop
   void BuildKNode(const GradParamPtr &grad_param, const VariableNodePtr &VariableNode);
