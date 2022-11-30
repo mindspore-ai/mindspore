@@ -47,30 +47,6 @@ static std::string ShapeToString(const std::vector<int64_t> &shape) {
   return result;
 }
 
-std::vector<char> ReadFile(const std::string &file) {
-  std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
-  if (!ifs.good()) {
-    std::cerr << "file: " << file << " is not exist." << std::endl;
-    return {};
-  }
-
-  if (!ifs.is_open()) {
-    std::cerr << "file: " << file << " open failed." << std::endl;
-    return {};
-  }
-
-  ifs.seekg(0, std::ios::end);
-  auto size = ifs.tellg();
-  std::vector<char> buf;
-  buf.resize(size);
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(buf.data(), buf.size());
-  ifs.close();
-
-  return buf;
-}
-
 template <typename T, typename Distribution>
 void GenerateRandomData(int size, void *data, Distribution distribution) {
   std::random_device rd{};
@@ -344,10 +320,7 @@ int TestHostDeviceOutput(mindspore::Model *model, uint32_t batch_size) {
     return -1;
   }
   // Model Predict, input host memory
-  if (SetHostData(inputs, host_buffers) != 0) {
-    std::cerr << "Failed to set input device data" << std::endl;
-    return -1;
-  }
+  SetHostData(inputs, host_buffers);
   if (Predict(model, inputs, &outputs) != 0) {
     return -1;
   }
@@ -371,10 +344,7 @@ int TestHostDeviceOutput(mindspore::Model *model, uint32_t batch_size) {
     return -1;
   }
   // Model Predict, input host memory
-  if (SetHostData(inputs, host_buffers) != 0) {
-    std::cerr << "Failed to set input device data" << std::endl;
-    return -1;
-  }
+  SetHostData(inputs, host_buffers);
   if (Predict(model, inputs, &outputs) != 0) {
     return -1;
   }
@@ -400,12 +370,6 @@ int QuickStart(int argc, const char **argv) {
     std::cerr << "Model path " << model_path << " is invalid.";
     return -1;
   }
-  auto model_buf = ReadFile(model_path);
-  if (model_buf.empty()) {
-    std::cerr << "Read model file failed." << std::endl;
-    return -1;
-  }
-
   // Create and init context, add CPU device info
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
@@ -428,7 +392,7 @@ int QuickStart(int argc, const char **argv) {
 
   mindspore::Model model;
   // Build model
-  auto build_ret = model.Build(model_buf.data(), model_buf.size(), mindspore::kMindIR, context);
+  auto build_ret = model.Build(model_path, mindspore::kMindIR, context);
   if (build_ret != mindspore::kSuccess) {
     std::cerr << "Build model error " << build_ret << std::endl;
     return -1;
