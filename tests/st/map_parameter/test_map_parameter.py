@@ -16,7 +16,7 @@ import os
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, Tensor, Parameter
+from mindspore import context, Tensor, Parameter, save_checkpoint, load_checkpoint
 from mindspore.experimental import MapParameter
 from mindspore.common.initializer import initializer
 
@@ -86,3 +86,37 @@ def test_maptensor_put_get_export(ms_type):
         print("data:", data)
         assert len(data) == 3
         assert len(data[0]) == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('ms_type', [ms.int32, ms.int64])
+def test_mapparameter_ckpt_save_load(ms_type):
+    """
+    Feature: MapParameter
+    Description: Test MapParameter, test save and load
+    Expectation: IR graph with MapParameter created without exceptions.
+    """
+    class MyNet(nn.Cell):
+        def __init__(self, ms_type):
+            nn.Cell.__init__(self)
+            self.m = MapParameter(key_dtype=ms_type, value_dtype=ms.float32, value_shape=(3,))
+            self.keys = Tensor([1, 2], dtype=ms_type)
+            self.values = Tensor([[11, 11, 11], [22, 22, 22]], dtype=ms.float32)
+
+        def construct(self, ms_type):
+            self.m[self.keys] = self.values
+            key1 = Tensor([3], dtype=ms_type)
+            value1 = self.m.get(key1, True)
+            key2 = Tensor([4], dtype=ms_type)
+            value2 = self.m.get(key2, True)
+            return value1, value2, self.m
+
+    net = MyNet(ms_type)
+    net(ms_type)
+    file_name = "map_parameter.ckpt"
+    save_checkpoint(net, file_name)
+    assert os.path.exists(file_name)
+    load_checkpoint(file_name)
+    os.remove(file_name)

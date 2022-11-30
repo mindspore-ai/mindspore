@@ -19,7 +19,10 @@ syntax = "proto2";
 message Checkpoint {
     message Value {
         required string tag = 1;
-        required TensorProto tensor = 2;
+        oneof value{
+            TensorProto tensor = 2;
+            MapTensorProto maptensor = 3;
+        }
     }
     repeated Value value = 1;
 }
@@ -32,4 +35,9 @@ message TensorProto {
     required string tensor_type = 2;
     // The data of the tensor.
     required bytes tensor_content = 3;
+}
+
+
+message MapTensorProto {
+    repeated TensorProto tensor = 1;
 }
