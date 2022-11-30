@@ -213,6 +213,13 @@ def atan2(x, y):
     return F.atan2(x, y)
 
 
+def bincount(x, weights=None, minlength=0):
+    r"""
+    For details, please refer to :func:`mindspore.ops.bincount`.
+    """
+    return F.bincount(x, weights, minlength)
+
+
 def size_(x):
     """
     Return the number of elements in tensor `x`.

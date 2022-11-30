@@ -3,7 +3,7 @@ mindspore.ops.angle
 
 .. py:function:: mindspore.ops.angle(x)
 
-    返回复数Tensor的元素参数。
+    返回复数Tensor的元素辐角。
     输入中的元素被认为是形式为a+bj的复数，其中a是实部，b是虚部。此函数返回的参数的形式为atan2(b，a)。
 
     参数：

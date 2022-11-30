@@ -170,6 +170,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"atan2", std::string("atan2")},                                    // P.Atan2
        {"angle", std::string("angle")},                                    // C.reduce_any
        {"any", std::string("any_")},                                       // C.reduce_any
+       {"bincount", std::string("bincount")},                              // C.reduce_any
        {"__add__", std::string("add")},                                    // C.add
        {"__sub__", std::string("sub")},                                    // C.sub
        {"__mul__", std::string("mul")},                                    // C.mul

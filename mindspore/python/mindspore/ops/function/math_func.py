@@ -70,6 +70,7 @@ from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore._c_expression import Tensor as Tensor_
+import mindspore.ops.function as F
 
 
 @constexpr
@@ -411,6 +412,69 @@ def angle(x):
         [1.7607845 1.0899091]
     """
     return angle_(x)
+
+
+def bincount(x, weights=None, minlength=0):
+    """
+    Count number of occurrences of each value in array of non-negative ints.
+    The number of bins (of size 1) is one larger than the largest value in `x`.
+    If `minlength` is specified, there will be at least this number of bins in the
+    output array (though it will be longer if necessary, depending on the contents
+    of `x`). Each bin gives the number of occurrences of its index value in `x`. If
+    `weights` is specified the input array is weighted by it, i.e. if a value `n`
+    is found at position `i`, ``out[n] += weight[i]`` instead of ``out[n] += 1``.
+
+    Args:
+        x (Tensor): 1-d input tensor.
+        weights (Tensor, optional): Weights, a tensor of the same shape as `x`. Defaults to None.
+        minlength (int, optional): A minimum number of bins for the output tensor. Defaults to 0.
+
+    Returns:
+        Tensor, a tensor of shape Size([max(input) + 1]) if input is non-empty, else Size(0).
+
+    Raises:
+        TypeError: if `x` or `weights` is not a tensor.
+        ValueError: If `x` is not one-dimensional, or if `x` and `weights` do not have the same shape.
+        ValueError: If `minlength` is a negative integer.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([2, 4, 1, 0, 0], dtype=mstype.int64)
+        >>> print(ops.bincount(x, minlength=7))
+        [2. 1. 1. 0. 1. 0. 0.]
+        >>> weights = Tensor([0, 0.25, 0.5, 0.75, 1], dtype=mstype.float32)
+        >>> print(ops.bincount(x, weights=weights))
+        [1.75 0.5  0.   0.   0.25]
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError("For math function 'bincount', 'x' must be Tensor.")
+    if x.dtype not in (mstype.Int, mstype.int16, mstype.int32, mstype.int64):
+        raise TypeError(f"For math function 'bincount', the type of 'x' must be in [Int, int16, int32, int64], but \
+                        got {x.dtype}.")
+    if not isinstance(weights, Tensor):
+        raise TypeError("For math function 'bincount', 'weights' must be Tensor, but got {type(weights)}.")
+    if not isinstance(minlength, int):
+        raise TypeError("For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
+    rank_op = _get_cache_prim(P.Rank)()
+    if rank_op(x) != 1:
+        raise ValueError("For math function 'bincount', `x` should be one-dimensional tensor.")
+    if x.shape[0] == 0:
+        return Tensor([])
+    if minlength < 0:
+        raise ValueError("For bincount minlength should be >= 0.")
+    if max(x.astype(mstype.float32)) > minlength - 1:
+        length = (max(x.astype(mstype.float32)) + 1).astype(mstype.int32)
+    else:
+        length = P.Cast()(minlength, mstype.int32)
+    idx = F.arange(length).expand_dims(-1)
+    idx_mapping = equal(x, idx)
+    if weights is not None:
+        if x.shape != weights.shape:
+            raise ValueError('for bincount `x` and `weights` must have the same length')
+        idx_mapping *= weights
+    return P.ReduceSum()(idx_mapping.astype(mstype.float32), 1).ravel()
 
 
 def exp2(x):
@@ -7649,6 +7713,7 @@ __all__ = [
     'arcsin',
     'arctan',
     'arctan2',
+    'bincount',
     'neg_tensor',
     'neg',
     'negative',
