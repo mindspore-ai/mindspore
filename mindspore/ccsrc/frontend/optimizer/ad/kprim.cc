@@ -241,8 +241,10 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   std::vector<NodeDebugInfoPtr> primal_debug_infos = GeneratePrimalDebugInfo(value_node, resources);
   if (cnode != nullptr) {
     primal_attrs = cnode->primal_attrs();
+    cnode->AddPrimalAttr(kPrimalAttrUniqueId, MakeValue(cnode->UniqueId()));
     const auto forward_node_primal_attr = prim->name() + "_" + cnode->UniqueId();
     primal_attrs[kPrimalAttrForwardNodeName] = MakeValue(forward_node_primal_attr);
+    primal_attrs[kPrimalAttrForwardUniqueId] = MakeValue(cnode->UniqueId());
   }
   auto expanded_fg = BpropToK(prim, bprop_fg, nullptr, cnode, primal_attrs, primal_debug_infos);
   if (expanded_fg == nullptr) {
