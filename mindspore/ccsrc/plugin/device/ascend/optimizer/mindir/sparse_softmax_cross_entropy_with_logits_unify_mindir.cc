@@ -198,14 +198,11 @@ ValueNodePtr GetAxisNode(const AnfNodePtr &node) {
 }
 
 CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_node,
-                          const AnfNodePtr &softmax_output_node, const PatternProcessPass &pass,
-                          bool is_pynative = false) {
+                          const AnfNodePtr &softmax_output_node, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(softmax_output_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
-
-  auto axis_value = GetAxis(softmax_output_node);
   auto axis_node = GetAxisNode(softmax_output_node);
   MS_EXCEPTION_IF_NULL(axis_node);
 
@@ -218,21 +215,14 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> inputs;
-  if (is_pynative) {
-    inputs = {NewValueNode(reduce_primitive), softmax_output_node};
-  } else {
-    kernel_graph->AddValueNodeToGraph(axis_node);
-    inputs = {NewValueNode(reduce_primitive), softmax_output_node, axis_node};
-  }
+  kernel_graph->AddValueNodeToGraph(axis_node);
+  inputs = {NewValueNode(reduce_primitive), softmax_output_node, axis_node};
   auto reduce_node = pass.NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(reduce_node);
   reduce_node->set_scope(sparse_softmax_node->scope());
   auto reduce_abstract = softmax_output_node->abstract();
   reduce_abstract->set_shape(std::make_shared<abstract::Shape>());
   reduce_node->set_abstract(reduce_abstract);
-  if (is_pynative) {
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_value), reduce_node);
-  }
   return reduce_node;
 }
 
@@ -662,7 +652,7 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
       common::AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad)) {
     return softmax_node_outputs[1];
   } else {
-    auto reduce_node = CreateReduceMean(graph, sparse_softmax_node, softmax_node_outputs[0], *this, true);
+    auto reduce_node = CreateReduceMean(graph, sparse_softmax_node, softmax_node_outputs[0], *this);
     return reduce_node;
   }
 }
