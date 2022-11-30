@@ -822,13 +822,16 @@ bool AbstractSequence::empty() const {
   return elements_.empty();
 }
 
+void AbstractSequence::set_dynamic_len(bool dynamic_len) {
+  if (dynamic_len) {
+    sequence_nodes_ = nullptr;
+  }
+  dynamic_len_ = dynamic_len;
+}
+
 void AbstractSequence::set_dynamic_len_element_abs(const AbstractBasePtr &dynamic_len_element_abs) {
   if (dynamic_len_element_abs == nullptr) {
     return;
-  }
-  if (dynamic_len_element_abs_ != nullptr) {
-    MS_EXCEPTION(TypeError) << "The abstract of element for variable length sequence " << ToString()
-                            << " is already set, this can not be reset.";
   }
   // dynamic_len_element_abs should ignore value.
   dynamic_len_element_abs_ = BroadenAllValues(dynamic_len_element_abs);

@@ -878,7 +878,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Set the sequence to be dynamic length or not.
   ///
   /// \param[in] dynamic_len Boolean value to decide whether the sequence is dynamic length.
-  void set_dynamic_len(bool dynamic_len) { dynamic_len_ = dynamic_len; }
+  void set_dynamic_len(bool dynamic_len);
 
   /// \brief Return the abstract of element for variable len sequence.
   ///

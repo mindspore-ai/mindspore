@@ -124,6 +124,16 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   auto queue = CheckArg<T>(op_name, args_spec_list, 0);
   AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
+  // For list/tuple with dynamic len, getitem can not be folded.
+  if (queue->dynamic_len()) {
+    // The value of dynamic_len_element_abs is kAnyValue, do not need to Broaden.
+    auto element_abs = queue->dynamic_len_element_abs();
+    if (element_abs == nullptr) {
+      MS_LOG(EXCEPTION) << "Getitem can not get element from an empty dynamic length sequence.";
+    }
+    return element_abs->Clone();
+  }
+
   ValuePtr index_value = index->BuildValue();
   MS_EXCEPTION_IF_NULL(index_value);
   if (!index_value->isa<Int64Imm>()) {
@@ -135,15 +145,6 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got " << index->ToString();
   }
   auto index_int64_value = GetValue<int64_t>(index_value);
-  if (queue->dynamic_len()) {
-    // For list/tuple, with dynamic len, getitem can not be folded.
-    // The value of dynamic_len_element_abs is kAnyValue, do not need to Broaden.
-    auto element_abs = queue->dynamic_len_element_abs();
-    if (element_abs == nullptr) {
-      MS_LOG(EXCEPTION) << "Getitem can not get element from an empty dynamic length sequence.";
-    }
-    return element_abs->Clone();
-  }
   std::size_t nelems = queue->elements().size();
   if (nelems == 0) {
     MS_EXCEPTION(IndexError) << "Can not getitem for an empty sequence.";

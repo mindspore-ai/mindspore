@@ -246,6 +246,8 @@ constexpr auto kNoRepeatNGram = "NoRepeatNGram";
 
 // Sequence operation
 constexpr auto kListAppend = "ListAppend";
+constexpr auto kSequenceAdd = "SequenceAdd";
+constexpr auto kSequenceCount = "SequenceCount";
 
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
@@ -1537,6 +1539,8 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceLen, std::make_shared<Primitive>("sequence_l
 
 // Sequence operations.
 GVAR_DEF(PrimitivePtr, kPrimListAppend, std::make_shared<Primitive>(kListAppend));
+GVAR_DEF(PrimitivePtr, kPrimSequenceAdd, std::make_shared<Primitive>(kSequenceAdd));
+GVAR_DEF(PrimitivePtr, kPrimSequenceCount, std::make_shared<Primitive>(kSequenceCount));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));

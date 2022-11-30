@@ -23,6 +23,7 @@ class ListAppend(Primitive):
 
     .. note::
         This operation is used for dynamic length list and this it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
 
     Inputs:
         - **input_data** (List) - The list for target to append. Must be dynamic length sequence
@@ -43,3 +44,58 @@ class ListAppend(Primitive):
     def __init__(self):
         """Initialize ListAppend"""
         self.init_prim_io_names(inputs=['input_data', 'target'], outputs=['output_data'])
+
+
+class SequenceAdd(Primitive):
+    r"""
+    Add elements of two sequence together.
+
+    .. note::
+        This it is only for internal used. At least one of the sequence should be dynamic length sequence.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_1** (Union[List, Tuple]) - The first sequence for sequence addition.
+        - **input_2** (Union[List, Tuple]) - The second sequence for sequence addition.
+
+    Outputs:
+        Dynamic length sequence after addition.
+
+    Raises:
+        TypeError: The 'input_1' and 'input_2' are not both list or tuple.
+        TypeError: Both of 'input_1' and 'input_2' are not dynamic length sequence.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListAppend"""
+        self.init_prim_io_names(inputs=['input_1', 'input_2'], outputs=['output_data'])
+
+
+class SequenceCount(Primitive):
+    r"""
+    Support sequence count operation 'seq.count(target)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence to count elements.
+        - **target** (Any Object) - The target element to find in sequence.
+
+    Outputs:
+        Integer, counting of target element.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListAppend"""
+        self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
