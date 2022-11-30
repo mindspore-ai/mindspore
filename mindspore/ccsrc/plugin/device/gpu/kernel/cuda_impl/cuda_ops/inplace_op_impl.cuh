@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INPLACE_UPDATE_IMPL_CUH_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INPLACE_UPDATE_IMPL_CUH_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INPLACE_OPS_IMPL_CUH_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INPLACE_OPS_IMPL_CUH_
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
+enum BroadcastOpType {
+  INPLACE_OP_TYPE_UPDATE = 0,
+  INPLACE_OP_TYPE_ADD = 1,
+  INPLACE_OP_TYPE_SUB = 2,
+};
+
 template <typename T>
-CUDA_LIB_EXPORT void CalInplaceUpdate(const size_t size_v, const T *input_v, T *output, const int64_t *indices,
-                                      const int64_t band_size, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalInplaceOp(const size_t size_v, const T *input_v, T *output, const int64_t *indices,
+                                  const int64_t band_size, const uint32_t &device_id, int op_type,
+                                  cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INPLACE_UPDATE_IMPL_CUH_
