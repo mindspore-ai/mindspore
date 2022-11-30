@@ -32,11 +32,7 @@ class SymbolTree:
     A `SymbolTree` usually corresponding to forward method of a network.
 
     Args:
-        network (Cell): Network to be rewritten. Only support `Cell`-type-network now.
-
-    Raises:
-        RuntimeError: If `network` is not a Cell.
-        RuntimeError: If there is any unsupported ast node type while parsing or optimizing.
+        handler (SymbolTreeImpl): SymbolTree internal implementation instance.
     """
 
     def __init__(self, handler: SymbolTreeImpl):
