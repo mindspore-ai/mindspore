@@ -267,6 +267,13 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
     AnfAlgo::SetOutputAddr(device_address, 0, param.get());
   }
+  if (input_tensor->isa<tensor::MapTensor>()) {
+    auto map_tensor = input_tensor->cast<tensor::MapTensorPtr>();
+    auto map_tensor_abs = std::make_shared<abstract::AbstractMapTensor>(map_tensor);
+    AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
+    param->set_abstract(map_tensor_abs);
+    return param;
+  }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
   // construct abstract of parameter
   auto type_of_tensor = input_tensor->Dtype();

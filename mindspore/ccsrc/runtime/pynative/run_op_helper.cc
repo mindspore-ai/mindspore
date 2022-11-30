@@ -83,6 +83,28 @@ void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const ten
                                               input_node.get());
 }
 
+void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::TensorPtr &input_tensor) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+  auto node_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
+
+  UpdateParameterShapeFromInputTensor(input_node, input_tensor);
+
+  MS_EXCEPTION_IF_NULL(node_address);
+  if (tensor_address == nullptr) {
+    input_tensor->set_device_address(node_address);
+    input_tensor->set_sync_status(kNeedSyncHostToDeviceImmediately);
+    input_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
+    node_address->set_from_persistent_mem(input_tensor->is_parameter());
+    node_address->SetNodeIndex(input_node, 0);
+  }
+
+  // The DeviceType and format of DeviceAddress is always the same after UpdateInputTensor
+  if (tensor_address != nullptr && tensor_address != node_address) {
+    AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
+  }
+}
+
 void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
                                   const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_LOG(DEBUG) << "Start";
@@ -95,23 +117,14 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
     auto &input_node = input_nodes[i];
     auto &input_tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(input_tensor);
-    auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
-    auto node_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
-
-    UpdateParameterShapeFromInputTensor(input_node, input_tensor);
-
-    MS_EXCEPTION_IF_NULL(node_address);
-    if (tensor_address == nullptr) {
-      input_tensor->set_device_address(node_address);
-      input_tensor->set_sync_status(kNeedSyncHostToDeviceImmediately);
-      input_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
-      node_address->set_from_persistent_mem(input_tensor->is_parameter());
-      node_address->SetNodeIndex(input_node, 0);
-    }
-
-    // The DeviceType and format of DeviceAddress is always the same after UpdateInputTensor
-    if (tensor_address != nullptr && tensor_address != node_address) {
-      AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
+    if (input_tensor->isa<tensor::MapTensor>()) {
+      auto map_tensor = input_tensor->cast<tensor::MapTensorPtr>();
+      SetDeviceAddress(input_node, map_tensor);
+      SetDeviceAddress(input_node, map_tensor->key_tensor());
+      SetDeviceAddress(input_node, map_tensor->value_tensor());
+      SetDeviceAddress(input_node, map_tensor->status_tensor());
+    } else {
+      SetDeviceAddress(input_node, input_tensor);
     }
   }
   MS_LOG(DEBUG) << "End";
@@ -221,6 +234,37 @@ void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::Device
   MS_LOG(DEBUG) << "End";
 }
 
+void UpdateAddressSizeForDynamicShapeTensor(const tensor::TensorPtr &input_tensor) {
+  if (input_tensor->base_shape_ptr() != nullptr) {
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
+    auto tensor_size = LongToSize(input_tensor->data().nbytes());
+    if (tensor_size != device_address->GetSize()) {
+      device_address->SetSize(tensor_size);
+    }
+  }
+}
+
+void CopyMapTensorDataToDevice(const tensor::MapTensorPtr &map_tensor, const AnfNodePtr &input_node,
+                               const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  auto key_tensor = map_tensor->key_tensor();
+  MS_EXCEPTION_IF_NULL(key_tensor);
+  UpdateAddressSizeForDynamicShapeTensor(key_tensor);
+  CopyTensorDataToDevice(key_tensor, input_node, device_context);
+  key_tensor->set_sync_status(kNoNeedSync);
+  auto value_tensor = map_tensor->value_tensor();
+  MS_EXCEPTION_IF_NULL(value_tensor);
+  UpdateAddressSizeForDynamicShapeTensor(value_tensor);
+  CopyTensorDataToDevice(value_tensor, input_node, device_context);
+  value_tensor->set_sync_status(kNoNeedSync);
+  auto status_tensor = map_tensor->status_tensor();
+  MS_EXCEPTION_IF_NULL(status_tensor);
+  UpdateAddressSizeForDynamicShapeTensor(status_tensor);
+  CopyTensorDataToDevice(status_tensor, input_node, device_context);
+  status_tensor->set_sync_status(kNoNeedSync);
+}
+
 void CopyParameterDataToDevice(const std::vector<AnfNodePtr> &input_nodes,
                                const std::vector<tensor::TensorPtr> &input_tensors,
                                const device::DeviceContext *device_context) {
@@ -234,16 +278,14 @@ void CopyParameterDataToDevice(const std::vector<AnfNodePtr> &input_nodes,
     MS_EXCEPTION_IF_NULL(input_tensors[i]);
     if (input_tensors[i]->NeedSyncHostToDeviceImmediately()) {
       // First op in dynamic shape scenario(feed mode)
-      if (input_tensors[i]->base_shape_ptr() != nullptr) {
-        auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensors[i]->device_address());
-        MS_EXCEPTION_IF_NULL(device_address);
-        auto tensor_size = LongToSize(input_tensors[i]->data().nbytes());
-        if (tensor_size != device_address->GetSize()) {
-          device_address->SetSize(tensor_size);
-        }
+      if (input_tensors[i]->isa<tensor::MapTensor>()) {
+        auto map_tensor = input_tensors[i]->cast<tensor::MapTensorPtr>();
+        CopyMapTensorDataToDevice(map_tensor, input_nodes[i], device_context);
+      } else {
+        UpdateAddressSizeForDynamicShapeTensor(input_tensors[i]);
+        CopyTensorDataToDevice(input_tensors[i], input_nodes[i], device_context);
+        input_tensors[i]->set_sync_status(kNoNeedSync);
       }
-      CopyTensorDataToDevice(input_tensors[i], input_nodes[i], device_context);
-      input_tensors[i]->set_sync_status(kNoNeedSync);
     }
   }
   MS_LOG(DEBUG) << "End";
@@ -264,13 +306,15 @@ void UpdateOutputAddrSize(const AnfNodePtr &node, const std::shared_ptr<OpRuntim
 }
 
 bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
-                          const device::DeviceContext *device_context) {
+                          const device::DeviceContext *device_context, const CNodePtr &node) {
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(runtime_info);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto input_size = runtime_info->GetInputSize();
   for (size_t i = 0; i < input_size; ++i) {
     auto input_address = runtime_info->GetInputDeviceAddress(i);
+    kernel_mod->set_input_user_data(input_address->user_data().get(), i);
     MS_EXCEPTION_IF_NULL(input_address);
     if (input_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(input_address.get())) {
@@ -299,6 +343,7 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
   for (size_t i = 0; i < output_size; ++i) {
     auto device_address = runtime_info->GetOutputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
+    kernel_mod->set_output_user_data(device_address->user_data().get(), i);
     // For example, we need to call cudnnGetRNNTrainingReserveSize to get real output size in LstmGpuKernelMod!
     if (kernel_out_size_list[i] != device_address->GetSize()) {
       // If the format of the DeviceAddress is different, then the size is originally different.
@@ -477,7 +522,7 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
     MS_EXCEPTION_IF_NULL(runtime_info);
 
-    if (!MallocForKernelInput(runtime_info, device_context)) {
+    if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto inputs = CreateKernelInputAddress(runtime_info);
@@ -524,7 +569,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
     MS_EXCEPTION_IF_NULL(runtime_info);
 
-    if (!MallocForKernelInput(runtime_info, device_context)) {
+    if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto inputs = CreateKernelInputAddress(runtime_info);

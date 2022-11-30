@@ -58,6 +58,8 @@ struct DataConvert {
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                            const tensor::CSRTensorPtr &csr_tensor, const PrimitivePtr &op_prim);
+  static void ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
+                               const PrimitivePtr &op_prim);
   static void ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq);
   static void PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                        const PrimitivePtr &op_prim, size_t index);

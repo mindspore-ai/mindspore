@@ -21,9 +21,10 @@ import sys
 from copy import copy
 import numbers
 import mindspore as ms
-from mindspore.common.parameter import Tensor, Parameter
+from mindspore.common.parameter import Parameter
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import MapTensor_
+from mindspore.ops.operations import _map_tensor_ops
 
 
 class MapParameter(Parameter):
@@ -128,6 +129,8 @@ class MapParameter(Parameter):
         else:
             self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape, self.default_value,
                                           self.permit_filter_value, self.evict_filter_value)
+        self.map_put = _map_tensor_ops.put
+        self.map_erase = _map_tensor_ops.erase
 
     def __getitem__(self, key_tensor):
         return self.get(key_tensor, True)
@@ -183,8 +186,8 @@ class MapParameter(Parameter):
         Returns:
             Tensor, the value tensor for the key tensor.
         """
-        result_tensor = self._map_tensor.get(key_tensor, insert_default_value)
-        return Tensor(result_tensor, internal=True)
+        map_get = _map_tensor_ops.MapTensorGet(insert_default_value)
+        return map_get(self._map_tensor, key_tensor)
 
     def get_keys(self):
         """
@@ -193,7 +196,7 @@ class MapParameter(Parameter):
         Returns:
             Tensor, the tensor contains all keys.
         """
-        return self.key_tensor
+        return self._map_tensor.get_keys()
 
     def get_values(self):
         """
@@ -202,7 +205,7 @@ class MapParameter(Parameter):
         Returns:
             Tensor, the tensor contains all values.
         """
-        return self.value_tensor
+        return self._map_tensor.get_values()
 
     def get_data(self):
         """
@@ -211,8 +214,7 @@ class MapParameter(Parameter):
         Returns:
             Tensor, the tensor contains all keys and values.
         """
-        return self.key_tensor, self.value_tensor
-
+        return self._map_tensor.get_data()
 
     def put(self, key_tensor, value_tensor):
         """
@@ -225,8 +227,8 @@ class MapParameter(Parameter):
         Returns:
             MapParameter, the MapParameter object itself.
         """
-        self._map_tensor.put(key_tensor, value_tensor)
-        return self
+        self.map_put(self._map_tensor, key_tensor, value_tensor)
+        return self._map_tensor
 
     def erase(self, key_tensor):
         """
@@ -238,8 +240,8 @@ class MapParameter(Parameter):
         Returns:
             MapParameter, the MapParameter object itself.
         """
-        self._map_tensor.erase(key_tensor)
-        return self
+        self.map_erase(self._map_tensor, key_tensor)
+        return self._map_tensor
 
     def export_data(self, incremental=False):
         """

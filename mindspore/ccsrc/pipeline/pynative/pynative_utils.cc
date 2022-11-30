@@ -386,6 +386,22 @@ void DataConvert::ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_i
   (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
 }
 
+void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
+                                   const PrimitivePtr &op_prim) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(op_prim);
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  constexpr int input_num = 1;
+  const auto input_names = op_prim->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    MS_LOG(DEBUG) << "input_names are nullptr";
+    return;
+  }
+  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(map_tensor);
+  const auto it = op_run_info->base_op_run_info.input_mask.end();
+  (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterWeightTensorMask);
+}
+
 void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                                const tensor::CSRTensorPtr &csr_tensor, const PrimitivePtr &op_prim) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -434,7 +450,10 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
   MS_EXCEPTION_IF_NULL(op_prim);
   tensor::TensorPtr tensor_ptr = nullptr;
   int64_t tensor_mask = kParameterDataTensorMask;
-  if (v->isa<tensor::Tensor>()) {
+  if (v->isa<tensor::MapTensor>()) {
+    ConvertMapTensor(op_run_info, v->cast<tensor::MapTensorPtr>(), op_prim);
+    return;
+  } else if (v->isa<tensor::Tensor>()) {
     tensor_ptr = v->cast<tensor::TensorPtr>();
     if (tensor_ptr->is_parameter()) {
       tensor_mask = kParameterWeightTensorMask;
