@@ -9,10 +9,6 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
     参数：
         - **handler** (SymbolTreeImpl) - SymbolTree内部实现实例。
 
-    异常：
-        - **RuntimeError** -  `network` 不是Cell对象。
-        - **RuntimeError** -  `network` 中包含不支持解析和优化的ast节点类型。
-
     .. py:method:: mindspore.rewrite.SymbolTree.after(node: Node)
 
         获取插入位置，位置为 `node` 之后。
