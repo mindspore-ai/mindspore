@@ -370,7 +370,7 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   auto fg = std::make_shared<FuncGraph>();
   fg->debug_info()->set_name("pynative_forward_graph");
   auto resource = std::make_shared<pipeline::Resource>();
-  const auto &already_run_cell_id = GetAlreadyRunCellId(input_args_info->cell_id);
+  const auto &already_run_cell_id = GetAlreadyRunCellId(input_args_info->obj_id);
   top_cell_ =
     std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
                                   input_args_info->obj_id, input_args_info->cell_id, already_run_cell_id, resource, fg);
@@ -576,7 +576,7 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     return;
   }
 
-  MS_LOG(DEBUG) << "Top cell " << new_top_cell->cell_id() << " has been ran";
+  MS_LOG(DEBUG) << "Top cell " << already_top_cell_id << " has been ran";
   auto pre_top_cell = already_run_top_cell_.at(already_top_cell_id);
   MS_EXCEPTION_IF_NULL(pre_top_cell);
 
@@ -662,7 +662,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
 
 std::string GradExecutor::GetAlreadyRunCellId(const std::string &cell_id) const {
   std::string already_run_cell_id(cell_id);
-  already_run_cell_id += std::to_string(grad_order_ == 0 ? 1 : grad_order_);
+  already_run_cell_id += "_" + std::to_string(grad_order_ == 0 ? 1 : grad_order_);
   already_run_cell_id += "_" + grad_operation_;
   MS_LOG(DEBUG) << "Get already run top cell id " << already_run_cell_id;
   return already_run_cell_id;
@@ -847,7 +847,7 @@ void GradExecutor::SetGradOrder(const std::string &cell_id) {
   // top_cell_ == nullptr means call by grad first
   // Args of CheckAlreadyRun may be have sens arg, so cell_id is include top cell id,
   // If cell_id.find(top_cell_->cell_id()) == std::string::npos, means current cell is not top cell, may be high order
-  if (top_cell_ == nullptr || cell_id.find(top_cell_->cell_id()) == std::string::npos) {
+  if (top_cell_ == nullptr || cell_id.find(top_cell_->c_cell_id()) == std::string::npos) {
     IncreaseGradOrder();
   }
   if (!grad_is_running_) {
@@ -858,7 +858,7 @@ void GradExecutor::SetGradOrder(const std::string &cell_id) {
 
 py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
                                          const py::object &grad_hash_id, const py::args &args) {
-  auto cell_id = GetCellId(obj, args, nullptr);
+  auto cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
 
   // Check current cell grad order and erase it if in current top cell list
   SetGradOrder(cell_id);
@@ -1064,6 +1064,7 @@ void GradExecutor::ClearGradRes() {
 
   DecreaseGradOrder();
   ClearGlobalRes();
+  grad_operation_.clear();
 }
 
 void GradExecutor::ClearRes() {
@@ -1079,6 +1080,7 @@ void GradExecutor::ClearRes() {
   top_cell_ = nullptr;
   top_input_args_info_ = nullptr;
   bprop_cell_list_.clear();
+  grad_operation_.clear();
   async_executor_->Reset();
   for (const auto &cell_ptr : top_cell_list_) {
     MS_EXCEPTION_IF_NULL(cell_ptr);
@@ -1372,7 +1374,7 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPt
 
   // First run top cell
   if (already_run_top_cell_.find(top_cell_->already_run_cell_id()) == already_run_top_cell_.end()) {
-    MS_LOG(DEBUG) << "Top cell " << top_cell_->cell_id() << " run firstly";
+    MS_LOG(DEBUG) << "Top cell " << top_cell_->already_run_cell_id() << " run firstly";
     return;
   }
   // Non-first run
@@ -1381,7 +1383,7 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPt
   if (pre_top_cell->op_info_with_tensor_id().find(op_run_info->op_info) ==
       pre_top_cell->op_info_with_tensor_id().end()) {
     MS_LOG(DEBUG) << "Can not find op info " << op_run_info->op_info << " in op info with tensor id map. Top cell "
-                  << top_cell_->cell_id();
+                  << top_cell_->already_run_cell_id();
     return;
   }
 
