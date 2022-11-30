@@ -116,7 +116,24 @@ std::vector<float> UpsampleNearest3DGrad::get_scale_factors() const {
   return GetValue<std::vector<float>>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(UpsampleNearest3DGrad, prim::kPrimUpsampleNearest3DGrad, UpsampleNearest3DGradInfer,
-                             nullptr, true);
+// AG means auto generated
+class MIND_API AGUpsampleNearest3DGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpsampleNearest3DGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpsampleNearest3DGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpsampleNearest3DGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UpsampleNearest3DGrad, prim::kPrimUpsampleNearest3DGrad, AGUpsampleNearest3DGradInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

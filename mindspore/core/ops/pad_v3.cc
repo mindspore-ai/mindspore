@@ -211,8 +211,27 @@ bool PadV3::get_paddings_contiguous() const { return GetValue<bool>(GetAttr("pad
 std::string PadV3::get_mode() const { return GetValue<string>(GetAttr("mode")); }
 std::vector<int64_t> PadV3::get_paddings() const { return GetValue<std::vector<int64_t>>(GetAttr("padding_switched")); }
 
-REGISTER_INFER_DEPENDS(kNamePadV3, {kInputIndex1});
 MIND_API_OPERATOR_NAME_IMPL(PadV3, kNamePadV3, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(PadV3, prim::kPrimPadV3, PadV3Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGPadV3Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return PadV3InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return PadV3InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return PadV3Infer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(PadV3, prim::kPrimPadV3, AGPadV3Infer, false);
 }  // namespace ops
 }  // namespace mindspore

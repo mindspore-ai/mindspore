@@ -124,7 +124,25 @@ AbstractBasePtr NonMaxSuppressionV3Infer(const abstract::AnalysisEnginePtr &, co
   return abstract::MakeAbstract(NonMaxSuppressionV3InferShape(primitive, input_args),
                                 NonMaxSuppressionV3InferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(NonMaxSuppressionV3, prim::kPrimNonMaxSuppressionV3, NonMaxSuppressionV3Infer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGNonMaxSuppressionV3Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonMaxSuppressionV3InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonMaxSuppressionV3InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonMaxSuppressionV3Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NonMaxSuppressionV3, prim::kPrimNonMaxSuppressionV3, AGNonMaxSuppressionV3Infer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

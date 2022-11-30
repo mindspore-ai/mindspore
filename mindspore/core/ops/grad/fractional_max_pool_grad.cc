@@ -86,7 +86,24 @@ bool FractionalMaxPoolGrad::get_overlapping() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPoolGrad, prim::kPrimFractionalMaxPoolGrad, FractionalMaxPoolGradInfer,
-                             nullptr, true);
+// AG means auto generated
+class MIND_API AGFractionalMaxPoolGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPoolGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPoolGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPoolGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FractionalMaxPoolGrad, prim::kPrimFractionalMaxPoolGrad, AGFractionalMaxPoolGradInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

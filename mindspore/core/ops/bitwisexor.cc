@@ -61,6 +61,23 @@ AbstractBasePtr BitwiseXorInfer(const abstract::AnalysisEnginePtr &, const Primi
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(BitwiseXor, prim::kPrimBitwiseXor, BitwiseXorInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGBitwiseXorInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BitwiseXorInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BitwiseXorInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BitwiseXorInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BitwiseXor, prim::kPrimBitwiseXor, AGBitwiseXorInfer, false);
 }  // namespace ops
 }  // namespace mindspore

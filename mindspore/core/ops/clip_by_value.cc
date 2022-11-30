@@ -65,6 +65,23 @@ AbstractBasePtr ClipByValueInfer(const abstract::AnalysisEnginePtr &, const Prim
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ClipByValue, prim::kPrimClipByValue, ClipByValueInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGClipByValueInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ClipByValueInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ClipByValueInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ClipByValueInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ClipByValue, prim::kPrimClipByValue, AGClipByValueInfer, false);
 }  // namespace ops
 }  // namespace mindspore

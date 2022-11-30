@@ -100,7 +100,26 @@ AbstractBasePtr AdaptiveMaxPool3DInfer(const abstract::AnalysisEnginePtr &, cons
   auto shapes = AdaptiveMaxPool3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_INFER_DEPENDS(kNameAdaptiveMaxPool3D, {1});
-REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveMaxPool3D, prim::kPrimAdaptiveMaxPool3D, AdaptiveMaxPool3DInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAdaptiveMaxPool3DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveMaxPool3DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveMaxPool3DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveMaxPool3DInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveMaxPool3D, prim::kPrimAdaptiveMaxPool3D, AGAdaptiveMaxPool3DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

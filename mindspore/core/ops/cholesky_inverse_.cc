@@ -72,6 +72,23 @@ AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &, const 
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(CholeskyInverse, prim::kPrimCholeskyInverse, CholeskyInverseInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGCholeskyInverseInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CholeskyInverseInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return CholeskyInverseInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return CholeskyInverseInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CholeskyInverse, prim::kPrimCholeskyInverse, AGCholeskyInverseInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -83,6 +83,24 @@ AbstractBasePtr GeqrfInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
 }
 
 MIND_API_OPERATOR_IMPL(Geqrf, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Geqrf, prim::kPrimGeqrf, GeqrfInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGGeqrfInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return GeqrfInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GeqrfInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GeqrfInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Geqrf, prim::kPrimGeqrf, AGGeqrfInfer, false);
 }  // namespace ops
 }  // namespace mindspore

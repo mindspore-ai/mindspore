@@ -236,6 +236,24 @@ abstract::AbstractBasePtr MaxPoolInfer(const abstract::AnalysisEnginePtr &, cons
   abstract::ShapePtr shape = MaxPoolInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxPool, prim::kPrimMaxPool, MaxPoolInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMaxPoolInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPoolInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPoolInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPoolInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaxPool, prim::kPrimMaxPool, AGMaxPoolInfer, false);
 }  // namespace ops
 }  // namespace mindspore

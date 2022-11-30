@@ -62,6 +62,23 @@ AbstractBasePtr FastGeLUGradInfer(const abstract::AnalysisEnginePtr &, const Pri
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FastGeLUGrad, prim::kPrimFastGeLUGrad, FastGeLUGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGFastGeLUGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FastGeLUGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FastGeLUGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FastGeLUGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FastGeLUGrad, prim::kPrimFastGeLUGrad, AGFastGeLUGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

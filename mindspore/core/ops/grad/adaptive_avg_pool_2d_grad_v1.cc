@@ -63,7 +63,24 @@ AbstractBasePtr AdaptiveAvgPool2DGradV1Infer(const abstract::AnalysisEnginePtr &
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveAvgPool2DGradV1, prim::kPrimAdaptiveAvgPool2DGradV1, AdaptiveAvgPool2DGradV1Infer,
-                             nullptr, true);
+// AG means auto generated
+class MIND_API AGAdaptiveAvgPool2DGradV1Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveAvgPool2DGradV1InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveAvgPool2DGradV1InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveAvgPool2DGradV1Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveAvgPool2DGradV1, prim::kPrimAdaptiveAvgPool2DGradV1,
+                                 AGAdaptiveAvgPool2DGradV1Infer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -35,8 +35,6 @@ class MIND_API Maximum : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Maximum for the inputs.
   void Init() const {}
 };
-MIND_API abstract::AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimMaximumPtr = std::shared_ptr<Maximum>;
 }  // namespace ops
 }  // namespace mindspore

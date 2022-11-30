@@ -87,6 +87,24 @@ AbstractBasePtr SparseReorderInfer(const abstract::AnalysisEnginePtr &, const Pr
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(SparseReorder, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseReorder, prim::kPrimSparseReorder, SparseReorderInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseReorderInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseReorderInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseReorderInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseReorderInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseReorder, prim::kPrimSparseReorder, AGSparseReorderInfer, false);
 }  // namespace ops
 }  // namespace mindspore

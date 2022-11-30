@@ -109,6 +109,24 @@ AbstractBasePtr BoundingBoxDecodeInfer(const abstract::AnalysisEnginePtr &, cons
   auto infer_shape = BoundingBoxDecodeInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BoundingBoxDecode, prim::kPrimBoundingBoxDecode, BoundingBoxDecodeInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGBoundingBoxDecodeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BoundingBoxDecodeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BoundingBoxDecodeInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BoundingBoxDecodeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BoundingBoxDecode, prim::kPrimBoundingBoxDecode, AGBoundingBoxDecodeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -150,6 +150,23 @@ AbstractBasePtr MultinomialInfer(const abstract::AnalysisEnginePtr &, const Prim
   return abstract::MakeAbstract(infershape, infertype);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Multinomial, prim::kPrimMultinomial, MultinomialInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGMultinomialInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MultinomialInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MultinomialInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MultinomialInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Multinomial, prim::kPrimMultinomial, AGMultinomialInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -132,7 +132,25 @@ AbstractBasePtr NonDeterministicIntsInfer(const abstract::AnalysisEnginePtr &, c
   auto infer_shape = NonDeterministicIntsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(NonDeterministicInts, prim::kPrimNonDeterministicInts, NonDeterministicIntsInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGNonDeterministicIntsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonDeterministicIntsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonDeterministicIntsInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonDeterministicIntsInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NonDeterministicInts, prim::kPrimNonDeterministicInts, AGNonDeterministicIntsInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

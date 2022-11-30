@@ -126,7 +126,26 @@ AbstractBasePtr RandpermV2Infer(const abstract::AnalysisEnginePtr &, const Primi
   auto infer_shape = RandpermV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_INFER_DEPENDS(kNameRandpermV2, {0, 1, 2});
-REGISTER_PRIMITIVE_EVAL_IMPL(RandpermV2, prim::kPrimRandpermV2, RandpermV2Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGRandpermV2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandpermV2InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandpermV2InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandpermV2Infer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0, 1, 2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RandpermV2, prim::kPrimRandpermV2, AGRandpermV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore

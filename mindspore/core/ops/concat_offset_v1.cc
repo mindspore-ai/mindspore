@@ -109,6 +109,24 @@ AbstractBasePtr ConcatOffsetV1Infer(const abstract::AnalysisEnginePtr &, const P
 }
 
 MIND_API_OPERATOR_IMPL(ConcatOffsetV1, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ConcatOffsetV1, prim::kPrimConcatOffsetV1, ConcatOffsetV1Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGConcatOffsetV1Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ConcatOffsetV1InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ConcatOffsetV1InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ConcatOffsetV1Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ConcatOffsetV1, prim::kPrimConcatOffsetV1, AGConcatOffsetV1Infer, false);
 }  // namespace ops
 }  // namespace mindspore

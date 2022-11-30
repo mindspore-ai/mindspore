@@ -129,6 +129,23 @@ AbstractBasePtr BartlettWindowInfer(const abstract::AnalysisEnginePtr &, const P
 }
 
 MIND_API_OPERATOR_IMPL(BartlettWindow, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(BartlettWindow, prim::kPrimBartlettWindow, BartlettWindowInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGBartlettWindowInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BartlettWindowInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BartlettWindowInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BartlettWindowInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BartlettWindow, prim::kPrimBartlettWindow, AGBartlettWindowInfer, false);
 }  // namespace ops
 }  // namespace mindspore

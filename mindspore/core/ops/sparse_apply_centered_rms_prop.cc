@@ -143,7 +143,24 @@ AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePt
 
 MIND_API_OPERATOR_IMPL(SparseApplyCenteredRMSProp, BaseOperator);
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyCenteredRMSProp, prim::kPrimSparseApplyCenteredRMSProp,
-                             SparseApplyCenteredRMSPropInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGSparseApplyCenteredRMSPropInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseApplyCenteredRMSPropInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseApplyCenteredRMSPropInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseApplyCenteredRMSPropInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseApplyCenteredRMSProp, prim::kPrimSparseApplyCenteredRMSProp,
+                                 AGSparseApplyCenteredRMSPropInfer, false);
 }  // namespace ops
 }  // namespace mindspore

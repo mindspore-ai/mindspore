@@ -86,7 +86,26 @@ AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto infer_shape = SearchSortedInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_INFER_DEPENDS(kNameSearchSorted, {1});
-REGISTER_PRIMITIVE_EVAL_IMPL(SearchSorted, prim::kPrimSearchSorted, SearchSortedInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSearchSortedInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SearchSortedInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SearchSortedInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SearchSortedInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SearchSorted, prim::kPrimSearchSorted, AGSearchSortedInfer, false);
 }  // namespace ops
 }  // namespace mindspore

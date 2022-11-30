@@ -133,7 +133,25 @@ AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   return res;
 }
 
-REGISTER_INFER_DEPENDS(kNameAvgPool3DGrad, {0});
-REGISTER_PRIMITIVE_EVAL_IMPL(AvgPool3DGrad, prim::kPrimAvgPool3DGrad, AvgPool3DGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGAvgPool3DGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AvgPool3DGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AvgPool3DGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AvgPool3DGradInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AvgPool3DGrad, prim::kPrimAvgPool3DGrad, AGAvgPool3DGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

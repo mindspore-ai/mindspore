@@ -133,7 +133,25 @@ AbstractBasePtr ResizeNearestNeighborV2GradInfer(const abstract::AnalysisEngineP
 }
 
 MIND_API_OPERATOR_IMPL(ResizeNearestNeighborV2Grad, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ResizeNearestNeighborV2Grad, prim::kPrimResizeNearestNeighborV2Grad,
-                             ResizeNearestNeighborV2GradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGResizeNearestNeighborV2GradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeNearestNeighborV2GradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeNearestNeighborV2GradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeNearestNeighborV2GradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ResizeNearestNeighborV2Grad, prim::kPrimResizeNearestNeighborV2Grad,
+                                 AGResizeNearestNeighborV2GradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

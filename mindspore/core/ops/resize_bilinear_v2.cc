@@ -108,8 +108,25 @@ AbstractBasePtr ResizeBilinearV2Infer(const abstract::AnalysisEnginePtr &, const
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ResizeBilinearV2, prim::kPrimResizeBilinearV2, ResizeBilinearV2Infer, nullptr, true);
+// AG means auto generated
+class MIND_API AGResizeBilinearV2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBilinearV2InferShape(primitive, input_args);
+  }
 
-REGISTER_INFER_DEPENDS(kNameResizeBilinearV2, {1});
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBilinearV2InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBilinearV2Infer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ResizeBilinearV2, prim::kPrimResizeBilinearV2, AGResizeBilinearV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore

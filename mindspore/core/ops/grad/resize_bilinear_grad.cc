@@ -115,6 +115,23 @@ AbstractBasePtr ResizeBilinearGradInfer(const abstract::AnalysisEnginePtr &, con
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ResizeBilinearGrad, prim::kPrimResizeBilinearGrad, ResizeBilinearGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGResizeBilinearGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBilinearGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBilinearGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBilinearGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ResizeBilinearGrad, prim::kPrimResizeBilinearGrad, AGResizeBilinearGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

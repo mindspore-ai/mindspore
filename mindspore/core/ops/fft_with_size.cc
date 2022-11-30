@@ -196,6 +196,24 @@ AbstractBasePtr FFTWithSizeInfer(const abstract::AnalysisEnginePtr &, const Prim
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(FFTWithSize, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(FFTWithSize, prim::kPrimFFTWithSize, FFTWithSizeInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGFFTWithSizeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FFTWithSizeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FFTWithSizeInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FFTWithSizeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FFTWithSize, prim::kPrimFFTWithSize, AGFFTWithSizeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

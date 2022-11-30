@@ -91,6 +91,23 @@ std::vector<int64_t> AdaptiveAvgPool3D::get_output_size() const {
 }
 
 MIND_API_OPERATOR_IMPL(AdaptiveAvgPool3D, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveAvgPool3D, prim::kPrimAdaptiveAvgPool3D, AdaptiveAvgPool3DInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGAdaptiveAvgPool3DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveAvgPool3DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveAvgPool3DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveAvgPool3DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveAvgPool3D, prim::kPrimAdaptiveAvgPool3D, AGAdaptiveAvgPool3DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

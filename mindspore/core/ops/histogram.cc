@@ -79,6 +79,24 @@ AbstractBasePtr HistogramInfer(const abstract::AnalysisEnginePtr &, const Primit
 }
 
 MIND_API_OPERATOR_IMPL(Histogram, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Histogram, prim::kPrimHistogram, HistogramInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGHistogramInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HistogramInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return HistogramInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return HistogramInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Histogram, prim::kPrimHistogram, AGHistogramInfer, false);
 }  // namespace ops
 }  // namespace mindspore

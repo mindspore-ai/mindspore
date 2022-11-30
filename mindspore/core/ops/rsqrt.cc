@@ -56,6 +56,23 @@ AbstractBasePtr RsqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Rsqrt, prim::kPrimRsqrt, RsqrtInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGRsqrtInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RsqrtInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RsqrtInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RsqrtInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Rsqrt, prim::kPrimRsqrt, AGRsqrtInfer, false);
 }  // namespace ops
 }  // namespace mindspore

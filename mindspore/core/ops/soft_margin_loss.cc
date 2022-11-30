@@ -75,6 +75,23 @@ AbstractBasePtr SoftMarginLossInfer(const abstract::AnalysisEnginePtr &, const P
                                 SoftMarginLossInferType(primitive, input_args));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SoftMarginLoss, prim::kPrimSoftMarginLoss, SoftMarginLossInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGSoftMarginLossInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SoftMarginLossInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SoftMarginLossInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SoftMarginLossInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SoftMarginLoss, prim::kPrimSoftMarginLoss, AGSoftMarginLossInfer, false);
 }  // namespace ops
 }  // namespace mindspore

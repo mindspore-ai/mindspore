@@ -135,7 +135,26 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto infer_shape = ExpandDimsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_INFER_DEPENDS(kNameExpandDims, {1});
-REGISTER_PRIMITIVE_EVAL_IMPL(ExpandDims, prim::kPrimExpandDims, ExpandDimsInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGExpandDimsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ExpandDimsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ExpandDimsInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ExpandDimsInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ExpandDims, prim::kPrimExpandDims, AGExpandDimsInfer, false);
 }  // namespace ops
 }  // namespace mindspore

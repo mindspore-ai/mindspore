@@ -161,7 +161,25 @@ AbstractBasePtr ScaleAndTranslateInfer(const abstract::AnalysisEnginePtr &, cons
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_INFER_DEPENDS(kNameScaleAndTranslate, {1, 2});
-REGISTER_PRIMITIVE_EVAL_IMPL(ScaleAndTranslate, prim::kPrimScaleAndTranslate, ScaleAndTranslateInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGScaleAndTranslateInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScaleAndTranslateInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScaleAndTranslateInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScaleAndTranslateInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScaleAndTranslate, prim::kPrimScaleAndTranslate, AGScaleAndTranslateInfer, false);
 }  // namespace ops
 }  // namespace mindspore

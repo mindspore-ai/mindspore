@@ -156,6 +156,24 @@ AbstractBasePtr EditDistanceInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto infer_type = EditDistanceInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(EditDistance, prim::kPrimEditDistance, EditDistanceInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGEditDistanceInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return EditDistanceInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return EditDistanceInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return EditDistanceInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(EditDistance, prim::kPrimEditDistance, AGEditDistanceInfer, false);
 }  // namespace ops
 }  // namespace mindspore

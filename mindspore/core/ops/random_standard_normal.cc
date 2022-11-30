@@ -124,9 +124,27 @@ AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, c
 
 MIND_API_OPERATOR_IMPL(RandomStandardNormal, BaseOperator);
 MIND_API_OPERATOR_IMPL(StandardNormal, BaseOperator);
-REGISTER_INFER_DEPENDS(kNameStandardNormal, {0});
-REGISTER_INFER_DEPENDS(kNameRandomStandardNormal, {0});
-REGISTER_PRIMITIVE_EVAL_IMPL(RandomStandardNormal, prim::kPrimStandardNormal, RandomStandardNormalInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(StandardNormal, prim::kPrimStandardNormal, RandomStandardNormalInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGRandomStandardNormalInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomStandardNormalInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomStandardNormalInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomStandardNormalInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RandomStandardNormal, prim::kPrimStandardNormal, AGRandomStandardNormalInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(StandardNormal, prim::kPrimStandardNormal, AGRandomStandardNormalInfer, false);
 }  // namespace ops
 }  // namespace mindspore

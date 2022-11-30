@@ -139,6 +139,24 @@ AbstractBasePtr DropoutDoMaskInfer(const abstract::AnalysisEnginePtr &, const Pr
   return abstract::MakeAbstract(DropoutDoMaskInferShape(primitive, input_args),
                                 DropoutDoMaskInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(DropoutDoMask, prim::kPrimDropoutDoMask, DropoutDoMaskInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGDropoutDoMaskInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutDoMaskInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutDoMaskInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutDoMaskInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DropoutDoMask, prim::kPrimDropoutDoMask, AGDropoutDoMaskInfer, false);
 }  // namespace ops
 }  // namespace mindspore

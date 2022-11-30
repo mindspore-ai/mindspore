@@ -113,11 +113,28 @@ MIND_API_OPERATOR_IMPL(SparseDenseCwiseAdd, BaseOperator);
 MIND_API_OPERATOR_IMPL(SparseDenseCwiseMul, BaseOperator);
 MIND_API_OPERATOR_IMPL(SparseDenseCwiseDiv, BaseOperator);
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseDenseCwiseAdd, prim::kPrimSparseDenseCwiseAdd, SparseDenseCwiseArithmeticInfer,
-                             nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseDenseCwiseMul, prim::kPrimSparseDenseCwiseMul, SparseDenseCwiseArithmeticInfer,
-                             nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseDenseCwiseDiv, prim::kPrimSparseDenseCwiseDiv, SparseDenseCwiseArithmeticInfer,
-                             nullptr, true);
+// AG means auto generated
+class MIND_API AGSparseDenseCwiseArithmeticInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseDenseCwiseArithmeticInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseDenseCwiseArithmeticInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseDenseCwiseArithmeticInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseDenseCwiseAdd, prim::kPrimSparseDenseCwiseAdd, AGSparseDenseCwiseArithmeticInfer,
+                                 false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseDenseCwiseMul, prim::kPrimSparseDenseCwiseMul, AGSparseDenseCwiseArithmeticInfer,
+                                 false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseDenseCwiseDiv, prim::kPrimSparseDenseCwiseDiv, AGSparseDenseCwiseArithmeticInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

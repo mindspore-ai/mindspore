@@ -136,6 +136,24 @@ AbstractBasePtr MirrorPadGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infer_shape = MirrorPadGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MirrorPadGrad, prim::kPrimMirrorPadGrad, MirrorPadGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMirrorPadGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MirrorPadGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MirrorPadGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MirrorPadGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MirrorPadGrad, prim::kPrimMirrorPadGrad, AGMirrorPadGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

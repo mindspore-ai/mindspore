@@ -70,7 +70,25 @@ bool CumulativeLogsumexp::get_reverse() const {
   auto value_ptr = this->GetAttr(KReverse);
   return GetValue<bool>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(CumulativeLogsumexp, prim::kPrimCumulativeLogsumexp, CumulativeLogsumexpInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGCumulativeLogsumexpInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CumulativeLogsumexpInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return CumulativeLogsumexpInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return CumulativeLogsumexpInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CumulativeLogsumexp, prim::kPrimCumulativeLogsumexp, AGCumulativeLogsumexpInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

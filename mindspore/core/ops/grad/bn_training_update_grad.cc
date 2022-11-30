@@ -57,7 +57,25 @@ AbstractBasePtr BNTrainingUpdateGradInfer(const abstract::AnalysisEnginePtr &, c
   return abstract::MakeAbstract(BNTrainingUpdateGradInferShape(primitive, input_args),
                                 BNTrainingUpdateGradInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BNTrainingUpdateGrad, prim::kPrimBNTrainingUpdateGrad, BNTrainingUpdateGradInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGBNTrainingUpdateGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BNTrainingUpdateGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BNTrainingUpdateGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BNTrainingUpdateGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BNTrainingUpdateGrad, prim::kPrimBNTrainingUpdateGrad, AGBNTrainingUpdateGradInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

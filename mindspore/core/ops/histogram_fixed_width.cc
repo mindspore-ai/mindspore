@@ -75,7 +75,24 @@ AbstractBasePtr HistogramFixedWidthInfer(const abstract::AnalysisEnginePtr &, co
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(HistogramFixedWidth, prim::kPrimHistogramFixedWidth, HistogramFixedWidthInfer, nullptr,
-                             true);
+// AG means auto generated
+class MIND_API AGHistogramFixedWidthInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HistogramFixedWidthInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return HistogramFixedWidthInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return HistogramFixedWidthInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(HistogramFixedWidth, prim::kPrimHistogramFixedWidth, AGHistogramFixedWidthInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

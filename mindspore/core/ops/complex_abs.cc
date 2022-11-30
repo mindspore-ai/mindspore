@@ -57,6 +57,24 @@ AbstractBasePtr ComplexAbsInfer(const abstract::AnalysisEnginePtr &, const Primi
 }
 
 MIND_API_OPERATOR_IMPL(ComplexAbs, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ComplexAbs, prim::kPrimComplexAbs, ComplexAbsInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGComplexAbsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ComplexAbsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ComplexAbsInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ComplexAbsInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ComplexAbs, prim::kPrimComplexAbs, AGComplexAbsInfer, false);
 }  // namespace ops
 }  // namespace mindspore

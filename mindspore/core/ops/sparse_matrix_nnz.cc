@@ -117,6 +117,24 @@ AbstractBasePtr SparseMatrixNNZInfer(const abstract::AnalysisEnginePtr &, const 
 }
 
 MIND_API_OPERATOR_IMPL(SparseMatrixNNZ, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixNNZ, prim::kPrimSparseMatrixNNZ, SparseMatrixNNZInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseMatrixNNZInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixNNZInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixNNZInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixNNZInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseMatrixNNZ, prim::kPrimSparseMatrixNNZ, AGSparseMatrixNNZInfer, false);
 }  // namespace ops
 }  // namespace mindspore

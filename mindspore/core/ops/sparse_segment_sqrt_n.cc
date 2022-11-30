@@ -107,7 +107,26 @@ AbstractBasePtr SparseSegmentSqrtNInfer(const abstract::AnalysisEnginePtr &, con
   auto shapes = SparseSegmentSqrtNInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_INFER_DEPENDS(kNameSparseSegmentSqrtN, {2});
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSqrtN, prim::kPrimSparseSegmentSqrtN, SparseSegmentSqrtNInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseSegmentSqrtNInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentSqrtNInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentSqrtNInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentSqrtNInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSegmentSqrtN, prim::kPrimSparseSegmentSqrtN, AGSparseSegmentSqrtNInfer, false);
 }  // namespace ops
 }  // namespace mindspore

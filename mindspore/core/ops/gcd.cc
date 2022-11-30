@@ -49,6 +49,24 @@ AbstractBasePtr GcdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   return abstract::MakeAbstract(shape, type);
 }
 MIND_API_OPERATOR_IMPL(Gcd, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Gcd, prim::kPrimGcd, GcdInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGGcdInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return GcdInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GcdInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GcdInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Gcd, prim::kPrimGcd, AGGcdInfer, false);
 }  // namespace ops
 }  // namespace mindspore

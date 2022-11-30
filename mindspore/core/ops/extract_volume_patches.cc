@@ -155,7 +155,25 @@ AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, c
   auto shape = ExtractVolumePatchesInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ExtractVolumePatches, prim::kPrimExtractVolumePatches, ExtractVolumePatchesInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGExtractVolumePatchesInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ExtractVolumePatchesInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ExtractVolumePatchesInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ExtractVolumePatchesInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ExtractVolumePatches, prim::kPrimExtractVolumePatches, AGExtractVolumePatchesInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

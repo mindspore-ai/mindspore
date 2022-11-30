@@ -72,6 +72,24 @@ AbstractBasePtr CTCLossV2GradInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infer_type = CTCLossV2GradInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(CTCLossV2Grad, prim::kPrimCTCLossV2Grad, CTCLossV2GradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGCTCLossV2GradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CTCLossV2GradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return CTCLossV2GradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return CTCLossV2GradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CTCLossV2Grad, prim::kPrimCTCLossV2Grad, AGCTCLossV2GradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

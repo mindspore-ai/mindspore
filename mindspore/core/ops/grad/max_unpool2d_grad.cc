@@ -84,6 +84,24 @@ std::string MaxUnpool2DGrad::get_format() const {
   auto value_ptr = GetAttr("format");
   return GetValue<std::string>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxUnpool2DGrad, prim::kPrimMaxUnpool2DGrad, MaxUnpool2DGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMaxUnpool2DGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxUnpool2DGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxUnpool2DGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxUnpool2DGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaxUnpool2DGrad, prim::kPrimMaxUnpool2DGrad, AGMaxUnpool2DGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

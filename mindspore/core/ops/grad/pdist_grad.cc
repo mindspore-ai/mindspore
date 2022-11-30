@@ -77,6 +77,24 @@ AbstractBasePtr PdistGradInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto infer_shape = PdistGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(PdistGrad, prim::kPrimPdistGrad, PdistGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGPdistGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return PdistGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return PdistGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return PdistGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(PdistGrad, prim::kPrimPdistGrad, AGPdistGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

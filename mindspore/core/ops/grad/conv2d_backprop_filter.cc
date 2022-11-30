@@ -173,7 +173,25 @@ AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, c
                                                         Conv2DBackpropFilterInferShape(primitive, input_args));
   return res;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter, Conv2DBackpropFilterInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGConv2DBackpropFilterInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Conv2DBackpropFilterInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Conv2DBackpropFilterInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Conv2DBackpropFilterInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter, AGConv2DBackpropFilterInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

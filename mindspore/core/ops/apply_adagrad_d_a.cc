@@ -114,6 +114,23 @@ AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &, const P
                                 ApplyAdagradDAInferType(primitive, input_args));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ApplyAdagradDA, prim::kPrimApplyAdagradDA, ApplyAdagradDAInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGApplyAdagradDAInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAdagradDAInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAdagradDAInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAdagradDAInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyAdagradDA, prim::kPrimApplyAdagradDA, AGApplyAdagradDAInfer, false);
 }  // namespace ops
 }  // namespace mindspore

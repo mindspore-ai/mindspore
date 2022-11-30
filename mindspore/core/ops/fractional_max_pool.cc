@@ -157,6 +157,23 @@ int64_t FractionalMaxPool::get_seed2() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPool, prim::kPrimFractionalMaxPool, FractionalMaxPoolInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGFractionalMaxPoolInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPoolInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPoolInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPoolInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FractionalMaxPool, prim::kPrimFractionalMaxPool, AGFractionalMaxPoolInfer, false);
 }  // namespace ops
 }  // namespace mindspore

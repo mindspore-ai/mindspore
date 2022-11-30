@@ -69,6 +69,24 @@ AbstractBasePtr ChannelShuffleInfer(const abstract::AnalysisEnginePtr &, const P
 }
 
 MIND_API_OPERATOR_IMPL(ChannelShuffle, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ChannelShuffle, prim::kPrimChannelShuffle, ChannelShuffleInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGChannelShuffleInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ChannelShuffleInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ChannelShuffleInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ChannelShuffleInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ChannelShuffle, prim::kPrimChannelShuffle, AGChannelShuffleInfer, false);
 }  // namespace ops
 }  // namespace mindspore

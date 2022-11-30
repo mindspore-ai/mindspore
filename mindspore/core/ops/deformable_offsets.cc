@@ -272,6 +272,23 @@ AbstractBasePtr DeformableOffsetsInfer(const abstract::AnalysisEnginePtr &, cons
                                 DeformableOffsetsInferType(primitive, input_args));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(DeformableOffsets, prim::kPrimDeformableOffsets, DeformableOffsetsInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGDeformableOffsetsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DeformableOffsetsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DeformableOffsetsInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DeformableOffsetsInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DeformableOffsets, prim::kPrimDeformableOffsets, AGDeformableOffsetsInfer, false);
 }  // namespace ops
 }  // namespace mindspore

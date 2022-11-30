@@ -101,6 +101,24 @@ void NanToNum::set_neginf_value(float neginf_value) { (void)this->AddAttr(kNegin
 float NanToNum::get_neginf_value() const { return GetValue<float>(GetAttr(kNeginf)); }
 
 MIND_API_OPERATOR_IMPL(NanToNum, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(NanToNum, prim::kPrimNanToNum, NanToNumInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGNanToNumInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NanToNumInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NanToNumInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NanToNumInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NanToNum, prim::kPrimNanToNum, AGNanToNumInfer, false);
 }  // namespace ops
 }  // namespace mindspore

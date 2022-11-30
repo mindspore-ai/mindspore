@@ -65,6 +65,24 @@ AbstractBasePtr BernoulliInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto infer_shape = BernoulliInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Bernoulli, prim::kPrimBernoulli, BernoulliInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGBernoulliInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BernoulliInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BernoulliInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BernoulliInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Bernoulli, prim::kPrimBernoulli, AGBernoulliInfer, false);
 }  // namespace ops
 }  // namespace mindspore

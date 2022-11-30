@@ -122,6 +122,23 @@ void SyncBatchNorm::set_device_num(const int64_t device_num) {
   (void)this->AddAttr(kDeviceNum, api::MakeValue(device_num));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SyncBatchNorm, prim::kPrimSyncBatchNorm, SyncBatchNormInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGSyncBatchNormInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SyncBatchNormInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SyncBatchNormInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SyncBatchNormInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SyncBatchNorm, prim::kPrimSyncBatchNorm, AGSyncBatchNormInfer, false);
 }  // namespace ops
 }  // namespace mindspore

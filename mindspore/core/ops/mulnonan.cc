@@ -82,6 +82,24 @@ AbstractBasePtr MulNoNanInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto infer_shape = MulNoNanInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MulNoNan, prim::kPrimMulNoNan, MulNoNanInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMulNoNanInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MulNoNanInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MulNoNanInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MulNoNanInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MulNoNan, prim::kPrimMulNoNan, AGMulNoNanInfer, false);
 }  // namespace ops
 }  // namespace mindspore

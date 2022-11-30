@@ -213,8 +213,26 @@ bool CombinedNonMaxSuppression::get_clip_boxes() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression,
-                             CombinedNonMaxSuppressionInfer, nullptr, true);
-REGISTER_INFER_DEPENDS(kNameCombinedNonMaxSuppression, {2, 3, 4, 5});
+// AG means auto generated
+class MIND_API AGCombinedNonMaxSuppressionInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CombinedNonMaxSuppressionInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return CombinedNonMaxSuppressionInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return CombinedNonMaxSuppressionInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2, 3, 4, 5}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression,
+                                 AGCombinedNonMaxSuppressionInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -180,6 +180,24 @@ void SpaceToBatchND::Init(const std::vector<int64_t> block_shape, const std::vec
 }
 
 MIND_API_OPERATOR_IMPL(SpaceToBatchND, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SpaceToBatchND, prim::kPrimSpaceToBatchND, SpaceToBatchNDInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSpaceToBatchNDInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SpaceToBatchNDInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SpaceToBatchNDInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SpaceToBatchNDInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SpaceToBatchND, prim::kPrimSpaceToBatchND, AGSpaceToBatchNDInfer, false);
 }  // namespace ops
 }  // namespace mindspore

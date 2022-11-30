@@ -75,7 +75,24 @@ int64_t MultilabelMarginLossGrad::get_reduction() const {
   return res;
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(MultilabelMarginLossGrad, prim::kPrimMultilabelMarginLossGrad,
-                             MultilabelMarginLossGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGMultilabelMarginLossGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MultilabelMarginLossGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MultilabelMarginLossGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MultilabelMarginLossGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MultilabelMarginLossGrad, prim::kPrimMultilabelMarginLossGrad,
+                                 AGMultilabelMarginLossGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -83,6 +83,23 @@ void SyncBatchNormGrad::set_device_num(const int64_t device_num) {
   (void)this->AddAttr(kDeviceNum, api::MakeValue(device_num));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SyncBatchNormGrad, prim::kPrimSyncBatchNormGrad, SyncBatchNormGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGSyncBatchNormGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SyncBatchNormGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SyncBatchNormGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SyncBatchNormGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SyncBatchNormGrad, prim::kPrimSyncBatchNormGrad, AGSyncBatchNormGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

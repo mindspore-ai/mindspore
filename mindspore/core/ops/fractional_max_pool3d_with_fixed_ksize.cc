@@ -226,7 +226,24 @@ std::string FractionalMaxPool3DWithFixedKsize::get_data_format() const {
   return GetValue<std::string>(GetAttr(kFormat));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPool3DWithFixedKsize, prim::kPrimFractionalMaxPool3DWithFixedKsize,
-                             FractionalMaxPool3DWithFixedKsizeInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGFractionalMaxPool3DWithFixedKsizeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPool3DWithFixedKsizeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPool3DWithFixedKsizeInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FractionalMaxPool3DWithFixedKsizeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FractionalMaxPool3DWithFixedKsize, prim::kPrimFractionalMaxPool3DWithFixedKsize,
+                                 AGFractionalMaxPool3DWithFixedKsizeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

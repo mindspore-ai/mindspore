@@ -118,6 +118,24 @@ void StridedSliceGrad::Init(int64_t begin_mask, int64_t end_mask, int64_t ellips
   this->set_new_axis_mask(new_axis_mask);
   this->set_shrink_axis_mask(shrink_axis_mask);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(StridedSliceGrad, prim::kPrimStridedSliceGrad, StridedSliceGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGStridedSliceGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return StridedSliceGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return StridedSliceGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return StridedSliceGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(StridedSliceGrad, prim::kPrimStridedSliceGrad, AGStridedSliceGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

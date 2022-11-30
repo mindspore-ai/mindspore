@@ -62,6 +62,24 @@ AbstractBasePtr NextAfterInfer(const abstract::AnalysisEnginePtr &, const Primit
 }
 
 MIND_API_OPERATOR_IMPL(NextAfter, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(NextAfter, prim::kPrimNextAfter, NextAfterInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGNextAfterInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NextAfterInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NextAfterInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NextAfterInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NextAfter, prim::kPrimNextAfter, AGNextAfterInfer, false);
 }  // namespace ops
 }  // namespace mindspore

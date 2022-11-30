@@ -92,20 +92,38 @@ AbstractBasePtr ScatterArithmeticInfer(const abstract::AnalysisEnginePtr &, cons
 }
 
 MIND_API_OPERATOR_IMPL(ScatterAdd, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterAdd, prim::kPrimScatterAdd, ScatterArithmeticInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGScatterArithmeticInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterArithmeticInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterArithmeticInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterArithmeticInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterAdd, prim::kPrimScatterAdd, AGScatterArithmeticInfer, false);
 MIND_API_OPERATOR_IMPL(ScatterUpdate, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterUpdate, prim::kPrimScatterUpdate, ScatterArithmeticInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterUpdate, prim::kPrimScatterUpdate, AGScatterArithmeticInfer, false);
 
 MIND_API_OPERATOR_IMPL(ScatterMin, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMin, prim::kPrimScatterMin, ScatterArithmeticInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterMin, prim::kPrimScatterMin, AGScatterArithmeticInfer, false);
 
 MIND_API_OPERATOR_IMPL(ScatterMax, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMax, prim::kPrimScatterMax, ScatterArithmeticInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterMax, prim::kPrimScatterMax, AGScatterArithmeticInfer, false);
 
 MIND_API_OPERATOR_IMPL(ScatterDiv, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterDiv, prim::kPrimScatterDiv, ScatterArithmeticInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterDiv, prim::kPrimScatterDiv, AGScatterArithmeticInfer, false);
 
 MIND_API_OPERATOR_IMPL(ScatterMul, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMul, prim::kPrimScatterMul, ScatterArithmeticInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterMul, prim::kPrimScatterMul, AGScatterArithmeticInfer, false);
 }  // namespace ops
 }  // namespace mindspore

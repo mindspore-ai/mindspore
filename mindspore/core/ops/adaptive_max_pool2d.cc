@@ -103,6 +103,24 @@ AbstractBasePtr AdaptiveMaxPool2DInfer(const abstract::AnalysisEnginePtr &, cons
   return abstract::MakeAbstract(AdaptiveMaxPool2DInferShape(primitive, input_args),
                                 AdaptiveMaxPool2DInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveMaxPool2D, prim::kPrimAdaptiveMaxPool2D, AdaptiveMaxPool2DInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAdaptiveMaxPool2DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveMaxPool2DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveMaxPool2DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AdaptiveMaxPool2DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveMaxPool2D, prim::kPrimAdaptiveMaxPool2D, AGAdaptiveMaxPool2DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

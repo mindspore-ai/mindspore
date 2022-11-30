@@ -115,7 +115,26 @@ AbstractBasePtr SparseSegmentMeanInfer(const abstract::AnalysisEnginePtr &, cons
 }
 
 MIND_API_OPERATOR_IMPL(SparseSegmentMean, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentMean, prim::kPrimSparseSegmentMean, SparseSegmentMeanInfer, nullptr, true);
-REGISTER_INFER_DEPENDS(kNameSparseSegmentMean, {2});
+
+// AG means auto generated
+class MIND_API AGSparseSegmentMeanInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentMeanInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentMeanInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentMeanInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSegmentMean, prim::kPrimSparseSegmentMean, AGSparseSegmentMeanInfer, false);
 }  // namespace ops
 }  // namespace mindspore

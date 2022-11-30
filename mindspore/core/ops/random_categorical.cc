@@ -197,6 +197,24 @@ AbstractBasePtr RandomCategoricalInfer(const abstract::AnalysisEnginePtr &, cons
   return abstract::MakeAbstract(infershape, infertype);
 }
 MIND_API_OPERATOR_IMPL(RandomCategorical, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(RandomCategorical, prim::kPrimRandomCategorical, RandomCategoricalInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGRandomCategoricalInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomCategoricalInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomCategoricalInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomCategoricalInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RandomCategorical, prim::kPrimRandomCategorical, AGRandomCategoricalInfer, false);
 }  // namespace ops
 }  // namespace mindspore

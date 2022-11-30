@@ -167,7 +167,25 @@ abstract::AbstractBasePtr UniformCandidateSamplerInfer(const abstract::AnalysisE
 }
 
 // register primivtive
-REGISTER_PRIMITIVE_EVAL_IMPL(UniformCandidateSampler, prim::kPrimUniformCandidateSampler, UniformCandidateSamplerInfer,
-                             nullptr, true);
+
+// AG means auto generated
+class MIND_API AGUniformCandidateSamplerInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UCSInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UCSInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UniformCandidateSamplerInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UniformCandidateSampler, prim::kPrimUniformCandidateSampler,
+                                 AGUniformCandidateSamplerInfer, false);
 }  // namespace ops
 }  // namespace mindspore

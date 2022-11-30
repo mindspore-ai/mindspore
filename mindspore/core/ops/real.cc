@@ -61,6 +61,24 @@ AbstractBasePtr RealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 }
 
 MIND_API_OPERATOR_IMPL(Real, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Real, prim::kPrimReal, RealInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGRealInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RealInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RealInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RealInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Real, prim::kPrimReal, AGRealInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -131,8 +131,26 @@ AbstractBasePtr RaggedTensorToTensorInfer(const abstract::AnalysisEnginePtr &, c
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(RaggedTensorToTensor, prim::kPrimRaggedTensorToTensor, RaggedTensorToTensorInfer, nullptr,
-                             true);
-REGISTER_INFER_DEPENDS(kNameRaggedTensorToTensor, {0});
+// AG means auto generated
+class MIND_API AGRaggedTensorToTensorInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RaggedTensorToTensorInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RaggedTensorToTensorInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RaggedTensorToTensorInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RaggedTensorToTensor, prim::kPrimRaggedTensorToTensor, AGRaggedTensorToTensorInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

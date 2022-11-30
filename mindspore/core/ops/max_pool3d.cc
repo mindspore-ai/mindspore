@@ -225,6 +225,23 @@ AbstractBasePtr MaxPool3DInfer(const abstract::AnalysisEnginePtr &, const Primit
   return abstract::MakeAbstract(MaxPool3DInferShape(primitive, input_args), MaxPool3DInferType(primitive, input_args));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxPool3D, prim::kPrimMaxPool3D, MaxPool3DInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGMaxPool3DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPool3DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPool3DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPool3DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaxPool3D, prim::kPrimMaxPool3D, AGMaxPool3DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -70,7 +70,25 @@ AbstractBasePtr MaxPoolGradGradWithArgmaxInfer(const abstract::AnalysisEnginePtr
 }
 
 MIND_API_OPERATOR_IMPL(MaxPoolGradGradWithArgmax, MaxPoolGradGrad);
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxPoolGradGradWithArgmax, prim::kPrimMaxPoolGradGradWithArgmax,
-                             MaxPoolGradGradWithArgmaxInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMaxPoolGradGradWithArgmaxInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPoolGradGradWithArgmaxInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPoolGradGradWithArgmaxInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPoolGradGradWithArgmaxInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaxPoolGradGradWithArgmax, prim::kPrimMaxPoolGradGradWithArgmax,
+                                 AGMaxPoolGradGradWithArgmaxInfer, false);
 }  // namespace ops
 }  // namespace mindspore

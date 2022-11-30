@@ -138,6 +138,24 @@ abstract::AbstractBasePtr ResizeLinear1DInfer(const abstract::AnalysisEnginePtr 
   auto infer_shape = ResizeLinear1DInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ResizeLinear1D, prim::kPrimResizeLinear1D, ResizeLinear1DInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGResizeLinear1DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeLinear1DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeLinear1DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeLinear1DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ResizeLinear1D, prim::kPrimResizeLinear1D, AGResizeLinear1DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

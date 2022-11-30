@@ -122,6 +122,24 @@ AbstractBasePtr MedianInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto infer_shape = MedianInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Median, prim::kPrimMedian, MedianInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMedianInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MedianInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MedianInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MedianInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Median, prim::kPrimMedian, AGMedianInfer, false);
 }  // namespace ops
 }  // namespace mindspore

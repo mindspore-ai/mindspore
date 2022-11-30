@@ -127,7 +127,25 @@ AbstractBasePtr CSRSparseMatrixToSparseTensorInfer(const abstract::AnalysisEngin
   auto infer_shape = CSRSparseMatrixToSparseTensorInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(CSRSparseMatrixToSparseTensor, prim::kPrimCSRSparseMatrixToSparseTensor,
-                             CSRSparseMatrixToSparseTensorInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGCSRSparseMatrixToSparseTensorInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CSRSparseMatrixToSparseTensorInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return CSRSparseMatrixToSparseTensorInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return CSRSparseMatrixToSparseTensorInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CSRSparseMatrixToSparseTensor, prim::kPrimCSRSparseMatrixToSparseTensor,
+                                 AGCSRSparseMatrixToSparseTensorInfer, false);
 }  // namespace ops
 }  // namespace mindspore

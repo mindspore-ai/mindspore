@@ -149,7 +149,25 @@ AbstractBasePtr SparseApplyProximalAdagradInfer(const abstract::AnalysisEnginePt
 }
 
 MIND_API_OPERATOR_IMPL(SparseApplyProximalAdagrad, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyProximalAdagrad, prim::kPrimSparseApplyProximalAdagrad,
-                             SparseApplyProximalAdagradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseApplyProximalAdagradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseApplyProximalAdagradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseApplyProximalAdagradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseApplyProximalAdagradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseApplyProximalAdagrad, prim::kPrimSparseApplyProximalAdagrad,
+                                 AGSparseApplyProximalAdagradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

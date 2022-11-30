@@ -144,7 +144,24 @@ AbstractBasePtr FusedSparseLazyAdamInfer(const abstract::AnalysisEnginePtr &, co
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FusedSparseLazyAdam, prim::kPrimFusedSparseLazyAdam, FusedSparseLazyAdamInfer, nullptr,
-                             true)
+// AG means auto generated
+class MIND_API AGFusedSparseLazyAdamInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return fused_sparse_lazy_adam::FusedSparseLazyAdamInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return fused_sparse_lazy_adam::FusedSparseLazyAdamInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FusedSparseLazyAdamInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FusedSparseLazyAdam, prim::kPrimFusedSparseLazyAdam, AGFusedSparseLazyAdamInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

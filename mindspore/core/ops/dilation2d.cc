@@ -164,6 +164,23 @@ std::string Dilation2D::get_format() const {
   return GetValue<std::string>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Dilation2D, prim::kPrimDilation2D, Dilation2DInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGDilation2DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Dilation2D, prim::kPrimDilation2D, AGDilation2DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

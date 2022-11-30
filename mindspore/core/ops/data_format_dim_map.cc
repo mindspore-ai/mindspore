@@ -83,6 +83,23 @@ std::string DataFormatDimMap::get_dst_format() const {
   return GetValue<std::string>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(DataFormatDimMap, prim::kPrimDataFormatDimMap, DataFormatDimMapInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGDataFormatDimMapInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DataFormatDimMapInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DataFormatDimMapInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DataFormatDimMapInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DataFormatDimMap, prim::kPrimDataFormatDimMap, AGDataFormatDimMapInfer, false);
 }  // namespace ops
 }  // namespace mindspore

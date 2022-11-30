@@ -81,6 +81,24 @@ AbstractBasePtr LogSpaceInfer(const abstract::AnalysisEnginePtr &, const Primiti
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(LogSpace, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(LogSpace, prim::kPrimLogSpace, LogSpaceInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGLogSpaceInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogSpaceInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogSpaceInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogSpaceInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LogSpace, prim::kPrimLogSpace, AGLogSpaceInfer, false);
 }  // namespace ops
 }  // namespace mindspore

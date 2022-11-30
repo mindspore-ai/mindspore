@@ -135,6 +135,24 @@ AbstractBasePtr ClipByNormInfer(const abstract::AnalysisEnginePtr &, const Primi
   }
   return abs;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ClipByNorm, prim::kPrimClipByNorm, ClipByNormInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGClipByNormInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ClipByNormInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ClipByNormInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ClipByNormInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ClipByNorm, prim::kPrimClipByNorm, AGClipByNormInfer, false);
 }  // namespace ops
 }  // namespace mindspore

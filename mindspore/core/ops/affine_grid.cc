@@ -142,6 +142,24 @@ AbstractBasePtr AffineGridInfer(const abstract::AnalysisEnginePtr &, const Primi
 }
 
 MIND_API_OPERATOR_IMPL(AffineGrid, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(AffineGrid, prim::kPrimAffineGrid, AffineGridInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAffineGridInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AffineGridInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AffineGridInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AffineGridInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AffineGrid, prim::kPrimAffineGrid, AGAffineGridInfer, false);
 }  // namespace ops
 }  // namespace mindspore

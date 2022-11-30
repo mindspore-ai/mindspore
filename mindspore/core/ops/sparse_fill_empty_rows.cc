@@ -135,8 +135,27 @@ AbstractBasePtr SparseFillEmptyRowsInfer(const abstract::AnalysisEnginePtr &, co
   auto infer_shape = SparseFillEmptyRowsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_INFER_DEPENDS(kNameSparseFillEmptyRows, {2});
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseFillEmptyRows, prim::kPrimSparseFillEmptyRows, SparseFillEmptyRowsInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGSparseFillEmptyRowsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseFillEmptyRowsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseFillEmptyRowsInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseFillEmptyRowsInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseFillEmptyRows, prim::kPrimSparseFillEmptyRows, AGSparseFillEmptyRowsInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

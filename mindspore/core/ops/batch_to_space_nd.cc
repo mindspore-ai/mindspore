@@ -139,6 +139,24 @@ AbstractBasePtr BatchToSpaceNDInfer(const abstract::AnalysisEnginePtr &, const P
   auto infer_shape = BatchToSpaceNDInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BatchToSpaceND, prim::kPrimBatchToSpaceND, BatchToSpaceNDInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGBatchToSpaceNDInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BatchToSpaceNDInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BatchToSpaceNDInferType(input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BatchToSpaceNDInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchToSpaceND, prim::kPrimBatchToSpaceND, AGBatchToSpaceNDInfer, false);
 }  // namespace ops
 }  // namespace mindspore

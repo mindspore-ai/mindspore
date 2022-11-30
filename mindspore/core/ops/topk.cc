@@ -103,6 +103,23 @@ bool TopK::get_attr(const char *attr) const {
   return GetValue<bool>(attr_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(TopK, prim::kPrimTopK, TopKInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGTopKInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TopKInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TopKInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return TopKInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TopK, prim::kPrimTopK, AGTopKInfer, false);
 }  // namespace ops
 }  // namespace mindspore

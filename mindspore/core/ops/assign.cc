@@ -91,6 +91,24 @@ AbstractBasePtr AssignInfer(const abstract::AnalysisEnginePtr &, const Primitive
   }
   return abstract::MakeAbstract(AssignInferShape(primitive, input_args), AssignInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Assign, prim::kPrimAssign, AssignInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAssignInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AssignInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AssignInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AssignInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Assign, prim::kPrimAssign, AGAssignInfer, false);
 }  // namespace ops
 }  // namespace mindspore

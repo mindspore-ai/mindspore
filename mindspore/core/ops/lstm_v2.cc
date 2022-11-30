@@ -163,6 +163,24 @@ AbstractBasePtr LSTMV2Infer(const abstract::AnalysisEnginePtr &, const Primitive
 }
 
 MIND_API_OPERATOR_IMPL(LSTMV2, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(LSTMV2, prim::kPrimLSTMV2, LSTMV2Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGLSTMV2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LSTMV2InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LSTMV2InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LSTMV2Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LSTMV2, prim::kPrimLSTMV2, AGLSTMV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore

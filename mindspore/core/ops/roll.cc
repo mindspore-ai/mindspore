@@ -63,6 +63,24 @@ AbstractBasePtr RollInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   return abstract::MakeAbstract(RollInferShape(primitive, input_args), RollInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Roll, prim::kPrimRoll, RollInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGRollInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RollInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RollInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RollInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Roll, prim::kPrimRoll, AGRollInfer, false);
 }  // namespace ops
 }  // namespace mindspore

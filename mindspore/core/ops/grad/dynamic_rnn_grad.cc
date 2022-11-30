@@ -162,6 +162,24 @@ AbstractBasePtr DynamicRNNGradInfer(const abstract::AnalysisEnginePtr &, const P
   auto shape = DynamicRNNGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(DynamicRNNGrad, prim::kPrimDynamicRNNGrad, DynamicRNNGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGDynamicRNNGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicRNNGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicRNNGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicRNNGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicRNNGrad, prim::kPrimDynamicRNNGrad, AGDynamicRNNGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

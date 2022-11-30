@@ -267,7 +267,25 @@ std::vector<int64_t> Conv2DBackpropInput::get_pad_list() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput, Conv2DBackpropInputInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGConv2DBackpropInputInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Conv2DBackpropInputInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Conv2DBackpropInputInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Conv2DBackpropInputInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput, AGConv2DBackpropInputInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

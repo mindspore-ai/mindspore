@@ -160,6 +160,23 @@ AbstractBasePtr FusedSparseFtrlInfer(const abstract::AnalysisEnginePtr &, const 
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FusedSparseFtrl, prim::kPrimFusedSparseFtrl, FusedSparseFtrlInfer, nullptr, true)
+// AG means auto generated
+class MIND_API AGFusedSparseFtrlInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return fused_sparse_ftrl::FusedSparseFtrlInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return fused_sparse_ftrl::FusedSparseFtrlInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FusedSparseFtrlInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FusedSparseFtrl, prim::kPrimFusedSparseFtrl, AGFusedSparseFtrlInfer, false);
 }  // namespace ops
 }  // namespace mindspore

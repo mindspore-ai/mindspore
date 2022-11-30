@@ -153,6 +153,24 @@ void SparseMatrixAdd::Init(const std::vector<int64_t> &csr_a, const std::vector<
 }
 
 MIND_API_OPERATOR_IMPL(SparseMatrixAdd, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixAdd, prim::kPrimSparseMatrixAdd, SparseMatrixAddInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseMatrixAddInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixAddInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixAddInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixAddInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseMatrixAdd, prim::kPrimSparseMatrixAdd, AGSparseMatrixAddInfer, false);
 }  // namespace ops
 }  // namespace mindspore

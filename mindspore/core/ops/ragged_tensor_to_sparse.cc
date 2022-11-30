@@ -101,7 +101,24 @@ AbstractBasePtr RaggedTensorToSparseInfer(const abstract::AnalysisEnginePtr &, c
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(RaggedTensorToSparse, prim::kPrimRaggedTensorToSparse, RaggedTensorToSparseInfer, nullptr,
-                             true);
+// AG means auto generated
+class MIND_API AGRaggedTensorToSparseInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RaggedTensorToSparseInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RaggedTensorToSparseInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RaggedTensorToSparseInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RaggedTensorToSparse, prim::kPrimRaggedTensorToSparse, AGRaggedTensorToSparseInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

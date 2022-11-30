@@ -109,6 +109,24 @@ AbstractBasePtr SparseSplitInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infershape = SparseSplitInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSplit, prim::kPrimSparseSplit, SparseSplitInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseSplitInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSplitInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSplitInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSplitInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSplit, prim::kPrimSparseSplit, AGSparseSplitInfer, false);
 }  // namespace ops
 }  // namespace mindspore

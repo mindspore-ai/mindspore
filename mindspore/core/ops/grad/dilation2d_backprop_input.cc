@@ -192,7 +192,24 @@ std::string Dilation2DBackpropInput::get_format() const {
   return GetValue<std::string>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Dilation2DBackpropInput, prim::kPrimDilation2DBackpropInput, Dilation2DBackpropInputInfer,
-                             nullptr, true);
+// AG means auto generated
+class MIND_API AGDilation2DBackpropInputInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DBackpropInputInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DBackpropInputInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DBackpropInputInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Dilation2DBackpropInput, prim::kPrimDilation2DBackpropInput,
+                                 AGDilation2DBackpropInputInfer, false);
 }  // namespace ops
 }  // namespace mindspore

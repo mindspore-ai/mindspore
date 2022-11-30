@@ -111,8 +111,27 @@ AbstractBasePtr ConjugateTransposeInfer(const abstract::AnalysisEnginePtr &, con
   return abstract::MakeAbstract(shape, type);
 }
 
-REGISTER_INFER_DEPENDS(kNameConjugateTranspose, {1});
 MIND_API_OPERATOR_IMPL(ConjugateTranspose, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ConjugateTranspose, prim::kPrimConjugateTranspose, ConjugateTransposeInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGConjugateTransposeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ConjugateTransposeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ConjugateTransposeInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ConjugateTransposeInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ConjugateTranspose, prim::kPrimConjugateTranspose, AGConjugateTransposeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

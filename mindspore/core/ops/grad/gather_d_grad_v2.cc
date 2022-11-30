@@ -69,6 +69,24 @@ AbstractBasePtr GatherDGradV2Infer(const abstract::AnalysisEnginePtr &, const Pr
 }
 
 MIND_API_OPERATOR_IMPL(GatherDGradV2, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(GatherDGradV2, prim::kPrimGatherDGradV2, GatherDGradV2Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGGatherDGradV2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return GatherDGradV2InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GatherDGradV2InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GatherDGradV2Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(GatherDGradV2, prim::kPrimGatherDGradV2, AGGatherDGradV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore

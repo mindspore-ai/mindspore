@@ -96,6 +96,23 @@ AbstractBasePtr TridiagonalSolveInfer(const abstract::AnalysisEnginePtr &, const
 }
 
 MIND_API_OPERATOR_IMPL(TridiagonalSolve, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(TridiagonalSolve, prim::kPrimTridiagonalSolve, TridiagonalSolveInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGTridiagonalSolveInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TridiagonalSolveInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TridiagonalSolveInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return TridiagonalSolveInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TridiagonalSolve, prim::kPrimTridiagonalSolve, AGTridiagonalSolveInfer, false);
 }  // namespace ops
 }  // namespace mindspore
