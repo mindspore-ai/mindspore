@@ -5237,6 +5237,64 @@ inline std::shared_ptr<SQuADDataset> DATASET_API SQuAD(const std::string &datase
                                         num_shards, shard_id, cache);
 }
 
+/// \class SST2Dataset
+/// \brief A source dataset for reading and parsing SST2 dataset.
+class DATASET_API SST2Dataset : public Dataset {
+ public:
+  /// \brief Constructor of SST2Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of SST2, can be "train", "test" or "dev".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode.kFalse - No shuffling is performed.
+  ///     ShuffleMode.kGlobal - Shuffle the samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  SST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+              ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of SST2.
+  ~SST2Dataset() override = default;
+};
+
+/// \brief Function to create a SST2Dataset.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of SST2, can be "train", "test" or "dev". Default: "train".
+/// \param[in] num_samples The number of samples to be included in the dataset.
+///     Default: 0, means all samples.
+/// \param[in] shuffle The mode for shuffling data every epoch. Default: ShuffleMode::kGlobal.
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into. Default: 1.
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified. Default: 0.
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the SST2Dataset
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/sst2_dataset_directory";
+///      std::shared_ptr<Dataset> ds = SST2(folder_path, "train");
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+/// \endcode
+inline std::shared_ptr<SST2Dataset> DATASET_API SST2(const std::string &dataset_dir, const std::string &usage = "train",
+                                                     int64_t num_samples = 0,
+                                                     ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
+                                                     int32_t shard_id = 0,
+                                                     const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SST2Dataset>(StringToChar(dataset_dir), StringToChar(usage), num_samples, shuffle, num_shards,
+                                       shard_id, cache);
+}
+
 /// \class STL10Dataset
 /// \brief A source dataset that reads and parses STL10 dataset.
 class DATASET_API STL10Dataset : public Dataset {

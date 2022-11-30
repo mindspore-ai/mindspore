@@ -121,6 +121,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/sogou_news_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/squad_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/sst2_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sun397_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
@@ -1854,6 +1855,14 @@ SQuADDataset::SQuADDataset(const std::vector<char> &dataset_dir, const std::vect
   auto ds = std::make_shared<SQuADNode>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle,
                                         num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+SST2Dataset::SST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                         ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                         const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<SST2Node>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle, num_shards,
+                                       shard_id, cache);
+  ir_node_ = std::static_pointer_cast<SST2Node>(ds);
 }
 
 TedliumDataset::TedliumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &release,

@@ -30,7 +30,8 @@ from .validators import check_imdb_dataset, check_iwslt2016_dataset, check_iwslt
     check_penn_treebank_dataset, check_ag_news_dataset, check_amazon_review_dataset, check_udpos_dataset, \
     check_wiki_text_dataset, check_conll2000_dataset, check_cluedataset, \
     check_sogou_news_dataset, check_textfiledataset, check_dbpedia_dataset, check_yelp_review_dataset, \
-    check_en_wik9_dataset, check_yahoo_answers_dataset, check_multi30k_dataset, check_squad_dataset
+    check_en_wik9_dataset, check_yahoo_answers_dataset, check_multi30k_dataset, check_squad_dataset, \
+    check_sst2_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -1494,6 +1495,105 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
     def parse(self, children=None):
         return cde.SQuADNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
                              self.num_shards, self.shard_id)
+
+
+class SST2Dataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses the SST2 dataset.
+
+    The generated dataset's train.tsv and dev.tsv have two columns :py:obj:`[sentence, label]` .
+    The generated dataset's test.tsv has one column :py:obj:`[sentence]` .
+    The tensor of column :py:obj:`sentence` and :py:obj:`label` are of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `dev`. `train` will read
+            from 67,349 train samples, `test` will read from 1,821 test samples, `dev` will read from
+            all 872 samples. Default: None, will read train samples.
+        num_samples (int, optional): The number of samples to be included in the dataset.
+            Default: None, will include all text.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the mindspore.dataset.config.
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch.
+            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Set the mode of data shuffling by passing in enumeration variables:
+
+            - Shuffle.GLOBAL: Shuffle the samples.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards. This argument can only be specified when
+            num_shards is also specified. Default: None.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
+
+    Raises:
+        RuntimeError: If `dataset_dir` does not contain data files.
+        RuntimeError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but shard_id is None.
+        RuntimeError: If `shard_id` is specified but num_shards is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> sst2_dataset_dir = "/path/to/sst2_dataset_directory"
+        >>>
+        >>> # 1) Read 3 samples from SST2 dataset
+        >>> dataset = ds.SST2Dataset(dataset_dir=sst2_dataset_dir, num_samples=3)
+        >>>
+        >>> # 2) Read train samples from SST2 dataset
+        >>> dataset = ds.SST2Dataset(dataset_dir=sst2_dataset_dir, usage="train")
+
+    About SST2 dataset:
+    The Stanford Sentiment Treebank is a corpus with fully labeled parse trees that allows for a complete
+    analysis of the compositional effects of sentiment in language. The corpus is based on the dataset introduced
+    by Pang and Lee (2005) and consists of 11,855 single sentences extracted from movie reviews. It was parsed
+    with the Stanford parser and includes a total of 215,154 unique phrases from those parse trees, each
+    annotated by 3 human judges.
+
+    Here is the original SST2 dataset structure.
+    You can unzip the dataset files into this directory structure and read by Mindspore's API.
+
+    .. code-block::
+
+        .
+        └── sst2_dataset_dir
+            ├── train.tsv
+            ├── test.tsv
+            ├── dev.tsv
+            └── original
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{socher-etal-2013-recursive,
+            title     = {Recursive Deep Models for Semantic Compositionality Over a Sentiment Treebank},
+            author    = {Socher, Richard and Perelygin, Alex and Wu, Jean and Chuang, Jason and Manning,
+                          Christopher D. and Ng, Andrew and Potts, Christopher},
+            booktitle = {Proceedings of the 2013 Conference on Empirical Methods in Natural Language Processing},
+            month     = oct,
+            year      = {2013},
+            address   = {Seattle, Washington, USA},
+            publisher = {Association for Computational Linguistics},
+            url       = {https://www.aclweb.org/anthology/D13-1170},
+            pages     = {1631--1642},
+        }
+    """
+
+    @check_sst2_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "train")
+
+    def parse(self, children=None):
+        return cde.SST2Node(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
+                            self.num_shards, self.shard_id)
 
 
 class TextFileDataset(SourceDataset, TextBaseDataset):

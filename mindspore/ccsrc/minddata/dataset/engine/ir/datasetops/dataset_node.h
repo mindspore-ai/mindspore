@@ -123,6 +123,7 @@ constexpr char kSemeionNode[] = "SemeionDataset";
 constexpr char kSogouNewsNode[] = "SogouNewsDataset";
 constexpr char kSpeechCommandsNode[] = "SpeechCommandsDataset";
 constexpr char kSQuADNode[] = "SQuADDataset";
+constexpr char kSST2Node[] = "SST2Dataset";
 constexpr char kSTL10Node[] = "STL10Dataset";
 constexpr char kSUN397Node[] = "SUN397Dataset";
 constexpr char kTedliumNode[] = "TedliumDataset";

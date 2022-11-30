@@ -1,0 +1,6 @@
+sentence	label
+train read SST2Dataset 1 . 	0
+train read SST2Dataset 2 . 	1
+train read SST2Dataset 3 . 	1
+train read SST2Dataset 4 . 	1
+train read SST2Dataset 5 . 	0

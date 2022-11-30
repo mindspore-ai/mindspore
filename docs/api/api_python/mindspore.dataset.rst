@@ -149,6 +149,7 @@ mindspore.dataset
     mindspore.dataset.IWSLT2017Dataset
     mindspore.dataset.PennTreebankDataset
     mindspore.dataset.SogouNewsDataset
+    mindspore.dataset.SST2Dataset
     mindspore.dataset.TextFileDataset
     mindspore.dataset.UDPOSDataset
     mindspore.dataset.WikiTextDataset

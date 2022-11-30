@@ -225,7 +225,7 @@ class CsvOp : public NonMappableLeafOp {
   /// @param str - the input string
   /// @param str - the delimiter
   /// @return - the a string vector
-  std::vector<std::string> split(const std::string &s, char delim);
+  virtual std::vector<std::string> split(const std::string &s, char delim);
 
   // Private function for analysing the column name in every CSV file
   // @return - Status
