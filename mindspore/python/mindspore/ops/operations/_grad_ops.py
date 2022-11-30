@@ -26,7 +26,7 @@ import mindspore.context as context
 from mindspore._checkparam import Validator as validator, Rel
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
-from mindspore.ops._utils import is_shape_unknown, is_dim_unknown
+from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 
 
 class SparseFillEmptyRowsGrad(Primitive):

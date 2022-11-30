@@ -26,7 +26,6 @@ from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.common._register_for_tensor import tensor_operator_registry
-from mindspore.ops import _utils as op_utils
 from mindspore._checkparam import Validator as validator
 from mindspore.ops import operations as P
 
@@ -117,9 +116,9 @@ def make_empty_slice():
 
 
 @constexpr
-def _deep_list(array_like, dim_size=-1):
+def _deep_list(array_like, dim_size=None):
     """convert nested tuple/list mixtures to pure nested list"""
-    if dim_size != -1:
+    if dim_size is not None:
         array_like = check_range(array_like, dim_size)
     if isinstance(array_like, (list, tuple)):
         return list(map(lambda x: _deep_list(x, dim_size), array_like))
@@ -160,7 +159,7 @@ def _deep_tensor_to_nparray(array_like):
 
 @constexpr
 def check_range(x, dim_size):
-    if dim_size == -1:
+    if dim_size is None:
         return x
     if isinstance(x, int) and not isinstance(x, bool):
         if x >= dim_size or x < -dim_size:
@@ -170,7 +169,7 @@ def check_range(x, dim_size):
 
 
 @constexpr
-def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=-1):
+def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
     """
     Converts the input to tensor.
 
@@ -194,7 +193,7 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=-1):
     if not isinstance(a, (list, tuple, int, float, bool)):
         raise TypeError("input data must be `int`, `float`, `bool`, `list` or `tuple`")
 
-    if dim_size != -1:
+    if dim_size is not None:
         a = check_range(a, dim_size)
 
     if isinstance(a, (list, tuple)):
@@ -480,6 +479,39 @@ def check_tensors_dtype_same(data_dtype, value_dtype, op_name):
 
 
 @constexpr
+def get_broadcast_shape(x_shape, y_shape, prim_name):
+    """Get broadcast shape from input shapes."""
+    if x_shape is None or y_shape is None:
+        raise ValueError("get_broadcast_shape has dynamic rank input")
+    if None in x_shape or None in y_shape:
+        raise ValueError("get_broadcast_shape has dynamic shape input")
+    if x_shape == y_shape:
+        return x_shape
+    x_len = len(x_shape)
+    y_len = len(y_shape)
+    length = x_len if x_len < y_len else y_len
+    broadcast_shape_back = []
+
+    for i in range(-length, 0):
+        if x_shape[i] == 1:
+            broadcast_shape_back.append(y_shape[i])
+        elif y_shape[i] == 1:
+            broadcast_shape_back.append(x_shape[i])
+        elif x_shape[i] == y_shape[i]:
+            broadcast_shape_back.append(x_shape[i])
+        else:
+            raise ValueError(f"For '{prim_name}', x.shape and y.shape need to "
+                             f"broadcast. The value of x.shape[{i}] or y.shape[{i}]"
+                             f" must be 1 or -1 when they are not the same, "
+                             f"but got x.shape = {x_shape} "
+                             f"and y.shape = {y_shape}.")
+
+    broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
+    broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back
+    return broadcast_shape
+
+
+@constexpr
 def generate_broadcast_shape(shapes, op_name):
     """Generate broadcast shape for a tuple of shape."""
     if not shapes:
@@ -488,8 +520,7 @@ def generate_broadcast_shape(shapes, op_name):
     for i, shape in enumerate(shapes):
         logger.debug(f"Broadcasts the {i}th tensor, the shape is {shape}.")
         try:
-            broadcast_shape = op_utils.get_broadcast_shape(
-                broadcast_shape, shape, op_name)
+            broadcast_shape = get_broadcast_shape(broadcast_shape, shape, op_name)
         except ValueError as ex:
             raise IndexError(ex)
     return tuple(broadcast_shape)
@@ -715,7 +746,7 @@ def normalize_start(start, dim_size):
     """
     if start is None:
         return 0
-    if dim_size == -1:
+    if dim_size is None:
         return start
     if start < 0:
         return 0 if start < -dim_size else start % dim_size
@@ -728,11 +759,11 @@ def normalize_stop(stop, dim_size):
     Normalize `stop` according to the number of dimensions (`dim_size`).
     If the number of dimensions is not given, return the original input directly.
     """
-    if stop is None and dim_size == -1:
+    if stop is None and dim_size is None:
         raise IndexError("Not Support stop is None when dim is dynamic")
     if stop is None:
         return dim_size
-    if dim_size == -1:
+    if dim_size is None:
         return stop
     if stop < 0:
         return 0 if stop < -dim_size else stop % dim_size
@@ -818,7 +849,7 @@ def sequence_to_index(sequence, dim_size):
     if not sequence:
         return False
     if all(isinstance(i, bool) for i in sequence):
-        if dim_size == -1:
+        if dim_size is None:
             raise IndexError("Not supported to take the subscript of dynamic shape tensor using Boolean type")
         seq_size = len(sequence)
         if seq_size != dim_size:

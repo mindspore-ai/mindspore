@@ -27,7 +27,7 @@ from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _rl_inner_ops as rl_ops
-from mindspore.ops._utils.utils import range_op, get_1d_shape, is_shape_unknown, is_dim_unknown
+from mindspore.ops._utils.utils import range_op, get_1d_shape
 
 
 @bprop_getters.register(P.BiasAdd)
@@ -85,7 +85,7 @@ def get_bprop_bias_add_grad(self):
         dyn_shape = P.TensorShape()
         dy_shape = dy.shape
         dout_shape = dout.shape
-        if is_shape_unknown(dy_shape) or is_shape_unknown(dout_shape):
+        if F.is_sequence_value_unknown(dy_shape) or F.is_sequence_value_unknown(dout_shape):
             dy_shape = dyn_shape(dy)
             dout_shape = dyn_shape(dout)
             expanded_shape, tile_mults = bias_add_gradgrad_helper_dynamic(dy_shape, dout_shape, data_format)
@@ -120,9 +120,9 @@ def get_bprop_conv2d(self):
     def bprop(x, w, out, dout):
         x_shape = get_shape(x)
         w_shape = get_shape(w)
-        if is_shape_unknown(x_shape):
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = get_dyn_shape(x)
-        if is_shape_unknown(w_shape):
+        if F.is_sequence_value_unknown(w_shape):
             w_shape = get_dyn_shape(w)
             w_shape = cast_type(w_shape, mstype.int32)
         dx = input_grad(dout, w, x_shape)
@@ -147,7 +147,7 @@ def get_bprop_conv3d(self):
     get_dyn_shape = P.TensorShape()
 
     def bprop(x, w, out, dout):
-        if is_shape_unknown(get_shape(x)) or is_shape_unknown(get_shape(w)):
+        if F.is_sequence_value_unknown(get_shape(x)) or F.is_sequence_value_unknown(get_shape(w)):
             dx = input_grad(w, dout, get_dyn_shape(x))
             dw = filter_grad(x, dout, get_dyn_shape(w))
             return dx, dw
@@ -176,7 +176,7 @@ def get_bprop_conv3d_transpose(self):
     get_dyn_shape = P.TensorShape()
 
     def bprop(x, w, out, dout):
-        if is_shape_unknown(F.shape(w)):
+        if F.is_sequence_value_unknown(F.shape(w)):
             dx = input_grad(dout, w)
             dw = filter_grad(dout, x, get_dyn_shape(w))
             return dx, dw
@@ -249,7 +249,7 @@ def get_bprop_extract_image_patches(self):
     def bprop(x, out, dout):
         x_shape = get_shape(x)
         out_shape = get_shape(out)
-        if is_shape_unknown(x_shape) or is_shape_unknown(out_shape):
+        if F.is_sequence_value_unknown(x_shape) or F.is_sequence_value_unknown(out_shape):
             return _dyn_extract_image_patched(x, out, dout)
         x_batch, x_depth, x_row, x_col = x_shape
         x_indices_num = x_row * x_col + 1
@@ -355,7 +355,7 @@ def get_bprop_max_pool_grad_grad(self):
             dgrad = maxpool_grad_grad(x1, x2, dout)
         else:
             shape_x2 = shape_op(x2)
-            if is_shape_unknown(shape_x2):
+            if F.is_sequence_value_unknown(shape_x2):
                 shape_x2 = dyn_shape_op(x2)
                 b, c, h, w = shape_x2
                 _, ind = maxpool_with_argmax(x1)
@@ -518,7 +518,7 @@ def get_bprop_avg_pool_3d_grad(self):
 
     def bprop(x, out, dout):
         x_shape = F.shape(x)
-        if is_shape_unknown(x_shape):
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = P.TensorShape()(x)
         dx = avgpool3d_grad(x_shape, dout)
         return (dx,)
@@ -722,7 +722,7 @@ def _get_transpose_axis(x_shp, axis):
 
 def _get_dyn_transpose_axis(x, axis, is_ascend):
     """Get transpose axis"""
-    if is_dim_unknown(P.Shape()(x)):
+    if F.is_sequence_shape_unknown(P.Shape()(x)):
         rank = dyn_rank(x)
         start = Tensor(0, dtype=mstype.int64)
         delta = Tensor(1, dtype=mstype.int64)
@@ -770,7 +770,7 @@ def get_bprop_softmax(self):
         # we transpose the data of the `axis` dimension to the last dimension for calculation,
         # and then transpose it back after the calculation.
         shp = get_shape(x)
-        if is_shape_unknown(shp):
+        if F.is_sequence_value_unknown(shp):
             reverse_axis = _get_dyn_transpose_axis(x, axis, is_ascend)
             if is_ascend:
                 reverse_axis = P.Cast()(reverse_axis, mstype.int32)
@@ -1115,7 +1115,7 @@ def get_bprop_top_kv2(self):
         return out_grad, zeros_like(k)
 
     def bprop(input_x, k, out, dout):
-        if is_shape_unknown(shape_op(input_x)):
+        if F.is_sequence_value_unknown(shape_op(input_x)):
             return _bprop_dynshape(input_x, k, out, dout)
         return _bprop_static(input_x, k, out, dout)
 
@@ -1321,7 +1321,7 @@ def get_bprop_pad(self):
         for item in paddings:
             begin += (item[0],)
         shp = shape_op(x)
-        if is_shape_unknown(shp):
+        if F.is_sequence_value_unknown(shp):
             shp = dyn_shape_op(x)
         dx = P.Slice()(dout, begin, shp)
         return (dx,)
@@ -1353,7 +1353,7 @@ def get_bprop_roi_align(self):
 
     def bprop(inputs, rois, out, dout):
         inputs_shape = shape_op(inputs)
-        if is_shape_unknown(inputs_shape):
+        if F.is_sequence_value_unknown(inputs_shape):
             inputs_shape = dyn_shape(inputs)
         dx = G.ROIAlignGrad(pooled_height, pooled_width, spatial_scale, sample_num)(dout, rois, inputs_shape)
         return dx, zeros_like(rois)
@@ -1380,7 +1380,7 @@ def get_bprop_conv2d_backprop_input(self):
 
     def bprop(x, w, f_sizes, out, dout):
         w_shape = get_shape(w)
-        if is_shape_unknown(w_shape):
+        if F.is_sequence_value_unknown(w_shape):
             w_shape = get_dyn_shape(w)
         dx = input_grad(dout, w)
         dw = filter_grad(x, dout, w_shape)
@@ -1427,8 +1427,8 @@ def get_bprop_bce_with_logits_loss(self):
             dx = mul(dx, weight)
             grad_target = mul(grad_target, weight)
         if reduction == 'mean':
-            dx_size = dyn_size(dx) if is_shape_unknown(shape(dx)) else size(dx)
-            target_size = dyn_size(target) if is_shape_unknown(shape(target)) else size(target)
+            dx_size = dyn_size(dx) if F.is_sequence_value_unknown(shape(dx)) else size(dx)
+            target_size = dyn_size(target) if F.is_sequence_value_unknown(shape(target)) else size(target)
             dx = dx / dx_size
             grad_target = grad_target / target_size
         return dx, grad_target, zeros_like(weight), zeros_like(pos_weight)
@@ -1451,7 +1451,7 @@ def get_bprop_kl_div_loss(self):
             grad = G.KLDivLossGrad(self.reduction)
         dx = grad(dout, x, y)
         if reduce_type == "mean":
-            x_size = dyn_size(x) if is_shape_unknown(shape(x)) else size(x)
+            x_size = dyn_size(x) if F.is_sequence_value_unknown(shape(x)) else size(x)
             return dx / x_size, zeros_like(y)
         return dx, zeros_like(y)
 
@@ -1584,7 +1584,7 @@ def get_bprop_conv2d_backprop_filter(self):
 
     def bprop(dy, x, filter_size, out, dout):
         x_shape = get_shape(x)
-        if is_shape_unknown(x_shape):
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = get_dyn_shape(x)
         dw_dx = input_grad(dy, dout, x_shape)
         dw_dy = filter_grad(x, dout)

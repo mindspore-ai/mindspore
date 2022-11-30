@@ -422,35 +422,29 @@ ValuePtr EvalShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrLis
 }
 }  // namespace
 
-std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const ValuePtr &attr, const std::string &prim_name) {
-  std::vector<int64_t> result;
-  bool is_correct = false;
-  MS_EXCEPTION_IF_NULL(attr);
-
-  auto attr_vec = attr->cast<ValueSequencePtr>()->value();
-  if (attr_vec.empty()) {
-    return result;
+std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const AbstractBasePtr &abs,
+                                      const std::string &prim_name) {
+  MS_EXCEPTION_IF_NULL(abs);
+  auto abs_seq = dyn_cast<abstract::AbstractSequence>(abs);
+  MS_EXCEPTION_IF_NULL(abs_seq);
+  if (abs_seq->dynamic_len()) {
+    return std::vector<int64_t>{abstract::Shape::kShapeRankAny};
   }
-  is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> bool {
-    MS_EXCEPTION_IF_NULL(e);
-    if (e->isa<Int64Imm>()) {
-      (void)result.emplace_back(GetValue<int64_t>(e));
-      return true;
-    } else if (e->isa<Int32Imm>()) {
-      (void)result.emplace_back(GetValue<int32_t>(e));
-      return true;
-    } else if (e->isa<AnyValue>()) {
-      (void)result.emplace_back(-1);
-      return true;
+  std::vector<int64_t> out_shape;
+  for (auto element : abs_seq->elements()) {
+    auto element_val = element->BuildValue();
+    if (element_val == kAnyValue) {
+      out_shape.push_back(abstract::Shape::kShapeDimAny);
+    } else if (element_val->isa<Int64Imm>()) {
+      (void)out_shape.emplace_back(GetValue<ShapeValueDType>(element_val));
+    } else if (element_val->isa<Int32Imm>()) {
+      (void)out_shape.emplace_back(GetValue<int32_t>(element_val));
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                              << " must be one of ['tuple', 'list'] with all Int elements, but got " << abs->ToString();
     }
-
-    return false;
-  });
-  if (!is_correct) {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
-                            << " must be one of ['tuple', 'list'] with all Int elements, but got " << attr->ToString();
   }
-  return result;
+  return out_shape;
 }
 
 ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &arg) {
@@ -481,11 +475,9 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
       MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(shape_size) == shape_vector.size(), "Illegal shape of shape value");
       return shape_vector;
     }
-  } else if (abs_value->isa<ValueSequence>()) {
-    auto shape = GetSequenceValue("input[shape]", abs_value, primitive->name());
+  } else if (arg->isa<abstract::AbstractSequence>()) {
+    auto shape = GetSequenceValue("input[shape]", arg, primitive->name());
     return shape;
-  } else if (abs_value->isa<AnyValue>()) {
-    return {abstract::Shape::kShapeRankAny};
   }
 
   auto size_type = arg->BuildType();

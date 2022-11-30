@@ -29,7 +29,6 @@ from mindspore.ops.operations.image_ops import CropAndResizeGradImage
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
 from mindspore.ops.operations.image_ops import RGBToHSV
 from mindspore.ops.operations.image_ops import ScaleAndTranslate
-from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore import context
 
 
@@ -69,7 +68,7 @@ def get_bprop_crop_and_resize(self):
         dimage_type = image_type
         gradimage = CropAndResizeGradImage(dimage_type, method=method_)
         image_shape = x.shape
-        if is_shape_unknown(image_shape):
+        if F.is_sequence_value_unknown(image_shape):
             image_size = dyn_shape(x)
             image_size = F.cast(image_size, mstype.int32)
         else:

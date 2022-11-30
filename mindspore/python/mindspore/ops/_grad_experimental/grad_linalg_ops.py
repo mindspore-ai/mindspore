@@ -29,7 +29,6 @@ from mindspore.ops.operations import array_ops as arrays
 from mindspore.ops.primitive import constexpr
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops._grad.grad_base import dyn_rank
-from mindspore.ops._utils.utils import is_shape_unknown
 
 _shape = arrays.Shape()
 _dyn_shape = arrays.TensorShape()
@@ -55,7 +54,7 @@ def _raise_value_error(*info):
 
 def _matrix_transpose(a):
     """Transpose last two axes"""
-    if is_shape_unknown(_shape(a)):
+    if F.is_sequence_value_unknown(_shape(a)):
         dims = dyn_rank(a)
         axes = P.Range()(P.Cast()(0, mindspore.int64), dims, P.Cast()(1, mindspore.int64))
         axes = P.Concat(axis=-1)((axes[:-2], axes[-1:], axes[-2:-1]))
@@ -92,7 +91,7 @@ def _make_zero_matrix(shape, dtype):
 def _matrix_diag(diagonal):
     """Do matrix diagnoal"""
     diagonal_shape = _shape(diagonal)
-    if is_shape_unknown(diagonal_shape):
+    if F.is_sequence_value_unknown(diagonal_shape):
         diagonal_shape = _dyn_shape(diagonal)
         row = P.Cast()(diagonal_shape[-1], mindspore.int32)
         return arrays.MatrixDiagV3()(diagonal, _k_0, row, row, P.Cast()(0, _dtype(diagonal)))
@@ -104,7 +103,7 @@ def _matrix_diag(diagonal):
 def _mat_mul(x, y):
     """Do matmul"""
     shape = _shape(x)
-    if is_shape_unknown(shape):
+    if F.is_sequence_value_unknown(shape):
         shape = _dyn_shape(x)
         tensor_rank = dyn_rank(x)
     else:
@@ -132,7 +131,7 @@ def get_bprop_svd(self):
             return (da,)
 
         a_shape = _shape(a)
-        if is_shape_unknown(a_shape):
+        if F.is_sequence_value_unknown(a_shape):
             a_shape = _dyn_shape(a)
             tensor_rank = dyn_rank(a)
         else:

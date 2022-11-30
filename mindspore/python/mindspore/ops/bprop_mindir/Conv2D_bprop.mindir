@@ -1,271 +1,268 @@
 
-0.1.1	MindSpore*2.0.0:åE
-gget_bprop_conv2d.18:[CNode]85:1get_bprop_conv2d.18:[CNode]85:1"REF::bprop.19:Default/bprop.19-op0
- get_bprop_conv2d.18:get_shape:2get_bprop_conv2d.18:get_shape:2"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op1
-C[ValueNode]86[ValueNode]86"Constant*
+0.1.1	MindSpore*2.0.0:”G
+o!get_bprop_conv2d.542:[CNode]543:1!get_bprop_conv2d.542:[CNode]543:1"REF::bprop.544:Default/bprop.544-op461
+Œ get_bprop_conv2d.542:get_shape:2 get_bprop_conv2d.542:get_shape:2"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:NDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op462
+E[ValueNode]562[ValueNode]562"Constant*
 value*get_attr_dictÄ
-í
-get_bprop_conv2d.18:self
-[ValueNode]86get_bprop_conv2d.18:[CNode]1:17get_bprop_conv2d.18:[CNode]1:17"REF::getattr:18:Default/getattr-op14
-lget_bprop_conv2d.18:[CNode]2:19get_bprop_conv2d.18:[CNode]2:19"$REF::get_bprop_conv2d.18:[CNode]1:17:15
-A[ValueNode]87[ValueNode]87"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]562"get_bprop_conv2d.542:[CNode]563:18"get_bprop_conv2d.542:[CNode]563:18"REF::getattr:19:Default/getattr-op475
+v"get_bprop_conv2d.542:[CNode]564:20"get_bprop_conv2d.542:[CNode]564:20"'REF::get_bprop_conv2d.542:[CNode]563:18:476
+C[ValueNode]565[ValueNode]565"Constant*
 value*out_channelÄ
-≤
-get_bprop_conv2d.18:[CNode]2:19
-[ValueNode]87"get_bprop_conv2d.18:out_channel:20"get_bprop_conv2d.18:out_channel:20"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op16
-A[ValueNode]88[ValueNode]88"Constant*
+π
+"get_bprop_conv2d.542:[CNode]564:20
+[ValueNode]565#get_bprop_conv2d.542:out_channel:21#get_bprop_conv2d.542:out_channel:21"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op477
+C[ValueNode]566[ValueNode]566"Constant*
 value*kernel_sizeÄ
-í
-get_bprop_conv2d.18:self
-[ValueNode]88get_bprop_conv2d.18:[CNode]3:21get_bprop_conv2d.18:[CNode]3:21"REF::getattr:18:Default/getattr-op17
->[ValueNode]89[ValueNode]89"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]566"get_bprop_conv2d.542:[CNode]567:22"get_bprop_conv2d.542:[CNode]567:22"REF::getattr:19:Default/getattr-op478
+@[ValueNode]568[ValueNode]568"Constant*
 value*pad_modeÄ
-í
-get_bprop_conv2d.18:self
-[ValueNode]89get_bprop_conv2d.18:[CNode]4:22get_bprop_conv2d.18:[CNode]4:22"REF::getattr:18:Default/getattr-op18
-9[ValueNode]90[ValueNode]90"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]568"get_bprop_conv2d.542:[CNode]569:23"get_bprop_conv2d.542:[CNode]569:23"REF::getattr:19:Default/getattr-op479
+;[ValueNode]570[ValueNode]570"Constant*
 value*padÄ
-í
-get_bprop_conv2d.18:self
-[ValueNode]90get_bprop_conv2d.18:[CNode]5:23get_bprop_conv2d.18:[CNode]5:23"REF::getattr:18:Default/getattr-op19
-C[ValueNode]91[ValueNode]91"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]570"get_bprop_conv2d.542:[CNode]571:24"get_bprop_conv2d.542:[CNode]571:24"REF::getattr:19:Default/getattr-op480
+E[ValueNode]572[ValueNode]572"Constant*
 value*get_attr_dictÄ
-í
-get_bprop_conv2d.18:self
-[ValueNode]91get_bprop_conv2d.18:[CNode]6:24get_bprop_conv2d.18:[CNode]6:24"REF::getattr:18:Default/getattr-op20
-lget_bprop_conv2d.18:[CNode]7:25get_bprop_conv2d.18:[CNode]7:25"$REF::get_bprop_conv2d.18:[CNode]6:24:21
->[ValueNode]92[ValueNode]92"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]572"get_bprop_conv2d.542:[CNode]573:25"get_bprop_conv2d.542:[CNode]573:25"REF::getattr:19:Default/getattr-op481
+v"get_bprop_conv2d.542:[CNode]574:26"get_bprop_conv2d.542:[CNode]574:26"'REF::get_bprop_conv2d.542:[CNode]573:25:482
+@[ValueNode]575[ValueNode]575"Constant*
 value*pad_listÄ
-¨
-get_bprop_conv2d.18:[CNode]7:25
-[ValueNode]92get_bprop_conv2d.18:pad_list:26get_bprop_conv2d.18:pad_list:26"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op22
-£
-"get_bprop_conv2d.18:out_channel:20
-get_bprop_conv2d.18:[CNode]3:21
-get_bprop_conv2d.18:[CNode]4:22
-get_bprop_conv2d.18:[CNode]5:23
-get_bprop_conv2d.18:pad_list:26get_bprop_conv2d.18:[CNode]8:27get_bprop_conv2d.18:[CNode]8:27"REF::S-Prim-MakeTuple:28:Default/S-Prim-MakeTuple-op23
-:[ValueNode]93[ValueNode]93"Constant*
+≥
+"get_bprop_conv2d.542:[CNode]574:26
+[ValueNode]575 get_bprop_conv2d.542:pad_list:27 get_bprop_conv2d.542:pad_list:27"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op483
+µ
+#get_bprop_conv2d.542:out_channel:21
+"get_bprop_conv2d.542:[CNode]567:22
+"get_bprop_conv2d.542:[CNode]569:23
+"get_bprop_conv2d.542:[CNode]571:24
+ get_bprop_conv2d.542:pad_list:27"get_bprop_conv2d.542:[CNode]576:28"get_bprop_conv2d.542:[CNode]576:28"REF::S-Prim-MakeTuple:29:Default/S-Prim-MakeTuple-op484
+<[ValueNode]577[ValueNode]577"Constant*
 value*modeÄ
->[ValueNode]94[ValueNode]94"Constant*
+@[ValueNode]578[ValueNode]578"Constant*
 value*dilationÄ
-<[ValueNode]95[ValueNode]95"Constant*
+>[ValueNode]579[ValueNode]579"Constant*
 value*strideÄ
-;[ValueNode]96[ValueNode]96"Constant*
+=[ValueNode]580[ValueNode]580"Constant*
 value*groupÄ
-A[ValueNode]97[ValueNode]97"Constant*
+C[ValueNode]581[ValueNode]581"Constant*
 value*data_formatÄ
-∆
-[ValueNode]93
-[ValueNode]94
-[ValueNode]95
-[ValueNode]96
-[ValueNode]97get_bprop_conv2d.18:[CNode]9:29get_bprop_conv2d.18:[CNode]9:29"REF::S-Prim-MakeTuple:30:Default/S-Prim-MakeTuple-op24
-:[ValueNode]98[ValueNode]98"Constant*
+“
+[ValueNode]577
+[ValueNode]578
+[ValueNode]579
+[ValueNode]580
+[ValueNode]581"get_bprop_conv2d.542:[CNode]582:30"get_bprop_conv2d.542:[CNode]582:30"REF::S-Prim-MakeTuple:31:Default/S-Prim-MakeTuple-op485
+<[ValueNode]583[ValueNode]583"Constant*
 value*modeÄ
-î
-get_bprop_conv2d.18:self
-[ValueNode]98 get_bprop_conv2d.18:[CNode]10:31 get_bprop_conv2d.18:[CNode]10:31"REF::getattr:18:Default/getattr-op25
->[ValueNode]99[ValueNode]99"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]583"get_bprop_conv2d.542:[CNode]584:32"get_bprop_conv2d.542:[CNode]584:32"REF::getattr:19:Default/getattr-op486
+@[ValueNode]585[ValueNode]585"Constant*
 value*dilationÄ
-î
-get_bprop_conv2d.18:self
-[ValueNode]99 get_bprop_conv2d.18:[CNode]11:32 get_bprop_conv2d.18:[CNode]11:32"REF::getattr:18:Default/getattr-op26
->[ValueNode]100[ValueNode]100"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]585"get_bprop_conv2d.542:[CNode]586:33"get_bprop_conv2d.542:[CNode]586:33"REF::getattr:19:Default/getattr-op487
+>[ValueNode]587[ValueNode]587"Constant*
 value*strideÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]100 get_bprop_conv2d.18:[CNode]12:33 get_bprop_conv2d.18:[CNode]12:33"REF::getattr:18:Default/getattr-op27
-=[ValueNode]101[ValueNode]101"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]587"get_bprop_conv2d.542:[CNode]588:34"get_bprop_conv2d.542:[CNode]588:34"REF::getattr:19:Default/getattr-op488
+=[ValueNode]589[ValueNode]589"Constant*
 value*groupÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]101 get_bprop_conv2d.18:[CNode]13:34 get_bprop_conv2d.18:[CNode]13:34"REF::getattr:18:Default/getattr-op28
->[ValueNode]102[ValueNode]102"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]589"get_bprop_conv2d.542:[CNode]590:35"get_bprop_conv2d.542:[CNode]590:35"REF::getattr:19:Default/getattr-op489
+>[ValueNode]591[ValueNode]591"Constant*
 value*formatÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]102 get_bprop_conv2d.18:[CNode]14:35 get_bprop_conv2d.18:[CNode]14:35"REF::getattr:18:Default/getattr-op29
-ß
- get_bprop_conv2d.18:[CNode]10:31
- get_bprop_conv2d.18:[CNode]11:32
- get_bprop_conv2d.18:[CNode]12:33
- get_bprop_conv2d.18:[CNode]13:34
- get_bprop_conv2d.18:[CNode]14:35 get_bprop_conv2d.18:[CNode]15:36 get_bprop_conv2d.18:[CNode]15:36"REF::S-Prim-MakeTuple:37:Default/S-Prim-MakeTuple-op30
-¿
-get_bprop_conv2d.18:[CNode]9:29
- get_bprop_conv2d.18:[CNode]15:36 get_bprop_conv2d.18:[CNode]16:38 get_bprop_conv2d.18:[CNode]16:38"REF::S-Prim-make_dict:39:Default/S-Prim-make_dict-op31
-U103103"Constant*?
+õ
+get_bprop_conv2d.542:self
+[ValueNode]591"get_bprop_conv2d.542:[CNode]592:36"get_bprop_conv2d.542:[CNode]592:36"REF::getattr:19:Default/getattr-op490
+∂
+"get_bprop_conv2d.542:[CNode]584:32
+"get_bprop_conv2d.542:[CNode]586:33
+"get_bprop_conv2d.542:[CNode]588:34
+"get_bprop_conv2d.542:[CNode]590:35
+"get_bprop_conv2d.542:[CNode]592:36"get_bprop_conv2d.542:[CNode]593:37"get_bprop_conv2d.542:[CNode]593:37"REF::S-Prim-MakeTuple:38:Default/S-Prim-MakeTuple-op491
+ 
+"get_bprop_conv2d.542:[CNode]582:30
+"get_bprop_conv2d.542:[CNode]593:37"get_bprop_conv2d.542:[CNode]594:39"get_bprop_conv2d.542:[CNode]594:39"REF::S-Prim-make_dict:40:Default/S-Prim-make_dict-op492
+U595595"Constant*?
 value*3mindspore.ops.operations.nn_ops.Conv2DBackpropInputÄ!
-–
-103
-get_bprop_conv2d.18:[CNode]8:27
- get_bprop_conv2d.18:[CNode]16:38#get_bprop_conv2d.18:—Ñinput_grad:40#get_bprop_conv2d.18:—Ñinput_grad:40"REF::MetaFuncGraph::unpack_call:Default/unpack_call.17-op32
-C[ValueNode]104[ValueNode]104"Constant*
+Ÿ
+595
+"get_bprop_conv2d.542:[CNode]576:28
+"get_bprop_conv2d.542:[CNode]594:39$get_bprop_conv2d.542:—Ñinput_grad:41$get_bprop_conv2d.542:—Ñinput_grad:41"REF::MetaFuncGraph::unpack_call:Default/unpack_call.596-op493
+C[ValueNode]597[ValueNode]597"Constant*
 value*kernel_sizeÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]104 get_bprop_conv2d.18:[CNode]21:42 get_bprop_conv2d.18:[CNode]21:42"REF::getattr:18:Default/getattr-op34
-@[ValueNode]105[ValueNode]105"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]597"get_bprop_conv2d.542:[CNode]598:43"get_bprop_conv2d.542:[CNode]598:43"REF::getattr:19:Default/getattr-op495
+@[ValueNode]599[ValueNode]599"Constant*
 value*pad_modeÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]105 get_bprop_conv2d.18:[CNode]22:43 get_bprop_conv2d.18:[CNode]22:43"REF::getattr:18:Default/getattr-op35
-;[ValueNode]106[ValueNode]106"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]599"get_bprop_conv2d.542:[CNode]600:44"get_bprop_conv2d.542:[CNode]600:44"REF::getattr:19:Default/getattr-op496
+;[ValueNode]601[ValueNode]601"Constant*
 value*padÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]106 get_bprop_conv2d.18:[CNode]23:44 get_bprop_conv2d.18:[CNode]23:44"REF::getattr:18:Default/getattr-op36
-®
-"get_bprop_conv2d.18:out_channel:20
- get_bprop_conv2d.18:[CNode]21:42
- get_bprop_conv2d.18:[CNode]22:43
- get_bprop_conv2d.18:[CNode]23:44
-get_bprop_conv2d.18:pad_list:26 get_bprop_conv2d.18:[CNode]24:45 get_bprop_conv2d.18:[CNode]24:45"REF::S-Prim-MakeTuple:46:Default/S-Prim-MakeTuple-op37
-<[ValueNode]107[ValueNode]107"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]601"get_bprop_conv2d.542:[CNode]602:45"get_bprop_conv2d.542:[CNode]602:45"REF::getattr:19:Default/getattr-op497
+µ
+#get_bprop_conv2d.542:out_channel:21
+"get_bprop_conv2d.542:[CNode]598:43
+"get_bprop_conv2d.542:[CNode]600:44
+"get_bprop_conv2d.542:[CNode]602:45
+ get_bprop_conv2d.542:pad_list:27"get_bprop_conv2d.542:[CNode]603:46"get_bprop_conv2d.542:[CNode]603:46"REF::S-Prim-MakeTuple:47:Default/S-Prim-MakeTuple-op498
+<[ValueNode]604[ValueNode]604"Constant*
 value*modeÄ
-@[ValueNode]108[ValueNode]108"Constant*
+@[ValueNode]605[ValueNode]605"Constant*
 value*dilationÄ
->[ValueNode]109[ValueNode]109"Constant*
+>[ValueNode]606[ValueNode]606"Constant*
 value*strideÄ
-=[ValueNode]110[ValueNode]110"Constant*
+=[ValueNode]607[ValueNode]607"Constant*
 value*groupÄ
-C[ValueNode]111[ValueNode]111"Constant*
+C[ValueNode]608[ValueNode]608"Constant*
 value*data_formatÄ
-Õ
-[ValueNode]107
-[ValueNode]108
-[ValueNode]109
-[ValueNode]110
-[ValueNode]111 get_bprop_conv2d.18:[CNode]25:47 get_bprop_conv2d.18:[CNode]25:47"REF::S-Prim-MakeTuple:48:Default/S-Prim-MakeTuple-op38
-<[ValueNode]112[ValueNode]112"Constant*
+“
+[ValueNode]604
+[ValueNode]605
+[ValueNode]606
+[ValueNode]607
+[ValueNode]608"get_bprop_conv2d.542:[CNode]609:48"get_bprop_conv2d.542:[CNode]609:48"REF::S-Prim-MakeTuple:49:Default/S-Prim-MakeTuple-op499
+<[ValueNode]610[ValueNode]610"Constant*
 value*modeÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]112 get_bprop_conv2d.18:[CNode]26:49 get_bprop_conv2d.18:[CNode]26:49"REF::getattr:18:Default/getattr-op39
-@[ValueNode]113[ValueNode]113"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]610"get_bprop_conv2d.542:[CNode]611:50"get_bprop_conv2d.542:[CNode]611:50"REF::getattr:19:Default/getattr-op500
+@[ValueNode]612[ValueNode]612"Constant*
 value*dilationÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]113 get_bprop_conv2d.18:[CNode]27:50 get_bprop_conv2d.18:[CNode]27:50"REF::getattr:18:Default/getattr-op40
->[ValueNode]114[ValueNode]114"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]612"get_bprop_conv2d.542:[CNode]613:51"get_bprop_conv2d.542:[CNode]613:51"REF::getattr:19:Default/getattr-op501
+>[ValueNode]614[ValueNode]614"Constant*
 value*strideÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]114 get_bprop_conv2d.18:[CNode]28:51 get_bprop_conv2d.18:[CNode]28:51"REF::getattr:18:Default/getattr-op41
-=[ValueNode]115[ValueNode]115"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]614"get_bprop_conv2d.542:[CNode]615:52"get_bprop_conv2d.542:[CNode]615:52"REF::getattr:19:Default/getattr-op502
+=[ValueNode]616[ValueNode]616"Constant*
 value*groupÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]115 get_bprop_conv2d.18:[CNode]29:52 get_bprop_conv2d.18:[CNode]29:52"REF::getattr:18:Default/getattr-op42
->[ValueNode]116[ValueNode]116"Constant*
+õ
+get_bprop_conv2d.542:self
+[ValueNode]616"get_bprop_conv2d.542:[CNode]617:53"get_bprop_conv2d.542:[CNode]617:53"REF::getattr:19:Default/getattr-op503
+>[ValueNode]618[ValueNode]618"Constant*
 value*formatÄ
-ï
-get_bprop_conv2d.18:self
-[ValueNode]116 get_bprop_conv2d.18:[CNode]30:53 get_bprop_conv2d.18:[CNode]30:53"REF::getattr:18:Default/getattr-op43
-ß
- get_bprop_conv2d.18:[CNode]26:49
- get_bprop_conv2d.18:[CNode]27:50
- get_bprop_conv2d.18:[CNode]28:51
- get_bprop_conv2d.18:[CNode]29:52
- get_bprop_conv2d.18:[CNode]30:53 get_bprop_conv2d.18:[CNode]31:54 get_bprop_conv2d.18:[CNode]31:54"REF::S-Prim-MakeTuple:55:Default/S-Prim-MakeTuple-op44
-¡
- get_bprop_conv2d.18:[CNode]25:47
- get_bprop_conv2d.18:[CNode]31:54 get_bprop_conv2d.18:[CNode]32:56 get_bprop_conv2d.18:[CNode]32:56"REF::S-Prim-make_dict:57:Default/S-Prim-make_dict-op45
-Y117117"Constant*C
+õ
+get_bprop_conv2d.542:self
+[ValueNode]618"get_bprop_conv2d.542:[CNode]619:54"get_bprop_conv2d.542:[CNode]619:54"REF::getattr:19:Default/getattr-op504
+∂
+"get_bprop_conv2d.542:[CNode]611:50
+"get_bprop_conv2d.542:[CNode]613:51
+"get_bprop_conv2d.542:[CNode]615:52
+"get_bprop_conv2d.542:[CNode]617:53
+"get_bprop_conv2d.542:[CNode]619:54"get_bprop_conv2d.542:[CNode]620:55"get_bprop_conv2d.542:[CNode]620:55"REF::S-Prim-MakeTuple:56:Default/S-Prim-MakeTuple-op505
+ 
+"get_bprop_conv2d.542:[CNode]609:48
+"get_bprop_conv2d.542:[CNode]620:55"get_bprop_conv2d.542:[CNode]621:57"get_bprop_conv2d.542:[CNode]621:57"REF::S-Prim-make_dict:58:Default/S-Prim-make_dict-op506
+Y622622"Constant*C
 value*7mindspore.ops.operations._grad_ops.Conv2DBackpropFilterÄ!
-”
-117
- get_bprop_conv2d.18:[CNode]24:45
- get_bprop_conv2d.18:[CNode]32:56$get_bprop_conv2d.18:—Ñfilter_grad:58$get_bprop_conv2d.18:—Ñfilter_grad:58"REF::MetaFuncGraph::unpack_call:Default/unpack_call.33-op46
-œ"get_bprop_conv2d.18:—Ñcast_type:62"get_bprop_conv2d.18:—Ñcast_type:62"7REF::ClassType::mindspore.ops.operations.array_ops.Cast:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Cast'-op49
-Â&get_bprop_conv2d.18:—Ñget_dyn_shape:63&get_bprop_conv2d.18:—Ñget_dyn_shape:63">REF::ClassType::mindspore.ops.operations.array_ops.TensorShape:SDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.TensorShape'-op50get_bprop_conv2d.18*
-get_bprop_conv2d.18:self*
-get_bprop_conv2d.18:—Ñx*
-get_bprop_conv2d.18:—Ñw*
-get_bprop_conv2d.18:out*
-get_bprop_conv2d.18:—Ñdout2!
-get_bprop_conv2d.18:[CNode]85:1:@bfbccb171253c7d1586dedf53880bd68919d2dd9512197df836f9d960ab69047J/grad_nn_ops.pyB∞
-j
-get_bprop_conv2d.18:—Ñxbprop.19:x_shape:3bprop.19:x_shape:3"$REF::get_bprop_conv2d.18:get_shape:2:2
-Ö
-bprop.19:x_shape:3bprop.19:[CNode]46:4bprop.19:[CNode]46:4"REF::S-Prim-is_shape_unknown:5:#Default/S-Prim-is_shape_unknown-op3
-g
-bprop.19:[CNode]46:4bprop.19:[CNode]47:6bprop.19:[CNode]47:6"REF::bool_.39:Default/bool_.39-op4
-
-bprop.19:[CNode]47:6
-‚úìbprop.49
-‚úóbprop.50bprop.19:[CNode]48:7bprop.19:[CNode]48:7"REF::Switch:8:Default/Switch-op5
-Jbprop.19:[CNode]51:9bprop.19:[CNode]51:9"REF::bprop.19:[CNode]48:7:6
-o
-bprop.19:[CNode]51:9bprop.19:[CNode]52:10bprop.19:[CNode]52:10"REF::‚Üìbprop.20:Default/‚Üìbprop.20-op7
+€
+622
+"get_bprop_conv2d.542:[CNode]603:46
+"get_bprop_conv2d.542:[CNode]621:57%get_bprop_conv2d.542:—Ñfilter_grad:59%get_bprop_conv2d.542:—Ñfilter_grad:59"REF::MetaFuncGraph::unpack_call:Default/unpack_call.623-op507
+“#get_bprop_conv2d.542:—Ñcast_type:63#get_bprop_conv2d.542:—Ñcast_type:63"7REF::ClassType::mindspore.ops.operations.array_ops.Cast:MDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Cast'-op510
+Ë'get_bprop_conv2d.542:—Ñget_dyn_shape:64'get_bprop_conv2d.542:—Ñget_dyn_shape:64">REF::ClassType::mindspore.ops.operations.array_ops.TensorShape:TDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.TensorShape'-op511get_bprop_conv2d.542*
+get_bprop_conv2d.542:self*
+get_bprop_conv2d.542:—Ñx*
+get_bprop_conv2d.542:—Ñw*
+get_bprop_conv2d.542:out*
+get_bprop_conv2d.542:—Ñdout2#
+!get_bprop_conv2d.542:[CNode]543:1:@6b27d31969519c997665e70e7575f80b2c62b72d7df362de9878226003884e34J/grad_nn_ops.pyBÈ
 p
-get_bprop_conv2d.18:—Ñwbprop.19:—Ñw_shape:11bprop.19:—Ñw_shape:11"$REF::get_bprop_conv2d.18:get_shape:2:8bprop.192
-bprop.19:[CNode]52:10B–
-ê
-bprop.19:—Ñw_shape:11‚Üìbprop.20:[CNode]37:12‚Üìbprop.20:[CNode]37:12"REF::S-Prim-is_shape_unknown:5:#Default/S-Prim-is_shape_unknown-op9
-t
-‚Üìbprop.20:[CNode]37:12‚Üìbprop.20:[CNode]38:13‚Üìbprop.20:[CNode]38:13"REF::bool_.39:Default/bool_.39-op10
-í
-‚Üìbprop.20:[CNode]38:13
-‚úì‚Üìbprop.41
-‚úó‚Üìbprop.42‚Üìbprop.20:[CNode]40:14‚Üìbprop.20:[CNode]40:14"REF::Switch:8:Default/Switch-op11
-W‚Üìbprop.20:[CNode]43:15‚Üìbprop.20:[CNode]43:15"REF::‚Üìbprop.20:[CNode]40:14:12
-Ä
-‚Üìbprop.20:[CNode]43:15‚Üìbprop.20:[CNode]44:16‚Üìbprop.20:[CNode]44:16"REF::‚Üì‚Üìbprop.45:Default/‚Üì‚Üìbprop.45-op13‚Üìbprop.20*
-‚Üìbprop.20:—Ñx_shape2
-‚Üìbprop.20:[CNode]44:16B
-after_blockÄ	B◊
+get_bprop_conv2d.542:—Ñxbprop.544:x_shape:3bprop.544:x_shape:3"%REF::get_bprop_conv2d.542:get_shape:2:463
+à
+bprop.544:x_shape:3bprop.544:[CNode]545:4bprop.544:[CNode]545:4"REF::S-Prim-IsShapeUnKnown:5:#Default/S-Prim-IsShapeUnKnown-op464
+q
+bprop.544:[CNode]545:4bprop.544:[CNode]546:6bprop.544:[CNode]546:6"REF::bool_.547:Default/bool_.547-op465
+â
+bprop.544:[CNode]546:6
+‚úìbprop.548
+‚úóbprop.549bprop.544:[CNode]550:7bprop.544:[CNode]550:7"REF::Switch:8:Default/Switch-op466
+Rbprop.544:[CNode]551:9bprop.544:[CNode]551:9"REF::bprop.544:[CNode]550:7:467
+y
+bprop.544:[CNode]551:9bprop.544:[CNode]552:10bprop.544:[CNode]552:10"REF::‚Üìbprop.553:Default/‚Üìbprop.553-op468
+v
+get_bprop_conv2d.542:—Ñwbprop.544:—Ñw_shape:11bprop.544:—Ñw_shape:11"%REF::get_bprop_conv2d.542:get_shape:2:469	bprop.5442
+bprop.544:[CNode]552:10B˙
+î
+bprop.544:—Ñw_shape:11‚Üìbprop.553:[CNode]554:12‚Üìbprop.553:[CNode]554:12"REF::S-Prim-IsShapeUnKnown:13:#Default/S-Prim-IsShapeUnKnown-op470
+}
+‚Üìbprop.553:[CNode]554:12‚Üìbprop.553:[CNode]555:14‚Üìbprop.553:[CNode]555:14"REF::bool_.547:Default/bool_.547-op471
+õ
+‚Üìbprop.553:[CNode]555:14
+‚úì‚Üìbprop.556
+‚úó‚Üìbprop.557‚Üìbprop.553:[CNode]558:15‚Üìbprop.553:[CNode]558:15"REF::Switch:8:Default/Switch-op472
+^‚Üìbprop.553:[CNode]559:16‚Üìbprop.553:[CNode]559:16"REF::‚Üìbprop.553:[CNode]558:15:473
+â
+‚Üìbprop.553:[CNode]559:16‚Üìbprop.553:[CNode]560:17‚Üìbprop.553:[CNode]560:17"REF::‚Üì‚Üìbprop.561:Default/‚Üì‚Üìbprop.561-op474‚Üìbprop.553*
+‚Üìbprop.553:—Ñx_shape2
+‚Üìbprop.553:[CNode]560:17B
+after_blockÄ	B
+≠
+get_bprop_conv2d.542:—Ñdout
+get_bprop_conv2d.542:—Ñw
+‚Üìbprop.553:—Ñx_shape‚Üì‚Üìbprop.561:dx:42‚Üì‚Üìbprop.561:dx:42")REF::get_bprop_conv2d.542:—Ñinput_grad:41:494
+±
+get_bprop_conv2d.542:—Ñdout
+get_bprop_conv2d.542:—Ñx
+‚Üì‚Üìbprop.561:—Ñw_shape‚Üì‚Üìbprop.561:dw:60‚Üì‚Üìbprop.561:dw:60"*REF::get_bprop_conv2d.542:—Ñfilter_grad:59:508
 ¶
-get_bprop_conv2d.18:—Ñdout
-get_bprop_conv2d.18:—Ñw
-‚Üìbprop.20:—Ñx_shape‚Üì‚Üìbprop.45:dx:41‚Üì‚Üìbprop.45:dx:41"(REF::get_bprop_conv2d.18:—Ñinput_grad:40:33
-™
-get_bprop_conv2d.18:—Ñdout
-get_bprop_conv2d.18:—Ñx
-‚Üì‚Üìbprop.45:—Ñw_shape‚Üì‚Üìbprop.45:dw:59‚Üì‚Üìbprop.45:dw:59")REF::get_bprop_conv2d.18:—Ñfilter_grad:58:47
-ü
-‚Üì‚Üìbprop.45:dx:41
-‚Üì‚Üìbprop.45:dw:59‚Üì‚Üìbprop.45:[CNode]34:60‚Üì‚Üìbprop.45:[CNode]34:60"REF::S-Prim-MakeTuple:61:Default/S-Prim-MakeTuple-op48‚Üì‚Üìbprop.45*
-‚Üì‚Üìbprop.45:—Ñw_shape2
-‚Üì‚Üìbprop.45:[CNode]34:60B
-after_blockÄ	B)‚úó‚Üìbprop.422
-bprop.19:—Ñw_shape:11BÖ
-Ä
-get_bprop_conv2d.18:—Ñw‚úì‚Üìbprop.41:w_shape:64‚úì‚Üìbprop.41:w_shape:64"+REF::get_bprop_conv2d.18:—Ñget_dyn_shape:63:51
-B[ValueNode]118[ValueNode]118"Constant*
+‚Üì‚Üìbprop.561:dx:42
+‚Üì‚Üìbprop.561:dw:60‚Üì‚Üìbprop.561:[CNode]624:61‚Üì‚Üìbprop.561:[CNode]624:61"REF::S-Prim-MakeTuple:62:Default/S-Prim-MakeTuple-op509‚Üì‚Üìbprop.561*
+‚Üì‚Üìbprop.561:—Ñw_shape2
+‚Üì‚Üìbprop.561:[CNode]624:61B
+after_blockÄ	B+‚úó‚Üìbprop.5572
+bprop.544:—Ñw_shape:11Bë
+Ö
+get_bprop_conv2d.542:—Ñw‚úì‚Üìbprop.556:w_shape:65‚úì‚Üìbprop.556:w_shape:65",REF::get_bprop_conv2d.542:—Ñget_dyn_shape:64:512
+B[ValueNode]625[ValueNode]625"Constant*
 valueb
 :value0Ä
-é
-‚úì‚Üìbprop.41:w_shape:64
-[ValueNode]118‚úì‚Üìbprop.41:w_shape:65‚úì‚Üìbprop.41:w_shape:65"'REF::get_bprop_conv2d.18:—Ñcast_type:62:52‚úì‚Üìbprop.412
-‚úì‚Üìbprop.41:w_shape:65B∂
-@[ValueNode]119[ValueNode]119"Constant*
+ì
+‚úì‚Üìbprop.556:w_shape:65
+[ValueNode]625‚úì‚Üìbprop.556:w_shape:66‚úì‚Üìbprop.556:w_shape:66"(REF::get_bprop_conv2d.542:—Ñcast_type:63:513‚úì‚Üìbprop.5562
+‚úì‚Üìbprop.556:w_shape:66B«
+@[ValueNode]626[ValueNode]626"Constant*
 value*__bool__Ä
-q
-
-bool_.39:x
-[ValueNode]119bool_.39:[CNode]35:66bool_.39:[CNode]35:66"REF::getattr:18:Default/getattr-op53
-Nbool_.39:[CNode]36:67bool_.39:[CNode]36:67"REF::bool_.39:[CNode]35:66:54bool_.39*
-
-bool_.39:x2
-bool_.39:[CNode]36:67B#‚úóbprop.502
-bprop.19:x_shape:3B£
-z
-get_bprop_conv2d.18:—Ñx‚úìbprop.49:x_shape:68‚úìbprop.49:x_shape:68"+REF::get_bprop_conv2d.18:—Ñget_dyn_shape:63:55‚úìbprop.492
-‚úìbprop.49:x_shape:68Pb
+w
+bool_.547:x
+[ValueNode]626bool_.547:[CNode]627:67bool_.547:[CNode]627:67"REF::getattr:19:Default/getattr-op514
+Ubool_.547:[CNode]628:68bool_.547:[CNode]628:68"REF::bool_.547:[CNode]627:67:515	bool_.547*
+bool_.547:x2
+bool_.547:[CNode]628:68B%‚úóbprop.5492
+bprop.544:x_shape:3B™
+
+get_bprop_conv2d.542:—Ñx‚úìbprop.548:x_shape:69‚úìbprop.548:x_shape:69",REF::get_bprop_conv2d.542:—Ñget_dyn_shape:64:516‚úìbprop.5482
+‚úìbprop.548:x_shape:69Pb
 Switch:8Switchb
 
-getattr:18getattrb'
-S-Prim-make_dict:57S-Prim-make_dictb'
-S-Prim-MakeTuple:46S-Prim-MakeTupleb'
-S-Prim-make_dict:39S-Prim-make_dictb'
-S-Prim-MakeTuple:28S-Prim-MakeTuplebé
-S-Prim-is_shape_unknown:5S-Prim-is_shape_unknown1
-constexpr_module*mindspore.ops._utils.utilsÄ%
-constexpr_name*is_shape_unknownÄb'
-S-Prim-MakeTuple:61S-Prim-MakeTupleb'
-S-Prim-MakeTuple:48S-Prim-MakeTupleb'
-S-Prim-MakeTuple:37S-Prim-MakeTupleb'
-S-Prim-MakeTuple:55S-Prim-MakeTupleb'
-S-Prim-MakeTuple:30S-Prim-MakeTupleh
+getattr:19getattrb'
+S-Prim-MakeTuple:62S-Prim-MakeTupleb'
+S-Prim-MakeTuple:38S-Prim-MakeTupleb'
+S-Prim-MakeTuple:56S-Prim-MakeTupleb'
+S-Prim-make_dict:58S-Prim-make_dictb'
+S-Prim-MakeTuple:29S-Prim-MakeTupleb'
+S-Prim-MakeTuple:47S-Prim-MakeTupleb1
+S-Prim-IsShapeUnKnown:13S-Prim-IsShapeUnKnownb0
+S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb'
+S-Prim-MakeTuple:49S-Prim-MakeTupleb'
+S-Prim-make_dict:40S-Prim-make_dictb'
+S-Prim-MakeTuple:31S-Prim-MakeTupleh

@@ -2975,7 +2975,7 @@ def check_is_tensor_bool_cond(shp):
     """check if tensor is a bool condition"""
     if shp in ((), (1,)):
         return True
-    if -1 in shp:
+    if None in shp:
         raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is "
                          f"None")
     raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is {shp}")
@@ -3004,6 +3004,10 @@ def check_view_shape(x):
         if len(x) != 1:
             raise ValueError(f"Only one tuple is needed, but got {x}")
         x = x[0]
+    if x is None:
+        x = -2
+    if isinstance(x, (tuple, list)):
+        x = tuple([-1 if i is None else i for i in x])
     return x
 
 

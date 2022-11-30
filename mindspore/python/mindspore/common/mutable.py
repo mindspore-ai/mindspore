@@ -118,7 +118,6 @@ def mutable(input_data, dynamic_len=False):
          [ 1.89999998e+00, 1.89999998e+00, 1.89999998e+00],
          [ 1.50000000e+00, 1.50000000e+00, 1.50000000e+00]]))
     """
-
     if not dynamic_len and not _check_element_type(input_data):
         raise TypeError(
             f"For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) "

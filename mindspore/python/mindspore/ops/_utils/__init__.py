@@ -15,7 +15,6 @@
 
 """ops utils."""
 from __future__ import absolute_import
-
-from mindspore.ops._utils.utils import get_broadcast_shape, get_concat_offset, is_shape_unknown, is_dim_unknown
+from mindspore.ops._utils.utils import get_broadcast_shape, get_concat_offset
 
 __all__ = ['get_broadcast_shape', 'get_concat_offset']

@@ -30,6 +30,7 @@ namespace ops {
 MIND_API_OPERATOR_IMPL(Shape, BaseOperator);
 AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
+  // Only called when the input of shape is dynamic shape/rank tensor.
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
@@ -41,11 +42,19 @@ AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   std::set<TypePtr> valid_params_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
   AbstractBasePtrList abs_list;
+  // Input of shape is not dynamic rank Tensor.
   (void)std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(abs_list),
                        [](int64_t item) -> std::shared_ptr<abstract::AbstractScalar> {
-                         return std::make_shared<abstract::AbstractScalar>(item);
+                         auto ret = std::make_shared<abstract::AbstractScalar>(item);
+                         if (item == abstract::Shape::kShapeRankAny || item == abstract::Shape::kShapeDimAny) {
+                           ret->set_value(kAnyValue);
+                         }
+                         return ret;
                        });
   auto abs = std::make_shared<abstract::AbstractTuple>(abs_list);
+  if (IsDynamicRank(in_shape)) {
+    abs->CheckAndConvertToDynamicLenSequence();
+  }
   return abs;
 }
 
@@ -58,9 +67,15 @@ ValuePtr ShapeInferValue(const PrimitivePtr &primitive, const std::vector<Abstra
   (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto inshape = shape_map[kShape];
-  auto value = MakeValue(inshape);
-  return value;
+  if (std::any_of(inshape.begin(), inshape.end(), [](ShapeValueDType shape) {
+        return shape == abstract::Shape::kShapeRankAny || shape == abstract::Shape::kShapeDimAny;
+      })) {
+    // If the input of shape is dynamic shape/rank tensor, value can not be directly built.
+    // Run infer of shape.
+    return nullptr;
+  }
+  return MakeValue(inshape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Shape, prim::kPrimShape, ShapeInfer, ShapeInferValue, false);
+REGISTER_PRIMITIVE_EVAL_IMPL(Shape, prim::kPrimShape, ShapeInfer, ShapeInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

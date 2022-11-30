@@ -16,6 +16,7 @@ import numpy as np
 
 from mindspore import ops, nn, context, Tensor
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops import functional as F
 
 
 class GradNet(nn.Cell):
@@ -45,12 +46,12 @@ class NetConvertForward(nn.Cell):
         if isinstance(outs, tuple):
             converted_outs = []
             for i, out in enumerate(outs):
-                if i not in self.skip_convert_out_ids and out.shape:
+                if i not in self.skip_convert_out_ids and (F.is_sequence_value_unknown(out.shape) or out.shape):
                     converted_outs.append(self.convert_to_dynamic(out))
                 else:
                     converted_outs.append(out)
             return tuple(converted_outs)
-        if 0 not in self.skip_convert_out_ids and outs.shape:
+        if 0 not in self.skip_convert_out_ids and (F.is_sequence_value_unknown(outs.shape) or outs.shape):
             return self.convert_to_dynamic(outs)
         return  outs
 
@@ -77,7 +78,7 @@ class DynamicGradNet(nn.Cell):
 
         new_args = []
         for i, arg in enumerate(inputs):
-            if i not in self.skip_convert_in_ids and arg.shape:
+            if i not in self.skip_convert_in_ids and (F.is_sequence_value_unknown(arg.shape) or arg.shape):
                 new_args.append(self.convert_to_dynamic(arg))
             else:
                 new_args.append(arg)
@@ -85,13 +86,13 @@ class DynamicGradNet(nn.Cell):
         if isinstance(sens, tuple):
             raw_sens = []
             for i, sen in enumerate(sens):
-                if i not in self.skip_convet_out_ids and sen.shape:
+                if i not in self.skip_convet_out_ids and (F.is_sequence_value_unknown(sen.shape) or sen.shape):
                     raw_sens.append(self.convert_to_dynamic(sen))
                 else:
                     raw_sens.append(sen)
             new_args.append(tuple(raw_sens))
         else:
-            if 0 not in self.skip_convet_out_ids and sens.shape:
+            if 0 not in self.skip_convet_out_ids and (F.is_sequence_value_unknown(sens.shape) or sens.shape):
                 new_args.append(self.convert_to_dynamic(sens))
             else:
                 new_args.append(sens)

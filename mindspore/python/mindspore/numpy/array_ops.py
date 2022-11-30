@@ -33,7 +33,6 @@ from mindspore.numpy.utils_const import _check_axes_range, _check_start_normaliz
     _list_comprehensions, _check_element_int, _is_shape_empty, _type_convert, \
     _tuple_slice, _expanded_shape, _seq_prod, _tuple_setitem, _iota, \
     _raise_unimplemented_error, _cumprod, _get_device, _check_is_int
-from mindspore.ops._utils.utils import is_shape_unknown
 from ..ops.operations._inner_ops import DynamicBroadcastTo
 
 
@@ -720,7 +719,8 @@ def where(condition, x=None, y=None):
     if not _check_same_type(F.dtype(condition), mstype.float32):
         # tiling with bool is not supported on GPU
         condition = F.cast(condition, mstype.float32)
-    dynamic = is_shape_unknown(F.shape(condition)) or is_shape_unknown(F.shape(x)) or is_shape_unknown(F.shape(y))
+    dynamic = F.is_sequence_value_unknown(F.shape(condition)) or F.is_sequence_value_unknown(F.shape(x))\
+              or F.is_sequence_value_unknown(F.shape(y))
     # As select op currently does not support broadcast, broadcasts input tensors
     if not dynamic:
         shape_out = _infer_out_shape(F.shape(condition),

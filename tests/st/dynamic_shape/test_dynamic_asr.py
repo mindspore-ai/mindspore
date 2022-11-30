@@ -202,7 +202,8 @@ class ResidualNorm(nn.Cell):
     def construct(self, hidden_status, input_tensor):
         output = self.dropout(hidden_status)
         output = self.add(output, input_tensor)
-        if -1 in P.Shape()(output):
+        # TODO Temp change for dynamic length sequence.
+        if F.is_sequence_value_unknown(P.Shape()(output)):
             output = P.ExpandDims()(output, 1)
         output = self.layernorm(output)
         output = P.Reshape()(output, self.out_shape)
@@ -267,11 +268,13 @@ class Conv2dSubsampling(nn.Cell):
         x = self.conv2(x)
         x = self.relu(x)
 
-        (b, c, t, f) = self.shape(x)
+        # TODO: Temp change for dynamic length sequence.
+        (b, c, _, f) = self.shape(x)
         x = self.transpose(x, (0, 2, 1, 3))
         x = self.reshape(x, (-1, c*f))
         x = self.linear(x)
-        x = self.reshape(x, (b, t, self.odim))
+        # TODO: Temp change for dynamic length sequence.
+        x = self.reshape(x, (b, -1, self.odim))
         return x
 
 
@@ -323,8 +326,9 @@ class EncoderCell(nn.Cell):
         attention_output = self.reshape(attention_output, self.shape_2d)
         fc_output = self.feedforward(attention_output)
         output = self.res_norm(fc_output, attention_output)
-        if -1 in shape_out:
-            shape_out = P.DynamicShape()(x)
+        # TODO Temp change for dynamic length sequence.
+        if F.is_sequence_value_unknown(shape_out):
+            shape_out = P.TensorShape()(x)
         return self.reshape(output, shape_out)
 
 
@@ -358,7 +362,7 @@ class PositionalEncoding(nn.Cell):
         :return: Encoded x (B, time, dim)
         """
         _, l, _ = self.shape(x)
-        if -1 == l:
+        if not F.isconstant(l):
             l = P.DynamicShape()(x)[1]
         pos = self.pe[:, :l, :]
         x = self.mul(x, self.te)
@@ -606,14 +610,15 @@ class CTC(nn.Cell):
         self.layernorm = nn.LayerNorm([odim])
 
     def construct(self, hs_pad, hlens, ys_pad, label_indices, label_values):
-        (_, t, _) = self.shape(hs_pad)
         hs = self.reshape(hs_pad, (-1, self.adim))
         hs = self.dropout(hs)
         hs = self.linear_c(hs)
-        if -1 in self.shape(hs):
+        # TODO Temp change for dynamic length sequence.
+        if F.is_sequence_value_unknown(self.shape(hs)):
             hs = P.ExpandDims()(hs, 1)
         hs = self.layernorm(hs)
-        hs = self.reshape(hs, (self.batch_size, t, self.odim))
+        # TODO Temp change for dynamic length sequence.
+        hs = self.reshape(hs, (self.batch_size, -1, self.odim))
         ys_hat = self.transpose(hs, (1, 0, 2))
 
         if self.ignore_id != self.blk:
@@ -647,10 +652,13 @@ class KLDivLoss(_Loss):
         self.div = P.RealDiv()
         self.mul = P.Mul()
         self.shape = P.Shape()
+        self.tensor_shape = P.TensorShape()
 
     def construct(self, s_logit, t_logit):
         # student
         shape_ori = self.shape(s_logit)
+        if F.is_sequence_value_unknown(shape_ori):
+            shape_ori = self.tensor_shape(s_logit)
         s_1d = self.reshape(s_logit, (-1,))
         s = self.cast(s_1d/self.kl_temperature, mstype.float32)
 

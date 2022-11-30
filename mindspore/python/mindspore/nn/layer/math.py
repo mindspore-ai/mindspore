@@ -25,7 +25,6 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
-from mindspore.ops._utils.utils import is_shape_unknown
 
 __all__ = ['ReduceLogSumExp',
            'Range',
@@ -256,7 +255,7 @@ class LGamma(Cell):
     def construct(self, x):
         input_dtype = self.dtype(x)
         _check_input_dtype("x", input_dtype, [mstype.float16, mstype.float32], self.cls_name)
-        if is_shape_unknown(self.shape(x)):
+        if F.is_sequence_value_unknown(self.shape(x)):
             infinity = self.ones_like(x) * F.cast(self.inf, input_dtype)
         else:
             infinity = self.fill(input_dtype, self.shape(x), self.inf)

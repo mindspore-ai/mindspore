@@ -18,6 +18,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 
@@ -39,7 +40,7 @@ class NetROIAlignGrad(nn.Cell):
             rois = self.convert_to_dynamic_rank(rois)
             xdiff = self.convert_to_dynamic_rank(xdiff)
         xdiff_shape = self.shape(xdiff)
-        if -1 in xdiff_shape or -2 in xdiff_shape:
+        if F.is_sequence_value_unknown(xdiff_shape) or F.is_sequence_shape_unknown(xdiff_shape):
             xdiff_shape = self.dyn_shape(xdiff)
         return self.roi_align_grad(dy, rois, xdiff_shape)
 

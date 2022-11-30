@@ -33,7 +33,6 @@ from mindspore.ops._grad.grad_base import dyn_ones, dyn_rank_1d
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, DynamicBroadcastTo, IsSubClass
-from mindspore.ops._utils.utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.operations import array_ops as A
 
 shape_op = P.Shape()
@@ -114,7 +113,7 @@ def binop_grad_common(x, y, dx, dy):
     # if input shape is the same as dout shape, do not need to reduce
     reduce_dx = dx
     reduce_dy = dy
-    if not (is_shape_unknown(shape_of_x) or is_shape_unknown(shape_of_y)):
+    if not (F.is_sequence_value_unknown(shape_of_x) or F.is_sequence_value_unknown(shape_of_y)):
         rx = broadcast_gradient_args(shape_of_x, shape_of_y)
         if rx[0]:
             # if dx is scalar whose shape is (), do not need reduce
@@ -127,11 +126,12 @@ def binop_grad_common(x, y, dx, dy):
                 dy = _reduce_sum_with_cast(dy, rx[1])
             reduce_dy = reshape(dy, shape_of_y)
         return reduce_dx, reduce_dy
-    if not shape_of_x or not shape_of_y:
+
+    if not isinstance(shape_of_x, tuple) or not isinstance(shape_of_y, tuple):
         # x or y is scalar
-        if not shape_of_x:
+        if not isinstance(shape_of_x, tuple):
             reduce_dx = _reduce_sum_with_cast(dx, ())
-        if not shape_of_y:
+        if not isinstance(shape_of_y, tuple):
             reduce_dy = _reduce_sum_with_cast(dy, ())
         return reduce_dx, reduce_dy
 
@@ -151,7 +151,7 @@ def binop_grad_common_with_shift(x, y, dx, dy, shift):
     # if input shape is the same as dout shape, do not need to reduce
     reduce_dx = dx
     reduce_dy = dy
-    if not (is_shape_unknown(broadcast_shape_of_x) or is_shape_unknown(broadcast_shape_of_y)):
+    if not (F.is_sequence_value_unknown(broadcast_shape_of_x) or F.is_sequence_value_unknown(broadcast_shape_of_y)):
         rx = broadcast_gradient_args(broadcast_shape_of_x, broadcast_shape_of_y)
         if rx[0]:
             # if dx is scalar whose shape is (), do not need reduce
@@ -164,11 +164,12 @@ def binop_grad_common_with_shift(x, y, dx, dy, shift):
                 dy = _reduce_sum_with_cast(dy, rx[1])
             reduce_dy = reshape(dy, shape_of_y)
         return reduce_dx, reduce_dy
-    if not shape_of_x or not shape_of_y:
+
+    if not isinstance(shape_of_x, tuple) or not isinstance(shape_of_y, tuple):
         # x or y is scalar
-        if not shape_of_x:
+        if not isinstance(shape_of_x, tuple):
             reduce_dx = _reduce_sum_with_cast(dx, ())
-        if not shape_of_y:
+        if not isinstance(shape_of_y, tuple):
             reduce_dy = _reduce_sum_with_cast(dy, ())
         return reduce_dx, reduce_dy
 
@@ -178,7 +179,7 @@ def binop_grad_common_with_shift(x, y, dx, dy, shift):
 def _dyn_reduced_shape(input_shape, axis, x):
     """Dynamic reduce shape"""
     input_shape = P.Cast()(input_shape, ms.int32)
-    if x is not None and not is_dim_unknown(shape_op(x)):
+    if x is not None and not F.is_sequence_shape_unknown(shape_op(x)):
         input_rank = len(shape_op(x))
     else:
         input_rank = dyn_rank(x)
@@ -209,7 +210,7 @@ def _sum_grad(x, axis, dout):
     """Grad definition for `Sum` operation."""
     input_shape = shape_op(x)
     is_mutable, axis = convert_to_tensor(axis)
-    if is_shape_unknown(input_shape) or is_mutable:
+    if F.is_sequence_value_unknown(input_shape) or is_mutable:
         input_shape = dyn_shape_op(x)
         output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis, x)
         output_shape_kept_dims = P.Cast()(output_shape_kept_dims, ms.int32)
@@ -226,7 +227,7 @@ def _min_or_max_grad(x, axis, out, dout):
     """Grad definition for `Min` and `Max` operations."""
     input_shape = shape_op(x)
     output_shape_kept_dims = ()
-    if is_shape_unknown(input_shape):
+    if F.is_sequence_value_unknown(input_shape):
         input_shape = dyn_shape_op(x)
         output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis, x)
         output_shape_kept_dims = P.Cast()(output_shape_kept_dims, ms.int32)
@@ -268,7 +269,7 @@ def _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout):
     x_axis = axis
     onehot_axis_is_neg = False
     if x_axis < 0:
-        if not is_dim_unknown(x_shape):
+        if not F.is_sequence_shape_unknown(x_shape):
             x_axis = axis + x_dim
         else:
             onehot_axis_is_neg = True
@@ -279,13 +280,13 @@ def _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout):
     else:
         dout_expand = expand(dout[1], onehot_axis)
     out_shape = shape_op(out[0])
-    if not is_dim_unknown(out_shape):
+    if not F.is_sequence_shape_unknown(out_shape):
         if onehot_axis >= len(out_shape):
             onehot_axis = -1
     type_x = F.dtype(x)
     on_value = F.cast(F.scalar_to_tensor(1.0), type_x)
     off_value = F.cast(F.scalar_to_tensor(0.0), type_x)
-    if not is_shape_unknown(x_shape):
+    if not F.is_sequence_value_unknown(x_shape):
         depth = 1
         if x_shape:
             depth = x_shape[axis]
@@ -501,7 +502,7 @@ def get_bprop_floor(self):
     dtype_ = P.DType()
 
     def bprop(x, out, dout):
-        if is_shape_unknown(shape_(x)):
+        if F.is_sequence_value_unknown(shape_(x)):
             bc_x = zeros_like(x)
         else:
             bc_x = fill_(dtype_(x), shape_(x), 0.)
@@ -518,7 +519,7 @@ def get_bprop_ceil(self):
     dtype_ = P.DType()
 
     def bprop(x, out, dout):
-        if is_shape_unknown(shape_(x)):
+        if F.is_sequence_value_unknown(shape_(x)):
             bc_x = zeros_like(x)
         else:
             bc_x = fill_(dtype_(x), shape_(x), 0.)
@@ -594,7 +595,7 @@ def get_bprop_square(self):
     def bprop(x, out, dout):
         temp = mul_func(dout, x)
         shape_x = shape_op(x)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             fill_value = dyn_fill(dtype(temp), dyn_shape_op(x), 2.0)
         else:
             fill_value = fill_func(dtype(temp), shape_x, 2.0)
@@ -644,12 +645,12 @@ def get_bprop_square_sum_all(self):
     def bprop(x, y, out, dout):
         temp_x = mul_func(dout[0], x)
         temp_y = mul_func(dout[1], y)
-        if is_shape_unknown(shape_op(x)):
+        if F.is_sequence_value_unknown(shape_op(x)):
             dx = mul_func(dyn_fill(dtype(temp_x), dyn_shape_op(x), 2.0), temp_x)
         else:
             dx = mul_func(fill_func(dtype(temp_x), shape_op(x), 2.0), temp_x)
 
-        if is_shape_unknown(shape_op(y)):
+        if F.is_sequence_value_unknown(shape_op(y)):
             dy = mul_func(dyn_fill(dtype(temp_y), dyn_shape_op(y), 2.0), temp_y)
         else:
             dy = mul_func(fill_func(dtype(temp_y), shape_op(y), 2.0), temp_y)
@@ -794,7 +795,7 @@ def get_bprop_pow(self):
     def bprop(x, power, out, dout):
         bc_dx = power * pow_op(x, power - 1.0) * dout
         shape_x = shape_op(x)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             x = F.select(x < 0, dyn_fill(F.dtype(x), dyn_shape_op(x), 1), x)
         else:
             x = F.select(x < 0, F.fill(F.dtype(x), F.shape(x), 1), x)
@@ -942,7 +943,7 @@ def get_bprop_reduceprod(self):
         """Grad definition for `Product` operation."""
         # Expand dout to full input shape
         input_shape = shape_op(x)
-        if is_shape_unknown(input_shape):
+        if F.is_sequence_value_unknown(input_shape):
             input_shape = dyn_shape_op(x)
             input_shape = P.Cast()(input_shape, ms.int64)
             output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis, x)
@@ -953,14 +954,14 @@ def get_bprop_reduceprod(self):
         dout = reshape(dout, output_shape_kept_dims)
 
         # Pack all reduced dimensions into a single one, so we can perform the cumprod ops.
-        if is_shape_unknown(shape_op(x)):
+        if F.is_sequence_value_unknown(shape_op(x)):
             pack_shape, perm = _split_dyn_shape_index(x, axis)
         else:
             pack_shape, perm = _split_shape_index(shape_op(x), axis)
 
         permuted = transpose(x, perm)
         permuted_shape = shape_op(permuted)
-        if is_shape_unknown(permuted_shape):
+        if F.is_sequence_value_unknown(permuted_shape):
             permuted_shape = dyn_shape_op(permuted)
             pack_shape = create_tensor_by_element(pack_shape)
         reshaped = reshape(permuted, pack_shape)
@@ -972,7 +973,7 @@ def get_bprop_reduceprod(self):
 
         # Invert the transpose and reshape operations.
         # Make sure to set the statically known shape information through a reshape.
-        if is_shape_unknown(shape_op(permuted)):
+        if F.is_sequence_value_unknown(shape_op(permuted)):
             dout = DynamicBroadcastTo()(dout, input_shape)
             out = transpose(y, dyn_invert_permutation(perm)) * dout
         else:
@@ -1083,7 +1084,7 @@ def get_bprop_reduce_mean(self):
         grad = _sum_grad(x, axis, dout)
         shape_x = shape_op(x)
         shape_out = shape_op(out)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             shape_x = dyn_shape_op(x)
             shape_out = dyn_shape_op(out)
             div_shape = reduce_prod(cast(shape_x, mstype.float32), ()) /\

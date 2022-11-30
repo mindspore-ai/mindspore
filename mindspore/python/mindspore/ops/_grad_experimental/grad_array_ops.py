@@ -53,7 +53,6 @@ from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore.ops.operations import _grad_ops as G
 
 
@@ -70,7 +69,7 @@ def get_bprop_strided_slice_v2(self):
 
     def bprop(x, begin, end, strides, out, dout):
         x_shape = shape_op(x)
-        if -1 in x_shape:
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = dyn_shape_op(x)
         dx = input_grad(x_shape, begin, end, strides, dout)
         dx_all = (dx, zeros_like(begin), zeros_like(end), zeros_like(strides))
@@ -221,7 +220,7 @@ def get_bprop_index_fill(self):
     def bprop(x, dim, indices, value, out, dout):
         zero_value = zeros_like(value)
         x_grad = index_fill(dout, dim, indices, zero_value)
-        if is_shape_unknown(shape(x)):
+        if F.is_sequence_value_unknown(shape(x)):
             if dyn_rank(x) == 0:
                 value_grad = dout
             else:
@@ -291,7 +290,7 @@ def get_bprop_matrix_diag_part_v3(self):
 
     def bprop(x, k, padding_value, out, dout):
         shape_this = P.Shape()(x)[-2:]
-        if not is_shape_unknown(shape_this):
+        if not F.is_sequence_value_unknown(shape_this):
             row = shape_this[0]
             col = shape_this[1]
             result = (matrix_diag_v3(dout, k, Tensor(row, dtype=mstype.int32), Tensor(col, dtype=mstype.int32),
@@ -315,7 +314,7 @@ def get_bprop_matrix_set_diag_v3(self):
         diagonal_cal = matrix_diag_part_v3(dout, k, zeros((), dout.dtype))
 
         diagonal_shape = P.Shape()(diagonal)
-        if is_shape_unknown(diagonal_shape):
+        if F.is_sequence_value_unknown(diagonal_shape):
             diagonal = F.cast(diagonal, dout.dtype)
             x_cal = matrix_set_diag_v3(dout, zeros_like(diagonal), k)
         else:
@@ -338,7 +337,7 @@ def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
     possibly_updated = gather_nd(out, indices)
     out_indicators = F.cast(equal(updates, possibly_updated), mstype.int32)
     input_shape = shape(x)
-    if is_shape_unknown(input_shape):
+    if F.is_sequence_value_unknown(input_shape):
         input_shape = dyn_shape_op(x)
 
     scattered_out_indicators = scatter_nd(indices, out_indicators, input_shape)
@@ -457,13 +456,13 @@ def get_bprop_resize_nearest_neighbor_v2(self):
 
     def bprop(x, size, output, dout):
         x_shape = P.Shape()(x)
-        if is_shape_unknown(x_shape):
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = P.TensorShape()(x)
         grad_in_size = x_shape[1:3]
         if data_format == 'NCHW':
             grad_in_size = x_shape[2:4]
 
-        if is_shape_unknown(P.Shape()(x)):
+        if F.is_sequence_value_unknown(P.Shape()(x)):
             dx = grad_op(dout, grad_in_size)
             return dx, zeros_like(grad_in_size)
 
@@ -549,7 +548,7 @@ def get_bprop_extract_volume_patches(self):
     def bprop(x, out, dout):
         x_shape = P.Shape()(x)
         out_shape = P.Shape()(out)
-        if is_shape_unknown(x_shape) or is_shape_unknown(out_shape):
+        if F.is_sequence_value_unknown(x_shape) or F.is_sequence_value_unknown(out_shape):
             return _dyn_extract_volume_patches(x, out, dout)
         x_n, x_c, x_d, x_h, x_w = x_shape
         x_indices_num = 1 + x_d * x_h * x_w
@@ -958,12 +957,12 @@ def get_bprop_segment_mean(self):
         dout_type = F.dtype(dout)
 
         ones_shape = shape(segment_ids)
-        if is_shape_unknown(ones_shape):
+        if F.is_sequence_value_unknown(ones_shape):
             ones_shape = dyn_shape(segment_ids)
 
         ones = ()
         inputx_shape = shape(input_x)
-        if is_shape_unknown(inputx_shape):
+        if F.is_sequence_value_unknown(inputx_shape):
             input_rank = dyn_rank(input_x)
             if input_rank > cast(1, mstype.float32):
                 ones_shape = concat([ones_shape, dyn_ones(expand_dims(input_rank - 1, 0), mstype.int64)])

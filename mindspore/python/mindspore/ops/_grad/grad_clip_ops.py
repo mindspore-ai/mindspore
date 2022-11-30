@@ -16,15 +16,14 @@
 
 """Define the grad rules of clip operations."""
 from __future__ import absolute_import
-
 from mindspore.ops._grad.grad_base import bprop_getters, dyn_fill
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.common import dtype as mstype
 from mindspore.ops._grad.grad_math_ops import _sum_grad
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
-from mindspore.ops._utils.utils import is_shape_unknown
 
 
 @bprop_getters.register(inner.ClipByNorm)
@@ -72,7 +71,7 @@ def get_bprop_clip_by_norm(self):
         temp_num = 2.0
         temp_out = mul_op(reduce_sum_dout_x, cast_x)
         shape_cast_x = shape_op(cast_x)
-        if is_shape_unknown(shape_cast_x):
+        if F.is_sequence_value_unknown(shape_cast_x):
             fill_x = dyn_fill(type_op(temp_out), dyn_shape_op(cast_x), temp_num)
         else:
             fill_x = fill_op(type_op(temp_out), shape_cast_x, temp_num)
