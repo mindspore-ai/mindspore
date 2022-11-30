@@ -250,7 +250,9 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *keys, size_t key_num
 
   // 2. Insert values into map by indices in blocks.
   size_t total_insert_size = value_dim_ * key_num;
-  InsertValues<<<GET_BLOCKS(total_insert_size), GET_THREADS, 0, cuda_stream>>>(
+  auto block_size = GET_THREADS_MAXSIZE(kBlockSize);
+  auto grid_size = CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, total_insert_size, block_size);
+  InsertValues<<<grid_size, block_size, 0, cuda_stream>>>(
     value_dim_, total_insert_size, indices, value, elements_per_block_, lookup_cnts_ptr_, permit_threshold_,
     global_timestamp_, update_timestamps_ptr_, statuses_ptr_, idle_flags_ptr_, blocks_ptr_);
 
