@@ -223,7 +223,6 @@ Image Processing
     mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
     mindspore.ops.ResizeArea
-    mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinearV2
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2

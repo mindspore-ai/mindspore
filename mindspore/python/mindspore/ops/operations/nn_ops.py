@@ -4358,14 +4358,15 @@ class Pad(Primitive):
 
 class PadV3(Primitive):
     """
-    Pads the input tensor according to the paddings, mode and paddings_contiguous.
+    Pads the input tensor according to the paddings, `mode` and `paddings_contiguous`.
 
     Args:
-        mode (str): An optional string, Defaults to "constant", indicates padding mode,
-            support "constant", "reflect", "edge", Defaults to "constant".
-        paddings_contiguous (bool): An optional bool value, Defaults to True.
+        mode (str, optional): An optional string indicates padding mode,
+            support "constant", "reflect", "edge". Default: "constant".
+        paddings_contiguous (bool, optional): An optional bool value indicates if the padding is paddings_contiguous.
             If true, paddings is arranged as [begin0, end0, begin1, end1, ...]
             If false, paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
+            Default:True.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
@@ -4380,16 +4381,18 @@ class PadV3(Primitive):
         TypeError: If `x` or `paddings` is not a Tensor.
         TypeError: If `padding_contiguous` is not a bool.
         ValueError: If `mode` is not a str or not in support modes.
-        ValueError: If `mode` is constant, the element's number of paddings not be even.
-        ValueError: If `mode` is constant, the element's number of paddings large than input dim * 2.
-        ValueError: If `mode` is edge or reflect, the element's number of paddings is not 2, 4 or 6.
-        ValueError: If `mode` is edge or reflect, x dims equal 3, the element's number of paddings is 2.
-        ValueError: If `mode` is edge or reflect, x dims equal 4, the element's number of paddings is 4.
-        ValueError: If `mode` is edge or reflect, x dims smaller than 3.
-        ValueError: If `mode` is edge, x dims bigger than 5.
-        ValueError: If `mode` is reflect, x dims bigger than 4.
-        ValueError: If `mode` is reflect, padding size bigger than the corresponding x dimension.
-        ValueError: After padding, output's shape number must be greater than 0.
+        ValueError: If `mode` is "constant", the element's number of `paddings` not be even.
+        ValueError: If `mode` is "constant", the element's number of `paddings` large than input dim * 2.
+        ValueError: If `mode` is "edge" or "reflect", the element's number of `paddings` is not 2, 4 or 6.
+        ValueError: If `mode` is "edge" or "reflect", `x` dims equals 3,
+            the element's number of `paddings` is 2.
+        ValueError: If `mode` is "edge" or "reflect", `x` dims equals 4,
+            the element's number of `paddings` is 4.
+        ValueError: If `mode` is "edge" or "reflect", `x` dims smaller than 3.
+        ValueError: If `mode` is "edge", x dims bigger than 5.
+        ValueError: If `mode` is "reflect", x dims bigger than 4.
+        ValueError: If `mode` is "reflect", padding size bigger than the corresponding `x` dimension.
+        ValueError: After padding, output's shape number is not greater than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7122,7 +7125,7 @@ class CTCGreedyDecoder(Primitive):
         >>>                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> decoded_indices, decoded_values, decoded_shape, log_probability = ops.CTCGreedyDecoder()(inputs,
-        >>>                                                                                          sequence_length)
+        ...                                                                                          sequence_length)
         >>> print(decoded_indices)
         [[0 0]
          [0 1]

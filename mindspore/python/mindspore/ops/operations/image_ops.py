@@ -355,23 +355,23 @@ class NonMaxSuppressionV3(Primitive):
     Greedily selects a subset of bounding boxes in descending order of score.
 
     .. warning::
-        When input "max_output_size" is negative, it will be treated as 0.
+        When input `max_output_size` is negative, it will be treated as 0.
 
     Note:
-        This algorithm is agnostic to where the origin is in the coordinate system.
-        This algorithm is invariant to orthogonal transformations and translations of the coordinate system;
-        thus translating or reflections of the coordinate system result in the same boxes being
-        selected by the algorithm.
+        - This algorithm is agnostic to where the origin is in the coordinate system.
+        - This algorithm is invariant to orthogonal transformations and translations of the coordinate system,
+          thus translating or reflections of the coordinate system result in the same boxes being
+          selected by the algorithm.
 
     Inputs:
-        - **boxes** (Tensor) - A 2-D Tensor of shape [num_boxes, 4].
-        - **scores** (Tensor) - A 1-D Tensor of shape [num_boxes] representing a single score
-          corresponding to each box (each row of boxes), the num_boxes of "scores" must be equal to
-          the num_boxes of "boxes".
+        - **boxes** (Tensor) - A 2-D Tensor of shape :math:`(num_boxes, 4)`.
+        - **scores** (Tensor) - A 1-D Tensor of shape :math:`(num_boxes)` representing a single score
+          corresponding to each box (each row of boxes), the num_boxes of `scores` must be equal to
+          the num_boxes of `boxes`.
         - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
           number of boxes to be selected by non max suppression.
         - **iou_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
-          deciding whether boxes overlap too much with respect to IOU, and iou_threshold must be equal or greater
+          deciding whether boxes overlap too much with respect to IOU, and `iou_threshold` must be equal or greater
           than 0 and be equal or smaller than 1.
         - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
           deciding when to remove boxes based on score.
@@ -381,16 +381,17 @@ class NonMaxSuppressionV3(Primitive):
         where M <= max_output_size.
 
     Raises:
-        TypeError: If the dtype of `boxes` and `scores` is different.
-        TypeError: If the dtype of `iou_threshold` and `score_threshold` is different.
+        TypeError: If the dtype of `boxes` and `scores` are different.
+        TypeError: If the dtype of `iou_threshold` and `score_threshold` are different.
         TypeError: If `boxes` is not tensor or its dtype is not float16 or float32.
-        TypeError: If `scores` is not tensor or its dtype is not float16 or float32.
-        TypeError: If `max_output_size` is not tensor or scalar.If `max_output_size` is not int32 or int64.
-        TypeError: If `iou_threshold` is not tensor or scalar. If its type is not float16 or float32.
-        TypeError: If `score_threshold` is not tensor or scalar. If its type is not float16 or float32.
+        TypeEroor: If `scores` is not tensor or its dtype is not float16 or float32.
+        TypeError: If `max_output_size` is not tensor or scalar or its date type is not int32 or int64.
+        TypeError: If `iou_threshold` is not tensor or scalar or its type is neither float16 or float32.
+        TypeError: If `score_threshold` is not tensor or scalar or its type is neither float16 or float32.
         ValueError: If the size of shape of `boxes` is not 2 or the second value of its shape is not 4.
         ValueError: If the size of shape of `scores` is not 1.
-        ValueError: If each of the size of shape of `max_output_size`, `iou_threshold`, `score_threshold` is not 0.
+        ValueError: If any of the size of shape of `max_output_size`,
+            `iou_threshold`, `score_threshold` is not 0.
 
     Supported Platforms:
         ``Ascend``

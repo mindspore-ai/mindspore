@@ -224,7 +224,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
     mindspore.ops.ResizeArea
-    mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinearV2
     mindspore.ops.ROIAlign
     mindspore.ops.SampleDistortedBoundingBoxV2

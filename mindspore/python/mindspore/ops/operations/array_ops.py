@@ -5417,7 +5417,6 @@ class BroadcastTo(Primitive):
         >>> print(output)
         [[1. 2. 3.]
          [1. 2. 3.]]
-
         >>> shape = (-1, 2)
         >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
         >>> output = ops.BroadcastTo(shape=shape)(x)
