@@ -233,7 +233,7 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<Address
   const size_t d_width = static_cast<size_t>(dilation_temp_list[kTwo]);
   const size_t d_height = static_cast<size_t>(dilation_temp_list[kOne]);
   const size_t d_depth = static_cast<size_t>(dilation_temp_list[kZero]);
-  const size_t length = batch * out_stride;
+  const size_t length = batch * in_stride;
   (void)CheckPadsValue(k_width, p_width, k_height, p_height, k_depth, p_depth);
   (void)CheckDilationValue(d_width, in_width, d_height, in_height, d_depth, in_depth);
   (void)CheckIfLessOne(strides_temp_list);
