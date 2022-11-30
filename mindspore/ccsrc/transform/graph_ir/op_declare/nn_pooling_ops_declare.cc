@@ -216,4 +216,16 @@ ATTR_MAP(Dilation2DBackpropFilter) = {{"strides", ATTR_DESC(strides, AnyTraits<s
 OUTPUT_MAP(Dilation2DBackpropFilter) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Dilation2DBackpropFilter, prim::kPrimDilation2DBackpropFilter->name(),
               ADPT_DESC(Dilation2DBackpropFilter))
+
+// Dilation2DBackpropInput
+INPUT_MAP(Dilation2DBackpropInput) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(out_backprop)}};
+ATTR_MAP(Dilation2DBackpropInput) = {
+  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"rates", ATTR_DESC(rates, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+  {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+  {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<int64_t>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(Dilation2DBackpropInput) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Dilation2DBackpropInput, kNameDilation2DBackpropInput, ADPT_DESC(Dilation2DBackpropInput))
 }  // namespace mindspore::transform
