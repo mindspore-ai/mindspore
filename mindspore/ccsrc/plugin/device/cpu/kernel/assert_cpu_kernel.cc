@@ -69,8 +69,7 @@ bool AssertCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
                               const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Assert>(base_operator);
   if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast Assert ops failed!";
-    return false;
+    MS_LOG(EXCEPTION) << "cast Assert ops failed!";
   }
   kernel_name_ = kernel_ptr->name();
   summarize_ = kernel_ptr->get_summarize();
