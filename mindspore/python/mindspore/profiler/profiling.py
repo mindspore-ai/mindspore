@@ -468,6 +468,10 @@ class Profiler:
         options = kwargs.get("env_enable")
         self._filt_optype_names = ''
         self._has_started = True
+        self._data_process_enable = True
+        self._stop_time = 0
+        self._is_heterogeneous = False
+        self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
         self._start_time = options.get("start_time")
         self._output_path = options.get('output_path')
         self._profile_memory = options.get('profile_memory')
