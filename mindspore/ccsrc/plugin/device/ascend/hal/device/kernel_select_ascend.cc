@@ -68,8 +68,9 @@ static const std::unordered_set<std::string> kAclKernelSet = {kConv2DOpName,
                                                               kReLUOpName,
                                                               kReluOpName};
 static const std::unordered_set<std::string> kAclBlackList = {
-  kAddNOpName,   kGatherV2OpName,  kAvgPool3DOpName, kResizeBilinearV2OpName, kIndexAddOpName,
-  kOneHotOpName, kTransDataOpName, kCastOpName,      kROIAlignGradName,       kSquareSumV1OpName};
+  kAddNOpName,       kGatherV2OpName,      kAvgPool3DOpName,    kResizeBilinearV2OpName,    kIndexAddOpName,
+  kOneHotOpName,     kTransDataOpName,     kCastOpName,         kROIAlignGradName,          kSquareSumV1OpName,
+  kDynamicRNNOpName, kKLDivLossGradOpName, kTransDataRNNOpName, kConfusionSoftmaxGradOpName};
 
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
   {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};

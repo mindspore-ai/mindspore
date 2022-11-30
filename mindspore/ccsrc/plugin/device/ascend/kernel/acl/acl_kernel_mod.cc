@@ -81,6 +81,9 @@ bool AclKernelMod::SkipUnRunNode(const std::vector<AddressPtr> &inputs, const st
   MS_EXCEPTION_IF_NULL(stream_ptr);
   for (auto &[attr_name, value] : attr_list_) {
     // Special process of dynamic input number.
+    if (value == nullptr) {
+      continue;
+    }
     if (attr_name == kNAttrName && value->isa<Int64Imm>()) {
       auto long_input_size = SizeToLong(input_size);
       if (GetValue<int64_t>(value) != long_input_size) {

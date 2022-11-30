@@ -63,6 +63,7 @@ class AclOpDesc {
  protected:
   aclTensorDesc *CreateTensorDesc(const GeTensorDescPtr &tensor_desc);
   aclDataBuffer *CreateDataBuf(const AddressPtr &address, const size_t op_size);
+  void CreateNullAclTensor(const size_t idx, const bool is_input);
 
   void GetListAttr(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
   void GetListListAttr(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
@@ -110,6 +111,7 @@ class AclUtils {
   static std::vector<std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
   static std::vector<std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
   static std::set<std::string> GetUselessOutputs(const AnfNodePtr &node);
+  static std::set<std::string> GetUselessInputs(const AnfNodePtr &node);
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -2988,5 +2988,23 @@ bool GeOpConvertor::IsDynamicInput(const AnfNodePtr &node, const size_t idx) {
   }
   return adapterPtr->IsDynInputOp(idx);
 }
+
+size_t GeOpConvertor::GetAclInputSize(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  if (adapterPtr == nullptr) {
+    MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
+  }
+  return adapterPtr->getInputMap().size();
+}
+
+size_t GeOpConvertor::GetAclOutputSize(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  OpAdapterPtr adapterPtr = FindAdapter(node, true);
+  if (adapterPtr == nullptr) {
+    MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
+  }
+  return adapterPtr->getOutputMap().size();
+}
 }  // namespace transform
 }  // namespace mindspore
