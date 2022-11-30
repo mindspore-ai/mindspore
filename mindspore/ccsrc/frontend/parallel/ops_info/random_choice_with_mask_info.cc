@@ -29,7 +29,6 @@ Status RandomChoiceWithMaskInfo::GetAttrs() {
   if (attrs_.find(SEED2) != attrs_.end()) {
     seed2_ = GetValue<int64_t>(attrs_[SEED2]);
   }
-  infer_strategy_mode_ = INDEPENDENT_MODE;
   return SUCCESS;
 }
 

@@ -56,7 +56,6 @@ Status ConcatInfo::GetAttrs() {
   }
 
   axis_ = LongToSize(axis);
-  infer_strategy_mode_ = SAME_MODE;
   return SUCCESS;
 }
 

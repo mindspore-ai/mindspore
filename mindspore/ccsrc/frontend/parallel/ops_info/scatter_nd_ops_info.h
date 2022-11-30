@@ -58,7 +58,6 @@ class ScatterNdOpsInfo : public OperatorInfo {
   int64_t slice_size_ = 0;
   size_t gather_dims_size_ = 1;
   GenerateGraph gen_g_ = GenerateGraph(attrs_);
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 };
 
 using ScatterNdOpsInfoPtr = std::shared_ptr<ScatterNdOpsInfo>;

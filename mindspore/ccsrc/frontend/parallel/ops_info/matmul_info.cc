@@ -125,7 +125,6 @@ Status MatMulBase::GetAttrs() {
                   << mat_a_dimension_ << ", the dim of mat_b is " << mat_b_dimension_;
   }
 
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -513,54 +512,6 @@ std::shared_ptr<Strategies> BatchMatMulInfo::GenerateBatchStrategies() {
 }
 
 Status MatMulBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
-
-Shapes MatMulBase::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  // if the transpose_b is false:
-  //   in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (a, b, d, e)), return: ((A, B, C, D), (A, B, D, 1))
-  //   in_strategy: ((), (A, B, D, E)), inputs shape: ((a, b, c, d), (a, b, d, e)), return: ((A, B, 1, D), (A, B, D, E))
-  // if the transpose_b is true:
-  //   in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (a, b, e, d)), return: ((A, B, C, D), (A, B, 1, D))
-  //   in_strategy: ((), (A, B, E, D)), inputs shape: ((a, b, c, d), (a, b, e, d)), return: ((A, B, 1, D), (A, B, E, D))
-  if (in_strategy.size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in strategy must be 2, but got " << in_strategy.size();
-  }
-
-  if (in_strategy[0].empty() && in_strategy[1].empty()) {
-    MS_LOG(EXCEPTION) << name_ << ": The in strategy is empty";
-  }
-
-  if (!in_strategy[0].empty() && !in_strategy[1].empty()) {
-    return in_strategy;
-  }
-
-  if (!in_strategy[0].empty() && in_strategy[0].size() != inputs_shape_[0].size()) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[0] is " << in_strategy[0].size()
-                      << ", but the size of the inputs_shape_[0] is " << inputs_shape_[0].size();
-  }
-
-  if (!in_strategy[1].empty() && in_strategy[1].size() != inputs_shape_[1].size()) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy[1] is " << in_strategy[1].size()
-                      << ", but the size of the inputs_shape_[1] is " << inputs_shape_[1].size();
-  }
-
-  Shapes ret_strategy = InferStrategyBroadcastMode(in_strategy);
-  if (transpose_b_) {
-    if (in_strategy[0].empty()) {
-      ret_strategy[0][ret_strategy[0].size() - 2] = 1;
-    } else {
-      ret_strategy[1][ret_strategy[1].size() - 2] = 1;
-    }
-  } else {
-    if (in_strategy[0].empty()) {
-      ret_strategy[0][ret_strategy[0].size() - 2] = 1;
-      ret_strategy[0][ret_strategy[0].size() - 1] = ret_strategy[1][ret_strategy[1].size() - 2];
-    } else {
-      ret_strategy[1][ret_strategy[1].size() - 2] = ret_strategy[0][ret_strategy[0].size() - 1];
-      ret_strategy[1][ret_strategy[1].size() - 1] = 1;
-    }
-  }
-  return ret_strategy;
-}
 
 // PCL matmul
 ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {

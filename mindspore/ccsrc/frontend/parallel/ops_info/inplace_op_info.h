@@ -38,10 +38,7 @@ class InplaceOpBase : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
-  Status GetAttrs() override {
-    infer_strategy_mode_ = SAME_MODE;
-    return SUCCESS;
-  }
+  Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;

@@ -48,7 +48,6 @@ class MatMulBase : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   Status GetAttrs() override;
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 
   bool candidate_flag_ = false;
   bool transpose_a_ = false;

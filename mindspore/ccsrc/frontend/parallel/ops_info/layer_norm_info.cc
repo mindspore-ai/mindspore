@@ -59,7 +59,6 @@ Status LayerNormInfo::GetAttrs() {
     axis = axis + dim;
   }
   begin_norm_axis_ = LongToSize(axis);
-  infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
@@ -247,67 +246,6 @@ Status LayerNormInfo::InitShapes() {
   gamma_shape_ = inputs_shape_[LAYER_NORM_GAMMA_INDEX];
   beta_shape_ = inputs_shape_[LAYER_NORM_BETA_INDEX];
   return SUCCESS;
-}
-
-// in_strategy: ((A, B, 1, 1), (), ()), begin_norm_axis_: 2, Shapes: ((a, b, c, d), (b, c, d), (b, c, d))
-// return: ((A, B, 1, 1), (B, 1, 1), (B, 1, 1))
-// in_strategy: ((), (B, 1, 1), (B, 1, 1)), begin_norm_axis_: 2, Shapes: ((a, b, c, d), (b, c, d), (b, c, d))
-// return: ((1, B, 1, 1), (B, 1, 1), (B, 1, 1))
-Shapes LayerNormInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
-  if (in_strategy.size() != 3) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();
-  }
-
-  if (in_strategy[1] != in_strategy[2]) {
-    MS_LOG(EXCEPTION) << name_ << ": The in_strategy[1] must be equal to the in_strategy[2], but the in_strategy[1] is"
-                      << in_strategy[1] << ", the in_strategy[2] is " << in_strategy[2];
-  }
-
-  if (gamma_shape_ != beta_shape_) {
-    MS_LOG(EXCEPTION) << name_ << ": The gamma's shape must be equal to the beta's shape, but the gamma's shape is"
-                      << gamma_shape_ << ", the beta's shape is " << beta_shape_;
-  }
-
-  if (input_shape_.size() < gamma_shape_.size()) {
-    MS_LOG(EXCEPTION)
-      << name_ << ": The input's shape size cannot smaller than gamma's shape size, but the input's shape size is"
-      << input_shape_.size() << ", the gamma's shape size is " << gamma_shape_.size();
-  }
-
-  if (!in_strategy[0].empty()) {
-    if (in_strategy[0].size() != input_shape_.size()) {
-      MS_LOG(EXCEPTION)
-        << name_
-        << ": The size of in_strategy[0] must be equal to the size of inputs_shape[0], but the in_strategy[0] is"
-        << in_strategy[0] << ", the inputs_shape[0] is " << input_shape_;
-    }
-    if (input_shape_.size() == gamma_shape_.size()) {
-      return Shapes({in_strategy[0], in_strategy[0], in_strategy[0]});
-    } else {
-      size_t diff_len = input_shape_.size() - gamma_shape_.size();
-      Shape gamma_strategy(in_strategy[0].begin() + diff_len, in_strategy[0].end());
-      return Shapes({in_strategy[0], gamma_strategy, gamma_strategy});
-    }
-  }
-
-  if (!in_strategy[1].empty()) {
-    if (in_strategy[1].size() != gamma_shape_.size()) {
-      MS_LOG(EXCEPTION)
-        << name_
-        << ": The size of in_strategy[1] must be equal to the size of inputs_shape[1], but the in_strategy[1] is"
-        << in_strategy[1] << ", the inputs_shape[1] is " << gamma_shape_;
-    }
-    if (input_shape_.size() == gamma_shape_.size()) {
-      return Shapes({in_strategy[1], in_strategy[1], in_strategy[1]});
-    } else {
-      size_t diff_len = input_shape_.size() - gamma_shape_.size();
-      Shape tmp_strategy = in_strategy[1];
-      (void)tmp_strategy.insert(tmp_strategy.begin(), diff_len, 1);
-      return Shapes({tmp_strategy, in_strategy[1], in_strategy[1]});
-    }
-  }
-
-  MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0], in_strategy[1] and in_strategy[2] are empty";
 }
 
 REGISTER(LayerNormInfo);
