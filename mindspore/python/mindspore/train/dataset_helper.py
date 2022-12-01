@@ -394,9 +394,9 @@ class DatasetHelper:
         """Continue to send data to device at the beginning of epoch."""
         self.iter.continue_send()
 
-    def _reset(self, step):
-        """Reset the dataset to the provided step."""
-        self.iter._reset(step)  # pylint: disable=W0212
+    def _reset(self, step, epoch):
+        """Reset the dataset to the provided step and epoch."""
+        self.iter._reset(step, epoch)  # pylint: disable=W0212
 
     def get_data_info(self):
         """

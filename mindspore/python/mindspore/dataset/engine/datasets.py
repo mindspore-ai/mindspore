@@ -3620,8 +3620,8 @@ class _ToDevice:
     def send(self):
         self._to_device.Send()
 
-    def _reset(self, step):
-        self._to_device.Reset(step)
+    def _reset(self, step, epoch):
+        self._to_device.Reset(step, epoch)
 
     def stop_send(self):
         """
@@ -3731,10 +3731,10 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             self._to_device.continue_send()
 
-    def _reset(self, step):
+    def _reset(self, step, epoch):
         if self._to_device is not None:
-            logger.info("Reset the dataset pipeline to step " + str(step))
-            self._to_device._reset(step)  # pylint: disable=W0212
+            logger.info("Reset the dataset pipeline to step: " + str(step) + ", epoch: " + str(epoch))
+            self._to_device._reset(step, epoch)  # pylint: disable=W0212
 
     def get_data_info(self):
         """
