@@ -194,7 +194,7 @@ mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t 
   for (auto &device : device_list) {
     if (device->GetDeviceType() == mindspore::kAscend) {
       param->aclModelOptionCfgParam.offline = false;
-      param->device = "Ascend";
+      param->device = "Ascend310";
       param->no_fusion = false;
       if (config_info.find("ascend_context") != config_info.end()) {
         std::map<std::string, std::string> ascend_map = config_info.at("ascend_context");
