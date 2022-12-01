@@ -28,7 +28,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from tests.st.tbe_networks.resnet import resnet50
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O0')
 
 
 class LeNet(nn.Cell):

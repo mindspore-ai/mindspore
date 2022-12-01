@@ -106,6 +106,7 @@ class BACKEND_EXPORT Somas {
   virtual bool InitDevSpecControlTensors(const session::KernelGraph &graph) = 0;
   virtual bool DevSpecNodeProcess(const session::KernelGraph &graph) = 0;
   virtual void CommunicationTensorProcess(const std::vector<SomasTensorPtr> &tensors) const;
+  virtual bool NeedContiguous(const std::vector<size_t> &inputs) const = 0;
   // end
 
   // SOMAS Configuration

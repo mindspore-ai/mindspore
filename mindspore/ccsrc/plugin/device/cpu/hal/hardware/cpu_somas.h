@@ -32,6 +32,7 @@ class CPUSomas : public somas::Somas {
   string GetDeviceName() const override;
   size_t GetAlignSize(size_t original_size) const override;
   void CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const override;
+  bool NeedContiguous(const std::vector<size_t> &inputs) const override;
 
   bool GetDependExecOrderFlag(const session::KernelGraph &graph) const override;
   bool InitDevSpecControlTensors(const session::KernelGraph &graph) override;

@@ -240,6 +240,8 @@ void AscendSomas::CommunicationTensorProcess(const std::vector<somas::SomasTenso
     tensors[tensors.size() - 1]->aligned_size_ += GetCommunicationReservedSize();
   }
 }
+
+bool AscendSomas::NeedContiguous(const std::vector<size_t> &inputs) const { return true; }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
