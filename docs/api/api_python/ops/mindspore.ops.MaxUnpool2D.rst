@@ -31,7 +31,7 @@ mindspore.ops.MaxUnpool2D
           - 如果 `pads` 是一个整数，则高度和宽度方向的填充数量相同，都等于 `pads` 。
           - 如果 `pads` 是含两个整数的元组，高度和宽度方向的填充数量分别等于 `pads[0]` 和 `pads[1]` 。
         
-        - **output_shape** (tuple[int]，可选) 一个可选的输入，指定目标输出的尺寸。默认值：()。
+        - **output_shape** (tuple[int]，可选) - 一个可选的输入，指定目标输出的尺寸。默认值：()。
          
           - 如果 `output_shape == ()` ，则输出的shape由 `kszie` 、 `strides` 和 `pads` 计算得到。
           - 如果 :math:`output_shape != ()` ，则 `output_shape` 必须为 :math:`(N, C, H, W)` 或 :math:`(N, H, W, C)` ，

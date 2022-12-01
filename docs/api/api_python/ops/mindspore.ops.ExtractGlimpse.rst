@@ -15,7 +15,7 @@
         - **uniform_noise** (bool，可选) - 可选的bool，指示是否应该使用均匀分布或高斯分布生成噪声。默认为True。
         - **noise** (str，可选) - 可选string，其值可以为： `uniform` 、 `gaussian` 和 `zero` 。
           窗口由输入大小和偏移决定，如果窗口与输入部分没有重叠，则填充随机噪声。当 `noise` 为 `uniform` 或者 `gaussian` ，
-          其填充结果是变量。当 `noise`为 `zero` ，则 `uniform_noise` 必须为False，这样填充的噪声才是0，保证了结果的正确。
+          其填充结果是变量。当 `noise` 为 `zero` ，则 `uniform_noise` 必须为False，这样填充的噪声才是0，保证了结果的正确。
           当 `uniform_noise` 为True， `noise` 仅可以为 `uniform` 。当 `uniform_noise` 为False， `noise` 可以为 `uniform` 、 `gaussian` 和 `zero` 。
           默认为 `uniform` 。
 

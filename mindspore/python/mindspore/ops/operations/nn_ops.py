@@ -10215,7 +10215,7 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
     Fractional max pooling operation.
 
     Applies a 2D fractional max pooling to an input signal composed of multiple input planes.
-    The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
+    The max-pooling operation is applied in kH x kW regions by a stochastic step size determined by
     the target output size. For any input size, the size of the specified output is H x W. The number
     of output features is equal to the number of input planes.
 

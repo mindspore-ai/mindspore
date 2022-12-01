@@ -14,7 +14,7 @@ mindspore.ops.ResizeNearestNeighborV2
 
     输入：
         - **x** (Tensor) - 四维的Tensor，其shape为 :math:`(batch, height, width, channels)` 或者 :math:`(batch, channels, height, width)`，取决于 `data_format` 。支持的数据类型列表：[int8, uint8, int16, uint16, int32, int64, float16, float32, float64]。
-        - **size** (Tensor) - 输出图片的尺寸。一维的Tensor，含有两个元素[ `new_height`,`new_width` ]。
+        - **size** (Tensor) - 输出图片的尺寸。一维的Tensor，含有两个元素 `[new_height, new_width]`。
 
     输出：
         -  **y** (Tensor) - 调整大小后的图像。是一个shape为 :math:`(batch, new\_height, new\_width, channels)` 或者 :math:`(batch, channels, new\_height, new\_width)` 的四维Tensor，具体是哪一个shape取决于 `data_format` 。数据类型与输入 `x` 相同。 

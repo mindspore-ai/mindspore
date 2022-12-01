@@ -7,7 +7,7 @@ mindspore.ops.angle
     输入中的元素被认为是形式为a+bj的复数，其中a是实部，b是虚部。此函数返回的参数的形式为atan2(b，a)。
 
     参数：
-        - **x** (Tensor) -输入Tensor。支持类型：complex64、complex128。
+        - **x** (Tensor) - 输入Tensor。支持类型：complex64、complex128。
 
     返回：
         Tensor，类型为float32或float64，shape与输入相同。

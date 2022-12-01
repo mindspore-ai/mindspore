@@ -1,7 +1,7 @@
 mindspore.ops.LogNormalReverse
 ==============================
 
-.. py:class:: mindspore.ops.LogNormalReverse(mean=2.0, std=1.0)
+.. py:class:: mindspore.ops.LogNormalReverse(mean=1.0, std=2.0)
 
     用给定均值和标准差初始化对数正态分布，并以此填充输入Tensor的元素。
 

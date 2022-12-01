@@ -14,6 +14,6 @@ mindspore.ops.MatrixLogarithm
 
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。
-        - **ValueError** - 如果 `x` 的数据类型不是complex64或complex128。
+        - **TypeError** - 如果 `x` 的数据类型不是complex64或complex128。
         - **ValueError** - 如果 `x` 的维度小于2。
         - **ValueError** - 如果内部的两维不相等。
