@@ -332,7 +332,7 @@ class _MindsporeFunctionExecutor:
         compile_args = _restore_mutable_attr(args_list, compile_args)
 
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-                        str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
+                        str(self.fn.__code__.co_firstlineno)
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
