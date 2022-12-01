@@ -56,7 +56,7 @@ struct LiteQuantParam {
 
 class Tensor {
  public:
-  Tensor() { tensor_c_ = {kTypeUnknown, DEFAULT_FORMAT, nullptr, 0}; }
+  Tensor() { tensor_c_ = {kTypeUnknown, NCHW, nullptr, 0}; }
 
   Tensor(TypeId data_type, std::vector<int> shape, const mindspore::Format &format = mindspore::NHWC,
          Category category = VAR);
