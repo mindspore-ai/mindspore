@@ -140,11 +140,9 @@ ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const Sha
 
 ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, const int64_t axis_shape, bool keep_dims) {
   ShapeVector out_shape;
+  constexpr int dynamic_rank_value = -2;
   if (!keep_dims) {
-    if (SizeToLong(x_shape.size()) < axis_shape) {
-      return out_shape;
-    }
-    (void)out_shape.insert(out_shape.end(), x_shape.size() - axis_shape, -1LL);
+    out_shape.push_back(dynamic_rank_value);
   } else {
     (void)out_shape.insert(out_shape.end(), x_shape.size(), -1LL);
   }

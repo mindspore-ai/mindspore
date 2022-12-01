@@ -18,6 +18,7 @@
 
 #include "backend/common/optimizer/op_adaptation_info_factory.h"
 
+// Do not add operators here, input to attribute function has been abandoned
 namespace mindspore::opt {
 #define RER_GPU_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kGPUDevice, false, __VA_ARGS__)
 #define RER_GPU_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kGPUDevice, true, __VA_ARGS__)
@@ -33,11 +34,7 @@ RER_GPU_STATIC_CONST_TO_ATTR(kCSRMMOpName, 3);
 RER_GPU_STATIC_CONST_TO_ATTR(kCSRMulOpName, 3);
 RER_GPU_STATIC_CONST_TO_ATTR(kCSRMVOpName, 3);
 RER_GPU_STATIC_CONST_TO_ATTR(kCSRReduceSumOpName, 3, 4);
-RER_GPU_STATIC_CONST_TO_ATTR(kCumprodOpName, 1);
 RER_GPU_STATIC_CONST_TO_ATTR(kFillOpName, 0);
-RER_GPU_STATIC_CONST_TO_ATTR(kSpaceToBatchOpName, 1);
-RER_GPU_STATIC_CONST_TO_ATTR(kSparseApplyAdagradOpName, 2);
-RER_GPU_STATIC_CONST_TO_ATTR(kStridedSliceAssignOpName, 1, 2, 3);
 }  // namespace mindspore::opt
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_GPU_OPTIMIZER_REG_GPU_CONST_INPUT_TO_ATTR_H_

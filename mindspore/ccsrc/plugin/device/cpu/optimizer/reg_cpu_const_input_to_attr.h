@@ -18,6 +18,7 @@
 
 #include "backend/common/optimizer/op_adaptation_info_factory.h"
 
+// Do not add operators here, the input to attribute function has been abandoned
 namespace mindspore::opt {
 #define RER_CPU_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kCPUDevice, false, __VA_ARGS__)
 #define RER_CPU_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kCPUDevice, true, __VA_ARGS__)
@@ -34,9 +35,7 @@ RER_CPU_STATIC_CONST_TO_ATTR(kCSRMMOpName, 3);
 RER_CPU_STATIC_CONST_TO_ATTR(kCSRMulOpName, 3);
 RER_CPU_STATIC_CONST_TO_ATTR(kCSRMVOpName, 3);
 RER_CPU_STATIC_CONST_TO_ATTR(kCSRReduceSumOpName, 3, 4);
-RER_CPU_STATIC_CONST_TO_ATTR(kCumprodOpName, 1);
 RER_CPU_STATIC_CONST_TO_ATTR(kFillOpName, 0);
-RER_CPU_STATIC_CONST_TO_ATTR(kSparseApplyAdagradOpName, 2);
 }  // namespace mindspore::opt
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_REG_CPU_CONST_INPUT_TO_ATTR_H_
