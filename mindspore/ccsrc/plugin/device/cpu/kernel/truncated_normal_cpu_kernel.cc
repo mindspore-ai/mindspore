@@ -126,7 +126,7 @@ std::vector<std::pair<KernelAttr, TruncatedNormalCPUKernelMod::TruncatedNormalFu
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
      &TruncatedNormalCPUKernelMod::LaunchKernel<int32_t, float, float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-     &TruncatedNormalCPUKernelMod::LaunchKernel<int32_t, double, double>},
+     &TruncatedNormalCPUKernelMod::LaunchKernel<int64_t, double, double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
      &TruncatedNormalCPUKernelMod::LaunchKernel<int64_t, float16, float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),

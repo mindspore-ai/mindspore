@@ -1465,7 +1465,7 @@ class LogSoftmaxGrad(Primitive):
         validator.check_value_type("axis", axis, [int], self.name)
 
 
-class LSTMGradData(PrimitiveWithInfer):
+class LSTMGradData(Primitive):
     """Computes the data gradients of LSTM."""
 
     @prim_attr_register
@@ -1483,36 +1483,8 @@ class LSTMGradData(PrimitiveWithInfer):
         else:
             self.num_directions = 1
 
-    def infer_shape(self, y_shape, dy_shape, dhy_shape, dcy_shape, w_shape,
-                    hx_shape, cx_shape, reserve_shape, state_shape):
-        # dhy and dcy should be same shape
-        validator.check_equal_int(len(dhy_shape), 3, "h_shape", self.name)
-        validator.check_equal_int(len(dhy_shape), len(dcy_shape), "h_shape", self.name)
-        validator.check_equal_int(dhy_shape[0], dcy_shape[0], "h_shape[0]", self.name)
-        validator.check_equal_int(dhy_shape[1], dcy_shape[1], "h_shape[1]", self.name)
-        validator.check_equal_int(dhy_shape[2], dcy_shape[2], "h_shape[2]", self.name)
 
-        validator.check_int(dhy_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h_shape[0]", self.name)
-        validator.check_equal_int(dhy_shape[2], self.hidden_size, "h_shape[2]", self.name)
-
-        validator.check_equal_int(len(dy_shape), 3, "dy_shape", self.name)
-        validator.check_equal_int(dy_shape[1], dhy_shape[1], "dy[1]", self.name)
-        validator.check_int(dy_shape[2], self.hidden_size * self.num_directions, Rel.EQ, "dy[2]", self.name)
-
-        dx_shape = (y_shape[0], y_shape[1], self.input_size)
-        dhx_shape = dhy_shape
-        dcx_shape = dcy_shape
-
-        return (dx_shape, dhx_shape, dcx_shape)
-
-    def infer_dtype(self, y_dtype, dy_dtype, dhy_dtype, dcy_dtype, w_dtype,
-                    hx_dtype, cx_dtype, reserve_dtype, state_dtype):
-        args = {"dy": dy_dtype, "dhy": dhy_dtype, "dcy": dcy_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
-        return (dy_dtype, dy_dtype, dy_dtype)
-
-
-class LSTMGradWeight(PrimitiveWithInfer):
+class LSTMGradWeight(Primitive):
     """Computes the weight gradients of LSTM."""
 
     @prim_attr_register
@@ -1530,24 +1502,8 @@ class LSTMGradWeight(PrimitiveWithInfer):
         else:
             self.num_directions = 1
 
-    def infer_shape(self, x_shape, hx_shape, y_shape, reserve_shape, state_shape):
-        weight_size = 0
-        gate_size = 4 * self.hidden_size
-        for layer in range(self.num_layers):
-            for _ in range(self.num_directions):
-                input_layer_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
-                weight_size += gate_size * input_layer_size
-                weight_size += gate_size * self.hidden_size
-                if self.has_bias:
-                    weight_size += 2 * gate_size
 
-        return (weight_size, 1, 1)
-
-    def infer_dtype(self, x_dtype, hx_dtype, y_dtype, reserve_dtype, state_dtype):
-        return hx_dtype
-
-
-class LSTMGrad(PrimitiveWithInfer):
+class LSTMGrad(Primitive):
     """Computes the data and weight gradients of LSTM."""
 
     @prim_attr_register
@@ -1564,41 +1520,6 @@ class LSTMGrad(PrimitiveWithInfer):
             self.num_directions = 2
         else:
             self.num_directions = 1
-
-    def infer_shape(self, x_shape, hx_shape, cx_shape, w_shape, y_shape, hy_shape, cy_shape, dy_shape, dhy_shape,
-                    dcy_shape, reserve_shape):
-        # dhy and dcy should be same shape
-        validator.check_equal_int(len(dhy_shape), 3, "h_shape", self.name)
-        validator.check_equal_int(len(dhy_shape), len(dcy_shape), "h_shape", self.name)
-        validator.check_equal_int(dhy_shape[0], dcy_shape[0], "h_shape[0]", self.name)
-        validator.check_equal_int(dhy_shape[1], dcy_shape[1], "h_shape[1]", self.name)
-        validator.check_equal_int(dhy_shape[2], dcy_shape[2], "h_shape[2]", self.name)
-
-        validator.check_int(dhy_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h_shape[0]", self.name)
-        validator.check_equal_int(dhy_shape[2], self.hidden_size, "h_shape[2]", self.name)
-
-        validator.check_equal_int(len(dy_shape), 3, "dy_shape", self.name)
-        validator.check_equal_int(dy_shape[1], dhy_shape[1], "dy[1]", self.name)
-        validator.check_int(dy_shape[2], self.hidden_size * self.num_directions, Rel.EQ, "dy[2]", self.name)
-
-        dx_shape = (y_shape[0], y_shape[1], self.input_size)
-        dhx_shape = dhy_shape
-        dcx_shape = dcy_shape
-        weight_size = 0
-        gate_size = 4 * self.hidden_size
-        for layer in range(self.num_layers):
-            for _ in range(self.num_directions):
-                input_layer_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
-                weight_size += gate_size * input_layer_size
-                weight_size += gate_size * self.hidden_size
-                if self.has_bias:
-                    weight_size += gate_size
-
-        return (dx_shape, dhx_shape, dcx_shape, (weight_size, 1, 1))
-
-    def infer_dtype(self, x_dtype, hx_dtype, cx_dtype, w_dtype, y_dtype, hy_dtype, cy_dtype, dy_dtype, dhy_dtype,
-                    dcy_dtype, reserve_dtype):
-        return (dy_dtype, dy_dtype, dy_dtype, hx_dtype)
 
 
 class DynamicRNNGrad(Primitive):

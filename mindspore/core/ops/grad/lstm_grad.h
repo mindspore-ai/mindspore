@@ -53,8 +53,6 @@ class MIND_API LSTMGrad : public BaseOperator {
   float get_zoneout_hidden() const;
   int64_t get_good_ld(const int64_t dim, const int64_t type_size);
 };
-abstract::AbstractBasePtr LstmGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

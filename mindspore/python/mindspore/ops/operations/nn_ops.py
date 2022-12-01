@@ -4024,7 +4024,7 @@ class PReLU(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'weight'], outputs=['output'])
 
 
-class LSTM(PrimitiveWithInfer):
+class LSTM(Primitive):
     """
     Performs the Long Short-Term Memory (LSTM) on the input.
 
@@ -4105,30 +4105,6 @@ class LSTM(PrimitiveWithInfer):
             self.num_directions = 2
         else:
             self.num_directions = 1
-
-    def infer_shape(self, x_shape, h_shape, c_shape, w_shape):
-        validator.check_equal_int(len(x_shape), 3, "x rank", self.name)
-        validator.check_equal_int(x_shape[2], self.input_size, "x[2]", self.name)
-
-        # h and c should be same shape
-        validator.check_equal_int(len(h_shape), 3, "h rank", self.name)
-        validator.check("h_shape", h_shape, "c_shape", c_shape, Rel.EQ, self.name)
-
-        validator.check_int(h_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h[0]", self.name)
-        validator.check_equal_int(h_shape[1], x_shape[1], "h[1]", self.name)
-        validator.check_int(h_shape[2], self.hidden_size, Rel.EQ, "h[2]", self.name)
-
-        y_shape = (x_shape[0], x_shape[1], self.hidden_size * self.num_directions)
-
-        # set arbitrary shape for reserved space
-        reserved_shape = (1, 1)
-        state_shape = (1, 1)
-        return y_shape, h_shape, c_shape, reserved_shape, state_shape
-
-    def infer_dtype(self, x_dtype, h_dtype, c_dtype, w_dtype):
-        args = {'x': x_dtype, 'h': h_dtype, 'c': c_dtype, 'w': w_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
-        return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
 class SigmoidCrossEntropyWithLogits(Primitive):
