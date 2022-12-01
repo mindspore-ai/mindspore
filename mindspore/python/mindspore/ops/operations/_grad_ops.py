@@ -3144,7 +3144,7 @@ class SparseSegmentMeanGrad(Primitive):
         ValueError: If `indices` is out of range of `output_dim0`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register

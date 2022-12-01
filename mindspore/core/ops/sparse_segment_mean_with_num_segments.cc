@@ -33,34 +33,36 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
   constexpr size_t kDimOne = 1;
   constexpr size_t kShapeZero = 0;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto segment_ids_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto num_segments_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  if (indices_shape.size() != kRankOne) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of indices should be 1.";
-  }
-  if (segment_ids_shape.size() != kRankOne) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of segment_ids should be 1.";
-  }
-  if (x_shape.size() < kRankOne) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of x cannot be less than 1.";
-  }
-  if (!IsDynamic(indices_shape) && !IsDynamic(segment_ids_shape) &&
-      indices_shape[kShapeZero] != segment_ids_shape[kShapeZero]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", indices and segment_ids's ranks mismatch.";
-  }
-  if (num_segments_shape.size() > kRankOne) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of num_segments should be 0 or 1.";
-  }
-  if (!IsDynamic(num_segments_shape)) {
-    if (num_segments_shape.size() == kRankOne && num_segments_shape[kShapeZero] != static_cast<int64_t>(kDimOne)) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1.";
+  if (!IsDynamicRank(indices_shape) && !IsDynamicRank(segment_ids_shape) && !IsDynamicRank(num_segments_shape)) {
+    if (indices_shape.size() != kRankOne) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of indices should be 1.";
     }
-  }
-  if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>(abstract::Shape::kShapeRankAny));
+    if (segment_ids_shape.size() != kRankOne) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of segment_ids should be 1.";
+    }
+    if (x_shape.size() < kRankOne) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of x cannot be less than 1.";
+    }
+    if (!IsDynamic(indices_shape) && !IsDynamic(segment_ids_shape) &&
+        indices_shape[kShapeZero] != segment_ids_shape[kShapeZero]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", indices and segment_ids's ranks mismatch.";
+    }
+    if (num_segments_shape.size() > kRankOne) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of num_segments should be 0 or 1.";
+    }
+    if (!IsDynamic(num_segments_shape)) {
+      if (num_segments_shape.size() == kRankOne && num_segments_shape[kShapeZero] != static_cast<int64_t>(kDimOne)) {
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1.";
+      }
+    }
   }
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>() &&
       input_args[kInputIndex3]->BuildValue()->isa<tensor::Tensor>()) {
