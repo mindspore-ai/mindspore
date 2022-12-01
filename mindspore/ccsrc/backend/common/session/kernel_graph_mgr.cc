@@ -1018,7 +1018,8 @@ void KernelGraphMgr::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGr
         node_ptr->SetNotUsedByRealKernelInGraph(graph->graph_id());
       }
       auto shape = node_ptr->Shape();
-      if (AnfUtils::IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
+      MS_EXCEPTION_IF_NULL(shape);
+      if (shape->isa<abstract::Shape>() && shape->IsDynamic()) {
         node_ptr->set_has_dynamic_shape(true);
       }
     }

@@ -65,10 +65,7 @@ class MS_CORE_API AbstractScope {
 class MS_CORE_API AnfUtils {
  public:
   using CustomActorCallback = std::function<void(void *args)>;
-  static bool IsDimUnknown(const abstract::ShapePtr &shape);
-  static bool IsShapeDynamic(const abstract::ShapePtr &shape);
-  static bool IsNodeOutputDynamicShape(const CNodePtr &node);
-  static bool IsDimUnknown(const AnfNodePtr &node);
+  static bool IsNodeOutputShapeDynamic(const AnfNodePtr &node);
   // check whether the anf node is a real kernel that can run on device,parameter and constant is real kernel too
   static bool IsRealKernel(const AnfNodePtr &node);
   // check whether the anf node is a real kernel that is a cnode and can run on device

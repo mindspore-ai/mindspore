@@ -185,7 +185,7 @@ bool IsNodeDynamicShape(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   auto in_dynamic = AnfAlgo::IsNodeInputDynamicShape(cnode);
-  auto out_dynamic = AnfUtils::IsNodeOutputDynamicShape(cnode);
+  auto out_dynamic = AnfUtils::IsNodeOutputShapeDynamic(cnode);
   if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
     AnfAlgo::SetNodeAttrSafely(kAttrInputIsDynamicShape, MakeValue(true), cnode);
     MS_LOG(DEBUG) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
@@ -1366,7 +1366,7 @@ bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
       continue;
     }
     if (base_shape->isa<abstract::Shape>()) {
-      if (AnfUtils::IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
+      if (base_shape->IsDynamic()) {
         return true;
       }
     } else if (base_shape->isa<abstract::TupleShape>()) {
@@ -1382,7 +1382,7 @@ bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
       if (!b_shp->isa<abstract::Shape>()) {
         continue;
       }
-      if (AnfUtils::IsShapeDynamic(b_shp->cast<abstract::ShapePtr>())) {
+      if (b_shp->IsDynamic()) {
         return true;
       }
     }

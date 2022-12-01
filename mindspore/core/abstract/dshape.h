@@ -210,7 +210,10 @@ using ShapePtrList = std::vector<ShapePtr>;
 class MS_CORE_API DynamicSequenceShape : public BaseShape {
  public:
   /// \brief Constructor of DynamicSequenceShape.
-  DynamicSequenceShape() {}
+  DynamicSequenceShape() = default;
+
+  /// \brief Constructor of DynamicSequenceShape.
+  explicit DynamicSequenceShape(const BaseShapePtr &element_shape) : element_shape_(element_shape) {}
 
   /// \brief Destructor of DynamicSequenceShape.
   ~DynamicSequenceShape() override = default;
@@ -221,13 +224,33 @@ class MS_CORE_API DynamicSequenceShape : public BaseShape {
   /// \return The description string about the DynamicSequenceShape object.
   std::string ToString() const override { return type_name(); }
 
-  bool IsDynamic() const override { return true; }
+  /// \brief Check whether any element shape of DynamicSequenceShape is dynamic shape or dynamic rank.
+  ///
+  /// \return True if any element shape of DynamicSequenceShape is dynamic shape or dynamic rank, otherwise false.
+  bool IsDynamic() const override;
 
-  bool IsDimZero() const override { return false; };
+  /// \brief Check whether all elements shape of DynamicSequenceShape are empty shape.
+  ///
+  /// \return True if all elements shape of DynamicSequenceShape are empty shape.
+  bool IsDimZero() const override;
 
-  bool IsDimUnknown() const override { return true; }
+  /// \brief Check whether any element shape of DynamicSequenceShape is dynamic shape.
+  ///
+  /// \return True if any element shape of DynamicSequenceShape is dynamic shape.
+  bool IsDimUnknown() const override;
 
-  BaseShapePtr Clone() const override { return std::make_shared<DynamicSequenceShape>(); }
+  BaseShapePtr Clone() const override { return std::make_shared<DynamicSequenceShape>(element_shape_->Clone()); }
+
+  bool operator==(const BaseShape &other) const override;
+
+  /// \brief Calculate the hash value for DynamicSequenceShape.
+  ///
+  /// \return The hash value of Shape.
+  std::size_t hash() const override;
+
+ private:
+  // element's shape
+  BaseShapePtr element_shape_{nullptr};
 };
 GVAR_DEF(std::shared_ptr<DynamicSequenceShape>, kDynamicSequenceShape, std::make_shared<DynamicSequenceShape>());
 
@@ -293,16 +316,25 @@ class MS_CORE_API SequenceShape : public BaseShape {
   ///
   /// \param[in] dim The index of element shape.
   /// \return The element shape got by index.
-  const BaseShapePtr operator[](std::size_t dim) const { return p_shapes_[dim]; }
+  const BaseShapePtr &operator[](std::size_t dim) const { return p_shapes_[dim]; }
 
+  /// \brief Check whether any element shape of DynamicSequenceShape is dynamic shape or dynamic rank.
+  ///
+  /// \return True if any element shape of DynamicSequenceShape is dynamic shape or dynamic rank, otherwise false.
   bool IsDynamic() const override {
     return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDynamic(); });
   }
 
+  /// \brief Check whether all elements shape of DynamicSequenceShape are empty shape.
+  ///
+  /// \return True if all elements shape of DynamicSequenceShape are empty shape.
   bool IsDimZero() const override {
     return std::all_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDimZero(); });
   };
 
+  /// \brief Check whether any element shape of DynamicSequenceShape is dynamic shape.
+  ///
+  /// \return True if any element shape of DynamicSequenceShape is dynamic shape.
   bool IsDimUnknown() const override {
     return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDimUnknown(); });
   }

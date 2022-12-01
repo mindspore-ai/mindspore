@@ -128,7 +128,7 @@ bool IsDynamicShapeNode(const AnfNodePtr node) {
   if (!shape->isa<abstract::Shape>()) {  // do not accept tuple shape as call node input
     return false;
   }
-  if (AnfUtils::IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
+  if (shape->IsDynamic()) {
     return true;
   }
   return false;
