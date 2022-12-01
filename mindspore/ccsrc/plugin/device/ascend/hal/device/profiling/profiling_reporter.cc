@@ -184,8 +184,13 @@ void ProfilingReporter::ReportParallelStrategy() const {
   }
   MS_LOG(INFO) << "Start to report parallel strategy data to Ascend Profiler.";
   std::string tag_name = "parallel_strategy";
-  ReportData(device_id_, reinterpret_cast<unsigned char *>(parallel_data.data()), parallel_data.size(), tag_name);
-  MS_LOG(INFO) << "Stop to report " << parallel_data.size() << "(Bytes) parallel strategy data to Ascend Profiler.";
+  constexpr int report_max_len = 256;
+  while (!parallel_data.empty()) {
+    std::string data_str = parallel_data.substr(0, report_max_len);
+    ReportData(device_id_, reinterpret_cast<unsigned char *>(data_str.data()), data_str.size(), tag_name);
+    parallel_data = parallel_data.substr(data_str.size());
+  }
+  MS_LOG(INFO) << "Stop to report parallel strategy data to Ascend Profiler.";
 }
 
 std::tuple<std::string, std::string> ProfilingReporter::GetTraceDataFilePath() const {
@@ -204,7 +209,6 @@ std::tuple<std::string, std::string> ProfilingReporter::GetTraceDataFilePath() c
 bool ProfilingReporter::TraceDataPathValid(const std::string &path) const {
   int ret = access(path.c_str(), F_OK);
   if (ret == -1) {
-    MS_LOG(WARNING) << "file: " << path << " is not exist.";
     return false;
   }
 
