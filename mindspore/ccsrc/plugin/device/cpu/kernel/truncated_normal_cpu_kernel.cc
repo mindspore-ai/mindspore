@@ -64,6 +64,14 @@ int TruncatedNormalCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
+  auto shape_input = inputs[kIndex0]->GetShapeVector();
+  if (shape_input.size() != kInputDims) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', The input tensor must be a 1-D tensor.";
+  }
+  if (shape_input[kIndex0] < kInputSizes) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input tensor shape must >= 2, but got "
+                             << shape_input[kIndex0];
+  }
   input_type_ = inputs[kIndex0]->GetDtype();
   output_type_ = outputs[kIndex0]->GetDtype();
   return KRET_OK;

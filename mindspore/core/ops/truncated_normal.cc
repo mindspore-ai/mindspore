@@ -39,13 +39,6 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(shape_input)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
-  if (shape_input.size() != kInputDims) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The input tensor must be a 1-D tensor.";
-  }
-  if (shape_input[kInputIndex0] < kInputSizes) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input tensor shape must >= 2, but got "
-                             << shape_input[kInputIndex0];
-  }
   MS_EXCEPTION_IF_NULL(primitive);
   const uint32_t kInpuDims = 1;
   auto max_length_ptr = primitive->GetAttr("max_length");
