@@ -682,13 +682,9 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
     }
 
-    auto is_mutable = graph->has_flag(kAttrMutableKernel);
-    bool use_dynamic_shape_process = root_graph_->has_flag(kFlagUseDynamicShapeProcess);
+    bool graph_use_dynamic_process = root_graph_->has_flag(kFlagUseDynamicShapeProcess);
     py::gil_scoped_release release;
     for (const auto &kernel : graph->execution_order()) {
-      if (is_mutable) {
-        common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), kernel);
-      }
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
@@ -711,11 +707,17 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       } else {
         session::BackendOpRunInfoPtr op_run_info;
         GraphInfo graph_info;
+        auto op_use_dynamic_process =
+          graph_use_dynamic_process &&
+          pynative::OpCompiler::GetInstance().NeedEnableDynamicProcess(common::AnfAlgo::GetCNodeName(kernel));
+        if (op_use_dynamic_process) {
+          common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), kernel);
+        }
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, use_dynamic_shape_process,
-                                                        &op_run_info, &graph_info, &graph_output_info);
-        if (use_dynamic_shape_process) {
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, op_use_dynamic_process, &op_run_info,
+                                                        &graph_info, &graph_output_info);
+        if (op_use_dynamic_process) {
           op_run_info->op_prim->AddAttr(kAttrMutableKernel, MakeValue(true));
           op_run_info->op_prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
           op_run_info->op_prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
@@ -1313,6 +1315,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
 void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
+  MS_LOG(DEBUG) << "RunOp start " << op_run_info->base_op_run_info.op_name;
   // Get the device context.
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
@@ -1341,6 +1344,7 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
 void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
+  MS_LOG(DEBUG) << "RunOp start " << op_run_info->base_op_run_info.op_name;
   // Get the device context.
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});

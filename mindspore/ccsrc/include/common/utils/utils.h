@@ -147,6 +147,7 @@ constexpr auto kCSRMVOpName = "CSRMV";
 constexpr auto kCSRReduceSumOpName = "CSRReduceSum";
 constexpr auto kCSRSparseMatrixToSparseTensorOpName = "CSRSparseMatrixToSparseTensor";
 constexpr auto kCTCGreedyDecoderOpName = "CTCGreedyDecoder";
+constexpr auto kCTCLossOpName = "CTCLoss";
 constexpr auto kCumprodOpName = "Cumprod";
 constexpr auto kCumProdOpName = "CumProd";
 constexpr auto kCumsumOpName = "Cumsum";
@@ -266,6 +267,7 @@ constexpr auto kLogOpName = "Log";
 constexpr auto kLogicalAndOpName = "LogicalAnd";
 constexpr auto kLogicalNotOpName = "LogicalNot";
 constexpr auto kLogicalOrOpName = "LogicalOr";
+constexpr auto kLogSoftmaxOpName = "LogSoftmax";
 constexpr auto kLogSoftmaxGradOpName = "LogSoftmaxGrad";
 constexpr auto kLSTMGradOpName = "LSTMGrad";
 constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
@@ -451,6 +453,7 @@ constexpr auto kUpdateStateOpName = "UpdateState";
 constexpr auto kDynamicBroadcastToOpName = "DynamicBroadcastTo";
 constexpr auto kCheckValidOpName = "CheckValid";
 constexpr auto kSoftmaxGradFusionOpName = "SoftmaxGradFusion";
+constexpr auto kZerosLikeOpName = "ZerosLike";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";

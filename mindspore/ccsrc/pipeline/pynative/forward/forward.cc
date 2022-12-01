@@ -194,8 +194,10 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   // Used for async run
   op_run_info->grad_flag = grad()->grad_flag();
   op_run_info->custom_bprop_cell_count = grad()->custom_bprop_cell_count();
-  op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
+  op_run_info->base_op_run_info.use_dynamic_shape_process =
+    grad()->use_dynamic_shape_process() &&
+    OpCompiler::GetInstance().NeedEnableDynamicProcess(op_run_info->base_op_run_info.op_name);
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)]);
