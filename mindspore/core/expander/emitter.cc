@@ -106,8 +106,8 @@ NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bo
 
 NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) const {
   return UnifyDtypeAndEmit(prim::kPrimBatchMatMul->name(), a, b,
-                           {{"transpose_x1", MakeValue(transpose_a)},
-                            {"transpose_x2", MakeValue(transpose_b)},
+                           {{"adj_x1", MakeValue(transpose_a)},
+                            {"adj_x2", MakeValue(transpose_b)},
                             {"transpose_a", MakeValue(transpose_a)},
                             {"transpose_b", MakeValue(transpose_b)}});
 }
