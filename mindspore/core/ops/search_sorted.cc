@@ -42,7 +42,8 @@ abstract::ShapePtr SearchSortedInferShape(const PrimitivePtr &primitive,
   ShapeVector values_shape_c = values_shape;
   sequence_shape_c.pop_back();
   values_shape_c.pop_back();
-  if (sequence_shape.size() != 1 && sequence_shape_c != values_shape_c) {
+  if (!(IsDynamic(sequence_shape) || IsDynamic(values_shape)) && sequence_shape.size() != 1 &&
+      sequence_shape_c != values_shape_c) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the 'sorted_sequence' must be 1 dimensional or "
                                 "all dimensions except the last dimension of 'sorted_sequence' "
@@ -72,6 +73,9 @@ TypePtr SearchSortedInferType(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
+// 属性相关
+void SearchSorted::Init(const bool right, const bool out_int32) { set_right(right); }
+
 MIND_API_OPERATOR_IMPL(SearchSorted, BaseOperator);
 AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
@@ -82,6 +86,7 @@ AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto infer_shape = SearchSortedInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+REGISTER_HOST_DEPENDS(kNameSearchSorted, {1});
 REGISTER_PRIMITIVE_EVAL_IMPL(SearchSorted, prim::kPrimSearchSorted, SearchSortedInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

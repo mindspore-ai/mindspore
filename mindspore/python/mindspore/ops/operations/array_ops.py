@@ -6102,7 +6102,7 @@ class SearchSorted(Primitive):
     Refer to :func:`mindspore.ops.search_sorted` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> sorted_sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
