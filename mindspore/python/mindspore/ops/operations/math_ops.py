@@ -6577,7 +6577,7 @@ class CholeskyInverse(Primitive):
     """
     Returns the inverse of the positive definite matrix using cholesky matrix factorization.
 
-    Refer to :func::`mindspore.ops.cholesky_inverse` for more details.
+    Refer to :func:`mindspore.ops.cholesky_inverse` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6977,7 +6977,7 @@ class Cholesky(Primitive):
     Computes the Cholesky decomposition of a symmetric positive-definite matrix `A`
     or for batches of symmetric positive-definite matrices.
 
-    Refer to :func::`mindspore.ops.cholesky` for more details.
+    Refer to :func:`mindspore.ops.cholesky` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
