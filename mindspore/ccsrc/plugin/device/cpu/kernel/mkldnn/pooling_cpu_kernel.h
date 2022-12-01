@@ -19,9 +19,11 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
 #include <unordered_map>
 #include <map>
 #include <string>
+
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
@@ -38,10 +40,8 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -59,15 +59,18 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   std::vector<int64_t> kernel_;
   std::vector<int64_t> padding_invalid_;
   std::string format_;
-  std::string pad_mode_;
-  std::vector<int64_t> kernel_include_nc_{};
-  std::vector<int64_t> strides_include_nc_{};
+  std::string pad_mode;
+  std::vector<int64_t> kernel_include_nc{};
+  std::vector<int64_t> strides_include_nc{};
   BaseOperatorPtr base_operator_{nullptr};
   std::vector<KernelTensorPtr> inputs_{};
   std::vector<KernelTensorPtr> outputs_{};
   std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 
  private:
+  void InitPoolingFields(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                         const std::vector<KernelTensorPtr> &outputs);
+
   std::string kernel_type_{kUnkown};
 };
 }  // namespace kernel
