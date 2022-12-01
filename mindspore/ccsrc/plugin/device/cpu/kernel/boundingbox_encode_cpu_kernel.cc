@@ -35,6 +35,7 @@ bool BoundingBoxEncodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 
   const size_t coordinate_size = 4;
   auto means = base_operator->GetAttr("means");
+  MS_EXCEPTION_IF_NULL(means);
   if (means->isa<api::ValueSequence>()) {
     means_ = api::GetValue<std::vector<float>>(means);
   } else if (means->isa<api::FloatImm>()) {
@@ -48,6 +49,7 @@ bool BoundingBoxEncodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
 
   auto stds = base_operator->GetAttr("stds");
+  MS_EXCEPTION_IF_NULL(stds);
   if (stds->isa<api::ValueSequence>()) {
     stds_ = api::GetValue<std::vector<float>>(stds);
   } else if (stds->isa<api::FloatImm>()) {
