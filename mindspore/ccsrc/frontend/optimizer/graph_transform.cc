@@ -38,6 +38,12 @@ bool IsTuple(const AnfNodePtr &param) {
   return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractTuple>();
 }
 
+bool IsConstantTuple(const AnfNodePtr &param) {
+  auto abs = param->abstract();
+  return abs != nullptr && abs->isa<abstract::AbstractTuple>() &&
+         !abs->cast<abstract::AbstractTuplePtr>()->dynamic_len();
+}
+
 bool ParamContainSparseTensor(const AnfNodePtr &param) {
   // If SparseTensor, Tuple(SparseTensor,...) or Tuple(...,(..., SparseTensor)), return false and skip this pass.
   return param->abstract() != nullptr && ContainSparseTensor(param->abstract());
@@ -45,6 +51,10 @@ bool ParamContainSparseTensor(const AnfNodePtr &param) {
 
 bool FuncGraphHasTupleInput(const FuncGraphPtr &fg) {
   return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), IsTuple);
+}
+
+bool FuncGraphHasConstantTupleInput(const FuncGraphPtr &fg) {
+  return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), IsConstantTuple);
 }
 
 std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,

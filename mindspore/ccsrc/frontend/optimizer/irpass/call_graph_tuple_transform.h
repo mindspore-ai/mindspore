@@ -51,7 +51,8 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
     if (abs == nullptr) {
       MS_LOG(EXCEPTION) << "Null abs of arg:" << arg->DebugString();
     }
-    if (!abs->isa<abstract::AbstractTuple>()) {
+    // Dynamic length tuple input can not be flattened.
+    if (!IsConstantTuple(arg)) {
       new_args->push_back(arg);
       continue;
     }
@@ -75,7 +76,7 @@ class GraphTupleTransform : public AnfVisitor {
       return nullptr;
     }
     auto fg = GetValueNode<FuncGraphPtr>(node);
-    if (!FuncGraphHasTupleInput(fg)) {
+    if (!FuncGraphHasConstantTupleInput(fg)) {
       return nullptr;
     }
     fg = graph_transform_(fg, optimizer->manager());
