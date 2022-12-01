@@ -60,7 +60,8 @@ class Evaluator : public Base {
 
   virtual AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_abs_list) const { return args_abs_list; }
 
-  virtual AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
+  virtual AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list,
+                                                      const AnalysisEnginePtr &) {
     return args_abs_list;
   }
 
@@ -251,7 +252,8 @@ class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
   FuncGraphPtr func_graph() { return func_graph_; }
 
   AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_abs_list) const override;
-  AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list) override;
+  AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list,
+                                              const AnalysisEnginePtr &engine) override;
   std::string ToString() const override { return identifier_ + "_" + func_graph_->ToString(); }
 
   void SyncFuncGraphIsolatedSideEffectFlag(const FuncGraphPtr &func_graph) override {

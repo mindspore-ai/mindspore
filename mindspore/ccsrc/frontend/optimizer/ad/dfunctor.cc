@@ -628,6 +628,10 @@ AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
   if (func_graph->has_flag(FUNC_GRAPH_FLAG_NO_INLINE)) {
     functor->k_graph_->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   }
+  if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    functor->k_graph_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
+    functor->tape_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
+  }
 
   MS_LOG(DEBUG) << "Map \"" << func_graph->ToString() << "\" to \"" << functor->k_graph_->ToString() << "\"";
   return NewValueNode(functor->k_graph_);

@@ -50,6 +50,7 @@ if(ENABLE_MINDDATA)
     file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             ./stub/*.cc
             ./common/*.cc
+            ./core/utils/*.cc
             ./abstract/*.cc
             ./base/*.cc
             ./dataset/*.cc

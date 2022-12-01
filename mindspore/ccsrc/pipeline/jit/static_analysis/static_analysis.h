@@ -336,6 +336,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   void set_check_isolated_side_effect(bool check_isolated_side_effect) {
     check_isolated_side_effect_ = check_isolated_side_effect;
   }
+  void SetUndeterminedFlag(const std::string &thread_id, const FuncGraph &fg);
+  void SetIgnoreValueFlag(const std::string &thread_id, FuncGraph *fg);
 
  private:
   // Overloaded function.
@@ -349,7 +351,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &func);
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &func);
 
-  void SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) const;
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
                                      bool *continue_flag);
@@ -357,6 +358,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
   std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> evaluators_;
+  // Record the func_graph which should be set as undetermined and the setting thread id.
+  mindspore::HashMap<const FuncGraph *, std::forward_list<std::string>> func_graph_undetermined_flags_;
   std::unordered_map<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
     constructors_app_;
 

@@ -370,10 +370,16 @@ ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_ty
   if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER) {
     MS_LOG(INFO) << "Convert constant numpy int64_t number:" << (std::string)py::str(obj);
     return MakeValue(py::cast<int64_t>(obj));
-  } else if (obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER) {
+  }
+  if (obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER) {
     MS_LOG(INFO) << "Convert constant numpy float number::" << (std::string)py::str(obj);
     return MakeValue(py::cast<float>(obj));
   }
+  if (obj_type == RESOLVE_TYPE_NUMPY_BOOL_NUMBER) {
+    MS_LOG(INFO) << "Convert constant numpy bool_ number::" << (std::string)py::str(obj);
+    return MakeValue(py::cast<bool>(obj));
+  }
+
   MS_LOG(ERROR) << "Convert numpy number type is invalid, obj: " << py::str(obj);
   return nullptr;
 }
@@ -405,7 +411,8 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (common::GetEnv("MS_DEV_ENABLE_FALLBACK") != "0");
   if (use_fallback) {
-    if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER || obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER) {
+    if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER || obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER ||
+        obj_type == RESOLVE_TYPE_NUMPY_BOOL_NUMBER) {
       return ConvertConstantNumpyNumber(obj, obj_type);
     }
     auto res = std::make_shared<InterpretedObject>(obj, py::str(obj));

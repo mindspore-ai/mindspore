@@ -26,7 +26,8 @@ from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, 
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import Tensor, CSRTensor, COOTensor
-
+from mindspore.common import mutable
+from mindspore import ops
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -169,6 +170,13 @@ tensor_operator_registry.register('__mod__', _tensor_mod)
 tensor_operator_registry.register('__pow__', _tensor_pow)
 tensor_operator_registry.register('__rpow__', _tensor_rpow)
 tensor_operator_registry.register('__floordiv__', _tensor_floordiv)
+
+
+def _scalar_to_tensor(input_x):
+    if ops.isconstant(input_x):
+        return P.ScalarToTensor()(input_x, ops.dtype(input_x))
+    # use add Tensor([0]) cast scalar to tensor.
+    return ops.add(input_x, mutable(Tensor(0)))
 
 
 def tensor_item(data, *args):
@@ -370,19 +378,10 @@ def _tensor_index_by_bool(data, bool_value):
     return const_utils.raise_index_error("When tensor is indexed by a bool object, the value only support 'True'.")
 
 
-def check_range(x, dim_size):
-    """Check whether x is within the range of dim_size"""
-    tensor_x = const_utils.make_tensor(x)
-    if tensor_x >= dim_size or tensor_x < -dim_size:
-        return tensor_x
-    tensor_x = tensor_x % dim_size
-    return tensor_x
-
-
 def get_stride_info_from_integer(tensor_int):
     """Convert integer to slice"""
     begin_strides = [tensor_int]
-    end_strides = [tensor_int + const_utils.make_tensor(1)]
+    end_strides = [tensor_int + 1]
     step_strides = [const_utils.make_tensor(1)]
     begin_tensor = stack(begin_strides)
     end_tensor = stack(end_strides)
@@ -398,10 +397,9 @@ def _tensor_index_by_integer(data, int_index):
     if data.ndim < 1 or data.ndim > 8:
         const_utils.raise_value_error("Expect Tensor to have dimension between 1 and 8.")
 
-    if F.is_sequence_value_unknown(data_shape):
-        data_shape = F.dyn_shape(data)
-        transformed_tensor = check_range(int_index, data_shape[0])
-        begin_strides, end_strides, step_strides = get_stride_info_from_integer(transformed_tensor)
+    if F.is_sequence_value_unknown(data_shape) or not F.isconstant(int_index):
+        tensor_index = _scalar_to_tensor(int_index)
+        begin_strides, end_strides, step_strides = get_stride_info_from_integer(tensor_index)
     else:
         transformed_number = const_utils.check_range(int_index, data_shape[0])
         begin_strides, end_strides, step_strides = \
@@ -527,7 +525,7 @@ def _get_stride_info_from_tuple(data, tuple_index):
             step_strides.append(step)
             index_count = index_count + 1
         elif isinstance(index, int):
-            int_tensor = check_range(index, dim_size)
+            int_tensor = _scalar_to_tensor(index)
             begin_strides.append(int_tensor)
             end_strides.append(int_tensor + const_utils.make_tensor(1))
             step_strides.append(const_utils.make_tensor(1))
@@ -605,8 +603,7 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
             int_index = const_utils.check_range(index, dim_size)
             tensor_index = F.scalar_to_tensor(int_index, mstype.int64)
             if F.is_sequence_value_unknown(data_shape):
-                dyn_shape = F.dyn_shape(data)
-                tensor_index = check_range(index, dyn_shape[i])
+                tensor_index = _scalar_to_tensor(int_index)
                 tensor_index = F.cast(tensor_index, mstype.int64)
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
@@ -962,7 +959,7 @@ def tensor_copy_slice_from_tuple(data, tuple_index, value):
     dim1_start, dim1_stop, _ = get_slice_stride(tuple_index[1], data_shape[1])
     if dim1_stop - dim1_start <= 0:
         return data
-    dim0_start = check_range(tuple_index[0], data_shape[0])
+    dim0_start = _scalar_to_tensor(tuple_index[0])
     dim0_stop = dim0_start + const_utils.make_tensor(1)
     start = (dim0_start, dim1_start)
     stop = (dim0_stop, dim1_stop)
@@ -1039,7 +1036,7 @@ def tensor_setitem_by_number_with_tensor(data, index, value):
     """Assigns the tensor by number with tensor value."""
     data_shape = F.shape(data)
     if F.is_sequence_value_unknown(data_shape):
-        index = check_range(index, F.dyn_shape(data)[0])
+        index = _scalar_to_tensor(index)
         index = F.expand_dims(index, -1)
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value)
 

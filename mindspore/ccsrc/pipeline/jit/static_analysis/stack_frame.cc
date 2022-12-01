@@ -34,7 +34,7 @@ AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &eng
     args_abs_list.push_back(abs);
   }
   args_abs_list = evaluator->NormalizeArgs(args_abs_list);
-  args_abs_list = evaluator->BroadenUndeterminedArgs(args_abs_list);
+  args_abs_list = evaluator->BroadenUndeterminedArgs(args_abs_list, engine);
   return args_abs_list;
 }
 

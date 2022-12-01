@@ -17,6 +17,8 @@ from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore import ops
+import mindspore as ms
 
 
 class FnDict:
@@ -69,7 +71,24 @@ def test_renormalize(tag):
         closure_out = F.tuple_getitem(out, 1)
         closure_out_tensor = closure_out()
         return F.add(forward_out, closure_out_tensor)
+    ######################################################
 
+    def test_ignore_flag_with_twice_call_if():
+        ll = (Tensor([1]), Tensor([2]), Tensor([3]))
+
+        def func(index, m, n):
+            func_out = Tensor([0])
+            if ops.less(m, n):
+                func_out = ms.ops.tuple_getitem(ll, index)
+            return func_out
+        x1 = pow_ops(x, x)
+        y1 = pow_ops(x, x)
+        out1 = func(0, x1, y1)
+        out2 = func(1, x1, y1)
+        return out1, out2
+    ######################################################
     # Add test_poly_delay_specialize_ut to fn dict.
     fns(test_poly_delay_specialize_ut)
+    fns(test_ignore_flag_with_twice_call_if)
+
     return fns[tag]
