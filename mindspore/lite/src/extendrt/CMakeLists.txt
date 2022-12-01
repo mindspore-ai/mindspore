@@ -40,6 +40,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/config_infos.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
@@ -57,10 +58,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/litert_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/convert/runtime_convert.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/litert/func_graph_reuse_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
         )
     if(MSLITE_ENABLE_BFC_MEMORY)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
@@ -158,8 +161,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
         _mindspore_backend_common_pass_obj)
     target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf)
-    add_dependencies(mindspore-extendrt msplugin-ge-litert)
-    target_link_libraries(mindspore-extendrt msplugin-ge-litert)
     target_link_libraries(mindspore-extendrt_static mindspore_infer_shared_lib_obj)
     target_link_libraries(mindspore-extendrt_static mindspore-infer-anfalgo
             mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
@@ -206,7 +207,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         add_subdirectory(convert)
     endif()
 
-    set(TEST_CLOUD_INFER on)
+    set(TEST_CLOUD_INFER off)
 
     if(TEST_CLOUD_INFER)
         set(CLOUD_INFER_TEST_SRC ${CLOUD_INFER_TEST_SRC}

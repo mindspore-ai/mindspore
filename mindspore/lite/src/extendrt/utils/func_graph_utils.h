@@ -28,10 +28,13 @@
 #include "ir/func_graph.h"
 #include "include/api/data_type.h"
 #include "mindspore/ccsrc/kernel/kernel.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 using AnfWithOutIndex = std::pair<AnfNodePtr, size_t>;
 using kernel::BaseOperatorPtr;
+
+std::vector<common::KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node);
 
 class FuncGraphUtils {
  public:
