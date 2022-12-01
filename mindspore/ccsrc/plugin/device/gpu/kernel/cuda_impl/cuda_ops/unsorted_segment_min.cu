@@ -67,6 +67,7 @@ void CalUnsortedSegmentMin(const T *input, const int *segment_ids, const int64_t
                            size_t inner_size, T *output, cudaStream_t stream) {
   int size = (inner_size * KWARPSIZE * num_segments);
   T init_K = std::numeric_limits<T>::lowest();  // only init here - overwritten later
+
   UnsortedSegmentMin<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, segment_ids, num_segments, outer_size,
                                                                    inner_size, init_K, output);
   return;
@@ -81,3 +82,28 @@ template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<half>(const half *input, con
 template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<int>(const int *input, const int *segment_ids,
                                                          const int64_t num_segments, size_t outer_size,
                                                          size_t inner_size, int *output, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<int8_t>(const int8_t *input, const int *segment_ids,
+                                                            const int64_t num_segments, size_t outer_size,
+                                                            size_t inner_size, int8_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<uint8_t>(const uint8_t *input, const int *segment_ids,
+                                                             const int64_t num_segments, size_t outer_size,
+                                                             size_t inner_size, uint8_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<int16_t>(const int16_t *input, const int *segment_ids,
+                                                             const int64_t num_segments, size_t outer_size,
+                                                             size_t inner_size, int16_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<uint16_t>(const uint16_t *input, const int *segment_ids,
+                                                              const int64_t num_segments, size_t outer_size,
+                                                              size_t inner_size, uint16_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<uint32_t>(const uint32_t *input, const int *segment_ids,
+                                                              const int64_t num_segments, size_t outer_size,
+                                                              size_t inner_size, uint32_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<int64_t>(const int64_t *input, const int *segment_ids,
+                                                             const int64_t num_segments, size_t outer_size,
+                                                             size_t inner_size, int64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<uint64_t>(const uint64_t *input, const int *segment_ids,
+                                                              const int64_t num_segments, size_t outer_size,
+                                                              size_t inner_size, uint64_t *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalUnsortedSegmentMin<double>(const double *input, const int *segment_ids,
+                                                            const int64_t num_segments, size_t outer_size,
+                                                            size_t inner_size, double *output, cudaStream_t stream);
