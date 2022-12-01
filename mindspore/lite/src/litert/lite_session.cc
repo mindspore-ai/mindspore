@@ -1572,7 +1572,7 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
     return mindspore::ModelType::kUnknownType;
   }
 
-  flatbuffers::Verifier verify((const uint8_t *)model_buf, buf_size);
+  flatbuffers::Verifier verify((const uint8_t *)model_buf, buf_size, INT32_MAX, INT32_MAX);
   auto version_verify = lite::LiteModel::VersionVerify(&verify);
   if (version_verify != SCHEMA_INVALID) {
     MS_LOG(DEBUG) << "The kMindIR type model buffer is valid mslite model buffer";
