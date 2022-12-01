@@ -46,6 +46,11 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
       // using for graph kernel
       auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
       MS_EXCEPTION_IF_NULL(dyn_input_node);
+      // Handle tuple nested scenes.
+      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
+        input_size += SplitTupleInputs(graph, dyn_input_node, plant_inputs);
+        continue;
+      }
       (void)plant_inputs->emplace_back(dyn_input_node);
     }
     return input_size;
@@ -64,6 +69,8 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
 
   auto new_cnode = NewCNode(input_list, func_graph, {origin_node});
   MS_EXCEPTION_IF_NULL(new_cnode);
+  // This pass should not have new node whose abstract differs from the original node. So set the original node's
+  // abstract.
   new_cnode->set_abstract(origin_node->abstract());
   new_cnode->set_scope(origin_node->scope());
   new_cnode->set_primal_attrs(origin_node->primal_attrs());
@@ -87,27 +94,31 @@ void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_nod
   KernelBuildInfoPtr origin_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(origin_node);
   auto new_kernel_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(origin_kernel_build_info);
 
-  // Construct new inputs and outputs info and set to the new kernel build info.
+  // Construct new inputs info and set to the new kernel build info.
   std::vector<std::string> inputs_device_format;
-  std::vector<std::string> outputs_device_format;
   std::vector<TypeId> inputs_device_type;
-  std::vector<TypeId> outputs_device_type;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(new_cnode);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_device_format.push_back(AnfAlgo::GetInputFormat(new_cnode, input_index));
-    inputs_device_type.push_back(AnfAlgo::GetInputDeviceDataType(new_cnode, input_index));
+    inputs_device_format.push_back(AnfAlgo::GetOutputFormat(new_cnode->input(input_index + kSizeOne), kIndex0));
+    inputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(new_cnode->input(input_index + kSizeOne), kIndex0));
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(new_cnode);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_device_format.push_back(AnfAlgo::GetOutputFormat(new_cnode, output_index));
-    outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(new_cnode, output_index));
-  }
-
   new_kernel_builder->SetInputsFormat(inputs_device_format);
-  new_kernel_builder->SetOutputsFormat(outputs_device_format);
   new_kernel_builder->SetInputsDeviceType(inputs_device_type);
-  new_kernel_builder->SetOutputsDeviceType(outputs_device_type);
+
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  new_cnode->set_kernel_info(kernel_info);
   AnfAlgo::SetSelectKernelBuildInfo(new_kernel_builder->Build(), new_cnode.get());
+}
+
+// A map of kernel object type pairs to processing functions.
+static std::map<ObjectTypePair, ProcessTypeTransformFunc> kTypePairToProcessFunc;
+
+InsertTypeTransformOp::InsertTypeTransformOp(bool multigraph)
+    : PatternProcessPass("insert_type_transform_op", multigraph) {
+  kTypePairToProcessFunc[{KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TUPLE_UNFOLD}] =
+    std::bind(&InsertTypeTransformOp::ProcessTupleUnfoldToTupleUnfold, this, std::placeholders::_1,
+              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 }
 
 const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -128,7 +139,8 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   MS_EXCEPTION_IF_NULL(cnode);
   AnfNodePtrList new_input_list = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
   for (size_t i = kIndex1; i < cnode->inputs().size(); i++) {
-    MS_LOG(DEBUG) << "Kernel object type of index " << i << " is " << kObjectTypeString[needed_input_type_list[i - 1]];
+    MS_LOG(DEBUG) << "Kernel object type of index " << i << " is "
+                  << kObjectTypeToString[needed_input_type_list[i - 1]];
     // Get actually needed input kernel object type.
     KernelObjectType needed_input_type = needed_input_type_list[i - 1];
 
