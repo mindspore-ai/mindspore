@@ -3777,7 +3777,7 @@ class ResizeNearestNeighborV2(Primitive):
             tensors are aligned, preserving the values at the corner pixels. Defaults: False.
         half_pixel_centers (bool, optional): Whether half pixel center. If set to True,
             `align_corners` should be False. Default: False.
-        data_format (string, optional): An optional `string` that describes the
+        data_format (str, optional): An optional `string` that describes the
             format of the input `x`. Default: `NHWC`.
 
     Inputs:
@@ -5417,6 +5417,7 @@ class BroadcastTo(Primitive):
         >>> print(output)
         [[1. 2. 3.]
          [1. 2. 3.]]
+        >>>
         >>> shape = (-1, 2)
         >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
         >>> output = ops.BroadcastTo(shape=shape)(x)

@@ -6232,8 +6232,8 @@ def log10(x):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU, if dtype of `x` is not float16
-            or float32 on Ascend.
+        TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU.
+        TypeError: If dtype of `x` is not float16 or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

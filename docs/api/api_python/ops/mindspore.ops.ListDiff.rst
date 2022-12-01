@@ -17,8 +17,8 @@ mindspore.ops.ListDiff
         - **y** (Tensor) - 一个1-D Tensor，与 `x` 类型一致。移除的值。
 
     输出：
-        **out** (Tensor) - 一个1-D Tensor，与 `x` 类型一致。
-        **idx** (Tensor) - 一个1-D Tensor， `out_idx` 类型。
+        - **out** (Tensor) - 一个1-D Tensor，与 `x` 类型一致。
+        - **idx** (Tensor) - 一个1-D Tensor， `out_idx` 类型。
 
     异常：
         - **ValueError** - 如果 `x` 或 `y` 的shape不是1D。

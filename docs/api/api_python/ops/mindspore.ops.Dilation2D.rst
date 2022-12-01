@@ -7,7 +7,7 @@
 
     对输入的shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，应用2-D膨胀，其中，
 
-    :math:`N` 为batch大小， :math:`H` 为高度， :math:`W`为宽度， :math:`C` 为通道数量。
+    :math:`N` 为batch大小， :math:`H` 为高度， :math:`W` 为宽度， :math:`C` 为通道数量。
 
     给定kernel size :math:`ks = (h_{ker}, w_{ker})`, stride :math:`s = (s_0, s_1)`，和
 
@@ -35,7 +35,7 @@
 
           - valid：采用丢弃的方式。没有填充时候输出为最大的高度和宽度。额外的像素点将被丢弃。
 
-        - **data_format** (str，可选) - 数据格式的值。目前只支持`NCHW`，默认值: `NCHW` 。
+        - **data_format** (str，可选) - 数据格式的值。目前只支持 `NCHW`，默认值: `NCHW` 。
 
     输入：
         - **x** (Tensor) - 输入数据。一个四维Tensor，数据类型为float16、float32，shape必须为
