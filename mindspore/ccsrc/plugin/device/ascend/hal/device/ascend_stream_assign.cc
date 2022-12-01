@@ -2942,7 +2942,7 @@ CNodePtr FindNextGenMask(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePt
   auto iter = std::find(exec_order.begin(), exec_order.end(), do_mask_cnode);
   for (; iter != exec_order.end(); ++iter) {
     auto cnode = *iter;
-    if (kDropoutGenMaskOps.find(common::AnfAlgo::GetCNodeName(cnode)) != kDropoutGenMaskOps.end() ||
+    if (kDropoutGenMaskOps.find(common::AnfAlgo::GetCNodeName(cnode)) == kDropoutGenMaskOps.end() ||
         !cnode->HasPrimalAttr(kAttrMicro)) {
       continue;
     }
