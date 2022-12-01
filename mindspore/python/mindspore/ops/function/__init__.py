@@ -195,6 +195,8 @@ from .math_func import (
     floormod,
     lcm,
     tensor_exp,
+    einsum,
+    view_as_real,
     exp,
     tensor_expm1,
     expm1,

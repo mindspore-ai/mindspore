@@ -414,6 +414,7 @@ Array Operation
     mindspore.ops.diagonal
     mindspore.ops.dsplit
     mindspore.ops.dyn_shape
+    mindspore.ops.einsum
     mindspore.ops.expand
     mindspore.ops.expand_dims
     mindspore.ops.flip
@@ -486,6 +487,7 @@ Array Operation
     mindspore.ops.unsorted_segment_sum
     mindspore.ops.unsqueeze
     mindspore.ops.unstack
+    mindspore.ops.view_as_real
     mindspore.ops.vsplit
     mindspore.ops.where
 

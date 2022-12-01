@@ -5975,6 +5975,40 @@ def atleast_3d(inputs):
     return [_expand3(arr) for arr in inputs]
 
 
+def view_as_real(x):
+    r"""
+    View a complex Tensor as a real Tensor.
+    The size of last dimension of the returned real Tensor is 2, and the last dimension is composed of
+    the real and imaginary components of complex numbers.
+
+    Args:
+        x (Tensor): the input must be a complex Tensor.
+
+    Returns:
+        A real Tensor.
+
+    Raises:
+        TypeError: If the input Tensor is not a complex Tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([2+1j,2+3j,2-1j,2], ms.complex64),
+        >>> print(ops.view_as_real(x))
+        [[ 2.  1.]
+         [ 2.  3.]
+         [ 2. -1.]
+         [ 2.  0.]]
+    """
+    if not is_complex(x):
+        raise TypeError("For view_as_real, the dtype of input Tensor must be complex.")
+    real_part = x.real().expand_dims(-1)
+    imag_part = x.imag().expand_dims(-1)
+    con = _get_cache_prim(ops.Concat)(-1)
+    return con((real_part, imag_part))
+
+
 def vstack(inputs):
     r"""
     Stacks tensors in sequence vertically.
@@ -8622,6 +8656,83 @@ def cross(input, other, dim=None):
     return cross_op(input, other)
 
 
+def einsum(equation, *operands):
+    r"""
+    Sums the product of the elements of the input Tensor along
+    dimensions specified notation based on the Einstein summation convention(Einsum).
+    You can use this operator to perform diagonal, reducesum, transpose, matmul, mul, inner product operations, etc.
+
+    Args:
+        equation (str): Notation based on the Einstein summation convention, represent the operation you want to do.
+            the value can contain only letters, commas, ellipsis and arrow.
+            The letters represent input tensor dimension, commas represent separate tensors, ellipsis indicates
+            the tensor dimension that you do not care about, the left of the arrow indicates the input tensors,
+            and the right of it indicates the desired output dimension.
+        operands (Tensor): Input tensor used for calculation. The dtype of the tensor must be the same.
+
+    Returns:
+        Tensor, the shape of it can be obtained from the `equation` , and the dtype is the same as input tensors.
+
+    Raises:
+        TypeError: If `equation` is invalid, or the `equation` does not match the input tensor.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> equation = "i->"
+        >>> output = ops.einsum(equation, x)
+        >>> print(output)
+        [7.]
+        >>>
+        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
+        >>> equation = "i,i->i"
+        >>> output = ops.einsum(equation, x, y)
+        >>> print(output)
+        [ 2. 8. 12.]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> y = Tensor(np.array([[2.0, 3.0], [1.0, 2.0], [4.0, 5.0]]), mindspore.float32)
+        >>> equation = "ij,jk->ik"
+        >>> output = ops.einsum(equation, x, y)
+        >>> print(output)
+        [[16. 22.]
+        [37. 52.]]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> equation = "ij->ji"
+        >>> output = ops.einsum(equation, x)
+        >>> print(output)
+        [[1. 4.]
+        [2. 5.]
+        [3. 6.]]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> equation = "ij->j"
+        >>> output = ops.einsum(equation, x)
+        >>> print(output)
+        [5. 7. 9.]
+        >>>
+        >>> x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32)
+        >>> equation = "...->"
+        >>> output = einsum(equation, x)
+        >>> print(output)
+        [21.]
+        >>>
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> y = Tensor(np.array([2.0, 4.0, 1.0]), mindspore.float32)
+        >>> equation = "j,i->ji"
+        >>> output = ops.einsum(equation, x, y)
+        >>> print(output)
+        [[ 2. 4. 1.]
+        [ 4. 8. 2.]
+        [ 6. 12. 3.]]
+    """
+    return _get_cache_prim(P.Einsum)(equation)(operands)
+
+
 def erfinv(input):
     r"""
     Computes the inverse error function of input. The inverse error function is defined in the range `(-1, 1)` as:
@@ -9467,6 +9578,7 @@ __all__ = [
     'atleast_2d',
     'cartesian_prod',
     'atleast_3d',
+    'view_as_real',
     'vstack',
     'combinations',
     'dist',
@@ -9494,6 +9606,7 @@ __all__ = [
     'cholesky_inverse',
     'conj',
     'cross',
+    'einsum',
     'erfinv',
     'less_equal',
     'cumprod',
