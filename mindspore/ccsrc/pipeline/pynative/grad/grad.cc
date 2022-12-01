@@ -63,10 +63,24 @@ std::string GetCellId(const py::object &obj, const py::args &args, const InputAr
   return cell_id;
 }
 
+std::string GetFnInfoByPyObj(const py::object &obj) {
+  auto module_name = obj.attr("__module__").cast<std::string>();
+  auto fn_name = obj.attr("__name__").cast<std::string>();
+  auto filename = obj.attr("__code__").attr("co_filename").cast<std::string>();
+  auto code_lineno = py::str(obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
+  return (module_name + "_" + fn_name + "_" + filename + "_" + code_lineno);
+}
+
 InputArgsInfoPtr ParsePyArgsToInputArgsInfo(const py::object &obj, const py::args &args, bool is_grad_top_cell,
                                             bool is_high_order_top_cell) {
   bool has_custom_bprop = py::hasattr(obj, parse::CUSTOM_BPROP_NAME);
-  const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+  std::string obj_id;
+  if (!py::isinstance<Cell>(obj) && (is_grad_top_cell || is_high_order_top_cell)) {
+    obj_id = GetFnInfoByPyObj(obj);
+  } else {
+    obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+  }
+
   const auto &input_args_info =
     std::make_shared<InputArgsInfo>(is_grad_top_cell, is_high_order_top_cell, has_custom_bprop, args.size(), obj_id);
   for (size_t i = 0; i < args.size(); i++) {
@@ -82,7 +96,6 @@ InputArgsInfoPtr ParsePyArgsToInputArgsInfo(const py::object &obj, const py::arg
     }
     pipeline::CheckArgsValid(obj, args);
   }
-  input_args_info->is_run_cell = py::isinstance<Cell>(obj);
   input_args_info->cell_id = GetCellId(obj, args, input_args_info);
   MS_LOG(DEBUG) << "cell_id is " << obj_id << ", is grad top cell " << (is_grad_top_cell || is_high_order_top_cell);
   return input_args_info;
@@ -522,7 +535,6 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
     std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
                                   input_args_info->obj_id, input_args_info->cell_id, already_run_cell_id, resource, fg);
   top_cell_->set_forward_already_run(true);
-  top_cell_->set_is_run_cell(input_args_info->is_run_cell);
   top_cell_->set_input_args_id(input_args_info->input_args_id);
   PushHighOrderGraphStack(top_cell_);
   (void)top_cell_list_.emplace_back(top_cell_);
@@ -727,7 +739,7 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
   auto pre_top_cell = already_run_top_cell_.at(already_top_cell_id);
   MS_EXCEPTION_IF_NULL(pre_top_cell);
 
-  if (input_args_info->use_dynamic_shape_process || !input_args_info->is_run_cell) {
+  if (input_args_info->use_dynamic_shape_process) {
     // Function need compile every time.
     MS_LOG(DEBUG) << "The graph is dynamic, need to compile graph again";
     EraseTopCellFromTopCellList(pre_top_cell);
@@ -1798,7 +1810,7 @@ bool GradExecutor::IsGraphDynamic(const CNodePtr &cnode, const size_t &node_idx,
 
 void GradExecutor::CheckGraphDynamic(const CNodePtr &cnode, const size_t &node_idx, bool is_ms_function_node,
                                      const std::string &graph_phase) const {
-  if (!top_cell()->is_run_cell() || use_dynamic_shape_process_) {
+  if (use_dynamic_shape_process_) {
     return;
   }
 

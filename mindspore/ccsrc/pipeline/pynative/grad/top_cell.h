@@ -101,8 +101,6 @@ class TopCellInfo {
   inline void SetGraphInfoMap(const FuncGraphPtr &fg, const GraphInfoPtr &graph_info) {
     graph_info_map_[fg] = graph_info;
   }
-  inline void set_is_run_cell(bool is_run_cell) { is_run_cell_ = is_run_cell; }
-  inline bool is_run_cell() const { return is_run_cell_; }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
   inline ad::AutoGradCellImplPtr auto_grad_cell_ptr() const {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
@@ -152,7 +150,6 @@ class TopCellInfo {
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
   bool need_compile_graph_{false};
-  bool is_run_cell_{false};
   size_t op_index_{0};
   bool is_high_order_top_cell_{false};
   bool need_do_final_opt_{false};
