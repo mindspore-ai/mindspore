@@ -291,6 +291,13 @@ enum class DATASET_API ResampleMethod {
   kKaiserWindow = 1,       ///< Resample audio by Kaiser window
 };
 
+/// \brief Possible configuration methods for processing error samples.
+enum class DATASET_API ErrorSamplesMode {
+  kReturn = 0,   ///< Erroneous sample results in error raised and returned
+  kReplace = 1,  ///< Erroneous sample is replaced with an internally determined sample
+  kSkip = 2      ///< Erroneous sample is skipped
+};
+
 /// \brief Convenience function to check bitmask for a 32bit int
 /// \param[in] bits a 32bit int to be tested
 /// \param[in] bitMask a 32bit int representing bit mask

@@ -24,6 +24,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/global_context.h"
+#include "minddata/dataset/core/tensor_row.h"
 
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
@@ -256,7 +257,23 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
   for (size_t i = 0; i < job_list.size(); i++) {
     RETURN_IF_INTERRUPTED();
     // Execute MapWorkerJob.
-    RETURN_IF_NOT_OK(job_list[i]->Run(job_input_table, &result_table));
+    Status rc = job_list[i]->Run(job_input_table, &result_table);
+    if (rc.IsError()) {
+      if (GlobalContext::config_manager()->error_samples_mode() == ErrorSamplesMode::kReplace) {
+        MS_LOG(WARNING)
+          << "Detected an erroneous sample in MindData Map operation, and will replace with a healthy sample: " +
+               rc.GetErrDescription();
+        *out_row = TensorRow(TensorRow::kFlagError);
+        return Status::OK();
+      } else if (GlobalContext::config_manager()->error_samples_mode() == ErrorSamplesMode::kSkip) {
+        MS_LOG(WARNING) << "Detected an erroneous sample in MindData Map operation, and will skip this sample: " +
+                             rc.GetErrDescription();
+        *out_row = TensorRow(TensorRow::kFlagError);
+        return Status::OK();
+      } else {
+        return rc;
+      }
+    }
     // Assign the processed data as an input for the next job processing, except for the last TensorOp in the list.
     if (i + 1 < job_list.size()) {
       job_input_table = std::move(result_table);

@@ -1022,20 +1022,19 @@ def test_imagefolder_error_sample_sourceop():
     Expectation: The dataset is processed as expected.
     """
 
-    def test_config(my_seed, my_error_sample_data_file):
-        # Set configuration
-        # Note: This test depends on the seed value.  An expected exception is not raised with some other seed values.
+    def test_config(my_seed, my_error_sample_data_file, my_total_samples):
+        # Set configuration since default Random Sampler is used
         original_seed = config_get_set_seed(my_seed)
 
         # For ImageFolderDataset, use decode=False
-        data1 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1, decode=False)
+        data1 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None, decode=False)
         count = 0
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             count += 1
-        assert count == 3
+        assert count == my_total_samples
 
         # For ImageFolderDataset, use decode=True
-        data2 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1, decode=True)
+        data2 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None, decode=True)
         with pytest.raises(RuntimeError) as error_info:
             for _ in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
                 pass
@@ -1045,11 +1044,11 @@ def test_imagefolder_error_sample_sourceop():
         ds.config.set_seed(original_seed)
 
     # Test empty sample
-    test_config(2, "../data/dataset/testImageNetError/Sample1_empty/train")
+    test_config(2, "../data/dataset/testImageNetError/Sample1_empty/train", 3)
     # Test corrupt sample
-    test_config(3, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train")
+    test_config(3, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train", 6)
     # Test text sample, instead of image sample
-    test_config(1, "../data/dataset/testImageNetError/Sample3_text/train")
+    test_config(1, "../data/dataset/testImageNetError/Sample3_text/train", 3)
 
 
 def test_imagefolder_error_sample_mapop():
@@ -1061,12 +1060,11 @@ def test_imagefolder_error_sample_mapop():
     """
 
     def test_config(my_seed, my_error_sample_data_file):
-        # Set configuration
-        # Note: This test depends on the seed value.  An expected exception is not raised with some other seed values.
+        # Set configuration since default Random Sampler is used
         original_seed = config_get_set_seed(my_seed)
 
         # For ImageFolderDataset, use decode default (of False)
-        data3 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1)
+        data3 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None)
         # Add map op to the pipeline. Use C++ implemented ops
         data3 = data3.map(operations=[vision.Decode(),
                                       vision.HorizontalFlip()],
@@ -1077,7 +1075,7 @@ def test_imagefolder_error_sample_mapop():
         assert "map operation: [Decode] failed" in str(error_info.value)
 
         # For ImageFolderDataset, use decode default (of False)
-        data4 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=3, num_parallel_workers=1)
+        data4 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None)
         # Add map op to the pipeline. Use Python implemented ops
         data4 = data4.map(operations=[vision.Decode(to_pil=True),
                                       vision.RandomHorizontalFlip(0.7)],

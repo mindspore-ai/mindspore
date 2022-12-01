@@ -89,6 +89,8 @@ Status ConfigManager::FromJson(const nlohmann::json &j) {
   set_op_connector_size(j.value("opConnectorSize", op_connector_size_));
   set_seed(j.value("seed", seed_));
   set_monitor_sampling_interval(j.value("monitorSamplingInterval", monitor_sampling_interval_));
+  set_fast_recovery(j.value("fast_recovery", fast_recovery_));
+  set_error_samples_mode(j.value("error_samples_mode", error_samples_mode_));
   set_cache_host(j.value("cacheHost", cache_host_));
   set_cache_port(j.value("cachePort", cache_port_));
   set_num_connections(j.value("numConnections", num_connections_));
