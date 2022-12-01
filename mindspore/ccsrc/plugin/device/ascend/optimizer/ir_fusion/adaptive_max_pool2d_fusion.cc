@@ -82,6 +82,7 @@ void SetNodeAttr(const AnfNodePtr &node, const std::vector<int64_t> &height_attr
   common::AnfAlgo::SetNodeAttr(kAttrGlobalPooling, MakeValue(false), node);
   common::AnfAlgo::SetNodeAttr(kAttrCeilMode, MakeValue(ceil_mode_value), node);
   common::AnfAlgo::SetNodeAttr(kAttrDilation, MakeValue(dilation_value), node);
+  common::AnfAlgo::SetNodeAttr(kAttrDatFormat, MakeValue("NCHW"), node);
 }
 }  // namespace
 

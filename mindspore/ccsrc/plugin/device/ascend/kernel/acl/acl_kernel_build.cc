@@ -27,8 +27,20 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-static const std::unordered_set<std::string> kAclStaticList = {kPackOpName, kTensorMoveOpName, kConcatDOpName,
-                                                               kCheckValidOpName};
+static const std::unordered_set<std::string> kAclStaticList = {kPackOpName,
+                                                               kTensorMoveOpName,
+                                                               kConcatDOpName,
+                                                               kCheckValidOpName,
+                                                               kBiasAddOpName,
+                                                               kBiasAddGradOpName,
+                                                               kConv3DTransposeOpName,
+                                                               kTileOpName,
+                                                               kROIAlignName,
+                                                               kDynamicGRUV2OpName,
+                                                               kSoftmaxCrossEntropyWithLogitsOpName,
+                                                               kIFMROpName,
+                                                               kReluGradV2OpName,
+                                                               kBroadcastToOpName};
 bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
                     std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -70,6 +82,11 @@ bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &inpu
       input_size_list->push_back(LongToSize(size_i));
     }
   }
+  if (GeOpConvertor::GetAclInputSize(anf_node) > input_num) {
+    for (size_t i = input_num; i < AclUtils::GetOpInputAnchorNames(anf_node).size(); i++) {
+      (void)input_size_list->emplace_back(SIZE_MAX);
+    }
+  }
   common::AnfAlgo::SetNodeAttr(kAttrUselessInput, MakeValue(useless_input_lists), anf_node);
   return true;
 }
@@ -98,8 +115,34 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
     }
     output_size_list.push_back(LongToSize(size_i));
   }
+  if (GeOpConvertor::GetAclOutputSize(anf_node) > output_num) {
+    for (size_t i = output_num; i < AclUtils::GetOpOutputAnchorNames(anf_node).size(); i++) {
+      (void)output_size_list.emplace_back(SIZE_MAX);
+    }
+  }
   kernel_mod_ptr->SetOutputSizeList(output_size_list);
   return true;
+}
+
+void UpdateReduceOpsAttr(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const std::set<std::string> reduce_ops = {prim::kPrimReduceMean->name(),  prim::kPrimReduceSum->name(),
+                                            prim::kPrimReduceMax->name(),   prim::kPrimReduceMin->name(),
+                                            prim::kPrimReduceMeanD->name(), prim::kPrimReduceSumD->name(),
+                                            prim::kPrimReduceMaxD->name(),  prim::kPrimReduceMinD->name()};
+  if (!reduce_ops.count(common::AnfAlgo::GetCNodeName(node))) {
+    return;
+  }
+  if (!common::AnfAlgo::HasNodeAttr(kAttrAxis, node->cast<CNodePtr>()) ||
+      !common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrAxis).empty()) {
+    return;
+  }
+  auto in_shape_size = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0).size();
+  ShapeVector axes;
+  for (size_t i = 0; i < in_shape_size; i++) {
+    (void)axes.emplace_back(i);
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axes), node);
 }
 
 void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mod_ptr) {
@@ -107,6 +150,7 @@ void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mod_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   auto op_type = GeOpConvertor::GetOpType(node, true);
   kernel_mod_ptr->SetOpType(op_type);
+  UpdateReduceOpsAttr(node);
   const auto &input_desc_list = AclUtils::GetInputTensorDesc(node);
   const auto &output_desc_list = AclUtils::GetOutputTensorDesc(node);
   kernel_mod_ptr->SetInputDescList(input_desc_list);
