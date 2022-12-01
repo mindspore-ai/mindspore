@@ -799,7 +799,8 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &spec, const AbstractBa
   constexpr int recursive_level = 2;
   std::ostringstream buffer;
   buffer << "Cannot join the return values of different branches, perhaps you need to make them equal.\n"
-         << error_info << "\n\nInner Message:\nThe abstract type of the return value of the current branch is "
+         << error_info
+         << "#dmsg#Framework Error Message:#dmsg#The abstract type of the return value of the current branch is "
          << spec->ToString() << ", and that of the previous branch is " << last_spec->ToString() << ".\n"
          << "The node is " << node->DebugString(recursive_level);
   if (node->isa<CNode>()) {
