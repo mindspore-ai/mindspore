@@ -45,6 +45,7 @@ abstract::TupleShapePtr LuUnpackGradInferShape(const PrimitivePtr &primitive,
   auto LU_data_dim1 = LU_data_shape[LU_data_shape.size() - 2];
   auto LU_data_dim2 = LU_data_shape[LU_data_shape.size() - 1];
   int64_t LU_data_min = std::min(LU_data_dim1, LU_data_dim2);
+
   if (LU_data_dim1 != L_data_dim1) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', L_grad's data dim[-2] and LU_data's dim[-2] should be same.";
