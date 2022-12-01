@@ -28,6 +28,21 @@ def construct_profiling_options():
     except json.JSONDecodeError as err:
         raise RuntimeError('The format of PROFILING_OPTIONS is incorrect.') from err
     options = combine_profile_options(profiling_options)
+    conbine_options = parse_profiling_arges(options)
+    if conbine_options.get("start"):
+        output_path = profiling_options.get("output_path")
+        if not output_path or not os.path.isabs(output_path):
+            output_path = os.path.join(os.getcwd(), "data")
+        if not os.path.exists(output_path):
+            os.makedirs(output_path, exist_ok=True)
+        conbine_options["output_path"] = validate_and_normalize_path(output_path)
+        conbine_options["profiler_path"] = os.path.join(output_path, "profiler")
+        return conbine_options
+    return conbine_options
+
+
+def parse_profiling_arges(options):
+    """Parsing profiling arges."""
     if not isinstance(options.get("start"), bool):
         options["start"] = False
         logger.warning(
@@ -58,15 +73,21 @@ def construct_profiling_options():
         logger.warning(
             "The 'sync_enable' parameter of the environment variable MS_PROFILE_OPTIONS is an invalid value,"
             " it will be set to True.")
-    if options.get("start"):
-        output_path = profiling_options.get("output_path")
-        if not output_path or not os.path.isabs(output_path):
-            output_path = os.path.join(os.getcwd(), "data")
-        if not os.path.exists(output_path):
-            os.makedirs(output_path, exist_ok=True)
-        options["output_path"] = validate_and_normalize_path(output_path)
-        options["profiler_path"] = os.path.join(output_path, "profiler")
-        return options
+    if not isinstance(options.get("data_process_enable"), bool):
+        options["data_process_enable"] = True
+        logger.warning(
+            "The 'data_process' parameter of the environment variable MS_PROFILE_OPTIONS is an invalid value,"
+            " it will be set to True.")
+    if not isinstance(options.get("timeline_limit_size"), int):
+        options["timeline_limit_size"] = 500
+        logger.warning(
+            "The 'timeline_limit_size' parameter of the environment variable MS_PROFILE_OPTIONS is an invalid value,"
+            " it will be set to True.")
+    if not isinstance(options.get("parallel_strategy_enable"), bool):
+        options["parallel_strategy_enable"] = True
+        logger.warning(
+            "The 'parallel_strategy' parameter of the environment variable MS_PROFILE_OPTIONS is an invalid"
+            "value, it will be set to True.")
     return options
 
 
@@ -83,7 +104,10 @@ def combine_profile_options(profiling_options):
         "profile_communication": profiling_options.get("hccl", False),
         "aicore_metrics": profiling_options.get("aicore_metrics", 0),
         "l2_cache": profiling_options.get("l2_cache", False),
-        "sync_enable": profiling_options.get("sync_enable", True)
+        "sync_enable": profiling_options.get("sync_enable", True),
+        "data_process_enable": profiling_options.get("data_process", True),
+        "timeline_limit_size": profiling_options.get("timeline_limit_size", 500),
+        "parallel_strategy_enable": profiling_options.get("parallel_strategy", True),
     }
     return options
 
@@ -101,6 +125,9 @@ class EnvProfiler:
         self.l2_cache = False
         self.sync_enable = True
         self.start_time = 0
+        self.parallel_strategy_enable = True
+        self.timeline_limit_size = 500
+        self.data_process_enable = True
 
     def analyse(self):
         """Determine whether to stop collecting and parsing performance data based on environment variables."""
@@ -112,6 +139,9 @@ class EnvProfiler:
         self.aicore_metrics = options.get("aicore_metrics")
         self.l2_cache = options.get("l2_cache")
         self.sync_enable = options.get("sync_enable")
+        self.parallel_strategy_enable = options.get("parallel_strategy_enable")
+        self.timeline_limit_size = options.get("timeline_limit_size")
+        self.data_process_enable = options.get("data_process_enable")
         if not self._environ_enable:
             return
         env_options = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
@@ -125,7 +155,10 @@ class EnvProfiler:
             "aicore_metrics": self.aicore_metrics,
             "l2_cache": self.l2_cache,
             "start_time": self.start_time,
-            "sync_enable": self.sync_enable
+            "sync_enable": self.sync_enable,
+            "parallel_strategy_enable": self.parallel_strategy_enable,
+            "timeline_limit_size": self.timeline_limit_size,
+            "data_process_enable": self.data_process_enable
         }
         profiler = Profiler(env_enable=options)
         profiler.analyse()
@@ -144,7 +177,10 @@ def profiler_check_env():
              profile_communication=config.get("profile_communication"),
              aicore_metrics=config.get("aicore_metrics"),
              l2_cache=config.get("l2_cache"),
-             sync_enable=config.get("sync_enable"))
+             sync_enable=config.get("sync_enable"),
+             parallel_strategy_enable=config.get("parallel_strategy_enable"),
+             timeline_limit_size=config.get("timeline_limit_size"),
+             data_process_enable=config.get("data_process_enable"))
 
 
 profiler_check_env()

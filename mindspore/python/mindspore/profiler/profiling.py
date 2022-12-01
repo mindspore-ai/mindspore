@@ -209,7 +209,6 @@ class Profiler:
         self._stop_time = 0
         self._dynamic_status = False
         self._decide_device_target(kwargs)
-        self._init_profiler_info()
         if self.start_profile:
             self.start()
 
@@ -326,8 +325,8 @@ class Profiler:
         cpu_op_file = glob.glob(os.path.join(self._output_path, 'cpu_op_type_info_*'))
         if self._device_target and self._device_target != DeviceTarget.CPU.value and cpu_op_file:
             self._is_heterogeneous = True
-
         ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        self._init_profiler_info()
         if self._device_target and self._device_target == DeviceTarget.CPU.value:
             self._cpu_analyse()
 
@@ -468,13 +467,15 @@ class Profiler:
         options = kwargs.get("env_enable")
         self._filt_optype_names = ''
         self._has_started = True
-        self._data_process_enable = True
         self._stop_time = 0
         self._is_heterogeneous = False
-        self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
+        self._rank_size = 1
         self._start_time = options.get("start_time")
         self._output_path = options.get('output_path')
         self._profile_memory = options.get('profile_memory')
+        self._parallel_strategy_enable = options.get('parallel_strategy_enable')
+        self._timeline_size_limit_byte = options.get('timeline_limit_size')
+        self._data_process_enable = options.get('data_process_enable')
         self._profile_communication = options.get('profile_communication')
         self._device_target = context.get_context("device_target").lower()
         self._profiler_manager = c_expression.ProfilerManager.get_instance()
@@ -515,9 +516,6 @@ class Profiler:
 
     def _cpu_profiler_init(self, kwargs):
         """Cpu profiler init."""
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative mode is not supported on CPU currently.")
-
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
@@ -639,6 +637,9 @@ class Profiler:
         if not isinstance(self._profile_communication, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_communication must be bool, "
                             f"but got type {type(self._profile_communication)}")
+        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
+                           "PyNative mode currently.")
         if self._profile_communication:
             hccl_option = {"output": self._output_path, "task_trace": "on"}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
@@ -650,6 +651,9 @@ class Profiler:
         if not isinstance(self._profile_memory, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_memory must be bool, "
                             f"but got type '{type(self._profile_memory)}'")
+        if self._profile_memory and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_memory is not supported on Ascend "
+                           "PyNative mode currently.")
         if kwargs:
             logger.warning("%s are invalid params which don't work.", kwargs)
 
@@ -847,6 +851,9 @@ class Profiler:
             raise RuntimeError("The profile_communication parameter cannot be set on the dynamic shape network.")
         if self._dynamic_status and self._profile_memory:
             raise RuntimeError("The profile_memory parameter cannot be set on the dynamic shape network.")
+        if self._dynamic_status:
+            logger.warning(
+                "[Profiler]Dynamic Shape network does not support collecting step trace performance data currently.")
 
         # analyse step trace info
         points = None
@@ -984,6 +991,8 @@ class Profiler:
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.') from err
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative mode is not supported on CPU currently.")
 
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
                             is_gpu_kernel_async_launch_flag=False):

@@ -532,7 +532,9 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       InferNodeRealShape(node);
       ResizeNodeInput(node);
 #ifndef ENABLE_SECURITY
-      ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
+      if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) {
+        ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
+      }
 #endif
     }
 
