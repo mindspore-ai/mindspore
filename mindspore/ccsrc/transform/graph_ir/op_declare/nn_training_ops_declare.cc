@@ -71,7 +71,7 @@ ATTR_MAP(ApplyAdagradV2D) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}
                              {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
                              {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdagradV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
-REG_ADPT_DESC(ApplyAdagradV2D, kNameApplyAdagradV2D, ADPT_DESC(ApplyAdagradV2D))
+REG_ADPT_DESC(ApplyAdagradV2D, kNameApplyAdagradV2, ADPT_DESC(ApplyAdagradV2D))
 
 // ApplyAddSignD
 INPUT_MAP(ApplyAddSignD) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},          {3, INPUT_DESC(lr)},
@@ -79,7 +79,7 @@ INPUT_MAP(ApplyAddSignD) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},         
                             {7, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAddSignD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAddSignD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}};
-REG_ADPT_DESC(ApplyAddSignD, kNameApplyAddSignD, ADPT_DESC(ApplyAddSignD))
+REG_ADPT_DESC(ApplyAddSignD, kNameApplyAddSign, ADPT_DESC(ApplyAddSignD))
 
 // SparseApplyAdagradV2D
 INPUT_MAP(SparseApplyAdagradV2D) = {
@@ -89,7 +89,7 @@ ATTR_MAP(SparseApplyAdagradV2D) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
                                    {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
                                    {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdagradV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
-REG_ADPT_DESC(SparseApplyAdagradV2D, kNameSparseApplyAdagradV2D, ADPT_DESC(SparseApplyAdagradV2D))
+REG_ADPT_DESC(SparseApplyAdagradV2D, kNameSparseApplyAdagradV2, ADPT_DESC(SparseApplyAdagradV2D))
 
 // DataFormatDimMap
 INPUT_MAP(DataFormatDimMap) = {{1, INPUT_DESC(x)}};
@@ -165,7 +165,7 @@ INPUT_MAP(SparseApplyProximalAdagradD) = {{1, INPUT_DESC(var)},    {2, INPUT_DES
                                           {7, INPUT_DESC(indices)}};
 ATTR_MAP(SparseApplyProximalAdagradD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyProximalAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
-REG_ADPT_DESC(SparseApplyProximalAdagradD, kNameSparseApplyProximalAdagradD, ADPT_DESC(SparseApplyProximalAdagradD))
+REG_ADPT_DESC(SparseApplyProximalAdagradD, kNameSparseApplyProximalAdagrad, ADPT_DESC(SparseApplyProximalAdagradD))
 
 // SparseApplyFtrlD
 INPUT_MAP(SparseApplyFtrlD) = {{1, INPUT_DESC(var)},
@@ -194,7 +194,7 @@ ATTR_MAP(SparseApplyFtrlV2D) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
                                 {"lr_power", ATTR_DESC(lr_power, AnyTraits<float>())},
                                 {"use_locking", ATTR_DESC(use_locking, AnyTraits<float>())}};
 OUTPUT_MAP(SparseApplyFtrlV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}, {2, OUTPUT_DESC(linear)}};
-REG_ADPT_DESC(SparseApplyFtrlV2D, kNameSparseApplyFtrlV2D, ADPT_DESC(SparseApplyFtrlV2D))
+REG_ADPT_DESC(SparseApplyFtrlV2D, kNameSparseApplyFtrlV2, ADPT_DESC(SparseApplyFtrlV2D))
 
 // ApplyFtrl
 INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
@@ -230,4 +230,135 @@ ATTR_INPUT_MAP(SparseApplyRMSProp) = {{"rho", 5}, {"momentum", 6}, {"epsilon", 7
 ATTR_MAP(SparseApplyRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyRMSProp) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(SparseApplyRMSProp, prim::kPrimSparseApplyRMSProp->name(), ADPT_DESC(SparseApplyRMSProp))
+
+// ApplyAdaMax
+INPUT_MAP(ApplyAdaMax) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},       {3, INPUT_DESC(v)},
+                          {4, INPUT_DESC(beta1_power)}, {5, INPUT_DESC(lr)},      {6, INPUT_DESC(beta1)},
+                          {7, INPUT_DESC(beta2)},       {8, INPUT_DESC(epsilon)}, {9, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdaMax) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdaMax) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdaMax, kApplyAdaMaxDOpName, ADPT_DESC(ApplyAdaMax))
+
+// SparseApplyAdagrad
+INPUT_MAP(SparseApplyAdagrad) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(indices)}};
+ATTR_INPUT_MAP(SparseApplyAdagrad) = {{"lr", 3}};
+ATTR_MAP(SparseApplyAdagrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                                {"update_slots", ATTR_DESC(update_slots, AnyTraits<float>())}};
+OUTPUT_MAP(SparseApplyAdagrad) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
+REG_ADPT_DESC(SparseApplyAdagrad, kSparseApplyAdagradDOpName, ADPT_DESC(SparseApplyAdagrad))
+
+// SparseApplyAdagradV2
+INPUT_MAP(SparseApplyAdagradV2) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
+                                   {4, INPUT_DESC(epsilon)}, {5, INPUT_DESC(grad)},  {6, INPUT_DESC(indices)}};
+ATTR_INPUT_MAP(SparseApplyAdagradV2) = {{"lr", 3}, {"epsilon", 4}};
+ATTR_MAP(SparseApplyAdagradV2) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                                  {"update_slots", ATTR_DESC(update_slots, AnyTraits<float>())}};
+OUTPUT_MAP(SparseApplyAdagradV2) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(SparseApplyAdagradV2, kSparseApplyAdagradV2DOpName, ADPT_DESC(SparseApplyAdagradV2))
+
+// ApplyKerasMomentum
+INPUT_MAP(ApplyKerasMomentum) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(momentum)}};
+ATTR_MAP(ApplyKerasMomentum) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())},
+                                {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyKerasMomentum) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyKerasMomentum, kApplyKerasMomentumDOpName, ADPT_DESC(ApplyKerasMomentum))
+
+// ApplyAdamWithAmsgrad
+INPUT_MAP(ApplyAdamWithAmsgrad) = {
+  {1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},    {4, INPUT_DESC(vhat)},
+  {5, INPUT_DESC(beta1_power)}, {6, INPUT_DESC(beta2_power)}, {7, INPUT_DESC(lr)},   {8, INPUT_DESC(beta1)},
+  {9, INPUT_DESC(beta2)},       {10, INPUT_DESC(epsilon)},    {11, INPUT_DESC(grad)}};
+ATTR_INPUT_MAP(ApplyAdamWithAmsgrad) = {{"beta1", 8}, {"beta2", 9}, {"epsilon", 10}};
+ATTR_MAP(ApplyAdamWithAmsgrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdamWithAmsgrad) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdamWithAmsgrad, kApplyAdamWithAmsgradDOpName, ADPT_DESC(ApplyAdamWithAmsgrad))
+
+// ApplyPowerSign
+INPUT_MAP(ApplyPowerSign) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(m)},          {3, INPUT_DESC(lr)},
+                             {4, INPUT_DESC(logbase)}, {5, INPUT_DESC(sign_decay)}, {6, INPUT_DESC(beta)},
+                             {7, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyPowerSign) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyPowerSign) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyPowerSign, kApplyPowerSignDOpName, ADPT_DESC(ApplyPowerSign))
+
+// ApplyAddSign
+INPUT_MAP(ApplyAddSign) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},          {3, INPUT_DESC(lr)},
+                           {4, INPUT_DESC(alpha)}, {5, INPUT_DESC(sign_decay)}, {6, INPUT_DESC(beta)},
+                           {7, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAddSign) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAddSign) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAddSign, kApplyAddSignDOpName, ADPT_DESC(ApplyAddSign))
+
+// ApplyAdagrad
+INPUT_MAP(ApplyAdagrad) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdagrad) = {{"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
+                          {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdagrad) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdagrad, kApplyAdagradDOpName, ADPT_DESC(ApplyAdagrad))
+
+// ApplyAdagradV2
+INPUT_MAP(ApplyAdagradV2) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(epsilon)}};
+ATTR_INPUT_MAP(ApplyAdagradV2) = {{"epsilon", 5}};
+ATTR_MAP(ApplyAdagradV2) = {{"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
+                            {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdagradV2) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdagradV2, kApplyAdagradV2DOpName, ADPT_DESC(ApplyAdagradV2))
+
+// ApplyAdagradDA
+INPUT_MAP(ApplyAdagradDA) = {{1, INPUT_DESC(var)},
+                             {2, INPUT_DESC(gradient_accumulator)},
+                             {3, INPUT_DESC(gradient_squared_accumulator)},
+                             {4, INPUT_DESC(grad)},
+                             {5, INPUT_DESC(lr)},
+                             {6, INPUT_DESC(l1)},
+                             {7, INPUT_DESC(l2)},
+                             {8, INPUT_DESC(global_step)}};
+ATTR_MAP(ApplyAdagradDA) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdagradDA) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdagradDA, kApplyAdagradDADOpName, ADPT_DESC(ApplyAdagradDA))
+
+// ApplyRMSProp
+INPUT_MAP(ApplyRMSProp) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(ms)},       {3, INPUT_DESC(mom)},     {4, INPUT_DESC(lr)},
+  {5, INPUT_DESC(rho)}, {6, INPUT_DESC(momentum)}, {7, INPUT_DESC(epsilon)}, {8, INPUT_DESC(grad)},
+};
+ATTR_INPUT_MAP(ApplyRMSProp) = {{"rho", 5}, {"momentum", 6}, {"epsilon", 7}};
+ATTR_MAP(ApplyRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyRMSProp) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyRMSProp, kApplyRMSPropDOpname, ADPT_DESC(ApplyRMSProp))
+
+// ApplyProximalAdagrad
+INPUT_MAP(ApplyProximalAdagrad) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
+                                   {4, INPUT_DESC(l1)},  {5, INPUT_DESC(l2)},    {6, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyProximalAdagrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyProximalAdagrad) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyProximalAdagrad, kApplyProximalAdagradDOpName, ADPT_DESC(ApplyProximalAdagrad))
+
+// SparseApplyProximalAdagrad
+INPUT_MAP(SparseApplyProximalAdagrad) = {{1, INPUT_DESC(var)},    {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
+                                         {4, INPUT_DESC(l1)},     {5, INPUT_DESC(l2)},    {6, INPUT_DESC(grad)},
+                                         {7, INPUT_DESC(indices)}};
+ATTR_MAP(SparseApplyProximalAdagrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseApplyProximalAdagrad) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(SparseApplyProximalAdagrad, kSparseApplyProximalAdagradDOpName, ADPT_DESC(SparseApplyProximalAdagrad))
+
+// ApplyAdadelta
+INPUT_MAP(ApplyAdadelta) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(accum_update)},
+                            {4, INPUT_DESC(lr)},  {5, INPUT_DESC(rho)},   {6, INPUT_DESC(epsilon)},
+                            {7, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdadelta) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdadelta) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdadelta, kApplyAdadeltaDOpName, ADPT_DESC(ApplyAdadelta))
+
+// SparseApplyAdadelta
+INPUT_MAP(SparseApplyAdadelta) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},  {3, INPUT_DESC(accum_update)},
+                                  {4, INPUT_DESC(lr)},   {5, INPUT_DESC(rho)},    {6, INPUT_DESC(epsilon)},
+                                  {7, INPUT_DESC(grad)}, {8, INPUT_DESC(indices)}};
+ATTR_INPUT_MAP(SparseApplyAdadelta) = {{"epsilon", 6}};
+ATTR_MAP(SparseApplyAdadelta) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseApplyAdadelta) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(SparseApplyAdadelta, kSparseApplyAdadeltaDOpName, ADPT_DESC(SparseApplyAdadelta))
 }  // namespace mindspore::transform
