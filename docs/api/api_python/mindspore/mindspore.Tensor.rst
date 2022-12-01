@@ -86,6 +86,7 @@ mindspore.Tensor
     mindspore.Tensor.diagonal
     mindspore.Tensor.div
     mindspore.Tensor.divide
+    mindspore.Tensor.dsplit
     mindspore.Tensor.dtype
     mindspore.Tensor.equal
     mindspore.Tensor.erf
@@ -119,6 +120,7 @@ mindspore.Tensor
     mindspore.Tensor.hardshrink
     mindspore.Tensor.has_init
     mindspore.Tensor.heaviside
+    mindspore.Tensor.hsplit
     mindspore.Tensor.hypot
     mindspore.Tensor.i0
     mindspore.Tensor.igamma
@@ -240,6 +242,7 @@ mindspore.Tensor
     mindspore.Tensor.take
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
+    mindspore.Tensor.tensor_split
     mindspore.Tensor.tile
     mindspore.Tensor.to
     mindspore.Tensor.to_coo
@@ -260,6 +263,7 @@ mindspore.Tensor
     mindspore.Tensor.unsqueeze
     mindspore.Tensor.var
     mindspore.Tensor.view
+    mindspore.Tensor.vsplit
     mindspore.Tensor.where
     mindspore.Tensor.xdivy
     mindspore.Tensor.xlogy

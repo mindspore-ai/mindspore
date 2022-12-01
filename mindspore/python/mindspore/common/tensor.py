@@ -3543,6 +3543,34 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get('split')(axis, output_num)(self)
 
+    def tensor_split(self, indices_or_sections, axis=0):
+        """
+        For details, please refer to :func:`mindspore.ops.tensor_split`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('tensor_split')(self, indices_or_sections, axis)
+
+    def vsplit(self, indices_or_sections):
+        """
+        For details, please refer to :func:`mindspore.ops.vsplit`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('vsplit')(self, indices_or_sections)
+
+    def hsplit(self, indices_or_sections):
+        """
+        For details, please refer to :func:`mindspore.ops.hsplit`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('hsplit')(self, indices_or_sections)
+
+    def dsplit(self, indices_or_sections):
+        """
+        For details, please refer to :func:`mindspore.ops.dsplit`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('dsplit')(self, indices_or_sections)
+
     def xlogy(self, y):
         r"""
         For details, please refer to :func:`mindspore.ops.xlogy`.

@@ -343,6 +343,10 @@ BuiltInTypeMap &GetMethodMap() {
        {"to_csr", std::string("to_csr")},                                  // dense_to_sparse_csr()
        {"col2im", std::string("col2im")},                                  // P.Col2Im
        {"split", std::string("split")},                                    // P.Split()
+       {"tensor_split", std::string("tensor_split")},                      // tensor_split
+       {"vsplit", std::string("vsplit")},                                  // vsplit
+       {"hsplit", std::string("hsplit")},                                  // hsplit
+       {"dsplit", std::string("dsplit")},                                  // dplit
        {"random_categorical", std::string("random_categorical")},          // P.RandomCategorical
        {"xlogy", std::string("xlogy")},                                    // P.Xlogy()
        {"erf", std::string("erf")},                                        // P.Erf()
