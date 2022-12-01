@@ -113,9 +113,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kSmoothL1LossGradOpName).set_backend_op_name(kS
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSoftmaxOpName).set_backend_op_name(kSoftmaxV2OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSoftmaxV2WithDropoutDoMaskV3OpName)
   .set_backend_op_name(kSoftmaxV2WithDropOutDoMaskV3DOpName);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyAdagradOpName)
-  .set_target_op_name(kSparseApplyAdagradDOpName)
-  .set_input_attr_info(2, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyAdagradOpName).set_backend_op_name(kSparseApplyAdagradDOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyProximalAdagradOpName)
   .set_backend_op_name(kSparseApplyProximalAdagradDOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kStackOpName).set_backend_op_name(kPackOpName);
@@ -127,10 +125,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kAdamOpName)
   .set_backend_op_name(kApplyAdamOpName)
   .set_target_op_name(kApplyAdamDOpName)
   .set_need_tbe_check_supported(true);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdagradV2OpName)
-  .set_target_op_name(kApplyAdagradV2DOpName)
-  .set_pre_check_func(ApplyAdagradV2PreCheck)
-  .set_input_attr_info(3, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdagradV2OpName).set_backend_op_name(kApplyAdagradV2DOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kApplyAdamWithAmsgradOpName)
   .set_target_op_name(kApplyAdamWithAmsgradDOpName)
   .set_input_attr_info(7, "float")
@@ -414,25 +409,11 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyAdadeltaOpName)
   .set_target_op_name(kSparseApplyAdadeltaDOpName)
   .set_input_attr_info(5, "float");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyAdagradV2OpName)
-  .set_target_op_name(kSparseApplyAdagradV2DOpName)
-  .set_input_attr_info(1, "float")
-  .set_input_attr_info(2, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyAdagradV2OpName).set_backend_op_name(kSparseApplyAdagradV2DOpName);
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlOpName)
-  .set_target_op_name(kSparseApplyFtrlDOpName)
-  .set_input_attr_info(5, "float")
-  .set_input_attr_info(6, "float")
-  .set_input_attr_info(7, "float")
-  .set_input_attr_info(8, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlOpName).set_backend_op_name(kSparseApplyFtrlDOpName);
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlV2OpName)
-  .set_target_op_name(kSparseApplyFtrlV2DOpName)
-  .set_input_attr_info(5, "float")
-  .set_input_attr_info(6, "float")
-  .set_input_attr_info(7, "float")
-  .set_input_attr_info(8, "float")
-  .set_input_attr_info(9, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlV2OpName).set_backend_op_name(kSparseApplyFtrlV2DOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyRMSPropOpName)
   .set_target_op_name(kSparseApplyRMSPropDOpName)
