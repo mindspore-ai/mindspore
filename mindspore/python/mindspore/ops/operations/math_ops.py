@@ -7547,6 +7547,33 @@ class TriuIndices(Primitive):
         validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
+class Fmin(Primitive):
+    """
+    Computes the minimum of input tensors element-wise.
+
+    Refer to :func:`mindspore.ops.fmin` for more detail.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mstype.float32)
+        >>> x2 = Tensor(np.array([4.0, 2.0, 6.0]), mstype.float32)
+        >>> fmin = ops.Fmin()
+        >>> output = fmin(x1, x2)
+        >>> print(output)
+        [1. 2. 3.]
+    """
+
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Fmin"""
+        self.add_prim_attr('ignore_nan', True)
+        self.init_prim_io_names(inputs=['x1, x2'], outputs=['y'])
+
+
 class Eig(Primitive):
     """
     Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).

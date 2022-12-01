@@ -614,6 +614,15 @@ class Log10Net(nn.Cell):
         return self.log10(x)
 
 
+class FminFunc(nn.Cell):
+    def __init__(self):
+        super(FminFunc, self).__init__()
+        self.fmin_ = ops.function.math_func.fmin
+
+    def construct(self, x1, x2):
+        return self.fmin_(x1, x2)
+
+
 class FracNet(nn.Cell):
     def __init__(self):
         super(FracNet, self).__init__()
@@ -936,6 +945,11 @@ raise_set = [
         'desc_inputs': [Tensor(np.array([2, 5, 8]).astype(np.int32)),
                         Tensor(np.array([4, 3, 12]).astype(np.int32))],
         'skip': ['backward']}),
+    ('Fmin', {
+        'block': FminFunc(),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float32)),
+                        Tensor(np.array([2.0, 1.0, 4.0], np.float32))],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float32))]}),
     ('Zeta', {
         'block': Zeta(),
         'desc_inputs': [Tensor(np.array([1, 1, 1, 1], np.float32)),
