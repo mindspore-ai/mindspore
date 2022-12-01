@@ -31,7 +31,7 @@ namespace {
 constexpr size_t kMinIndiceRank = 2;
 template <typename T>
 inline T RealDiv(const T &a, const T &b) {
-  constexpr T zero = T(0);
+  T zero = static_cast<T>(0);
   if (b == zero) {
     if (a == zero) {
       return std::numeric_limits<T>::quiet_NaN();
@@ -205,6 +205,8 @@ const ScatterNdArithmeticCpuKernelMod::ScatterNdSupportListType &ScatterNdArithm
                                         double, int64_t)},
     {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32,
                                         float, int64_t)},
+    {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16,
+                                        float16, int64_t)},
     {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
                                         int64_t)},
     {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t,
@@ -225,6 +227,8 @@ const ScatterNdArithmeticCpuKernelMod::ScatterNdSupportListType &ScatterNdArithm
                                         double, int32_t)},
     {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32,
                                         float, int32_t)},
+    {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16,
+                                        float16, int32_t)},
     {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t,
                                         int32_t)},
     {SCATTER_ND_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
