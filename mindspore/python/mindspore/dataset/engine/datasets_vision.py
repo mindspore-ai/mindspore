@@ -37,8 +37,9 @@ from .validators import check_caltech101_dataset, check_caltech256_dataset, chec
     check_flickr_dataset, check_flowers102dataset, check_food101_dataset, check_imagefolderdataset, \
     check_kittidataset, check_lfw_dataset, check_lsun_dataset, check_manifestdataset, check_mnist_cifar_dataset, \
     check_omniglotdataset, check_photo_tour_dataset, check_places365_dataset, check_qmnist_dataset, \
-    check_random_dataset, check_sb_dataset, check_sbu_dataset, check_semeion_dataset, check_stl10_dataset, \
-    check_svhn_dataset, check_usps_dataset, check_vocdataset, check_wider_face_dataset, check_sun397_dataset
+    check_random_dataset, check_rendered_sst2_dataset, check_sb_dataset, check_sbu_dataset, check_semeion_dataset, \
+    check_stl10_dataset, check_sun397_dataset, check_svhn_dataset, check_usps_dataset, check_vocdataset, \
+    check_wider_face_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -3890,6 +3891,158 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
         return cde.RandomNode(self.total_rows, schema, self.columns_list)
 
 
+class RenderedSST2Dataset(MappableDataset, VisionBaseDataset):
+    """
+    A source dataset that reads and parses RenderedSST2 dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be 'train', 'val', 'test' or 'all'.
+            Default: None, will read all samples.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will include all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, set in the config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table below.
+        decode (bool, optional): Whether or not to decode the images after reading. Default: False.
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset. Default: None, expected order behavior shown in the table below.
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into. When this argument is specified, `num_samples` reflects
+            the maximum sample number of per shard. Default: None.
+        shard_id (int, optional): The shard ID within `num_shards` . This
+            argument can only be specified when `num_shards` is also specified. Default: None.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
+
+    Raises:
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `usage` is not 'train', 'test', 'val' or 'all'.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+
+    Note:
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> rendered_sst2_dataset_dir = "/path/to/rendered_sst2_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (image files) in rendered_sst2_dataset_dir with 8 threads
+        >>> dataset = ds.RenderedSST2Dataset(dataset_dir=rendered_sst2_dataset_dir,
+                                             usage="all", num_parallel_workers=8)
+
+    About RenderedSST2Dataset:
+
+    Rendered SST2 is an image classification dataset which was generated by rendering sentences in the Standford
+    Sentiment Treebank v2 dataset. There are three splits in this dataset and each split contains two classes
+    (positive and negative): a train split containing 6920 images (3610 positive and 3310 negative), a validation
+    split containing 872 images (444 positive and 428 negative), and a test split containing 1821 images
+    (909 positive and 912 negative).
+
+    Here is the original RenderedSST2 dataset structure.
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── rendered_sst2_dataset_directory
+             ├── train
+             │    ├── negative
+             │    │    ├── 0001.jpg
+             │    │    ├── 0002.jpg
+             │    │    ...
+             │    └── positive
+             │         ├── 0001.jpg
+             │         ├── 0002.jpg
+             │         ...
+             ├── test
+             │    ├── negative
+             │    │    ├── 0001.jpg
+             │    │    ├── 0002.jpg
+             │    │    ...
+             │    └── positive
+             │         ├── 0001.jpg
+             │         ├── 0002.jpg
+             │         ...
+             └── valid
+                  ├── negative
+                  │    ├── 0001.jpg
+                  │    ├── 0002.jpg
+                  │    ...
+                  └── positive
+                       ├── 0001.jpg
+                       ├── 0002.jpg
+                       ...
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{socher-etal-2013-recursive,
+            title     = {Recursive Deep Models for Semantic Compositionality Over a Sentiment Treebank},
+            author    = {Socher, Richard and Perelygin, Alex and Wu, Jean and Chuang, Jason and Manning,
+                          Christopher D. and Ng, Andrew and Potts, Christopher},
+            booktitle = {Proceedings of the 2013 Conference on Empirical Methods in Natural Language Processing},
+            month     = oct,
+            year      = {2013},
+            address   = {Seattle, Washington, USA},
+            publisher = {Association for Computational Linguistics},
+            url       = {https://www.aclweb.org/anthology/D13-1170},
+            pages     = {1631--1642},
+        }
+    """
+
+    @check_rendered_sst2_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.RenderedSST2Node(self.dataset_dir, self.usage, self.decode, self.sampler)
+
+
 class _SBDataset:
     """
     Dealing with the data file with .mat extension, and return one row in tuple (image, task) each time.
@@ -4533,7 +4686,7 @@ class SUN397Dataset(MappableDataset, VisionBaseDataset):
     About SUN397Dataset:
 
     The SUN397 or Scene UNderstanding (SUN) is a dataset for scene recognition consisting of 397 categories with
-    108,754 images.The number of images varies across categories, but there are at least 100 images per category.
+    108,754 images. The number of images varies across categories, but there are at least 100 images per category.
     Images are in jpg, png, or gif format.
 
     Here is the original SUN397 dataset structure.

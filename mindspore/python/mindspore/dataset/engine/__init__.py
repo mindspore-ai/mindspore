@@ -63,6 +63,7 @@ __all__ = ["Caltech101Dataset",        # Vision
            "Places365Dataset",         # Vision
            "QMnistDataset",            # Vision
            "RandomDataset",            # Vision
+           "RenderedSST2Dataset",      # Vision
            "SBDataset",                # Vision
            "SBUDataset",               # Vision
            "SemeionDataset",           # Vision

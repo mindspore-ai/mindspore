@@ -32,6 +32,7 @@ Vision
     mindspore.dataset.PhotoTourDataset
     mindspore.dataset.Places365Dataset
     mindspore.dataset.QMnistDataset
+    mindspore.dataset.RenderedSST2Dataset
     mindspore.dataset.SBDataset
     mindspore.dataset.SBUDataset
     mindspore.dataset.SemeionDataset

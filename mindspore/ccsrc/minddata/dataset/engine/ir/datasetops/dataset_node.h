@@ -118,6 +118,7 @@ constexpr char kPhotoTourNode[] = "PhotoTourDataset";
 constexpr char kPlaces365Node[] = "Places365Dataset";
 constexpr char kQMnistNode[] = "QMnistDataset";
 constexpr char kRandomNode[] = "RandomDataset";
+constexpr char kRenderedSST2Node[] = "RenderedSST2Dataset";
 constexpr char kSBUNode[] = "SBUDataset";
 constexpr char kSemeionNode[] = "SemeionDataset";
 constexpr char kSogouNewsNode[] = "SogouNewsDataset";

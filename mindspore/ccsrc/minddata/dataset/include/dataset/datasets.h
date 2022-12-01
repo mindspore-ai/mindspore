@@ -4882,6 +4882,99 @@ std::shared_ptr<RandomDataDataset> DATASET_API RandomData(const int32_t &total_r
   return ds;
 }
 
+/// \class RenderedSST2Dataset
+/// \brief A source dataset for reading and parsing RenderedSST2 dataset.
+class DATASET_API RenderedSST2Dataset : public Dataset {
+ public:
+  /// \brief Constructor of RenderedSST2Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  RenderedSST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                      const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of RenderedSST2Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  RenderedSST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                      const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of RenderedSST2Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  RenderedSST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool decode,
+                      const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of RenderedSST2Dataset.
+  ~RenderedSST2Dataset() override = default;
+};
+
+/// \brief Function to create a RenderedSST2Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all". Default: "all".
+/// \param[in] decode Decode the images after reading. Default: false.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset. Default: RandomSampler().
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the RenderedSST2Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/RenderedSST2_dataset_directory";
+///      std::shared_ptr<Dataset> ds = RenderedSST2(dataset_path);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In RenderedSST2 dataset, each data dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<RenderedSST2Dataset> DATASET_API
+RenderedSST2(const std::string &dataset_dir, const std::string &usage = "all", bool decode = false,
+             const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<RenderedSST2Dataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a RenderedSST2Dataset
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all".
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the RenderedSST2Dataset.
+inline std::shared_ptr<RenderedSST2Dataset> DATASET_API
+RenderedSST2(const std::string &dataset_dir, const std::string &usage, bool decode, const Sampler *sampler,
+             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<RenderedSST2Dataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
+/// \brief Function to create a RenderedSST2Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage The type of dataset. Acceptable usages include "train", "test", "val" or "all".
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. Default: nullptr, which means no cache is used.
+/// \return Shared pointer to the RenderedSST2Dataset.
+inline std::shared_ptr<RenderedSST2Dataset> DATASET_API
+RenderedSST2(const std::string &dataset_dir, const std::string &usage, bool decode,
+             const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<RenderedSST2Dataset>(StringToChar(dataset_dir), StringToChar(usage), decode, sampler, cache);
+}
+
 /// \class SBUDataset
 /// \brief A source dataset that reads and parses SBU dataset.
 class DATASET_API SBUDataset : public Dataset {
@@ -5268,7 +5361,6 @@ class DATASET_API SST2Dataset : public Dataset {
 /// \param[in] shuffle The mode for shuffling data every epoch. Default: ShuffleMode::kGlobal.
 ///     Can be any of:
 ///     ShuffleMode::kFalse - No shuffling is performed.
-///     ShuffleMode::kFiles - Shuffle files only.
 ///     ShuffleMode::kGlobal - Shuffle both the files and samples.
 /// \param[in] num_shards Number of shards that the dataset should be divided into. Default: 1.
 /// \param[in] shard_id The shard ID within num_shards. This argument should be

@@ -44,6 +44,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     places365_op.cc
     qmnist_op.cc
     random_data_op.cc
+    rendered_sst2_op.cc
     sbu_op.cc
     semeion_op.cc
     sogou_news_op.cc
