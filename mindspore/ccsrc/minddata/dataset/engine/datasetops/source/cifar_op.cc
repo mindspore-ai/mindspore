@@ -385,5 +385,11 @@ Status CifarOp::ComputeColMap() {
   return Status::OK();
 }
 
+Status CifarOp::InitPullMode() {
+  RETURN_IF_NOT_OK(cifar_raw_data_block_->Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
+    "Get cifar data block", std::bind(&CifarOp::ReadCifarBlockDataAsync, this), nullptr, id()));
+  return PrepareData();
+}
 }  // namespace dataset
 }  // namespace mindspore

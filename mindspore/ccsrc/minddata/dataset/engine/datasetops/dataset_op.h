@@ -386,6 +386,11 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Launch the Op
   virtual Status Launch() { return Status::OK(); }
 
+  enum ImplementedPullMode { NotImplemented = 0, Implemented, DisabledDebugMode };
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  virtual ImplementedPullMode PullModeImplementationStatus() const { return ImplementedPullMode::NotImplemented; }
+
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
   std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership
   std::shared_ptr<SamplerRT> sampler_;                           // Some leaf ops might have a sampler

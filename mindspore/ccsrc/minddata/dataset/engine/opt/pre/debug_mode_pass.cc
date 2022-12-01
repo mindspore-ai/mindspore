@@ -44,6 +44,18 @@ bool DebugModePass::RemoveCacheAndOffload(std::shared_ptr<DatasetNode> node) {
   return ret;
 }
 
+Status SetSeed() {
+  // Debug mode requires the deterministic result. Set seed if users have not done so.
+  uint32_t seed = GlobalContext::config_manager()->seed();
+  if (seed == std::mt19937::default_seed) {
+    int8_t kSeedValue = 1;
+    MS_LOG(WARNING) << "Debug mode is enabled. Set seed to ensure deterministic results. Seed value: "
+                    << std::to_string(kSeedValue);
+    GlobalContext::config_manager()->set_seed(kSeedValue);
+  }
+  return Status::OK();
+}
+
 Status DebugModePass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   *modified = RemoveCacheAndOffload(node);
   if (node->GetOffload() == ManualOffloadMode::kEnabled) {
@@ -52,11 +64,13 @@ Status DebugModePass::Visit(std::shared_ptr<MapNode> node, bool *const modified)
     node->SetOffload(ManualOffloadMode::kDisabled);
     *modified = true;
   }
+  RETURN_IF_NOT_OK(SetSeed());
   return Status::OK();
 }
 
 Status DebugModePass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = RemoveCacheAndOffload(node);
+  RETURN_IF_NOT_OK(SetSeed());
   return Status::OK();
 }
 }  // namespace dataset

@@ -267,11 +267,6 @@ Status ShuffleOp::EoeReceived(int32_t worker_id) {
 Status ShuffleOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   RETURN_UNEXPECTED_IF_NULL(child_[0]);
-  if (GlobalContext::config_manager()->get_debug_mode()) {
-    MS_LOG(WARNING) << "In debug mode, shuffle operation is disabled for debugging purposes.";
-  } else {
-    MS_LOG(WARNING) << "Shuffle operation has not been implemented yet in pull mode.";
-  }
   return child_[0]->GetNextRowPullMode(row);
 }
 }  // namespace dataset

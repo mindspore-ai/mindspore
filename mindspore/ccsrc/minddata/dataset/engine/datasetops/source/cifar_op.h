@@ -109,6 +109,10 @@ class CifarOp : public MappableLeafOp {
   /// @return - Status
   Status ComputeColMap() override;
 
+  /// Initialize pull mode, calls PrepareData() within
+  /// @return Status The status code returned
+  Status InitPullMode() override;
+
   CifarType cifar_type_;
   std::string folder_path_;
   std::unique_ptr<DataSchema> data_schema_;

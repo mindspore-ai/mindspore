@@ -80,6 +80,11 @@ class ConcatOp : public PipelineOp {
   /// \return bool
   bool IgnoreSample();
 
+ protected:
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
  private:
   Status Verify(int32_t id, const TensorRow &new_row);
 

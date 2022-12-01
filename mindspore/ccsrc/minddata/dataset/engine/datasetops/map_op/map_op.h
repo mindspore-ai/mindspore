@@ -217,6 +217,10 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   Status AddNewWorkers(int32_t num_new_workers) override;
   Status RemoveWorkers(int32_t num_workers) override;
 
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
  private:
   Status RebuildMapErrorMsg(const TensorRow &input_row, const std::string &op_name, Status *rc);
 };
