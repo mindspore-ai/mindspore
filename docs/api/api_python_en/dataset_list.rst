@@ -98,7 +98,7 @@ Others
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
 
-{% elif objname in ['Caltech101Dataset', 'Caltech256Dataset', 'CelebADataset', 'Cifar100Dataset', 'Cifar10Dataset', 'CityscapesDataset', 'CocoDataset', 'DIV2KDataset', 'EMnistDataset', 'FakeImageDataset', 'FashionMnistDataset', 'FlickrDataset', 'Flowers102Dataset', 'ImageFolderDataset', 'KMnistDataset', 'ManifestDataset', 'MnistDataset', 'PhotoTourDataset', 'Places365Dataset', 'QMnistDataset', 'SBDataset', 'SBUDataset', 'SemeionDataset', 'STL10Dataset', 'SVHNDataset', 'USPSDataset', 'VOCDataset', 'WIDERFaceDataset', 'Food101Dataset']%}
+{% elif objname in ['Caltech101Dataset', 'Caltech256Dataset', 'CelebADataset', 'Cifar100Dataset', 'Cifar10Dataset', 'CityscapesDataset', 'CocoDataset', 'DIV2KDataset', 'EMnistDataset', 'FakeImageDataset', 'FashionMnistDataset', 'FlickrDataset', 'Flowers102Dataset', 'ImageFolderDataset', 'KMnistDataset', 'ManifestDataset', 'MnistDataset', 'PhotoTourDataset', 'Places365Dataset', 'QMnistDataset', 'SBDataset', 'SBUDataset', 'SemeionDataset', 'STL10Dataset', 'SVHNDataset', 'USPSDataset', 'VOCDataset', 'WIDERFaceDataset', 'Food101Dataset', 'SUN397Dataset', 'SST2Dataset']%}
 
 {{ fullname | underline }}
 

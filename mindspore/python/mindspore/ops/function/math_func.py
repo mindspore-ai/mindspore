@@ -2197,8 +2197,8 @@ def inverse(x):
     Compute the inverse of the input matrix.
 
     Args:
-        - **x** (Tensor) - A matrix to be calculated. Input `x` must be at least two dimensions, and the size of
-          the last two dimensions must be the same size.
+        x (Tensor): A matrix to be calculated. Input `x` must be at least two dimensions, and the size of
+            the last two dimensions must be the same size.
 
     Returns:
         Tensor, has the same type and shape as input `x`.
@@ -3379,8 +3379,8 @@ def isreal(x):
     Tests element-wise for real number.
     A complex value is considered real when its imaginary part is 0.
 
-    Inputs:
-        - **x** (Tensor) - The input tensor.
+    Args:
+        x (Tensor): The input tensor.
 
     Returns:
        Tensor, true where `x` is real number, false otherwise.
@@ -3396,7 +3396,7 @@ def isreal(x):
         >>> x = Tensor([1, 1+1j, 2+0j], mstype.complex64)
         >>> output = ops.isreal(x)
         >>> print(output)
-        [ True False  True]
+        [ True False True]
     """
 
     if not isinstance(x, (Tensor, Tensor_)):

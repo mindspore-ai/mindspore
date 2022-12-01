@@ -543,9 +543,9 @@ class Col2Im(Primitive):
             for height and width. If type is int, it means that height equal with width. Must be specified.
         dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two positive int
             for height and width. If type is int, it means that height equal with width. Default: 1.
-        padding (Union[int, tuple[int], list[int]], optional)): The size of the padding, should be two int
+        padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 0.
-        stride (Union[int, tuple[int], list[int]], optional)): The size of the stride, should be two positive int
+        stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two positive int
             for height and width. If type is int, it means that height equal with width. Default: 1.
 
     Inputs:
@@ -5397,7 +5397,7 @@ class BroadcastTo(Primitive):
         >>> print(output)
         [[1. 2. 3.]
          [1. 2. 3.]]
-
+        >>>
         >>> shape = (-1, 2)
         >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
         >>> output = ops.BroadcastTo(shape=shape)(x)

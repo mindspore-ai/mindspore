@@ -66,4 +66,4 @@ mindspore.dataset.SST2Dataset
             pages     = {1631--1642},
         }
 
-    include:: mindspore.dataset.api_list_vision.rst
+.. include:: mindspore.dataset.api_list_vision.rst
