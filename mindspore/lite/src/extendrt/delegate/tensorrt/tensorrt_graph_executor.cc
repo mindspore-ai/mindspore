@@ -31,6 +31,7 @@
 #include "src/extendrt/utils/kernel_graph_utils.h"
 #include "common/config_infos.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "src/extendrt/utils/func_graph_utils.h"
 
 namespace mindspore::lite {
 namespace {
@@ -149,7 +150,7 @@ Status GetAbstractArgsFromCNode(const CNodePtr &cnode, std::vector<NodeWithOutpu
   MS_EXCEPTION_IF_NULL(*base_operator);
   // Makeup input tensors.
   input_tensors->clear();
-  auto input_nodes = opt::GetNodeInputs(cnode);
+  auto input_nodes = mindspore::GetNodeInputs(cnode);
   for (auto &tensor_id : input_nodes) {
     auto it = std::find_if(tensor_info_list.begin(), tensor_info_list.end(),
                            [&tensor_id](const NodeWithOutputIndex &index) { return index.kernel_index == tensor_id; });

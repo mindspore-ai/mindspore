@@ -26,6 +26,7 @@
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"
+#include "extendrt/delegate/plugin/litert_executor_plugin.h"
 
 namespace mindspore {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
@@ -129,7 +130,11 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
         continue;
       }
       auto provider = cpu_device->GetProvider();
-      if (provider.empty()) {
+      if (provider.empty() || provider == default_cpu_provider) {
+        if (!infer::LiteRTExecutorPlugin::GetInstance().Register()) {
+          MS_LOG_WARNING << "Failed to register LiteRT plugin";
+          return;
+        }
         cpu_device->SetProvider(default_cpu_provider);
       }
       continue;

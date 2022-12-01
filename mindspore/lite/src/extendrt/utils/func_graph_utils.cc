@@ -22,12 +22,11 @@
 #include <memory>
 
 #include "src/extendrt/utils/func_graph_utils.h"
-#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "mindspore/ccsrc/backend/common/optimizer/helper.h"
-#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {
+const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 ValuePtr FuncGraphUtils::GetNodeValuePtr(AnfNodePtr input_node) {
   if (input_node == nullptr) {
     return nullptr;
@@ -115,6 +114,42 @@ bool FuncGraphUtils::GetCNodeOperator(const mindspore::CNodePtr &cnode,
   return true;
 }
 
+bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
+  if (node == nullptr || primitive_type == nullptr) {
+    return false;
+  }
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    return IsPrimitive(cnode->input(kAnfPrimitiveIndex), primitive_type);
+  } else if (node->isa<ValueNode>()) {
+    return IsPrimitive(node, primitive_type);
+  }
+  return false;
+}
+
+std::vector<common::KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node) {
+  if (!anf_node) {
+    return {};
+  }
+  if (!anf_node->isa<CNode>()) {
+    return {{anf_node, 0}};
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  std::vector<common::KernelWithIndex> inputs;
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
+    const auto &pre_node_output = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
+    auto pre_node = pre_node_output.first;
+    if (CheckPrimitiveType(pre_node, prim::kPrimMakeTuple) || CheckPrimitiveType(pre_node, kPrimMakeTupleV2)) {
+      auto tuple_inputs = GetNodeInputs(pre_node);
+      std::copy(tuple_inputs.begin(), tuple_inputs.end(), std::back_inserter(inputs));
+    } else {
+      inputs.push_back(pre_node_output);
+    }
+  }
+  return inputs;
+}
+
 bool FuncGraphUtils::GetCNodeInputsOutputs(const mindspore::CNodePtr &cnode,
                                            std::vector<AnfWithOutIndex> *input_tensors,
                                            std::vector<AnfWithOutIndex> *output_tensors) {
@@ -123,7 +158,7 @@ bool FuncGraphUtils::GetCNodeInputsOutputs(const mindspore::CNodePtr &cnode,
     return false;
   }
   // Makeup input tensors.
-  *input_tensors = opt::GetNodeInputs(cnode);
+  *input_tensors = GetNodeInputs(cnode);
   // Makeup output tensors.
   output_tensors->clear();
   auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
@@ -161,7 +196,7 @@ bool FuncGraphUtils::GetFuncGraphOutputs(const FuncGraphPtr &func_graph, std::ve
     MS_LOG(ERROR) << "Input func_graph or outputs cannot be nullptr";
     return false;
   }
-  *outputs = opt::GetNodeInputs(func_graph->get_return());
+  *outputs = GetNodeInputs(func_graph->get_return());
   return true;
 }
 
