@@ -56,5 +56,6 @@
 #include "plugin/device/gpu/optimizer/insert_cast_gpu.h"
 #include "plugin/device/gpu/optimizer/neighbor_exchange_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/bias_dropout_add_fusion.h"
+#include "backend/common/pass/insert_type_transform_op.h"
 
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_OPTIMIZER_H_
