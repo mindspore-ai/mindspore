@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_LITERT_KERNEL_ASCEND_ASCEND_KERNEL_PLUGIN_H_
 
 #include <memory>
+#include <mutex>
 #include "src/common/dynamic_library_loader.h"
 
 namespace mindspore {
@@ -33,6 +34,7 @@ class AscendKernelPlugin {
 
   bool is_registered_;
   std::shared_ptr<lite::DynamicLibraryLoader> dl_loader_ = nullptr;
+  std::mutex mutex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_LITERT_KERNEL_ASCEND_ASCEND_KERNEL_PLUGIN_H_

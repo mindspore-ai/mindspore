@@ -27,29 +27,47 @@ AscendKernelPlugin &AscendKernelPlugin::GetInstance() {
 
 AscendKernelPlugin::AscendKernelPlugin() : is_registered_(false) {}
 
-AscendKernelPlugin::~AscendKernelPlugin() {}
+AscendKernelPlugin::~AscendKernelPlugin() { is_registered_ = false; }
 
 int AscendKernelPlugin::Register() {
+#if !defined(_WIN32)
+  std::lock_guard<std::mutex> locker(mutex_);
   if (is_registered_) {
     return lite::RET_OK;
   }
-  std::string dl_so_path;
-  auto get_path_ret = DLSoPath({"libmindspore-lite.so"}, "libascend_kernel_plugin.so", &dl_so_path);
-  if (get_path_ret != kSuccess) {
-    MS_LOG(ERROR) << "Get libascend_kernel_plugin.so path failed";
+  Dl_info dl_info;
+  dladdr(reinterpret_cast<void *>(this), &dl_info);
+  std::string cur_so_path = dl_info.dli_fname;
+  auto pos = cur_so_path.find("libmindspore-lite.so");
+  if (pos == std::string::npos) {
+    MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
+    auto c_lite_pos = cur_so_path.find("_c_lite");
+    if (c_lite_pos == std::string::npos) {
+      MS_LOG(ERROR) << "Could not find _c_lite so, cur so path: " << cur_so_path;
+      return lite::RET_ERROR;
+    }
+    pos = c_lite_pos;
+  }
+  std::string parent_dir = cur_so_path.substr(0, pos);
+  std::string ascend_kernel_plugin_path;
+  auto ret = FindSoPath(parent_dir, "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Get real path of libascend_kernel_plugin.so failed.";
     return lite::RET_ERROR;
   }
+  MS_LOG(INFO) << "Find ascend kernel plugin so success, path = " << ascend_kernel_plugin_path;
   dl_loader_ = std::make_shared<lite::DynamicLibraryLoader>();
   if (dl_loader_ == nullptr) {
     MS_LOG(ERROR) << "Init dynamic library loader failed";
     return lite::RET_ERROR;
   }
-  auto status = dl_loader_->Open(dl_so_path);
+  auto status = dl_loader_->Open(ascend_kernel_plugin_path);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "Open libascend_kernel_plugin.so failed";
     return lite::RET_ERROR;
   }
   is_registered_ = true;
+#endif
   return lite::RET_OK;
 }
 }  // namespace mindspore
