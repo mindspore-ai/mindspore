@@ -41,9 +41,10 @@ class UnsortedSegmentMaxGpuKernelMod : public NativeGpuKernelMod {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(output_addr, std::numeric_limits<T>::min(), outputs[0]->size,
-                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                       "cudaMemSet Failed");
+
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(output_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemSet Failed");
     CalUnsortedSegmentMax(input_addr, indices_addr, num_segments_, outer_size_, inner_size_, output_addr,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
