@@ -75,6 +75,8 @@ int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
                   << input_size_list_.size() << " and " << output_size_list_.size();
     return static_cast<int>(KRET_RESIZE_FAILED);
   }
+  input_shape_.clear();
+  output_shape_.clear();
 
   // The input tensor must be 1-D tensor.
   for (auto &input : inputs) {
