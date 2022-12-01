@@ -382,7 +382,7 @@ int BenchmarkUnifiedApi::GetDataTypeByTensorName(const std::string &tensor_name)
       return static_cast<int>(tensor.DataType());
     }
   }
-  MS_LOG(ERROR) << "not find tensor name in model output.";
+  MS_LOG(ERROR) << "not find tensor name : " << tensor_name << " in model output.";
   return static_cast<int>(DataType::kTypeUnknown);
 #endif
   return static_cast<int>(ms_model_.GetOutputByTensorName(tensor_name).DataType());

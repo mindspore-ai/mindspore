@@ -21,10 +21,6 @@
 namespace mindspore::lite {
 int ConcateTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (type_ != ops::kNameStack && type_ != ops::kNameConcat) {
     MS_LOG(ERROR) << "Unsupported op :" << op_name_ << " , type: " << type_;
     return RET_ERROR;
@@ -94,13 +90,16 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
         MS_LOG(ERROR) << "addShuffle failed for TensorRT.";
         return RET_ERROR;
       }
-      auto shuffer_dims_opt = UnsqueezeDims(trt_input_tensors[i]->getDimensions(), axis_, 1);
-      if (!shuffer_dims_opt) {
-        MS_LOG(ERROR) << "UnsqueezeDims failed.";
-        return RET_ERROR;
+      bool has_rank_n = (trt_input_tensors[i]->getDimensions().nbDims > 1);
+      if (has_rank_n) {
+        auto shuffer_dims_opt = UnsqueezeDims(trt_input_tensors[i]->getDimensions(), axis_, 1);
+        if (!shuffer_dims_opt) {
+          MS_LOG(ERROR) << "UnsqueezeDims failed.";
+          return RET_ERROR;
+        }
+        shuffle_layer->setReshapeDimensions(shuffer_dims_opt.value());
+        trt_input_tensors[i] = shuffle_layer->getOutput(0);
       }
-      shuffle_layer->setReshapeDimensions(shuffer_dims_opt.value());
-      trt_input_tensors[i] = shuffle_layer->getOutput(0);
     }
   }
   nvinfer1::IConcatenationLayer *concate_layer =

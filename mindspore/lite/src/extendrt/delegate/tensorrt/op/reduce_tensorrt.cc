@@ -21,10 +21,6 @@
 namespace mindspore::lite {
 int ReduceTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                               const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
   }
@@ -89,26 +85,36 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 uint32_t ReduceTensorRT::GetAxis(TensorRTContext *ctx) {
-  // axis
   uint32_t reduceAxis = 0;
-  auto axis_tensor = this->in_tensors_[1];
-  if (!axis_tensor.IsConst()) {
-    MS_LOG(ERROR) << "invalid axis_tensor";
-    return reduceAxis;
-  }
-  if (axis_tensor.DataType() != DataType::kNumberTypeInt32 && axis_tensor.DataType() != DataType::kNumberTypeInt64) {
-    MS_LOG(WARNING) << "not int data type";
-  }
-  auto axis_vec = ConvertTensorAsIntVector(axis_tensor);
-  if (axis_vec.empty()) {
-    MS_LOG(ERROR) << "Failed to get axis input, axis size " << axis_vec.size() << ", node: " << op_name_;
-    return RET_ERROR;
-  }
-  auto input_0 = input(ctx, 0).trt_tensor_;
-  for (size_t i = 0; i < axis_vec.size(); i++) {
-    int format_axis_data = (axis_vec[i] == -1) ? input_0->getDimensions().nbDims - 1 : axis_vec[i];
-    MS_LOG(DEBUG) << op_name_ << " reduceAxis at index : " << axis_vec[i];
-    reduceAxis |= 1u << format_axis_data;
+  if (in_tensors_.size() == 1) {
+    std::vector<int> axis;
+    axis.resize(input(ctx, 0).trt_tensor_->getDimensions().nbDims);
+    std::iota(axis.begin(), axis.end(), 0);
+    for (int ax : axis) {
+      MS_LOG(DEBUG) << op_name_ << " reduceAxis at index : " << ax;
+      reduceAxis |= 1 << ax;
+    }
+  } else {
+    // axis
+    auto axis_tensor = this->in_tensors_[1];
+    if (!axis_tensor.IsConst()) {
+      MS_LOG(ERROR) << "invalid axis_tensor";
+      return reduceAxis;
+    }
+    if (axis_tensor.DataType() != DataType::kNumberTypeInt32 && axis_tensor.DataType() != DataType::kNumberTypeInt64) {
+      MS_LOG(WARNING) << "not int data type";
+    }
+    auto axis_vec = ConvertTensorAsIntVector(axis_tensor);
+    if (axis_vec.empty()) {
+      MS_LOG(ERROR) << "Failed to get axis input, axis size " << axis_vec.size() << ", node: " << op_name_;
+      return RET_ERROR;
+    }
+    auto input_0 = input(ctx, 0).trt_tensor_;
+    for (size_t i = 0; i < axis_vec.size(); i++) {
+      int format_axis_data = (axis_vec[i] < 0) ? input_0->getDimensions().nbDims + axis_vec[i] : axis_vec[i];
+      MS_LOG(DEBUG) << op_name_ << " reduceAxis at index : " << axis_vec[i];
+      reduceAxis |= 1u << format_axis_data;
+    }
   }
   return reduceAxis;
 }

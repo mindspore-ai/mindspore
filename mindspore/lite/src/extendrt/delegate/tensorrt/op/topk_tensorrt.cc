@@ -35,10 +35,6 @@ nvinfer1::ITensor *TopkReshape(TensorRTContext *ctx, nvinfer1::ITensor *input, i
 
 int TopKTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                             const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != 1 && in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -50,6 +46,10 @@ int TopKTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vec
   if (type_ != ops::kNameTopKFusion) {
     // need reshape
     dynamic_shape_params_.support_hw_dynamic_ = false;
+  }
+  if ((type_ == ops::kNameTopKFusion || type_ == ops::kNameTopK) && in_tensors.size() != INPUT_SIZE2) {
+    MS_LOG(ERROR) << "TopkFusion or Topk need 2 input tensors for " << op_name_;
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -107,7 +107,7 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   // output 0 is data value, output 1 is index
 
-  if (top_k_ == 1 && type_ != ops::kNameTopKFusion) {
+  if (top_k_ == 1 && type_ != ops::kNameTopKFusion && keep_dims_ == false) {
     value_out_tensor = TopkReshape(ctx, value_out_tensor, axis_value_);
     if (value_out_tensor == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed!";
@@ -138,23 +138,23 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
     CHECK_NULL_RETURN(max_prim);
     axis_value_ = max_prim->get_axis();
     axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
-    if (max_prim->HasAttr(ops::kTopK)) {
-      top_k_ = max_prim->get_top_k();
-    } else {
-      top_k_ = 1;
+    if (max_prim->HasAttr(ops::kKeepDims)) {
+      keep_dims_ = max_prim->get_keep_dims();
     }
-  } else if (type_ == ops::kNameArgMinFusion) {
+    top_k_ = max_prim->HasAttr(ops::kTopK) ? max_prim->get_top_k() : 1;
+  }
+  if (type_ == ops::kNameArgMinFusion) {
     topk_op_ = nvinfer1::TopKOperation::kMIN;
     auto mim_prim = AsOps<ops::ArgMaxFusion>();
     CHECK_NULL_RETURN(mim_prim);
     axis_value_ = mim_prim->get_axis();
     axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
-    if (mim_prim->HasAttr(ops::kTopK)) {
-      top_k_ = mim_prim->get_top_k();
-    } else {
-      top_k_ = 1;
+    if (mim_prim->HasAttr(ops::kKeepDims)) {
+      keep_dims_ = mim_prim->get_keep_dims();
     }
-  } else if (type_ == ops::kNameTopKFusion) {
+    top_k_ = mim_prim->HasAttr(ops::kTopK) ? mim_prim->get_top_k() : 1;
+  }
+  if (type_ == ops::kNameTopKFusion) {
     auto topk_prim = AsOps<ops::TopKFusion>();
     CHECK_NULL_RETURN(topk_prim);
     if (topk_prim->HasAttr(ops::kLargest)) {
@@ -171,35 +171,25 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
       axis_value_ = input_nbDims - 1;
     }
     axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
-    if (in_tensors_.size() < INPUT_SIZE2) {
-      MS_LOG(ERROR) << "invalid input size " << in_tensors_.size() << "for " << op_name_;
-      return RET_ERROR;
-    }
     std::vector<float> tmp(1);
     int ret_k = ParseData2Vector(in_tensors_[1], &tmp);
     if (ret_k != RET_OK) {
       return ret_k;
     }
     top_k_ = tmp[0];
-  } else if (type_ == ops::kNameTopK) {
+  }
+  if (type_ == ops::kNameTopK) {
     auto topk_prim = AsOps<ops::TopK>();
     CHECK_NULL_RETURN(topk_prim);
     topk_op_ = nvinfer1::TopKOperation::kMAX;
 
     axis_value_ = input_nbDims - 1;
-    if (in_tensors_.size() < INPUT_SIZE2) {
-      MS_LOG(ERROR) << "invalid input size " << in_tensors_.size() << "for " << op_name_;
-      return RET_ERROR;
-    }
     std::vector<float> tmp(1);
     int ret_k = ParseData2Vector(in_tensors_[1], &tmp);
     if (ret_k != RET_OK) {
       return ret_k;
     }
     top_k_ = tmp[0];
-  } else {
-    MS_LOG(ERROR) << op_name_ << " has more primitive type: " << type_;
-    return RET_ERROR;
   }
   // Currently reduceAxes must specify exactly one dimension, and it must be one of the last four dimensions.
   if (axis_value_ != input_nbDims - 1) {

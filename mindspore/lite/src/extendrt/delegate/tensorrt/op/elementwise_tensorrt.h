@@ -41,6 +41,8 @@ class ElementWiseTensorRT : public TensorRTOp {
 
   int AddConstTensor(TensorRTContext *ctx);
 
+  int BroadcastInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input);
+
   bool SameTensor(nvinfer1::ITensor *trt_tensor, TensorInfo *ms_tensor);
 
   int PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input);

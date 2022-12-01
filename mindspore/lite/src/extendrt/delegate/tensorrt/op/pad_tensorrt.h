@@ -36,6 +36,10 @@ class PadTensorRT : public TensorRTOp {
                 const std::vector<TensorInfo> &outputs) override;
 
  private:
+  int AddInnerOpFix(TensorRTContext *ctx, const std::vector<int64_t> &input_shape, nvinfer1::ITensor *pad_input,
+                    const std::vector<int> &pad_vec);
+  int AddInnerOpDynamic(TensorRTContext *ctx, const std::vector<int64_t> &input_shape, nvinfer1::ITensor *pad_input,
+                        const std::vector<int> &pad_vec);
   float constant_value_ = 0.0f;
   PaddingMode padding_mode_ = PaddingMode::CONSTANT;
   int AddInnerOpOld(TensorRTContext *ctx);
