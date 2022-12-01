@@ -39,6 +39,7 @@ constexpr size_t IMAGE = 0;
 constexpr size_t BOXES = 1;
 constexpr size_t BOX_INDEX = 2;
 constexpr size_t CROP_SIZE = 3;
+constexpr size_t IMAGE_BATCH = 0;
 constexpr size_t IMAGE_HEIGHT = 1;
 constexpr size_t IMAGE_WEIGHT = 2;
 class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
@@ -74,6 +75,7 @@ class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
   int method_{1};
   float extrapolation_value_{0.0};
   int output_size_{0};
+  int input_batch_{0};
   int input_height_{0};
   int input_width_{0};
   int final_height_{0};
