@@ -181,7 +181,9 @@ mindspore.ops
     mindspore.ops.bessel_y0
     mindspore.ops.bessel_y1
     mindspore.ops.bitwise_and
+    mindspore.ops.bitwise_left_shift
     mindspore.ops.bitwise_or
+    mindspore.ops.bitwise_right_shift
     mindspore.ops.bitwise_xor
     mindspore.ops.ceil
     mindspore.ops.clamp

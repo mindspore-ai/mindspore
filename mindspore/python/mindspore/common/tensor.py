@@ -1140,6 +1140,22 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('bitwise_xor')(self, x)
 
+    def bitwise_left_shift(self, other):
+        """
+        For details, please refer to :func:`mindspore.ops.bitwise_left_shift`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('bitwise_left_shift')(self, other)
+
+    def bitwise_right_shift(self, other):
+        """
+        For details, please refer to :func:`mindspore.ops.bitwise_left_shift`.
+        """
+        self._init_check()
+        _cast = tensor_operator_registry.get('cast')
+        other = _cast(other, self.dtype)
+        return tensor_operator_registry.get('bitwise_right_shift')(self, other)
+
     def scatter_mul(self, indices, updates):
         """
         For details, please refer to :func:`mindspore.ops.scatter_mul`.

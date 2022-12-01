@@ -2698,6 +2698,16 @@ def bitwise_xor(x, y):
     return F.bitwise_xor(x, y)
 
 
+def bitwise_left_shift(x, y):
+    """Returns bitwise left shift of `x` by `other` bits."""
+    return F.bitwise_left_shift(x, y)
+
+
+def bitwise_right_shift(x, y):
+    """Returns bitwise right shift of `x` by `other` bits."""
+    return F.bitwise_right_shift(x, y)
+
+
 def exp(x):
     """Returns exponential of a tensor element-wise."""
     return F.exp(x)

@@ -16,6 +16,7 @@
 """Defines math operators with functional form."""
 
 import math
+import numbers
 from itertools import zip_longest
 from collections import deque
 import numpy as np
@@ -2160,6 +2161,115 @@ def bitwise_xor(x, y):
         [ 0  1  0  0 -2  3  2]
     """
     return bitwise_xor_(x, y)
+
+
+def bitwise_left_shift(x, other):
+    r"""
+    Calculates the left arithmetic shift of `x` by `other` bits.
+
+    .. math::
+
+        \begin{aligned}
+        &out_{i} =x_{i} << other_{i}
+        \end{aligned}
+
+    Args:
+        x (Tensor or Scalar): The input to be left shifted.
+        other(Tensor or Scalar): The number of bit to be applied on left arithmetic shift.
+
+    Returns:
+        Tensor, the result after bitwise left shift.
+
+    Raises:
+        TypeError: If neither `x` nor `other` is a tensor.
+        TypeError: If either `x` or `other` is not an int or a tensor of dtype: int or uint.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1024, 2]), mindspore.int16)
+        >>> y = Tensor(np.array([2]), mindspore.int16)
+        >>> output = ops.bitwise_left_shift(x, y)
+        >>> print(output)
+        [4096    8]
+    """
+    if isinstance(x, numbers.Number) and isinstance(other, numbers.Number):
+        raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
+
+    cast = ops.Cast()
+    white_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                  mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
+    if isinstance(x, numbers.Number):
+        _dtype = other.dtype
+        if not isinstance(x, int):
+            raise TypeError(f"For 'bitwise_left_shift', 'x' must be an integer, but got x:{type(x)}.")
+        if _dtype not in white_list:
+            raise TypeError(f"For 'bitwise_left_shift', 'other' must be a Tensor of int or uint, but got {_dtype}.")
+        x = cast(x, other.dtype)
+    elif isinstance(other, numbers.Number):
+        _dtype = x.dtype
+        if not isinstance(other, int):
+            raise TypeError(f"For 'bitwise_left_shift', 'other' must be an integer, but got other:{type(other)}.")
+        if _dtype not in white_list:
+            raise TypeError(f"For 'bitwise_left_shift', 'x' must be a Tensor of int or uint, but got {_dtype}.")
+    other = cast(other, x.dtype)
+    ls = ops.LeftShift()
+    return ls(x, other)
+
+
+def bitwise_right_shift(x, other):
+    r"""
+    Calculates the right arithmetic shift of `x` by `other` bits.
+
+    .. math::
+
+        \begin{aligned}
+        &out_{i} =x_{i} >> y_{i}
+        \end{aligned}
+
+    Args:
+        x (Tensor or Scalar): The input to be right shifted.
+        other(Tensor or Scalar): The number of bit to be applied on right arithmetic shift.
+
+    Returns:
+        Tensor, the result after bitwise right shift.
+
+    Raises:
+        TypeError: If neither `x` nor `other` is a tensor.
+        TypeError: If either `x` or `other` is not an int or a tensor of dtype: int or uint.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1024, 2]), mindspore.int16)
+        >>> y = Tensor(np.array([2]), mindspore.int16)
+        >>> output = ops.bitwise_right_shift(x, y)
+        >>> print(output)
+        [256   0]
+    """
+    if isinstance(x, numbers.Number) and isinstance(other, numbers.Number):
+        raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
+    cast = ops.Cast()
+    white_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                  mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
+    if isinstance(x, numbers.Number):
+        _dtype = other.dtype
+        if not isinstance(x, int):
+            raise TypeError(f"For 'bitwise_left_shift', 'x' must be an integer, but got x:{type(x)}.")
+        if _dtype not in white_list:
+            raise TypeError(f"For 'bitwise_left_shift', 'other' must be a Tensor of int or uint, but got {_dtype}.")
+        x = cast(x, other.dtype)
+    elif isinstance(other, numbers.Number):
+        _dtype = x.dtype
+        if not isinstance(other, int):
+            raise TypeError(f"For 'bitwise_left_shift', 'other' must be an integer, but got other:{type(other)}.")
+        if _dtype not in white_list:
+            raise TypeError(f"For 'bitwise_left_shift', 'x' must be a Tensor of int or uint, but got {_dtype}.")
+    other = cast(other, x.dtype)
+    rs = ops.RightShift()
+    return rs(x, other)
 
 
 def inv(x):
@@ -7752,6 +7862,8 @@ __all__ = [
     'bitwise_and',
     'bitwise_or',
     'bitwise_xor',
+    'bitwise_left_shift',
+    'bitwise_right_shift',
     'inv',
     'inverse',
     'invert',

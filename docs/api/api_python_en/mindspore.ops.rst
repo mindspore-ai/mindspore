@@ -184,6 +184,8 @@ Element-by-Element Operations
     mindspore.ops.bitwise_and
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor
+    mindspore.ops.bitwise_left_shift
+    mindspore.ops.bitwise_right_shift
     mindspore.ops.ceil
     mindspore.ops.clip
     mindspore.ops.clamp

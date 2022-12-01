@@ -59,7 +59,9 @@ mindspore.Tensor
     mindspore.Tensor.baddbmm
     mindspore.Tensor.bernoulli
     mindspore.Tensor.bitwise_and
+    mindspore.Tensor.bitwise_left_shift
     mindspore.Tensor.bitwise_or
+    mindspore.Tensor.bitwise_right_shift
     mindspore.Tensor.bitwise_xor
     mindspore.Tensor.bmm
     mindspore.Tensor.bool
