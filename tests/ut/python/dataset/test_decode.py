@@ -15,6 +15,9 @@
 """
 Testing Decode op in DE
 """
+import glob
+import os
+
 import cv2
 import numpy as np
 import pytest
@@ -85,15 +88,34 @@ def test_decode_op_support_format():
 
     # gif: Opencv[×] Pillow[√]
     gif_image = np.fromfile("../data/dataset/testFormats/apple.gif", np.uint8)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="Unsupported image type"):
         c_decode(gif_image)
     p_decode(gif_image)
 
+    assert len(glob.glob('unsupported_image.gif')) == 1
+    # delete the dump file which is not supported
+    os.remove(glob.glob('unsupported_image.gif')[0])
+
     # webp: Opencv[×] Pillow[√]
     webp_image = np.fromfile("../data/dataset/testFormats/apple.webp", np.uint8)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="Unsupported image type"):
         c_decode(webp_image)
     p_decode(webp_image)
+
+    assert len(glob.glob('unsupported_image.webp')) == 1
+    # delete the dump file which is not supported
+    os.remove(glob.glob('unsupported_image.webp')[0])
+
+    # abnormal image: Opencv[x] Pillow[x]
+    abnormal_image = np.fromfile("../data/dataset/testFormats/abnormal_apple.jpg", np.uint8)
+    with pytest.raises(RuntimeError, match="Dump the abnormal image to"):
+        c_decode(abnormal_image)
+    with pytest.raises(ValueError, match="image file is truncated"):
+        p_decode(abnormal_image)
+
+    assert len(glob.glob('abnormal_image.jpg')) == 1
+    # delete the dump file which is abnormal
+    os.remove(glob.glob('abnormal_image.jpg')[0])
 
 
 class ImageDataset:

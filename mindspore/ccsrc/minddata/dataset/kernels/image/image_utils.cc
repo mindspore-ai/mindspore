@@ -320,24 +320,34 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 }
 
+const unsigned char kJpegMagic[] = "\xFF\xD8\xFF";
+constexpr dsize_t kJpegMagicLen = 3;
+const unsigned char kPngMagic[] = "\x89\x50\x4E\x47";
+constexpr dsize_t kPngMagicLen = 4;
+
 bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input) {
-  const unsigned char kJpegMagic[] = "\xFF\xD8\xFF";
-  constexpr dsize_t kJpegMagicLen = 3;
   return input->SizeInBytes() > kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
 }
 
 bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input) {
-  const unsigned char kPngMagic[] = "\x89\x50\x4E\x47";
-  constexpr dsize_t kPngMagicLen = 4;
   return input->SizeInBytes() > kPngMagicLen && memcmp(input->GetBuffer(), kPngMagic, kPngMagicLen) == 0;
 }
 
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  RETURN_IF_NOT_OK(CheckUnsupportedImage(input));
+
+  Status ret;
   if (IsNonEmptyJPEG(input)) {
-    return JpegCropAndDecode(input, output);
+    ret = JpegCropAndDecode(input, output);
   } else {
-    return DecodeCv(input, output);
+    ret = DecodeCv(input, output);
   }
+
+  // decode failed and dump it
+  if (ret != Status::OK()) {
+    return DumpImageAndAppendStatus(input, ret);
+  }
+  return ret;
 }
 
 Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -2588,6 +2598,83 @@ Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &imag
     RETURN_STATUS_UNEXPECTED("WritePng: Failed to write the file " + filename);
   }
   fs.close();
+  return Status::OK();
+}
+
+// support list
+const unsigned char kBmpMagic[] = "\x42\x4D";
+constexpr dsize_t kBmpMagicLen = 2;
+const unsigned char kTiffMagic1[] = "\x4D\x4D";
+const unsigned char kTiffMagic2[] = "\x49\x49";
+constexpr dsize_t kTiffMagicLen = 2;
+
+Status DumpImageAndAppendStatus(const std::shared_ptr<Tensor> &image, const Status &status) {
+  Status local_status = status;
+  std::string file_name = "./abnormal_image.";
+  std::string file_suffix = "";
+  std::string error_info = local_status.GetErrDescription();
+  if (image->SizeInBytes() == 0) {
+    return local_status;
+  }
+
+  if (memcmp(image->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0) {  // support
+    file_suffix = "jpg";
+  } else if (memcmp(image->GetBuffer(), kPngMagic, kPngMagicLen) == 0) {  // support
+    file_suffix = "png";
+  } else if (memcmp(image->GetBuffer(), kBmpMagic, kBmpMagicLen) == 0) {  // support
+    file_suffix = "bmp";
+  } else if (memcmp(image->GetBuffer(), kTiffMagic1, kTiffMagicLen) == 0 ||  // support
+             memcmp(image->GetBuffer(), kTiffMagic2, kTiffMagicLen) == 0) {
+    file_suffix = "tif";
+  } else {
+    file_suffix = "exception";
+    error_info += " Unknown image type.";
+  }
+
+  auto ret = WriteFile(file_name + file_suffix, image);
+  if (ret == Status::OK()) {
+    error_info += " Dump the abnormal image to [" + (file_name + file_suffix) +
+                  "]. You can check this image first through the image viewer. If you find that " +
+                  "the image is abnormal, delete it from the dataset and re-run.";
+  }
+  local_status.SetErrDescription(error_info);
+  return local_status;
+}
+
+// unsupported list
+const unsigned char kGifMagic[] = "\x47\x49\x46";
+constexpr dsize_t kGifMagicLen = 3;
+const unsigned char kWebpMagic[] = "\x00\x57\x45\x42";
+constexpr dsize_t kWebpMagicLen = 4;
+
+Status CheckUnsupportedImage(const std::shared_ptr<Tensor> &image) {
+  bool unsupport_flag = false;
+
+  std::string file_name = "./unsupported_image.";
+  std::string file_suffix = "";
+  if (image->SizeInBytes() == 0) {
+    RETURN_STATUS_UNEXPECTED("Image file size is 0.");
+  }
+
+  if (memcmp(image->GetBuffer(), kGifMagic, kGifMagicLen) == 0) {  // unsupported
+    file_suffix = "gif";
+    unsupport_flag = true;
+  } else if (memcmp(image->GetBuffer() + 7, kWebpMagic, kWebpMagicLen) == 0) {  // unsupported: skip the 7 bytes
+    file_suffix = "webp";
+    unsupport_flag = true;
+  }
+
+  if (unsupport_flag) {
+    auto ret = WriteFile(file_name + file_suffix, image);
+    if (ret == Status::OK()) {
+      RETURN_STATUS_UNEXPECTED("Unsupported image type [" + file_suffix + "] and dump the image to [" +
+                               (file_name + file_suffix) + "]. Please delete it from the dataset and re-run.");
+    } else {
+      ret.SetErrDescription("Unsupported image type [" + file_suffix + "], but dump the image failed. " +
+                            "Error info: " + ret.GetErrDescription());
+      return ret;
+    }
+  }
   return Status::OK();
 }
 }  // namespace dataset
