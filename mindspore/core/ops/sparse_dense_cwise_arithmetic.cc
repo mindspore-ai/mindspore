@@ -42,6 +42,13 @@ abstract::ShapePtr SparseDenseCwiseArithmeticInferShape(const PrimitivePtr &prim
   MS_EXCEPTION_IF_NULL(shape_shape_ptr);
   auto dense_shape_ptr = input_args[kInputIndex3]->BuildShape();
   MS_EXCEPTION_IF_NULL(dense_shape_ptr);
+
+  auto output_shape = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
+  if (indices_shape_ptr->IsDynamic() || values_shape_ptr->IsDynamic() || shape_shape_ptr->IsDynamic() ||
+      dense_shape_ptr->IsDynamic()) {
+    return output_shape;
+  }
+
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
@@ -74,7 +81,6 @@ abstract::ShapePtr SparseDenseCwiseArithmeticInferShape(const PrimitivePtr &prim
                              << "',  the dims of `x2` should be less or equal to the shape[0] of `x1_shape`, but got "
                              << dense_shape.size() << " vs " << shape_shape[0] << ".";
   }
-  auto output_shape = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
   return output_shape;
 }
 
@@ -88,7 +94,7 @@ TypePtr SparseDenseCwiseArithmeticInferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
   (void)type_dict.emplace("values", input_args[kInputIndex1]->BuildType());
-  (void)type_dict.emplace("shape", input_args[kInputIndex3]->BuildType());
+  (void)type_dict.emplace("x2", input_args[kInputIndex3]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex, prim_name);
 }
 }  // namespace
