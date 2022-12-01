@@ -24,7 +24,7 @@ namespace mindspore {
 FuncGraphLoopBreaker::~FuncGraphLoopBreaker() {
   std::lock_guard<std::mutex> lock_set(func_mutex_);
   for (auto fg : func_set_) {
-    fg->reg_flg = false;
+    fg->reg_flg_ = false;
   }
 }
 
@@ -38,9 +38,15 @@ void FuncGraphLoopBreaker::BreakLoop() {
   std::list<FuncGraphBasePtr> func_list;
 
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
-  (void)std::transform(func_set_.begin(), func_set_.end(), std::back_inserter(func_list),
-                       [](FuncGraphBase *fun) -> FuncGraphBasePtr { return fun->shared_from_base<FuncGraphBase>(); });
+  std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
+    if (fun != nullptr && !fun->subclass_destruct_flag_) {
+      func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
+    }
+  });
   for (auto &item : func_list) {
+    if (item == nullptr) {
+      continue;
+    }
     item->DoBreakLoop();
   }
   func_list.clear();
@@ -62,10 +68,13 @@ void FuncGraphLoopBreaker::CleanMetaFuncGraphCache() {
   std::list<FuncGraphBasePtr> func_list;
 
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
-  (void)std::transform(func_set_.begin(), func_set_.end(), std::back_inserter(func_list),
-                       [](FuncGraphBase *fun) -> FuncGraphBasePtr { return fun->shared_from_base<FuncGraphBase>(); });
+  std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
+    if (fun != nullptr && !fun->subclass_destruct_flag_) {
+      func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
+    }
+  });
   for (auto item : func_list) {
-    if (item->isa<MetaFuncGraph>()) {
+    if (item != nullptr && item->isa<MetaFuncGraph>()) {
       item->DoBreakLoop();
     }
   }
@@ -73,14 +82,16 @@ void FuncGraphLoopBreaker::CleanMetaFuncGraphCache() {
 
 void FuncGraphLoopBreaker::ClearCellGraphs(const std::string &phase) {
   std::list<FuncGraphBasePtr> func_list;
-
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
-  (void)std::transform(func_set_.begin(), func_set_.end(), std::back_inserter(func_list),
-                       [](FuncGraphBase *fun) -> FuncGraphBasePtr { return fun->shared_from_base<FuncGraphBase>(); });
+  std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
+    if (fun != nullptr && !fun->subclass_destruct_flag_) {
+      func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
+    }
+  });
   for (auto item : func_list) {
-    if (item->isa<FuncGraph>()) {
+    if (item != nullptr && item->isa<FuncGraph>()) {
       auto func_graph = item->cast<FuncGraphPtr>();
-      if (func_graph->phase() == phase) {
+      if (func_graph != nullptr && func_graph->phase() == phase) {
         func_graph->DoBreakLoop();
       }
     }
