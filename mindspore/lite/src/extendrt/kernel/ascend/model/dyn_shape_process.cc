@@ -34,7 +34,6 @@ constexpr auto kNCHWWidthIdx = 3;
 constexpr auto kImageSizeHwNum = 2;
 constexpr auto kUnknownDim = -1;
 }  // namespace
-
 std::string GenResultStr(const std::vector<int64_t> &input_vec) {
   std::string res;
   for (size_t i = 0; i < input_vec.size(); ++i) {

@@ -63,7 +63,6 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   bool OnNewInputShapes(const std::vector<KernelTensorPtr> &new_shapes);
 
   bool load_model_;
-  std::vector<KernelTensorPtr> original_data_;
   std::vector<KernelTensorPtr> inputs_;
   std::vector<KernelTensorPtr> outputs_;
   AclModelOptionsPtr acl_options_;
