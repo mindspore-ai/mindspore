@@ -167,6 +167,7 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     }
     return is_dynamic;
   }
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto input_value = input_args[kInputIndex1]->BuildValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>() ||
       input_args[kInputIndex1]->isa<abstract::AbstractTuple>() ||

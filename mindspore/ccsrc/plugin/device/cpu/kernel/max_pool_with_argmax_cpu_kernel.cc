@@ -25,6 +25,7 @@ namespace {
 constexpr size_t kMaxPoolWithArgmaxInputsNum = 1;
 constexpr size_t kMaxPoolWithArgmaxOutputsNum = 2;
 constexpr size_t kInputRank = 4;
+constexpr size_t kIndex3 = 3;
 constexpr int kPadHalf = 2;
 }  // namespace
 
@@ -34,8 +35,15 @@ bool MaxPoolWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(base_operator);
   data_format_ = kernel_ptr->get_format();
-  window_height_ = LongToInt(kernel_ptr->get_kernel_size()[kDim1]);
-  window_width_ = LongToInt(kernel_ptr->get_kernel_size()[kDim2]);
+  auto kernel_size = kernel_ptr->get_kernel_size();
+  auto strides = kernel_ptr->get_strides();
+  if (kernel_size.size() < kIndex3 || strides.size() < kIndex3) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 3, but got "
+                      << strides.size();
+  }
+
+  window_height_ = LongToInt(kernel_size[kDim1]);
+  window_width_ = LongToInt(kernel_size[kDim2]);
   if (window_height_ < 1 || window_width_ < 1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', expected kernel_size to be Union[int, tuple[int]] with value no "
@@ -44,8 +52,8 @@ bool MaxPoolWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                              << window_height_ << ", and the window width: " << window_width_;
     return false;
   }
-  stride_height_ = LongToInt(kernel_ptr->get_strides()[kDim1]);
-  stride_width_ = LongToInt(kernel_ptr->get_strides()[kDim2]);
+  stride_height_ = LongToInt(strides[kDim1]);
+  stride_width_ = LongToInt(strides[kDim2]);
   if (stride_height_ < 1 || stride_width_ < 1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', expected strides to be Union[int, tuple[int]] with value no "
