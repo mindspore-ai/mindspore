@@ -15,11 +15,11 @@
  */
 
 #include "nnacl/nnacl_utils.h"
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
 #include <sys/auxv.h>
 #endif
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
 uint32_t getHwCap(int hwcap_type) {
   uint32_t ret = getauxval(hwcap_type);
   return ret;

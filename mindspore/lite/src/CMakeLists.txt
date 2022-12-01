@@ -534,10 +534,16 @@ if(SUPPORT_NNAPI)
 endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
-        AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
+        AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64 AND NOT TARGET_OHOS)
     target_link_libraries(mindspore-lite log)
     target_link_libraries(mindspore-lite_static log)
 endif()
+
+if(TARGET_OHOS)
+    target_link_libraries(mindspore-lite hilog_ndk.z.so)
+    target_link_libraries(mindspore-lite_static hilog_ndk.z.so)
+endif()
+
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite")
     target_link_libraries(mindspore-lite minddata_eager_mid minddata-lite)
     target_link_libraries(mindspore-lite_static minddata_eager_mid)

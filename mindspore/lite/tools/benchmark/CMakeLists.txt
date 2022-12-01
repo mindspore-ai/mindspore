@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.12)
 project(Lite_benchmark)
 
 if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-    set(BENCHMARK_LINK_LIB mindspore-lite)
+    if(TARGET_OHOS)
+        set(BENCHMARK_LINK_LIB libmindspore-lite.so)
+    else()
+        set(BENCHMARK_LINK_LIB mindspore-lite)
+    endif()
 else()
     add_definitions(-DUSE_GLOG)
     set(BENCHMARK_LINK_LIB mindspore-extendrt)
@@ -81,6 +85,11 @@ add_executable(benchmark
         ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_unified_api.cc
         ${C_SRC}
         ${COMMON_SRC})
+
+if(TARGET_OHOS)
+    target_link_directories(benchmark PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../../src)
+    add_dependencies(benchmark mindspore-lite)
+endif()
 
 add_dependencies(benchmark fbs_src)
 

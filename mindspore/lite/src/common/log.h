@@ -23,6 +23,12 @@
 #include <unordered_map>
 #include "utils/overload.h"
 
+#ifdef MS_COMPILE_OHOS
+#define LOG_DOMAIN 0x2102
+#define LOG_TAG "MS_Lite"
+#define FORMAT "[%{public}s:%{public}d] %{public}s# %{public}s"
+#include "hilog/log.h"
+#endif
 // NOTICE: when relative path of 'log.h' changed, macro 'LITE_LOG_HEAR_FILE_REL_PATH' must be changed
 #ifndef LITE_LOG_HEAR_FILE_REL_PATH
 #define LITE_LOG_HEAR_FILE_REL_PATH "mindspore/lite/src/common/log.h"

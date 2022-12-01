@@ -17,13 +17,13 @@
 #include <cstring>
 #include <cstdio>
 
-#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
+#if defined(__ANDROID__)
 #include <android/log.h>
 #endif
 
 // namespace to support utils module definition namespace mindspore constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 namespace mindspore {
-#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
+#if defined(__ANDROID__)
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
 
@@ -55,7 +55,7 @@ bool IsPrint(int level) {
   return level >= ms_level;
 }
 
-#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
+#if defined(__ANDROID__)
 static int GetAndroidLogLevel(LiteLogLevel level) {
   switch (level) {
     case LiteLogLevel::DEBUG:
@@ -67,6 +67,22 @@ static int GetAndroidLogLevel(LiteLogLevel level) {
     case LiteLogLevel::ERROR:
     default:
       return ANDROID_LOG_ERROR;
+  }
+}
+#endif
+
+#ifdef MS_COMPILE_OHOS
+void PrintHiLog(LiteLogLevel level, const char *file, int line, const char *func, const char *msg) {
+  if (level == LiteLogLevel::DEBUG) {
+    OH_LOG_Print(LOG_APP, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, FORMAT, file, line, func, msg);
+  } else if (level == LiteLogLevel::INFO) {
+    OH_LOG_Print(LOG_APP, LOG_INFO, LOG_DOMAIN, LOG_TAG, FORMAT, file, line, func, msg);
+  } else if (level == LiteLogLevel::WARNING) {
+    OH_LOG_Print(LOG_APP, LOG_WARN, LOG_DOMAIN, LOG_TAG, FORMAT, file, line, func, msg);
+  } else if (level == LiteLogLevel::ERROR) {
+    OH_LOG_Print(LOG_APP, LOG_ERROR, LOG_DOMAIN, LOG_TAG, FORMAT, file, line, func, msg);
+  } else {
+    OH_LOG_Print(LOG_APP, LOG_ERROR, LOG_DOMAIN, LOG_TAG, FORMAT, file, line, func, msg);
   }
 }
 #endif
@@ -87,9 +103,11 @@ const char *EnumStrForMsLogLevel(LiteLogLevel level) {
 
 void LiteLogWriter::OutputLog(const std::ostringstream &msg) const {
   if (IsPrint(static_cast<int>(log_level_))) {
-#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
+#if defined(__ANDROID__)
     __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s", location_.file_,
                         location_.line_, location_.func_, msg.str().c_str());
+#elif defined(MS_COMPILE_OHOS)
+    PrintHiLog(log_level_, location_.file_, location_.line_, location_.func_, msg.str().c_str());
 #else
     printf("%s [%s:%d] %s] %s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
            msg.str().c_str());

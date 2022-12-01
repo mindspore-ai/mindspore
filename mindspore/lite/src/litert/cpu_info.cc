@@ -56,7 +56,7 @@
 #endif
 #endif
 namespace mindspore::lite {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
 uint32_t CpuInfo::MidrSetPart(uint32_t part) {
   return ((part << ARM_CPU_PART_OFFSET) & ARM_CPU_PART_MASK) | (midr_ & ~ARM_CPU_PART_MASK);
 }
@@ -152,7 +152,7 @@ bool CpuInfo::ArmIsSupportFp16() {
   }
   return false;
 #else
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
 #ifdef ENABLE_ARM32
   GetArmProcCpuInfo(&android_cpu_info_);
   midr_ = MidrSetPart(android_cpu_info_.cpu_part);

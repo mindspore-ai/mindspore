@@ -113,7 +113,7 @@ if(USE_GLOG)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/securec/include)
     include_directories(${CMAKE_BINARY_DIR}/jni_include)
     add_definitions(-DUSE_GLOG)
-
+    set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
     set(JNI_SRC
             ${JNI_SRC}
             ${TOP_DIR}/mindspore/core/utils/log_adapter.cc
@@ -166,6 +166,7 @@ if(SUPPORT_TRAIN)
                 ${JNI_TRAIN_SRC}
                 ${TOP_DIR}/mindspore/core/utils/log_adapter.cc
                 )
+        set_property(SOURCE ${JNI_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
     else()
         set(JNI_TRAIN_SRC
                 ${JNI_TRAIN_SRC}

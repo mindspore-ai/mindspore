@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
 #endif
@@ -141,7 +141,7 @@ std::vector<std::string> Tokenize(const std::string &src, const std::string &del
   return tokens;
 }
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
 uint32_t getHwCap(int hwcap_type) {
   uint32_t ret = getauxval(hwcap_type);
   return ret;
@@ -151,7 +151,7 @@ uint32_t getHwCap(int hwcap_type) {
 bool IsSupportSDot() {
   bool status = false;
 #ifdef ENABLE_ARM64
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
   int hwcap_type = 16;
   uint32_t hwcap = getHwCap(hwcap_type);
   if (hwcap & HWCAP_ASIMDDP) {
