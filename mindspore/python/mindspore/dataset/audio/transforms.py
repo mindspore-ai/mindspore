@@ -1214,6 +1214,7 @@ class LFCC(AudioTensorOperation):
         TypeError: If `log_lf` is not of type bool.
         TypeError: If `speckwargs` is not of type dict.
         ValueError: If `sample_rate` is 0.
+        ValueError: If `n_lfcc` is less than 0.
         ValueError: If `f_min` is greater than `f_max` .
         ValueError: If `f_min` is greater than `sample_rate // 2` when `f_max` is set to None.
         ValueError: If `dct_type` is not 2.
