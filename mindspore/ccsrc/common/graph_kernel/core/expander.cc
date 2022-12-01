@@ -52,12 +52,11 @@ AnfNodePtr InputToAttrDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node, true);
   auto all_op_index_info = ConvertOpUtils::GetOpIndexInfo();
   auto iter = all_op_index_info.find(GetCNodePrimitive(node)->name());
-  if (iter == all_op_index_info.end()) {
-    MS_LOG(DEBUG) << "This Node don't need convert input to attr";
-    return nullptr;
+  if (iter != all_op_index_info.end()) {
+    auto ret = ConvertOpUtils::ConstInputToAttr(cnode, iter->second);
+    return ret ? decorated_->Run(cnode) : nullptr;
   }
-  auto ret = ConvertOpUtils::ConstInputToAttr(cnode, iter->second);
-  return ret ? decorated_->Run(cnode) : nullptr;
+  return decorated_->Run(cnode);
 }
 
 AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
