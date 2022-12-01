@@ -16,7 +16,6 @@
 """inner_ops"""
 from __future__ import absolute_import
 
-from mindspore import context
 from mindspore.ops.operations.comm_ops import _VirtualPipelineEnd
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops.operations import _inner_ops as inner
@@ -36,27 +35,6 @@ def get_bprop_tensor_copy_slices(self):
         x_grad = tensor_copy_slices(dout, zeros_like(update), begin, end, stride)
         update_grad = F.strided_slice(dout, begin, end, stride)
         return x_grad, update_grad, zeros_like(begin), zeros_like(end), zeros_like(stride)
-
-    return bprop
-
-
-@bprop_getters.register(inner.Roll)
-def get_bprop_roll(self):
-    """Generate bprop for Roll"""
-    if context.get_context("device_target") == "GPU":
-        shift = []
-        axis = self.axis
-        for tmp in enumerate(self.shift):
-            shift.append(-tmp[1])
-        roll_grad = inner.Roll(shift, axis)
-    else:
-        shift = self.shift
-        axis = self.axis
-        roll_grad = inner.Roll(-shift, axis)
-
-    def bprop(x_input, out, dout):
-        dx = roll_grad(dout)
-        return (dx,)
 
     return bprop
 
