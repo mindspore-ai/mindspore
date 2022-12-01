@@ -91,7 +91,7 @@ abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
   constexpr auto kInputNum = 2;
   if (input_num != kInputNum) {
     MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the number of inputs must be "
-                             << " 1 or 2, but got " << input_num;
+                             << "2, but got " << input_num;
   }
 
   auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
