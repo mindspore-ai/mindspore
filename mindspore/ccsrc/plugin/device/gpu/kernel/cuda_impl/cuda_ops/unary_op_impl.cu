@@ -310,6 +310,13 @@ __global__ void SinhKernel(const double *input, double *output, const size_t cou
   }
   return;
 }
+template <typename T>
+__global__ void SinhKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = sinh(input[i]);
+  }
+  return;
+}
 template <>
 __global__ void SinhKernel(const half *input, half *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
@@ -1847,6 +1854,8 @@ template CUDA_LIB_EXPORT void Sign<Complex<float>>(const Complex<float> *input, 
                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atan<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
@@ -1881,6 +1890,8 @@ template CUDA_LIB_EXPORT void Sin<Complex<double>>(const Complex<double> *input,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cos<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void ACos<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Acosh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
