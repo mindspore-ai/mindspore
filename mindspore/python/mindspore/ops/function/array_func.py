@@ -43,6 +43,7 @@ from mindspore.ops.operations.array_ops import (
     Expand,
     Lstsq,
     Mvlgamma,
+    CountNonZero,
 )
 from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.common import Tensor
@@ -5188,6 +5189,45 @@ def mvlgamma(input, p):
     """
     mvlgamma_op = _get_cache_prim(Mvlgamma)(p)
     return mvlgamma_op(input)
+
+
+def count_nonzero(x, dims=None):
+    """
+    Counts the number of non-zero values in the input tensor along the given dims.
+    If no dim is specified then all non-zeros in the tensor are counted.
+
+    Note:
+        The value range of "dims" is [-x_dims, x_dims). "x_dims" is the dimension length of input "x".
+
+
+    Args:
+        x (Tensor): Input to be computed, a N-D Tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)` .
+        dims (int, list[int], tuple[int]): The dimension to count the number of non-zero values along.
+            Default: None.
+
+    Returns:
+        A N-D Tensor, represents the number of the nonzero elements of the input tensor along the dims.
+        Reduces x_shape along the dimensions given in dims. For example, if the size of x is (2, 3, 4),
+        dims is [0, 1], y_shape will be (4,).
+
+    Raises:
+        TypeError: If the data type of `x` is not support.
+        TypeError: If the data type of `dims` is not int.
+        ValueError: If any of the values of `dims` is not in [-x_dims, x_dims).
+
+    Supported Platforms:
+         ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0, 0, 1], [1, 1, 2], [0, 0, 1]], mindspore.int64)
+        >>> y = ops.count_nonzero(x, dims=[1])
+        >>> print(y)
+        [1 3 1]
+    """
+    dims = [] if dims is None else dims
+    count_nonzero_ = CountNonZero(dims)
+    return count_nonzero_(x)
 
 
 __all__ = [

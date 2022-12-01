@@ -47,6 +47,7 @@ from mindspore.ops.operations.array_ops import Im2Col
 from mindspore.ops.operations.array_ops import Col2Im
 from mindspore.ops.operations.array_ops import StridedSliceV2
 from mindspore.ops.operations.array_ops import MaskedScatter
+from mindspore.ops.operations.array_ops import CountNonZero
 from mindspore.ops.operations._grad_ops import StridedSliceV2Grad
 from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops.operations import _inner_ops as inner
@@ -159,6 +160,16 @@ def get_bprop_masked_scatter(self):
             zeros_tensor = zeros(shape(updates), mstype.float32)
             dupdates = masked_scatter(zeros_tensor, mask, mask_selected)
         return F.cast(dx, F.dtype(x)), zeros_like(mask), F.cast(dupdates, F.dtype(updates))
+
+    return bprop
+
+
+@bprop_getters.register(CountNonZero)
+def get_bprop_countnonzero(self):
+    """Grad definition for CountNonZero"""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
 
     return bprop
 

@@ -156,6 +156,7 @@ constexpr auto kSelfAdjointEig = "SelfAdjointEig";
 
 // Arrays
 constexpr auto kLeftShift = "LeftShift";
+constexpr auto kCountNonZero = "CountNonZero";
 constexpr auto kFillDiagonal = "FillDiagonal";
 constexpr auto kSegmentMax = "SegmentMax";
 constexpr auto kSegmentSum = "SegmentSum";
@@ -554,6 +555,7 @@ GVAR_DEF(PrimitivePtr, kPrimCast, std::make_shared<Primitive>("Cast"));
 GVAR_DEF(PrimitivePtr, kPrimConcat, std::make_shared<Primitive>(kConcat));
 GVAR_DEF(PrimitivePtr, kPrimConcatD, std::make_shared<Primitive>("ConcatD"));
 GVAR_DEF(PrimitivePtr, kPrimParallelConcat, std::make_shared<Primitive>(kParallelConcat));
+GVAR_DEF(PrimitivePtr, kPrimCountNonZero, std::make_shared<Primitive>("CountNonZero"));
 GVAR_DEF(PrimitivePtr, kPrimFlattenConcat, std::make_shared<Primitive>(kFlattenConcat));
 GVAR_DEF(PrimitivePtr, kPrimSqueeze, std::make_shared<Primitive>("Squeeze"));
 GVAR_DEF(PrimitivePtr, kPrimSqueezeV3, std::make_shared<Primitive>("SqueezeV3"));
