@@ -33,7 +33,7 @@ def create_np_dataset(size, num_parallel_workers, python_multiprocessing):
     """
     def my_func(x):
         return x + 1 if x % 2 else x - 1
-    data = ds.NumpySlicesDataset(list(range(1, size + 1)), shuffle=False)
+    data = ds.NumpySlicesDataset([(x,) for x in range(1, size + 1)], shuffle=False)
     data = data.map(operations=my_func, num_parallel_workers=num_parallel_workers,
                     python_multiprocessing=python_multiprocessing)
     return data
@@ -69,7 +69,7 @@ class MyCallback(Callback):
         logger.info(f"Epoch #{cb_params.cur_epoch_num - 1} has ended")
         if cb_params.cur_epoch_num == self.reset_point:
             dataset = ds.engine.datasets._get_training_dataset()  # pylint: disable=W0212
-            dataset._reset(self.reset_point * self.dataset_size)  # pylint: disable=W0212
+            dataset._reset(self.reset_point * self.dataset_size, self.reset_point)  # pylint: disable=W0212
 
 
 @pytest.mark.level1
