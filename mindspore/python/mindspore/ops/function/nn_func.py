@@ -915,7 +915,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
             :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
             (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]`.
 
-    Outputs:
+    Returns:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`,
         with the same data type with `x`.
 
@@ -936,11 +936,14 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     Examples:
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
         >>> indices= Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
-        >>> maxunpool3d = nn.MaxUnpool3d(kernel_size=1, stride=1, padding=0)
-        >>> output = maxunpool3d(x, indices)
-        >>> print(output.asnumpy())
-        [[[[[0. 1.]
-            [8. 9.]]]]]
+        >>> output = ops.max_unpool3d(x, indices, kernel_size=2, stride=1, padding=0)
+        >>> print(output)
+        [[[[[0. 1. 8.]
+            [9. 0. 0.]
+            [0. 0. 0.]]
+           [[0. 0. 0.]
+            [0. 0. 0.]
+            [0. 0. 0.]]]]]
     """
     if stride is None:
         stride = 0
