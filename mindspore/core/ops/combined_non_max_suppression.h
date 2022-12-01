@@ -36,6 +36,8 @@ class MIND_API CombinedNonMaxSuppression : public BaseOperator {
     InitIOName({"boxes", "scores", "max_output_size_per_class", "max_total_size", "iou_threshold", "score_threshold"},
                {"nmsed_box", "nmsed_scores", "nmsed_classes", "valid_detections"});
   }
+  bool get_pad_per_class() const;
+  bool get_clip_boxes() const;
 };
 abstract::AbstractBasePtr CombinedNonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &,
                                                          const PrimitivePtr &primitive,
