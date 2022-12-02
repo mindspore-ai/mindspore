@@ -49,6 +49,7 @@ from mindspore.ops.operations.math_ops import (
     MatrixExp,
     MatrixSolve,
     Median,
+    Fmax,
     Orgqr,
     Fmin,
     Renorm,
@@ -3592,6 +3593,47 @@ def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
             neginf = (float)(np.finfo(np.float32).min)
     _nan_to_num = _get_cache_prim(NanToNum)(nan=nan, posinf=posinf, neginf=neginf)
     return _nan_to_num(x)
+
+
+def fmax(x1, x2):
+    r"""
+    Computes the maximum of input tensors element-wise.
+
+    Note:
+        - Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two tensors.
+        - Types of them are one of the following: float16, float32, float64, int32, int64.
+        - Shapes of them are supposed to be broadcast.
+        - If one of the elements to be compared is NaN, another element is returned.
+
+    .. math::
+        output_i = max(x1_i, x2_i)
+
+    Args:
+        x1 (Tensor): The first input is a tensor whose data type is number.
+        x2 (Tensor): The second input is is a tensor whose data type is number.
+
+    Returns:
+        A Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x1` and `x2` is not Tensor.
+        TypeError: If dtype of `x1` and 'x2' is not one of: float16, float32, float64, int32, int64.
+        ValueError: If `x1` and `x2` are not the same shape after broadcast.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
+        >>> x2 = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
+        >>> output = ops.fmax(x1, x2)
+        >>> print(output)
+        [4. 5. 6.]
+    """
+    fmax_ = Fmax()
+    return fmax_(x1, x2)
 
 
 def maximum(x, y):
