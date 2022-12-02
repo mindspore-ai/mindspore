@@ -33,13 +33,6 @@ Status ModelParallelRunnerImpl::Init(const std::string &model_path,
     MS_LOG(ERROR) << "new model pool failed, model pool is nullptr.";
     return kLiteNullptr;
   }
-#ifndef ENABLE_CLOUD_FUSION_INFERENCE
-  if (!PlatformInstructionSetSupportCheck()) {
-    delete model_pool_;
-    model_pool_ = nullptr;
-    return kLiteNotSupport;
-  }
-#endif
   auto status = model_pool_->InitByPath(model_path, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "ModelParallelRunner init failed.";
@@ -65,13 +58,6 @@ Status ModelParallelRunnerImpl::Init(const void *model_data, size_t data_size,
     MS_LOG(ERROR) << "new model pool failed, model pool is nullptr.";
     return kLiteNullptr;
   }
-#ifndef ENABLE_CLOUD_FUSION_INFERENCE
-  if (!PlatformInstructionSetSupportCheck()) {
-    delete model_pool_;
-    model_pool_ = nullptr;
-    return kLiteNotSupport;
-  }
-#endif
   auto status = model_pool_->InitByBuf(static_cast<const char *>(model_data), data_size, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";
