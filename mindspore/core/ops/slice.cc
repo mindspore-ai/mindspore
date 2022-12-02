@@ -106,16 +106,15 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(ValueError) << "For Slice, the input_x must hava value.";
   }
 
-  if (input_begin_value_ptr->isa<AnyValue>() && !input_size_value_ptr->isa<AnyValue>()) {
-    auto input_value = input_args[kInputIndex2]->BuildValue();
-    auto tmp_input = InferImplSliceFuncCalInputValue(primitive, input_value);
+  if (!IsValueKnown(input_begin_value_ptr) && IsValueKnown(input_size_value_ptr)) {
+    auto tmp_input = InferImplSliceFuncCalInputValue(primitive, input_size_value_ptr);
     for (size_t i = 0; i < tmp_input.size(); i++) {
       out_shape.push_back(-1);
     }
     return std::make_shared<abstract::Shape>(out_shape);
   }
 
-  if (input_size_value_ptr->isa<AnyValue>()) {
+  if (!IsValueKnown(input_size_value_ptr)) {
     if (input_size_shape.size() == 0) {
       out_shape.push_back(kDynamicOutValue);
       return std::make_shared<abstract::Shape>(out_shape);
@@ -129,8 +128,8 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     return std::make_shared<abstract::Shape>(out_shape);
   }
 
-  auto input_begin_value = InferImplSliceFuncCalInputValue(primitive, input_args[kInputIndex1]->BuildValue());
-  auto input_size_value = InferImplSliceFuncCalInputValue(primitive, input_args[kInputIndex2]->BuildValue());
+  auto input_begin_value = InferImplSliceFuncCalInputValue(primitive, input_begin_value_ptr);
+  auto input_size_value = InferImplSliceFuncCalInputValue(primitive, input_size_value_ptr);
   auto rank = input_x_shape.size();
   if ((!is_inputx_dyn) && ((input_begin_value.size() != rank) || (input_size_value.size() != rank))) {
     MS_EXCEPTION(ValueError) << "For Slice, the shape of input|begin|size must be equal.";

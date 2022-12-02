@@ -55,10 +55,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
   //  MS_EXCEPTION_IF_NULL(shape_value_tensor); Dealing with dynamic shapes
   if ((shape_value_tensor) == nullptr) {
     ShapeVector out_shape = {-2};
-    ShapeVector infer_shape_min;
-    ShapeVector infer_shape_max;
-    infer_shape_min = infer_shape_max = {1};
-    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 
   auto shape_type_element = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();

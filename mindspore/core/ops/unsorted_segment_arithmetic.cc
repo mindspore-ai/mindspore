@@ -45,13 +45,17 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
     }
     return num_segments_v;
   } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
+    auto value = input_args[kInputIndex2]->BuildValue();
+    if (!IsValueKnown(value)) {
+      num_segments_v = abstract::Shape::kShapeDimAny;
+    }
     auto num_segments_input_type = input_args[kInputIndex2]->BuildType();
     auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(num_sample_ptr);
     if (num_segments_input_type->type_id() == kNumberTypeInt64) {
-      num_segments_v = GetValue<int64_t>(input_args[kInputIndex2]->BuildValue());
+      num_segments_v = GetValue<int64_t>(value);
     } else if (num_segments_input_type->type_id() == kNumberTypeInt32) {
-      num_segments_v = GetValue<int32_t>(input_args[kInputIndex2]->BuildValue());
+      num_segments_v = GetValue<int32_t>(value);
     } else {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "' the third input build type is invalid:"
                               << TypeIdToString(num_segments_input_type->type_id()) << ".";

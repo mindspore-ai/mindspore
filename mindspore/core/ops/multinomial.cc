@@ -59,16 +59,19 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
 
   int64_t num_samples_val = 0;
   if (input_args[1]->isa<abstract::AbstractScalar>()) {
-    auto num_samples = input_args[1]->cast<abstract::AbstractScalarPtr>();
-    auto num_samples_value_ptr = num_samples->BuildValue();
-    if (!num_samples_value_ptr->isa<Int64Imm>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the num_samples"
-                              << " must be a int, but got " << num_samples_value_ptr->ToString() << ".";
-    }
-    num_samples_val = GetValue<int64_t>(num_samples->BuildValue());
-    if (num_samples_val < 0) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', num_samples"
-                               << " should be a nonnegative number, but got " << num_samples_val << ".";
+    auto num_samples_value_ptr = input_args[1]->BuildValue();
+    if (num_samples_value_ptr->isa<AnyValue>()) {
+      num_samples_val = -1;
+    } else {
+      if (!num_samples_value_ptr->isa<Int64Imm>()) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the num_samples"
+                                << " must be a int, but got " << num_samples_value_ptr->ToString() << ".";
+      }
+      num_samples_val = GetValue<int64_t>(num_samples_value_ptr);
+      if (num_samples_val < 0) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', num_samples"
+                                 << " should be a nonnegative number, but got " << num_samples_val << ".";
+      }
     }
   } else if (input_args[1]->cast<abstract::AbstractTensorPtr>()) {
     auto num_samples = input_args[1]->cast<abstract::AbstractTensorPtr>();

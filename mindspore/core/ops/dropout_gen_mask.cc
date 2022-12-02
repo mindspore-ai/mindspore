@@ -138,6 +138,13 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(any_shape);
   }
 
+  auto shape_value = shape_args->BuildValue();
+  MS_EXCEPTION_IF_NULL(shape_value);
+  if (!IsValueKnown(shape_value)) {
+    ShapeVector any_shape{abstract::Shape::kShapeDimAny};
+    return std::make_shared<abstract::Shape>(any_shape);
+  }
+
   auto x_shape = dyn_cast<abstract::AbstractTuple>(shape_args);
   auto x_shape_data = x_shape->elements();
   out_shape = CalOutputShape(primitive, x_shape_data);

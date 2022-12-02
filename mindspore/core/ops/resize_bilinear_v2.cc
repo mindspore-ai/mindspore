@@ -45,44 +45,6 @@ bool ResizeBilinearV2::get_half_pixel_centers() const {
 }
 
 namespace {
-void GetSizeValue(const abstract::AbstractBasePtr &size, std::vector<int64_t> *size_value,
-                  std::vector<int64_t> *min_size, std::vector<int64_t> *max_size) {
-  MS_EXCEPTION_IF_NULL(size);
-  auto size_v = size->BuildValue();
-  MS_EXCEPTION_IF_NULL(size_v);
-  const int64_t size_size = 2;
-  auto prim_name = kNameResizeBilinearV2;
-  if (size->isa<abstract::AbstractTensor>()) {
-    if (size_v->isa<tensor::Tensor>()) {
-      *size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name);
-      (void)CheckAndConvertUtils::CheckPositiveVector("size", *size_value, prim_name);
-    } else {
-      size_value->push_back(-1);
-      size_value->push_back(-1);
-      auto min_value = size->cast<abstract::AbstractTensorPtr>()->get_min_value();
-      auto max_value = size->cast<abstract::AbstractTensorPtr>()->get_max_value();
-      if (!min_value || !max_value) {
-        MS_LOG(INFO) << "inputs['size'] min or max value of " << prim_name << " is empty.";
-        return;
-      }
-      *min_size = GetValue<std::vector<int64_t>>(min_value);
-      *max_size = GetValue<std::vector<int64_t>>(max_value);
-      if (min_size->size() != size_size || max_size->size() != size_size) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name
-                                 << ", inputs['size'] min and max value size must be 2, but got min: "
-                                 << min_size->size() << ",  max: " << max_size->size() << ".";
-      }
-    }
-  } else if (size->isa<abstract::AbstractTuple>() || size->isa<abstract::AbstractList>()) {
-    *size_value = CheckAndConvertUtils::CheckIntOrTupleInt("size", size_v, prim_name);
-    (void)CheckAndConvertUtils::CheckPositiveVector("size", *size_value, prim_name);
-  } else {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the "
-                            << "size"
-                            << " must be a Tensor or a tuple/list with all Int elements, but got " << size->ToString();
-  }
-}
-
 abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -102,11 +64,11 @@ abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckInteger("the dimension of input_x", SizeToLong(x_shape.size()), kEqual, shape_size,
                                              prim_name);
   }
-  std::vector<int64_t> size_value;
-  std::vector<int64_t> min_size;
-  std::vector<int64_t> max_size;
 
-  GetSizeValue(input_args[1], &size_value, &min_size, &max_size);
+  auto size_value = GetShapeValue(primitive, input_args[1]);
+  if (IsDynamicRank(size_value)) {
+    size_value = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
+  }
 
   (void)CheckAndConvertUtils::CheckInteger("the dimension of size", SizeToLong(size_value.size()), kEqual, size_size,
                                            prim_name);

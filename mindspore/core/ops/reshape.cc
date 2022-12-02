@@ -80,39 +80,22 @@ class ReshapeInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     constexpr size_t max_size = 2;
     (void)CheckAndConvertUtils::CheckValue<size_t>("input size", input_args.size(), kLessEqual, max_size, prim_name);
-
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-
     std::vector<int64_t> output_shape;
 
     if (input_args.size() == max_size) {
       auto input_y = input_args[1];
       MS_EXCEPTION_IF_NULL(input_y);
-      if (input_y->isa<abstract::AbstractTensor>()) {
-        auto y_value = input_y->BuildValue();
-        MS_EXCEPTION_IF_NULL(y_value);
-        if (y_value != kAnyValue) {
-          output_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", y_value, prim_name);
-        } else {
-          abstract::ShapePtr y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
-          auto shape_value = y_shape->shape();
-          if (shape_value.size() != 1) {
-            MS_EXCEPTION(TypeError) << "For '" << prim_name
-                                    << "', the shape size must be 1, but got: " << shape_value.size() << ".";
-          }
-          if (y_shape->IsDynamic()) {
-            output_shape.push_back(abstract::Shape::kShapeRankAny);
-          } else {
-            output_shape = GetShapeValue(primitive, input_y);
-          }
-          return std::make_shared<abstract::Shape>(output_shape);
-        }
-      } else if (input_y->isa<abstract::AbstractTuple>()) {
-        auto y_value = input_y->BuildValue();
-        MS_EXCEPTION_IF_NULL(y_value);
-        output_shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", y_value, primitive->name());
-      } else {
-        MS_EXCEPTION(TypeError) << "input_y must be AbstractTensor or AbstractTuple, but got: " << input_y;
+      auto value = input_y->BuildValue();
+      MS_EXCEPTION_IF_NULL(value);
+      output_shape = GetShapeValue(primitive, input_y);
+
+      const int64_t kSelfComputedDim = -1;
+      const int64_t kMaxSelfComputedDimCount = 1;
+
+      auto self_computed_dim_count = std::count(output_shape.begin(), output_shape.end(), kSelfComputedDim);
+      if (!IsValueKnown(value) && self_computed_dim_count > kMaxSelfComputedDimCount) {
+        return std::make_shared<abstract::Shape>(output_shape);
       }
     } else {
       // When the shape is passed as an attribute, shape should be constant.

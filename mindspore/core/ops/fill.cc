@@ -113,9 +113,7 @@ class FillInfer : public abstract::OpInferBase {
     }
     auto prim_name = primitive->name();
     if (input_args[inputsIndex[kIndex1]]->isa<abstract::AbstractTuple>()) {
-      auto shape_value = input_args[inputsIndex[kIndex1]]->BuildValue();
-      MS_EXCEPTION_IF_NULL(shape_value);
-      std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
+      auto out_shape = GetShapeValue(primitive, input_args[inputsIndex[kIndex1]]);
       return std::make_shared<abstract::Shape>(out_shape);
     }
 
@@ -126,7 +124,7 @@ class FillInfer : public abstract::OpInferBase {
     const uint32_t kInputDims = 1;
     auto input1_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[inputsIndex[kIndex1]]->BuildShape())[kShape];
-    if (input1_shape.size() != 1) {
+    if (input1_shape.size() != kInputDims) {
       MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                               << "', the shape size of 'input1' must be 1, but got: " << input1_shape.size() << ".";
     }
@@ -136,13 +134,7 @@ class FillInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                               << "', the shape size of 'input2' must be 0, but got: " << input2_shape.size() << ".";
     }
-    auto shape_ptr = std::make_shared<abstract::Shape>(
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[inputsIndex[kIndex1]]->BuildShape())[kShape]);
-    auto shape_v = shape_ptr->shape();
-    if (shape_v.size() != kInputDims) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', input must be a 1-D tensor, but got a: " << shape_v.size() << "-D tensor.";
-    }
+
     auto shape_arg = input_args[inputsIndex[1]];
     MS_EXCEPTION_IF_NULL(shape_arg);
     auto output_shape = GetShapeValue(primitive, shape_arg);

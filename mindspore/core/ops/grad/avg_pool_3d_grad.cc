@@ -98,14 +98,10 @@ abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
   if (!IsDynamicRank(grad_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("grad_rank", SizeToLong(grad_shape.size()), kEqual, k5DInputDims, op_name);
   }
-  std::vector<int64_t> origin_input_size;
-  if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
-    origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
-  } else if (input_args[0]->isa<abstract::AbstractTensor>()) {
-    GetTensorIntValue(input_args[0], &origin_input_size, "origin_input_shape");
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple or tensor, but got: "
-                      << input_args[0]->BuildShape()->ToString() << ".";
+  auto origin_input_size = GetShapeValue(primitive, input_args[0]);
+  if (IsDynamic(origin_input_size)) {
+    auto dim = abstract::Shape::kShapeDimAny;
+    origin_input_size = {dim, dim, dim, dim, dim};
   }
   return std::make_shared<abstract::Shape>(origin_input_size);
 }

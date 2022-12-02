@@ -49,20 +49,23 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
   int64_t axis = 0;
   if (input_args.size() == kExpandDimsInputsNum) {
     auto input_value = input_args[kInputIndex1]->BuildValue();
-    if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
-      axis = GetValue<int64_t>(input_value);
-    } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-      if (input_value->isa<tensor::Tensor>()) {
-        auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, prim_name);
-        if (axis_vec.size() != 1) {
-          MS_LOG(EXCEPTION) << " The input number of ExpandDims axis must be int, but got " << axis_vec;
-        }
-        axis = axis_vec[0];
-      } else {
-        ShapeVector out_shape;
-        (void)out_shape.insert(out_shape.end(), x_shape.size() + 1, -1);
-        return std::make_shared<abstract::Shape>(out_shape);
+    if (input_value->isa<tensor::Tensor>()) {
+      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, prim_name);
+      if (axis_vec.size() != 1) {
+        MS_LOG(EXCEPTION) << " The input number of ExpandDims axis must be int, but got " << axis_vec;
       }
+      axis = axis_vec[0];
+    } else if (input_value->isa<Int64Imm>()) {
+      axis = GetValue<int64_t>(input_value);
+    } else if (input_value->isa<Int32Imm>()) {
+      axis = static_cast<int64_t>(GetValue<int32_t>(input_value));
+    } else if (input_value->isa<AnyValue>()) {
+      ShapeVector out_shape;
+      (void)out_shape.insert(out_shape.end(), x_shape.size() + 1, abstract::Shape::kShapeDimAny);
+      return std::make_shared<abstract::Shape>(out_shape);
+    } else {
+      MS_LOG(EXCEPTION) << "For " << primitive->name()
+                        << ", the type of axis must be Tensor/Int64Imm/Int32Imm, which got " << input_value->ToString();
     }
   } else if (input_args.size() == 1) {
     auto value_ptr = primitive->GetAttr(kAxis);

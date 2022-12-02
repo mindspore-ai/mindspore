@@ -92,16 +92,11 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    const uint32_t input_shapes = static_cast<uint32_t>(std::pow(max_length, 1.0 / shape_v[0]));
     std::vector<int64_t> output_shape;
-    ShapeVector shape_min;
-    ShapeVector shape_max;
     for (int i = 0; i < shape_v[0]; i++) {
       output_shape.push_back(abstract::Shape::kShapeDimAny);
-      shape_min.push_back(0);
-      shape_max.push_back(input_shapes);
     }
-    return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);
+    return std::make_shared<abstract::Shape>(output_shape);
   }
 }
 

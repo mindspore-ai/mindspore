@@ -66,7 +66,7 @@ class OneHotInfer : public abstract::OpInferBase {
     } else if (depth->isa<Int64Imm>()) {
       depth_value = GetValue<int64_t>(depth);
       (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
-    } else if (input_args[depth_index]->isa<abstract::AbstractTensor>()) {
+    } else if (depth->isa<AnyValue>()) {
       depth_value = abstract::Shape::kShapeDimAny;
     } else {
       MS_EXCEPTION(TypeError) << "For '" << op_name

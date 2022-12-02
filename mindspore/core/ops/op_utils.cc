@@ -170,8 +170,7 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto input_value = input_args[kInputIndex1]->BuildValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>() ||
-      input_args[kInputIndex1]->isa<abstract::AbstractTuple>() ||
-      input_args[kInputIndex1]->isa<abstract::AbstractList>()) {
+      input_args[kInputIndex1]->isa<abstract::AbstractSequence>()) {
     *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", input_value, op_name);
     if (axis_value->empty()) {
       *axis_shape_v = 0;
@@ -423,16 +422,51 @@ ValuePtr EvalShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrLis
 }
 }  // namespace
 
+std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const ValuePtr &attr, const std::string &prim_name) {
+  std::vector<int64_t> result;
+  bool is_correct = false;
+  MS_EXCEPTION_IF_NULL(attr);
+
+  auto attr_vec = attr->cast<ValueSequencePtr>()->value();
+  if (attr_vec.empty()) {
+    return result;
+  }
+  is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> bool {
+    MS_EXCEPTION_IF_NULL(e);
+    if (e->isa<Int64Imm>()) {
+      (void)result.emplace_back(GetValue<int64_t>(e));
+      return true;
+    } else if (e->isa<Int32Imm>()) {
+      (void)result.emplace_back(GetValue<int32_t>(e));
+      return true;
+    } else if (e->isa<AnyValue>()) {
+      (void)result.emplace_back(-1);
+      return true;
+    }
+
+    return false;
+  });
+  if (!is_correct) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                            << " must be one of ['tuple', 'list'] with all Int elements, but got " << attr->ToString();
+  }
+  return result;
+}
+
 ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &arg) {
   auto abs_value = arg->BuildValue();
   MS_EXCEPTION_IF_NULL(abs_value);
-  if (arg->isa<abstract::AbstractTensor>()) {
-    auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
+
+  if (IsValueKnown(abs_value)) {
     if (abs_value->isa<tensor::Tensor>()) {
       auto shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", abs_value, "");
-      MS_EXCEPTION_IF_CHECK_FAIL(!shape_value.empty(), "Data type of shape value must be int64_t or int32_t");
       return shape_value;
+    } else if (abs_value->isa<ValueSequence>()) {
+      auto out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", abs_value, primitive->name());
+      return out_shape;
     }
+  } else if (arg->isa<abstract::AbstractTensor>()) {
+    auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
     auto abs_tensor_shape = abs_tensor->shape()->shape();
     MS_EXCEPTION_IF_CHECK_FAIL(abs_tensor_shape.size() == 1, "Shape of shape value only could be one-dimensional");
     if (IsDynamic(abs_tensor_shape)) {
@@ -447,17 +481,16 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
       MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(shape_size) == shape_vector.size(), "Illegal shape of shape value");
       return shape_vector;
     }
-  } else if (arg->isa<abstract::AbstractTuple>()) {
-    auto elements = arg->cast<abstract::AbstractTuplePtr>()->elements();
-    MS_EXCEPTION_IF_CHECK_FAIL(!elements.empty() && !elements[0]->isa<abstract::AbstractTensor>(),
-                               "Input cannot be a tuple of tensor");
-    auto out_shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", abs_value, primitive->name());
-    return out_shape;
+  } else if (abs_value->isa<ValueSequence>()) {
+    auto shape = GetSequenceValue("input[shape]", abs_value, primitive->name());
+    return shape;
+  } else if (abs_value->isa<AnyValue>()) {
+    return {abstract::Shape::kShapeRankAny};
   }
 
   auto size_type = arg->BuildType();
   MS_EXCEPTION_IF_NULL(size_type);
-  MS_EXCEPTION(TypeError) << "For " << primitive->name() << "Input arg must be abstract tensor or tuple, but got"
+  MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input type must be Tensor/Tuple/List , but got"
                           << size_type->ToString() << ".";
 }
 
@@ -562,5 +595,15 @@ template std::shared_ptr<abstract::AbstractCSRTensor> InferSparseAttr(const Prim
                                                                       const AbstractBasePtrList &args_spec_list);
 template std::shared_ptr<abstract::AbstractCOOTensor> InferSparseAttr(const PrimitivePtr &primitive,
                                                                       const AbstractBasePtrList &args_spec_list);
+
+bool IsValueKnown(const ValuePtr &value) {
+  // For now if the Abstract is a container of elements such as AbstractSequence and AbstractDictionary,
+  // the BuildValue returns AnyValue if any one of the elements' value is AnyValue
+  if (value->isa<AnyValue>() || value->isa<None>()) {
+    return false;
+  }
+
+  return true;
+}
 }  // namespace ops
 }  // namespace mindspore

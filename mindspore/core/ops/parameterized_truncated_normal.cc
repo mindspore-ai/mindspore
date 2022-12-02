@@ -76,9 +76,7 @@ abstract::ShapePtr ParameterizedTruncatedNormalInferShape(const PrimitivePtr &pr
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
     std::vector<int64_t> output_shape = {-2};
-    ShapeVector shape_min = {1};
-    ShapeVector shape_max = {1};
-    return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);
+    return std::make_shared<abstract::Shape>(output_shape);
   }
 }
 

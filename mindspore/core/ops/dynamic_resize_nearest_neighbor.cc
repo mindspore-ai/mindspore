@@ -40,21 +40,10 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
                                            prim_name);
   auto size = input_args[1];
   MS_EXCEPTION_IF_NULL(size);
-  auto size_v = size->BuildValue();
-  MS_EXCEPTION_IF_NULL(size_v);
-  std::vector<int64_t> size_value;
   std::vector<int64_t> output_shape;
-  if (size->isa<abstract::AbstractTensor>()) {
-    if (size_v->isa<tensor::Tensor>()) {
-      size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name);
-    } else {
-      size_value.push_back(-1);
-      size_value.push_back(-1);
-    }
-  } else if (size->isa<abstract::AbstractTuple>()) {
-    size_value = CheckAndConvertUtils::CheckIntOrTupleInt("size", size_v, prim_name);
-  } else if (size->isa<abstract::AbstractList>()) {
-    size_value = CheckAndConvertUtils::CheckListInt("size", size_v, prim_name);
+  auto size_value = GetShapeValue(primitive, size);
+  if (IsDynamic(size_value)) {
+    size_value = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
   }
   (void)CheckAndConvertUtils::CheckInteger("the dimension of size", SizeToLong(size_value.size()), kEqual, size_size,
                                            prim_name);

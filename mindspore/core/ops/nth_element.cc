@@ -59,11 +59,13 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   } else if (input_args[1]->isa<abstract::AbstractScalar>()) {
     auto n = input_args[1]->cast<abstract::AbstractScalarPtr>();
     auto n_value_ptr = n->BuildValue();
-    if (!n_value_ptr->isa<Int64Imm>()) {
-      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n"
-                              << " must be a int, but got " << n_value_ptr->ToString() << ".";
+    if (!n_value_ptr->isa<AnyValue>()) {
+      if (!n_value_ptr->isa<Int64Imm>()) {
+        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n"
+                                << " must be a int, but got " << n_value_ptr->ToString() << ".";
+      }
+      n_val = GetValue<int64_t>(n_value_ptr);
     }
-    n_val = GetValue<int64_t>(n->BuildValue());
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n must be "
                             << "int or a scalar Tensor, but got " << input_args[1]->type_name() << ".";

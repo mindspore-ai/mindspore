@@ -84,7 +84,13 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(axis_ptr);
-    axis = GetValue<int64_t>(axis_ptr->BuildValue());
+    auto axis_value = axis_ptr->BuildValue();
+    MS_EXCEPTION_IF_NULL(axis_value);
+    if (IsValueKnown(axis_value)) {
+      axis = GetValue<int64_t>(axis_value);
+    } else {
+      return std::make_shared<abstract::Shape>(x_shape);
+    }
   } else {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', the second input type should be tensor or scalar, but got invalid abstract type:"

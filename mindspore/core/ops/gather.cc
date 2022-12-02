@@ -60,8 +60,12 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
       is_axis_dyn = true;
     }
   } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
-    auto axis = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
-    axis_val = GetValue<int64_t>(axis->BuildValue());
+    auto axis_value = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>()->BuildValue();
+    if (axis_value->isa<AnyValue>()) {
+      is_axis_dyn = true;
+    } else {
+      axis_val = GetValue<int64_t>(axis_value);
+    }
   } else {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', the third input type should be tensor or scalar, but got invalid abstract type:"

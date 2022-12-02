@@ -93,7 +93,7 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
                                                      output_size_valid_types, prim_name);
     auto output_size_value = output_size->BuildValue();
     MS_EXCEPTION_IF_NULL(output_size_value);
-    if (!output_size_value->isa<None>() && !output_size_value->isa<AnyValue>()) {
+    if (IsValueKnown(output_size_value)) {
       auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
       const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
       std::vector<int64_t> output_size_value_vec(ImagekOutputSizeLen);

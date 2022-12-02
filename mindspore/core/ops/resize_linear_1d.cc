@@ -96,12 +96,8 @@ abstract::ShapePtr ResizeLinear1DInferShape(const PrimitivePtr &primitive,
   } else {
     ShapeVector shape_out = shape0_v;
     shape_out.pop_back();
-    ShapeVector shape_min = shape_out;
-    ShapeVector shape_max = shape_out;
     shape_out.push_back(abstract::Shape::kShapeDimAny);
-    shape_min.push_back(0);
-    shape_max.push_back(1);
-    return std::make_shared<abstract::Shape>(shape_out, shape_min, shape_max);
+    return std::make_shared<abstract::Shape>(shape_out);
   }
 }
 TypePtr ResizeLinear1DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
