@@ -34,6 +34,7 @@
 #include "src/litert/weight_decoder.h"
 #include "src/litert/runtime_allocator.h"
 #include "src/litert/kernel_exec_util.h"
+#include "src/litert/cpu_info.h"
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 #include "src/registry/register_kernel_impl.h"
 #endif
@@ -921,6 +922,11 @@ int LiteSession::Init(const std::shared_ptr<InnerContext> &context) {
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
+  }
+
+  if (!PlatformInstructionSetSupportCheck()) {
+    MS_LOG(ERROR) << "Device not support isa";
+    return RET_NOT_SUPPORT;
   }
 
   auto ret = ContextInit(context);

@@ -64,7 +64,7 @@ Status ContextUtils::AddGpuDevice(bool enable_fp16, uint32_t device_id, int rank
 
 Status ContextUtils::AddNpuDevice(int frequency, lite::InnerContext *inner_context) {
   lite::DeviceInfo device_info;
-  device_info.npu_device_info_ = {frequency};
+  device_info.npu_device_info_ = {false, frequency};
   inner_context->device_list_.push_back({lite::DT_NPU, device_info});
   return kSuccess;
 }
