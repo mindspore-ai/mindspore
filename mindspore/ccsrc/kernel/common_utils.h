@@ -409,6 +409,11 @@ BACKEND_EXPORT void SetInputsByDependMap(const std::map<uint32_t, tensor::Tensor
                                          std::vector<KernelTensorPtr> *inputs, bool is_stored_in_device = false);
 BACKEND_EXPORT void SetInputsByConstInputs(const CNodePtr &node,
                                            std::map<uint32_t, tensor::TensorPtr> *inputs_tensor_map);
+BACKEND_EXPORT void InitAndResizeWithoutParameterInput(const CNodePtr &node,
+                                                       std::shared_ptr<kernel::KernelMod> kernel_mod,
+                                                       kernel::KernelArgs args,
+                                                       std::map<uint32_t, tensor::TensorPtr> inputs_tensor_map);
+
 inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cnode) {
   auto args = GetArgsFromCNode(cnode);
   if (args) {

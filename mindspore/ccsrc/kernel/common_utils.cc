@@ -1522,6 +1522,41 @@ void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr
   (void)to_kernel_attr->AddAllOutInRef(all_out_in_ref);
 }
 
+void InitAndResizeWithoutParameterInput(const CNodePtr &node, std::shared_ptr<kernel::KernelMod> kernel_mod,
+                                        kernel::KernelArgs args,
+                                        std::map<uint32_t, tensor::TensorPtr> inputs_tensor_map) {
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  auto ret = kernel_mod->Init(args.op, args.inputs, args.outputs);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->input(0));
+  if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
+    const auto &depend_list = abstract::GetValueDependArgIndices(node);
+    if (!depend_list.empty()) {
+      auto input_size = common::AnfAlgo::GetInputTensorNum(node);
+      for (size_t i = 0; i < input_size; ++i) {
+        if (depend_list.find(i) == depend_list.end()) {
+          continue;
+        }
+        auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
+        auto real_input = input_node_with_index.first;
+        // Inverse op have constant input need RunGraphBySingleOp
+        if (real_input->isa<Parameter>()) {
+          MS_LOG(DEBUG) << "Set Node Attr is Dynamic Shape";
+          common::AnfAlgo::SetNodeAttr(mindspore::kAttrOutputIsDynamicShape, MakeValue(true), node);
+          node->func_graph()->cast<KernelGraphPtr>()->SetGraphDynamicAttr(true);
+          return;
+        }
+      }
+    }
+  }
+  if (kernel_mod->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+    MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Resize failed.";
+  }
+}
+
 namespace broadcast_utils {
 bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
                            std::vector<size_t> *rhs) {

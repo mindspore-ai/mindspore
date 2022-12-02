@@ -46,20 +46,35 @@ class WeightDecoder {
                          const std::string &model_version, bool float_mode);
   static int DecompressTensor(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
+  static int CompareVersion(const std::string &version1, const std::string &version2) {
+    std::istringstream iss1(version1);
+    std::istringstream iss2(version2);
+    std::string string1;
+    std::string string2;
+    while (!iss1.eof() || !iss2.eof()) {
+      getline(iss1, string1, '.');
+      getline(iss2, string2, '.');
+      if (stoi(string1) > stoi(string2)) return 1;
+      if (stoi(string1) < stoi(string2)) return -1;
+      string1 = string2 = "0";
+    }
+    return 0;
+  }
+
   template <typename T>
   static int GetPreferredDim(const std::vector<T *> &in_tensors, const OpParameter *op_parameter, int index,
                              const std::vector<int> &dims, const std::string &model_version) {
 #ifndef WEIGHT_DECODE_CLIP
-    const int first_version_offset = 5;
-    if (model_version.empty() ||
-        model_version.substr(model_version.size() - first_version_offset, model_version.size()) < "1.6.0") {
+    const int first_version_offset = 15;
+    if (model_version.empty() || model_version.substr(0, first_version_offset) != "MindSpore Lite " ||
+        CompareVersion(model_version.substr(first_version_offset, model_version.size()), "1.6.0") == -1) {
       return IsChannelFirst(index, op_parameter) ? 0 : 1;
     }
     if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
       return GetMatMulPreferredDim(op_parameter, index, dims);
     } else if (op_parameter->type_ == schema::PrimitiveType_Conv2dTransposeFusion) {
       if (model_version.empty() ||
-          model_version.substr(model_version.size() - first_version_offset, model_version.size()) < "1.8.0") {
+          CompareVersion(model_version.substr(first_version_offset, model_version.size()), "1.8.0") == -1) {
         return 0;
       }
       return GetDeConvPreferredDim(op_parameter, dims);
