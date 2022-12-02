@@ -269,6 +269,44 @@ bool NotDuplicatedDropout(const BaseRef &n) {
   }
   return false;
 }
+
+void UpdateReturnNode(const FuncGraphPtr &graph, const AnfNodePtr &origin_node, const AnfNodePtr &new_node) {
+  // this pass maybe update the graph output abstract
+  auto output = graph->output();
+  MS_EXCEPTION_IF_NULL(output);
+  if (!output->isa<CNode>()) {
+    return;
+  }
+  auto cnode = output->cast<CNodePtr>();
+  if (!common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+    return;
+  }
+
+  auto inputs_num = common::AnfAlgo::GetInputNum(cnode);
+  std::vector<AnfNodePtr> make_tuple_inputs;
+  std::vector<AbstractBasePtr> abstract_list;
+  make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  bool flag = false;
+  for (size_t index = 0; index < inputs_num; index++) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode, index);
+    if (input_node == origin_node) {
+      flag = true;
+      make_tuple_inputs.emplace_back(new_node);
+      abstract_list.emplace_back(new_node->abstract());
+      continue;
+    }
+    make_tuple_inputs.emplace_back(input_node);
+    abstract_list.emplace_back(input_node->abstract());
+  }
+  if (!flag) {
+    return;
+  }
+
+  auto g_output = graph->NewCNode(make_tuple_inputs);
+  auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  g_output->set_abstract(abstract);
+  graph->set_output(g_output);
+}
 }  // namespace
 
 const BaseRef DropoutAndDropoutGradUnifyMindIR::DefinePattern() const {
@@ -387,11 +425,15 @@ const AnfNodePtr DropoutUnifyMindIR0::Process(const FuncGraphPtr &func_graph, co
   // make tuple to replace dropout
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), dropout_do_mask, dropout_gen_mask};
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  std::vector<AbstractBasePtr> abstract_list{dropout_do_mask->abstract(), dropout_gen_mask->abstract()};
+  auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  make_tuple->set_abstract(abstract);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   (void)manager->Replace(dropout_node, make_tuple);
 
   tuple_cnode->set_abstract(dropout_gen_mask->abstract());
+  UpdateReturnNode(func_graph, node, tuple_cnode);
   return tuple_cnode;
 }
 
@@ -429,6 +471,10 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
 
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), dropout_do_mask, dropout_gen_mask};
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  std::vector<AbstractBasePtr> abstract_list{dropout_do_mask->abstract(), dropout_gen_mask->abstract()};
+  auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  make_tuple->set_abstract(abstract);
+  UpdateReturnNode(func_graph, node, make_tuple);
   return make_tuple;
 }
 

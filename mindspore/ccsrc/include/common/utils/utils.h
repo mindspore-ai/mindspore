@@ -1077,11 +1077,9 @@ COMMON_EXPORT bool IsOneOfServerFormatC04(const std::string &format);
 using OutputInputRefMap = std::map<size_t, size_t>;
 
 static inline uint64_t GetCurrentUSec() {
-  constexpr int64_t const_num = 1000000;
   auto time_now = std::chrono::system_clock::now();
-  auto tv_sec = std::chrono::duration_cast<std::chrono::seconds>(time_now.time_since_epoch()).count();
   auto tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(time_now.time_since_epoch()).count();
-  return static_cast<uint64_t>(tv_usec + tv_sec * const_num);
+  return static_cast<uint64_t>(tv_usec);
 }
 
 #define PROF_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()

@@ -636,6 +636,8 @@ void Somas::InitSomasStreamAndNode(const session::KernelGraph &graph) {
   MS_LOG(DEBUG) << "Somas InitSomasStreamAndNode start...";
   streams_map_.clear();
   nodes_list_ = {};
+  SomasNodePtr last_node = nullptr;
+  size_t last_repeat_node_size = 0;
   auto &kernel_cnodes = (graph.subgraph_multi_call()) ? graph.mem_reuse_exec_order() : graph.execution_order();
   for (size_t i = 0; i < kernel_cnodes.size(); i++) {
     auto kernel = kernel_cnodes[i];
@@ -662,10 +664,17 @@ void Somas::InitSomasStreamAndNode(const session::KernelGraph &graph) {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_CHECK_FAIL(nodes_list_.size() == i, "node_list_ size error!!!");
     nodes_list_.push_back(node);
-    stream->nodes_.push_back(node);
     auto key = kernel.get();
     auto &nodes = nodes_map_[key];
+    if (nodes.empty()) {
+      stream->nodes_.push_back(node);
+    }
     nodes.push_back(node);
+    if (last_node != nullptr && (last_repeat_node_size > 1 || nodes.size() > 1) && depend_exec_order_) {
+      AddControlTensor(last_node, node);
+    }
+    last_node = node;
+    last_repeat_node_size = nodes.size();
   }
 }
 

@@ -55,6 +55,9 @@ const char OUTPUT[] = "output";
 // Attribute to indicate that the node is last node in an iteration.
 const char ITEREND[] = "PROFILING_ITER_END";
 
+const auto kSingleOutput = 1;
+const auto kFirstOutput = 0;
+
 #ifdef ENABLE_DUMP_IR
 bool IsSaveGraph() {
   auto context_ptr = MsContext::GetInstance();
@@ -1042,6 +1045,18 @@ class AscendAutoMonadConverter {
     std::vector<uint32_t> labels;
     graphes.reserve(branches.size());
     labels.reserve(branches.size());
+    for (auto &[graph, args] : branches) {
+      MS_EXCEPTION_IF_NULL(graph);
+      graphes.push_back(graph);
+      labels.push_back(GetGraphLabel(graph));
+    }
+
+    // For the same call, their internal assignments cannot be cross-run.
+    auto iter = call_last_monad_.find(graphes);
+    if (iter != call_last_monad_.end()) {
+      last_monad_ = MakeDepend(last_monad_, iter->second);
+    }
+
     bool monad_update = false;
     for (auto &[graph, args] : branches) {
       MS_EXCEPTION_IF_NULL(graph);
@@ -1050,8 +1065,6 @@ class AscendAutoMonadConverter {
         monad_ = UpdateState(GetMonad(), linked_args);
         monad_update = true;
       }
-      graphes.push_back(graph);
-      labels.push_back(GetGraphLabel(graph));
     }
     if (!monad_update) {
       monad_ = last_monad_;
@@ -1098,6 +1111,7 @@ class AscendAutoMonadConverter {
       }
       // Replace the the call/switch node with the output.
       ReplaceNode(cnode, output);
+      call_last_monad_[graphes] = monad_;
       return;
     }
 
@@ -1108,6 +1122,7 @@ class AscendAutoMonadConverter {
     // For tail calls, replace origin call node with label_goto/label_switch.
     ReplaceNode(cnode, label_goto_switch);
     kernel_graph_->set_end_goto(label_goto_switch);
+    call_last_monad_[graphes] = monad_;
   }
 
   // Assign label indexes to label parameters for a call site.
@@ -1337,6 +1352,33 @@ class AscendAutoMonadConverter {
       assign_prim->set_attr(OUTPUT, prim::kValueOne);
     }
     auto assign = NewValueNode(assign_prim);
+    if (!IsCompatible(target->abstract(), source->abstract())) {
+      MS_LOG(WARNING) << "Assign: " << target->DebugString() << " has different abstract() with "
+                      << source->DebugString() << ", [ " << target->abstract()->ToString()
+                      << " != " << source->abstract()->ToString() << " ], need insert CastOp.";
+      if (common::AnfAlgo::GetOutputTensorNum(target) != kSingleOutput ||
+          common::AnfAlgo::GetOutputTensorNum(source) != kSingleOutput) {
+        MS_LOG(EXCEPTION) << "Assign: " << target->DebugString() << " or " << source->DebugString()
+                          << " has multi outputs.";
+      }
+      std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())),
+                                             source};
+      auto cast_node = kernel_graph_->NewCNode(cast_inputs);
+      auto origin_shape = common::AnfAlgo::GetOutputDetailShape(source, kFirstOutput);
+      auto shape = common::AnfAlgo::GetOutputDetailShape(target, kFirstOutput);
+      if (!common::IsEqual(origin_shape, shape)) {
+        MS_LOG(EXCEPTION) << "Assign: " << target->DebugString() << " and " << source->DebugString()
+                          << " has different shape, source shape: " << origin_shape->ToString()
+                          << ", target shape: " << shape->ToString();
+      }
+      auto type_id = common::AnfAlgo::GetOutputInferDataType(target, kFirstOutput);
+      common::AnfAlgo::SetOutputTypeAndDetailShape({type_id}, {shape}, cast_node.get());
+      common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(type_id), cast_node);
+      cast_node->set_scope(source->scope());
+      auto cnode = kernel_graph_->NewCNode({assign, target, cast_node, monad});
+      cnode->set_abstract(target->abstract());
+      return cnode;
+    }
     auto cnode = kernel_graph_->NewCNode({assign, target, source, monad});
     MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_abstract(target->abstract());
@@ -1570,6 +1612,9 @@ class AscendAutoMonadConverter {
 
   // The flag which indicates to insert stackops.
   bool need_stackops_;
+
+  // For the same call, the monad at the end of the function needs to be recorded.
+  std::map<std::vector<KernelGraphPtr>, AnfNodePtr> call_last_monad_;
 };
 
 constexpr size_t kAssignTargetIndex = 1;

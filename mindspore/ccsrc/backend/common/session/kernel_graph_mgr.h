@@ -41,6 +41,13 @@ bool ExistSummaryNode(const KernelGraph *graph);
 #endif
 ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node);
 
+struct PartialFuncInfo {
+  AbstractBasePtr abstract;
+  AnfNodePtr sub_graph;
+  size_t param_begin;
+  size_t param_end;
+};
+
 class BACKEND_EXPORT KernelGraphMgr {
  public:
   KernelGraphMgr() {}
@@ -103,6 +110,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const;
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
+  void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph);
 
  protected:
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
@@ -114,6 +122,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   mindspore::HashMap<AnfNodePtr, std::string> partial_target_map_;
   mindspore::HashMap<AnfNodePtr, ParameterPtr> default_param_map_;
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
+  mindspore::HashMap<KernelGraph *, PartialFuncInfo> kernel_graph_partial_map_;
   static GraphId graph_sum_;
 };
 }  // namespace session

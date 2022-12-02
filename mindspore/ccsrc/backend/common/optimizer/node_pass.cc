@@ -31,7 +31,36 @@ const size_t kSwitchBranchIndex = 2;
 const size_t kCallArgsIndex = 1;
 const size_t kPartialArgsIndex = 1;
 
-void AddOutputAndCallerToMap(const CNodePtr &cnode, mindspore::HashMap<AnfNodePtr, AnfNodePtr> *out_caller_map) {
+void UpdateCallerAbstract(const AnfNodePtr &call_node, const FuncGraphPtr &call_node_fg,
+                          const FuncGraphPtr &sub_graph) {
+  MS_EXCEPTION_IF_NULL(call_node);
+  MS_EXCEPTION_IF_NULL(call_node_fg);
+  call_node->set_abstract(sub_graph->output()->abstract());
+  auto manager = call_node_fg->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
+  // need update TupleGetItem abstract after call node
+  auto &node_users = manager->node_users();
+  auto iter = node_users.find(call_node);
+  if (iter == node_users.end()) {
+    return;
+  }
+  for (auto &node_index : iter->second) {
+    auto used_node = node_index.first;
+    MS_EXCEPTION_IF_NULL(used_node);
+    if (!common::AnfAlgo::CheckPrimitiveType(used_node, prim::kPrimTupleGetItem)) {
+      continue;
+    }
+    auto idx = common::AnfAlgo::GetTupleGetItemOutIndex(used_node->cast<CNodePtr>());
+    std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(call_node, idx)};
+    auto shapes = {common::AnfAlgo::GetOutputInferShape(call_node, idx)};
+    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, used_node.get());
+  }
+}
+
+void AddOutputAndCallerToMap(
+  const CNodePtr &cnode, const FuncGraphPtr &fg,
+  mindspore::HashMap<AnfNodePtr, std::vector<std::pair<AnfNodePtr, FuncGraphPtr>>> *out_caller_map) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(out_caller_map);
   auto inputs = cnode->inputs();
@@ -44,11 +73,31 @@ void AddOutputAndCallerToMap(const CNodePtr &cnode, mindspore::HashMap<AnfNodePt
     }
     auto switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
     MS_EXCEPTION_IF_NULL(switch_subgraph);
-    (*out_caller_map)[switch_subgraph->output()] = cnode;
+    (*out_caller_map)[switch_subgraph->output()].emplace_back(cnode, fg);
+    UpdateCallerAbstract(cnode, fg, switch_subgraph);
   } else if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
     auto call_subgraph = GetValueNode<FuncGraphPtr>(inputs.at(kCallArgsIndex));
     MS_EXCEPTION_IF_NULL(call_subgraph);
-    (*out_caller_map)[call_subgraph->output()] = cnode;
+    (*out_caller_map)[call_subgraph->output()].emplace_back(cnode, fg);
+    UpdateCallerAbstract(cnode, fg, call_subgraph);
+  }
+}
+
+void UpdateSubGraphCaller(
+  const AnfNodePtr &origin_output, const FuncGraphPtr &fg,
+  mindspore::HashMap<AnfNodePtr, std::vector<std::pair<AnfNodePtr, FuncGraphPtr>>> *out_caller_map) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(fg->output());
+  auto find_iter = (*out_caller_map).find(origin_output);
+  if (find_iter != (*out_caller_map).end()) {
+    auto call_node_list = find_iter->second;
+    (*out_caller_map).erase(find_iter);
+    for (auto &call_node_pair : call_node_list) {
+      auto call_node = call_node_pair.first;
+      auto call_node_fg = call_node_pair.second;
+      UpdateCallerAbstract(call_node, call_node_fg, fg);
+    }
+    (*out_caller_map)[fg->output()] = call_node_list;
   }
 }
 
@@ -68,7 +117,8 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(func_graph);
 
-  mindspore::HashMap<AnfNodePtr, AnfNodePtr> subgraph_out_caller_map = {};
+  // maybe call subgraph many times
+  mindspore::HashMap<AnfNodePtr, std::vector<std::pair<AnfNodePtr, FuncGraphPtr>>> subgraph_out_caller_map = {};
   mindspore::HashSet<AnfNodePtr> seen_node;
   std::deque<std::pair<AnfNodePtr, FuncGraphPtr>> todo{{func_graph->output(), func_graph}};
   bool changes = false;
@@ -82,13 +132,17 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     }
     (void)seen_node.insert(node);
     TraceGuard guard(std::make_shared<TraceOpt>(node->debug_info()));
+    // we may update return value in some pass.
+    MS_EXCEPTION_IF_NULL(fg);
+    auto origin_output = fg->output();
+    MS_EXCEPTION_IF_NULL(origin_output);
+    auto origin_abstract = origin_output->abstract();
     AnfNodePtr new_node = Run(fg, node);
     bool change = (new_node != nullptr);
+    if (origin_abstract != fg->output()->abstract()) {
+      UpdateSubGraphCaller(origin_output, fg, &subgraph_out_caller_map);
+    }
     if (new_node != nullptr && new_node != node) {
-      auto find_iter = subgraph_out_caller_map.find(node);
-      if (find_iter != subgraph_out_caller_map.end()) {
-        find_iter->second->set_abstract(new_node->abstract());
-      }
       SkipSameOp(node, new_node, &seen_node);
       (void)manager->Replace(node, new_node);
       // if replaced node is end_goto, refresh relative params in kernel graph
@@ -117,7 +171,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
       }
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      AddOutputAndCallerToMap(cnode, &subgraph_out_caller_map);
+      AddOutputAndCallerToMap(cnode, fg, &subgraph_out_caller_map);
       auto inputs = cnode->inputs();
       (void)std::for_each(inputs.begin(), inputs.end(), [&fg, &todo](AnfNodePtr &node) {
         (void)todo.emplace_back(std::pair<AnfNodePtr, FuncGraphPtr>(node, fg));
