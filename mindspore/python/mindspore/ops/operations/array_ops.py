@@ -1501,6 +1501,49 @@ class Fills(Primitive):
         self.init_prim_io_names(inputs=['x', 'value'], outputs=['y'])
 
 
+class FillV2(Primitive):
+    """
+    Creates a tensor with shape described by `shape` and fills it with values in `value` .
+
+    Inputs:
+        - **shape** (tensor) - 1-D Tensor, the specified shape of output tensor.
+          It's dtype must be int32 or int64.
+        - **value** (tensor) - A scalar tensor, the value to fill the output tensor.
+          The shape of `value` must be 0D and it's dtype must be one of the following types:
+          bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64.
+
+    Outputs:
+        - **y** (Tensor) - A tensor, it's shape and value are described above.
+
+    Raises:
+        ValueError: If `shape` is not a 1-D tensor.
+        TypeError: If the data type of `shape` is not int32 or int64.
+        ValueError: If `value` is not a 0-D tensor.
+        ValueError: If the number of output elements is greater than 1000000.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> fillV2 = ops.FillV2()
+        >>> output = fillV2(Tensor([2, 3], mindspore.int32), Tensor(1, mindspore.float32))
+        >>> print(output)
+        [[1. 1. 1.]
+         [1. 1. 1.]]
+        >>> output = fillV2(Tensor([3, 3], mindspore.int64), Tensor(0, mindspore.int32))
+        >>> print(output)
+        [[0 0 0]
+         [0 0 0]
+         [0 0 0]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize FillV2"""
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
+
+
 class Ones(Primitive):
     r"""
     Creates a tensor filled with value ones.

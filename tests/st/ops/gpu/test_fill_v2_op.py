@@ -15,14 +15,14 @@
 import pytest
 import mindspore as ms
 from mindspore import context, nn, Tensor
-from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations import array_ops as op
 
 
 class Net(nn.Cell):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.op = inner.FillV2()
+        self.op = op.FillV2()
 
     def construct(self, shape, value):
         return self.op(shape, value)

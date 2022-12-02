@@ -268,7 +268,13 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kEuclideanNormOpName)
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kExpandDimsOpName).set_target_op_name(kExpandDimsOpName).set_input_attr_info(1, "int");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillOpName).set_backend_op_name(kFillDOpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillOpName).set_target_op_name(kFillDOpName);
+
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kFillV2OpName)
+  .set_backend_op_name(kFillOpName)
+  .set_target_op_name(kFillDOpName)
+  .set_need_tbe_check_supported(true)
+  .set_input_attr_info(0, "listInt");
 
 // In hisi code, first check dynamic impl in GatherV2
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherOpName)

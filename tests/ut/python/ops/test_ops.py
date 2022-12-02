@@ -4686,7 +4686,7 @@ test_case_other_ops = [
         'desc_inputs': [Tensor(np.array([[[[0.5, 0.5, 0.5]]]], np.float32))],
         'desc_bprop': [Tensor(np.array([[[[0., 0., 0.5]]]], np.float32))]}),
     ('FillV2', {
-        'block': inner.FillV2(),
+        'block': P.FillV2(),
         'desc_inputs': [Tensor([2, 3], mstype.int32),
                         Tensor(1, mstype.float32)],
         'desc_bprop': [Tensor([[1, 1, 1], [1, 1, 1]], mstype.float32)]}),

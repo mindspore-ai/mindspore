@@ -33,8 +33,6 @@ namespace {
 abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
 
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
@@ -42,26 +40,41 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
   const int64_t kDimOne = 1;
   const int64_t kDimZero = 0;
 
-  CheckAndConvertUtils::CheckInteger("rank of shape", SizeToLong(input1_shape.size()), kEqual, kDimOne, prim_name);
+  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+
   if (!IsDynamic(input2_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of value", SizeToLong(input2_shape.size()), kEqual, kDimZero, prim_name);
   }
 
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex0]->BuildValue()->isa<tensor::Tensor>()) {
-    auto value_ptr = input_args[kInputIndex0]->BuildValue();
-    MS_EXCEPTION_IF_NULL(value_ptr);
-    auto output_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", value_ptr, prim_name);
-    for (size_t i = 0; i < output_shape.size(); ++i) {
-      CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
-                                         kGreaterThan, kDimZero, prim_name);
-    }
-    CheckAndConvertUtils::CheckInteger("the number of elements of output", SizeToLong(SizeOf(output_shape)), kLessEqual,
-                                       max_length, prim_name);
-    return std::make_shared<abstract::Shape>(output_shape);
-  } else {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  auto input1_type = input_args[kInputIndex0]->BuildType();
+  auto value_ptr = input_args[kInputIndex0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(value_ptr);
+
+  if (!IsValueKnown(value_ptr)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
+
+  ShapeVector output_shape{};
+  if (input1_type->isa<TensorType>()) {
+    auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    CheckAndConvertUtils::CheckInteger("rank of shape", SizeToLong(input1_shape.size()), kEqual, kDimOne, prim_name);
+    output_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", value_ptr, prim_name);
+  } else if (IsIdentidityOrSubclass(input1_type, kTuple)) {
+    output_shape = CheckAndConvertUtils::CheckTupleInt("shape", value_ptr, prim_name);
+  } else {
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the `shape` "
+                            << " must be a tuple or tensor with all Int elements, but got " << value_ptr->type_name()
+                            << ".";
+  }
+
+  for (size_t i = 0; i < output_shape.size(); ++i) {
+    CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
+                                       kGreaterThan, kDimZero, prim_name);
+  }
+  CheckAndConvertUtils::CheckInteger("the number of elements of output", SizeToLong(SizeOf(output_shape)), kLessEqual,
+                                     max_length, prim_name);
+
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -71,8 +84,10 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   auto input2_type = input_args[kInputIndex1]->BuildType();
 
   // Check the data type of the first input
-  const std::set<TypePtr> input1_valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input1 datatype", input1_type, input1_valid_types, prim_name);
+  if (input1_type->isa<TensorType>()) {
+    const std::set<TypePtr> input1_valid_types = {kInt32, kInt64};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input1 datatype", input1_type, input1_valid_types, prim_name);
+  }
   // Check the data type of the second input and infer the data type of the output from the second input
   (void)CheckAndConvertUtils::CheckTensorTypeValid("output datatype", input2_type,
                                                    common_valid_types_with_complex_and_bool, prim_name);
