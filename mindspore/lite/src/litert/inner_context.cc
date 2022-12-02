@@ -165,7 +165,7 @@ int InnerContext::IsValid() {
     return RET_NOT_SUPPORT;
   }
 #endif
-#ifndef SUPPORT_NPU
+#if !defined(SUPPORT_NPU) && !defined(SUPPORT_NNAPI)
   if (IsDeviceTypeEnabled(DT_NPU)) {
     MS_LOG(ERROR) << "NPU is not supported.";
     return RET_NOT_SUPPORT;

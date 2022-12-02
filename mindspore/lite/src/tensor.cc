@@ -527,6 +527,7 @@ Tensor *Tensor::CreateTensor(const std::string &name, TypeId type, const std::ve
   tensor->set_shape(shape);
   tensor->set_tensor_name(name);
   tensor->set_data_type(type);
+  tensor->set_category(data != nullptr ? (shape.empty() ? CONST_SCALAR : CONST_TENSOR) : VAR);
   return tensor.release();
 }
 
@@ -583,6 +584,7 @@ Tensor *Tensor::CreateTensorByDeepCopy(const std::string &name, TypeId type, con
   }
   tensor->set_tensor_name(name);
   tensor->set_data_type(type);
+  tensor->set_category(data != nullptr ? (shape.empty() ? CONST_SCALAR : CONST_TENSOR) : VAR);
   return tensor.release();
 }
 
