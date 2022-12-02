@@ -99,3 +99,31 @@ class SequenceCount(Primitive):
     def __init__(self):
         """Initialize ListAppend"""
         self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
+
+
+class SequenceMul(Primitive):
+    r"""
+    Support sequence multiplication operation 'seq.mul(scalar)'.
+
+    .. note::
+        This it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **sequence** (Union[List, Tuple]) - The sequence to count elements.
+        - **scalar** (Any Object) - The times to replicate the sequence.
+
+    Outputs:
+        List or tuple with 'scalar' times multiplication.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+        ValueError: Both 'sequence' and 'scalar' is constant.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListAppend"""
+        self.init_prim_io_names(inputs=['sequence', 'scalar'], outputs=['output_data'])

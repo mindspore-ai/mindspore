@@ -19,6 +19,8 @@ from mindspore.ops.composite.multitype_ops._constexpr_utils import check_equal
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.common import COOTensor
+from ...operations._sequence_ops import SequenceMul
+
 
 mul = base.MultitypeFuncGraph("mul", True)
 """
@@ -101,6 +103,10 @@ def _list_mul_scalar(x, y):
     Outputs:
         List.
     """
+    if not isinstance(y, int):
+        raise TypeError(f"can't multiply sequence by non-int of type '{type(y)}'.")
+    if F.is_sequence_shape_unknown(x) or not F.isconstant(y):
+        return SequenceMul()(x, y)
     res = []
     i = 0
     while i < y:
@@ -117,6 +123,10 @@ def _scalar_mul_list(x, y):
     Outputs:
         List.
     """
+    if not isinstance(x, int):
+        raise TypeError(f"can't multiply sequence by non-int of type '{type(x)}'.")
+    if not F.isconstant(x) or F.is_sequence_shape_unknown(y):
+        return SequenceMul()(y, x)
     res = []
     i = 0
     while i < x:
@@ -133,6 +143,10 @@ def _tuple_mul_scalar(x, y):
     Outputs:
         Tuple.
     """
+    if not isinstance(y, int):
+        raise TypeError(f"can't multiply sequence by non-int of type '{type(y)}'.")
+    if F.is_sequence_shape_unknown(x) or not F.isconstant(y):
+        return SequenceMul()(x, y)
     res = ()
     i = 0
     while i < y:
@@ -149,6 +163,10 @@ def _scalar_mul_tuple(x, y):
     Outputs:
         Tuple.
     """
+    if not isinstance(x, int):
+        raise TypeError(f"can't multiply sequence by non-int of type '{type(x)}'.")
+    if not F.isconstant(x) or F.is_sequence_shape_unknown(y):
+        return SequenceMul()(y, x)
     res = ()
     i = 0
     while i < x:
