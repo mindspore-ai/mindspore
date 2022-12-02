@@ -55,6 +55,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore.ops.operations import _grad_ops as G
+from mindspore import context
 
 
 @bprop_getters.register(StridedSliceV2)
@@ -620,6 +621,7 @@ def get_bprop_affinegrid(self):
     """Generate bprop for AffineGrid"""
 
     align_corners = self.align_corners
+    input_grad = G.AffineGridGrad(align_corners)
     ones = P.Ones()
     transpose = P.Transpose()
     concat = P.Concat(1)
@@ -835,11 +837,18 @@ def get_bprop_affinegrid(self):
             dtheta = transpose(dtheta, perm2)
         return dtheta, tre
 
-    def bprop(theta, output_size, out, dout):
+    def bprop_gpu(theta, output_size, out, dout):
         is_tensor, _ = convert_to_tensor(output_size)
         if is_tensor:
             return dyn_bprop(theta, output_size, out, dout)
         return static_bprop(theta, output_size, out, dout)
+
+    def bprop(theta, output_size, out, dout):
+        dx = input_grad(dout, output_size)
+        return dx, zeros_like(output_size)
+
+    if context.get_context('device_target') == "GPU":
+        return bprop_gpu
 
     return bprop
 
