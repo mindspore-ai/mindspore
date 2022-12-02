@@ -4,7 +4,7 @@ MAINTAINER MindSpore Authors
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV PATH /usr/local/bin:$PATH
+ENV PATH ${PYTHON_ROOT_PATH}/bin:/usr/local/bin:/root/.local/bin:$PATH
 
 # Install base tools
 RUN apt update \
@@ -38,7 +38,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
 
 # Install the rest dependent tools
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
-    libnuma-dev
+    libnuma-dev                
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
@@ -74,3 +74,7 @@ RUN mkdir -pv /root/.pip \
     && pip install --upgrade pip \
     && pip install --no-cache-dir py-spy \
     && pip cache purge
+
+# Install MindSpore cpu and MindInsight packages
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0a0/MindSpore/unified/x86_64/mindspore-2.0.0a0-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0a0/MindInsight/any/mindinsight-2.0.0-py3-none-any.whl
