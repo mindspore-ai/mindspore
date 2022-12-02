@@ -36,7 +36,27 @@ class ActorWorker : public Worker {
   explicit ActorWorker(ThreadPool *pool, size_t index) : Worker(pool, index) {}
   void CreateThread() override;
   bool ActorActive();
-  ~ActorWorker() override{};
+  ~ActorWorker() override {
+    {
+      std::lock_guard<std::mutex> _l(mutex_);
+      alive_ = false;
+    }
+    cond_var_.notify_one();
+
+    bool terminate = false;
+    int count = 0;
+    do {
+      terminate = local_task_queue_->Empty();
+      if (!terminate) {
+        auto task_split = local_task_queue_->Dequeue();
+        (void)TryRunTask(task_split);
+      }
+    } while (!terminate && count++ < kMaxCount);
+
+    if (thread_.joinable()) {
+      thread_.join();
+    }
+  };
 
  private:
   void RunWithSpin();
