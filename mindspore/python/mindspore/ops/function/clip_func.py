@@ -107,7 +107,7 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
     """
     def _clip_by_value(clip_min, clip_max, x):
         if not isinstance(x, Tensor):
-            TypeError("Then type of 'x' must be Tensor")
+            raise TypeError("Then type of 'x' must be Tensor")
         result = x
         if clip_min is not None:
             result = max_op(result, cast_op(clip_min, x.dtype))
@@ -116,13 +116,13 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
         return result
 
     if clip_value_min is None and clip_value_max is None:
-        ValueError("At least one of 'clip_value_min' or 'clip_value_max' must not be None")
+        raise ValueError("At least one of 'clip_value_min' or 'clip_value_max' must not be None")
     if not isinstance(x, (Tensor, tuple, list)):
-        TypeError("The input of 'clip_by_value' must be tensor or tuple[Tensor] or list[Tensor]")
+        raise TypeError("The input of 'clip_by_value' must be tensor or tuple[Tensor] or list[Tensor]")
     if not isinstance(clip_value_min, (type(None), Tensor, float, int)):
-        TypeError("Then type of 'clip_value_min' must be not one of None, Tensor, float, int.")
+        raise TypeError("Then type of 'clip_value_min' must be not one of None, Tensor, float, int.")
     if not isinstance(clip_value_max, (type(None), Tensor, float, int)):
-        TypeError("Then type of 'clip_value_max' must be not one of None, Tensor, float, int.")
+        raise TypeError("Then type of 'clip_value_max' must be not one of None, Tensor, float, int.")
     if isinstance(clip_value_min, (float, int)):
         clip_value_min = scalar2tensor_op(clip_value_min)
     if isinstance(clip_value_max, (float, int)):

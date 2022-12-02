@@ -200,6 +200,8 @@ Element-by-Element Operations
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
+    mindspore.ops.float_power
+    mindspore.ops.fmod
     mindspore.ops.heaviside
     mindspore.ops.hypot
     mindspore.ops.i0
@@ -297,6 +299,7 @@ Comparison Functions
     mindspore.ops.isneginf
     mindspore.ops.isposinf
     mindspore.ops.isreal
+    mindspore.ops.is_complex
     mindspore.ops.le
     mindspore.ops.less
     mindspore.ops.maximum

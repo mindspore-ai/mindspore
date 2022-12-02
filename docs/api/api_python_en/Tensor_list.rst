@@ -110,9 +110,11 @@
     mindspore.Tensor.fliplr
     mindspore.Tensor.flipud
     mindspore.Tensor.float
+    mindspore.Tensor.float_power
     mindspore.Tensor.floor
     mindspore.Tensor.flush_from_cache
     mindspore.Tensor.fold
+    mindspore.Tensor.fmod
     mindspore.Tensor.from_numpy
     mindspore.Tensor.gather
     mindspore.Tensor.gather_elements
@@ -148,6 +150,7 @@
     mindspore.Tensor.isposinf
     mindspore.Tensor.isreal
     mindspore.Tensor.is_signed
+    mindspore.Tensor.is_complex
     mindspore.Tensor.item
     mindspore.Tensor.itemset
     mindspore.Tensor.itemsize

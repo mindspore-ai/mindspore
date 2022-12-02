@@ -292,6 +292,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"isclose", std::string("isclose")},                                // P.IsClose()
        {"is_floating_point", std::string("is_floating_point")},            // is_floating_point()
        {"is_signed", std::string("is_signed")},                            // is_signed()
+       {"is_complex", std::string("is_complex")},                          // F.is_complex()
        {"inv", std::string("inv")},                                        // inv()
        {"inverse", std::string("inverse")},                                // inverse()
        {"invert", std::string("invert")},                                  // invert()
@@ -330,6 +331,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"flip", std::string("flip")},                                      // flip
        {"fliplr", std::string("fliplr")},                                  // fliplr
        {"flipud", std::string("flipud")},                                  // flipud
+       {"float_power", std::string("float_power")},                        // F.float_power
+       {"fmod", std::string("fmod")},                                      // F.fmod
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"heaviside", std::string("heaviside")},                            // F.heaviside
        {"hypot", std::string("hypot")},                                    // F.hypot

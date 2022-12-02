@@ -1517,6 +1517,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('isfinite')()(self)
 
+    def is_complex(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.is_complex`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('is_complex')(self)
+
     def inv(self):
         r"""
         For details, please refer to :func:`mindspore.ops.inv`.
@@ -1841,6 +1848,20 @@ class Tensor(Tensor_):
 
         perm = tuple(range(self.ndim - 1, -1, -1))
         return reshape_op(trans_op(self, perm), (-1,))
+
+    def float_power(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.float_power`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('float_power')(self, other)
+
+    def fmod(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.fmod`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fmod')(self, other)
 
     def narrow(self, axis, start, length):
         """

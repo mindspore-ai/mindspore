@@ -146,6 +146,7 @@ float_type = (float16, float32, float64,)
 signed_type = (int8, byte, int16, short, int32, intc, int64,
                intp, float16, half, float32, single, float64,
                double, complex64, complex128)
+complex_type = (complex64, complex128,)
 all_types = (bool_, int8, uint8, int16, int32, int64, float16, float32, float64, complex64, complex128)
 implicit_conversion_seq = {t: idx for idx, t in enumerate(all_types)}
 
