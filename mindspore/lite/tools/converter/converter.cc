@@ -138,7 +138,12 @@ FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> 
     kernel::PopulateTrainParameters();
 #endif
     MindsporeImporter ms_import;
-    func_graph_base = api::MakeShared<api::FuncGraph>(ms_import.ImportMindIR(param));
+    auto func_graph_ptr = ms_import.ImportMindIR(param);
+    if (func_graph_ptr == nullptr) {
+      MS_LOG(ERROR) << "Import MindIR failed";
+      return nullptr;
+    }
+    func_graph_base = api::MakeShared<api::FuncGraph>(func_graph_ptr);
   } else {
     model_parser_ = registry::ModelParserRegistry::GetModelParser(param->fmk_type);
     if (model_parser_ == nullptr) {
