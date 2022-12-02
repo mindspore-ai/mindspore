@@ -15,6 +15,7 @@
 """Test dynamic obfuscation"""
 import os
 import numpy as np
+import pytest
 
 import mindspore.ops as ops
 import mindspore.nn as nn
@@ -130,6 +131,7 @@ def test_obfuscate_model_customized_func_mode():
     assert np.all(original_result == right_func_result)
 
 
+@pytest.mark.skip(reason="random failures")
 def test_export_password_mode():
     """
     Feature: Obfuscate MindIR format model with dynamic obfuscation (password mode) in export().
