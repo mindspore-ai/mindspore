@@ -575,14 +575,10 @@ class Col2Im(Primitive):
         Tensor, a 4-D Tensor with same type of input `x`.
 
     Raises:
-        TypeError: If :attr:`kernel_size` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`dilation` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`padding` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If :attr:`stride` data type is not in Union[int, tuple[int], list[int]].
-        ValueError: If :attr:`kernel_size` value is not greater than zero or elements number more than 2.
-        ValueError: If :attr:`dilation` value is not greater than zero or elements number more than 2.
-        ValueError: If :attr:`padding` value is not greater than zero or elements number more than 2.
-        ValueError: If :attr:`stride` value is not greater than zero or elements number more than 2.
+        TypeError: If dtype of `kernel_size` , `dilation` , `padding` or `stride` is not in
+                   Union[int, tuple[int], list[int]].
+        ValueError: If values in `kernel_size` , `dilation` , `padding` or `stride` are not greater than zero or any
+                    one of them has more than 2 elements.
         ValueError: If x.shape[2] != kernel_size[0] * kernel_size[1].
         ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
 

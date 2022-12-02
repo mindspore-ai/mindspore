@@ -1114,9 +1114,8 @@ class CombinedNonMaxSuppression(Primitive):
         TypeError: If the dtype of `max_output_size_per_class` and `max_total_size` are not int32.
         ValueError: If `boxes` is not 4D.
         ValueError: If `max_output_size_per_class`, `max_total_size`, `iou_threshold` and `score threshold` are not 0D.
-        ValueError: If shape[0] of `boxes` is not same with shape[0] of `scores`.
         ValueError: If `scores` is not 3D.
-        ValueError: If shape[1] of `boxes` is not same with shape[1] of the `scores`.
+        ValueError: If shape[0] or shape[1] of `boxes` is not same with that of the `scores`.
         ValueError: If shape[2] of `boxes` is not same with shape[2] of `scores` or 1
         ValueError: If `max_total_size` < 0.
         ValueError: If `max_output_size_per_class` < 0.

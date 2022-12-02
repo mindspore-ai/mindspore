@@ -664,7 +664,7 @@ class ReduceMean(_Reduce):
 
 class CumulativeLogsumexp(Primitive):
     """
-    Compute the cumulative product of the tensor `x` along `axis`.
+    Compute the cumulative log-sum-exp of the tensor `x` along `axis` .
 
     When `exclusive` is set `False`, this operation performs an inclusive cumulative log-sum-exp, which means that the
     first element of the input is identical to the first element of the output. For example, when takes a tensor
@@ -679,10 +679,11 @@ class CumulativeLogsumexp(Primitive):
     is performed in the opposite direction and thus get the output [log(exp(b) * exp(c)), c, -inf].
 
     Args:
-        exclusive (bool): If true, perform exclusive cumulative log-sum-exp.
-                          If false, perform inclusive cumulative log-sum-exp. Default: False.
-        reverse (bool): If true, the cumulative log-sum-exp is performed in the opposite direction.
-                        If false, the cumulative log-sum-exp is performed in the forward direction. Default: False.
+        exclusive (bool, optional): If true, perform exclusive cumulative log-sum-exp.
+                                    If false, perform inclusive cumulative log-sum-exp. Default: False.
+        reverse (bool, optional): If true, the cumulative log-sum-exp is performed in the opposite direction.
+                                  If false, the cumulative log-sum-exp is performed in the forward direction.
+                                  Default: False.
 
     Inputs:
         - **x** (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64.
@@ -694,12 +695,11 @@ class CumulativeLogsumexp(Primitive):
         Tensor, has the same dtype and shape as the `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `x` or `axis` not a Tensor.
         TypeError: If dtype of `x` is not in [float16, float32, float64].
-        TypeError: If `axis` is not a Tensor.
         TypeError: If dtype of `axis` is not in [int16, int32, int64].
         TypeError: If `exclusive` or `reverse` is not a bool.
-        ValueError: If the dimension of `x` is not greater than 1.
+        ValueError: If the dimension of `x` is not greater than 0.
         RuntimeError: If `axis` is out of range [-rank(x), rank(x)).
 
     Supported Platforms:
