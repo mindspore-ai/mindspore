@@ -24,7 +24,6 @@
 #include "include/transform/graph_ir/utils.h"
 #include "external/ge/ge_api.h"
 #include "runtime/config.h"
-#include "mindspore/ccsrc/pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 GeDeviceContext &GeDeviceContext::GetInstance() {
@@ -39,7 +38,6 @@ void GeDeviceContext::Initialize() {
     MS_LOG(INFO) << "Ge device context has been initialized.";
     return;
   }
-  mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());
   context_ = MsContext::GetInstance();
   InitGe(context_);
   is_initialized_ = true;
