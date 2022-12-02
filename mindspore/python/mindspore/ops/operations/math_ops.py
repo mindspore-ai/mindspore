@@ -3743,7 +3743,7 @@ class Quantile(Primitive):
     Refer to :func:`mindspore.ops.quantile` and :func:`mindspore.ops.nanquantile` for more detail.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> quantile = ops.Quantile()

@@ -56,6 +56,7 @@ from mindspore.ops.operations.math_ops import (
     Lcm,
     Gcd,
     Sinc,
+    Quantile,
     NanToNum,
     SparseSegmentMean,
     TrilIndices,
@@ -6225,6 +6226,117 @@ def bmm(input_x, mat2):
 
     bmm_op = _get_cache_prim(P.BatchMatMul)()
     return bmm_op(input_x, mat2)
+
+
+def quantile(x, q, axis=None, keepdims=False):
+    r"""
+    Computes the q-th quantiles of all elements in the input tensor, doing a linear interpolation when the
+    q-th quantile lies between two data points.
+
+    Args:
+        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+                    Supported dtypes: float32, float64.
+        q (float or Tensor): A scalar or 1D tensor of quantile values in the range [0, 1].
+                            Supported dtypes: float32, float64.
+        axis (int): The dimension to reduce. Default: None. By default,
+                    axis is None resulting in the input tensor being flattened before computation.
+        keepdims (bool): Whether the output tensor has dim retained or not. Default: False.
+
+    Returns:
+        Tensor, has the same dtype as the `input`.
+
+        Assume the input shape is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, axis = :math:`i` and m is
+        the element count of input `q`.
+
+        - If `q` is scalar and `keepdims` is True, the shape of output is :math:`(x_0, x_1, ..., 1, ..., X_R)`.
+        - If `q` is scalar and `keepdims` is False, the shape of output is :math:`(x_0, x_1, ..., X_R)`.
+        - If `q` is 1D Tensor and `keepdims` is True, the shape of output is :math:`(m, x_0, x_1, ..., 1, ..., X_R)`.
+        - If `q` is 1D Tensor and `keepdims` is False, the shape of output is :math:`(m, x_0, x_1, ..., X_R)`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `q` is not a Tensor or float.
+        TypeError: If dtype of `input` is not float32 or float64.
+        TypeError: If dtype of `q` is not float32 or float64.
+        TypeError: If dtype of `input` and the dtype of `q` is different.
+        ValueError: If the `q` values not in the range [0, 1].
+        ValueError: If the `axis` values out of range.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
+        >>> q = Tensor(np.array([0, 0.5, 1]), mindspore.float32)
+        >>> output = ops.quantile(x, q)
+        >>> print(output.asnumpy())
+        [-0.5446  0.07  0.9214]
+    """
+
+    if axis is not None:
+        _check_attr_dtype("axis", axis, [int], "quantile")
+    if keepdims is not None:
+        _check_attr_dtype("keepdims", keepdims, [bool], "quantile")
+
+    quantile_ = _get_cache_prim(Quantile)(dim=axis, keep_dims=keepdims)
+    return quantile_(x, q)
+
+
+def nanquantile(x, q, axis=None, keepdims=False):
+    r"""
+    This is a variant of mindspore.ops.quantile() that 'ignores' NaN values,
+    computing the quantiles q as if NaN values in input did not exist.
+    If all values in a reduced row are NaN then the quantiles for that reduction will be NaN.
+
+    Refer to :func:`mindspore.ops.quantile` for more detail.
+
+    Args:
+        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+                    Supported dtypes: float32, float64.
+        q (float or Tensor): A scalar or 1D tensor of quantile values in the range [0, 1].
+                            Supported dtypes: float32, float64.
+        axis (int): The dimension to reduce. Default: None. By default,
+                    axis is None resulting in the input tensor being flattened before computation.
+        keepdims (bool): Whether the output tensor has dim retained or not. Default: False.
+
+    Returns:
+        Tensor, has the same dtype as the `input`.
+
+        Assume the input shape is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, axis = :math:`i` and m is
+        the element count of input `q`.
+
+        - If `q` is scalar and `keepdims` is True, the shape of output is :math:`(x_0, x_1, ..., 1, ..., X_R)`.
+        - If `q` is scalar and `keepdims` is False, the shape of output is :math:`(x_0, x_1, ..., X_R)`.
+        - If `q` is 1D Tensor and `keepdims` is True, the shape of output is :math:`(m, x_0, x_1, ..., 1, ..., X_R)`.
+        - If `q` is 1D Tensor and `keepdims` is False, the shape of output is :math:`(m, x_0, x_1, ..., X_R)`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `q` is not a Tensor or float.
+        TypeError: If dtype of `input` is not float32 or float64.
+        TypeError: If dtype of `q` is not float32 or float64.
+        TypeError: If dtype of `input` and the dtype of `q` is different.
+        ValueError: If the `q` values not in the range [0, 1]
+        ValueError: If the `axis` values out of range.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
+        >>> q = Tensor(np.array([0, 0.5, 1]), mindspore.float32)
+        >>> output = ops.nanquantile(x, q)
+        >>> print(output.asnumpy())
+        [-0.5446  0.07  0.9214]
+    """
+
+    if axis is not None:
+        _check_attr_dtype("axis", axis, [int], "nanquantile")
+    if keepdims is not None:
+        _check_attr_dtype("keepdims", keepdims, [bool], "nanquantile")
+
+    quantile_ = _get_cache_prim(Quantile)(dim=axis, keep_dims=keepdims, ignore_nan=True)
+    return quantile_(x, q)
 
 
 def baddbmm(x, batch1, batch2, beta=1, alpha=1):

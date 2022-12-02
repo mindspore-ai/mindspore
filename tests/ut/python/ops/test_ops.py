@@ -28,6 +28,8 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.function.math_func import matrix_exp
 from mindspore.ops.function.math_func import sinc
+from mindspore.ops.function.math_func import quantile
+from mindspore.ops.function.math_func import nanquantile
 from mindspore.ops.function.math_func import nan_to_num
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2, \
                                                AdjustSaturation, CombinedNonMaxSuppression, CropAndResizeGradImage
@@ -100,6 +102,7 @@ from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Diagonal
 from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Heaviside
+from mindspore.ops.operations.math_ops import Quantile
 from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Fmin
@@ -1368,6 +1371,26 @@ class MatrixSetDiagV3Net(nn.Cell):
         return self.matrix_set_diag_v3(x, diagonal, self.k)
 
 
+class QuantileFunc(nn.Cell):
+    def __init__(self):
+        super(QuantileFunc, self).__init__()
+        self.quantile = quantile
+
+    def construct(self, x, q):
+        y = self.quantile(x, q)
+        return y
+
+
+class NanQuantileFunc(nn.Cell):
+    def __init__(self):
+        super(NanQuantileFunc, self).__init__()
+        self.nanquantile = nanquantile
+
+    def construct(self, x, q):
+        y = self.nanquantile(x, q)
+        return y
+
+
 class SparseApplyCenteredRMSPropNet(nn.Cell):
     def __init__(self, use_locking=False):
         super(SparseApplyCenteredRMSPropNet, self).__init__()
@@ -1736,6 +1759,18 @@ test_case_math_ops = [
         'block': SincFunc(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Quantile_1', {
+        'block': Quantile(),
+        'desc_inputs': [[2, 3], [3]],
+        'skip': ['backward']}),
+    ('Quantile_2', {
+        'block': QuantileFunc(),
+        'desc_inputs': [[2, 3], [3]],
+        'skip': ['backward']}),
+    ('NanQuantile', {
+        'block': NanQuantileFunc(),
+        'desc_inputs': [[2, 3], [3]],
+        'skip': ['backward']}),
     ('Asin', {
         'block': P.Asin(),
         'desc_inputs': [[2, 3]],
