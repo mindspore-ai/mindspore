@@ -57,21 +57,27 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
     auto aicpu_ext_info = reinterpret_cast<AicpuExtInfo *>(ext_info_data + offset);
     MS_EXCEPTION_IF_NULL(aicpu_ext_info);
     switch (aicpu_ext_info->infoType) {
-      case kernel::FWK_ADPT_EXT_SHAPE_TYPE:
+      case aicpu::FWKAdapter::FWK_ADPT_EXT_SHAPE_TYPE:
         if (!ParseExtShapeType(*aicpu_ext_info)) {
           MS_LOG(ERROR) << "Parse aicpu_ext_info shape type failed, node: " << node_name_;
           return false;
         }
         break;
-      case kernel::FWK_ADPT_EXT_INPUT_SHAPE:
+      case aicpu::FWKAdapter::FWK_ADPT_EXT_INPUT_SHAPE:
         if (!ParseExtInputShape(aicpu_ext_info)) {
           MS_LOG(ERROR) << "Parse aicpu_ext_info input shape failed, node: " << node_name_;
           return false;
         }
         break;
-      case kernel::FWK_ADPT_EXT_OUTPUT_SHAPE:
+      case aicpu::FWKAdapter::FWK_ADPT_EXT_OUTPUT_SHAPE:
         if (!ParseExtOutputShape(aicpu_ext_info)) {
           MS_LOG(ERROR) << "Parse aicpu_ext_info output shape failed, node: " << node_name_;
+          return false;
+        }
+        break;
+      case aicpu::FWKAdapter::FWK_ADPT_EXT_ASYNCWAIT:
+        if (!ParseExtAsyncWait(aicpu_ext_info)) {
+          MS_LOG(ERROR) << "Parse aicpu_ext_info async wait failed, node: " << node_name_;
           return false;
         }
         break;
@@ -147,6 +153,20 @@ bool AicpuExtInfoHandler::ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info) {
   return true;
 }
 
+bool AicpuExtInfoHandler::ParseExtAsyncWait(AicpuExtInfo *aicpu_ext_info) {
+  auto need_len = sizeof(AsyncWaitInfo);
+  MS_EXCEPTION_IF_NULL(aicpu_ext_info);
+  if (aicpu_ext_info->infoLen != need_len) {
+    MS_LOG(ERROR) << "Node:" << node_name_
+                  << " parse aicpu_ext_info async wait failed, aicpu_ext_info->infoLen:" << aicpu_ext_info->infoLen
+                  << " need_len:" << need_len;
+    return false;
+  }
+
+  async_wait_ = reinterpret_cast<AsyncWaitInfo *>(aicpu_ext_info->infoMsg);
+  return true;
+}
+
 bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const NotNull<AnfNodePtr> &anf_node) {
   if (input_index >= input_num_) {
     MS_LOG(ERROR) << "input_index: " << input_index << " >= input_num_: " << input_num_ << ", node: " << node_name_;
@@ -206,7 +226,7 @@ bool AicpuExtInfoHandler::GetOutputShapeAndType(uint32_t output_index, NotNull<s
 
 bool AicpuExtInfoHandler::UpdateShapeAndType(const std::vector<int64_t> &shape,
                                              NotNull<AicpuShapeAndType *> shape_and_type) {
-  if (shape.empty() || shape.size() > kernel::kMaxShapeDims) {
+  if (shape.empty() || shape.size() > aicpu::FWKAdapter::kMaxShapeDims) {
     MS_LOG(ERROR) << "Invalid shape:" << shape.size() << " Only support 0-8";
     return false;
   }
@@ -215,7 +235,7 @@ bool AicpuExtInfoHandler::UpdateShapeAndType(const std::vector<int64_t> &shape,
   for (; index < shape.size(); ++index) {
     shape_and_type->dims[index] = shape[index];
   }
-  if (index < kernel::kMaxShapeDims) {
+  if (index < aicpu::FWKAdapter::kMaxShapeDims) {
     shape_and_type->dims[index] = kDimEndFlag;
   }
 
@@ -240,6 +260,16 @@ void AicpuExtInfoHandler::GetShapeAndType(const NotNull<const AicpuShapeAndType 
   }
   MS_LOG(DEBUG) << "Debug ms_type:" << ms_type;
   *data_type = static_cast<TypeId>(ms_type);
+}
+
+bool AicpuExtInfoHandler::UpdateEventId(const uint32_t event_id) {
+  if (async_wait_ == nullptr) {
+    MS_LOG(ERROR) << "async_wait_ is nullptr";
+    return false;
+  }
+  async_wait_->waitType = 1U;
+  async_wait_->waitId = event_id;
+  return true;
 }
 }  // namespace ascend
 }  // namespace device
