@@ -28,7 +28,16 @@ TypePtr RefType::DeepCopy() const {
   }
 }
 
-std::string RefType::ToString() const { return DumpText(); }
+std::string RefType::ToString() const {
+  std::ostringstream buffer;
+  if (IsGeneric()) {
+    buffer << "Ref";
+  } else {
+    buffer << "Ref[";
+    buffer << TensorType::ToString() << "]";
+  }
+  return buffer.str();
+}
 
 std::string RefType::DumpText() const {
   std::ostringstream buffer;
