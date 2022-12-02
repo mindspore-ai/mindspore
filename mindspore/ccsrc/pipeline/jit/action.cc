@@ -199,10 +199,6 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
 void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto &used_forward_nodes = func_graph->used_forward_nodes();
-  std::vector<AnfNodePtr> used_forward_nodes_sorted_list(used_forward_nodes.begin(), used_forward_nodes.end());
-  std::sort(
-    used_forward_nodes_sorted_list.begin(), used_forward_nodes_sorted_list.end(),
-    [](const AnfNodePtr &a, const AnfNodePtr &b) { return a->fullname_with_scope() < b->fullname_with_scope(); });
 
   // Get original output node and abstract
   auto original_output_node = func_graph->output();
@@ -213,7 +209,7 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   // Create a new make tuple node to hold all forward used nodes.
   abstract::AbstractBasePtrList added_abs_list;
   std::vector<AnfNodePtr> added_node_list{NewValueNode(prim::kPrimMakeTuple)};
-  std::for_each(used_forward_nodes_sorted_list.begin(), used_forward_nodes_sorted_list.end(),
+  std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(),
                 [&added_abs_list, &added_node_list](const AnfNodePtr &node) {
                   MS_EXCEPTION_IF_NULL(node);
                   added_node_list.push_back(node);
