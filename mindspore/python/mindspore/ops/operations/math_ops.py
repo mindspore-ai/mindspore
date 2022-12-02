@@ -6424,7 +6424,7 @@ class LuUnpack(Primitive):
         RuntimeError: On the Ascend platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> LU_data = Tensor(np.array([[[-0.3806, -0.4872,  0.5536],
@@ -6435,11 +6435,32 @@ class LuUnpack(Primitive):
         ...                             [ 0.1015, -0.5363,  0.6165]]]), mstype.float32)
         >>> LU_pivots = Tensor(np.array([[1, 3, 3],
         ...                              [2, 3, 3]]), mstype.int32)
-        >>> lu_unpack = ops.LuUnpack()
-        >>> pivots, L, U = lu_unpack(LU_data, LU_pivots, unpack_data, unpack_pivots)
+        >>> lu_unpack = LuUnpack()
+        >>> pivots, L, U = lu_unpack(LU_data, LU_pivots)
         >>> print(pivots)
+        [[[1. 0. 0.]
+          [0. 0. 1.]
+          [0. 1. 0.]]
+        <BLANKLINE>
+         [[0. 0. 1.]
+          [1. 0. 0.]
+          [0. 1. 0.]]]
         >>> print(L)
+        [[[ 1.      0.      0.    ]
+          [-0.1287  1.      0.    ]
+          [ 0.2583  0.5239  1.    ]]
+        <BLANKLINE>
+         [[ 1.      0.      0.    ]
+          [-0.6401  1.      0.    ]
+          [ 0.1015 -0.5363  1.    ]]]
         >>> print(U)
+        [[[-0.3806 -0.4872  0.5536]
+          [ 0.      0.6508 -0.2396]
+          [ 0.      0.      0.6902]]
+        <BLANKLINE>
+         [[ 0.6706 -1.1782  0.4574]
+          [ 0.     -0.4779  0.6701]
+          [ 0.      0.      0.6165]]]
     """
 
     @prim_attr_register
@@ -6526,10 +6547,6 @@ class Polygamma(Primitive):
 
     .. math::
     \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
-
-    Args:
-        :math:`a \geq 0`: the order of the polygamma function.
-        input (Tensor): the tensor to compute the polygamma function.
 
     Inputs:
         - **a** (Tensor) - The order of the polygamma function, types: int32, int64.
