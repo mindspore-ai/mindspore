@@ -120,6 +120,10 @@ file(GLOB CXX_API_SRCS
 file(GLOB RUNTIME_PASS_SRCS
         ${SRC_DIR}/litert/pass/*.cc)
 
+if(MSLITE_ENABLE_RUNTIME_PASS)
+        file(GLOB KERNEL_ONLINE_FUSION_SRC ${SRC_DIR}/litert/pass/online_fusion/*.cc)
+endif()
+
 set(LITE_SRC ${API_SRC}
         ${CXX_API_SRCS}
         ${RUNTIME_PASS_SRCS}
@@ -154,6 +158,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/scheduler.cc
         ${SRC_DIR}/litert/sub_graph_kernel.cc
         ${SRC_DIR}/litert/sub_graph_split.cc
+        ${KERNEL_ONLINE_FUSION_SRC}
         ${SRC_DIR}/litert/lite_session.cc
         ${SRC_DIR}/litert/executor.cc
         ${SRC_DIR}/litert/lite_model.cc
@@ -168,7 +173,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
         ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
-        )
+)
 
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
     set(LITE_SRC

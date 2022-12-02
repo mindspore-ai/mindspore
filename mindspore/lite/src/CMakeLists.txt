@@ -271,11 +271,20 @@ if(MSLITE_ENABLE_WEIGHT_DECODE)
     endif()
 endif()
 
+if(MSLITE_ENABLE_RUNTIME_PASS)
+    file(GLOB KERNEL_ONLINE_FUSION_SRC ${CMAKE_CURRENT_SOURCE_DIR}/litert/pass/online_fusion/*.cc)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${KERNEL_ONLINE_FUSION_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/litert/sub_graph_split.cc
+    )
+endif()
+
 if(MSLITE_ENABLE_AUTO_PARALLEL)
     set(LITE_SRC
-            ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/sub_graph_split.cc
-            )
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/litert/sub_graph_split.cc
+    )
 endif()
 
 if(MSLITE_ENABLE_CUSTOM_KERNEL)
