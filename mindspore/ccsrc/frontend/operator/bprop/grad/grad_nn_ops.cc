@@ -244,6 +244,10 @@ REG_BPROP_BUILDER("LSTM").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto dout = ib->GetInput(kIndex5);
   auto target = ib->GetTargetFromContext();
   if (target == "CPU") {
+    if (out != nullptr || dout != nullptr) {
+      MS_LOG(INFO) << "Skip bprop expander for 'LSTM' on CPU because LSTMGrad does not have C++ infer";
+      return {};
+    }
     auto y = ib->TupleGetItem(out, kIndex0);
     auto hy = ib->TupleGetItem(out, kIndex1);
     auto cy = ib->TupleGetItem(out, kIndex2);
