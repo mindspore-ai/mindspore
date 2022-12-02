@@ -6093,7 +6093,7 @@ class SearchSorted(Primitive):
     within `sorted_sequence` would be preserved when the corresponding values in `values` were inserted before the
     indices.
 
-    Refer to :func:`mindspore.ops.search_sorted` for more details.
+    Refer to :func:`mindspore.ops.searchsorted` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
