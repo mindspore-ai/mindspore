@@ -95,6 +95,8 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.I32_NHWC, DataType.I32_HWCN) \
     .dtype_format(DataType.I32_HWCN, DataType.I32_Default) \
     .dtype_format(DataType.I32_HWCN, DataType.I32_NHWC) \
+    .dtype_format(DataType.I32_NDC1HWC0, DataType.I32_NCDHW) \
+    .dtype_format(DataType.I32_NCDHW, DataType.I32_NDC1HWC0) \
     .dtype_format(DataType.I64_Default, DataType.I64_NHWC) \
     .dtype_format(DataType.I64_Default, DataType.I64_HWCN) \
     .dtype_format(DataType.I64_NHWC, DataType.I64_Default) \

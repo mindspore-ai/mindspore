@@ -1265,6 +1265,8 @@ class DataType:
     I32_NHWC = ("int32", "NHWC")
     I32_HWCN = ("int32", "HWCN")
     I32_NDHWC = ("int32", "NDHWC")
+    I32_NDC1HWC0 = ("int32", "NDC1HWC0")
+    I32_NCDHW = ("int32", "NCDHW")
     I32_ChannelLast = ("int32", "ChannelLast")
 
     U32_None = ("uint32", "")
