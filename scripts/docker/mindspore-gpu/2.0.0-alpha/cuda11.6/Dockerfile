@@ -1,14 +1,24 @@
-FROM ubuntu:18.04
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu18.04
 
 MAINTAINER MindSpore Authors
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV PATH /usr/local/bin:$PATH
+ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
+ENV CUDA_PATH /usr/local/cuda
+ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
 
-# Install base tools
-RUN apt update \
-    && DEBIAN_FRONTEND=noninteractive apt install -y \
+# Update nvidia GPG key and install base tools
+RUN rm /etc/apt/sources.list.d/cuda.list && \
+    rm /etc/apt/sources.list.d/nvidia-ml.list && \
+    apt-key del 7fa2af80 && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget && \
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-keyring_1.0-1_all.deb && \
+    dpkg -i cuda-keyring_1.0-1_all.deb && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt install -y \
     vim \
     wget \
     curl \
@@ -74,3 +84,20 @@ RUN mkdir -pv /root/.pip \
     && pip install --upgrade pip \
     && pip install --no-cache-dir py-spy \
     && pip cache purge
+
+# Install openmpi (v4.0.3)
+RUN cd /tmp \
+    && wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz \
+    && tar -xvf openmpi-4.0.3.tar.gz \
+    && cd /tmp/openmpi-4.0.3 \
+    && mkdir -p ${OMPI_ROOT_PATH} \
+    && ./configure --prefix=${OMPI_ROOT_PATH} \
+    && make -j4 \
+    && make install -j4 \
+    && rm -rf /tmp/openmpi-4.0.3 \
+    && rm -f /tmp/openmpi-4.0.3.tar.gz
+
+# Install MindSpore cuda-11.1, MindInsight, Serving whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0a0/MindSpore/unified/x86_64/mindspore-2.0.0a0-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0a0/MindInsight/any/mindinsight-2.0.0-py3-none-any.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0a0/Serving/x86_64/mindspore_serving-2.0.0-cp37-cp37m-linux_x86_64.whl

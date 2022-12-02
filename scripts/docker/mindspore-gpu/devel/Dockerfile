@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.1-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu18.04
 
 MAINTAINER MindSpore Authors
 
@@ -87,6 +87,7 @@ RUN mkdir -pv /root/.pip \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
     && pip install --upgrade pip \
     && pip install --no-cache-dir wheel \
+    && pip install --no-cache-dir py-spy \
     && pip cache purge
 
 # Install cmake (v3.14.1)
