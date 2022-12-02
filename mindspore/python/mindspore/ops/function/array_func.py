@@ -898,7 +898,7 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
 
     Raises:
         ValueError: If the dimension of `sorted_sequence` isn't 1 and all dimensions except the last dimension of
-        `sorted_sequence` and `values` are different.
+            `sorted_sequence` and `values` are different.
 
     Supported Platforms:
         ``CPU``
@@ -2763,10 +2763,10 @@ def sort(input_x, axis=-1, descending=False):
 
     Args:
         input_x(Tensor): The input tensor to sort.
-        The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+            The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         axis (int): The dimension to sort along. Default: -1.
         descending (bool): Controls the sort order. If descending is True then the elements
-        are sorted in descending order by value. Default: False.
+            are sorted in descending order by value. Default: False.
 
     .. warning::
         Currently, the data types of Float16, UInt8, Int8, Int16, Int32, Int64 are supported.
