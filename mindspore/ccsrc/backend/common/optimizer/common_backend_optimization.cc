@@ -33,7 +33,6 @@
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "backend/common/pass/flatten_concat_fission.h"
-#include "backend/common/pass/clip_by_norm_fission.h"
 #include "backend/common/pass/add_dropout_attrs.h"
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
