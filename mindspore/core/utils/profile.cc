@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,16 @@
 #include <utility>
 #include <cfloat>
 #include "utils/log_adapter.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace {
 constexpr size_t TIME_INFO_PREFIX_NUM_LEN = 4;
-const char KEY_PROF_TOTAL[] = "__total__";
+constexpr char kProcessStatusFileName[] = "/proc/self/status";
+constexpr auto kLineMaxSize = 1024;
+constexpr auto kInvalid = -1;
+static bool kRecordMemoryFlag = common::GetEnv("MS_DEV_RECORD_MEMORY") == "1";
+const auto kVmRSS = "VmRSS";
 
 void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent = 0,
                   std::map<std::string, double> *sums = nullptr, const std::string &prefix = "");
@@ -80,7 +85,7 @@ void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent
 
   // indent by multiples of 4 spaces.
   if (indent == 0) {
-    oss << "TotalTime = " << time_info.time_;
+    oss << "\nTotalTime = " << time_info.time_;
     if (time_info.dict_ != nullptr) {
       oss << ", [" << time_info.dict_->size() << "]";
     }
@@ -155,14 +160,12 @@ void Profile::Print(void) {
   }
   std::ostringstream oss;
   PrintProfile(oss, *ctx_ptr_->time_info_);
-  std::string text = oss.str();
-  // here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performance
-  (void)printf("%s", text.c_str());
-  (void)fflush(stdout);
+  // Here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performance
+  std::cout << oss.str() << std::endl;
 }
 
 // Start a step in the current context with the given name.
-// Nomes must be unique otherwise the previous record will be overwritten.
+// Name must be unique otherwise the previous record will be overwritten.
 ProfContext *Profile::Step(const std::string &name) {
   ctx_ptr_ = new (std::nothrow) ProfContext(name, this);
   if (ctx_ptr_ == nullptr) {
@@ -361,9 +364,98 @@ void MsProfile::Print() {
     std::string prefix = (i < items.size() ? items[i] : std::string("others."));
     PrintTimeStat(oss, groups[i], prefix);
   }
-  std::string text = oss.str();
-  // here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performance
-  (void)printf("\nTime group info:\n%s", text.c_str());
-  (void)fflush(stdout);
+  // Here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performance
+  std::cout << "\nTime group info:\n" << oss.str() << std::endl;
+}
+
+ProcessStatus &ProcessStatus::GetInstance() {
+  static ProcessStatus recorder;
+  return recorder;
+}
+
+int64_t ProcessStatus::GetMemoryCost(const std::string &key) {
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+  return kInvalid;
+#else
+  if (!kRecordMemoryFlag) {
+    return kInvalid;
+  }
+
+  FILE *file = fopen(kProcessStatusFileName, "r");
+  if (file == nullptr) {
+    MS_LOG(ERROR) << "Get process status file failed.";
+    return 0;
+  }
+
+  int64_t mem_size = 0;
+  char buf[kLineMaxSize] = {0};
+  while (fgets(buf, kLineMaxSize, file)) {
+    // Get mem title.
+    std::string line(buf);
+    auto title_end_pos = line.find(":");
+    auto title = line.substr(0, title_end_pos);
+    // Get mem size.
+    if (title == key) {
+      auto mem_size_end_pos = line.find_last_of(" ");
+      auto mem_size_begin_pos = line.find_last_of(" ", mem_size_end_pos - 1);
+      if ((mem_size_end_pos != std::string::npos) && (mem_size_begin_pos != std::string::npos)) {
+        auto mem_size_string = line.substr(mem_size_begin_pos, mem_size_end_pos - mem_size_begin_pos);
+        mem_size = std::atol(mem_size_string.c_str());
+      }
+      break;
+    }
+    if (memset_s(buf, kLineMaxSize, 0, kLineMaxSize) != EOK) {
+      MS_LOG(ERROR) << "Set process status file failed.";
+      (void)fclose(file);
+      return 0;
+    }
+  }
+  (void)fclose(file);
+  return mem_size;
+#endif
+}
+
+void ProcessStatus::RecordStart(const std::string &step_name) {
+  if (!kRecordMemoryFlag) {
+    return;
+  }
+  MemoryInfo memory_info;
+  memory_info.name = step_name;
+  memory_info.depth = stack_.size();
+  memory_info.start_memory = GetMemoryCost(kVmRSS);
+  (void)stack_.emplace_back(memory_info);
+}
+
+void ProcessStatus::RecordEnd() {
+  if (!kRecordMemoryFlag) {
+    return;
+  }
+  if (stack_.empty()) {
+    MS_EXCEPTION(ValueError) << "ProcessStatus stack is empty";
+  }
+  auto memory_info = stack_.back();
+  memory_info.end_memory = GetMemoryCost(kVmRSS);
+  (void)memory_used_.emplace_back(memory_info);
+  stack_.pop_back();
+}
+
+void ProcessStatus::Print() {
+  if (!kRecordMemoryFlag) {
+    return;
+  }
+  std::ostringstream oss;
+  constexpr auto indent = 2;
+  for (auto item : memory_used_) {
+    std::string spaces(item.depth * indent, ' ');
+    oss << spaces << "[" << item.name << "]: " << item.start_memory << "KB -> " << item.end_memory
+        << "KB. Increased: " << item.end_memory - item.start_memory << "KB\n";
+  }
+  std::cout << "\nMemory increase info:\n" << oss.str() << std::endl;
+  Clear();
+}
+
+void ProcessStatus::Clear() {
+  memory_used_.clear();
+  stack_.clear();
 }
 }  // namespace mindspore
