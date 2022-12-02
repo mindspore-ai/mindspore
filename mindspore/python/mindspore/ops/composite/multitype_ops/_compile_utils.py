@@ -26,7 +26,7 @@ from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, 
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import Tensor, CSRTensor, COOTensor
-from mindspore.common._utils import is_shape_unknown
+
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -318,7 +318,7 @@ def tensor_index_by_slice(data, slice_index):
     min_data_dim, max_data_dim = 1, 8
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
     data_shape = F.shape(data)
-    is_dynamic = (is_shape_unknown(data_shape)
+    is_dynamic = (F.is_sequence_value_unknown(data_shape)
                   or isinstance(slice_get_item(slice_index, "start"), Tensor)
                   or isinstance(slice_get_item(slice_index, "stop"), Tensor)
                   or isinstance(slice_get_item(slice_index, "step"), Tensor))
@@ -398,7 +398,7 @@ def _tensor_index_by_integer(data, int_index):
     if data.ndim < 1 or data.ndim > 8:
         const_utils.raise_value_error("Expect Tensor to have dimension between 1 and 8.")
 
-    if is_shape_unknown(data_shape):
+    if F.is_sequence_value_unknown(data_shape):
         data_shape = F.dyn_shape(data)
         transformed_tensor = check_range(int_index, data_shape[0])
         begin_strides, end_strides, step_strides = get_stride_info_from_integer(transformed_tensor)
@@ -435,9 +435,10 @@ def tensor_index_by_list(data, list_index):
     data_shape = F.shape(data)
     indexes_types = hyper_map(toptypeof, list_index)
     if const_utils.check_type_isinstance(indexes_types, (mstype.Bool, mstype.Int)):
-        if data_shape[0] == -1 and all(isinstance(i, bool) for i in list_index):
-            const_utils.raise_unimplemented_error(
-                "Not supported to the dynamic shape tensor slice by using list of Boolean type")
+        if not F.isconstant(data_shape[0]):
+            if all(isinstance(i, bool) for i in list_index):
+                const_utils.raise_unimplemented_error(
+                    "Not supported to the dynamic shape tensor slice by using list of Boolean type")
         tensor_index = const_utils.sequence_to_index(list_index, data_shape[0])
         if tensor_index is False:
             const_utils.raise_index_error("When tensor is indexed by list, the list can't be empty.")
@@ -466,31 +467,6 @@ def tensor_index_by_tuple(data, tuple_index):
     if contain_type == const_utils.ALL_BASIC:
         return _tensor_getitem_by_tuple_slice(data, tuple_index)
     return _tensor_getitem_by_tuple(data, tuple_index, op_name)
-
-
-def _tensor_getitem_by_tuple_of_tensor(data, tuple_index, op_name):
-    """Tensor getitem by a tuple of tensor."""
-    data_shape = F.shape(data)
-    tuple_index_len = len(tuple_index)
-
-    indexes_types = hyper_map(F.dtype, tuple_index)
-    const_utils.check_indexes_types_valid(indexes_types, mstype.int_type, op_name)
-    tensor_index_shape = hyper_map(F.shape, tuple_index)
-    broadcast_shape = const_utils.generate_broadcast_shape(tensor_index_shape, op_name)
-    if 0 in broadcast_shape:
-        res_shape = broadcast_shape
-        if tuple_index_len < len(data_shape):
-            res_shape += data_shape[tuple_index_len:]
-        res = const_utils.make_tensor([], data.dtype, res_shape)
-        return res
-
-    broadcast_tensors = hyper_map(F.partial(_broadcast, broadcast_shape), tuple_index)
-    new_broadcast_tensors = ()
-    for tensor in broadcast_tensors:
-        new_broadcast_tensors += (F.cast(tensor, mstype.int64),)
-    indices = stack(new_broadcast_tensors)
-    result = F.gather_nd(data, indices)
-    return result
 
 
 def get_slice_stride(slice_index, dim_size):
@@ -585,7 +561,7 @@ def _get_stride_info_from_tuple(data, tuple_index):
 def _tensor_getitem_by_tuple_slice(data, tuple_index):
     """Tensor getitem by a tuple of slice"""
     data_shape = F.shape(data)
-    is_dynamic = is_shape_unknown(data_shape)
+    is_dynamic = F.is_sequence_value_unknown(data_shape)
     for item in tuple_index:
         if isinstance(item, slice):
             is_dynamic = is_dynamic or isinstance(slice_get_item(item, "start"), Tensor) \
@@ -628,7 +604,7 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
         if i in int_positions:
             int_index = const_utils.check_range(index, dim_size)
             tensor_index = F.scalar_to_tensor(int_index, mstype.int64)
-            if is_shape_unknown(data_shape):
+            if F.is_sequence_value_unknown(data_shape):
                 dyn_shape = F.dyn_shape(data)
                 tensor_index = check_range(index, dyn_shape[i])
                 tensor_index = F.cast(tensor_index, mstype.int64)
@@ -791,7 +767,7 @@ def _generate_updates_from_sequence(data, index, value, op_type):
 def _generate_updates_from_tensor(data, index, value, op_type):
     """Generate an updates tensor from a tensor."""
     value = value.astype(data.dtype)
-    if is_shape_unknown(F.shape(data)):
+    if F.is_sequence_value_unknown(F.shape(data)):
         data_shape = F.dyn_shape(data)
         index_shape = F.dyn_shape(index)
         updates_shape = const_utils.generate_updates_shape(data_shape, index_shape, op_type, True)
@@ -852,7 +828,11 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
     if F.rank(index) == 0:
         index = F.expand_dims(index, -1)
     updates = _generate_updates_from_tensor(data, index, value, const_utils.SET_ITEM_BY_ONE_TENSOR)
-    index = F.select(index < 0, index + F.shape(data)[0], index)
+    data_shape = F.shape(data)
+    first_val = data_shape[0]
+    if not F.isconstant(first_val):
+        first_val = -1
+    index = F.select(index < 0, index + first_val, index)
     index = F.expand_dims(index, -1)
     if F.rank(index) < 2:
         index = F.expand_dims(index, 0)
@@ -884,7 +864,7 @@ def tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):
     if tensor_dtype == const_utils.INT_:
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value_tensor)
 
-    if is_shape_unknown(F.shape(data)):
+    if F.is_sequence_value_unknown(F.shape(data)):
         const_utils.raise_unimplemented_error(
             "Not supported to the dynamic shape tensor slice by using tensor of Boolean type")
     return _tensor_setitem_by_bool_tensor_with_tensor(data, index, value_tensor)
@@ -949,7 +929,7 @@ def tensor_setitem_by_slice_with_tensor(data, input_slice, value):
         data_shape = F.shape(data)
         step = const_utils.get_step_from_slice(input_slice)
         if step == 1:
-            if is_shape_unknown(data_shape):
+            if F.is_sequence_value_unknown(data_shape):
                 return tensor_copy_slice_from_slice(data, input_slice, value)
             start, stop, step = const_utils.normalize_slice(input_slice, data.shape[0])
             dim0_size = stop - start
@@ -958,7 +938,7 @@ def tensor_setitem_by_slice_with_tensor(data, input_slice, value):
             value_shape = (dim0_size,) + const_utils.tuple_slice(data.shape, 1, None)
             value = _broadcast(value_shape, value)
             return copy_slice(data, value.astype(data.dtype), (start,), (stop,), (step,))
-        if is_shape_unknown(data_shape):
+        if F.is_sequence_value_unknown(data_shape):
             const_utils.raise_unimplemented_error(
                 "Not supported to take the subscript of dynamic shape tensor slice setitem")
         indices = const_utils.slice2indices(input_slice, data_shape)
@@ -1004,7 +984,7 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
 
     if const_utils.use_copy_slice(tuple_index):
-        if is_shape_unknown(F.shape(data)):
+        if F.is_sequence_value_unknown(F.shape(data)):
             return tensor_copy_slice_from_tuple(data, tuple_index, value)
         dim1_start, dim1_stop, _ = const_utils.normalize_slice(tuple_index[1], data.shape[1])
         if dim1_stop - dim1_start <= 0:
@@ -1058,7 +1038,7 @@ def tensor_setitem_by_number_with_sequence(data, index, value):
 def tensor_setitem_by_number_with_tensor(data, index, value):
     """Assigns the tensor by number with tensor value."""
     data_shape = F.shape(data)
-    if is_shape_unknown(data_shape):
+    if F.is_sequence_value_unknown(data_shape):
         index = check_range(index, F.dyn_shape(data)[0])
         index = F.expand_dims(index, -1)
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value)
@@ -1073,7 +1053,7 @@ def tensor_setitem_by_ellipsis_with_number(data, value):
     """Assigns the tensor by ellipsis with number value."""
     data_shape = F.shape(data)
     data_dtype = F.dtype(data)
-    if is_shape_unknown(data_shape):
+    if F.is_sequence_value_unknown(data_shape):
         value = F.fill(F.dtype(data), (), value)
         return tensor_setitem_by_ellipsis_with_tensor(data, value)
     return F.fill(data_dtype, data_shape, value)
@@ -1085,7 +1065,7 @@ def tensor_setitem_by_ellipsis_with_tensor(data, value):
     data_dtype = F.dtype(data)
     value = value.astype(data_dtype)
 
-    if is_shape_unknown(data_shape):
+    if F.is_sequence_value_unknown(data_shape):
         data_shape = F.dyn_shape(data)
         data = dynamic_broadcast_to(value, data_shape)
         return data
@@ -1115,7 +1095,7 @@ def tensor_setitem_by_bool(data, index, value):
     elif isinstance(value, float):
         value = const_utils.make_tensor(value, mstype.float32)
 
-    if is_shape_unknown(data_shape) and index:
+    if F.is_sequence_value_unknown(data_shape) and index:
         data_shape = F.dyn_shape(data)
         data = dynamic_broadcast_to(value, data_shape)
         return data

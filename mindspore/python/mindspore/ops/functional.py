@@ -49,6 +49,11 @@ tensor_range = P.Range()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 mixed_precision_cast = _inner_ops.MixedPrecisionCast()
+
+# Dynamic shape
+is_sequence_value_unknown = Primitive("IsShapeUnKnown")
+is_sequence_shape_unknown = Primitive("IsDimUnKnown")
+
 partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()

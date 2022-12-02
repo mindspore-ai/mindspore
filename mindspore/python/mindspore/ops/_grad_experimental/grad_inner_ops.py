@@ -58,7 +58,7 @@ def get_bprop_dynamic_resize_nearest_neighbor(self):
     shape_op = P.Shape()
 
     def bprop(inputs, size, out, dout):
-        if -1 in shape_op(inputs):
+        if F.is_sequence_value_unknown(shape_op(inputs)):
             shp = tensor_shape(inputs)
         else:
             shp = shape_op(inputs)

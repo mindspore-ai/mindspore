@@ -42,7 +42,6 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops._grad.grad_base import bprop_getters
-from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore import context
 
 # Unused parameters are placeholders.
@@ -188,7 +187,7 @@ def get_bprop_sparse_segment_sqrt_n(self):
 
     def bprop(x, indices, segment_ids, out, dout):
         shape_x = shape(x)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             shape_x = dyn_shape_op(x)
         output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         indices = F.cast(indices, mstype.int32)
@@ -208,7 +207,7 @@ def get_bprop_sparse_segment_sqrt_n_with_num_segments(self):
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):
         shape_x = shape(x)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             shape_x = dyn_shape_op(x)
         output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         indices = F.cast(indices, mstype.int32)
@@ -230,7 +229,7 @@ def get_bprop_sparse_segment_sum(self):
     def bprop_gpu(x, indices, segment_ids, out, dout):
         input_grad = G.SparseSegmentSumGrad()
         shape_x = shape(x)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             shape_x = dyn_shape_op(x)
         output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         indices = F.cast(indices, mstype.int32)
@@ -278,7 +277,7 @@ def get_bprop_sparse_segment_sum_with_num_segments(self):
     def bprop_gpu(x, indices, segment_ids, num_segments, out, dout):
         input_grad = G.SparseSegmentSumGrad()
         shape_x = shape(x)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             shape_x = dyn_shape_op(x)
         output_dim0 = P.Cast()(shape_x[0], mstype.int32)
         indices = F.cast(indices, mstype.int32)
@@ -313,7 +312,7 @@ def get_bprop_sparse_segment_mean_with_num_segments(self):
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):
         x_shp = shape(x)
-        if is_shape_unknown(x_shp):
+        if F.is_sequence_value_unknown(x_shp):
             x_shp = dyn_shape_op(x)
             output_dim0 = F.cast(x_shp[0], mstype.int32)
         else:

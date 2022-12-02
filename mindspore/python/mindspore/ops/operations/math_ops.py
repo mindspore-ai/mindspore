@@ -29,7 +29,7 @@ from mindspore.common._decorator import deprecated
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore.ops._utils import is_shape_unknown
+from mindspore.common._utils import is_shape_unknown
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):

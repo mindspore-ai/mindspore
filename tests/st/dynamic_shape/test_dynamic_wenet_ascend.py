@@ -581,7 +581,7 @@ class CustomDense(nn.Dense):
 
     def construct(self, x):
         x_shape = self.shape_op(x)
-        if -1 in x_shape:
+        if F.is_sequence_value_unknown(x_shape):
             x_dyn_shape = self.dyn_shape(x)
             x_dyn_shape = self.cast(x_dyn_shape, mstype.float32)
             if len(x_dyn_shape) != 2:
@@ -1335,7 +1335,7 @@ class PositionalEncoding(nn.Cell):
 
     def construct(self, x, offset=0) -> Tuple[mindspore.Tensor, mindspore.Tensor]:
         x_shape = self.get_shape(x)
-        if -1 in x_shape:
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = self.dyn_shape(x)
         pos_emb = self.pe[:, offset: offset + x_shape[1]]
         x = x * self.xscale + pos_emb
@@ -1364,7 +1364,7 @@ class RelPositionalEncoding(PositionalEncoding):
         """
         x = x * self.xscale
         x_shape = self.get_shape(x)
-        if -1 in x_shape:
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = self.dyn_shape(x)
         pos_emb = self.pe[:, offset: offset + x_shape[1]]
         return self.dropout(x), self.dropout(pos_emb)

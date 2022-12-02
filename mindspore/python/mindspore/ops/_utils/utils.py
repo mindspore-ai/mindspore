@@ -21,6 +21,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
+from mindspore.common._utils import is_dim_unknown
 
 
 def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x", arg_name2="y"):
@@ -140,19 +141,3 @@ def generate_shape_index(out_shape, indices_shape, axis):
     index = tuple(range(out_rank))
     perm = perm_part1 + index[:axis] + index[axis + ind_rank:]
     return perm
-
-
-@constexpr
-def is_shape_unknown(shape):
-    for i in shape:
-        if i < 0:
-            return True
-    return False
-
-
-@constexpr
-def is_dim_unknown(shape):
-    for i in shape:
-        if i == -2:
-            return True
-    return False

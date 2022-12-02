@@ -1,128 +1,126 @@
 
-0.1.1	MindSpore*2.0.0:�
-
-k"get_bprop_kl_div_loss.1:[CNode]2:1"get_bprop_kl_div_loss.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
-=[ValueNode]4[ValueNode]4"Constant*
+0.1.1	MindSpore*2.0.0:�
+�(get_bprop_kl_div_loss.1318:[CNode]1319:1(get_bprop_kl_div_loss.1318:[CNode]1319:1"REF::bprop.1320:Default/bprop.1320-op1002
+C[ValueNode]1321[ValueNode]1321"Constant*
 value*	reduction�
-�
-get_bprop_kl_div_loss.1:self
-[ValueNode]4'get_bprop_kl_div_loss.1:фreduce_type:2'get_bprop_kl_div_loss.1:фreduce_type:2"REF::getattr:3:Default/getattr-op1
-�"get_bprop_kl_div_loss.1:фshape:19"get_bprop_kl_div_loss.1:фshape:19"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:MDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op15
-�!get_bprop_kl_div_loss.1:фsize:30!get_bprop_kl_div_loss.1:фsize:30"7REF::ClassType::mindspore.ops.operations.array_ops.Size:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Size'-op24
+�
+get_bprop_kl_div_loss.1318:self
+[ValueNode]1321*get_bprop_kl_div_loss.1318:фreduce_type:2*get_bprop_kl_div_loss.1318:фreduce_type:2"REF::getattr:3:Default/getattr-op1003
+�%get_bprop_kl_div_loss.1318:фshape:19%get_bprop_kl_div_loss.1318:фshape:19"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:ODefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op1017
+�$get_bprop_kl_div_loss.1318:фsize:30$get_bprop_kl_div_loss.1318:фsize:30"7REF::ClassType::mindspore.ops.operations.array_ops.Size:NDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Size'-op1026
 M
 фdyn_size
 фdyn_size"Constant*)
 value*mindspore.ops._grad.grad_base�"
 >фdyn_size_32фdyn_size_32"Constant*
 value*dyn_size�#
-�
+�
 
 фdyn_size
-фdyn_size_32%get_bprop_kl_div_loss.1:фdyn_size:33%get_bprop_kl_div_loss.1:фdyn_size:33"REF::resolve:34:Default/resolve-op26get_bprop_kl_div_loss.1*
-get_bprop_kl_div_loss.1:self*
-get_bprop_kl_div_loss.1:фx*
-get_bprop_kl_div_loss.1:фy*
-get_bprop_kl_div_loss.1:out* 
-get_bprop_kl_div_loss.1:фdout2$
-"get_bprop_kl_div_loss.1:[CNode]2:1:@faa7425e3e0bc5e72fdddf8e5e8bdf9c28ed8a5ebb6794118e9644e14a576087J/grad_nn_ops.pyB�
-8[ValueNode]5[ValueNode]5"Constant*
+фdyn_size_32(get_bprop_kl_div_loss.1318:фdyn_size:33(get_bprop_kl_div_loss.1318:фdyn_size:33"REF::resolve:34:Default/resolve-op1028get_bprop_kl_div_loss.1318*!
+get_bprop_kl_div_loss.1318:self* 
+get_bprop_kl_div_loss.1318:фx* 
+get_bprop_kl_div_loss.1318:фy* 
+get_bprop_kl_div_loss.1318:out*#
+!get_bprop_kl_div_loss.1318:фdout2*
+(get_bprop_kl_div_loss.1318:[CNode]1319:1:@e844b8a0bc7b6ccad86e53e619f03ea72ed702a6576972ce9467f99b9020dba3J/grad_nn_ops.pyB�
+>[ValueNode]1322[ValueNode]1322"Constant*
 value*mean�
-�
-'get_bprop_kl_div_loss.1:фreduce_type:2
-[ValueNode]5bprop.3:[CNode]6:4bprop.3:[CNode]6:4"REF::MetaFuncGraph::equal:Default/S-Prim-equal-op2
-_
-bprop.3:[CNode]6:4bprop.3:[CNode]7:5bprop.3:[CNode]7:5"REF::bool_.8:Default/bool_.8-op3
+�
+*get_bprop_kl_div_loss.1318:фreduce_type:2
+[ValueNode]1322bprop.1320:[CNode]1323:4bprop.1320:[CNode]1323:4"REF::MetaFuncGraph::equal:Default/S-Prim-equal-op1004
 z
-bprop.3:[CNode]7:5
-
-✓bprop.9
-✗bprop.10bprop.3:[CNode]11:6bprop.3:[CNode]11:6"REF::Switch:7:Default/Switch-op4
-Gbprop.3:[CNode]12:8bprop.3:[CNode]12:8"REF::bprop.3:[CNode]11:6:5
-j
-bprop.3:[CNode]12:8bprop.3:[CNode]13:9bprop.3:[CNode]13:9"REF::↓bprop.14:Default/↓bprop.14-op6bprop.32
-bprop.3:[CNode]13:9B�
-:[ValueNode]15[ValueNode]15"Constant*
+bprop.1320:[CNode]1323:4bprop.1320:[CNode]1324:5bprop.1320:[CNode]1324:5"REF::bool_.1325:Default/bool_.1325-op1005
+�
+bprop.1320:[CNode]1324:5
+✓bprop.1326
+✗bprop.1327bprop.1320:[CNode]1328:6bprop.1320:[CNode]1328:6"REF::Switch:7:Default/Switch-op1006
+Ybprop.1320:[CNode]1329:8bprop.1320:[CNode]1329:8"REF::bprop.1320:[CNode]1328:6:1007
+�
+bprop.1320:[CNode]1329:8bprop.1320:[CNode]1330:9bprop.1320:[CNode]1330:9"REF::↓bprop.1331:Default/↓bprop.1331-op1008
+bprop.13202
+bprop.1320:[CNode]1330:9B�
+>[ValueNode]1332[ValueNode]1332"Constant*
 value*mean�
-�
-'get_bprop_kl_div_loss.1:фreduce_type:2
-[ValueNode]15↓bprop.14:[CNode]16:10↓bprop.14:[CNode]16:10"REF::MetaFuncGraph::equal:Default/S-Prim-equal-op7
-q
-↓bprop.14:[CNode]16:10↓bprop.14:[CNode]17:11↓bprop.14:[CNode]17:11"REF::bool_.8:Default/bool_.8-op8
-�
-↓bprop.14:[CNode]17:11
-✓↓bprop.18
-✗↓bprop.19↓bprop.14:[CNode]20:12↓bprop.14:[CNode]20:12"REF::Switch:7:Default/Switch-op9
-W↓bprop.14:[CNode]21:13↓bprop.14:[CNode]21:13"REF::↓bprop.14:[CNode]20:12:10
-�
-get_bprop_kl_div_loss.1:фdout
-get_bprop_kl_div_loss.1:фx
-get_bprop_kl_div_loss.1:фy↓bprop.14:dx:15↓bprop.14:dx:15"REF::↓bprop.14:фgrad:12↓bprop.14*
-↓bprop.14:фgrad2
-↓bprop.14:[CNode]21:13B
-after_block�	B�
-l✗↓bprop.19:[CNode]22:14✗↓bprop.19:[CNode]22:14"REF::↓↓bprop.23:Default/↓↓bprop.23-op11✗↓bprop.192
-✗↓bprop.19:[CNode]22:14B�
-�
-get_bprop_kl_div_loss.1:фy↓↓bprop.23:[CNode]24:16↓↓bprop.23:[CNode]24:16".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op13
-�
-↓bprop.14:dx:15
-↓↓bprop.23:[CNode]24:16↓↓bprop.23:[CNode]25:17↓↓bprop.23:[CNode]25:17"REF::S-Prim-MakeTuple:18:Default/S-Prim-MakeTuple-op14↓↓bprop.232
-↓↓bprop.23:[CNode]25:17B
-after_block�	B�	
-�
-get_bprop_kl_div_loss.1:фx✓↓bprop.18:[CNode]26:20✓↓bprop.18:[CNode]26:20"'REF::get_bprop_kl_div_loss.1:фshape:19:16
-�
-✓↓bprop.18:[CNode]26:20✓↓bprop.18:[CNode]27:21✓↓bprop.18:[CNode]27:21"REF::S-Prim-is_shape_unknown:22:$Default/S-Prim-is_shape_unknown-op17
-{
-✓↓bprop.18:[CNode]27:21✓↓bprop.18:[CNode]28:23✓↓bprop.18:[CNode]28:23"REF::bool_.8:Default/bool_.8-op18
-�
-✓↓bprop.18:[CNode]28:23
-↰✓↓bprop.29
-↱✓↓bprop.30✓↓bprop.18:[CNode]31:24✓↓bprop.18:[CNode]31:24"REF::Switch:7:Default/Switch-op19
-Z✓↓bprop.18:x_size:25✓↓bprop.18:x_size:25" REF::✓↓bprop.18:[CNode]31:24:20
+�
+*get_bprop_kl_div_loss.1318:фreduce_type:2
+[ValueNode]1332↓bprop.1331:[CNode]1333:10↓bprop.1331:[CNode]1333:10"REF::MetaFuncGraph::equal:Default/S-Prim-equal-op1009
+�
+↓bprop.1331:[CNode]1333:10↓bprop.1331:[CNode]1334:11↓bprop.1331:[CNode]1334:11"REF::bool_.1325:Default/bool_.1325-op1010
+�
+↓bprop.1331:[CNode]1334:11
+✓↓bprop.1335
+✗↓bprop.1336↓bprop.1331:[CNode]1337:12↓bprop.1331:[CNode]1337:12"REF::Switch:7:Default/Switch-op1011
+e↓bprop.1331:[CNode]1338:13↓bprop.1331:[CNode]1338:13"!REF::↓bprop.1331:[CNode]1337:12:1012
+�
+!get_bprop_kl_div_loss.1318:фdout
+get_bprop_kl_div_loss.1318:фx
+get_bprop_kl_div_loss.1318:фy↓bprop.1331:dx:15↓bprop.1331:dx:15"REF::↓bprop.1331:фgrad:1014↓bprop.1331*
+↓bprop.1331:фgrad2
+↓bprop.1331:[CNode]1338:13B
+after_block�	B�
+z✗↓bprop.1336:[CNode]1339:14✗↓bprop.1336:[CNode]1339:14"REF::↓↓bprop.1340:Default/↓↓bprop.1340-op1013✗↓bprop.13362!
+✗↓bprop.1336:[CNode]1339:14B�
+�
+get_bprop_kl_div_loss.1318:фy↓↓bprop.1340:[CNode]1341:16↓↓bprop.1340:[CNode]1341:16".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:0Default/S-Prim-hyper_map[zeros_like_leaf]-op1015
+�
+↓bprop.1331:dx:15
+↓↓bprop.1340:[CNode]1341:16↓↓bprop.1340:[CNode]1342:17↓↓bprop.1340:[CNode]1342:17"REF::S-Prim-MakeTuple:18:Default/S-Prim-MakeTuple-op1016↓↓bprop.13402!
+↓↓bprop.1340:[CNode]1342:17B
+after_block�	B�
+
+�
+get_bprop_kl_div_loss.1318:фx✓↓bprop.1335:[CNode]1343:20✓↓bprop.1335:[CNode]1343:20"*REF::get_bprop_kl_div_loss.1318:фshape:19:1018
+�
+✓↓bprop.1335:[CNode]1343:20✓↓bprop.1335:[CNode]1344:21✓↓bprop.1335:[CNode]1344:21"REF::S-Prim-IsShapeUnKnown:22:$Default/S-Prim-IsShapeUnKnown-op1019
+�
+✓↓bprop.1335:[CNode]1344:21✓↓bprop.1335:[CNode]1345:23✓↓bprop.1335:[CNode]1345:23"REF::bool_.1325:Default/bool_.1325-op1020
+�
+✓↓bprop.1335:[CNode]1345:23
+↰✓↓bprop.1346
+↱✓↓bprop.1347✓↓bprop.1335:[CNode]1348:24✓↓bprop.1335:[CNode]1348:24"REF::Switch:7:Default/Switch-op1021
+d✓↓bprop.1335:x_size:25✓↓bprop.1335:x_size:25"$REF::✓↓bprop.1335:[CNode]1348:24:1022
+�
+↓bprop.1331:dx:15
+✓↓bprop.1335:x_size:25✓↓bprop.1335:[CNode]1349:26✓↓bprop.1335:[CNode]1349:26"REF::MetaFuncGraph::div:Default/S-Prim-div-op1023
+�
+get_bprop_kl_div_loss.1318:фy✓↓bprop.1335:[CNode]1350:27✓↓bprop.1335:[CNode]1350:27".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:0Default/S-Prim-hyper_map[zeros_like_leaf]-op1024
+�
+✓↓bprop.1335:[CNode]1349:26
+✓↓bprop.1335:[CNode]1350:27✓↓bprop.1335:[CNode]1351:28✓↓bprop.1335:[CNode]1351:28"REF::S-Prim-MakeTuple:29:Default/S-Prim-MakeTuple-op1025✓↓bprop.13352!
+✓↓bprop.1335:[CNode]1351:28B�
 �
-↓bprop.14:dx:15
-✓↓bprop.18:x_size:25✓↓bprop.18:[CNode]32:26✓↓bprop.18:[CNode]32:26"REF::MetaFuncGraph::div:Default/S-Prim-div-op21
-�
-get_bprop_kl_div_loss.1:фy✓↓bprop.18:[CNode]33:27✓↓bprop.18:[CNode]33:27".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op22
-�
-✓↓bprop.18:[CNode]32:26
-✓↓bprop.18:[CNode]33:27✓↓bprop.18:[CNode]34:28✓↓bprop.18:[CNode]34:28"REF::S-Prim-MakeTuple:29:Default/S-Prim-MakeTuple-op23✓↓bprop.182
-✓↓bprop.18:[CNode]34:28B�
-�
-get_bprop_kl_div_loss.1:фx↱✓↓bprop.30:[CNode]35:31↱✓↓bprop.30:[CNode]35:31"&REF::get_bprop_kl_div_loss.1:фsize:30:25↱✓↓bprop.302 
-↱✓↓bprop.30:[CNode]35:31B�
-�
-get_bprop_kl_div_loss.1:фx↰✓↓bprop.29:[CNode]36:35↰✓↓bprop.29:[CNode]36:35"*REF::get_bprop_kl_div_loss.1:фdyn_size:33:27↰✓↓bprop.292 
-↰✓↓bprop.29:[CNode]36:35B�
->[ValueNode]37[ValueNode]37"Constant*
+get_bprop_kl_div_loss.1318:фx"↱✓↓bprop.1347:[CNode]1352:31"↱✓↓bprop.1347:[CNode]1352:31")REF::get_bprop_kl_div_loss.1318:фsize:30:1027↱✓↓bprop.13472$
+"↱✓↓bprop.1347:[CNode]1352:31B�
+�
+get_bprop_kl_div_loss.1318:фx"↰✓↓bprop.1346:[CNode]1353:35"↰✓↓bprop.1346:[CNode]1353:35"-REF::get_bprop_kl_div_loss.1318:фdyn_size:33:1029↰✓↓bprop.13462$
+"↰✓↓bprop.1346:[CNode]1353:35B�
+B[ValueNode]1354[ValueNode]1354"Constant*
 value*__bool__�
-l
-	bool_.8:x
-[ValueNode]37bool_.8:[CNode]38:36bool_.8:[CNode]38:36"REF::getattr:3:Default/getattr-op28
-Kbool_.8:[CNode]39:37bool_.8:[CNode]39:37"REF::bool_.8:[CNode]38:36:29bool_.8*
-	bool_.8:x2
-bool_.8:[CNode]39:37B�
-?[ValueNode]40[ValueNode]40"Constant*
+}
+bool_.1325:x
+[ValueNode]1354bool_.1325:[CNode]1355:36bool_.1325:[CNode]1355:36"REF::getattr:3:Default/getattr-op1030
+\bool_.1325:[CNode]1356:37bool_.1325:[CNode]1356:37"REF::bool_.1325:[CNode]1355:36:1031
+bool_.1325*
+bool_.1325:x2
+bool_.1325:[CNode]1356:37B�
+C[ValueNode]1357[ValueNode]1357"Constant*
 value*	reduction�
-�
-get_bprop_kl_div_loss.1:self
-[ValueNode]40✗bprop.10:[CNode]41:38✗bprop.10:[CNode]41:38"REF::getattr:3:Default/getattr-op30
-�
-✗bprop.10:[CNode]41:38✗bprop.10:grad:39✗bprop.10:grad:39"@REF::ClassType::mindspore.ops.operations._grad_ops.KLDivLossGrad:UDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.KLDivLossGrad'-op31✗bprop.102
-✗bprop.10:grad:39B�
-9[ValueNode]42[ValueNode]42"Constant*
+�
+get_bprop_kl_div_loss.1318:self
+[ValueNode]1357✗bprop.1327:[CNode]1358:38✗bprop.1327:[CNode]1358:38"REF::getattr:3:Default/getattr-op1032
+�
+✗bprop.1327:[CNode]1358:38✗bprop.1327:grad:39✗bprop.1327:grad:39"@REF::ClassType::mindspore.ops.operations._grad_ops.KLDivLossGrad:WDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.KLDivLossGrad'-op1033✗bprop.13272
+✗bprop.1327:grad:39B�
+=[ValueNode]1359[ValueNode]1359"Constant*
 value*sum�
-�
-[ValueNode]42✓bprop.9:grad:40✓bprop.9:grad:40"@REF::ClassType::mindspore.ops.operations._grad_ops.KLDivLossGrad:UDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.KLDivLossGrad'-op32
-✓bprop.92
-✓bprop.9:grad:40Pb
+�
+[ValueNode]1359✓bprop.1326:grad:40✓bprop.1326:grad:40"@REF::ClassType::mindspore.ops.operations._grad_ops.KLDivLossGrad:WDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.KLDivLossGrad'-op1034✓bprop.13262
+✓bprop.1326:grad:40Pb
 Switch:7Switchb
 	getattr:3getattrb
 
-resolve:34resolveb�
-S-Prim-is_shape_unknown:22S-Prim-is_shape_unknown1
-constexpr_module*mindspore.ops._utils.utils�%
-constexpr_name*is_shape_unknown�b'
+resolve:34resolveb'
 S-Prim-MakeTuple:18S-Prim-MakeTupleb'
-S-Prim-MakeTuple:29S-Prim-MakeTupleh
+S-Prim-MakeTuple:29S-Prim-MakeTupleb1
+S-Prim-IsShapeUnKnown:22S-Prim-IsShapeUnKnownh

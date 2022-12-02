@@ -78,8 +78,12 @@ def _check_dtype(dtype):
 @constexpr
 def _is_shape_empty(shp):
     """Check whether shape contains zero"""
+    if shp is None:
+        return False
     if isinstance(shp, int):
         return shp == 0
+    if isinstance(shp, (tuple, list)):
+        return 0 in shp
     return F.shape_mul(shp) == 0
 
 

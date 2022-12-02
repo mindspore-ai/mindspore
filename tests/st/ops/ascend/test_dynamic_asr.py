@@ -19,8 +19,9 @@ import pytest
 
 from mindspore import ops, nn, context, set_seed
 from mindspore.train import DatasetHelper, connect_network_with_dataset
-import mindspore.dataset as ds
 from mindspore.common.tensor import Tensor
+from mindspore.ops import functional as F
+import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -161,7 +162,7 @@ class CustomDense(nn.Dense):
         self.indices_2 = Tensor(np.array([[2]]), mstype.int32)
 
     def construct(self, x):
-        if -1 in x.shape:
+        if F.is_sequence_value_unknown(x.shape):
             x_dyn_shape = self.dyn_shape(x)
             x_dyn_shape = self.cast(x_dyn_shape, mstype.float16)
             if len(x_dyn_shape) != 2:
@@ -248,9 +249,8 @@ class Positional(nn.Cell):
         self.scatterupdate = ops.TensorScatterUpdate()
         self.end = Tensor((self.pe.shape[0], 0, self.pe.shape[2]), mstype.float32)
 
-
     def construct(self, x: Tensor, offset: int = 0):
-        if -1 not in x.shape:
+        if not F.is_sequence_value_unknown(x.shape):
             pos_emb = self.pe[:, offset: offset + x.shape[1]]
         else:
             x_dyn_shape = self.dyn_shape(x)

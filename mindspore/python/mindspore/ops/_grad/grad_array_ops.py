@@ -29,7 +29,7 @@ from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_elemen
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.common.sparse_tensor import RowTensorInner
-from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
+from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index
 from mindspore.ops._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, \
     dyn_fill
 from mindspore.ops._grad.grad_base import sum_grad_reduce_axis
@@ -198,7 +198,7 @@ def get_bprop_reshape(self):
 
     def bprop(x, shp, out, dout):
         shapex = shape_op(x)
-        if is_shape_unknown(shapex):
+        if F.is_sequence_value_unknown(shapex):
             shapex = dyn_shape_op(x)
         return reshape(dout, shapex), zeros_like(shp)
 
@@ -211,7 +211,7 @@ def get_bprop_expand_dims(self):
 
     def bprop(x, axis, out, dout):
         shapex = shape_op(x)
-        if is_shape_unknown(shapex):
+        if F.is_sequence_value_unknown(shapex):
             shapex = dyn_shape_op(x)
         return reshape(dout, shapex), zeros_like(axis)
 
@@ -224,7 +224,7 @@ def get_bprop_squeeze(self):
 
     def bprop(x, out, dout):
         shapex = shape_op(x)
-        if is_shape_unknown(shapex):
+        if F.is_sequence_value_unknown(shapex):
             shapex = dyn_shape_op(x)
         return (reshape(dout, shapex),)
 
@@ -238,7 +238,7 @@ def get_bprop_flatten(self):
 
     def bprop(x, out, dout):
         shape_x = shape_op(x)
-        if is_shape_unknown(shape_x):
+        if F.is_sequence_value_unknown(shape_x):
             shape_x = dyn_shape_op(x)
         dx = flatten_grad(dout, shape_x)
         return (dx,)
@@ -297,7 +297,7 @@ def get_bprop_tile(self):
 
     def bprop(x, multiples, out, dout):
         shapex = shape_op(x)
-        if is_shape_unknown(shapex):
+        if F.is_sequence_value_unknown(shapex):
             shapex = dyn_shape_op(x)
         if isinstance(multiples, tuple) and isinstance(shapex, tuple):
             r_shape = _tile_shape(multiples, shapex)
@@ -340,7 +340,7 @@ def get_bprop_embedding_lookup(self):
 
     def bprop_sparse(x, indices, offset, out, dout):
         x_shp = shape_op(x)
-        if is_shape_unknown(x_shp):
+        if F.is_sequence_value_unknown(x_shp):
             raise RuntimeError("Now, EmbeddingLookup op's grad don't support Dynamic Sense!")
         new_indices = sub_op(indices, offset)
         indices_size = size_op(new_indices)
@@ -379,7 +379,7 @@ def get_bprop_padding(self):
     def bprop(x, out, dout):
         shp = shape_op(x)
         begin = ()
-        if is_shape_unknown(shp):
+        if F.is_sequence_value_unknown(shp):
             shp = dyn_shape_op(x)
             begin = make_dynamic_begin(shp)
         else:
@@ -569,8 +569,8 @@ def get_bprop_gather_v2(self):
 
     def bprop(x, indices, axis, out, dout):
         is_mutable, axis = convert_to_tensor(axis)
-        if (is_shape_unknown(shape_op(x)) or is_shape_unknown(shape_op(indices)) or \
-            is_shape_unknown(shape_op(dout))) and is_mutable:
+        if (F.is_sequence_value_unknown(shape_op(x)) or F.is_sequence_value_unknown(shape_op(indices)) or \
+                F.is_sequence_value_unknown(shape_op(dout))) and is_mutable:
             return _dyn_bprop_gather_v2(x, indices, axis, dout)
         orig_indices = indices
         if F.rank(dout) == 0:
@@ -588,7 +588,7 @@ def get_bprop_gather_v2(self):
         # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
         perm_1 = generate_shape_index(out_shp, ind_shp, axis)
         values_transpose = transpose(dout, perm_1)
-        if is_shape_unknown(shape_op(x)):
+        if F.is_sequence_value_unknown(shape_op(x)):
             params_grad = unsorted_segment_sum(values_transpose, indices, dyn_shape_op(x)[axis])
         else:
             params_grad = unsorted_segment_sum(values_transpose, indices, shape_op(x)[axis])
@@ -854,7 +854,7 @@ def get_bprop_strided_slice(self):
 
     def bprop(x, begin, end, strides, out, dout):
         x_shape = shape_op(x)
-        if is_shape_unknown(x_shape):
+        if F.is_sequence_value_unknown(x_shape):
             x_shape = dyn_shape_op(x)
         dx = input_grad(dout, x_shape, begin, end, strides)
         return dx, zeros_like(begin), zeros_like(end), zeros_like(strides)
@@ -926,7 +926,7 @@ def get_bprop_resize_nearest_neighbor(self):
     tensor_shape = P.TensorShape()
 
     def bprop(inputs, out, dout):
-        if (-1 in shape_op(inputs)) or (-2 in shape_op(inputs)):
+        if F.is_sequence_value_unknown(shape_op(inputs)) or F.is_sequence_shape_unknown(shape_op(inputs)):
             shp = tensor_shape(inputs)
         else:
             shp = shape_op(inputs)
@@ -944,7 +944,7 @@ def get_bprop_gather_nd(self):
 
     def bprop(x, indices, out, dout):
         shp = shape_op(x)
-        if is_shape_unknown(shp):
+        if F.is_sequence_value_unknown(shp):
             shp = dyn_shape_op(x)
         return op(indices, dout, shp), zeros_like(indices)
 
@@ -1127,7 +1127,7 @@ def _gather_drop_negatives(params,
         is_positive = greater_equal(ids, 0)
         is_positive_shape = shape_op(is_positive)
         gathered_shape = shape_op(gathered)
-        if is_shape_unknown(gathered_shape) or is_shape_unknown(is_positive_shape):
+        if F.is_sequence_value_unknown(gathered_shape) or F.is_sequence_value_unknown(is_positive_shape):
             gathered_shape = dyn_shape_op(gathered)
             rank_gathered = dyn_rank(gathered)
             fill_gathered = dyn_fill(mstype.int64, gathered_shape, 1)
@@ -1301,10 +1301,10 @@ def get_bprop_broadcast_to(self):
         x_shape = shape_op(x)
         dout_shape = shape_op(dout)
         broadcast_shape = shape_op(out)
-        dynamic = is_shape_unknown(x_shape) or is_shape_unknown(dout_shape)
+        dynamic = F.is_sequence_value_unknown(x_shape) or F.is_sequence_value_unknown(dout_shape)
         if not dynamic and x_shape == dout_shape:
             return (dout,)
-        dynamic = dynamic or is_shape_unknown(broadcast_shape)
+        dynamic = dynamic or F.is_sequence_value_unknown(broadcast_shape)
         if not dynamic:
             _, reduction_axes = broadcast_gradient_args(broadcast_shape, x_shape)
             reduced_grad = reduce_keep_dim(dout, reduction_axes)

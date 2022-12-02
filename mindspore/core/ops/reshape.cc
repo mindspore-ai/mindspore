@@ -82,7 +82,6 @@ class ReshapeInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckValue<size_t>("input size", input_args.size(), kLessEqual, max_size, prim_name);
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
     std::vector<int64_t> output_shape;
-
     if (input_args.size() == max_size) {
       auto input_y = input_args[1];
       MS_EXCEPTION_IF_NULL(input_y);

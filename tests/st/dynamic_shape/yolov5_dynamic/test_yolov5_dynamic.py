@@ -26,6 +26,11 @@ def run_yolov5_dynamic_case(device_target):
     model_name = "yolov5"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, "yolov5")
+    # pylint: disable=anomalous-backslash-in-string
+    old_list = ["gt_shape\[1\]"]
+    # pylint: disable=anomalous-backslash-in-string
+    new_list = ["-1"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/yolo.py"))
     os.system("cp -r {} {}".format(os.path.join(cur_path, "run_yolov5_dynamic.py"), cur_model_path))
     exec_network_shell = "cd {}; python run_yolov5_dynamic.py --device_target={} > log &".format(
         cur_model_path, device_target)

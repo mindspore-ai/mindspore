@@ -189,6 +189,8 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
     being out of range with given shape and also checking for compatible axes values
     with given inputs.
     """
+    x1_shape = [-1 if i is None else i for i in x1_shape]
+    x2_shape = [-1 if i is None else i for i in x2_shape]
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     shapes = [x1_shape, x2_shape]
 
@@ -233,7 +235,7 @@ def _calc_new_shape(shape, axes, position=0):
     contraction_axes = tuple(i if i >= 0 else i + len(shape) for i in axes[position])
     prod_contraction = int(np.prod([shape[i] for i in contraction_axes]))
     free_axes = tuple(i for i in range(len(shape)) if i not in contraction_axes)
-    free_dims = tuple(shape[i] for i in free_axes)
+    free_dims = tuple(shape[i] if shape[i] is not None else -1 for i in free_axes)
     prod_free = int(np.prod(free_dims))
 
     transpose_perm = contraction_axes + free_axes if position else free_axes + contraction_axes

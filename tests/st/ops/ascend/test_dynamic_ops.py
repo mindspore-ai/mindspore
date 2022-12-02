@@ -190,7 +190,7 @@ class ShapeTensorNet(nn.Cell):
         res = self.tensor_scatter_update(res, indice, update)
         z = self.reshape(y, res)
         res_shape = self.shape(z)
-        return (y_shape, res_shape)
+        return y_shape, res_shape
 
 
 class SoftmaxNet(nn.Cell):
@@ -399,6 +399,7 @@ def test_dynamic_add2():
     assert compare(gradients, gradients_cmp)
 
 
+@pytest.mark.skip(reason='Operator Shape is not support in backend yet.')
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

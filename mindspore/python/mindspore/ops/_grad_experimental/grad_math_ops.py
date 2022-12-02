@@ -73,7 +73,6 @@ from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr
-from mindspore.ops._utils.utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops._grad.grad_base import bprop_getters, create_tensor_by_element, dyn_rank
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_fill, sum_grad_reduce_axis
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
@@ -160,7 +159,7 @@ def get_bprop_cdist(self):
 
     def bprop(input_x, input_y, out, dout):
         dout_shape = F.shape(dout)
-        if is_shape_unknown(dout_shape):
+        if F.is_sequence_value_unknown(dout_shape):
             dout_dim = dyn_rank(dout)
             dout_perm_part2 = create_tensor_by_element(
                 (dout_dim - 1, dout_dim - 2))
@@ -563,7 +562,7 @@ def get_bprop_matrix_exp(self):
     dyn_shape = P.TensorShape()
 
     def bprop(x, out, dout):
-        if is_shape_unknown(x.shape):
+        if F.is_sequence_value_unknown(x.shape):
             shape_x = dyn_shape(x)
             x_len = dyn_rank(x)
             input_perm = range_op(cast(0, mstype.int64), x_len, cast(1, mstype.int64))
@@ -587,7 +586,7 @@ def get_bprop_matrix_exp(self):
         meta_grad = concat_col((meta_grad_up, meta_grad_down))
         meta_grad = matrix_exp(meta_grad)
 
-        if is_shape_unknown(x.shape):
+        if F.is_sequence_value_unknown(x.shape):
             begins = dyn_fill(mstype.int32, expand_dims(x_len, 0), 0)
             sizes = cast(shape_x, mstype.int32)
         else:
@@ -674,7 +673,7 @@ def get_bprop_matrix_solve(self):
             grad_b = cast(grad_b, mstype.float32)
 
         a_shape = F.shape(input_a)
-        if is_shape_unknown(a_shape):
+        if F.is_sequence_value_unknown(a_shape):
             matrix_rank = dyn_rank(input_a)
         else:
             matrix_rank = rank(input_a)
@@ -857,7 +856,7 @@ def get_bprop_matrix_determinant(self):
     concat = P.Concat(0)
 
     def bprop(x, out, dout):
-        if is_shape_unknown(shape_op(x)):
+        if F.is_sequence_value_unknown(shape_op(x)):
             x_adj_inv = inverse_op(x)
             out_shape = dyn_shape_op(out)
             ones = create_tensor_by_element((1, 1))
@@ -881,7 +880,7 @@ def get_bprop_log_matrix_determinant(self):
 
     def bprop(x, out, dout):
         x_adj_inv = inverse_op(x)
-        if is_shape_unknown(shape_op(out[1])):
+        if F.is_sequence_value_unknown(shape_op(out[1])):
             const_value = F.cast(1, mstype.int64)
             const_value = P.ExpandDims()(const_value, 0)
             new_shape = P.Concat()((dyn_shape_op(out[1]), const_value, const_value))
@@ -904,7 +903,7 @@ def get_bprop_betainc(self):
     dyn_shape = P.TensorShape()
 
     def bprop(input_a, input_b, input_x, out, dout):
-        if is_shape_unknown(F.shape(input_x)):
+        if F.is_sequence_value_unknown(F.shape(input_x)):
             sx = dyn_shape(input_x)
         else:
             sx = F.shape(input_x)
@@ -1319,7 +1318,7 @@ def get_bprop_trace(self):
 
     def bprop(x, out, dout):
         shape = shape_op(x)
-        if is_shape_unknown(shape):
+        if F.is_sequence_value_unknown(shape):
             shape = dyn_shape_op(x)
             dx = input_grad(dout, shape)
         else:
@@ -1493,7 +1492,7 @@ def get_bprop_igamma(self):
     def bprop(a, x, out, dout):
         sa = shape_(a)
         sx = shape_(x)
-        if is_shape_unknown(sa) or is_shape_unknown(sx):
+        if F.is_sequence_value_unknown(sa) or F.is_sequence_value_unknown(sx):
             sa = dyn_shape_op(a)
             sx = dyn_shape_op(x)
             ra, rx = DynamicBroadcastGradientArgs()(sa, sx)
@@ -1533,7 +1532,7 @@ def get_bprop_igammac(self):
     def bprop(a, x, out, dout):
         sa = shape_(a)
         sx = shape_(x)
-        if is_shape_unknown(sa) or is_shape_unknown(sx):
+        if F.is_sequence_value_unknown(sa) or F.is_sequence_value_unknown(sx):
             sa = dyn_shape_op(a)
             sx = dyn_shape_op(x)
             ra, rx = DynamicBroadcastGradientArgs()(sa, sx)
@@ -1689,7 +1688,7 @@ def get_bprop_cholesky_solve(self):
     def bprop(x1, x2, out, dout):
         flag = 0
         shape_x1 = shape_op(x1)
-        if is_dim_unknown(shape_x1):
+        if F.is_sequence_shape_unknown(shape_x1):
             len_x1 = dyn_rank(x1)
         else:
             len_x1 = len(shape_x1)
@@ -1748,7 +1747,7 @@ def get_bprop_nextafter(self):
 
         s_x1 = shape(x1)
         partial_x1 = ()
-        if is_shape_unknown(s_x1):
+        if F.is_sequence_value_unknown(s_x1):
             s_x1 = dyn_shape(x1)
             partial_x1 = dyn_ones(s_x1, dtype(x1))
         else:
@@ -1756,7 +1755,7 @@ def get_bprop_nextafter(self):
 
         s_x2 = shape(x2)
         partial_x2 = ()
-        if is_shape_unknown(s_x2):
+        if F.is_sequence_value_unknown(s_x2):
             s_x2 = dyn_shape(x2)
             partial_x2 = dyn_fill(dtype(x2), s_x2, 0)
         else:

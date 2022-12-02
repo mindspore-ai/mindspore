@@ -1468,7 +1468,7 @@ class Fill(PrimitiveWithCheck):
 
     def infer_value(self, dtype, dims, x):
         x_nptype = mstype.dtype_to_nptype(dtype)
-        if dims is not None and not is_shape_unknown(dims) and x is not None:
+        if dims is not None and None not in dims and x is not None:
             if isinstance(dims, Tensor):
                 dims = dims.asnumpy()
             if isinstance(x, Tensor):

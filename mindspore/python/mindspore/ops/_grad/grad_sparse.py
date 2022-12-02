@@ -14,7 +14,6 @@
 # ============================================================================
 
 """bprop primitives"""
-from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore.ops._grad.grad_base import bprops, bprop_getters
 from mindspore.ops.composite.multitype_ops._constexpr_utils import infer_out_shape
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
@@ -122,7 +121,7 @@ def get_bprop_sparse_add(self):
         dx1, dx2 = sparse_add_grad(dout[1], x1_indices, x2_indices, out[0])
         ret0 = zeros_like(x1_indices)
         shp = shape_op(x1_values)
-        if is_shape_unknown(shp):
+        if F.is_sequence_value_unknown(shp):
             shp = dyn_shape_op(x1_values)
         dx1_shape = shp
         ret1 = reshape(dx1, dx1_shape)
@@ -130,7 +129,7 @@ def get_bprop_sparse_add(self):
 
         ret3 = zeros_like(x2_indices)
         shp = shape_op(x2_values)
-        if is_shape_unknown(shp):
+        if F.is_sequence_value_unknown(shp):
             shp = dyn_shape_op(x2_values)
         dx2_shape = shp
         ret4 = reshape(dx2, dx2_shape)
