@@ -1514,7 +1514,7 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
             Default: None, will include all text.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the mindspore.dataset.config.
-        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch.
+        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed;
             If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
