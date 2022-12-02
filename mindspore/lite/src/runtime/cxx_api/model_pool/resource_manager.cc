@@ -129,9 +129,7 @@ Status ResourceManager::DistinguishPhysicalAndLogical(std::vector<int> *physical
     for (size_t i = 0; i < processor_ids.size(); i++) {
       physical_core_ids_.push_back(processor_ids[i]);
     }
-    return kSuccess;
-  }
-  if (core_ids.size() == physical_ids.size() && physical_ids.size() == processor_ids.size()) {
+  } else if (core_ids.size() == physical_ids.size() && physical_ids.size() == processor_ids.size()) {
     for (size_t i = 0; i < processor_ids.size(); i++) {
       if (ids.find(physical_ids[i]) == ids.end()) {
         std::vector<int> core_id_list = {core_ids[i]};

@@ -43,8 +43,8 @@ class ResourceManager {
   int core_num_ = 0;
   bool can_use_all_resource_ = true;
   std::vector<int> cpu_cores_;
-  std::vector<int> physical_core_ids_;
-  std::vector<int> logical_core_ids_;
+  std::vector<int> physical_core_ids_ = {};
+  std::vector<int> logical_core_ids_ = {};
   std::vector<std::vector<int>> numa_physical_core_ids_;
   std::vector<std::vector<int>> numa_logical_core_ids_;
 };
