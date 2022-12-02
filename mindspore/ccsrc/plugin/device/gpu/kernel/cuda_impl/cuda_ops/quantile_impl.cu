@@ -106,7 +106,7 @@ __global__ void QuantileKernelCheck(int num, const T *q, int *flag_in) {
 template <typename T>
 __global__ void QuantileKernelCheckNan(int x, int y, int z, int num, const T *input, int *flag_in) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num; i += gridDim.x * blockDim.x) {
-    if (std::isnan(input[i]) && flag_in[i / (y * z) * z + i % (y * z) % z] != 2) {
+    if ((input[i] != input[i]) && flag_in[i / (y * z) * z + i % (y * z) % z] != 2) {
       flag_in[i / (y * z) * z + i % (y * z) % z] = 2;
     }
   }
