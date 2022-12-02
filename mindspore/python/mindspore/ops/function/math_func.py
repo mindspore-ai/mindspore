@@ -991,7 +991,7 @@ def fmod(x, other):
         TypeError: If neither `x` nor `other` is a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-3., -2, -1, 1, 2, 3]), mindspore.float32)

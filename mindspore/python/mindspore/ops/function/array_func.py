@@ -4364,7 +4364,7 @@ def diag(input_x):
         ValueError: If rank of `input_x` is less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
