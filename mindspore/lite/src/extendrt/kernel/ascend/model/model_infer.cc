@@ -141,6 +141,13 @@ const std::vector<ShapeVector> ModelInfer::GetOutputShape() { return model_proce
 const std::vector<ShapeVector> ModelInfer::GetInputShape() { return model_process_.GetInputShape(); }
 const std::vector<TypeId> ModelInfer::GetInputDataType() { return model_process_.GetInputDataType(); }
 
-bool ModelInfer::Resize(const std::vector<ShapeVector> &new_shapes) { return model_process_.Resize(new_shapes); }
+bool ModelInfer::Resize(const std::vector<ShapeVector> &new_shapes) {
+  aclError rt_ret = aclrtSetCurrentContext(context_);
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Set the ascend device context failed, ret = " << rt_ret;
+    return false;
+  }
+  return model_process_.Resize(new_shapes);
+}
 }  // namespace acl
 }  // namespace mindspore::kernel

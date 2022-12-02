@@ -119,4 +119,10 @@ ATTR_MAP(ReduceStd) = {{"axis", ATTR_DESC(dim, AnyTraits<std::vector<int64_t>>()
                        {"unbiased", ATTR_DESC(unbiased, AnyTraits<bool>())},
                        {"keep_dims", ATTR_DESC(keepdim, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceStd) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
+
+// ReduceProd
+INPUT_MAP(ReduceProd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_MAP(ReduceProd) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceProd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceProd, kNameDynamicReduceProd, ADPT_DESC(ReduceProd))
 }  // namespace mindspore::transform

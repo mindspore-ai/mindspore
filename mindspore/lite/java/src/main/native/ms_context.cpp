@@ -20,6 +20,7 @@
 #include "common/jni_utils.h"
 
 constexpr const int kNpuDevice = 2;
+constexpr const int kAscendDevice = 3;
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_MSContext_createMSContext(JNIEnv *env, jobject thiz,
                                                                                        jint thread_num,
                                                                                        jint cpu_bind_mode,
@@ -88,6 +89,18 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDev
       }
       npu_device_info->SetFrequency(npu_freq);
       device_list.push_back(npu_device_info);
+      break;
+    }
+    case kAscendDevice:  // DT_ASCEND
+    {
+      auto ascend_device_info = std::make_shared<mindspore::AscendDeviceInfo>();
+      if (ascend_device_info == nullptr) {
+        MS_LOG(ERROR) << "ascend device info is nullptr";
+        delete (c_context_ptr);
+        return (jboolean) false;
+      }
+      ascend_device_info->SetDeviceID(0);
+      device_list.push_back(ascend_device_info);
       break;
     }
     default:

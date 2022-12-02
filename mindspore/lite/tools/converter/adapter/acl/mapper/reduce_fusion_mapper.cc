@@ -65,6 +65,8 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_L2)) {
     ops::LpNorm lp_norm_op;
     dst_prim = lp_norm_op.GetPrim();
+  } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Prod)) {
+    dst_prim = std::make_shared<acl::DynamicReduceProd>();
   } else {
     MS_LOG(ERROR) << "Not support reduce mode " << static_cast<int64_t>(mode);
     return RET_ERROR;
