@@ -805,7 +805,7 @@ void FuncGraph::SetMultiTarget() const {
 void FuncGraph::set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes) {
   (void)std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(), [this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
-    (void)used_forward_nodes_.emplace(node);
+    (void)used_forward_nodes_.insert(node);
   });
 }
 
