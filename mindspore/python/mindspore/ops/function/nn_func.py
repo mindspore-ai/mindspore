@@ -743,7 +743,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         if len(output_size) == 2:
             output_size = (1,) + output_size + (1,)
         if len(output_size) == 3:
-            output_size = (1,) + output_size
+            output_size = output_size + (1,)
 
     shape = P.Shape()
     x_shape = shape(x)
