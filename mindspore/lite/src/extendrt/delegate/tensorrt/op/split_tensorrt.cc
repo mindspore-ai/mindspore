@@ -142,9 +142,8 @@ int SplitTensorRT::AddInnerOp(TensorRTContext *ctx) {
           return RET_ERROR;
         }
         shuffer_layer->setReshapeDimensions(shuffer_dims_opt.value());
+        out_tensor = shuffer_layer->getOutput(0);
       }
-      shuffer_layer->setReshapeDimensions(out_tensor->getDimensions());
-      out_tensor = shuffer_layer->getOutput(0);
     }
     ctx->RegisterTensor(ITensorHelper{out_tensor, split_input.format_, split_input.same_format_, res_is_tensor},
                         out_tensors_[i].Name());

@@ -370,8 +370,17 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
 int TensorRTSubGraph::ParseInputsProfile() {
   MS_LOG(INFO) << "using serialied engine.";
   for (auto in_tensor : inputs_) {
-    auto dim = ParseInputDimsProfile(in_tensor);
-    if (dim.nbDims <= 0) {
+    nvinfer1::Dims input_dims;
+    if (using_input_ranges_) {
+      if (min_dims_.find(in_tensor.Name()) == min_dims_.end()) {
+        MS_LOG(ERROR) << "profile config do not have input tensor name : " << in_tensor.Name();
+        return RET_ERROR;
+      }
+      input_dims = SetInputDimsProfile(in_tensor);
+    } else {
+      input_dims = ParseInputDimsProfile(in_tensor);
+    }
+    if (input_dims.nbDims <= 0) {
       MS_LOG(ERROR) << "input dims is invalid.";
       return RET_ERROR;
     }
@@ -693,6 +702,10 @@ size_t TensorRTSubGraph::MaxVolumnProfileIndex() const {
 }
 
 int TensorRTSubGraph::ReSize() {
+  int ret = lite::SetCudaDevice(device_info_);
+  if (ret != RET_OK) {
+    return ret;
+  }
   auto profile_index_opt = SelectProfile();
   if (!profile_index_opt) {
     MS_LOG(ERROR) << "do not have profile in range!";
@@ -709,8 +722,8 @@ int TensorRTSubGraph::ReSize() {
           continue;
         }
         nvinfer1::Dims construct_dims = ctx_->network()->getInput(j)->getDimensions();
-        bool ret = ValidInputResizeDims(construct_dims, inputs_[i].Shape());
-        if (!ret) {
+        bool is_valid = ValidInputResizeDims(construct_dims, inputs_[i].Shape());
+        if (!is_valid) {
           MS_LOG(ERROR) << "input resize shape is invalid.";
           return RET_ERROR;
         }
@@ -780,6 +793,8 @@ int TensorRTSubGraph::Execute() {
       MS_LOG(INFO) << "no need memcpy to cuda for input tensor: " << trt_in_tensor_name_[i];
       continue;
     }
+    nvinfer1::Dims input_dims = ConvertCudaDims(inputs_[i].Shape());
+    DebugDims("in dims : ", input_dims);
 
     auto iter = model_input_to_cache_tensors_.find(trt_in_tensor_name_[i]);
     if (iter != model_input_to_cache_tensors_.end()) {

@@ -23,7 +23,7 @@ int TensorRTRuntime::Init() {
   if (is_init_) {
     return RET_OK;
   }
-  builder_ = nvinfer1::createInferBuilder(this->logger_);
+  builder_ = nvinfer1::createInferBuilder(*TensorRTLogger::Instance());
   if (builder_ == nullptr) {
     MS_LOG(ERROR) << "create infer builder failed.";
     return RET_ERROR;
