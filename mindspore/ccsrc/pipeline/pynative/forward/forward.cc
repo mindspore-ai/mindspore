@@ -476,6 +476,7 @@ void ForwardExecutor::ClearRes() {
   }
   init_ = false;
   lazy_build_ = false;
+  is_ms_function_compiling_ = false;
   ClearNodeAbsMap();
   infer_operation()->ClearPrimAbsList();
   infer_operation()->ClearConstFlagPrimCache();
