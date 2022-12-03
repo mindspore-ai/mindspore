@@ -205,6 +205,7 @@ from mindspore.ops.operations.array_ops import RightShift
 from mindspore.ops.operations.array_ops import LeftShift
 from mindspore.ops.operations.array_ops import Expand
 from mindspore.ops.operations.array_ops import HammingWindow
+from mindspore.ops.operations.array_ops import AffineGrid
 from mindspore.ops.operations.nn_ops import SparseApplyMomentum
 from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
@@ -3676,6 +3677,10 @@ test_case_array_ops = [
         'block': P.DepthToSpace(2),
         'desc_inputs': [[1, 12, 1, 1]],
         'desc_bprop': [[1, 3, 2, 2]]}),
+    ('AffineGrid', {
+        'block': AffineGrid(align_corners=False),
+        'desc_inputs': [Tensor(np.random.rand(1, 2, 3), mstype.float32), (1, 1, 1, 2)],
+        'desc_bprop': [Tensor(np.random.rand(1, 1, 2, 2), mstype.float32)]}),
     ('Split', {
         'block': P.Split(1, 2),
         'desc_inputs': [Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))],

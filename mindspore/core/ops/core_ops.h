@@ -232,6 +232,7 @@ constexpr auto kScatterAddWithAxis = "ScatterAddWithAxis";
 constexpr auto kCSRSparseMatrixToSparseTensor = "CSRSparseMatrixToSparseTensor";
 constexpr auto kSlice = "Slice";
 constexpr auto kAffineGrid = "AffineGrid";
+constexpr auto kAffineGridGrad = "AffineGridGrad";
 constexpr auto kGatherDGrad = "GatherDGrad";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
 constexpr auto kSparseTensorToCSRSparseMatrix = "SparseTensorToCSRSparseMatrix";
@@ -741,6 +742,7 @@ GVAR_DEF(PrimitivePtr, kPrimSegmentMax, std::make_shared<Primitive>(kSegmentMax)
 GVAR_DEF(PrimitivePtr, kPrimSegmentMin, std::make_shared<Primitive>(kSegmentMin));
 GVAR_DEF(PrimitivePtr, kPrimSegmentSum, std::make_shared<Primitive>(kSegmentSum));
 GVAR_DEF(PrimitivePtr, kPrimAffineGrid, std::make_shared<Primitive>(kAffineGrid));
+GVAR_DEF(PrimitivePtr, kPrimAffineGridGrad, std::make_shared<Primitive>(kAffineGridGrad));
 GVAR_DEF(PrimitivePtr, kPrimSegmentMean, std::make_shared<Primitive>(kSegmentMean));
 GVAR_DEF(PrimitivePtr, kPrimSegmentProd, std::make_shared<Primitive>(kSegmentProd));
 GVAR_DEF(PrimitivePtr, kPrimSparseSparseMinimum, std::make_shared<Primitive>(kSparseSparseMinimum));

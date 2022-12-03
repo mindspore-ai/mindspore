@@ -3766,6 +3766,42 @@ class FractionalMaxPoolGradWithFixedKsize(Primitive):
         self.init_prim_io_names(inputs=['origin_input', 'out_backprop', 'argmax'], outputs=['y'])
 
 
+class AffineGridGrad(Primitive):
+    r"""
+    Computes gradients for AffineGrid operation.
+
+    Args:
+        align_corners (bool): if True, consider -1 and 1 to refer to the centers
+            of the corner pixels rather than the image corners. Default: False.
+
+    Inputs:
+        - **y_grad** (Tensor) - Data type must be float16 or float32.
+        - **x_size** (tuple) - Data type must be int32 or int64.
+
+    Outputs:
+        Tensor, with data type same as `y_grad`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import mindspore.ops.operations._grad_ops as _grad_ops
+        >>> affinegridgrad = _grad_ops.AffineGridGrad()
+        >>> y_grad = Tensor(np.ones([1, 2, 2, 2]), mindspore.float32)
+        >>> x_size = (1, 2, 2, 2)
+        >>> x_grad = affinegridgrad(y_grad, x_size)
+        >>> print(x_grad)
+        [[[0. 0. 4.]
+          [0. 0. 4.]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, align_corners=False):
+        """Initialize AffineGridGrad."""
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.init_prim_io_names(inputs=['y_grad', 'x_size'], outputs=['x_grad'])
+
+
 class HSigmoidGrad(Primitive):
     """Gets the gradient of HSigmoid operation."""
     @prim_attr_register
