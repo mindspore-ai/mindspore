@@ -741,8 +741,9 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
 void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                         const VectorRef &args, VectorRef *outputs) {
-  bool contain_cut_graph = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
-                                       [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagsIsCutGraph); });
+  bool contain_cut_graph =
+    std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
+                [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagEnableRunGraphBySingleOp); });
   MS_EXCEPTION_IF_NULL(root_graph_);
   bool is_dynamic = true;
 

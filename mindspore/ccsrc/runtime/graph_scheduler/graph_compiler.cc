@@ -289,6 +289,25 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
 }
 }  // namespace
 
+bool IsParameterInput(const AnfNodePtr &node, const std::set<int64_t> &depend_list) {
+  if (depend_list.empty()) {
+    return false;
+  }
+  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_size; ++i) {
+    if (depend_list.find(i) == depend_list.end()) {
+      continue;
+    }
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
+    auto real_input = input_node_with_index.first;
+    // Inverse op have constant input need RunGraphBySingleOp
+    if (real_input->isa<Parameter>()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context, device::RunMode run_mode,
                                     bool run_in_pynative) {
@@ -359,8 +378,19 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
   for (auto &node : graph->execution_order()) {
-    if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
-      graph->set_flag(kFlagsIsCutGraph, true);
+    MS_EXCEPTION_IF_NULL(node->input(0));
+    bool enable = false;
+    if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
+      const auto &depend_list = abstract::GetValueDependArgIndices(node);
+      if (IsParameterInput(node, depend_list)) {
+        MS_LOG(DEBUG) << "Enable Run Graph By Single Op";
+        enable = true;
+      }
+    }
+
+    if (common::AnfAlgo::IsControlOpExecInBackend(node) || enable) {
+      graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
+      break;
     }
   }
 
@@ -502,7 +532,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   } else {
     for (auto &node : root_graph->execution_order()) {
       if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
-        root_graph->set_flag(kFlagsIsCutGraph, true);
+        root_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
       }
     }
     root_graph->set_front_outputs({func_graph->output()});
