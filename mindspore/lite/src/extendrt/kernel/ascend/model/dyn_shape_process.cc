@@ -98,6 +98,11 @@ bool DynShapeProcess::CheckBatchSize(const std::vector<ShapeVector> &new_shapes)
     MS_LOG(ERROR) << "Shape is empty, input index = " << input_data_idx_;
     return false;
   }
+  if (cur_shape.size() != original_shape.size()) {
+    MS_LOG(ERROR) << "Cur shape size " << cur_shape.size() << " is not equal with original shape size "
+                  << original_shape.size();
+    return false;
+  }
   for (size_t i = 1; i < cur_shape.size(); ++i) {
     if (cur_shape[i] <= 0) {
       MS_LOG(ERROR) << "Invalid new shape " << cur_shape << " for input " << i;
@@ -124,8 +129,9 @@ bool DynShapeProcess::CheckImageSize(const std::vector<ShapeVector> &new_shapes)
     MS_LOG(ERROR) << "Shape size " << original_shape.size() << " is invalid, input index = " << input_data_idx_;
     return false;
   }
-  if (cur_shape.size() != kInputDimNum) {
-    MS_LOG(ERROR) << "Shape size " << cur_shape.size() << " is invalid, input index = " << input_data_idx_;
+  if (cur_shape.size() != original_shape.size()) {
+    MS_LOG(ERROR) << "Cur shape size " << cur_shape.size() << " is not equal with original shape size "
+                  << original_shape.size();
     return false;
   }
   for (size_t i = 1; i < cur_shape.size(); ++i) {

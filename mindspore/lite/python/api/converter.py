@@ -170,7 +170,8 @@ class Converter:
         train_model (bool, optional):   Whether the model is going to be trained on device. Default: False.
         no_fusion(bool, optional): Whether avoid fusion optimization, fusion optimization is allowed by default.
             Default: False.
-
+        device (str, optional): Set target device when converter model. Only valid for ascend. The following 2 device
+            are supported: "Ascend310" | "Ascend310P". Default: "".
     Raises:
         TypeError: `fmk_type` is not a FmkType.
         TypeError: `model_file` is not a str.
@@ -193,8 +194,10 @@ class Converter:
         TypeError: `infer` is not a bool.
         TypeError: `train_model` is not a bool.
         TypeError: `no_fusion` is not a bool.
+        TypeError: `device` is not a str.
         ValueError: `input_format` is neither Format.NCHW nor Format.NHWC when it is a Format.
         ValueError: `decrypt_mode` is neither "AES-GCM" nor "AES-CBC" when it is a str.
+        ValueError: `device` is neither "Ascend310" nor "Ascend310P" when it is a str.
         RuntimeError: `model_file` does not exist.
         RuntimeError: `weight_file` is not "", but `weight_file` does not exist.
         RuntimeError: `config_file` is not "", but `config_file` does not exist.
@@ -219,14 +222,15 @@ class Converter:
         encrypt_key: ,
         infer: False,
         train_model: False,
-        no_fusion: False.
+        no_fusion: False,
+        device: .
     """
 
     def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False,
                  input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
                  output_data_type=DataType.FLOAT32, export_mindir=ModelType.MINDIR_LITE, decrypt_key="",
                  decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False,
-                 no_fusion=False):
+                 no_fusion=False, device=""):
         check_isinstance("fmk_type", fmk_type, FmkType)
         check_isinstance("model_file", model_file, str)
         check_isinstance("output_file", output_file, str)
@@ -245,6 +249,8 @@ class Converter:
         check_isinstance("infer", infer, bool)
         check_isinstance("train_model", train_model, bool)
         check_isinstance("no_fusion", no_fusion, bool)
+        check_isinstance("device", device, str)
+
         if not os.path.exists(model_file):
             raise RuntimeError(f"Converter's init failed, model_file does not exist!")
         if weight_file != "":
@@ -255,6 +261,9 @@ class Converter:
                 raise RuntimeError(f"Converter's init failed, config_file does not exist!")
         if input_format not in [Format.NCHW, Format.NHWC]:
             raise ValueError(f"Converter's init failed, input_format must be NCHW or NHWC.")
+        if device != "":
+            if device not in ["Ascend310", "Ascend310P"]:
+                raise ValueError(f"Converter's init failed, device must be Ascend310 or Ascend310P.")
         if decrypt_mode not in ["AES-GCM", "AES-CBC"]:
             raise ValueError(f"Converter's init failed, decrypt_mode must be AES-GCM or AES-CBC.")
         input_shape_ = {} if input_shape is None else input_shape
@@ -296,6 +305,8 @@ class Converter:
             self._converter.set_train_model(train_model)
         if no_fusion:
             self._converter.set_no_fusion(no_fusion)
+        if device != "":
+            self._converter.set_device(device)
 
     def __str__(self):
         res = f"config_file: {self._converter.get_config_file()},\n" \
@@ -312,7 +323,8 @@ class Converter:
               f"encrypt_key: {self._converter.get_encrypt_key()},\n" \
               f"infer: {self._converter.get_infer()},\n" \
               f"train_model: {self._converter.get_train_model()},\n" \
-              f"no_fusion: {self._converter.get_no_fusion()}."
+              f"no_fusion: {self._converter.get_no_fusion()},\n" \
+              f"device: {self._converter.get_device()}."
         return res
 
     def set_config_info(self, section="", config_info=None):
