@@ -218,8 +218,8 @@ int ScaleInt8CPUKernel::Prepare() {
     if (tensor->data_type() != TypeId::kNumberTypeInt8) {
       MS_LOG(ERROR) << " in tensors type to scale_int8 should be int8, but type id " << tensor->data_type()
                     << " is given";
+      return RET_ERROR;
     }
-    return RET_ERROR;
   }
 
   if (!InferShapeDone()) {
