@@ -37,13 +37,59 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   CheckAndConvertUtils::CheckInteger("dimension of 'default_value'", SizeToLong(default_value_shape.size()), kLessThan,
                                      SizeToLong(values_shape.size()), prim_name);
-
   auto shape_arg = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_arg);
   auto output_shape = GetShapeValue(primitive, shape_arg);
-  auto row_partition_tensors_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  primitive->AddAttr("num_row_partition_tensors", MakeValue(SizeToLong(row_partition_tensors_shape.size())));
+  auto values_rank = values_shape.size();
+  auto output_shape_rank = output_shape.size();
+  auto tensors = input_args[kInputIndex3]->isa<abstract::AbstractTuple>()
+                   ? input_args[kInputIndex3]->cast<abstract::AbstractTuplePtr>()->elements()
+                   : input_args[kInputIndex3]->cast<abstract::AbstractListPtr>()->elements();
+  auto tensors_size = tensors.size();
+  const auto &row_partition_types_ptr = primitive->GetAttr("row_partition_types");
+  MS_EXCEPTION_IF_NULL(row_partition_types_ptr);
+  const auto &row_partition_types = GetValue<std::vector<std::string>>(row_partition_types_ptr);
+  auto types_size = row_partition_types.size();
+  if (tensors_size != types_size) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the number of row_partition_tensors must be equal to the "
+                             << "number of row_partition_types: " << types_size << ", but got " << tensors_size << ".";
+  }
+  if (row_partition_types[0] == "FIRST_DIM_SIZE") {
+    auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->BuildShape())[kShape];
+    auto tensor0_dim = tensor0_shape.size();
+    CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'FIRST_DIM_SIZE')",
+                                       SizeToLong(tensor0_dim), kEqual, 0, prim_name);
+    if (types_size - 1 + values_rank != output_shape_rank) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', row partition size plus 'values' rank should be equal to 'shape' rank: "
+                               << output_shape.size() << ", but got row partition size: " << (types_size - 1)
+                               << ", 'values' rank: " << values_rank << ".";
+    }
+  } else if (row_partition_types[0] == "ROW_SPLITS") {
+    auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->BuildShape())[kShape];
+    auto tensor0_dim = tensor0_shape.size();
+    CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'ROW_SPLITS')",
+                                       SizeToLong(tensor0_dim), kEqual, 1, prim_name);
+    if (types_size + values_rank != output_shape_rank) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', row partition size plus 'values' rank should be equal to 'shape' rank: "
+                               << output_shape.size() << ", but got row partition size: " << types_size
+                               << ", 'values' rank: " << values_rank << ".";
+    }
+  } else if (row_partition_types[0] == "VALUE_ROWIDS") {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', cannot handle 'VALUE_ROWIDS' in row_partition_types[0].";
+  } else {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', row_partition_types only support 'FIRST_DIM_SIZE', "
+                             << "'VALUE_ROWIDS' and 'ROW_SPLITS', but got unknown string: " << row_partition_types[0]
+                             << ".";
+  }
+  for (size_t i = 1; i < types_size; i++) {
+    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->BuildShape())[kShape];
+    auto tensori_dim = tensori_shape.size();
+    CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[" + std::to_string(i) + "]",
+                                       SizeToLong(tensori_dim), kEqual, 1, prim_name);
+  }
+  primitive->AddAttr("num_row_partition_tensors", MakeValue(SizeToLong(tensors_size)));
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
