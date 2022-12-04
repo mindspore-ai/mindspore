@@ -62,8 +62,8 @@ int MaximumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   tensor_size_ = 1;
   output_shape_ = CPUKernelUtils::GetBroadcastShape(x1_shape_, x2_shape_);
-  for (const uint64_t &d : output_shape_) {
-    tensor_size_ *= d;
+  for (const int64_t &d : output_shape_) {
+    tensor_size_ *= static_cast<uint64_t>(d);
   }
 
   return KRET_OK;

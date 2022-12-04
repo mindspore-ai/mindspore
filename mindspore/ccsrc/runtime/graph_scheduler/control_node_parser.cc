@@ -1639,7 +1639,7 @@ void ControlNodeParser::ParseFormalToRealParameter(const std::vector<AnfNodePtr>
       MS_EXCEPTION_IF_NULL(cnode);
       const auto &inputs = cnode->inputs();
       const auto &func_graphs = FetchFuncGraphbyCallNode(node);
-      for (const auto func_graph : func_graphs) {
+      for (const auto &func_graph : func_graphs) {
         MS_EXCEPTION_IF_NULL(func_graph);
         const auto &parameters = func_graph->parameters();
         for (int i = SizeToInt(inputs.size()) - 1, j = SizeToInt(parameters.size()) - 1; i >= 1 && j >= 0; --i, --j) {
@@ -1825,7 +1825,7 @@ void ControlNodeParser::ParseFrontToBackendParameter(const std::vector<KernelGra
         std::set<KernelWithIndex> invalid_call_nodes;
         FetchRealParameterByNode(front_node_with_index, &real_parameters, &invalid_call_nodes,
                                  call_node_to_func_graphs_);
-        for (const auto real_parameter : real_parameters) {
+        for (const auto &real_parameter : real_parameters) {
           MS_EXCEPTION_IF_NULL(real_parameter.first);
           if (real_parameter.first->isa<Parameter>() || real_parameter.first->isa<ValueNode>()) {
             (void)front_to_backend_parameters_[real_parameter].emplace(KernelWithIndex(parameter, 0), device_context);
