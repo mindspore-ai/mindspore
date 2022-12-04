@@ -30,7 +30,7 @@ nvinfer1::ICudaEngine *TensorRTSerializer::GetSerializedEngine() {
     MS_LOG(WARNING) << "read engine file failed : " << serialize_file_path_;
     return nullptr;
   }
-  nvinfer1::IRuntime *runtime = nvinfer1::createInferRuntime(logger_);
+  nvinfer1::IRuntime *runtime = nvinfer1::createInferRuntime(*TensorRTLogger::Instance());
   if (runtime == nullptr) {
     delete[] trt_model_stream;
     MS_LOG(ERROR) << "createInferRuntime failed.";

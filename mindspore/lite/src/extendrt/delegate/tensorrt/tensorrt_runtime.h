@@ -26,6 +26,13 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::lite {
 class TensorRTLogger : public nvinfer1::ILogger {
+ public:
+  static TensorRTLogger *Instance() {
+    static TensorRTLogger logger;
+    return &logger;
+  }
+
+ private:
   void log(Severity severity, const char *msg) noexcept override {
     if (severity == Severity::kINTERNAL_ERROR || severity == Severity::kERROR) {
       MS_LOG(ERROR) << msg;
@@ -72,7 +79,6 @@ class TensorRTRuntime {
  private:
   bool is_init_ = false;
   nvinfer1::IBuilder *builder_{nullptr};
-  TensorRTLogger logger_;
   TensorRTAllocator *allocator_{nullptr};
   int batch_size_{0};
   uint32_t device_id_{0};

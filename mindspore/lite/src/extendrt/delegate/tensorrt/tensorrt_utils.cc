@@ -507,6 +507,7 @@ int SetCudaDevice(int device_id) {
     return RET_ERROR;
   }
   if (device != set_device_id) {
+    MS_LOG(INFO) << "from device " << device << " to device " << set_device_id;
     ret = cudaSetDevice(set_device_id);
     if (ret != cudaSuccess) {
       MS_LOG(ERROR) << "cudaSetDevice failed, error code: " << ret;
