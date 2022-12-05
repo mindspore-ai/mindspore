@@ -261,6 +261,8 @@ from .math_func import (
     bitwise_and,
     bitwise_or,
     bitwise_xor,
+    bitwise_left_shift,
+    bitwise_right_shift,
     erf,
     erfc,
     cdist,
