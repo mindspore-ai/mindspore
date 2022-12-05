@@ -35,6 +35,7 @@
 #include "cxx_api/model/acl/model_converter.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "src/common/file_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 
@@ -301,7 +302,11 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
     MS_LOG(ERROR) << "Om data is nullptr.";
     return lite::RET_ERROR;
   }
-  SetAclModelOptions(func_graph);
+  auto ret = SetAclModelOptions(func_graph);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Set acl model options error!";
+    return lite::RET_ERROR;
+  }
   // call interface of cloud
   ModelConverter model_converter;
   model_converter.set_options(options_);
@@ -382,6 +387,15 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
       input_names.push_back(para->name());
     }
     options_->RenameInput(input_names);
+  }
+  auto pos = user_options_cfg_.om_file_path.find_last_of('/');
+  std::string save_path = "./";
+  if (pos != std::string::npos) {
+    save_path = user_options_cfg_.om_file_path.substr(0, pos + 1);
+  }
+  save_path = lite::RealPath(save_path.c_str());
+  if (save_path.empty()) {
+    return lite::RET_ERROR;
   }
   options_->SetOmFilePath(user_options_cfg_.om_file_path);
   MS_LOG(INFO) << "Set acl model options success.";
