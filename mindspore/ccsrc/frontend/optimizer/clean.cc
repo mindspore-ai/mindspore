@@ -254,19 +254,25 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
       return nullptr;
     }
     int64_t index = GetAttrIndex(abs_dict->elements(), cons);
+    auto func_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
     if (index >= static_cast<int64_t>(abs_dict->elements().size())) {
       // For dictionary set, if the key does not exist, we should create a new item.
       std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
       for (size_t i = 0; i < abs_dict->elements().size(); ++i) {
         auto tuple_getitem_i =
-          node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, NewValueNode(SizeToLong(i))});
+          func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, NewValueNode(SizeToLong(i))});
         (void)make_tuple_inputs.emplace_back(tuple_getitem_i);
       }
       (void)make_tuple_inputs.emplace_back(item_value);
-      return node->func_graph()->NewCNode(make_tuple_inputs);
+      auto new_node = func_graph->NewCNode(make_tuple_inputs);
+      new_node->set_debug_info(node->debug_info());
+      return new_node;
     }
     auto index_node = NewValueNode(index);
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, index_node, item_value});
+    auto new_node = func_graph->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, index_node, item_value});
+    new_node->set_debug_info(node->debug_info());
+    return new_node;
   }
 
   // From:
