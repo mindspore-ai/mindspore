@@ -18,11 +18,15 @@ import json
 import os
 from decimal import Decimal
 from enum import Enum
+import sys
 
 from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerRawFileException
 from mindspore.profiler.common.util import query_latest_trace_time_file, to_int, to_millisecond
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
+
+
+csv.field_size_limit(sys.maxsize)
 
 
 class Integrator:
