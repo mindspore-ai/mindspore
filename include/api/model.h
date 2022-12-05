@@ -240,7 +240,7 @@ class MS_API Model {
 
   /// \brief Obtain all weights tensors of the model.
   ///
-  /// \return The vector that includes all gradient tensors.
+  /// \return The vector that includes all weights tensors.
   std::vector<MSTensor> GetFeatureMaps() const;
 
   /// \brief Update weights tensors of the model.
