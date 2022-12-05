@@ -912,12 +912,12 @@ def set_error_samples_mode(error_samples_mode):
     Set the method in which erroneous samples should be processed in a dataset pipeline.
 
     Note:
-        1. This error samples feature is only applicable to the Map operation in a dataset pipeline.
-        2. For replacement mode, a cache of internally determined samples will be used.
-        3. If skip mode is used in a distributed setting, beware to manually ensure the
-           number of valid samples are the same for each shard (otherwise one may encounter hangs).
-           One technique is to manually concat a dataset of all valid samples plus a
-           take operation for the number of skipped erroneous samples.
+        - This error samples feature is only applicable to the Map operation in a dataset pipeline.
+        - For replacement mode, a cache of internally determined samples will be used.
+        - If skip mode is used in a distributed setting, beware to manually ensure the
+          number of valid samples are the same for each shard (otherwise one may encounter hangs).
+          One technique is to manually concat a dataset of all valid samples plus a
+          take operation for the number of skipped erroneous samples.
 
     Args:
         error_samples_mode (ErrorSamplesMode): The method in which erroneous samples should be processed in a dataset
@@ -946,9 +946,11 @@ def get_error_samples_mode():
 
     Returns:
         ErrorSamplesMode, The method in which erroneous samples should be processed in a dataset pipeline.
+
             - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
             - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
             - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+
     Examples:
         >>> error_samples_mode = ds.config.get_error_samples_mode()
     """

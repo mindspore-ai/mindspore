@@ -259,6 +259,8 @@ config模块能够设置或获取数据处理的全局配置参数。
     mindspore.dataset.config.get_fast_recovery
     mindspore.dataset.config.set_multiprocessing_timeout_interval
     mindspore.dataset.config.get_multiprocessing_timeout_interval
+    mindspore.dataset.config.set_error_samples_mode
+    mindspore.dataset.config.get_error_samples_mode
 
 其他
 -----
