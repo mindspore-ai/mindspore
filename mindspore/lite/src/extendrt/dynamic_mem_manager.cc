@@ -27,8 +27,8 @@ namespace {
 // Alloc memory aligned according to 64 bytes.
 static constexpr size_t kMemAlginSize = 64;
 
-// The default unit size (512M) of memory block used for dynamic extend.
-static constexpr size_t kAllocUnitSize = 512 * 1024 * 1024;
+// The default unit size (256M) of memory block used for dynamic extend.
+static constexpr size_t kAllocUnitSize = 256 * 1024 * 1024;
 // The minimum unit size (64M) of memory block used for dynamic extend.
 static constexpr size_t kMinimumAllocUnitSize = 64 * 1024 * 1024;
 // 16G
