@@ -41,8 +41,9 @@
 #include "src/litert/infer_manager.h"
 #include "src/litert/runtime_pass.h"
 #include "src/litert/pass/runtime_ncx_pass.h"
-#ifndef AUTO_PARALLEL_CLIP
+#if !defined(AUTO_PARALLEL_CLIP) || !defined(RUNTIME_PASS_CLIP)
 #include "src/litert/sub_graph_split.h"
+#include "src/litert/pass/online_fusion/online_fusion_pass_registry.h"
 #endif
 #include "src/litert/weight_decoder.h"
 #include "src/litert/kernel/cpu/fp16/fp16_op_handler.h"
@@ -268,10 +269,13 @@ int Scheduler::InitKernels(std::vector<kernel::KernelExec *> &&dst_kernels) {
 int Scheduler::SchedulePreProcess() {
   schema_version_ = reinterpret_cast<LiteModel *>(src_model_)->GetSchemaVersion();
 
-#ifndef AUTO_PARALLEL_CLIP
+#if !defined(AUTO_PARALLEL_CLIP) || !defined(RUNTIME_PASS_CLIP)
   auto search_sub_graph =
     SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
-  search_sub_graph.DoOnlineFusion();
+#endif
+
+#if !defined(RUNTIME_PASS_CLIP)
+  OnlineFusionRegistry::GetInstance()->DoOnlineFusionPass(&search_sub_graph);
 #endif
 
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);

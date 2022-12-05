@@ -28,7 +28,6 @@
 #include "src/litert/inner_context.h"
 #include "src/common/prim_util.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/split_parameter.h"
 
 namespace mindspore::lite {
 constexpr int kDefaultSubGraphSize = 2;
@@ -40,6 +39,7 @@ constexpr int kMaxSubGraphCount = 10;
 constexpr int kMinSubgraphCost = 50;
 constexpr double kDefaultGpu = 0.5;
 class SearchSubGraph {
+ public:
   enum TensorType { NORMAL, CONST, INPUT };
 
   struct Tensor {
@@ -91,20 +91,11 @@ class SearchSubGraph {
   void SubGraphSplit();
   void SubGraphSplitByOperator();
   void InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::vector<size_t> *outputs);
-  void DoOnlineFusion();
-  void DoSplitReduceConcatFusionPass();
-  int CreateCustomNode(LiteGraph::Node *node, Subgraph *subgraph, SplitParameter *split_param);
-  int ParseNodePrimitive(Subgraph *subgraph);
-  OpParameter *GetNodeOpParameter(LiteGraph::Node *node);
-  std::vector<std::vector<uint32_t>> GetNextNodeIndex(LiteGraph::Node *cur_node);
 
  private: /* split by output */
   void SubGraphSplitByOutput();
   void InitSearchSubGraphByOutput();
   void InsertNode(uint32_t index, Subgraph *subgraph, uint32_t last_index);
-  bool DoSplitReduceConcatFusion(uint32_t node_id);
-  bool SatifyReduceReshapeConcatParse(Subgraph *subgraph, uint32_t node_id, int split_concat_axis);
-  void DeleteOriginNode(Subgraph *subgraph);
 
  private: /* split by middle */
   void SubGraphSplitByMiddle();
@@ -144,13 +135,15 @@ class SearchSubGraph {
   void dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
            std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs);
 
- private:
-  std::vector<size_t> *output_nodes_ = nullptr;
+ public:
   const InnerContext *context_ = nullptr;
-  std::vector<lite::Tensor *> *src_tensors_ = nullptr;
-  const std::map<int, OpParameter *> *op_parameters_ = nullptr;
   LiteModel *model_ = nullptr;
   std::vector<Tensor> tensors_;
+
+ private:
+  std::vector<size_t> *output_nodes_ = nullptr;
+  std::vector<lite::Tensor *> *src_tensors_ = nullptr;
+  const std::map<int, OpParameter *> *op_parameters_ = nullptr;
   std::vector<Subgraph> sub_graphs_;
   std::unordered_map<uint32_t, std::vector<Subgraph>> node_sub_map_;
   std::vector<LiteGraph::Node *> node_list_;
