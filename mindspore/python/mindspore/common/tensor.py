@@ -4467,6 +4467,74 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('not_equal')(self, other)
 
+    def new_zeros(self, size, *, dtype=None):
+        r"""
+        Return a tensor of `size` filled with zeros. By default, the returned tensor has the same dtype as `self`.
+
+        Args:
+            size (Union[int, tuple, list]): An int, list or tuple of integers defining the output shape.
+
+        Keyword Args:
+            dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, same dtype as `self`.
+                Default: None.
+
+        Returns:
+            Tensor, the shape and dtype is defined above and filled with zeros.
+
+        Raises:
+            TypeError: If `size` is not an int, list or tuple of integers.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+            >>> output = x.new_zeros((2, 2))
+            >>> print(output)
+            [[0. 0.]
+             [0. 0.]]
+        """
+        validator.check_value_type('size', size, [list, int, tuple], 'Tensor.new_zeros')
+        if isinstance(size, list):
+            size = tuple(size)
+        self._init_check()
+        _dtype = self.dtype if dtype is None else dtype
+        return tensor_operator_registry.get('zeros')(size, _dtype)
+
+    def new_ones(self, size, *, dtype=None):
+        r"""
+        Return a tensor of `size` filled with ones. By default, the returned tensor has the same dtype as `self`.
+
+        Args:
+            size (Union[int, tuple, list]): An int, list or tuple of integers defining the output shape.
+
+        Keyword Args:
+            dtype (mindspore.dtype, optional): The desired dtype of the output tensor. Default: if None, same dtype as
+                `self`.
+
+        Returns:
+            Tensor, the shape and dtype is defined above and filled with ones.
+
+        Raises:
+            TypeError: If `size` is not an int, list or tuple of integers.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+            >>> output = x.new_ones((2, 2))
+            >>> print(output)
+            [[1. 1.]
+             [1. 1.]]
+        """
+        validator.check_value_type('size', size, [list, int, tuple], 'Tensor.new_zeros')
+        if isinstance(size, list):
+            size = tuple(size)
+        self._init_check()
+        _dtype = self.dtype if dtype is None else dtype
+        return tensor_operator_registry.get('ones')(size, _dtype)
+
     def sinh(self):
         r"""
         Computes hyperbolic sine of the input element-wise.

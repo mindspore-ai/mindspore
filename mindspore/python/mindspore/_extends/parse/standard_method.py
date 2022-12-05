@@ -2882,6 +2882,22 @@ def nonzero(x):
     return F.nonzero(x)
 
 
+def new_zeros(x, size, *, dtype=None):
+    r"""
+    Return a tensor of `size` filled with zeros. By default, the returned tensor has the same dtype as `x`.
+    """
+    _dtype = x.dtype if dtype is None else dtype
+    return F.zeros(size, dtype=_dtype)
+
+
+def new_ones(x, size, *, dtype=None):
+    r"""
+    Return a tensor of `size` filled with ones. By default, the returned tensor has the same dtype as `x`.
+    """
+    _dtype = x.dtype if dtype is None else dtype
+    return F.ones(size, dtype=_dtype)
+
+
 def diag(x):
     """
     Constructs a diagonal tensor with a given diagonal values.
@@ -2918,7 +2934,7 @@ def coo_to_csr(x):
 
 def coo_to_dense(x):
     """convert coo to dense."""
-    zeros_tensor = F.zeros(x.shape, x.values.dtype)
+    zeros_tensor = F.zeros(x.shape, dtype=x.values.dtype)
     return F.tensor_scatter_update(zeros_tensor, x.indices, x.values)
 
 

@@ -195,6 +195,8 @@
     mindspore.Tensor.ndimension
     mindspore.Tensor.negative
     mindspore.Tensor.nelement
+    mindspore.Tensor.new_ones
+    mindspore.Tensor.new_zeros
     mindspore.Tensor.numel
     mindspore.Tensor.nonzero
     mindspore.Tensor.norm

@@ -39,6 +39,8 @@ from .array_func import (
     size,
     ones,
     ones_like,
+    zeros,
+    zeros_like,
     shape,
     shape_,
     ger,
