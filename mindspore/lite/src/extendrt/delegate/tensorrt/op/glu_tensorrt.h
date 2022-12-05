@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TILE_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TILE_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_GLU_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_GLU_TENSORRT_H_
 #include <string>
 #include <vector>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
-#include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tile_impl.cuh"
 
 namespace mindspore::lite {
-class TileTensorRT : public TensorRTOp {
+constexpr int SPLITE_NUM = 2;
+constexpr int INPUT_INDEX = 2;
+class GLUTensorRT : public TensorRTOp {
  public:
-  TileTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
-               const std::vector<TensorInfo> &out_tensors, std::string name)
+  GLUTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+              const std::vector<TensorInfo> &out_tensors, std::string name)
       : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
-  ~TileTensorRT() override = default;
+  ~GLUTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
-
-  bool IsWeightInputHanledInner() const override { return true; }
 
   int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                 const std::vector<TensorInfo> &out_tensors) override;
 
  private:
-  int RunAsConcat(TensorRTContext *ctx, const ITensorHelper &tile_input);
-  std::vector<float> repeats_;
+  int64_t dim_{-1};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TILE_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_GLU_TENSORRT_H_

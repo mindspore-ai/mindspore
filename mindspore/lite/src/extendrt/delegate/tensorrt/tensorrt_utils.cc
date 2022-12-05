@@ -298,13 +298,53 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(Activatio
     {ActivationType::RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
     {ActivationType::RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
     {ActivationType::HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
-    {ActivationType::HSIGMOID, ActivationParams{nvinfer1::ActivationType::kHARD_SIGMOID, true, 0.2f, true, 0.5f}},
+    {ActivationType::HSIGMOID, ActivationParams{nvinfer1::ActivationType::kHARD_SIGMOID, true, 1.f / 6, true, 0.5f}},
     // using plugin
     {ActivationType::GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
     {ActivationType::SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}}};
   return action_map.find(activation_type) != action_map.end()
            ? std::experimental::optional<ActivationParams>(action_map[activation_type])
            : std::experimental::nullopt;
+}
+
+bool IsComfortableAlign(std::vector<int64_t> *in_shape_ptr, const std::vector<int64_t> &out_shape, int index) {
+  if (in_shape_ptr->size() > out_shape.size()) {
+    return false;
+  }
+  int out_index = index;
+  int in_index = in_shape_ptr->size() - 1;
+  while (in_index >= 0 && (in_shape_ptr->at(in_index) == out_shape[out_index] || in_shape_ptr->at(in_index) == 1)) {
+    in_index--;
+    out_index--;
+  }
+  return in_index < 0;
+}
+
+void BackComfortableAlign(std::vector<int64_t> *in_shape_ptr, const std::vector<int64_t> &out_shape) {
+  if (in_shape_ptr->size() >= out_shape.size()) {
+    return;
+  }
+  int out_index = out_shape.size() - 1;
+  bool is_comfortable = false;
+  while (out_index >= static_cast<int>(in_shape_ptr->size()) - 1) {
+    if (IsComfortableAlign(in_shape_ptr, out_shape, out_index)) {
+      is_comfortable = true;
+      break;
+    }
+    out_index--;
+  }
+  if (is_comfortable == false) {
+    MS_LOG(ERROR) << "failed to align constant tensor";
+    return;
+  }
+  while (static_cast<int>(in_shape_ptr->size()) - 1 < out_index) {
+    in_shape_ptr->insert(in_shape_ptr->begin(), 1);
+  }
+  while (in_shape_ptr->size() < out_shape.size()) {
+    in_shape_ptr->insert(in_shape_ptr->end(), 1);
+  }
+  DebugDims("constant : ", ConvertCudaDims(*in_shape_ptr));
+  return;
 }
 
 void AlignShapeRank(std::vector<int64_t> *in_shape_ptr, const std::vector<int64_t> &out_shape) {
@@ -335,24 +375,13 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const Tenso
   }
   auto origin_shape = ms_tensor.Shape();
   std::vector<int64_t> convert_shape(expect_shape);
-  AlignShapeRank(&origin_shape, convert_shape);
-  size_t origin_index = 0;
-  for (size_t i = 0; i < convert_shape.size(); ++i) {
-    if (origin_index >= origin_shape.size()) {
-      convert_shape[i] = 1;
-      continue;
-    }
-    if (origin_shape[origin_index] != convert_shape[i]) {
-      convert_shape[i] = origin_shape[origin_index];
-    }
-    origin_index++;
-  }
+  BackComfortableAlign(&origin_shape, convert_shape);
   if (ms_tensor.ElementNum() !=
-      std::accumulate(convert_shape.begin(), convert_shape.end(), 1, std::multiplies<int64_t>())) {
+      std::accumulate(origin_shape.begin(), origin_shape.end(), 1, std::multiplies<int64_t>())) {
     MS_LOG(ERROR) << "ExpandDims failed for " << op_name;
     return nullptr;
   }
-  nvinfer1::Dims dims = ConvertCudaDims(convert_shape);
+  nvinfer1::Dims dims = ConvertCudaDims(origin_shape);
   if (dims.nbDims == -1) {
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name;
     return nullptr;

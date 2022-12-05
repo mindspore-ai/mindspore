@@ -40,12 +40,21 @@ class StrideSliceTensorRT : public TensorRTOp {
                 const std::vector<TensorInfo> &out_tensors) override;
 
  private:
+  nvinfer1::ITensor *GetDynamicAxisSliceStart(TensorRTContext *ctx, nvinfer1::ITensor *input, int axis, int nbdims);
   nvinfer1::ITensor *GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input,
-                                         const nvinfer1::Dims &size_dims);
+                                         const nvinfer1::Dims &size_dims, const nvinfer1::Dims &start_dims);
+  nvinfer1::ITensor *GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *slice_input, size_t end_mask);
   nvinfer1::ITensor *GetDynamicAxisSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input, int size_dim, int axis,
                                              nvinfer1::ITensor *size_tensor);
   int ComputeSliceDims(TensorRTContext *ctx, ITensorHelper *slice_input);
-  bool GetConstInputValue(int *axis_val, int *start_val, int *stride_val);
+  int ComputeDims(TensorRTContext *ctx, ITensorHelper *slice_input, const TensorInfo &begin, const TensorInfo &stride,
+                  const TensorInfo &end, size_t start_mask, size_t end_mask);
+  int ComputeDimsSingle(TensorRTContext *ctx, ITensorHelper *slice_input, const TensorInfo &begin,
+                        const TensorInfo &stride, const TensorInfo &end, size_t start_mask, size_t end_mask);
+  int ComputeDimsMulti(TensorRTContext *ctx, ITensorHelper *slice_input, const TensorInfo &begin,
+                       const TensorInfo &stride, const TensorInfo &end, size_t start_mask, size_t end_mask);
+  bool GetConstInputValue(int *start_val, int *stride_val);
+  int GetAxis(TensorRTContext *ctx);
   size_t shrink_axis_;
   size_t start_axis_;
   size_t end_axis_;
@@ -53,6 +62,7 @@ class StrideSliceTensorRT : public TensorRTOp {
   nvinfer1::Dims size_dims_;
   nvinfer1::Dims stride_dims_;
   nvinfer1::ITensor *size_tensor_{nullptr};
+  nvinfer1::ITensor *start_tensor_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_STRIDE_SLICE_TENSORRT_H_

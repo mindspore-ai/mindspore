@@ -15,7 +15,6 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/constantofshape_tensorrt.h"
-#include <numeric>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/constant_of_shape.h"
 
@@ -51,7 +50,14 @@ int ConstantOfShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   auto &&value_vector = constofshape_op->get_value();
-  auto value_tensor = ctx->ConvertTo1DTensor(value_vector[0]);
+  nvinfer1::ITensor *value_tensor;
+  if (static_cast<DataType>(constofshape_op->get_data_type()) == DataType::kNumberTypeInt32) {
+    auto value = static_cast<int>(*value_vector.begin());
+    value_tensor = ctx->ConvertTo1DTensor(value);
+  } else {
+    auto value = *value_vector.begin();
+    value_tensor = ctx->ConvertTo1DTensor(value);
+  }
   CHECK_NULL_RETURN(value_tensor);
 
   auto unsqueeze_layer = ctx->network()->addShuffle(*value_tensor);

@@ -43,6 +43,7 @@ class TopKTensorRT : public TensorRTOp {
   uint32_t axis_{0};
   int axis_value_{0};
   int32_t top_k_{0};
+  bool keep_dims_{false};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_
