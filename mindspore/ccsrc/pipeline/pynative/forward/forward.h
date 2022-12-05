@@ -75,7 +75,7 @@ class ForwardExecutor {
   inline void set_is_ms_function_compiling(bool is_ms_function_compiling) {
     is_ms_function_compiling_ = is_ms_function_compiling;
   }
-  inline std::string device_target() { return device_target_; }
+  std::string device_target() const;
 
  private:
   GradExecutorPtr grad() const;
@@ -102,7 +102,6 @@ class ForwardExecutor {
   bool is_ms_function_compiling_{false};
   uint32_t device_id_{0};
   std::string last_target_{"Unknown"};
-  std::string device_target_;
   std::stack<CellPtr> forward_cell_stack_;
   GradExecutorWeakPtr grad_executor_;
   CastOperationPtr cast_operation_;
