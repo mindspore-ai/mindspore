@@ -55,7 +55,7 @@ int DropoutGradCPUKernel::Prepare() {
   if (param->ratio_ >= 1.0f) {
     scale_ = 1.0f;
   } else {
-    scale_ = 1. / (1. - param->ratio_);
+    scale_ = 1. / param->ratio_;
   }
   if (!InferShapeDone()) {
     return RET_OK;
