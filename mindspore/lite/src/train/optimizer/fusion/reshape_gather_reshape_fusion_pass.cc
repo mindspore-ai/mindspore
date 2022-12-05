@@ -112,7 +112,9 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   auto old_shape = graph->allTensors.at(reshape2_node->outputIndex.at(opt::kOutputIndexZero))->dims;
   auto gather_shape0 = graph->allTensors.at(gather_node->inputIndex.at(opt::kInputIndexZero))->dims;
   auto gather_shape1 = graph->allTensors.at(reshape1_node->inputIndex.at(opt::kInputIndexZero))->dims;
-  MS_CHECK_TRUE_RET(!old_shape.empty() && !gather_shape0.empty() && !gather_shape1.empty(), RET_NO_CHANGE);
+  if (old_shape.empty() || gather_shape0.empty() || gather_shape1.empty()) {
+    return RET_NO_CHANGE;
+  }
   int gather_axis;
   auto data = graph->allTensors.at(gather_node->inputIndex.at(opt::kInputIndexTwo))->data;
   if (data.empty()) {
@@ -124,9 +126,10 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
     gather_axis += gather_shape1.size();
   }
   gather_shape0.erase(gather_shape0.begin() + gather_axis);
-  MS_CHECK_TRUE_RET(!gather_shape1.empty(), RET_NO_CHANGE);
   (void)gather_shape0.insert(gather_shape0.begin() + gather_axis, gather_shape1.begin(), gather_shape1.end());
-  MS_CHECK_TRUE_RET(gather_shape0 == old_shape, RET_NO_CHANGE);
+  if (gather_shape0 != old_shape) {
+    return RET_NO_CHANGE;
+  }
 
   gather_node->inputIndex.at(opt::kInputIndexOne) = reshape1_node->inputIndex.at(opt::kInputIndexZero);
   gather_node->outputIndex.at(opt::kOutputIndexZero) = reshape2_node->outputIndex.at(opt::kOutputIndexZero);
