@@ -292,9 +292,9 @@ def visualize_one_channel_dataset(images_original, images_transformed, labels):
     plt.show()
 
 
-def visualize_list(image_list_1, image_list_2, visualize_mode=1):
+def visualize_list(image_list_1, image_list_2=None, visualize_mode=1):
     """
-    visualizes a list of images using DE op
+    visualizes one or two lists of images using DE op
     """
     plot_title = PLOT_TITLE_DICT[visualize_mode]
     num = len(image_list_1)
@@ -303,9 +303,10 @@ def visualize_list(image_list_1, image_list_2, visualize_mode=1):
         plt.imshow(image_list_1[i])
         plt.title(plot_title[0])
 
-        plt.subplot(2, num, i + num + 1)
-        plt.imshow(image_list_2[i])
-        plt.title(plot_title[1])
+        if image_list_2 is not None:
+            plt.subplot(2, num, i + num + 1)
+            plt.imshow(image_list_2[i])
+            plt.title(plot_title[1])
 
     plt.show()
 

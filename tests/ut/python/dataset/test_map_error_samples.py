@@ -15,6 +15,7 @@
 """
 Test Map operation's handling of rows with errors
 """
+import numpy as np
 import pytest
 
 import mindspore.dataset as ds
@@ -22,7 +23,7 @@ import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from mindspore.dataset.core.config import ErrorSamplesMode
-from util import config_get_set_seed
+from util import config_get_set_seed, visualize_list
 
 # Need to run all these tests in separate processes since we are modifying a config flag
 pytestmark = pytest.mark.forked
@@ -187,7 +188,9 @@ def test_map_replace_errors_failure():
     ds.config.set_error_samples_mode(error_samples_mode_original)
 
 
-def test_map_replace_errors_success1():
+@pytest.mark.parametrize("my_num_workers, my_mp",
+                         [(1, False), (4, False), (3, True)])
+def test_map_replace_errors_success1(my_num_workers, my_mp):
     """
     Feature: Process Error Samples
     Description: Simple replace tests of data pipeline with various number of error rows in different indexes
@@ -195,60 +198,70 @@ def test_map_replace_errors_success1():
     """
     error_samples_mode_original = ds.config.get_error_samples_mode()
     ds.config.set_error_samples_mode(ds.config.ErrorSamplesMode.REPLACE)
+    # Check if python_multiprocessing is to be enabled
+    if my_mp:
+        # Reduce memory required by disabling the shared memory optimization
+        mem_original = ds.config.get_enable_shared_mem()
+        ds.config.set_enable_shared_mem(False)
 
     # no error rows
-    run_replace_test(raise_none, 10, 1, False, list(range(10)))
-    run_replace_test(raise_none, 100, 1, False, list(range(100)))
-    run_replace_test(raise_none, 1000, 1, False, list(range(1000)))
+    run_replace_test(raise_none, 10, my_num_workers, my_mp, list(range(10)))
+    run_replace_test(raise_none, 100, my_num_workers, my_mp, list(range(100)))
+    run_replace_test(raise_none, 1000, my_num_workers, my_mp, list(range(1000)))
 
     # 1 error row in the beginning of dataset
-    run_replace_test(raise_first, 2, 1, False, [1, 1])
-    run_replace_test(raise_first, 3, 1, False, [1, 2, 1])
-    run_replace_test(raise_first, 10, 1, False, list(range(1, 10)) + [1])
-    run_replace_test(raise_first, 16, 1, False, list(range(1, 16)) + [1])
-    run_replace_test(raise_first, 17, 1, False, list(range(1, 17)) + [1])
-    run_replace_test(raise_first, 20, 1, False, list(range(1, 17)) + [1] + list(range(17, 20)))
-    run_replace_test(raise_first, 100, 1, False, list(range(1, 17)) + [1] + list(range(17, 100)))
+    run_replace_test(raise_first, 2, my_num_workers, my_mp, [1, 1])
+    run_replace_test(raise_first, 3, my_num_workers, my_mp, [1, 2, 1])
+    run_replace_test(raise_first, 10, my_num_workers, my_mp, list(range(1, 10)) + [1])
+    run_replace_test(raise_first, 16, my_num_workers, my_mp, list(range(1, 16)) + [1])
+    run_replace_test(raise_first, 17, my_num_workers, my_mp, list(range(1, 17)) + [1])
+    run_replace_test(raise_first, 20, my_num_workers, my_mp, list(range(1, 17)) + [1] + list(range(17, 20)))
+    run_replace_test(raise_first, 100, my_num_workers, my_mp, list(range(1, 17)) + [1] + list(range(17, 100)))
 
     # multiple error rows in beginning of dataset
-    run_replace_test(raise_first_10, 11, 1, False, [10] * 11)
-    run_replace_test(raise_first_10, 12, 1, False, [10, 11] * 6)
-    run_replace_test(raise_first_10, 20, 1, False, list(range(10, 20)) * 2)
-    run_replace_test(raise_first_10, 30, 1, False,
+    run_replace_test(raise_first_10, 11, my_num_workers, my_mp, [10] * 11)
+    run_replace_test(raise_first_10, 12, my_num_workers, my_mp, [10, 11] * 6)
+    run_replace_test(raise_first_10, 20, my_num_workers, my_mp, list(range(10, 20)) * 2)
+    run_replace_test(raise_first_10, 30, my_num_workers, my_mp,
                      [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] +
                      [10, 26, 27, 11, 28, 29, 12, 13, 14, 15, 16, 17, 18, 19])
-    run_replace_test(raise_first_100, 1000, 1, False)
-    run_replace_test(raise_first_n, 20, 1, False, list(range(8, 20)) + list(range(8, 16)))  # ~first half (n < half)
-    run_replace_test(raise_first_n, 40, 1, False, [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33] +
+    run_replace_test(raise_first_100, 1000, my_num_workers, my_mp)
+    run_replace_test(raise_first_n, 20, my_num_workers, my_mp,
+                     list(range(8, 20)) + list(range(8, 16)))  # ~first half (n < half)
+    run_replace_test(raise_first_n, 40, my_num_workers, my_mp,
+                     [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33] +
                      [18, 34, 35, 19, 36, 37, 20, 38, 39] +
-                     [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35,
-                      37])  # ~first half (n < half)
-    run_replace_test(raise_first_n, 100, 1, False)  # ~first half (n < half)
-    run_replace_test(raise_first_m, 100, 1, False)  # ~first half (m > half)
-    run_replace_test(raise_all_but_last, 2, 1, False, [1, 1])
-    run_replace_test(raise_all_but_last, 3, 1, False, [2, 2, 2])
-    run_replace_test(raise_all_but_last, 4, 1, False, [3] * 4)
-    run_replace_test(raise_all_but_last, 16, 1, False, [15] * 16)
-    run_replace_test(raise_all_but_last, 100, 1, False, [99] * 100)
-    run_replace_test(raise_all_but_first, 10, 1, False, [0] * 10)
-    run_replace_test(raise_all_but_first, 100, 1, False, [0] * 100)
+                     [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 37])  # ~first half (n < half)
+    run_replace_test(raise_first_n, 100, my_num_workers, my_mp)  # ~first half (n < half)
+    run_replace_test(raise_first_m, 100, my_num_workers, my_mp)  # ~first half (m > half)
+    run_replace_test(raise_all_but_last, 2, my_num_workers, my_mp, [1, 1])
+    run_replace_test(raise_all_but_last, 3, my_num_workers, my_mp, [2, 2, 2])
+    run_replace_test(raise_all_but_last, 4, my_num_workers, my_mp, [3] * 4)
+    run_replace_test(raise_all_but_last, 16, my_num_workers, my_mp, [15] * 16)
+    run_replace_test(raise_all_but_last, 100, my_num_workers, my_mp, [99] * 100)
+    run_replace_test(raise_all_but_first, 10, my_num_workers, my_mp, [0] * 10)
+    run_replace_test(raise_all_but_first, 100, my_num_workers, my_mp, [0] * 100)
 
     # error rows in the end of dataset
-    run_replace_test(raise_last_n, 10, 1, False, list(range(0, 8)) + [0, 1])
-    run_replace_test(raise_last_n, 20, 1, False, list(range(0, 13)) + list(range(0, 7)))
-    run_replace_test(raise_last_n, 40, 1, False, list(range(0, 23)) + list(range(0, 16)) + [0])
-    run_replace_test(raise_last_n, 100, 1, False)
-    run_replace_test(raise_last_m, 100, 1, False)
+    run_replace_test(raise_last_n, 10, my_num_workers, my_mp, list(range(0, 8)) + [0, 1])
+    run_replace_test(raise_last_n, 20, my_num_workers, my_mp, list(range(0, 13)) + list(range(0, 7)))
+    run_replace_test(raise_last_n, 40, my_num_workers, my_mp, list(range(0, 23)) + list(range(0, 16)) + [0])
+    run_replace_test(raise_last_n, 100, my_num_workers, my_mp)
+    run_replace_test(raise_last_m, 100, my_num_workers, my_mp)
 
     # error rows in different places
-    run_replace_test(raise_all_odds, 10, 1, False, [0, 2, 4, 6, 8] * 2)
-    run_replace_test(raise_all_odds, 40, 1, False, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] +
+    run_replace_test(raise_all_odds, 10, my_num_workers, my_mp, [0, 2, 4, 6, 8] * 2)
+    run_replace_test(raise_all_odds, 40, my_num_workers, my_mp,
+                     [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] +
                      [0, 32, 2, 34, 4, 36, 6, 38, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38])
-    run_replace_test(raise_all_odds, 100, 1, False)
-    run_replace_test(raise_all_3_remainders, 12, 1, False, [0, 3, 6, 9] * 3)
-    run_replace_test(raise_all_3_remainders, 100, 1, False)
+    run_replace_test(raise_all_odds, 100, my_num_workers, my_mp)
+    run_replace_test(raise_all_3_remainders, 12, my_num_workers, my_mp, [0, 3, 6, 9] * 3)
+    run_replace_test(raise_all_3_remainders, 100, my_num_workers, my_mp)
 
     ds.config.set_error_samples_mode(error_samples_mode_original)
+    if my_mp:
+        # Restore configuration for shared memory
+        ds.config.set_enable_shared_mem(mem_original)
 
 
 @pytest.mark.parametrize("my_mp", (False, True))
@@ -307,17 +320,23 @@ def test_map_replace_errors_success3(my_num_workers, my_mp):
     dataset_size = 100
     global TOTAL_SIZE
     TOTAL_SIZE = dataset_size
+    my_batch_size = 5
 
     # multiple maps
-    transforms = [raise_all_but_last]
     data1 = ds.GeneratorDataset(my_generator(dataset_size), ["data"])
-    data1 = data1.map(operations=transforms, num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
-    data1 = data1.map(operations=transforms, num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
+    data1 = data1.map(operations=[raise_all_but_last],
+                      num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
+    data1 = data1.map(operations=[raise_all_3_remainders],
+                      num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
+
+    # apply shuffle and batch
+    data1 = data1.shuffle(buffer_size=50)
+    data1 = data1.batch(batch_size=my_batch_size, drop_remainder=False)
 
     count = 0
     for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         count += 1
-    assert count == dataset_size
+    assert count == dataset_size / my_batch_size
 
     # repeat op
     transforms = [raise_all_but_first]
@@ -325,10 +344,14 @@ def test_map_replace_errors_success3(my_num_workers, my_mp):
     data1 = data1.map(operations=transforms, num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
     data1 = data1.repeat(3)
 
+    # apply shuffle and batch
+    data1 = data1.shuffle(buffer_size=50)
+    data1 = data1.batch(batch_size=my_batch_size, drop_remainder=False)
+
     count = 0
     for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         count += 1
-    assert count == dataset_size * 3
+    assert count == (dataset_size * 3) / my_batch_size
 
     ds.config.set_error_samples_mode(error_samples_mode_original)
     if my_mp:
@@ -396,9 +419,9 @@ def test_map_skip_errors_success1(my_num_workers, my_mp):
     run_skip_test(raise_all_odds, 10, my_num_workers, my_mp, [0, 2, 4, 6, 8])
     run_skip_test(raise_all_odds, 40, my_num_workers, my_mp,
                   [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38])
-    run_skip_test(raise_all_odds, 100, 1, False)
+    run_skip_test(raise_all_odds, 100, my_num_workers, my_mp)
     run_skip_test(raise_all_3_remainders, 12, my_num_workers, my_mp, [0, 3, 6, 9])
-    run_skip_test(raise_all_3_remainders, 100, 1, False)
+    run_skip_test(raise_all_3_remainders, 100, my_num_workers, my_mp)
 
     # error rows in entire dataset
     run_skip_test(raise_all, 1, my_num_workers, my_mp, [])
@@ -412,17 +435,18 @@ def test_map_skip_errors_success1(my_num_workers, my_mp):
         ds.config.set_enable_shared_mem(mem_original)
 
 
-@pytest.mark.parametrize("my_error_samples_mode",
-                         (ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP))
-def test_map_error_samples_imagefolder1_basic(my_error_samples_mode):
+@pytest.mark.parametrize("my_error_samples_mode, my_num_workers",
+                         [(ErrorSamplesMode.RETURN, 3), (ErrorSamplesMode.REPLACE, 2), (ErrorSamplesMode.SKIP, 1)])
+def test_map_error_samples_imagefolder1_cop(my_error_samples_mode, my_num_workers, plot=False):
     """
     Feature: Process Error Samples
-    Description: Invoke set_error_samples_mode and test ImageFolderDataset pipeline with map op and sample errors.
+    Description: Invoke set_error_samples_mode and test ImageFolderDataset pipeline with map op
+        of C++ implemented ops and sample errors.
     Expectation: The dataset is processed as expected.
     """
 
     def test_config(my_error_samples_mode, my_error_sample_data_file, my_num_classes, my_total_samples,
-                    my_unskipped_samples):
+                    my_unskipped_samples, plot):
         # For ImageFolderDataset:
         # - use num_samples=None to read all samples
         # - use num_parallel_workers=1
@@ -433,86 +457,153 @@ def test_map_error_samples_imagefolder1_basic(my_error_samples_mode):
         # Use multiple map ops in pipeline.
         data3 = data3.map(operations=[data_trans.OneHot(my_num_classes)],
                           input_columns=["label"],
-                          num_parallel_workers=1)
-        # 2nd map op is in pipeline is Decode Op, which uses C++ implementation
-        data3 = data3.map(operations=[vision.Decode()], input_columns=["image"], num_parallel_workers=1)
-        data3 = data3.map(operations=[vision.Crop((0, 0), 32)], input_columns=["image"], num_parallel_workers=1)
+                          num_parallel_workers=my_num_workers)
+        # 2nd map op in pipeline is Decode Op, which uses C++ implementation
+        data3 = data3.map(operations=[vision.Decode()], input_columns=["image"],
+                          num_parallel_workers=my_num_workers)
+        data3 = data3.map(operations=[vision.ResizedCrop(50, 80, 300, 400, (100, 120))],
+                          input_columns=["image"],
+                          num_parallel_workers=my_num_workers)
 
+        images_list = []
         if my_error_samples_mode == ErrorSamplesMode.REPLACE:
             # Error samples are to be replaced
             count = 0
-            for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
+            for item in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
                 count += 1
+                image_c = item["image"]
+                images_list.append(image_c)
             assert count == my_total_samples
         elif my_error_samples_mode == ErrorSamplesMode.SKIP:
             # Error samples are to be skipped
             count = 0
-            for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
+            for item in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
                 count += 1
+                image_c = item["image"]
+                images_list.append(image_c)
             assert count == my_unskipped_samples
         else:
             with pytest.raises(RuntimeError) as error_info:
                 for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
                     pass
             assert "map operation: [Decode] failed" in str(error_info.value)
-
-        data4 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None, num_parallel_workers=1,
-                                      shuffle=False)
-        # Use multiple map ops in pipeline.
-        data4 = data4.map(operations=[data_trans.OneHot(my_num_classes)],
-                          input_columns=["label"],
-                          num_parallel_workers=1)
-        # 2nd map op is in pipeline is Decode Op, which uses Python implementation
-        data4 = data4.map(operations=[vision.Decode(to_pil=True),
-                                      vision.RandomHorizontalFlip(0.7)],
-                          input_columns=["image"], num_parallel_workers=1)
-        # Note: ToPIL op added so that Python implementation of RandomVerticalFlip is selected
-        data4 = data4.map(operations=[vision.ToPIL(),
-                                      vision.RandomVerticalFlip(0.6)],
-                          input_columns=["image"], num_parallel_workers=1)
-
-        if my_error_samples_mode == ErrorSamplesMode.REPLACE:
-            # Error samples are to be replaced
-            count = 0
-            for _ in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
-                count += 1
-            assert count == my_total_samples
-        elif my_error_samples_mode == ErrorSamplesMode.SKIP:
-            # Error samples are to be skipped
-            count = 0
-            for _ in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
-                count += 1
-            assert count == my_unskipped_samples
-        else:
-            with pytest.raises(RuntimeError) as error_info:
-                for _ in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
-                    pass
-            assert "map operation: [PyFunc] failed" in str(error_info.value)
+        if plot:
+            visualize_list(images_list, None, visualize_mode=1)
 
     # Set configuration for error_samples_mode
     error_samples_mode_original = ds.config.get_error_samples_mode()
     ds.config.set_error_samples_mode(my_error_samples_mode)
 
     # Test empty sample (which is first error sample when samples are read sequentially)
-    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample1_empty/train", 1, 3, 2)
+    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample1_empty/train", 1, 3, 2, plot)
     # Test corrupt sample (which is a middle error sample when samples are read sequentially)
-    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train", 3, 6, 5)
+    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train", 3, 6, 5, plot)
     # Test text sample, instead of image sample (which is a final error sample when samples are read sequentially)
-    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample3_text/train", 1, 3, 2)
+    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample3_text/train", 1, 3, 2, plot)
 
     # Restore configuration for error_samples_mode
     ds.config.set_error_samples_mode(error_samples_mode_original)
 
 
 @pytest.mark.parametrize("my_error_samples_mode, my_num_workers, my_mp",
-                         [(ErrorSamplesMode.RETURN, 3, False), (ErrorSamplesMode.RETURN, 4, True),
-                          (ErrorSamplesMode.REPLACE, 2, False), (ErrorSamplesMode.REPLACE, 3, True),
-                          (ErrorSamplesMode.SKIP, 3, False), (ErrorSamplesMode.SKIP, 2, True)])
-def test_map_error_samples_imagefolder2_parallel(my_error_samples_mode, my_num_workers, my_mp):
+                         [(ErrorSamplesMode.RETURN, 1, False), (ErrorSamplesMode.RETURN, 3, True),
+                          (ErrorSamplesMode.REPLACE, 3, False), (ErrorSamplesMode.REPLACE, 2, True),
+                          (ErrorSamplesMode.SKIP, 2, False), (ErrorSamplesMode.SKIP, 4, True)])
+def test_map_error_samples_imagefolder1_pyop(my_error_samples_mode, my_num_workers, my_mp, plot=False):
     """
     Feature: Process Error Samples
     Description: Invoke set_error_samples_mode and test ImageFolderDataset pipeline with map op
-        with num_parallel workers and python_multiprocess set plus sample errors.
+        of Python implemented ops and sample errors.
+    Expectation: The dataset is processed as expected.
+    """
+
+    def test_config(my_error_samples_mode, my_error_sample_data_file, my_num_classes, my_total_samples,
+                    my_unskipped_samples, plot):
+        # For ImageFolderDataset:
+        # - use num_samples=None to read all samples
+        # - use num_parallel_workers=1
+        # - use shuffle=False which will result in sequential order of samples
+        # - use decode default of False
+        data4 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None, num_parallel_workers=1,
+                                      shuffle=False)
+        # Use multiple map ops in pipeline.
+        data4 = data4.map(operations=[data_trans.OneHot(my_num_classes)],
+                          input_columns=["label"],
+                          num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
+        # 2nd map op in pipeline includes Decode Op, which uses Python implementation
+        data4 = data4.map(operations=[vision.Decode(to_pil=True),
+                                      vision.Resize((120, 150)),
+                                      vision.Crop((10, 10), (100, 120))],
+                          input_columns=["image"],
+                          num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
+        # Note: ToPIL op added so that Python implementation of RandomVerticalFlip is selected
+        data4 = data4.map(operations=[vision.ToPIL(),
+                                      vision.RandomVerticalFlip(1.0)],
+                          input_columns=["image"],
+                          num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
+        data4 = data4.map(operations=[vision.ToTensor()],
+                          input_columns=["image"],
+                          num_parallel_workers=my_num_workers)
+
+        images_list = []
+        if my_error_samples_mode == ErrorSamplesMode.REPLACE:
+            # Error samples are to be replaced
+            count = 0
+            for item in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
+                count += 1
+                image_py = (item["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+                images_list.append(image_py)
+            assert count == my_total_samples
+        elif my_error_samples_mode == ErrorSamplesMode.SKIP:
+            # Error samples are to be skipped
+            count = 0
+            for item in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
+                count += 1
+                image_py = (item["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+                images_list.append(image_py)
+            assert count == my_unskipped_samples
+        else:
+            with pytest.raises(RuntimeError) as error_info:
+                for _ in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
+                    pass
+            assert "map operation: [PyFunc] failed" in str(error_info.value)
+        if plot:
+            visualize_list(images_list, None, visualize_mode=1)
+
+    # Set configuration for error_samples_mode
+    error_samples_mode_original = ds.config.get_error_samples_mode()
+    ds.config.set_error_samples_mode(my_error_samples_mode)
+
+    # Check if python_multiprocessing is to be enabled
+    if my_mp:
+        # Reduce memory required by disabling the shared memory optimization
+        mem_original = ds.config.get_enable_shared_mem()
+        ds.config.set_enable_shared_mem(False)
+
+    # Test empty sample (which is first error sample when samples are read sequentially)
+    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample1_empty/train", 1, 3, 2, plot)
+    # Test corrupt sample (which is a middle error sample when samples are read sequentially)
+    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train", 3, 6, 5, plot)
+    # Test text sample, instead of image sample (which is a final error sample when samples are read sequentially)
+    test_config(my_error_samples_mode, "../data/dataset/testImageNetError/Sample3_text/train", 1, 3, 2, plot)
+
+    # Restore configuration for error_samples_mode
+    ds.config.set_error_samples_mode(error_samples_mode_original)
+
+    if my_mp:
+        # Restore configuration for shared memory
+        ds.config.set_enable_shared_mem(mem_original)
+
+
+@pytest.mark.parametrize("my_error_samples_mode, my_num_workers, my_mp",
+                         [(ErrorSamplesMode.RETURN, 3, False), (ErrorSamplesMode.RETURN, 4, True),
+                          (ErrorSamplesMode.REPLACE, 2, False), (ErrorSamplesMode.REPLACE, 3, True),
+                          (ErrorSamplesMode.SKIP, 3, False), (ErrorSamplesMode.SKIP, 2, True)])
+def test_map_error_samples_imagefolder2(my_error_samples_mode, my_num_workers, my_mp):
+    """
+    Feature: Process Error Samples
+    Description: Invoke set_error_samples_mode and test ImageFolderDataset pipeline with multiple map ops
+        plus sample errors.
     Expectation: The dataset is processed as expected.
     """
 
@@ -524,6 +615,10 @@ def test_map_error_samples_imagefolder2_parallel(my_error_samples_mode, my_num_w
         my_sampler = ds.RandomSampler(replacement=False, num_samples=None)
         data1 = ds.ImageFolderDataset(my_error_sample_data_file, sampler=my_sampler,
                                       num_parallel_workers=my_num_workers)
+        data1 = data1.map(operations=[(lambda z: z)],
+                          input_columns=["image"],
+                          num_parallel_workers=my_num_workers,
+                          python_multiprocessing=my_mp)
         # Add map op to the pipeline which will encounter error samples. Use Python implemented ops
         # Note: Decode is not the first op in the list of operations
         data1 = data1.map(operations=[(lambda x: x),
@@ -533,6 +628,10 @@ def test_map_error_samples_imagefolder2_parallel(my_error_samples_mode, my_num_w
                           input_columns=["image"],
                           num_parallel_workers=my_num_workers,
                           python_multiprocessing=my_mp)
+        data1 = data1.map(operations=[vision.ToPIL(),
+                                      vision.RandomHorizontalFlip(1.0)],
+                          input_columns=["image"],
+                          num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
 
         if my_error_samples_mode == ErrorSamplesMode.REPLACE:
             # Error samples are to be replaced
@@ -588,7 +687,7 @@ def test_map_error_samples_imagefolder3(my_error_samples_mode, my_num_workers, m
     """
     Feature: Process Error Samples
     Description: Invoke set_error_samples_mode and test ImageFolderDataset pipeline with map op
-        with num_parallel workers and python_multiprocess set plus multiple sample errors.
+        plus multiple sample errors.
     Expectation: The dataset is processed as expected.
     """
 
@@ -597,6 +696,13 @@ def test_map_error_samples_imagefolder3(my_error_samples_mode, my_num_workers, m
         original_seed = config_get_set_seed(my_seed)
 
         # Create dataset pipelines with multiple error samples
+        # Dataset TotalRows TotalBadSamples
+        # data4       3           3
+        # data1       3           1
+        # data2       6           1
+        # data3       3           1
+        #            ==          ==
+        # datafinal  15           6
         data1 = ds.ImageFolderDataset("../data/dataset/testImageNetError/Sample1_empty/train",
                                       num_samples=None, shuffle=True, num_parallel_workers=my_num_workers)
         data2 = ds.ImageFolderDataset("../data/dataset/testImageNetError/Sample2_corrupt1mid/train",
@@ -609,9 +715,14 @@ def test_map_error_samples_imagefolder3(my_error_samples_mode, my_num_workers, m
         datafinal = data4 + data1 + data2 + data3
         datafinal = datafinal.take(my_take).repeat(my_repeat)
         total_rows = my_take * my_repeat
-        # Add map op to the pipeline. Use Python implemented ops
+        # Add map ops to the pipeline. Use Python implemented ops
         datafinal = datafinal.map(operations=[vision.Decode(to_pil=True),
-                                              vision.RandomHorizontalFlip(0.9)],
+                                              vision.RandomHorizontalFlip(0.7)],
+                                  input_columns=["image"],
+                                  num_parallel_workers=my_num_workers,
+                                  python_multiprocessing=my_mp)
+        datafinal = datafinal.map(operations=[vision.ToPIL(),
+                                              vision.RandomVerticalFlip(0.8)],
                                   input_columns=["image"],
                                   num_parallel_workers=my_num_workers,
                                   python_multiprocessing=my_mp)
@@ -666,10 +777,11 @@ def test_map_error_samples_imagefolder3(my_error_samples_mode, my_num_workers, m
 
 if __name__ == '__main__':
     test_map_replace_errors_failure()
-    test_map_replace_errors_success1()
+    test_map_replace_errors_success1(2, True)
     test_map_replace_errors_success2(True)
     test_map_replace_errors_success3(3, False)
     test_map_skip_errors_success1(3, True)
-    test_map_error_samples_imagefolder1_basic(ErrorSamplesMode.REPLACE)
-    test_map_error_samples_imagefolder2_parallel(ErrorSamplesMode.REPLACE, 4, True)
+    test_map_error_samples_imagefolder1_cop(ErrorSamplesMode.REPLACE, 4, plot=True)
+    test_map_error_samples_imagefolder1_pyop(ErrorSamplesMode.REPLACE, 3, True, plot=True)
+    test_map_error_samples_imagefolder2(ErrorSamplesMode.REPLACE, 4, True)
     test_map_error_samples_imagefolder3(ErrorSamplesMode.SKIP, 3, True)
