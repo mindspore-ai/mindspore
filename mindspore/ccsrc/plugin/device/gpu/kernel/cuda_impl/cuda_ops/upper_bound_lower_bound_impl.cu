@@ -26,14 +26,14 @@ __global__ void CalUpperBoundKernel(const size_t size, const size_t sorted_x_col
     int64_t low = values_row * sorted_x_col_;
     int64_t up = (values_row + 1) * sorted_x_col_ - 1;
     while (low <= up) {
-        int64_t mid = (low + up) / 2;
-        if (values[pos] < sorted_x[static_cast<size_t>(mid)]) {
-          up = mid - 1;
-        } else {
-          low = mid + 1;
-        }
-     }
-      output[pos] = static_cast<S>(low - values_row * sorted_x_col_);
+      int64_t mid = (low + up) / 2;
+      if (values[pos] < sorted_x[static_cast<size_t>(mid)]) {
+        up = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+    output[pos] = static_cast<S>(low - values_row * sorted_x_col_);
   }
 }
 
@@ -45,31 +45,29 @@ __global__ void CalLowerBoundKernel(const size_t size, const size_t sorted_x_col
     int64_t low = values_row * sorted_x_col_;
     int64_t up = (values_row + 1) * sorted_x_col_ - 1;
     while (low <= up) {
-        int64_t mid = (low + up) / 2;
-        if (values[pos] <= sorted_x[static_cast<size_t>(mid)]) {
-          up = mid - 1;
-        } else {
-          low = mid + 1;
-        }
-     }
-      output[pos] = static_cast<S>(low - values_row * sorted_x_col_);
+      int64_t mid = (low + up) / 2;
+      if (values[pos] <= sorted_x[static_cast<size_t>(mid)]) {
+        up = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+    output[pos] = static_cast<S>(low - values_row * sorted_x_col_);
   }
 }
 
 template <typename T, typename S>
 void CalUpperBound(const size_t size, const size_t sorted_x_col_, const size_t values_col_, const T *sorted_x,
                    const T *values, S *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  CalUpperBoundKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, sorted_x_col_,
-                                                                                                 values_col_, sorted_x,
-                                                                                                 values, output);
+  CalUpperBoundKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, sorted_x_col_, values_col_, sorted_x, values, output);
 }
 
 template <typename T, typename S>
 void CalLowerBound(const size_t size, const size_t sorted_x_col_, const size_t values_col_, const T *sorted_x,
                    const T *values, S *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
-  CalLowerBoundKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, sorted_x_col_,
-                                                                                                 values_col_, sorted_x,
-                                                                                                 values, output);
+  CalLowerBoundKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, sorted_x_col_, values_col_, sorted_x, values, output);
 }
 
 template CUDA_LIB_EXPORT void CalUpperBound<int8_t, int>(const size_t size, const size_t sorted_x_col_,
