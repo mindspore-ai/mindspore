@@ -41,6 +41,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/config_infos.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/config_file.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
