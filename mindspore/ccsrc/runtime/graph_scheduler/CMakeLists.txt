@@ -11,6 +11,8 @@ if(NOT ENABLE_CPU OR WIN32 OR APPLE)
   list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "actor/rpc/mux_send_actor.cc")
   list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "actor/rpc/mux_recv_actor.cc")
   list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "actor/embedding_cache/embedding_cache_prefetch_actor.cc")
+  list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "actor/embedding_cache/device_dense_embedding_operation.cc")
+  list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "actor/embedding_cache/device_sparse_embedding_operation.cc")
   list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "embedding_cache_scheduler.cc")
 endif()
 
