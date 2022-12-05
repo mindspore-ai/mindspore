@@ -31,7 +31,6 @@
 struct is_selected {
   __host__ __device__ bool operator()(const bool x) { return x == false; }
 };
-
 template <typename T, typename S>
 int CalListDiff(size_t x_size, size_t y_size, const T *x, const T *y, T *out, S *idx, T *workspace_y, S *workspace_xidx,
                 bool *workspace_flag, const uint32_t &device_id, cudaStream_t cuda_stream) {

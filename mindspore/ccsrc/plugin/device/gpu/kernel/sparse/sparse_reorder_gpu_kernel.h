@@ -45,7 +45,7 @@ class SparseReorderGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename I, typename T>
+  template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   using SparseReorderFunc =
@@ -57,8 +57,13 @@ class SparseReorderGpuKernelMod : public NativeGpuKernelMod {
   SparseReorderFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, SparseReorderFunc>> func_list_;
   size_t unit_size_{1};
+  size_t values_unit_size_{1};
+  size_t shape_unit_size_{1};
   size_t input_elements_{};
-  std::vector<size_t> input_shape_;
+  size_t values_elements_{};
+  size_t shape_elements_{};
+  size_t output_indices_elements_{};
+  size_t output_values_elements_{};
   int num_elems_;
   int num_dims_;
 };
