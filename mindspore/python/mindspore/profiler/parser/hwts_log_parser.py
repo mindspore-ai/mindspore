@@ -32,7 +32,7 @@ class HWTSLogParser:
 
     GRAPH_MODE_MAX_TASKID = 65000
     _source_file_target_old = 'hwts.log.data.45.dev.profiler_default_tag'
-    _source_file_target = 'hwts.data'
+    _source_file_target = 'hwts.data.'
     _dst_file_title = 'title:45 HWTS data'
     _dst_file_column_title = 'Type           cnt  Core_ID  Block_ID  Task_ID  Cycle_counter   Stream_ID'
 
@@ -66,7 +66,7 @@ class HWTSLogParser:
                 if not line.strip():
                     continue
                 if len(line) < 64:
-                    logger.warning("Length of hwts data is less than 64")
+                    logger.error("Length of hwts data is less than 64, it is %s", len(line))
                     continue
                 byte_first_four = struct.unpack('BBHHH', line[0:8])
                 byte_first = bin(byte_first_four[0]).replace('0b', '').zfill(8)
