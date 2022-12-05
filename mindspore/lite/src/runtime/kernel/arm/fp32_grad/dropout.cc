@@ -46,7 +46,7 @@ int DropoutCPUKernel::Prepare() {
   if (param->ratio_ >= kOne) {
     scale_ = kOne;
   } else {
-    scale_ = kOne / (kOne - param->ratio_);
+    scale_ = kOne / param->ratio_;
   }
 
   std::bernoulli_distribution::param_type p1(param->ratio_);
