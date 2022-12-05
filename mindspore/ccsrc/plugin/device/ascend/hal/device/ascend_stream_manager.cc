@@ -26,14 +26,45 @@ AscendStreamMng &AscendStreamMng::GetInstance() {
   return instance;
 }
 
-rtEvent_t AscendStreamMng::ApplyRtEvent() const {
+rtEvent_t AscendStreamMng::ApplyRtEvent() {
   auto rt_resource = std::make_shared<rtEvent_t>();
   auto ret = rtEventCreate(rt_resource.get());
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtEventCreate failed, ret:" << ret;
-    *rt_resource = nullptr;
+    MS_LOG(EXCEPTION) << "rtEventCreate failed, ret:" << ret;
   }
+  events_.emplace_back(*rt_resource);
   return *rt_resource;
+}
+
+rtEvent_t AscendStreamMng::ApplyRtEventWithFlag(uint32_t flag) {
+  rtEvent_t rt_event = nullptr;
+  auto ret = rtEventCreateWithFlag(&rt_event, flag);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rtEventCreateWithFlag failed, ret:" << ret;
+  }
+  events_.emplace_back(rt_event);
+  return rt_event;
+}
+
+uint32_t AscendStreamMng::GetRtEventId(const rtEvent_t &event) const {
+  uint32_t rt_event_id = 0;
+  auto rt_ret = rtGetEventID(event, &rt_event_id);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rtGetEventID failed, ret:" << rt_ret;
+  }
+  return rt_event_id;
+}
+
+void AscendStreamMng::DestroyAllRtEvents() {
+  for (size_t i = 0; i < events_.size(); ++i) {
+    if (events_[i] != nullptr) {
+      auto rt_ret = rtEventDestroy(events_[i]);
+      if (rt_ret != RT_ERROR_NONE) {
+        MS_LOG(ERROR) << "Call rtEventDestroy failed, ret:" << rt_ret;
+      }
+    }
+  }
+  events_.clear();
 }
 
 void AscendStreamMng::DeleteEvent() {
