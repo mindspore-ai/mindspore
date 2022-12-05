@@ -94,6 +94,16 @@ mindspore.ops
     mindspore.ops.softsign
     mindspore.ops.tanh
 
+距离函数
+^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.cdist
+
 采样函数
 ^^^^^^^^^^
 
@@ -106,7 +116,7 @@ mindspore.ops
     mindspore.ops.log_uniform_candidate_sampler
     mindspore.ops.uniform_candidate_sampler
 
-距离函数
+图像函数
 ^^^^^^^^^^
 
 .. mscnplatformautosummary::
@@ -114,10 +124,15 @@ mindspore.ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.cdist
+    mindspore.ops.bounding_box_decode
+    mindspore.ops.bounding_box_encode
+    mindspore.ops.check_valid
+    mindspore.ops.iou
+    mindspore.ops.pixel_shuffle
+    mindspore.ops.pixel_unshuffle
 
 数学运算函数
-^^^^^^^^^^^^^^^^^
+----------------
 
 .. mscnplatformautosummary::
     :toctree: ops
@@ -473,102 +488,6 @@ Array操作
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
-稀疏函数
-^^^^^^^^^^^^^^^^
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.dense_to_sparse_coo
-    mindspore.ops.dense_to_sparse_csr
-    mindspore.ops.csr_to_coo
-
-COO函数
-++++++++++++++++
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.coo_cos
-    mindspore.ops.coo_tan
-    mindspore.ops.coo_exp
-    mindspore.ops.coo_inv
-    mindspore.ops.coo_relu
-    mindspore.ops.coo_expm1
-    mindspore.ops.coo_isfinite
-    mindspore.ops.coo_asin
-    mindspore.ops.coo_sqrt
-    mindspore.ops.coo_log
-    mindspore.ops.coo_isnan
-    mindspore.ops.coo_acos
-    mindspore.ops.coo_floor
-    mindspore.ops.coo_atan
-    mindspore.ops.coo_square
-    mindspore.ops.coo_relu6
-    mindspore.ops.coo_sinh
-    mindspore.ops.coo_ceil
-    mindspore.ops.coo_cosh
-    mindspore.ops.coo_softsign
-    mindspore.ops.coo_log1p
-    mindspore.ops.coo_round
-    mindspore.ops.coo_tanh
-    mindspore.ops.coo_asinh
-    mindspore.ops.coo_neg
-    mindspore.ops.coo_acosh
-    mindspore.ops.coo_isinf
-    mindspore.ops.coo_atanh
-    mindspore.ops.coo_sigmoid
-    mindspore.ops.coo_abs
-    mindspore.ops.coo_sin
-    mindspore.ops.sparse_add
-
-CSR函数
-++++++++++++++++
-
-.. mscnplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.csr_cos
-    mindspore.ops.csr_tan
-    mindspore.ops.csr_exp
-    mindspore.ops.csr_inv
-    mindspore.ops.csr_relu
-    mindspore.ops.csr_expm1
-    mindspore.ops.csr_isfinite
-    mindspore.ops.csr_asin
-    mindspore.ops.csr_sqrt
-    mindspore.ops.csr_log
-    mindspore.ops.csr_isnan
-    mindspore.ops.csr_acos
-    mindspore.ops.csr_floor
-    mindspore.ops.csr_atan
-    mindspore.ops.csr_square
-    mindspore.ops.csr_relu6
-    mindspore.ops.csr_sinh
-    mindspore.ops.csr_ceil
-    mindspore.ops.csr_cosh
-    mindspore.ops.csr_softsign
-    mindspore.ops.csr_log1p
-    mindspore.ops.csr_round
-    mindspore.ops.csr_tanh
-    mindspore.ops.csr_asinh
-    mindspore.ops.csr_neg
-    mindspore.ops.csr_acosh
-    mindspore.ops.csr_isinf
-    mindspore.ops.csr_atanh
-    mindspore.ops.csr_sigmoid
-    mindspore.ops.csr_abs
-    mindspore.ops.csr_sin
-    mindspore.ops.csr_add
-    mindspore.ops.csr_mm
-    mindspore.ops.csr_softmax
-
 梯度剪裁
 ^^^^^^^^
 
@@ -626,7 +545,7 @@ Parameter操作函数
 
     mindspore.ops.print_
 
-图像函数
+稀疏函数
 ----------------
 
 .. mscnplatformautosummary::
@@ -634,12 +553,93 @@ Parameter操作函数
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.bounding_box_decode
-    mindspore.ops.bounding_box_encode
-    mindspore.ops.check_valid
-    mindspore.ops.iou
-    mindspore.ops.pixel_shuffle
-    mindspore.ops.pixel_unshuffle
+    mindspore.ops.dense_to_sparse_coo
+    mindspore.ops.dense_to_sparse_csr
+    mindspore.ops.csr_to_coo
+
+COO函数
+^^^^^^^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.coo_cos
+    mindspore.ops.coo_tan
+    mindspore.ops.coo_exp
+    mindspore.ops.coo_inv
+    mindspore.ops.coo_relu
+    mindspore.ops.coo_expm1
+    mindspore.ops.coo_isfinite
+    mindspore.ops.coo_asin
+    mindspore.ops.coo_sqrt
+    mindspore.ops.coo_log
+    mindspore.ops.coo_isnan
+    mindspore.ops.coo_acos
+    mindspore.ops.coo_floor
+    mindspore.ops.coo_atan
+    mindspore.ops.coo_square
+    mindspore.ops.coo_relu6
+    mindspore.ops.coo_sinh
+    mindspore.ops.coo_ceil
+    mindspore.ops.coo_cosh
+    mindspore.ops.coo_softsign
+    mindspore.ops.coo_log1p
+    mindspore.ops.coo_round
+    mindspore.ops.coo_tanh
+    mindspore.ops.coo_asinh
+    mindspore.ops.coo_neg
+    mindspore.ops.coo_acosh
+    mindspore.ops.coo_isinf
+    mindspore.ops.coo_atanh
+    mindspore.ops.coo_sigmoid
+    mindspore.ops.coo_abs
+    mindspore.ops.coo_sin
+    mindspore.ops.sparse_add
+
+CSR函数
+^^^^^^^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.csr_cos
+    mindspore.ops.csr_tan
+    mindspore.ops.csr_exp
+    mindspore.ops.csr_inv
+    mindspore.ops.csr_relu
+    mindspore.ops.csr_expm1
+    mindspore.ops.csr_isfinite
+    mindspore.ops.csr_asin
+    mindspore.ops.csr_sqrt
+    mindspore.ops.csr_log
+    mindspore.ops.csr_isnan
+    mindspore.ops.csr_acos
+    mindspore.ops.csr_floor
+    mindspore.ops.csr_atan
+    mindspore.ops.csr_square
+    mindspore.ops.csr_relu6
+    mindspore.ops.csr_sinh
+    mindspore.ops.csr_ceil
+    mindspore.ops.csr_cosh
+    mindspore.ops.csr_softsign
+    mindspore.ops.csr_log1p
+    mindspore.ops.csr_round
+    mindspore.ops.csr_tanh
+    mindspore.ops.csr_asinh
+    mindspore.ops.csr_neg
+    mindspore.ops.csr_acosh
+    mindspore.ops.csr_isinf
+    mindspore.ops.csr_atanh
+    mindspore.ops.csr_sigmoid
+    mindspore.ops.csr_abs
+    mindspore.ops.csr_sin
+    mindspore.ops.csr_add
+    mindspore.ops.csr_mm
+    mindspore.ops.csr_softmax
 
 光谱函数
 ----------------
