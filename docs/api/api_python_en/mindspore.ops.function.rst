@@ -16,6 +16,7 @@ Neural Network
     mindspore.ops.adaptive_avg_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.bias_add
+    mindspore.ops.conv2d
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
     mindspore.ops.dropout2d
@@ -59,6 +60,7 @@ Activation Functions
     mindspore.ops.selu
     mindspore.ops.softsign
     mindspore.ops.soft_shrink
+    mindspore.ops.softmax
     mindspore.ops.tanh
 
 Sampling Functions
@@ -71,6 +73,16 @@ Sampling Functions
 
     mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
+
+Distance Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.cdist
 
 Image Functions
 ^^^^^^^^^^^^^^^^
