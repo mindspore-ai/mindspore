@@ -663,7 +663,7 @@ void CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     std::string exit_actor_name = "";
 
-    for (const auto arrow : kernel_actor->output_data_arrows()) {
+    for (const auto &arrow : kernel_actor->output_data_arrows()) {
       MS_EXCEPTION_IF_NULL(arrow);
       if (arrow->to_op_id_.Name().find(kExitActorNameSuffix) == std::string::npos) {
         continue;

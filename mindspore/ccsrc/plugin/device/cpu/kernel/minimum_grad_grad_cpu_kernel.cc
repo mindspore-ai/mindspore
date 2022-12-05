@@ -65,8 +65,8 @@ int MinimumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   grad_y2_shape_ = inputs[kInputIndex3]->GetDeviceShapeAdaptively();
 
   output_shape_ = CPUKernelUtils::GetBroadcastShape(x1_shape_, x2_shape_);
-  for (const uint64_t &d : output_shape_) {
-    tensor_size_ *= d;
+  for (const int64_t &d : output_shape_) {
+    tensor_size_ *= static_cast<uint64_t>(d);
   }
 
   return KRET_OK;

@@ -43,7 +43,7 @@ std::vector<WordIdType> Vocab::TokensToIds(const std::vector<WordType> &words) c
 WordType Vocab::IdsToTokens(const WordIdType &id) {
   // lazy initialization, since I think it's not common use but waste memory
   if (id2word_.empty()) {
-    for (const auto [word_, id_] : word2id_) {
+    for (const auto &[word_, id_] : word2id_) {
       id2word_[id_] = word_;
     }
   }
@@ -54,7 +54,7 @@ WordType Vocab::IdsToTokens(const WordIdType &id) {
 std::vector<WordType> Vocab::IdsToTokens(const std::vector<WordIdType> &ids) {
   // lazy initialization, since I think it's not common use but waste memory
   if (id2word_.empty()) {
-    for (const auto [word_, id_] : word2id_) {
+    for (const auto &[word_, id_] : word2id_) {
       id2word_[id_] = word_;
     }
   }

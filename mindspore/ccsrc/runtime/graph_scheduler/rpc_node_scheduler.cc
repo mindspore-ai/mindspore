@@ -234,7 +234,7 @@ void RpcNodeScheduler::Abort() {
 
 void RpcNodeScheduler::UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) const {
   MS_EXCEPTION_IF_NULL(rpc_actor_set);
-  for (const auto send_actor : rpc_actor_set->send_actors_) {
+  for (const auto &send_actor : rpc_actor_set->send_actors_) {
     MS_EXCEPTION_IF_NULL(send_actor);
     auto kernel_mod = AnfAlgo::GetKernelMod(send_actor->kernel_);
     MS_EXCEPTION_IF_NULL(kernel_mod);
