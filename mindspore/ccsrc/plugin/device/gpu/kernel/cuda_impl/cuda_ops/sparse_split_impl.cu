@@ -27,6 +27,7 @@ __global__ void SparseSplitKernel(IndexType *split_dim_ptr, IndexType *indices_p
                                   DataType **y_values_ptr, IndexType *out_shape_ptr, int *sum_count_ptr,
                                   size_t input_nnz_, size_t num_dim_, IndexType *d_block_ptr) {
   // atomicADD
+
   for (size_t input_nz = blockIdx.x * blockDim.x + threadIdx.x; input_nz < input_nnz_;
        input_nz += blockDim.x * gridDim.x) {
     DataType value = values_ptr[input_nz];
@@ -39,7 +40,7 @@ __global__ void SparseSplitKernel(IndexType *split_dim_ptr, IndexType *indices_p
       }
     }
     int idx = atomicAdd(&sum_count_ptr[block], 1);
-    if (split_dim_ptr == 0) {
+    if (*split_dim_ptr == 0) {
       y_indices_ptr[block][idx * 2] = index[0] - d_block_ptr[block];
       y_indices_ptr[block][idx * 2 + 1] = index[1];
     } else {

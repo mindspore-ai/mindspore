@@ -42,11 +42,14 @@ bool SparseSplitGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     {kNumberTypeInt16, &SparseSplitGpuKernelMod::LaunchKernel<int16_t, int64_t>},
     {kNumberTypeInt8, &SparseSplitGpuKernelMod::LaunchKernel<int8_t, int64_t>},
     {kNumberTypeFloat64, &SparseSplitGpuKernelMod::LaunchKernel<double, int64_t>},
-    {kNumberTypeFloat, &SparseSplitGpuKernelMod::LaunchKernel<float, int64_t>},
+    {kNumberTypeFloat32, &SparseSplitGpuKernelMod::LaunchKernel<float, int64_t>},
     {kNumberTypeFloat16, &SparseSplitGpuKernelMod::LaunchKernel<half, int64_t>},
     {kNumberTypeBool, &SparseSplitGpuKernelMod::LaunchKernel<bool, int64_t>},
   };
-
+  if (kernel_list.find(input_dtype_) == kernel_list.end()) {
+    MS_LOG(ERROR) << "SparseSplit does not support this data type.";
+    return false;
+  }
   kernel_func_ = kernel_list[input_dtype_];
   is_need_retrieve_output_shape_ = true;
   return true;
@@ -170,6 +173,9 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
                                      "For SparseSplit, cudaMemcpyAsync failed.");
 
   auto sum_count_ptr = GetDeviceAddress<int>(workspace, kIndex3);
+
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(sum_count_ptr, 0, workspace[kIndex3]->size, cuda_stream),
+                                     "For SparseSplit, cudaMemsetAsync failed.");
 
   SparseSplit<DataType, IndexType>(split_dim_ptr, indices_ptr, values_ptr, shape_ptr, num_split, d_y_indices_vec,
                                    d_y_values_ptr, d_out_shape_ptr, sum_count_ptr, input_nnz_, num_dim_, d_block_ptr,
