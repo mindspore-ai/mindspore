@@ -44,8 +44,9 @@ constexpr char kAttrOnesLikeCOO[] = "ones_like_coo_node";
 enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
 const std::map<SpecialType, std::shared_ptr<Primitive>> kValueType{{SpecialType::kZerosLikeType, prim::kPrimZerosLike},
                                                                    {SpecialType::kOnesLikeType, prim::kPrimOnesLike}};
-const std::vector<PrimitivePtr> kGradBlackList{prim::kPrimMakeTuple, prim::kPrimTupleGetItem, prim::kPrimStopGradient,
-                                               prim::kPrimUpdateState, prim::kPrimNPUAllocFloatStatus};
+const std::vector<PrimitivePtr> kGradBlackList{
+  prim::kPrimMakeTuple,           prim::kPrimTupleGetItem,      prim::kPrimStopGradient,       prim::kPrimUpdateState,
+  prim::kPrimNPUAllocFloatStatus, prim::kPrimNPUGetFloatStatus, prim::kPrimNPUClearFloatStatus};
 AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value, const SpecialType &type);
 void ClearDeviceAddress(const ValuePtr &value) {
   std::vector<tensor::TensorPtr> tensors;
@@ -53,26 +54,6 @@ void ClearDeviceAddress(const ValuePtr &value) {
   for (auto tensor : tensors) {
     tensor->set_device_address(nullptr);
     tensor->set_is_forward_output(false);
-  }
-}
-
-ValuePtr FilterSensValues(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>() || value->isa<tensor::COOTensor>() || value->isa<tensor::CSRTensor>()) {
-    return value;
-  } else if (value->isa<ValueSequence>()) {
-    std::vector<ValuePtr> value_list;
-    auto value_seq = value->cast<ValueSequencePtr>();
-    MS_EXCEPTION_IF_NULL(value_seq);
-    for (auto filter_value : value_seq->value()) {
-      if (FilterSensValues(filter_value) != nullptr) {
-        (void)value_list.emplace_back(filter_value);
-      }
-    }
-    return std::make_shared<ValueTuple>(value_list);
-  } else {
-    MS_LOG(DEBUG) << "value type: " << value->ToString();
-    return nullptr;
   }
 }
 
@@ -376,7 +357,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   } else {
     mindspore::BuildBprop(input_node, &outputs, &users_);
     if (outputs.empty()) {
-      MS_LOG(DEBUG) << "expander has no bprop of this prim: " << grad_param->cnode->DebugString();
+      MS_LOG(DEBUG) << "Expander has no bprop of this prim: " << grad_param->cnode->DebugString();
       BuildCustomBpropCNode(input_node, &outputs);
     }
   }
@@ -390,7 +371,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   if (!outputs.empty()) {
     UpdateNextEdges(fn, grad_param->cnode, outputs, grad_param->op_args);
   } else {
-    MS_LOG(DEBUG) << "this op has not custom bprop: " << grad_param->cnode->DebugString();
+    MS_LOG(DEBUG) << "This op has not custom bprop: " << grad_param->cnode->DebugString();
     variable_adjoint->set_is_fake_bprop(true);
     variable_adjoint->set_fake_prim_name(prim->name());
   }
@@ -489,7 +470,7 @@ void AutoGradCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, 
   MS_EXCEPTION_IF_NULL(sens_out);
   MS_LOG(DEBUG) << "Real output node of top cell is " << output_node->DebugString();
   last_node_ = output_node;
-  sens_value_ = FilterSensValues(sens_out);
+  sens_value_ = sens_out;
 }
 
 FuncGraphPtr AutoGradCellImpl::Finish(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
@@ -501,7 +482,6 @@ FuncGraphPtr AutoGradCellImpl::Finish(const AnfNodePtrList &weights, const std::
   if (!last_node_->isa<ValueNode>() && !last_node_->isa<Parameter>()) {
     (void)BackPropagate();
   }
-
   SetOutput(weights, grad_position, grad_attr);
   // Replace Parameter of primal funcgraph with parameter of tape_;
   ReplacePrimalParameter(weights, grad_attr.has_sens);
@@ -582,7 +562,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForCNodeInput(const AnfNodePtr &input_nod
   if (input_node->isa<CNode>()) {
     const auto input_adjoint_iter = anfnode_to_variable_adjoint_.find(input_node);
     if (input_adjoint_iter == anfnode_to_variable_adjoint_.end()) {
-      MS_LOG(EXCEPTION) << "cannot find input in adjoint map, inp: " << input_node->DebugString();
+      MS_LOG(EXCEPTION) << "Cannot find input in adjoint map, inp: " << input_node->DebugString();
     }
     return input_adjoint_iter->second->k_node();
   } else {
@@ -871,7 +851,7 @@ void AutoGradCellImpl::BackPropagate() {
       const auto &node = next_edge.first;
       const auto &din = next_edge.second;
       if (anfnode_to_variable_adjoint_.find(node) == anfnode_to_variable_adjoint_.end()) {
-        MS_LOG(EXCEPTION) << "current node not find corresponding node";
+        MS_LOG(EXCEPTION) << "Current node not find corresponding node";
       }
       auto last_variable = anfnode_to_variable_adjoint_[node];
       last_variable->fn()->UpdateAccumulativeDout(din);
@@ -892,7 +872,7 @@ AnfNodePtr AutoGradCellImpl::GetGradNodeByIndex(const AnfNodePtrList &node_list,
   if (input_adjoint_iter == anfnode_to_variable_adjoint_.end()) {
     // If weight is not used in the forward network, just return zeros_like() as dout.
     if (grad_node->isa<Parameter>()) {
-      MS_LOG(WARNING) << "Weight does not participate in forward calculation, weight: " << grad_node->DebugString();
+      MS_LOG(INFO) << "Weight does not participate in forward calculation, weight: " << grad_node->DebugString();
       auto w = grad_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(w);
       auto default_param = w->default_param();

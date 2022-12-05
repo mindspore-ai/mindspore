@@ -141,6 +141,7 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v) {
       MS_EXCEPTION_IF_NULL(value_tuple);
       return opt::CreateTupleTensor(value_tuple);
     }
+    PyNativeAlgo::Common::FilterSensValues(v);
     MS_LOG(DEBUG) << "Output is value sequence, but have tensor and other type mixed. Its value is " << v->ToString();
     return v;
   } else if (v->isa<FloatImm>()) {
@@ -1214,10 +1215,10 @@ void GradExecutor::ClearGradRes() {
   // Custom bprop nested, top cell reset by first time, second time no need clean
   if (top_cell_ != nullptr) {
     top_cell_->ClearDeviceMemory();
-  }
-  if (use_dynamic_shape_process_ ||
-      already_run_top_cell_.find(top_cell_->already_run_cell_id()) != already_run_top_cell_.end()) {
-    top_cell_ = nullptr;
+    if (use_dynamic_shape_process_ ||
+        already_run_top_cell_.find(top_cell()->already_run_cell_id()) != already_run_top_cell_.end()) {
+      top_cell_ = nullptr;
+    }
   }
   DecreaseGradOrder();
   ClearGlobalRes();

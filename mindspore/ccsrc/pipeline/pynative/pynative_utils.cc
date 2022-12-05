@@ -113,6 +113,26 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
   return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
 }
 
+ValuePtr Common::FilterSensValues(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>() || value->isa<tensor::COOTensor>() || value->isa<tensor::CSRTensor>()) {
+    return value;
+  } else if (value->isa<ValueSequence>()) {
+    std::vector<ValuePtr> value_list;
+    auto value_seq = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_seq);
+    for (auto &filter_value : value_seq->value()) {
+      if (FilterSensValues(filter_value) != nullptr) {
+        (void)value_list.emplace_back(filter_value);
+      }
+    }
+    return std::make_shared<ValueTuple>(value_list);
+  } else {
+    MS_LOG(DEBUG) << "Value type: " << value->ToString();
+    return nullptr;
+  }
+}
+
 tensor::TensorPtr Common::GetTensorFromParam(const AnfNodePtr &param_node) {
   MS_EXCEPTION_IF_NULL(param_node);
   auto param = param_node->cast<ParameterPtr>();
