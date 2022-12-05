@@ -72,6 +72,16 @@ Sampling Functions
     mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
 
+Image Functions
+^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.iou
+
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

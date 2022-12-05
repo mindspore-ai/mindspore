@@ -72,6 +72,16 @@ mindspore.ops.function
     mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
 
+图像函数
+^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.iou
+
 逐元素运算
 ^^^^^^^^^^^^^
 
