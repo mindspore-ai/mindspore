@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include <memory>
+#include <string>
+#include <iostream>
 #include "common/common_test.h"
 #include "include/api/serialization.h"
 
@@ -39,6 +41,46 @@ TEST_F(TestCxxApiLiteSerialization, test_load_file_not_exist_x2_FAILED) {
 TEST_F(TestCxxApiLiteSerialization, test_export_uninitialized_FAILED) {
   Model model;
   ASSERT_TRUE(Serialization::ExportModel(model, ModelType::kMindIR, "./nets/export.ms") != kSuccess);
+}
+
+TEST_F(TestCxxApiLiteSerialization, test_export_to_buffer) {
+  auto context = std::make_shared<mindspore::Context>();
+  auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
+  context->MutableDeviceInfo().push_back(cpu_context);
+
+  Graph graph;
+  std::string file_name = "../../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_train.ms";
+  auto status = mindspore::Serialization::Load(file_name, mindspore::kMindIR, &graph);
+  ASSERT_TRUE(status == mindspore::kSuccess);
+
+  Model model;
+  auto cfg = std::make_shared<mindspore::TrainCfg>();
+
+  status = model.Build(mindspore::GraphCell(graph), context, cfg);
+  ASSERT_TRUE(status == mindspore::kSuccess);
+
+  std::string exported_file = "./export.ms";
+  status = Serialization::ExportModel(model, mindspore::kMindIR, exported_file, mindspore::kNoQuant, false);
+  ASSERT_TRUE(status == mindspore::kSuccess);
+
+  mindspore::Buffer modef_buffer_infer;
+  status = Serialization::ExportModel(model, mindspore::kMindIR, &modef_buffer_infer, mindspore::kNoQuant, false);
+  ASSERT_TRUE(status == mindspore::kSuccess);
+
+  std::ifstream file(exported_file.c_str(), std::ifstream::binary);
+  ASSERT_TRUE(file);
+
+  file.seekg(0, std::ifstream::end);
+  size_t file_size = file.tellg();
+  file.seekg(0);
+
+  const int kMaxSize = 1024 * 1024;
+  char buf[kMaxSize] = {0};
+  file.read(buf, file_size);
+  file.close();
+
+  int result = memcmp(buf, modef_buffer_infer.Data(), file_size);
+  ASSERT_EQ(result, 0);
 }
 
 }  // namespace mindspore

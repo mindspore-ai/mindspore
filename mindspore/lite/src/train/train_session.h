@@ -36,6 +36,14 @@
   +-------------------------------+
 */
 
+#define TRAIN_SESSION_CHECK_FALSE_MSG(value, errcode, msg) \
+  do {                                                     \
+    if ((value)) {                                         \
+      MS_LOG(ERROR) << #msg;                               \
+      return errcode;                                      \
+    }                                                      \
+  } while (0)
+
 namespace mindspore {
 namespace lite {
 using CreatorOp = std::tuple<mindspore::kernel::KernelKey, mindspore::kernel::KernelCreator>;
@@ -90,7 +98,8 @@ class TrainSession : virtual public lite::LiteSession {
   }
   int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType,
              std::vector<std::string> out_put_tensor_name = {}) override;
-
+  int Export(Buffer *model_buffer, ModelType model_type, QuantizationType quant_type, FormatType,
+             std::vector<std::string> out_put_tensor_name = {}) override;
   std::vector<lite::Tensor *> GetFeatureMaps() const override;
 
   int UpdateFeatureMaps(const std::vector<lite::Tensor *> &features_map) override;
@@ -158,7 +167,9 @@ class TrainSession : virtual public lite::LiteSession {
   size_t GetInplaceTensorOffset(kernel::KernelExec *kernel,
                                 const std::unordered_map<lite::Tensor *, size_t> &offset_map,
                                 std::unordered_map<lite::Tensor *, int> *ref_count, uint32_t input_idx);
-
+  template <typename DestType>
+  int ExportInner(DestType destination, ModelType model_type, QuantizationType quant_type, FormatType,
+                  std::vector<std::string> out_put_tensor_name = {});
   std::map<Tensor *, Tensor *> restored_origin_tensors_;
   int virtual_batch_idx_ = 0;
   int virtual_batch_multiplier_ = 0;

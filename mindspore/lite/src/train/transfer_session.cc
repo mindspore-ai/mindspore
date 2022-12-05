@@ -183,15 +183,24 @@ std::unordered_map<size_t, size_t> TransferSession::ConnectionMap() {
   return map;
 }
 
-int TransferSession::Export(const std::string &filename, ModelType model_type, QuantizationType quant_type,
-                            FormatType format, std::vector<std::string> out_put_tensor_name) {
+template <typename DestType>
+int TransferSession::ExportInner(DestType destination, ModelType model_type, QuantizationType quant_type,
+                                 FormatType format, std::vector<std::string> out_put_tensor_name) {
+  if constexpr (std::is_same_v<DestType, const std::string &>) {
+    MS_CHECK_FALSE_MSG(destination.empty(), RET_ERROR, "File name cannot be empty");
+  } else if constexpr (std::is_same_v<DestType, Buffer *>) {
+    MS_CHECK_FALSE_MSG(destination == nullptr, RET_ERROR, "model buffer cannot be nullptr");
+  } else {
+    MS_LOG(ERROR) << "Unsupported destination.";
+    return RET_ERROR;
+  }
   if (format != FT_FLATBUFFERS) {
     MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
     return RET_ERROR;
   }
 
   if (model_type == MT_TRAIN) {
-    return TrainSession::Export(filename, model_type, quant_type, format);
+    return TrainSession::Export(destination, model_type, quant_type, format);
   }
 
   bool orig_train_state = IsTrain();
@@ -199,7 +208,7 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
     MS_LOG(ERROR) << "eval failed.";
     return RET_ERROR;
   }
-  TrainExport texport(filename);
+  TrainExport texport(destination);
   int status = texport.LoadModel(lite_model_, size_backbone_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot init export";
@@ -231,11 +240,18 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
     MS_LOG(ERROR) << "cannot serialize head";
     return status;
   }
-  status = texport.SaveToFile();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "failed to save to " << filename;
-    return status;
+
+  if constexpr (std::is_same_v<DestType, const std::string &>) {
+    status = texport.SaveToFile();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "failed to save to " << destination;
+      return status;
+    }
+  } else {
+    status = texport.SaveToBuffer();
+    MS_CHECK_FALSE_MSG(status != RET_OK, status, "fail to save to model buffer.");
   }
+
   if (orig_train_state) {
     auto ret = Train();
     if (ret != RET_OK) {
@@ -244,6 +260,16 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
     }
   }
   return status;
+}
+
+int TransferSession::Export(const std::string &filename, ModelType model_type, QuantizationType quant_type,
+                            FormatType format, std::vector<std::string> out_put_tensor_name) {
+  return ExportInner<const std::string &>(filename, model_type, quant_type, format, out_put_tensor_name);
+}
+
+int TransferSession::Export(Buffer *model_buffer, ModelType model_type, QuantizationType quant_type, FormatType format,
+                            std::vector<std::string> out_put_tensor_name) {
+  return ExportInner<Buffer *>(model_buffer, model_type, quant_type, format, out_put_tensor_name);
 }
 
 lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,

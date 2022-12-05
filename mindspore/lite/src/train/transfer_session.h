@@ -65,6 +65,8 @@ class TransferSession : public lite::TrainSession {
   int CompileTransferGraph();
   int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType,
              std::vector<std::string> out_put_tensor_name = {}) override;
+  int Export(Buffer *model_buffer, ModelType model_type, QuantizationType quant_type, FormatType,
+             std::vector<std::string> out_put_tensor_name = {}) override;
 
  protected:
   LiteSession *backbone_session_ = nullptr;
@@ -74,6 +76,9 @@ class TransferSession : public lite::TrainSession {
   bool is_valid_ = false;
 
  private:
+  template <typename DestType>
+  int ExportInner(DestType destination, ModelType model_type, QuantizationType quant_type, FormatType,
+                  std::vector<std::string> out_put_tensor_name = {});
   bool CompileFormatTransform(lite::Tensor *out, lite::Tensor *in, int *mask, size_t mask_len);
   std::unordered_map<size_t, size_t> ConnectionMap();
   bool nchw2nhwc_ = false;

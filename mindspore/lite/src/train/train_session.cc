@@ -1154,9 +1154,17 @@ int TrainSession::FindExportKernels(std::vector<kernel::KernelExec *> *export_ke
   return RET_OK;
 }
 
-int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,
-                         FormatType format, std::vector<std::string> out_put_tensor_name) {
-  MS_CHECK_FALSE_MSG(file_name.empty(), RET_ERROR, "File name cannot be empty");
+template <typename DestType>
+int TrainSession::ExportInner(DestType destination, ModelType model_type, QuantizationType quant_type,
+                              FormatType format, std::vector<std::string> out_put_tensor_name) {
+  if constexpr (std::is_same_v<DestType, const std::string &>) {
+    MS_CHECK_FALSE_MSG(destination.empty(), RET_ERROR, "File name cannot be empty");
+  } else if constexpr (std::is_same_v<DestType, Buffer *>) {
+    MS_CHECK_FALSE_MSG(destination == nullptr, RET_ERROR, "model buffer cannot be nullptr");
+  } else {
+    MS_LOG(ERROR) << "Unsupported destination.";
+    return RET_ERROR;
+  }
   MS_CHECK_FALSE_MSG(model_type > mindspore::lite::MT_INFERENCE || model_type < mindspore::lite::MT_TRAIN, RET_ERROR,
                      "Export model type parameter error");
   MS_CHECK_FALSE_MSG(quant_type < mindspore::lite::QT_DEFAULT || quant_type > mindspore::lite::QT_WEIGHT, RET_ERROR,
@@ -1165,27 +1173,21 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
 
   bool orig_train_state = IsTrain();
   Eval();
-  TrainExport texport(file_name);
+  TrainExport texport(destination);
   int status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "cannot init export";
-    return status;
-  }
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to init export");
 
   if (!out_put_tensor_name.empty() && model_type == MT_INFERENCE) {
     std::vector<kernel::KernelExec *> export_kernels = {};
     status = FindExportKernels(&export_kernels, out_put_tensor_name, inference_kernels_);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "FindExportKernels failed.";
-      return RET_ERROR;
-    }
+    TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "FindExportKernels failed.");
     status = texport.ExportNet(export_kernels, tensors_, out_put_tensor_name, model_.get(), quant_type);
   } else {
     if ((quant_type == QT_NONE) && (model_type == MT_TRAIN) &&
         std::all_of(model_->graph_.all_nodes_.begin(), model_->graph_.all_nodes_.end(), [](const LiteGraph::Node *n) {
           return n->quant_type_ == schema::QuantType::QuantType_QUANT_NONE;
         })) {
-      status = texport.SaveModel(model_.get(), file_name);
+      status = texport.SaveModel(model_.get(), destination);
       if (orig_train_state) Train();
       return status;
     } else {
@@ -1194,31 +1196,41 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
                                  model_.get(), quant_type);
     }
   }
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to export Network.");
 
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "cannot export Network";
-    return status;
-  }
   if (model_type == MT_INFERENCE) {
     status = texport.TrainModelDrop();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "TrainModelDrop failed.";
-      return status;
-    }
+    TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "TrainModelDrop failed.");
+
     status = texport.TrainModelFusion();
+    TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "TrainModelFusion failed.");
+  }
+
+  if constexpr (std::is_same_v<DestType, const std::string &>) {
+    status = texport.SaveToFile();
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "TrainModelFusion failed.";
+      MS_LOG(ERROR) << "failed to save to " << destination;
       return status;
     }
+  } else {
+    status = texport.SaveToBuffer();
+    TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "fail to save to model buffer.");
   }
-  status = texport.SaveToFile();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "failed to save to " << file_name;
-    return status;
-  }
+
   if (orig_train_state) Train();
   return status;
 }
+
+int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,
+                         FormatType format, std::vector<std::string> out_put_tensor_name) {
+  return ExportInner<const std::string &>(file_name, model_type, quant_type, format, out_put_tensor_name);
+}
+
+int TrainSession::Export(Buffer *model_buffer, ModelType model_type, QuantizationType quant_type, FormatType format,
+                         std::vector<std::string> out_put_tensor_name) {
+  return ExportInner<Buffer *>(model_buffer, model_type, quant_type, format, out_put_tensor_name);
+}
+
 std::vector<lite::Tensor *> TrainSession::GetFeatureMaps() const {
   std::vector<lite::Tensor *> features;
   for (auto cur_tensor : this->tensors_) {

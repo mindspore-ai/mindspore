@@ -44,23 +44,27 @@ struct tensor_info {
 class TrainExport {
  public:
   explicit TrainExport(const std::string file_name) : file_name_(file_name) {}
+  explicit TrainExport(Buffer *model_buffer) : model_buffer_(model_buffer) {}
   virtual ~TrainExport();
   int ExportNet(const std::vector<mindspore::kernel::KernelExec *> &kernels,
                 const std::vector<mindspore::lite::Tensor *> &tensors, const std::vector<std::string> &output_names,
                 const Model *model, QuantizationType quant_type, const Model *bb_model = nullptr);
   int ExportInit(const std::string model_name, std::string version);
   int SaveToFile();
+  int SaveToBuffer();
   void set_connect(const std::unordered_map<size_t, size_t> &map) { connect_ = map; }
   int LoadModel(void *buf, size_t buf_size);
   int AddTransformNode();
   int TrainModelFusion();
   int TrainModelDrop();
   int SaveModel(lite::Model *model, const std::string &file_name);
+  int SaveModel(lite::Model *model, Buffer *model_buffer);
 
  protected:
   virtual std::vector<uint8_t> CreateData(const mindspore::lite::Tensor *tensor);
 
  private:
+  Buffer *model_buffer_ = nullptr;
   std::string file_name_;
   schema::MetaGraphT *meta_graph_ = nullptr;
   std::vector<size_t> out_idx_;

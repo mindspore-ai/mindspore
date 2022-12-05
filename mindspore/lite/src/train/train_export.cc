@@ -612,7 +612,38 @@ int TrainExport::SaveModel(lite::Model *model, const std::string &file_name) {
   return status;
 }
 
+int TrainExport::SaveModel(lite::Model *model, Buffer *model_buffer) {
+  MS_CHECK_FALSE_MSG(model == nullptr, RET_ERROR, "model cannot be empty.");
+  MS_CHECK_FALSE_MSG(model_buffer == nullptr, RET_ERROR, "model_buffer cannot be empty.");
+  auto *liteModel = reinterpret_cast<LiteModel *>(model);
+  auto size = liteModel->buf_size_;
+  model_buffer->ResizeData(size);
+
+  size_t out_size = model_buffer->DataSize();
+  int status = mindspore::lite::Model::Export(model, static_cast<char *>(model_buffer->MutableData()), &out_size);
+  if (out_size != size) {
+    MS_LOG(ERROR) << "model_buffer resize failed.";
+    return RET_ERROR;
+  }
+
+  return status;
+}
+
 int TrainExport::SaveToFile() { return Storage::Save(*meta_graph_, file_name_); }
+
+int TrainExport::SaveToBuffer() {
+  constexpr size_t kFbBuilderInitSize = 1024;
+  flatbuffers::FlatBufferBuilder builder(kFbBuilderInitSize);
+  auto offset = schema::MetaGraph::Pack(builder, meta_graph_);
+  builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
+  size_t size = builder.GetSize();
+  auto content = builder.GetBufferPointer();
+  MS_CHECK_FALSE_MSG(content == nullptr, RET_ERROR, "context cannot be empty.");
+  MS_CHECK_FALSE_MSG(model_buffer_ == nullptr, RET_ERROR, "context cannot be empty.");
+  model_buffer_->SetData(content, size);
+  return RET_OK;
+}
 
 bool TrainExport::IsInputTensor(const schema::TensorT &t) {
   int total_dims = std::accumulate(t.dims.begin(), t.dims.end(), 1, std::multiplies<int>());

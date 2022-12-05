@@ -101,6 +101,11 @@ class LiteSession {
                      std::vector<std::string> out_put_tensor_name = {}) {
     return mindspore::lite::RET_ERROR;
   }
+  virtual int Export(Buffer *model_buffer, lite::ModelType model_type = lite::MT_TRAIN,
+                     lite::QuantizationType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFERS,
+                     std::vector<std::string> out_put_tensor_name = {}) {
+    return mindspore::lite::RET_ERROR;
+  }
   virtual int UpdateWeights(std::vector<lite::Tensor *> new_weights) { return mindspore::lite::RET_ERROR; }
   virtual std::vector<lite::Tensor *> GetFeatureMaps() const {
     std::vector<lite::Tensor *> features;

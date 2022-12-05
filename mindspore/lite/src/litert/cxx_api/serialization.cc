@@ -159,9 +159,34 @@ Status Serialization::SetParameters(const std::map<std::vector<char>, Buffer> &p
   return kMEFailed;
 }
 
-Status Serialization::ExportModel(const Model &model, ModelType model_type, Buffer *model_data) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return kMEFailed;
+Status Serialization::ExportModel(const Model &model, ModelType model_type, Buffer *model_data,
+                                  QuantizationType quantization_type, bool export_inference_only,
+                                  const std::vector<std::vector<char>> &output_tensor_name) {
+  if (model.impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteUninitializedObj;
+  }
+  if (!model.impl_->IsTrainModel()) {
+    MS_LOG(ERROR) << "Model is not TrainModel.";
+    return kLiteError;
+  }
+  if (model_data == nullptr) {
+    MS_LOG(ERROR) << "model_data is nullptr.";
+    return kLiteParamInvalid;
+  }
+  if (model_type != kMindIR && model_type != kMindIR_Lite) {
+    MS_LOG(ERROR) << "Unsupported Export Format " << model_type;
+    return kLiteParamInvalid;
+  }
+  if (model.impl_->session_ == nullptr) {
+    MS_LOG(ERROR) << "Model session is nullptr.";
+    return kLiteError;
+  }
+  auto ret = model.impl_->session_->Export(model_data, export_inference_only ? lite::MT_INFERENCE : lite::MT_TRAIN,
+                                           A2L_ConvertQT(quantization_type), lite::FT_FLATBUFFERS,
+                                           VectorCharToString(output_tensor_name));
+
+  return (ret == mindspore::lite::RET_OK) ? kSuccess : kLiteError;
 }
 
 Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::vector<char> &model_file,
