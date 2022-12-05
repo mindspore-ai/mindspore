@@ -191,7 +191,19 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 
   // create acl tdt handle
   if (!channel_name_.empty()) {
-    const size_t capacity = 128;
+    // When "capacity" is too large, device memory will be exploded
+    size_t capacity = 16;
+    std::string env_capacity_str = common::GetEnv("MS_DATASET_SINK_QUEUE");
+    if (!env_capacity_str.empty()) {
+      int32_t env_capacity = atoi(env_capacity_str.c_str());
+      if (env_capacity <= 0) {
+        MS_LOG(EXCEPTION) << "Invalid data queue capacity.#umsg#User Help Message:#umsg#"
+                             "Expect env variable MS_DATASET_SINK_QUEUE > 0."
+                          << ascend::GetErrorMessage(true);
+      }
+      capacity = env_capacity;
+    }
+    MS_LOG(INFO) << "The capacity of data queue is: " << capacity;
     acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), capacity);
     if (acl_handle_ == nullptr) {
       MS_LOG(INFO) << "Select the TDT process.";
