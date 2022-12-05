@@ -29,40 +29,32 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace parallel {
-std::string GetOpPythonPath(const OperatorName &op_name) {
-  // almost all ops are defined in two main paths
-  const std::string ops_module = OP_PATH;
-  const std::string inner_ops_module = INNER_OP_PATH;
-  const std::string grad_ops_module = GRAD_OP_PATH;
-  const std::string functional_op_module = FUNCTIONAL_OP_PATH;
-  py::module mod = py::module::import(common::SafeCStr(ops_module));
-  py::module inner_mod = py::module::import(common::SafeCStr(inner_ops_module));
-  py::module grad_mod = py::module::import(common::SafeCStr(grad_ops_module));
-  py::module functional_mod = py::module::import(common::SafeCStr(functional_op_module));
+const char *GetOpPythonPath(const char *op_name) {
+  static py::module inner_mod = py::module::import(INNER_OP_PATH);
+  if (py::hasattr(inner_mod, op_name)) {
+    return INNER_OP_PATH;
+  }
 
-  if (py::hasattr(inner_mod, common::SafeCStr(op_name))) {
-    return inner_ops_module;
+  static py::module mod = py::module::import(OP_PATH);
+  if (py::hasattr(mod, op_name)) {
+    return OP_PATH;
   }
-  if (py::hasattr(mod, common::SafeCStr(op_name))) {
-    return ops_module;
+
+  static py::module grad_mod = py::module::import(GRAD_OP_PATH);
+  if (py::hasattr(grad_mod, op_name)) {
+    return GRAD_OP_PATH;
   }
-  if (py::hasattr(grad_mod, common::SafeCStr(op_name))) {
-    return grad_ops_module;
+
+  static py::module functional_mod = py::module::import(FUNCTIONAL_OP_PATH);
+  if (!py::hasattr(functional_mod, op_name)) {
+    MS_LOG(EXCEPTION) << OP_PATH << " and " << INNER_OP_PATH << " and " << GRAD_OP_PATH << " and " << FUNCTIONAL_OP_PATH
+                      << " don't have op:" << op_name;
   }
-  if (!py::hasattr(functional_mod, common::SafeCStr(op_name))) {
-    MS_LOG(EXCEPTION) << ops_module << " and " << inner_ops_module << " and " << grad_ops_module << " and "
-                      << functional_op_module << " don't have op:" << op_name;
-  }
-  return functional_op_module;
+  return FUNCTIONAL_OP_PATH;
 }
 
 ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name) {
-  std::string op_path = GetOpPythonPath(op_name);
-  py::module mod = py::module::import(common::SafeCStr(op_path));
-  if (!py::hasattr(mod, common::SafeCStr(op_name))) {
-    MS_LOG(ERROR) << "Failure: op_path:" << op_path << " don't have attr " << op_name;
-    return nullptr;
-  }
+  const auto op_path = GetOpPythonPath(op_name.c_str());
   std::vector<py::object> arg_list;
   (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arg_list),
                        [](const Attr &attr) { return ValueToPyData(attr.second); });

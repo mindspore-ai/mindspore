@@ -29,6 +29,18 @@
 namespace mindspore {
 namespace pynative {
 namespace PyNativeAlgo {
+namespace {
+void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
+  // Clone a new prim
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  op_run_info->op_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim));
+  MS_EXCEPTION_IF_NULL(op_run_info->op_prim->adapter());
+  if (op_run_info->op_prim->adapter()->attached_primitive() == nullptr) {
+    op_run_info->op_prim->adapter()->set_attached_primitive(op_run_info->op_prim);
+  }
+}
+}  // namespace
+
 std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<tensor::Tensor>()) {
@@ -517,12 +529,8 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
   bool need_convert_input_to_attr = NeedConvertConstInputToAttr(op_run_info, device_target, &input_to_attr);
   MS_LOG(DEBUG) << "Need convert input to addr " << need_convert_input_to_attr;
   if (need_convert_input_to_attr) {
-    // Clone a new prim
-    op_run_info->op_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim));
-    MS_EXCEPTION_IF_NULL(op_run_info->op_prim->adapter());
-    if (op_run_info->op_prim->adapter()->attached_primitive() == nullptr) {
-      op_run_info->op_prim->adapter()->set_attached_primitive(op_run_info->op_prim);
-    }
+    // Prim may be changed attr
+    ClonePrim(op_run_info);
   }
   const auto &op_prim = op_run_info->op_prim;
 
@@ -538,10 +546,17 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
     // Mark tensors, common tensor data : 0, weight param: 1, valuenode(float_, int_): 2
     ConvertValueToTensor(op_run_info, input_object, index, op_prim);
     // -1 indicates input_object is not a dynInput
-    if (op_prim->HasAttr(kAttrDynInputSizes) && !input_object->isa<ValueSequence>()) {
-      auto dyn_v = GetValue<const std::vector<int64_t>>(op_prim->GetAttr(kAttrDynInputSizes));
-      (void)dyn_v.emplace_back(-1);
-      op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+    if (op_prim->HasAttr(kAttrDynInputSizes)) {
+      if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
+        // Like addn, prim define in python, but number of inputs change, so the value of kAttrDynInputSizes
+        // changed too. In async, do opgrad may be not complete.
+        ClonePrim(op_run_info);
+      }
+      if (!input_object->isa<ValueSequence>()) {
+        auto dyn_v = GetValue<const std::vector<int64_t>>(op_prim->GetAttr(kAttrDynInputSizes));
+        (void)dyn_v.emplace_back(-1);
+        op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+      }
     }
   }
   op_prim->EndRecordAddAttr();

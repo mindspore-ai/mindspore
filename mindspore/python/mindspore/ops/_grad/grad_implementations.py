@@ -229,5 +229,5 @@ def bprop_scalar_not(x, out, dout):
 
 @bprops.register("TensorMove")
 def bprop_tensor_move(x, out, dout):
-    """Backpropagator for primitive `mutable`."""
+    """Backpropagator for primitive `TensorMove`."""
     return (dout,)

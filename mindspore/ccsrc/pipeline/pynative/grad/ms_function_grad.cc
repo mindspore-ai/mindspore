@@ -230,11 +230,11 @@ void MsFunction::GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const G
     } else {
       top_cell->fg()->add_parameter(param);
       param->debug_info()->set_name(param->name());
+      top_cell->SetParamNodeMapInGraphInfoMap(tensor_value->id(), param, true);
     }
     (void)new_params.emplace_back(param);
     (void)input_nodes->emplace_back(param);
     (void)op_run_info->input_value.emplace_back(tensor_value);
-    top_cell->SetParamNodeMapInGraphInfoMap(tensor_value->id(), param, true);
     MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
                   << tensor_value->ToString() << ". Its name is: " << param->name();
   }

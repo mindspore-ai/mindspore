@@ -82,6 +82,10 @@ class GradExecutor {
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
   }
+  inline InputArgsInfoPtr top_input_args_info() const {
+    MS_EXCEPTION_IF_NULL(top_input_args_info_);
+    return top_input_args_info_;
+  }
 
   inline bool need_renormalize() const { return need_renormalize_; }
   inline void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
@@ -110,15 +114,14 @@ class GradExecutor {
                            const std::vector<tensor::TensorPtr> &pre_tensors) const;
   void ClearRes();
   void WorkerJoin() { async_executor_->WorkerJoin(); }
-  void CheckGraphDynamic(const CNodePtr &cnode, const size_t &node_idx, bool is_ms_function_node = false,
+  void CheckGraphDynamic(const CNodePtr &cnode, const size_t node_idx, bool is_ms_function_node = false,
                          const std::string &graph_phase = "") const;
 
  private:
   ForwardExecutorPtr forward() const;
   inline FuncGraphPtr curr_g() const { return top_cell()->fg(); }
   inline void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell) { high_order_stack_.push(top_cell); }
-  std::string GetCurCellOrder() const;
-  void SetGradOrder(const std::string &cell_id);
+  void SetGradOrder(const std::string &obj_id);
   void SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
                          const CNodePtr &cnode) const;
   void DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNodePtr &cnode, const ValuePtr &op_out) const;
@@ -154,7 +157,6 @@ class GradExecutor {
   void HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info, bool is_bprop_top) const;
   void InitResourceAndDfBuilder(const InputArgsInfoPtr &cell_info);
   void MakeNewTopGraph(const InputArgsInfoPtr &input_args_info);
-  void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph) const;
 
   // Manage resource when run grad process.
   bool IsBpropGraph(const std::string &cell_id) const;
@@ -163,6 +165,8 @@ class GradExecutor {
   void NewGraphImpl(const InputArgsInfoPtr &input_args_info);
   void AsyncNewGraphImpl(const InputArgsInfoPtr &input_args_info);
   void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
+  void UpdateInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::object &out,
+                           const py::args &args);
   void EndGraphImpl(const InputArgsInfoPtr &input_args_info);
   void AsyncEndGraphImpl(const InputArgsInfoPtr &input_args_info);
   void SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const;
@@ -188,9 +192,9 @@ class GradExecutor {
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
 
-  void SaveDynamicDetectNodeInfoInFirstTime(const CNodePtr &cnode, const size_t &node_idx, bool is_ms_function_node,
+  void SaveDynamicDetectNodeInfoInFirstTime(const CNodePtr &cnode, const size_t node_idx, bool is_ms_function_node,
                                             const std::string &graph_phase) const;
-  bool IsGraphDynamic(const CNodePtr &cnode, const size_t &node_idx, bool is_ms_function_node,
+  bool IsGraphDynamic(const CNodePtr &cnode, const size_t node_idx, bool is_ms_function_node,
                       const std::string &graph_phase) const;
 
   bool grad_flag_{false};
@@ -200,16 +204,11 @@ class GradExecutor {
   mutable bool use_dynamic_shape_process_{false};
   mutable bool is_cell_id_in_dynamic_detect_nodes_map_{false};
   int custom_bprop_cell_count_{0};
-
-  // Used in sub thread
-  size_t cell_order_{0};
-  std::string cur_cell_id_;
-
+  size_t obj_order_{0};
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};
   std::string grad_operation_;
   TopCellInfoPtr top_cell_{nullptr};
-  TopCellInfoPtr pre_top_cell_{nullptr};
   InputArgsInfoPtr top_input_args_info_{nullptr};
   // Records every cell info for share, regardless of whether need construct grad graph
   std::stack<InputArgsInfoPtr> input_args_info_stack_;
