@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_fusion_pass.h"
-#include "kernel/kernel_fusion.h"
+
+#include <set>
+#include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
@@ -55,7 +57,8 @@ void Conv2DBackpropEltwiseFusionPass::MatchSingleFusionPattern(const session::Ke
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
+    std::set<std::string> support_type = {kReluOpName, kPReluOpName, kLeakyReluOpName};
+    if (support_type.count(common::AnfAlgo::GetCNodeName(cnode)) > 0) {
       MatchConv2DBackpropInputEltwise(cnode, candidate_fusion);
     }
   }
