@@ -30,20 +30,23 @@
 
 namespace mindspore::expander::bprop {
 namespace {
-NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis) {
-  auto dx_origin_dtypeptr = ib->GetDtype(dx);
+static NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std::vector<int64_t> &axis,
+                                 const ShapeVector &shape_x) {
+  auto reduce_x = dx;
   auto need_reduce = ib->NeedReduce(ib->GetShape(dx), axis, false);
-  if (!need_reduce.first) {
-    return ib->Reshape(dx, need_reduce.second);
+  if (need_reduce.first) {
+    auto dx_origin_dtypeptr = ib->GetDtype(dx);
+    auto dx_origin_dtype = dx_origin_dtypeptr->type_id();
+    if (dx_origin_dtype == TypeId::kNumberTypeInt16 || dx_origin_dtype == TypeId::kNumberTypeInt32 ||
+        dx_origin_dtype == TypeId::kNumberTypeInt64) {
+      auto dx_fp32 = ib->Cast(dx, kFloat32);
+      auto red = ib->Emit("ReduceSum", {dx_fp32, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
+      reduce_x = ib->Cast(red, dx_origin_dtypeptr);
+    } else {
+      reduce_x = ib->Emit("ReduceSum", {dx, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
+    }
   }
-  auto dx_origin_dtype = dx_origin_dtypeptr->type_id();
-  if (dx_origin_dtype == TypeId::kNumberTypeInt16 || dx_origin_dtype == TypeId::kNumberTypeInt32 ||
-      dx_origin_dtype == TypeId::kNumberTypeInt64) {
-    auto dx_fp32 = ib->Cast(dx, kFloat32);
-    auto red = ib->Emit("ReduceSum", {dx_fp32, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
-    return ib->Cast(red, dx_origin_dtypeptr);
-  }
-  return ib->Emit("ReduceSum", {dx, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
+  return ib->Reshape(reduce_x, shape_x);
 }
 
 void ComputeReduceIndex(const std::vector<int64_t> &x_rev, const std::vector<int64_t> &y_rev,
@@ -234,19 +237,11 @@ NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const No
 
   std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(shape_x, shape_y);
   if (!bc_axis[0].empty()) {
-    auto dx_shape = ib->GetShape(dx);
-    if (!dx_shape.empty()) {
-      reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0]);
-    }
-    reduce_dx = ib->Reshape(reduce_dx, shape_x);
+    reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
   }
 
   if (!bc_axis[1].empty()) {
-    auto dy_shape = ib->GetShape(dy);
-    if (!dy_shape.empty()) {
-      reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1]);
-    }
-    reduce_dy = ib->Reshape(reduce_dy, shape_y);
+    reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
   }
   return {reduce_dx, reduce_dy};
 }
@@ -271,19 +266,11 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
 
   std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
   if (!bc_axis[0].empty()) {
-    auto dx_shape = ib->GetShape(dx);
-    if (!dx_shape.empty()) {
-      reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0]);
-    }
-    reduce_dx = ib->Reshape(reduce_dx, shape_x);
+    reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
   }
 
   if (!bc_axis[1].empty()) {
-    auto dy_shape = ib->GetShape(dy);
-    if (!dy_shape.empty()) {
-      reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1]);
-    }
-    reduce_dy = ib->Reshape(reduce_dy, shape_y);
+    reduce_dy = ReduceSumWithCast(ib, reduce_dy, bc_axis[1], shape_y);
   }
   return {reduce_dx, reduce_dy};
 }
