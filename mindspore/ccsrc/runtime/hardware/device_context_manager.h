@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_DEVICE_CONTEXT_MANAGER_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_DEVICE_CONTEXT_MANAGER_H_
 
+#include <set>
 #include <map>
 #include <string>
 #include <memory>
@@ -60,6 +61,7 @@ class BACKEND_EXPORT DeviceContextManager {
   ~DeviceContextManager() = default;
   DISABLE_COPY_AND_ASSIGN(DeviceContextManager);
   void LoadPlugin();
+  void SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names);
 
   std::map<std::string, void *> plugin_maps_;
   bool load_init_;
