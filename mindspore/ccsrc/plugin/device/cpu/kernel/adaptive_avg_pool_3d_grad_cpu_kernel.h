@@ -19,32 +19,45 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class AdaptiveAvgPool3DGradCPUKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdaptiveAvgPool3DGradCPUKernelMod : public NativeCpuKernelMod {
  public:
   AdaptiveAvgPool3DGradCPUKernelMod() = default;
   ~AdaptiveAvgPool3DGradCPUKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename SCALAR_T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
+  using AdaptiveAvgPool3DGradLaunchFunc = std::function<bool(
+    AdaptiveAvgPool3DGradCPUKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, AdaptiveAvgPool3DGradLaunchFunc>> func_list_;
+  AdaptiveAvgPool3DGradLaunchFunc kernel_func_;
+
   std::vector<int64_t> grad_output_dim_sizes_;
   std::vector<int64_t> orig_input_shape_dim_sizes_;
   std::vector<int64_t> grad_input_dim_sizes_;
   TypeId dtype_{kTypeUnknown};
-
-  template <typename SCALAR_T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

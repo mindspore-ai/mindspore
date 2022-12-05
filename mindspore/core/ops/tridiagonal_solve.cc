@@ -31,33 +31,37 @@ namespace {
 abstract::ShapePtr TridiagonalSolveInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+
   auto diagonals_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto rhs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto diagonals_shp = diagonals_shape_map[kShape];
   auto rhs_shp = rhs_shape_map[kShape];
-  int numberforthelastsecend = 2;
-  int numberofdiagonals = 3;
-  if (static_cast<int>(diagonals_shp.size()) <= 1) {
-    MS_EXCEPTION(ValueError)
-      << "For TridiagonalSolve, the dimensions of the input diagonals should be more than 1, but got "
-      << diagonals_shp.size() << ".";
+
+  std::vector<ShapeVector> all_shapes = {diagonals_shp, rhs_shp};
+  auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
+  auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
+
+  const int64_t kNumOne = 1;
+  const int64_t numberofdiagonals = 3;
+  const size_t numberforthelastsecend = 2;
+  const size_t rank_diagonals = diagonals_shp.size();
+  const size_t rank_rhs = rhs_shp.size();
+
+  if (!is_dynamic_rank) {
+    CheckAndConvertUtils::CheckInteger("the rank of the input diagonals", SizeToLong(rank_diagonals), kGreaterThan,
+                                       kNumOne, prim_name);
+    CheckAndConvertUtils::CheckInteger("the rank of the input diagonals and rhs", SizeToLong(rank_diagonals), kEqual,
+                                       SizeToLong(rank_rhs), prim_name);
   }
 
-  if (diagonals_shp.size() != rhs_shp.size()) {
-    MS_EXCEPTION(ValueError) << "For TridiagonalSolve, expected the rank of diagonals and rhs to be the same, but got "
-                             << diagonals_shp.size() << " and " << rhs_shp.size() << ".";
-  }
-
-  if (diagonals_shp[diagonals_shp.size() - numberforthelastsecend] != numberofdiagonals) {
-    MS_EXCEPTION(ValueError)
-      << "For TridiagonalSolve, the last second dimension of the input diagonals should be 3, but got "
-      << diagonals_shp[diagonals_shp.size() - numberforthelastsecend] << ".";
-  }
-
-  if (diagonals_shp[diagonals_shp.size() - 1] != rhs_shp[rhs_shp.size() - numberforthelastsecend]) {
-    MS_EXCEPTION(ValueError)
-      << "For TridiagonalSolve, the last dimension of the input diagonals and the last second dimension of the input "
-      << diagonals_shp[diagonals_shp.size() - 1] << " and " << rhs_shp[rhs_shp.size() - numberforthelastsecend] << ".";
+  if (!is_dynamic) {
+    CheckAndConvertUtils::CheckInteger("the last second dimension of the input diagonals",
+                                       diagonals_shp[rank_diagonals - numberforthelastsecend], kEqual,
+                                       numberofdiagonals, prim_name);
+    CheckAndConvertUtils::CheckInteger(
+      "the last dimension of the input diagonals and the last second dimension of the input rhs",
+      diagonals_shp[rank_diagonals - 1], kEqual, rhs_shp[rank_rhs - numberforthelastsecend], prim_name);
   }
 
   return std::make_shared<abstract::Shape>(rhs_shp);
@@ -75,7 +79,12 @@ TypePtr TridiagonalSolveInferType(const PrimitivePtr &prim, const std::vector<Ab
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(TridiagonalSolve, BaseOperator);
+bool TridiagonalSolve::get_partial_pivoting() const {
+  auto value_ptr = GetAttr("partial_pivoting");
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<bool>(value_ptr);
+}
+
 AbstractBasePtr TridiagonalSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -86,6 +95,7 @@ AbstractBasePtr TridiagonalSolveInfer(const abstract::AnalysisEnginePtr &, const
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
+MIND_API_OPERATOR_IMPL(TridiagonalSolve, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(TridiagonalSolve, prim::kPrimTridiagonalSolve, TridiagonalSolveInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

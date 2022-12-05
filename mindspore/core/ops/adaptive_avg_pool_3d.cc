@@ -33,17 +33,25 @@ abstract::ShapePtr AdaptiveAvgPool3DInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  const int64_t input_num_dims = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInRange("the rank of x", input_num_dims, kIncludeBoth, {4, 5}, op_name);
-  for (size_t i = 0; i < x_shape.size(); i++) {
-    CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1, op_name);
-  }
 
   const auto &output_size_ptr = primitive->GetAttr("output_size");
   MS_EXCEPTION_IF_NULL(output_size_ptr);
   const auto &output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
   (void)CheckAndConvertUtils::CheckInteger("length of output_size", SizeToLong(output_size.size()), kEqual,
                                            kOutputSizeLen, op_name);
+
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+
+  const int64_t input_num_dims = SizeToLong(x_shape.size());
+  CheckAndConvertUtils::CheckInRange("the rank of x", input_num_dims, kIncludeBoth, {4, 5}, op_name);
+  if (!IsDynamic(x_shape)) {
+    for (size_t i = 0; i < x_shape.size(); i++) {
+      CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1,
+                                         op_name);
+    }
+  }
 
   // Update the output shape by output size and input shape.
   auto input_size_iter = x_shape.rbegin();
@@ -54,6 +62,7 @@ abstract::ShapePtr AdaptiveAvgPool3DInferShape(const PrimitivePtr &primitive,
       *input_size_iter = *output_size_iter;
     }
   }
+
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
@@ -66,7 +75,6 @@ TypePtr AdaptiveAvgPool3DInferType(const PrimitivePtr &primitive, const std::vec
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(AdaptiveAvgPool3D, BaseOperator);
 AbstractBasePtr AdaptiveAvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -82,6 +90,7 @@ std::vector<int64_t> AdaptiveAvgPool3D::get_output_size() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
+MIND_API_OPERATOR_IMPL(AdaptiveAvgPool3D, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveAvgPool3D, prim::kPrimAdaptiveAvgPool3D, AdaptiveAvgPool3DInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

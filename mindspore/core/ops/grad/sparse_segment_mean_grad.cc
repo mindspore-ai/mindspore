@@ -39,15 +39,23 @@ abstract::ShapePtr SparseSegmentMeanGradInferShape(const PrimitivePtr &prim,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto output_dim0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+
   if (x_shape.size() < kRankNum1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor x's rank cannot be less than 1.";
   }
-  if (output_dim0_shape.size() != kRankNum0) {
+  if (!IsDynamic(output_dim0_shape) && output_dim0_shape.size() != kRankNum0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor outputdim0 should be a scalar.";
   }
-  if (indices_shape[kShapeNum0] != segment_ids_shape[kShapeNum0]) {
+  if (!IsDynamic(indices_shape) && !IsDynamic(segment_ids_shape) &&
+      indices_shape[kShapeNum0] != segment_ids_shape[kShapeNum0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor indices & segment_ids's ranks mismatch.";
   }
+
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+
+  ShapeVector y_shape = x_shape;
   if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
     auto output_dim0_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
@@ -60,14 +68,13 @@ abstract::ShapePtr SparseSegmentMeanGradInferShape(const PrimitivePtr &prim,
     if (dim_zero <= kDimNum0) {
       MS_EXCEPTION(ValueError) << "Input output_dim0 must > 0!";
     } else {
-      ShapeVector y_shape = x_shape;
       y_shape[kShapeNum0] = dim_zero;
-      return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
-    std::vector<int64_t> output_shape = {-2};
-    return std::make_shared<abstract::Shape>(output_shape);
+    y_shape[kShapeNum0] = abstract::Shape::kShapeDimAny;
   }
+
+  return std::make_shared<abstract::Shape>(y_shape);
 }
 
 TypePtr SparseSegmentMeanGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -86,18 +93,19 @@ TypePtr SparseSegmentMeanGradInferType(const PrimitivePtr &prim, const std::vect
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SparseSegmentMeanGrad, BaseOperator);
 AbstractBasePtr SparseSegmentMeanGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t input_num = static_cast<int64_t>(kInputIndex4);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  const int64_t kInputNum = 4;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto types = SparseSegmentMeanGradInferType(prim, input_args);
   auto shapes = SparseSegmentMeanGradInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
+
 REGISTER_HOST_DEPENDS(kNameSparseSegmentMeanGrad, {3});
+MIND_API_OPERATOR_IMPL(SparseSegmentMeanGrad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentMeanGrad, prim::kPrimSparseSegmentMeanGrad, SparseSegmentMeanGradInfer,
                              nullptr, true);
 }  // namespace ops
