@@ -3056,6 +3056,11 @@ def matmul(x, y):
     return F.matmul(x, y)
 
 
+def inner(x, other):
+    """Computes the inner product of 2 tensors."""
+    return F.inner(x, other)
+
+
 def float_bool(x):
     """Implementation of `float_bool`."""
     return x != 0.0

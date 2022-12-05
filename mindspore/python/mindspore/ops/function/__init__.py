@@ -284,6 +284,7 @@ from .math_func import (
     trunc,
     gumbel_softmax,
     matmul,
+    inner,
     baddbmm,
     cummin,
     cummax,

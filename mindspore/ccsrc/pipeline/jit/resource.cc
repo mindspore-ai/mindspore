@@ -413,6 +413,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"lstsq", std::string("lstsq")},                                    // lstsq()
        {"mvlgamma", std::string("mvlgamma")},                              // mvlgamma()
        {"matmul", std::string("matmul")},                                  // matmul()
+       {"inner", std::string("inner")},                                    // inner()
        {"maximum", std::string("maximum")},                                // maximum()
        {"msort", std::string("msort")},                                    // msort()
        {"mm", std::string("mm")},                                          // mm()
