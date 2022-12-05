@@ -870,13 +870,13 @@ std::vector<int64_t> CheckAndConvertUtils::CheckTupleInt(const std::string &arg_
       attr_vec.begin(), attr_vec.end(), std::back_inserter(result), [=](const ValuePtr &e) -> int64_t {
         if (!e->isa<Int64Imm>()) {
           MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
-                                  << " must be a tuple with all Int elements, but got " << attr->ToString();
+                                  << " must be a tuple with all Int elements, but got " << attr->type_name();
         }
         return GetValue<int64_t>(e);
       });
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
-                            << " must be a tuple with all Int elements, but got " << attr->ToString() << ".";
+                            << " must be a tuple with all Int elements, but got " << attr->type_name() << ".";
   }
   return result;
 }
