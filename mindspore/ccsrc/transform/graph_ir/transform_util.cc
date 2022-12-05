@@ -57,7 +57,7 @@ static std::map<MeDataType, GeDataType> datatype_trans_map = {
   {MeDataType::kNumberTypeInt64, GeDataType::DT_INT64},     {MeDataType::kNumberTypeUInt8, GeDataType::DT_UINT8},
   {MeDataType::kNumberTypeUInt16, GeDataType::DT_UINT16},   {MeDataType::kNumberTypeUInt32, GeDataType::DT_UINT32},
   {MeDataType::kNumberTypeUInt64, GeDataType::DT_UINT64},   {MeDataType::kNumberTypeBool, GeDataType::DT_BOOL},
-  {MeDataType::kObjectTypeString, GeDataType::DT_STRING}};
+  {MeDataType::kObjectTypeString, GeDataType::DT_STRING},   {MeDataType::kNumberTypeFloat, GeDataType::DT_FLOAT}};
 
 GeDataType TransformUtil::ConvertDataType(const MeDataType &type) {
   MS_LOG(DEBUG) << "Convert me data type: " << TypeIdLabel(type) << " to ge data type";
@@ -74,7 +74,8 @@ static std::map<MeDataType, size_t> datatype_size_map = {
   {MeDataType::kNumberTypeInt16, sizeof(int16_t)},     {MeDataType::kNumberTypeInt32, sizeof(int32_t)},
   {MeDataType::kNumberTypeInt64, sizeof(int64_t)},     {MeDataType::kNumberTypeUInt8, sizeof(uint8_t)},
   {MeDataType::kNumberTypeUInt16, sizeof(uint16_t)},   {MeDataType::kNumberTypeUInt32, sizeof(uint32_t)},
-  {MeDataType::kNumberTypeUInt64, sizeof(uint64_t)},   {MeDataType::kNumberTypeBool, sizeof(bool)}};
+  {MeDataType::kNumberTypeUInt64, sizeof(uint64_t)},   {MeDataType::kNumberTypeBool, sizeof(bool)},
+  {MeDataType::kNumberTypeFloat, sizeof(float)}};
 
 size_t TransformUtil::GetDataTypeSize(const MeDataType &type) {
   if (datatype_size_map.find(type) != datatype_size_map.end()) {
