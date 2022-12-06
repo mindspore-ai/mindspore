@@ -37,9 +37,9 @@ constexpr size_t kMaxConfigNumPerSection = 1000;
 }  // namespace
 void ModelImpl::SetMsContext() {
   if (MsContext::GetInstance() != nullptr) {
-    auto back_policy_env = std::getenv("MSLITE_ENABLE_HELPER");
+    auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
     if (back_policy_env != nullptr) {
-      MsContext::GetInstance()->set_backend_policy("ge");
+      MsContext::GetInstance()->set_backend_policy(std::string(back_policy_env));
     }
   }
 }

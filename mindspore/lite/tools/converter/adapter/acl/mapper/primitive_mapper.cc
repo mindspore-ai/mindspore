@@ -198,19 +198,18 @@ STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
   }
 
   auto inputs = cnode->inputs();
+  ParameterPtr param_node = nullptr;
   switch (flag) {
     case (kNumFlagOne): {
       auto value_data = opt::CastToVec2DInt(attr_val);
-      auto param_node =
+      param_node =
         opt::BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
       break;
     }
     case (kNumFlagTwo): {
       auto value_data = GetValue<float>(attr_val);
-      auto param_node =
+      param_node =
         opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
       break;
     }
     case (kNumFlagThree): {
@@ -219,15 +218,17 @@ STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
         MS_LOG(ERROR) << "Invalid size: " << value_data.size();
         return lite::RET_ERROR;
       }
-      auto param_node =
+      param_node =
         opt::BuildIntValueParameterNode(func_graph, value_data[0], cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
       break;
     }
     default:
       MS_LOG(ERROR) << "Invalid flag for attr: " << flag;
       return lite::RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "param_node is nullptr.");
+  param_node->set_debug_info(std::make_shared<NodeDebugInfo>(cnode->fullname_with_scope() + "_" + attr_name));
+  inputs.push_back(param_node);
   cnode->set_inputs(inputs);
   return lite::RET_OK;
 }

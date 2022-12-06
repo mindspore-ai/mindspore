@@ -36,9 +36,6 @@ class MIND_API ScatterElements : public BaseOperator {
   void set_axis(const int64_t axis);
 
   int64_t get_axis() const;
-
- private:
-  int64_t axis_ = 0;
 };
 abstract::AbstractBasePtr ScatterElementsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<abstract::AbstractBasePtr> &input_args);

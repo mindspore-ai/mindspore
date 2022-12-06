@@ -38,7 +38,7 @@ PrimitiveCPtr OnnxTopkParser::Parse(const onnx::GraphProto &onnx_graph, const on
     } else if (attribute_name == "largest") {
       prim->set_largest(static_cast<int64_t>(onnx_node_attr.i()));
     } else if (attribute_name == "sorted") {
-      prim->set_sorted(static_cast<int64_t>(onnx_node_attr.i()));
+      prim->set_sorted(static_cast<bool>(onnx_node_attr.i()));
     }
   }
 
