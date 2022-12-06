@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
@@ -171,10 +172,13 @@ class TFRecordNode : public NonMappableSourceNode {
   /// Check and return if compression type is invalid or number of files in dataset_files is less than num_shards
   Status ValidateTFRecordCompressionType(const std::string &compression_type,
                                          const std::vector<std::string> &dataset_files, int32_t num_shards,
-                                         int64_t num_samples);
+                                         int64_t num_samples) const;
 
   /// Record large tf file and log a warning.
   void CheckLargeFile(const std::string &filename, std::ifstream *reader);
+
+  /// Helper function to get NonMappableLeafOp::CompressionType based on compression_type_ and num_samples_
+  Status HelperGetCompressType(NonMappableLeafOp::CompressionType *compression_type);
 
   std::vector<std::string> dataset_files_;
   std::string schema_path_;  // schema_path_ path to schema file. It is set when type of schema parameter is string

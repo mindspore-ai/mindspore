@@ -84,11 +84,8 @@ Status TFReaderOp::Init() {
     RETURN_IF_NOT_OK(CreateSchema(dataset_files_list_[0], columns_to_load_));
   }
 
-  if (compression_type_ == CompressionType::None && total_rows_ == 0) {
+  if (compression_type_ == CompressionType::NONE && total_rows_ == 0) {
     total_rows_ = data_schema_->NumRows();
-  } else if (total_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "[Internal ERROR] num_samples for TFRecordDataset cannot be 0 when compression_type is specified");
   }
   if (total_rows_ < 0) {
     RETURN_STATUS_UNEXPECTED(
@@ -113,12 +110,12 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
     return Status::OK();
   }
 
-  if (compression_type_ != CompressionType::None) {
+  if (compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::ZLIB) {
     num_rows_per_shard_ = total_rows_;
   } else {
     for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
       std::vector<std::string> file(1, it.value());
-      int64_t num = CountTotalRowsSectioned(file, 0, 1);
+      int64_t num = CountTotalRowsSectioned(file, 0, 1, compression_type_);
       filename_numrows_[it.value()] = num;
       num_rows_ += num;
     }
@@ -147,14 +144,13 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
   }
   std::string realpath_value = realpath.value();
 
-  if (compression_type_ == CompressionType::None) {
+  if (compression_type_ == CompressionType::NONE) {
     RETURN_IF_NOT_OK(HelperLoadNonCompFile(filename, start_offset, end_offset, worker_id, realpath_value));
   }
 #if !defined(_WIN32) && !defined(_WIN64)
-  if (compression_type_ == CompressionType::GZIP) {
+  if (compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::GZIP_WITH_COUNT) {
     RETURN_IF_NOT_OK(HelperLoadCompGZIPFile(filename, start_offset, end_offset, worker_id, realpath_value));
-  } else if (compression_type_ == CompressionType::ZLIB) {
-    // Status is: Interrupted system call
+  } else if (compression_type_ == CompressionType::ZLIB || compression_type_ == CompressionType::ZLIB_WITH_COUNT) {
     RETURN_IF_NOT_OK(HelperLoadCompZLIBFile(filename, start_offset, end_offset, worker_id, realpath_value));
   }
 #endif
@@ -170,7 +166,6 @@ Status TFReaderOp::HelperLoadNonCompFile(const std::string &filename, int64_t st
     RETURN_STATUS_UNEXPECTED("Invalid file, " + filename + " open failed: permission denied!");
   }
 
-  int64_t rows_read = 0;
   int64_t rows_total = 0;
 
   while (reader.peek() != EOF) {
@@ -188,10 +183,10 @@ Status TFReaderOp::HelperLoadNonCompFile(const std::string &filename, int64_t st
 
     // read serialized Example
     std::string serialized_example;
-    serialized_example.resize(record_length);
+    serialized_example.resize(static_cast<size_t>(record_length));
     (void)reader.read(&serialized_example[0], static_cast<std::streamsize>(record_length));
 
-    int32_t num_columns = data_schema_->NumColumns();
+    int32_t num_columns = static_cast<int32_t>(data_schema_->NumColumns());
     TensorRow newRow(num_columns, nullptr);
 
     if (start_offset == kInvalidOffset || (rows_total >= start_offset && rows_total < end_offset)) {
@@ -205,7 +200,6 @@ Status TFReaderOp::HelperLoadNonCompFile(const std::string &filename, int64_t st
       std::vector<std::string> file_path(num_columns, filename);
       newRow.setPath(file_path);
       RETURN_IF_NOT_OK(LoadExample(&tf_record_file, &newRow));
-      rows_read++;
       RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(newRow)));
     }
 
@@ -227,7 +221,11 @@ Status TFReaderOp::HelperLoadCompGZIPFile(const std::string &filename, int64_t s
   int64_t rows_read = 0;
   int64_t rows_total = 0;
 
-  while (gzeof(file) != 1 && rows_read < end_offset) {
+  while (gzeof(file) != 1) {
+    if (compression_type_ == CompressionType::GZIP && rows_read >= end_offset) {
+      break;
+    }
+
     if (!load_jagged_connector_) {
       break;
     }
@@ -260,10 +258,10 @@ Status TFReaderOp::HelperLoadCompGZIPFile(const std::string &filename, int64_t s
 
     // read serialized Example
     std::string serialized_example;
-    serialized_example.resize(record_length);
-    (void)gzread(file, &serialized_example[0], record_length);
+    serialized_example.resize(static_cast<size_t>(record_length));
+    (void)gzread(file, &serialized_example[0], static_cast<unsigned int>(record_length));
 
-    int32_t num_columns = data_schema_->NumColumns();
+    int32_t num_columns = static_cast<int32_t>(data_schema_->NumColumns());
     TensorRow newRow(num_columns, nullptr);
 
     if (start_offset == kInvalidOffset || (rows_total >= start_offset && rows_total < end_offset)) {
@@ -284,8 +282,8 @@ Status TFReaderOp::HelperLoadCompGZIPFile(const std::string &filename, int64_t s
     rows_total++;
   }
 
-  gzclose(file);
-  if (rows_read < end_offset) {
+  (void)gzclose(file);
+  if (compression_type_ == CompressionType::GZIP && rows_read < end_offset) {
     std::string errMsg = "This tfrecord file: " + filename +
                          ", does not meet minimum rows per shard requirement: " + std::to_string(total_rows_) +
                          " and " + std::to_string(static_cast<int>(total_rows_ / num_devices_)) +
@@ -316,13 +314,17 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
 
   // decompress until inflate stream ends or end of file
   do {
+    if (compression_type_ == CompressionType::ZLIB && rows_read >= end_offset) {
+      break;
+    }
+
     if (!load_jagged_connector_) {
       break;
     }
     RETURN_IF_INTERRUPTED();
 
-    reader.read(zlib_stream.input_stream, kZLIBChunkSize);
-    zlib_stream.strm.avail_in = reader.gcount();
+    (void)reader.read(zlib_stream.input_stream, kZLIBChunkSize);
+    zlib_stream.strm.avail_in = static_cast<unsigned int>(reader.gcount());
     if (zlib_stream.strm.avail_in == 0) {
       break;
     }
@@ -331,6 +333,10 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
     // run inflate() on input buffer until current output buffer is not full yet but still need more from input buffer,
     // or rows_read have exceeded the required number of rows to be read (end_offset)
     do {
+      if (compression_type_ == CompressionType::ZLIB && rows_read >= end_offset) {
+        break;
+      }
+
       // inflate the stream
       RETURN_IF_NOT_OK(HelperInflateZLIB(&zlib_stream, filename));
       if (zlib_stream.left_to_read != 0) {
@@ -340,17 +346,17 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
       // Process inflated data depending on read flag
       RETURN_IF_NOT_OK(
         HelperProcessZLIBData(&zlib_stream, &rows_read, &rows_total, filename, start_offset, end_offset, worker_id));
-      zlib_stream.read_flag =
-        (zlib_stream.read_flag + 1) % (ZLIBReadFlag::Footer + 1);  // resets flag to reading record length
-    } while (zlib_stream.strm.avail_out == 0 && rows_read < end_offset);
-  } while (zlib_stream.inflate_status != Z_STREAM_END && rows_read < end_offset);
+      zlib_stream.read_flag = (zlib_stream.read_flag + 1) %
+                              (static_cast<int>(ZLIBReadFlag::Footer) + 1);  // resets flag to reading record length
+    } while (zlib_stream.strm.avail_out == 0);
+  } while (zlib_stream.inflate_status != Z_STREAM_END);
 
   (void)inflateEnd(&zlib_stream.strm);
   if (zlib_stream.inflate_status != Z_STREAM_END && rows_read < end_offset) {
     RETURN_STATUS_UNEXPECTED("Decompression of ZLIB file failed for file " + filename + "!");
   }
 
-  if (rows_read < end_offset) {
+  if (compression_type_ == CompressionType::ZLIB && rows_read < end_offset) {
     std::string errMsg = "This tfrecord file: " + filename +
                          ", does not meet minimum rows per shard requirement: " + std::to_string(total_rows_) +
                          " and " + std::to_string(static_cast<int>(total_rows_ / num_devices_)) +
@@ -361,35 +367,36 @@ Status TFReaderOp::HelperLoadCompZLIBFile(const std::string &filename, int64_t s
   return Status::OK();
 }
 
-int64_t TFReaderOp::HelperBinDataToInt(unsigned char *str_record_size, size_t str_size) {
+int64_t TFReaderOp::HelperBinDataToInt(const unsigned char *str_record_size, size_t str_size) {
   int n = 1;
   int new_value_width = 2;
   if (*reinterpret_cast<char *>(&n) == 1) {  // Little-endian system
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
     std::string hex_str = "0x";
-    for (int pos = str_size - 1; pos >= 0; pos--) {
-      ss << std::setw(new_value_width) << static_cast<unsigned>(str_record_size[pos]);
+    for (int pos = static_cast<int>(str_size) - 1; pos >= 0; pos--) {
+      ss << std::setw(new_value_width) << static_cast<unsigned>(str_record_size[static_cast<size_t>(pos)]);
     }
-    hex_str.append(ss.str());
-    int64_t result = std::stoul(hex_str, nullptr, 16);
+    (void)hex_str.append(ss.str());
+    int64_t result = static_cast<int64_t>(std::stoul(hex_str, nullptr, 16));
     return result;
   } else {  // Big-endian system
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
     std::string hex_str = "0x";
-    for (int pos = 0; pos < str_size; pos++) {
+    for (size_t pos = 0; pos < str_size; pos++) {
       ss << std::setw(new_value_width) << static_cast<unsigned>(str_record_size[pos]);
     }
-    hex_str.append(ss.str());
-    int64_t result = std::stoul(hex_str, nullptr, 16);
+    (void)hex_str.append(ss.str());
+    int64_t result = static_cast<int64_t>(std::stoul(hex_str, nullptr, 16));
     return result;
   }
 }
 
 Status TFReaderOp::HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::string &filename) {
   if (zlib_stream->left_to_read != 0) {
-    zlib_stream->strm.avail_out = zlib_stream->left_to_read;  // need to read the rest before process
+    zlib_stream->strm.avail_out =
+      static_cast<unsigned int>(zlib_stream->left_to_read);  // need to read the rest before process
   } else {
     switch (zlib_stream->read_flag) {
       case ZLIBReadFlag::RecordLength:  // record length
@@ -402,8 +409,8 @@ Status TFReaderOp::HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::stri
         zlib_stream->strm.next_out = zlib_stream->garbage;
         break;
       default:  // record example
-        zlib_stream->strm.avail_out = zlib_stream->record_length;
-        zlib_stream->content = std::make_unique<unsigned char[]>(zlib_stream->record_length);
+        zlib_stream->strm.avail_out = static_cast<unsigned int>(zlib_stream->record_length);
+        zlib_stream->content = std::make_unique<unsigned char[]>(static_cast<size_t>(zlib_stream->record_length));
         zlib_stream->strm.next_out = zlib_stream->content.get();
     }
   }
@@ -411,7 +418,7 @@ Status TFReaderOp::HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::stri
   // Inflate stream
   zlib_stream->inflate_status = inflate(&zlib_stream->strm, Z_NO_FLUSH);
   if (zlib_stream->inflate_status == Z_OK || zlib_stream->inflate_status == Z_STREAM_END) {
-    zlib_stream->left_to_read = zlib_stream->strm.avail_out;  // after reading
+    zlib_stream->left_to_read = static_cast<unsigned int>(zlib_stream->strm.avail_out);  // after reading
     return Status::OK();
   } else if (zlib_stream->inflate_status == Z_STREAM_ERROR) {
     (void)inflateEnd(&zlib_stream->strm);
@@ -431,11 +438,11 @@ Status TFReaderOp::HelperInflateZLIB(ZLIBStreamInf *zlib_stream, const std::stri
 Status TFReaderOp::HelperProcessZLIBData(ZLIBStreamInf *zlib_stream, int64_t *rows_read, int64_t *rows_total,
                                          const std::string &filename, int64_t start_offset, int64_t end_offset,
                                          int32_t worker_id) {
-  if (zlib_stream->read_flag == ZLIBReadFlag::RecordLength) {  // read record length
+  if (zlib_stream->read_flag == static_cast<int>(ZLIBReadFlag::RecordLength)) {  // read record length
     zlib_stream->record_length = HelperBinDataToInt(zlib_stream->record_size, kTFRecordRecLenSize);
-  } else if (zlib_stream->read_flag == ZLIBReadFlag::Header &&
+  } else if (zlib_stream->read_flag == static_cast<int>(ZLIBReadFlag::Header) &&
              *rows_total == 0) {  // read header when needed (for tfrecord validation)
-    uint32_t masked_crc = HelperBinDataToInt(zlib_stream->garbage, kTFRecordHeadFootSize);
+    uint32_t masked_crc = static_cast<uint32_t>(HelperBinDataToInt(zlib_stream->garbage, kTFRecordHeadFootSize));
     uint32_t generated_crc =
       system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&zlib_stream->record_length), kTFRecordRecLenSize);
 
@@ -443,9 +450,9 @@ Status TFReaderOp::HelperProcessZLIBData(ZLIBStreamInf *zlib_stream, int64_t *ro
     if (masked_crc != generated_crc) {
       RETURN_STATUS_UNEXPECTED("Invalid TFRecord file: " + filename);
     }
-  } else if (zlib_stream->read_flag == ZLIBReadFlag::Content) {  // read serialized example
+  } else if (zlib_stream->read_flag == static_cast<int>(ZLIBReadFlag::Content)) {  // read serialized example
     std::string serialized_example(reinterpret_cast<char *>(zlib_stream->content.get()), zlib_stream->record_length);
-    int32_t num_columns = data_schema_->NumColumns();
+    int32_t num_columns = static_cast<int32_t>(data_schema_->NumColumns());
     TensorRow newRow(num_columns, nullptr);
 
     if (start_offset == kInvalidOffset || (*rows_total >= start_offset && *rows_total < end_offset)) {
@@ -462,7 +469,7 @@ Status TFReaderOp::HelperProcessZLIBData(ZLIBStreamInf *zlib_stream, int64_t *ro
       (*rows_read)++;
       RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(newRow)));
     }
-  } else if (zlib_stream->read_flag == ZLIBReadFlag::Footer) {
+  } else if (zlib_stream->read_flag == static_cast<int>(ZLIBReadFlag::Footer)) {
     (*rows_total)++;
   }
 
@@ -472,7 +479,7 @@ Status TFReaderOp::HelperProcessZLIBData(ZLIBStreamInf *zlib_stream, int64_t *ro
 
 // Parses a single row and puts the data into a tensor table.
 Status TFReaderOp::LoadExample(const dataengine::Example *tf_record_file, TensorRow *out_row) {
-  int32_t num_columns = data_schema_->NumColumns();
+  int32_t num_columns = static_cast<int32_t>(data_schema_->NumColumns());
   for (int32_t col = 0; col < num_columns; ++col) {
     const ColDescriptor current_col = data_schema_->Column(col);
     const dataengine::Features &example_features = tf_record_file->features();
@@ -765,7 +772,7 @@ Status TFReaderOp::CreateSchema(const std::string tf_record_file, std::vector<st
 
 Status TFReaderOp::HelperGetExampleSchema(std::string *serialized_example, const std::string &realpath_value,
                                           const std::string &filename) {
-  if (compression_type_ == CompressionType::None) {
+  if (compression_type_ == CompressionType::NONE) {
     std::ifstream reader;
     reader.open(realpath_value);
 
@@ -777,11 +784,11 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *serialized_example, const
     (void)reader.ignore(static_cast<std::streamsize>(kTFRecordHeadFootSize));
 
     // read serialized Example
-    (*serialized_example).resize(record_length);
+    (*serialized_example).resize(static_cast<size_t>(record_length));
     (void)reader.read(&(*serialized_example)[0], static_cast<std::streamsize>(record_length));
   }
 #if !defined(_WIN32) && !defined(_WIN64)
-  if (compression_type_ == CompressionType::GZIP) {
+  if (compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::GZIP_WITH_COUNT) {
     gzFile file = gzopen(realpath_value.c_str(), "rb");
 
     // read length
@@ -792,10 +799,10 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *serialized_example, const
     (void)gzseek(file, kTFRecordHeadFootSize, SEEK_CUR);
 
     // read serialized Example
-    (*serialized_example).resize(record_length);
-    (void)gzread(file, &(*serialized_example)[0], record_length);
-    gzclose(file);
-  } else if (compression_type_ == CompressionType::ZLIB) {
+    (*serialized_example).resize(static_cast<size_t>(record_length));
+    (void)gzread(file, &(*serialized_example)[0], static_cast<unsigned int>(record_length));
+    (void)gzclose(file);
+  } else if (compression_type_ == CompressionType::ZLIB || compression_type_ == CompressionType::ZLIB_WITH_COUNT) {
     // ZLIB stream setup (based on zlib.h tutorial)
     ZLIBStreamInf zlib_stream;
 
@@ -807,8 +814,8 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *serialized_example, const
 
     // decompress until first row is read
     do {
-      reader.read(zlib_stream.input_stream, kZLIBChunkSize);
-      zlib_stream.strm.avail_in = reader.gcount();
+      (void)reader.read(zlib_stream.input_stream, kZLIBChunkSize);
+      zlib_stream.strm.avail_in = static_cast<unsigned int>(reader.gcount());
       zlib_stream.strm.next_in = reinterpret_cast<unsigned char *>(zlib_stream.input_stream);
 
       // run inflate() on input until output buffer not full
@@ -819,18 +826,21 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *serialized_example, const
         }
 
         // Process inflated data depending on read flag
-        if (zlib_stream.read_flag == ZLIBReadFlag::RecordLength) {  // read record length
+        if (zlib_stream.read_flag == static_cast<int>(ZLIBReadFlag::RecordLength)) {  // read record length
           zlib_stream.record_length = HelperBinDataToInt(zlib_stream.record_size, kTFRecordRecLenSize);
-        } else if (zlib_stream.read_flag == ZLIBReadFlag::Content) {  // read serialized example
-          (*serialized_example).resize(zlib_stream.record_length);
-          (*serialized_example).assign(reinterpret_cast<char *>(zlib_stream.content.get()), zlib_stream.record_length);
+        } else if (zlib_stream.read_flag == static_cast<int>(ZLIBReadFlag::Content)) {  // read serialized example
+          (*serialized_example).resize(static_cast<size_t>(zlib_stream.record_length));
+          (void)(*serialized_example)
+            .assign(reinterpret_cast<char *>(zlib_stream.content.get()),
+                    static_cast<size_t>(zlib_stream.record_length));
         }
         zlib_stream.read_flag++;
-      } while (zlib_stream.strm.avail_out == 0 && zlib_stream.read_flag != ZLIBReadFlag::Footer);
-    } while (zlib_stream.inflate_status != Z_STREAM_END && zlib_stream.read_flag != ZLIBReadFlag::Footer);
+      } while (zlib_stream.strm.avail_out == 0 && zlib_stream.read_flag != static_cast<int>(ZLIBReadFlag::Footer));
+    } while (zlib_stream.inflate_status != Z_STREAM_END &&
+             zlib_stream.read_flag != static_cast<int>(ZLIBReadFlag::Footer));
 
     (void)inflateEnd(&zlib_stream.strm);
-    if (zlib_stream.inflate_status != Z_STREAM_END && zlib_stream.read_flag < ZLIBReadFlag::Footer) {
+    if (zlib_stream.inflate_status != Z_STREAM_END && zlib_stream.read_flag < static_cast<int>(ZLIBReadFlag::Footer)) {
       RETURN_STATUS_UNEXPECTED("Decompression of ZLIB file failed for file " + filename + "!");
     }
   }
@@ -840,7 +850,7 @@ Status TFReaderOp::HelperGetExampleSchema(std::string *serialized_example, const
 }
 
 Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std::string> &filenames, int64_t threads,
-                                  bool estimate) {
+                                  bool estimate, CompressionType compression_type) {
   RETURN_UNEXPECTED_IF_NULL(out_total_rows);
   try {
     if (threads > filenames.size()) {
@@ -868,10 +878,12 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
 
       if (estimate) {
         // Parse a single file for each chunk with estimate mode on
-        async_results.push_back(std::async(std::launch::async, &CountTotalRowsSectioned, filenames, begin, begin + 1));
+        async_results.push_back(
+          std::async(std::launch::async, &CountTotalRowsSectioned, filenames, begin, begin + 1, compression_type));
       } else {
         // Parse the whole chunk with estimate mode off
-        async_results.push_back(std::async(std::launch::async, &CountTotalRowsSectioned, filenames, begin, end));
+        async_results.push_back(
+          std::async(std::launch::async, &CountTotalRowsSectioned, filenames, begin, end, compression_type));
       }
 
       begin = end;
@@ -898,7 +910,8 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
   return Status::OK();
 }
 
-int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &filenames, int64_t begin, int64_t end) {
+int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &filenames, int64_t begin, int64_t end,
+                                            CompressionType compression_type) {
   int64_t rows_read = 0;
   for (size_t i = begin; i < end; i++) {
     auto realpath = FileUtils::GetRealPath(filenames[i].c_str());
@@ -907,31 +920,147 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
       continue;
     }
 
-    std::ifstream reader;
-    reader.open(realpath.value());
-    if (!reader) {
-      MS_LOG(DEBUG) << "TFReader operator failed to open file " << filenames[i] << ".";
+    if (compression_type == CompressionType::NONE) {
+      HelperCountNonCompRows(realpath.value(), filenames[i], &rows_read);
     }
-
-    while (reader.peek() != EOF) {
-      // read length
-      int64_t record_length = 0;
-      (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(kTFRecordRecLenSize));
-
-      // ignore crc header
-      (void)reader.ignore(static_cast<std::streamsize>(kTFRecordHeadFootSize));
-
-      // ignore tf_record_file contents
-      (void)reader.ignore(static_cast<std::streamsize>(record_length));
-
-      // ignore crc footer
-      (void)reader.ignore(static_cast<std::streamsize>(kTFRecordHeadFootSize));
-      rows_read++;
+#if !defined(_WIN32) && !defined(_WIN64)
+    if (compression_type == CompressionType::GZIP_WITH_COUNT) {
+      HelperCountGZIPRows(realpath.value(), filenames[i], &rows_read);
+    } else if (compression_type == CompressionType::ZLIB_WITH_COUNT) {
+      HelperCountZLIBRows(realpath.value(), filenames[i], &rows_read);
     }
+#endif
   }
 
   return rows_read;
 }
+
+void TFReaderOp::HelperCountNonCompRows(const std::string &realpath_value, const std::string &filename,
+                                        int64_t *rows_read) {
+  std::ifstream reader;
+  reader.open(realpath_value);
+  if (!reader) {
+    MS_LOG(DEBUG) << "TFReader operator failed to open file " << filename << ".";
+  }
+
+  while (reader.peek() != EOF) {
+    // read length
+    int64_t record_length = 0;
+    (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(kTFRecordRecLenSize));
+
+    // ignore crc header
+    (void)reader.ignore(static_cast<std::streamsize>(kTFRecordHeadFootSize));
+
+    // ignore TFRecord file contents
+    (void)reader.ignore(static_cast<std::streamsize>(record_length));
+
+    // ignore crc footer
+    (void)reader.ignore(static_cast<std::streamsize>(kTFRecordHeadFootSize));
+    (*rows_read)++;
+  }
+}
+
+#if !defined(_WIN32) && !defined(_WIN64)
+void TFReaderOp::HelperCountGZIPRows(const std::string &realpath_value, const std::string &filename,
+                                     int64_t *rows_read) {
+  gzFile file = gzopen(realpath_value.c_str(), "rb");
+
+  if (file == NULL) {
+    MS_LOG(DEBUG) << "TFReader operator failed to open file " << filename << " with GZIP.";
+  }
+
+  while (gzeof(file) != 1) {
+    // read length
+    int64_t record_length = 0;
+    (void)gzread(file, reinterpret_cast<char *>(&record_length), kTFRecordRecLenSize);
+    if (record_length == 0) {
+      continue;
+    }
+
+    // ignore crc header
+    (void)gzseek(file, kTFRecordHeadFootSize, SEEK_CUR);
+
+    // ignore TFRecord file contents
+    (void)gzseek(file, record_length, SEEK_CUR);
+
+    // ignore crc footer
+    (void)gzseek(file, kTFRecordHeadFootSize, SEEK_CUR);
+    (*rows_read)++;
+  }
+  (void)gzclose(file);
+}
+
+void TFReaderOp::HelperCountZLIBRows(const std::string &realpath_value, const std::string &filename,
+                                     int64_t *rows_read) {
+  // ZLIB stream setup (based on zlib.h tutorial)
+  ZLIBStreamInf zlib_stream;
+
+  std::ifstream reader(realpath_value.c_str(), std::ios::binary);
+
+  if (!reader) {
+    MS_LOG(DEBUG) << "TFReader operator failed to open file " << filename << " with ZLIB.";
+  }
+
+  zlib_stream.inflate_status = inflateInit(&zlib_stream.strm);
+  if (zlib_stream.inflate_status != Z_OK) {
+    MS_LOG(DEBUG) << "Failed to initialize inflate stream for ZLIB when counting rows for file " << filename << "!";
+  }
+
+  // decompress until first row is read
+  do {
+    (void)reader.read(zlib_stream.input_stream, kZLIBChunkSize);
+    zlib_stream.strm.avail_in = static_cast<unsigned int>(reader.gcount());
+    zlib_stream.strm.next_in = reinterpret_cast<unsigned char *>(zlib_stream.input_stream);
+
+    // run inflate() on input until output buffer not full
+    do {
+      if (zlib_stream.left_to_read != 0) {
+        zlib_stream.strm.avail_out = zlib_stream.left_to_read;  // need to read the rest before process
+      } else {
+        switch (zlib_stream.read_flag) {
+          case ZLIBReadFlag::RecordLength:  // record length
+            zlib_stream.strm.avail_out = kTFRecordRecLenSize;
+            zlib_stream.strm.next_out = zlib_stream.record_size;
+            break;
+          default:  // record header, example, and footer since we just want to count rows
+            zlib_stream.strm.avail_out = zlib_stream.record_length + kTFRecordHeadFootSize + kTFRecordHeadFootSize;
+            zlib_stream.content = std::make_unique<unsigned char[]>(zlib_stream.record_length + kTFRecordHeadFootSize +
+                                                                    kTFRecordHeadFootSize);
+            zlib_stream.strm.next_out = zlib_stream.content.get();
+        }
+      }
+
+      // Inflate stream
+      zlib_stream.inflate_status = inflate(&zlib_stream.strm, Z_NO_FLUSH);
+      if (zlib_stream.inflate_status == Z_OK || zlib_stream.inflate_status == Z_STREAM_END) {
+        zlib_stream.left_to_read = zlib_stream.strm.avail_out;  // after reading
+      } else {
+        MS_LOG(DEBUG) << "An error is found during inflation when counting rows for file: " << filename << "!";
+      }
+
+      if (zlib_stream.left_to_read != 0) {
+        break;
+      }
+
+      // Process inflated data depending on read flag
+      if (zlib_stream.read_flag == static_cast<int>(ZLIBReadFlag::RecordLength)) {  // read record length
+        zlib_stream.record_length = HelperBinDataToInt(zlib_stream.record_size, kTFRecordRecLenSize);
+      } else if (zlib_stream.read_flag == static_cast<int>(ZLIBReadFlag::Footer)) {
+        (*rows_read)++;
+      }
+      zlib_stream.read_flag = zlib_stream.read_flag == static_cast<int>(ZLIBReadFlag::Footer)
+                                ? static_cast<int>(ZLIBReadFlag::RecordLength)
+                                : static_cast<int>(ZLIBReadFlag::Footer);  // resets flag to reading record length
+    } while (zlib_stream.strm.avail_out == 0 && zlib_stream.inflate_status == Z_OK);
+  } while (zlib_stream.inflate_status != Z_STREAM_END && zlib_stream.inflate_status == Z_OK);
+
+  (void)inflateEnd(&zlib_stream.strm);
+  if (zlib_stream.inflate_status != Z_STREAM_END) {
+    MS_LOG(DEBUG) << "Decompression of ZLIB file failed when counting rows for file " << filename << "!";
+  }
+}
+
+#endif
 
 Status TFReaderOp::ComputeColMap() {
   // Construct the column name map for this operator (base class field)
@@ -966,8 +1095,10 @@ Status TFReaderOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
         RETURN_IF_NOT_OK(HelperIOBlockFiller(&queue_index, &key_index, &pre_count, &start_offset, &end_offset, *it,
                                              (*filename_index_)[*it]));
       }
-    } while (compression_type_ == CompressionType::None && equal_rows_per_shard_ &&
-             pre_count < (static_cast<int64_t>(device_id_) + 1) * num_rows_per_shard_ && !end_of_epoch);
+    } while ((compression_type_ == CompressionType::NONE || compression_type_ == CompressionType::GZIP_WITH_COUNT ||
+              compression_type_ == CompressionType::ZLIB_WITH_COUNT) &&
+             equal_rows_per_shard_ && pre_count < (static_cast<int64_t>(device_id_) + 1) * num_rows_per_shard_ &&
+             !end_of_epoch);
   } else {
     do {
       // Iterate over all the keys and add one key to each block.
@@ -982,8 +1113,10 @@ Status TFReaderOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
         RETURN_IF_NOT_OK(
           HelperIOBlockFiller(&queue_index, &key_index, &pre_count, &start_offset, &end_offset, it.key(), it.value()));
       }
-    } while (compression_type_ == CompressionType::None && equal_rows_per_shard_ &&
-             pre_count < (static_cast<int64_t>(device_id_) + 1) * num_rows_per_shard_ && !end_of_epoch);
+    } while ((compression_type_ == CompressionType::NONE || compression_type_ == CompressionType::GZIP_WITH_COUNT ||
+              compression_type_ == CompressionType::ZLIB_WITH_COUNT) &&
+             equal_rows_per_shard_ && pre_count < (static_cast<int64_t>(device_id_) + 1) * num_rows_per_shard_ &&
+             !end_of_epoch);
   }
   RETURN_IF_NOT_OK(PostEndOfEpoch(queue_index));
   return Status::OK();
@@ -992,10 +1125,12 @@ Status TFReaderOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
 Status TFReaderOp::HelperIOBlockFiller(int32_t *queue_index, int32_t *key_index, int64_t *pre_count,
                                        int64_t *start_offset, int64_t *end_offset, int64_t key,
                                        const std::string &file_name) {
-  if (compression_type_ != CompressionType::None) {
-    int num_files_to_read = dataset_files_list_.size() - dataset_files_list_.size() % num_devices_;
+  if (compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::ZLIB) {
+    int num_files_to_read =
+      static_cast<int>(dataset_files_list_.size() - dataset_files_list_.size() % static_cast<size_t>(num_devices_));
     if (*key_index % num_devices_ == device_id_ && *key_index < num_files_to_read) {
-      *end_offset = static_cast<int>(total_rows_ / static_cast<int>(dataset_files_list_.size() / num_devices_));
+      *end_offset = static_cast<int>(total_rows_ /
+                                     static_cast<int>(dataset_files_list_.size() / static_cast<size_t>(num_devices_)));
       auto ioBlock = std::make_unique<FilenameBlock>(key, 0, *end_offset, IOBlock::kDeIoBlockNone);
       RETURN_IF_NOT_OK(PushIoBlockQueue(*queue_index, std::move(ioBlock)));
       *queue_index = (*queue_index + 1) % num_workers_;

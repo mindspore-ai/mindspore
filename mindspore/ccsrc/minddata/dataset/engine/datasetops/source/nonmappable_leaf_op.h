@@ -44,7 +44,12 @@ using StringIndex = AutoIndexObj<std::string>;
 
 class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow> {
  public:
-  enum class CompressionType { None = 0, GZIP = 1, ZLIB = 2 };
+  // NONE: No compression_type is used
+  // GZIP: GZIP compression_type with num_samples provided
+  // ZLIB: ZLIB compression_type with num_samples provided
+  // GZIP_WITH_COUNT: GZIP compression_type with num_samples not provided
+  // ZLIB_WITH_COUNT: ZLIB compression_type with num_samples not provided
+  enum class CompressionType { NONE = 0, GZIP = 1, ZLIB = 2, GZIP_WITH_COUNT = 3, ZLIB_WITH_COUNT = 4 };
 
   // Constructor of TFReaderOp (2)
   // @note The builder class should be used to call this constructor.
@@ -59,7 +64,7 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
   // @param compression_type - the compression type of the tf_file files
   NonMappableLeafOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
                     int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id,
-                    const CompressionType &compression_type = CompressionType::None);
+                    const CompressionType &compression_type = CompressionType::NONE);
 
   // Default destructor
   ~NonMappableLeafOp() = default;

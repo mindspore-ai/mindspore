@@ -350,6 +350,38 @@ def test_tfrecord_schema_columns_list():
     assert "col_sint32" in str(info.value)
 
 
+def test_tfrecord_size_compression():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset dataset size with compressed files with num_samples provided
+    Expectation: The dataset is processed as expected as if not compressed
+    """
+    logger.info("test_tfrecord_size_compression")
+    data_files_gz = []
+    data_files_zlib = []
+
+    for filename in DATA_FILES3:
+        gz_filename = filename + ".gz"
+        data_files_gz.append(gz_filename)
+
+        zlib_filename = filename + ".zlib"
+        data_files_zlib.append(zlib_filename)
+
+    ds1 = ds.TFRecordDataset(DATA_FILES3, SCHEMA_FILE3,
+                             num_samples=50, num_shards=5, shard_id=0, compression_type="")
+    ds2 = ds.TFRecordDataset(data_files_gz, SCHEMA_FILE3,
+                             num_samples=10, num_shards=5, shard_id=0, compression_type="GZIP")
+    ds3 = ds.TFRecordDataset(data_files_zlib, SCHEMA_FILE3,
+                             num_samples=10, num_shards=5, shard_id=0, compression_type="ZLIB")
+    assert ds1.get_dataset_size() == ds2.get_dataset_size() == ds3.get_dataset_size() == 10
+
+    ds4 = ds.TFRecordDataset(data_files_gz, SCHEMA_FILE3,
+                             num_samples=16, num_shards=2, shard_id=0, compression_type="GZIP")
+    ds5 = ds.TFRecordDataset(data_files_zlib, SCHEMA_FILE3,
+                             num_samples=16, num_shards=2, shard_id=0, compression_type="ZLIB")
+    assert ds4.get_dataset_size() == ds5.get_dataset_size() == 16
+
+
 def test_tfrecord_basic_compression():
     """
     Feature: TFRecordDataset
@@ -591,6 +623,160 @@ def test_tfrecord_compression_shard_even():
     ds.config.set_num_parallel_workers(original_num_workers)
 
 
+def test_tfrecord_compression_shape_and_size_no_num_samples():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset shape and dataset size with compressed files and no num_samples provided
+    Expectation: The dataset is processed as expected as if not compressed
+    """
+    logger.info("test_tfrecord_compression_shape_and_size_no_num_samples")
+    data_files_gz = []
+    data_files_zlib = []
+
+    for filename in DATA_FILES3:
+        gz_filename = filename + ".gz"
+        data_files_gz.append(gz_filename)
+
+        zlib_filename = filename + ".zlib"
+        data_files_zlib.append(zlib_filename)
+
+    ds1 = ds.TFRecordDataset(DATA_FILES3, SCHEMA_FILE3, compression_type="")
+    ds2 = ds.TFRecordDataset(data_files_gz, SCHEMA_FILE3, compression_type="GZIP")
+    ds3 = ds.TFRecordDataset(data_files_zlib, SCHEMA_FILE3, compression_type="ZLIB")
+    assert ds1.get_dataset_size() == ds2.get_dataset_size() == ds3.get_dataset_size() == 50
+
+    ds1 = ds1.batch(3)
+    ds2 = ds2.batch(3)
+    ds3 = ds3.batch(3)
+    count1 = count2 = count3 = 0
+    for _ in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        count1 += 1
+    for _ in ds2.create_dict_iterator(num_epochs=1, output_numpy=True):
+        count2 += 1
+    for _ in ds3.create_dict_iterator(num_epochs=1, output_numpy=True):
+        count3 += 1
+    assert ds1.output_shapes() == ds2.output_shapes() == ds3.output_shapes()
+    assert count1 == count2 == count3 == 17
+
+
+def test_tfrecord_compression_shard_no_num_samples():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset shard with compressed files and no num_samples
+    Expectation: The dataset is processed as expected as if not compressed
+    """
+    logger.info("test_tfrecord_compression_shard_no_num_samples")
+
+    original_seed = config_get_set_seed(1)
+    original_num_workers = config_get_set_num_parallel_workers(3)
+
+    data_files_gz = []
+    data_files_zlib = []
+
+    for filename in DATA_FILES3:
+        gz_filename = filename + ".gz"
+        data_files_gz.append(gz_filename)
+
+        zlib_filename = filename + ".zlib"
+        data_files_zlib.append(zlib_filename)
+
+    def get_res(shard_id, num_repeats, compression_type):
+        if compression_type == 'GZIP':
+            data1 = ds.TFRecordDataset(data_files_gz, num_shards=4, shard_id=shard_id,
+                                       shuffle=ds.Shuffle.FILES, compression_type=compression_type)
+        elif compression_type == 'ZLIB':
+            data1 = ds.TFRecordDataset(data_files_zlib, num_shards=4, shard_id=shard_id,
+                                       shuffle=ds.Shuffle.FILES, compression_type=compression_type)
+        else:
+            data1 = ds.TFRecordDataset(DATA_FILES3, num_shards=4, shard_id=shard_id,
+                                       shuffle=ds.Shuffle.FILES, compression_type=compression_type)
+        data1 = data1.repeat(num_repeats)
+        res = list()
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            res.append(item['scalars'][0])
+        return res
+
+    worker_uncomp_files = get_res(0, 20, '')
+    worker1_gzip_files = get_res(0, 20, 'GZIP')
+    worker_zlib_files = get_res(0, 20, 'ZLIB')
+    # Confirm each worker gets 20x20 = 400 rows
+    assert len(worker_uncomp_files) == len(worker1_gzip_files) == len(worker_zlib_files) == 400
+    assert worker_uncomp_files == worker1_gzip_files == worker_zlib_files
+    assert set(worker1_gzip_files) == set(range(1, 51))
+
+    worker2_gzip_files = get_res(1, 20, 'GZIP')
+    worker3_gzip_files = get_res(2, 20, 'GZIP')
+    worker4_gzip_files = get_res(3, 20, 'GZIP')
+    assert len(worker2_gzip_files) == len(worker3_gzip_files) == len(worker4_gzip_files) == 200
+
+    for i, _ in enumerate(worker2_gzip_files):
+        assert worker2_gzip_files[i] != worker3_gzip_files[i]
+        assert worker2_gzip_files[i] != worker4_gzip_files[i]
+        assert worker3_gzip_files[i] != worker4_gzip_files[i]
+
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_workers)
+
+
+def test_tfrecord_compression_shard_equal_rows_no_num_samples():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset shard with equal rows with compressed files and no num_samples
+    Expectation: The dataset is processed as expected as if not compressed
+    """
+    logger.info("test_tfrecord_compression_shard_equal_rows_no_num_samples")
+
+    original_seed = config_get_set_seed(1)
+    original_num_workers = config_get_set_num_parallel_workers(4)
+
+    data_files_gz = []
+    data_files_zlib = []
+
+    for filename in DATA_FILES3:
+        gz_filename = filename + ".gz"
+        data_files_gz.append(gz_filename)
+
+        zlib_filename = filename + ".zlib"
+        data_files_zlib.append(zlib_filename)
+
+    def get_res(shard_id, num_repeats, compression_type):
+        if compression_type == 'GZIP':
+            data1 = ds.TFRecordDataset(data_files_gz, num_shards=3, shard_id=shard_id, shard_equal_rows=True,
+                                       shuffle=ds.Shuffle.GLOBAL, compression_type=compression_type)
+        elif compression_type == 'ZLIB':
+            data1 = ds.TFRecordDataset(data_files_zlib, num_shards=3, shard_id=shard_id, shard_equal_rows=True,
+                                       shuffle=ds.Shuffle.GLOBAL, compression_type=compression_type)
+        else:
+            data1 = ds.TFRecordDataset(DATA_FILES3, num_shards=3, shard_id=shard_id, shard_equal_rows=True,
+                                       shuffle=ds.Shuffle.GLOBAL, compression_type=compression_type)
+        data1 = data1.repeat(num_repeats)
+        res = list()
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            res.append(item['scalars'][0])
+        return res
+
+    worker_uncomp_global = get_res(0, 20, '')
+    worker_gzip_global = get_res(0, 20, 'GZIP')
+    worker1_zlib_global = get_res(0, 20, 'ZLIB')
+    # Confirm each worker gets 17x20 = 340 rows
+    assert len(worker_uncomp_global) == len(worker_gzip_global) == len(worker1_zlib_global) == 340
+    assert worker_uncomp_global == worker_gzip_global == worker1_zlib_global
+    # Confirm for one worker that after 20 repeats, all 50 unique rows are included in the dataset pipeline
+    assert set(worker1_zlib_global) == set(range(1, 51))
+
+    worker2_zlib_global = get_res(1, 20, 'ZLIB')
+    worker3_zlib_global = get_res(2, 20, 'ZLIB')
+    assert len(worker1_zlib_global) == len(worker2_zlib_global) == len(worker3_zlib_global) == 340
+
+    for i, _ in enumerate(worker1_zlib_global):
+        assert worker1_zlib_global[i] != worker2_zlib_global[i]
+        assert worker1_zlib_global[i] != worker3_zlib_global[i]
+        assert worker2_zlib_global[i] != worker3_zlib_global[i]
+
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_workers)
+
+
 def test_tfrecord_compression_invalid_inputs():
     """
     Feature: TFRecordDataset
@@ -613,18 +799,17 @@ def test_tfrecord_compression_invalid_inputs():
             pass
     assert "does not meet minimum rows per shard requirement" in str(info.value)
 
-    # num_samples must be provided
-    with pytest.raises(ValueError) as info:
-        _ = ds.TFRecordDataset(data_files_gz, SCHEMA_FILE3, num_shards=3, shard_id=0,
-                               shuffle=False, compression_type='GZIP')
-    assert "When compression_type is provided, num_samples must be provided and > 0" in str(info.value)
-
     # number of dataset files cannot be less than num_shards
     with pytest.raises(ValueError) as info:
         _ = ds.TFRecordDataset(data_files_gz, SCHEMA_FILE3, num_shards=6, shard_id=0,
-                               shuffle=False, compression_type='GZIP')
+                               num_samples=10, shuffle=False, compression_type='GZIP')
     assert "When compression_type is provided, the number of dataset files cannot be less than num_shards" in str(
         info.value)
+
+    # invalid num_samples
+    with pytest.raises(ValueError) as info:
+        _ = ds.TFRecordDataset(DATA_FILES3[0] + ".gz", SCHEMA_FILE3, num_samples=-1, compression_type="GZIP")
+    assert "num_samples exceeds the boundary" in str(info.value)
 
     # check compression_type
     with pytest.raises(ValueError) as info:
@@ -695,7 +880,7 @@ def test_tfrecord_invalid_columns():
     Description: Test TFRecordDataset with invalid columns
     Expectation: Error is raised as expected
     """
-    logger.info("test_tfrecord_columns_list")
+    logger.info("test_tfrecord_invalid_columns")
     invalid_columns_list = ["not_exist"]
     data = ds.TFRecordDataset(FILES, columns_list=invalid_columns_list)
     with pytest.raises(RuntimeError) as info:
@@ -764,12 +949,16 @@ if __name__ == '__main__':
     test_tfrecord_shard_equal_rows()
     test_tfrecord_no_schema_columns_list()
     test_tfrecord_schema_columns_list()
+    test_tfrecord_size_compression()
     test_tfrecord_basic_compression()
     test_tfrecord_compression_with_other_ops()
     test_tfrecord_compression_no_schema()
     test_tfrecord_compression_shard_exact()
     test_tfrecord_compression_shard_odd()
     test_tfrecord_compression_shard_even()
+    test_tfrecord_compression_shape_and_size_no_num_samples()
+    test_tfrecord_compression_shard_no_num_samples()
+    test_tfrecord_compression_shard_equal_rows_no_num_samples()
     test_tfrecord_compression_invalid_inputs()
     test_tfrecord_invalid_files()
     test_tf_wrong_schema()

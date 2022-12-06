@@ -589,7 +589,8 @@ def check_tfrecorddataset(method):
         if compression_type is not None and compression_type not in ['', 'ZLIB', 'GZIP']:
             raise ValueError("Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP', \
                              but got '" + str(compression_type) + "'.")
-        if compression_type is not None and compression_type in ['ZLIB', 'GZIP']:
+        if compression_type is not None and compression_type in ['ZLIB', 'GZIP'] and \
+            param_dict.get('num_samples') is not None:
             if param_dict.get('num_shards') is not None and ((isinstance(dataset_files, str) and \
                 param_dict.get('num_shards') > 1) or (isinstance(dataset_files, list) and \
                 len(dataset_files) < param_dict.get('num_shards'))):
@@ -598,9 +599,6 @@ def check_tfrecorddataset(method):
                 raise ValueError("When compression_type is provided, the number of dataset files cannot be less " +
                                  "than num_shards, but the actual number of files is " + str(num_files) +
                                  " and actual num_shards is " + str(act_num_shard) + ".")
-            if param_dict.get('num_samples') is None or param_dict.get('num_samples') <= 0:
-                raise ValueError("When compression_type is provided, num_samples must be provided and > 0, but got " +
-                                 str(param_dict.get('num_samples')) + " for num_samples.")
             if param_dict.get('shard_equal_rows') is None or not param_dict.get('shard_equal_rows'):
                 logger.warning("If compression_type is set, shard_equal_rows will be ignored.")
 

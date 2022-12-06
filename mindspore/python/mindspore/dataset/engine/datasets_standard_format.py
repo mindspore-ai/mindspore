@@ -256,8 +256,12 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             If num_samples is None and numRows(parsed from schema) does not exist, read the full dataset;
             If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-            If `compression_type` is not None, then num_samples is a mandatory parameter and it is
-            for the number of rows that is be read per shard from the compressed files.
+            If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
+            interpreted as number of rows to be read per shard from the compressed files.
+            It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
+            to avoid performance degradation.
+            If `num_samples` is not provided, then multiple decompressions of the same file is required to
+            obtain the file size.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
@@ -279,7 +283,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             is False, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
             When the number of samples of per TFRecord file are not equal, it is suggested to set to true.
             This argument should only be specified when `num_shards` is also specified.
-            When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
+            When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
@@ -331,7 +335,9 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         self.shard_equal_rows = replace_none(shard_equal_rows, False)
         self.compression_type = replace_none(compression_type, "")
 
-        if self.schema is not None and (self.num_samples is None or self.num_samples == 0):
+        # Only take numRows from schema when compression type is not specified
+        if self.compression_type == "" and self.schema is not None and \
+            (self.num_samples is None or self.num_samples == 0):
             self.num_samples = Schema.get_num_rows(self.schema)
 
     def parse(self, children=None):
