@@ -17,6 +17,7 @@
 #include "ops/randperm.h"
 #include <set>
 #include <map>
+#include <climits>
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
