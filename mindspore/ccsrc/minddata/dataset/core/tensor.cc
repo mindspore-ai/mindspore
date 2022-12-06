@@ -141,7 +141,6 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
 
 Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, const uchar *src, const dsize_t &length,
                                 TensorPtr *out) {
-  RETURN_UNEXPECTED_IF_NULL(src);
   RETURN_UNEXPECTED_IF_NULL(out);
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *out = std::allocate_shared<Tensor>(*alloc, shape, type);
@@ -160,6 +159,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
   if (length == 0) {
     return Status::OK();
   }
+  RETURN_UNEXPECTED_IF_NULL(src);  // needs to be here as we may return early without using src content (empty tensors)
   if (length < SECUREC_MEM_MAX_LEN) {
     int ret_code = memcpy_s((*out)->data_, length, src, length);
     CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "Failed to copy data into tensor.");
