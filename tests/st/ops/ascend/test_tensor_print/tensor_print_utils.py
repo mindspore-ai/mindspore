@@ -52,7 +52,8 @@ def get_tensor(is_scalar, input_type):
             return Tensor(np.array([[1.0, -2.0, 3.0], [4.0, -5.0, 6.0]]), dtype=input_type)
     return Tensor(False, np.bool)
 
-if __name__ == "__main__":
+
+def run_net():
     net = TensorPrint()
     net(get_tensor('scalar', mindspore.bool_), get_tensor('scalar', mindspore.uint8),
         get_tensor('scalar', mindspore.int8), get_tensor('scalar', mindspore.uint16),
@@ -66,3 +67,7 @@ if __name__ == "__main__":
         get_tensor('array', mindspore.int32), get_tensor('array', mindspore.uint64),
         get_tensor('array', mindspore.int64), get_tensor('array', mindspore.float16),
         get_tensor('array', mindspore.float32), get_tensor('array', mindspore.float64))
+
+
+if __name__ == "__main__":
+    run_net()
