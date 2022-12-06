@@ -96,8 +96,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     backend_front_anf_map_ = graph.backend_front_anf_map_;
     tensor_to_value_node_map_ = graph.tensor_to_value_node_map_;
     graph_value_nodes_ = graph.graph_value_nodes_;
-    node_input_num_ = graph.node_input_num_;
-    node_input_edges_ = graph.node_input_edges_;
     ref_out_in_map_ = graph.ref_out_in_map_;
     node_output_edges_ = graph.node_output_edges_;
     summary_nodes_ = graph.summary_nodes_;
@@ -119,9 +117,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     internal_outputs_tensor_map_ = graph.internal_outputs_tensor_map_;
     current_epoch_ = graph.current_epoch_;
     tuple_parameter_to_make_tuple_map_ = graph.tuple_parameter_to_make_tuple_map_;
-    visited_nodes_ = graph.visited_nodes_;
-    edge_to_ = graph.edge_to_;
-    loop_nodes_ = graph.loop_nodes_;
     input_nodes_ = graph.input_nodes_;
     pre_graphs_ = graph.pre_graphs_;
     post_graphs_ = graph.post_graphs_;
@@ -168,6 +163,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void set_mem_reuse_exec_order(const std::vector<CNodePtr> &order) { mem_reuse_exec_order_ = order; }
   const std::vector<CNodePtr> &mem_reuse_exec_order() const { return mem_reuse_exec_order_; }
   void SetExecOrderByDefault();
+  void SetNodeOutputEdges();
   uint32_t graph_id() const { return graph_id_; }
   void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
   uint32_t root_graph_id() const { return root_graph_id_; }
@@ -482,22 +478,12 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
-  void EnqueueReadyNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
-                         mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first = true);
-  // update node edge list
-  void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
-  // add node depend edge by data edge
-  void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
-  std::vector<AnfNodePtr> GetOutputNodes(const AnfNodePtr &node);
+
   AnfNodePtr TransValueNodeTuple(const AbstractBasePtr &abstract, const ValuePtr &value);
   AnfNodePtr TransParameterTuple(const AbstractBasePtr &abstract);
   AnfNodePtr TransCNodeTuple(const CNodePtr &node);
   AnfNodePtr CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx);
   std::vector<CNodePtr> SortStartLabelAndEndGoto();
-  // checkout whether loop exist in graph
-  void CheckLoop();
-  uint32_t GetLoopNum(const std::map<AnfNodePtr, size_t> &none_zero_nodes);
-  void GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num);
   void PostNewCNode(const CNodePtr &cnode) const;
 
   // members
@@ -519,11 +505,9 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   mindspore::HashMap<tensor::TensorPtr, ValueNodePtr> tensor_to_value_node_map_;
   // include all value nodes
   mindspore::HashSet<ValueNodePtr> graph_value_nodes_;
-  mindspore::HashMap<AnfNodePtr, size_t> node_input_num_;
-  mindspore::HashMap<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_input_edges_;
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
-  mindspore::HashMap<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
+  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_output_edges_;
   std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // parameters that will be updated when graph is executed
   mindspore::HashSet<ParameterPtr> updated_parameters_;
@@ -565,9 +549,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
-  std::set<AnfNodePtr> visited_nodes_;
-  std::map<AnfNodePtr, AnfNodePtr> edge_to_;
-  std::stack<AnfNodePtr> loop_nodes_;
   std::vector<AnfNodePtr> input_nodes_;
   std::vector<tensor::TensorPtr> input_tensors_;
   KernelMapTensor output_node_to_tensor_;

@@ -2,6 +2,7 @@ file(GLOB_RECURSE _SESSION_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "kernel_build_client.cc"
     "kernel_graph.cc"
     "kernel_graph_mgr.cc"
+    "exec_order_builder.cc"
     "session_basic.cc"
     "session_factory.cc"
     "executor.cc"
