@@ -1520,8 +1520,18 @@ class Cummin(Primitive):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    """
 
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
+        >>> func = ops.Cummin(axis=0)
+        >>> output = func(a)
+        >>> print(output[0])
+        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
+        >>> print(output[1])
+        [0 1 1 1 4 4]
+    """
     @prim_attr_register
     def __init__(self, axis):
         """Initialize Cummin"""
