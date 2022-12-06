@@ -287,8 +287,16 @@ class TupleListSetitemEliminator : public AnfVisitor {
   }
 
   void Visit(const CNodePtr &cnode) override {
-    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
-      auto &inputs = cnode->inputs();
+    CNodePtr real_node = cnode;
+    while (IsPrimitiveCNode(real_node, prim::kPrimDepend)) {
+      if (!real_node->isa<CNode>()) {
+        return;
+      }
+      auto depend = real_node->cast<CNodePtr>();
+      real_node = depend->input(1)->cast<CNodePtr>();
+    }
+    if (IsPrimitiveCNode(real_node, prim::kPrimMakeTuple) || IsPrimitiveCNode(real_node, prim::kPrimMakeList)) {
+      auto &inputs = real_node->inputs();
       (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(args_));
     }
   }
