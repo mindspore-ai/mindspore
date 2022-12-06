@@ -1414,6 +1414,7 @@ def get_meshgrid_vmap_rule(prim, axis_size):
                 "The input number of P.Meshgrid must be greater than 1.")
 
         output_shape = []
+        ones_shape = []
         for each_arg in args:
             x, bdim = each_arg
             if bdim is None:
@@ -1424,19 +1425,30 @@ def get_meshgrid_vmap_rule(prim, axis_size):
                 _raise_value_error(
                     "Each input of Meshgrid must be 1D, but got {}.".format(F.rank(x) - 1))
             output_shape.append(F.shape(x)[-1])
+            ones_shape.append(1)
         output_shape.insert(0, axis_size)
+        ones_shape.insert(0, axis_size)
 
         if indexing == "xy":
             output_shape[1], output_shape[2] = output_shape[2], output_shape[1]
-
         shape = tuple(output_shape)
+
+        input_0, _ = args[0]
+        dtype = F.dtype(input_0)
+        ones_tensor = F.fill(dtype, shape, 1)
+
+        index = 0
         vals_out_tuple = ()
         for each_arg in args:
             x, bdim = each_arg
             x = _bdim_at_front(x, bdim, axis_size)
-            x = _handle_broadcasting(x, F.shape(x), output_shape)
-            output = P.BroadcastTo(shape)(x)
+            shape_index = (1 - index) if (index <= 1 and indexing == "xy") else index
+            ones_shape[shape_index + 1] = output_shape[shape_index + 1]
+            x = P.Reshape()(x, tuple(ones_shape))
+            output = P.Mul()(x, ones_tensor)
             vals_out_tuple = vals_out_tuple + ((output, 0),)
+            ones_shape[shape_index + 1] = 1
+            index = index + 1
 
         return vals_out_tuple
 
