@@ -309,7 +309,7 @@ def _add_cootensor(x, y):
         COOTensor, consists of elements of x and elements of y.
     """
     check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
-    return F.sparse_add(x, y, make_tensor(0, x.values.dtype))
+    return F.coo_add(x, y, make_tensor(0, x.values.dtype))
 
 
 @add.register("COOTensor", "Tensor")

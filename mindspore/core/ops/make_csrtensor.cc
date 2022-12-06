@@ -78,6 +78,12 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
                              << ", CSRTensor's dimension: " << shape_vec.size() << ".";
   }
 
+  if (IsShapeEmpty(indptr_shp) && IsShapeEmpty(indices_shp) && IsShapeEmpty(values_shp)) {
+    MS_LOG(DEBUG) << "Constructing empty CSRTensor! Ignore further shape check.";
+    std::vector<abstract::AbstractBasePtr> element_list{indptr, indices, values, shape};
+    return std::make_shared<abstract::AbstractCSRTensor>(element_list);
+  }
+
   if (IsDynamic(indptr_shp) || IsDynamic(indices_shp) || IsDynamic(values_shp)) {
     MS_LOG(DEBUG) << "Dynamic shape in MakeCSRTensor's inputs! Ignore shape check.";
     std::vector<abstract::AbstractBasePtr> element_list{indptr, indices, values, shape};

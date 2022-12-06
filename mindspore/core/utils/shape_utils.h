@@ -59,6 +59,12 @@ inline bool IsDynamic(const ShapeVector &shape) {
   return IsDynamicRank(shape) || IsDynamicShape(shape);
 }
 
+inline bool IsShapeEmpty(const ShapeVector &shape) {
+  constexpr size_t kOne = 1;
+  constexpr size_t kZero = 0;
+  return shape.size() == kOne && shape[0] == kZero;
+}
+
 template <typename T>
 std::string VectorToString(const std::vector<T> &values) {
   std::stringstream ss;

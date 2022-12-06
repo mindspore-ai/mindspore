@@ -19,8 +19,6 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
-from mindspore.ops.function.sparse_func import sparse_add
-from mindspore.ops.function.sparse_func import csr_mm
 from mindspore.ops.function.array_func import narrow
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
@@ -343,7 +341,7 @@ tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
 tensor_operator_registry.register('coalesce', coalesce)
 tensor_operator_registry.register('argmax_with_value', max)
 tensor_operator_registry.register('argmin_with_value', min)
-tensor_operator_registry.register('coo_add', sparse_add)
+tensor_operator_registry.register('coo_add', coo_add)
 tensor_operator_registry.register('top_k', P.TopK)
 tensor_operator_registry.register('isfinite', P.IsFinite)
 tensor_operator_registry.register('to', P.Cast)

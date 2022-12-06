@@ -12,7 +12,7 @@ class SparseConcatNet(nn.Cell):
         sp_input = []
         for i in range(0, num):
             sp_input.append(COOTensor(input_list[i*3], input_list[i*3+1], input_list[i*3+2]))
-        return F.sparse_concat(sp_input, concat_dim)
+        return F.coo_concat(sp_input, concat_dim)
 
 
 def judge_result_correct(result, expect):
@@ -27,7 +27,7 @@ def judge_result_correct(result, expect):
     assert np.allclose(result.shape, expect[2])
 
 
-def sparse_concat_int(i_type, v_type):
+def coo_concat_int(i_type, v_type):
     indices0 = Tensor([[0, 1], [1, 2]], dtype=i_type)
     values0 = Tensor([1, 2], dtype=v_type)
     shape0 = (3, 4)
@@ -46,7 +46,7 @@ def sparse_concat_int(i_type, v_type):
     expect_forward_output = (expect_forward_output_indices, expect_forward_output_values, expect_forward_output_shape)
     judge_result_correct(forward_output, expect_forward_output)
     #single op run
-    forward_output = F.sparse_concat((input0, input1), concat_dim)
+    forward_output = F.coo_concat((input0, input1), concat_dim)
     judge_result_correct(forward_output, expect_forward_output)
 
 
@@ -109,7 +109,7 @@ def sparse_concat_int(i_type, v_type):
     judge_result_correct(forward_output, expect_forward_output)
 
 
-def sparse_concat_float(i_type, v_type):
+def coo_concat_float(i_type, v_type):
     indices0 = Tensor([[0, 1], [1, 2]], dtype=i_type)
     values0 = Tensor([1.0, 2.0], dtype=v_type)
     shape0 = (3, 4)
@@ -128,7 +128,7 @@ def sparse_concat_float(i_type, v_type):
     expect_forward_output = (expect_forward_output_indices, expect_forward_output_values, expect_forward_output_shape)
     judge_result_correct(forward_output, expect_forward_output)
     #single op run
-    forward_output = F.sparse_concat((input0, input1), concat_dim)
+    forward_output = F.coo_concat((input0, input1), concat_dim)
     judge_result_correct(forward_output, expect_forward_output)
 
 
@@ -268,9 +268,9 @@ def error_case_wrong_intput():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sparse_concat_error_case():
+def test_coo_concat_error_case():
     """
-    Feature: Test sparse_concat Ops. error case test
+    Feature: Test coo_concat Ops. error case test
     Description: Test spare_concat, test error case: wrong COOTensor input, wrong concat_dim input.
     Expectation: Success.
     """
@@ -283,9 +283,9 @@ def test_sparse_concat_error_case():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sparse_concat_default_value():
+def test_coo_concat_default_value():
     """
-    Feature: Test sparse_concat Ops. And the concat_dim input is default
+    Feature: Test coo_concat Ops. And the concat_dim input is default
     Description: Test spare_concat, test default inputs.
     Expectation: Success.
     """
@@ -304,7 +304,7 @@ def test_sparse_concat_default_value():
     shape2 = (4, 5)
     input2 = COOTensor(indices2, values2, shape2)
     #net run
-    forward_output = F.sparse_concat((input0, input1, input2))
+    forward_output = F.coo_concat((input0, input1, input2))
     expect_forward_output_indices = Tensor([[0, 1], [0, 2], [3, 1], [3, 2], [7, 1], [7, 2], [7, 3]], dtype=i_type)
     expect_forward_output_values = Tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], dtype=v_type)
     expect_forward_output_shape = (10, 5)
@@ -315,9 +315,9 @@ def test_sparse_concat_default_value():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sparse_concat_int():
+def test_coo_concat_int():
     """
-    Feature: Test sparse_concat Ops. And the input COOTensor dtype is int
+    Feature: Test coo_concat Ops. And the input COOTensor dtype is int
     Description: Test spare_concat, test different inputs.
     Expectation: Success.
     """
@@ -325,18 +325,18 @@ def test_sparse_concat_int():
     values_types = (mstype.int8, mstype.int16, mstype.int32, mstype.int64, \
                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64)
     for v_type in values_types:
-        sparse_concat_int(mstype.int64, v_type)
+        coo_concat_int(mstype.int64, v_type)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sparse_concat_float():
+def test_coo_concat_float():
     """
-    Feature: Test sparse_concat Ops. And the input COOTensor dtype is float
+    Feature: Test coo_concat Ops. And the input COOTensor dtype is float
     Description: Test spare_concat, test different inputs.
     Expectation: Success.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    sparse_concat_float(mstype.int64, mstype.float32)
-    sparse_concat_float(mstype.int64, mstype.float16)
+    coo_concat_float(mstype.int64, mstype.float32)
+    coo_concat_float(mstype.int64, mstype.float16)
