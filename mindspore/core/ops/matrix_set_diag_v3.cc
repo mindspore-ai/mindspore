@@ -49,14 +49,10 @@ void TrueValueCalAndCheck(const std::vector<AbstractBasePtr> &input_args, int64_
 abstract::ShapePtr MakeShape(const ShapeVector &x_shape) {
   auto rank = SizeToLong(x_shape.size());
   ShapeVector out_shape;
-  ShapeVector infer_shape_min;
-  ShapeVector infer_shape_max;
-  (void)infer_shape_max.insert(infer_shape_max.end(), x_shape.begin(), x_shape.end());
   for (int64_t i = 0; i < rank; i++) {
     out_shape.push_back(-1);
-    infer_shape_min.push_back(0);
   }
-  return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,

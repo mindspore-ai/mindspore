@@ -88,10 +88,9 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     int64_t max_length = GetValue<int64_t>(max_length_ptr);
     for (int64_t i = 1; i <= dense_size[0] - 1; ++i) {
       dynamic_shape.end()[-i] = abstract::Shape::kShapeDimAny;
-      min_shape.end()[-i] = 0;
       max_shape.end()[-i] = max_length;
     }
-    return std::make_shared<abstract::Shape>(dynamic_shape, min_shape, max_shape);
+    return std::make_shared<abstract::Shape>(dynamic_shape, max_shape);
   } else {
     ShapeVector output_shape;
     auto set_values_index = 2;

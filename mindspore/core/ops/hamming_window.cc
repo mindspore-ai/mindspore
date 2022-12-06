@@ -24,8 +24,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t MAX_WINDOW_LEN = 1024 * 1024;
-
 #define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                    \
   case (DTYPE): {                                                                       \
     LENGTH_VALUE = static_cast<int64_t>(*static_cast<TYPE *>(LENGTH_TENSOR->data_c())); \
@@ -79,9 +77,7 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
     std::vector<int64_t> out_shape = {abstract::Shape::kShapeDimAny};
-    std::vector<int64_t> infer_shape_min = {0};
-    std::vector<int64_t> infer_shape_max = {MAX_WINDOW_LEN};
-    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 }
 

@@ -26,7 +26,7 @@ abstract::ShapePtr MaxPoolGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto shape = std::make_shared<abstract::Shape>(shape_map[kShape], shape_map[kMinShape], shape_map[kMaxShape]);
+  auto shape = std::make_shared<abstract::Shape>(shape_map[kShape]);
   return shape;
 }
 TypePtr MaxPoolGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

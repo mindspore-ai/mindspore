@@ -115,23 +115,18 @@ AbstractBasePtr SparseCountSparseOutputInfer(const abstract::AnalysisEnginePtr &
   }
 
   ShapeVector indices_shape_ = {-1, -1};
-  ShapeVector indices_min_shape = {1, 1};
   ShapeVector indices_max_shape = {indices_shape[0] * indices_shape[1], 2};
   ShapeVector values_shape_ = {-1};
-  ShapeVector values_min_shape = {1};
   ShapeVector values_max_shape = {indices_shape[0] * indices_shape[1]};
   ShapeVector dense_shape_shape_ = {-1};
-  ShapeVector dense_shape_min_shape = {1};
   ShapeVector dense_shape_max_shape = {2};
 
   auto out_indices = std::make_shared<abstract::AbstractTensor>(
-    kInt64, std::make_shared<mindspore::abstract::Shape>(indices_shape_, indices_min_shape, indices_max_shape));
+    kInt64, std::make_shared<mindspore::abstract::Shape>(indices_shape_, indices_max_shape));
   auto out_values = std::make_shared<abstract::AbstractTensor>(
-    weights_ptr->element()->BuildType(),
-    std::make_shared<mindspore::abstract::Shape>(values_shape_, values_min_shape, values_max_shape));
+    weights_ptr->element()->BuildType(), std::make_shared<mindspore::abstract::Shape>(values_shape_, values_max_shape));
   auto out_dense_shape = std::make_shared<abstract::AbstractTensor>(
-    kInt64,
-    std::make_shared<mindspore::abstract::Shape>(dense_shape_shape_, dense_shape_min_shape, dense_shape_max_shape));
+    kInt64, std::make_shared<mindspore::abstract::Shape>(dense_shape_shape_, dense_shape_max_shape));
   AbstractBasePtrList ret = {out_indices, out_values, out_dense_shape};
   return std::make_shared<abstract::AbstractTuple>(ret);
 }

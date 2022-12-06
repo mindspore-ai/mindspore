@@ -230,17 +230,6 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
                                          reshape_type);
 }
 
-abstract::ShapePtr GetPadShape(const ShapeVector &padding_shape, const ShapeVector &out_shape_min,
-                               const ShapeVector &out_shape_max, const std::string &dst_format,
-                               const std::string &reshape_type, const AnfNodePtr &node, bool is_dynamic_shape) {
-  if (!is_dynamic_shape || out_shape_min.empty() || out_shape_max.empty()) {
-    return std::make_shared<abstract::Shape>(padding_shape);
-  }
-  auto pad_shape_min = trans::PaddingShape(out_shape_min, dst_format, reshape_type, node);
-  auto pad_shape_max = trans::PaddingShape(out_shape_max, dst_format, reshape_type, node);
-  return std::make_shared<abstract::Shape>(padding_shape, pad_shape_min, pad_shape_max);
-}
-
 AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                                            const AnfNodePtr &node, const KernelSelectPtr &kernel_select,
                                            const std::string &input_format, const std::string &dst_format,
@@ -260,15 +249,8 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
   auto out_shape_ptr = input_node_out_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(out_shape_ptr);
   ShapeVector out_shape = out_shape_ptr->shape();
-  ShapeVector out_shape_min;
-  ShapeVector out_shape_max;
-  bool is_dynamic_shape = false;
 
-  if (out_shape_ptr->IsDynamic()) {
-    out_shape_min = out_shape_ptr->min_shape();
-    out_shape_max = out_shape_ptr->max_shape();
-    is_dynamic_shape = true;
-  }
+  auto is_dynamic_shape = out_shape_ptr->IsDynamic();
 
   bool need_padding = trans::IsNeedPadding(spec_format, out_shape.size());
   std::string trans_opname = GetTransOpName(spec_format);
@@ -291,8 +273,7 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
     if (std::count(padding_shape.begin(), padding_shape.end(), -1) > 1) {
       padding_axis = trans::StringToAxisVector(out_shape, dst_format, reshape_type, node);
     }
-    abstract::ShapePtr pad_shape_ptr =
-      GetPadShape(padding_shape, out_shape_min, out_shape_max, dst_format, reshape_type, node, is_dynamic_shape);
+    abstract::ShapePtr pad_shape_ptr = std::make_shared<abstract::Shape>(padding_shape);
     auto reshape_node = CreateReshapeNode(func_graph, input_node, orig_node, kernel_select, pad_shape_ptr,
                                           is_dynamic_shape, padding_axis);
     trans_data = NewTransOpNode(func_graph, reshape_node, orig_node, kernel_select, need_padding, trans_opname);
@@ -304,9 +285,7 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
     // device shape -> transdata[padding shape] -> reshape[ori_shape]
     trans_data = NewTransOpNode(func_graph, input_node, orig_node, kernel_select, need_padding, trans_opname);
     RefreshKernelBuildInfo(kernel_select, input_format, dst_format, trans_data, reshape_type, type_id);
-    abstract::ShapePtr pad_shape_ptr = is_dynamic_shape
-                                         ? std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max)
-                                         : std::make_shared<abstract::Shape>(out_shape);
+    abstract::ShapePtr pad_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
     std::vector<int> padding_axis;
     if (std::count(out_shape.begin(), out_shape.end(), -1) > 1) {
       padding_axis = trans::StringToAxisVector(out_shape, dst_format, reshape_type, node);
@@ -395,35 +374,20 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   auto out_shape_base = common::AnfAlgo::GetOutputDetailShape(input, 0);
   MS_EXCEPTION_IF_NULL(out_shape_base);
   ShapeVector out_shape;
-  ShapeVector out_shape_min;
-  ShapeVector out_shape_max;
   bool is_dynamic_shape = false;
   if (out_shape_base->isa<abstract::Shape>()) {
     auto out_shape_ptr = out_shape_base->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(out_shape_ptr);
     out_shape = out_shape_ptr->shape();
-    if (out_shape_ptr->IsDynamic()) {
-      out_shape_min = out_shape_ptr->min_shape();
-      out_shape_max = out_shape_ptr->max_shape();
-      is_dynamic_shape = true;
-    }
+    is_dynamic_shape = out_shape_ptr->IsDynamic();
   }
 
   if (need_padding) {
     // if need padding we should set the transdata node's shape to the padding shape
     auto padding_axis = AnfAlgo::GetOutputReshapeType(input, 0);
 
-    abstract::ShapePtr pad_shape_ptr;
     ShapeVector pad_shape = trans::PaddingShape(out_shape, AnfAlgo::GetOutputFormat(input, 0), padding_axis, input);
-    if (is_dynamic_shape) {
-      ShapeVector pad_shape_min =
-        trans::PaddingShape(out_shape_min, AnfAlgo::GetOutputFormat(input, 0), padding_axis, input);
-      ShapeVector pad_shape_max =
-        trans::PaddingShape(out_shape_max, AnfAlgo::GetOutputFormat(input, 0), padding_axis, input);
-      pad_shape_ptr = std::make_shared<abstract::Shape>(pad_shape, pad_shape_min, pad_shape_max);
-    } else {
-      pad_shape_ptr = std::make_shared<abstract::Shape>(pad_shape);
-    }
+    auto pad_shape_ptr = std::make_shared<abstract::Shape>(pad_shape);
     common::AnfAlgo::SetOutputTypeAndDetailShape({infer_type}, {pad_shape_ptr}, trans_node.get());
   } else {
     common::AnfAlgo::SetOutputTypeAndDetailShape({infer_type}, {out_shape_base}, trans_node.get());

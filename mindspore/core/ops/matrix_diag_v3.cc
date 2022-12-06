@@ -156,13 +156,8 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   } else {
     // Since the real output shape relies on the value of 'k', 'num_cols' and 'num_rows',
     // the out_shape is set to {-2} meaning that even the dimension can not be determined.
-    // The real output shape will be updated before launching kernel, so min/max shape are not necessary to set
-    // correctly.
     ShapeVector out_shape = {-2};
-    ShapeVector infer_shape_min;
-    ShapeVector infer_shape_max;
-    infer_shape_min = infer_shape_max = {1};
-    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 }
 

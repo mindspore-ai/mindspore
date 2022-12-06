@@ -276,7 +276,7 @@ std::vector<int64_t> ComputeInferShapeV2(const PrimitivePtr &primitive, const st
 }
 
 ShapeMap DynamicComputeInferShapeV2(const PrimitivePtr &primitive, const std::vector<int64_t> &x_shape,
-                                    const size_t slice_len, const std::vector<int64_t> &max_shape) {
+                                    const size_t slice_len) {
   // currently not support mask
   std::vector<int64_t> begin_pos;
   std::vector<int64_t> end_pos;
@@ -292,8 +292,6 @@ ShapeMap DynamicComputeInferShapeV2(const PrimitivePtr &primitive, const std::ve
   int64_t strides;
   ShapeMap shape_map;
   std::vector<int64_t> infer_shape;
-  std::vector<int64_t> infer_min_shape;
-  std::vector<int64_t> infer_max_shape;
   size_t x_rank = x_shape.size();
 
   while (i < x_rank || j < slice_len) {
@@ -304,9 +302,6 @@ ShapeMap DynamicComputeInferShapeV2(const PrimitivePtr &primitive, const std::ve
     }
     if (j < slice_len) {
       if (j < new_axis_pos.size() && new_axis_pos[j] == 1) {
-        infer_shape.push_back(1);
-        infer_min_shape.push_back(1);
-        infer_max_shape.push_back(1);
         j += 1;
         continue;
       }
@@ -325,16 +320,10 @@ ShapeMap DynamicComputeInferShapeV2(const PrimitivePtr &primitive, const std::ve
       }
     }
     infer_shape.push_back(slicing_length);
-    if (max_shape.size() != 0) {
-      infer_min_shape.push_back(1);
-      infer_max_shape.push_back(max_shape[i]);
-    }
     i += 1;
     j += 1;
   }
   shape_map[kShape] = infer_shape;
-  shape_map[kMinShape] = infer_min_shape;
-  shape_map[kMaxShape] = infer_max_shape;
   return shape_map;
 }
 
@@ -394,8 +383,6 @@ abstract::ShapePtr StridedSliceV2InferShape(const PrimitivePtr &primitive,
   }
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
   auto x_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   bool x_is_dyn =
     std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::kShapeDimAny; });
   ShapeVector begin_v;
@@ -425,16 +412,10 @@ abstract::ShapePtr StridedSliceV2InferShape(const PrimitivePtr &primitive,
     ret_in_shape = ComputeInferShapeV2(primitive, begin_v, end_v, strides_v, x_shape);
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
-  auto ret_shape_map = DynamicComputeInferShapeV2(primitive, x_shape, begin_len, max_shape);
+  auto ret_shape_map = DynamicComputeInferShapeV2(primitive, x_shape, begin_len);
   ret_in_shape = ret_shape_map[kShape];
-  auto ret_min_shape = ret_shape_map[kMinShape];
-  auto ret_max_shape = ret_shape_map[kMaxShape];
 
-  if (x_is_dyn && (max_shape.empty() || min_shape.empty())) {
-    return std::make_shared<abstract::Shape>(ret_in_shape);
-  }
-
-  return std::make_shared<abstract::Shape>(ret_in_shape, ret_min_shape, ret_max_shape);
+  return std::make_shared<abstract::Shape>(ret_in_shape);
 }
 
 TypePtr StridedSliceV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

@@ -49,69 +49,6 @@ TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
   return kAnyType;
 }
 
-inline bool IsMaxOrMinEmpty(const ShapePtr &shape1, const ShapePtr &shape2) {
-  if (shape1->max_shape().empty() || shape1->min_shape().empty() || shape2->max_shape().empty() ||
-      shape2->min_shape().empty()) {
-    return true;
-  }
-
-  return false;
-}
-
-ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, const ShapeVector &dims) {
-  // calculate dynamic shape
-  ShapeVector min_dims(dims.size());
-  ShapeVector max_dims(dims.size());
-  MS_EXCEPTION_IF_NULL(shape1);
-  MS_EXCEPTION_IF_NULL(shape2);
-
-  if (IsMaxOrMinEmpty(shape1, shape2)) {
-    return std::make_shared<Shape>(dims);
-  }
-
-  for (size_t i = 0; i < dims.size(); ++i) {
-    if (dims[i] != Shape::kShapeDimAny) {
-      min_dims[i] = max_dims[i] = dims[i];
-      continue;
-    }
-    if (shape1->shape()[i] != Shape::kShapeDimAny && shape2->shape()[i] != Shape::kShapeDimAny) {
-      min_dims[i] = std::min(shape1->shape()[i], shape2->shape()[i]);
-      max_dims[i] = std::max(shape1->shape()[i], shape2->shape()[i]);
-      continue;
-    }
-    if (shape1->shape()[i] == Shape::kShapeDimAny && shape2->shape()[i] != Shape::kShapeDimAny) {
-      if (shape1->min_shape().size() <= i || shape1->max_shape().size() <= i) {
-        MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
-                                 << " has dynamic shape, but does not have min/max shape info.";
-      }
-      min_dims[i] = std::min(shape1->min_shape()[i], shape2->shape()[i]);
-      max_dims[i] = std::max(shape1->max_shape()[i], shape2->shape()[i]);
-      continue;
-    }
-    if (shape1->shape()[i] != Shape::kShapeDimAny && shape2->shape()[i] == Shape::kShapeDimAny) {
-      if (shape2->min_shape().size() <= i || shape2->max_shape().size() <= i) {
-        MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
-                                 << " has dynamic shape, but does not have min/max shape info.";
-      }
-      min_dims[i] = std::min(shape1->shape()[i], shape2->min_shape()[i]);
-      max_dims[i] = std::max(shape1->shape()[i], shape2->max_shape()[i]);
-      continue;
-    }
-    // both shapes contains dynamic shape
-    if (shape1->min_shape().size() <= i || shape1->max_shape().size() <= i) {
-      MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
-                               << " has dynamic shape, but does not have min/max shape info.";
-    }
-    if (shape2->min_shape().size() <= i || shape2->max_shape().size() <= i) {
-      MS_EXCEPTION(ValueError) << "Shape " << shape2->ToString()
-                               << " has dynamic shape, but does not have min/max shape info.";
-    }
-    min_dims[i] = std::min(shape1->min_shape()[i], shape2->min_shape()[i]);
-    max_dims[i] = std::max(shape1->max_shape()[i], shape2->max_shape()[i]);
-  }
-  return std::make_shared<Shape>(dims, min_dims, max_dims);
-}
-
 // Broaden all values within the input abstract. Since for AbstractScalar, calling Broaden() can not set
 // the value directly to kAnyValue, this function can not be replaced by calling abs->Broaden().
 AbstractBasePtr BroadenAllValues(const AbstractBasePtr &abs) {
@@ -148,17 +85,6 @@ bool IsShapesDynamicRank(const std::vector<ShapeVector> &shapes) {
   return std::any_of(shapes.begin(), shapes.end(), [](const ShapeVector &shape) {
     return std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::kShapeRankAny; });
   });
-}
-
-bool HasSpecialShape(const std::vector<ShapePtr> &shapes) {
-  for (const auto &shape : shapes) {
-    bool shape_dyn =
-      std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t dim) { return dim == Shape::kShapeDimAny; });
-    if (shape_dyn && shape->min_shape().empty() && shape->max_shape().empty()) {
-      return true;
-    }
-  }
-  return false;
 }
 
 ShapePtr SingleElementShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
@@ -333,27 +259,12 @@ size_t TypeIdSize(const TypeId data_type) {
   return unsupported_type_error;
 }
 
-void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape) {
-  *min_shape = (*min_shape).empty() ? shape : *min_shape;
-  *max_shape = (*max_shape).empty() ? shape : *max_shape;
-}
-
 AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type) {
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(type);
   AbstractBasePtr tensor = nullptr;
-  auto ret_vec = shape->shape();
-  ShapeVector min_shape_vec;
-  ShapeVector max_shape_vec;
 
-  if (!shape->min_shape().empty()) {
-    min_shape_vec = shape->min_shape();
-  }
-  if (!shape->max_shape().empty()) {
-    max_shape_vec = shape->max_shape();
-  }
-
-  auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
+  auto ret_shape = shape->Clone();
   if (type->isa<TensorType>()) {
     auto tensor_type = type->cast_ptr<TensorType>();
     MS_EXCEPTION_IF_NULL(tensor_type);

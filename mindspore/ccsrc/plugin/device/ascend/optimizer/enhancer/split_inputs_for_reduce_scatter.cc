@@ -41,20 +41,8 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
     std::vector<int> size_splits;
     auto output_node_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
     output_node_shape[0] /= rank_size;
-    if (IsDynamic(output_node_shape)) {
-      auto min_shape = common::AnfAlgo::GetInputMinShape(node, i);
-      auto max_shape = common::AnfAlgo::GetInputMaxShape(node, i);
-      if (!min_shape.empty() && !max_shape.empty()) {
-        min_shape[0] /= rank_size;
-        max_shape[0] /= rank_size;
-      }
-      std::vector<BaseShapePtr> shapes(rank_size_t,
-                                       std::make_shared<abstract::Shape>(output_node_shape, min_shape, max_shape));
-      common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split.get());
-    } else {
-      std::vector<ShapeVector> shapes(rank_size_t, output_node_shape);
-      common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
-    }
+    std::vector<ShapeVector> shapes(rank_size_t, output_node_shape);
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
 
     for (size_t j = 0; j < rank_size_t; j++) {
       size_splits.push_back(output_node_shape[0]);

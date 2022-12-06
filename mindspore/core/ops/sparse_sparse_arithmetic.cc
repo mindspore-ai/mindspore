@@ -111,35 +111,22 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
   auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
   ShapeVector out_indice_shape = {-1, -1};
   ShapeVector out_value_shape = {-1};
-  ShapeVector min_out_indice_shape = {};
   ShapeVector max_out_indice_shape = {};
-  ShapeVector min_out_value_shape = {};
   ShapeVector max_out_value_shape = {};
   abstract::ShapePtr y_indices_shape;
   abstract::ShapePtr y_values_shape;
   if (IsDynamic(x1_indice_shape) || IsDynamic(x2_indice_shape)) {
-    min_out_indice_shape.push_back(-1);
-    min_out_indice_shape.push_back(-1);
     max_out_indice_shape.push_back(-1);
     max_out_indice_shape.push_back(-1);
-    min_out_value_shape.push_back(-1);
     max_out_value_shape.push_back(-1);
   } else {
-    if (x1_indice_shape[0] > x2_indice_shape[0]) {
-      min_out_indice_shape.push_back(x1_indice_shape[0]);
-      min_out_value_shape.push_back(x1_indice_shape[0]);
-    } else {
-      min_out_indice_shape.push_back(x2_indice_shape[0]);
-      min_out_value_shape.push_back(x2_indice_shape[0]);
-    }
-    min_out_indice_shape.push_back(x1_indice_shape[1]);
     max_out_indice_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);
     max_out_indice_shape.push_back(x1_indice_shape[1]);
     out_indice_shape[1] = x1_indice_shape[1];
     max_out_value_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);
   }
-  y_indices_shape = std::make_shared<abstract::Shape>(out_indice_shape, min_out_indice_shape, max_out_indice_shape);
-  y_values_shape = std::make_shared<abstract::Shape>(out_value_shape, min_out_value_shape, max_out_value_shape);
+  y_indices_shape = std::make_shared<abstract::Shape>(out_indice_shape, max_out_indice_shape);
+  y_values_shape = std::make_shared<abstract::Shape>(out_value_shape, max_out_value_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{y_indices_shape, y_values_shape});
 }
 

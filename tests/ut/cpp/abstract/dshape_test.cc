@@ -29,7 +29,6 @@ class TestDShape : public UT::Common {
   Shape shp_2;
   Shape shp_3;
   Shape shp_4;
-  Shape shp_5;
 
   NoShape shp_noshp_1;
   NoShape shp_noshp_2;
@@ -43,7 +42,6 @@ class TestDShape : public UT::Common {
         shp_2({1, 1}),
         shp_3({1, 2}),
         shp_4({1}),
-        shp_5({-1, 2}, {1, 2}, {3, 3}),
 
         shp_noshp_1(),
         shp_noshp_2(),
@@ -69,7 +67,6 @@ TEST_F(TestDShape, ToString) {
   ASSERT_EQ(shp_3.ToString(), "(1, 2)");
   ASSERT_EQ(shp_noshp_1.ToString(), "NoShape");
   ASSERT_EQ(shp_tuple_2.ToString(), "TupleShape(NoShape, (1, 1, 1))");
-  ASSERT_EQ(shp_5.ToString(), "{shape:(-1, 2)|min shape:(1, 2)|max shape:(3, 3)}");
 }
 
 TEST_F(TestDShape, Clone) {

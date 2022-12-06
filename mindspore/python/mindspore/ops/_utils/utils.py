@@ -24,7 +24,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common._utils import is_dim_unknown
 
 
-def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x", arg_name2="y"):
+def get_broadcast_shape(x_shape, y_shape, prim_name, arg_name1="x", arg_name2="y"):
     """
     Doing broadcast between tensor x and tensor y.
 
@@ -32,7 +32,6 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x
         x_shape (list): The shape of tensor x.
         y_shape (list): The shape of tensor y.
         prim_name (str): Primitive name.
-        shape_type (str): The type of shape, optional values are "", "min_shape" and "max_shape".
         arg_name1 (str): The arg name of x_shape.
         arg_name2 (str): The arg name of y_shape.
 
@@ -69,16 +68,11 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x
         elif x_shape[i] == -1 or y_shape[i] == -1:
             broadcast_shape_back.append(-1)
         else:
-            if shape_type == "min_shape":
-                broadcast_shape_back.append(max(x_shape[i], y_shape[i]))
-            elif shape_type == "max_shape":
-                broadcast_shape_back.append(min(x_shape[i], y_shape[i]))
-            else:
-                raise ValueError(f"For '{prim_name}', {arg_name1}.shape and {arg_name2}.shape need to "
-                                 f"broadcast. The value of {arg_name1}.shape[{i}] or {arg_name2}.shape[{i}]"
-                                 f" must be 1 or -1 when they are not the same, "
-                                 f"but got {arg_name1}.shape = {x_shape} "
-                                 f"and {arg_name2}.shape = {y_shape}.")
+            raise ValueError(f"For '{prim_name}', {arg_name1}.shape and {arg_name2}.shape need to "
+                             f"broadcast. The value of {arg_name1}.shape[{i}] or {arg_name2}.shape[{i}]"
+                             f" must be 1 or -1 when they are not the same, "
+                             f"but got {arg_name1}.shape = {x_shape} "
+                             f"and {arg_name2}.shape = {y_shape}.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back

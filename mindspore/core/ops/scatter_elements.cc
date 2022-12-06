@@ -40,11 +40,7 @@ AbstractBasePtr ScatterElementsInfer(const abstract::AnalysisEnginePtr &, const 
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   ShapeVector shape = x->shape()->shape();
-  ShapeVector min_shape = x->shape()->min_shape();
-  ShapeVector max_shape = x->shape()->max_shape();
-  abstract::CheckMinMaxShape(shape, &min_shape, &max_shape);
-  return std::make_shared<abstract::AbstractTensor>(x->element(),
-                                                    std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
+  return std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(shape));
 }
 
 MIND_API_OPERATOR_IMPL(ScatterElements, BaseOperator);

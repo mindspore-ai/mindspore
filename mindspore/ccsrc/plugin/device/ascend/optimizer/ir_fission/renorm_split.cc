@@ -43,13 +43,6 @@ void FreshRenormInferShape(const CNodePtr &node, ShapeVector in_shape, const Typ
       in_shape[i] = 1;
     }
   }
-  if (common::AnfAlgo::IsDynamicShape(node)) {
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(node, 0);
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(node, 0);
-    common::AnfAlgo::SetOutputTypeAndDetailShape(
-      {type}, {std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape)}, node.get());
-    return;
-  }
   common::AnfAlgo::SetOutputInferTypeAndShape({type}, {in_shape}, node.get());
 }
 }  // namespace

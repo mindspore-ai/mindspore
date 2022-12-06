@@ -848,30 +848,14 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const
       return;
     }
 
-    abstract::AbstractTensorPtr abstract = nullptr;
-    if (abstract_ptr != nullptr) {
-      auto max_shape0 = GetOutputMaxShape(node_ptr, 0);
-      auto min_shape0 = GetOutputMinShape(node_ptr, 0);
-      abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]),
-                                                  std::make_shared<abstract::Shape>(shapes[0], min_shape0, max_shape0));
-    } else {
-      abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
-    }
+    abstract::AbstractTensorPtr abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
     node->set_abstract(abstract);
   } else {
     // multiple output handle
     std::vector<AbstractBasePtr> abstract_list;
     for (size_t i = 0; i < types.size(); ++i) {
-      abstract::AbstractTensorPtr abstract = nullptr;
-      if (abstract_ptr != nullptr) {
-        auto max_shape = GetOutputMaxShape(node_ptr, i);
-        auto min_shape = GetOutputMinShape(node_ptr, i);
-        abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[i]),
-                                                    std::make_shared<abstract::Shape>(shapes[i], min_shape, max_shape));
-      } else {
-        abstract =
-          std::make_shared<AbstractTensor>(TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shapes[i]));
-      }
+      abstract::AbstractTensorPtr abstract =
+        std::make_shared<AbstractTensor>(TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shapes[i]));
       abstract_list.emplace_back(abstract);
     }
     auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
@@ -1362,8 +1346,7 @@ void AnfAlgo::GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std:
   }
 }
 
-static ShapeVector GetShapeFromSequenceShape(const abstract::SequenceShapePtr &sequeue_shape_ptr, size_t index,
-                                             ShapeType type) {
+static ShapeVector GetShapeFromSequenceShape(const abstract::SequenceShapePtr &sequeue_shape_ptr, size_t index) {
   MS_EXCEPTION_IF_NULL(sequeue_shape_ptr);
   auto shape_list = sequeue_shape_ptr->shape();
   if (index >= shape_list.size()) {
@@ -1380,42 +1363,24 @@ static ShapeVector GetShapeFromSequenceShape(const abstract::SequenceShapePtr &s
   }
 
   auto shape_ptr = shape->cast<abstract::ShapePtr>();
-  return type == ShapeType::kMaxShape ? shape_ptr->max_shape() : shape_ptr->min_shape();
+  return shape_ptr->max_shape();
 }
 
-static std::vector<int64_t> GetOutputMinOrMaxShape(const AnfNodePtr &anf_node, size_t index, ShapeType type) {
+ShapeVector AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto shape = anf_node->Shape();
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->isa<abstract::Shape>()) {
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
-    return type == ShapeType::kMaxShape ? shape_ptr->max_shape() : shape_ptr->min_shape();
+    return shape_ptr->max_shape();
   } else if (shape->isa<abstract::SequenceShape>()) {
     auto sequeue_shape_ptr = shape->cast<abstract::SequenceShapePtr>();
-    return GetShapeFromSequenceShape(sequeue_shape_ptr, index, type);
+    return GetShapeFromSequenceShape(sequeue_shape_ptr, index);
   } else if (shape->isa<abstract::NoShape>()) {
     return {};
   } else {
     MS_LOG(EXCEPTION) << "Invalid shape type." << trace::DumpSourceLines(anf_node);
   }
-}
-
-ShapeVector AnfAlgo::GetInputMaxShape(const AnfNodePtr &anf_node, size_t index) {
-  auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
-  return GetOutputMaxShape(input_node_with_index.first, input_node_with_index.second);
-}
-
-ShapeVector AnfAlgo::GetInputMinShape(const AnfNodePtr &anf_node, size_t index) {
-  auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
-  return GetOutputMinShape(input_node_with_index.first, input_node_with_index.second);
-}
-
-ShapeVector AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
-  return GetOutputMinOrMaxShape(anf_node, index, ShapeType::kMaxShape);
-}
-
-ShapeVector AnfAlgo::GetOutputMinShape(const AnfNodePtr &anf_node, size_t index) {
-  return GetOutputMinOrMaxShape(anf_node, index, ShapeType::kMinShape);
 }
 
 bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {

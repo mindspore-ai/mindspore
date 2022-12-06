@@ -86,10 +86,8 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
     }
   }
   ShapeVector y_indices_shape = {x_indices_shape[0], -1};
-  ShapeVector y_indices_min_shape = {x_indices_shape[0], 1};
   ShapeVector y_indices_max_shape = {x_indices_shape[0], x_indices_shape[1]};
   ShapeVector y_values_shape = {-1};
-  ShapeVector y_values_min_shape = {1};
   ShapeVector y_values_max_shape = {x_indices_shape[1]};
   if (x_indices_shape_ptr->IsDynamic()) {
     y_indices_max_shape = {1, 1};
@@ -99,10 +97,8 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(y_shape);
   abstract::ShapePtr y_shape_shape_list = y_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(y_shape_shape_list);
-  abstract::ShapePtr y_indices_shape_list =
-    std::make_shared<abstract::Shape>(y_indices_shape, y_indices_min_shape, y_indices_max_shape);
-  abstract::ShapePtr y_values_shape_list =
-    std::make_shared<abstract::Shape>(y_values_shape, y_values_min_shape, y_values_max_shape);
+  abstract::ShapePtr y_indices_shape_list = std::make_shared<abstract::Shape>(y_indices_shape, y_indices_max_shape);
+  abstract::ShapePtr y_values_shape_list = std::make_shared<abstract::Shape>(y_values_shape, y_values_max_shape);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{y_indices_shape_list, y_values_shape_list, y_shape_shape_list});
 }

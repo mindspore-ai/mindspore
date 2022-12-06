@@ -54,17 +54,11 @@ AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNod
   }
 
   ShapeVector new_shape = output_shape->shape();
-  ShapeVector new_shape_min = output_shape->min_shape();
-  ShapeVector new_shape_max = output_shape->max_shape();
   auto axis_l = LongToSize(axis);
   if (axis_l < new_shape.size()) {
     new_shape[axis_l] = SizeToLong(offset);
-    if (!new_shape_min.empty() && !new_shape_max.empty()) {
-      new_shape_min[axis_l] = SizeToLong(offset);
-      new_shape_max[axis_l] = SizeToLong(offset);
-    }
   }
-  auto new_output_shape = std::make_shared<abstract::Shape>(new_shape, new_shape_min, new_shape_max);
+  auto new_output_shape = std::make_shared<abstract::Shape>(new_shape);
   common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_pack_cnode, 0)},
                                                {new_output_shape}, new_pack.get());
   return new_pack;

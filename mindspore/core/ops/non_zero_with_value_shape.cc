@@ -52,13 +52,12 @@ AbstractBasePtr NonZeroWithValueShapeInfer(const abstract::AnalysisEnginePtr &, 
   (void)y_shape.emplace_back(rank_base);
   // Indices of elements that are non-zero
   (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
-  ShapeVector min_shape = {rank_base, 1};
   ShapeVector max_shape = {rank_base, max_size};
 
-  auto value = std::make_shared<abstract::AbstractTensor>(
-    x->element(), std::make_shared<abstract::Shape>(y_shape, min_shape, max_shape));
-  auto index = std::make_shared<abstract::AbstractTensor>(
-    kInt32, std::make_shared<abstract::Shape>(y_shape, min_shape, max_shape));
+  auto value =
+    std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(y_shape, max_shape));
+  auto index =
+    std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape, max_shape));
   AbstractBasePtrList result = {value, index};
   return std::make_shared<abstract::AbstractTuple>(result);
 }

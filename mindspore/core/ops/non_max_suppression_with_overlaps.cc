@@ -73,16 +73,13 @@ abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &p
 
   // calculate output shape
   ShapeVector selected_indices_shape = {abstract::Shape::kShapeDimAny};
-  ShapeVector selected_indices_min_shape = {0};
   ShapeVector selected_indices_max_shape;
   if (scores_shape_map[kShape].size() > 0 && scores_shape_map[kShape][0] == -1) {
     selected_indices_max_shape = scores_shape_map[kMaxShape];
-    return std::make_shared<abstract::Shape>(selected_indices_shape, selected_indices_min_shape,
-                                             selected_indices_max_shape);
+    return std::make_shared<abstract::Shape>(selected_indices_shape, selected_indices_max_shape);
   }
   selected_indices_max_shape = scores_shape_map[kShape];
-  return std::make_shared<abstract::Shape>(selected_indices_shape, selected_indices_min_shape,
-                                           selected_indices_max_shape);
+  return std::make_shared<abstract::Shape>(selected_indices_shape, selected_indices_max_shape);
 }
 
 TypePtr NonMaxSuppressionWithOverlapsInferType(const PrimitivePtr &prim,

@@ -182,10 +182,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool GetBooleanAttr(const AnfNodePtr &node, const std::string &attr);
   static std::optional<string> GetDumpFlag(const AnfNodePtr &node);
   static void GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std::vector<int64_t> *> dynamic_shape);
-  static std::vector<int64_t> GetInputMaxShape(const AnfNodePtr &anf_node, size_t index);
-  static std::vector<int64_t> GetInputMinShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int64_t> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
-  static std::vector<int64_t> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
   static bool IsHostKernel(const CNodePtr &kernel_node);
   static void AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &real_input, size_t real_input_index);
   // Find real input nodes.

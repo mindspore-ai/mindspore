@@ -51,9 +51,8 @@ abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,
   }
 
   ShapeVector output_shape = {abstract::Shape::kShapeDimAny};
-  ShapeVector min_shape = {0};
   ShapeVector max_shape = {num};
-  return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(output_shape, max_shape);
 }
 
 TypePtr MaskedSelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

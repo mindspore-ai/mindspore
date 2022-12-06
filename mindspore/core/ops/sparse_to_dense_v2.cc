@@ -33,9 +33,6 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   const int64_t OutShapeSize = 1;
   const int64_t ValuesSize = 1;
   const int64_t DefaultSize = 0;
-  auto max_length_ptr = primitive->GetAttr("max_length");
-  MS_EXCEPTION_IF_NULL(max_length_ptr);
-  int64_t max_length = GetValue<int64_t>(max_length_ptr);
   auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto output_shape_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto values_shape_ptr = input_args[kInputIndex2]->BuildShape();
@@ -102,15 +99,10 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
     }
     return std::make_shared<abstract::Shape>(y_shape);
   } else {
-    const uint32_t input_shapes = static_cast<uint32_t>(std::pow(max_length, 1.0 / SizeToInt(output_shape_numelement)));
-    ShapeVector shape_min;
-    ShapeVector shape_max;
     for (size_t i = 0; i < output_shape_numelement; i++) {
       y_shape.push_back(abstract::Shape::kShapeDimAny);
-      shape_min.push_back(0);
-      shape_max.push_back(input_shapes);
     }
-    return std::make_shared<abstract::Shape>(y_shape, shape_min, shape_max);
+    return std::make_shared<abstract::Shape>(y_shape);
   }
 }
 

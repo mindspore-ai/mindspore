@@ -53,9 +53,6 @@ T ShapeSize(const std::vector<T> &shape) {
   return std::accumulate(shape.begin(), shape.end(), static_cast<T>(1), std::multiplies<T>());
 }
 
-// Check dynamic shape routine
-void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
-
 AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type);
 MS_CORE_API AbstractBasePtr MakeMonadAbstract(const MonadTypePtr &type);
 MS_CORE_API AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type);

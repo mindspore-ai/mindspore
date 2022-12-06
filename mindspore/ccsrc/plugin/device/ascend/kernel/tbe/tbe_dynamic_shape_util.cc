@@ -103,27 +103,15 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
     kernel_info->select_kernel_build_info() == nullptr ? def_format : AnfAlgo::GetInputFormat(anf_node, index);
   auto data_type =
     kernel_info->select_kernel_build_info() == nullptr ? type : AnfAlgo::GetInputDeviceDataType(anf_node, index);
-  auto input_range_min = common::AnfAlgo::GetInputMinShape(anf_node, index);
-  auto input_range_max = common::AnfAlgo::GetInputMaxShape(anf_node, index);
-  if (input_range_min.size() != input_range_max.size()) {
-    MS_EXCEPTION(ArgumentError) << "Input range size is not equal, min size: " << input_range_min.size()
-                                << "max size: " << input_range_max.size();
-  }
 
   std::string reshape_type = AnfAlgo::GetInputReshapeType(anf_node, index);
   trans::ShapeRangeTransfer shapeRangeTransfer;
   RangePair ret;
 
-  if (input_range_min.empty() && input_range_max.empty()) {
-    auto prev_node = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
-    MS_EXCEPTION_IF_NULL(prev_node.first);
-    auto shape = common::AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
-    GetRangeByShape(anf_node, shape, &ret);
-  } else {
-    for (size_t i = 0; i < input_range_min.size(); ++i) {
-      (void)ret.emplace_back(input_range_min[i], input_range_max[i]);
-    }
-  }
+  auto prev_node = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
+  MS_EXCEPTION_IF_NULL(prev_node.first);
+  auto shape = common::AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
+  GetRangeByShape(anf_node, shape, &ret);
 
   return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
 }
@@ -137,24 +125,12 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
     kernel_info->select_kernel_build_info() == nullptr ? def_format : AnfAlgo::GetOutputFormat(anf_node, index);
   auto data_type =
     kernel_info->select_kernel_build_info() == nullptr ? type : AnfAlgo::GetOutputDeviceDataType(anf_node, index);
-  auto output_range_min = common::AnfAlgo::GetOutputMinShape(anf_node, index);
-  auto output_range_max = common::AnfAlgo::GetOutputMaxShape(anf_node, index);
-  if (output_range_min.size() != output_range_max.size()) {
-    MS_EXCEPTION(ArgumentError) << "Onput range size is not equal, min size: " << output_range_min.size()
-                                << "max size: " << output_range_max.size();
-  }
   std::string reshape_type = AnfAlgo::GetOutputReshapeType(anf_node, index);
   trans::ShapeRangeTransfer shapeRangeTransfer;
   RangePair ret;
 
-  if (output_range_min.empty() && output_range_max.empty()) {
-    auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, index);
-    GetRangeByShape(anf_node, shape, &ret);
-  } else {
-    for (size_t i = 0; i < output_range_min.size(); i++) {
-      (void)ret.emplace_back(output_range_min[i], output_range_max[i]);
-    }
-  }
+  auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, index);
+  GetRangeByShape(anf_node, shape, &ret);
 
   return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
 }

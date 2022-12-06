@@ -49,35 +49,17 @@ void GetShapeVector(const ValuePtr &shape_attr, std::vector<std::vector<int64_t>
   }
 }
 
-bool IsShapesDynamic(const std::vector<ShapeVector> &shape) {
-  for (auto shape_vec : shape) {
-    if (IsDynamic(shape_vec)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto types = GetValue<std::vector<TypePtr>>(primitive->GetAttr("types"));
   ValuePtr shape_attr = primitive->GetAttr("shapes");
-  ValuePtr min_shape_attr = primitive->GetAttr("min_shapes");
-  ValuePtr max_shape_attr = primitive->GetAttr("max_shapes");
 
   std::vector<ShapeVector> shape;
-  std::vector<ShapeVector> min_shape;
-  std::vector<ShapeVector> max_shape;
   GetShapeVector(shape_attr, &shape);
-  GetShapeVector(min_shape_attr, &min_shape);
-  GetShapeVector(max_shape_attr, &max_shape);
 
-  bool is_dynamic = IsShapesDynamic(shape);
   AbstractBasePtrList output;
   for (size_t i = 0; i < shape.size(); ++i) {
-    auto ret_shape = !min_shape.empty() && !max_shape.empty() && is_dynamic
-                       ? std::make_shared<abstract::Shape>(shape[i], min_shape[i], max_shape[i])
-                       : std::make_shared<abstract::Shape>(shape[i]);
+    auto ret_shape = std::make_shared<abstract::Shape>(shape[i]);
     auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, types[i]);
     auto tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
     output.push_back(tensor);

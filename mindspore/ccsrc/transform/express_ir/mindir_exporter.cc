@@ -666,16 +666,7 @@ bool IrExportBuilder::SetTensorProto(const AbstractBasePtr &abstract, mind_ir::T
   for (const auto &dim : dims) {
     tensor_proto->add_dims(dim);
   }
-  if (tensor_shape->IsDynamic()) {
-    auto min_shape = tensor_shape->min_shape();
-    auto max_shape = tensor_shape->max_shape();
-    for (auto item : min_shape) {
-      tensor_proto->add_min_dims(item);
-    }
-    for (auto item : max_shape) {
-      tensor_proto->add_max_dims(item);
-    }
-  }
+
   if (!abstract->name().empty()) {
     tensor_proto->set_name(abstract->name());
   }

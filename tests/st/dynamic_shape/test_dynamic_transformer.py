@@ -199,4 +199,4 @@ def test_train():
     """
     graph_loss = get_train_loss()
     expect_loss = [11.193909]
-    assert np.allclose(graph_loss, expect_loss, 1e-3, 1e-3)
+    assert np.allclose(graph_loss, expect_loss, 5e-3, 5e-3)
