@@ -197,14 +197,17 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
     MS_EXCEPTION(TypeError) << "The dtype of indices must be a Int, but got " << indices_dtype->ToString();
   }
   auto indices_shp = indices->shape()->shape();
-  if (indices_shp.size() != 1) {
-    MS_EXCEPTION(TypeError) << "Indices must be a 1 dimension tensor, but got a " << indices_shp.size()
-                            << " dimension tensor";
-  }
   auto values_shp = values->shape()->shape();
-  if (indices_shp[0] != values_shp[0]) {
-    MS_EXCEPTION(TypeError) << "The first dimension of indices must be the same with the first dimension of values "
-                            << values_shp[0] << ", but got " << indices_shp[0];
+  auto is_values_dynamic = IsDynamic(values_shp);
+  if (!IsDynamic(indices_shp) && !is_values_dynamic) {
+    if (indices_shp.size() != 1) {
+      MS_EXCEPTION(TypeError) << "Indices must be a 1 dimension tensor, but got a " << indices_shp.size()
+                              << " dimension tensor";
+    }
+    if (indices_shp[0] != values_shp[0]) {
+      MS_EXCEPTION(TypeError) << "The first dimension of indices must be the same with the first dimension of values "
+                              << values_shp[0] << ", but got " << indices_shp[0];
+    }
   }
 
   for (const auto &elem_type : dense_shape->ElementsType()) {
@@ -223,7 +226,7 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
                          auto elem = GetValue<int64_t>(e);
                          return elem;
                        });
-  if (dense_shape_vec.size() != values_shp.size()) {
+  if (dense_shape_vec.size() != values_shp.size() && !is_values_dynamic) {
     MS_EXCEPTION(TypeError) << "The size of dense_shape must be the same with the dimension of values "
                             << values_shp.size() << ", but got " << dense_shape_valuetuple->size();
   }
@@ -233,7 +236,7 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
                               << dense_shape_vec[i];
     }
     // The 0th mode might be less or exceed dense_shape[0] due to duplicated selection
-    if (i != 0 && dense_shape_vec[i] != values_shp[i]) {
+    if (!is_values_dynamic && i != 0 && dense_shape_vec[i] != values_shp[i]) {
       MS_EXCEPTION(TypeError) << "The " << i << "th element of dense_shape must be same with the " << i
                               << "th dimension of values " << values_shp[i] << ", but got " << dense_shape_vec[i];
     }
