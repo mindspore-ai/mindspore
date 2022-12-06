@@ -408,12 +408,12 @@ void CreateTensorPrintThread(const PrintThreadCrt &ctr) {
   uint32_t device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string channel_name = "_npu_log";
 
-  const size_t capacity_size = 128;
+  const size_t capacity_size = 16;
   if (!AclHandle::GetInstance().CreateChannel(device_id, channel_name, capacity_size)) {
     MS_LOG(EXCEPTION) << "create acl channel failed";
   }
-  MS_LOG(WARNING) << "Success to create acl channel handle, tsd reference = "
-                  << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
+  MS_LOG(INFO) << "Success to create acl channel handle, tsd reference = "
+               << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   std::string print_file_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
   g_acl_tdt_print = ctr(print_file_path, AclHandle::GetInstance().Get());
 }
