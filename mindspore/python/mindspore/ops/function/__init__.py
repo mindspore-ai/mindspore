@@ -314,6 +314,7 @@ from .math_func import (
     atleast_2d,
     atleast_3d,
     vstack,
+    dist,
     copysign,
     hann_window,
     log2,
