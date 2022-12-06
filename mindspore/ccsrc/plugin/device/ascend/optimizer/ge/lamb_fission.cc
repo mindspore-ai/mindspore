@@ -254,6 +254,8 @@ const AnfNodePtr LambFissionGe::Process(const FuncGraphPtr &graph, const AnfNode
     std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), param_node, global_step_node};
     auto make_tuple_node = NewCNode(make_tuple_inputs, graph);
     MS_EXCEPTION_IF_NULL(make_tuple_node);
+    AbstractBasePtrList abstract_list{param_node->abstract(), global_step_node->abstract()};
+    make_tuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
 
     // graph mode need umonad and update-state function to keep order
     update_state_load_node =
