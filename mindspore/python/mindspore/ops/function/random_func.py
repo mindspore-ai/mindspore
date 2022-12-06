@@ -23,9 +23,11 @@ from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask, RandpermV2
 from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.common.api import _function_forbid_reuse
 
 
-def random_gamma(shape, alpha, seed=0, seed2=0):
+@_function_forbid_reuse
+def random_gamma(shape, alpha, seed=None):
     r"""
     Outputs random values from the Gamma distribution(s) described by alpha.
 
@@ -35,10 +37,8 @@ def random_gamma(shape, alpha, seed=0, seed2=0):
             Must be one of the following types: int32, int64. 1-D integer tensor.
         alpha (Tensor): The alpha α distribution parameter.
             A Tensor. Must be one of the following types: half, float32, float64.
-        seed (int): Seed is used as entropy source for the random number engines to generate
-            pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
-        seed2 (int): Seed2 is used as entropy source for the random number engines to generate
-            pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+            Default: None, which will be treated as 0.
 
     Returns:
         Tensor. The shape should be equal to the concat shape between the input `shape` and the broadcast
@@ -65,20 +65,20 @@ def random_gamma(shape, alpha, seed=0, seed2=0):
         >>> print(result)
         (7, 5, 2)
     """
-
-    random_gamma_op = _get_cache_prim(P.RandomGamma)(seed=seed, seed2=seed2)
+    seed1, seed2 = _get_seed(seed, "random_gamma")
+    random_gamma_op = _get_cache_prim(P.RandomGamma)(seed1, seed2)
     output = random_gamma_op(shape, alpha)
-
     return output
 
 
 @constexpr(reuse_result=False)
 def _get_seed(op_seed, kernel_name):
-    "Get the graph-level seed."
+    """Get the graph-level seed."""
     return _get_graph_seed(op_seed, kernel_name)
 
 
-def standard_laplace(shape, seed=0, seed2=0):
+@_function_forbid_reuse
+def standard_laplace(shape, seed=None):
     r"""
     Generates random numbers according to the Laplace random number distribution (mean=0, lambda=1).
     It is defined as:
@@ -89,16 +89,14 @@ def standard_laplace(shape, seed=0, seed2=0):
     Args:
         shape (Union[tuple, Tensor]): The shape of random tensor to be generated. Only constant value is allowed
           when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: None, which will be treated as 0.
 
     Returns:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Raises:
-        TypeError: If seed or seed2 is not an int.
         TypeError: If shape is neither a tuple nor a Tensor.
-        ValueError: If seed or seed2 is not a non-negative int.
         ValueError: If shape is a tuple containing non-positive items.
         ValueError: If shape is a Tensor, and the rank of the Tensor is not equal to 1.
 
@@ -113,10 +111,12 @@ def standard_laplace(shape, seed=0, seed2=0):
         >>> print(result)
         (4, 4)
     """
-    standard_laplace_op = _get_cache_prim(P.StandardLaplace)(seed=seed, seed2=seed2)
+    seed1, seed2 = _get_seed(seed, "standard_laplace")
+    standard_laplace_op = _get_cache_prim(P.StandardLaplace)(seed=seed1, seed2=seed2)
     return standard_laplace_op(shape)
 
 
+@_function_forbid_reuse
 def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     r"""
     Generates random samples from a given categorical distribution tensor.
@@ -154,6 +154,7 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     return random_categorical_(logits, num_sample, seed)
 
 
+@_function_forbid_reuse
 def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False):
     r"""
     Returns a tensor where each row contains `numsamples` elements sampled from the multinomial distribution.
@@ -198,6 +199,7 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
     return multinomial_with_replacement_(x, seed, offset)
 
 
+@_function_forbid_reuse
 def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     """
     Generates random numbers according to the Uniform random number distribution.
@@ -274,7 +276,8 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     return value
 
 
-def standard_normal(shape, seed=0, seed2=0):
+@_function_forbid_reuse
+def standard_normal(shape, seed=None):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
@@ -287,16 +290,14 @@ def standard_normal(shape, seed=0, seed2=0):
     Args:
         shape (Union[tuple, Tensor]): The shape of random tensor to be generated. Only constant value is allowed
           when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+          Default: None, which will be treated as 0.
 
     Returns:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Raises:
-        TypeError: If `seed` or `seed2` is not an int.
         TypeError: If `shape` is neither a tuple nor a Tensor.
-        ValueError: If `seed` or `seed2` is not a non-negative int.
         ValueError: If `shape` is a tuple containing non-positive items.
 
     Supported Platforms:
@@ -310,10 +311,12 @@ def standard_normal(shape, seed=0, seed2=0):
         >>> print(result)
         (4, 4)
     """
-    standard_normal_op = _get_cache_prim(P.StandardNormal)(seed=seed, seed2=seed2)
+    seed1, seed2 = _get_seed(seed, "standard_normal")
+    standard_normal_op = _get_cache_prim(P.StandardNormal)(seed=seed1, seed2=seed2)
     return standard_normal_op(shape)
 
 
+@_function_forbid_reuse
 def uniform_candidate_sampler(true_classes,
                               num_true,
                               num_sampled,
@@ -375,6 +378,7 @@ def uniform_candidate_sampler(true_classes,
     return sampled_candidates, true_expected_count, sampled_expected_count
 
 
+@_function_forbid_reuse
 def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     r"""
     Generates random number Tensor with shape `shape` according to a Poisson distribution with mean `rate`.
@@ -390,8 +394,8 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         rate (Tensor): The μ parameter the distribution is constructed with. It represents the mean of the distribution
           and also the variance of the distribution. It should be a `Tensor` whose dtype is mindspore.dtype.int64,
           mindspore.dtype.int32, mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16.
-        seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers
-          and must be non-negative. Default: None, which will be treated as 0.
+        seed (int, optional): Seed is used as entropy source for the random number engines to generate pseudo-random
+          numbers and must be non-negative. Default: None, which will be treated as 0.
         dtype (mindspore.dtype): The data type of output: mindspore.dtype.int64, mindspore.dtype.int32,
           mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16. Default: mindspore.dtype.float32.
 
@@ -437,14 +441,15 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     return value
 
 
+@_function_forbid_reuse
 def shuffle(x, seed=None):
     r"""
     Randomly shuffles a Tensor along its first dimension.
 
     Args:
         x (Tensor): The Tensor need be shuffled.
-        seed (int): Random seed used for random number generation, must be non-negative. If `seed` is 0, which will be
-            replaced with a randomly generated value. Default: None, which will be treated as 0.
+        seed (int, optional): Random seed used for random number generation, must be non-negative. If `seed` is 0,
+            which will be replaced with a randomly generated value. Default: None, which will be treated as 0.
 
     Returns:
         Tensor. The shape and type are the same as the input `x`.
@@ -467,6 +472,7 @@ def shuffle(x, seed=None):
     return output
 
 
+@_function_forbid_reuse
 def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
     r"""
     Generates random labels with a log-uniform distribution for sampled_candidates.
@@ -519,7 +525,8 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
     return sampler(true_classes)
 
 
-def choice_with_mask(input_x, count=256, seed=0, seed2=0):
+@_function_forbid_reuse
+def choice_with_mask(input_x, count=256, seed=None):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
 
@@ -532,8 +539,8 @@ def choice_with_mask(input_x, count=256, seed=0, seed2=0):
         input_x (Tensor[bool]): The input tensor.
             The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
         count (int): Number of items expected to get and the number must be greater than 0. Default: 256.
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+            Default: None, which will be treated as 0.
 
     Returns:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.
@@ -559,11 +566,13 @@ def choice_with_mask(input_x, count=256, seed=0, seed2=0):
         >>> print(result)
         (256,)
     """
-    choice_with_mask_ = _get_cache_prim(RandomChoiceWithMask)(count=count, seed=seed, seed2=seed2)
+    seed1, seed2 = _get_seed(seed, "choice_with_mask")
+    choice_with_mask_ = _get_cache_prim(RandomChoiceWithMask)(count=count, seed=seed1, seed2=seed2)
     output = choice_with_mask_(input_x)
     return output
 
 
+@_function_forbid_reuse
 def randperm(n, seed=0, offset=0, dtype=mstype.int64):
     r"""
     Generates random permutation of integers from 0 to n-1.

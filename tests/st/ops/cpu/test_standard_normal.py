@@ -75,15 +75,6 @@ def test_standard_normal_functional():
     Expectation: the value and shape of output tensor match the predefined values
     """
     seed = 10
-    seed2 = 10
     shape = (5, 6, 8)
-    output = F.standard_normal(shape, seed, seed2)
+    output = F.standard_normal(shape, seed)
     assert output.shape == shape
-    output_numpy_flatten_1 = output.asnumpy().flatten()
-
-    seed = 0
-    seed2 = 10
-    output = F.standard_normal(shape, seed, seed2)
-    assert output.shape == shape
-    output_numpy_flatten_2 = output.asnumpy().flatten()
-    assert (output_numpy_flatten_1 == output_numpy_flatten_2).all()
