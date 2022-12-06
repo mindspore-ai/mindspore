@@ -216,6 +216,15 @@ class L2NormalizeNet(nn.Cell):
         return out
 
 
+class MultiLabelSoftMarginLossNet(nn.Cell):
+    def __init__(self):
+        super(MultiLabelSoftMarginLossNet, self).__init__()
+        self.multi_label_soft_margin_loss = nn.MultiLabelSoftMarginLoss(reduction='mean')
+
+    def construct(self, x, target):
+        return self.multi_label_soft_margin_loss(x, target)
+
+
 class HistogramSummaryNet(nn.Cell):
     """HistogramSummaryNet definition"""
 
@@ -541,6 +550,11 @@ test_cases = [
     ('L2Normalize', {
         'block': L2NormalizeNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
+    }),
+    ('MultiLabelSoftMarginLoss', {
+        'block': MultiLabelSoftMarginLossNet(),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]]), mindspore.float32),
+                        Tensor(np.array([[0, 0, 1], [0, 0, 1]]), mindspore.float32)]
     }),
     ('FusedBatchNormGrad', {
         'block': FusedBatchNormGrad(nn.BatchNorm2d(num_features=512, eps=1e-5, momentum=0.1)),
