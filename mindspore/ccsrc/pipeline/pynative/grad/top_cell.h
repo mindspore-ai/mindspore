@@ -32,7 +32,7 @@
 #include "pybind11/pytypes.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "ir/anf.h"
-#include "frontend/optimizer/ad/auto_grad.h"
+#include "pipeline/pynative/grad/auto_grad.h"
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/pynative/base.h"
