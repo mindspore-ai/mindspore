@@ -302,7 +302,7 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
 #if TRT_VERSION_GE(8, 0)
   std::map<schema::CoordinateTransformMode, nvinfer1::ResizeCoordinateTransformation> transform_map = {
     {schema::CoordinateTransformMode_ASYMMETRIC, nvinfer1::ResizeCoordinateTransformation::kASYMMETRIC},
-    {schema::CoordinateTransformMode_ALIGN_CORNERS, nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS},
+    {schema::CoordinateTransformMode_ALIGN_CORNERS, nvinfer1::ResizeCoordinateTransformation::kASYMMETRIC},
     {schema::CoordinateTransformMode_HALF_PIXEL, nvinfer1::ResizeCoordinateTransformation::kHALF_PIXEL}};
   auto transform_it = transform_map.find(resize_op_->coordinate_transform_mode());
   if (transform_it == transform_map.end()) {
@@ -311,6 +311,9 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
     return RET_ERROR;
   }
   resize_layer->setCoordinateTransformation(transform_it->second);
+  if (resize_op_->new_height() != 0 || resize_op_->new_width() != 0) {
+    resize_layer->setCoordinateTransformation(nvinfer1::ResizeCoordinateTransformation::kALIGN_CORNERS);
+  }
 #else
   if (resize_op_->coordinate_transform_mode() != schema::CoordinateTransformMode_ASYMMETRIC) {
     MS_LOG(WARNING) << op_name_ << " has coordinate_transform_mode may not supported: "
