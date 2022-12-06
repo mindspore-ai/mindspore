@@ -519,18 +519,26 @@ class Assert(PrimitiveWithInfer):
         TypeError: If `condition` is neither a Tensor nor a bool.
         TypeError: If `input_data` is neither a tuple nor a list.
 
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
     Examples:
-        >>> class AssertDemo(nn.Cell):
-        ...     def __init__(self):
-        ...         super(AssertDemo, self).__init__()
-        ...         self.assert1 = ops.Assert(summarize=10)
-        ...         self.add = ops.Add()
-        ...
-        ...     def construct(self, x, y):
-        ...         data = self.add(x, y)
-        ...         self.assert1(True, [data])
-        ...         return data
-        ...
+        >>> a = Tensor(np.array([-1, 0, 1, 2, 3]).astype(np.int32))
+        >>> b = Tensor(np.array([1, 2, 3, 4, 5]).astype(np.float32))
+        >>> assert1 = ops.Assert(3)
+        >>> assert1(False, [a, b])
+        For 'Assert' condition is false.
+        input data: [-1 0 1]
+        input data: [1 2 3]
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+          File "mindspore/ops/primitive.py", line 294, in __call__
+            return _run_op(self, self.name, args)
+          File "mindspore/common/api.py", line 99, in wrapper
+            results = fn(*arg, **kwargs)
+          File "mindspore/ops/primitive.py", line 743, in _run_op
+            output = real_run_op(obj, op_name, args)
+        RuntimeError: assert failed
     """
 
     @prim_attr_register
