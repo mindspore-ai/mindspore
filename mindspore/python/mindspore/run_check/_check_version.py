@@ -515,9 +515,9 @@ def check_version_and_env_config():
             import ctypes
             ctypes.cdll.LoadLibrary("libgomp.so.1")
         except OSError:
-            logger.warning(
-                "Pre-Load Lirary libgomp.so.1 failed, this might cause cannot allocate TLS memory problem, "
-                "if so find solution in FAQ in https://www.mindspore.cn/docs/en/master/faq/installation.html.")
+            logger.warning("Pre-Load Lirary libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
+                           "the failure occurs, you can find a solution in FAQ in "
+                           "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
     if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
         return
     MSContext.get_instance().register_check_env_callback(check_env)
