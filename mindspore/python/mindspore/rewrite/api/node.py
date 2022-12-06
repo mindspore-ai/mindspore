@@ -99,12 +99,6 @@ class Node:
                                             args, kwargs, name, is_sub_net))
 
     def get_handler(self) -> NodeImpl:
-        """
-        Get handler of node implementation.
-
-        Returns:
-            An instance of `NodeImpl`.
-        """
         return self._node
 
     def get_inputs(self) -> ['Node']:
@@ -209,27 +203,6 @@ class Node:
             belong_symbol_tree.set_node_arg_by_node(self._node, arg_idx, src_node.get_handler(), out_idx)
 
     def get_targets(self) -> [ScopedValue]:
-        """
-        Get targets of current node.
-
-        - When node_type of current node is `CallCell`, `CallPrimitive`, `CallMethod` or `Tree`, `targets` are strings
-          represents invoke result of the cell-op or primitive-op or function-call which are corresponding to targets of
-          ast.Assign.
-        - When node_type of current node is Input, `targets` should have only one element which is a string represents
-          parameter of function.
-        - When node_type of current node is `Python` or `Output`, `targets` are don't-care.
-
-        Returns:
-            A list of instances of ScopedValue as targets of node.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> node = stree.get_node("conv1")
-            >>> targets = node.get_targets()
-        """
         return self._node.get_targets()
 
     def get_name(self) -> str:
@@ -284,106 +257,21 @@ class Node:
         return self._node.get_instance_type()
 
     def get_instance(self):
-        """
-        Get the instance of current node.
-
-        - When node_type of current node is `CallCell`, instance is an instance of Cell.
-        - When node_type of current node is `CallPrimitive`, instance is an instance of primitive.
-        - When node_type of current node is `Tree`, instance is an instance of network-cell.
-        - When node_type of current node is `Python`, `Input`, `Output` or `CallMethod`, instance should be None.
-
-        Returns:
-            A object represents corresponding instance of current node.
-        """
         return self._node.get_instance()
 
     def get_args(self) -> [ScopedValue]:
-        """
-        Get the arguments of current node.
-
-        - When `node_type` of current node is `CallCell`, `CallPrimitive` or `Tree`, arguments are corresponding to args
-          of ast.Call which represents arguments to invoke forward method of cell-op or primitive-op.
-        - When `node_type` of current node is `Input`, arguments represents default-value of argument of function.
-        - When `node_type` of current node is `Output`, arguments represents the return values of network.
-        - When `node_type` of current node is `Python`, arguments are don't-care.
-
-        Returns:
-            A list of instances of `ScopedValue`.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> node = stree.get_node("conv1")
-            >>> args = node.get_args()
-        """
         return self._node.get_args()
 
     def get_kwargs(self) -> {str: ScopedValue}:
-        """
-        Get the keyword arguments of current node.
-
-        - When node_type of current node is `CallCell`, `CallPrimitive` or `Tree`, keyword arguments are corresponding
-          to kwargs of ast.Call which represents arguments to invoke forward method of cell-op or primitive-op.
-        - When node_type of current node is `Python`, `Input` or `Output`, keyword arguments are don't-care.
-
-        Returns:
-            A dict of str to instance of `ScopedValue`.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> node = stree.get_node("conv1")
-            >>> kwargs = node.get_kwargs()
-        """
         return self._node.get_kwargs()
 
     def set_attribute(self, key: str, value):
-        """
-        Set attribute of current node.
-
-        Args:
-            key (str): Key of attribute.
-            value (object): Value of attribute.
-
-        Raises:
-            TypeError: If `key` is not a `str`.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
-            >>> stree = SymbolTree.create(net)
-            >>> node = stree.get_node("conv1")
-            >>> node.set_attribute("channel", 3)
-        """
         Validator.check_value_type("key", key, [str], "Node attribute")
         self._node.set_attribute(key, value)
 
     def get_attributes(self) -> {str: object}:
-        """
-        Get all attributes of current node.
-
-        Returns:
-            A dict of str to instance of object as attributes.
-        """
         return self._node.get_attributes()
 
     def get_attribute(self, key: str):
-        """
-        Get attribute of current node by key.
-
-        Args:
-            key (str): Key of attribute.
-
-        Returns:
-            A object as attribute, can be any type.
-
-        Raises:
-            TypeError: If `key` is not a `str`.
-        """
         Validator.check_value_type("key", key, [str], "Node attribute")
         return self._node.get_attribute(key)

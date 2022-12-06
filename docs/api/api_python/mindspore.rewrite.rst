@@ -50,26 +50,6 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
         异常：
             - **TypeError** - 参数 `network` 不是Cell类型对象。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.create_call_function(func, targets, args, kwargs)
-
-        创建一个Node对象，并生成执行代码插入源码中。源码中以 `args` 和 `kwargs` 为参数调用 `func` 函数。
-
-        参数：
-            - **func** (FunctionType) - 要被调用的函数。
-            - **targets** (list[str]) - 表示输出名称。在源代码中作为节点的输出。
-            - **args** (Union[MsDtypes, ParamTypes]) - 该节点的参数名称。用作源代码中代码语句的参数。默认为None表示 `cell` 没有参数输入。
-            - **kwargs** (dict{str,Union[MsDtypes, ParamTypes]}) - 键的类型必须是str，值必须是MsDtypes或类型必须是ParamTypes。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。默认为None，表示没有 `kwargs` 输入。
-
-        返回：
-            一个Node实例。
-
-        异常：
-            - **TypeError** - 如果参数 `func` 不是FunctionType类型。
-            - **TypeError** - 如果参数 `targets` 不是list类型。
-            - **TypeError** - 如果参数 `targets` 的成员不是str类型。
-            - **TypeError** - 如果参数 `args` 不是ParamType类型。
-            - **TypeError** - 如果参数 `kwarg` 的 `key` 不是str类型或者 `value` 不是ParamType类型。
-
     .. py:method:: mindspore.rewrite.SymbolTree.dump()
 
         将 `SymbolTree` 中network对应的ir图信息打印到屏幕。
@@ -94,32 +74,12 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
         返回：
             str，SymbolTree对应的源码字符串。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.get_handler()
-
-        获取SymbolTree对应实现的handle。
-
-        返回：
-            SymbolTree对象。
-
     .. py:method:: mindspore.rewrite.SymbolTree.get_network()
 
         获取SymbolTree所对应的生成的网络对象。源码会保存到文件中，默认的文件名为 `network_define.py`。
 
         返回：
             根据SymbolTree生成的网络对象。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.get_node(node_name: str)
-
-        获取节点名为 `node_name` 的节点。
-
-        参数：
-            - **node_name** (str) - 节点的名称。
-
-        返回：
-            如果找到则返回结果，否则返回 `None`。
-
-        异常：
-            - **TypeError** - 如果 `node_name` 不是Node类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.insert(position, node: Node)
 
@@ -143,10 +103,6 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
 
         返回：
             当前SymbolTree中节点的生成器。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate()
-
-        打印当前SymbolTree的节点信息表格。
 
     .. py:method:: mindspore.rewrite.SymbolTree.replace(old_node: Node, new_nodes: [Node])
 
@@ -205,63 +161,12 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
             - **TypeError** - 如果参数 `args` 不是ScopedValue类型。
             - **TypeError** - 如果参数 `kwarg` 的 `key` 不是str类型或者 `value` 不是ScopedValue类型。
 
-    .. py:method:: mindspore.rewrite.Node.get_args()
-
-        获取当前节点的参数。
-
-        - 当前节点的 `node_type` 为 `CallCell`、 `CallPrimitive` 或 `Tree` 时，返回值对应于 ast.Call 的 `args`，表示调用 `cell-op` 或 `primitive-op` 的 `forward` 方法的参数。
-        - 当前节点的 `node_type` 为 `Input` 时，返回值为函数参数的默认值。
-        - 当前节点的 `node_type` 为 `Output` 时，返回值为网络的返回值。
-        - 当前节点的 `node_type` 为 `Python` 时，没有实际含义，可以忽略。
-
-        返回：
-            `ScopedValue` 实例的列表。
-
-    .. py:method:: mindspore.rewrite.Node.get_attribute(key: str)
-
-        获取当前节点属性 `key` 的值。
-
-        参数：
-            - **key** (str) - 属性的名称。
-
-        返回：
-            属性值，可能是任意类型。
-
-        异常：
-            - **TypeError** - 如果参数 `key` 不是str类型。
-
-    .. py:method:: mindspore.rewrite.Node.get_attributes()
-
-        获取当前节点的所有属性。
-
-        返回：
-            返回一个包含属性名和属性值的字典。
-
-    .. py:method:: mindspore.rewrite.Node.get_handler()
-
-        获取节点具体实现的handle。
-
-        返回：
-            返回NodeImpl的实例。
-
     .. py:method:: mindspore.rewrite.Node.get_inputs()
 
         获取当前节点的拓扑序的输入节点。
 
         返回：
             Node的实例列表。
-
-    .. py:method:: mindspore.rewrite.Node.get_instance()
-
-        获取当前节点对应的 `operation` 实例。
-
-        - 如果当前节点的 `node_type` 是 `CallCell`，该节点的实例是一个Cell的对象。
-        - 如果当前节点的 `node_type` 是 `CallPrimitive`，该节点的实例是一个Primitive的对象。
-        - 如果当前节点的 `node_type` 是 `Tree`，该节点的实例是一个网络的对象。
-        - 如果当前节点的 `node_type` 是 `Python`、 `Input`、 `Output`、 `CallMethod`，该节点的实例为None。
-
-        返回：
-            当前节点的 `operation` 实例。
 
     .. py:method:: mindspore.rewrite.Node.get_instance_type()
 
@@ -274,16 +179,6 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
 
         返回：
             当前节点的 `operation` 类型。
-
-    .. py:method:: mindspore.rewrite.Node.get_kwargs()
-
-        获取当前节点带 `key` 值的参数。
-
-        - 当前节点的 `node_type` 为 `CallCell`、 `CallPrimitive` 或 `Tree` 时，关键字参数对应于 `ast.Call` 的 `kwargs`，表示调用 `cell-op` 或 `Primitive-op` 方法的参数。
-        - 当前节点的 `node_type` 为 `Python`、 `Input` 或 `Output` 时，不关心关键字参数。
-
-        返回：
-            `key` 为str， `value` 为ScopedValue的字典。
 
     .. py:method:: mindspore.rewrite.Node.get_name()
 
@@ -298,17 +193,6 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
 
         返回：
             NodeType，当前节点的类型。
-
-    .. py:method:: mindspore.rewrite.Node.get_targets()
-
-        获取当前节点的输出名称。
-
-        - 当前节点的 `node_type` 为 `CallCell`、 `CallPrimitive`、 `CallMethod` 或 `Tree` 时， `target` 为字符串，表示单元操作或原始操作或函数调用的调用结果，它们对应于 `ast.Assign` 的 `targets`。
-        - 当前节点的 `node_type` 为 `Input` 时， `targets` 应该只有一个元素，字符串代表函数的参数。
-        - 当前节点的 `node_type` 为 `Python` 或 `Output` 时， `target` 不需要关心。
-
-        返回：
-            节点输出的ScopedValue列表。
 
     .. py:method:: mindspore.rewrite.Node.get_users()
 
@@ -347,17 +231,6 @@ MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进�
             - **TypeError** - 如果参数 `out_idx` 不是int类型。
             - **ValueError** - 如果参数 `out_idx` 超出了 `src_node` 的输出数量。
             - **ValueError** - 当 `out_idx` 为None或者没有给 `out_idx` 赋值时，参数 `src_node` 有多个输出。
-
-    .. py:method:: mindspore.rewrite.Node.set_attribute(key: str, value)
-
-        设置当前节点的属性。
-
-        参数：
-            - **key** (str) - 属性的名称。
-            - **value** (object) - 属性值。
-
-        异常：
-            - **TypeError** - 如果参数 `key` 不是str类型。
 
 .. py:class:: mindspore.rewrite.NodeType
 
