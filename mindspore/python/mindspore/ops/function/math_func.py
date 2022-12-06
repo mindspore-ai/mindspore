@@ -5338,6 +5338,45 @@ def sparse_segment_mean(x, indices, segment_ids):
     return sparse_segment_mean_(x, indices, segment_ids)
 
 
+def atleast_1d(inputs):
+    r"""
+    Converts `inputs` to arrays with at least one dimension.
+
+    Scalar `inputs` are converted to 1-dimensional arrays, whilst higher-dimensional `inputs` are preserved.
+
+    Args:
+        inputs (Union[Tensor, List[Tensor]]): One or more input tensors.
+
+    Returns:
+        Tensor or list of tensors, each with ``a.ndim >= 1``.
+
+    Raises:
+        TypeError: If the input is not a tensor or a list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.ones((2, 3)))
+        >>> x2 = Tensor(np.ones(()))
+        >>> x3 = Tensor(np.ones(5))
+        >>> out = ops.atleast_1d([x1, x2, x3])
+        >>> print(out[0].asnumpy())
+        [[1. 1. 1.]
+         [1. 1. 1.]]
+        >>> print(out[1].asnumpy())
+        [1.]
+        >>> print(out[2].asnumpy())
+        [1. 1. 1. 1. 1.]
+    """
+    if isinstance(inputs, Tensor):
+        return _expand(inputs, 1)
+    for tensor in inputs:
+        if not isinstance(tensor, Tensor):
+            raise TypeError(f"For 'atleast_1d', each element of 'inputs' must be a tensor, but got {type(tensor)}")
+    return [_expand(arr, 1) for arr in inputs]
+
+
 def dstack(inputs):
     r"""
     Stacks tensors in sequence depth wise (along the third axis).
@@ -8438,6 +8477,7 @@ __all__ = [
     'all',
     'any',
     'sparse_segment_mean',
+    'atleast_1d',
     'dstack',
     'atleast_2d',
     'atleast_3d',
