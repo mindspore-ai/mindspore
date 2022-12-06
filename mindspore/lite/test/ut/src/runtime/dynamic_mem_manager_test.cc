@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace {
-constexpr size_t kAllocUnitSize = 512 * 1024 * 1024;
+constexpr size_t kAllocUnitSize = 256 * 1024 * 1024;
 static constexpr size_t kMinimumAllocUnitSize = 64 * 1024 * 1024;
 constexpr size_t kTestAllocSize = 1024;
 constexpr size_t kTestAllocSize2 = 64;

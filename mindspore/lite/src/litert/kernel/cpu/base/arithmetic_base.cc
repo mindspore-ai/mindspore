@@ -114,12 +114,16 @@ int ArithmeticBaseCPUKernel::ResetStatus() {
   a_matric_.Reset();
   b_matric_.Reset();
   c_matric_.Reset();
-  auto dim_num = shape0.size() >= shape1.size() ? shape0.size() : shape1.size();
-  for (size_t i = 0; i < dim_num - shape0.size(); ++i) {
+  auto shape0_size = shape0.size();
+  auto shape1_size = shape1.size();
+  auto dim_num = shape0_size >= shape1_size ? shape0_size : shape1_size;
+  auto a_matric_size = dim_num - shape0_size;
+  for (size_t i = 0; i < a_matric_size; ++i) {
     a_matric_.shape.push_back(1);
   }
   (void)a_matric_.shape.insert(a_matric_.shape.end(), shape0.begin(), shape0.end());
-  for (size_t i = 0; i < dim_num - shape1.size(); ++i) {
+  auto b_matric_size = dim_num - shape1_size;
+  for (size_t i = 0; i < b_matric_size; ++i) {
     b_matric_.shape.push_back(1);
   }
   (void)b_matric_.shape.insert(b_matric_.shape.end(), shape1.begin(), shape1.end());
@@ -138,19 +142,25 @@ int ArithmeticBaseCPUKernel::ResetStatus() {
 int ArithmeticBaseCPUKernel::OptimizeShape() {
   auto shape0 = a_matric_.shape;
   auto shape1 = b_matric_.shape;
-  auto dim_num = shape0.size() >= shape1.size() ? shape0.size() : shape1.size();
+  auto shape0_size = shape0.size();
+  auto shape1_size = shape1.size();
+  auto dim_num = shape0_size >= shape1_size ? shape0_size : shape1_size;
+  auto a_matric_size = dim_num - shape0_size;
   std::vector<int64_t> shape_0;
   std::vector<int64_t> shape_1;
-  for (size_t i = 0; i < dim_num - shape0.size(); ++i) {
+  for (size_t i = 0; i < a_matric_size; ++i) {
     shape_0.push_back(1);
   }
   (void)shape_0.insert(shape_0.end(), shape0.begin(), shape0.end());
-  for (size_t i = 0; i < dim_num - shape1.size(); ++i) {
+  auto b_matric_size = dim_num - shape1_size;
+  for (size_t i = 0; i < b_matric_size; ++i) {
     shape_1.push_back(1);
   }
   (void)shape_1.insert(shape_1.end(), shape1.begin(), shape1.end());
   std::vector<int64_t> shape0_temp;
+  shape0_temp.reserve(dim_num);
   std::vector<int64_t> shape1_temp;
+  shape1_temp.reserve(dim_num);
   for (size_t i = 0; i < dim_num;) {  // horizontal comparison, merge the part of continuous 1.
     shape0_temp.push_back(shape_0[i]);
     shape1_temp.push_back(shape_1[i]);
