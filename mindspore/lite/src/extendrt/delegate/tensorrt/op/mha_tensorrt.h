@@ -31,6 +31,8 @@ class MhaTensorRT : public TensorRTOp {
       : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~MhaTensorRT() override = default;
+
+  // bool IsWeightInputHanledInner() const override { return true; }
   int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
@@ -40,13 +42,14 @@ class MhaTensorRT : public TensorRTOp {
 constexpr auto MHA_PLUGIN_NAME{"AttentionPlugin"};
 class MhaPlugin : public TensorRTPlugin {
  public:
-  MhaPlugin(const std::string name, int compute_type, int head_number, int head_size, int is_cross,
-            cublasHandle_t cublas_handle, cublasLtHandle_t cublaslt_handle, uint32_t device_id)
+  MhaPlugin(const std::string name, int compute_type, int head_number, int head_size, bool is_cross,
+            bool is_position_bias, cublasHandle_t cublas_handle, cublasLtHandle_t cublaslt_handle, uint32_t device_id)
       : TensorRTPlugin(name, std::string(MHA_PLUGIN_NAME), device_id),
         compute_type_(compute_type),
         head_number_(head_number),
         head_size_(head_size),
         is_cross_(is_cross),
+        is_position_bias_(is_position_bias),
         cublas_handle_(cublas_handle),
         cublaslt_handle_(cublaslt_handle) {}
 
@@ -57,6 +60,7 @@ class MhaPlugin : public TensorRTPlugin {
     head_number_ = static_cast<const int *>(fields[1].data)[0];
     head_size_ = static_cast<const int *>(fields[2].data)[0];
     is_cross_ = static_cast<const int *>(fields[3].data)[0];
+    is_position_bias_ = static_cast<const int *>(fields[4].data)[0];
   }
 
   MhaPlugin(const char *name, const void *serialData, size_t serialLength)
@@ -65,6 +69,7 @@ class MhaPlugin : public TensorRTPlugin {
     DeserializeValue(&serialData, &serialLength, &head_number_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &head_size_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &is_cross_, sizeof(int));
+    DeserializeValue(&serialData, &serialLength, &is_position_bias_, sizeof(int));
   }
 
   MhaPlugin() = delete;
@@ -82,21 +87,37 @@ class MhaPlugin : public TensorRTPlugin {
                           const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept override;
   nvinfer1::DimsExprs getOutputDimensions(int index, const nvinfer1::DimsExprs *inputs, int nbInputDims,
                                           nvinfer1::IExprBuilder &exprBuilder) noexcept override;
+  void configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
+                       const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept override;
+  bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
+                                 int nbOutputs) noexcept override;
   void terminate() noexcept override;
+  int initialize() noexcept override;
 
  private:
   bool needResize(const int *current_dims, const int *last_dims);
+  template <typename T>
   int RunCudaMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
-                 const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream);
-  int RunCudaCrossMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
-                      const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream);
+                 const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream,
+                 cublasGemmAlgo_t *algoId);
+  template <typename T>
+  void SetInnerAddr(void *workspace, size_t size_q, size_t size_k, size_t qk_buf_len, size_t qkv_buf_2_len,
+                    size_t extra_size);
+  template <typename T>
+  void RunPhase1GEMM(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs, int *gemm_dims,
+                     int *gemm_lds, cublasOperation_t *gemm_ops, cudaDataType *gemm_data_types, void *alpha, void *beta,
+                     cublasGemmAlgo_t algoId, cudaStream_t stream);
 
   const std::string layer_name_;
   std::string name_space_;
   int compute_type_;
   int head_number_;
   int head_size_;
-  int is_cross_;
+  bool is_cross_;
+  bool is_position_bias_;
+  cublasGemmAlgo_t fast_algo_gemm[4] = {CUBLAS_GEMM_DEFAULT_TENSOR_OP, CUBLAS_GEMM_DEFAULT_TENSOR_OP,
+                                        CUBLAS_GEMM_DEFAULT_TENSOR_OP, CUBLAS_GEMM_DEFAULT_TENSOR_OP};
+
   cublasHandle_t cublas_handle_;
   cublasLtHandle_t cublaslt_handle_;
   void *qkv_buf_{nullptr};

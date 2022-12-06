@@ -27,6 +27,7 @@
 #include <limits>
 #include <unordered_map>
 #include "src/extendrt/delegate/delegate_utils.h"
+#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/common/utils.h"
 
 #include "ops/transpose.h"
@@ -68,6 +69,11 @@ TensorRTSubGraph::~TensorRTSubGraph() {
     config_->destroy();
     config_ = nullptr;
   }
+#ifdef PROFILER_
+  auto profile = dynamic_cast<SimpleProfiler *>(trt_context_->getProfiler());
+  if (profile != nullptr) std::cout << *profile << std::endl;
+  delete profile;
+#endif
   if (trt_context_ != nullptr) {
     trt_context_->destroy();
     trt_context_ = nullptr;
@@ -494,6 +500,15 @@ int TensorRTSubGraph::Prepare() {
     MS_LOG(ERROR) << "TensorRTSubGraph create context failed.";
     return RET_ERROR;
   }
+
+#ifdef PROFILER_
+  auto profiler = new SimpleProfiler("myprofiler");
+  if (profiler == nullptr) {
+    MS_LOG(WARNING) << "Cannot create profiler";
+  }
+  this->trt_context_->setProfiler(profiler);
+#endif
+
   int binding_num = this->engine_->getNbBindings();
   if (binding_num <= 0) {
     MS_LOG(ERROR) << "TensorRTSubGraph binding num < 0.";
@@ -504,7 +519,6 @@ int TensorRTSubGraph::Prepare() {
     MS_LOG(ERROR) << "malloc tensor binding array failed.";
     return RET_ERROR;
   }
-
   profile_index_ = MaxVolumnProfileIndex();
   if (this->trt_context_->setOptimizationProfile(profile_index_)) {
     MS_LOG(INFO) << "setOptimizationProfile: " << profile_index_;
@@ -527,9 +541,6 @@ int TensorRTSubGraph::Prepare() {
     MS_LOG(INFO) << "device index " << index << " for tensor : " << tensor_name << " attr: " << device_ptr;
     tensor_bindings_[index] = device_ptr;
     nvinfer1::Dims input_dims = ConvertCudaDims(profile.inputs[i].max_dims);
-    for (int od = 0; od < input_dims.nbDims; od++) {
-      MS_LOG(DEBUG) << "in tensor " << tensor.Name() << " dims at " << od << " is " << input_dims.d[od];
-    }
     if (!this->trt_context_->setBindingDimensions(index, input_dims)) {
       MS_LOG(ERROR) << "invalid input dims of " << tensor.Name();
       return RET_ERROR;
@@ -781,7 +792,6 @@ int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs) {
     // actual output tensor dims
     auto out_dims = this->trt_context_->getBindingDimensions(index);
     std::vector<int64_t> new_shape = lite::ConvertMSShape(out_dims);
-    outputs_[i].SetShape(new_shape);
     for (int od = 0; od < out_dims.nbDims; od++) {
       MS_LOG(DEBUG) << "out tensor " << trt_out_tensor_name << " dims at " << od << " is " << new_shape[od];
     }
