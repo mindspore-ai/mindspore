@@ -441,6 +441,7 @@ constexpr auto kPReLUOpName = "PReLU";
 constexpr auto kPReluOpName = "PRelu";
 constexpr auto kPReLUGradOpName = "PReLUGrad";
 constexpr auto kPReluGradOpName = "PReluGrad";
+constexpr auto kLeakyReluOpName = "LeakyRelu";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferDestroy = "PriorityReplayBufferDestroy";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
