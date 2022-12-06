@@ -14,6 +14,8 @@
 # ============================================================================
 """Defines parameter operators with functional form."""
 
+from __future__ import absolute_import
+
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
