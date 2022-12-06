@@ -84,6 +84,10 @@ class TensorRow {
   // Destructor
   ~TensorRow() = default;
 
+  // Deep copy
+  /// \param[in] new_tr the tensor row to clone to
+  Status Clone(TensorRow *new_tr) const;
+
   /// Convert a vector of primitive types to a TensorRow consisting of one 1-D Tensor with the shape n.
   /// \tparam `T`
   /// \param[in] o input vector

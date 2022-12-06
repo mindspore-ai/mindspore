@@ -49,6 +49,7 @@ class ParallelOp : public DatasetOp {
         epoch_sync_flag_(false),
         num_workers_(num_workers),
         next_worker_id_(0),
+        strategy_{nullptr},
         worker_connector_size_(op_connector_size) {
     // reduce excessive memory usage with high parallelism
     constexpr int32_t worker_limit = 4;
@@ -168,16 +169,16 @@ class ParallelOp : public DatasetOp {
    public:
     explicit RowHandlingStrategy(ParallelOp *op) : op_(op) {}
 
-    virtual Status HandleHealthyRow(const TensorRow &row) {
+    virtual Status HandleHealthyRow(TensorRow *row) {
       ++this->op_->ep_step_;
       ++this->op_->total_step_;
       RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(
         CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
-      return this->op_->out_connector_->Add(std::move(row));
+      return this->op_->out_connector_->Add(std::move(*row));
     }
-    virtual Status HandleErrorRow(const TensorRow &row) = 0;
+    virtual Status HandleErrorRow(TensorRow *row) = 0;
 
-    virtual Status HandleEOE(const TensorRow &row) {
+    virtual Status HandleEOE(TensorRow *row) {
       this->op_->current_repeats_++;
       // check whether this is the end of a real epoch (not all eoe signals end of epoch)
       if (this->op_->current_repeats_ % this->op_->GetOpNumRepeatsPerEpoch() == 0) {
@@ -186,12 +187,12 @@ class ParallelOp : public DatasetOp {
           CallbackParam(this->op_->current_epochs_, this->op_->ep_step_, this->op_->total_step_)));
         this->op_->ep_step_ = 0;
       }
-      return op_->out_connector_->Add(std::move(row));
+      return op_->out_connector_->Add(std::move(*row));
     }
-    virtual Status HandleEOF(const TensorRow &row) {
+    virtual Status HandleEOF(TensorRow *row) {
       RETURN_IF_NOT_OK(this->op_->callback_manager_.End(
         CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
-      return op_->out_connector_->Add(std::move(row));
+      return op_->out_connector_->Add(std::move(*row));
     }
 
    protected:
@@ -201,7 +202,7 @@ class ParallelOp : public DatasetOp {
   class ErrorStrategy : public RowHandlingStrategy {
    public:
     using RowHandlingStrategy::RowHandlingStrategy;
-    Status HandleErrorRow(const TensorRow &row) override {
+    Status HandleErrorRow(TensorRow *row) override {
       return Status(StatusCode::kMDUnexpectedError,
                     "[Internal Error] Error row is detected in collector while Error strategy is set to error out!");
     }
@@ -210,28 +211,29 @@ class ParallelOp : public DatasetOp {
   class SkipStrategy : public RowHandlingStrategy {
    public:
     using RowHandlingStrategy::RowHandlingStrategy;
-    Status HandleErrorRow(const TensorRow &row) override { return Status::OK(); }
+    Status HandleErrorRow(TensorRow *row) override { return Status::OK(); }
   };
 
   class ReplaceStrategy : public RowHandlingStrategy {
    public:
     using RowHandlingStrategy::RowHandlingStrategy;
 
-    Status HandleHealthyRow(const TensorRow &row) override {
+    Status HandleHealthyRow(TensorRow *row) override {
       CHECK_FAIL_RETURN_UNEXPECTED(backup_index_ < kCachedRowsSize,
                                    "[Internal Error] Number of cached rows is beyond the number set.");
-      if (backup_index_ < kCachedRowsSize - 1) {  // cache has used row(s)
+      if (backup_index_ < kCachedRowsSize - 1) {  // cache has used row(s) or is not full
         if (IsCacheFull()) {
           // remove the last element from cache (a used row)
           PopFromCache();
         }
-        AddToCache(row);
+        RETURN_IF_NOT_OK(AddToCache(*row));
       } else {  // cache is full of unused rows
         if (missing_errors_ > 0) {
           // send a cached row to next op and cache the current row
           RETURN_IF_NOT_OK(AddFromCache());
+          PopFromCache();
           missing_errors_--;
-          AddToCache(row);
+          RETURN_IF_NOT_OK(AddToCache(*row));
         }
       }
       // send the healthy row to next op
@@ -239,10 +241,10 @@ class ParallelOp : public DatasetOp {
       ++this->op_->total_step_;
       RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(
         CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
-      return this->op_->out_connector_->Add(std::move(row));
+      return this->op_->out_connector_->Add(std::move(*row));
     }
 
-    Status HandleErrorRow(const TensorRow &row) override {
+    Status HandleErrorRow(TensorRow *row) override {
       CHECK_FAIL_RETURN_UNEXPECTED(backup_index_ < kCachedRowsSize,
                                    "[Internal Error] Number of cached rows is beyond the number set.");
       // cache is not full of unused rows
@@ -254,7 +256,7 @@ class ParallelOp : public DatasetOp {
       return AddFromCache();
     }
 
-    Status HandleEOE(const TensorRow &row) {
+    Status HandleEOE(TensorRow *row) override {
       CHECK_FAIL_RETURN_UNEXPECTED(missing_errors_ == 0 || !IsCacheEmpty(),
                                    "All data is garbage and cannot be replaced.");
       // send outstanding rows first and then send eoe
@@ -270,22 +272,26 @@ class ParallelOp : public DatasetOp {
       CHECK_FAIL_RETURN_UNEXPECTED(backup_rows.size() > 0, "Cannot add a row from cache since cache is empty!");
       // Note: If backup_index_ is negative (error samples at the end of data),
       // the modulo division with size_t will be result in 0, and backup_rows[0] accessed.
-      auto cached_row = backup_rows[backup_index_ % backup_rows.size()];
+      const TensorRow &cached_row = backup_rows[backup_index_ % backup_rows.size()];
+      TensorRow copy_row;
+      RETURN_IF_NOT_OK(cached_row.Clone(&copy_row));
       backup_index_--;
       ++this->op_->ep_step_;
       ++this->op_->total_step_;
       RETURN_IF_NOT_OK(this->op_->callback_manager_.StepEnd(
         CallbackParam(this->op_->current_epochs_ + 1, this->op_->ep_step_, this->op_->total_step_)));
-      return this->op_->out_connector_->Add(std::move(cached_row));
+      return this->op_->out_connector_->Add(std::move(copy_row));
     }
 
-    Status AddToCache(TensorRow row) {
+    Status AddToCache(const TensorRow &row) {
       CHECK_FAIL_RETURN_UNEXPECTED(backup_rows.size() < kCachedRowsSize,
                                    "[Internal Error] Inserting another row to cache while cache is already full.");
       CHECK_FAIL_RETURN_UNEXPECTED(
         backup_index_ < kCachedRowsSize - 1,
         "[Internal Error] Inserting another row to cache while cache is already full of unused rows.");
-      backup_rows.push_front(row);
+      TensorRow copy_row;
+      RETURN_IF_NOT_OK(row.Clone(&copy_row));
+      backup_rows.emplace_front(std::move(copy_row));
       backup_index_++;
       return Status::OK();
     }
@@ -308,8 +314,8 @@ class ParallelOp : public DatasetOp {
     SetStrategy();
     // num_step of current epoch and the total
     ep_step_ = 0, total_step_ = 0;
-    TensorRow row;
     do {
+      TensorRow row;
       RETURN_IF_NOT_OK(worker_out_queues_[static_cast<const int>(num_rows++ % num_workers_)]->PopFront(&row));
       if (row.wait()) {
         // When collector receives the signal from worker thread, it increments an atomic int
@@ -320,17 +326,18 @@ class ParallelOp : public DatasetOp {
         }
         continue;
       } else if (row.eoe()) {
-        RETURN_IF_NOT_OK(strategy_->HandleEOE(row));
+        RETURN_IF_NOT_OK(strategy_->HandleEOE(&row));
       } else if (row.eof()) {
-        RETURN_IF_NOT_OK(strategy_->HandleEOF(row));
+        RETURN_IF_NOT_OK(strategy_->HandleEOF(&row));
+        break;
       } else if (row.skip()) {
         continue;
       } else if (row.error()) {
-        RETURN_IF_NOT_OK(strategy_->HandleErrorRow(row));
+        RETURN_IF_NOT_OK(strategy_->HandleErrorRow(&row));
       } else if (row.Flags() == TensorRow::TensorRowFlags::kFlagNone) {
-        RETURN_IF_NOT_OK(strategy_->HandleHealthyRow(row));
+        RETURN_IF_NOT_OK(strategy_->HandleHealthyRow(&row));
       }
-    } while (!row.eof());
+    } while (true);
     return Status::OK();
   }
 
@@ -359,12 +366,16 @@ class ParallelOp : public DatasetOp {
 
  private:
   void SetStrategy() {
+    if (Name() != kMapOp) {
+      strategy_ = std::make_unique<ErrorStrategy>(this);
+      return;
+    }
     if (GlobalContext::config_manager()->error_samples_mode() == ErrorSamplesMode::kSkip) {
-      strategy_ = std::make_shared<SkipStrategy>(this);
+      strategy_ = std::make_unique<SkipStrategy>(this);
     } else if (GlobalContext::config_manager()->error_samples_mode() == ErrorSamplesMode::kReplace) {
-      strategy_ = std::make_shared<ReplaceStrategy>(this);
+      strategy_ = std::make_unique<ReplaceStrategy>(this);
     } else {
-      strategy_ = std::make_shared<ErrorStrategy>(this);
+      strategy_ = std::make_unique<ErrorStrategy>(this);
     }
   }
 
@@ -381,7 +392,7 @@ class ParallelOp : public DatasetOp {
   QueueList<S> worker_out_queues_;
 
  private:
-  std::shared_ptr<RowHandlingStrategy> strategy_;
+  std::unique_ptr<RowHandlingStrategy> strategy_;
   int32_t ep_step_{0};
   int32_t total_step_{0};
   int32_t current_epochs_{0};

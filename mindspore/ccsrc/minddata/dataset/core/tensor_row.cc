@@ -48,6 +48,20 @@ TensorRow &TensorRow::operator=(const TensorRow &tr) {
   return *this;
 }
 
+Status TensorRow::Clone(TensorRow *new_tr) const {
+  RETURN_UNEXPECTED_IF_NULL(new_tr);
+  new_tr->row_.clear();
+  for (const std::shared_ptr<Tensor> &s : row_) {
+    std::shared_ptr<Tensor> d;
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(s, &d));
+    new_tr->row_.emplace_back(std::move(d));
+  }
+  new_tr->id_ = id_;
+  new_tr->path_ = path_;
+  new_tr->tensor_row_flag_ = tensor_row_flag_;
+  return Status::OK();
+}
+
 TensorRow &TensorRow::operator=(const std::initializer_list<TensorRow::value_type> &lst) {
   row_ = lst;
   tensor_row_flag_ = kFlagNone;

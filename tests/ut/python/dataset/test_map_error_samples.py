@@ -224,14 +224,14 @@ def test_map_replace_errors_success1(my_num_workers, my_mp):
     run_replace_test(raise_first_10, 20, my_num_workers, my_mp, list(range(10, 20)) * 2)
     run_replace_test(raise_first_10, 30, my_num_workers, my_mp,
                      [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] +
-                     [10, 26, 27, 11, 28, 29, 12, 13, 14, 15, 16, 17, 18, 19])
+                     [10, 26, 11, 27, 12, 28, 13, 29, 14, 15, 16, 17, 18, 19])
     run_replace_test(raise_first_100, 1000, my_num_workers, my_mp)
     run_replace_test(raise_first_n, 20, my_num_workers, my_mp,
                      list(range(8, 20)) + list(range(8, 16)))  # ~first half (n < half)
     run_replace_test(raise_first_n, 40, my_num_workers, my_mp,
                      [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33] +
-                     [18, 34, 35, 19, 36, 37, 20, 38, 39] +
-                     [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 37])  # ~first half (n < half)
+                     [18, 34, 19, 35, 20, 36, 21, 37, 22, 38, 23, 39] +
+                     [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35])  # ~first half (n < half)
     run_replace_test(raise_first_n, 100, my_num_workers, my_mp)  # ~first half (n < half)
     run_replace_test(raise_first_m, 100, my_num_workers, my_mp)  # ~first half (m > half)
     run_replace_test(raise_all_but_last, 2, my_num_workers, my_mp, [1, 1])
@@ -254,7 +254,12 @@ def test_map_replace_errors_success1(my_num_workers, my_mp):
     run_replace_test(raise_all_odds, 40, my_num_workers, my_mp,
                      [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30] +
                      [0, 32, 2, 34, 4, 36, 6, 38, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38])
-    run_replace_test(raise_all_odds, 100, my_num_workers, my_mp)
+    run_replace_test(raise_all_odds, 100, my_num_workers, my_mp,
+                     [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 0, 32, 2, 34, 4, 36, 6, 38] +
+                     [8, 40, 10, 42, 12, 44, 14, 46, 16, 48, 18, 50, 20, 52, 22, 54, 24, 56, 26, 58, 28, 60] +
+                     [30, 62, 32, 64, 34, 66, 36, 68, 38, 70, 40, 72, 42, 74, 44, 76, 46, 78, 48, 80, 50, 82] +
+                     [52, 84, 54, 86, 56, 88, 58, 90, 60, 92, 62, 94, 64, 96, 66, 98, 68, 70, 72, 74, 76, 78] +
+                     [80, 82, 84, 86, 88, 90, 92, 94, 96, 98])
     run_replace_test(raise_all_3_remainders, 12, my_num_workers, my_mp, [0, 3, 6, 9] * 3)
     run_replace_test(raise_all_3_remainders, 100, my_num_workers, my_mp)
 
@@ -282,14 +287,6 @@ def test_map_replace_errors_success2(my_mp):
     # multiple pyfuncs
     run_replace_test([raise_last_n, raise_last_n, raise_first_m, raise_first_n], 100, 1, my_mp)
     run_replace_test([raise_last_n, raise_last_n, raise_first_n], 100, 2, my_mp)  # n<50
-
-    # parallel workers
-    run_replace_test(raise_first, 100, 2, my_mp)
-    run_replace_test(raise_last_n, 100, 2, my_mp)
-    run_replace_test(raise_first_n, 100, 4, my_mp)
-    run_replace_test(raise_all_odds, 100, 2, my_mp)
-    run_replace_test(raise_all_odds, 100, 3, my_mp)
-    run_replace_test(raise_all_3_remainders, 100, 5, my_mp)
 
     # multiple epochs
     run_replace_test(raise_last_m, 100, 1, my_mp, epochs=3)
@@ -533,7 +530,7 @@ def test_map_error_samples_imagefolder1_pyop(my_error_samples_mode, my_num_worke
         # 2nd map op in pipeline includes Decode Op, which uses Python implementation
         data4 = data4.map(operations=[vision.Decode(to_pil=True),
                                       vision.Resize((120, 150)),
-                                      vision.Crop((10, 10), (100, 120))],
+                                      vision.RandomCrop((10, 10), (100, 120))],
                           input_columns=["image"],
                           num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
         # Note: ToPIL op added so that Python implementation of RandomVerticalFlip is selected
@@ -628,8 +625,7 @@ def test_map_error_samples_imagefolder2(my_error_samples_mode, my_num_workers, m
                           input_columns=["image"],
                           num_parallel_workers=my_num_workers,
                           python_multiprocessing=my_mp)
-        data1 = data1.map(operations=[vision.ToPIL(),
-                                      vision.RandomHorizontalFlip(1.0)],
+        data1 = data1.map(operations=[vision.RandomHorizontalFlip(1.0)],
                           input_columns=["image"],
                           num_parallel_workers=my_num_workers, python_multiprocessing=my_mp)
 
