@@ -790,7 +790,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
                 return {'dtype': None, 'shape': None, 'value': fn(*value_args)}
 
             def __call__(self, *args, **kwargs):
-                return fn(*args)
+                return fn(*args, **kwargs)
 
         if get_instance:
             return CompileOp()
