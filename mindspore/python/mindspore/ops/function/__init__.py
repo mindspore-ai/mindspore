@@ -315,6 +315,7 @@ from .math_func import (
     atleast_3d,
     vstack,
     copysign,
+    hann_window,
     log2,
     xlogy,
     log10,

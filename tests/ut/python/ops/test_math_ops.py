@@ -477,6 +477,15 @@ class CopysignFunc(nn.Cell):
         return self.copysign(x, other)
 
 
+class HannWindowFunc(nn.Cell):
+    def __init__(self):
+        super(HannWindowFunc, self).__init__()
+        self.hann_window = ops.hann_window
+
+    def construct(self, window_length):
+        return self.hann_window(window_length)
+
+
 class HypotFunc(nn.Cell):
     def __init__(self):
         super(HypotFunc, self).__init__()
@@ -824,6 +833,10 @@ test_case_math_ops = [
         'block': CopysignFunc(),
         'desc_inputs': [Tensor(np.array([[0.3, -0.7], [0.5, 0.5]])),
                         Tensor(np.array([[-0.4, 0.6], [0.4, -0.6]]))]
+    }),
+    ('HannWindow', {
+        'block': HannWindowFunc(),
+        'desc_inputs': [5]
     }),
     ('LogAddExp2', {
         'block': LogAddExp2Func(),
