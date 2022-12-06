@@ -69,7 +69,7 @@ bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Reduce node is " << node->DebugString() << ".";
 
-  if (AnfUtils::IsDimUnknown(node)) {
+  if (AnfUtils::IsNodeOutputShapeDynamic(node)) {
     MS_LOG(INFO) << "The dimension of " << node->DebugString() << " is unknown.";
     return false;
   }

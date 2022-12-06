@@ -107,6 +107,41 @@ void Shape::Broaden() {
   }
 }
 
+bool DynamicSequenceShape::IsDynamic() const {
+  if (element_shape_ == nullptr) {
+    return false;
+  }
+  return element_shape_->IsDynamic();
+}
+
+bool DynamicSequenceShape::IsDimZero() const {
+  if (element_shape_ == nullptr) {
+    return false;
+  }
+  return element_shape_->IsDimZero();
+}
+
+bool DynamicSequenceShape::IsDimUnknown() const {
+  if (element_shape_ == nullptr) {
+    return false;
+  }
+  return element_shape_->IsDimUnknown();
+}
+
+size_t DynamicSequenceShape::hash() const {
+  auto hash_code = static_cast<std::size_t>(tid());
+  hash_code = hash_combine(hash_code, element_shape_->hash());
+  return hash_code;
+}
+
+bool DynamicSequenceShape::operator==(const BaseShape &other) const {
+  if (!other.isa<DynamicSequenceShape>()) {
+    return false;
+  }
+  const auto &other_shape = dynamic_cast<const DynamicSequenceShape &>(other);
+  return element_shape_ == other_shape.element_shape_;
+}
+
 std::string SequenceShape::ToString() const {
   std::ostringstream buffer;
   bool f_begin = true;
@@ -124,7 +159,7 @@ std::string SequenceShape::ToString() const {
 
 BaseShapePtrList SequenceShape::ElementsClone() const {
   BaseShapePtrList ele_list;
-  for (auto p_shp : p_shapes_) {
+  for (const auto &p_shp : p_shapes_) {
     MS_EXCEPTION_IF_NULL(p_shp);
     ele_list.push_back(p_shp->Clone());
   }

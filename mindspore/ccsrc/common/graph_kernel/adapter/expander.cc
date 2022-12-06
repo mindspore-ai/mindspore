@@ -212,7 +212,7 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
 
 void SetDynamicShapeAttrToCNode(const CNodePtr &cnode) {
   auto in_dynamic = common::AnfAlgo::IsNodeInputDynamicShape(cnode);
-  auto out_dynamic = AnfUtils::IsNodeOutputDynamicShape(cnode);
+  auto out_dynamic = AnfUtils::IsNodeOutputShapeDynamic(cnode);
   if (in_dynamic && !common::AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
   }

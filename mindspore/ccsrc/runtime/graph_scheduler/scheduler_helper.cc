@@ -324,7 +324,7 @@ void SchedulerHelper::AddFormalParameterDeviceTensor(ControlActor *const from_ac
   // Collect backend parameters with dynamic shapes.
   auto base_shape = input_node->Shape();
   if (input_node->isa<Parameter>() && base_shape != nullptr && base_shape->isa<abstract::Shape>()) {
-    if (AnfUtils::IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
+    if (base_shape->IsDynamic()) {
       if (from_index >= from_actor->backend_parameters_.size()) {
         MS_LOG(EXCEPTION) << "Invalid from index:" << from_index << " for actor:" << from_actor->GetAID()
                           << " vector size:" << from_actor->backend_parameters_.size();
