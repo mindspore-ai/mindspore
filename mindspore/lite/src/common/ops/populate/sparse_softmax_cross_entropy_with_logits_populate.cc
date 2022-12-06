@@ -22,6 +22,9 @@ namespace lite {
 OpParameter *PopulateSparseSoftmaxCrossEntropyWithLogitsParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
+  auto value = primitive->value_as_SparseSoftmaxCrossEntropyWithLogits();
+  MS_CHECK_TRUE_RET(value != nullptr, nullptr);
+
   auto *param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
@@ -30,6 +33,7 @@ OpParameter *PopulateSparseSoftmaxCrossEntropyWithLogitsParameter(const void *pr
   memset(param, 0, sizeof(SoftmaxCrossEntropyParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
+  param->is_grad_ = value->is_grad();
   return reinterpret_cast<OpParameter *>(param);
 }
 
