@@ -174,7 +174,8 @@ class BACKEND_EXPORT GraphScheduler {
   void LinkControlArrowByAutoMonad(
     AbstractActor *to_actor, const AnfNodePtr &from_node, const KernelGraphPtr &graph,
     const ControlNodeParserPtr &parser = nullptr,
-    const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs = {});
+    const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs = {},
+    std::set<AnfNodePtr> *checked_nodes = nullptr);
   // The skipped node doesn't run, so need link the control arrow between the inputs and user of skipped node.
   void LinkControlArrowBySkippedNode(AbstractActor *to_actor, const AnfNodePtr &skipped_node,
                                      const KernelGraphPtr &graph) const;
