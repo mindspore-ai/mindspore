@@ -29,7 +29,7 @@ def hccl_load_lib():
     """load hccl lib"""
     try:
         base_dir = os.path.dirname(os.path.realpath(__file__))
-        lib_path = os.path.join(base_dir, "../lib/plugin", HCCL_LIB)
+        lib_path = os.path.join(base_dir, "../lib/plugin/ascend", HCCL_LIB)
         ctypes.CDLL(lib_path)
     except Exception:
         raise RuntimeError('Get hccl lib error.')

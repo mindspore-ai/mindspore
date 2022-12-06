@@ -46,7 +46,7 @@ target_link_libraries(mindspore_gpu PRIVATE mindspore_shared_lib)
 target_link_libraries(mindspore_gpu PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_gpu PRIVATE securec)
 set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH
-        ${ORIGIN_PATH}:${ORIGIN_PATH}/gpu${CUDA_VERSION}:${ORIGIN_PATH}/../:/usr/local/cuda/lib64)
+        ${ORIGIN_PATH}:${ORIGIN_PATH}/gpu${CUDA_VERSION}:${ORIGIN_PATH}/../:${CUDA_PATH}/lib64)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
 if(NOT WIN32)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::ssl mindspore::crypto)
