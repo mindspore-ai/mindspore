@@ -5518,6 +5518,66 @@ def atleast_2d(inputs):
     return [_expand(arr, 2) for arr in inputs]
 
 
+def atleast_3d(inputs):
+    r"""
+    Reshapes `inputs` as arrays with at least three dimensions.
+    Input tensor with three or more dimensions will be returned as is.
+
+    Args:
+        inputs (Union[Tensor, List[Tensor]]): One or more input tensors.
+
+    Returns:
+        Tensor or list of tensors, each with ``a.ndim >= 3``. For example,
+        a 1-D array of shape `(N,)` becomes a tensor of shape `(1, N, 1)`, and
+        a 2-D array of shape `(M, N)` becomes a tensor of shape `(M, N, 1)`.
+
+    Raises:
+        TypeError: If the input is not a tensor or a list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.ones((2, 3)))
+        >>> x2 = Tensor(np.ones(()))
+        >>> x3 = Tensor(np.ones(5))
+        >>> out = ops.atleast_3d([x1, x2, x3])
+        >>> print(out[0].asnumpy())
+        [[[1.]
+          [1.]
+          [1.]]
+        <BLANKLINE>
+         [[1.]
+          [1.]
+          [1.]]]
+        >>> print(out[1].asnumpy())
+        [[[1.]]]
+        >>> print(out[2].asnumpy())
+        [[[1.]
+          [1.]
+          [1.]
+          [1.]
+          [1.]]]
+    """
+
+    def _expand3(arr):
+        ndim = P.Rank()(arr)
+        if ndim == 0:
+            return P.Reshape()(arr, (1, 1, 1))
+        if ndim == 1:
+            return P.Reshape()(arr, (1, P.Size()(arr), 1))
+        if ndim == 2:
+            return P.Reshape()(arr, P.Shape()(arr) + (1,))
+        return arr
+
+    if isinstance(inputs, Tensor):
+        return _expand3(inputs)
+    for tensor in inputs:
+        if not isinstance(tensor, Tensor):
+            raise TypeError(f"For 'atleast_3d', each element of 'inputs' must be a tensor, but got {type(tensor)}")
+    return [_expand3(arr) for arr in inputs]
+
+
 def vstack(inputs):
     r"""
     Stacks tensors in sequence vertically.
@@ -8380,6 +8440,7 @@ __all__ = [
     'sparse_segment_mean',
     'dstack',
     'atleast_2d',
+    'atleast_3d',
     'vstack',
     'copysign',
     'log2',

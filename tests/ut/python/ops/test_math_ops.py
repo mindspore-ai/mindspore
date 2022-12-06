@@ -441,6 +441,15 @@ class AtLeast2DFunc(nn.Cell):
         return self.atleast_2d([x1, x2, x3])
 
 
+class AtLeast3DFunc(nn.Cell):
+    def __init__(self):
+        super(AtLeast3DFunc, self).__init__()
+        self.atleast_3d = ops.atleast_3d
+
+    def construct(self, x1, x2, x3):
+        return self.atleast_3d([x1, x2, x3])
+
+
 class VstackFunc(nn.Cell):
     def __init__(self):
         super(VstackFunc, self).__init__()
@@ -781,6 +790,12 @@ test_case_math_ops = [
     }),
     ('AtLeast2D', {
         'block': AtLeast2DFunc(),
+        'desc_inputs': [Tensor(np.array([[1, 1, 1], [1, 1, 1]]), ms.float64),
+                        Tensor(np.array(1), ms.float64),
+                        Tensor(np.array([1, 1, 1, 1, 1]), ms.float64)]
+    }),
+    ('AtLeast3D', {
+        'block': AtLeast3DFunc(),
         'desc_inputs': [Tensor(np.array([[1, 1, 1], [1, 1, 1]]), ms.float64),
                         Tensor(np.array(1), ms.float64),
                         Tensor(np.array([1, 1, 1, 1, 1]), ms.float64)]
