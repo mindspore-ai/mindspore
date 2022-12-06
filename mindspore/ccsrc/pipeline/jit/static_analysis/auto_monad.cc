@@ -524,6 +524,27 @@ class SideEffectFinder {
     return GetGraphsFromTuple(func_tuple);
   }
 
+  FuncGraphPtr GetGraphFromSwitchWithDeadNode(const CNodePtr &cnode) {
+    auto node = cnode->inputs()[0];
+    MS_EXCEPTION_IF_NULL(node);
+    if (!IsPrimitiveCNode(node, prim::kPrimSwitch)) {
+      return nullptr;
+    }
+    const auto &inputs = node->cast<CNodePtr>()->inputs();
+    auto cond_node = inputs[kSwitchCondIndex];
+    auto cond_abs = cond_node->abstract();
+    MS_EXCEPTION_IF_NULL(cond_abs);
+    auto cond_abs_val = cond_abs->BuildValue();
+    MS_EXCEPTION_IF_NULL(cond_abs_val);
+    if (cond_abs_val == kAnyValue) {
+      return nullptr;
+    }
+    auto cond_abs_bool_val = dyn_cast<BoolImm>(cond_abs_val);
+    MS_EXCEPTION_IF_NULL(cond_abs_bool_val);
+    auto branch = cond_abs_bool_val->value() ? inputs[kSwitchTrueBranchIndex] : inputs[kSwitchFalseBranchIndex];
+    return GetValueNode<FuncGraphPtr>(branch);
+  }
+
   // Get and trace graphs from a tuple of func node for switch_layer.
   std::vector<FuncGraphPtr> GetGraphsFromTuple(const AnfNodePtr &func_tuple) {
     // The func tuple maker.
@@ -541,6 +562,11 @@ class SideEffectFinder {
     // Trace tuple returned from func graph call.
     auto cnode = dyn_cast<CNode>(func_tuple);
     auto func_graph = GetFuncGraph(cnode);
+    if (func_graph != nullptr) {
+      return GetGraphsFromTuple(func_graph->output());
+    }
+    // Trace tuple returned from func graph call including switch with dead node.
+    func_graph = GetGraphFromSwitchWithDeadNode(cnode);
     if (func_graph != nullptr) {
       return GetGraphsFromTuple(func_graph->output());
     }

@@ -977,6 +977,7 @@ constexpr auto kPartialGraphIndex = 1;
 
 // index define of switch
 constexpr auto kSwitchInputSize = 4;
+constexpr auto kSwitchCondIndex = 1;
 constexpr auto kSwitchTrueBranchIndex = 2;
 constexpr auto kSwitchFalseBranchIndex = 3;
 constexpr auto kSwitchBranchesNum = 2;
