@@ -14,10 +14,13 @@ set(REG_SRC ${CONVERT_REG_SRC}
         ${KERNEL_REG_DIR}/../common/utils.cc
         ${KERNEL_REG_DIR}/../extendrt/delegate/tensorrt/distribution/distribution_base.cc
         ${KERNEL_REG_DIR}/../extendrt/delegate/plugin/tensorrt_executor_plugin.cc
-        ${CORE_DIR}/utils/log_adapter.cc
         ${CORE_DIR}/utils/status.cc
         ${CONVERTER_DIR}/converter_context.cc
         )
+if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    set(REG_SRC ${REG_SRC}
+            ${CORE_DIR}/utils/log_adapter.cc)
+endif()
 set_property(SOURCE ${REG_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(mslite_converter_plugin SHARED ${REG_SRC})
 target_link_libraries(mslite_converter_plugin mindspore::glog)
