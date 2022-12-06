@@ -224,6 +224,8 @@ void Conv3dTransposeFwdGpuKernelMod::Set5DDesc(const ShapeVector &input_shape, c
 
 void Conv3dTransposeFwdGpuKernelMod::SetStrideAndDilation(std::vector<int64_t> stride_me,
                                                           std::vector<int64_t> dilation_me) {
+  stride_.clear();
+  dilation_.clear();
   (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
