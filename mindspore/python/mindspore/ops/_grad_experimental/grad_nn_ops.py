@@ -325,10 +325,10 @@ def get_bprop_nth_element(self):
     divide = P.Div()
 
     def bprop(input_x, n, out, dout):
-        indicators = cast(equal(expand_dims(out, -1), input_x), input_x.dtype)
+        indicators = cast(equal(expand_dims(out, -1), input_x), mstype.float32)
         dout = expand_dims(dout, -1)
         num_select = expand_dims(reduce_sum(indicators, -1), -1)
-        return divide(indicators, num_select) * dout, None
+        return cast(divide(indicators, num_select) * dout, input_x.dtype), None
 
     return bprop
 
