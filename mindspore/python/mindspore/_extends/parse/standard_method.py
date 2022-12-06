@@ -3514,12 +3514,12 @@ def gather(input_x, input_indices, axis):
     return F.gather(input_x, input_indices, axis)
 
 
-def split(input_x, axis=0, output_num=1):
+def split(x, split_size_or_sections, axis=0):
     """
-    Splits the input tensor into output_num of tensors along the given axis and output numbers.
+    Splits the Tensor into chunks along the given axis.
     Refer to :func:`mindspore.ops.split` for more detail.
     """
-    return F.split(input_x, axis, output_num)
+    return F.split(x, split_size_or_sections, axis)
 
 
 def tensor_split(x, indices_or_sections, axis=0):

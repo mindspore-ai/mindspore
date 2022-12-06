@@ -3581,11 +3581,11 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get("xdivy")()(self, y)
 
-    def split(self, axis=0, output_num=1):
+    def split(self, split_size_or_sections, axis=0):
         """
         For details, please refer to :func:`mindspore.ops.split`.
         """
-        return tensor_operator_registry.get('split')(axis, output_num)(self)
+        return tensor_operator_registry.get('split')(self, split_size_or_sections, axis)
 
     def tensor_split(self, indices_or_sections, axis=0):
         """
@@ -3598,6 +3598,7 @@ class Tensor(Tensor_):
         """
         For details, please refer to :func:`mindspore.ops.vsplit`.
         """
+
         self._init_check()
         return tensor_operator_registry.get('vsplit')(self, indices_or_sections)
 

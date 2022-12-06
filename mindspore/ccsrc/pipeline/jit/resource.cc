@@ -348,7 +348,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"to_coo", std::string("to_coo")},                                  // dense_to_sparse_coo()
        {"to_csr", std::string("to_csr")},                                  // dense_to_sparse_csr()
        {"col2im", std::string("col2im")},                                  // P.Col2Im
-       {"split", std::string("split")},                                    // P.Split()
+       {"split", std::string("split")},                                    // split
        {"tensor_split", std::string("tensor_split")},                      // tensor_split
        {"vsplit", std::string("vsplit")},                                  // vsplit
        {"hsplit", std::string("hsplit")},                                  // hsplit
