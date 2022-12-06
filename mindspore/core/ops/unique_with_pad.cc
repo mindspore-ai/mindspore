@@ -34,6 +34,22 @@ namespace ops {
 namespace {
 constexpr size_t kUniqueWithPadInputsNum = 2;
 constexpr size_t kUniqueWithPadOutputsNum = 2;
+constexpr int64_t kUniqueWithPadEmptyDim = 0;
+
+void UniqueWithPadCheckEmptyTensor(const std::string &prim_name, const std::vector<ShapeVector> &shapes) {
+  for (auto &shape : shapes) {
+    if (IsDynamicRank(shape)) {
+      continue;
+    }
+    auto is_empty_tensor =
+      std::any_of(shape.begin(), shape.end(), [](int64_t x) -> bool { return x == kUniqueWithPadEmptyDim; });
+    if (is_empty_tensor) {
+      MS_EXCEPTION(ValueError) << "For [" << prim_name
+                               << "], empty tensor(at least one dimension is zero) is not supported.";
+    }
+  }
+  return;
+}
 
 abstract::TupleShapePtr UniqueWithPadInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
@@ -42,6 +58,8 @@ abstract::TupleShapePtr UniqueWithPadInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto pad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto is_dynamic = IsDynamic(x_shape) || IsDynamic(pad_shape);
+
+  UniqueWithPadCheckEmptyTensor(prim_name, {x_shape, pad_shape});
 
   size_t batch_rank = 0;
   if (primitive->HasAttr(ops::kBatchRank)) {
