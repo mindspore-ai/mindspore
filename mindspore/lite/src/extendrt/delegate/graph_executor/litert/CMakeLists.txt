@@ -136,7 +136,8 @@ if(MSLITE_ENABLE_EXPERIMENTAL_KERNEL)
 endif()
 
 if(MSLITE_ENABLE_RUNTIME_GLOG)
-    if(NOT MSLITE_ENABLE_RUNTIME_CONVERT AND NOT MSLITE_ENABLE_KERNEL_EXECUTOR)
+    if(NOT MSLITE_ENABLE_RUNTIME_CONVERT AND NOT MSLITE_ENABLE_KERNEL_EXECUTOR
+            AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         set(LITE_SRC ${LITE_SRC}
             ${CORE_DIR}/utils/log_adapter.cc)
     endif()
@@ -337,6 +338,7 @@ add_library(msplugin-ge-litert SHARED $<TARGET_OBJECTS:msplugin_infer_lite_src_m
 
 add_dependencies(msplugin-ge-litert mindspore_converter)
 target_link_libraries(msplugin-ge-litert mindspore_converter)
+target_link_libraries(msplugin-ge-litert mindspore-extendrt)
 
 if(MSVC)
     set_target_properties(msplugin-ge-litert PROPERTIES PREFIX lib)
