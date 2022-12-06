@@ -74,13 +74,15 @@ std::string CombineDynImgString(const struct mindspore::ProfileConfigs &profile)
     first_dim = kIndex2;
     second_dim = kIndex3;
   }
-  int64_t min_first = profile.profiles[kIndex0].inputs[kIndex0].min_dims[first_dim];
-  int64_t max_first = profile.profiles[kIndex0].inputs[kIndex0].max_dims[first_dim];
-  int64_t min_second = profile.profiles[kIndex0].inputs[kIndex0].min_dims[second_dim];
-  int64_t max_second = profile.profiles[kIndex0].inputs[kIndex0].max_dims[second_dim];
-  for (int64_t i = min_first; i <= max_first; ++i) {
-    for (int64_t j = min_second; j <= max_second; ++j) {
-      ret += std::to_string(i) + "," + std::to_string(j) + ";";
+  for (size_t dim_idx = 0; dim_idx < profile.profiles.size(); ++dim_idx) {
+    int64_t min_first = profile.profiles[dim_idx].inputs[kIndex0].min_dims[first_dim];
+    int64_t max_first = profile.profiles[dim_idx].inputs[kIndex0].max_dims[first_dim];
+    int64_t min_second = profile.profiles[dim_idx].inputs[kIndex0].min_dims[second_dim];
+    int64_t max_second = profile.profiles[dim_idx].inputs[kIndex0].max_dims[second_dim];
+    for (int64_t i = min_first; i <= max_first; ++i) {
+      for (int64_t j = min_second; j <= max_second; ++j) {
+        ret += std::to_string(i) + "," + std::to_string(j) + ";";
+      }
     }
   }
   ret = ret.substr(0, ret.size() - 1);  // discard the final ";"
