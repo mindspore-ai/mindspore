@@ -2333,8 +2333,8 @@ def bitwise_left_shift(x, other):
         \end{aligned}
 
     Args:
-        x (Tensor or Scalar): The input to be left shifted.
-        other(Tensor or Scalar): The number of bit to be applied on left arithmetic shift.
+        x (Union[Tensor, Scalar]): The input to be left shifted.
+        other (Union[Tensor, Scalar]): The number of bit to be applied on left arithmetic shift.
 
     Returns:
         Tensor, the result after bitwise left shift.

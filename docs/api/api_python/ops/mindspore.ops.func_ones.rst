@@ -1,7 +1,7 @@
 mindspore.ops.ones
 ===================
 
-.. py:function:: mindspore.ops.ones(shape, dtype)
+.. py:function:: mindspore.ops.ones(shape, dtype=None)
 
     创建一个值全为1的Tensor。
 

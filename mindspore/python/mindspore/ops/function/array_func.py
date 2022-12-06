@@ -760,7 +760,7 @@ def zeros_like(x, *, dtype=None):
         Tensor, filled with 0.
 
     Raises:
-        ValueError: If dtype is not a MindSpore dtype.
+        TypeError: If dtype is not a MindSpore dtype.
 
     Examples:
         >>> x = Tensor(np.arange(4).reshape(2, 2))
