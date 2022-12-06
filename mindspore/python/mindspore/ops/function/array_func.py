@@ -23,6 +23,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
+import mindspore.ops.function as ops
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
@@ -228,6 +229,58 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     return data
 
 
+def cat(tensors, axis=0):
+    r"""
+    Connect input tensors along with the given axis.
+
+    The input data is a tuple of tensors. These tensors have the same rank :math:`R`. Set the given axis as :math:`m`,
+    and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`. For the :math:`i`-th tensor :math:`t_i`,
+    it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
+    :math:`t_i`. Then, the shape of the output tensor is
+
+    .. math::
+
+        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
+
+    Args:
+        tensors (Union[tuple, list]): A tuple or a list of input tensors.
+            Suppose there are two tensors in this tuple or list, namely t1 and t2.
+            To perform `concat` in the axis 0 direction, except for the :math:`0`-th axis,
+            all other dimensions should be equal, that is,
+            :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
+        axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: 0.
+
+    Returns:
+        Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
+            The data type is the same with `tensors`.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        ValueError: If `tensors` have different dimension of tensor.
+        ValueError: If `axis` not in range :math:`[-R, R)`.
+        RuntimeError: If tensor's shape in `tensors` except for `axis` are different.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> output = ops.cat((input_x1, input_x2))
+        >>> print(output)
+        [[0. 1.]
+         [2. 1.]
+         [0. 1.]
+         [2. 1.]]
+        >>> output = ops.cat((input_x1, input_x2), 1)
+        >>> print(output)
+        [[0. 1. 0. 1.]
+         [2. 1. 2. 1.]]
+    """
+    _concat = _get_cache_prim(P.Concat)(axis)
+    return _concat(tensors)
+
+
 def eye(n, m, t):
     """
     Creates a tensor with ones on the diagonal and zeros in the rest.
@@ -267,6 +320,57 @@ def eye(n, m, t):
         Float64
     """
     return eye_(n, m, t)
+
+
+def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype=None):
+    """
+    Returns the Hamming window.
+
+    Args:
+        window_length (int): The size of returned window. Must be a non negative integer.
+        periodic (bool): If True, return a periodic window. If False, return a symmetric window.
+        alpha (float, optional): The coefficient α.
+        beta (float, optional): The coefficient β.
+
+    Keyword Args:
+        dtype (mindspore.dtype, optional): The output window data type. Default: None.
+
+    Returns:
+        Tensor, a 1-D tensor of size (window_length) containing the window.
+
+    Raises:
+        TypeError: If `window_length` is a negative integer.
+        TypeError: If `periodic` is not bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> print(ops.hamming_window(6, False))
+        [[0.08 0.39785218 0.91214782  0.91214782  0.39785218 0.08]]
+    """
+    if not isinstance(window_length, int):
+        raise TypeError(f"For array function 'hamming_window', 'window_length' must be int, but got \
+            {type(window_length)}.")
+    if window_length < 0:
+        raise ValueError("For array function 'hamming_window', 'window_length' must be non negative number.")
+    if not isinstance(periodic, bool):
+        raise TypeError("For array function 'hamming_window', 'periodic' must be bool, but got {type(periodic)}.")
+    if not isinstance(alpha, float):
+        raise TypeError("For array function 'hamming_window', 'alpha' must be float, but got {type(alpha)}.")
+    if not isinstance(beta, float):
+        raise TypeError("For array function 'hamming_window', 'beta' must be float, but got {type(beta)}.")
+    if window_length <= 1:
+        return Tensor(np.ones(window_length))
+
+    if periodic:
+        window_length += 1
+    n = arange(0, window_length)
+    w = alpha - beta * ops.cos((2 * np.pi / (window_length - 1)) * n)
+
+    if dtype:
+        w = P.Cast()(w, dtype)
+    return w[:-1] if periodic else w
 
 
 def where(condition, x, y):
@@ -1590,55 +1694,8 @@ def slice(input_x, begin, size):
 
 
 def concat(input_x, axis=0):
-    r"""
-    Connect input tensors along with the given axis.
-
-    The input data is a tuple of tensors. These tensors have the same rank :math:`R`. Set the given axis as :math:`m`,
-    and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`. For the :math:`i`-th tensor :math:`t_i`,
-    it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
-    :math:`t_i`. Then, the shape of the output tensor is
-
-    .. math::
-
-        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
-
-    Args:
-        input_x (tuple, list): A tuple or a list of input tensors.
-            Suppose there are two tensors in this tuple or list, namely t1 and t2.
-            To perform `concat` in the axis 0 direction, except for the :math:`0`-th axis,
-            all other dimensions should be equal, that is,
-            :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
-        axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: 0.
-
-    Returns:
-        Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-            The data type is the same with `input_x`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        ValueError: If `input_x` have different dimension of tensor.
-        ValueError: If `axis` not in range :math:`[-R, R)`.
-        RuntimeError: If tensor's shape in `input_x` except for `axis` are different.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> output = ops.concat((input_x1, input_x2))
-        >>> print(output)
-        [[0. 1.]
-         [2. 1.]
-         [0. 1.]
-         [2. 1.]]
-        >>> output = ops.concat((input_x1, input_x2), 1)
-        >>> print(output)
-        [[0. 1. 0. 1.]
-         [2. 1. 2. 1.]]
-    """
-    _concat = _get_cache_prim(P.Concat)(axis)
-    return _concat(input_x)
+    """Alias of :func:`mindspore.ops.cat()`"""
+    return cat(input_x, axis)
 
 
 def stack(input_x, axis=0):
@@ -5586,6 +5643,7 @@ __all__ = [
     'shape_',
     'reverse',
     'reverse_sequence',
+    'hamming_window',
     'dyn_shape',
     'rank',
     'range',
@@ -5596,6 +5654,7 @@ __all__ = [
     'tensor_slice',
     'strided_slice',
     'slice',
+    'cat',
     'concat',
     'stack',
     'unbind',

@@ -358,6 +358,7 @@ Tensor Building
     mindspore.ops.eye
     mindspore.ops.fill
     mindspore.ops.fills
+    mindspore.ops.hamming_window
     mindspore.ops.linspace
     mindspore.ops.narrow
     mindspore.ops.one_hot
@@ -398,7 +399,9 @@ Array Operation
     mindspore.ops.affine_grid
     mindspore.ops.arange
     mindspore.ops.batch_to_space_nd
+    mindspore.ops.bincount
     mindspore.ops.broadcast_to
+    mindspore.ops.cat
     mindspore.ops.col2im
     mindspore.ops.concat
     mindspore.ops.count_nonzero

@@ -64,6 +64,7 @@
     mindspore.Tensor.atanh
     mindspore.Tensor.baddbmm
     mindspore.Tensor.bernoulli
+    mindspore.Tensor.bincount
     mindspore.Tensor.bitwise_and
     mindspore.Tensor.bitwise_left_shift
     mindspore.Tensor.bitwise_or

@@ -711,6 +711,13 @@ class Tensor(Tensor_):
         self.assign_value_cpp(value)
         return self
 
+    def bincount(self, weights=None, minlength=0):
+        r"""
+        For details, please refer to :func:`mindspore.ops.bincount`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('bincount')(self, weights, minlength)
+
     def item(self, index=None):
         """
         Get the item at the specified index of the tensor.
