@@ -296,9 +296,13 @@ class _MindsporeFunctionExecutor:
         args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
-        _pynative_executor.set_ms_function_compile_status(True)
-        phase = self.compile(args_list, self.fn.__name__)
-        _pynative_executor.set_ms_function_compile_status(False)
+        try:
+            _pynative_executor.set_ms_function_compile_status(True)
+            phase = self.compile(args_list, self.fn.__name__)
+            _pynative_executor.set_ms_function_compile_status(False)
+        except Exception as err:
+            _pynative_executor.clear_res()
+            raise err
         if context.get_context("precompile_only"):
             return None
         new_inputs = self._generate_run_args(args_list)
