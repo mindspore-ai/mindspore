@@ -50,6 +50,38 @@ int64_t Randperm::get_pad() const {
 
 TypeId Randperm::get_dtype() const { return GetAttr("dtype")->cast<api::TensorTypePtr>()->element()->type_id(); }
 
+int64_t GetDtypeMaxForCheckOverFlow(TypePtr tid) {
+  int64_t max = 0;
+  int64_t max_float16 = 65504;
+  switch (tid->type_id()) {
+    case kNumberTypeUInt8:
+      max = UCHAR_MAX;
+      break;
+    case kNumberTypeInt8:
+      max = SCHAR_MAX;
+      break;
+    case kNumberTypeUInt16:
+      max = USHRT_MAX;
+      break;
+    case kNumberTypeInt16:
+      max = SHRT_MAX;
+      break;
+    case kNumberTypeUInt32:
+      max = UINT_MAX;
+      break;
+    case kNumberTypeInt32:
+      max = INT_MAX;
+      break;
+    case kNumberTypeFloat16:
+      max = max_float16;
+      break;
+    default:
+      max = LONG_MAX - 1;
+      break;
+  }
+  return max;
+}
+
 MIND_API_OPERATOR_IMPL(Randperm, BaseOperator);
 class RandpermInfer : public abstract::OpInferBase {
  public:
@@ -77,7 +109,33 @@ class RandpermInfer : public abstract::OpInferBase {
                                << x_shape.front();
     }
     auto value_ptr = primitive->GetAttr("max_length");
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{GetValue<int64_t>(value_ptr)});
+    auto max_length = GetValue<int64_t>(value_ptr);
+    auto input_x = input_args[kInputIndex0];
+    MS_EXCEPTION_IF_NULL(input_x);
+    auto x_value = input_x->BuildValue();
+    MS_EXCEPTION_IF_NULL(x_value);
+    if (input_x->isa<abstract::AbstractTensor>()) {
+      if (x_value->isa<tensor::Tensor>()) {
+        auto x_int = CheckAndConvertUtils::CheckTensorIntValue("x", x_value, primitive->name());
+        if (x_int[0] < 0) {
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The value of the input n (" << x_int[0]
+                                   << ") cannot be less than 0";
+        }
+        if (x_int[0] > max_length) {
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input 'n' (" << x_int[0]
+                                   << ") cannot exceed 'max_length' (" << max_length << ").";
+        }
+        auto dtype_value = primitive->GetAttr("dtype");
+        auto output_type = dtype_value->cast<TypePtr>();
+        int64_t max_data = GetDtypeMaxForCheckOverFlow(output_type);
+        if (x_int[0] > max_data + 1) {
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input 'n' must be less than "
+                                   << "or equal to the largest number in 'dtype', but got: " << x_int[0];
+        }
+        return std::make_shared<abstract::Shape>(std::vector<int64_t>{GetValue<int64_t>(value_ptr)});
+      }
+    }
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -86,17 +144,16 @@ class RandpermInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     auto x_type = input_args[0]->BuildType();
-    std::set<TypePtr> input_valid_types{kInt32};
-    (void)CheckAndConvertUtils::CheckTypeValid("input_x", x_type, input_valid_types, prim_name);
-    auto dtype_attr = prim->GetAttr("dtype");
-    MS_EXCEPTION_IF_NULL(dtype_attr);
-    auto infer_type = dtype_attr->cast<TypePtr>();
-    MS_EXCEPTION_IF_NULL(infer_type);
-    const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
-    (void)CheckAndConvertUtils::CheckTypeValid("output", infer_type, valid_types, prim_name);
-    return infer_type;
+    const std::set<TypePtr> valid_types_x = {kInt32, kInt64};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types_x, prim_name);
+    auto dtype = GetValue<TypePtr>(prim->GetAttr("dtype"));
+    const std::set<TypePtr> valid_types_dtype = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
+                                                 kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+    auto out_type = CheckAndConvertUtils::CheckTypeValid("dtype", dtype->cast<TypePtr>(), valid_types_dtype, prim_name);
+    return out_type;
   }
 };
+REGISTER_HOST_DEPENDS(kNameRandperm, {0});
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Randperm, prim::kPrimRandperm, RandpermInfer, false);
 }  // namespace ops
 }  // namespace mindspore

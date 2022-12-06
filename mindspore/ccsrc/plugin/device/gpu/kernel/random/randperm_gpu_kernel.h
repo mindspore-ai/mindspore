@@ -49,7 +49,7 @@ class RandpermGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  template <typename T>
+  template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
