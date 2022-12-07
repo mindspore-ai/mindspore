@@ -209,7 +209,7 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputsDeviceType(const std::ve
   kernel_build_info_->outputs_device_type_ = outputs_device_type;
 }
 
-void KernelBuildInfo::KernelBuildInfoBuilder::SetFusionType(FusionType fusion_type) {
+void KernelBuildInfo::KernelBuildInfoBuilder::SetFusionType(const std::string &fusion_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->fusion_type_ = fusion_type;
 }

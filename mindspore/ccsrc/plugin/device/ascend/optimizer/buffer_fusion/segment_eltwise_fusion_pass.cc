@@ -45,7 +45,7 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
     return;
   }
   if (AnfAlgo::GetKernelType(eltwise_input) == KernelType::TBE_KERNEL &&
-      AnfAlgo::GetFusionType(eltwise_input) == kernel::FusionType::SEGMENT) {
+      AnfAlgo::GetFusionType(eltwise_input) == kernel::kPatternSegment) {
     (void)record.insert(eltwise_input);
     auto previous_input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(previous_input_cnode);
@@ -79,7 +79,7 @@ void SegmentEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGra
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
+        AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise && cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
       MatchSegmentEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

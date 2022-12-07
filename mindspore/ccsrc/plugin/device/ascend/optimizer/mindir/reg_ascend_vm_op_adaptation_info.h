@@ -364,11 +364,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeNearestNeighborGradOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "listInt");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeNearestNeighborOpName)
-  .set_backend_op_name(kResizeNearestNeighborV2OpName)
-  .set_target_op_name(kResizeNearestNeighborV2DOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(1, "listInt");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeNearestNeighborOpName).set_backend_op_name(kResizeNearestNeighborV2DOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReverseV2OpName)
   .set_target_op_name(kReverseV2DOpName)

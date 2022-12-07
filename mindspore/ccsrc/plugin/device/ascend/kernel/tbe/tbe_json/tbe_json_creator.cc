@@ -446,7 +446,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   (*compute_json)[kJIsDynamicImpl] = is_dynamic_impl;
   (*compute_json)[kJInt64Mode] = false;
   (*compute_json)[kJName] = cnode->fullname_with_scope();
-  (*compute_json)[kJPattern] = kernel::GetFusionNameByType(AnfAlgo::GetFusionType(cnode));
+  (*compute_json)[kJPattern] = AnfAlgo::GetFusionType(cnode);
   (*compute_json)[kJModuleName] = kJModuleNamePrefix + func_name;
 }
 

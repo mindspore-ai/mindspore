@@ -159,7 +159,7 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> MemCpyAsyncDesc::GetKernel
       builder.SetOutputsDeviceType(output_type);
       builder.SetProcessor(AICORE);
       builder.SetKernelType(RT_KERNEL);
-      builder.SetFusionType(OPAQUE);
+      builder.SetFusionType(kPatternOpaque);
       memcpy_build_info.emplace_back(builder.Build());
     }
   }

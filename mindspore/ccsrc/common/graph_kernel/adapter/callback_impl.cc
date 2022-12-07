@@ -135,7 +135,7 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
   graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
   graph_info_builder.SetInputsFormat(graph_input_format);
   graph_info_builder.SetInputsDeviceType(graph_input_type);
   graph_info_builder.SetOutputsFormat(graph_output_format);
@@ -189,7 +189,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   info_builder.SetOutputsDeviceType(output_types);
   info_builder.SetProcessor(kernel::GetProcessorFromContext());
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  info_builder.SetFusionType(kernel::kPatternOpaque);
   auto selected_info = info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, node.get());
 }

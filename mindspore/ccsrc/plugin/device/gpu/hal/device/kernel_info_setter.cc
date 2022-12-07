@@ -454,7 +454,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
   graph_info_builder.SetProcessor(kernel::Processor::CUDA);
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
   auto graph_selected_info = graph_info_builder.Build();
   MS_EXCEPTION_IF_NULL(graph_selected_info);
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, kernel_node.get());

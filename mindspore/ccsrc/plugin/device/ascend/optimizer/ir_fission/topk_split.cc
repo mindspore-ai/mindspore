@@ -124,7 +124,7 @@ ValueNodePtr CreateAssistNode(const std::vector<int64_t> &input_shape, int32_t k
 kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   builder.SetKernelType(TBE_KERNEL);
-  builder.SetFusionType(kernel::OPAQUE);
+  builder.SetFusionType(kernel::kPatternOpaque);
   builder.SetProcessor(kernel::AICORE);
   builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
   builder.SetOutputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});

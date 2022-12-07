@@ -102,7 +102,7 @@ class BACKEND_EXPORT KernelBuildInfo {
 
   std::vector<nlohmann::json> output_data_desc() const { return output_data_desc_; }
 
-  FusionType fusion_type() const { return fusion_type_; }
+  std::string fusion_type() const { return fusion_type_; }
 
   Processor processor() const { return processor_; }
 
@@ -136,7 +136,7 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::vector<KernelObjectType> inputs_kernel_object_type_;
   std::vector<KernelObjectType> outputs_kernel_object_type_;
   std::vector<nlohmann::json> output_data_desc_;
-  FusionType fusion_type_{kernel::FusionType::OPAQUE};
+  std::string fusion_type_{kernel::kPatternOpaque};
   Processor processor_{AICORE};
 };
 using KernelBuildInfoPtr = std::shared_ptr<KernelBuildInfo>;
@@ -189,7 +189,7 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
 
   void SetCoreType(const std::string &core_type);
 
-  void SetFusionType(FusionType fusion_type);
+  void SetFusionType(const std::string &fusion_type);
   // save prebuild result
   void SetOutputDataDesc(const std::vector<nlohmann::json> &data_desc);
 

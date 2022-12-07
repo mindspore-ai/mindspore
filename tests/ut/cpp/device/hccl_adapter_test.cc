@@ -42,7 +42,7 @@ class TestHcclAdapter : public UT::Common {
   void SetOutputs(const CNodePtr &cnode, const std::vector<ShapeVector> &shape, const std::vector<TypeId> &data_type) {
     common::AnfAlgo::SetOutputInferTypeAndShape(data_type, shape, cnode.get());
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-    builder.SetFusionType(kernel::FusionType::OPAQUE);
+    builder.SetFusionType(kernel::kPatternOpaque);
     builder.SetProcessor(kernel::Processor::AICORE);
     builder.SetKernelType(TBE_KERNEL);
     builder.SetInputsFormat(std::vector<std::string>(cnode->size() - 1, format_));
@@ -65,7 +65,7 @@ class TestHcclAdapter : public UT::Common {
       common::AnfAlgo::SetOutputInferTypeAndShape(std::vector<TypeId>{data_type[i]}, std::vector<ShapeVector>{shape[i]},
                                                   node.get());
       kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-      builder.SetFusionType(kernel::FusionType::OPAQUE);
+      builder.SetFusionType(kernel::kPatternOpaque);
       builder.SetProcessor(kernel::Processor::AICORE);
       builder.SetKernelType(TBE_KERNEL);
       builder.SetInputsFormat({format_});

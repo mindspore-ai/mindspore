@@ -669,7 +669,7 @@ KernelType AnfRuntimeAlgorithm::GetKernelType(const AnfNodePtr &node) {
   return build_info->kernel_type();
 }
 
-void AnfRuntimeAlgorithm::SetFusionType(const AnfNodePtr &node, const kernel::FusionType &type) {
+void AnfRuntimeAlgorithm::SetFusionType(const AnfNodePtr &node, const std::string &type) {
   MS_EXCEPTION_IF_NULL(node);
   auto builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
@@ -718,13 +718,13 @@ kernel::Processor AnfRuntimeAlgorithm::GetProcessor(const AnfNodePtr &node) {
   return build_info->processor();
 }
 
-kernel::FusionType AnfRuntimeAlgorithm::GetFusionType(const AnfNodePtr &node) {
+std::string AnfRuntimeAlgorithm::GetFusionType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   if (build_info == nullptr) {
-    return kernel::FusionType::UNKNOWN_FUSION_TYPE;
+    return kernel::kPatternUnknown;
   }
   return build_info->fusion_type();
 }

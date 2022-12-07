@@ -180,8 +180,6 @@ inline float Scaler(const size_t x, const float scale, bool half_pixel_centers) 
   }
 }
 float ScaleGrid(const int x, const float scale);
-BACKEND_EXPORT FusionType GetFusionTypeByName(const std::string &name);
-BACKEND_EXPORT std::string GetFusionNameByType(const kernel::FusionType &type);
 BACKEND_EXPORT std::vector<bool> Dec2Bin(const int64_t &mask);
 BACKEND_EXPORT void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
                                   std::vector<int64_t> *end, std::vector<int64_t> *stride, ShapeVector *input_shape);

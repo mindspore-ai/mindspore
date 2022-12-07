@@ -55,7 +55,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_all) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
-  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
@@ -96,7 +96,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_group) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
-  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
@@ -137,7 +137,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_op) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
-  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());
@@ -194,7 +194,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
-  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
   auto node_list = TopoSort(func_graph->get_return());

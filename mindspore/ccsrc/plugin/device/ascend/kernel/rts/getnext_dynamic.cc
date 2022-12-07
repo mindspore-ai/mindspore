@@ -82,7 +82,7 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetNextDynamicDesc::GetKer
   builder.SetOutputsDeviceType(output_type);
   builder.SetProcessor(AICORE);
   builder.SetKernelType(RT_KERNEL);
-  builder.SetFusionType(OPAQUE);
+  builder.SetFusionType(kPatternOpaque);
   get_next_dynamic_build_info.emplace_back(builder.Build());
   return get_next_dynamic_build_info;
 }

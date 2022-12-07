@@ -33,7 +33,7 @@ bool FusionBasePass::CheckEltWiseNode(const session::KernelGraph &kernel_graph, 
   MS_EXCEPTION_IF_NULL(cnode);
   size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && not_updatestate_nums == ELTWISE_USE &&
+         AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise && not_updatestate_nums == ELTWISE_USE &&
          cnode->inputs().size() == ELTWISE_INPUT_SIZE;
 }
 
@@ -48,7 +48,7 @@ bool FusionBasePass::CheckDoubleInEltWiseNode(const session::KernelGraph &kernel
   MS_EXCEPTION_IF_NULL(cnode);
   size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && not_updatestate_nums == ELTWISE_USE &&
+         AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise && not_updatestate_nums == ELTWISE_USE &&
          cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE;
 }
 
@@ -63,7 +63,7 @@ bool FusionBasePass::CheckMultiOutputEltWiseNode(const session::KernelGraph &ker
   MS_EXCEPTION_IF_NULL(cnode);
   size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && not_updatestate_nums == ELTWISE_MULTI_USE &&
+         AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise && not_updatestate_nums == ELTWISE_MULTI_USE &&
          cnode->inputs().size() == ELTWISE_INPUT_SIZE;
 }
 
