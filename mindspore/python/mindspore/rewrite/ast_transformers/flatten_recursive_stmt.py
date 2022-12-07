@@ -19,6 +19,7 @@ import ast
 from ast import FunctionDef
 
 from mindspore import log as logger
+import astunparse
 from ..common import error_str
 
 
@@ -180,6 +181,20 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             child = node.body[index]
             if isinstance(child, ast.Assign):
                 stmt = child.value
+            elif isinstance(child, ast.If):
+                if isinstance(child.body[0], ast.Return) and not isinstance(child.test, ast.UnaryOp):
+                    if isinstance(child.body[0].value, ast.Call):
+                        if_body = child.body
+                        if_func = if_body[0].value
+                        expr = "x = " + astunparse.unparse(if_func)
+                        if_body = ast.parse(expr)
+                        if_body = if_body.body+ast.parse("return x").body
+                        child.body = if_body
+                        stmt = child
+                    else:
+                        stmt = child
+                else:
+                    stmt = child
             elif isinstance(child, ast.Expr):
                 stmt = child.value
             else:
