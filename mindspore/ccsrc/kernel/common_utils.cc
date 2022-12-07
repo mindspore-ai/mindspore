@@ -1127,6 +1127,154 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
   return bytes;
 }
 
+bool IsObjectTypeMatched(const std::vector<TypeId> &object_types, const std::vector<TypeId> &kernel_object_types,
+                         bool strict) {
+  if (object_types.size() != kernel_object_types.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < object_types.size(); i++) {
+    bool strict_cond = (object_types[i] == kernel_object_types[i]);
+    bool not_strict_cond = (strict_cond || object_types[i] == kObjectTypeTuple ||
+                            (kernel_object_types[i] == kObjectTypeTensorType && object_types[i] == kObjectTypeNumber));
+    if ((strict && !strict_cond) || (!strict && !not_strict_cond)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+std::vector<TypeId> GetOutputObjectTypeListFromKernelAttr(const kernel::KernelAttr &kernel_attr) {
+  size_t output_attr_size = kernel_attr.GetOutputSize();
+  std::vector<TypeId> res;
+  for (size_t i = 0; i < output_attr_size; ++i) {
+    res.push_back(kernel_attr.GetOutputAttr(i).object_type);
+  }
+  return res;
+}
+
+std::vector<TypeId> GetInputObjectTypeListFromKernelAttr(const kernel::KernelAttr &kernel_attr) {
+  size_t input_attr_size = kernel_attr.GetInputSize();
+  std::vector<TypeId> res;
+  for (size_t i = 0; i < input_attr_size; ++i) {
+    res.push_back(kernel_attr.GetInputAttr(i).object_type);
+  }
+  return res;
+}
+
+bool MatchObjectType(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr, bool strict) {
+  auto inputs_object_types = common::AnfAlgo::GetAllInputObjectType(kernel_node);
+  auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(kernel_node);
+  auto abstract_type = common::AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
+  auto kernel_inputs_object_types = GetInputObjectTypeListFromKernelAttr(kernel_attr);
+  auto kernel_outputs_object_types = GetOutputObjectTypeListFromKernelAttr(kernel_attr);
+  size_t output_attr_size = kernel_attr.GetOutputSize();
+  return IsObjectTypeMatched(inputs_object_types, kernel_inputs_object_types, strict) &&
+         ((output_attr_size == 1 && IsObjectTypeMatched({abstract_type}, {kernel_outputs_object_types[0]}, strict)) ||
+          IsObjectTypeMatched(output_object_types, kernel_outputs_object_types, strict));
+}
+
+std::vector<kernel::KernelAttr> SelectKernelObjectType(
+  const CNodePtr &kernel_node, const std::vector<kernel::KernelAttr> &selected_kernel_attr_list) {
+  auto SelectKernelObjectTypeImpl = [&](bool strict) {
+    std::vector<kernel::KernelAttr> selected;
+    std::copy_if(
+      selected_kernel_attr_list.begin(), selected_kernel_attr_list.end(), std::back_inserter(selected),
+      [&](const kernel::KernelAttr &kernel_attr) { return MatchObjectType(kernel_node, kernel_attr, strict); });
+    return selected;
+  };
+  auto selected_result = SelectKernelObjectTypeImpl(true);
+  if (selected_result.empty()) {
+    return SelectKernelObjectTypeImpl(false);
+  }
+  return selected_result;
+}
+
+KernelObjectType TypeIdToKernelObjectType(const TypeId &object_type) {
+  std::unordered_map<TypeId, KernelObjectType> trans_map{{kObjectTypeTuple, KernelObjectType::TUPLE},
+                                                         {kObjectTypeNumber, KernelObjectType::SCALAR},
+                                                         {kObjectTypeTensorType, KernelObjectType::TENSOR}};
+  if (trans_map.find(object_type) == trans_map.end()) {
+    MS_LOG(DEBUG) << "Unsupported object type " << TypeIdToString(object_type)
+                  << ", that cannot converted to corresponding kernel object type.";
+    return KernelObjectType::UNKNOWN_TYPE;
+  }
+  return trans_map[object_type];
+}
+
+std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &object_types) {
+  std::vector<KernelObjectType> ret;
+  std::transform(object_types.begin(), object_types.end(), std::back_inserter(ret),
+                 [](const TypeId &obj_type) { return kernel::TypeIdToKernelObjectType(obj_type); });
+  return ret;
+}
+
+KernelObjectType CalKernelObjectType(const TypeId &object_type, const TypeId &selected_object_type) {
+  if (object_type == selected_object_type) {
+    return TypeIdToKernelObjectType(object_type);
+  }
+  if (object_type == kObjectTypeTuple && selected_object_type != kObjectTypeTuple) {
+    return KernelObjectType::TUPLE_UNFOLD;
+  }
+  if (object_type == kObjectTypeNumber) {
+    return TypeIdToKernelObjectType(selected_object_type);
+  }
+  return KernelObjectType::UNKNOWN_TYPE;
+}
+
+std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &object_types,
+                                                   const std::vector<TypeId> &selected_object_types) {
+  std::vector<KernelObjectType> ret;
+  if (object_types.size() != selected_object_types.size()) {
+    MS_LOG(EXCEPTION) << "The size of object_types and selected_object_types must be same, but got "
+                      << object_types.size() << "vs " << selected_object_types.size();
+  }
+  for (size_t i = 0; i < object_types.size(); ++i) {
+    ret.push_back(CalKernelObjectType(object_types[i], selected_object_types[i]));
+  }
+  return ret;
+}
+
+std::vector<KernelObjectType> CalInputKernelObjectTypes(const AnfNodePtr &kernel_node,
+                                                        const kernel::KernelAttr &selected_kernel_attr) {
+  auto selected_input_object_types = GetInputObjectTypeListFromKernelAttr(selected_kernel_attr);
+  auto input_object_types = common::AnfAlgo::GetAllInputObjectType(kernel_node);
+  return CalKernelObjectTypes(input_object_types, selected_input_object_types);
+}
+
+std::vector<KernelObjectType> CalOutputKernelObjectTypes(const AnfNodePtr &kernel_node,
+                                                         const kernel::KernelAttr &selected_kernel_attr) {
+  auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
+  auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(kernel_node);
+  auto abstract_type = common::AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
+  if (selected_output_object_types.size() == 1) {
+    auto ret_type = CalKernelObjectType(abstract_type, selected_output_object_types[0]);
+    if (ret_type != KernelObjectType::UNKNOWN_TYPE) {
+      return {ret_type};
+    }
+  }
+  return CalKernelObjectTypes(output_object_types, selected_output_object_types);
+}
+
+void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
+                                  const std::vector<KernelObjectType> &input_kernel_object_types,
+                                  const std::vector<KernelObjectType> &output_kernel_object_types) {
+  if (kernel_node->kernel_info() == nullptr) {
+    kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  }
+  if (!kernel_node->kernel_info()->has_build_info()) {
+    AnfAlgo::SetSelectKernelBuildInfo(std::make_shared<kernel::KernelBuildInfo>(), kernel_node.get());
+  }
+  auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  kernel_build_info->SetOutputsKernelObjectType(output_kernel_object_types);
+  kernel_build_info->SetInputsKernelObjectType(input_kernel_object_types);
+}
+
+void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
+  auto input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
+  auto output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
+  SetKernelObjectTypeBuildInfo(kernel_node, input_kernel_object_types, output_kernel_object_types);
+}
+
 KernelAttr &KernelAttr::AddInputAttr(const TypeId &object_type, const TypeId &ms_type, const std::string &format) {
   (void)input_type_.emplace_back(DataType(ms_type, format, object_type));
   return *this;
