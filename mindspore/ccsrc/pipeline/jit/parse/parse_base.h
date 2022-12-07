@@ -179,6 +179,7 @@ enum ResolveTypeDef : int64_t {
   RESOLVE_TYPE_NAMESPACE_INSTANCE = 5,  // Resolve the namespace instance.
   RESOLVE_TYPE_NUMPY_INT_NUMBER = 6,    // Resolve numpy number int type.
   RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 7,  // Resolve numpy number float type.
+  RESOLVE_TYPE_NUMPY_BOOL_NUMBER = 8,   // Resolve numpy bool number.
   RESOLVE_TYPE_INVALID = 0xFF           // Resolve invalid.
 };
 

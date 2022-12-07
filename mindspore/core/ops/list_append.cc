@@ -50,8 +50,16 @@ AbstractBasePtr ListAppendInfer(const abstract::AnalysisEnginePtr &, const Primi
   }
   // If abstract of element is fixed, the abstract of target should have the same shape and type with the
   // abstract of element.
-  CheckAndConvertUtils::CheckAbstractTypeIdSame(data_element_abs, target_abs, prim_name, "list element", "target");
-  CheckAndConvertUtils::CheckAbstractShapeSame(data_element_abs, target_abs, prim_name, "list element", "target");
+  auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame({data_element_abs, target_abs});
+  if (differ_index == 0) {
+    differ_index = CheckAndConvertUtils::CheckAbstractShapeSame({data_element_abs, target_abs});
+  }
+  if (differ_index != 0) {
+    MS_EXCEPTION(TypeError) << "For primitive:" << prim::kPrimListAppend->ToString()
+                            << ", the mutable list existing item abstract '" << data_element_abs->ToString()
+                            << "' is not same with new added item abstract '" << target_abs->ToString() << "'.";
+  }
+
   return data_abs->Clone();
 }
 MIND_API_OPERATOR_IMPL(ListAppend, BaseOperator);

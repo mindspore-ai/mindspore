@@ -349,7 +349,7 @@ py::object BaseRefToPyData(const BaseRef &value) {
     v[0] = utils::cast<TypePtr>(value);
     ret = v[0];
   } else {
-    MS_LOG(EXCEPTION) << "value is not support type";
+    MS_LOG(EXCEPTION) << "value is not support, value:" << value.ToString();
   }
   return ret;
 }

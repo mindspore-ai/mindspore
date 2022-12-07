@@ -289,7 +289,9 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   TypePtr BuildType() const override { return GetTypeTrack(); }
 
   AbstractBasePtr Clone() const override {
-    return std::make_shared<AbstractScalar>(GetValueTrack(), GetTypeTrack()->Clone());
+    auto abs = std::make_shared<AbstractScalar>(GetValueTrack(), GetTypeTrack()->Clone());
+    abs->set_is_variable(is_variable_);
+    return abs;
   }
 
   AbstractBasePtr Broaden() const override;

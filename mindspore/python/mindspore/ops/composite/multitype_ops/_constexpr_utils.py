@@ -191,7 +191,7 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
         return Tensor(np.zeros(data_shape), dtype)
 
     if not isinstance(a, (list, tuple, int, float, bool)):
-        raise TypeError("input data must be `int`, `float`, `bool`, `list` or `tuple`")
+        raise TypeError(f"input data must be `int`, `float`, `bool`, `list` or `tuple`, but got {a}")
 
     if dim_size is not None:
         a = check_range(a, dim_size)

@@ -301,34 +301,49 @@ void CheckAndConvertUtils::GetFormatStringVal(const PrimitivePtr &prim, std::str
   }
 }
 
-void CheckAndConvertUtils::CheckAbstractShapeSame(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2,
-                                                  const std::string &prim_name, const std::string &name1,
-                                                  const std::string &name2) {
-  MS_EXCEPTION_IF_NULL(abs1);
-  MS_EXCEPTION_IF_NULL(abs2);
-  auto abs1_shape = abs1->BuildShape();
-  auto abs2_shape = abs2->BuildShape();
-  if (*abs1_shape != *abs2_shape) {
-    MS_EXCEPTION(ValueError) << "For primitive " << prim_name << " the abstrcat of " << name1 << " and the abstract of "
-                             << name2 << " should have the same shape but got the shape of " << name1 << ": "
-                             << abs1_shape->ToString() << " and the shape of " << name2 << ": "
-                             << abs2_shape->ToString();
+size_t CheckAndConvertUtils::CheckAbstractShapeSame(const std::vector<AbstractBasePtr> &abs_list) {
+  if (abs_list.size() <= 1) {
+    return 0;
   }
+  const auto &first_elem_abs = abs_list[0];
+  MS_EXCEPTION_IF_NULL(first_elem_abs);
+  auto abs1_shape = first_elem_abs->BuildShape();
+  MS_EXCEPTION_IF_NULL(abs1_shape);
+  for (size_t i = 0; i < abs_list.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(abs_list[i]);
+    auto abs2_shape = abs_list[i]->BuildShape();
+    MS_EXCEPTION_IF_NULL(abs2_shape);
+    if (*abs1_shape != *abs2_shape) {
+      MS_LOG(ERROR) << "Abstract shapes are not same, shape1:" << abs1_shape->ToString()
+                    << ", shape2:" << abs2_shape->ToString();
+      return i;
+    }
+  }
+  return 0;
 }
 
-void CheckAndConvertUtils::CheckAbstractTypeIdSame(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2,
-                                                   const std::string &prim_name, const std::string &name1,
-                                                   const std::string &name2) {
-  MS_EXCEPTION_IF_NULL(abs1);
-  MS_EXCEPTION_IF_NULL(abs2);
-  auto abs1_type_id = abs1->BuildType()->generic_type_id();
-  auto abs2_type_id = abs2->BuildType()->generic_type_id();
-  if (abs1_type_id != abs2_type_id) {
-    MS_EXCEPTION(ValueError) << "For primitive " << prim_name << " the abstrcat of " << name1 << " and the abstract of "
-                             << name2 << " should have the same type but got the type of " << name1 << ": "
-                             << TypeIdToString(abs1_type_id) << " and the type of " << name2 << ": "
-                             << TypeIdToString(abs2_type_id);
+// For example,
+// TensorType(element type is float16) and TensorType(element type is int32) are not same,
+// TupleType(elements num is 3) and TupleType(elements num is 4) are same.
+size_t CheckAndConvertUtils::CheckAbstractTypeSame(const std::vector<AbstractBasePtr> &abs_list) {
+  if (abs_list.size() <= 1) {
+    return 0;
   }
+  const auto &first_elem_abs = abs_list[0];
+  MS_EXCEPTION_IF_NULL(first_elem_abs);
+  auto abs1_type = first_elem_abs->BuildType();
+  MS_EXCEPTION_IF_NULL(abs1_type);
+  for (size_t i = 1; i < abs_list.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(abs_list[i]);
+    auto abs2_type = abs_list[i]->BuildType();
+    MS_EXCEPTION_IF_NULL(abs2_type);
+    if (!(*abs1_type == *abs2_type)) {
+      MS_LOG(ERROR) << "Abstract types are not same, type1:" << abs1_type->ToString()
+                    << ", type2:" << abs2_type->ToString();
+      return i;
+    }
+  }
+  return 0;
 }
 
 void CheckAndConvertUtils::ConvertAttrValueInExport(const std::string &op_type, const std::string &attr_name,

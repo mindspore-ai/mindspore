@@ -34,22 +34,19 @@ AbstractBasePtr CheckAndGetElementType(const abstract::AbstractSequencePtr input
     return input->dynamic_len_element_abs();
   }
   const auto &elements = input->elements();
-  if (elements.size() == 0) {
+  if (elements.empty()) {
     return nullptr;
   }
-  auto first_element = elements[0];
-  MS_EXCEPTION_IF_NULL(first_element);
-  std::string first_element_name = "first element";
-  for (size_t i = 1; i < elements.size(); ++i) {
-    auto cur_element = elements[i];
-    MS_EXCEPTION_IF_NULL(cur_element);
-    const std::string cur_element_name = std::to_string(i) + "th element";
-    CheckAndConvertUtils::CheckAbstractTypeIdSame(first_element, cur_element, prim_name, first_element_name,
-                                                  cur_element_name);
-    CheckAndConvertUtils::CheckAbstractShapeSame(first_element, cur_element, prim_name, first_element_name,
-                                                 cur_element_name);
+  auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame(elements);
+  if (differ_index == 0) {
+    differ_index = CheckAndConvertUtils::CheckAbstractShapeSame(elements);
   }
-  return first_element;
+  if (differ_index != 0) {
+    MS_EXCEPTION(TypeError) << "For primitive:" << prim_name << ", the added sequence abstract of item[0]: '"
+                            << elements[0]->ToString() << "' is not same with abstract of item[ " << differ_index
+                            << "]: abstract '" << elements[differ_index]->ToString() << "'.";
+  }
+  return elements[0];
 }
 
 AbstractBasePtr SequenceAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -98,10 +95,14 @@ AbstractBasePtr SequenceAddInfer(const abstract::AnalysisEnginePtr &, const Prim
     ret->set_dynamic_len_element_abs(abs_1);
     return ret;
   }
-  std::string abs_1_name = "the element of first input";
-  std::string abs_2_name = "the element of second input";
-  CheckAndConvertUtils::CheckAbstractTypeIdSame(abs_1, abs_2, prim_name, abs_1_name, abs_2_name);
-  CheckAndConvertUtils::CheckAbstractShapeSame(abs_1, abs_2, prim_name, abs_1_name, abs_2_name);
+  auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame({abs_1, abs_2});
+  if (differ_index == 0) {
+    differ_index = CheckAndConvertUtils::CheckAbstractShapeSame({abs_1, abs_2});
+  }
+  if (differ_index != 0) {
+    MS_EXCEPTION(TypeError) << "For primitive:" << prim_name << ", the element of first input: " << abs_1->ToString()
+                            << "' is not same with the element of second input: '" << abs_2->ToString() << "'.";
+  }
   if (input_1->dynamic_len()) {
     return input_1->Clone();
   }

@@ -832,7 +832,11 @@ FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes, 
   if (update_info != nullptr) {
     cloner.set_update_info(update_info);
   }
-  return cloner[func_graph];
+  auto target_func_graph = cloner[func_graph];
+  if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
+  }
+  return target_func_graph;
 }
 
 AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
@@ -844,6 +848,9 @@ AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &targe
     cloner.set_scope(scope);
   }
   cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
+  if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
+  }
   return cloner[func_graph->output()];
 }
 
@@ -851,7 +858,11 @@ FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   Cloner cloner({}, false);
   cloner.AddClone(func_graph, nullptr, {}, kLifting);
-  return cloner[func_graph];
+  auto target_func_graph = cloner[func_graph];
+  if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
+  }
+  return target_func_graph;
 }
 
 FuncGraphVector LiftingCloneMulti(const FuncGraphVector &func_graphs) {
@@ -916,6 +927,9 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   }
   if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
     new_func_graph->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE, true);
+  }
+  if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    new_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
   }
   if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
     new_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));

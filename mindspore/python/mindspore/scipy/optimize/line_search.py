@@ -14,6 +14,7 @@
 # ============================================================================
 """line search"""
 from typing import NamedTuple
+from mindspore import ops
 from ... import nn
 from ... import numpy as mnp
 from ...common import dtype as mstype
@@ -151,7 +152,7 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
         state["phi_high"] = mnp.where(j_to_high, phi_j, state["phi_high"])
         state["dphi_high"] = mnp.where(j_to_high, dphi_j, state["dphi_high"])
 
-        j_to_star = mnp.logical_not(j_to_high) and mnp.abs(dphi_j) <= -c2 * dphi_0
+        j_to_star = mnp.logical_not(j_to_high) and mnp.abs(dphi_j) <= ops.negative(ops.add(c2, Tensor(0))) * dphi_0
         state["done"] = j_to_star
         state["a_star"] = mnp.where(j_to_star, a_j, state["a_star"])
         state["phi_star"] = mnp.where(j_to_star, phi_j, state["phi_star"])

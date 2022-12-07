@@ -731,12 +731,25 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
   return ExecuteMultipleEvaluatorsMultiThread(evaluators, out_conf, args_conf_list);
 }
 
-void AnalysisEngine::SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) const {
-  MS_EXCEPTION_IF_NULL(possible_parent_fg);
+void AnalysisEngine::SetUndeterminedFlag(const std::string &thread_id, const FuncGraph &fg) {
   static std::mutex fg_lock;
   std::lock_guard<std::mutex> infer_lock(fg_lock);
-  possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
-  MS_LOG(DEBUG) << "Set graph undetermined flag for " << possible_parent_fg->ToString();
+  MS_LOG(DEBUG) << "Record undetermined flag of fg:" << fg.ToString() << ", thread id:" << thread_id;
+  func_graph_undetermined_flags_[&fg].push_front(thread_id);
+}
+
+void AnalysisEngine::SetIgnoreValueFlag(const std::string &thread_id, FuncGraph *fg) {
+  auto it = func_graph_undetermined_flags_.find(fg);
+  if (it == func_graph_undetermined_flags_.cend()) {
+    return;
+  }
+  for (const auto &id : it->second) {
+    if (thread_id.find(id) != std::string::npos && thread_id != id) {
+      MS_LOG(DEBUG) << "Set ignore value of fg:" << fg->ToString() << ", thread id:" << thread_id;
+      fg->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE, true);
+      return;
+    }
+  }
 }
 
 EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators,
@@ -1030,16 +1043,16 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     return std::make_shared<EvalResult>(eval_result, nullptr);
   }
   auto possible_parent_fg = out_conf->node()->func_graph();
+  MS_EXCEPTION_IF_NULL(possible_parent_fg);
   // Eval result of the main.
   AsyncAbstractPtr async_result_main = std::make_shared<AsyncAbstract>();
   // Eval result of the branches
   std::vector<AsyncAbstractPtr> async_result_branches;
-
+  SetUndeterminedFlag(AnalysisSchedule::thread_id(), *possible_parent_fg);
   for (auto &evaluator : evaluators) {
     static std::atomic<int> id_count{0};
     std::string thread_id = AnalysisSchedule::thread_id() + "." + std::to_string(id_count.fetch_add(1));
     MS_EXCEPTION_IF_NULL(evaluator);
-    SetUndeterminedFlag(possible_parent_fg);
     AsyncAbstractPtr async_result_branch = std::make_shared<AsyncAbstract>();
     // Control the order to run.
     AsyncAbstractPtr control_run_order = std::make_shared<AsyncAbstract>();
@@ -1105,9 +1118,10 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   auto possible_parent_fg = out_conf->node()->func_graph();
-  for (auto eval : evaluators) {
+  possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
+  MS_LOG(DEBUG) << "Set graph undetermined flag for " << possible_parent_fg->ToString();
+  for (const auto &eval : evaluators) {
     MS_EXCEPTION_IF_NULL(eval);
-    SetUndeterminedFlag(possible_parent_fg);
     const auto current_inf = EvaluatorArgs(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.
@@ -1139,11 +1153,12 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
         MS_EXCEPTION_IF_NULL(eval_result->abstract());
         MS_LOG(DEBUG) << "end Direct Evaluator " << latest_entry->ToString()
                       << " return out_spec: " << eval_result->abstract()->ToString();
+        possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, false);
         return eval_result;
       }
     }
   }
-
+  possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, false);
   return ProcessEvalResults(out_specs, out_conf->node());
 }
 

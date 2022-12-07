@@ -59,6 +59,7 @@ RESOLVE_TYPE_CLASS_INSTANCE = 4         # Resolve the class instance of common c
 RESOLVE_TYPE_NAMESPACE_INSTANCE = 5     # Resolve the namespace instance.
 RESOLVE_TYPE_NUMPY_INT_NUMBER = 6       # Resolve numpy int number.
 RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 7     # Resolve numpy float number.
+RESOLVE_TYPE_NUMPY_BOOL_NUMBER = 8     # Resolve numpy bool number.
 RESOLVE_TYPE_INVALID = 0xFF             # Resolve invalid.
 
 # Define the class instance detail type
@@ -355,6 +356,8 @@ def get_obj_type(obj):
         obj_type = RESOLVE_TYPE_NUMPY_INT_NUMBER
     elif _is_numpy_float_number(obj):
         obj_type = RESOLVE_TYPE_NUMPY_FLOAT_NUMBER
+    elif _is_numpy_bool_number(obj):
+        obj_type = RESOLVE_TYPE_NUMPY_BOOL_NUMBER
     else:
         # Raise a proper error if not using Fallback feature.
         if support_fallback_ != '0':
@@ -404,6 +407,11 @@ def _is_numpy_int_number(obj):
 def _is_numpy_float_number(obj):
     """Confirm the obj is numpy float number."""
     return isinstance(obj, (numpy.float16, numpy.float32, numpy.float64))
+
+
+def _is_numpy_bool_number(obj):
+    """Confirm the obj is numpy bool number."""
+    return isinstance(obj, numpy.bool_)
 
 
 def _convert_tuple_to_args_kwargs(params):

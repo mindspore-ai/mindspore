@@ -136,20 +136,30 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
 
   ValuePtr index_value = index->BuildValue();
   MS_EXCEPTION_IF_NULL(index_value);
-  if (!index_value->isa<Int64Imm>()) {
-    // when index_value is an AnyValue and args_spec_list[0] is a scalar, try to return the type of the first element
-    //  and continue
-    if (dyn_cast<AbstractScalar>(queue->elements()[0]) != nullptr) {
-      return std::make_shared<AbstractScalar>(queue->elements()[0]->BuildType());
+  // Input  or index is variable, items shape and type should be same.
+  if (index_value == kAnyValue) {
+    auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame(args_spec_list);
+    if (differ_index == 0) {
+      differ_index = CheckAndConvertUtils::CheckAbstractShapeSame(args_spec_list);
     }
+    if (differ_index != 0) {
+      MS_EXCEPTION(TypeError) << "For op:" << op_name
+                              << ", the index is a variable, but the sequence[0] item abstract '"
+                              << args_spec_list[0]->ToString() << "' is not same with sequence[" << differ_index
+                              << "] abstract '" << args_spec_list[differ_index]->ToString() << "'.";
+    }
+    return queue->elements()[0]->Broaden();
+  }
+  // For constant index, return input[index] of sequence.
+  if (!index_value->isa<Int64Imm>()) {
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got " << index->ToString();
   }
   auto index_int64_value = GetValue<int64_t>(index_value);
   std::size_t nelems = queue->elements().size();
-  if (nelems == 0) {
-    MS_EXCEPTION(IndexError) << "Can not getitem for an empty sequence.";
-  }
   if (index_int64_value >= SizeToLong(nelems) || index_int64_value < -SizeToLong(nelems)) {
+    if (nelems == 0) {
+      MS_EXCEPTION(ValueError) << "For primitive:'" << op_name << "', cannot get item by index from an empty sequence.";
+    }
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToLong(nelems) << ", "
                              << SizeToLong(nelems) << "), but got " << index_int64_value << ".";
   }
@@ -371,17 +381,27 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
     for (const auto &ele : abs_seq->elements()) {
       CheckMutableArgAbstract(ele);
     }
-  } else if (abs->isa<AbstractDictionary>()) {
+    return;
+  }
+  if (abs->isa<AbstractDictionary>()) {
     auto abs_dic = abs->cast_ptr<AbstractDictionary>();
     for (const auto &ele : abs_dic->elements()) {
       CheckMutableArgAbstract(ele.second);
     }
-  } else if (!abs->isa<AbstractTensor>()) {
-    MS_EXCEPTION(TypeError)
-      << "For mutable api in graph, the input arg should be one of (Tensor, tuple[Tensor], list[Tensor], "
-         "dict[Tensor]) or their nested structures, but got "
-      << abs->ToString();
+    return;
   }
+  if (abs->isa<AbstractScalar>()) {
+    MS_LOG(DEBUG) << "Set scalar as variable, scalar abstract:" << abs->ToString();
+    abs->cast_ptr<AbstractScalar>()->set_is_variable(true);
+    return;
+  }
+  if (abs->isa<AbstractTensor>()) {
+    return;
+  }
+  MS_EXCEPTION(TypeError)
+    << "For mutable api in graph, the input arg should be one of (Scalar, Tensor, tuple[Tensor], list[Tensor], "
+       "dict[Tensor]) or their nested structures, but got "
+    << abs->ToString();
 }
 }  // namespace
 

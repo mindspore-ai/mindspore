@@ -56,9 +56,9 @@ def test_dynamic_sequence_add_dynamic_sequence_different_type():
         c = a + b
         return c
 
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         foo()
-    assert "should have the same type but got the type of" in str(ex.value)
+    assert "is not same with the element of second input" in str(ex.value)
 
 
 def test_dynamic_sequence_add_dynamic_sequence_different_shape():
@@ -75,9 +75,9 @@ def test_dynamic_sequence_add_dynamic_sequence_different_shape():
         c = a + b
         return c
 
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         foo()
-    assert "should have the same shape but got the shape of" in str(ex.value)
+    assert "is not same with the element of second input" in str(ex.value)
 
 
 def test_empty_dynamic_sequence_add_dynamic_sequence():
@@ -170,9 +170,9 @@ def test_dynamic_sequence_add_constant_length_sequence_different_type():
         c = a + b
         return c
 
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         foo()
-    assert "should have the same type but got the type of" in str(ex.value)
+    assert "is not same with the element of second input" in str(ex.value)
 
 
 def test_dynamic_sequence_add_constant_length_sequence_different_shape():
@@ -189,9 +189,9 @@ def test_dynamic_sequence_add_constant_length_sequence_different_shape():
         c = a + b
         return c
 
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         foo()
-    assert "should have the same shape but got the shape of" in str(ex.value)
+    assert "is not same with the element of second input" in str(ex.value)
 
 
 def test_empty_dynamic_sequence_add_constant_length_sequence():
