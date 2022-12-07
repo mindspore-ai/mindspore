@@ -42,6 +42,7 @@ void TbeKernelReduceSelector::GetSupportedFormatDType(SupportFormatDType *suppor
   GetReduceSupport5HD(&support_format);
   GetReduceSupportNDC1HWC0(&support_format);
   GetReduceSupportFracZ(&support_format);
+  GetReduceSupportFracNZ(&support_format);
   GetReduceSupportC1HWNCoC0(&support_format);
   GetReduceSupportFracZ3D(&support_format);
   GenerateSupportFormatDType(cnode_ptr_, support_format, support_format_dtype);
@@ -171,9 +172,6 @@ void TbeKernelReduceSelector::GetReduceSupportFracNZ(SupportFormat *support_form
   if (is_shape_less_2_dims_) {
     return;
   }
-  if (!keep_dims_) {
-    return;
-  }
   int64_t last_channel = SizeToLong(input_shape_.at(0).size()) - 1;
   bool is_reduce_last = CheckReduceContainChanel(last_channel);
   int64_t last_channel_but_one = SizeToLong(input_shape_.at(0).size()) - 2;
@@ -181,6 +179,9 @@ void TbeKernelReduceSelector::GetReduceSupportFracNZ(SupportFormat *support_form
   if (!is_reduce_last && !is_reduce_last_but_one) {
     GenerateSupportFormat(kOpFormat_FRAC_NZ, input_shape_.size(), kOpFormat_FRAC_NZ, output_shape_.size(),
                           support_format);
+    return;
+  }
+  if (!keep_dims_) {
     return;
   }
   if (last_channel >= 0 && LongToSize(last_channel) < input_shape_.at(kIndex0).size() &&

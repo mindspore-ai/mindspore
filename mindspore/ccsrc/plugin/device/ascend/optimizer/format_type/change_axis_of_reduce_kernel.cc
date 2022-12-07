@@ -26,12 +26,9 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::opt {
 namespace {
 using ConvertFunction = std::function<void(const CNodePtr &)>;
-
-void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode);
 const size_t kAxis_N = 0;
 const size_t kAxis_C = 1;
 const size_t kAxis_C1 = 1;
@@ -123,9 +120,36 @@ void ConvertReduceAttrNC1HWC0(const CNodePtr &cnode) {
   }
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(convert_axis), cnode);
 }
+
+void ConvertReduceAttrFracNZ(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto axis = kernel::GetReduceAttrAxis(cnode);
+  std::vector<int64_t> convert_axis;
+  auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto dims_num = static_cast<int64_t>(origin_shape.size());
+  SafeCheckFunction(cnode, axis);
+  int64_t kLastIndex = 1;
+  int64_t kLastIndexButOne = 2;
+  for (const auto &axis_value : axis) {
+    if (axis_value == dims_num - kLastIndex) {
+      // reduce last axis
+      (void)convert_axis.emplace_back(axis_value - kLastIndex);
+      (void)convert_axis.emplace_back(axis_value + kLastIndexButOne);
+    } else if (axis_value == dims_num - kLastIndexButOne) {
+      // reduce last axis but one
+      (void)convert_axis.emplace_back(axis_value + kLastIndex);
+      (void)convert_axis.emplace_back(axis_value + kLastIndexButOne);
+    } else {
+      (void)convert_axis.emplace_back(axis_value);
+    }
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(convert_axis), cnode);
+}
+
 const std::map<std::string, ConvertFunction> kReduceConvertMap = {{kOpFormat_FRAC_Z, ConvertReduceAttrFraczAnd6HD},
                                                                   {kOpFormat_C1HWNCoC0, ConvertReduceAttrFraczAnd6HD},
-                                                                  {kOpFormat_NC1HWC0, ConvertReduceAttrNC1HWC0}};
+                                                                  {kOpFormat_NC1HWC0, ConvertReduceAttrNC1HWC0},
+                                                                  {kOpFormat_FRAC_NZ, ConvertReduceAttrFracNZ}};
 }  // namespace
 
 const BaseRef ChangeAxisOfReduceKernel::DefinePattern() const {
@@ -177,5 +201,4 @@ const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const A
   }
   return nullptr;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::opt
