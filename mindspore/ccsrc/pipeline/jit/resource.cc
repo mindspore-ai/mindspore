@@ -199,6 +199,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"expand_as", std::string("expand_tensor_as")},                     // C.expand_as
        {"broadcast_to", std::string("broadcast_to")},                      // P.BroadcastTo
        {"view", std::string("view")},                                      // C.view
+       {"view_as", std::string("view_as")},                                // view_as()
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
        {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
        {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
@@ -373,6 +374,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"addmm", std::string("addmm")},                                    // addmm()
        {"addmv", std::string("addmv")},                                    // addmv()
        {"adjoint", std::string("adjoint")},                                // adjoint()
+       {"t", std::string("t")},                                            // t()
        {"arccosh", std::string("acosh")},                                  // arccosh()
        {"arcsin", std::string("asin")},                                    // arcsin()
        {"arctan", std::string("atan")},                                    // arctan()

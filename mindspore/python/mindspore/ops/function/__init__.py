@@ -245,6 +245,7 @@ from .math_func import (
     outer,
     sin,
     cos,
+    t,
     tan,
     asin,
     acos,

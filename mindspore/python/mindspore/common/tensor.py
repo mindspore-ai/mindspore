@@ -1126,6 +1126,36 @@ class Tensor(Tensor_):
             shape = shape[0]
         return tensor_operator_registry.get('reshape')()(self, shape)
 
+    def view_as(self, other):
+        r"""
+        View self Tensor as the same shape as `other` .
+
+        Args:
+            other(Tensor): The returned Tensor has the same shape as `other`.
+
+        Returns:
+            Tensor, has the same shape as `other`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> a = Tensor([[1, 2, 3], [2, 3, 4]], ms.float32)
+            >>> b = Tensor([1, 1, 1, 1, 1, 1], ms.float32)
+            >>> output = a.view_as(b)
+            >>> print(output)
+            [1. 2. 3. 2. 3. 4.]
+        """
+        self._init_check()
+        return self.view(other.shape)
+
+    def t(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.t`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get("t")(self)
+
     def bitwise_and(self, x):
         """
         For details, please refer to :func:`mindspore.ops.bitwise_and`.

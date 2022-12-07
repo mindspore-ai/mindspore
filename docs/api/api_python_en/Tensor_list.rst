@@ -253,6 +253,7 @@
     mindspore.Tensor.svd
     mindspore.Tensor.swapaxes
     mindspore.Tensor.T
+    mindspore.Tensor.t
     mindspore.Tensor.take
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
@@ -277,6 +278,7 @@
     mindspore.Tensor.unsqueeze
     mindspore.Tensor.var
     mindspore.Tensor.view
+    mindspore.Tensor.view_as
     mindspore.Tensor.where
     mindspore.Tensor.xdivy
     mindspore.Tensor.xlogy
