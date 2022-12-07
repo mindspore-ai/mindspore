@@ -16,10 +16,14 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/ftrl_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+using Complex64 = Complex<float>;
+using Complex128 = Complex<double>;
 
 template <typename T>
 __device__ __forceinline__ T PowFunc(T x, T y) {
-  return pow(x, y);
+  return static_cast<T>(pow(static_cast<double>(x), static_cast<double>(y)));
 }
 
 template <>
@@ -29,7 +33,7 @@ __device__ __forceinline__ half PowFunc(half x, half y) {
 
 template <typename T>
 __device__ __forceinline__ bool CompareFunc(T x, T y) {
-  return abs(x) > y;
+  return abs(static_cast<double>(x)) > static_cast<double>(y);
 }
 
 template <>
@@ -39,7 +43,7 @@ __device__ __forceinline__ bool CompareFunc(half x, half y) {
 
 template <typename T>
 __device__ __forceinline__ T Sgn(T x) {
-  return static_cast<T>(x != 0 ? (x > 0 ? 1 : -1) : 0);
+  return static_cast<T>(static_cast<double>(x) != 0 ? (static_cast<double>(x) > 0 ? 1 : -1) : 0);
 }
 
 template <>
@@ -86,3 +90,54 @@ template CUDA_LIB_EXPORT void ApplyFtrl<half>(const size_t size, const half *gra
                                               const half *l1_regularization, const half *l2_regularization,
                                               const half *learning_rate_power, half *variable, half *accumulation,
                                               half *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<double>(const size_t size, const double *gradient, const double *learning_rate,
+                                                const double *l1_regularization, const double *l2_regularization,
+                                                const double *learning_rate_power, double *variable,
+                                                double *accumulation, double *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<int8_t>(const size_t size, const int8_t *gradient, const int8_t *learning_rate,
+                                                const int8_t *l1_regularization, const int8_t *l2_regularization,
+                                                const int8_t *learning_rate_power, int8_t *variable,
+                                                int8_t *accumulation, int8_t *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<int16_t>(const size_t size, const int16_t *gradient,
+                                                 const int16_t *learning_rate, const int16_t *l1_regularization,
+                                                 const int16_t *l2_regularization, const int16_t *learning_rate_power,
+                                                 int16_t *variable, int16_t *accumulation, int16_t *linear,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<int64_t>(const size_t size, const int64_t *gradient,
+                                                 const int64_t *learning_rate, const int64_t *l1_regularization,
+                                                 const int64_t *l2_regularization, const int64_t *learning_rate_power,
+                                                 int64_t *variable, int64_t *accumulation, int64_t *linear,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<uint8_t>(const size_t size, const uint8_t *gradient,
+                                                 const uint8_t *learning_rate, const uint8_t *l1_regularization,
+                                                 const uint8_t *l2_regularization, const uint8_t *learning_rate_power,
+                                                 uint8_t *variable, uint8_t *accumulation, uint8_t *linear,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<uint16_t>(const size_t size, const uint16_t *gradient,
+                                                  const uint16_t *learning_rate, const uint16_t *l1_regularization,
+                                                  const uint16_t *l2_regularization,
+                                                  const uint16_t *learning_rate_power, uint16_t *variable,
+                                                  uint16_t *accumulation, uint16_t *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<uint32_t>(const size_t size, const uint32_t *gradient,
+                                                  const uint32_t *learning_rate, const uint32_t *l1_regularization,
+                                                  const uint32_t *l2_regularization,
+                                                  const uint32_t *learning_rate_power, uint32_t *variable,
+                                                  uint32_t *accumulation, uint32_t *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<uint64_t>(const size_t size, const uint64_t *gradient,
+                                                  const uint64_t *learning_rate, const uint64_t *l1_regularization,
+                                                  const uint64_t *l2_regularization,
+                                                  const uint64_t *learning_rate_power, uint64_t *variable,
+                                                  uint64_t *accumulation, uint64_t *linear, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<Complex64>(const size_t size, const Complex64 *gradient,
+                                                   const Complex64 *learning_rate, const Complex64 *l1_regularization,
+                                                   const Complex64 *l2_regularization,
+                                                   const Complex64 *learning_rate_power, Complex64 *variable,
+                                                   Complex64 *accumulation, Complex64 *linear,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ApplyFtrl<Complex128>(const size_t size, const Complex128 *gradient,
+                                                    const Complex128 *learning_rate,
+                                                    const Complex128 *l1_regularization,
+                                                    const Complex128 *l2_regularization,
+                                                    const Complex128 *learning_rate_power, Complex128 *variable,
+                                                    Complex128 *accumulation, Complex128 *linear,
+                                                    cudaStream_t cuda_stream);

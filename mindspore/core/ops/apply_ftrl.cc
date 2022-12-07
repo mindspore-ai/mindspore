@@ -104,7 +104,8 @@ class ApplyFtrlInfer : public abstract::OpInferBase {
     auto accum_type = input_args[kInputIndex1]->BuildType();
     auto linear_type = input_args[kInputIndex2]->BuildType();
     auto grad_type = input_args[kInputIndex3]->BuildType();
-    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+    const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
+                                           kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     std::map<std::string, TypePtr> args;
     (void)args.insert(std::make_pair("var_type", var_type));
     (void)args.insert(std::make_pair("accum_type", accum_type));
