@@ -1156,7 +1156,7 @@ class Tensor(Tensor_):
 
     def bitwise_right_shift(self, other):
         """
-        For details, please refer to :func:`mindspore.ops.bitwise_left_shift`.
+        For details, please refer to :func:`mindspore.ops.bitwise_right_shift`.
         """
         self._init_check()
         _cast = tensor_operator_registry.get('cast')
@@ -4002,7 +4002,7 @@ class Tensor(Tensor_):
 
     def multiply(self, value):
         r"""
-        Refer to :func:`mindspore.ops.multiply` for more details.
+        For details, please refer to :func:`mindspore.ops.multiply`.
         """
         self._init_check()
         return tensor_operator_registry.get('multiply')(self, value)
@@ -4016,7 +4016,7 @@ class Tensor(Tensor_):
 
     def divide(self, other, *, rounding_mode=None):
         r"""
-        For details, please refer to :func:`mindspore.ops.div`.
+        Alias for :func:`mindspore.Tensor.div`.
         """
         self._init_check()
         return tensor_operator_registry.get('div')(self, other, rounding_mode)
@@ -4640,7 +4640,7 @@ class Tensor(Tensor_):
 
     def where(self, condition, y):
         r"""
-        For details, please refer to :func:`mindspore.ops.where`
+        For details, please refer to :func:`mindspore.ops.where`.
         """
         self._init_check()
         return tensor_operator_registry.get('where')(condition, self, y)
