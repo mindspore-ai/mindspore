@@ -7323,13 +7323,17 @@ def kron(x, y):
 
     Note:
         Supports real-valued and complex-valued inputs.
+        This function generalizes the typical definition of the Kronecker product
+        for two matrices to two tensors, as described above.
+        When x is a (m x n) matrix and y is a (p x q) matrix, the result
+        be a (p * m x q * n) block matrix.
 
     Args:
-        x (Tensor): Input tensor.
-        y (Tensor): Input tensor.
+        x (Tensor): Input tensor, has the shape (r0, r1, ... , rN).
+        y (Tensor): Input tensor, has the shape (s0, s1, ... , sN).
 
     Returns:
-        Tensor.
+        Tensor, has the shape (r0 * s0, r1 * s1, ... , rN * sN).
 
     Raises:
         TypeError: If `x` is not a Tensor.
