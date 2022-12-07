@@ -1054,7 +1054,11 @@ class AscendAutoMonadConverter {
     // For the same call, their internal assignments cannot be cross-run.
     auto iter = call_last_monad_.find(graphes);
     if (iter != call_last_monad_.end()) {
-      last_monad_ = MakeDepend(last_monad_, iter->second);
+      if (last_monad_ != nullptr && iter->second != nullptr) {
+        last_monad_ = MakeDepend(last_monad_, iter->second);
+      } else if (last_monad_ == nullptr) {
+        last_monad_ = iter->second;
+      }
     }
 
     bool monad_update = false;
