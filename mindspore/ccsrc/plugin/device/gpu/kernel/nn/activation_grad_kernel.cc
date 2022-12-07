@@ -18,6 +18,7 @@
 #include <memory>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_grad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -31,20 +32,20 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
   ActivationGradGpuKernelMod::kernel_attr_map_ = {
     {kReLU6Grad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &ActivationGradGpuKernelMod::LaunchKernel<float>},
+       &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationGradGpuKernelMod::LaunchKernel<half>}}},
+       &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
     {kTanhGrad,
      {{KernelAttr()
          .AddInputAttr(kNumberTypeComplex128)
          .AddInputAttr(kNumberTypeComplex128)
          .AddOutputAttr(kNumberTypeComplex128),
-       &ActivationGradGpuKernelMod::LaunchKernel<utils::Complex<double>>},
+       &ActivationGradGpuKernelMod::LaunchTanhGrad<utils::Complex<double>>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeComplex64)
          .AddInputAttr(kNumberTypeComplex64)
          .AddOutputAttr(kNumberTypeComplex64),
-       &ActivationGradGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+       &ActivationGradGpuKernelMod::LaunchTanhGrad<utils::Complex<float>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &ActivationGradGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -53,9 +54,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
        &ActivationGradGpuKernelMod::LaunchKernel<half>}}},
     {kEluGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &ActivationGradGpuKernelMod::LaunchKernel<float>},
+       &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationGradGpuKernelMod::LaunchKernel<half>}}},
+       &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
     {kSigmoidGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchKernel<float>},
@@ -67,12 +68,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
          .AddInputAttr(kNumberTypeComplex64)
          .AddInputAttr(kNumberTypeComplex64)
          .AddOutputAttr(kNumberTypeComplex64),
-       &ActivationGradGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+       &ActivationGradGpuKernelMod::LaunchSigmoidGrad<utils::Complex<float>>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeComplex128)
          .AddInputAttr(kNumberTypeComplex128)
          .AddOutputAttr(kNumberTypeComplex128),
-       &ActivationGradGpuKernelMod::LaunchKernel<utils::Complex<double>>}}}};
+       &ActivationGradGpuKernelMod::LaunchSigmoidGrad<utils::Complex<double>>}}}};
 
 bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
@@ -110,9 +111,9 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   }
   mode_ = mode_iter->second;
 
-  const auto dtype = inputs.at(kIndex0)->GetDtype();
-  if (((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) &&
-      (kernel_name_ != kTanhGrad) && (kernel_name_ != kSigmoidGrad)) {
+  dtype_ = inputs.at(kIndex0)->GetDtype();
+  if (((dtype_ == kNumberTypeComplex64) || (dtype_ == kNumberTypeComplex128)) && (kernel_name_ != kTanhGrad) &&
+      (kernel_name_ != kSigmoidGrad)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', only tanh and sigmoid support complex input, but got "
                   << kernel_name_ << " with dtype " << TypeIdLabel(inputs.at(kIndex0)->GetDtype());
   }
@@ -137,10 +138,14 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return KRET_OK;
   }
 
-  const auto dtype = inputs.at(kIndex0)->GetDtype();
-  if (((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) &&
-      ((kernel_name_ == kTanhGrad) || (kernel_name_ == kSigmoidGrad))) {
-    // Does not call Cudnn
+  if (dtype_ == kNumberTypeComplex128) {
+    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<double>));
+    // only tanh and sigmoid support complex dytpe, Does not call Cudnn
+    return KRET_OK;
+  }
+  if (dtype_ == kNumberTypeComplex64) {
+    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<float>));
+    // only tanh and sigmoid support complex dytpe, Does not call Cudnn
     return KRET_OK;
   }
 
@@ -193,29 +198,31 @@ std::vector<KernelAttr> ActivationGradGpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool ActivationGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  T *dy = nullptr;
-  T *y = nullptr;
-  if (mode_ == CUDNN_ACTIVATION_ELU || mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) {
-    dy = GetDeviceAddress<T>(inputs, 0);
-    y = GetDeviceAddress<T>(inputs, 1);
-  } else {
-    y = GetDeviceAddress<T>(inputs, 0);
-    dy = GetDeviceAddress<T>(inputs, 1);
-  }
-  T *dx = GetDeviceAddress<T>(outputs, 0);
+bool ActivationGradGpuKernelMod::LaunchTanhGrad(const std::vector<kernel::AddressPtr> &inputs,
+                                                const std::vector<kernel::AddressPtr> &outputs) {
+  T *dy = GetDeviceAddress<T>(inputs, kIndex1);
+  T *y = GetDeviceAddress<T>(inputs, kIndex0);
+  T *dx = GetDeviceAddress<T>(outputs, kIndex0);
+  TanhGradOpt(y, dy, dx, elements_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  return true;
+}
 
-  constexpr bool use_unary =
-    std::is_same_v<T, double> || std::is_same_v<T, utils::Complex<float>> || std::is_same_v<T, utils::Complex<double>>;
-  if constexpr (use_unary) {
-    if (kernel_name_ == kTanhGrad) {
-      TanhGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
-    } else {
-      SigmoidGrad(y, dy, dx, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
-    }
-    return true;
-  }
+template <typename T>
+bool ActivationGradGpuKernelMod::LaunchSigmoidGrad(const std::vector<kernel::AddressPtr> &inputs,
+                                                   const std::vector<kernel::AddressPtr> &outputs) {
+  T *dy = GetDeviceAddress<T>(inputs, kIndex1);
+  T *y = GetDeviceAddress<T>(inputs, kIndex0);
+  T *dx = GetDeviceAddress<T>(outputs, kIndex0);
+  SigmoidGradOpt(y, dy, dx, elements_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  return true;
+}
+
+template <typename T>
+bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &outputs) {
+  T *dy = GetDeviceAddress<T>(inputs, kIndex0);
+  T *y = GetDeviceAddress<T>(inputs, kIndex1);
+  T *dx = GetDeviceAddress<T>(outputs, kIndex0);
 
   const float alpha = 1;
   const float beta = 0;
@@ -223,6 +230,32 @@ bool ActivationGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
     cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
                             data_descriptor_, y, &beta, data_descriptor_, dx),
     "For 'ActivationGrad', cudnnActivationBackward failed.");
+
+  return true;
+}
+
+template <typename T>
+bool ActivationGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
+  T *dy = GetDeviceAddress<T>(inputs, kIndex1);
+  T *y = GetDeviceAddress<T>(inputs, kIndex0);
+  T *dx = GetDeviceAddress<T>(outputs, kIndex0);
+
+  if constexpr (std::is_same_v<T, double>) {
+    constexpr double alpha = 1.0;
+    constexpr double beta = 0.0;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
+                              data_descriptor_, y, &beta, data_descriptor_, dx),
+      "For 'ActivationGrad', cudnnActivationBackward failed.");
+  } else {
+    constexpr float alpha = 1.0;
+    constexpr float beta = 0.0;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
+                              data_descriptor_, y, &beta, data_descriptor_, dx),
+      "For 'ActivationGrad', cudnnActivationBackward failed.");
+  }
 
   return true;
 }
