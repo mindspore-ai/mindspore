@@ -390,6 +390,27 @@ def test_pipeline_split_shared_parameter_with_micro_batch_interleaved_stage1_opt
     model.train(2, dataset, dataset_sink_mode=False)
 
 
+def test_pipeline_split_shared_parameter_opt_not_fully_shard():
+    """
+    Feature: test pipeline + optimizer_shard not fully shard in auto parallel.
+    Description: net with pipeline and not fully shard optmizer shard in semi auto parallel.
+    Expectation: compile success.
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(optimizer_weight_shard_size=4)
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
+    net = PipelineCell(PipelineSplit2(strategy1, strategy2), 4)
+    params = net.network.cell.block[0].trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
 def run_pipeline_split_function(pipeline_net, micro_batch_interleaved=1):
     """
     Feature: test PipelineSplitSharedParameter with MicroBatchInterleaved in auto parallel.
