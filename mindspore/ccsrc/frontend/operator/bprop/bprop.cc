@@ -205,7 +205,9 @@ bool BuildBprop(const CNodePtr &cnode, CNodePtrList *outputs, UserType *users) {
     expander::bprop::BpropExpander e(outputs, nullptr, users);
     ret = e.Run(cnode);
   } catch (const std::exception &e) {
-    MS_LOG(WARNING) << "Bprop \"" << AnfUtils::GetCNodeName(cnode) << "\" encounter a problem: [" << e.what() << "]";
+    auto node_name = AnfUtils::GetCNodeName(cnode);
+    MS_LOG(DEBUG) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what() << "]";
+    MS_LOG(INFO) << "Python bprop will be used for \"" << node_name << "\"";
     outputs->clear();
     ret = false;
   }
