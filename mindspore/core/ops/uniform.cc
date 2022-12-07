@@ -21,13 +21,19 @@
 
 namespace mindspore {
 namespace ops {
-void Uniform::Init(float from, float to) {
+void Uniform::Init(float from, float to, int64_t seed, int64_t offset) {
   this->set_from(from);
   this->set_to(to);
+  this->set_seed(seed);
+  this->set_offset(offset);
 }
 void Uniform::set_from(float from) { (void)this->AddAttr(kFrom, api::MakeValue(from)); }
 
 void Uniform::set_to(float to) { (void)this->AddAttr(kTo, api::MakeValue(to)); }
+
+void Uniform::set_seed(int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+
+void Uniform::set_offset(int64_t offset) { (void)this->AddAttr(kOffset, api::MakeValue(offset)); }
 
 float Uniform::get_from() const {
   auto value_ptr = GetAttr(kFrom);
@@ -37,6 +43,16 @@ float Uniform::get_from() const {
 float Uniform::get_to() const {
   auto value_ptr = GetAttr(kTo);
   return GetValue<float>(value_ptr);
+}
+
+int64_t Uniform::get_seed() const {
+  auto value_ptr = GetAttr(kSeed);
+  return GetValue<int64_t>(value_ptr);
+}
+
+int64_t Uniform::get_offset() const {
+  auto value_ptr = GetAttr(kOffset);
+  return GetValue<int64_t>(value_ptr);
 }
 
 namespace {
