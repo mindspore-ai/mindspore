@@ -27,6 +27,11 @@
 
 namespace mindspore {
 struct ConverterPara;
+/// \brief Converter provides C++ API for user to integrate model conversion into user application.
+///
+/// \note Converter C++ API cannot be used in Converter main process.
+///
+/// \note Converter C++ API doesn't support calling with multi-threads in a single process.
 class MS_API Converter {
  public:
   inline Converter(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file = "",
@@ -81,7 +86,14 @@ class MS_API Converter {
   inline void SetDevice(const std::string &device);
   inline std::string GetDevice();
 
+  /// \brief Convert model and save .ms format model into `output_file` that passed in constructor.
   Status Convert();
+
+  /// \brief Convert model and return converted FlatBuffer model binary buffer.
+  ///
+  /// \param[in] data_size Converted FlatBuffer model's buffer size.
+  ///
+  /// \return A pointer to converted FlatBuffer model buffer.
   void *Convert(size_t *data_size);
 
  private:
