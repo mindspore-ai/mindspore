@@ -58,6 +58,10 @@ class SkipOp : public PipelineOp {
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
 
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
  private:
   int32_t max_skips_;   // The number of skips that the user requested
   int32_t skip_count_;  // A counter for the current number of executed skips

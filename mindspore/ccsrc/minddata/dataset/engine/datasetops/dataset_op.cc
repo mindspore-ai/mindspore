@@ -335,6 +335,23 @@ Status DatasetOp::PrepareOperatorPullBased() {
   // Generate the column name map for the current op.
   RETURN_IF_NOT_OK(this->ComputeColMap());
 
+  // check if operators are implemented in pull mode
+  std::string message = "";
+  ImplementedPullMode isImplemented = PullModeImplementationStatus();
+  if (isImplemented == ImplementedPullMode::NotImplemented) {
+    message = Name() + " is not implemented yet in pull mode.";
+    if (IsLeaf()) {
+      message = "Leaf node " + message;
+      if (GlobalContext::config_manager()->get_debug_mode()) {
+        RETURN_STATUS_UNEXPECTED(message);
+      }
+    }
+  } else if (isImplemented == ImplementedPullMode::DisabledDebugMode) {
+    message = "In debug mode, " + Name() + " is disabled for debugging purposes.";
+  }
+  if (message.size() > 0) {
+    MS_LOG(WARNING) << message;
+  }
   return Status::OK();
 }
 

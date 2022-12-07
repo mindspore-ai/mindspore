@@ -96,6 +96,84 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableCelebA) {
 }
 
 /// Feature: PullBasedIterator GetNextRowPullMode
+/// Description: Test PullBasedIterator on Cifar10
+/// Expectation: Output is the same as the normal iterator
+TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableCifar10) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableCifar10.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  EXPECT_EQ(row.size(), 2);
+
+  // order: image, label
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row[0];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    auto label = row[1];
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: PullBasedIterator GetNextRowPullMode
+/// Description: Test PullBasedIterator on Cifar100
+/// Expectation: Output is the same as the normal iterator
+TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableCifar100) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableCifar100.";
+
+  // Create a Cifar100 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  EXPECT_EQ(row.size(), 3);
+
+  // order: image, coarse_label, fine_label
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row[0];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    auto coarse_label = row[1];
+    MS_LOG(INFO) << "Tensor coarse_label shape: " << coarse_label.Shape();
+    auto fine_label = row[2];
+    MS_LOG(INFO) << "Tensor fine_label shape: " << fine_label.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: PullBasedIterator GetNextRowPullMode
 /// Description: Test PullBasedIterator on Cityscapes
 /// Expectation: Output is the same as the normal iterator
 TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableCityscapes) {

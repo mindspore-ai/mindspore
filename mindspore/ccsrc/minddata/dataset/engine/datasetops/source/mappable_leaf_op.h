@@ -111,7 +111,7 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   Status SendWaitFlagToWorker(int32_t worker_id) override;
   Status SendQuitFlagToWorker(int32_t worker_id) override;
 
-  ///  \brief In pull mode, gets the next row
+  /// \brief In pull mode, gets the next row
   /// \param row[out] - Fetched TensorRow
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
@@ -119,6 +119,10 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   /// Initialize pull mode, calls PrepareData() within
   /// @return Status The status code returned
   virtual Status InitPullMode() { return PrepareData(); }
+
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
 };
 }  // namespace dataset
 }  // namespace mindspore
