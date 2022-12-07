@@ -984,7 +984,7 @@ def float_power(x, exponent):
         x = cast_(x, exponent.dtype)
     # If both x and exponent are complex Tensor, no processing is required.
     elif not (isinstance(x, (Tensor, Tensor_)) and is_complex(x) and \
-            isinstance(exponent, (Tensor, Tensor_)) and is_complex(exponent)):
+              isinstance(exponent, (Tensor, Tensor_)) and is_complex(exponent)):
         x = cast_(x, mstype.float64)
         exponent = cast_(exponent, mstype.float64)
     return pow(x, exponent)
@@ -8454,7 +8454,7 @@ def nansum(x, axis, keepdims=False, *, dtype=None):
     x_dtype = dtype_op(x)
 
     if (x_dtype is not None and x_dtype in (mstype.complex64, mstype.complex128)) or \
-       (dtype is not None and dtype in (mstype.complex64, mstype.complex128)):
+            (dtype is not None and dtype in (mstype.complex64, mstype.complex128)):
         raise TypeError('nansum not supported complex type.')
     if x_dtype == mstype.bool_:
         x = x.astype(mstype.int64)
@@ -8574,6 +8574,76 @@ def diag_embed(x, offset=0, dim1=-2, dim2=-1):
             perm = perm + (dim,)
             dim = dim + 1
     return transpose_op(output, perm)
+
+
+def sum(x, dim=None, keepdim=False, *, dtype=None):
+    """
+    Calculate sum of Tensor elements over a given dim.
+
+    Args:
+        x (Tensor): The input tensor.
+        dim (Union[None, int, tuple(int)]): Dimensions along which a sum is performed.
+            If None, sum all the elements of the input tensor.
+            If the `dim` is a tuple of ints, a sum is performed on all the dimensions specified in the tuple.
+            Must be in the range :math:`[-x.ndim, x.ndim)` . Default: None.
+        keepdim (bool): Whether the output tensor has dim retained or not.
+            If True, keep these reduced dimensions and the length is 1.
+            If False, don't keep these dimensions. Default: False.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: None.
+
+    Returns:
+       A Tensor, sum of elements over a given dim in `x`.
+
+    Raise:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `dim` is not an int.
+        ValueError: If `dim` is not in the range :math:`[-x.ndim, x.ndim)` .
+        TypeError: If `keepdim` is not a bool.
+
+    Examples:
+        >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+        ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), ms.float32)
+        >>> out = ops.sum(x)
+        >>> print(out)
+        270.0
+        >>> out = ops.sum(x, dim=2)
+        >>> print(out)
+        [[ 6. 12. 18.]
+         [24. 30. 36.]
+         [42. 48. 54.]]
+        >>> out = ops.sum(x, dim=2, keepdim=True)
+        >>> print(out)
+        [[[ 6.]
+         [12.]
+         [18.]]
+        [[24.]
+         [30.]
+         [36.]]
+        [[42.]
+         [48.]
+         [54.]]]
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError("For 'sum', 'x' must be Tensor.")
+    if dim is not None:
+        if not isinstance(dim, int):
+            raise TypeError("For 'sum', 'dim' must be int or None.")
+        if dim < -x.ndim or dim >= x.ndim:
+            raise ValueError("For sum, 'dim' must be in :math:`[-x.ndim, x.ndim)` .")
+    if not isinstance(keepdim, bool):
+        raise TypeError("For 'sum', 'keepdim' must be bool.")
+
+    reduce_sum = P.ReduceSum(keep_dims=keepdim)
+    if dim:
+        out = reduce_sum(x, dim)
+    else:
+        out = reduce_sum(x)
+    if dtype:
+        out = out.astype(dtype)
+    return out
 
 
 __all__ = [
@@ -8779,5 +8849,6 @@ __all__ = [
     'logical_xor',
     'imag',
     'roll',
+    'sum'
 ]
 __all__.sort()
