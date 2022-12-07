@@ -299,12 +299,16 @@ void BinaryCrossEntropyLossGrad(const int &input_size, const ReductionMode &redu
 // helper function to calculate single negative log likelihood
 template <typename T, typename S>
 __global__ void NLLLossKernel(const int n, const int c, const T *input, const int32_t *target, const S *weight,
-                              S *tmp_target_weight, T *output) {
+                              S *tmp_target_weight, T *output, int *ret_flag) {
   int target_class;
   int input_idx;
 
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
     target_class = static_cast<int>(target[i]);
+    if (target_class < 0 || target_class > c) {
+      *ret_flag = -1;
+      return;
+    }
 
     tmp_target_weight[i] = weight[target_class];  // fill tmp_target_weight for later summation
 
@@ -315,23 +319,37 @@ __global__ void NLLLossKernel(const int n, const int c, const T *input, const in
 }
 
 template <typename T, typename S>
-void NLLLoss(const int n, const int c, const ReductionMode reduction, const T *input, const int32_t *target,
+int NLLLoss(const int n, const int c, const ReductionMode reduction, const T *input, const int32_t *target,
              const S *weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream) {
+  int *ret_flag_device = nullptr;
+  (void)cudaMalloc(&ret_flag_device, sizeof(int));
+  (void)cudaMemset(ret_flag_device, 0, sizeof(int));
+  int ret_flag_host;
   if (reduction != ReductionMode::kNone) {
-    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, tmp_loss);
+    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, tmp_loss,
+                                                             ret_flag_device);
+    cudaDeviceSynchronize();
+    (void)cudaMemcpy(&ret_flag_host, ret_flag_device, sizeof(int), cudaMemcpyDeviceToHost);
     // sum target weights after populating them
     Sum(tmp_target_weight, n, stream);
     // reduce tmp_loss
     Reduce(tmp_loss, n, tmp_target_weight, reduction, loss, stream);
   } else {
     // no reduction, output directly to loss
-    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, loss);
+    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, loss,
+                                                             ret_flag_device);
+    (void)cudaMemcpy(&ret_flag_host, ret_flag_device, sizeof(int), cudaMemcpyDeviceToHost);
     // sum target weights after populatin them
     Sum(tmp_target_weight, n, stream);
   }
 
+  if (ret_flag_host == -1) {
+    return ret_flag_host;
+  }
+
   // copy sum of weight (tmp_target_weight[0]) to total_weight
   CopyEqual<<<1, 1, 0, stream>>>(tmp_target_weight, total_weight, 1);
+  return 0;
 }
 
 template <typename T, typename S>
@@ -405,12 +423,12 @@ template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<float>(const int &input
                                                                 const float *weight, const float *dloss, float *dx,
                                                                 cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void NLLLoss<float, float>(const int n, const int c, const ReductionMode reduction,
+template CUDA_LIB_EXPORT int NLLLoss<float, float>(const int n, const int c, const ReductionMode reduction,
                                                     const float *input, const int32_t *target, const float *weight,
                                                     float *loss, float *total_weight, float *tmp_loss,
                                                     float *tmp_target_weight, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void NLLLoss<float, half>(const int n, const int c, const ReductionMode reduction,
+template CUDA_LIB_EXPORT int NLLLoss<float, half>(const int n, const int c, const ReductionMode reduction,
                                                    const float *input, const int32_t *target, const half *weight,
                                                    float *loss, half *total_weight, float *tmp_loss,
                                                    half *tmp_target_weight, cudaStream_t stream);
@@ -442,12 +460,12 @@ template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<half>(const int &input_
                                                                const half *weight, const half *dloss, half *dx,
                                                                cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void NLLLoss<half, half>(const int n, const int c, const ReductionMode reduction,
+template CUDA_LIB_EXPORT int NLLLoss<half, half>(const int n, const int c, const ReductionMode reduction,
                                                   const half *input, const int32_t *target, const half *weight,
                                                   half *loss, half *total_weight, half *tmp_loss,
                                                   half *tmp_target_weight, cudaStream_t stream);
 
-template CUDA_LIB_EXPORT void NLLLoss<half, float>(const int n, const int c, const ReductionMode reduction,
+template CUDA_LIB_EXPORT int NLLLoss<half, float>(const int n, const int c, const ReductionMode reduction,
                                                    const half *input, const int32_t *target, const float *weight,
                                                    half *loss, float *total_weight, half *tmp_loss,
                                                    float *tmp_target_weight, cudaStream_t stream);
