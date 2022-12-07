@@ -47,7 +47,7 @@ class DumpGraph : public registry::PassBase, public Pass {
   }
 
  private:
-  const std::shared_ptr<ConverterPara> param_;
+  const std::shared_ptr<ConverterPara> &param_;
 };
 }  // namespace opt
 }  // namespace mindspore
