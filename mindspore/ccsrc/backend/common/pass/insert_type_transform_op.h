@@ -28,10 +28,10 @@ namespace opt {
 using kernel::KernelBuildInfoPtr;
 using kernel::KernelObjectType;
 
-std::map<KernelObjectType, std::string> kObjectTypeString = {{KernelObjectType::TENSOR, "tensor"},
-                                                             {KernelObjectType::SCALAR, "scalar"},
-                                                             {KernelObjectType::TUPLE, "tuple"},
-                                                             {KernelObjectType::TUPLE_UNFOLD, "tuple_unfold"}};
+static std::map<KernelObjectType, std::string> kObjectTypeToString = {{KernelObjectType::TENSOR, "tensor"},
+                                                                      {KernelObjectType::SCALAR, "scalar"},
+                                                                      {KernelObjectType::TUPLE, "tuple"},
+                                                                      {KernelObjectType::TUPLE_UNFOLD, "tuple_unfold"}};
 
 // Kernel object type pair of:
 // 1. One node's input kernel object type.
@@ -41,16 +41,18 @@ struct ObjectTypePair {
   KernelObjectType needed_input_type;
 
   std::string to_string() const {
-    if (kObjectTypeString.find(current_input_type) == kObjectTypeString.end() ||
-        kObjectTypeString.find(needed_input_type) == kObjectTypeString.end()) {
+    if (kObjectTypeToString.find(current_input_type) == kObjectTypeToString.end() ||
+        kObjectTypeToString.find(needed_input_type) == kObjectTypeToString.end()) {
       MS_LOG(EXCEPTION) << "The current input object type " << current_input_type << " or needed input object type "
                         << needed_input_type << " is not valid.";
     }
 
-    return kObjectTypeString[current_input_type] + "->" + kObjectTypeString[needed_input_type];
+    return kObjectTypeToString[current_input_type] + "->" + kObjectTypeToString[needed_input_type];
   }
 
   bool operator<(const ObjectTypePair &t) const { return to_string() < t.to_string(); }
+
+  bool operator==(const ObjectTypePair &t) const { return to_string() == t.to_string(); }
 };
 
 // For each unmatched type pair, a processing method is required to correct the types by inserting type transforming
@@ -67,7 +69,6 @@ struct ObjectTypePair {
  */
 using ProcessTypeTransformFunc = std::function<AnfNodePtrList(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                               const CNodePtr &node, bool *new_prim)>;
-std::map<ObjectTypePair, ProcessTypeTransformFunc> kTypePairToProcessFunc;
 
 // SplitTupleInputs methods refer to the pass ConvertTupleInputToDynamicInput. It unfolds tuple inputs and returns the
 // unfolded inputs nodes.
@@ -85,11 +86,7 @@ void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_nod
 // node's output type). We need this pass to transform these types to valid types.
 class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
  public:
-  explicit InsertTypeTransformOp(bool multigraph = true) : PatternProcessPass("insert_type_transform_op", multigraph) {
-    kTypePairToProcessFunc[{KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TUPLE_UNFOLD}] =
-      std::bind(&InsertTypeTransformOp::ProcessTupleUnfoldToTupleUnfold, this, std::placeholders::_1,
-                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-  }
+  explicit InsertTypeTransformOp(bool multigraph = true);
   ~InsertTypeTransformOp() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
