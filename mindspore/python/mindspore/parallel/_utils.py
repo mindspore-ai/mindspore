@@ -405,32 +405,19 @@ def _infer_rank_list(train_map, predict_map=None):
     return ret
 
 
-def _sens_divided_by_device_num_if_recomputation(sens_param, args, kwargs):
+def _grads_divided_by_device_num_if_recomputation(grads):
     """
-    If in pynative parallel and full_batch is True, divide sens by device num to ensure that the gradients is right.
+    If in pynative parallel and full_batch is True, divide grads by device num to ensure that the gradients is correct.
     """
-    if not _is_pynative_parallel() or not _get_full_batch():
-        return args, kwargs
-    if not sens_param:
-        logger.warning(
-            "When pynative parallel and full_batch=True, the 'sens_param' should be set to True, "
-            "otherwise the gradients may be wrong.")
-        return args, kwargs
+    if not grads or not _is_pynative_parallel() or not _get_full_batch():
+        return grads
 
-    device_num = _get_device_num()
-    logger.info(f"When pynative_parallel and full_batch=True, "
-                f"the 'sens' will be divided by device num({device_num})")
-    sens = kwargs['sens'] if 'sens' in kwargs.keys() else args[-1]
+    device_num = Tensor(_get_device_num(), grads[0].dtype)
+    logger.info(f"In PyNative mode, when parallel mode is in "
+                f"({context.ParallelMode.SEMI_AUTO_PARALLEL}, {context.ParallelMode.AUTO_PARALLEL}) and "
+                f"full_batch is Ture, the gradients will be automatically divided by device_num({device_num}).")
+    new_grads = ()
+    for grad in grads:
+        new_grads += (grad / device_num,)
 
-    if isinstance(sens, tuple):
-        new_sens = ()
-        for item in sens:
-            new_sens += (item / device_num,)
-    else:
-        new_sens = sens / device_num
-
-    if not 'sens' in kwargs.keys():
-        args = args[:-1] + (new_sens,)
-    else:
-        kwargs['sens'] = new_sens
-    return args, kwargs
+    return new_grads
