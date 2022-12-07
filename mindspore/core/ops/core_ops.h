@@ -1605,6 +1605,7 @@ GVAR_DEF(PrimitivePtr, kPrimSigmoid, std::make_shared<Primitive>("Sigmoid"));
 GVAR_DEF(PrimitivePtr, kPrimSigmoidGrad, std::make_shared<Primitive>("SigmoidGrad"));
 GVAR_DEF(PrimitivePtr, kPrimHSigmoid, std::make_shared<Primitive>("HSigmoid"));
 GVAR_DEF(PrimitivePtr, kPrimHSigmoidGrad, std::make_shared<Primitive>("HSigmoidGrad"));
+GVAR_DEF(PrimitivePtr, kPrimLogSigmoid, std::make_shared<Primitive>("LogSigmoid"));
 GVAR_DEF(PrimitivePtr, kPrimClip, std::make_shared<Primitive>("Clip"));
 GVAR_DEF(PrimitivePtr, kPrimHardTanh, std::make_shared<Primitive>("HardTanh"));
 GVAR_DEF(PrimitivePtr, kPrimDepthWiseConv2DTransposeFusion,

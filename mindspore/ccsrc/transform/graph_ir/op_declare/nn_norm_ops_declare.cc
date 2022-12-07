@@ -25,7 +25,8 @@ ATTR_MAP(SoftmaxV2) = {
   {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(SoftmaxV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(SoftmaxV2, kNameSoftmax, ADPT_DESC(SoftmaxV2))
+REG_ADPT_DESC(Softmax, kNameSoftmax, ADPT_DESC(SoftmaxV2))
+REG_ADPT_DESC(SoftmaxV2, kSoftmaxV2OpName, ADPT_DESC(SoftmaxV2))
 
 // SoftmaxGrad
 INPUT_MAP(SoftmaxGrad) = {{1, INPUT_DESC(softmax)}, {2, INPUT_DESC(grad_softmax)}};
@@ -72,7 +73,8 @@ INPUT_MAP(SigmoidCrossEntropyWithLogitsV2) = {
   {1, INPUT_DESC(predict)}, {2, INPUT_DESC(target)}, {3, INPUT_DESC(weight)}, {4, INPUT_DESC(pos_weight)}};
 ATTR_MAP(SigmoidCrossEntropyWithLogitsV2) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(SigmoidCrossEntropyWithLogitsV2) = {{0, OUTPUT_DESC(loss)}};
-REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsV2, kNameSigmoidCrossEntropyWithLogitsV2,
+REG_ADPT_DESC(BCEWithLogitsLoss, kNameSigmoidCrossEntropyWithLogitsV2, ADPT_DESC(SigmoidCrossEntropyWithLogitsV2))
+REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsV2, kSigmoidCrossEntropyWithLogitsV2OpName,
               ADPT_DESC(SigmoidCrossEntropyWithLogitsV2))
 
 // LogSoftmaxGrad
@@ -104,6 +106,20 @@ ATTR_MAP(LayerNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LayerNormGrad) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
 REG_ADPT_DESC(LayerNormGrad, prim::kPrimLayerNormGrad->name(), ADPT_DESC(LayerNormGrad))
 
+// LayerNormBetaGammaBackpropV2
+INPUT_MAP(LayerNormBetaGammaBackpropV2) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(res_for_gamma)}};
+ATTR_MAP(LayerNormBetaGammaBackpropV2) = {{"shape_gamma", ATTR_DESC(shape_gamma, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(LayerNormBetaGammaBackpropV2) = {{0, OUTPUT_DESC(pd_gamma)}, {1, OUTPUT_DESC(pd_beta)}};
+REG_ADPT_DESC(LayerNormBetaGammaBackpropV2, kLayerNormBetaGammaBackpropV2OpName,
+              ADPT_DESC(LayerNormBetaGammaBackpropV2))
+
+// LayerNormXBackpropV2
+INPUT_MAP(LayerNormXBackpropV2) = {
+  {1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(variance)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(gamma)}};
+ATTR_MAP(LayerNormXBackpropV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LayerNormXBackpropV2) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(res_for_gamma)}};
+REG_ADPT_DESC(LayerNormXBackpropV2, kLayerNormXBackpropV2OpName, ADPT_DESC(LayerNormXBackpropV2))
+
 // LRN
 INPUT_MAP(LRN) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LRN) = {{"depth_radius", ATTR_DESC(depth_radius, AnyTraits<int64_t>())},
@@ -127,7 +143,7 @@ REG_ADPT_DESC(LRNGrad, kNameLRNGrad, ADPT_DESC(LRNGrad))
 INPUT_MAP(DropOutDoMask) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(keep_prob)}};
 ATTR_MAP(DropOutDoMask) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(DropOutDoMask) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(DropOutDoMask, kNameDropoutDoMask, ADPT_DESC(DropOutDoMask))
+REG_ADPT_DESC(DropOutDoMask, kDropOutDoMaskOpName, ADPT_DESC(DropOutDoMask))
 
 // BinaryCrossEntropy
 INPUT_MAP(BinaryCrossEntropy) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}, {3, INPUT_DESC(weight)}};

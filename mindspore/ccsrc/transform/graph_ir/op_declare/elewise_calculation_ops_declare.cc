@@ -315,13 +315,6 @@ ATTR_MAP(ArgMaxV2) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMaxV2, kNameArgMaxV2, ADPT_DESC(ArgMaxV2))
 
-// ArgMinD
-INPUT_MAP(ArgMinD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMinD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
-                     {"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
-OUTPUT_MAP(ArgMinD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ArgMinD, kNameArgmin, ADPT_DESC(ArgMinD))
-
 // ArgMaxWithValue
 INPUT_MAP(ArgMaxWithValue) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(ArgMaxWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
@@ -424,7 +417,7 @@ REG_ADPT_DESC(RealDiv, kNameRealDiv, ADPT_DESC(RealDiv))
 // Cast
 INPUT_MAP(Cast) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
-ATTR_MAP(Cast) = EMPTY_ATTR_MAP;
+ATTR_MAP(Cast) = {{"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cast, prim::kPrimCast->name(), ADPT_DESC(Cast))
 
@@ -689,10 +682,11 @@ REG_ADPT_DESC(Erfinv, prim::kPrimErfinv->name(), ADPT_DESC(Erfinv))
 
 // ArgMin
 INPUT_MAP(ArgMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
-ATTR_INPUT_MAP(ArgMin) = {{"axis", 2}};
+ATTR_INPUT_MAP(ArgMin) = {{"axis", "dimension"}};
 ATTR_MAP(ArgMin) = {{"output_dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMin) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ArgMin, kArgMinDOpName, ADPT_DESC(ArgMin))
+REG_ADPT_DESC(ArgMin, kArgMinOpName, ADPT_DESC(ArgMin))
+REG_ADPT_DESC(ArgMinD, kArgMinDOpName, ADPT_DESC(ArgMin))
 
 // Threshold
 INPUT_MAP(Threshold) = {{1, INPUT_DESC(x)}};

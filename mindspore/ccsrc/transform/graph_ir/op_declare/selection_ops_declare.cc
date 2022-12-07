@@ -35,10 +35,11 @@ OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumProd, ADPT_DESC(CumprodD))
 
 INPUT_MAP(Tile) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(multiples)}};
-ATTR_INPUT_MAP(Tile) = {{"multiples", 2}};
+ATTR_INPUT_MAP(Tile) = {{"multiples", "multiples"}};
 ATTR_MAP(Tile) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Tile) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Tile, kNameTile, ADPT_DESC(Tile))
+REG_ADPT_DESC(TileD, kNameTileD, ADPT_DESC(Tile))
 
 INPUT_MAP(Slice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(offsets)}, {3, INPUT_DESC(size)}};
 ATTR_MAP(Slice) = EMPTY_ATTR_MAP;
@@ -65,10 +66,10 @@ REG_ADPT_DESC(OneHot, prim::kPrimOneHot->name(), ADPT_DESC(OneHot))
 
 // GatherV2
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(GatherV2) = {{"axis", 3}};
+ATTR_INPUT_MAP(GatherV2) = {{"axis", "axis"}};
 ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
+REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
 
 // ScatterNd
@@ -146,7 +147,7 @@ REG_ADPT_DESC(StridedSliceGrad, kNameStridedSliceGrad, ADPT_DESC(StridedSliceGra
 
 // StridedSlice
 INPUT_MAP(StridedSlice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(begin)}, {3, INPUT_DESC(end)}, {4, INPUT_DESC(strides)}};
-ATTR_INPUT_MAP(StridedSlice) = {{"begin", 2}, {"end", 3}, {"strides", 4}};
+ATTR_INPUT_MAP(StridedSlice) = {{"begin", "begin"}, {"end", "end"}, {"strides", "strides"}};
 ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
                           {"end_mask", ATTR_DESC(end_mask, AnyTraits<int64_t>())},
                           {"ellipsis_mask", ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
@@ -168,7 +169,7 @@ REG_ADPT_DESC(StridedSliceV2, kNameStridedSliceV2, ADPT_DESC(StridedSliceV2))
 
 // UnsortedSegmentSum
 INPUT_MAP(UnsortedSegmentSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
-ATTR_INPUT_MAP(UnsortedSegmentSum) = {{"num_segments", 3}};
+ATTR_INPUT_MAP(UnsortedSegmentSum) = {{"num_segments", "num_segments"}};
 ATTR_MAP(UnsortedSegmentSum) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentSum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentSumD, prim::kPrimUnsortedSegmentSumD->name(), ADPT_DESC(UnsortedSegmentSum))
@@ -176,7 +177,7 @@ REG_ADPT_DESC(UnsortedSegmentSum, prim::kPrimUnsortedSegmentSum->name(), ADPT_DE
 
 // UnsortedSegmentProd
 INPUT_MAP(UnsortedSegmentProd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
-ATTR_INPUT_MAP(UnsortedSegmentProd) = {{"num_segments", 3}};
+ATTR_INPUT_MAP(UnsortedSegmentProd) = {{"num_segments", "num_segments"}};
 ATTR_MAP(UnsortedSegmentProd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentProd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentProd, kNameUnsortedSegmentProd, ADPT_DESC(UnsortedSegmentProd))
@@ -215,21 +216,21 @@ REG_ADPT_DESC(MaskedFill, prim::kPrimMaskedFill->name(), ADPT_DESC(MaskedFill))
 // InplaceAdd
 INPUT_MAP(InplaceAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
 ATTR_MAP(InplaceAdd) = EMPTY_ATTR_MAP;
-ATTR_INPUT_MAP(InplaceAdd) = {{"indices", 2}};
+ATTR_INPUT_MAP(InplaceAdd) = {{"indices", "indices"}};
 OUTPUT_MAP(InplaceAdd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceAdd, kInplaceAddDOpName, ADPT_DESC(InplaceAdd))
 
 // InplaceSub
 INPUT_MAP(InplaceSub) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
 ATTR_MAP(InplaceSub) = EMPTY_ATTR_MAP;
-ATTR_INPUT_MAP(InplaceSub) = {{"indices", 2}};
+ATTR_INPUT_MAP(InplaceSub) = {{"indices", "indices"}};
 OUTPUT_MAP(InplaceSub) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceSub, kInplaceSubDOpName, ADPT_DESC(InplaceSub))
 
 // InplaceUpdate
 INPUT_MAP(InplaceUpdate) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(v)}};
 ATTR_MAP(InplaceUpdate) = EMPTY_ATTR_MAP;
-ATTR_INPUT_MAP(InplaceUpdate) = {{"indices", 2}};
+ATTR_INPUT_MAP(InplaceUpdate) = {{"indices", "indices"}};
 OUTPUT_MAP(InplaceUpdate) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceUpdate, kInplaceUpdateDOpName, ADPT_DESC(InplaceUpdate))
 
@@ -238,6 +239,13 @@ INPUT_MAP(Cummin) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Cummin) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Cummin) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(Cummin, prim::kPrimCummin->name(), ADPT_DESC(Cummin))
+
+// Cumsum
+INPUT_MAP(Cumsum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
+ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
+                    {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Cumsum, kCumsumOpName, ADPT_DESC(Cumsum))
 
 // StridedRead
 INPUT_MAP(StridedRead) = {{1, INPUT_DESC(x)}};
@@ -261,7 +269,7 @@ REG_ADPT_DESC(InplaceIndexAdd, prim::kPrimInplaceIndexAdd->name(), ADPT_DESC(Inp
 
 // UnsortedSegmentMax
 INPUT_MAP(UnsortedSegmentMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
-ATTR_INPUT_MAP(UnsortedSegmentMax) = {{"num_segments", 3}};
+ATTR_INPUT_MAP(UnsortedSegmentMax) = {{"num_segments", "num_segments"}};
 ATTR_MAP(UnsortedSegmentMax) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentMax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentMax, kUnsortedSegmentMaxDOpName, ADPT_DESC(UnsortedSegmentMax))
