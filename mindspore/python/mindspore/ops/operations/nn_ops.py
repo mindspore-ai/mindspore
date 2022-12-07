@@ -2887,14 +2887,19 @@ class ApplyMomentum(Primitive):
         gradient_scale (float): The scale of the gradient. Default: 1.0.
 
     Inputs:
-        - **variable** (Parameter) - Weights to be updated. Data type must be float.
+        - **variable** (Parameter) - Weights to be updated. Data type must be float64, int64, float, float16,
+          int16, int32, int8, uint16, uint32, uint64, uint8, complex64, complex128.
         - **accumulation** (Parameter) - Accumulated gradient value by moment weight,
           has the same data type with `variable`.
-        - **learning_rate** (Union[Number, Tensor]) - The learning rate value, must be a float number or
-          a scalar tensor with float data type.
+        - **learning_rate** (Union[Number, Tensor]) - The learning rate value, must be a float64, int64, float,
+          float16, int16, int32, int8, uint16, uint32, uint64, uint8, complex64, complex128 number or
+          a scalar tensor with float64, int64, float, float16, int16, int32, int8, uint16, uint32, uint64, uint8,
+          complex64, complex128 data type.
         - **gradient** (Tensor) - Gradient, has the same data type as `variable`.
-        - **momentum** (Union[Number, Tensor]) - Momentum, must be a float number or
-          a scalar tensor with float data type.
+        - **momentum** (Union[Number, Tensor]) - Momentum, must be a float64, int64, float, float16, int16, int32,
+          int8, uint16, uint32, uint64, uint8, complex64, complex128 number or
+          a scalar tensor with float64, int64, float, float16, int16, int32, int8, uint16, uint32, uint64, uint8,
+          complex64, complex128 data type.
 
     Outputs:
         Tensor, parameters to be updated.
