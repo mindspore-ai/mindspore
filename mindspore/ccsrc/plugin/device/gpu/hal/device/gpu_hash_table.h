@@ -219,7 +219,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   size_t capacity_{0};
 
   // The number of elements of one block.
-  static const size_t elements_per_block_{kInitialCapacity};
+  static constexpr size_t elements_per_block_{kInitialCapacity};
 
   // Record the number of successfully inserted keys.
   cuda::atomic<std::size_t, cuda::thread_scope_device> *insert_success_number_{nullptr};
@@ -230,7 +230,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   curandStatePhilox4_32_10_t *random_gen_state_{nullptr};
 
   // The block size used to launch cuda kernel for inserting normal distribution random values.
-  int random_gen_threads_per_block_{GET_THREADS};
+  int random_gen_threads_per_block_{kBlockSize};
   // The grid size used to launch cuda kernel for inserting normal distribution random values.
   int random_gen_block_count_{(kMaxThreadsPerBlockRandomGen - 1) / random_gen_threads_per_block_ + 1};
 
