@@ -75,8 +75,8 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     int64_t axis = GetValue<int64_t>(axis_ptr);
     int64_t ndims = SizeToLong(input_shape_vec.size());
     if (axis >= ndims || axis < -ndims) {
-      MS_LOG(EXCEPTION) << "For " << op_name << ", the axis must be in the range [-" << ndims << "," << ndims << ")"
-                        << "but got " << axis << ".";
+      MS_EXCEPTION(ValueError) << "For " << op_name << ", the axis must be in the range [-" << ndims << "," << ndims
+                               << "), but got " << axis << ".";
     }
     if (axis < 0) {
       axis = axis + ndims;
@@ -121,7 +121,8 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
 TypePtr UniqueConsecutiveInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
-  const std::set valid_types = {kInt32, kInt64, kFloat16, kFloat, kFloat64};
+  const std::set valid_types = {kComplex64, kComplex128, kFloat16, kFloat,  kFloat64, kInt8,  kInt16,
+                                kInt32,     kInt64,      kUInt8,   kUInt16, kUInt32,  kUInt64};
   auto input_type = CheckAndConvertUtils::CheckTypeValid("input", input_args[0]->BuildType(), valid_types, name);
   std::vector<TypePtr> ret_type_vec = {input_type, std::make_shared<TensorType>(kInt32),
                                        std::make_shared<TensorType>(kInt32)};

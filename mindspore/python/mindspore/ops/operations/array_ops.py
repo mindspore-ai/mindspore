@@ -920,13 +920,9 @@ class UniqueConsecutive(Primitive):
     Refer to :func:`mindspore.ops.unique_consecutive` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import dtype as mstype
-        >>> from mindspore.ops import UniqueConsecutive
         >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1, 1, 2]), mstype.int32)
         >>> unique_consecutive = UniqueConsecutive(True, True, None)
         >>> output, idx, counts = unique_consecutive(x)
@@ -940,6 +936,7 @@ class UniqueConsecutive(Primitive):
 
     @prim_attr_register
     def __init__(self, return_idx=False, return_counts=False, axis=None):
+        """Initialize UniqueConsecutive"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type("return_idx", return_idx, [bool], self.name)
         validator.check_value_type("return_counts", return_counts, [bool], self.name)
