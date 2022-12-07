@@ -26,10 +26,6 @@ int BatchNormTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
-  if (out_tensors.size() != 1) {
-    MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
