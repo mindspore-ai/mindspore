@@ -88,7 +88,6 @@ void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
     op_run_info->op_info += "-" + shape->ToString();
   }
   op_run_info->op_index = op_index_;
-  ++op_index_;
 }
 
 void TopCellInfo::UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile) {

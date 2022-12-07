@@ -37,13 +37,10 @@ using ForwardExecutorPtr = std::shared_ptr<ForwardExecutor>;
 using ForwardExecutorWeakPtr = std::weak_ptr<ForwardExecutor>;
 
 struct DynamicDetectNodeInfo {
-  PrimitivePtr prim{nullptr};
-  AbstractBasePtr output_abs{nullptr};
+  AnfNodePtr anf_node;
+  std::vector<size_t> op_index_of_cnode_inputs;
   bool is_graph_node{false};
   std::string graph_phase;
-  mindspore::HashMap<size_t, std::pair<size_t, AbstractBasePtr>> input_cnode_info;
-  mindspore::HashMap<size_t, ValuePtr> input_values;
-  mindspore::HashMap<size_t, ParamInfoPtr> input_param_infos;
 };
 using DynamicDetectNodeInfoPtr = std::shared_ptr<DynamicDetectNodeInfo>;
 
@@ -115,7 +112,7 @@ class GradExecutor {
                            const std::vector<tensor::TensorPtr> &pre_tensors) const;
   void ClearRes();
   void WorkerJoin() { async_executor_->WorkerJoin(); }
-  void CheckGraphDynamic(const CNodePtr &cnode, const size_t node_idx, bool is_ms_function_node = false,
+  bool CheckGraphDynamic(const AnfNodePtr &anf_node, bool is_ms_function_node = false,
                          const std::string &graph_phase = "") const;
 
  private:
@@ -193,9 +190,9 @@ class GradExecutor {
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
 
-  void SaveDynamicDetectNodeInfoInFirstTime(const CNodePtr &cnode, size_t node_idx, bool is_ms_function_node,
+  void SaveDynamicDetectNodeInfoInFirstTime(const AnfNodePtr &anf_node, const size_t node_idx, bool is_ms_function_node,
                                             const std::string &graph_phase) const;
-  bool IsGraphDynamic(const CNodePtr &cnode, size_t node_idx, bool is_ms_function_node,
+  bool IsGraphDynamic(const AnfNodePtr &anf_node, const size_t node_idx, bool is_ms_function_node,
                       const std::string &graph_phase) const;
   bool grad_flag_{false};
   bool grad_is_running_{false};
