@@ -90,7 +90,8 @@ struct InputArgsInfo {
   std::string obj_id;
 
   bool has_sens{false};
-  bool use_dynamic_shape_process = false;
+  bool grad_is_running{false};
+  bool use_dynamic_shape_process{false};
   PrimitivePyPtr custom_bprp_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string cell_id;

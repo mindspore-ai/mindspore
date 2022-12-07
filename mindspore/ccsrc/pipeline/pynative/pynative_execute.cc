@@ -213,6 +213,7 @@ void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling) const {
 
 void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) const {
   grad_executor()->set_use_dynamic_shape_process(true);
+  MS_LOG(DEBUG) << "Set dynamic shape by set inputs";
 }
 
 void RegPyNativeExecutor(const py::module *m) {

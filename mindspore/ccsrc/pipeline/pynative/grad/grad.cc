@@ -447,10 +447,10 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (input_args_info->is_grad_topest_cell || input_args_info->grad_order > 1) {
-    if (input_args_info->is_grad_topest_cell && !grad_is_running_) {
+    if (input_args_info->is_grad_topest_cell && !input_args_info->grad_is_running) {
       MS_LOG(DEBUG) << "Make new topest graph";
       MakeNewTopGraph(input_args_info);
-    } else if (grad_is_running_ && IsBpropGraph(input_args_info->cell_id)) {
+    } else if (input_args_info->grad_is_running && IsBpropGraph(input_args_info->cell_id)) {
       MS_LOG(DEBUG) << "Run custom bprop cell";
       auto fg = std::make_shared<FuncGraph>();
       top_cell()->set_fg(fg);
@@ -458,7 +458,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
       top_cell()->SetGraphInfoMap(fg, graph_info_cg);
       HandleInputArgsForTopCell(input_args_info, true);
       bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
-    } else if (grad_is_running_ && top_cell()->grad_order() != input_args_info->grad_order) {
+    } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
       MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
       MakeNewTopGraph(input_args_info);
       bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
@@ -499,15 +499,10 @@ InputArgsInfoPtr GradExecutor::GetInputArgsInfo(const py::object &obj, const py:
     if (grad_order_ == 0) {
       IncreaseGradOrder();
     }
-    // Both set grad: NetA.set_grad(); NetB.set_grad();
-    // Run forward: NetA(); NetB();then grad order is 2
-    // Grad(NetA()); Grad(NetB()). NetA grad order now is 2. Forward run again. grad_order is disordered, so need reset.
-    if (input_args_info->is_grad_topest_cell && input_args_info->grad_order > 1) {
-      input_args_info->grad_order--;
-    }
     input_args_info->already_run_cell_id = GetAlreadyRunCellId(input_args_info->obj_id);
   }
   input_args_info->grad_order = grad_order_;
+  input_args_info->grad_is_running = grad_is_running_;
   input_args_info->use_dynamic_shape_process = use_dynamic_shape_process_;
   // top_input_args_info_ indicate current running cell info
   top_input_args_info_ = input_args_info;
@@ -615,7 +610,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   const auto &out_id = PyNativeAlgo::Common::GetIdByValue(input_args_info->out_value);
   DoGradForCustomBprop(input_args_info, out_id);
   // Update bprop grad stack
-  if (grad_is_running_ && !bprop_grad_stack_.empty()) {
+  if (input_args_info->grad_is_running && !bprop_grad_stack_.empty()) {
     if (!bprop_grad_stack_.top().second) {
       curr_g()->set_output(GetInput(input_args_info->out_value, out_id));
       bprop_grad_stack_.pop();
@@ -669,15 +664,11 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   op_run_info->input_size = input_args_info->input_arg_value_vec.size();
   op_run_info->input_value_id = input_args_info->input_arg_id_vec;
   auto cnode = ConstructForwardGraph(op_run_info);
-
-  if (grad_is_running_ && !bprop_grad_stack_.top().second) {
-    MS_LOG(DEBUG) << "Custom bprop, no need do op grad";
-    return;
+  if (!input_args_info->grad_is_running || bprop_grad_stack_.top().second) {
+    DoOpGrad(op_run_info, cnode, input_args_info->out_value);
   }
-  DoOpGrad(op_run_info, cnode, input_args_info->out_value);
   CheckGraphDynamic(cnode, top_cell()->op_index());
   top_cell()->IncreaseOpIndex();
-
   SaveOutputNodeMap(out_id, op_run_info, cnode);
 }
 
@@ -791,6 +782,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
                 << ", input args info ptr " << top_input_args_info_.get();
 
   SetSensValue(grad, top_input_args_info_, args);
+  GetPreRunTopCell(obj);
   // For async, top can not be change when run SetForwardLastNodeInfo; Change top cell after sync
   set_top_cell(already_run_top_cell_.at(top_cell()->already_run_cell_id()));
   if (!top_cell()->need_compile_graph()) {
@@ -816,6 +808,31 @@ std::string GradExecutor::GetAlreadyRunCellId(const std::string &cell_id) const 
   already_run_cell_id += "_" + grad_operation_;
   MS_LOG(DEBUG) << "Get already run top cell id " << already_run_cell_id;
   return already_run_cell_id;
+}
+
+void GradExecutor::GetPreRunTopCell(const py::object &obj) {
+  // @wrap_op
+  // class A():
+  //     def construct(self):
+  // def wrap_op(op):
+  //     class WrapOp(op):
+  //         def __init(self, *args, *kwargs):
+  //             self.net = op(*args, *kwargs) # self.net is A also
+  //         def __call__(self, *args, *kwargs):
+  //             out = super().__call(*args, *kwargs)
+  //             Grad(self.net)
+  //     return WrapOp
+  // Run Grad(A), the following will happen:
+  // 1、Create a new top cell for WrapOp, and run construct of A;
+  // 2、Create a new top cell A, and get gradient, then set top_cell_ = nullptr;
+  // 3、Here top_cell_ is nullptr, but gradient of WrapOp is not get. So, try find it in AlreadyRunCellId.
+  if (top_cell_ != nullptr) {
+    return;
+  }
+  const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+  MS_LOG(DEBUG) << "Get top cell by obj id " << obj_id;
+  const auto &check_already_run_cell_id = GetAlreadyRunCellId(obj_id);
+  top_cell_ = GetTopCell(check_already_run_cell_id);
 }
 
 void GradExecutor::GetGradGraph(const ad::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
@@ -997,9 +1014,10 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const ad::GradAttr &grad_attr, const ve
 void GradExecutor::SetGradOrder(const std::string &obj_id) {
   // top_cell_ == nullptr means call by grad first
   // top_cell_->obj_id_with_grad_order() include obj_id and grad_order
-  // If top_cell_->obj_id_with_grad_order().find(obj_id) == std::string::npos, means current cell is not top cell, grad
-  // high order come in
-  if (top_cell_ == nullptr || top_cell_->obj_id_with_grad_order().find(obj_id) == std::string::npos) {
+  // If top_cell_->obj_id_with_grad_order().find(obj_id) == std::string::npos and have cell info stack, means current
+  // cell is not top cell, grad high order come in
+  if (top_cell_ == nullptr ||
+      (!input_args_info_stack_.empty() && top_cell_->obj_id_with_grad_order().find(obj_id) == std::string::npos)) {
     IncreaseGradOrder();
   }
   if (!grad_is_running_) {
@@ -1400,6 +1418,12 @@ TopCellInfoPtr GradExecutor::GetTopCell(const std::string &already_run_cell_id) 
       find_top_cell = top_cell;
       break;
     }
+    // Partial match, means run grad first, but follow a other net grad
+    if (top_cell->already_run_cell_id().find(already_run_cell_id) != std::string::npos &&
+        already_run_cell_id.back() == '_') {
+      find_top_cell = top_cell;
+      break;
+    }
   }
   // Same topcell info, but grad operation is not the same, construct backward graph again
   if (find_top_cell != nullptr) {
@@ -1431,20 +1455,13 @@ void GradExecutor::SetHookChanged(const py::object &cell) const {
 
 void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  // Do op grad and save node info. If cell have custom bprop, no need do op grad. Otherwise, need do.
-  if (op_run_info->custom_bprop_cell_count <= 0) {
-    const auto &cnode = ConstructForwardGraph(op_run_info);
-    MS_EXCEPTION_IF_NULL(cnode);
-    cnode->set_abstract(op_run_info->base_op_run_info.abstract);
-    SaveOutputNodeMap(op_run_info->out_value_id, op_run_info, cnode);
-    if (grad_is_running_ && !bprop_grad_stack_.top().second) {
-      MS_LOG(DEBUG) << "Custom bprop, no need do op grad";
-      return;
-    }
-    DoOpGrad(op_run_info, cnode, op_run_info->out_value);
-    CheckGraphDynamic(cnode, top_cell()->op_index());
-    UpdateForwardTensorInfoInBpropGraph(op_run_info);
-  }
+  const auto &cnode = ConstructForwardGraph(op_run_info);
+  MS_EXCEPTION_IF_NULL(cnode);
+  cnode->set_abstract(op_run_info->base_op_run_info.abstract);
+  SaveOutputNodeMap(op_run_info->out_value_id, op_run_info, cnode);
+  DoOpGrad(op_run_info, cnode, op_run_info->out_value);
+  CheckGraphDynamic(cnode, top_cell()->op_index());
+  UpdateForwardTensorInfoInBpropGraph(op_run_info);
 }
 
 void GradExecutor::AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const {

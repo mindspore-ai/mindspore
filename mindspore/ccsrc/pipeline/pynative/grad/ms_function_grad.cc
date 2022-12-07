@@ -75,8 +75,8 @@ size_t GetOutputTensorNumForTuple(const CNodePtr &make_tuple) {
 }  // namespace
 
 void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
-                            const std::vector<tensor::TensorPtr> &total_output_tensors,
-                            const FuncGraphPtr &grad_graph) const {
+                            const std::vector<tensor::TensorPtr> &total_output_tensors, const FuncGraphPtr &grad_graph,
+                            bool is_dynamic_shape) const {
   MS_EXCEPTION_IF_NULL(added_make_tuple);
   size_t index = 0;
   for (size_t i = 1; i < added_make_tuple->size(); ++i) {
@@ -110,6 +110,17 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
     } else {
       MS_LOG(EXCEPTION) << "The output value of forward cnode is empty, forward cnode info: " << cnode->ToString();
     }
+    if (is_dynamic_shape) {
+      if (output_num == 1) {
+        output_vnode->set_abstract(new_values[0]->ToAbstract()->Broaden());
+      } else {
+        AbstractBasePtrList abs_list;
+        for (size_t j = 0; j < output_num; ++j) {
+          (void)abs_list.emplace_back(new_values[j]->ToAbstract()->Broaden());
+        }
+        output_vnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+      }
+    }
     MS_LOG(DEBUG) << "New output value node: " << output_vnode->ToString();
   }
   // Save op info with new tensors for current running ms_function func graph.
@@ -119,9 +130,8 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
   }
 }
 
-void MsFunction::ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const ValuePtr &added_out,
-                                              const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const {
-  MS_EXCEPTION_IF_NULL(top_cell);
+void MsFunction::ReplaceNewTensorsInGradGraph(const ValuePtr &added_out, const FuncGraphPtr &ms_func_graph,
+                                              const FuncGraphPtr &grad_graph, bool is_dynamic_shape) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   // Get added forward nodes.
   auto merge_node = ms_func_graph->output();
@@ -150,7 +160,7 @@ void MsFunction::ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, co
   // The forward node in ms_function graph is created during compilation and is a
   // placeholder(mindspore/ccsrc/frontend/optimizer/ad/pynative_dfunctor.cc).After running ms_function, need to update
   // to real value.
-  RunReplace(added_make_tuple, total_output_tensors, grad_graph);
+  RunReplace(added_make_tuple, total_output_tensors, grad_graph, is_dynamic_shape);
 }
 
 void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const string &op_info,
@@ -190,11 +200,10 @@ void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNo
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
     const auto &input_i_value = op_run_info->input_value[i];
     const auto &id = PyNativeAlgo::Common::GetIdByValue(input_i_value);
-    MS_LOG(DEBUG) << "The input " << i << " id " << id
-                  << " value of ms_function graph is: " << input_i_value->ToString();
     const auto &input_i_node = grad_executor->GetInput(input_i_value, id);
     MS_EXCEPTION_IF_NULL(input_i_node);
-    MS_LOG(DEBUG) << "The input " << i << " node of ms_function graph is: " << input_i_node->DebugString();
+    MS_LOG(DEBUG) << "The input " << i << " id " << id << " value is: " << input_i_value->ToString()
+                  << ", node is: " << input_i_node->DebugString();
     (void)input_nodes->emplace_back(input_i_node);
   }
 }
@@ -254,7 +263,6 @@ void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
   // Make a CNode which includes ms_function fprop graph and inputs node
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
   *ms_function_cnode = grad_executor->top_cell()->fg()->NewCNode(input_nodes);
-
   MS_LOG(DEBUG) << "Make ms function forward CNode: " << (*ms_function_cnode)->DebugString();
 }
 
@@ -316,6 +324,7 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
+
   // Step 1: Update actual output tensors used in grad graph.
   MS_EXCEPTION_IF_NULL(op_run_info->out_value);
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
@@ -327,8 +336,12 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
       grad_executor->top_cell()->op_info_with_ms_func_forward_tensors().end()) {
     UpdateMsFunctionForwardTensors(grad_executor, op_run_info->op_info, added_out_v);
   }
-
-  ReplaceNewTensorsInGradGraph(grad_executor->top_cell(), added_out_v, ms_func_graph, grad_graph);
+  bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(ms_func_graph->output());
+  if (is_dynamic_shape) {
+    const_cast<GradExecutor *>(grad_executor)->set_use_dynamic_shape_process(true);
+    MS_LOG(DEBUG) << "Ms function is dynamic shape";
+  }
+  ReplaceNewTensorsInGradGraph(added_out_v, ms_func_graph, grad_graph, is_dynamic_shape);
 
   // Clone new ms_function func graph and grad graph.
   auto new_ms_func_graph = BasicClone(ms_func_graph);

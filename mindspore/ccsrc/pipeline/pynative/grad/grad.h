@@ -105,6 +105,7 @@ class GradExecutor {
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &grad_hash_id,
                              const py::args &args);
   TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id);
+  void GetPreRunTopCell(const py::object &obj);
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   void AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
