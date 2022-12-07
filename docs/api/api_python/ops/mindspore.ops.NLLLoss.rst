@@ -39,3 +39,4 @@ mindspore.ops.NLLLoss
     异常：
         - **TypeError** - `logits` 或 `weight` 的数据类型既不是float16也不是float32， `labels` 不是int32。
         - **ValueError** - `logits` 不是二维Tensor， `labels` 和 `weight` 不是一维Tensor。 `logits` 的第一个维度不等于 `labels` ， `logits` 的第二个维度不等于 `weight` 。
+        - **ValueError** - `labels` 的取值超出 :math:`[0, C-1]` ，其中 :math:`C` 表示类的数量。

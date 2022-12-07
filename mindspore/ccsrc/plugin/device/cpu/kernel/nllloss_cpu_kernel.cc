@@ -25,6 +25,7 @@ namespace kernel {
 namespace {
 constexpr size_t kNLLLossInputsNum = 3;
 constexpr size_t kNLLLossOutputsNum = 2;
+constexpr int minLabelNum = 0;
 const std::map<Reduction, ReductionType> kReductionMap = {
   {Reduction::MEAN, Reduction_Mean}, {Reduction::REDUCTION_SUM, Reduction_Sum}, {Reduction::NONE, Reduction_None}};
 }  // namespace
@@ -82,6 +83,15 @@ bool NLLLossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   const auto *weight = reinterpret_cast<float *>(inputs[kIndex2]->addr);
   auto *loss = reinterpret_cast<float *>(outputs[kIndex0]->addr);
   auto *total_weight = reinterpret_cast<float *>(outputs[kIndex1]->addr);
+  if (logits == NULL || labels == NULL || weight == NULL) {
+    MS_LOG(EXCEPTION) << "Nllloss does not support null input";
+  }
+
+  for (int i = 0; i < nllloss_param_.batch_; i++) {
+    if (labels[i] < minLabelNum || labels[i] > nllloss_param_.class_num_) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the label must in scope[0, C-1], but got" << labels[i];
+    }
+  }
 
   int ret = NLLLoss(logits, labels, weight, loss, total_weight, &nllloss_param_);
   if (ret != static_cast<int>(NNACL_OK)) {
