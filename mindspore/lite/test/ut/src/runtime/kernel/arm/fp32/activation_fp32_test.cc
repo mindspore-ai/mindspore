@@ -70,6 +70,11 @@ TEST_F(TestActivationFp32, SigmoidFp32) {
     std::cout << output[i] << " ";
   }
   std::cout << std::endl;
+
+  input[0] = -1.85524821;
+  float expect[1] = {0.13525787};
+  Sigmoid(input, 1, output);
+  ASSERT_EQ(fabs(output[0] - expect[0]) < 0.000001, true);
   MS_LOG(INFO) << "TestSigmoidFp32 passed";
 }
 

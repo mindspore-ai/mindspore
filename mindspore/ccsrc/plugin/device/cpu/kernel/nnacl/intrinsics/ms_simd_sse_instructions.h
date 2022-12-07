@@ -269,13 +269,15 @@ static inline float MS_GET_SUM128_F32(__m128 src) {
   MS_STQ_F32(output_ptr + 7 * num, dst##8);
 
 static inline MS_FLOAT32X4 VexpFp32(MS_FLOAT32X4 input) {
-  static MS_FLOAT32X4 param[] = {{0.693147f, 0.693147f, 0.693147f, 0.693147f},
-                                 {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
-                                 {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
-                                 {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
-                                 {0.5f, 0.5f, 0.5f, 0.5f},
-                                 {1.0f, 1.0f, 1.0f, 1.0f}};
-  MS_INT32X4 integer = MS_CVTQPS_EPI32(MS_DIVQ_F32(input, param[0]));
+  static MS_FLOAT32X4 param[] = {
+    {0.693147f, 0.693147f, 0.693147f, 0.693147f},
+    {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
+    {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
+    {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
+    {0.5f, 0.5f, 0.5f, 0.5f},
+    {1.0f, 1.0f, 1.0f, 1.0f},
+    {1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f, 1.44269504088896341f}};
+  MS_INT32X4 integer = MS_CVTQPS_EPI32(MS_FLOOR128_F32(MS_FMADD128_F32(input, param[6], param[4])));
   MS_FLOAT32X4 decimal = MS_SUBQ_F32(input, MS_MULQ_F32(MS_CVTQEPI32_PS(integer), param[0]));
   MS_INT32X4 int_exp = MS_SLLIQ_EPI32(MS_ADDQ_EPI32(integer, MS_MOVQ_EPI32(127)), 23);
   MS_FLOAT32X4 tmp = MS_MULQ_F32(decimal, (MS_ADDQ_F32(param[2], MS_MULQ_F32(decimal, param[1]))));
