@@ -34,11 +34,15 @@ class MIND_API Uniform : public BaseOperator {
  public:
   Uniform() : BaseOperator(kNameUniform) { InitIOName({"x"}, {"y"}); }
   /// \brief Method to init the ops attributes.
-  void Init(const float from, const float to);
+  void Init(const float from, const float to, const int64_t seed, const int64_t offset);
   /// \brief Set from.
   void set_from(const float from);
   /// \brief Set to.
   void set_to(const float to);
+  /// \brief Set seed.
+  void set_seed(const int64_t seed);
+  /// \brief Set offset.
+  void set_offset(const int64_t offset);
   /// \brief Get from.
   ///
   /// \return from.
@@ -47,6 +51,14 @@ class MIND_API Uniform : public BaseOperator {
   ///
   /// \return to.
   float get_to() const;
+  /// \brief Get seed.
+  ///
+  /// \return seed.
+  int64_t get_seed() const;
+  /// \brief Get offset.
+  ///
+  /// \return offset.
+  int64_t get_offset() const;
 
   MIND_API_BASE_MEMBER(Uniform);
 };

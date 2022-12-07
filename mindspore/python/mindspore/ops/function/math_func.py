@@ -5525,7 +5525,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> net = ops.TrilIndices(4, 3, -1, mindspore.int64)
+        >>> net = ops.tril_indices(4, 3, -1, mindspore.int64)
         >>> output = net()
         >>> print(output)
         [[1 2 2 3 3 3]
@@ -5570,7 +5570,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> net = ops.TriuIndices(5, 4, 2, mindspore.int64)
+        >>> net = ops.triu_indices(5, 4, 2, mindspore.int64)
         >>> output = net()
         >>> print(output)
         [[0 0 1]

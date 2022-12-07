@@ -1005,39 +1005,43 @@ class Uniform(Primitive):
     Generates random numbers according to the Uniform random number distribution.
 
     Args:
-        min_val(float):must be non-negative. Default: 0.0.
-        max_val(float):must be non-negative. Default: 1.0.
+        minval(float):must be non-negative. Default: 0.0.
+        maxval(float):must be non-negative. Default: 1.0.
 
     Inputs:
         - **x** (Tensor) - The x of random tensor to be generated.
           Only constant value is allowed, and the date type is float16, float32, float64.
 
     Raises:
-        TypeError: If `min_val` or `max_val` is not a float.
+        TypeError: If `minval` or `maxval` is not a float.
         TypeError: If `x`is not a Tensor.
+        ValueError: If `minval` is larger than `maxval`.
 
     Outputs:
         - **output** (Tensor) - With the same type and shape as the 'x'.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.random.randn(3,4), mstype.float64)
-        >>> uniform = Uniform(min_val=1.0, max_val=2.0)
+        >>> uniform = Uniform(minval=1.0, maxval=2.0)
         >>> y = uniform(x)
         >>> print(y.shape)
         (3, 4)
     """
 
     @prim_attr_register
-    def __init__(self, min_val=0, max_val=1):
+    def __init__(self, minval=0., maxval=1., seed=0, offset=0):
         """Initialize Uniform"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        self.add_prim_attr("from", 0.0)
-        self.add_prim_attr("to", 1.0)
-        Validator.check_non_negative_float(min_val, "from", self.name)
-        Validator.check_non_negative_float(max_val, "to", self.name)
+        self.add_prim_attr("from", minval)
+        self.add_prim_attr("to", maxval)
+        Validator.check_value_type('seed', seed, [int], self.name)
+        Validator.check_value_type('offset', offset, [int], self.name)
+        Validator.check('minval', minval, 'maxval', maxval, Rel.LE, self.name)
+        Validator.check_non_negative_float(minval, "minval", self.name)
+        Validator.check_non_negative_float(maxval, "maxval", self.name)
 
 
 class RandpermV2(Primitive):

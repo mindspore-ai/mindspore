@@ -82,6 +82,7 @@ from mindspore.ops.operations.array_ops import SegmentProd
 from mindspore.ops.operations.array_ops import ScatterAddWithAxis
 from mindspore.ops.operations.array_ops import ConcatOffsetV1
 from mindspore.ops.operations.random_ops import NonDeterministicInts
+from mindspore.ops.operations.random_ops import Uniform
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.random_ops import MultinomialWithReplacement
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
@@ -4309,6 +4310,10 @@ test_case_other_ops = [
     ('NonDeterministicInts', {
         'block': NonDeterministicInts(dtype=mstype.int32),
         'desc_inputs': [Tensor(np.array([2, 2]), mstype.int32)],
+        'skip': ['backward']}),
+    ('UniformOps', {
+        'block': Uniform(minval=0., maxval=1., seed=1, offset=1),
+        'desc_inputs': [Tensor(np.array([2, 2]), mstype.float32)],
         'skip': ['backward']}),
     ('TruncatedNormal', {
         'block': TruncatedNormal(dtype=mstype.float32, seed=1, seed2=1),
