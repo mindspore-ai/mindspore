@@ -220,7 +220,7 @@ void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::Device
     } else if (node_value->isa<StringImm>()) {
       CopyValueNodeStringToDevice(value_node, device_context);
     } else {
-      MS_LOG(WARNING) << "Unknown value node type:" << value_node->DebugString();
+      MS_LOG(INFO) << "Unknown value node type:" << value_node->DebugString();
     }
   }
   MS_LOG(DEBUG) << "End";
