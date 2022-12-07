@@ -52,7 +52,7 @@
             - **sink_size** (int) - 控制每次数据下沉的数据量。默认值：-1。
             - **epoch** (int) - 控制训练轮次。默认值：1。
 
-    .. py:method:: eval(valid_dataset, callbacks=None, dataset_sink_mode=True)
+    .. py:method:: eval(valid_dataset, callbacks=None, dataset_sink_mode=False)
 
         模型评估接口。
 
@@ -65,7 +65,7 @@
         参数：
             - **valid_dataset** (Dataset) - 评估模型的数据集。
             - **callbacks** (Optional[list(Callback), Callback]) - 评估过程中需要执行的回调对象或回调对象列表。默认值：None。
-            - **dataset_sink_mode** (bool) - 数据是否直接下沉至处理器进行处理。默认值：True。
+            - **dataset_sink_mode** (bool) - 数据是否直接下沉至处理器进行处理。默认值：False。
 
         返回：
             Dict，key是用户定义的评价指标名称，value是以推理模式运行的评估结果。
@@ -78,7 +78,7 @@
         返回：
             评估网络实例。
 
-    .. py:method:: fit(epoch, train_dataset, valid_dataset=None, valid_frequency=1, callbacks=None, dataset_sink_mode=True, valid_dataset_sink_mode=True, sink_size=-1, initial_epoch=0)
+    .. py:method:: fit(epoch, train_dataset, valid_dataset=None, valid_frequency=1, callbacks=None, dataset_sink_mode=False, valid_dataset_sink_mode=False, sink_size=-1, initial_epoch=0)
 
         模型边训练边推理接口。
 
@@ -92,8 +92,8 @@
             - **valid_dataset** (Dataset) - 评估模型的数据集迭代器。默认值：None。
             - **valid_frequency** (int, list) - 此参数只有在valid_dataset不为None时生效。如果为int类型，表示执行推理的频率，例如 `valid_frequency=2`，则每2个训练epoch执行一次推理；如果为list类型，指明在哪几个epoch时执行推理，例如 `valid_frequency=[1, 5]`，则在第1个和第5个epoch执行推理。默认值：1。
             - **callbacks** (Optional[list[Callback], Callback]) - 训练过程中需要执行的回调对象或者回调对象列表。默认值：None。
-            - **dataset_sink_mode** (bool) - 训练数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：True。
-            - **valid_dataset_sink_mode** (bool) - 推理数据是否直接下沉至处理器进行处理。默认值：True。
+            - **dataset_sink_mode** (bool) - 训练数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：False。
+            - **valid_dataset_sink_mode** (bool) - 推理数据是否直接下沉至处理器进行处理。默认值：False。
             - **sink_size** (int) - 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
             - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。
 
@@ -112,7 +112,7 @@
         异常：
             - **RuntimeError** - 非图模式（GRAPH_MODE）将会抛出该异常。
 
-    .. py:method:: infer_train_layout(train_dataset, dataset_sink_mode=True, sink_size=-1)
+    .. py:method:: infer_train_layout(train_dataset, dataset_sink_mode=False, sink_size=-1)
 
         在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为训练网络生成参数layout。当前仅支持在数据下沉模式下使用。
 
@@ -122,7 +122,7 @@
 
         参数：
             - **train_dataset** (Dataset) - 一个训练数据集迭代器。如果没有损失函数（loss_fn），返回一个包含多个数据的元组（data1, data2, data3, ...）并传递给网络。否则，返回一个元组（data, label），数据和标签将被分别传递给网络和损失函数。
-            - **dataset_sink_mode** (bool) - 决定是否以数据集下沉模式进行训练。默认值：True。PyNative模式下或处理器为CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值：True。
+            - **dataset_sink_mode** (bool) - 决定是否以数据集下沉模式进行训练。默认值：True。PyNative模式下或处理器为CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值：False。
             - **sink_size** (int) - 控制每次数据下沉的数据量，如果 `sink_size` =-1，则每一次epoch下沉完整数据集。如果 `sink_size` >0，则每一次epoch下沉数据量为 `sink_size` 的数据集。如果 `dataset_sink_mode` 为False，则设置 `sink_size` 为无效。默认值：-1。
 
         返回：

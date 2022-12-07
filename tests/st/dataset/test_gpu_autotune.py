@@ -105,7 +105,7 @@ def test_autotune_train_simple_model(tmp_path):
     print("Start training.")
     epoch_size = 10
     start_time = time.time()
-    model.train(epoch_size, ds_train)
+    model.train(epoch_size, ds_train, dataset_sink_mode=True)
     print("Training finished. Took {}s".format(time.time() - start_time))
 
     ds.config.set_enable_autotune(False)
@@ -195,7 +195,7 @@ def test_autotune_pymultiproc_train_simple_model():
     print("Start Model Training.")
     model_start = time.time()
     epoch_size = 2
-    model.train(epoch_size, ds_train)
+    model.train(epoch_size, ds_train, dataset_sink_mode=True)
     print("Model training is finished. Took {}s".format(time.time() - model_start))
 
     # Restore settings
