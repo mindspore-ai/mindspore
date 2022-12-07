@@ -35,8 +35,8 @@ class MIND_API Trunc : public BaseOperator {
   Trunc() : BaseOperator(kNameTrunc) { InitIOName({"input_x"}, {"output_y"}); }
 };
 
-abstract::AbstractBasePtr TruncInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TruncInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimTruncPtr = std::shared_ptr<Trunc>;
 }  // namespace ops

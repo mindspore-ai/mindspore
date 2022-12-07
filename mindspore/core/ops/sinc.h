@@ -31,8 +31,8 @@ class MIND_API Sinc : public BaseOperator {
   Sinc() : BaseOperator(kNameSinc) { InitIOName({"x"}, {"y"}); }
   void Init() {}
 };
-abstract::AbstractBasePtr SincInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SincInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSincPtr = std::shared_ptr<Sinc>;
 }  // namespace ops
 }  // namespace mindspore

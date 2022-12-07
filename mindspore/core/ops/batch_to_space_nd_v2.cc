@@ -96,6 +96,6 @@ AbstractBasePtr BatchToSpaceNDV2Infer(const abstract::AnalysisEnginePtr &, const
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(BatchToSpaceNDV2, prim::kPrimBatchToSpaceNDV2, BatchToSpaceNDV2Infer, nullptr, true);
-REGISTER_HOST_DEPENDS(kNameBatchToSpaceNDV2, {1, 2});
+REGISTER_INFER_DEPENDS(kNameBatchToSpaceNDV2, {1, 2});
 }  // namespace ops
 }  // namespace mindspore

@@ -34,8 +34,8 @@ class MIND_API BatchMatMul : public MatMul {
   /// \brief Constructor.
   BatchMatMul() : MatMul(kNameBatchMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
 };
-abstract::AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

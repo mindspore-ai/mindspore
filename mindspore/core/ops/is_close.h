@@ -46,8 +46,8 @@ class MIND_API IsClose : public BaseOperator {
 
   bool get_equal_nan() const;
 };
-abstract::AbstractBasePtr IsCloseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr IsCloseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimIsClosePtr = std::shared_ptr<IsClose>;
 }  // namespace ops
 }  // namespace mindspore

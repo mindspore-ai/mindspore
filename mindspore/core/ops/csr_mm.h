@@ -37,8 +37,8 @@ class MIND_API CSRMM : public BaseOperator {
     InitIOName({"indptr", "indices", "values", "dense_shape", "dense_tensor"}, {"output"});
   }
 };
-abstract::AbstractBasePtr CSRMMInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CSRMMInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

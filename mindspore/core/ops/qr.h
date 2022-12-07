@@ -44,8 +44,8 @@ class MIND_API Qr : public BaseOperator {
   /// \return full_matrices.
   bool get_full_matrices() const;
 };
-abstract::AbstractBasePtr QrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr QrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimQrPtr = std::shared_ptr<Qr>;
 }  // namespace ops
 }  // namespace mindspore

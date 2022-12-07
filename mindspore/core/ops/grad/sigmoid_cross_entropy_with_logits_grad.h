@@ -34,7 +34,7 @@ class MIND_API SigmoidCrossEntropyWithLogitsGrad : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(
+MIND_API abstract::AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSigmoidCrossEntropyWithLogitsGradPtr = std::shared_ptr<SigmoidCrossEntropyWithLogitsGrad>;

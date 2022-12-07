@@ -33,8 +33,9 @@ class CheckNumerics : public BaseOperator {
   CheckNumerics() : BaseOperator(kNameCheckNumerics) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr CheckNumericsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CheckNumericsInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCheckNumericsPtr = std::shared_ptr<CheckNumerics>;
 }  // namespace ops
 }  // namespace mindspore

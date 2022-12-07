@@ -33,8 +33,9 @@ class MIND_API ArgMinWithValue : public BaseOperator {
   int64_t axis() const;
   bool keep_dims() const;
 };
-abstract::AbstractBasePtr ArgMinWithValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ArgMinWithValueInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_ARGMIN_WITH_VALUE_H_

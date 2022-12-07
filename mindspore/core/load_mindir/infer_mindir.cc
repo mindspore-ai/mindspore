@@ -159,20 +159,11 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, cons
   MS_EXCEPTION_IF_NULL(prim);
   try {
     MS_LOG_TRY_CATCH_SCOPE;
-    static auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
-    auto ret = prim_eval_implement_map.find(prim);
-    if (ret != prim_eval_implement_map.end()) {
-      // fing infer function in the front infer map and restore input abastract form dynamic inputs and reg attr
-      MS_EXCEPTION_IF_CHECK_FAIL(ret->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-      return ret->second.InferShapeAndType(nullptr, prim, args_spec_list);
-    } else {
-      // if the infer function has been not founded in the front infer map find it in the backend infer map instead
-      static auto &prim_backend_eval_impl_map = abstract::GetPrimitiveToBackendEvalImplMap();
-      auto ret_backend = prim_backend_eval_impl_map.find(prim);
-      if (ret_backend != prim_backend_eval_impl_map.end()) {
-        MS_EXCEPTION_IF_CHECK_FAIL(ret_backend->second.IsImplInferShapeAndType(),
-                                   "There is no infer-abstract implement!");
-        return ret_backend->second.InferShapeAndType(nullptr, prim, args_spec_list);
+    auto found = abstract::GetPrimitiveInferImpl(prim);
+    if (found.has_value()) {
+      auto infer = found.value();
+      if (infer.IsImplInferShapeAndType()) {
+        return infer.InferShapeAndType(nullptr, prim, args_spec_list);
       }
     }
     if (raise_exception_) {

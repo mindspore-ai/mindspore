@@ -30,8 +30,8 @@ class MIND_API TruncateMod : public BaseOperator {
   TruncateMod() : BaseOperator(kNameTruncateMod) { InitIOName({"x", "y"}, {"output"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr TruncateModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TruncateModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

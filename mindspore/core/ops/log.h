@@ -32,8 +32,8 @@ class MIND_API Log : public BaseOperator {
   /// \brief Constructor.
   Log() : BaseOperator(kNameLog) { InitIOName({"x"}, {"y"}); }
 };
-abstract::AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LOG_H_

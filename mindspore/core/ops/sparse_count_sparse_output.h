@@ -51,9 +51,9 @@ class MIND_API SparseCountSparseOutput : public BaseOperator {
 
   int64_t get_maxlength() const;
 };
-abstract::AbstractBasePtr SparseCountSparseOutputInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseCountSparseOutputInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

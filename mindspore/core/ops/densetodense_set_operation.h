@@ -37,9 +37,9 @@ class MIND_API DenseToDenseSetOperation : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DenseToDenseSetOperation for more details.
   void Init() const {}
 };
-abstract::AbstractBasePtr DenseToDenseSetOperationInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DenseToDenseSetOperationInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kDenseToDenseSetOperationPtr = std::shared_ptr<DenseToDenseSetOperation>;
 }  // namespace ops
 }  // namespace mindspore

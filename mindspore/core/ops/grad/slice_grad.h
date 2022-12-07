@@ -31,8 +31,8 @@ class MIND_API SliceGrad : public BaseOperator {
   SliceGrad() : BaseOperator(kNameSliceGrad) { InitIOName({"dy", "x", "begin", "size"}, {"output"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr SliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSliceGradPtr = std::shared_ptr<SliceGrad>;
 }  // namespace ops
 }  // namespace mindspore

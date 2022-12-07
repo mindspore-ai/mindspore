@@ -102,7 +102,7 @@ AbstractBasePtr AdaptiveMaxPool3DInfer(const abstract::AnalysisEnginePtr &, cons
   auto shapes = AdaptiveMaxPool3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameAdaptiveMaxPool3D, {1});
+REGISTER_INFER_DEPENDS(kNameAdaptiveMaxPool3D, {1});
 REGISTER_PRIMITIVE_EVAL_IMPL(AdaptiveMaxPool3D, prim::kPrimAdaptiveMaxPool3D, AdaptiveMaxPool3DInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

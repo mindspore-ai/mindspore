@@ -52,8 +52,8 @@ class MIND_API Dilation2D : public BaseOperator {
   std::string get_format() const;
 };
 
-abstract::AbstractBasePtr Dilation2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr Dilation2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DILATION2D_H_

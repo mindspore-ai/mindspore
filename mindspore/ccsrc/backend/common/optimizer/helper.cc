@@ -33,7 +33,8 @@
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
-#include "abstract/ops/primitive_infer_map.h"
+#include "backend/operator/ops_backend_infer_function.h"
+#include "frontend/operator/ops_front_infer_function.h"
 
 namespace mindspore {
 namespace opt {
@@ -1034,37 +1035,17 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
                    const AbstractBasePtr &out_abs) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(out_abs);
-  auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
-  auto ret = prim_eval_implement_map.find(prim);
-  if (ret != prim_eval_implement_map.end()) {
-    // fing infer function in the front infer map and restore input abastract form dynamic inputs and reg attr
-    MS_EXCEPTION_IF_CHECK_FAIL(ret->second.IsImplInferShapeAndType(),
-                               "There is no infer-shape implement for frontend!");
+  auto found = abstract::GetBackendPrimitiveInferImpl(prim);
+  if (found.has_value()) {
+    auto infer = found.value();
+    MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
     auto infer_spec_list = RectifyAbstract(prim, args_spec_list);
-    auto shape = ret->second.InferShape(prim, infer_spec_list);
+    auto shape = infer.InferShape(prim, infer_spec_list);
     if (shape == nullptr) {
-      MS_LOG(EXCEPTION) << "Infer shape with frontend function failed.";
+      MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
     }
     out_abs->set_shape(shape);
     return;
-  } else {
-    // if the infer function has been not founded in the front infer map find it in the backend infer map instead
-    auto &prim_backend_eval_impl_map = abstract::GetPrimitiveToBackendEvalImplMap();
-    auto ret_backend = prim_backend_eval_impl_map.find(prim);
-    if (ret_backend != prim_backend_eval_impl_map.end()) {
-      MS_EXCEPTION_IF_CHECK_FAIL(ret_backend->second.IsImplInferShapeAndType(),
-                                 "There is no infer-shape implement for backend!");
-      auto infer_spec_list = args_spec_list;
-      if (!ret_backend->second.IsInWhileList()) {
-        infer_spec_list = RectifyAbstract(prim, args_spec_list);
-      }
-      auto shape = ret_backend->second.InferShape(prim, infer_spec_list);
-      if (shape == nullptr) {
-        MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
-      }
-      out_abs->set_shape(shape);
-      return;
-    }
   }
 
   MS_LOG(EXCEPTION) << "Get infer functions failed, the operator is not support dynamic shape yet, primitive name:"
@@ -1073,29 +1054,16 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
 
 AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
-  auto ret = prim_eval_implement_map.find(prim);
-  if (ret != prim_eval_implement_map.end()) {
-    // fing infer function in the front infer map and restore input abastract form dynamic inputs and reg attr
-    MS_EXCEPTION_IF_CHECK_FAIL(ret->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
+  auto found = abstract::GetBackendPrimitiveInferImpl(prim);
+  if (found.has_value()) {
+    auto infer = found.value();
+    MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
     auto infer_spec_list = RectifyAbstract(prim, args_spec_list);
-    return ret->second.InferShapeAndType(nullptr, prim, infer_spec_list);
-  } else {
-    // if the infer function has been not founded in the front infer map find it in the backend infer map instead
-    auto &prim_backend_eval_impl_map = abstract::GetPrimitiveToBackendEvalImplMap();
-    auto ret_backend = prim_backend_eval_impl_map.find(prim);
-    if (ret_backend != prim_backend_eval_impl_map.end()) {
-      MS_EXCEPTION_IF_CHECK_FAIL(ret_backend->second.IsImplInferShapeAndType(),
-                                 "There is no infer-abstract implement!");
-      auto infer_spec_list = args_spec_list;
-      if (!ret_backend->second.IsInWhileList()) {
-        infer_spec_list = RectifyAbstract(prim, args_spec_list);
-      }
-      return ret_backend->second.InferShapeAndType(nullptr, prim, infer_spec_list);
-    }
+    return infer.InferShapeAndType(nullptr, prim, infer_spec_list);
   }
   MS_LOG(EXCEPTION) << "Get infer shape function failed, the operator is not support dynamic shape yet, primitive name:"
                     << prim->name() << " primitive type:" << prim->type_name();
+  return nullptr;
 }
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list) {

@@ -31,8 +31,8 @@ class MIND_API HSVToRGB : public BaseOperator {
   MIND_API_BASE_MEMBER(HSVToRGB);
   HSVToRGB() : BaseOperator(kNameHSVToRGB) { InitIOName({"x"}, {"y"}); }
 };
-abstract::AbstractBasePtr HSVToRGBInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr HSVToRGBInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using HSVToRGBPtr = std::shared_ptr<HSVToRGB>;
 }  // namespace ops
 }  // namespace mindspore

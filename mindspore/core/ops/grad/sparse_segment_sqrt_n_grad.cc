@@ -109,7 +109,7 @@ AbstractBasePtr SparseSegmentSqrtNGradInfer(const abstract::AnalysisEnginePtr &,
   auto shapes = SparseSegmentSqrtNGradInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameSparseSegmentSqrtNGrad, {3});
+REGISTER_INFER_DEPENDS(kNameSparseSegmentSqrtNGrad, {3});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSqrtNGrad, prim::kPrimSparseSegmentSqrtNGrad, SparseSegmentSqrtNGradInfer,
                              nullptr, true);
 }  // namespace ops

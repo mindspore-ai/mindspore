@@ -38,8 +38,9 @@ class MIND_API CholeskyInverse : public BaseOperator {
   void set_upper(const bool upper);
   bool get_upper() const;
 };
-abstract::AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCholeskyInversePtr = std::shared_ptr<CholeskyInverse>;
 }  // namespace ops
 }  // namespace mindspore

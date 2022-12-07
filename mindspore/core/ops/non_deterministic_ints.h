@@ -33,8 +33,9 @@ class MIND_API NonDeterministicInts : public BaseOperator {
   MIND_API_BASE_MEMBER(NonDeterministicInts);
   NonDeterministicInts() : BaseOperator(kNonDeterministicInts) { InitIOName({"shape"}, {"output"}); }
 };
-abstract::AbstractBasePtr NonDeterministicIntsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr NonDeterministicIntsInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimNonDeterministicIntsPtr = std::shared_ptr<NonDeterministicInts>;
 }  // namespace ops
 }  // namespace mindspore

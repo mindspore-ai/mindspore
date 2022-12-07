@@ -31,8 +31,9 @@ class MIND_API MatrixDeterminant : public BaseOperator {
   MatrixDeterminant() : BaseOperator(kNameMatrixDeterminant) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr MatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MatrixDeterminantInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixDeterminantPtr = std::shared_ptr<MatrixDeterminant>;
 }  // namespace ops
 }  // namespace mindspore

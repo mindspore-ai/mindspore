@@ -60,9 +60,9 @@ class MIND_API SparseMatrixSparseMatMul : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr SparseMatrixSparseMatMulInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseMatrixSparseMatMulInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSparseMatrixSparseMatMul = std::shared_ptr<SparseMatrixSparseMatMul>;
 }  // namespace ops
 }  // namespace mindspore

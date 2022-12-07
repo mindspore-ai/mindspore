@@ -36,9 +36,9 @@ class MIND_API LayerNormBetaGammaBackpropV2 : public BaseOperator {
   std::vector<int64_t> get_shape_gamma() const;
 };
 
-abstract::AbstractBasePtr LayerNormBetaGammaBackpropV2Infer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LayerNormBetaGammaBackpropV2Infer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

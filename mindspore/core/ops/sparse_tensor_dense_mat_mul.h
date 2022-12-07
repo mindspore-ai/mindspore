@@ -37,9 +37,9 @@ class MIND_API SparseTensorDenseMatmul : public BaseOperator {
   void set_adjoint_dt(const bool adjoint_dt);
   bool get_adjoint_dt() const;
 };
-abstract::AbstractBasePtr SparseTensorDenseMatmulInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseTensorDenseMatmulInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

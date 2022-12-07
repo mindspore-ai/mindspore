@@ -38,8 +38,9 @@ class MIND_API MinimumGradGrad : public BaseOperator {
   bool get_grad_x() const;
   bool get_grad_y() const;
 };
-abstract::AbstractBasePtr MinimumGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MinimumGradGradInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GRAD_MINIMUM_GRAD_GRAD_H_

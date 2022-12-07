@@ -38,8 +38,8 @@ class MIND_API Cauchy : public BaseOperator {
   void set_size(std::vector<int64_t>);
   std::vector<int64_t> get_size();
 };
-abstract::AbstractBasePtr CauchyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CauchyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCauchy = std::shared_ptr<Cauchy>;
 }  // namespace ops
 }  // namespace mindspore

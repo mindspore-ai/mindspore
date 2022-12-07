@@ -35,8 +35,8 @@ class MIND_API NuclearNorm : public BaseOperator {
   NuclearNorm() : BaseOperator(kNameNuclearNorm) { InitIOName({"x"}, {"y"}); }
   MIND_API_BASE_MEMBER(NuclearNorm);
 };
-abstract::AbstractBasePtr NuclearNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr NuclearNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

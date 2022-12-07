@@ -36,8 +36,8 @@ class MIND_API Greater : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Greater for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr GreaterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GreaterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimGreaterPtr = std::shared_ptr<Greater>;
 }  // namespace ops
 }  // namespace mindspore

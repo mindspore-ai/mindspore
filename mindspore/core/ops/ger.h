@@ -38,8 +38,8 @@ class MIND_API Ger : public BaseOperator {
   Ger() : BaseOperator(kNameGer) { InitIOName({"x", "y"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr GerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGerPtr = std::shared_ptr<Ger>;
 }  // namespace ops
 }  // namespace mindspore

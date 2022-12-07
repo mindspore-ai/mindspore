@@ -44,8 +44,9 @@ class MIND_API SparseToDenseV2 : public BaseOperator {
   /// \return validate_indices.
   bool get_validate_indices() const;
 };
-abstract::AbstractBasePtr SparseToDenseV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseToDenseV2Infer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

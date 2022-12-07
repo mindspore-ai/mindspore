@@ -136,7 +136,7 @@ AbstractBasePtr SparseFillEmptyRowsInfer(const abstract::AnalysisEnginePtr &, co
   auto infer_shape = SparseFillEmptyRowsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_HOST_DEPENDS(kNameSparseFillEmptyRows, {2});
+REGISTER_INFER_DEPENDS(kNameSparseFillEmptyRows, {2});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseFillEmptyRows, prim::kPrimSparseFillEmptyRows, SparseFillEmptyRowsInfer, nullptr,
                              true);
 }  // namespace ops

@@ -38,8 +38,9 @@ class MIND_API KLDivLossGrad : public BaseOperator {
   std::string get_reduction() const;
 };
 
-abstract::AbstractBasePtr KLDivLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr KLDivLossGradInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

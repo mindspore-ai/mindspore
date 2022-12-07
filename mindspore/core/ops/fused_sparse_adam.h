@@ -54,8 +54,9 @@ class MIND_API FusedSparseAdam : public BaseOperator {
   bool get_use_nesterov() const;
 };
 
-abstract::AbstractBasePtr FusedSparseAdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FusedSparseAdamInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

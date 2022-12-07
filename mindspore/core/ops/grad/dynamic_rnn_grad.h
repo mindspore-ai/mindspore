@@ -37,8 +37,9 @@ class MIND_API DynamicRNNGrad : public BaseOperator {
   void Init() {}
 };
 
-abstract::AbstractBasePtr DynamicRNNGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DynamicRNNGradInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

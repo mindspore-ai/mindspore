@@ -37,8 +37,8 @@ class MIND_API GetNext : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GetNext for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GETNEXT_H_

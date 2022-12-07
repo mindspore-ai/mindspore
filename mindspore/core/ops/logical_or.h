@@ -36,8 +36,8 @@ class MIND_API LogicalOr : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogicalOr for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimLogicalOrPtr = std::shared_ptr<LogicalOr>;
 }  // namespace ops
 }  // namespace mindspore

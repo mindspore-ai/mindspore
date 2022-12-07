@@ -75,8 +75,8 @@ abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, 
   return abstract::MakeAbstract(output_shape, kFloat32);
 }
 
-REGISTER_HOST_DEPENDS(kNameUniformReal, {0});
-REGISTER_HOST_DEPENDS(kNameCudnnUniformReal, {0});
+REGISTER_INFER_DEPENDS(kNameUniformReal, {0});
+REGISTER_INFER_DEPENDS(kNameCudnnUniformReal, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(UniformReal, prim::kPrimUniformReal, UniformRealInfer, nullptr, true);
 REGISTER_PRIMITIVE_EVAL_IMPL(CudnnUniformReal, prim::kPrimCudnnUniformReal, UniformRealInfer, nullptr, true);
 }  // namespace ops

@@ -39,8 +39,8 @@ class MIND_API Elu : public BaseOperator {
   /// \return alpha.
   float get_alpha() const;
 };
-abstract::AbstractBasePtr EluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr EluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimElu = std::shared_ptr<Elu>;
 }  // namespace ops
 }  // namespace mindspore

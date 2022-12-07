@@ -33,8 +33,8 @@ class MIND_API BitwiseAnd : public BaseOperator {
   explicit BitwiseAnd(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr BitwiseAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BitwiseAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBitwiseAndPtr = std::shared_ptr<BitwiseAnd>;
 }  // namespace ops
 }  // namespace mindspore

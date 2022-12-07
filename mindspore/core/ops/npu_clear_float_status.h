@@ -31,8 +31,9 @@ class MIND_API NPUClearFloatStatus : public BaseOperator {
   NPUClearFloatStatus() : BaseOperator(kNameNPUClearFloatStatus) { InitIOName({"addr"}, {"data"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr NPUClearFloatStatusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr NPUClearFloatStatusInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_NPU_CLEAR_FLOATSTATUS_H_

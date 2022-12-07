@@ -32,8 +32,9 @@ class MIND_API MakeCSRTensor : public BaseOperator {
   /// \brief Constructor.
   MakeCSRTensor() : BaseOperator(kNameMakeCSRTensor) {}
 };
-abstract::AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &args_spec_list);
+MIND_API abstract::AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &args_spec_list);
 }  // namespace ops
 }  // namespace mindspore
 

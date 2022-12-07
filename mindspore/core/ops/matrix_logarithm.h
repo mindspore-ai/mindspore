@@ -31,8 +31,9 @@ class MIND_API MatrixLogarithm : public BaseOperator {
   MIND_API_BASE_MEMBER(MatrixLogarithm);
 };
 
-abstract::AbstractBasePtr MatrixLogarithmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MatrixLogarithmInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixLogarithmPtr = std::shared_ptr<MatrixLogarithm>;
 }  // namespace ops
 }  // namespace mindspore

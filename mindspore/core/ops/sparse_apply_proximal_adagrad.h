@@ -43,9 +43,9 @@ class MIND_API SparseApplyProximalAdagrad : public BaseOperator {
   bool get_use_locking() const;
 };
 
-abstract::AbstractBasePtr SparseApplyProximalAdagradInfer(const abstract::AnalysisEnginePtr &,
-                                                          const PrimitivePtr &primitive,
-                                                          const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseApplyProximalAdagradInfer(const abstract::AnalysisEnginePtr &,
+                                                                   const PrimitivePtr &primitive,
+                                                                   const std::vector<AbstractBasePtr> &input_args);
 using kPrimSparseApplyProximalAdagradPtr = std::shared_ptr<SparseApplyProximalAdagrad>;
 }  // namespace ops
 }  // namespace mindspore

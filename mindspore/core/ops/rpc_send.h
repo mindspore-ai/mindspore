@@ -33,8 +33,8 @@ class MIND_API RpcSend : public BaseOperator {
   MIND_API_BASE_MEMBER(RpcSend);
   RpcSend() : BaseOperator(kNameRpcSend) {}
 };
-abstract::AbstractBasePtr RpcSendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RpcSendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimRpcSendPtr = std::shared_ptr<RpcSend>;
 }  // namespace ops
 }  // namespace mindspore

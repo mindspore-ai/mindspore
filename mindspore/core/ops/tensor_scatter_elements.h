@@ -50,8 +50,9 @@ class MIND_API TensorScatterElements : public BaseOperator {
   /// \return reduction.
   std::string get_reduction() const;
 };
-abstract::AbstractBasePtr TensorScatterElementsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TensorScatterElementsInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimTensorScatterElementsPtr = std::shared_ptr<TensorScatterElements>;
 }  // namespace ops
 }  // namespace mindspore

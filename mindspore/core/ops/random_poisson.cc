@@ -101,7 +101,7 @@ AbstractBasePtr RandomPoissonInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infershape = RandomPoissonInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
-REGISTER_HOST_DEPENDS(kRandomPoisson, {0});
+REGISTER_INFER_DEPENDS(kRandomPoisson, {0});
 MIND_API_OPERATOR_IMPL(RandomPoisson, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(RandomPoisson, prim::kPrimRandomPoisson, RandomPoissonInfer, nullptr, true);
 }  // namespace ops

@@ -29,8 +29,8 @@ class MIND_API Heaviside : public BaseOperator {
   MIND_API_BASE_MEMBER(Heaviside);
   Heaviside() : BaseOperator(kNameHeaviside) { InitIOName({"x", "values"}, {"y"}); }
 };
-abstract::AbstractBasePtr HeavisideInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr HeavisideInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif

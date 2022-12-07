@@ -39,8 +39,8 @@ class MIND_API Cummin : public BaseOperator {
   int64_t get_axis() const;
 };
 
-abstract::AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCumminPtr = std::shared_ptr<Cummin>;
 }  // namespace ops
 }  // namespace mindspore

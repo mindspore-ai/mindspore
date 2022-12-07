@@ -37,8 +37,9 @@ class MIND_API RandomPoisson : public BaseOperator {
   void set_seed2(const int64_t seed2);
   int64_t get_seed2() const;
 };
-abstract::AbstractBasePtr RandomPoissonInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RandomPoissonInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimPrimRandomPoissonPtr = std::shared_ptr<RandomPoisson>;
 }  // namespace ops
 }  // namespace mindspore

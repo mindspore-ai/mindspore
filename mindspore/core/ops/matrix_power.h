@@ -37,8 +37,8 @@ class MIND_API MatrixPower : public BaseOperator {
   int64_t get_exponent();
 };
 
-abstract::AbstractBasePtr MatrixPowerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MatrixPowerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixPowerPtr = std::shared_ptr<MatrixPower>;
 }  // namespace ops
 }  // namespace mindspore

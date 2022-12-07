@@ -64,8 +64,9 @@ class MIND_API GroupConv2DGradInput : public BaseOperator {
   ActivationType get_activation_type() const;
   bool get_has_bias() const;
 };
-abstract::AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

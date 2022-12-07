@@ -124,8 +124,8 @@ AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, c
 
 MIND_API_OPERATOR_IMPL(RandomStandardNormal, BaseOperator);
 MIND_API_OPERATOR_IMPL(StandardNormal, BaseOperator);
-REGISTER_HOST_DEPENDS(kNameStandardNormal, {0});
-REGISTER_HOST_DEPENDS(kNameRandomStandardNormal, {0});
+REGISTER_INFER_DEPENDS(kNameStandardNormal, {0});
+REGISTER_INFER_DEPENDS(kNameRandomStandardNormal, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(RandomStandardNormal, prim::kPrimStandardNormal, RandomStandardNormalInfer, nullptr, true);
 REGISTER_PRIMITIVE_EVAL_IMPL(StandardNormal, prim::kPrimStandardNormal, RandomStandardNormalInfer, nullptr, true);
 }  // namespace ops

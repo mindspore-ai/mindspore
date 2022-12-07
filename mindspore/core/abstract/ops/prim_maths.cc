@@ -304,8 +304,8 @@ AbstractBasePtr InferImplLess(const AnalysisEnginePtr &, const PrimitivePtr &pri
                                           std::make_shared<Shape>(out_shape, out_shape_min, out_shape_max));
 }
 
-AbstractBasePtr InferImplReal(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplRealInner(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: one tensors.
   constexpr auto kRealInputNum = 1;
   const std::string op_name = primitive->name();

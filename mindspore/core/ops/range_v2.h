@@ -37,8 +37,8 @@ class MIND_API RangeV2 : public BaseOperator {
   RangeV2() : BaseOperator(kNameRangeV2) {}
 };
 
-abstract::AbstractBasePtr RangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr RangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRangeV2Ptr = std::shared_ptr<RangeV2>;
 }  // namespace ops
 }  // namespace mindspore

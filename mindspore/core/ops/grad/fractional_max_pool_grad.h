@@ -38,8 +38,9 @@ class MIND_API FractionalMaxPoolGrad : public BaseOperator {
   ///
   /// \return overlapping attributes.
 };
-abstract::AbstractBasePtr FractionalMaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FractionalMaxPoolGradInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalMaxPoolGrad = std::shared_ptr<FractionalMaxPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore

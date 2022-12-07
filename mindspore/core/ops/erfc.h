@@ -30,8 +30,8 @@ class MIND_API Erfc : public BaseOperator {
   Erfc() : BaseOperator(kNameErfc) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr ErfcInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ErfcInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimErfc = std::shared_ptr<Erfc>;
 }  // namespace ops
 }  // namespace mindspore

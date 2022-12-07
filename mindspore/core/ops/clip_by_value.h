@@ -35,8 +35,8 @@ class MIND_API ClipByValue : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr ClipByValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ClipByValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimClipByValuePtr = std::shared_ptr<ClipByValue>;
 }  // namespace ops
 }  // namespace mindspore

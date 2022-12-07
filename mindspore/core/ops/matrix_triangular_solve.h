@@ -33,8 +33,9 @@ class MIND_API MatrixTriangularSolve : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatrixTriangularSolve for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr MatrixTriangularSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MatrixTriangularSolveInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixTriangularSolvePtr = std::shared_ptr<MatrixTriangularSolve>;
 }  // namespace ops
 }  // namespace mindspore

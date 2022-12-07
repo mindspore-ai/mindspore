@@ -126,7 +126,7 @@ AbstractBasePtr RandpermV2Infer(const abstract::AnalysisEnginePtr &, const Primi
   auto infer_shape = RandpermV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_HOST_DEPENDS(kNameRandpermV2, {0, 1, 2});
+REGISTER_INFER_DEPENDS(kNameRandpermV2, {0, 1, 2});
 REGISTER_PRIMITIVE_EVAL_IMPL(RandpermV2, prim::kPrimRandpermV2, RandpermV2Infer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -34,8 +34,8 @@ class MIND_API Mod : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mod for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API MIND_API abstract::AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimModPtr = std::shared_ptr<Mod>;
 }  // namespace ops
 }  // namespace mindspore

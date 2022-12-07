@@ -37,8 +37,8 @@ class MIND_API Pow : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Pow for the inputs.
   void Init();
 };
-abstract::AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimPowPtr = std::shared_ptr<Pow>;
 }  // namespace ops
 }  // namespace mindspore

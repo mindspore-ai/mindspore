@@ -53,8 +53,9 @@ class MIND_API SolveTriangular : public BaseOperator {
   /// \brief Method to get trans attributes.
   std::string get_trans() const;
 };
-abstract::AbstractBasePtr SolveTriangularInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SolveTriangularInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSolveTriangularPtr = std::shared_ptr<SolveTriangular>;
 }  // namespace ops
 }  // namespace mindspore

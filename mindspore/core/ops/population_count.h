@@ -35,8 +35,9 @@ class MIND_API PopulationCount : public BaseOperator {
   PopulationCount() : BaseOperator(kNamePopulationCount) { InitIOName({"input_x"}, {"output_y"}); }
 };
 
-abstract::AbstractBasePtr PopulationCountInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr PopulationCountInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimPopulationCountPtr = std::shared_ptr<PopulationCount>;
 }  // namespace ops

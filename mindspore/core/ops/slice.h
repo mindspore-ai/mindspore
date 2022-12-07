@@ -44,8 +44,8 @@ class MIND_API Slice : public BaseOperator {
   /// \return size attributes.
   std::vector<int64_t> get_size() const;
 };
-abstract::AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSlicePtr = std::shared_ptr<Slice>;
 }  // namespace ops
 }  // namespace mindspore

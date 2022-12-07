@@ -42,8 +42,8 @@ class MIND_API Logit : public BaseOperator {
   /// \return epsilon.
   float get_eps() const;
 };
-abstract::AbstractBasePtr LogitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LogitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

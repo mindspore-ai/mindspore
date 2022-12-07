@@ -37,8 +37,8 @@ class MIND_API ArgminV2 : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ArgminV2 for the inputs.
   void Init();
 };
-abstract::AbstractBasePtr ArgminV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ArgminV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimArgminV2 = std::shared_ptr<ArgminV2>;
 }  // namespace ops
 }  // namespace mindspore

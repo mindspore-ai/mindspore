@@ -32,8 +32,8 @@ class MIND_API SparseAddmm : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr SparseAddmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseAddmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseAddmmPtr = std::shared_ptr<SparseAddmm>;
 }  // namespace ops
 }  // namespace mindspore

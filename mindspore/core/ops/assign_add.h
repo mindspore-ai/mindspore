@@ -35,8 +35,8 @@ class MIND_API AssignAdd : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.AssignAdd for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimAssignAddPtr = std::shared_ptr<AssignAdd>;
 }  // namespace ops
 }  // namespace mindspore

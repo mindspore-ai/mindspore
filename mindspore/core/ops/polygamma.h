@@ -32,8 +32,8 @@ class MIND_API Polygamma : public BaseOperator {
   Polygamma() : BaseOperator(kNamePolygamma) { InitIOName({"a", "x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr PolygammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr PolygammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimPolygammaPtr = std::shared_ptr<Polygamma>;
 }  // namespace ops
 }  // namespace mindspore

@@ -33,8 +33,8 @@ class MIND_API BitwiseXor : public BaseOperator {
   explicit BitwiseXor(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr BitwiseXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BitwiseXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBitwiseXorPtr = std::shared_ptr<BitwiseXor>;
 }  // namespace ops
 }  // namespace mindspore

@@ -58,8 +58,8 @@ class MIND_API Crop : public BaseOperator {
   /// \return a vector which indicates the start index to slice on the corresponding axis.
   std::vector<int64_t> get_offsets() const;
 };
-abstract::AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCrop = std::shared_ptr<Crop>;
 }  // namespace ops
 }  // namespace mindspore

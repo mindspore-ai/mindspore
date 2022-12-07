@@ -35,8 +35,8 @@ class MIND_API CumProd : public BaseOperator {
   bool GetExclusive() const;
   bool GetReverse() const;
 };
-abstract::AbstractBasePtr CumProdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CumProdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCumProd = std::shared_ptr<CumProd>;
 }  // namespace ops
 }  // namespace mindspore

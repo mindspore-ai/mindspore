@@ -53,8 +53,9 @@ class MIND_API TruncatedNormal : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr TruncatedNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TruncatedNormalInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimTruncatedNormalPtr = std::shared_ptr<TruncatedNormal>;
 }  // namespace ops
 }  // namespace mindspore

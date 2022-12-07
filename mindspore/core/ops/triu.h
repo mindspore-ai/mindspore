@@ -40,8 +40,8 @@ class MIND_API Triu : public BaseOperator {
   void set_diagonal(const int diagonal);
   int get_diagonal() const;
 };
-abstract::AbstractBasePtr TriuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TriuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimTriuPtr = std::shared_ptr<Triu>;
 }  // namespace ops
 }  // namespace mindspore

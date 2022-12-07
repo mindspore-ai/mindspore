@@ -130,7 +130,7 @@ AbstractBasePtr LinSpaceInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto infer_shape = LinSpaceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_HOST_DEPENDS(kNameLinSpace, {2});
+REGISTER_INFER_DEPENDS(kNameLinSpace, {2});
 REGISTER_PRIMITIVE_EVAL_IMPL(LinSpace, prim::kPrimLinSpace, LinSpaceInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

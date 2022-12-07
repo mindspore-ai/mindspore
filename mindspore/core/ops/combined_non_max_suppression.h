@@ -39,9 +39,9 @@ class MIND_API CombinedNonMaxSuppression : public BaseOperator {
   bool get_pad_per_class() const;
   bool get_clip_boxes() const;
 };
-abstract::AbstractBasePtr CombinedNonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CombinedNonMaxSuppressionInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimCombinedNonMaxSuppressionPtr = std::shared_ptr<CombinedNonMaxSuppression>;
 }  // namespace ops

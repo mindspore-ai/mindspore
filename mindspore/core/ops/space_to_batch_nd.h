@@ -50,8 +50,9 @@ class MIND_API SpaceToBatchND : public BaseOperator {
   /// \return paddings.
   std::vector<std::vector<int64_t>> get_paddings() const;
 };
-abstract::AbstractBasePtr SpaceToBatchNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SpaceToBatchNDInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

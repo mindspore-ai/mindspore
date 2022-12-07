@@ -50,7 +50,7 @@ class MIND_API FakeQuantWithMinMaxVarsPerChannel : public BaseOperator {
   bool get_narrow_range() const;
 };
 
-abstract::AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(
+MIND_API abstract::AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

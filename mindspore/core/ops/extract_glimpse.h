@@ -44,8 +44,9 @@ class MIND_API ExtractGlimpse : public BaseOperator {
   bool get_uniform_noise() const;
   std::string get_noise() const;
 };
-abstract::AbstractBasePtr ExtractGlimpseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ExtractGlimpseInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args);
 using PrimExtractGlimpsePtr = std::shared_ptr<ExtractGlimpse>;
 }  // namespace ops
 }  // namespace mindspore

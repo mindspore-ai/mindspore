@@ -12,6 +12,7 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/common/optimizer/pattern_engine.cc
         ${CCSRC_DIR}/backend/common/optimizer/visit.cc
         ${CCSRC_DIR}/backend/common/optimizer/graph_optimizer.cc
+        ${CCSRC_DIR}/backend/operator/ops_backend_infer_function.cc
         )
 
 if(NOT WIN32)

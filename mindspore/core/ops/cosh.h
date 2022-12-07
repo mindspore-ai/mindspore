@@ -30,8 +30,8 @@ class MIND_API Cosh : public BaseOperator {
   Cosh() : BaseOperator(kNameCosh) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr CoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimCoshPtr = std::shared_ptr<Cosh>;
 }  // namespace ops
 }  // namespace mindspore

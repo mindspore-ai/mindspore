@@ -52,9 +52,9 @@ class MIND_API ParameterizedTruncatedNormal : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr ParameterizedTruncatedNormalInfer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ParameterizedTruncatedNormalInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimParameterizedTruncatedNormalPtr = std::shared_ptr<ParameterizedTruncatedNormal>;
 }  // namespace ops
 }  // namespace mindspore

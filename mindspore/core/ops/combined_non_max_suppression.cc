@@ -215,6 +215,6 @@ bool CombinedNonMaxSuppression::get_clip_boxes() const {
 
 REGISTER_PRIMITIVE_EVAL_IMPL(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression,
                              CombinedNonMaxSuppressionInfer, nullptr, true);
-REGISTER_HOST_DEPENDS(kNameCombinedNonMaxSuppression, {2, 3, 4, 5});
+REGISTER_INFER_DEPENDS(kNameCombinedNonMaxSuppression, {2, 3, 4, 5});
 }  // namespace ops
 }  // namespace mindspore

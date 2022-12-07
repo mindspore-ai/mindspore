@@ -35,8 +35,9 @@ class MIND_API ApplyAdadelta : public BaseOperator {
     InitIOName({"var", "accum", "accum_update", "lr", "rho", "epsilon", "grad"}, {"var", "accum", "accum_update"});
   }
 };
-abstract::AbstractBasePtr ApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyAdadeltaPtr = std::shared_ptr<ApplyAdadelta>;
 }  // namespace ops
 }  // namespace mindspore

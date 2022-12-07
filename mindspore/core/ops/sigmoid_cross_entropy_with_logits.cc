@@ -73,7 +73,7 @@ class SigmoidCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SigmoidCrossEntropyWithLogits, prim::kPrimSigmoidCrossEntropyWithLogits,
-                                 SigmoidCrossEntropyWithLogitsInfer, false);
+                                 SigmoidCrossEntropyWithLogitsInfer, true);
 
 }  // namespace ops
 }  // namespace mindspore

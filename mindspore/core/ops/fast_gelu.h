@@ -34,8 +34,8 @@ class MIND_API FastGeLU : public BaseOperator {
   FastGeLU() : BaseOperator(kNameFastGeLU) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr FastGeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FastGeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimFastGeLUPtr = std::shared_ptr<FastGeLU>;
 }  // namespace ops

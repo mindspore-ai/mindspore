@@ -42,8 +42,8 @@ class MIND_API MatrixSolve : public BaseOperator {
   /// \brief Method to get adjoint attributes.
   bool get_adjoint() const;
 };
-abstract::AbstractBasePtr MatrixSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MatrixSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixSolvePtr = std::shared_ptr<MatrixSolve>;
 }  // namespace ops
 }  // namespace mindspore

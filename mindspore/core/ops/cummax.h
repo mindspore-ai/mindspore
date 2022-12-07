@@ -36,8 +36,8 @@ class MIND_API Cummax : public BaseOperator {
 
   int64_t get_axis() const;
 };
-abstract::AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCummaxPtr = std::shared_ptr<Cummax>;
 }  // namespace ops
 }  // namespace mindspore

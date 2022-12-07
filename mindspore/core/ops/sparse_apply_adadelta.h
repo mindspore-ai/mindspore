@@ -36,8 +36,9 @@ class MIND_API SparseApplyAdadelta : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimSparseApplyAdadeltaPtr = std::shared_ptr<SparseApplyAdadelta>;
 }  // namespace ops

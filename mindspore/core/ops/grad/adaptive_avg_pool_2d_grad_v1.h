@@ -34,9 +34,9 @@ class MIND_API AdaptiveAvgPool2DGradV1 : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr AdaptiveAvgPool2DGradV1Infer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AdaptiveAvgPool2DGradV1Infer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAdaptiveAvgPool2DGradV1Ptr = std::shared_ptr<AdaptiveAvgPool2DGradV1>;
 }  // namespace ops
 }  // namespace mindspore

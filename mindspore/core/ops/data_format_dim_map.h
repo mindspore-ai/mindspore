@@ -36,8 +36,9 @@ class MIND_API DataFormatDimMap : public BaseOperator {
   std::string get_src_format() const;
   std::string get_dst_format() const;
 };
-abstract::AbstractBasePtr DataFormatDimMapInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DataFormatDimMapInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kDataFormatDimMapPtr = std::shared_ptr<DataFormatDimMap>;
 }  // namespace ops
 }  // namespace mindspore

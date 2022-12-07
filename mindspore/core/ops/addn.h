@@ -34,8 +34,8 @@ class MIND_API AddN : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.AddN for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

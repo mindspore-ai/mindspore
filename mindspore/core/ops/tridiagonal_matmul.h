@@ -38,8 +38,9 @@ class MS_CORE_API TridiagonalMatMul : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr TridiagonalMatMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TridiagonalMatMulInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<AbstractBasePtr> &input_args);
 using PrimTridiagonalMatMulPtr = std::shared_ptr<TridiagonalMatMul>;
 }  // namespace ops
 }  // namespace mindspore

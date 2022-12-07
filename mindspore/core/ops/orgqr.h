@@ -33,8 +33,8 @@ class MIND_API Orgqr : public BaseOperator {
   Orgqr() : BaseOperator(kNameOrgqr) { InitIOName({"x", "tau"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr OrgqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr OrgqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimOrgqrPtr = std::shared_ptr<Orgqr>;
 }  // namespace ops
 }  // namespace mindspore

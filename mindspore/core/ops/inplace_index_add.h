@@ -33,8 +33,9 @@ class MIND_API InplaceIndexAdd : public BaseOperator {
   /// \brief Constructor.
   InplaceIndexAdd() : BaseOperator(kNameInplaceIndexAdd) { InitIOName({"var", "indices", "updates"}, {"var"}); }
 };
-abstract::AbstractBasePtr InplaceIndexAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr InplaceIndexAddInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_INPLACE_INDEX_ADD_H_

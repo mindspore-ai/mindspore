@@ -215,6 +215,6 @@ AbstractBasePtr SparseMatrixSparseMatMulInfer(const abstract::AnalysisEnginePtr 
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixSparseMatMul, prim::kPrimSparseMatrixSparseMatMul,
                              SparseMatrixSparseMatMulInfer, nullptr, true);
-REGISTER_HOST_DEPENDS(kNameSparseMatrixSparseMatMul, {0});
+REGISTER_INFER_DEPENDS(kNameSparseMatrixSparseMatMul, {0});
 }  // namespace ops
 }  // namespace mindspore

@@ -50,8 +50,8 @@ class MIND_API Cross : public BaseOperator {
   int64_t get_dim() const;
 };
 
-abstract::AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCrossPtr = std::shared_ptr<Cross>;
 }  // namespace ops
 }  // namespace mindspore

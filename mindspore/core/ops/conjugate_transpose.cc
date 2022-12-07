@@ -111,7 +111,7 @@ AbstractBasePtr ConjugateTransposeInfer(const abstract::AnalysisEnginePtr &, con
   return abstract::MakeAbstract(shape, type);
 }
 
-REGISTER_HOST_DEPENDS(kNameConjugateTranspose, {1});
+REGISTER_INFER_DEPENDS(kNameConjugateTranspose, {1});
 MIND_API_OPERATOR_IMPL(ConjugateTranspose, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(ConjugateTranspose, prim::kPrimConjugateTranspose, ConjugateTransposeInfer, nullptr, true);
 }  // namespace ops

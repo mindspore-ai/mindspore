@@ -35,8 +35,9 @@ class MIND_API ConcatOffsetV1 : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ConcatOffsetV1 for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr ConcatOffsetV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ConcatOffsetV1Infer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONCAT_OFFSET_V1_H_

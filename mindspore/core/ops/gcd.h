@@ -33,8 +33,8 @@ class MIND_API Gcd : public BaseOperator {
   /// \brief Constructor.
   Gcd() : BaseOperator(kNameGcd) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr GcdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GcdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GCD_H_

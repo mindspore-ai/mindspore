@@ -33,8 +33,9 @@ class MIND_API SparseSegmentSqrtN : public BaseOperator {
   SparseSegmentSqrtN() : BaseOperator(kNameSparseSegmentSqrtN) { InitIOName({"x", "indices", "segment_ids"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr SparseSegmentSqrtNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SparseSegmentSqrtNInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSegmentSqrtNPtr = std::shared_ptr<SparseSegmentSqrtN>;
 }  // namespace ops
 }  // namespace mindspore

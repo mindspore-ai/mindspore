@@ -50,8 +50,8 @@ class MIND_API VmapUnstackAssign : public BaseOperator {
   VmapUnstackAssign() : BaseOperator(kNameVmapUnstackAssign) {}
 };
 
-abstract::AbstractBasePtr VmapAssignInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr VmapAssignInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_VMAP_ASSIGN_H_

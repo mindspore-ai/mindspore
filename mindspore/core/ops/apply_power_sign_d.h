@@ -32,8 +32,9 @@ class MIND_API ApplyPowerSign : public BaseOperator {
     InitIOName({"var", "m", "lr", "logbase", "sign_decay", "beta", "grad"}, {"var", "m"});
   }
 };
-abstract::AbstractBasePtr ApplyPowerSignDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ApplyPowerSignInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyPowerSignDPtr = std::shared_ptr<ApplyPowerSign>;
 }  // namespace ops
 }  // namespace mindspore

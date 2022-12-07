@@ -35,8 +35,8 @@ class MIND_API CSR2COO : public BaseOperator {
   /// \brief Constructor.
   CSR2COO() : BaseOperator(kNameCSR2COO) { InitIOName({"indptr", "nnz"}, {"output"}); }
 };
-abstract::AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

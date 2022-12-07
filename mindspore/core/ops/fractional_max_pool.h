@@ -73,8 +73,9 @@ class MIND_API FractionalMaxPool : public BaseOperator {
   ///
   /// \return pooling seed2 attributes.
 };
-abstract::AbstractBasePtr FractionalMaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FractionalMaxPoolInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalMaxPool = std::shared_ptr<FractionalMaxPool>;
 }  // namespace ops
 }  // namespace mindspore

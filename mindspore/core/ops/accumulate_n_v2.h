@@ -30,8 +30,9 @@ class MIND_API AccumulateNV2 : public BaseOperator {
   MIND_API_BASE_MEMBER(AccumulateNV2);
   AccumulateNV2() : BaseOperator(kNameAccumulateNV2) { InitIOName({"inputs"}, {"sum"}); }
 };
-abstract::AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAccumulateNV2Ptr = std::shared_ptr<AccumulateNV2>;
 }  // namespace ops
 }  // namespace mindspore

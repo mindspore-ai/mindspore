@@ -48,8 +48,9 @@ class MIND_API StridedSliceV2Grad : public BaseOperator {
   int64_t get_shrink_axis_mask() const;
 };
 
-abstract::AbstractBasePtr StridedSliceV2GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr StridedSliceV2GradInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimStridedSliceV2GradPtr = std::shared_ptr<StridedSliceV2Grad>;
 }  // namespace ops
 }  // namespace mindspore

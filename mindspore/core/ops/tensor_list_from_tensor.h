@@ -54,8 +54,9 @@ class MIND_API TensorListFromTensor : public BaseOperator {
   /// \brief Method to get the op's shape_type attributes.
   int64_t get_shape_type() const;
 };
-abstract::AbstractBasePtr TensorListFromTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TensorListFromTensorInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

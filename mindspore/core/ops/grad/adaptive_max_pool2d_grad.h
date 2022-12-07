@@ -36,8 +36,9 @@ class MIND_API AdaptiveMaxPool2DGrad : public BaseOperator {
     InitIOName({"y_grad", "x", "argmax"}, {"x_grad"});
   }
 };
-abstract::AbstractBasePtr AdaptiveMaxPool2DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AdaptiveMaxPool2DGradInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

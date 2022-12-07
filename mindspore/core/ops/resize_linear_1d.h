@@ -37,8 +37,9 @@ class MIND_API ResizeLinear1D : public BaseOperator {
   void set_coordinate_transformation_mode(const std::string coordinate_transformation_mode);
   std::string get_coordinate_transformation_mode() const;
 };
-abstract::AbstractBasePtr ResizeLinear1DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ResizeLinear1DInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimResizeLinear1DPtr = std::shared_ptr<ResizeLinear1D>;
 }  // namespace ops
 }  // namespace mindspore

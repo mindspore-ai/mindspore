@@ -118,7 +118,7 @@ AbstractBasePtr SparseSegmentMeanWithNumSegmentsInfer(const abstract::AnalysisEn
 }
 
 MIND_API_OPERATOR_IMPL(SparseSegmentMeanWithNumSegments, BaseOperator);
-REGISTER_HOST_DEPENDS(kNameSparseSegmentMeanWithNumSegments, {3});
+REGISTER_INFER_DEPENDS(kNameSparseSegmentMeanWithNumSegments, {3});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentMeanWithNumSegments, prim::kPrimSparseSegmentMeanWithNumSegments,
                              SparseSegmentMeanWithNumSegmentsInfer, nullptr, true);
 }  // namespace ops

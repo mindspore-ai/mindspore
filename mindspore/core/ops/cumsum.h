@@ -48,8 +48,8 @@ class MIND_API CumSum : public BaseOperator {
   bool get_reverse() const;
   ///
 };
-abstract::AbstractBasePtr CumSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr CumSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCumSum = std::shared_ptr<CumSum>;
 }  // namespace ops
 }  // namespace mindspore

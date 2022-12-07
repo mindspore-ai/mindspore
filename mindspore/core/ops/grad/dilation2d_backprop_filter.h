@@ -56,9 +56,9 @@ class MIND_API Dilation2DBackpropFilter : public BaseOperator {
   std::string get_format() const;
 };
 
-abstract::AbstractBasePtr Dilation2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr Dilation2DBackpropFilterInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

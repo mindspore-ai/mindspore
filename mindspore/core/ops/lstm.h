@@ -99,8 +99,8 @@ class MIND_API LSTM : public BaseOperator {
   /// \return good_ld.
   int64_t get_good_ld(const int64_t dim, const int64_t type_size);
 };
-abstract::AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

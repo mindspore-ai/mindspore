@@ -33,9 +33,9 @@ class MIND_API DenseToSparseSetOperation : public BaseOperator {
     InitIOName({"x1", "x2_indices", "x2_values", "x2_shape"}, {"y_indices", "y_values", "y_shape"});
   }
 };
-abstract::AbstractBasePtr DenseToSparseSetOperationInfer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DenseToSparseSetOperationInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kDenseToSparseSetOperationPtr = std::shared_ptr<DenseToSparseSetOperation>;
 }  // namespace ops
 }  // namespace mindspore

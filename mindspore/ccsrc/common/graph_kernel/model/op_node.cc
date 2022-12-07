@@ -30,6 +30,7 @@
 #include "utils/hash_map.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/model/node.h"
+#include "backend/operator/ops_backend_infer_function.h"
 
 namespace mindspore::graphkernel::inner {
 std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
@@ -41,49 +42,36 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
 }
 
 BaseShapePtr InferShapeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
-  auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
-  auto iter = frontend_infer_func.find(prim);
-  if (iter != frontend_infer_func.end()) {
-    MS_EXCEPTION_IF_CHECK_FAIL(iter->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    return iter->second.InferShape(prim, abs_list);
+  auto found = abstract::GetBackendPrimitiveInferImpl(prim);
+  if (found.has_value()) {
+    auto infer = found.value();
+    if (infer.IsImplInferShapeAndType()) {
+      return infer.InferShape(prim, abs_list);
+    }
   }
-  auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
-  auto iter2 = backend_infer_func.find(prim);
-  if (iter2 != backend_infer_func.end()) {
-    MS_EXCEPTION_IF_CHECK_FAIL(iter2->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    return iter2->second.InferShape(prim, abs_list);
-  } else {
-    MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
-  }
+  MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
+  return nullptr;
 }
 
 TypePtr InferTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
-  auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
-  auto iter = frontend_infer_func.find(prim);
-  if (iter != frontend_infer_func.end()) {
-    MS_EXCEPTION_IF_CHECK_FAIL(iter->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    return iter->second.InferType(prim, abs_list);
+  auto found = abstract::GetBackendPrimitiveInferImpl(prim);
+  if (found.has_value()) {
+    auto infer = found.value();
+    if (infer.IsImplInferShapeAndType()) {
+      return infer.InferType(prim, abs_list);
+    }
   }
-  auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
-  auto iter2 = backend_infer_func.find(prim);
-  if (iter2 != backend_infer_func.end()) {
-    MS_EXCEPTION_IF_CHECK_FAIL(iter2->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    return iter2->second.InferType(prim, abs_list);
-  } else {
-    MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
-  }
+  MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
+  return nullptr;
 }
 
 tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
-  auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
-  auto iter = frontend_infer_func.find(prim);
-  if (iter != frontend_infer_func.end() && iter->second.IsImplInferValue()) {
-    return std::static_pointer_cast<tensor::Tensor>(iter->second.InferValue(prim, abs_list));
-  }
-  auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
-  auto iter2 = backend_infer_func.find(prim);
-  if (iter2 != backend_infer_func.end() && iter2->second.IsImplInferValue()) {
-    return std::static_pointer_cast<tensor::Tensor>(iter2->second.InferValue(prim, abs_list));
+  auto found = abstract::GetBackendPrimitiveInferImpl(prim);
+  if (found.has_value()) {
+    auto infer = found.value();
+    if (infer.IsImplInferValue()) {
+      return std::static_pointer_cast<tensor::Tensor>(infer.InferValue(prim, abs_list));
+    }
   }
   return nullptr;
 }

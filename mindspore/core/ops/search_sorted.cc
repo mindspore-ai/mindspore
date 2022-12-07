@@ -86,7 +86,7 @@ AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto infer_shape = SearchSortedInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_HOST_DEPENDS(kNameSearchSorted, {1});
+REGISTER_INFER_DEPENDS(kNameSearchSorted, {1});
 REGISTER_PRIMITIVE_EVAL_IMPL(SearchSorted, prim::kPrimSearchSorted, SearchSortedInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

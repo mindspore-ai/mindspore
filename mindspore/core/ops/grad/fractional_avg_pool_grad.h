@@ -39,8 +39,9 @@ class MIND_API FractionalAvgPoolGrad : public BaseOperator {
   ///
   /// \return overlapping attributes.
 };
-abstract::AbstractBasePtr FractionalAvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr FractionalAvgPoolGradInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalAvgPoolGrad = std::shared_ptr<FractionalAvgPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore

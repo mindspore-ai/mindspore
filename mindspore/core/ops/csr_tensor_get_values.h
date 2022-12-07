@@ -32,8 +32,9 @@ class MIND_API CSRTensorGetValues : public BaseOperator {
   /// \brief Constructor.
   CSRTensorGetValues() : BaseOperator(kNameCSRTensorGetValues) {}
 };
-abstract::AbstractBasePtr CSRTensorGetValuesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &args_spec_list);
+MIND_API abstract::AbstractBasePtr CSRTensorGetValuesInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &args_spec_list);
 }  // namespace ops
 }  // namespace mindspore
 

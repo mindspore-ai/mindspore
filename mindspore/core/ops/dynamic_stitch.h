@@ -30,8 +30,9 @@ class MIND_API DynamicStitch : public BaseOperator {
   DynamicStitch() : BaseOperator(kNameDynamicStitch) {}
   void Init() const {}
 };
-abstract::AbstractBasePtr DynamicStitchInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr DynamicStitchInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

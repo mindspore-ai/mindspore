@@ -80,8 +80,8 @@ class MIND_API Mfcc : public BaseOperator {
   /// \return the output channels to generate per time slice.
   int64_t get_dct_coeff_num() const;
 };
-abstract::AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

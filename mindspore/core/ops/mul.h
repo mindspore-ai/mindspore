@@ -36,8 +36,8 @@ class MIND_API Mul : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mul for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr MulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API MIND_API abstract::AbstractBasePtr MulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

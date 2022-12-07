@@ -36,8 +36,9 @@ class MIND_API ApplyProximalAdagrad : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr ApplyProximalAdagradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ApplyProximalAdagradInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimApplyProximalAdagradPtr = std::shared_ptr<ApplyProximalAdagrad>;
 }  // namespace ops

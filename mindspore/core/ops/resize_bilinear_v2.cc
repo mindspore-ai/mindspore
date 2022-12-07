@@ -110,6 +110,6 @@ AbstractBasePtr ResizeBilinearV2Infer(const abstract::AnalysisEnginePtr &, const
 
 REGISTER_PRIMITIVE_EVAL_IMPL(ResizeBilinearV2, prim::kPrimResizeBilinearV2, ResizeBilinearV2Infer, nullptr, true);
 
-REGISTER_HOST_DEPENDS(kNameResizeBilinearV2, {1});
+REGISTER_INFER_DEPENDS(kNameResizeBilinearV2, {1});
 }  // namespace ops
 }  // namespace mindspore

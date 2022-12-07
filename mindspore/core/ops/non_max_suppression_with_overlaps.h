@@ -38,9 +38,9 @@ class MIND_API NonMaxSuppressionWithOverlaps : public BaseOperator {
   MIND_API_BASE_MEMBER(NonMaxSuppressionWithOverlaps);
   NonMaxSuppressionWithOverlaps() : BaseOperator("NonMaxSuppressionWithOverlaps") {}
 };
-abstract::AbstractBasePtr NonMaxSuppressionWithOverlapsInfer(const abstract::AnalysisEnginePtr &,
-                                                             const PrimitivePtr &primitive,
-                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr NonMaxSuppressionWithOverlapsInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimNonMaxSuppressionWihtOverlapsPtr = std::shared_ptr<NonMaxSuppressionWithOverlaps>;
 }  // namespace ops
 }  // namespace mindspore

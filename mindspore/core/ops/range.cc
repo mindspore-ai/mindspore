@@ -173,7 +173,7 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_HOST_DEPENDS(kNameRange, {0, 1, 2});
+REGISTER_INFER_DEPENDS(kNameRange, {0, 1, 2});
 REGISTER_PRIMITIVE_EVAL_IMPL(Range, prim::kPrimRange, RangeInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

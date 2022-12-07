@@ -121,7 +121,7 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_HOST_DEPENDS(kNameUnsortedSegmentSum, {2});
+REGISTER_INFER_DEPENDS(kNameUnsortedSegmentSum, {2});
 REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentSum, prim::kPrimUnsortedSegmentSum, UnsortedSegmentSumInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

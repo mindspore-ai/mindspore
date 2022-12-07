@@ -101,7 +101,7 @@ AbstractBasePtr StandardLaplaceInfer(const abstract::AnalysisEnginePtr &, const 
   return abstract::MakeAbstract(shape, type);
 }
 
-REGISTER_HOST_DEPENDS(kNameStandardLaplace, {0});
+REGISTER_INFER_DEPENDS(kNameStandardLaplace, {0});
 MIND_API_OPERATOR_IMPL(StandardLaplace, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(StandardLaplace, prim::kPrimStandardLaplace, StandardLaplaceInfer, nullptr, true);
 }  // namespace ops

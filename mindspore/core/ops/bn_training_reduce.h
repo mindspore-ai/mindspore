@@ -30,8 +30,9 @@ class MIND_API BNTrainingReduce : public BaseOperator {
   MIND_API_BASE_MEMBER(BNTrainingReduce);
   BNTrainingReduce() : BaseOperator(kNamekBNTrainingReduce) { InitIOName({"x"}, {"sum", "square_sum"}); }
 };
-abstract::AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBNTrainingReduce = std::shared_ptr<BNTrainingReduce>;
 }  // namespace ops
 }  // namespace mindspore

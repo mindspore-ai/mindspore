@@ -36,8 +36,9 @@ class MIND_API InstanceNormV2 : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr InstanceNormV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr InstanceNormV2Infer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimInstanceNormV2Ptr = std::shared_ptr<InstanceNormV2>;
 }  // namespace ops
 }  // namespace mindspore

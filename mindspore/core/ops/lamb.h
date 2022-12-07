@@ -32,8 +32,8 @@ class MIND_API Lamb : public BaseOperator {
   MIND_API_BASE_MEMBER(Lamb);
   Lamb() : BaseOperator(kNameLamb) {}
 };
-abstract::AbstractBasePtr LambInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LambInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimLambPtr = std::shared_ptr<Lamb>;
 }  // namespace ops
 }  // namespace mindspore

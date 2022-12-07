@@ -1227,7 +1227,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  bool need_infer_value = !eval_impl_.IsInWhileList();
+  bool need_infer_value = !eval_impl_.IsInWhiteList();
   if (need_infer_value == false) {
     need_infer_value = ((context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode)) &&
                        std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
@@ -2848,7 +2848,7 @@ std::mutex PrimEvaluatorConstructorMutex;
 void InitPrimEvaluatorConstructors() {
   PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
 
-  for (const auto &iter : GetPrimitiveToEvalImplMap()) {
+  for (const auto &iter : GetPrimitiveInferMap()) {
     constructor[iter.first] = InitStandardPrimEvaluator(iter.first, iter.second);
   }
 
@@ -2875,16 +2875,25 @@ void InitPrimEvaluatorConstructors() {
 
 void ClearPrimEvaluatorMap() {
   PrimEvaluatorConstructors.clear();
-  GetPrimitiveToEvalImplMap().clear();
+  GetFrontendPrimitiveInferMapPtr()->clear();
   GetUniformPrimitiveToImplMap().clear();
 }
 
 bool IsInWhiteList(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
 
-  auto iter = GetPrimitiveToEvalImplMap().find(primitive);
-  if (iter != GetPrimitiveToEvalImplMap().end()) {
-    return iter->second.IsInWhileList();
+  using WhiteList = mindspore::HashMap<PrimitivePtr, bool, PrimitiveHasher, PrimitiveEqual>;
+
+  static WhiteList whitelist = {{prim::kPrimPartial, true}};
+  auto iter = whitelist.find(primitive);
+  if (iter != whitelist.end()) {
+    return iter->second;
+  }
+
+  auto found = abstract::GetFrontendPrimitiveInferImpl(primitive);
+  if (found.has_value()) {
+    auto infer = found.value();
+    return infer.IsInWhiteList();
   }
 
   auto uni_iter = GetUniformPrimitiveToImplMap().find(primitive);
@@ -2892,7 +2901,7 @@ bool IsInWhiteList(const PrimitivePtr &primitive) {
     return uni_iter->second.in_white_list_;
   }
 
-  return false;
+  return true;
 }
 
 PrimEvaluatorMap &GetPrimEvaluatorConstructors() {

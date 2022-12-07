@@ -116,6 +116,6 @@ AbstractBasePtr SparseSegmentMeanInfer(const abstract::AnalysisEnginePtr &, cons
 
 MIND_API_OPERATOR_IMPL(SparseSegmentMean, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentMean, prim::kPrimSparseSegmentMean, SparseSegmentMeanInfer, nullptr, true);
-REGISTER_HOST_DEPENDS(kNameSparseSegmentMean, {2});
+REGISTER_INFER_DEPENDS(kNameSparseSegmentMean, {2});
 }  // namespace ops
 }  // namespace mindspore

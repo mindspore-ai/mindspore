@@ -45,8 +45,9 @@ class MIND_API BCEWithLogitsLoss : public BaseOperator {
   /// \return reduction.
   std::string get_reduction() const;
 };
-abstract::AbstractBasePtr BCEWithLogitsLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BCEWithLogitsLossInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_BCE_WITH_LOGITS_LOSS_H_

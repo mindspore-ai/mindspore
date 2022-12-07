@@ -33,8 +33,8 @@ class MIND_API Lu : public BaseOperator {
   MIND_API_BASE_MEMBER(Lu);
   Lu() : BaseOperator(kNameLu) { InitIOName({"input"}, {"lu", "p"}); }
 };
-abstract::AbstractBasePtr LuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr LuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLuPtr = std::shared_ptr<Lu>;
 }  // namespace ops
 }  // namespace mindspore

@@ -161,7 +161,7 @@ AbstractBasePtr ScaleAndTranslateInfer(const abstract::AnalysisEnginePtr &, cons
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_HOST_DEPENDS(kNameScaleAndTranslate, {1, 2});
+REGISTER_INFER_DEPENDS(kNameScaleAndTranslate, {1, 2});
 REGISTER_PRIMITIVE_EVAL_IMPL(ScaleAndTranslate, prim::kPrimScaleAndTranslate, ScaleAndTranslateInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

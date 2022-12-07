@@ -32,8 +32,8 @@ class MIND_API BitwiseOr : public BaseOperator {
   BitwiseOr() : BaseOperator(kNameBitwiseOr) { InitIOName({"x1", "x2"}, {"y"}); }
   explicit BitwiseOr(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBitwiseOrPtr = std::shared_ptr<BitwiseOr>;
 }  // namespace ops
 }  // namespace mindspore

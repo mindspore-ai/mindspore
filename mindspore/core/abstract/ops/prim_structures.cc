@@ -76,8 +76,8 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
   return std::make_shared<AbstractDictionary>(key_value);
 }
 
-AbstractBasePtr InferImplMakeKwarg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: a string and an object of a subclass of AbstractBase.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 2;
@@ -93,8 +93,8 @@ AbstractBasePtr InferImplMakeKwarg(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractKeywordArg>(key_string, args_spec_list[1]);
 }
 
-AbstractBasePtr InferImplExtractKwarg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_spec_list) {
   // Inputs: a string and a keyword.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 2;

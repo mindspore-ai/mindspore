@@ -35,8 +35,9 @@ class MIND_API GridSampler2D : public BaseOperator {
   std::string get_padding_mode() const;
   bool get_align_corners() const;
 };
-abstract::AbstractBasePtr GridSampler2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr GridSampler2DInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGridSampler2D = std::shared_ptr<GridSampler2D>;
 }  // namespace ops
 }  // namespace mindspore

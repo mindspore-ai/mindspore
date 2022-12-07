@@ -347,14 +347,18 @@ AbstractBasePtrList ConstructArgs(const std::vector<ShapeVector> &args_shape_lis
 
 ShapeVector RunCInferShapeValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
   ShapeVector shape_value;
-  auto eval_impl = abstract::GetPrimitiveInferImpl(prim);
-  if (eval_impl.IsImplInferValue()) {
-    auto value = eval_impl.InferValue(prim, args);
-    if (value != nullptr) {
-      shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", value, prim->name());
-      MS_LOG(DEBUG) << "Inferred shape value: " << shape_value;
+  auto eval_impl_opt = abstract::GetPrimitiveInferImpl(prim);
+  if (eval_impl_opt.has_value()) {
+    auto eval_impl = eval_impl_opt.value();
+    if (eval_impl.IsImplInferValue()) {
+      auto value = eval_impl.InferValue(prim, args);
+      if (value != nullptr) {
+        shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", value, prim->name());
+        MS_LOG(DEBUG) << "Inferred shape value: " << shape_value;
+      }
     }
   }
+
   return shape_value;
 }
 
@@ -388,10 +392,14 @@ std::vector<ShapeVector> ConvertShape(const std::vector<ShapeVector> &shapes) {
 }
 
 bool HasInferValue(const PrimitivePtr &prim) {
-  auto eval_impl = abstract::GetPrimitiveInferImpl(prim);
-  if (eval_impl.IsImplInferValue()) {
-    return true;
+  auto eval_impl_opt = abstract::GetPrimitiveInferImpl(prim);
+  if (eval_impl_opt.has_value()) {
+    auto eval_impl = eval_impl_opt.value();
+    if (eval_impl.IsImplInferValue()) {
+      return true;
+    }
   }
+
   return false;
 }
 

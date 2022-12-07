@@ -116,7 +116,7 @@ AbstractBasePtr SparseSegmentSumWithNumSegmentsInfer(const abstract::AnalysisEng
   auto shapes = SparseSegmentSumWithNumSegmentsInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameSparseSegmentSumWithNumSegments, {3});
+REGISTER_INFER_DEPENDS(kNameSparseSegmentSumWithNumSegments, {3});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSumWithNumSegments, prim::kPrimSparseSegmentSumWithNumSegments,
                              SparseSegmentSumWithNumSegmentsInfer, nullptr, true);
 }  // namespace ops

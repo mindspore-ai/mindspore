@@ -215,6 +215,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/common/session/executor_manager.cc"
         "../../../mindspore/ccsrc/backend/common/session/session_factory.cc"
         "../../../mindspore/ccsrc/backend/common/session/kernel_build_client.cc"
+        "../../../mindspore/ccsrc/backend/operator/*.cc"
         "../../../mindspore/ccsrc/ps/*.cc"
         "../../../mindspore/ccsrc/fl/*.cc"
         "../../../mindspore/ccsrc/distributed/cluster/actor_route_table_service.cc"

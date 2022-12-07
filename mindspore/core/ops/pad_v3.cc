@@ -211,7 +211,7 @@ bool PadV3::get_paddings_contiguous() const { return GetValue<bool>(GetAttr("pad
 std::string PadV3::get_mode() const { return GetValue<string>(GetAttr("mode")); }
 std::vector<int64_t> PadV3::get_paddings() const { return GetValue<std::vector<int64_t>>(GetAttr("padding_switched")); }
 
-REGISTER_HOST_DEPENDS(kNamePadV3, {kInputIndex1});
+REGISTER_INFER_DEPENDS(kNamePadV3, {kInputIndex1});
 MIND_API_OPERATOR_NAME_IMPL(PadV3, kNamePadV3, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(PadV3, prim::kPrimPadV3, PadV3Infer, nullptr, true);
 }  // namespace ops

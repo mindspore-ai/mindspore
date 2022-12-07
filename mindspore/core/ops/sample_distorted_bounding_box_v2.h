@@ -48,9 +48,9 @@ class MIND_API SampleDistortedBoundingBoxV2 : public BaseOperator {
   void set_use_image(const bool use_image);
   bool get_use_image() const;
 };
-abstract::AbstractBasePtr SampleDistortedBoundingBoxV2Infer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr SampleDistortedBoundingBoxV2Infer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSampleDistortedBoundingBoxV2Ptr = std::shared_ptr<SampleDistortedBoundingBoxV2>;
 }  // namespace ops
 }  // namespace mindspore

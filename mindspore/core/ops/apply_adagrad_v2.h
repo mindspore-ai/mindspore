@@ -49,8 +49,9 @@ class MIND_API ApplyAdagradV2 : public BaseOperator {
   bool get_update_slots() const;
 };
 
-abstract::AbstractBasePtr ApplyAdagradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr ApplyAdagradV2Infer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyAdagradV2Ptr = std::shared_ptr<ApplyAdagradV2>;
 }  // namespace ops
 }  // namespace mindspore

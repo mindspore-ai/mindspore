@@ -32,8 +32,8 @@ class MIND_API Atanh : public BaseOperator {
   Atanh() : BaseOperator(kNameAtanh) { InitIOName({"x"}, {"y"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr AtanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AtanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimAtanhPtr = std::shared_ptr<Atanh>;
 }  // namespace ops

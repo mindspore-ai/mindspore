@@ -111,7 +111,7 @@ AbstractBasePtr SparseSegmentSumGradInfer(const abstract::AnalysisEnginePtr &, c
   auto shapes = SparseSegmentSumGradInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameSparseSegmentSumGrad, {3});
+REGISTER_INFER_DEPENDS(kNameSparseSegmentSumGrad, {3});
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSumGrad, prim::kPrimSparseSegmentSumGrad, SparseSegmentSumGradInfer, nullptr,
                              true);
 }  // namespace ops

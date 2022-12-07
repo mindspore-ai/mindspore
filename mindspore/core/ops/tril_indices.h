@@ -56,8 +56,8 @@ class MIND_API TrilIndices : public BaseOperator {
   int64_t get_offset() const;
 };
 
-abstract::AbstractBasePtr TrilIndicesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr TrilIndicesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

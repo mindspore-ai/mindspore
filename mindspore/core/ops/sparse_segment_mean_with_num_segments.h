@@ -39,7 +39,7 @@ class MIND_API SparseSegmentMeanWithNumSegments : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseSegmentMeanWithNumSegmentsInfer(
+MIND_API abstract::AbstractBasePtr SparseSegmentMeanWithNumSegmentsInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSegmentMeanWithNumSegmentsPtr = std::shared_ptr<SparseSegmentMeanWithNumSegments>;
