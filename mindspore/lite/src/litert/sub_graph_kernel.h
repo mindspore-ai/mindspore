@@ -57,6 +57,16 @@ struct DataStore {
   }
 };
 
+typedef struct KernelsArray {
+  struct KernelsArrayUnit {
+    std::vector<KernelExec *> kernels = {};
+    std::vector<size_t> input_indexs = {};
+    std::vector<size_t> output_indexs = {};
+  };
+  std::vector<KernelsArrayUnit> units = {};
+  std::vector<size_t> graph_input = {};
+} KernelsArray;
+
 class SubGraphKernel : public KernelExec {
  public:
   SubGraphKernel(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
@@ -132,6 +142,12 @@ class SubGraphKernel : public KernelExec {
 
   int DeleteSingleWayNode(KernelExec *kernel, bool keep_input);
 
+  inline bool GetGraphChanged() const { return graph_changed_; }
+
+  inline void SetGraphChanged(bool flag) { graph_changed_ = flag; }
+
+  int SubGraphSplitByOperator(KernelsArray *out_kernels);
+
  protected:
   std::vector<KernelExec *> nodes_{};
   // entry nodes in nodes
@@ -140,6 +156,7 @@ class SubGraphKernel : public KernelExec {
   std::vector<KernelExec *> out_nodes_{};
   mindspore::lite::Executor *executor_ = nullptr;
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
+  bool graph_changed_ = false;
 };
 
 class CpuSubGraph : public SubGraphKernel {

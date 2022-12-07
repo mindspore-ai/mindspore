@@ -253,12 +253,12 @@ void ConvNormC4PassAct(std::vector<kernel::KernelExec *> *kernels) {
   return;
 }
 
-STATUS DeleteRedundantTrans(std::vector<kernel::KernelExec *> *kernels) {
+STATUS DeleteRedundantTrans(std::vector<kernel::KernelExec *> *kernels, bool *changed = nullptr) {
   for (auto *pre_kernel : *kernels) {
     if (pre_kernel->subgraph_type() != kernel::kNotSubGraph) {
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(pre_kernel);
       auto &partial = sub_graph->nodes();
-      if (DeleteRedundantTrans(&partial) != RET_OK) {
+      if (DeleteRedundantTrans(&partial, changed) != RET_OK) {
         MS_LOG(ERROR) << "DeleteRedundantTrans failed in subgraph.";
         return RET_ERROR;
       }
@@ -294,14 +294,28 @@ STATUS DeleteRedundantTrans(std::vector<kernel::KernelExec *> *kernels) {
       continue;
     }
     auto pre_in_kernel = pre_kernel->in_kernels().front();
-    pre_in_kernel->set_out_kernels({post_kernel});
-    std::vector<kernel::KernelExec *> post_in_kernels = {pre_in_kernel};
-    if (post_kernel->in_kernels().size() == kInputSize1) {
-      post_in_kernels.push_back(post_kernel->in_kernels()[1]);
+    auto pre_output_kernels = pre_in_kernel->out_kernels();
+    auto item = find(pre_output_kernels.begin(), pre_output_kernels.end(), pre_kernel);
+    if (item == pre_output_kernels.end()) {
+      MS_LOG(ERROR) << "kernel's out_kernels is invalid.";
+      return RET_ERROR;
     }
+    *item = post_kernel;
+    pre_in_kernel->set_out_kernels(pre_output_kernels);
+
+    auto post_in_kernels = post_kernel->in_kernels();
+    item = find(post_in_kernels.begin(), post_in_kernels.end(), pre_kernel);
+    if (item == post_in_kernels.end()) {
+      MS_LOG(ERROR) << "kernel's in_kernels is invalid.";
+      return RET_ERROR;
+    }
+    *item = pre_in_kernel;
     post_kernel->set_in_kernels(post_in_kernels);
     post_kernel->set_in_tensor(pre_kernel->in_tensors()[0], 0);
     kernels->erase(find(kernels->begin(), kernels->end(), pre_kernel));
+    if (changed != nullptr) {
+      *changed = true;
+    }
     delete pre_kernel;
   }
   return RET_OK;
@@ -338,7 +352,11 @@ STATUS GraphOptimizePass(std::vector<kernel::KernelExec *> *sub_graphs) {
       continue;
     }
     auto &kernels = sub_graph->nodes();
-    auto status = DeleteRedundantTrans(&kernels);
+    bool changed = false;
+    auto status = DeleteRedundantTrans(&kernels, &changed);
+    if (changed) {
+      sub_graph->SetGraphChanged(changed);
+    }
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DeleteRedundantTrans failed.";
       return RET_ERROR;

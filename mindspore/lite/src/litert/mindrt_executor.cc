@@ -123,7 +123,7 @@ int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::KernelExec *> &
           MS_LOG(ERROR) << "new opdata failed.";
           return RET_NULL_PTR;
         }
-        op_actors_[j]->AddResultIndex(output_data_.size());
+        op_actors_[j]->AddResultIndex(output_data_.size(), k);
         (void)output_data_.emplace_back(data);
       }
     }
