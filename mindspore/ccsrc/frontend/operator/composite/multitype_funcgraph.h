@@ -21,10 +21,12 @@
 
 #include <vector>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <map>
 #include <set>
 #include <memory>
+#include <algorithm>
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "ir/dtype.h"
@@ -34,7 +36,7 @@ namespace mindspore {
 namespace prim {
 class MultitypeFuncGraph : public MetaFuncGraph {
  public:
-  explicit MultitypeFuncGraph(const std::string &name);
+  explicit MultitypeFuncGraph(const std::string &name, const std::string &doc_url);
   ~MultitypeFuncGraph() override = default;
   MS_DECLARE_PARENT(MultitypeFuncGraph, MetaFuncGraph)
 
@@ -49,9 +51,11 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   const TypeListMap<py::function> &GetPyFunctions() const { return fn_cache_py_; }
 
  private:
-  const std::pair<py::function, bool> SignMatch(const TypePtrList &types);
+  const std::tuple<py::function, bool, size_t> SignMatch(const TypePtrList &types);
+  const std::string PrintMatchFailLog(const TypeListMap<py::function>, const TypePtrList &types, size_t match_max_idx);
   TypeListMap<specialize_fn> fn_cache_;
   TypeListMap<py::function> fn_cache_py_;
+  std::string doc_url_;
 };
 using MultitypeFuncGraphPtr = std::shared_ptr<MultitypeFuncGraph>;
 }  // namespace prim

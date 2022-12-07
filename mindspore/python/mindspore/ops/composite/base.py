@@ -641,9 +641,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         [0.2 1.2 2.4]
     """
 
-    def __init__(self, name, read_value=False):
+    def __init__(self, name, read_value=False, doc_url=""):
         """Initialize MultitypeFuncGraph."""
-        MultitypeFuncGraph_.__init__(self, name)
+        MultitypeFuncGraph_.__init__(self, name, doc_url)
         self.entries = list()
         if read_value:
             self.set_signatures((

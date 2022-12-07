@@ -23,7 +23,9 @@ from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite import base
 from mindspore.common import Tensor
 
-setitem = base.MultitypeFuncGraph('setitem')
+DOC_URL = "https://mindspore.cn/docs/zh-CN/master/note/index_support.html"
+
+setitem = base.MultitypeFuncGraph('setitem', doc_url=DOC_URL)
 
 slice_get_item = SliceGetItem()
 

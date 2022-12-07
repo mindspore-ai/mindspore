@@ -87,7 +87,9 @@ def test_shift_operator_error_list_input():
     net = Net()
     with pytest.raises(RuntimeError) as err:
         net()
-    assert "operation does not support the type" in str(err.value)
+    assert "For operation 'left_shift'" in str(err.value)
+    assert "The 1-th argument type 'List' is not supported now." in str(err.value)
+    assert "<Number, Number>" in str(err.value)
 
 
 def test_shift_operator_error_float_input():

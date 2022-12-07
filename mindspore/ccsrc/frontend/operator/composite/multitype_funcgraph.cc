@@ -31,7 +31,8 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name) : MetaFuncGraph(name) {
+MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name, const std::string &doc_url)
+    : MetaFuncGraph(name), doc_url_(doc_url) {
   fn_cache_.clear();
   // def multitype(*args:ref):
   signatures_ = std::vector<Signature>({{"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});
@@ -88,12 +89,66 @@ bool HasUMonadType(const TypePtrList &types) {
   }
   return false;
 }
+
+size_t GetTypesPrefixMatchedNum(const TypePtrList &types, const TypePtrList &sign) {
+  for (size_t i = 0; i < sign.size(); ++i) {
+    if (!IsIdentidityOrSubclass(types[i], sign[i])) {
+      return i;
+    }
+  }
+  return sign.size();
+}
+
+std::string IntToNumber(const std::string &v) {
+  static mindspore::HashMap<std::string, std::string> int_to_number{
+    {"Int64", "Number"}, {"Int32", "Number"}, {"Int8", "Number"}};
+  auto iter = int_to_number.find(v);
+  if (iter != int_to_number.end()) {
+    return iter->second;
+  } else {
+    return v;
+  }
+}
+
+const std::vector<mindspore::TypePtrList> GetSortedCache(const TypeListMap<py::function> &fn_cache_py_,
+                                                         const TypePtrList &types, size_t match_max_idx) {
+  std::vector<mindspore::TypePtrList> cache_vec;
+  std::transform(fn_cache_py_.begin(), fn_cache_py_.end(), back_inserter(cache_vec),
+                 [](const auto &fcp) { return fcp.first; });
+
+  for (auto it = cache_vec.begin(); it != cache_vec.end();) {
+    if (GetTypesPrefixMatchedNum(types, *it) != match_max_idx) {
+      it = cache_vec.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  auto comparator = [](const mindspore::TypePtrList &a, const mindspore::TypePtrList &b) {
+    if (a.size() > b.size()) {
+      return false;
+    }
+    if (a.size() < b.size()) {
+      return true;
+    }
+    for (size_t i = 0; i < a.size(); ++i) {
+      if (a[i]->type_id() == b[i]->type_id()) {
+        continue;
+      }
+      return a[i]->type_id() < b[i]->type_id();
+    }
+    return true;
+  };
+  std::sort(cache_vec.begin(), cache_vec.end(), comparator);
+  return cache_vec;
+}
 }  // namespace
 
 // Return Exact match if exists,  else return non ambiguous sub class match
 // Return py::none() if matching is ambiguous
-const std::pair<py::function, bool> MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
+const std::tuple<py::function, bool, size_t> MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
   // Exact match
+  size_t match_max_idx = 0;
   for (auto &item : fn_cache_py_) {
     bool has_extra_u_monad = false;
     TypePtrList sign = item.first;
@@ -105,24 +160,70 @@ const std::pair<py::function, bool> MultitypeFuncGraph::SignMatch(const TypePtrL
         continue;
       }
     }
-    auto match = true;
-    for (size_t i = 0; i < sign.size(); ++i) {
-      if (!IsIdentidityOrSubclass(types[i], sign[i])) {
-        match = false;
-        break;
+    size_t match_idx = GetTypesPrefixMatchedNum(types, sign);
+    if (match_idx > match_max_idx) {
+      match_max_idx = match_idx;
+    }
+    if (match_idx == sign.size()) {
+      return std::make_tuple(item.second, has_extra_u_monad, sign.size());
+    }
+  }
+  return std::make_tuple(py::none(), false, match_max_idx);
+}
+
+const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::function>, const TypePtrList &types,
+                                                        size_t match_max_idx) {
+  std::ostringstream buffer1;
+  py::list types_list;
+  buffer1 << "<";
+  for (size_t i = 0; i < types.size(); ++i) {
+    std::string types_to_int = IntToNumber(TypeIdLabel(types[i]->type_id()));
+    types_list.append(types_to_int);
+    if (i != types.size() - 1) {
+      buffer1 << types_to_int << ", ";
+    } else {
+      buffer1 << types_to_int << ">";
+    }
+  }
+
+  std::ostringstream buffer2;
+  if (match_max_idx == 1) {
+    buffer2 << "When first argument is '" << types_list[0].str() << "', ";
+  }
+  if (match_max_idx > 1) {
+    buffer2 << "When argumen are given as ";
+    for (size_t i = 0; i < match_max_idx; ++i) {
+      buffer2 << "'" << types_list[i].str() << "', ";
+    }
+  }
+
+  std::ostringstream oss;
+  oss << "For operation '" << name_ << "', current input arguments types are " << buffer1.str() << ". The "
+      << (match_max_idx + 1) << "-th argument type '" << types_list[match_max_idx].str() << "' is not supported now.\n"
+      << buffer2.str() << "the support argument types of '" << name_ << "' operation as follows:\n";
+  const std::vector<mindspore::TypePtrList> cache_vec = GetSortedCache(fn_cache_py_, types, match_max_idx);
+  for (auto &item : cache_vec) {
+    oss << "<";
+    for (size_t i = 0; i < item.size(); ++i) {
+      std::string item_str = item[i]->ToString();
+      item_str.erase(std::remove(item_str.begin(), item_str.end(), ' '), item_str.end());
+      if (i != item.size() - 1) {
+        oss << item_str << ", ";
+      } else {
+        oss << item_str << ">\n";
       }
     }
-    if (!match) {
-      continue;
-    }
-    return std::pair(item.second, has_extra_u_monad);
   }
-  return std::pair(py::none(), false);
+
+  if (!doc_url_.empty()) {
+    oss << "For more details, please refer to " << doc_url_;
+  }
+
+  return oss.str();
 }
 
 FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
-  auto py_fn_pair = SignMatch(types);
-  auto py_fn = py_fn_pair.first;
+  auto [py_fn, has_extra_u_monad, match_max_idx] = SignMatch(types);
   std::ostringstream buffer;
   buffer << types;
   if (!py_fn.is_none()) {
@@ -131,7 +232,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
       MS_LOG(EXCEPTION) << "Fail to parse overload function " << buffer.str() << ".";
     }
     MS_LOG(DEBUG) << "Find overload function " << buffer.str() << ", function: " << func_graph->ToString() << ".";
-    if (py_fn_pair.second) {
+    if (has_extra_u_monad) {
       MS_LOG(DEBUG) << "Add extra UMoand type for func_graph: " << func_graph->ToString() << ".";
       func_graph->add_parameter();
     }
@@ -142,21 +243,9 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     MS_LOG(DEBUG) << "GenerateStubFunc " << buffer.str() << ", function: " << stub->ToString() << ".";
     return stub;
   }
-  std::ostringstream oss;
-  oss << "The supported types of overload function `" << name_ << "` is: ";
-  size_t idx = 0;
-  for (auto &item : fn_cache_py_) {
-    oss << item.first;
-    if (idx != fn_cache_py_.size() - 1) {
-      oss << ", ";
-    } else {
-      oss << ".";
-    }
-    idx++;
-  }
-  oss << "\n";
-  MS_LOG(EXCEPTION) << "The '" << name_ << "' operation does not support the type " << buffer.str() << ".\n"
-                    << oss.str();
+
+  auto match_fail_log = PrintMatchFailLog(fn_cache_py_, types, match_max_idx);
+  MS_LOG(EXCEPTION) << match_fail_log;
 }
 }  // namespace prim
 }  // namespace mindspore

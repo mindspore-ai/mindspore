@@ -215,7 +215,8 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_1():
         return x
     with pytest.raises(RuntimeError) as ex:
         foo()
-    assert "does not support the type" in str(ex.value)
+    assert "For operation 'add'" in str(ex.value)
+    assert "is not supported now" in str(ex.value)
 
 
 def test_fallback_sum_with_x_unsupported_operand_type_error_2():
@@ -231,4 +232,5 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_2():
         return x
     with pytest.raises(RuntimeError) as ex:
         foo()
-    assert "does not support the type" in str(ex.value)
+    assert "For operation 'add'" in str(ex.value)
+    assert "is not supported now" in str(ex.value)

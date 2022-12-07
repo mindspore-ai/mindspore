@@ -21,7 +21,9 @@ from mindspore.ops.composite.multitype_ops import _compile_utils as compile_util
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
-getitem = base.MultitypeFuncGraph('getitem', True)
+DOC_URL = "https://mindspore.cn/docs/zh-CN/master/note/index_support.html"
+
+getitem = base.MultitypeFuncGraph('getitem', doc_url=DOC_URL)
 """
 getitem is a metafuncgraph object which will get item from an object according to input type
 using ".register" decorator.
