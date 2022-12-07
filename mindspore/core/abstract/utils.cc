@@ -200,11 +200,9 @@ ShapeValueDType SingleShapeValueJoin(const ShapeValueDType &shape_value1, const 
   if (shape_value1 == shape_value2) {
     return shape_value1;
   }
-  if (shape_value1 == Shape::kShapeDimAny) {
-    return shape_value2;
-  }
-  if (shape_value2 == Shape::kShapeDimAny) {
-    return shape_value1;
+  // (-1, 2) join (1, -1) should be (-1, -1)
+  if (shape_value1 == Shape::kShapeDimAny || shape_value2 == Shape::kShapeDimAny) {
+    return Shape::kShapeDimAny;
   }
   // shape_value1 != shape_value2
   return Shape::kShapeError;

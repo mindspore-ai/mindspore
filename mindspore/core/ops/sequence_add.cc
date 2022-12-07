@@ -37,15 +37,7 @@ AbstractBasePtr CheckAndGetElementType(const abstract::AbstractSequencePtr input
   if (elements.empty()) {
     return nullptr;
   }
-  auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame(elements);
-  if (differ_index == 0) {
-    differ_index = CheckAndConvertUtils::CheckAbstractShapeSame(elements);
-  }
-  if (differ_index != 0) {
-    MS_EXCEPTION(TypeError) << "For primitive:" << prim_name << ", the added sequence abstract of item[0]: '"
-                            << elements[0]->ToString() << "' is not same with abstract of item[ " << differ_index
-                            << "]: abstract '" << elements[differ_index]->ToString() << "'.";
-  }
+  CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, "For primitive " + prim_name);
   return elements[0];
 }
 
@@ -94,14 +86,8 @@ AbstractBasePtr SequenceAddInferInner(const PrimitivePtr &primitive, const std::
     ret->set_dynamic_len_element_abs(abs_1);
     return ret;
   }
-  auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame({abs_1, abs_2});
-  if (differ_index == 0) {
-    differ_index = CheckAndConvertUtils::CheckAbstractShapeSame({abs_1, abs_2});
-  }
-  if (differ_index != 0) {
-    MS_EXCEPTION(TypeError) << "For primitive:" << prim_name << ", the element of first input: " << abs_1->ToString()
-                            << "' is not same with the element of second input: '" << abs_2->ToString() << "'.";
-  }
+  CheckAndConvertUtils::CheckAbstractTypeAndShapeSame({abs_1, abs_2}, "For primitive " + prim_name,
+                                                      "element of first input", "element of second input");
   if (input_1->dynamic_len()) {
     return input_1->Clone();
   }

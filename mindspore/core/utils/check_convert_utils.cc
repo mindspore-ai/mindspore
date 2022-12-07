@@ -346,6 +346,27 @@ size_t CheckAndConvertUtils::CheckAbstractTypeSame(const std::vector<AbstractBas
   return 0;
 }
 
+void CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(const std::vector<AbstractBasePtr> &abs_list,
+                                                         const std::string &precondition_log,
+                                                         const std::string &standard_abs_description,
+                                                         const std::string &differ_abs_description) {
+  if (abs_list.size() <= 1) {
+    return;
+  }
+  auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame(abs_list);
+  if (differ_index == 0) {
+    differ_index = CheckAndConvertUtils::CheckAbstractShapeSame(abs_list);
+  }
+  if (differ_index != 0) {
+    auto log_info1 = standard_abs_description.empty() ? "sequence[0] item" : standard_abs_description;
+    auto log_info2 =
+      differ_abs_description.empty() ? "sequence[" + std::to_string(differ_index) + "] item" : differ_abs_description;
+    MS_EXCEPTION(TypeError) << precondition_log << ", the " << log_info1 << " abstract '" << abs_list[0]->ToString()
+                            << "' is not same with the " << log_info2 << " abstract '"
+                            << abs_list[differ_index]->ToString() << "'.";
+  }
+}
+
 bool CheckAndConvertUtils::CheckValueSame(const ValuePtr &value_1, const ValuePtr &value_2) {
   MS_EXCEPTION_IF_NULL(value_1);
   MS_EXCEPTION_IF_NULL(value_2);

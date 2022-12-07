@@ -165,6 +165,18 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
     }
   }
 }
+
+void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args) {
+  MS_EXCEPTION_IF_NULL(broaded_args);
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
+                       [](const AbstractBasePtr &arg) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg);
+                         if (arg->GetValueTrack() != kAnyValue) {
+                           return arg->Broaden();
+                         }
+                         return arg;
+                       });
+}
 }  // namespace
 
 FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {

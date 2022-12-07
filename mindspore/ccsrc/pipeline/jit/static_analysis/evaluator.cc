@@ -343,6 +343,12 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
+                         auto arg_type = arg->BuildType();
+                         MS_EXCEPTION_IF_NULL(arg_type);
+                         if (arg->isa<AbstractScalar>() && arg_type->isa<Number>()) {
+                           MS_LOG(DEBUG) << "Set variable for scalar arg:" << arg->ToString();
+                           arg->cast_ptr<AbstractScalar>()->set_is_variable(true);
+                         }
                          if (arg->GetValueTrack() != kAnyValue) {
                            return arg->Broaden();
                          }
@@ -353,23 +359,11 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
 AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_abs_list) const {
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
-    for (const auto &arg : args_abs_list) {
-      // Scalar in no-expanding while body should be set to mutable.
-      if (!arg->isa<AbstractScalar>()) {
-        continue;
-      }
-      auto arg_type = arg->BuildType();
-      MS_EXCEPTION_IF_NULL(arg_type);
-      if (arg_type->isa<Number>()) {
-        MS_LOG(DEBUG) << "Set variable for scalar arg:" << arg->ToString();
-        arg->cast_ptr<AbstractScalar>()->set_is_variable(true);
-      }
-    }
-    AbstractBasePtrList broaded_list;
-    BroadenArgs(args_abs_list, &broaded_list);
+    AbstractBasePtrList broadened_list;
+    BroadenArgs(args_abs_list, &broadened_list);
     MS_LOG(DEBUG) << func_graph_->ToString() << ", original: " << mindspore::ToString(args_abs_list)
-                  << ", broadened: " << mindspore::ToString(broaded_list);
-    return broaded_list;
+                  << ", broadened: " << mindspore::ToString(broadened_list);
+    return broadened_list;
   }
   return args_abs_list;
 }

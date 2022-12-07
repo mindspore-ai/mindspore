@@ -138,16 +138,8 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   MS_EXCEPTION_IF_NULL(index_value);
   // Input  or index is variable, items shape and type should be same.
   if (index_value == kAnyValue) {
-    auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame(args_spec_list);
-    if (differ_index == 0) {
-      differ_index = CheckAndConvertUtils::CheckAbstractShapeSame(args_spec_list);
-    }
-    if (differ_index != 0) {
-      MS_EXCEPTION(TypeError) << "For op:" << op_name
-                              << ", the index is a variable, but the sequence[0] item abstract '"
-                              << args_spec_list[0]->ToString() << "' is not same with sequence[" << differ_index
-                              << "] abstract '" << args_spec_list[differ_index]->ToString() << "'.";
-    }
+    CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(args_spec_list,
+                                                        "For " + op_name + ", when index is not constant");
     return queue->elements()[0]->Broaden();
   }
   // For constant index, return input[index] of sequence.

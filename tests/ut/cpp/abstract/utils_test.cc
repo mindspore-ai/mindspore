@@ -89,11 +89,11 @@ TEST_F(TestUtils, TestShapeJoin) {
   ShapeJoinCheck({3, 4}, {3, 4}, {3, 4});
   ShapeJoinCheck({3, 5}, {3, 4}, nullptr);
   ShapeJoinCheck({3, 4}, {3, 4, 1}, nullptr);
-  ShapeJoinCheck({3, -1}, {-1, -1}, {3, -1});
+  ShapeJoinCheck({3, -1}, {-1, -1}, {-1, -1});
   ShapeJoinCheck({3, 4, -1}, {4, -1, -1}, nullptr);
-  ShapeJoinCheck({3, -1}, {-1, 3}, {3, 3});
-  ShapeJoinCheck({3, 4}, {-1, -1}, {3, 4});
-  ShapeJoinCheck({3, 4}, {3, -1}, {3, 4});
+  ShapeJoinCheck({3, -1}, {-1, 3}, {-1, -1});
+  ShapeJoinCheck({3, 4}, {-1, -1}, {-1, -1});
+  ShapeJoinCheck({3, 4}, {3, -1}, {3, -1});
   ShapeJoinCheck({3, -1}, {3, 4, -1}, nullptr);
   ShapeJoinCheck({3, 4}, {4, -1, 5}, nullptr);
   ShapeJoinCheck({3, 4}, {-2}, {-2});

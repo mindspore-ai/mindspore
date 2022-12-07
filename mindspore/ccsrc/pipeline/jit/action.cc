@@ -31,7 +31,6 @@
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/anfalgo.h"
 #include "abstract/abstract_value.h"
-#include "frontend/parallel/costmodel_context.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
 #include "pipeline/jit/pipeline.h"
