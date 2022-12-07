@@ -393,10 +393,6 @@ bool PynativeShard(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
     return change;
   }
 
-  if (!ParallelContext::GetInstance()->device_num_is_set()) {
-    MS_LOG(EXCEPTION) << "device_num must be set when use shard function";
-  }
-
   if (ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "parallel init failed.";
   }
@@ -404,7 +400,8 @@ bool PynativeShard(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   AnfNodePtr ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
-  auto device_num_shard = parallel::ParallelContext::GetInstance()->device_num();
+  CheckGlobalDeviceManager();
+  auto device_num_shard = g_device_manager->stage_device_num();
   change = SetStrategyForShard(root, all_nodes, device_num_shard);
   MS_LOG(INFO) << "Leaving pynative shard";
   return change;
