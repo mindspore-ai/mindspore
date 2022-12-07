@@ -2937,37 +2937,6 @@ std::shared_ptr<GeTensorDesc> GeOpConvertor::GetTensorDesc(const ShapeVector &de
   return tensor_desc;
 }
 
-mindspore::HashSet<size_t> GeOpConvertor::GetNeedRemoveInput(const AnfNodePtr &node, const bool training) {
-  MS_EXCEPTION_IF_NULL(node);
-  OpAdapterPtr adpt = FindAdapter(node, training);
-  if (adpt == nullptr) {
-    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
-    return {};
-  }
-
-  mindspore::HashSet<size_t> remove_input_index;
-  for (auto info : adpt->getInputAttrMap()) {
-    remove_input_index.insert(info.first);
-  }
-
-  static const std::unordered_set<std::string> kSpecialInputOps = {kDeformableOffsetsOpName};
-  auto op_type = GeOpConvertor::GetOpType(node, training);
-  if (kSpecialInputOps.count(op_type) == 0) {
-    return remove_input_index;
-  }
-
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto input_size = cnode->inputs().size();
-  for (size_t i = 1; i < input_size; ++i) {
-    if (adpt->getInputMap().count(i) == 0) {
-      MS_LOG(INFO) << "Different input numbers between ge and vm for index " << i;
-      remove_input_index.insert(i);
-    }
-  }
-  return remove_input_index;
-}
-
 mindspore::HashMap<std::string, std::string> GeOpConvertor::GetNeedAddInput(const AnfNodePtr &node,
                                                                             const bool training) {
   MS_EXCEPTION_IF_NULL(node);
@@ -2990,22 +2959,32 @@ bool GeOpConvertor::IsDynamicInput(const AnfNodePtr &node, const size_t idx) {
   return adapterPtr->IsDynInputOp(idx);
 }
 
-size_t GeOpConvertor::GetAclInputSize(const AnfNodePtr &node) {
+std::map<int, std::string> GeOpConvertor::GetAclInputNames(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adapterPtr = FindAdapter(node, true);
   if (adapterPtr == nullptr) {
     MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
   }
-  return adapterPtr->getInputMap().size();
+
+  std::map<int, std::string> input_names;
+  for (const auto &[k, v] : adapterPtr->getInputMap()) {
+    input_names.emplace(k, v.name);
+  }
+  return input_names;
 }
 
-size_t GeOpConvertor::GetAclOutputSize(const AnfNodePtr &node) {
+std::map<int, std::string> GeOpConvertor::GetAclOutputNames(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adapterPtr = FindAdapter(node, true);
   if (adapterPtr == nullptr) {
     MS_LOG(EXCEPTION) << "Can't find a adapter for op:" << node->DebugString();
   }
-  return adapterPtr->getOutputMap().size();
+
+  std::map<int, std::string> output_names;
+  for (const auto &[k, v] : adapterPtr->getOutputMap()) {
+    output_names.emplace(k, v.name);
+  }
+  return output_names;
 }
 }  // namespace transform
 }  // namespace mindspore
