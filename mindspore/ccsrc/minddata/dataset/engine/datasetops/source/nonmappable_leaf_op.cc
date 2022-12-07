@@ -42,9 +42,9 @@ NonMappableLeafOp::NonMappableLeafOp(int32_t num_workers, int32_t worker_connect
       shuffle_files_(shuffle_files),
       num_rows_per_shard_(0),
       num_rows_(0),
+      compression_type_(compression_type),
       shuffled_keys_({}),
-      seed_(0),
-      compression_type_(compression_type) {
+      seed_(0) {
   worker_connector_size_ = worker_connector_size;
 }
 
@@ -82,11 +82,14 @@ Status NonMappableLeafOp::operator()() {
       RETURN_IF_NOT_OK(jagged_rows_connector_->Pop(0, &fetched_row));
       if (fetched_row.eoe()) {
         workers_done++;
-      } else if (compression_type_ == CompressionType::None && (total_rows_ == 0 || rows_read < total_rows_)) {
+      } else if ((compression_type_ == CompressionType::NONE || compression_type_ == CompressionType::GZIP_WITH_COUNT ||
+                  compression_type_ == CompressionType::ZLIB_WITH_COUNT) &&
+                 (total_rows_ == 0 || rows_read < total_rows_)) {
         // we need to push a row
         RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row)));
         rows_read++;
-      } else if (compression_type_ != CompressionType::None && (rows_read < total_rows_ * num_devices_)) {
+      } else if ((compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::ZLIB) &&
+                 (rows_read < total_rows_ * num_devices_)) {
         // for compressed version, total_rows_ is total rows that will be read per shard
         // we need to push a row
         RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row)));

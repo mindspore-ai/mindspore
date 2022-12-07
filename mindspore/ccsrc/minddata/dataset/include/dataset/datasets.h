@@ -5733,8 +5733,12 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     If `num_samples` is 0 and numRows(parsed from schema) does not exist, read the full dataset;
   ///     If `num_samples` is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
   ///     If both `num_samples` and numRows(parsed from schema) are greater than 0, read `num_samples` rows.
-  ///     If `compression_type` is not None, then num_samples is a mandatory parameter and it is
-  ///     for the number of rows that is be read per shard from the compressed files.
+  ///     If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
+  ///     interpreted as number of rows to be read per shard from the compressed files.
+  ///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
+  ///     to avoid performance degradation.
+  ///     If `num_samples` is not provided, then multiple decompressions of the same file is required to
+  ///     obtain the file size.
   /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
   ///     Can be any of:
   ///     ShuffleMode::kFalse - No shuffling is performed.
@@ -5745,7 +5749,7 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     when num_shards is also specified. (Default = 0).
   /// \param[in] shard_equal_rows Get equal rows for all shards.
   ///     (Default = false, number of rows of each shard may be not equal).
-  ///     When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
+  ///     When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] compression_type Compression type to use.
   ///     (Default = "", which means no compression is used).
@@ -5771,8 +5775,12 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     If num_samples is 0 and numRows(parsed from schema) does not exist, read the full dataset;
   ///     If num_samples is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
   ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-  ///     If `compression_type` is not None, then num_samples is a mandatory parameter and it is
-  ///     for the number of rows that is be read per shard from the compressed files.
+  ///     If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
+  ///     interpreted as number of rows to be read per shard from the compressed files.
+  ///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
+  ///     to avoid performance degradation.
+  ///     If `num_samples` is not provided, then multiple decompressions of the same file is required to
+  ///     obtain the file size.
   /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
   ///     Can be any of:
   ///     ShuffleMode::kFalse - No shuffling is performed.
@@ -5783,7 +5791,7 @@ class DATASET_API TFRecordDataset : public Dataset {
   ///     when num_shards is also specified. (Default = 0).
   /// \param[in] shard_equal_rows Get equal rows for all shards.
   ///     (Default = false, number of rows of each shard may be not equal).
-  ///     When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
+  ///     When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] compression_type Compression type to use.
   ///     (Default = "", which means no compression is used).
@@ -5814,8 +5822,12 @@ class DATASET_API TFRecordDataset : public Dataset {
 ///     If num_samples is 0 and numRows(parsed from schema) does not exist, read the full dataset;
 ///     If num_samples is 0 and numRows(parsed from schema) is greater than 0, read numRows rows;
 ///     If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
-///     If `compression_type` is not None, then num_samples is a mandatory parameter and it is
-///     for the number of rows that is be read per shard from the compressed files.
+///     If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
+///     interpreted as number of rows to be read per shard from the compressed files.
+///     It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
+///     to avoid performance degradation.
+///     If `num_samples` is not provided, then multiple decompressions of the same file is required to
+///     obtain the file size.
 /// \param[in] shuffle The mode for shuffling data every epoch. (Default = ShuffleMode::kGlobal).
 ///     Can be any of:
 ///     ShuffleMode::kFalse - No shuffling is performed.
@@ -5826,7 +5838,7 @@ class DATASET_API TFRecordDataset : public Dataset {
 ///     when num_shards is also specified. (Default = 0).
 /// \param[in] shard_equal_rows Get equal rows for all shards.
 ///     (Default = false, number of rows of each shard may be not equal).
-///     When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
+///     When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \param[in] compression_type Compression type to use.
 ///     (Default = "", which means no compression is used).

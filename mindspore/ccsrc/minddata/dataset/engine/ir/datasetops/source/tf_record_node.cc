@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <fstream>
 
-#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
@@ -111,7 +110,7 @@ Status TFRecordNode::ValidateTFRecordFiles(const std::vector<std::string> &filen
 
 Status TFRecordNode::ValidateTFRecordCompressionType(const std::string &compression_type,
                                                      const std::vector<std::string> &dataset_files, int32_t num_shards,
-                                                     int64_t num_samples) {
+                                                     int64_t num_samples) const {
   if (!compression_type.empty() && compression_type != "ZLIB" && compression_type != "GZIP") {
     RETURN_STATUS_UNEXPECTED(
       "Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP', but got '" + compression_type +
@@ -124,16 +123,12 @@ Status TFRecordNode::ValidateTFRecordCompressionType(const std::string &compress
 #endif
   }
 
-  if (!compression_type.empty() && dataset_files.size() < num_shards) {
+  if (!compression_type.empty() && static_cast<int32_t>(dataset_files.size()) < num_shards) {
     RETURN_STATUS_UNEXPECTED(
       "When compression_type is provided, number of dataset files cannot be less than num_shards but got " +
       std::to_string(dataset_files.size()) + " number of files with " + std::to_string(num_shards) + " num_shards");
   }
 
-  if (!compression_type.empty() && num_samples <= 0) {
-    RETURN_STATUS_UNEXPECTED("When compression_type is provided, num_samples must be provided and > 0, but got " +
-                             std::to_string(num_samples) + " num_samples ");
-  }
   return Status::OK();
 }
 
@@ -184,15 +179,7 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
   NonMappableLeafOp::CompressionType compression_type;
-  if (compression_type_.empty()) {
-    compression_type = NonMappableLeafOp::CompressionType::None;
-  } else if (compression_type_ == "GZIP") {
-    compression_type = NonMappableLeafOp::CompressionType::GZIP;
-  } else if (compression_type_ == "ZLIB") {
-    compression_type = NonMappableLeafOp::CompressionType::ZLIB;
-  } else {
-    RETURN_STATUS_UNEXPECTED("Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP'");
-  }
+  RETURN_IF_NOT_OK(HelperGetCompressType(&compression_type));
 
   // Create and initialize TFReaderOp
   std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
@@ -212,8 +199,8 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    if (compression_type_.empty()) {
-      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files));
+    if (compression_type_.empty() || num_samples_ == 0) {
+      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files, 1, false, compression_type));
     } else {
       // For compressed, actual total rows is unable to be counted, thus max number of rows that will be read is
       // provided instead
@@ -249,18 +236,21 @@ Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
     return Status::OK();
   }
 
-  if (compression_type_.empty()) {
+  if (compression_type_.empty() || num_samples_ == 0) {
     int64_t num_rows;
     constexpr int64_t kThreadCount = 8;
+    NonMappableLeafOp::CompressionType compression_type;
+    RETURN_IF_NOT_OK(HelperGetCompressType(&compression_type));
     // By default, TFRecord will do file-based sharding. But when cache is injected, it will be row-based sharding.
     if (!shard_equal_rows_ && !IsCached()) {
       // Data will be sharded by file
       std::vector<std::string> shard_file_list;
       RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
-      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, kThreadCount, estimate));
+      RETURN_IF_NOT_OK(
+        TFReaderOp::CountTotalRows(&num_rows, shard_file_list, kThreadCount, estimate, compression_type));
     } else {
       // Data will be sharded by row
-      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, kThreadCount, estimate));
+      RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, kThreadCount, estimate, compression_type));
       num_rows = static_cast<int64_t>(ceil(num_rows / (num_shards_ * 1.0)));
     }
     *dataset_size = num_samples_ > 0 ? std::min(num_rows, num_samples_) : num_rows;
@@ -279,11 +269,29 @@ Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames)
     RETURN_STATUS_UNEXPECTED("The initial file list must be empty.");
   }
   int cut_off_file = dataset_files_.size();
-  if (!compression_type_.empty()) {
+  if (!compression_type_.empty() && num_samples_ > 0) {
     cut_off_file = static_cast<int>(cut_off_file / num_shards_) * num_shards_;
   }
   for (int index = shard_id_; index < cut_off_file; index += num_shards_) {
     shard_filenames->push_back(dataset_files_.at(index));
+  }
+  return Status::OK();
+}
+
+//
+Status TFRecordNode::HelperGetCompressType(NonMappableLeafOp::CompressionType *compression_type) {
+  if (compression_type_.empty()) {
+    *compression_type = NonMappableLeafOp::CompressionType::NONE;
+  } else if (compression_type_ == "GZIP" && num_samples_ > 0) {
+    *compression_type = NonMappableLeafOp::CompressionType::GZIP;
+  } else if (compression_type_ == "GZIP" && num_samples_ == 0) {
+    *compression_type = NonMappableLeafOp::CompressionType::GZIP_WITH_COUNT;
+  } else if (compression_type_ == "ZLIB" && num_samples_ > 0) {
+    *compression_type = NonMappableLeafOp::CompressionType::ZLIB;
+  } else if (compression_type_ == "ZLIB" && num_samples_ == 0) {
+    *compression_type = NonMappableLeafOp::CompressionType::ZLIB_WITH_COUNT;
+  } else {
+    RETURN_STATUS_UNEXPECTED("Input compression_type can only be either '' (no compression), 'ZLIB', or 'GZIP'");
   }
   return Status::OK();
 }
