@@ -32,9 +32,6 @@
 #endif
 
 namespace mindspore::lite {
-#ifdef ENABLE_MINDRT
-constexpr int kDefaultParallelNum = 2;
-#endif
 struct InnerContext : public Context {
  public:
   InnerContext() { InitDeviceFp16(); }

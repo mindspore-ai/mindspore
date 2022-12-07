@@ -38,6 +38,7 @@ namespace mindspore::lite {
 namespace {
 const constexpr int kMaxLiteContextDeviceNums = 2;
 const constexpr int kMaxInnerContextDeviceNums = 3;
+constexpr int kDefaultParallelNum = 2;
 }  // namespace
 
 void InnerContext::InitDeviceFp16() {
@@ -130,13 +131,13 @@ int InnerContext::CreateThreadPool() {
       bind_mode_ = static_cast<BindMode>(this->GetDeviceInfo(DT_CPU).cpu_device_info_.cpu_bind_mode_);
     }
 
-#ifdef ENABLE_MINDRT
     this->inter_op_parallel_num_ =
       (!this->enable_parallel_ && this->inter_op_parallel_num_ > 1) ? this->inter_op_parallel_num_ : 1;
     actor_thread_num_ = (inter_op_parallel_num_ > 1) ? 1 : (this->enable_parallel_ ? kDefaultParallelNum : 1);
     thread_pool_ = ThreadPoolManager::GetInstance()->GetThreadPool(actor_thread_num_, inter_op_parallel_num_,
                                                                    thread_num_, bind_mode_, affinity_core_list_);
     if (thread_pool_ == nullptr) {
+#ifdef ENABLE_MINDRT
       if (inter_op_parallel_num_ > 1) {
         thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
                                                             this->affinity_core_list_, bind_mode_);
@@ -144,11 +145,11 @@ int InnerContext::CreateThreadPool() {
         thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num_, this->thread_num_,
                                                          this->affinity_core_list_, bind_mode_);
       }
-    }
 #else
-    thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
-    thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode_));
+      thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
+      thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode_));
 #endif
+    }
   }
   MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
   return RET_OK;
