@@ -34,6 +34,7 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 using kernel::DataType;
+bool IsVmapNotSupported(const CNodePtr &node);
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &apply_kernel_ptr);
 
 class BACKEND_EXPORT CPUGraphKernelInfo : public GraphKernelInfo {

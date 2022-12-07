@@ -455,7 +455,6 @@ void reset_id_with_offset() {
   offset++;
 }
 }  // namespace id_generator
-auto constexpr kTargetUnDefined = "kTargetUnDefined";
 auto constexpr kPrimitiveTarget = "primitive_target";
 namespace {
 PrimitivePtr GetPrimitiveFromValueNode(const AnfNodePtr &node) {
@@ -478,14 +477,14 @@ static std::string GetNodeTargetForVarInputNode(const CNodePtr &cnode) {
     (void)std::copy(inputs.begin() + SizeToLong(make_tuple_valid_input_index), inputs.end(),
                     std::back_inserter(real_inputs));
   }
-  std::string first_input_target = kTargetUnDefined;
+  std::string first_input_target = kDeviceUnDefined;
   bool has_diff_target =
     std::any_of(std::rbegin(real_inputs), std::rend(real_inputs), [&first_input_target](const AnfNodePtr &n) {
       auto target = GetOriginNodeTarget(n);
-      if (target == kTargetUnDefined) {
+      if (target == kDeviceUnDefined) {
         return false;
       }
-      if (first_input_target == kTargetUnDefined) {
+      if (first_input_target == kDeviceUnDefined) {
         first_input_target = target;
       }
       return target != first_input_target;
@@ -493,7 +492,7 @@ static std::string GetNodeTargetForVarInputNode(const CNodePtr &cnode) {
   if (!has_diff_target) {
     return first_input_target;
   }
-  return kTargetUnDefined;
+  return kDeviceUnDefined;
 }
 
 static inline bool IsSummaryPrimitiveCNode(const AnfNodePtr &node) {
@@ -511,7 +510,7 @@ std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
     if (inputs.size() > 1) {
       return GetOriginNodeTarget(inputs[1]);
     }
-    return kTargetUnDefined;
+    return kDeviceUnDefined;
   }
 #endif
   if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad)) {
@@ -528,7 +527,7 @@ std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
   } else if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     return GetOriginNodeTarget(cnode->input(1));
   }
-  return kTargetUnDefined;
+  return kDeviceUnDefined;
 }
 
 std::string GetVirtualNodeTargetFromUsers(const AnfNodePtr &node) {
@@ -537,21 +536,21 @@ std::string GetVirtualNodeTargetFromUsers(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto func_graph = cnode->func_graph();
   if (func_graph == nullptr) {
-    return kTargetUnDefined;
+    return kDeviceUnDefined;
   }
   auto manager = func_graph->manager();
   if (manager == nullptr) {
-    return kTargetUnDefined;
+    return kDeviceUnDefined;
   }
   auto users = manager->node_users()[cnode];
-  std::string first_user_target = kTargetUnDefined;
+  std::string first_user_target = kDeviceUnDefined;
   bool has_diff_target =
     std::any_of(std::begin(users), std::end(users), [&first_user_target](const std::pair<AnfNodePtr, int> &u) {
       auto target = GetOriginNodeTarget(u.first);
-      if (target == kTargetUnDefined) {
+      if (target == kDeviceUnDefined) {
         return false;
       }
-      if (first_user_target == kTargetUnDefined) {
+      if (first_user_target == kDeviceUnDefined) {
         first_user_target = target;
       }
       return target != first_user_target;
@@ -559,15 +558,15 @@ std::string GetVirtualNodeTargetFromUsers(const AnfNodePtr &node) {
   if (!has_diff_target) {
     return first_user_target;
   }
-  return kTargetUnDefined;
+  return kDeviceUnDefined;
 }
 
 std::string GetVirtualNodeTarget(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  node->set_user_data(kPrimitiveTarget, std::make_shared<std::string>(kTargetUnDefined));
+  node->set_user_data(kPrimitiveTarget, std::make_shared<std::string>(kDeviceUnDefined));
   auto target = GetVirtualNodeTargetFromInputs(node);
   node->set_user_data(kPrimitiveTarget, std::make_shared<std::string>(target));
-  if (target != kTargetUnDefined) {
+  if (target != kDeviceUnDefined) {
     return target;
   }
   target = GetVirtualNodeTargetFromUsers(node);
@@ -582,7 +581,7 @@ std::string GetTargetFromAttr(const AnfNodePtr &node) {
   auto attr_input = cnode->input(0);
   auto primitive = GetPrimitiveFromValueNode(attr_input);
   if (primitive == nullptr) {
-    return kTargetUnDefined;
+    return kDeviceUnDefined;
   }
   auto att_target = primitive->GetAttr(kPrimitiveTarget);
   if (att_target != nullptr) {
@@ -595,14 +594,14 @@ std::string GetTargetFromAttr(const AnfNodePtr &node) {
     }
     return target;
   }
-  return kTargetUnDefined;
+  return kDeviceUnDefined;
 }
 }  // namespace
 
 std::string GetOriginNodeTarget(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    return kTargetUnDefined;
+    return kDeviceUnDefined;
   }
   auto cnode = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -611,7 +610,7 @@ std::string GetOriginNodeTarget(const AnfNodePtr &node) {
     return *ud_target.get();
   }
   auto target = GetTargetFromAttr(node);
-  if (target != kTargetUnDefined) {
+  if (target != kDeviceUnDefined) {
     return target;
   }
 #ifndef ENABLE_SECURITY
@@ -648,7 +647,7 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
 
   std::string target;
   auto ori_target = GetOriginNodeTarget(node);
-  if (ori_target != kTargetUnDefined) {
+  if (ori_target != kDeviceUnDefined) {
     target = ori_target;
   } else {
     auto context_ptr = MsContext::GetInstance();

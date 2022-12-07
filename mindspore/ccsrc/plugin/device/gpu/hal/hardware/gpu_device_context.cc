@@ -464,6 +464,22 @@ void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) {
   }
 }
 
+// Mark the kernel backoff with failure info when setting operator info fails.
+void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
+                               const std::pair<std::string, ExceptionType> &failure_info) {
+  MS_EXCEPTION_IF_NULL(node);
+  // The single op does not support the backoff ability.
+  if ((graph == nullptr) || graph->is_from_single_op()) {
+    MS_EXCEPTION(failure_info.second) << failure_info.first;
+  }
+
+  // Mark kernel selection backoff info.
+  AnfAlgo::SetKernelSelectBackoffInfo(node, failure_info);
+
+  // The logic will be deleted after the function is finished.
+  MS_EXCEPTION(failure_info.second) << failure_info.first;
+}
+
 // Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
 // selection needs to be performed to set kernel info.
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
@@ -474,9 +490,11 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
     }
 
     // Kernel selection process.
-    auto [msg, etype] = SetKernelInfoWithMsg(node);
-    if (!msg.empty()) {
-      MS_EXCEPTION(etype) << msg;
+    const auto &failure_info = SetKernelInfoWithMsg(node);
+    if (!failure_info.first.empty()) {
+      const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
+      HandleKernelSelectFailure(kernel_graph, node, failure_info);
+      continue;
     }
   }
 }
@@ -617,8 +635,8 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
 #endif
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
-    auto [msg, etype] = SetKernelInfoWithMsg(node);
-    if (msg.empty()) {
+    const auto &failure_info = SetKernelInfoWithMsg(node);
+    if (failure_info.first.empty()) {
       continue;
     }
 #if (defined(ENABLE_AKG) && !defined(_WIN32))
@@ -628,15 +646,17 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     };
     auto cnode = graphkernel::TryExpandCNode(node, f);
     if (cnode == nullptr) {
-      MS_EXCEPTION(etype) << msg;
+      HandleKernelSelectFailure(graph, node, failure_info);
+      continue;
     }
     (void)mng->Replace(node, cnode);
-    MS_LOG(INFO) << msg << " but expand success.";
+    MS_LOG(INFO) << failure_info.first << " but expand success.";
     auto expand_fg = GetCNodeFuncGraph(cnode);
     graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
     do_expand = true;
 #else
-    MS_EXCEPTION(etype) << msg;
+    HandleKernelSelectFailure(graph, node, failure_info);
+    continue;
 #endif
   }
 #if (defined(ENABLE_AKG) && !defined(_WIN32))

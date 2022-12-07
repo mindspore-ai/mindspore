@@ -1386,4 +1386,21 @@ bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(value);
   return value->isa<FuncGraph>();
 }
+
+void AnfRuntimeAlgorithm::SetKernelSelectBackoffInfo(const CNodePtr &node,
+                                                     const std::pair<std::string, ExceptionType> &failure_info) {
+  MS_EXCEPTION_IF_NULL(node);
+  common::AnfAlgo::SetNodeAttr(kAttrKernelBackoffWithFailureInfo, MakeValue(failure_info.first), node);
+  common::AnfAlgo::SetNodeAttr(kAttrKernelBackoffWithFailureType, MakeValue(static_cast<int32_t>(failure_info.second)),
+                               node);
+}
+
+bool AnfRuntimeAlgorithm::IsKernelSelectBackoffOp(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (common::AnfAlgo::HasNodeAttr(kAttrKernelBackoffWithFailureInfo, node) &&
+      common::AnfAlgo::HasNodeAttr(kAttrKernelBackoffWithFailureType, node)) {
+    return true;
+  }
+  return false;
+}
 }  // namespace mindspore::session

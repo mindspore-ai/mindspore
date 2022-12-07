@@ -376,6 +376,9 @@ class BACKEND_EXPORT KernelAttr {
   void SetInputAttrList(const std::vector<DataType> &addr_list);
   void SetOutputAttrList(const std::vector<DataType> &addr_list);
 
+  const std::vector<DataType> &input_type() const { return input_type_; }
+  const std::vector<DataType> &output_type() const { return output_type_; }
+
  private:
   std::vector<DataType> input_type_;
   std::vector<DataType> output_type_;
@@ -392,6 +395,8 @@ BACKEND_EXPORT std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr
 
 BACKEND_EXPORT std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
                                                        const std::vector<KernelAttr> &kernel_attr_list);
+BACKEND_EXPORT std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
+                                                             const std::vector<KernelAttr> &kernel_attr_list);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
 
@@ -429,6 +434,8 @@ inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cn
   }
   return std::map<uint32_t, tensor::TensorPtr>();
 }
+
+// The related interfaces of kernel object type.
 void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
                                   const std::vector<KernelObjectType> &input_kernel_object_types,
                                   const std::vector<KernelObjectType> &output_kernel_object_types);
@@ -436,8 +443,9 @@ void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kern
 bool MatchObjectType(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr, bool strict);
 std::vector<kernel::KernelAttr> SelectKernelObjectType(
   const CNodePtr &kernel_node, const std::vector<kernel::KernelAttr> &selected_kernel_attr_list);
-KernelObjectType TypeIdToKernelObjectType(const TypeId &object_type);
-std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &object_types);
+KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id);
+std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &type_ids);
+TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
 
 template <typename Derived>
 class MatchKernelHelper {

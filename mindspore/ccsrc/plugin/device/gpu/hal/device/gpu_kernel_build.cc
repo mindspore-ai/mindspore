@@ -57,15 +57,6 @@ void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<ke
 }
 }  // namespace
 
-bool IsInBlackList(const std::string &kernel_name) {
-  bool flag = false;
-  if (kernel_name == prim::kPrimTupleGetItem->name() || kernel_name == prim::kPrimMakeTuple->name() ||
-      kernel_name == prim::kPrimDepend->name() || kernel_name == prim::kPrimStateSetItem->name()) {
-    flag = true;
-  }
-  return flag;
-}
-
 void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
@@ -73,8 +64,13 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel);
-    if (IsInBlackList(kernel_name)) {
+    // Need backoff to create CPU kernel.
+    if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
+      continue;
+    }
+    const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> virtual_prims = {
+      prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimDepend, prim::kPrimStateSetItem};
+    if (IsOneOfPrimitiveCNode(kernel, virtual_prims)) {
       continue;
     }
 
@@ -95,6 +91,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
     } else if (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
       std::shared_ptr<kernel::NativeGpuKernelMod> gpu_kernel_mod = nullptr;
       bool new_factory = true;
+      const auto &kernel_name = common::AnfAlgo::GetCNodeName(kernel);
       if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
         gpu_kernel_mod = kernel::Factory<kernel::NativeGpuKernelMod>::Instance().Create(kernel_name);
       } else {

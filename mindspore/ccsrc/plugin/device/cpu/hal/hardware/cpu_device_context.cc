@@ -309,6 +309,7 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   }
 #endif
 }
+
 void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
 
@@ -471,6 +472,56 @@ bool CPUKernelExecutor::DoLaunchKernel(KernelMod *const kernel_mod, const std::v
                                        const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   return kernel_mod->Launch(inputs, workspace, outputs, nullptr);
+}
+
+void CPUKernelExecutor::RebuildKernelSelectBackoffOp(const std::vector<CNodePtr> &nodes) const {
+  for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!AnfAlgo::IsKernelSelectBackoffOp(node)) {
+      continue;
+    }
+
+    auto failure_info = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrKernelBackoffWithFailureInfo);
+    auto failure_type =
+      static_cast<ExceptionType>(common::AnfAlgo::GetNodeAttr<int32_t>(node, kAttrKernelBackoffWithFailureType));
+    if (IsVmapNotSupported(node)) {
+      MS_EXCEPTION(failure_type) << failure_info;
+    }
+
+    // Judge whether match strictly between kernel build info and supported kernel attrs.
+    const auto &kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+    MS_EXCEPTION_IF_NULL(kernel_build_info);
+    const auto &kernel_attr = kernel::GetKernelAttrFromBuildInfo(kernel_build_info);
+    const auto &supported_kernel_attrs =
+      kernel::NativeCpuKernelMod::GetCpuSupportedList(common::AnfAlgo::GetCNodeName(node));
+    const auto &match_result = kernel::MatchKernelAttrStrict(kernel_attr, supported_kernel_attrs);
+    if (!match_result.first) {
+      MS_EXCEPTION(failure_type) << failure_info;
+    } else {
+      // Set the CPU flag.
+      common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), node);
+      kernel_build_info->set_kernel_type(CPU_KERNEL);
+      kernel_build_info->set_processor(kernel::Processor::CPU);
+
+      std::string attr_info = "input[";
+      std::for_each(std::begin(kernel_attr.input_type()), std::end(kernel_attr.input_type()),
+                    [&attr_info](auto &input_type) {
+                      attr_info += TypeIdToString(input_type.object_type) + " " + TypeIdToString(input_type.dtype) +
+                                   " " + input_type.format + ",";
+                    });
+      attr_info += "] output[";
+      std::for_each(std::begin(kernel_attr.output_type()), std::end(kernel_attr.output_type()),
+                    [&attr_info](auto &output_type) {
+                      attr_info += TypeIdToString(output_type.object_type) + " " + TypeIdToString(output_type.dtype) +
+                                   " " + output_type.format + ",";
+                    });
+      attr_info += "]";
+      MS_LOG(INFO) << "Backoff and rebuild kernel in device CPU for node: " << node->fullname_with_scope()
+                   << ", supported attr index: " << match_result.second << ", attr: " << attr_info;
+    }
+
+    CreateKernel({node});
+  }
 }
 
 MS_REGISTER_DEVICE(kCPUDevice, CPUDeviceContext);

@@ -36,6 +36,7 @@
 #include "base/base_ref_utils.h"
 #include "include/common/debug/dump_proto.h"
 #include "include/common/utils/parallel_context.h"
+#include "plugin/device/cpu/hal/hardware/cpu_device_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -500,6 +501,18 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   device_context->kernel_executor_->CreateKernel(graph->execution_order());
+
+  // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
+#ifdef WITH_BACKEND
+  if (!run_in_pynative) {
+    auto cpu_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {kCPUDevice, device_context->device_context_key().device_id_});
+    MS_EXCEPTION_IF_NULL(cpu_device_context);
+    auto cpu_executor = dynamic_cast<device::cpu::CPUKernelExecutor *>(cpu_device_context->kernel_executor_.get());
+    MS_EXCEPTION_IF_NULL(cpu_executor);
+    cpu_executor->RebuildKernelSelectBackoffOp(graph->execution_order());
+  }
+#endif
 
   // Read the output and input ref map and set to the kernel graph.
   AnfAlgo::AddOutInRefToGraph(graph);
