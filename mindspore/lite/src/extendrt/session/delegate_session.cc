@@ -26,27 +26,22 @@
 #include "extendrt/utils/tensor_default_impl.h"
 #include "extendrt/session/optimizer/tensorrt_optimizer.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
-#ifdef ENABLE_HELPER
-#include "extendrt/delegate/ascend_ge/ge_device_context.h"
-#include "extendrt/delegate/ascend_ge/ge_utils.h"
-#endif
+#include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 
 namespace mindspore {
 namespace {
 constexpr auto kAscendProviderGe = "ge";
 std::mutex kernel_graph_mutex;
 }  // namespace
-Status GraphSinkSession::GeDeviceContextInit() {
-#ifdef ENABLE_HELPER
-  GeDeviceContext::GetInstance().Initialize();
-#endif
-  return kSuccess;
+GraphSinkSession::~GraphSinkSession() {
+  graph_executor_ = nullptr;
+  if (is_use_ascend_ge_) {
+    lite::AscendGeExecutorPlugin::GetInstance().DestroyGeContext();
+  }
 }
 
-GraphSinkSession::~GraphSinkSession() {
-#ifdef ENABLE_HELPER
-  GeDeviceContext::GetInstance().Destroy();
-#endif
+Status GraphSinkSession::GeDeviceContextInit() {
+  return lite::AscendGeExecutorPlugin::GetInstance().InitializeGeContext();
 }
 
 Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
@@ -63,6 +58,7 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
     }
     if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == kAscendProviderGe) {
       MS_LOG(INFO) << "GraphSinkSession::Init ascend helper";
+      is_use_ascend_ge_ = true;
       GeDeviceContextInit();
       break;
     }
@@ -83,9 +79,7 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
     }
     if (device_info && device_info->GetDeviceType() == DeviceType::kAscend &&
         device_info->GetProvider() == kAscendProviderGe) {
-#ifdef ENABLE_HELPER
-      GeUtils::AdaptGraph(graph);
-#endif
+      lite::AscendGeExecutorPlugin::GetInstance().AdaptGraph(graph);
     }
   }
   func_graph_ = graph;

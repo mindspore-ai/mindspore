@@ -27,6 +27,7 @@
 #include "extendrt/session/factory.h"
 #include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 #include "extendrt/delegate/plugin/litert_executor_plugin.h"
+#include "extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 
 namespace mindspore {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
@@ -98,6 +99,7 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
   }
   constexpr auto default_gpu_provider = "tensorrt";
   constexpr auto default_cpu_provider = "litert";
+  constexpr auto default_npu_provider = "ge";
   auto device_infos = context->MutableDeviceInfo();
   for (auto &device_info : device_infos) {
     if (!device_info) {
@@ -122,6 +124,13 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
       auto ascend_device = device_info->Cast<AscendDeviceInfo>();
       if (!ascend_device) {
         continue;
+      }
+      auto provider = ascend_device->GetProvider();
+      if (provider == default_npu_provider) {
+        if (!lite::AscendGeExecutorPlugin::GetInstance().Register()) {
+          MS_LOG_WARNING << "Failed to register AscendGe plugin";
+          return;
+        }
       }
     }
     if (device_info->GetDeviceType() == kCPU) {

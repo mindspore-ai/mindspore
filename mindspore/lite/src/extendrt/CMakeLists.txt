@@ -60,6 +60,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/litert_executor_plugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/ascend_ge_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
@@ -180,9 +181,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     if(MSLITE_ENABLE_ACL)
         include_directories(${TOP_DIR}/graphengine/inc/external)
         add_subdirectory(kernel/ascend)
-        if(MSLITE_ENABLE_HELPER)
-            add_subdirectory(delegate/ascend_ge)
-        endif()
+        add_subdirectory(delegate/ascend_ge)
     endif()
 
     if(SUPPORT_CUDA)
@@ -229,8 +228,5 @@ else()
     add_dependencies(mindspore-extendrt_static fbs_inner_src)
 endif()
 
-if(MSLITE_ENABLE_HELPER)
-    target_link_libraries(mindspore-extendrt ascend_ge_plugin)
-endif()
 set_target_properties(mindspore-extendrt PROPERTIES OUTPUT_NAME "mindspore-lite")
 
