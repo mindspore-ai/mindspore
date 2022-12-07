@@ -5403,6 +5403,71 @@ def sparse_segment_mean(x, indices, segment_ids):
     return sparse_segment_mean_(x, indices, segment_ids)
 
 
+def block_diag(*inputs):
+    r"""
+    Creates a block diagonal matrix from the provided tensor.
+
+    Args:
+        inputs (List[Tensor]): The dimension of Tensor should be 0, 1 or 2.
+
+    Returns:
+        Tensor, two-dimensional with all input tensors arranged in
+        order so that their top left and bottom right corners are
+        diagonally adjacent. All other elements are set to 0.
+
+    Raises:
+        TypeError: If the input is not a list of tensors.
+        ValueError: If the dimension of Tensor is not 0, 1 or 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor([[4], [3], [2]], mstype.int32)
+        >>> x2 = Tensor([7, 6, 5], mstype.int32)
+        >>> x3 = Tensor(1, mstype.int32)
+        >>> x4 = Tensor([[5, 4, 3], [2, 1, 0]], mstype.int32)
+        >>> x5 = Tensor([[8, 7], [7, 8]], mstype.int32)
+        >>> out = ops.block_diag(x1, x2, x3, x4, x5)
+        >>> print(out.asnumpy())
+        [[4 0 0 0 0 0 0 0 0 0]
+         [3 0 0 0 0 0 0 0 0 0]
+         [2 0 0 0 0 0 0 0 0 0]
+         [0 7 6 5 0 0 0 0 0 0]
+         [0 0 0 0 1 0 0 0 0 0]
+         [0 0 0 0 0 5 4 3 0 0]
+         [0 0 0 0 0 2 1 0 0 0]
+         [0 0 0 0 0 0 0 0 8 7]
+         [0 0 0 0 0 0 0 0 7 8]]
+    """
+
+    def to_col_block(arys, i, a):
+        return [
+            a if idx == i else ops.zeros((ary.shape[0], a.shape[1]), ary.dtype)
+            for idx, ary in enumerate(arys)
+        ]
+
+    def to_2d(ary):
+        if not isinstance(ary, Tensor):
+            raise TypeError(
+                f"For 'block_diag', each element of 'inputs' must be a tensor, but got {type(ary)}"
+            )
+        if ary.ndim == 0:
+            return ops.expand_dims(ops.expand_dims(ary, 0), 0)
+        if ary.ndim == 1:
+            return ops.expand_dims(ary, 0)
+        if ary.ndim == 2:
+            return ary
+        raise ValueError(
+            "For 'block_diag', the dimension of each elements in 'inputs' must be 0, 1, or 2, but got "
+            f"{ary.ndim}"
+        )
+
+    arys = [to_2d(ary) for ary in inputs]
+    matrix = [ops.concat(to_col_block(arys, idx, ary)) for idx, ary in enumerate(arys)]
+    return ops.concat(matrix, 1)
+
+
 def atleast_1d(inputs):
     r"""
     Converts `inputs` to arrays with at least one dimension.
@@ -8742,6 +8807,7 @@ __all__ = [
     'all',
     'any',
     'sparse_segment_mean',
+    'block_diag',
     'atleast_1d',
     'dstack',
     'atleast_2d',
