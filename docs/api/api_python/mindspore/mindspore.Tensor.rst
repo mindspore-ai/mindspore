@@ -231,9 +231,12 @@ mindspore.Tensor
     mindspore.Tensor.searchsorted
     mindspore.Tensor.select
     mindspore.Tensor.set_const_arg
+    mindspore.Tensor.sgn
     mindspore.Tensor.shape
     mindspore.Tensor.short
     mindspore.Tensor.sigmoid
+    mindspore.Tensor.sign
+    mindspore.Tensor.signbit
     mindspore.Tensor.sin
     mindspore.Tensor.sinc
     mindspore.Tensor.size

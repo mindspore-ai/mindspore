@@ -4539,6 +4539,27 @@ class Tensor(Tensor_):
         _dtype = self.dtype if dtype is None else dtype
         return tensor_operator_registry.get('ones')(size, _dtype)
 
+    def sign(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.sign`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sign')(self)
+
+    def signbit(self):
+        """
+        For details, please refer to :func:`mindspore.ops.signbit`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('signbit')(self)
+
+    def sgn(self):
+        """
+        For details, please refer to :func:`mindspore.ops.sgn`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sgn')(self)
+
     def sin(self):
         r"""
         For details, please refer to :func:`mindspore.ops.sin`.
