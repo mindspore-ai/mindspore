@@ -40,9 +40,9 @@ void ReorderForForward(const std::vector<AnfNodePtr> &forward_start, const std::
 void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePair &forward_end_pair,
                         const PipelinePair &backward_start_pair, const PipelinePair &backward_end_pair,
                         const PipelinePair &forward_end_before_pair, const FuncGraphPtr &root);
-void ReorderForParams(const std::vector<AnfNodePtr> &backward_params, const std::vector<AnfNodePtr> &forward_params,
-                      const PipelinePair &forward_params_pair, const std::vector<AnfNodePtr> &backward_end,
-                      const PipelinePair &forward_start_pair, const FuncGraphPtr &root);
+void ReorderForParams(const PipelinePair &backward_params_pair, const PipelinePair &forward_params_pair,
+                      const PipelinePair &backward_end_pair, const PipelinePair &forward_start_pair,
+                      const FuncGraphPtr &root);
 int64_t GetMicroBatch(const AnfNodePtr &node);
 void InsertDepend(const AnfNodePtr &prior_node, const AnfNodePtr &post_node, const FuncGraphManagerPtr &manager,
                   const FuncGraphPtr &root);

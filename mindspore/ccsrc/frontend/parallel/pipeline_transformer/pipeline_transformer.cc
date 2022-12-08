@@ -296,19 +296,16 @@ void PipelineTransformer::BroadCastColoring() {
 }
 
 std::vector<AnfNodePtr> PipelineTransformer::GetLoadNodeByParam(const AnfNodePtr &param) {
-  std::vector<AnfNodePtr> load_vec;
+  std::vector<AnfNodePtr> load_vec = {param};
   auto node_users = manager_->node_users()[param];
   for (auto &param_user : node_users) {
     if (IsPrimitiveCNode(param_user.first, prim::kPrimLoad)) {
       auto graph = param_user.first->func_graph();
-      if (graph == root_) {
+      if (graph == root_ || (graph->stage() == -1 && graph != main_graph_)) {
         continue;
       }
       (void)load_vec.emplace_back(param_user.first);
     }
-  }
-  if (load_vec.empty()) {
-    (void)load_vec.emplace_back(param);
   }
   return load_vec;
 }

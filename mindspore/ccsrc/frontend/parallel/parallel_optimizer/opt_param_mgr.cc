@@ -94,7 +94,7 @@ class OptParamMgrImpl : public OptParamMgr {
     auto user_set = manager->node_users()[parameter];
     for (auto &param_pair : user_set) {
       CNodePtr cnode = param_pair.first->cast<CNodePtr>();
-      if (IsPrimitiveCNode(cnode, prim::kPrimSend) || IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
+      if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
         return true;
       }
     }
