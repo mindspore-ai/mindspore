@@ -72,12 +72,6 @@ class DeviceDenseEmbeddingOperation : public DeviceEmbeddingOperation {
   bool ParseDeviceData(int id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index,
                        size_t data_step, size_t graph_running_step, bool *device_cache_need_wait_graph);
 
-  // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
-  bool ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
-
-  // Parse the swap in information from device cache of the currently preprocessed id of the local host cache.
-  bool ParseHostDataDeviceToHost(size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
-
   static bool InferOpShape(const CNodePtr &kernel);
 
   static bool MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
