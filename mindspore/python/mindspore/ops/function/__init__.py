@@ -318,6 +318,7 @@ from .math_func import (
     combinations,
     dist,
     copysign,
+    chain_matmul,
     hann_window,
     log2,
     xlogy,
