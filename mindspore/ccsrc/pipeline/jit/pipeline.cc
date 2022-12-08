@@ -868,6 +868,7 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
 // Clean all resource not used in the future and cache generated during compiling.
 void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource start";
+  ProcessStatus::GetInstance().RecordStart("pipeline clean");
   abstract::AnalysisContext::ClearContext();
   ClearCurConvertInput();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
@@ -876,6 +877,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   ReclaimOptimizer();
   resource->Clean();
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
+  ProcessStatus::GetInstance().RecordEnd();
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
@@ -891,7 +893,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     MS_LOG(ERROR) << "The source object to compile should not be None.";
     return false;
   }
-
   // Check if the args of function or net is valid.
   CheckArgsValid(source_obj, args);
 
@@ -1008,6 +1009,7 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
       CleanCompileRes(res);
     }
   }
+  ProcessStatus::GetInstance().Clear();
   if (clear) {
     DelOneNetRes(phase);
   }
@@ -1017,7 +1019,10 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
                               bool use_vm) {
   bool ret_value = false;
   try {
+    ProcessStatus::GetInstance().RecordStart("CompileInner");
     ret_value = CompileInner(source_obj, args, phase, use_vm);
+    ProcessStatus::GetInstance().RecordEnd();
+    ProcessStatus::GetInstance().Print();
   } catch (const py::error_already_set &ex) {
     if (!StaticAnalysisException::Instance().HasException()) {
       // print function call stack info before release
@@ -1212,12 +1217,14 @@ void Pipeline::Run() {
       DumpTime &dump_time = DumpTime::GetInstance();
       dump_time.Record(action.first, GetTime(), true);
 #endif
+      ProcessStatus::GetInstance().RecordStart(action.first);
       bool result = true;
       WITH(MsProfile::GetProfile()->Step(action.first))[&result, &action, this]() {
         MS_LOG(INFO) << "Status record: start " << action.first << " action.";
         result = action.second(resource_);
         MS_LOG(INFO) << "Status record: end " << action.first << " action.";
       };
+      ProcessStatus::GetInstance().RecordEnd();
       if (action.first == "task_emit") {
         SetLoopCount(resource_);
       } else if (action.first == "validate") {

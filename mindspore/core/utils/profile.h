@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -216,6 +217,35 @@ class MS_CORE_API MsProfile {
 
   std::map<std::string, TimeStat> time_stat_;  // record time and count info from some activity
   ProfileBase *profile_ = nullptr;             // record hierarchical profile info
+};
+
+struct MemoryInfo {
+  std::string name{""};
+  int64_t start_memory{-1};
+  int64_t end_memory{-1};
+  size_t depth{0};
+};
+
+class MS_CORE_API ProcessStatus {
+ public:
+  ~ProcessStatus() = default;
+  static ProcessStatus &GetInstance();
+  // Get current process status by a key. Only useful for Linux.
+  int64_t GetMemoryCost(const std::string &key);
+  // Start to record memory increase info. It must be used with RecordEnd().
+  // If previous record not end, the next record will have indent when printed.
+  void RecordStart(const std::string &step_name);
+  // End to record memory increase info. It must be used with RecordStart().
+  void RecordEnd();
+  // Print memory increase info which are recorded.
+  void Print();
+  // Clear all records.
+  void Clear();
+
+ private:
+  ProcessStatus() = default;
+  std::vector<MemoryInfo> stack_;
+  std::vector<MemoryInfo> memory_used_;
 };
 }  // namespace mindspore
 
