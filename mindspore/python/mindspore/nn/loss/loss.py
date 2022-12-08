@@ -2386,9 +2386,8 @@ class CTCLoss(LossBase):
 
     def construct(self, log_probs, targets, input_lengths, target_lengths):
         if len(log_probs.shape) == 2:
-            n, c = log_probs.shape
-            log_probs = log_probs.reshape((n, 1, c))
-            targets = targets.reshape(1, targets.shape[0])
+            log_probs = log_probs.expand_dims(-2)
+            targets = targets.expand_dims(0)
             if isinstance(input_lengths, int):
                 input_lengths = Tensor([input_lengths], mstype.int32)
             else:

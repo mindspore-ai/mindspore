@@ -1819,8 +1819,8 @@ class Tensor(Tensor_):
         self._init_check()
         if not dims:
             raise ValueError(f"For Tensor.permute, the dims must not be none.")
-        if len(dims) == 1:
-            return tensor_operator_registry.get("permute")(self, *dims)
+        if len(dims) == 1 and isinstance(dims[0], tuple):
+            return tensor_operator_registry.get("permute")(self, dims[0])
         return tensor_operator_registry.get("permute")(self, dims)
 
     def positive(self):
@@ -3036,6 +3036,11 @@ class Tensor(Tensor_):
         if initial is not None:
             res += initial
         return res.astype(dtype)
+
+    def sum_to_size(self, *size):
+        """For details, please refer to :func:`mindspore.ops.sum_to_size`."""
+        self._init_check()
+        return tensor_operator_registry.get("sum_to_size")(self, *size)
 
     def repeat(self, repeats, axis=None):
         """

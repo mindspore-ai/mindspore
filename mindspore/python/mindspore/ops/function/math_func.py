@@ -809,6 +809,48 @@ def subtract(x, other, *, alpha=1):
     return tensor_sub(x, alpha * other)
 
 
+def sum_to_size(x, *size):
+    """
+    Sum `x` Tensor to the `size`. `size` must be expandable to the Tensor size.
+
+    Args:
+        x (Tensor): The Tensor to be summed.
+        size (Union[tuple(int), int]): The expected shape of output Tensor.
+
+    Returns:
+        Tensor, the sum result of `x` according to the `size`.
+
+    Raises:
+        ValueError: If `size` is not expandable to the size of `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.random.randn(3, 3, 3, 3, 3, 3), mindspore.float32)
+        >>> output = ops.sum_to_size(x, (1, 3, 1, 3))
+        >>> print(output.shape)
+        (1, 3, 1, 3)
+    """
+    if len(size) == 1 and isinstance(size[0], tuple):
+        size = size[0]
+    shape_x = x.shape
+    if len(size) > x.ndim:
+        raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
+    if len(size) < x.ndim:
+        pre_axis = tuple([axis for axis in range(x.ndim - len(size))])
+        x = x.sum(pre_axis)
+    axes = []
+    for i, element in enumerate(size):
+        if element != x.shape[i] and element == 1:
+            axes.append(i)
+        elif element != x.shape[i]:
+            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
+    if axes:
+        return x.sum(tuple(axes), keepdims=True)
+    return x
+
+
 def true_divide(dividend, divisor):
     r"""
     Alias for Tensor.div() with :math:`rounding\_mode=None`.
@@ -9217,6 +9259,7 @@ __all__ = [
     'tensor_sub',
     'sub',
     'subtract',
+    'sum_to_size',
     'tensor_mul',
     'mul',
     'multiply',

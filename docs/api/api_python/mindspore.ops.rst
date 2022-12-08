@@ -263,6 +263,7 @@ mindspore.ops
     mindspore.ops.square
     mindspore.ops.sub
     mindspore.ops.subtract
+    mindspore.ops.sum_to_size
     mindspore.ops.svd
     mindspore.ops.tan
     mindspore.ops.true_divide
