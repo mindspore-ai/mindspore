@@ -37,17 +37,12 @@
 namespace mindspore {
 namespace ad {
 namespace {
-constexpr char kAttrZerosLikeCSR[] = "zero_like_csr_node";
-constexpr char kAttrZerosLikeCOO[] = "zero_like_coo_node";
-constexpr char kAttrOnesLikeCSR[] = "ones_like_csr_node";
-constexpr char kAttrOnesLikeCOO[] = "ones_like_coo_node";
 enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
 const std::map<SpecialType, std::shared_ptr<Primitive>> kValueType{{SpecialType::kZerosLikeType, prim::kPrimZerosLike},
                                                                    {SpecialType::kOnesLikeType, prim::kPrimOnesLike}};
 const std::vector<PrimitivePtr> kGradBlackList{
   prim::kPrimMakeTuple,           prim::kPrimTupleGetItem,      prim::kPrimStopGradient,       prim::kPrimUpdateState,
   prim::kPrimNPUAllocFloatStatus, prim::kPrimNPUGetFloatStatus, prim::kPrimNPUClearFloatStatus};
-AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value, const SpecialType &type);
 void ClearDeviceAddress(const ValuePtr &value) {
   std::vector<tensor::TensorPtr> tensors;
   TensorValueToTensor(value, &tensors);
@@ -66,10 +61,11 @@ bool IsPrimNeedGrad(const PrimitivePtr &prim) {
   return true;
 }
 
-AnfNodePtr BuildSpecialLikeCSRTensor(const FuncGraphPtr &tape, const ValuePtr &value, const SpecialType &type) {
-  MS_EXCEPTION_IF_NULL(value);
+AnfNodePtr BuildSpecialLikeCSRTensor(const FuncGraphPtr &tape, const ValuePtr &csr_value,
+                                     const AnfNodePtr &dout_value_node) {
+  MS_EXCEPTION_IF_NULL(csr_value);
 
-  auto csr_tensor = value->cast<tensor::CSRTensorPtr>();
+  auto csr_tensor = csr_value->cast<tensor::CSRTensorPtr>();
   MS_EXCEPTION_IF_NULL(csr_tensor);
   auto indptr = csr_tensor->GetIndptr();
   auto cloned_indptr = ShallowCopyTensorValue(indptr);
@@ -89,7 +85,6 @@ AnfNodePtr BuildSpecialLikeCSRTensor(const FuncGraphPtr &tape, const ValuePtr &v
   auto value_node = NewValueNode(cloned_data);
   value_node->set_abstract(cloned_data->ToAbstract()->Broaden());
 
-  auto zero_like_value = BuildSpecialLikeValue(tape, cloned_data, type);
   auto shape = csr_tensor->shape();
   auto value_shape = NewValueNode(shape);
   std::vector<abstract::AbstractBasePtr> abstract_shape;
@@ -99,21 +94,16 @@ AnfNodePtr BuildSpecialLikeCSRTensor(const FuncGraphPtr &tape, const ValuePtr &v
   auto abs_shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
   value_shape->set_abstract(abs_shape);
   auto special_like_csr_node =
-    tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indptr_node, indices_node, zero_like_value, value_shape});
-  special_like_csr_node->set_abstract(value->ToAbstract()->Broaden());
-  special_like_csr_node->AddAttr(kAttrZerosLikeCSR, MakeValue(True));
-  if (type == SpecialType::kZerosLikeType) {
-    special_like_csr_node->AddAttr(kAttrZerosLikeCSR, MakeValue(True));
-  } else {
-    special_like_csr_node->AddAttr(kAttrOnesLikeCSR, MakeValue(True));
-  }
+    tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indptr_node, indices_node, dout_value_node, value_shape});
+  special_like_csr_node->set_abstract(csr_value->ToAbstract()->Broaden());
   return special_like_csr_node;
 }
 
-AnfNodePtr BuildSpecialLikeCOOTensor(const FuncGraphPtr &tape, const ValuePtr &value, const SpecialType &type) {
-  MS_EXCEPTION_IF_NULL(value);
+AnfNodePtr BuildSpecialLikeCOOTensor(const FuncGraphPtr &tape, const ValuePtr &coo_value,
+                                     const AnfNodePtr &dout_value_node) {
+  MS_EXCEPTION_IF_NULL(coo_value);
 
-  auto coo_tensor = value->cast<tensor::COOTensorPtr>();
+  auto coo_tensor = coo_value->cast<tensor::COOTensorPtr>();
   MS_EXCEPTION_IF_NULL(coo_tensor);
   auto indices = coo_tensor->GetIndices();
   auto cloned_indices = ShallowCopyTensorValue(indices);
@@ -127,7 +117,6 @@ AnfNodePtr BuildSpecialLikeCOOTensor(const FuncGraphPtr &tape, const ValuePtr &v
   auto value_node = NewValueNode(cloned_data);
   value_node->set_abstract(cloned_data->ToAbstract()->Broaden());
 
-  auto special_like_value = BuildSpecialLikeValue(tape, cloned_data, type);
   auto shape = coo_tensor->shape();
   auto value_shape = NewValueNode(shape);
   std::vector<abstract::AbstractBasePtr> abstract_shape;
@@ -137,13 +126,8 @@ AnfNodePtr BuildSpecialLikeCOOTensor(const FuncGraphPtr &tape, const ValuePtr &v
   auto abs_shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
   value_shape->set_abstract(abs_shape);
   auto special_like_coo_node =
-    tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indices_node, special_like_value, value_shape});
-  special_like_coo_node->set_abstract(value->ToAbstract()->Broaden());
-  if (type == SpecialType::kZerosLikeType) {
-    special_like_coo_node->AddAttr(kAttrZerosLikeCOO, MakeValue(True));
-  } else {
-    special_like_coo_node->AddAttr(kAttrOnesLikeCOO, MakeValue(True));
-  }
+    tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indices_node, dout_value_node, value_shape});
+  special_like_coo_node->set_abstract(coo_value->ToAbstract()->Broaden());
   return special_like_coo_node;
 }
 
@@ -158,9 +142,19 @@ AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value
     special_like_value->set_abstract(value->ToAbstract()->Broaden());
     return special_like_value;
   } else if (value->isa<tensor::CSRTensor>()) {
-    return BuildSpecialLikeCSRTensor(tape, value, type);
+    auto csr_tensor = value->cast<tensor::CSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor);
+    auto data = csr_tensor->GetValues();
+    auto cloned_data = ShallowCopyTensorValue(data);
+    ClearDeviceAddress(cloned_data);
+    return BuildSpecialLikeValue(tape, cloned_data, type);
   } else if (value->isa<tensor::COOTensor>()) {
-    return BuildSpecialLikeCOOTensor(tape, value, type);
+    auto coo_tensor = value->cast<tensor::COOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_tensor);
+    auto data = coo_tensor->GetValues();
+    auto cloned_data = ShallowCopyTensorValue(data);
+    ClearDeviceAddress(cloned_data);
+    return BuildSpecialLikeValue(tape, cloned_data, type);
   } else if (value->isa<ValueSequence>()) {
     std::vector<AnfNodePtr> args;
     (void)args.emplace_back(NewValueNode(prim::kPrimMakeTuple));
@@ -202,9 +196,6 @@ bool IsZerosLikeNode(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(cnode, prim::kPrimZerosLike)) {
     return true;
   } else if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
-    if (cnode->HasAttr(kAttrZerosLikeCSR) || cnode->HasAttr(kAttrZerosLikeCOO)) {
-      return true;
-    }
     for (size_t i = 1; i < cnode->size(); ++i) {
       if (!IsZerosLikeNode(cnode->input(i))) {
         return false;
@@ -308,6 +299,23 @@ void FunctionNode::ReplaceEdges() {
   for (const auto index : need_replace_edges_) {
     next_edges_[index].second = accumulate_dout_;
   }
+}
+
+AnfNodePtr VariableAdjoint::RealDout() {
+  const auto &accumulate_dout = fn()->accumulate_dout();
+  auto &tape = fn()->tape();
+  MS_EXCEPTION_IF_NULL(out_value_);
+  const auto &dout_abs = accumulate_dout->abstract();
+  MS_EXCEPTION_IF_NULL(dout_abs);
+  // For input, if it is a sparsetensor, we need return a sparsetensor.
+  if (out_value_->isa<tensor::Tensor>() || dout_abs->isa<abstract::AbstractSparseTensor>()) {
+    return accumulate_dout;
+  } else if (out_value_->isa<tensor::COOTensor>()) {
+    return BuildSpecialLikeCOOTensor(tape, out_value_, accumulate_dout);
+  } else if (out_value_->isa<tensor::CSRTensor>()) {
+    return BuildSpecialLikeCSRTensor(tape, out_value_, accumulate_dout);
+  }
+  return accumulate_dout;
 }
 
 AutoGradCellImpl::AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values)
@@ -585,15 +593,15 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
     const auto &node = cnode->input(i + 1);
     const auto &din = dins[i];
     MS_LOG(DEBUG) << "Node " << node->DebugString() << ", din " << din->DebugString();
-    UpdateNextEdges(fn, node, din, op_args[i]);
+    UpdateNextEdge(fn, node, din, op_args[i]);
   }
   if (fn->next_edges().empty()) {
     variable->set_is_need_grad(false);
   }
 }
 
-void AutoGradCellImpl::UpdateNextEdges(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din,
-                                       const ValuePtr &op_arg) {
+void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din,
+                                      const ValuePtr &op_arg) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(din);
   MS_EXCEPTION_IF_NULL(op_arg);
@@ -622,7 +630,7 @@ void AutoGradCellImpl::UpdateNextEdges(const FunctionNodePtr &fn, const AnfNodeP
         if (din == fn->fake_dout()) {
           AddUser(fn->fake_dout(), new_din, 1);
         }
-        UpdateNextEdges(fn, input_node, new_din, sub_value);
+        UpdateNextEdge(fn, input_node, new_din, sub_value);
       }
     } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
       auto src_node = cnode->input(1);
@@ -630,7 +638,7 @@ void AutoGradCellImpl::UpdateNextEdges(const FunctionNodePtr &fn, const AnfNodeP
       if (index_value == nullptr) {
         MS_LOG(EXCEPTION) << "CNode input 2 should be a Int64Imm, CNode: " << cnode->DebugString();
       }
-      UpdateNextEdges(fn, src_node, din, op_arg);
+      UpdateNextEdge(fn, src_node, din, op_arg);
     } else {
       MS_LOG(EXCEPTION) << "Cnode should be tuplegetitem or maketuple " << cnode->DebugString();
     }
@@ -639,7 +647,7 @@ void AutoGradCellImpl::UpdateNextEdges(const FunctionNodePtr &fn, const AnfNodeP
     auto tensor = param->default_param();
     MS_EXCEPTION_IF_NULL(tensor);
     AddParameterNode(param, tensor);
-    UpdateNextEdges(fn, node, din, op_arg);
+    UpdateNextEdge(fn, node, din, op_arg);
   } else {
     MS_LOG(DEBUG) << "It is not a cnode or parameter: " << node->DebugString();
     return;
@@ -658,7 +666,7 @@ void AutoGradCellImpl::BuildForwardLastNode() {
   // If last_node is a maketuple or tuplegetitem, need update next edges,
   // if last_node is parameter, not need to update next edges.
   if (last_node_->isa<CNode>()) {
-    UpdateNextEdges(fn, last_node_, zeros_like_node, sens_value_);
+    UpdateNextEdge(fn, last_node_, zeros_like_node, sens_value_);
   }
   auto input_adjoint = std::make_shared<VariableAdjoint>(fn, sens_value_);
   (void)anfnode_to_variable_adjoint_.insert(std::make_pair(last_node_, input_adjoint));
@@ -785,10 +793,11 @@ void AutoGradCellImpl::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CN
   if (prim == nullptr) {
     MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
   }
-  size_t index = cnode->size() - 1;
-  const auto &dout = cnode->input(index);
+  size_t dout_index = cnode->size() - 1;
+  const auto &dout = cnode->input(dout_index);
   const auto &dout_cnode = dout->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(dout_cnode);
+  // Size is same as op_arg size
   size_t input_size = cnode->size() - 2;
   for (size_t i = 1; i < input_size; ++i) {
     (void)outputs->emplace_back(dout_cnode);
@@ -859,14 +868,13 @@ void AutoGradCellImpl::BackPropagate() {
     }
     if (variable->is_fake_bprop()) {
       MS_LOG(EXCEPTION) << variable->fake_prim_name() << " op has not corresponding bprop!";
-      continue;
     }
     if (!has_primc && iter->first->isa<CNode>() && GetCNodePrimitive(iter->first) != nullptr) {
       has_primc = true;
     }
     const auto &fn = variable->fn();
     // replace real dout to fake dout
-    Replace(fn->fake_dout(), fn->RealDout());
+    Replace(fn->fake_dout(), fn->accumulate_dout());
     // replace edges which exist fake dout
     fn->ReplaceEdges();
 
@@ -905,11 +913,9 @@ AnfNodePtr AutoGradCellImpl::GetGradNodeByIndex(const AnfNodePtrList &node_list,
     }
     // If input is not used in the forward network, just return zeros_like() as dout.
     MS_LOG(EXCEPTION) << "Input does not participate in forward calculation, input: " << grad_node->DebugString();
-    // to do
-    // return BuildZerosLikeNode(tape_, grad_node);
     return nullptr;
   }
-  return input_adjoint_iter->second->fn()->RealDout();
+  return input_adjoint_iter->second->RealDout();
 }
 
 AnfNodePtr AutoGradCellImpl::GetInputGrad(bool grad_all_inputs, bool get_by_position,
