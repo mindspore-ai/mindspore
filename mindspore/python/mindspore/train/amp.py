@@ -70,22 +70,23 @@ AMP_BLACK_LIST = (
 
 class _OutputTo16(nn.Cell):
     """Wrap cell for amp. Cast network output back to float16."""
-
-    def __init__(self, op):
+    def __init__(self, backbone):
         super(_OutputTo16, self).__init__(auto_prefix=False)
-        self._op = op
+        self._backbone = backbone
+        if isinstance(backbone, nn.Cell) and backbone.jit_config_dict:
+            self._jit_config_dict = backbone.jit_config_dict
 
     def construct(self, x):
-        return F.cast(self._op(x), mstype.float16)
+        return F.cast(self._backbone(x), mstype.float16)
 
 
 class _OutputTo32(nn.Cell):
-    "Wrap loss for amp. Cast network output back to float32"
-
+    """Wrap loss for amp. Cast network output back to float32."""
     def __init__(self, backbone):
         super(_OutputTo32, self).__init__(auto_prefix=False)
         self._backbone = backbone
-        self._jit_config_dict = backbone._jit_config_dict
+        if isinstance(backbone, nn.Cell) and backbone.jit_config_dict:
+            self._jit_config_dict = backbone.jit_config_dict
 
     def construct(self, *inputs):
         out = self._backbone(*inputs)
@@ -331,13 +332,12 @@ def _add_loss_network(network, loss_fn, cast_model_type):
     """Add loss network."""
 
     class WithLossCell(nn.Cell):
-        "Wrap loss for amp. Cast network output back to float32"
-
+        """Wrap loss for amp. Cast network output back to float32."""
         def __init__(self, backbone, loss_fn):
             super(WithLossCell, self).__init__(auto_prefix=False)
             self._backbone = backbone
             self._loss_fn = loss_fn
-            if backbone.jit_config_dict:
+            if isinstance(backbone, nn.Cell) and backbone.jit_config_dict:
                 self._jit_config_dict = backbone.jit_config_dict
 
         def construct(self, data, label):

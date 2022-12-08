@@ -95,6 +95,8 @@ class _DataWrapper(nn.Cell):
         self.get_next = P.GetNext(
             dataset_types, dataset_shapes, len(dataset_types), queue_name)
         self.network = network
+        if isinstance(network, nn.Cell) and network.jit_config_dict:
+            self._jit_config_dict = network.jit_config_dict
 
     def construct(self):
         outputs = self.get_next()

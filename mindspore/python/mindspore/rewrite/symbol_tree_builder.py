@@ -43,6 +43,8 @@ class SymbolTreeBuilder:
         network_str = inspect.getsource(type(network))
         self._ast_root: ast.Module = ast.parse(network_str)
         self._root_tree: Optional[SymbolTree] = None
+        if isinstance(network, Cell) and network.jit_config_dict:
+            self._jit_config_dict = network.jit_config_dict
 
     @staticmethod
     def merge_module_of_subtree(main_tree: SymbolTree, sub_stree: SymbolTree):

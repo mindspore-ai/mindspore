@@ -83,7 +83,7 @@ def test_sink():
                                       dataset_strategy="data_parallel", device_num=8)
     data = {"input": np.ones([16, 32, 128]).astype(np.float32), "label": np.zeros([16, 32, 768]).astype(np.float32)}
     dataset = ds.NumpySlicesDataset(data=data)
-    jitconfig = JitConfig(jit_level="O1", task_sink=True)
+    jitconfig = JitConfig(jit_level="O1", exc_mode='auto')
     sink_process = ms.train.data_sink(dense_func, dataset, sink_size=4, jit_config=jitconfig)
     _ = sink_process()
 
@@ -110,7 +110,7 @@ def test_sink_with_grad():
                                       dataset_strategy="data_parallel", device_num=8)
     data = {"input": np.ones([16, 32, 128]).astype(np.float32), "label": np.zeros([16, 32, 768]).astype(np.float32)}
     dataset = ds.NumpySlicesDataset(data=data)
-    jitconfig = JitConfig(jit_level="O1", task_sink=True)
+    jitconfig = JitConfig(jit_level="O1", exc_mode='no_sink')
     sink_process = ms.train.data_sink(train_step, dataset, sink_size=4, jit_config=jitconfig)
     _ = sink_process()
 

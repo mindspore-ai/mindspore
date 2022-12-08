@@ -16,5 +16,10 @@ mindspore.JitConfig
           - "O2": 手动优化与图算优化结合。
           - "O3": 性能优化，无法保证泛化性。
 
-        - **task_sink** (bool) - 数据是否直接下沉至处理器进行处理。默认值：True。
+        - **task_sink** (str) - 设置执行模式，支持["auto", "sink", "no_sink"]。默认值："auto"。
+
+          - "auto": 自动策略。
+          - "sink": 计算图下沉策略。
+          - "no_sink": 非计算图下沉策略。
+
         - **kwargs** (dict) - 关键字参数字典。
