@@ -675,6 +675,7 @@ def test_map_error_samples_imagefolder2(my_error_samples_mode, my_num_workers, m
         ds.config.set_enable_shared_mem(mem_original)
 
 
+@pytest.mark.skip(reason="random failures")
 @pytest.mark.parametrize("my_error_samples_mode, my_num_workers, my_mp",
                          [(ErrorSamplesMode.RETURN, 4, False), (ErrorSamplesMode.RETURN, 3, True),
                           (ErrorSamplesMode.REPLACE, 3, False), (ErrorSamplesMode.REPLACE, 4, True),
