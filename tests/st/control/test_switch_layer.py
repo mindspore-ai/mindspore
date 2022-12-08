@@ -19,6 +19,7 @@ import mindspore.context as context
 from mindspore import Tensor, nn
 from mindspore.common import dtype as mstype
 from mindspore.ops.composite import GradOperation
+from mindspore.ops import operations as P
 
 
 class Grad(nn.Cell):
@@ -111,3 +112,59 @@ def test_cell_in_list():
 
     assert out == Tensor(160, mstype.int32)
     assert grad_out == Tensor(16, mstype.int32)
+
+
+class TwoLayerRelU(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.funcs1 = P.ReLU()
+        self.funcs2 = P.Neg()
+
+    def construct(self, inputs):
+        x = self.funcs1(inputs)
+        x = self.funcs2(x)
+        return x
+
+
+class TwoLayerSoftmax(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.funcs1 = P.Softmax()
+        self.funcs2 = P.Neg()
+
+    def construct(self, inputs):
+        x = self.funcs1(inputs)
+        x = self.funcs2(x)
+        return x
+
+
+class AddFuncNet(nn.Cell):
+    def __init__(self, funcs, new_func):
+        super().__init__()
+        self.funcs = funcs
+        self.new_func = new_func
+
+    def construct(self, i, inputs):
+        final_funcs = self.funcs + (self.new_func,)
+        x = final_funcs[i](inputs)
+        return x
+
+
+@case_register.level0
+@case_register.target_cpu
+def test_switch_layer_add_func_in_construct():
+    """
+    Feature: Switch layer.
+    Description: test switch layer add function in construct.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    func1 = TwoLayerSoftmax()
+    func2 = TwoLayerRelU()
+    func3 = TwoLayerSoftmax()
+    funcs = (func1, func2)
+    net = AddFuncNet(funcs, func3)
+    inputs = Tensor(np.random.rand(2, 3, 4, 5).astype(np.float32))
+    i = Tensor(2, mstype.int32)
+    ret = net(i, inputs)
+    assert ret.shape == (2, 3, 4, 5)
