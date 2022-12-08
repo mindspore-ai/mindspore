@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <map>
+#include "runtime/rt.h"
 #include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
@@ -35,9 +36,6 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
-  }
 
   const auto &input_names = AclUtils::GetOpInputAnchorNames(cnode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
@@ -48,9 +46,10 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
       MS_LOG(INFO) << "Error input index for adaptor:" << index << " of node " << cnode->fullname_with_scope();
       continue;
     }
-    TypeId type_id = AnfAlgo::GetInputDeviceDataType(node, i);
+    auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(node, i);
+    auto type_id = AnfAlgo::GetOutputDeviceDataType(input, idx);
     auto type_size = GetTypeByte(TypeIdToType(type_id));
-    auto shape = AnfAlgo::GetInputDeviceShape(node, i);
+    auto shape = AnfAlgo::GetOutputDeviceShape(input, idx);
     if (IsDynamic(shape)) {
       MS_LOG(ERROR) << "Please check infer op shape before resize, error input index is:" << i;
       return 1;
@@ -58,6 +57,7 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
     auto input_size = type_size * SizeOf(shape);
     input_size_list_[index] = (input_size == 0) ? SIZE_MAX : input_size;
   }
+
   // Update output size list
   AscendKernelMod::UpdateOutputSizeList();
 
@@ -176,6 +176,10 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     MS_LOG(ERROR) << "Acl compile and execute failed! op_name is " << op_type_ << " and op info is "
                   << node->DebugString();
     return false;
+  }
+
+  if (rtStreamSynchronize(stream_ptr) != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclopCompileAndExecute sync failed";
   }
 
   MS_LOG(INFO) << "Success launch of node: " << op_type_;

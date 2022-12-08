@@ -67,6 +67,7 @@ class AscendGraphOptimization {
 
   void GetAllGraphs(const KernelGraphPtr &root_graph);
   void CheckControlFlowDynamicShape(const KernelGraphPtr &root_graph);
+  void AclOpOptimize(const KernelGraphPtr &graph);
 
   // Manager for the optimized graphs
   FuncGraphManagerPtr graph_manager_;

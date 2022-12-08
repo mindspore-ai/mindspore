@@ -90,6 +90,10 @@ class MIND_API BatchNormWithAddAndActivation : public BatchNorm {
                {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
   }
 };
+
+MIND_API abstract::AbstractBasePtr BatchNormInferFunc(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

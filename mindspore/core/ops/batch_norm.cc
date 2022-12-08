@@ -190,6 +190,15 @@ class BatchNormInfer : public abstract::OpInferBase {
   }
 };
 
+abstract::AbstractBasePtr BatchNormInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  BatchNormInfer bn;
+  auto type = bn.InferType(primitive, input_args);
+  auto shape = bn.InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
 REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNorm, prim::kPrimBatchNorm, BatchNormInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNormWithActivation, prim::kPrimBatchNormWithActivation, BatchNormInfer, false);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNormWithAddAndActivation, prim::kPrimBatchNormWithAddAndActivation,

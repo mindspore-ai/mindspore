@@ -173,7 +173,7 @@ bool TbeKernelSelect::TbeCheckIsSupportedAny(const CNodePtr &kernel_node) {
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> TbeKernelSelect::GetSupportFormatDTypesWithFilter() {
   auto format_dtypes = GetSupportFormatDTypes();
   const std::set<std::string> skip_filter_nodes = {kCastOpName, kTransDataOpName};
-  if (skip_filter_nodes.count(node_name_) != 0) {
+  if (skip_filter_nodes.count(node_name_) != 0 || common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode_ptr_)) {
     return format_dtypes;
   }
   bool reduce_flag = false;
@@ -208,8 +208,11 @@ void TbeKernelSelect::FilterInvalidKernelInfo() {
     if (!FilterInvalidShape(kernel_build_info, dynamic_inputs)) {
       continue;
     }
-    if (!TbeCheckSupported(kernel_build_info)) {
-      continue;
+    // Skip check for ACL op.
+    if (!common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode_ptr_)) {
+      if (!TbeCheckSupported(kernel_build_info)) {
+        continue;
+      }
     }
     (void)kernel_info_list.emplace_back(kernel_build_info);
   }

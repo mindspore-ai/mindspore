@@ -50,7 +50,7 @@ ge::DataType GeTypesConvert::TransTypeIdToGeDataType(TypeId type_id) {
     {TypeId::kNumberTypeInt, ge::DataType::DT_INT32},       {TypeId::kNumberTypeInt64, ge::DataType::DT_INT64},
     {TypeId::kNumberTypeUInt32, ge::DataType::DT_UINT32},   {TypeId::kNumberTypeUInt, ge::DataType::DT_UINT32},
     {TypeId::kNumberTypeUInt64, ge::DataType::DT_UINT64},   {TypeId::kNumberTypeBool, ge::DataType::DT_BOOL},
-    {TypeId::kNumberTypeInt64, ge::DataType::DT_DOUBLE},    {TypeId::kTypeUnknown, ge::DataType::DT_UNDEFINED}};
+    {TypeId::kNumberTypeFloat64, ge::DataType::DT_DOUBLE},  {TypeId::kTypeUnknown, ge::DataType::DT_UNDEFINED}};
   auto iter = data_type_map.find(type_id);
   if (iter == data_type_map.end()) {
     MS_LOG(EXCEPTION) << "Invalid data type:" << type_id << ": " << TypeIdLabel(type_id);

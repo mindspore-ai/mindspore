@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_SUM_OPTIMIZER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_SUM_OPTIMIZER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_OPTIMIZER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_OPTIMIZER_H_
 #include <memory>
 #include <vector>
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class ReduceSumOptimizer : public PatternProcessPass {
+class ReduceOptimizer : public PatternProcessPass {
  public:
-  explicit ReduceSumOptimizer(bool multigraph = true) : PatternProcessPass("reduce_sum_optimizer", multigraph) {}
-  ~ReduceSumOptimizer() override = default;
+  explicit ReduceOptimizer(bool multigraph = true) : PatternProcessPass("reduce_optimizer", multigraph) {}
+  ~ReduceOptimizer() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
@@ -41,4 +41,4 @@ class ReduceSumOptimizer : public PatternProcessPass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_SUM_OPTIMIZER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_OPTIMIZER_H_

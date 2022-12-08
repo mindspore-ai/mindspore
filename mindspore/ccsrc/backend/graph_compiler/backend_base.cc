@@ -310,9 +310,9 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
     }
 
     AnfUtils::CloseAbstractLock();
-    bool is_dynamic = IsFuncGraphDynamicShapeOrStruct(func_graph, func_graph_cell_id);
+    is_dynamic_ = IsFuncGraphDynamicShapeOrStruct(func_graph, func_graph_cell_id);
     AnfUtils::OpenAbstractLock();
-    if (!is_dynamic) {
+    if (!is_dynamic_) {
       auto iter = graph_actor_infos_.find(func_graph_cell_id);
       if (iter != graph_actor_infos_.end()) {
         return iter->second;
@@ -436,9 +436,13 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
 
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    // Compile graph.
-    auto graph_id =
-      graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);
+    GraphId graph_id;
+    if (is_dynamic_ || root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
+      graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
+    } else {
+      graph_id =
+        graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);
+    }
 
     graph_id_to_device_context_[graph_id] = device_context;
 

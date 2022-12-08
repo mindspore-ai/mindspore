@@ -1648,7 +1648,7 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   std::ostringstream buf;
   auto fn = [&buf, data_size](auto addr) {
     for (size_t i = 0; i < data_size; ++i) {
-      buf << *(addr + i);
+      buf << *(addr + i) << ",";
     }
   };
 
@@ -1658,6 +1658,8 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
     fn(reinterpret_cast<int *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt8) {
     fn(reinterpret_cast<int8_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeUInt8) {
+    fn(reinterpret_cast<uint8_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt16) {
     fn(reinterpret_cast<int16_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt32) {

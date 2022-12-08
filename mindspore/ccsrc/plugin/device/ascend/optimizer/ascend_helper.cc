@@ -460,7 +460,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
     common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
   }
-  common::AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(origin_type), cast);
+  common::AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(output_type), cast);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
   common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
   common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);

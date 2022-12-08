@@ -26,6 +26,8 @@
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 
+#include "plugin/device/ascend/hal/device/ge_types_convert.h"
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -500,10 +502,12 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
       MS_LOG(INFO) << "Error input index for adaptor:" << index << " of node " << anf_node->fullname_with_scope();
       continue;
     }
-    auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, i);
-    auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, i);
-    auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, i);
-    auto input_format = AnfAlgo::GetInputFormat(anf_node, i);
+
+    auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(anf_node, i);
+    auto ori_shape = common::AnfAlgo::GetOutputInferShape(input, idx);
+    auto input_shape = AnfAlgo::GetOutputDeviceShape(input, idx);
+    auto input_type = AnfAlgo::GetOutputDeviceDataType(input, idx);
+    auto input_format = AnfAlgo::GetOutputFormat(input, idx);
     auto ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
