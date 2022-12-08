@@ -315,7 +315,7 @@ super_bar_config = {
         "FusionOp_Conv2DBackpropInputD_ReluGradV2": [1, 0, 2]
     },
     "SkipDynamicCompileStatic": ["SoftmaxV2", "PRelu", "Trunc", "AccumulateNV2",
-                                 "SoftmaxCrossEntropyWithLogits", "ReduceMeanD", "SquareSumV1"],
+                                 "SoftmaxCrossEntropyWithLogits", "ReduceMeanD", "SquareSumV1", "BiasAddGrad"],
     # BroadcastTo: The name is occupied
     # DynamicBroadcastTo: The name is occupied
     # BatchToSpaceD: attr type is listInt，not listListInt
