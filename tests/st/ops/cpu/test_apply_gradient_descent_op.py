@@ -136,41 +136,6 @@ def test_apply_gradient_descent_float16():
     run_net(var, alpha, delta, expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_apply_gradient_descent_wrong_dtype():
-    """
-    Feature: ApplyGradientDescent cpu op.
-    Description: test invalid data type: 1) dtype of var is neither float16 nor float32.
-                 2) delta is not a Tensor. 3) alpha is neither a Tensor nor a Number.
-    Expectation: Failure and TypeError is caught.
-    """
-
-    # run in graph mode
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    with pytest.raises(TypeError):
-        var = Tensor(np.arange(10).reshape(2, 5).astype(np.float64) / 10)
-        alpha = Tensor(np.array([0.0001]).astype(np.float16))
-        delta = Tensor(np.arange(34, 44).reshape(2, 5).astype(np.float16))
-        net = Net(var)
-        _ = net(alpha, delta)
-
-    with pytest.raises(TypeError):
-        var = Tensor(np.arange(10).reshape(2, 5).astype(np.float32) / 10)
-        alpha = Tensor(np.array([0.0001]).astype(np.float32))
-        delta = np.arange(34, 44).reshape(2, 5).astype(np.float32)
-        net = Net(var)
-        _ = net(alpha, delta)
-
-    with pytest.raises(TypeError):
-        var = Tensor(np.arange(10).reshape(2, 5).astype(np.float32) / 10)
-        alpha = np.array([0.0001]).astype(np.float32)
-        delta = Tensor(np.arange(34, 44).reshape(2, 5).astype(np.float32))
-        net = Net(var)
-        _ = net(alpha, delta)
-
-
 class VmapNet(nn.Cell):
     def __init__(self):
         super(VmapNet, self).__init__()

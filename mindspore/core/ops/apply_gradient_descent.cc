@@ -80,7 +80,8 @@ TypePtr ApplyGradientDescentInferType(const PrimitivePtr &prim, const std::vecto
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto alpha_type = input_args[kInputIndex1]->BuildType();
   auto delta_type = input_args[kInputIndex2]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt8,   kUInt8,   kInt16,     kUInt16,    kInt32,
+                                         kUInt32,  kInt64,   kUInt64, kFloat64, kComplex64, kComplex128};
   // delta must have the same type as var
   std::map<std::string, TypePtr> args;
   (void)args.insert(std::make_pair("var_type", var_type));

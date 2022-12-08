@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/apply_gradient_descent_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,7 +41,67 @@ std::vector<std::pair<KernelAttr, ApplyGradientDescentKernelMod::LaunchFunc>>
                                                   .AddInputAttr(kNumberTypeFloat16)
                                                   .AddInputAttr(kNumberTypeFloat16)
                                                   .AddOutputAttr(kNumberTypeFloat16),
-                                                &ApplyGradientDescentKernelMod::LaunchKernel<half>}};
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<half>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeInt8)
+                                                  .AddInputAttr(kNumberTypeInt8)
+                                                  .AddInputAttr(kNumberTypeInt8)
+                                                  .AddOutputAttr(kNumberTypeInt8),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<int8_t>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeUInt8)
+                                                  .AddInputAttr(kNumberTypeUInt8)
+                                                  .AddInputAttr(kNumberTypeUInt8)
+                                                  .AddOutputAttr(kNumberTypeUInt8),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<uint8_t>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeInt16)
+                                                  .AddInputAttr(kNumberTypeInt16)
+                                                  .AddInputAttr(kNumberTypeInt16)
+                                                  .AddOutputAttr(kNumberTypeInt16),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<int16_t>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeUInt16)
+                                                  .AddInputAttr(kNumberTypeUInt16)
+                                                  .AddInputAttr(kNumberTypeUInt16)
+                                                  .AddOutputAttr(kNumberTypeUInt16),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<uint16_t>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeUInt32)
+                                                  .AddInputAttr(kNumberTypeUInt32)
+                                                  .AddInputAttr(kNumberTypeUInt32)
+                                                  .AddOutputAttr(kNumberTypeUInt32),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<uint32_t>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeInt64)
+                                                  .AddInputAttr(kNumberTypeInt64)
+                                                  .AddInputAttr(kNumberTypeInt64)
+                                                  .AddOutputAttr(kNumberTypeInt64),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<int64_t>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeUInt64)
+                                                  .AddInputAttr(kNumberTypeUInt64)
+                                                  .AddInputAttr(kNumberTypeUInt64)
+                                                  .AddOutputAttr(kNumberTypeUInt64),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<uint64_t>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeFloat64)
+                                                  .AddInputAttr(kNumberTypeFloat64)
+                                                  .AddInputAttr(kNumberTypeFloat64)
+                                                  .AddOutputAttr(kNumberTypeFloat64),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<double>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeComplex64)
+                                                  .AddInputAttr(kNumberTypeComplex64)
+                                                  .AddInputAttr(kNumberTypeComplex64)
+                                                  .AddOutputAttr(kNumberTypeComplex64),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<utils::Complex<float>>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeComplex128)
+                                                  .AddInputAttr(kNumberTypeComplex128)
+                                                  .AddInputAttr(kNumberTypeComplex128)
+                                                  .AddOutputAttr(kNumberTypeComplex128),
+                                                &ApplyGradientDescentKernelMod::LaunchKernel<utils::Complex<double>>}};
 
 std::vector<KernelAttr> ApplyGradientDescentKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
