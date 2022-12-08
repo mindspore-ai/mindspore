@@ -21,7 +21,6 @@
 #include <vector>
 #include <set>
 #include <string>
-#include <algorithm>
 #include <functional>
 
 #include "ir/anf.h"
@@ -56,6 +55,10 @@
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/scheduler.h"
 #include "distributed/cluster/cluster_context.h"
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
 #endif
 
 namespace mindspore {
@@ -315,6 +318,42 @@ FuncGraphPtr ProgramSpecialize(const ResourcePtr &resource, const FuncGraphPtr &
   return result;
 }
 
+// If it is windows OS, create a child thread with 8M stack space to execute program specialize.
+#if defined(_WIN32) || defined(_WIN64)
+typedef struct {
+  const ResourcePtr *resource_;
+  const AnalysisContextPtr *context_;
+} WinThreadParam;
+
+DWORD WINAPI WinThreadFunction(PVOID para) {
+  auto p = static_cast<WinThreadParam *>(para);
+  MS_EXCEPTION_IF_NULL(p->resource_);
+  MS_EXCEPTION_IF_NULL(p->context_);
+  const ResourcePtr resource = *(p->resource_);
+  const AnalysisContextPtr context = *(p->context_);
+  auto specialized_fg = ProgramSpecialize(resource, context->func_graph(), context);
+  resource->set_func_graph(specialized_fg);
+  return 0;
+}
+
+inline void DoSpecialize(const ResourcePtr &resource, const abstract::AnalysisContextPtr &context) {
+  constexpr size_t stack_size = 1024 * 1024 * 8;
+  MS_LOG(INFO) << "Do specialize in windows os start";
+  WinThreadParam param;
+  param.resource_ = &resource;
+  param.context_ = &context;
+  auto handle = CreateThread(NULL, stack_size, WinThreadFunction, &param, 0, NULL);
+  WaitForSingleObject(handle, INFINITE);
+  MS_LOG(INFO) << "Do specialize in windows os end";
+}
+
+#else
+inline void DoSpecialize(const ResourcePtr &resource, const abstract::AnalysisContextPtr &context) {
+  auto specialized_fg = ProgramSpecialize(resource, context->func_graph(), context);
+  resource->set_func_graph(specialized_fg);
+}
+#endif
+
 FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                          const abstract::AbstractBasePtrList &args_abs) {
   MS_EXCEPTION_IF_NULL(resource);
@@ -326,8 +365,7 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
 #endif
-  auto res = ProgramSpecialize(resource, func_graph, result.context);
-  resource->set_func_graph(res);
+  DoSpecialize(resource, result.context);
 #ifdef ENABLE_PROFILE
   double t3 = GetTime();
   MsProfile::StatTime("renormalize.infer", t2 - t1);
@@ -336,7 +374,7 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
 
   MS_LOG(DEBUG) << "Renormalize end";
 
-  return res;
+  return resource->func_graph();
 }
 
 void SetLoadFlag(const ResourcePtr &resource) {
@@ -763,10 +801,8 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
 
   // The top graph may be replaced by infer, update the top graph when the infer is done
   parse::Parser::UpdateTopFuncGraph(result.context->func_graph());
-
-  // Specialize
-  FuncGraphPtr new_fg = ProgramSpecialize(resource, result.context->func_graph(), result.context);
-  resource->set_func_graph(new_fg);
+  DoSpecialize(resource, result.context);
+  auto new_fg = resource->func_graph();
   engine->set_check_isolated_side_effect(false);
 
   // Remove unused nodes in cnode order list, this is prepared for auto-monad.
