@@ -346,6 +346,19 @@ size_t CheckAndConvertUtils::CheckAbstractTypeSame(const std::vector<AbstractBas
   return 0;
 }
 
+bool CheckAndConvertUtils::CheckValueSame(const ValuePtr &value_1, const ValuePtr &value_2) {
+  MS_EXCEPTION_IF_NULL(value_1);
+  MS_EXCEPTION_IF_NULL(value_2);
+  if (!value_1->IsSameTypeId(value_2->tid())) {
+    return false;
+  }
+  if (value_1->isa<tensor::Tensor>()) {
+    auto list_tensor_value = value_2->cast_ptr<tensor::Tensor>();
+    return value_1->cast_ptr<tensor::Tensor>()->ValueEqual(*list_tensor_value);
+  }
+  return *value_1 == *value_2;
+}
+
 void CheckAndConvertUtils::ConvertAttrValueInExport(const std::string &op_type, const std::string &attr_name,
                                                     ValuePtr *const value) {
   if (value == nullptr || *value == nullptr) {

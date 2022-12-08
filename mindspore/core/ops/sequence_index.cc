@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/sequence_count.h"
+#include "ops/sequence_index.h"
 
 #include <vector>
 #include <memory>
@@ -23,11 +23,12 @@
 #include "utils/check_convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "mindapi/src/helper.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(SequenceCount, BaseOperator);
-class SequenceCountInfer : public abstract::OpInferBase {
+MIND_API_OPERATOR_IMPL(SequenceIndex, BaseOperator);
+class SequenceIndexInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
@@ -40,7 +41,7 @@ class SequenceCountInfer : public abstract::OpInferBase {
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
-    constexpr size_t input_num = 2;
+    const size_t input_num = 2;
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     for (const auto &item : input_args) {
@@ -63,15 +64,15 @@ class SequenceCountInfer : public abstract::OpInferBase {
       return nullptr;
     }
     const auto &seq_elements = seq_abs->elements();
-    int64_t count = 0;
-    for (auto element : seq_elements) {
+    for (size_t i = 0; i < seq_elements.size(); ++i) {
+      auto element = seq_elements[i];
       if (CheckAndConvertUtils::CheckValueSame(target_value, element->BuildValue())) {
-        ++count;
+        return MakeValue(static_cast<int64_t>(i));
       }
     }
-    return MakeValue(count);
+    MS_EXCEPTION(ValueError) << target_value->ToString() << " is not in " << seq_abs->ToString();
   }
 };
-REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceCount, prim::kPrimSequenceCount, SequenceCountInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceIndex, prim::kPrimSequenceIndex, SequenceIndexInfer, true);
 }  // namespace ops
 }  // namespace mindspore

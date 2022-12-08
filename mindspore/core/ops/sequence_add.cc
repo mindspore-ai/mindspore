@@ -49,8 +49,7 @@ AbstractBasePtr CheckAndGetElementType(const abstract::AbstractSequencePtr input
   return elements[0];
 }
 
-AbstractBasePtr SequenceAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr SequenceAddInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr size_t input_len = 2;
@@ -109,6 +108,22 @@ AbstractBasePtr SequenceAddInfer(const abstract::AnalysisEnginePtr &, const Prim
   return input_2->Clone();
 }
 MIND_API_OPERATOR_IMPL(SequenceAdd, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SequenceAdd, prim::kPrimSequenceAdd, SequenceAddInfer, nullptr, true);
+class SequenceAddInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SequenceAddInferInner(primitive, input_args)->BuildShape();
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SequenceAddInferInner(prim, input_args)->BuildType();
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SequenceAddInferInner(primitive, input_args);
+  }
+};
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SequenceAdd, prim::kPrimSequenceAdd, SequenceAddInfer, true);
 }  // namespace ops
 }  // namespace mindspore

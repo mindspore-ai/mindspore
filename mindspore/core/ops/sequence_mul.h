@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SEQUENCE_COUNT_H_
-#define MINDSPORE_CORE_OPS_SEQUENCE_COUNT_H_
+#ifndef MINDSPORE_CORE_OPS_SEQUENCE_MUL_H_
+#define MINDSPORE_CORE_OPS_SEQUENCE_MUL_H_
 
 #include "ops/base_operator.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief Sequence count operation.
-class MIND_API SequenceCount : public BaseOperator {
+/// \brief Sequence mul integer operation.
+class MIND_API SequenceMul : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(SequenceCount);
+  MIND_API_BASE_MEMBER(SequenceMul);
   /// \brief Constructor.
-  SequenceCount() : BaseOperator(prim::kSequenceCount) {}
+  SequenceMul() : BaseOperator(prim::kSequenceMul) {}
   /// \brief Init function.
   void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SEQUENCE_COUNT_H_
+#endif  // MINDSPORE_CORE_OPS_SEQUENCE_MUL_H_

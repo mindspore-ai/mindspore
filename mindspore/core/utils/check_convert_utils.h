@@ -329,6 +329,7 @@ class MS_CORE_API CheckAndConvertUtils {
   static void GetFormatStringVal(const PrimitivePtr &prim, std::string *format);
   static size_t CheckAbstractShapeSame(const std::vector<AbstractBasePtr> &abs_list);
   static size_t CheckAbstractTypeSame(const std::vector<AbstractBasePtr> &abs_list);
+  static bool CheckValueSame(const ValuePtr &value_1, const ValuePtr &value_2);
 
  private:
   static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
