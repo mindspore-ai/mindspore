@@ -313,6 +313,7 @@ from .math_func import (
     block_diag,
     atleast_1d,
     dstack,
+    diff,
     atleast_2d,
     cartesian_prod,
     atleast_3d,
