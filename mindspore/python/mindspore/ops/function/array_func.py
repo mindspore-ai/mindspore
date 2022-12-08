@@ -392,6 +392,9 @@ def where(condition, x, y):
     Raises:
         ValueError: If `condition` can not be broadcast to the shape of `x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> a = Tensor(np.arange(4).reshape((2, 2)), mstype.float32)
         >>> b = Tensor(np.ones((2, 2)), mstype.float16)
@@ -404,7 +407,12 @@ def where(condition, x, y):
     not_op = P.LogicalNot()
     x_mask = cast_(condition, mstype.bool_)
     y_mask = not_op(x_mask)
-    output = x * x_mask + y * y_mask
+    if x_mask.all():
+        output = x
+    elif not x_mask.any():
+        output = y
+    else:
+        output = x * x_mask + y * y_mask
     return output
 
 
