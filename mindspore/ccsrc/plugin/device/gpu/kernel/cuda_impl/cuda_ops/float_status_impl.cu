@@ -141,11 +141,15 @@ template CUDA_LIB_EXPORT void CalFloatStatus<int16_t>(const size_t size, const i
                                                       cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalFloatStatus<int32_t>(const size_t size, const int32_t *input, float *output,
                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalFloatStatus<int64_t>(const size_t size, const int64_t *input, float *output,
+                                                      cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalFloatStatus<uint8_t>(const size_t size, const uint8_t *input, float *output,
                                                       cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalFloatStatus<uint16_t>(const size_t size, const uint16_t *input, float *output,
                                                        cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalFloatStatus<uint32_t>(const size_t size, const uint32_t *input, float *output,
+                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalFloatStatus<uint64_t>(const size_t size, const uint64_t *input, float *output,
                                                        cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsInf<float>(const size_t size, const float *input, bool *output,
                                               cudaStream_t cuda_stream);
@@ -153,11 +157,15 @@ template CUDA_LIB_EXPORT void CalIsInf<half>(const size_t size, const half *inpu
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsInf<double>(const size_t size, const double *input, bool *output,
                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsInf<bool>(const size_t size, const bool *input, bool *output,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsInf<int8_t>(const size_t size, const int8_t *input, bool *output,
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsInf<int16_t>(const size_t size, const int16_t *input, bool *output,
                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsInf<int32_t>(const size_t size, const int32_t *input, bool *output,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsInf<int64_t>(const size_t size, const int64_t *input, bool *output,
                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsInf<uint8_t>(const size_t size, const uint8_t *input, bool *output,
                                                 cudaStream_t cuda_stream);
@@ -165,17 +173,23 @@ template CUDA_LIB_EXPORT void CalIsInf<uint16_t>(const size_t size, const uint16
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsInf<uint32_t>(const size_t size, const uint32_t *input, bool *output,
                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsInf<uint64_t>(const size_t size, const uint64_t *input, bool *output,
+                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<float>(const size_t size, const float *input, bool *output,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<half>(const size_t size, const half *input, bool *output,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<double>(const size_t size, const double *input, bool *output,
                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsNan<bool>(const size_t size, const bool *input, bool *output,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<int8_t>(const size_t size, const int8_t *input, bool *output,
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<int16_t>(const size_t size, const int16_t *input, bool *output,
                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<int32_t>(const size_t size, const int32_t *input, bool *output,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsNan<int64_t>(const size_t size, const int64_t *input, bool *output,
                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<uint8_t>(const size_t size, const uint8_t *input, bool *output,
                                                 cudaStream_t cuda_stream);
@@ -183,21 +197,29 @@ template CUDA_LIB_EXPORT void CalIsNan<uint16_t>(const size_t size, const uint16
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsNan<uint32_t>(const size_t size, const uint32_t *input, bool *output,
                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsNan<uint64_t>(const size_t size, const uint64_t *input, bool *output,
+                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<float>(const size_t size, const float *input, bool *output,
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<half>(const size_t size, const half *input, bool *output,
                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<double>(const size_t size, const double *input, bool *output,
                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsFinite<bool>(const size_t size, const bool *input, bool *output,
+                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<int8_t>(const size_t size, const int8_t *input, bool *output,
                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<int16_t>(const size_t size, const int16_t *input, bool *output,
                                                    cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<int32_t>(const size_t size, const int32_t *input, bool *output,
                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsFinite<int64_t>(const size_t size, const int64_t *input, bool *output,
+                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<uint8_t>(const size_t size, const uint8_t *input, bool *output,
                                                    cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<uint16_t>(const size_t size, const uint16_t *input, bool *output,
                                                     cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalIsFinite<uint32_t>(const size_t size, const uint32_t *input, bool *output,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalIsFinite<uint64_t>(const size_t size, const uint64_t *input, bool *output,
                                                     cudaStream_t cuda_stream);
