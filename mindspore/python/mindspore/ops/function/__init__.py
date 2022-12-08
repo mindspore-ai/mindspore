@@ -297,6 +297,7 @@ from .math_func import (
     truncate_mod,
     trunc,
     gumbel_softmax,
+    kaiser_window,
     matmul,
     baddbmm,
     cummin,
