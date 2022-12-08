@@ -24,6 +24,7 @@
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 
 #include "google/protobuf/util/json_util.h"
+#include "proto/profiling_parallel.pb.h"
 
 #ifdef WITH_BACKEND
 #include "ps/ps_context.h"
@@ -76,14 +77,14 @@ bool ParallelStrategy::StringToInt(const std::string *str, int32_t *value) const
   return true;
 }
 
-irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel() {
-  irpb::ProfilingParallel profiling_parallel;
+std::shared_ptr<irpb::ProfilingParallel> ParallelStrategy::GetProfilingParallel() {
+  std::shared_ptr<irpb::ProfilingParallel> profiling_parallel = std::make_shared<irpb::ProfilingParallel>();
 
   // set parallel model
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   std::string parallel_mode = parallel_context->parallel_mode();
-  irpb::Config *config = profiling_parallel.mutable_config();
+  irpb::Config *config = profiling_parallel->mutable_config();
   MS_EXCEPTION_IF_NULL(config);
   config->set_parallel_type(parallel_mode);
 
@@ -166,7 +167,7 @@ void ParallelStrategy::SaveParallelStrategyToFile() {
     rank_id = "0";
   }
   std::string parallel_str;
-  (void)google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb, &parallel_str);
+  (void)google::protobuf::util::MessageToJsonString(*cache_profiling_parallel_pb, &parallel_str);
   std::string parallel_file = std::string("parallel_strategy_") + std::string(rank_id) + std::string(".json");
   std::string parallel_path = dir + "/" + parallel_file;
   MS_LOG(INFO) << "Start to write parallel strategy string, file path is " << parallel_path;

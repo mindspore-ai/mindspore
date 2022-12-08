@@ -19,6 +19,7 @@ import os
 import stat
 from decimal import Decimal
 from enum import Enum
+import sys
 
 from mindspore import log as logger
 from mindspore import context
@@ -30,6 +31,7 @@ from mindspore.profiler.common.validator.validate_path import validate_and_norma
 from mindspore.profiler.parser.container import TimelineContainer
 from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 
+csv.field_size_limit(sys.maxsize)
 SIZE_LIMIT_DEFAULT = 20 * 1024 * 1024  # 20MB
 
 
