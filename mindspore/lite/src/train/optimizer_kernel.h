@@ -59,6 +59,11 @@ class OptimizerKernel : public LiteKernel {
     return indices;
   }
 
+  virtual std::vector<int> GetTrainableParamsIdxs() const {
+    std::vector<int> indices;
+    return indices;
+  }
+
   std::vector<lite::Tensor *> GetOptimizerParams() const {
     std::vector<lite::Tensor *> params;
     auto indices = GetOptimizerParamsIdxs();
@@ -93,6 +98,19 @@ class OptimizerKernel : public LiteKernel {
       }
     }
     return found;
+  }
+
+  std::vector<lite::Tensor *> GetTrainableParams() const {
+    std::vector<lite::Tensor *> params;
+    auto indices = GetTrainableParamsIdxs();
+    for (size_t ix = 0; ix < indices.size(); ix++) {
+      auto param = in_tensors_.at(indices[ix]);
+      if (!param->IsConst()) {
+        continue;
+      }
+      params.push_back(param);
+    }
+    return params;
   }
 
   lite::Tensor *GetGradients() {

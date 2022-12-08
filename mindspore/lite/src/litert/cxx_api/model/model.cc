@@ -540,6 +540,15 @@ std::vector<MSTensor> Model::GetFeatureMaps() const {
   return impl_->GetFeatureMaps();
 }
 
+std::vector<MSTensor> Model::GetTrainableParams() const {
+  std::vector<MSTensor> empty;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return empty;
+  }
+  return impl_->GetTrainableParams();
+}
+
 Status Model::UpdateFeatureMaps(const std::vector<MSTensor> &new_weights) {
   if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
     MS_LOG(ERROR) << "Model is null.";

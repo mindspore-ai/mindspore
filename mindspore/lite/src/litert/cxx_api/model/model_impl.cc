@@ -600,6 +600,21 @@ std::vector<MSTensor> ModelImpl::GetFeatureMaps() const {
   return res;
 }
 
+std::vector<MSTensor> ModelImpl::GetTrainableParams() const {
+  std::vector<MSTensor> empty;
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return empty;
+  }
+  auto params = session_->GetTrainableParams();
+  if (params.empty()) {
+    MS_LOG(ERROR) << "No trainable parameters available.";
+    return empty;
+  }
+  std::vector<MSTensor> res = LiteTensorsToMSTensors(params, true);
+  return res;
+}
+
 Status ModelImpl::UpdateFeatureMaps(const std::vector<MSTensor> &new_weights) {
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Session is null.";
@@ -840,6 +855,9 @@ Status ModelImpl::UpdateWeights(const std::vector<MSTensor> &new_weights) {
     inner_weights[i] = lite_impl->lite_tensor();
   }
   auto ret = session_->UpdateWeights(inner_weights);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "UpdateWeights failed, and the origin weights may have been changed.";
+  }
   return static_cast<StatusCode>(ret);
 }
 

@@ -101,6 +101,7 @@ class TrainSession : virtual public lite::LiteSession {
   int Export(Buffer *model_buffer, ModelType model_type, QuantizationType quant_type, FormatType,
              std::vector<std::string> out_put_tensor_name = {}) override;
   std::vector<lite::Tensor *> GetFeatureMaps() const override;
+  std::vector<lite::Tensor *> GetTrainableParams() const override;
 
   int UpdateFeatureMaps(const std::vector<lite::Tensor *> &features_map) override;
   int FindUseInTensorKernel(std::vector<kernel::KernelExec *> *use_in_tensor_kernels,
@@ -123,6 +124,7 @@ class TrainSession : virtual public lite::LiteSession {
   virtual void CompileTrainKernels();
   virtual int CompileInferenceKernels();
   virtual void CompileOptimizedKernels();
+  virtual void CompileTrainableParams();
   virtual void CompileTrainOutputs();
   virtual void CompileEvalOutputs();
   virtual int InitCallBack();
@@ -171,6 +173,7 @@ class TrainSession : virtual public lite::LiteSession {
   int ExportInner(DestType destination, ModelType model_type, QuantizationType quant_type, FormatType,
                   std::vector<std::string> out_put_tensor_name = {});
   std::map<Tensor *, Tensor *> restored_origin_tensors_;
+  std::vector<Tensor *> trainable_parameters_;
   int virtual_batch_idx_ = 0;
   int virtual_batch_multiplier_ = 0;
   uint32_t num_of_not_nan_iter_ = 0;

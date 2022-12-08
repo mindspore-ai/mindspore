@@ -116,6 +116,11 @@ std::vector<int> ApplyMomentumCPUKernel::GetOptimizerParamsIdxs() const {
   return indices;
 }
 
+std::vector<int> ApplyMomentumCPUKernel::GetTrainableParamsIdxs() const {
+  std::vector<int> indices = {0, 1, 2, 4};
+  return indices;
+}
+
 int ApplyMomentumCPUKernel::OptimizerStep() {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(weight);

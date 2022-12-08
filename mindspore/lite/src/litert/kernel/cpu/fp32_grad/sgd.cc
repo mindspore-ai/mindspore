@@ -218,6 +218,11 @@ std::vector<int> SgdCPUKernel::GetOptimizerParamsIdxs() const {
   return indices;
 }
 
+std::vector<int> SgdCPUKernel::GetTrainableParamsIdxs() const {
+  std::vector<int> indices = {0, 2, 3, 4, 5};
+  return indices;
+}
+
 int SgdCPUKernel::OptimizerStep() {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
 

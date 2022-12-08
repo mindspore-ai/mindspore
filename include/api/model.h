@@ -243,6 +243,11 @@ class MS_API Model {
   /// \return The vector that includes all weights tensors.
   std::vector<MSTensor> GetFeatureMaps() const;
 
+  /// \brief Obtain all trainable parameters of the model optimizers.
+  ///
+  /// \return The vector that includes all trainable parameters.
+  std::vector<MSTensor> GetTrainableParams() const;
+
   /// \brief Update weights tensors of the model.
   ///
   /// \param[in] new_weights A vector new weights.
