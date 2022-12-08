@@ -467,27 +467,16 @@ public class FLLiteClient {
     }
 
     public Map<String, float[]> getFeatureMap() {
-        Map<String, float[]> featureMap = new HashMap<>();
         if (Common.checkFLName(flParameter.getFlName())) {
-            featureMap = deprecatedGetFeatureMap();
-            return featureMap;
+            return deprecatedGetFeatureMap();
         }
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            Common.freeSession();
-            retCode = ResponseCode.RequestError;
-            return new HashMap<>();
-        }
-        List<MSTensor> features = client.getFeatures();
-        featureMap = CommonUtils.convertTensorToFeatures(features);
-        Common.freeSession();
-        return featureMap;
+        return Common.getFeatureMap(secureProtocol);
     }
 
     public void updateDpNormClip() {
         EncryptLevel encryptLevel = localFLParameter.getEncryptLevel();
         if (encryptLevel == EncryptLevel.DP_ENCRYPT) {
-            Map<String, float[]> fedFeatureMap = getFeatureMap();
+            Map<String, float[]> fedFeatureMap = Common.getFeatureMap(secureProtocol);
             float fedWeightUpdateNorm = calWeightUpdateNorm(oldFeatureMap, fedFeatureMap);
             if (fedWeightUpdateNorm == -1) {
                 LOGGER.severe("[updateDpNormClip] the returned value fedWeightUpdateNorm is not valid: " +
@@ -784,7 +773,6 @@ public class FLLiteClient {
         Common.freeSession();
         return featureMap;
     }
-
 
     private FLClientStatus deprecatedEvaluateLoop() {
         status = FLClientStatus.SUCCESS;
