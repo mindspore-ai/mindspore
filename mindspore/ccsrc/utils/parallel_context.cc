@@ -24,8 +24,6 @@
 
 namespace mindspore::parallel {
 namespace {
-std::map<std::string, std::vector<int64_t>> param_shapes;
-
 std::vector<std::string> kParallelModeList = {kStandalone, kDataParallel, kHybridParallel, kSemiAutoParallel,
                                               kAutoParallel};
 std::vector<std::string> kStrategySearchModeList = {kDynamicProgramming, kRecursiveProgramming, kShardingPropagation};
@@ -235,14 +233,12 @@ bool ParallelContext::set_communi_parallel_mode(const std::string &communi_paral
   return true;
 }
 
-// Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
 void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (!IsAutoParallelCareGraph(func_graph)) {
+  if (!ParallelContextCareGraph(func_graph)) {
     return;
   }
   if (func_graph->has_flag(kIsFirstIteration)) {
-    param_shapes.clear();
     init_param_shape_ = true;
     MS_LOG(INFO) << "Init the parameter shape dict in increment predict with two graph";
     return;
@@ -257,7 +253,6 @@ void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func
     init_param_shape_ = false;
     MS_LOG(INFO) << "In parallel grad accumulation second graph, need to restore the parameter shape";
   } else {
-    param_shapes.clear();
     init_param_shape_ = true;
     MS_LOG(INFO) << "Init the parameter shape dict";
   }
@@ -270,7 +265,7 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
-  if (!IsAutoParallelCareGraph(func_graph)) {
+  if (!ParallelContextCareGraph(func_graph)) {
     return;
   }
 
@@ -291,30 +286,7 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   MS_LOG(INFO) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
 }
 
-// Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
-// Checkpoint the parameters' shape for training in auto-parallel or semi-auto-parallel mode
-void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                                        const AbstractBasePtr &ptr) const {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(param_node);
-  MS_EXCEPTION_IF_NULL(ptr);
-  if (!IsAutoParallelCareGraph(func_graph)) {
-    return;
-  }
-
-  if (!init_param_shape_) {
-    return;
-  }
-  std::vector<int64_t> shape = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
-  auto ret = param_shapes.try_emplace(param_node->name(), shape);
-  if (!ret.second) {
-    MS_LOG(EXCEPTION) << "The shape for parameter name " << param_node->name() << " is existed";
-  }
-
-  MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
-}
-
-bool ParallelContext::IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) const {
+bool ParallelContext::ParallelContextCareGraph(const FuncGraphPtr &func_graph) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   if (func_graph->has_flag(kSkipAutoParallelCompile)) {
     return false;

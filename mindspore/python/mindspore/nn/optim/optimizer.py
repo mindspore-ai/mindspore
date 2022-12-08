@@ -181,6 +181,7 @@ class Optimizer(Cell):
             self._init_group_params(parameters, learning_rate, weight_decay, self.grad_centralization)
 
         self._init_opt_attrs(learning_rate, parameters, weight_decay)
+        self.add_flags(skip_auto_parallel_compile=True)
 
     def _init_opt_attrs(self, learning_rate, parameters, weight_decay):
         """initialize optimizer attributions"""

@@ -741,7 +741,6 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
       auto param_abs = GetDefaultValueAbstract(param_node);
       context->ParallelParameterContextRestoreShape(func_graph, param_node, param_abs);
       (void)args_abs.emplace_back(param_abs);
-      context->ParallelParameterContextCkptShape(func_graph, param_node, param_abs);
     }
   }
   return args_abs;

@@ -181,8 +181,6 @@ class COMMON_EXPORT ParallelContext {
   void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
   void ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
                                             const AbstractBasePtr &ptr) const;
-  void ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                         const AbstractBasePtr &ptr) const;
   void set_sharding_propagation(const bool stra_pto);
   bool sharding_propagation() const { return sharding_propagation_; }
 
@@ -194,7 +192,7 @@ class COMMON_EXPORT ParallelContext {
 
  private:
   ParallelContext();
-  bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) const;
+  bool ParallelContextCareGraph(const FuncGraphPtr &func_graph) const;
 
   bool gradients_mean_;
   bool full_batch_;
