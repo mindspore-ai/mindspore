@@ -867,6 +867,52 @@ Status DATASET_API MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min
                                   int32_t sample_rate, NormType norm = NormType::kNone,
                                   MelType mel_type = MelType::kHtk);
 
+/// \brief Create MFCC for a raw audio signal.
+class DATASET_API MFCC final : public TensorTransform {
+ public:
+  /// \param[in] sample_rate Sample rate of audio signal. Default: 16000.
+  /// \param[in] n_mfcc Number of mfc coefficients to retain. Default: 40.
+  /// \param[in] dct_type Type of DCT (discrete cosine transform) to use. Default: 2.
+  /// \param[in] norm If 'slaney', divide the triangular mel weights by the width of the mel band (area normalization).
+  ///     Default: NormMode::kOrtho.
+  /// \param[in] log_mels Whether to use log-mel spectrograms instead of db-scaled. Default: false.
+  /// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
+  /// \param[in] win_length Window size. Default: 0.
+  /// \param[in] hop_length Length of hop between STFT windows. Default: 0.
+  /// \param[in] f_min Minimum frequency. Default: 0.
+  /// \param[in] f_max Maximum frequency. Default: 0.
+  /// \param[in] pad Two sided padding of signal. Default: 0.
+  /// \param[in] n_mels Number of mel filterbanks. Default: 128.
+  /// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+  ///     Default: WindowType::kHann.
+  /// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2 for power, etc.
+  ///     Default: 2.0.
+  /// \param[in] normalized Whether to normalize by magnitude after stft. Default: false.
+  /// \param[in] center Whether to pad waveform on both sides. Default: true.
+  /// \param[in] pad_mode Controls the padding method used when center is True. Default: BorderType::kReflect.
+  /// \param[in] onesided Controls whether to return half of results to avoid redundancy. Default: true.
+  /// \param[in] norm_mel Norm to use. Default: NormType::kNone.
+  /// \param[in] mel_scale Scale to use: htk or slaney. Default: MelType::kHtk.
+  explicit MFCC(int32_t sample_rate = 16000, int32_t n_mfcc = 40, int32_t dct_type = 2,
+                NormMode norm = NormMode::kOrtho, bool log_mels = false, int32_t n_fft = 400, int32_t win_length = 0,
+                int32_t hop_length = 0, float f_min = 0, float f_max = 0, int32_t pad = 0, int32_t n_mels = 128,
+                WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false, bool center = true,
+                BorderType pad_mode = BorderType::kReflect, bool onesided = true, NormType norm_mel = NormType::kNone,
+                MelType mel_scale = MelType::kHtk);
+
+  /// \brief Destructor.
+  ~MFCC() override = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief MuLawDecoding TensorTransform.
 /// \note Decode mu-law encoded signal.
 class DATASET_API MuLawDecoding final : public TensorTransform {

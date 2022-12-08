@@ -2230,5 +2230,77 @@ Status LFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
   return Status::OK();
 }
+
+Status MelSpectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                      int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min, float f_max, int32_t pad,
+                      int32_t n_mels, WindowType window, float power, bool normalized, bool center, BorderType pad_mode,
+                      bool onesided, NormType norm, MelType mel_scale) {
+  auto input_shape_vec = input->shape().AsVector();
+  CHECK_FAIL_RETURN_UNEXPECTED(n_fft < TWO * input_shape_vec[input_shape_vec.size() - 1],
+                               "MelSpectrogram: Padding size should be less than the corresponding input dimension.");
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
+  std::shared_ptr<Tensor> spectrogram;
+  RETURN_IF_NOT_OK(Spectrogram(input, &spectrogram, pad, window, n_fft, hop_length, win_length, power, normalized,
+                               center, pad_mode, onesided));
+  RETURN_IF_NOT_OK(
+    MelScale<float>(spectrogram, output, n_mels, sample_rate, f_min, f_max, n_fft / TWO + 1, norm, mel_scale));
+  return Status::OK();
+}
+
+Status MFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate, int32_t n_mfcc,
+            int32_t dct_type, bool log_mels, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min,
+            float f_max, int32_t pad, int32_t n_mels, WindowType window, float power, bool normalized, bool center,
+            BorderType pad_mode, bool onesided, NormType norm, NormMode norm_M, MelType mel_scale) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
+  std::shared_ptr<Tensor> mel_spectrogram;
+  std::shared_ptr<Tensor> dct_mat;
+  RETURN_IF_NOT_OK(MelSpectrogram(input, &mel_spectrogram, sample_rate, n_fft, win_length, hop_length, f_min, f_max,
+                                  pad, n_mels, window, power, normalized, center, pad_mode, onesided, norm, mel_scale));
+  RETURN_IF_NOT_OK(Dct(&dct_mat, n_mfcc, n_mels, norm_M));
+  if (log_mels) {
+    for (auto itr = mel_spectrogram->begin<float>(); itr != mel_spectrogram->end<float>(); ++itr) {
+      float log_offset = 1e-6;
+      *itr = log(*itr + log_offset);
+    }
+  } else {
+    std::shared_ptr<Tensor> amplitude_to_db;
+    float multiplier = 10.0;
+    float db_multiplier = 0.0;
+    float amin = 1e-10;
+    float top_db = 80.0;
+    RETURN_IF_NOT_OK(AmplitudeToDB(mel_spectrogram, &amplitude_to_db, multiplier, amin, db_multiplier, top_db));
+    mel_spectrogram = amplitude_to_db;
+  }
+  auto dct_mat_ptr = &*dct_mat->begin<float>();
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mat_res;
+  Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> matrix_dm(dct_mat_ptr, n_mfcc, n_mels);
+  TensorShape st_shape = mel_spectrogram->shape();
+  TensorShape st_reshape({mel_spectrogram->Size() / st_shape[-1] / st_shape[-2], st_shape[-2], st_shape[-1]});
+  RETURN_IF_NOT_OK(mel_spectrogram->Reshape(st_reshape));
+
+  const dsize_t kRowIndex = 1;
+  const dsize_t kColIndex = 2;
+  int rows = st_reshape[kRowIndex];
+  int cols = st_reshape[kColIndex];
+  std::vector<float> out_temp;
+
+  for (int c = 0; c < st_reshape[0]; c++) {
+    Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(
+      &*mel_spectrogram->begin<float>() + rows * cols * c, cols, rows);
+    mat_res.noalias() = (matrix_c * matrix_dm.transpose());
+    std::vector<float> vec_c(mat_res.data(), mat_res.data() + mat_res.size());
+    out_temp.insert(out_temp.end(), vec_c.begin(), vec_c.end());
+  }
+  // unpack
+  std::vector<int64_t> output_shape_vec = st_shape.AsVector();
+  output_shape_vec[st_shape.Size() - 1] = cols;
+  output_shape_vec[st_shape.Size() - TWO] = n_mfcc;
+  TensorShape output_shape(output_shape_vec);
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_temp, output_shape, output));
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

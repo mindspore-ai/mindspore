@@ -34,6 +34,7 @@ add_library(audio-ir-kernels OBJECT
         mask_along_axis_iid_ir.cc
         mask_along_axis_ir.cc
         mel_scale_ir.cc
+        mfcc_ir.cc
         mu_law_decoding_ir.cc
         mu_law_encoding_ir.cc
         overdrive_ir.cc
