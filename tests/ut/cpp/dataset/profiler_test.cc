@@ -273,7 +273,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByEpoch) {
 /// Feature: MindData Profiling Support
 /// Description: Test MindData Profiling GetByStep Methods
 /// Expectation: Results are successfully outputted.
-TEST_F(MindDataTestProfiler, TestProfilerManagerByStep) {
+TEST_F(MindDataTestProfiler, DISABLED_TestProfilerManagerByStep) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProfilerManagerByStep.";
   // Enable profiler and check
   common::SetEnv("RANK_ID", "2");
