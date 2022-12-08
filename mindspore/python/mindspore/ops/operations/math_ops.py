@@ -7360,8 +7360,11 @@ class TrilIndices(Primitive):
 
 class MatrixTriangularSolve(Primitive):
     r"""
-    Returns a new tensor with the solotion of a linear equation system with an
+    Returns a new tensor with the solution of a linear equation system with an
     upper or lower triangular matrix.
+
+    Note:
+        Only GPU platforms now support the broadcast mechanism.
 
     Args:
         lower (bool, optional): If True, the innermost matrices in `matrix` is
@@ -7381,12 +7384,13 @@ class MatrixTriangularSolve(Primitive):
     Raises:
         TypeError: If `matrix` or `rhs` is not a Tensor.
         TypeError: If `lower` or `adjoint` is not bool.
-        ValueError: If the batch sizes of `matrix` and `rhs` are not equal.
+        ValueError: For GPU platform, if the batch sizes of `matrix` and `rhs` do not satisfy broadcasting rules.
+            For other platforms, if the batch sizes of `matrix` and `rhs` are not equal.
         ValueError: If the inner-most 2 dimensions of `matrix` are not equal.
         ValueError: If the second-last dimensions of `matrix` and `rhs` are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> matrix_triangular_solve = ops.MatrixTriangularSolve(lower=True, adjoint=False)
