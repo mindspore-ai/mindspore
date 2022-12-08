@@ -2389,8 +2389,8 @@ def bitwise_right_shift(x, other):
         \end{aligned}
 
     Args:
-        x (Tensor or Scalar): The input to be right shifted.
-        other(Tensor or Scalar): The number of bit to be applied on right arithmetic shift.
+        x (Union[Tensor, Scalar]): The input to be right shifted.
+        other (Union[Tensor, Scalar]): The number of bit to be applied on right arithmetic shift.
 
     Returns:
         Tensor, the result after bitwise right shift.

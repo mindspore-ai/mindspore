@@ -329,7 +329,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
 
     Args:
         window_length (int): The size of returned window. Must be a non negative integer.
-        periodic (bool): If True, return a periodic window. If False, return a symmetric window.
+        periodic (bool, optional): If True, return a periodic window. If False, return a symmetric window.
         alpha (float, optional): The coefficient α.
         beta (float, optional): The coefficient β.
 
