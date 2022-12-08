@@ -190,7 +190,7 @@ REG_ADPT_DESC(Upsample, kNameUpsample, ADPT_DESC(Upsample))
 INPUT_MAP(AdaptiveMaxPool2d) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AdaptiveMaxPool2d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(AdaptiveMaxPool2d) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
-REG_ADPT_DESC(AdaptiveMaxPool2d, kNameAdaptiveMaxPool2d, ADPT_DESC(AdaptiveMaxPool2d))
+REG_ADPT_DESC(AdaptiveMaxPool2d, kAdaptiveMaxPool2dOpName, ADPT_DESC(AdaptiveMaxPool2d))
 
 // AvgPool3DGrad
 INPUT_MAP(AvgPool3DGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(grads)}};
