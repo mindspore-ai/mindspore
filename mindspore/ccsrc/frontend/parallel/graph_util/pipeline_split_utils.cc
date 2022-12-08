@@ -424,19 +424,19 @@ void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePa
   }
 }
 
-void ReorderForParams(const std::vector<AnfNodePtr> &backward_params, const std::vector<AnfNodePtr> &forward_params,
-                      const PipelinePair &forward_params_pair, const std::vector<AnfNodePtr> &backward_end,
-                      const PipelinePair &forward_start_pair, const FuncGraphPtr &root) {
+void ReorderForParams(const PipelinePair &backward_params_pair, const PipelinePair &forward_params_pair,
+                      const PipelinePair &backward_end_pair, const PipelinePair &forward_start_pair,
+                      const FuncGraphPtr &root) {
   auto manager = root->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  if (!forward_params.empty()) {
-    auto prior_node = forward_params_pair.second[0];
-    auto post_node = forward_start_pair.first[0];
+  if (!forward_params_pair.second.empty()) {
+    auto prior_node = forward_params_pair.second.back();
+    auto post_node = forward_start_pair.first.front();
     InsertDepend(prior_node, post_node, manager, root);
   }
-  if (!backward_params.empty()) {
-    auto prior_node2 = backward_end.back();
-    auto post_node2 = backward_params[0];
+  if (!backward_params_pair.first.empty()) {
+    auto prior_node2 = backward_end_pair.second.back();
+    auto post_node2 = backward_params_pair.first.front();
     InsertDepend(prior_node2, post_node2, manager, root);
   }
 }
@@ -749,6 +749,7 @@ void Reorder(const FuncGraphPtr &root) {
   auto forward_start_pair = Deduplicate(forward_start, root, micro_max);
   auto forward_end_pair = Deduplicate(forward_end, root, micro_max);
   auto forward_params_pair = Deduplicate(forward_params, root, micro_max);
+  auto backward_params_pair = Deduplicate(backward_params, root, micro_max);
   CheckBorderNode(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair, LongToSize(micro_max));
   PipelinePair forward_end_before_pair;
   if (!IsLastStage()) {
@@ -770,7 +771,7 @@ void Reorder(const FuncGraphPtr &root) {
   ReorderForForward(forward_start_pair.first, forward_end_pair.second, root);
   ReorderForBackward(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair,
                      forward_end_before_pair, root);
-  ReorderForParams(backward_params, forward_params, forward_params_pair, backward_end, forward_start_pair, root);
+  ReorderForParams(backward_params_pair, forward_params_pair, backward_end_pair, forward_start_pair, root);
 }
 
 void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
