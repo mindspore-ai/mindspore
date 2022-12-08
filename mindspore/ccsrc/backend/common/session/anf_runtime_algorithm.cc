@@ -1412,4 +1412,13 @@ std::string AnfRuntimeAlgorithm::GetOriginFormat(const AnfNodePtr &anf_node) {
   }
   return {};
 }
+
+bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value().get();
+  MS_EXCEPTION_IF_NULL(value);
+  return value->isa<FuncGraph>();
+}
 }  // namespace mindspore::session

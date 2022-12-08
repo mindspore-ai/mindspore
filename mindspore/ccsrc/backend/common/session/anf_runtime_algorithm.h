@@ -192,6 +192,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void AddOutInRefToGraph(const KernelGraphPtr &graph);
   static bool HasOriginFormat(const AnfNodePtr &anf_node);
   static std::string GetOriginFormat(const AnfNodePtr &anf_node);
+
+  static bool NodeValueIsFuncGraph(const AnfNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

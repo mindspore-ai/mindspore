@@ -1535,6 +1535,67 @@ void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr
   (void)to_kernel_attr->AddAllOutInRef(all_out_in_ref);
 }
 
+using ShapeSet = std::set<int64_t>;
+static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in_resize_map = {
+  {prim::kPrimReduceMean->name(), ShapeSet{1}},
+  {prim::kPrimReduceMax->name(), ShapeSet{1}},
+  {prim::kPrimReduceSum->name(), ShapeSet{1}},
+  {prim::kPrimReduceMin->name(), ShapeSet{1}},
+  {prim::kPrimReduceProd->name(), ShapeSet{1}},
+  {prim::kPrimReduceAll->name(), ShapeSet{1}},
+  {prim::kPrimReduceAny->name(), ShapeSet{1}},
+  {prim::kPrimROIAlignGrad->name(), ShapeSet{2}},
+  {prim::kSlice, ShapeSet{1, 2}},
+  {prim::kPrimSliceGrad->name(), ShapeSet{2, 3, 4}},
+  {prim::kStridedSliceGrad, ShapeSet{2, 3, 4}},
+  {prim::kPrimTensorCopySlices->name(), ShapeSet{2, 3, 4}},
+  {prim::kTranspose, ShapeSet{1}},
+  {prim::kPrimGatherD->name(), ShapeSet{1}},
+  {prim::kPrimGather->name(), ShapeSet{2}},
+  {prim::kPrimSparseGatherV2->name(), ShapeSet{2}},
+  {prim::kPrimScatterNd->name(), ShapeSet{2}},
+  {prim::kStridedSlice, ShapeSet{1, 2, 3}},
+  {prim::kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
+  {prim::kPrimTensorCopySlices->name(), ShapeSet{2, 3, 4}},
+  {prim::kTile, ShapeSet{1}},
+  {prim::kTranspose, ShapeSet{1}},
+  {prim::kPrimConv2DBackpropFilter->name(), ShapeSet{2}},
+  {prim::kPrimConv2DBackpropInput->name(), ShapeSet{2}},
+  {prim::kMatrixDiagPartV3, ShapeSet{1, 2}},
+};
+
+std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node) {
+  auto primitive = GetValueNode<PrimitivePtr>(node->input(0));
+  auto prim_name = primitive->ToString();
+  auto iter = try_get_value_in_resize_map.find(prim_name);
+  std::set<int64_t> res = {};
+  if (iter != try_get_value_in_resize_map.end()) {
+    res = iter->second;
+  }
+  return res;
+}
+
+bool IfNeedSkipResize(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->input(0));
+  if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
+    auto input_size = common::AnfAlgo::GetInputTensorNum(node);
+    for (size_t i = 0; i < input_size; ++i) {
+      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
+      auto real_input = input_node_with_index.first;
+      // Inverse op have constant input need infer ,then resize
+      auto shape_set = GetShapeSetFromResizeMap(node);
+      if (shape_set.find(i) != shape_set.end() && real_input->isa<Parameter>()) {
+        MS_LOG(DEBUG) << "Set Node Attr is Dynamic Shape";
+        common::AnfAlgo::SetNodeAttr(mindspore::kAttrOutputIsDynamicShape, MakeValue(true), node);
+        node->func_graph()->cast<KernelGraphPtr>()->SetGraphDynamicAttr(true);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 namespace broadcast_utils {
 bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
                            std::vector<size_t> *rhs) {
