@@ -315,6 +315,7 @@ from .math_func import (
     atleast_2d,
     atleast_3d,
     vstack,
+    combinations,
     dist,
     copysign,
     hann_window,

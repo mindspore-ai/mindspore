@@ -5806,6 +5806,102 @@ def vstack(inputs):
     return out
 
 
+def combinations(x, r=2, with_replacement=False):
+    r"""
+    When `with_replacement` is set to `False`, the behavior is similar to python's
+    `itertools.combinations`, and when `with_replacement` is set to `True`,
+    it behaves like `itertools.combinations_with_replacement`.
+
+    Args:
+        x (Tensor): One-dimensional tensors.
+        r (int, optional): Number of elements. Default: 2.
+        with_replacement (bool, optional): Allow duplication or not. Default: False.
+
+    Returns:
+        Tensor, equivalent to resulting list.
+
+    Raises:
+        TypeError: If `x` is not a tensor.
+        ValueError: If `x` is not one-dimensional.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([1, 3, -1, 0, 4])
+        >>> output = ops.combinations(x)
+        >>> print(output.asnumpy())
+        [[ 1  3]
+         [ 1 -1]
+         [ 1  0]
+         [ 1  4]
+         [ 3 -1]
+         [ 3  0]
+         [ 3  4]
+         [-1  0]
+         [-1  4]
+         [ 0  4]]
+    """
+
+    def _combinations(iterable, r):
+        lst = ops.StridedSlice()(Tensor([np.zeros(r)]), (0,), (0,), (1,))
+        pool = tuple(iterable)
+        n = len(pool)
+        if r > n:
+            return lst
+        indices = list(range(r))
+        lst = ops.concat([ops.reshape(pool[i], (1,)) for i in indices])
+        while True:
+            stop = True
+            i = 0
+            for index in range(r)[::-1]:
+                if indices[index] != index + n - r:
+                    stop = False
+                    i = index
+                    break
+            if stop:
+                return lst
+            indices[i] += 1
+            for j in range(i + 1, r):
+                indices[j] = indices[j - 1] + 1
+            item = ops.concat([ops.reshape(pool[i], (1,)) for i in indices])
+            lst = ops.concat((lst, item), -1)
+        return None
+
+    def _combinations_with_replacement(iterable, r):
+        lst = Tensor([])
+        pool = tuple(iterable)
+        n = len(pool)
+        if not n and r:
+            return lst
+        indices = [0] * r
+        lst = ops.concat([ops.reshape(pool[i], (1,)) for i in indices])
+        while True:
+            stop = True
+            i = 0
+            for index in range(r)[::-1]:
+                if indices[index] != n - 1:
+                    stop = False
+                    i = index
+                    break
+            if stop:
+                return lst
+            indices[i:] = [indices[i] + 1] * (r - i)
+            item = ops.concat([ops.reshape(pool[i], (1,)) for i in indices])
+            lst = ops.concat((lst, item), -1)
+        return None
+
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For 'combinations', 'x' must be a tensor, but got {type(x)}")
+    if x.ndim != 1:
+        raise ValueError(f"For 'combinations', the dimension 'x' must be 1, but got {x.ndim}")
+    comb_func = _combinations_with_replacement if with_replacement else _combinations
+    ret = comb_func(x, r)
+    if ret.size == 0:
+        return ret
+    return ops.reshape(ret, (-1, r))
+
+
 def dist(input_x, input_y, p=2):
     r"""
     Computes batched the :math:`p`-norm distance between each pair of the two collections of row vectors.
@@ -8813,6 +8909,7 @@ __all__ = [
     'atleast_2d',
     'atleast_3d',
     'vstack',
+    'combinations',
     'dist',
     'copysign',
     'hann_window',
