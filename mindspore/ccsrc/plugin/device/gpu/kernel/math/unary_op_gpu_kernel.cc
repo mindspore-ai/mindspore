@@ -487,23 +487,23 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   const bool is_t_complex = (std::is_same_v<T, utils::Complex<float>>) || (std::is_same_v<T, utils::Complex<double>>);
   if constexpr (is_t_complex) {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_complex = {
-      {kSqrt, Sqrt<T>},   {kTan, Tan<T>},       {kCosh, Cosh<T>},       {kAtanh, Atanh<T>},
-      {kInv, Inv<T>},     {kLog, Logarithm<T>}, {kExp, Exponential<T>}, {kNeg, Negative<T>},
-      {kSin, Sin<T>},     {kCos, Cos<T>},       {kACos, ACos<T>},       {kAcosh, Acosh<T>},
-      {kAsin, Asin<T>},   {kAsinh, Asinh<T>},   {kSquare, Square<T>},   {kReciprocal, Reciprocal<T>},
-      {kRsqrt, Rsqrt<T>}, {kSign, Sign<T>},     {kAtan, Atan<T>},       {kSinh, Sinh<T>},
-      {kExpm1, Expm1<T>}, {kLog1p, Log1p<T>}};
+      {kSqrt, SqrtOpt<T>}, {kTan, Tan<T>},     {kCosh, Cosh<T>},        {kAtanh, Atanh<T>},
+      {kInv, Inv<T>},      {kLog, LogOpt<T>},  {kExp, ExpOpt<T>},       {kNeg, NegOpt<T>},
+      {kSin, Sin<T>},      {kCos, Cos<T>},     {kACos, ACos<T>},        {kAcosh, Acosh<T>},
+      {kAsin, Asin<T>},    {kAsinh, Asinh<T>}, {kSquare, SquareOpt<T>}, {kReciprocal, ReciprocalOpt<T>},
+      {kRsqrt, Rsqrt<T>},  {kSign, Sign<T>},   {kAtan, Atan<T>},        {kSinh, Sinh<T>},
+      {kExpm1, Expm1<T>},  {kLog1p, Log1p<T>}};
     copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
   } else {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_normal = {
-      {kExp, Exponential<T>}, {kExpm1, Expm1<T>},   {kLog, Logarithm<T>}, {kLog1p, Log1p<T>},
-      {kErf, Erf<T>},         {kErfc, Erfc<T>},     {kNeg, Negative<T>},  {kReciprocal, Reciprocal<T>},
-      {kInv, Inv<T>},         {kInvert, Invert<T>}, {kSquare, Square<T>}, {kSqrt, Sqrt<T>},
-      {kRsqrt, Rsqrt<T>},     {kSin, Sin<T>},       {kCos, Cos<T>},       {kCosh, Cosh<T>},
-      {kAsin, Asin<T>},       {kACos, ACos<T>},     {kAtan, Atan<T>},     {kAsinh, Asinh<T>},
-      {kAcosh, Acosh<T>},     {kAbs, Abs<T>},       {kFloor, Floor<T>},   {kCeil, Ceil<T>},
-      {kRint, Rint<T>},       {kRound, Round<T>},   {kSign, Sign<T>},     {kAtanh, Atanh<T>},
-      {kTan, Tan<T>},         {kSinh, Sinh<T>},     {kTrunc, Trunc<T>}};
+      {kExp, ExpOpt<T>},  {kExpm1, Expm1<T>},   {kLog, LogOpt<T>},       {kLog1p, Log1p<T>},
+      {kErf, Erf<T>},     {kErfc, Erfc<T>},     {kNeg, NegOpt<T>},       {kReciprocal, ReciprocalOpt<T>},
+      {kInv, Inv<T>},     {kInvert, Invert<T>}, {kSquare, SquareOpt<T>}, {kSqrt, SqrtOpt<T>},
+      {kRsqrt, Rsqrt<T>}, {kSin, Sin<T>},       {kCos, Cos<T>},          {kCosh, Cosh<T>},
+      {kAsin, Asin<T>},   {kACos, ACos<T>},     {kAtan, Atan<T>},        {kAsinh, Asinh<T>},
+      {kAcosh, Acosh<T>}, {kAbs, Abs<T>},       {kFloor, Floor<T>},      {kCeil, Ceil<T>},
+      {kRint, Rint<T>},   {kRound, Round<T>},   {kSign, Sign<T>},        {kAtanh, Atanh<T>},
+      {kTan, Tan<T>},     {kSinh, Sinh<T>},     {kTrunc, Trunc<T>}};
     copy(func_map_normal.begin(), func_map_normal.end(), inserter(func_map, func_map.begin()));
   }
 

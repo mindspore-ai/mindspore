@@ -28,8 +28,7 @@ bool SelectGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto *input_x = reinterpret_cast<T *>(inputs[1]->addr);
   auto *input_y = reinterpret_cast<T *>(inputs[2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  CalSelect(output_size_, input_cond, input_x, input_y, output, device_id_,
-            reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CalSelect(input_cond, input_x, input_y, output, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
 
