@@ -26,6 +26,7 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {

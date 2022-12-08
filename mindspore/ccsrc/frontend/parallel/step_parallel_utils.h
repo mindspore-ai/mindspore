@@ -27,6 +27,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 
 namespace mindspore {
 namespace parallel {
@@ -39,6 +40,8 @@ struct CommInfo {
   std::string world_group;
   std::string communication_backend;
 };
+const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER,       ALL_TO_ALL,         REDUCE_SCATTER,
+                                                 BROADCAST,  NEIGHBOREXCHANGE, NEIGHBOREXCHANGEV2, SYNC_BATCH_NORM};
 // common method
 CommInfo GetCommInfo();
 ShapeVector ToFullShape(const ShapeVector &input_shape, size_t index);
@@ -86,6 +89,22 @@ bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph);
 bool HasNestedMetaFg(const FuncGraphPtr &func_graph);
 bool IsEmbedShardNode(const FuncGraphPtr &func_graph);
 bool IsSplittableOperator(const std::string &op_name);
+std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);
+OperatorInfoPtr GetDistributeOperator(const CNodePtr &node);
+bool StrategyFound(const mindspore::HashMap<std::string, ValuePtr> &attrs);
+bool AttrFound(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &target);
+void ExceptionIfHasCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);
+std::string MirrorOpName();
+// Extract strategy from attr
+StrategyPtr ExtractStrategy(const ValuePtr &stra);
+ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth);
+Status ParallelInit();
+std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
+                                    size_t max_depth);
+void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &parameter);
+StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const PrimitivePtr prim);
+bool IsInsertVirtualOutput(const FuncGraphPtr &root);
+TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair);
 }  // namespace parallel
 }  // namespace mindspore
 

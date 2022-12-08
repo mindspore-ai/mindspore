@@ -237,7 +237,7 @@ Shapes GetValueListShape(const AnfNodePtr &node) {
   } else if (IsValueNode<ValueTuple>(node)) {
     inputs_seq = node->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
   } else {
-    MS_LOG(EXCEPTION) << "node is eigther ValueList or ValueTuple";
+    MS_LOG(EXCEPTION) << "node is either ValueList or ValueTuple";
   }
   for (auto &ele : inputs_seq) {
     auto tensor = ele->cast<tensor::TensorPtr>();
@@ -1057,6 +1057,348 @@ bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
     return false;
   }
   return true;
+}
+
+// Needed by rec_parser
+std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node) {
+  std::vector<std::string> name_inputs;
+  std::vector<AnfNodePtr> all_inputs = node->inputs();
+  std::vector<AnfNodePtr> node_inputs{all_inputs.begin() + 1, all_inputs.end()};
+
+  std::string node_id = node->UniqueId();
+  name_inputs.push_back(node_id);
+  for (auto &input : node_inputs) {
+    std::string name = input->UniqueId();
+    name_inputs.push_back(name);
+  }
+
+  return name_inputs;
+}
+
+OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsParallelCareNode(node)) {
+    return nullptr;
+  }
+  OperatorInfoPtr distribute_operator = node->user_data<OperatorInfo>();
+  return distribute_operator;
+}
+
+bool StrategyFound(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+  auto iter = attrs.find(IN_STRATEGY);
+  return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
+}
+
+bool AttrFound(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &target) {
+  auto iter = attrs.find(target);
+  return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
+}
+
+static bool IsCommunicationOp(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  return (COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end());
+}
+
+void ExceptionIfHasCommunicationOp(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (!IsValueNode<Primitive>(cnode->input(0))) {
+      continue;
+    }
+    ValueNodePtr prim_value_node = cnode->input(0)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(prim_value_node);
+    PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_value_node);
+    MS_EXCEPTION_IF_NULL(prim);
+
+    if (IsCommunicationOp(prim) && cnode->in_forward_flag()) {
+      MS_EXCEPTION_IF_NULL(prim_value_node->scope());
+      MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+      std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+      MS_LOG(EXCEPTION) << "If the parallel mode is semi_auto_parallel or auto_parallel, the graph can not contain "
+                           "communication op, the parallel mode is "
+                        << parallel_mode << ", and the graph has communication op : " << prim->name()
+                        << ", scope name is " << prim_value_node->scope()->name();
+    }
+  }
+}
+
+std::string MirrorOpName() {
+  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
+  int64_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  std::string mirror_op_name;
+  if (grad_accumulation_step > 1) {
+    mirror_op_name = MIRROR_MINI_STEP_OPERATOR;
+  } else if (split_stage_num > 1) {
+    mirror_op_name = MIRROR_MICRO_STEP_OPERATOR;
+  } else {
+    mirror_op_name = MIRROR_OPERATOR;
+  }
+  return mirror_op_name;
+}
+
+StrategyPtr ExtractStrategy(const ValuePtr &stra) {
+  if (stra == nullptr) {
+    return nullptr;
+  }
+
+  auto var = stra->cast<ValueTuplePtr>();
+  if (var == nullptr) {
+    return nullptr;
+  }
+
+  StrategyPtr strategyPtr;
+  int64_t stage_id = g_device_manager->stage_id();
+
+  MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
+  if (var->size() > 0) {
+    std::vector<ValuePtr> elements = var->value();
+    Strategies strategy;
+    for (uint64_t index = 0; index < elements.size(); ++index) {
+      Dimensions dim;
+      if (elements[index]->isa<ValueSequence>()) {
+        auto value_tuple = elements[index]->cast<ValueTuplePtr>();
+        std::vector<ValuePtr> value_vector = value_tuple->value();
+        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
+                             [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+        strategy.push_back(dim);
+      } else {
+        MS_LOG(EXCEPTION) << "Failure: Strategy's format is wrong! Need ValueSequence";
+      }
+    }
+    if (strategy.empty()) {
+      MS_LOG(EXCEPTION) << "ExtractStrategy: failed to extract strategy";
+    }
+    strategyPtr = NewStrategy(stage_id, strategy);
+  }
+
+  return strategyPtr;
+}
+
+static bool IsCohesiveNode(const CNodePtr &cnode) {
+  return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
+         IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) ||
+         IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather);
+}
+
+ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding the parameters' name of a operator, exceeded the maximum depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return {};
+  }
+  std::vector<AnfNodePtr> node_inputs{node->inputs()};
+  ParameterMap param_names;
+  for (int64_t i = 0; i < UlongToLong(node_inputs.size()); ++i) {
+    int64_t idx = index > i ? index : i;
+    auto input = node_inputs[LongToSize(i)];
+    if (input->isa<Parameter>()) {
+      auto input_parameter = input->cast<ParameterPtr>();
+      if (input_parameter->has_default() && ParameterRequireGrad(input_parameter)) {
+        (void)param_names.emplace_back(std::make_pair(input_parameter->name(), input_parameter));
+      }
+    } else if (input->isa<CNode>()) {
+      CNodePtr cnode = input->cast<CNodePtr>();
+      if (!IsValueNode<Primitive>(cnode->input(0))) {
+        continue;
+      }
+      if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
+        auto input_param_names = NodeParameterName(cnode, idx, 0);
+        (void)param_names.insert(param_names.cend(), input_param_names.cbegin(), input_param_names.cend());
+      }
+    }
+  }
+  return param_names;
+}
+
+Status ParallelInit() {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (split_stage_num <= 0) {
+    MS_LOG(ERROR) << "The parameter 'split_stage_num' must be a positive number, but got the value : "
+                  << split_stage_num;
+    return FAILED;
+  }
+  auto comm_info = GetCommInfo();
+  int64_t device_num = comm_info.device_num;
+  int64_t global_rank = comm_info.global_rank;
+  if ((device_num <= 0) || (device_num > MAX_DEVICE_NUM)) {
+    MS_LOG(ERROR) << "The context configuration parameter 'device_num' must be positive, "
+                     "but got the value of device_num: "
+                  << device_num;
+    return FAILED;
+  }
+
+  // the device_num maybe get from communication interface
+  if (device_num % split_stage_num != 0) {
+    MS_LOG(ERROR) << "The parameter 'device_num' must be divided by 'split_stage_num', but got the device_num : "
+                  << device_num << "and the split_stage_num : " << split_stage_num;
+    return FAILED;
+  }
+
+  if ((global_rank < 0) || (global_rank >= device_num)) {
+    MS_LOG(ERROR) << "The parameter 'global_rank' must be  greater than 0 and less equal 'device num', "
+                     "but got the global_rank : "
+                  << global_rank << "and the device_num : " << device_num;
+    return FAILED;
+  }
+
+  std::vector<int64_t> stages;
+  for (int i = 0; i < split_stage_num; i++) {
+    stages.push_back(device_num / split_stage_num);
+  }
+
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
+                (ParallelContext::GetInstance()->sharding_propagation());
+  if ((split_stage_num > 1) && (parallel_mode == kAutoParallel) && !use_sp) {
+    MS_LOG(ERROR) << "To enable the pipeline parallel, please set the parallel mode to " << kSemiAutoParallel << " or "
+                  << kAutoParallel << " with " << kShardingPropagation;
+    return FAILED;
+  }
+
+  if (!InitDevice(device_num, global_rank, comm_info.communication_backend, stages)) {
+    MS_LOG(ERROR) << "Init device failed";
+    return FAILED;
+  }
+
+  MS_LOG(INFO) << "The parallel context: device_num: " << device_num << ", global_rank: " << global_rank
+               << ", communication_backend: " << comm_info.communication_backend
+               << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
+               << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();
+  return SUCCESS;
+}
+
+// only used for FindCNode
+static CNodePtr SkipTrivialNodesMoveDown(const FuncGraphManagerPtr &manager, CNodePtr node) {
+  MS_EXCEPTION_IF_NULL(node);
+  while (IsInTrivialNodeList(node) || IsSomePrimitive(node, LOAD)) {
+    node = manager->node_users()[node].begin()->first->cast<CNodePtr>();
+  }
+  return node;
+}
+
+std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
+                                    size_t max_depth) {
+  MS_EXCEPTION_IF_NULL(anode);
+  MS_EXCEPTION_IF_NULL(anode->func_graph());
+  FuncGraphManagerPtr manager = anode->func_graph()->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  if (max_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(EXCEPTION) << "Recursive call is larger than 100000.";
+  }
+  AnfNodeIndexSet node_set = manager->node_users()[anode];
+  bool result = false;
+  CNodePtr cnode_return = nullptr;
+  for (auto &node_pair : node_set) {
+    CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
+    if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+      continue;
+    }
+    use_apply = SkipTrivialNodesMoveDown(manager, use_apply);
+    if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+      continue;
+    }
+    ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(prim_anf_node);
+    PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
+    MS_EXCEPTION_IF_NULL(node_prim);
+    if (node_prim->name() == name && node_pair.second == 1) {
+      if (use_apply->func_graph() == func_graph) {
+        result = true;
+        cnode_return = use_apply;
+        MS_LOG(INFO) << "Find Primitive " << name << " in the same func_graph";
+        continue;
+      }
+      MS_LOG(INFO) << "Find Primitive " << name << " in different func_graph";
+    }
+    if (ParallelContext::GetInstance()->enable_parallel_optimizer() && IsInAllGatherNodeList(use_apply)) {
+      return FindCNode(node_pair.first, name, func_graph, max_depth + 1);
+    }
+  }
+  return std::make_pair(result, cnode_return);
+}
+
+void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &parameter) {
+  MS_EXCEPTION_IF_NULL(root);
+  MS_EXCEPTION_IF_NULL(parameter);
+  FuncGraphManagerPtr manager = root->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
+  if (parameter_ptr == nullptr) {
+    MS_LOG(INFO) << parameter->ToString() << ": cast to ptr failed. it may not be a parameter";
+    return;
+  }
+  auto user_set = manager->node_users()[parameter];
+  int32_t user_count = 0;
+  for (auto &param_pair : user_set) {
+    CNodePtr cnode = param_pair.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->in_forward_flag()) {
+      user_count++;
+    }
+  }
+  if (user_count > 1) {
+    auto tensor_layout = parameter_ptr->user_data<TensorLayout>();
+    tensor_layout->set_is_shared_param(true);
+  }
+}
+
+StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const PrimitivePtr prim) {
+  MS_EXCEPTION_IF_NULL(operator_);
+  MS_EXCEPTION_IF_NULL(prim);
+  StrategyPtr strategyPtr;
+  std::shared_ptr<Strategies> strategy_v_ptr = operator_->GenerateBatchStrategiesWithCheck();
+  MS_EXCEPTION_IF_NULL(strategy_v_ptr);
+  auto stage_id = g_device_manager->stage_id();
+  strategyPtr = NewStrategy(stage_id, *strategy_v_ptr);
+  std::vector<ValuePtr> elements;
+  for (size_t i = 0; i < strategy_v_ptr->size(); i++) {
+    elements.push_back(MakeValue((*strategy_v_ptr)[i]));
+  }
+  ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
+  // display the strategy generated by batch parallel
+  auto attrs = prim->attrs();
+  attrs[GEN_STRATEGY] = strategy;
+  (void)prim->SetAttrs(attrs);
+  MS_LOG(INFO) << "prim " << prim->name() << " batch parallel strategy is " << attrs[GEN_STRATEGY]->ToString();
+  return strategyPtr;
+}
+
+bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  auto comm_info = GetCommInfo();
+  int64_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  int64_t per_stage_device_num = comm_info.device_num / split_stage_num;
+  int64_t current_stage = comm_info.global_rank / per_stage_device_num;
+  MS_LOG(INFO) << "The current stage is: " << current_stage;
+  if (!root->has_flag(kTraining) && !ParallelContext::GetInstance()->dataset_strategy().empty()) {
+    MS_LOG(WARNING) << "In eval/predict net, the output parallel strategy would not follow "
+                       "the input parallel strategy when using context.set_auto_parallel_context(dataset_strategy)"
+                       " to configure the input strategy.";
+  }
+  return ((!root->has_flag(kTraining) && ParallelContext::GetInstance()->dataset_strategy().empty() &&
+           current_stage == split_stage_num - 1) ||
+          IsPynativeParallel());
+}
+
+TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair) {
+  CNodePtr cnode = node_pair.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
+  MS_EXCEPTION_IF_NULL(distribute_operator);
+  int64_t index = node_pair.second;
+  if (index > SizeToLong(distribute_operator->inputs_tensor_info().size())) {
+    MS_LOG(EXCEPTION) << "The index is out of range, the node_pair.second is  " << (index - 1)
+                      << ", the vector size is  " << distribute_operator->inputs_tensor_info().size();
+  }
+  TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(index - 1)];
+  TensorLayout tensorlayout_in = tensorinfo_in.tensor_layout();
+  return tensorlayout_in;
 }
 }  // namespace parallel
 }  // namespace mindspore
