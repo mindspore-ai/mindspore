@@ -17,6 +17,7 @@
 #include "src/extendrt/cxx_api/model_pool/runner_config.h"
 #include "src/common/log_adapter.h"
 #include "src/litert/cpu_info.h"
+#include "nnacl/op_base.h"
 #ifdef CAPTURE_SIGNALS
 #include "src/extendrt/signal_handler.h"
 #endif
@@ -24,7 +25,7 @@ namespace mindspore {
 Status ModelParallelRunnerImpl::Init(const std::string &model_path,
                                      const std::shared_ptr<RunnerConfig> &runner_config) {
   std::unique_lock<std::shared_mutex> l(model_parallel_runner_impl_mutex_);
-  if (model_pool_ != nullptr && model_pool_->IsInitialized()) {
+  if (model_pool_ != nullptr) {
     MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
     return kSuccess;
   }
@@ -49,7 +50,7 @@ Status ModelParallelRunnerImpl::Init(const std::string &model_path,
 Status ModelParallelRunnerImpl::Init(const void *model_data, size_t data_size,
                                      const std::shared_ptr<RunnerConfig> &runner_config) {
   std::unique_lock<std::shared_mutex> l(model_parallel_runner_impl_mutex_);
-  if (model_pool_ != nullptr && model_pool_->IsInitialized()) {
+  if (model_pool_ != nullptr) {
     MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
     return kSuccess;
   }
@@ -60,7 +61,7 @@ Status ModelParallelRunnerImpl::Init(const void *model_data, size_t data_size,
   }
   auto status = model_pool_->InitByBuf(static_cast<const char *>(model_data), data_size, runner_config);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "model runner init failed.";
+    MS_LOG(ERROR) << "ModelParallelRunner init failed.";
     delete model_pool_;
     model_pool_ = nullptr;
     return kLiteError;
@@ -94,7 +95,7 @@ std::vector<MSTensor> ModelParallelRunnerImpl::GetOutputs() {
 Status ModelParallelRunnerImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                                         const MSKernelCallBack &before, const MSKernelCallBack &after) {
   std::shared_lock<std::shared_mutex> l(model_parallel_runner_impl_mutex_);
-  if (outputs == nullptr || model_pool_ == nullptr) {
+  if (MS_UNLIKELY((outputs == nullptr || model_pool_ == nullptr))) {
     MS_LOG(ERROR) << "predict output is nullptr or ModelParallelRunner Not Initialize.";
     return kLiteNullptr;
   }
@@ -106,6 +107,7 @@ Status ModelParallelRunnerImpl::Predict(const std::vector<MSTensor> &inputs, std
   return kSuccess;
 }
 ModelParallelRunnerImpl::~ModelParallelRunnerImpl() {
+  MS_LOG(INFO) << "delete model pool begin.";
   std::unique_lock<std::shared_mutex> l(model_parallel_runner_impl_mutex_);
   if (model_pool_ != nullptr) {
     MS_LOG(INFO) << "delete model pool impl.";
