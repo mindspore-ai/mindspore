@@ -352,6 +352,7 @@ from .math_func import (
     imag,
     roll,
     orgqr,
+    sum,
 )
 from .nn_func import (
     adaptive_avg_pool1d,
