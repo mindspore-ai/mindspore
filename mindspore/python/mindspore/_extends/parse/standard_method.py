@@ -3587,6 +3587,20 @@ def isfinite(x):
     return F.isfinite(x)
 
 
+def sin(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.sin`.
+    """
+    return F.sin(x)
+
+
+def sinc(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.sinc`.
+    """
+    return F.sinc(x)
+
+
 def cos(x):
     r"""
     Computes cosine of input element-wise.

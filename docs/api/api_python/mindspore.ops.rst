@@ -257,6 +257,7 @@ mindspore.ops
     mindspore.ops.round
     mindspore.ops.rsqrt
     mindspore.ops.sin
+    mindspore.ops.sinc
     mindspore.ops.sinh
     mindspore.ops.sqrt
     mindspore.ops.square
