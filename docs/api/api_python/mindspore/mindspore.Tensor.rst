@@ -77,6 +77,7 @@ mindspore.Tensor
     mindspore.Tensor.conj
     mindspore.Tensor.copy
     mindspore.Tensor.copysign
+    mindspore.Tensor.cos
     mindspore.Tensor.cosh
     mindspore.Tensor.cross
     mindspore.Tensor.cummax
@@ -233,6 +234,8 @@ mindspore.Tensor
     mindspore.Tensor.shape
     mindspore.Tensor.short
     mindspore.Tensor.sigmoid
+    mindspore.Tensor.sin
+    mindspore.Tensor.sinc
     mindspore.Tensor.size
     mindspore.Tensor.soft_shrink
     mindspore.Tensor.split

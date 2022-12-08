@@ -1315,27 +1315,7 @@ class Tensor(Tensor_):
 
     def cos(self):
         r"""
-        Computes cosine of input element-wise.
-
-        .. math::
-            out_i = cos(x_i)
-
-        .. warning::
-            Currently support Float16, Float32 data type. If use Float64, there may
-            be a problem of missing precision.
-
-        Returns:
-            Tensor, has the same shape as `x`.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> a = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
-            >>> output = a.cos()
-            >>> print(output)
-            [0.971338 0.6748758 0.95233357 0.9959527]
+        For details, please refer to :func:`mindspore.ops.cos`.
         """
         self._init_check()
         return tensor_operator_registry.get('cos')(self)
@@ -4558,6 +4538,20 @@ class Tensor(Tensor_):
         self._init_check()
         _dtype = self.dtype if dtype is None else dtype
         return tensor_operator_registry.get('ones')(size, _dtype)
+
+    def sin(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.sin`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sin')(self)
+
+    def sinc(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.sinc`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sinc')(self)
 
     def sinh(self):
         r"""

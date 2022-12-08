@@ -374,6 +374,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"addmv", std::string("addmv")},                                    // addmv()
        {"adjoint", std::string("adjoint")},                                // adjoint()
        {"arccosh", std::string("acosh")},                                  // arccosh()
+       {"sin", std::string("sin")},                                        // sin()
+       {"sinc", std::string("sinc")},                                      // sinc()
        {"arcsin", std::string("asin")},                                    // arcsin()
        {"arctan", std::string("atan")},                                    // arctan()
        {"arctan2", std::string("atan2")},                                  // arctan2()

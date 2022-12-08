@@ -1669,7 +1669,8 @@ def sinc(x):
 
     .. math::
 
-        out_i = sinc(x_i)
+        out_i = \begin{cases} \frac{sin(\pi x_i)}{x_i} & x_i\neq 0\\
+        1 & x_i=0 \end{cases}
 
     Args:
         x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -1683,7 +1684,7 @@ def sinc(x):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
@@ -8687,6 +8688,7 @@ __all__ = [
     'acos',
     'arccos',
     'atan',
+    'sinc',
     'sinh',
     'cosh',
     'tanh',

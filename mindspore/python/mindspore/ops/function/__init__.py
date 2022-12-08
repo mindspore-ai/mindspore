@@ -244,6 +244,7 @@ from .math_func import (
     logsumexp,
     outer,
     sin,
+    sinc,
     cos,
     tan,
     asin,
