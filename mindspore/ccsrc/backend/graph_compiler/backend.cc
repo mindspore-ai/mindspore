@@ -752,7 +752,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
 void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                         const VectorRef &args, VectorRef *outputs) {
-  bool contain_cut_graph =
+  bool enable_run_graph_by_single_op =
     std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
                 [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagEnableRunGraphBySingleOp); });
   MS_EXCEPTION_IF_NULL(root_graph_);
@@ -768,7 +768,7 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
     is_dynamic = graph_iter->second.is_dynamic;
   }
 
-  if (contain_cut_graph || root_graph_->has_flag(kFlagIsDynamicStructure) ||
+  if (enable_run_graph_by_single_op || root_graph_->has_flag(kFlagIsDynamicStructure) ||
       (enable_backend_dynamic_detect_ && root_graph_->has_flag(kFlagIsPynativeBpropGraph) && is_dynamic) ||
       root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
     RunGraphBySingleOp(graph_compiler_info, args, outputs);

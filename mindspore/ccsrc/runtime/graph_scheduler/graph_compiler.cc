@@ -288,26 +288,22 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   return true;
 }
 }  // namespace
-
-bool IsParameterInput(const AnfNodePtr &node, const std::set<int64_t> &depend_list) {
-  if (depend_list.empty()) {
-    return false;
-  }
-  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t i = 0; i < input_size; ++i) {
-    if (depend_list.find(i) == depend_list.end()) {
-      continue;
+void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
+  for (auto &node : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(node->input(0));
+    bool enable = false;
+    if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
+      if (kernel::IfNeedSkipResize(node)) {
+        MS_LOG(DEBUG) << "Enable Run Graph By Single Op";
+        enable = true;
+      }
     }
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
-    auto real_input = input_node_with_index.first;
-    // Inverse op have constant input need RunGraphBySingleOp
-    if (real_input->isa<Parameter>()) {
-      return true;
+    if (enable || common::AnfAlgo::IsControlOpExecInBackend(node)) {
+      graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
+      break;
     }
   }
-  return false;
 }
-
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context, device::RunMode run_mode,
                                     bool run_in_pynative) {
@@ -377,22 +373,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
-  for (auto &node : graph->execution_order()) {
-    MS_EXCEPTION_IF_NULL(node->input(0));
-    bool enable = false;
-    if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
-      const auto &depend_list = abstract::GetValueDependArgIndices(node);
-      if (IsParameterInput(node, depend_list)) {
-        MS_LOG(DEBUG) << "Enable Run Graph By Single Op";
-        enable = true;
-      }
-    }
-
-    if (common::AnfAlgo::IsControlOpExecInBackend(node) || enable) {
-      graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
-      break;
-    }
-  }
+  SetRunGraphBySingleOpFlag(graph);
 
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
@@ -560,7 +541,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // Execute optimization pass.
   device_context->kernel_executor_->OptimizeGraph(graph);
-
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   device_context->kernel_executor_->CreateKernel(graph->execution_order());
