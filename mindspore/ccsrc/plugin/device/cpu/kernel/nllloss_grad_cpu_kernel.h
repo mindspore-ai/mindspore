@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/fp32_grad/nllloss_grad_fp32.h"
@@ -37,7 +38,9 @@ class NLLLossGradCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -47,11 +50,26 @@ class NLLLossGradCpuKernelMod : public NativeCpuKernelMod {
                                                      .AddInputAttr(kNumberTypeInt32)
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using NLLLossGradFunc =
+    std::function<bool(NLLLossGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  NLLLossGradFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, NLLLossGradFunc>> func_list_;
   NLLLossParameter nllloss_param_{};
 };
 }  // namespace kernel

@@ -27,7 +27,7 @@ mindspore.ops.NLLLoss
 
     输入：
         - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 。数据类型仅支持float32或float16。
-        - **labels** (Tensor) - 输入目标值，shape为 :math:`(N,)` 。数据类型仅支持int32。
+        - **labels** (Tensor) - 输入目标值，shape为 :math:`(N,)` ，取值范围为 :math:`[0, C-1]` 。数据类型仅支持int32或int64。
         - **weight** (Tensor) - 指定各类别的权重，shape为 :math:`(C,)` ，数据类型仅支持float32或float16。
 
     输出：
@@ -37,6 +37,7 @@ mindspore.ops.NLLLoss
         - **total_weight** (Tensor) - `total_weight` 是scalar，数据类型与 `weight` 相同。
 
     异常：
-        - **TypeError** - `logits` 或 `weight` 的数据类型既不是float16也不是float32， `labels` 不是int32。
+        - **TypeError** - `logits` 或 `weight` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `labels` 的数据类型既不是int32也不是int64。
         - **ValueError** - `logits` 不是二维Tensor， `labels` 和 `weight` 不是一维Tensor。 `logits` 的第一个维度不等于 `labels` ， `logits` 的第二个维度不等于 `weight` 。
         - **ValueError** - `labels` 的取值超出 :math:`[0, C-1]` ，其中 :math:`C` 表示类的数量。
