@@ -35,9 +35,7 @@ file(GLOB_RECURSE QUICK_START_CXX ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 add_executable(mindspore_quick_start_cpp ${QUICK_START_CXX})
 
 target_link_libraries(
-    mindspore_quick_start_cpp
-    -Wl,--whole-archive mindspore-lite -Wl,--no-whole-archive
-    pthread
+    mindspore_quick_start_cpp mindspore-lite pthread dl
 )
 
 if("${EXAMPLE_TARGET}" STREQUAL "Ascend")
@@ -45,18 +43,3 @@ if("${EXAMPLE_TARGET}" STREQUAL "Ascend")
 else()
     target_link_libraries(mindspore_quick_start_cpp cudart cublas)
 endif()
-
-# Due to the increased compilation options for stack protection,
-# it is necessary to target link ssp library when Use the static library in Windows.
-if(WIN32)
-    target_link_libraries(
-        mindspore_quick_start_cpp
-        ssp
-    )
-else()
-    target_link_libraries(
-        mindspore_quick_start_cpp
-        dl
-    )
-endif()
-
