@@ -43,7 +43,7 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
     debug_info_ = std::make_shared<DebugInfo>();
   }
 
-  ~MetaFuncGraph() override = default;
+  ~MetaFuncGraph() { subclass_destruct_flag_ = true; }
 
   MS_DECLARE_PARENT(MetaFuncGraph, FuncGraphBase);
   // Return normalized versions of the arguments.

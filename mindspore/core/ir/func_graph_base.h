@@ -57,11 +57,11 @@ class FuncGraphBase : public Value {
  public:
   FuncGraphBase() {
     FuncGraphLoopBreaker::Inst().RegFuncGraphBase(this);
-    reg_flg = true;
+    reg_flg_ = true;
   }
 
   ~FuncGraphBase() override {
-    if (reg_flg) {
+    if (reg_flg_) {
       FuncGraphLoopBreaker::Inst().UnRegFuncGraphBase(this);
     }
   }
@@ -77,7 +77,9 @@ class FuncGraphBase : public Value {
 
  protected:
   friend FuncGraphLoopBreaker;
-  bool reg_flg{false};
+  bool reg_flg_{false};
+  // If the subclass (such as FuncGraph) has started destructing.
+  bool subclass_destruct_flag_{false};
 
  private:
   // If the nodes or their callee's nodes contain Depend CNode with isolated side-effect node.
