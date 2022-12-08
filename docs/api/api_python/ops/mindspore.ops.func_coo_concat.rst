@@ -1,7 +1,7 @@
-mindspore.ops.sparse_concat
+mindspore.ops.coo_concat
 ===========================
 
-.. py:function:: mindspore.ops.sparse_concat(sp_input, concat_dim)
+.. py:function:: mindspore.ops.coo_concat(sp_input, concat_dim)
 
     根据指定的轴concat_dim对输入的COO Tensor（sp_input）进行合并操作。
 

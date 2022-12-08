@@ -1,7 +1,7 @@
-mindspore.ops.sparse_add
+mindspore.ops.coo_add
 ================================
 
-.. py:function:: mindspore.ops.sparse_add(x1: COOTensor, x2: COOTensor, thresh: Tensor)
+.. py:function:: mindspore.ops.coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor)
 
     两个COOTensor相加，根据相加的结果与 `thresh` 返回新的COOTensor。
 

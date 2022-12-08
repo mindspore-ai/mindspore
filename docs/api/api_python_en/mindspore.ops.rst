@@ -603,7 +603,8 @@ COO Functions
     mindspore.ops.coo_sigmoid
     mindspore.ops.coo_abs
     mindspore.ops.coo_sin
-    mindspore.ops.sparse_add
+    mindspore.ops.coo_add
+    mindspore.ops.coo_concat
 
 CSR Functions
 ^^^^^^^^^^^^^
