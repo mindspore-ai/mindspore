@@ -289,9 +289,6 @@ class TupleListSetitemEliminator : public AnfVisitor {
   void Visit(const CNodePtr &cnode) override {
     CNodePtr real_node = cnode;
     while (IsPrimitiveCNode(real_node, prim::kPrimDepend)) {
-      if (!real_node->isa<CNode>()) {
-        return;
-      }
       auto depend = real_node->cast<CNodePtr>();
       real_node = depend->input(1)->cast<CNodePtr>();
     }

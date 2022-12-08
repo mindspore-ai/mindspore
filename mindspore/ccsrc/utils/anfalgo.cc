@@ -253,7 +253,10 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
       size_t make_tuple_input_index = item_with_index_tmp.second + 1;
       if (make_tuple_input_index >= make_tuple_inputs.size()) {
         MS_LOG(EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range[" << make_tuple_inputs.size()
-                          << "].";
+                          << "].\nPlease check node: " << cnode->DebugString()
+                          << ".\nLine: " << trace::GetDebugInfo(cnode->debug_info())
+                          << ".\nAnd check node: " << make_tuple->DebugString()
+                          << ".\nLine: " << trace::GetDebugInfo(make_tuple->debug_info()) << ".";
       }
       return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], index, skip_nop_node, return_types);
     }
