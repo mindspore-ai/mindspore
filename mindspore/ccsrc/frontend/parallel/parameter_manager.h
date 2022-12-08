@@ -65,6 +65,7 @@ void HandleMirrorInAdaSum(
 bool ParameterIsCloned(const AnfNodePtr &parameter_node);
 py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &obj);
 bool IsFullySplitParameter(const ParameterPtr &param_ptr, size_t allow_repeat_num = 1);
+std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -43,6 +43,7 @@
 #include "frontend/parallel/ops_info/reshape_info.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "ir/anf.h"

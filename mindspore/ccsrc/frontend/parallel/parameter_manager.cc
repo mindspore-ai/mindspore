@@ -882,7 +882,7 @@ std::vector<bool> IsBorderAdaSumSendReceive(const AnfNodePtr &node, const RankLi
   }
   size_t border_step = size_t(log2(adasum_rank_distance / ADASUM_MIN_DIS));
   int64_t fusion_id = GetValue<int64_t>(send_rec_prim->GetAttr("origin_fusion"));
-  // when cuting nodes, the fusion id should change.
+  // when cutting nodes, the fusion id should change.
   int64_t new_fusion_id = fusion_id + SizeToLong(g_device_manager->DeviceNum() * (border_step + IntToSize(1)));
   send_rec_prim->set_attr(FUSION, MakeValue(new_fusion_id));
   std::vector<int64_t> group_list;
@@ -1308,6 +1308,69 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
                    << ", new slice shape is " << opt_shard_slice_shape;
     }
   }
+}
+
+static std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding the next tensor layout for the parameter, exceeded the maximum recursion depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return nullptr;
+  }
+  FuncGraphManagerPtr manager = node->func_graph()->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  AnfNodeIndexSet node_set = manager->node_users()[node];
+  for (auto &node_pair : node_set) {
+    if (IsPrimitiveCNode(node_pair.first, prim::kPrimLoad)) {
+      auto layout_param = FindParameterNextLayout(node_pair.first, ++curr_depth);
+      if (!layout_param) {
+        continue;
+      }
+      return layout_param;
+    }
+    CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
+    if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+      continue;
+    }
+    ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(prim_anf_node);
+    PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
+    MS_EXCEPTION_IF_NULL(node_prim);
+    if ((node_prim->name() == DEPEND && node_pair.second != 1) || node_prim->name() == RESHAPE) {
+      continue;
+    }
+    if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
+      auto layout = GetInputLayoutFromCNode(node_pair);
+      return std::make_shared<TensorLayout>(layout);
+    }
+  }
+  return nullptr;
+}
+
+std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
+  // Create DataParallel tensor layout for parameter(support WideDeep).
+  auto next_layout = FindParameterNextLayout(node, 0);
+  if (next_layout != nullptr) {
+    return next_layout;
+  }
+  CheckGlobalDeviceManager();
+  int64_t dev_num = g_device_manager->stage_device_num();
+  TensorLayout input_tensor_layout;
+  // create input_shape
+  Shapes inputs_shape = GetNodeShape(node);
+  Shape input_shape_array = inputs_shape[0];
+  if (input_shape_array.empty()) {
+    MS_LOG(EXCEPTION) << "Don't support reshape a scalar parameter.";
+  }
+  // create tensor_map
+  size_t shape_size = input_shape_array.size();
+  TensorMap input_tensor_map_array(SizeToLong(shape_size) - 1, -1);
+  (void)input_tensor_map_array.insert(input_tensor_map_array.cbegin(), 0);
+  // create dev_matrix
+  Shape dev_matrix_array = {dev_num};
+  if (input_tensor_layout.InitFromVector(dev_matrix_array, input_tensor_map_array, input_shape_array) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create tensor layout for parameter failed.";
+  }
+  return std::make_shared<TensorLayout>(input_tensor_layout);
 }
 }  // namespace parallel
 }  // namespace mindspore
