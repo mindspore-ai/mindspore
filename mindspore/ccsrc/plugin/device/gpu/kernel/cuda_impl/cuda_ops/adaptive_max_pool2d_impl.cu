@@ -69,9 +69,7 @@ __global__ void AdaptiveMaxPool2DKernel(const size_t size, const size_t input_he
         sub_input_ptr += input_width;
       }
       output_ptr[oh * output_width + ow] = max;
-      if (indices_data != nullptr) {
-        indices_ptr[oh * output_width + ow] = indice;
-      }
+      indices_ptr[oh * output_width + ow] = indice;
     }
   }
 }

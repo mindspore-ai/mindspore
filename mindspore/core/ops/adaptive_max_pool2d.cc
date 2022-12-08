@@ -33,12 +33,6 @@ std::vector<int64_t> AdaptiveMaxPool2D::output_size() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-bool AdaptiveMaxPool2D::return_indices() const {
-  auto value_ptr = GetAttr("return_indices");
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<bool>(value_ptr);
-}
-
 namespace {
 abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
@@ -81,18 +75,9 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
       }
     }
   }
-
-  const auto &return_indices_ptr = primitive->GetAttr("return_indices");
-  MS_EXCEPTION_IF_NULL(return_indices_ptr);
-  const auto &return_indices = GetValue<bool>(return_indices_ptr);
   auto in_shape = std::make_shared<abstract::Shape>(in_shape_vector);
 
-  // If return indices is true, need to output the indices corresponding to the max value, whose shape is the same
-  // as the max value.
-  if (return_indices) {
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{in_shape, in_shape});
-  }
-  return in_shape;
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{in_shape, in_shape});
 }
 
 TypePtr AdaptiveMaxPool2DInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -107,17 +92,8 @@ TypePtr AdaptiveMaxPool2DInferType(const PrimitivePtr &prim, const std::vector<A
   auto input_type =
     CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim->name());
 
-  const auto &return_indices_ptr = prim->GetAttr("return_indices");
-  MS_EXCEPTION_IF_NULL(return_indices_ptr);
-  const auto &return_indices = GetValue<bool>(return_indices_ptr);
-
-  // If return indices is true, need to output the indices corresponding to the max value, whose shape is the same
-  // as the max value.
-  if (return_indices) {
-    auto indices_type = kInt64;
-    return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, indices_type});
-  }
-  return input_type;
+  auto indices_type = kInt64;
+  return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, indices_type});
 }
 }  // namespace
 

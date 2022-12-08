@@ -23,7 +23,7 @@ class Net(nn.Cell):
 
     def __init__(self, output_size):
         super(Net, self).__init__()
-        self.op = P.AdaptiveMaxPool2D(output_size=output_size, return_indices=True)
+        self.op = P.AdaptiveMaxPool2D(output_size=output_size)
 
     def construct(self, x):
         return self.op(x)
