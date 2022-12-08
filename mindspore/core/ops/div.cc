@@ -54,8 +54,7 @@ class DivInfer : public abstract::OpInferBase {
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[0]->BuildType());
     (void)types.emplace("y", input_args[1]->BuildType());
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
-    return input_args[0]->BuildType();
+    return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types_with_complex, op_name);
   }
 };
 
