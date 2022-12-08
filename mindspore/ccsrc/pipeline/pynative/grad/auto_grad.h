@@ -98,6 +98,8 @@ class VariableAdjoint {
   void set_is_fake_bprop(bool is_fake_bprop) { is_fake_bprop_ = is_fake_bprop; }
   bool is_need_propagate() const { return is_need_propagate_; }
   void set_is_need_propagate(bool is_need_grad) { is_need_propagate_ = is_need_grad; }
+  bool is_need_grad() { return is_need_grad_; }
+  void set_is_need_grad(bool is_need_grad) { is_need_grad_ = is_need_grad; }
   AnfNodePtr k_node() const { return k_node_; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
 
@@ -111,6 +113,8 @@ class VariableAdjoint {
   bool is_fake_bprop_{false};
   // Flag to judge need to propagrate
   bool is_need_propagate_{false};
+  // Flag to judge variable whether need grad
+  bool is_need_grad_{true};
   // K mapped cnode for primal CNode; primal CNode is owned by primal funcgraph, this is owned by tape_;
   AnfNodePtr k_node_{nullptr};
 };
@@ -159,7 +163,7 @@ class AutoGradCellImpl {
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
                                     const VariableAdjointPtr &variable_adjoint);
   // Back propagate for one node;
-  void UpdateNextEdges(const FunctionNodePtr &fn, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
+  void UpdateNextEdges(const VariableAdjointPtr &variable, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &op_args);
   void UpdateNextEdges(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din,
                        const ValuePtr &op_arg);

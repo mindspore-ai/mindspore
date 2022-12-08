@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/ad/auto_grad.h"
+#include "pipeline/pynative/grad/auto_grad.h"
 #include <map>
 #include <memory>
 #include <string>
@@ -368,13 +368,13 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
     BuildCustomBpropCNode(input_node, &outputs);
   }
 #endif
-  if (!outputs.empty()) {
-    UpdateNextEdges(fn, grad_param->cnode, outputs, grad_param->op_args);
-  } else {
+  if (outputs.empty()) {
     MS_LOG(DEBUG) << "This op has not custom bprop: " << grad_param->cnode->DebugString();
+    BuildFakeBpropCNode(input_node, &outputs);
     variable_adjoint->set_is_fake_bprop(true);
     variable_adjoint->set_fake_prim_name(prim->name());
   }
+  UpdateNextEdges(variable_adjoint, grad_param->cnode, outputs, grad_param->op_args);
   (void)anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
   // record last_node for brackpropagate
   last_node_ = grad_param->cnode;
@@ -418,7 +418,7 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
     din->set_abstract(grad_param->op_args[i - 1]->ToAbstract()->Broaden());
     (void)outputs.emplace_back(din);
   }
-  UpdateNextEdges(fn, grad_param->cnode, outputs, grad_param->op_args);
+  UpdateNextEdges(variable_adjoint, grad_param->cnode, outputs, grad_param->op_args);
   (void)anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
   need_do_manager_replace_ = true;
   return true;
@@ -574,17 +574,21 @@ bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_
   return k_cell->KPynativeOp(grad_param);
 }
 
-void AutoGradCellImpl::UpdateNextEdges(const FunctionNodePtr &fn, const CNodePtr &cnode,
+void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const CNodePtr &cnode,
                                        const std::vector<CNodePtr> &dins, const ValuePtrList &op_args) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (dins.size() != op_args.size()) {
-    MS_LOG(EXCEPTION) << "The size of dins is not same as op_args";
+    MS_LOG(EXCEPTION) << "The size of dins is not same as op_args, cnode: " << cnode->DebugString();
   }
+  const auto &fn = variable->fn();
   for (size_t i = 0; i < op_args.size(); ++i) {
     const auto &node = cnode->input(i + 1);
     const auto &din = dins[i];
     MS_LOG(DEBUG) << "Node " << node->DebugString() << ", din " << din->DebugString();
     UpdateNextEdges(fn, node, din, op_args[i]);
+  }
+  if (fn->next_edges().empty()) {
+    variable->set_is_need_grad(false);
   }
 }
 
@@ -595,6 +599,9 @@ void AutoGradCellImpl::UpdateNextEdges(const FunctionNodePtr &fn, const AnfNodeP
   MS_EXCEPTION_IF_NULL(op_arg);
   if (anfnode_to_variable_adjoint_.find(node) != anfnode_to_variable_adjoint_.end()) {
     auto variable = anfnode_to_variable_adjoint_.at(node);
+    if (!variable->is_need_grad()) {
+      return;
+    }
     auto real_din = GetRealDin(fn, variable->out_value(), op_arg, din);
     fn->AddEdge(node, real_din);
   } else if (node->isa<CNode>()) {
@@ -773,6 +780,22 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, std::vector<
   BuildBPropCutCNode(cnode, outputs);
 }
 
+void AutoGradCellImpl::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) {
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
+  }
+  size_t index = cnode->size() - 1;
+  const auto &dout = cnode->input(index);
+  const auto &dout_cnode = dout->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(dout_cnode);
+  size_t input_size = cnode->size() - 2;
+  for (size_t i = 1; i < input_size; ++i) {
+    (void)outputs->emplace_back(dout_cnode);
+  }
+  return;
+}
+
 void AutoGradCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg) {
   BuildForwardLastNode();
   // Add sens parameter
@@ -830,12 +853,13 @@ void AutoGradCellImpl::BackPropagate() {
   for (auto iter = last_node_reverse_iter; iter != anfnode_to_variable_adjoint_.rend(); ++iter) {
     MS_LOG(DEBUG) << "BackPropagate cnode: " << iter->first->DebugString();
     const auto &variable = iter->second;
-    if (!variable->is_need_propagate()) {
+    if (!variable->is_need_propagate() || !variable->is_need_grad()) {
       MS_LOG(DEBUG) << "No need grad";
       continue;
     }
     if (variable->is_fake_bprop()) {
       MS_LOG(EXCEPTION) << variable->fake_prim_name() << " op has not corresponding bprop!";
+      continue;
     }
     if (!has_primc && iter->first->isa<CNode>() && GetCNodePrimitive(iter->first) != nullptr) {
       has_primc = true;
