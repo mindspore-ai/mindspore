@@ -3986,7 +3986,7 @@ class RenderedSST2Dataset(MappableDataset, VisionBaseDataset):
         >>>
         >>> # 1) Read all samples (image files) in rendered_sst2_dataset_dir with 8 threads
         >>> dataset = ds.RenderedSST2Dataset(dataset_dir=rendered_sst2_dataset_dir,
-                                             usage="all", num_parallel_workers=8)
+        ...                                  usage="all", num_parallel_workers=8)
 
     About RenderedSST2Dataset:
 
