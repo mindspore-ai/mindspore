@@ -9981,7 +9981,7 @@ class SparseApplyProximalGradientDescent(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.ops.operations.nn_ops as nn_ops
