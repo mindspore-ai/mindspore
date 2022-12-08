@@ -7418,21 +7418,24 @@ def nanquantile(x, q, axis=None, keepdims=False):
 
 def baddbmm(x, batch1, batch2, beta=1, alpha=1):
     r"""
-    Performs a batch matrix-matrix product of matrices in batch1 and batch2. input is added to the final result.
+    The result is the sum of the input and a batch matrix-matrix product of matrices in batch1 and batch2.
     The formula is defined as follows:
 
     .. math::
         \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
 
     Args:
-        x (Tensor): The tensor to be added.
-        batch1 (Tensor): The first batch of matrices to be multiplied.
-        batch2 (Tensor): The second batch of matrices to be multiplied.
+        x (Tensor): The tensor to be added. When batch1 is a (CxWxT) tensor and batch2 is a (CxTxH) tensor,
+            x must be broadcastable with (CxWxH) tensor.
+        batch1 (Tensor): The first batch of matrices to be multiplied. Must be 3-D tensors, dtype is same as x.
+        batch2 (Tensor): The second batch of matrices to be multiplied. Must be 3-D tensors, dtype is same as x.
         beta (Union[float, int], optional): multiplier for input. The default is 1.
         alpha (Union[float, int], optional): multiplier for `batch1 @ batch2`. The default is 1.
+        Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
+            be a real number.
 
     Returns:
-        Tensor, the output tensor.
+        Tensor, has the same dtype as x, shape will be (CxWxH).
 
     Raises:
         TypeError: The type of `x`, `batch1`, `batch2` is not Tensor.
