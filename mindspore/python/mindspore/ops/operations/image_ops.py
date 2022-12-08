@@ -722,7 +722,7 @@ class ResizeBilinearV2(Primitive):
 
     Examples:
         >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
-        >>> output = ops.ResizeBilinearV2(x, (5, 5))
+        >>> output = ops.ResizeBilinearV2()(x, (5, 5))
         >>> print(output)
         [[[[1. 2. 3. 4. 5.]
            [1. 2. 3. 4. 5.]

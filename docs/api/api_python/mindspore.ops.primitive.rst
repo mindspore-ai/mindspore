@@ -80,6 +80,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.NthElement
     mindspore.ops.NuclearNorm
     mindspore.ops.Pad
+    mindspore.ops.PadV3
     mindspore.ops.Padding
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
@@ -221,6 +222,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
+    mindspore.ops.NonMaxSuppressionV3
     mindspore.ops.NonMaxSuppressionWithOverlaps
     mindspore.ops.PSROIPooling
     mindspore.ops.RGBToHSV
@@ -546,6 +548,7 @@ Array操作
     mindspore.ops.ReverseSequence
     mindspore.ops.ReverseV2
     mindspore.ops.RightShift
+    mindspore.ops.Roll
     mindspore.ops.ScatterAddWithAxis
     mindspore.ops.ScatterNd
     mindspore.ops.ScatterNdDiv
