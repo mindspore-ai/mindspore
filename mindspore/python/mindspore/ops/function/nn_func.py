@@ -2792,7 +2792,7 @@ def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', la
 
     if weight is None:
         weight = _ones_like(inputs)
-    else:
+    elif inputs.ndim != 1:
         broadcast_shape = [1 for _ in range(inputs.ndim)]
         broadcast_shape[1] = weight.shape[0]
         weight = weight.reshape(broadcast_shape)
@@ -2894,12 +2894,19 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
         target = target.masked_fill(non_pad_mask, 0)
     else:
         non_pad_mask = target
-    loss = _neg(_gather_d(inputs, target_dim, target))
-    smooth_loss = _neg(inputs.sum(axis=target_dim, keepdims=True))
     if weight is not None:
         loss_weights = _gather(weight, target, 0)
-        loss = loss * loss_weights
+        orig_shape = inputs.shape
+        if inputs.ndim != 2:
+            inputs = inputs.view(orig_shape[:2] + (-1,))
+            weight = weight.view(weight.shape + (1,))
+        weighted_inputs = inputs * weight
+        weighted_inputs = weighted_inputs.view(orig_shape)
+        loss = _neg(_gather_d(weighted_inputs, target_dim, target))
+        smooth_loss = _neg(weighted_inputs.sum(axis=target_dim, keepdims=True))
     else:
+        loss = _neg(_gather_d(inputs, target_dim, target))
+        smooth_loss = _neg(inputs.sum(axis=target_dim, keepdims=True))
         loss_weights = _ones_like(loss)
     if ignore_index is not None:
         loss = loss.masked_fill(non_pad_mask, 0.)
@@ -2914,7 +2921,7 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
         smooth_loss = smooth_loss.sum()
     if reduction == 'mean':
         loss = loss.sum() / loss_weights.sum()
-        smooth_loss = smooth_loss.mean()
+        smooth_loss = smooth_loss.sum() / loss_weights.sum()
 
     eps_i = label_smoothing / inputs.shape[target_dim]
     loss = (1. - label_smoothing) * loss + eps_i * smooth_loss

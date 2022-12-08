@@ -2090,11 +2090,12 @@ def _check_cross_entropy_inputs(logits_shape, label_shape,
                              f"but get 'logits' shape: {logits_shape} and 'labels' shape: {label_shape}.")
     elif label_rank == logits_rank - 1:
         validator.check_type_name('labels', label_dtype, [mstype.int32], prim_name)
-        logits_shape_new = (logits_shape[0], *logits_shape[2:])
-        if logits_shape_new != label_shape:
-            raise ValueError(f"{msg_prefix} shape of 'logits' should be (N, C, d_0, d_1, ...), "
-                             f"and the shape of 'labels' should be (N, d_0, d_1, ...), "
-                             f"but get 'logits' shape: {logits_shape} and 'labels' shape: {label_shape}.")
+        if logits_rank != 1:
+            logits_shape_new = (logits_shape[0], *logits_shape[2:])
+            if logits_shape_new != label_shape:
+                raise ValueError(f"{msg_prefix} shape of 'logits' should be (N, C, d_0, d_1, ...), "
+                                 f"and the shape of 'labels' should be (N, d_0, d_1, ...), "
+                                 f"but get 'logits' shape: {logits_shape} and 'labels' shape: {label_shape}.")
     else:
         raise ValueError(f"{msg_prefix} rank of 'logits' and 'labels' should be:\n"
                          f"1. 'logits.ndim == labels.ndim' for probabilities, \n"
