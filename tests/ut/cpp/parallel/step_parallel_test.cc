@@ -213,9 +213,9 @@ FuncGraphManagerPtr Make_Manager(int64_t condition = 0) {
 /// Description:
 /// Expectation: the python path is right
 TEST_F(TestStepParallel, GetPythonPath1) {
-  OperatorName operator_name = "AllReduce";
+  const char *operator_name = "AllReduce";
   const std::string expect = "mindspore.ops.operations";
-  auto temp = parallel::GetOpPythonPath(operator_name);
+  std::string temp = parallel::GetOpPythonPath(operator_name);
   ASSERT_EQ(temp, expect);
 }
 
@@ -223,9 +223,9 @@ TEST_F(TestStepParallel, GetPythonPath1) {
 /// Description:
 /// Expectation: the python path is right
 TEST_F(TestStepParallel, GetPythonPath2) {
-  OperatorName operator_name = "Add";
+  const char *operator_name = "Add";
   const std::string expect = "mindspore.ops.operations";
-  auto temp = parallel::GetOpPythonPath(operator_name);
+  std::string temp = parallel::GetOpPythonPath(operator_name);
   ASSERT_EQ(temp, expect);
 }
 

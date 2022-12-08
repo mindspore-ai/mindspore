@@ -498,6 +498,8 @@ constexpr auto kAttrReshapeType = "reshape_type";
 constexpr auto kAttrAxis = "axis";
 constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrKeepDims = "keep_dims";
+constexpr auto kTransposeA = "transpose_a";
+constexpr auto kTransposeB = "transpose_b";
 constexpr auto kAttrSkipMode = "skip_mode";
 constexpr auto kAttrShapeGamma = "shape_gamma";
 constexpr auto kAttrPerm = "perm";
@@ -718,6 +720,7 @@ constexpr auto kFlagNeedRenormalize = "need_renormalize";
 constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
 constexpr auto kFlagUseDynamicShapeProcess = "use_dynamic_shape_process";
 constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
+constexpr auto kPrimCPrimPyMixed = "primc_primpy_mixed";
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";
 

@@ -198,6 +198,8 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
     irpass.tuple_list_get_item_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
     irpass.depend_value_elim_,
+    irpass.switch_simplify_,
+    irpass.ad_related_special_op_eliminate_,
   });
   OptPassGroupMap map({{"ad_final_opt", bg_final_opt}});
   if (pynative::PyNativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
@@ -250,6 +252,7 @@ FuncGraphPtr OptGradGraphPass(const ResourcePtr &resource) {
   WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
   };
+  func_graph = LiftingClone(func_graph);
   //  Validate(func_graph);
   return func_graph;
 }

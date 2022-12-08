@@ -34,10 +34,12 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 namespace {
-const std::map<std::string, std::vector<std::string>> op2attrs = {{prim::kPrimBroadcastTo->name(), {kAttrShape}},
-                                                                  {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
-                                                                  {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
-                                                                  {prim::kPrimReduceSum->name(), {kAttrKeepDims}}};
+const std::map<std::string, std::vector<std::string>> op2attrs = {
+  {prim::kPrimBroadcastTo->name(), {kAttrShape}},
+  {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
+  {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
+  {prim::kPrimReduceSum->name(), {kAttrKeepDims}},
+  {prim::kPrimMatMul->name(), {kTransposeA, kTransposeB}}};
 }
 
 bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
@@ -53,7 +55,7 @@ bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
       continue;
     }
     parallel::OperatorAttrs attrs;
-    auto iter = op2attrs.find(primitive->name());
+    const auto iter = op2attrs.find(primitive->name());
     if (iter != op2attrs.end()) {
       for (auto &attr : iter->second) {
         if (primitive->HasAttr(attr)) {

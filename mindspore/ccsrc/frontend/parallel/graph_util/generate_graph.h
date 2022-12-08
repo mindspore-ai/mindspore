@@ -31,7 +31,7 @@ namespace mindspore {
 namespace parallel {
 const char USING_HASH_NAME[] = "USING_HASH_NAME";
 // Get the operator's path where the operator has be defined
-std::string GetOpPythonPath(const OperatorName &op_name);
+const char *GetOpPythonPath(const char *op_name);
 
 // Init python operator Instance
 ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name);

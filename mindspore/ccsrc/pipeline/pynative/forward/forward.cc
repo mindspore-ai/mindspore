@@ -161,9 +161,9 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
   // 1.Set cast for inputs
   SetCastForInputs(op_run_info);
-  // 2. Infer output abstract
+  // 2.Infer output abstract
   InferOutputAbstract(op_run_info);
-  // 3. Run op with selected backend
+  // 3.Run op with selected backend
   if (!op_run_info->output_get_by_infer_value) {
     GetOutput(op_run_info);
   }
@@ -171,7 +171,6 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
-
   // Set forward output flag for release memory,
   // Because tensor address may change, it should set in main thread to ensure consistency.
   PyNativeAlgo::Common::SetForwardOutputFlag(op_run_info->out_value);
@@ -181,7 +180,10 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
     return;
   }
   // 4. Do op grad and record op info
-  if (!is_ms_function_compiling_) {
+  // If cell have custom bprop, no need do op grad. Otherwise, need do.
+  // If ms function is complime, real run op must be not record
+  bool is_custom_bprop = op_run_info->custom_bprop_cell_count <= 0;
+  if (!is_ms_function_compiling_ && is_custom_bprop) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
 }
