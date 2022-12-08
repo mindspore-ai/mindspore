@@ -48,28 +48,32 @@ void CheckSegmentIDDataMean(const T *segment_ids_data, const size_t data_size) {
 namespace {
 abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  auto prim_name = primitive->name();
-  auto x_shape_ptr = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x_shape_ptr);
-  auto segment_ids_shape_ptr = input_args[1]->BuildShape();
-  MS_EXCEPTION_IF_NULL(segment_ids_shape_ptr);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
-  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(segment_ids_shape_ptr)[kShape];
+
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'segment_ids'", SizeToLong(segment_ids_shape.size()), kEqual, 1,
                                            prim_name);
-  if (segment_ids_shape[0] != x_shape[0]) {
+
+  auto is_dynamic = IsDynamic(x_shape) || IsDynamic(segment_ids_shape);
+  if (!is_dynamic && segment_ids_shape[0] != x_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the amount of data for segment_ids must be equal to the first dimension of the "
                                 "shape of input_x, but got "
                              << segment_ids_shape[0] << " and " << x_shape[0] << ".";
   }
-  if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
-  }
+
   ShapeVector out_shape(x_shape);
   auto segment_ids_ptr = input_args[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(segment_ids_ptr);
@@ -100,6 +104,7 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
   } else {
     out_shape[0] = abstract::Shape::kShapeDimAny;
   }
+
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
