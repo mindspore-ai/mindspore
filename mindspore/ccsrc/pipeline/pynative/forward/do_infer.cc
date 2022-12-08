@@ -65,6 +65,8 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
     return abs->cast<abstract::AbstractCOOTensorPtr>()->BuildValue();
   } else if (abs->isa<abstract::AbstractCSRTensor>()) {
     return abs->cast<abstract::AbstractCSRTensorPtr>()->BuildValue();
+  } else if (abs->isa<abstract::AbstractMapTensor>()) {
+    return kAnyValue;
   } else {
     MS_LOG(DEBUG) << "Unsupported abstract type for primitive, the abs is " << abs->ToString();
     return kAnyValue;
