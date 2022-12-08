@@ -166,7 +166,7 @@ def test_cg_against_scipy_graph(tensor_type, dtype, tol, shape, preconditioner, 
     assert osp_res[1] == msp_res_sta[1].asnumpy().item()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -555,7 +555,7 @@ def test_gmres_against_graph_scipy(n, tensor_type, dtype, error, preconditioner,
     assert onp.allclose(scipy_output, ms_net_output.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
