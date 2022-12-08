@@ -431,6 +431,14 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
 int TensorRTSubGraph::MarkOutputs() {
   // Mark NetWork Output Tensor.
   for (const auto &out_tensor : outputs_) {
+    std::string output_name = out_tensor.Name();
+    auto input_it = std::find_if(inputs_.begin(), inputs_.end(),
+                                 [=](const TensorInfo &input) { return input.Name() == output_name; });
+    if (input_it != inputs_.end()) {
+      nvinfer1::ITensor *trt_tensor = SetTensorRTNetworkInput(*input_it, GetInputIndexByName(input_it->Name()));
+      ctx_->network()->markOutput(*trt_tensor);
+      continue;
+    }
     if (out_tensor.IsConst()) {
       MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
       auto output_helper = ctx_->MsName2Tensor(out_tensor.Name());
