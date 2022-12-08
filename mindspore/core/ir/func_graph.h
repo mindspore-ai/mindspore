@@ -105,7 +105,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   FuncGraph();
   explicit FuncGraph(GraphDebugInfoPtr &&debug_info);
-  ~FuncGraph() override = default;
+  ~FuncGraph() { subclass_destruct_flag_ = true; }
   MS_DECLARE_PARENT(FuncGraph, FuncGraphBase);
 
   void DoBreakLoop() override;
