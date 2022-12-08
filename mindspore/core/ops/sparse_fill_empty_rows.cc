@@ -37,8 +37,8 @@ bool CheckSparseFillEmptyRowsInputs(const std::vector<AbstractBasePtr> &input_ar
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto default_value_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-
-  if (IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(dense_shape_shape)) {
+  if (IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(dense_shape_shape) ||
+      IsDynamic(default_value_shape)) {
     return false;
   }
 
@@ -50,6 +50,10 @@ bool CheckSparseFillEmptyRowsInputs(const std::vector<AbstractBasePtr> &input_ar
 
   (void)CheckAndConvertUtils::CheckInteger("indices rank", SizeToLong(indices_shape.size()), kEqual, indice_rank,
                                            op_name);
+  if (indices_shape[1] != dense_rank) {
+    MS_EXCEPTION(ValueError) << "For SparseFillEmptyRows, "
+                             << "the last dim of the indices must be 2, but got " << indices_shape[1] << ".";
+  }
   (void)CheckAndConvertUtils::CheckInteger("values rank", SizeToLong(values_shape.size()), kEqual, values_rank,
                                            op_name);
   (void)CheckAndConvertUtils::CheckInteger("dense_shape rank", SizeToLong(dense_shape_shape.size()), kEqual,
@@ -57,10 +61,6 @@ bool CheckSparseFillEmptyRowsInputs(const std::vector<AbstractBasePtr> &input_ar
   (void)CheckAndConvertUtils::CheckInteger("dense_shape size", dense_shape_shape[0], kEqual, dense_rank, op_name);
   (void)CheckAndConvertUtils::CheckInteger("default_value rank", SizeToLong(default_value_shape.size()), kEqual,
                                            default_value_rank, op_name);
-  if (indices_shape[1] != dense_rank) {
-    MS_EXCEPTION(ValueError) << "For SparseFillEmptyRows, "
-                             << "the last dim of the indices must be 2, but got " << indices_shape[1] << ".";
-  }
   if (indices_shape[0] != values_shape[0]) {
     MS_EXCEPTION(ValueError) << "For SparseFillEmptyRows, "
                              << "the size of indices must be equal to values, but got " << indices_shape[0] << " and "
