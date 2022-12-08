@@ -64,6 +64,14 @@ int TruncatedNormalCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
+  auto shape_input = inputs[kIndex0]->GetShapeVector();
+  if (shape_input.size() != kInputDims) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', The input tensor must be a 1-D tensor.";
+  }
+  if (shape_input[kIndex0] < kInputSizes) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input tensor shape must >= 2, but got "
+                             << shape_input[kIndex0];
+  }
   input_type_ = inputs[kIndex0]->GetDtype();
   output_type_ = outputs[kIndex0]->GetDtype();
   return KRET_OK;
@@ -126,7 +134,7 @@ std::vector<std::pair<KernelAttr, TruncatedNormalCPUKernelMod::TruncatedNormalFu
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
      &TruncatedNormalCPUKernelMod::LaunchKernel<int32_t, float, float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-     &TruncatedNormalCPUKernelMod::LaunchKernel<int32_t, double, double>},
+     &TruncatedNormalCPUKernelMod::LaunchKernel<int64_t, double, double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
      &TruncatedNormalCPUKernelMod::LaunchKernel<int64_t, float16, float>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
