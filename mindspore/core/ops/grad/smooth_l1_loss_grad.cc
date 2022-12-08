@@ -52,8 +52,6 @@ abstract::ShapePtr SmoothL1LossGradInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto prediction = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   abstract::CheckShapeSame(prim_name, prediction, target);
@@ -76,17 +74,17 @@ TypePtr SmoothL1LossGradInferType(const PrimitivePtr &prim, const std::vector<Ab
   std::map<std::string, TypePtr> args;
   (void)args.emplace("prediction", input_args[kInputIndex0]->BuildType());
   (void)args.emplace("target", input_args[kInputIndex1]->BuildType());
-  auto dloss_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
-  return dloss_type;
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
+  return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(SmoothL1LossGrad, BaseOperator);
 AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = SmoothL1LossGradInferType(primitive, input_args);
   auto infer_shape = SmoothL1LossGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
