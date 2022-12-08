@@ -1,5 +1,6 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
+source ./scripts/run_benchmark_python.sh
 
 # Run converter on x86 platform:
 function Run_Converter() {
@@ -154,4 +155,17 @@ fi
 
 echo "Run_x86_cloud is ended"
 Print_Benchmark_Result $run_benchmark_result_file
+
+# run python ST
+if [[ $backend == "all" || $backend == "x86_cloud_onnx" ]]; then
+  models_python_config=${basepath}/../config_level0/models_python.cfg
+  models_python_cfg_file_list=("$models_python_config")
+  Run_python_ST ${basepath} ${x86_path} ${ms_models_path} ${models_path} "${models_python_cfg_file_list[*]}" "CPU"
+  Run_python_status=$?
+  if [[ ${Run_python_status} != 0 ]];then
+      echo "Run_python_status failed"
+      isFailed=1
+  fi
+fi
+
 exit ${isFailed}
