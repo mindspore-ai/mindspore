@@ -7902,6 +7902,8 @@ class Roll(Primitive):
         >>> op = ops.Roll(shift=-1, axis=0)
         >>> output = op(input_x)
         >>> print(output)
+        [[5. 6. 7. 8. 9.]
+         [0. 1. 2. 3. 4.]]
     """
 
     @prim_attr_register
