@@ -459,6 +459,15 @@ class AtLeast2DFunc(nn.Cell):
         return self.atleast_2d([x1, x2, x3])
 
 
+class CartesianProdFunc(nn.Cell):
+    def __init__(self):
+        super(CartesianProdFunc, self).__init__()
+        self.cartesian_prod = ops.cartesian_prod
+
+    def construct(self, x1, x2):
+        return self.cartesian_prod(x1, x2)
+
+
 class AtLeast3DFunc(nn.Cell):
     def __init__(self):
         super(AtLeast3DFunc, self).__init__()
@@ -861,6 +870,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1, 1, 1], [1, 1, 1]]), ms.float64),
                         Tensor(np.array(1), ms.float64),
                         Tensor(np.array([1, 1, 1, 1, 1]), ms.float64)]
+    }),
+    ('CartesianProd', {
+        'block': CartesianProdFunc(),
+        'desc_inputs': [Tensor(np.array([1, 2]), ms.int32),
+                        Tensor(np.array([5]), ms.int32)]
     }),
     ('AtLeast3D', {
         'block': AtLeast3DFunc(),
