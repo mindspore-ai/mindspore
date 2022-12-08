@@ -14,88 +14,85 @@
  * limitations under the License.
  */
 
+#include <thrust/binary_search.h>
+#include <thrust/copy.h>
+#include <thrust/device_ptr.h>
+#include <thrust/device_vector.h>
+#include <thrust/execution_policy.h>
+#include <thrust/iterator/zip_iterator.h>
+#include <thrust/sort.h>
+#include <thrust/tuple.h>
 #include "include/cuda_fp16.h"
 #include "include/cuda_runtime.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/list_diff_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
-template <typename T>
-__global__ void InitListDiff(size_t x_size, size_t y_size, const T *x, const T *y, int *workspace_flag) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < x_size * y_size; pos += blockDim.x * gridDim.x) {
-    size_t x_pos = pos / y_size;
-    size_t y_pos = pos % y_size;
-    if (x[x_pos] == y[y_pos]) {
-      workspace_flag[x_pos] = 1;
-    }
-  }
-}
+struct is_selected {
+  __host__ __device__ bool operator()(const bool x) { return x == false; }
+};
 
 template <typename T, typename S>
-__global__ void ShrinkRes(int count_out, const T *x, int *workspace_flag, T *out, S *idx) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < count_out; pos += blockDim.x * gridDim.x) {
-    out[pos] = x[workspace_flag[pos]];
-    idx[pos] = static_cast<S>(workspace_flag[pos]);
-  }
-}
-
-template <typename T, typename S>
-int ListDiff(int *count_number, size_t x_size, size_t y_size, const T *x, const T *y, T *out, S *idx,
-             int *workspace_flag, const uint32_t &device_id, cudaStream_t cuda_stream) {
+int CalListDiff(size_t x_size, size_t y_size, const T *x, const T *y, T *out, S *idx, T *workspace_y, S *workspace_xidx,
+                bool *workspace_flag, const uint32_t &device_id, cudaStream_t cuda_stream) {
   int count_out = 0;
-  cudaMemset(workspace_flag, 0, sizeof(int) * x_size);
-  int thread_num = 256 < x_size * y_size ? 256 : x_size * y_size;
-
-  InitListDiff<<<CUDA_BLOCKS_CAL(device_id, x_size * y_size, thread_num), thread_num, 0, cuda_stream>>>(
-    x_size, y_size, x, y, workspace_flag);
-  cudaStreamSynchronize(cuda_stream);
-  std::vector<int> workspace_flag_host(x_size);
-  cudaMemcpy(workspace_flag_host.data(), workspace_flag, x_size * sizeof(int), cudaMemcpyDeviceToHost);
-  for (size_t idx = 0; idx < x_size; ++idx) {
-    if (workspace_flag_host[idx] == 0) {
-      workspace_flag_host[count_out] = idx;
-      ++count_out;
-    }
-  }
-  cudaMemcpy(workspace_flag, workspace_flag_host.data(), count_out * sizeof(int), cudaMemcpyHostToDevice);
-  ShrinkRes<<<CUDA_BLOCKS(device_id, count_out), CUDA_THREADS(device_id), 0, cuda_stream>>>(count_out, x,
-                                                                                            workspace_flag, out, idx);
+  auto policy = thrust::cuda::par.on(cuda_stream);
+  cudaMemcpy(workspace_y, y, y_size * sizeof(T), cudaMemcpyDeviceToDevice);
+  thrust::sequence(policy, thrust::device_pointer_cast(workspace_xidx),
+                   thrust::device_pointer_cast(workspace_xidx) + x_size);
+  thrust::stable_sort(policy, thrust::device_pointer_cast(workspace_y),
+                      thrust::device_pointer_cast(workspace_y) + y_size);
+  thrust::binary_search(thrust::device_pointer_cast(workspace_y), thrust::device_pointer_cast(workspace_y) + y_size,
+                        thrust::device_pointer_cast(x), thrust::device_pointer_cast(x) + x_size,
+                        thrust::device_pointer_cast(workspace_flag));
+  count_out = thrust::count(policy, thrust::device_pointer_cast(workspace_flag),
+                            thrust::device_pointer_cast(workspace_flag) + x_size, false);
+  thrust::copy_if(
+    policy,
+    thrust::make_zip_iterator(
+      thrust::make_tuple(thrust::device_pointer_cast(workspace_xidx), thrust::device_pointer_cast(x))),
+    thrust::make_zip_iterator(thrust::make_tuple(thrust::device_pointer_cast(workspace_xidx) + x_size,
+                                                 thrust::device_pointer_cast(x) + x_size)),
+    thrust::device_pointer_cast(workspace_flag),
+    thrust::make_zip_iterator(thrust::make_tuple(thrust::device_pointer_cast(idx), thrust::device_pointer_cast(out))),
+    is_selected());
   return count_out;
 }
 
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const half *, const half *, half *, int64_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const float *, const float *, float *, int64_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const double *, const double *, double *, int64_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const uint8_t *, const uint8_t *, uint8_t *, int64_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const uint16_t *, const uint16_t *, uint16_t *, int64_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int8_t *, const int8_t *, int8_t *, int64_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int16_t *, const int16_t *, int16_t *, int64_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int32_t *, const int32_t *, int32_t *, int64_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int64_t *, const int64_t *, int64_t *, int64_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const half *, const half *, half *, int32_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const float *, const float *, float *, int32_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const double *, const double *, double *, int32_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const uint8_t *, const uint8_t *, uint8_t *, int32_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const uint16_t *, const uint16_t *, uint16_t *, int32_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int8_t *, const int8_t *, int8_t *, int32_t *, int *,
-                                      const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int16_t *, const int16_t *, int16_t *, int32_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int32_t *, const int32_t *, int32_t *, int32_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT int ListDiff(int *, size_t, size_t, const int64_t *, const int64_t *, int64_t *, int32_t *,
-                                      int *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const half *, const half *, half *, int64_t *, half *,
+                                         int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const float *, const float *, float *, int64_t *, float *,
+                                         int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const double *, const double *, double *, int64_t *, double *,
+                                         int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const uint8_t *, const uint8_t *, uint8_t *, int64_t *,
+                                         uint8_t *, int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const uint16_t *, const uint16_t *, uint16_t *, int64_t *,
+                                         uint16_t *, int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int8_t *, const int8_t *, int8_t *, int64_t *, int8_t *,
+                                         int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int16_t *, const int16_t *, int16_t *, int64_t *,
+                                         int16_t *, int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int32_t *, const int32_t *, int32_t *, int64_t *,
+                                         int32_t *, int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int64_t *, const int64_t *, int64_t *, int64_t *,
+                                         int64_t *, int64_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const half *, const half *, half *, int32_t *, half *,
+                                         int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const float *, const float *, float *, int32_t *, float *,
+                                         int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const double *, const double *, double *, int32_t *, double *,
+                                         int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const uint8_t *, const uint8_t *, uint8_t *, int32_t *,
+                                         uint8_t *, int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const uint16_t *, const uint16_t *, uint16_t *, int32_t *,
+                                         uint16_t *, int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int8_t *, const int8_t *, int8_t *, int32_t *, int8_t *,
+                                         int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int16_t *, const int16_t *, int16_t *, int32_t *,
+                                         int16_t *, int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int32_t *, const int32_t *, int32_t *, int32_t *,
+                                         int32_t *, int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT int CalListDiff(size_t, size_t, const int64_t *, const int64_t *, int64_t *, int32_t *,
+                                         int64_t *, int32_t *, bool *, const uint32_t &, cudaStream_t cuda_stream);
