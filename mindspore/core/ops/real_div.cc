@@ -49,8 +49,7 @@ TypePtr RealDivInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return input_args[0]->BuildType();
+  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, op_name);
 }
 }  // namespace
 
