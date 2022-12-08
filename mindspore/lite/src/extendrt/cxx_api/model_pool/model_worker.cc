@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 #include "src/extendrt/cxx_api/model_pool/model_worker.h"
+#include <algorithm>
 #include "src/common/log_adapter.h"
 #include "src/extendrt/numa_adapter.h"
 #include "src/common/common.h"
 #include "nnacl/op_base.h"
 namespace mindspore {
 void ModelWorker::PrintWorkerInfo() {
-  MS_LOG(ERROR) << "worker id: " << worker_config_->worker_id << " | strategy: " << worker_config_->strategy
+  MS_LOG(ERROR) << "worker id: " << worker_config_->worker_id
                 << " | bind core mode: " << worker_config_->context->GetThreadAffinityMode()
                 << " | bind core id list: " << worker_config_->context->GetThreadAffinityCoreList()
                 << " | inter op parallel num: " << worker_config_->context->GetInterOpParallelNum()
                 << " | worker thread num: " << worker_config_->context->GetThreadNum()
-                << " | worker bind numa id: " << worker_config_->numa_id
-                << " | worker task queue id: " << worker_config_->task_queue_id;
+                << " | worker bind numa id: " << worker_config_->numa_id;
 }
 
 bool ModelWorker::IsAvailable() {
@@ -42,10 +42,9 @@ void ModelWorker::WaitCreateWorkerDone() {
   return;
 }
 
-void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
-                                     const std::shared_ptr<WorkerConfig> &worker_config,
-                                     const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
-                                     bool *create_success) {
+void ModelWorker::InitModelWorker(const char *model_buf, size_t size,
+                                  const std::shared_ptr<WorkerConfig> &worker_config,
+                                  const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success) {
   worker_config_ = worker_config;
   MS_LOG(DEBUG) << "worker bind core id list: " << worker_config_->context->GetThreadAffinityCoreList();
   MS_LOG(DEBUG) << "worker thread num: " << worker_config_->context->GetThreadNum();
@@ -66,17 +65,20 @@ void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
 }
 
 void ModelWorker::Run() {
-  int task_queue_id = worker_config_->task_queue_id;
+  auto numa_node_id = worker_config_->numa_id;
+  int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
   {
     // The scope of the lock is only for this variable
     std::unique_lock<std::mutex> create_work_lock(create_work_done_mutex_);
     create_work_done_ = true;
   }
   create_work_done_condition_.notify_one();
+  MS_LOG(INFO) << "model worker is initialized.";
   while (!predict_task_queue_->IsPredictTaskDone()) {
     auto task = predict_task_queue_->GetPredictTask(task_queue_id, this);
     if (task == nullptr) {
       MS_LOG(DEBUG) << "task queue is empty, wait task ...";
+      available_ = true;
       continue;
     }
     available_ = false;
@@ -95,6 +97,7 @@ void ModelWorker::Run() {
     task->ready = true;
     predict_task_queue_->ActiveTask(task);
   }
+  MS_LOG(INFO) << "task queue all tasks completed.";
 }
 
 Status ModelWorker::Init(const char *model_buf, size_t size) {
@@ -122,11 +125,13 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
       }
     }
   }
+  MS_LOG(INFO) << "ms model init.";
   auto status = model_->Build(model_buf, size, model_type, worker_config_->context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;
   }
+  MS_LOG(INFO) << "ms model init done.";
   origin_worker_inputs_ = model_->GetInputs();
   origin_worker_outputs_ = model_->GetOutputs();
   if (origin_worker_outputs_.empty() || origin_worker_outputs_.empty()) {
@@ -202,7 +207,13 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     auto status = model_->Resize(model_->GetInputs(), dims);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model pool resize failed.";
-      PrintWorkerInfo();
+      std::vector<std::vector<int64_t>> old_dims;
+      auto ins = model_->GetInputs();
+      (void)std::transform(ins.begin(), ins.end(), std::back_inserter(old_dims),
+                           [&](auto &tensor) { return tensor.Shape(); });
+      MS_LOG(INFO) << "Fallback wrong shape, resize shape: " << old_dims;
+      (void)model_->Resize(model_->GetInputs(), old_dims);
+      MS_LOG(INFO) << "Fallback wrong shape end.";
       available_ = true;
       return kLiteError;
     }
@@ -227,14 +238,14 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     model_input[i].SetDeviceData(const_cast<MSTensor &>(input).GetDeviceData());
   }
   auto status = model_->Predict(model_input, &model_output, before, after);
+  for (size_t i = 0; i < model_input.size(); i++) {
+    model_input[i].SetData(nullptr);
+  }
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model predict failed.";
     PrintWorkerInfo();
     available_ = true;
     return status;
-  }
-  for (size_t i = 0; i < model_input.size(); i++) {
-    model_input[i].SetData(nullptr);
   }
   if (need_copy_output) {
     status = CopyOutputTensor(model_output, outputs);

@@ -18,6 +18,7 @@
 #include "src/common/log_adapter.h"
 namespace mindspore {
 PredictTaskQueue::~PredictTaskQueue() {
+  MS_LOG(INFO) << "free predict task queue.";
   if (predict_task_ != nullptr) {
 #ifdef USE_HQUEUE
     for (size_t i = 0; i < task_queue_num_; i++) {
@@ -27,10 +28,12 @@ PredictTaskQueue::~PredictTaskQueue() {
     delete[] predict_task_;
     predict_task_ = nullptr;
   }
+  MS_LOG(INFO) << "delete idle worker num.";
   if (idle_worker_num_ != nullptr) {
     delete[] idle_worker_num_;
     idle_worker_num_ = nullptr;
   }
+  MS_LOG(INFO) << "free predict task queue done.";
 }
 
 void PredictTaskQueue::SetPredictTaskDone() {
@@ -114,8 +117,9 @@ PredictTask *PredictTaskQueue::GetPredictTask(int node_id, ModelWorker *worker) 
     while ((predict_task_[node_id].Empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
       task_push_cond_.wait(task_lock);
     }
+    return predict_task_[node_id].Dequeue();
   }
-  return predict_task_[node_id].Dequeue();
+  return nullptr;
 #else
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   while ((predict_task_[node_id].empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
