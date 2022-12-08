@@ -48,6 +48,7 @@ using kernel::Address;
 using kernel::AddressPtr;
 using kernel::AddressPtrList;
 
+class DeviceEmbeddingOperation;
 class Sender;
 class Receiver;
 using SenderPtr = std::shared_ptr<Sender>;
@@ -100,69 +101,39 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Finalize embedding cache prefetch actor and push latest embedding from local cache to remote cache.
   void Finalize();
 
- private:
-  // Perform Local and Device Cache hit/miss analysis and prefetch cache for missing embeddings.
-  bool PrefetchCache();
-
-  // Analyze the hit/miss info of the local host cache and device cache, and calculate the swapping and
-  // mapping information of the missing feature id that needs to be inserted into the cache.
-  bool CountCacheMissIds(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
-
-  // Increase the current global step of cache prefetching operation.
-  bool IncreaseStep();
-
   // Wait the computed graph finish current step when there is not enough free memory space in the cache, in order to
   // delete the feature vector used by the current step from the cache.
   bool WaitGraphRun();
 
-  // Parse the hit and swap information of the currently preprocessed id in the device cache.
-  bool ParseDeviceData(int id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index);
-  // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
-  bool ParseHostDataHostToDevice(int id);
-  // Parse the swap in information from device cache of the currently preprocessed id of the local host cache.
-  bool ParseHostDataDeviceToHost();
-
-  // Batch preprocess the current batch ids information of cache hitting or exceeding the range of the embedding table
-  // slice corresponding to the process.
-  bool CheckCacheHitOrOutRange(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
-                               bool *out_range);
-  // Thread execution function of method 'CheckCacheHitOrOutRange'.
-  bool CheckCacheHitOrOutRangeFunc(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
-                                   bool *out_range, size_t *hash_hit_count);
-
   // Reset EmbeddingHashMap for device and local host cache.
   bool ResetEmbeddingHashMap();
+
+  // Insert weights into the local host embedding cache.
+  bool InsertLocalHostCache(size_t embedding_size, size_t insert_indices_size, const int *insert_indices,
+                            const float *insert_data, float *hash_table_addr);
+
+  // Lookup embeddings from local host embedding cache.
+  bool LookupLocalHostCache(size_t embedding_size, size_t indices_num, const float *hash_table_addr,
+                            const int *indices_addr, float *output_addr);
+
+ private:
+  // Perform Local and Device Cache hit/miss analysis and prefetch cache for missing embeddings.
+  bool PrefetchCache();
+
+  // Increase the current global step of cache prefetching operation.
+  bool IncreaseStep();
 
   // Update the current computed graph's step to real global step at the time when this actor starts to prefetch cache
   // for a batch ids.
   void set_current_graph_step() { graph_running_step_ = graph_step_; }
 
-  // When the device cache does not reach 100% hit, the cache needs to be updated, which involves cache insertion and
-  // deletion. That is, push the non-hotspot embeddings on the local side to the remote, and pull the missing embeddings
-  // on the local side from the remote.
-  bool UpdateCache();
-
   // Push non-hotspot embeddings on local host cache to remote.
   bool PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info);
-  // Push non-hotspot embeddings on device cache to local host cache.
-  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info);
   // Pull missing embeddings on local cache from remote.
   bool PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info);
-  // Pull missing embeddings on device cache from local host.
-  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info);
 
   // Initialize local cache values using the random number generator.
   bool InitLocalCacheForNewIds(const HashTableInfo &hash_info);
-
-  // Insert weights into the local host embedding cache.
-  bool InsertLocalHostCache(size_t embedding_size, size_t insert_indices_size, const int *insert_indices,
-                            const float *insert_data, float *hash_table_addr);
-  // Lookup embeddings from local host embedding cache.
-  bool LookupLocalHostCache(size_t embedding_size, size_t indices_num, const float *hash_table_addr,
-                            const int *indices_addr, float *output_addr);
-  // Do lookup embedding table operation.
-  void LookupEmbeddingTable(size_t indices_num, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
-                            const int *indices_addr, float *output_addr);
 
   // Lookup embedding from Remote and get embeddings via RPC.
   bool PullEembeddingsFromRemote(int32_t param_key, const int *ids, size_t ids_num, std::vector<float> *outputs);
@@ -219,24 +190,15 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // device embedding cache.
   void BuildEmbeddingCacheUpdateKernel();
 
-  // Look up feature weights on Device Embedding Cache:
-  // 1. Update the shape of parameter node.
-  // 2. Infer shape for embedding cache look up kernel(operator name: 'Gather').
-  // 3. Launch embedding cache look up kernel.
-  bool LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num, size_t cache_size,
-                         size_t embedding_size, void *outputs);
-
-  // Update feature weights on Device Embedding Cache:
-  // 1. Update the shape of parameter node.
-  // 2. Infer shape for embedding cache update kernel(operator name: 'ScatterUpdate').
-  // 3. Launch embedding cache update kernel.
-  bool UpdateDeviceCache(void *indices, void *update_value, size_t indices_num, size_t cache_size,
-                         size_t embedding_size, void *embedding_cache);
-
   // Get dataset channel name.
   std::string channel_name();
   // Set dataset channel name.
   void set_channel_name(const std::string channel_name);
+
+  // When the device cache does not reach 100% hit, the cache needs to be updated, which involves cache insertion and
+  // deletion. That is, push the non-hotspot embeddings on the local side to the remote, and pull the missing embeddings
+  // on the local side from the remote.
+  bool UpdateCache();
 
   // Wait data channel ready.
   void WaitDataChannelInit();
@@ -248,6 +210,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // Set current error information before finalizing actor.
   void SetErrorInfo(const std::string &error_info);
+
+  // The operations for the embedding on the device.
+  DeviceEmbeddingOperation *emb_ops_{nullptr};
 
   // Record sender and receiver pairs for different cache operation, server and parameter key.
   // key: cache operation(such as LookupEmbeddingCache and UpdateEmbeddingCache)
@@ -350,9 +315,6 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // The random number generator is used to initialize the embedding values when needed.
   std::unique_ptr<distributed::RandomGenerator<DataType, Generator, Distribution>> rnd_gen_;
-
-  // The feature ids that have been initialized already.
-  std::set<int> initialized_ids_;
 };
 
 // RpcOperator is used to do rpc with other processes in distributed execution.

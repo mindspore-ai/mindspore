@@ -18,12 +18,17 @@
 
 namespace mindspore {
 namespace runtime {
+void LookupEmbeddingTable(size_t indices_num, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
+                          const int *indices_addr, float *output_addr) {}
+
+bool DeviceSparseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const size_t batch_ids_len, size_t data_step,
+                                                       size_t graph_running_step, bool *device_cache_need_wait_graph,
+                                                       bool *host_cache_need_wait_graph) {
+  return true;
+}
+
 bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) { return true; }
 
 bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) { return true; }
-
-bool DeviceSparseEmbeddingOperation::CountCacheMissIds(const int *batch_ids, const size_t batch_ids_len) {
-  return true;
-}
 }  // namespace runtime
 }  // namespace mindspore
