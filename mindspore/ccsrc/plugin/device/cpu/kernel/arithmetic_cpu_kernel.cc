@@ -236,7 +236,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', it only supports operators in "
                         << Map2Str<std::unordered_map, TypeComputeFunc>(arithmeticMathFuncMap) << ", but got "
-                        << kernel_name_ << "for " << dtype_desc << ", but got " << kernel_name_ << ".";
+                        << kernel_name_ << " for " << dtype_desc << ".";
     }
     compute_func_ = arithmeticMathFuncMap.at(kernel_name_);
   }
