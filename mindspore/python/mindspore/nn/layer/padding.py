@@ -650,11 +650,11 @@ class ReplicationPad1d(_ReplicationPadNd):
     Supported Platforms:
         ``GPU``
 
-    Examples::
+    Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore.nn import ReplicationPad1d
-        >>> x = Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
         >>> pad1d = ReplicationPad1d(2)
         >>> input = Tensor(np.arange(0, 8).reshape(1, 2, 4), mindspore.float32)
         >>> input
@@ -714,8 +714,9 @@ class ReplicationPad2d(_ReplicationPadNd):
     Supported Platforms:
         ``GPU``
 
-    Examples::
+    Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore.nn import ReplicationPad2d
         >>> pad2d = ReplicationPad2d(2)
@@ -735,8 +736,8 @@ class ReplicationPad2d(_ReplicationPadNd):
                   [6., 6., 6., 7., 8., 8., 8.],
                   [6., 6., 6., 7., 8., 8., 8.],
                   [6., 6., 6., 7., 8., 8., 8.]]]])
-        >>> pad2d = nn.ReplicationPad2d((1, 1, 2, 0))
-        >>> out = m(input)
+        >>> pad2d = ReplicationPad2d((1, 1, 2, 0))
+        >>> out = pad2d(input)
         >>> print(out)
         Tensor(shape=[1, 1, 5, 5], dtype=Float32, value=
              [[[[0., 0., 1., 2., 2.],
@@ -791,21 +792,31 @@ class ReplicationPad3d(_ReplicationPadNd):
     Supported Platforms:
         ``GPU``
 
-    Examples::
+    Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore.nn import ReplicationPad3d
         >>> pad3d = ReplicationPad3d(1)
         >>> input = Tensor(np.arange(0, 9).reshape(1, 1, 1, 3, 3), mindspore.float32)
         >>> out = pad3d(input)
         >>> print(out)
-        Tensor(shape=[1, 1, 7, 7], dtype=Float32, value=
-               [[[[[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
-                   [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]],
-                  [[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
-                   [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]],
-                  [[0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.], [0., 0., 1., 2., 2.],
-                   [3., 3., 4., 5., 5.], [6., 6., 7., 8., 8.]]]]])
+        Tensor(shape=[1, 1, 3, 5, 5], dtype=Float32, value=
+               [[[[[0., 0., 1., 2., 2.],
+                     [0., 0., 1., 2., 2.],
+                     [3., 3., 4., 5., 5.],
+                     [6., 6., 7., 8., 8.],
+                     [6., 6., 7., 8., 8.]],
+                   [[0., 0., 1., 2., 2.],
+                     [0., 0., 1., 2., 2.],
+                     [3., 3., 4., 5., 5.],
+                     [6., 6., 7., 8., 8.],
+                     [6., 6., 7., 8., 8.]],
+                   [[0., 0., 1., 2., 2.],
+                     [0., 0., 1., 2., 2.],
+                     [3., 3., 4., 5., 5.],
+                     [6., 6., 7., 8., 8.],
+                     [6., 6., 7., 8., 8.]]]]])
     """
 
     def __init__(self, padding):
