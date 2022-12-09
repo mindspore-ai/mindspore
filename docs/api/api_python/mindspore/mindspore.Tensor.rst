@@ -134,6 +134,7 @@ mindspore.Tensor
     mindspore.Tensor.index_add
     mindspore.Tensor.index_fill
     mindspore.Tensor.init_data
+    mindspore.Tensor.inner
     mindspore.Tensor.inplace_update
     mindspore.Tensor.int
     mindspore.Tensor.inv

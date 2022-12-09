@@ -4304,6 +4304,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('matmul')(self, tensor2)
 
+    def inner(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.inner`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('inner')(self, other)
+
     def maximum(self, other):
         r"""
         Computes the maximum of input tensors element-wise.

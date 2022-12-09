@@ -338,6 +338,7 @@ Reduction函数
     mindspore.ops.adjoint
     mindspore.ops.batch_dot
     mindspore.ops.dot
+    mindspore.ops.inner
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
     mindspore.ops.mm

@@ -300,6 +300,7 @@ from .math_func import (
     gumbel_softmax,
     kaiser_window,
     matmul,
+    inner,
     baddbmm,
     cummin,
     cummax,
