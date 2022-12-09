@@ -195,7 +195,6 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   init_seed_ = LongToUint(seed_);
   // check the attribute, inputs and outputs
   CheckAttribute();
-  CheckInputsAndOutputs(inputs, outputs);
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -211,6 +210,7 @@ int UniformCandidateSamplerCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   if (ret != 0) {
     return ret;
   }
+  CheckInputsAndOutputs(inputs, outputs);
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
 
   batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());

@@ -65,7 +65,10 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   int64_t range_max = GetValue<int64_t>(primitive->GetAttr("range_max"));
   (void)CheckAndConvertUtils::CheckInteger("num_true", num_true, kGreaterThan, 0, op_name);
   (void)CheckAndConvertUtils::CheckInteger("seed", seed, kGreaterEqual, 0, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("num_true", num_true, kEqual, input_shape[input_shape.size() - 1], op_name);
+  if (!IsDynamic(input_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("num_true", num_true, kEqual, input_shape[input_shape.size() - 1],
+                                             op_name);
+  }
   if (unique) {
     (void)CheckAndConvertUtils::CheckInteger("num_sampled", num_sampled, kLessEqual, range_max, op_name);
   }
