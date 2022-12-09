@@ -2062,7 +2062,8 @@ class ArgMinWithValue(Primitive):
         - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int32. If `keep_dims`
           is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
           Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index, and same dtype as x.
+        - **values** (Tensor) - The minimum value of input tensor, with the same
+          shape as `index`, and same dtype as `x`.
 
     Raises:
         TypeError: If `x` is not Tensor.
@@ -5737,7 +5738,27 @@ class Sort(Primitive):
     """
     Sorts the elements of the input tensor along the given dimension in the specified order.
 
-    Refer to :func:`mindspore.ops.sort` for more details.
+    .. warning::
+        Currently, the data types of Float16 is well supported.
+        Using Float32 might cause loss of accuracy.
+
+    Args:
+        axis (int): The dimension to sort along. Default: -1.
+        descending (bool): Controls the sort order. If descending is True then the elements
+            are sorted in descending order by value. Default: False.
+
+    Inputs:
+        x(Tensor): The input tensor of any dimension, with a type of float16 or float32.
+
+    Outputs:
+        y1(Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
+        y2(Tensor) - The indices of the elements in the original input tensor. Data type is int32.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If `descending` is not a bool.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `axis` is not in range of [-len(x.shape), len(x.shape)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

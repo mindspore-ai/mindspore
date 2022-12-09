@@ -70,7 +70,8 @@ class Randperm(Primitive):
         dtype (mindspore.dtype): The type of output. Default: mindspore.int32.
 
     Inputs:
-        - **n** (Tensor) - The input tensor with shape (1,) and dtype int32 or int64. 'n' must be in [0, `max_length`].
+        - **n** (Tensor) - The input tensor with shape (1,) with and dtype int32 or int64.
+          `n` must be in range [0, `max_length`].
 
     Outputs:
         - **output** (Tensor) - The output Tensor with shape: (`max_length`,) and type: `dtype`.
