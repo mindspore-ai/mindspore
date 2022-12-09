@@ -54,9 +54,6 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
     return std::make_shared<abstract::AbstractCOOTensor>(element_list);
   }
 
-  CheckSparseShape(indices_shp.size(), kSizeTwo, "Indices");
-  CheckSparseShape(values_shp.size(), kSizeOne, "Values");
-
   for (const auto &elem_type : dense_shape->ElementsType()) {
     if (!elem_type->isa<Int>()) {
       MS_EXCEPTION(TypeError) << "For COOTensor, the element type of `shape` must be Int, but got "
