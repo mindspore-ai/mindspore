@@ -8,17 +8,17 @@
 
 - 编译构建
 
-  在`mindspore/lite/examples/runtime_cpp_extendrt`目录下执行build脚本，将能够自动下载相关文件并编译Demo。
+  在`mindspore/lite/examples/cloud_infer/runtime_cpp/`目录下执行build脚本，将能够自动下载相关文件并编译Demo。
 
   ```bash
   bash build.sh
   ```
 
   > 若MindSpore Lite推理框架下载失败，请手动下载硬件平台为CPU，操作系统为Ubuntu-x64的[MindSpore Lite 模型推理框架](https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html)
-  ，将压缩包拷贝到`mindspore/lite/examples/runtime_cpp_extendrt/`目录。
+  ，将压缩包拷贝到`mindspore/lite/examples/cloud_infer/runtime_cpp/`目录。
   >
   > 若mobilenetv2模型下载失败，请手动下载相关模型文件[mobilenetv2](https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.mindir)
-  ，并将其拷贝到`mindspore/lite/examples/runtime_cpp_extendrt/model`目录。
+  ，并将其拷贝到`mindspore/lite/examples/cloud_infer/runtime_cpp/model`目录。
 
 - 执行推理
 

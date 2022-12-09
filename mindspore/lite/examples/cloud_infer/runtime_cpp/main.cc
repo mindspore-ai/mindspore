@@ -37,12 +37,6 @@ void Usage() {
   std::cerr << "[config_file], optional, config file for dynamic input" << std::endl;
 }
 
-DEFINE_string(model_path, "", "model path");
-DEFINE_string(device_type, "CPU", "device type, optional, can be GPU, Ascend or CPU, default CPU");
-DEFINE_string(config_file, "", "config file for dynamic input");
-DEFINE_int32(device_id, 0, "device id, optional, should be an integer >=0, default 0");
-DEFINE_int32(batch_size, 1, "optional, should be an positive integer, default 1");
-
 struct CommandArgs {
   std::string model_path;
   std::string device_type;
@@ -54,6 +48,12 @@ struct CommandArgs {
 int Run(const CommandArgs &args);
 
 int main(int argc, const char **argv) {
+  DEFINE_string(model_path, "", "model path");
+  DEFINE_string(device_type, "CPU", "device type, optional, can be GPU, Ascend or CPU, default CPU");
+  DEFINE_string(config_file, "", "config file for dynamic input");
+  DEFINE_int32(device_id, 0, "device id, optional, should be an integer >=0, default 0");
+  DEFINE_int32(batch_size, 1, "optional, should be an positive integer, default 1");
+
   if (!mindspore::example::ParseCommandLineFlags(argc, argv)) {
     std::cerr << "Failed to parse command args" << std::endl;
     Usage();
