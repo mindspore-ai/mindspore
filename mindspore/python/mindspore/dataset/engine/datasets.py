@@ -1821,12 +1821,12 @@ class Dataset:
 
         Examples:
             >>> mind_dataset_dir = ["/path/to/mind_dataset_file"]
-            >>> data_set = ds.MindDataset(dataset_files=mind_dataset_dir)
+            >>> dataset = ds.MindDataset(dataset_files=mind_dataset_dir)
             >>> for _ in range(5):
             ...     num_iter = 0
             ...     for data in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
             ...         num_iter += 1
-            ...     data_set.reset()
+            ...     dataset.reset()
         """
 
     def is_shuffled(self):

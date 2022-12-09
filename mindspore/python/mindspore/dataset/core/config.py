@@ -136,7 +136,7 @@ def get_seed():
     """
     Get random number seed. If the seed has been set, then will
     return the set value, otherwise it will return the default seed value
-    which equals to std::mt19937::default_seed.
+    which equals to `std::mt19937::default_seed <http://www.cplusplus.com/reference/random/mt19937/>`_ .
 
     Returns:
         int, random number seed.
@@ -154,11 +154,12 @@ def set_prefetch_size(size):
     Set the queue capacity of the thread in pipeline.
 
     Args:
-        size (int): The length of the cache queue.
+        size (int): The length of the cache queue. The `size` must be greater than 0, otherwise the queue capacity of
+            the thread is invalid.
 
     Raises:
         TypeError: If `size` is not of type int.
-        ValueError: If `size` <= 0 or `size` > INT32_MAX(2147483647).
+        ValueError: If `size` is not a positive number.
 
     Note:
         Since total memory used for prefetch can grow very large with high number of workers,
@@ -236,7 +237,8 @@ def get_num_parallel_workers():
 
 def set_numa_enable(numa_enable):
     """
-    Set the default state of numa enabled. If numa_enable is True, need to ensure numa library is installed.
+    Set the default state of numa enabled. If `numa_enable` is True, need to
+    ensure `numa library <http://rpmfind.net/linux/rpm2html/search.php?query=libnuma-devel>`_ is installed.
 
     Args:
         numa_enable (bool): Whether to use numa bind feature.
@@ -377,14 +379,15 @@ def get_auto_num_workers():
 
 def set_callback_timeout(timeout):
     """
-    Set the default timeout (in seconds) for DSWaitedCallback.
+    Set the default timeout (in seconds) for :class:`mindspore.dataset.DSWaitedCallback` .
 
     Args:
-        timeout (int): Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
+        timeout (int): Timeout (in seconds) to be used to end the wait in :class:`mindspore.dataset.DSWaitedCallback`
+            in case of a deadlock. The `timeout` must be greater than 0.
 
     Raises:
         TypeError: If `timeout` is not type int.
-        ValueError: If `timeout` <= 0 or `timeout` > INT32_MAX(2147483647).
+        ValueError: If `timeout` is not a positive number.
 
     Examples:
         >>> # Set a new global configuration value for the timeout value.
@@ -399,10 +402,11 @@ def set_callback_timeout(timeout):
 
 def get_callback_timeout():
     """
-    Get the default timeout for WaitedDSCallback.
+    Get the default timeout for :class:`mindspore.dataset.WaitedDSCallback` .
 
     Returns:
-        int, Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
+        int, Timeout (in seconds) to be used to end the wait in :class:`mindspore.dataset.WaitedDSCallback` in case of
+            a deadlock.
 
     Examples:
         >>> # Get the global configuration of callback timeout.
