@@ -557,6 +557,17 @@ Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &ima
 /// \param[in] compression_level The compression level for PNG file, in range of [0, 9]. Default: 6.
 /// \return Status code.
 Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &image, int compression_level = 6);
+
+/// \brief Dump the abnormal image to disk and facilitate user to check it.
+/// \param[in] image The data Tensor.
+/// \param[in] status The previous error status which is needed to append more info.
+/// \return Status code.
+Status DumpImageAndAppendStatus(const std::shared_ptr<Tensor> &image, const Status &status);
+
+/// \brief Check the unsupported image and dump it to disk.
+/// \param[in] image The data Tensor.
+/// \return Status code.
+Status CheckUnsupportedImage(const std::shared_ptr<Tensor> &image);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

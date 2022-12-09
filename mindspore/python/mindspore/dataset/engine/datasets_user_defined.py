@@ -555,6 +555,17 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
+        - If you configure `python_multiprocessing=True (default: True)` and `num_parallel_workers>1 (default: 1)`
+          indicates that the multi-process mode is started for data load acceleration. At this time, as the dataset
+          iterates, the memory consumption of the subprocess will gradually increase, mainly because the subprocess
+          of the user-defined dataset obtains the member variables from the main process in the Copy On Write way.
+          Example: If you define a dataset with `__ init__` function which contains a large number of member variable
+          data (for example, a very large file name list is loaded during the dataset construction) and uses the
+          multi-process mode, which may cause the problem of OOM (the estimated total memory usage is:
+          `(num_parallel_workers+1) * size of the parent process` ). The simplest solution is to replace python objects
+          (such as list/dict/int/float/string) with non referenced data types
+          (such as Pandas, Numpy or PyArrow objects) for member variables, or configure `python_multiprocessing=False`
+          multi-threading mode is used.
         - Input `source` accepts user-defined Python functions (PyFuncs), Do not add network computing operators from
           mindspore.nn and mindspore.ops or others into this `source` .
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
