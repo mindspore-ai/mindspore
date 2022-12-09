@@ -1102,19 +1102,21 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetCurrentContext();
-  {
+  if (stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_);
-    if (stream_ != nullptr && !AscendStreamMng::GetInstance().SyncStream(stream_)) {
+    if (!AscendStreamMng::GetInstance().SyncStream(stream_)) {
       MS_LOG(ERROR) << "Sync default stream failed.";
       return false;
     }
   }
-  // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(communication_stream_);
-  if (communication_stream_ != nullptr && !AscendStreamMng::GetInstance().SyncStream(communication_stream_)) {
-    MS_LOG(ERROR) << "Sync default stream failed.";
-    return false;
+  if (communication_stream_ != nullptr) {
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime(communication_stream_);
+    if (!AscendStreamMng::GetInstance().SyncStream(communication_stream_)) {
+      MS_LOG(ERROR) << "Sync default stream failed.";
+      return false;
+    }
   }
   return true;
 }
