@@ -101,6 +101,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 
     set(KERNEL_GRAPH_SRC ${KERNEL_GRAPH_SRC}
         ${CCSRC_DIR}/backend/common/session/kernel_graph.cc
+        ${CCSRC_DIR}/backend/common/session/exec_order_builder.cc
         ${CCSRC_DIR}/backend/common/session/anf_runtime_algorithm.cc
         ${CCSRC_DIR}/backend/common/somas/somas.cc
         ${CCSRC_DIR}/backend/common/somas/somas_tensor.cc

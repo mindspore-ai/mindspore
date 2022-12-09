@@ -31,6 +31,7 @@
 #include "kernel/common_utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/anf_utils.h"
+#include "backend/common/session/exec_order_builder.h"
 
 namespace mindspore {
 namespace session {
@@ -39,18 +40,6 @@ constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 constexpr size_t k5dDims = 5;
 const std::set<std::string> kOpAssignKernelNameList = {prim::kAssign, prim::kAssignAdd, prim::kAssignSub};
-
-void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
-                       mindspore::HashSet<AnfNodePtr> *visited_nodes) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(que);
-  MS_EXCEPTION_IF_NULL(visited_nodes);
-  if (visited_nodes->find(node) == visited_nodes->end()) {
-    que->push(node);
-    (void)visited_nodes->insert(node);
-    MS_LOG(DEBUG) << "Push que:" << node->DebugString();
-  }
-}
 
 std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
   auto item_with_index =
@@ -130,15 +119,6 @@ void SyncDeviceInfoToValueNode(const ValueNodePtr &value_node, std::vector<std::
   }
 }
 
-std::string GetNodeGroup(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  if (common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
-    return common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
-  }
-  return "";
-}
-
 void SetInternalOutputAttr(const AnfNodePtr &node) {
   if (!common::AnfAlgo::IsNopNode(node)) {
     return;
@@ -153,20 +133,6 @@ void SetInternalOutputAttr(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   cnode->set_input(kAnfPrimitiveIndex, prim_node);
   common::AnfAlgo::SetNodeAttr(kAttrIsInternalOutputNopNode, MakeValue(true), node);
-}
-
-bool NeedOptimize(const AnfNodePtr &node, const std::string &optimized_comm_group) {
-  bool is_fused_comm = common::AnfAlgo::IsFusedCommunicationOp(node);
-  if (!is_fused_comm) {
-    return false;
-  }
-  auto node_group = GetNodeGroup(node);
-  if (node_group.find(kSyncBnGroup) == string::npos) {
-    if (optimized_comm_group.empty() || node_group == optimized_comm_group) {
-      return true;
-    }
-  }
-  return false;
 }
 }  // namespace
 
@@ -194,113 +160,36 @@ std::vector<AnfNodePtr> KernelGraph::outputs() const {
   return std::vector<AnfNodePtr>(1, graph_output);
 }
 
-void KernelGraph::EnqueueReadyNodes(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
-                                    mindspore::HashSet<AnfNodePtr> *visited_nodes, bool comm_first) {
-  MS_EXCEPTION_IF_NULL(visit_queue);
-  MS_EXCEPTION_IF_NULL(visited_nodes);
-  auto it = node_output_edges_.find(node);
-  if (it == node_output_edges_.end()) {
-    // value node and parameter has no input,no need to print log
-    if (node->isa<CNode>()) {
-      MS_LOG(DEBUG) << "Can not find node [" << node->DebugString() << "]";
-    }
-    return;
-  }
-  // visit all reduce node first, then other nodes
-  std::vector<AnfNodePtr> active_nodes;
-  for (const auto &output_edge : it->second) {
-    auto next_node = output_edge.first;
-    MS_EXCEPTION_IF_NULL(next_node);
-    if (node_input_num_.find(next_node) == node_input_num_.end()) {
-      MS_LOG(EXCEPTION) << "Can't find node[" << next_node->DebugString() << "]";
-    }
-    MS_LOG(DEBUG) << "Decrease input:" << next_node->DebugString() << ",node:" << node->DebugString()
-                  << ",num: " << node_input_num_[next_node] << ",decrease num:" << output_edge.second;
-    if (node_input_num_[next_node] < output_edge.second) {
-      MS_LOG(DEBUG) << "Input node:" << next_node->DebugString() << ",node_output_num" << node_input_num_[next_node]
-                    << ",depend edge:" << output_edge.second;
+void KernelGraph::SetNodeOutputEdges() {
+  node_output_edges_.clear();
+  std::queue<AnfNodePtr> to_visit;
+  to_visit.push(get_return());
+  std::set<AnfNodePtr> visited;
+  while (!to_visit.empty()) {
+    auto node = to_visit.front();
+    to_visit.pop();
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
       continue;
     }
-    node_input_num_[next_node] = node_input_num_[next_node] - output_edge.second;
-    // allreduce first
-    if (node_input_num_[next_node] == 0 && visited_nodes->find(next_node) == visited_nodes->end()) {
-      (void)visited_nodes->insert(next_node);
-      bool is_comm_node = common::AnfAlgo::IsCommunicationOp(next_node);
-      if (common::AnfAlgo::CheckPrimitiveType(next_node, prim::kPrimLoad)) {
-        EnqueueReadyNodes(next_node, visit_queue, visited_nodes);
-      } else if ((is_comm_node && comm_first) || (!is_comm_node && !comm_first)) {
-        MS_LOG(DEBUG) << "Visit node:" << next_node->DebugString();
-        visit_queue->push(next_node);
-      } else {
-        active_nodes.emplace_back(next_node);
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    for (auto &input : cnode->inputs()) {
+      (void)node_output_edges_[input].emplace_back(node);
+      if (visited.find(input) != visited.end()) {
+        continue;
       }
+      to_visit.push(input);
+      (void)visited.insert(input);
     }
-  }
-  for (auto &active_node : active_nodes) {
-    visit_queue->push(active_node);
   }
 }
 
 void KernelGraph::SetExecOrderByDefault() {
-  std::queue<AnfNodePtr> seed_nodes;
-  UpdateNodeEdgeList(&seed_nodes);
-  execution_order_.clear();
-  mindspore::HashSet<AnfNodePtr> visited_nodes;
-  std::queue<AnfNodePtr> ready_nodes;
-  std::queue<AnfNodePtr> delay_comm_stack;
-  std::queue<AnfNodePtr> ready_comm_descendants;
-  std::queue<AnfNodePtr> *handle_queue_ptr;
-  std::string optimized_comm_group;
-  while (!seed_nodes.empty() || !delay_comm_stack.empty()) {
-    // seed nodes first, then delay comm nodes
-    if (seed_nodes.empty()) {
-      EnqueueReadyNodes(delay_comm_stack.front(), &ready_comm_descendants, &visited_nodes, false);
-      delay_comm_stack.pop();
-    } else {
-      ready_nodes.push(seed_nodes.front());
-      seed_nodes.pop();
-    }
-    // comm descendant first, then common queue
-    while (!ready_nodes.empty() || !ready_comm_descendants.empty()) {
-      AnfNodePtr node = nullptr;
-      if (ready_comm_descendants.empty()) {
-        handle_queue_ptr = &ready_nodes;
-        node = ready_nodes.front();
-        ready_nodes.pop();
-      } else {
-        handle_queue_ptr = &ready_comm_descendants;
-        node = ready_comm_descendants.front();
-        ready_comm_descendants.pop();
-      }
-      // add execute node
-      MS_EXCEPTION_IF_NULL(node);
-      if (node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
-        execution_order_.push_back(node->cast<CNodePtr>());
-      }
-      // delay execute comm ops that need optimize
-      bool is_comm = common::AnfAlgo::IsCommunicationOp(node);
-      bool optimize_comm = NeedOptimize(node, optimized_comm_group);
-      if (optimize_comm) {
-        optimized_comm_group = GetNodeGroup(node);
-        while (!delay_comm_stack.empty()) {
-          EnqueueReadyNodes(delay_comm_stack.front(), &ready_comm_descendants, &visited_nodes, false);
-          delay_comm_stack.pop();
-        }
-        delay_comm_stack.push(node);
-      } else if (is_comm) {
-        if (delay_comm_stack.size() > 1) {
-          EnqueueReadyNodes(delay_comm_stack.front(), &ready_comm_descendants, &visited_nodes, false);
-          delay_comm_stack.pop();
-        }
-        delay_comm_stack.push(node);
-      } else {
-        EnqueueReadyNodes(node, handle_queue_ptr, &visited_nodes);
-      }
-    }
-  }
-  CheckLoop();
-  // resort start label / end goto
+  ExecOrderBuilder builder;
+  execution_order_ = builder.Build(this);
   execution_order_ = SortStartLabelAndEndGoto();
+  SetNodeOutputEdges();
 }
 
 std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
@@ -350,96 +239,6 @@ std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
     re_order.push_back(end_goto_);
   }
   return re_order;
-}
-
-void KernelGraph::GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto node_input_it = node_input_edges_.find(node);
-  if (node_input_it == node_input_edges_.end()) {
-    MS_LOG(DEBUG) << "Node [" << node->DebugString() << "] don't have input edges.";
-    return;
-  }
-  if (*loop_num != 0) {
-    return;
-  }
-  (void)visited_nodes_.insert(node);
-  for (auto &input_edge : node_input_edges_[node]) {
-    size_t input_num = node_input_num_[input_edge.first];
-    if (input_num == 0) {
-      continue;
-    }
-    if (find(visited_nodes_.begin(), visited_nodes_.end(), input_edge.first) == visited_nodes_.end()) {
-      MS_EXCEPTION_IF_NULL(input_edge.first);
-      edge_to_[input_edge.first] = node;
-      GetLoopNodesByDFS(input_edge.first, loop_num);
-    } else {
-      AnfNodePtr node_iter = node;
-      MS_EXCEPTION_IF_NULL(node_iter);
-      MS_LOG(INFO) << "Print loop nodes start:";
-      for (; node_iter != input_edge.first && node_iter != nullptr; node_iter = edge_to_[node_iter]) {
-        loop_nodes_.push(node_iter);
-        node_input_num_[node_iter]--;
-        MS_LOG(INFO) << "Get loop node:" << node_iter->DebugString();
-      }
-      if (node_iter != nullptr) {
-        loop_nodes_.push(node_iter);
-        loop_nodes_.push(node);
-        (*loop_num)++;
-        node_input_num_[node_iter]--;
-        MS_LOG(INFO) << "Get loop node:" << node_iter->DebugString();
-        MS_LOG(INFO) << "Get loop node:" << node->DebugString();
-        MS_LOG(INFO) << "Print loop nodes end, Loop num:" << *loop_num;
-        while (!loop_nodes_.empty()) {
-          loop_nodes_.pop();
-        }
-        return;
-      }
-    }
-  }
-}
-
-uint32_t KernelGraph::GetLoopNum(const std::map<AnfNodePtr, size_t> &none_zero_nodes) {
-  uint32_t loop_num = 0;
-  for (auto &iter : none_zero_nodes) {
-    auto node = iter.first;
-    MS_EXCEPTION_IF_NULL(node);
-    if (node_input_num_[node] == 0) {
-      continue;
-    }
-    edge_to_.clear();
-    visited_nodes_.clear();
-    GetLoopNodesByDFS(node, &loop_num);
-  }
-  return loop_num;
-}
-
-void KernelGraph::CheckLoop() {
-  std::map<AnfNodePtr, size_t> none_zero_nodes;
-  if (node_input_edges_.size() != node_input_num_.size()) {
-    MS_LOG(EXCEPTION) << "node_input_edges_ size :" << node_input_edges_.size()
-                      << "not equal to node_input_num_ size:" << node_input_num_.size();
-  }
-  for (auto &it : node_input_num_) {
-    MS_EXCEPTION_IF_NULL(it.first);
-    string str;
-    auto node_input_it = node_input_edges_.find(it.first);
-    if (node_input_it == node_input_edges_.end()) {
-      MS_LOG(EXCEPTION) << "Can't find node [" << it.first->DebugString() << "]";
-    }
-    if (it.second != 0) {
-      for (const auto &input_edge : node_input_edges_[it.first]) {
-        MS_EXCEPTION_IF_NULL(input_edge.first);
-        str = str.append(input_edge.first->DebugString()).append("|");
-      }
-      MS_LOG(WARNING) << "Node:" << it.first->DebugString() << ",inputs:" << str << ",input num:" << it.second;
-      none_zero_nodes[it.first] = it.second;
-    }
-  }
-  // if don't consider loop exit,a exception will be throw
-  if (!none_zero_nodes.empty()) {
-    MS_LOG(WARNING) << "Nums of loop:" << GetLoopNum(none_zero_nodes);
-    MS_LOG(EXCEPTION) << "Nodes have loop, left node num:" << none_zero_nodes.size();
-  }
 }
 
 CNodePtr KernelGraph::NewCNode(std::vector<AnfNodePtr> &&inputs) {
@@ -852,61 +651,6 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
   tensor_to_value_node_map_[tensor] = value_node;
 }
 
-void KernelGraph::AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(input);
-  MS_LOG(DEBUG) << "Input:" << input->DebugString() << ",  node:" << node->DebugString() << ",num:" << depend_edge_num;
-  // add output depend edge of input
-  node_output_edges_[input].emplace_back(node, depend_edge_num);
-  // add input depend edge of output
-  node_input_edges_[node].emplace_back(input, depend_edge_num);
-  // add node input depend num
-  node_input_num_[node] += depend_edge_num;
-}
-
-std::vector<AnfNodePtr> KernelGraph::GetOutputNodes(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto it = node_output_edges_.find(node);
-  if (it == node_output_edges_.end()) {
-    MS_LOG(EXCEPTION) << "Can't find node[" << node->DebugString() << "]";
-  }
-  std::vector<AnfNodePtr> output_nodes;
-  output_nodes.reserve(it->second.size());
-  (void)std::transform(it->second.begin(), it->second.end(), std::back_inserter(output_nodes),
-                       [](const auto &p) { return p.first; });
-  return output_nodes;
-}
-
-void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
-  MS_EXCEPTION_IF_NULL(seed_nodes);
-  node_output_edges_.clear();
-  node_input_num_.clear();
-  node_input_edges_.clear();
-  mindspore::HashSet<AnfNodePtr> visited_nodes;
-  std::queue<AnfNodePtr> que;
-  que.push(get_return());
-  while (!que.empty()) {
-    auto node = que.front();
-    que.pop();
-    MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<Parameter>() || node->isa<ValueNode>() || AnfUtils::IsCustomActorNode(node)) {
-      seed_nodes->push(node);
-      continue;
-    }
-    auto cnode = dyn_cast<CNode>(node);
-    if (cnode == nullptr) {
-      continue;
-    }
-    auto &inputs = cnode->inputs();
-    // We push inputs from right to left, so that them can be evaluated from left to right.
-    for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
-      auto &input = *iter;
-      PushNoVisitedNode(input, &que, &visited_nodes);
-      AddDependEdge(node, input, 1);
-    }
-  }
-}
-
 void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.insert(value_node); }
 
 bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return ref_out_in_map_.count(pair) != 0; }
@@ -991,7 +735,7 @@ void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, const AnfNodePtr &
     return;
   }
   for (auto &user : it->second) {
-    auto user_cnode = dyn_cast<CNode>(user.first);
+    auto user_cnode = dyn_cast<CNode>(user);
     MS_EXCEPTION_IF_NULL(user_cnode);
     auto &inputs = user_cnode->inputs();
     for (size_t i = 1; i < inputs.size(); i++) {
