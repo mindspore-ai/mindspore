@@ -35,10 +35,6 @@ bool UniformGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   kernel_func_ = func_list_[index].second;
   from_ = GetValue<float>(base_operator->GetAttr("from"));
   to_ = GetValue<float>(base_operator->GetAttr("to"));
-  auto x_shape = inputs[0]->GetShapeVector();
-  for (size_t i = 0; i < x_shape.size(); i++) {
-    input_size_ *= static_cast<size_t>(x_shape[i]);
-  }
   return true;
 }
 
@@ -49,12 +45,7 @@ int UniformGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (ret != KRET_OK) {
     return ret;
   }
-  for (const auto &input : inputs) {
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
-  }
+  input_size_ = SizeOf(inputs[0]->GetShapeVector());
   return KRET_OK;
 }
 
