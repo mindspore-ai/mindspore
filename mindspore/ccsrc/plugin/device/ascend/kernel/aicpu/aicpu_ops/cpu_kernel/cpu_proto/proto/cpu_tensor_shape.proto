@@ -1,0 +1,20 @@
+syntax = "proto3";
+package aicpuops;
+
+message TensorShape {
+  // One dimension of the tensor.
+  message Dim {
+    // size must >=0
+    int64 size = 1;
+  };
+
+  // group dim info
+  repeated Dim dim = 2;
+
+  // If true, the number of dimensions in the shape is unknown.
+  // If true, "dim.size()" must be 0.
+  bool unknown_rank = 3;
+
+  // data format "NHWC" "NCHW" "NC1HWC0" OR "NONE"
+  int32 data_format = 4;
+};

@@ -1,0 +1,36 @@
+syntax = "proto3";
+package aicpuops;
+import "cpu_tensor.proto";
+import "cpu_tensor_shape.proto";
+
+message AttrValue {
+
+  message ArrayValue {
+    repeated bytes s = 2;                         //"array(string)"
+    repeated int64 i = 3 [ packed = true ];       //"array(int)"
+    repeated float f = 4 [ packed = true ];       //"array(float)"
+    repeated bool b = 5 [ packed = true ];        //"array(bool)"
+    repeated int32 type = 6 [ packed = true ];    //"array(type)"
+    repeated TensorShape shape = 7;               //"array(shape)"
+    repeated Tensor tensor = 8;                   //"array(tensor)"
+  }
+  
+  message ListListInt{
+      message ListInt{
+          repeated int64 list_i             = 1; // list int
+      }
+      repeated ListInt list_list_i          = 1; // list list int
+  }
+
+  oneof value {
+    ArrayValue array = 1;
+    bytes s = 2;           //"string"
+    int64 i = 3;           //"int"
+    float f = 4;           //"float"
+    bool b = 5;            //"bool"
+    int32 type = 6;        //"type"
+    TensorShape shape = 7; //"shape"
+    Tensor tensor = 8;     //"tensor"
+    ListListInt list_list_int  = 9;  // List List Int type
+  }
+}

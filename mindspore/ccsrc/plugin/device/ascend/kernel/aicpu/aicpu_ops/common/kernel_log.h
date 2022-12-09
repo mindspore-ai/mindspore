@@ -91,5 +91,69 @@ bool CheckLogLevel(int log_level_check);
     AICPU_LOGE(logText);                                  \
     return errorCode;                                     \
   }
+
+#define KERNEL_LOG_DEBUG(fmt, ...) \
+  AICPU_LOG(AICPU_LOG_DEBUG, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
+#define KERNEL_LOG_INFO(fmt, ...) \
+  AICPU_LOG(AICPU_LOG_INFO, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
+#define KERNEL_LOG_WARN(fmt, ...) \
+  AICPU_LOG(AICPU_LOG_WARN, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
+#define KERNEL_LOG_ERROR(fmt, ...) \
+  AICPU_LOG(AICPU_LOG_ERROR, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
+#define KERNEL_LOG_EVENT(fmt, ...) \
+  AICPU_LOG(AICPU_LOG_EVENT, "%s:%s:%d[tid:%lu]:" #fmt, __FUNCTION__, __FILE__, __LINE__, GetTid(), ##__VA_ARGS__);
+#define AICPU_LOG(level, fmt, ...)                                              \
+  do {                                                                          \
+    if (aicpu::CheckLogLevel(level)) {                                          \
+      aicpu::PrintLog(level, "[%s:%d]" fmt, __FILE__, __LINE__, ##__VA_ARGS__); \
+    }                                                                           \
+  } while (LOG_COUNT != 0)
+
+#define KERNEL_CHECK_NULLPTR_VOID(value, logText...) \
+  if (value == nullptr) {                            \
+    AICPU_LOGE(logText);                             \
+    return;                                          \
+  }
+
+#define KERNEL_CHECK_FALSE(condition, errorCode, logText...) \
+  if (!(condition)) {                                        \
+    AICPU_LOGE(logText);                                     \
+    return errorCode;                                        \
+  }
+
+#define KERNEL_CHECK_NULLPTR(value, errorCode, logText...) \
+  if (value == nullptr) {                                  \
+    AICPU_LOGE(logText);                                   \
+    return errorCode;                                      \
+  }
+
+#define KERNEL_CHECK_ASSIGN_64S_MULTI(A, B, result, errorCode)              \
+  do {                                                                      \
+    if ((A) != 0 && (B) != 0 && ((INT64_MAX) / (A)) <= (B)) {               \
+      AICPU_LOGE("Integer reversed multiA: %llu * multiB: %llu", (A), (B)); \
+      return errorCode;                                                     \
+    }                                                                       \
+    (result) = ((A) * (B));                                                 \
+  } while (0)
+
+#define KERNEL_CHECK_FALSE_VOID(condition, logText...) \
+  if (!(condition)) {                                  \
+    AICPU_LOGE(logText);                               \
+    return;                                            \
+  }
+
+#define KERNEL_HANDLE_ERROR(expression, logText...)       \
+  do {                                                    \
+    uint32_t ret = expression;                            \
+    if (ret != static_cast<uint32_t>(KERNEL_STATUS_OK)) { \
+      AICPU_LOGE(logText);                                \
+      return ret;                                         \
+    }                                                     \
+  } while (0)
+
+#define KERNEL_CHECK_FALSE_EXEC(condition, execExpr...) \
+  if (!(condition)) {                                   \
+    execExpr;                                           \
+  }
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_COMMON_KERNEL_LOG_H_
