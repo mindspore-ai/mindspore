@@ -241,8 +241,10 @@ class AstModifier(ast.NodeTransformer):
             An instance of ast.Assign which has been appended to 'init_func'.
         """
         return AstModifier.insert_assign_to_function(init_func, targets=targets,
-                                                     args=[ScopedValue.create_variable_value(field)],
-                                                     expr=ScopedValue(ValueType.NamingValue, "global_vars", "get"))
+                                                     expr=ScopedValue(ValueType.NamingValue, "", "setattr"),
+                                                     args=[ScopedValue(ValueType.NamingValue, "obj"),
+                                                           ScopedValue.create_variable_value(field)])
+
 
     @staticmethod
     def create_call_assign(targets: [ScopedValue], expr: ScopedValue, args: [ScopedValue],

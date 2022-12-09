@@ -308,6 +308,16 @@ class PatternEngine:
                 queue.extend(inputs_dict.get(cur_node.get_name()))
         return new_root
 
+    @staticmethod
+    def _multi_replace_cellcontainer(stree, cellcontainer, node, matched_dict, new_nodes):
+        """Replace node in CellContainer."""
+        to_erase_list = list(matched_dict.values())
+        stree.replace(Node(node), new_nodes)
+        for n in reversed(to_erase_list):
+            if n.get_handler() is node:
+                continue
+            stree.erase_node(n)
+
     def apply(self, stree: SymbolTree) -> bool:
         """
         Apply current pattern to a `SymbolTree`.
@@ -358,6 +368,9 @@ class PatternEngine:
                 self.apply(subtree)
                 visited.append(cur_node)
                 queue.extend(cur_node.get_users())
+                continue
+            if cur_node.get_node_type() == NodeType.CellContainer:
+                self._process_cellcontainer(stree, cur_node.get_handler())
                 continue
             visited.append(cur_node)
             matched, matched_dict = self._match(self._pattern, cur_node)
@@ -460,3 +473,21 @@ class PatternEngine:
                     logger.debug("Check match failed, pattern leaked")
                     return False
         return True
+
+    def _process_cellcontainer(self, stree, cellcontainer):
+        """Process CellContainer node."""
+        for node in cellcontainer.nodes():
+            if node.get_node_type() == NodeType.Tree:
+                subtree = node.symbol_tree
+                self.apply(SymbolTree(subtree))
+                continue
+            else:
+                matched, matched_dict = self._match(self._pattern, Node(node))
+                if not matched:
+                    continue
+                new_nodes = []
+                if self._replacement is not None:
+                    new_nodes = self._replacement(self._pattern, self._is_chain, matched_dict)
+                if not new_nodes:  # if replacement is empty, do nothing
+                    continue
+                PatternEngine._multi_replace_cellcontainer(stree, cellcontainer, node, matched_dict, new_nodes)

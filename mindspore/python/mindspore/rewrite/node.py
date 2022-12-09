@@ -624,7 +624,7 @@ class Node:
         """
         self._targets = targets
         if self._node_type in (NodeType.CallCell, NodeType.CallMethod, NodeType.CallPrimitive,
-                               NodeType.Tree, NodeType.CallFunction):
+                               NodeType.Tree, NodeType.CallFunction, NodeType.CellContainer):
             self._sync_assign_targets_to_ast()
 
     def get_func(self) -> ScopedValue:
@@ -1135,7 +1135,7 @@ class Node:
 
     def _sync_arg(self):
         """Sync _normalized_args to corresponding ast node when updated."""
-        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
+        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree, NodeType.CellContainer):
             self._sync_call_cell_args_to_ast()
         elif self._node_type == NodeType.Output:
             self._sync_return_node_to_ast()
@@ -1198,3 +1198,85 @@ class TreeNode(Node):
         if ast_node is None:
             ast_node = AstModifier.create_call_assign(new_targets, func, non_custom_args, non_custom_kwargs)
         return cls(tree, ast_node, new_targets, func, args, kwargs, name, instance)
+
+
+class CellContainer(Node):
+    """ Container for saving cell-objects node. """
+    class _Visitor():
+        """ A iterator of CellContainer nodes. """
+        def __init__(self, cellcontainer):
+            self._cellcontainer = cellcontainer
+
+        def __len__(self):
+            """ Get the number of nodes. """
+            return self._cellcontainer.node_count
+
+        def __iter__(self):
+            """Create an iterator over the CellContainer."""
+            count = len(self._cellcontainer.node_list)
+            i = 0
+            while i < count:
+                curr = self._cellcontainer.node_list[i]
+                if curr.valid:
+                    yield curr
+                i += 1
+
+    def __init__(self, ast_node: ast.AST, targets: [ScopedValue], func: ScopedValue,
+                 args: [ScopedValue], kwargs: {str: ScopedValue}, name: str, instance):
+        """Constructor of CellContainer.
+
+        Args:
+            ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
+            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            func ([ScopedValue, optional]): An instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
+                Name of node also used as field name in network class.
+            instance: Object in network corresponding to this node.
+        """
+        if isinstance(func, str):
+            func = ScopedValue.create_naming_value(func)
+        super().__init__(NodeType.CellContainer, ast_node, targets, func, args, kwargs, name, instance)
+        self._node_list = list()
+        self._node_count = 0
+
+    @property
+    def node_count(self):
+        """Number of nodes."""
+        return self._node_count
+
+    @node_count.setter
+    def node_count(self, count):
+        """Set number of nodes."""
+        self._node_count = count
+
+    @property
+    def node_list(self):
+        """ Get node list. """
+        return self._node_list
+
+    def append(self, node):
+        """ Append new node to node list. """
+        self._node_list.append(node)
+        self.get_instance().append(node.get_instance())
+        self.node_count += 1
+
+    def erase(self, node):
+        """Erase node form container."""
+        index = self.node_list.index(node)
+        setattr(node, "valid", False)
+        self.node_count -= 1
+        index = self.get_instance().cell_list.index(node.get_instance())
+        del self.get_instance()[index]
+
+    def insert(self, index, node):
+        """Insert node into container"""
+        self.node_list.insert(index, node)
+        setattr(node, "valid", True)
+        self.get_instance()._insert(index, node.get_instance())
+        self.node_count += 1
+
+    def nodes(self):
+        """ Return a iterator of node."""
+        return self._Visitor(self)

@@ -19,13 +19,13 @@ import astunparse
 
 from mindspore import log as logger
 from mindspore._extends.parse.namespace import CellNamespace
-from mindspore.nn import Cell
+from mindspore.nn import Cell, SequentialCell
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
 from mindspore.rewrite.parser_register import ParserRegister
 from mindspore.rewrite.namespace import is_subtree, is_functional, get_functional
 from mindspore.rewrite.symbol_tree import SymbolTree
-from mindspore.rewrite.node import Node, TreeNode
+from mindspore.rewrite.node import Node, TreeNode, CellContainer
 from mindspore.rewrite.parser import Parser
 from mindspore.rewrite.parser_register import reg_parser
 from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
@@ -286,10 +286,10 @@ class AssignParser(Parser):
             if target.attr != func_name:
                 continue
             changed = True
-            global_vars_key = "_".join([func_name, "args"])
-            stree.add_global_vars(global_vars_key, sub_tree.get_global_vars())
-            args_call = AstModifier.create_call(ScopedValue.create_naming_value("get", "global_vars"),
-                                                [ScopedValue.create_variable_value(global_vars_key)])
+            setattr(stree.get_origin_network(), func_name, sub_tree.get_origin_network())
+            args_call = AstModifier.create_call(ScopedValue(ValueType.NamingValue, "", "getattr"),
+                                                [ScopedValue(ValueType.NamingValue, "", "obj"),
+                                                 ScopedValue(ValueType.StringValue, "", func_name)])
             body.value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
             break
         return changed
@@ -307,6 +307,37 @@ class AssignParser(Parser):
         targets = AssignParser._get_targets(AssignParser._create_scopedvalue(father_ast_node.targets[0]))
         call_args = [AssignParser._create_scopedvalue(arg) for arg in father_ast_node.value.args]
         return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, {})
+
+    def _cell_container_process(self, ast_node, stree, targets, func, call_args, call_kwargs, op_name, container_obj):
+        """ parse cell container object."""
+        cell_container = CellContainer(ast_node, targets, func, call_args, call_kwargs, op_name, container_obj)
+        for i, cell in enumerate(container_obj):
+            is_sub_tree = is_subtree(type(cell).__name__)
+            if is_sub_tree:
+                stb = SymbolTreeBuilder(cell)
+                new_stree = stb.build()
+                replacer = AstReplacer(new_stree.get_class_ast())
+                replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
+                tree = TreeNode.create_tree_node(new_stree, ast_node, targets, func, call_args, call_kwargs,
+                                                 type(cell).__name__, cell)
+                setattr(tree, "container", cell_container)
+                setattr(tree, "valid", True)
+                tree.set_belong_symbol_tree(stree)
+                cell_container.node_list.append(tree)
+                cell_container.node_count += 1
+                if i > 0:
+                    tree.set_inputs([cell_container.node_list[i-1]])
+            else:
+                node = Node.create_call_buildin_op(cell, ast_node, targets, func, call_args, call_kwargs,
+                                                   type(cell).__name__)
+                setattr(node, "container", cell_container)
+                setattr(node, "valid", True)
+                node.set_belong_symbol_tree(stree)
+                cell_container.node_list.append(node)
+                cell_container.node_count += 1
+                if i > 0:
+                    node.set_inputs([cell_container.node_list[i-1]])
+        return cell_container
 
     def _convert_ast_call_to_node(self, ast_node: ast.Call, father_ast_node: ast.Assign, stree: SymbolTree) -> Node:
         """
@@ -343,6 +374,10 @@ class AssignParser(Parser):
                 return node
             raise RuntimeError(error_str(f"operator instance undefined.",
                                          child_node=ast_node.func, father_node=ast_node))
+        if isinstance(op, SequentialCell):
+            node = self._cell_container_process(father_ast_node, stree, targets, func, call_args, call_kwargs,
+                                                func_name, op)
+            return node
         if isinstance(op, Primitive):
             return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
         if isinstance(op, Cell):

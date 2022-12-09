@@ -43,3 +43,4 @@ class NodeType(Enum):
     Input = 7
     Output = 8
     Tree = 9
+    CellContainer = 10

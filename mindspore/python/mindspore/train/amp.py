@@ -100,7 +100,11 @@ def _insert_cast_operator(stree):
         if node.get_targets() is None:
             continue
         in_white_list = False
-        if node.get_node_type() != ms.rewrite.NodeType.Tree:
+        if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
+            for n in node.get_handler().node_list:
+                if n.get_node_type() == ms.rewrite.NodeType.Tree:
+                    _insert_cast_operator(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)))
+        elif node.get_node_type() != ms.rewrite.NodeType.Tree:
             # insert cast before the primitive operators in white_list
             if node.get_instance_type() in AMP_WHITE_LIST_OPS:
                 in_white_list = True
@@ -165,7 +169,11 @@ def _remove_duplicated_cast(stree):
     for node in stree.nodes():
         if node.get_targets() is None:
             continue
-        if node.get_node_type() != ms.rewrite.NodeType.Tree:
+        if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
+            for n in node.get_handler().node_list:
+                if n.get_node_type() == ms.rewrite.NodeType.Tree:
+                    _remove_duplicated_cast(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)))
+        elif node.get_node_type() != ms.rewrite.NodeType.Tree:
             if node.get_instance_type() == P.Cast and _removed_cast_pair(node):
                 # remove the following cast node first
                 len_users = len(node.get_users())

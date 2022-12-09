@@ -279,6 +279,32 @@ class SequentialCell(Cell):
             input_data = cell(input_data)
         return input_data
 
+    def _insert(self, index, cell):
+        """
+        Inserts a given Cell before a given index in the list.
+
+        Args:
+            index(int): The Insert index in the CellList.
+            cell(Cell): The Cell to be inserted.
+        """
+        cls_name = self.__class__.__name__
+        idx = _valid_index(len(self), index, cls_name)
+        _valid_cell(cell, cls_name)
+        length = len(self)
+        prefix, key_index = _get_prefix_and_index(self._cells)
+        while length > idx:
+            if self._auto_prefix:
+                tmp_cell = self._cells[str(length-1)]
+                for _, param in tmp_cell.parameters_and_names():
+                    param.name = prefix + str(length) + "." + ".".join(param.name.split(".")[key_index+1:])
+            self._cells[str(length)] = self._cells[str(length - 1)]
+            length -= 1
+        self._cells[str(idx)] = cell
+        if self._auto_prefix:
+            cell.update_parameters_name(prefix + str(idx) + ".")
+        self.cell_list = list(self._cells.values())
+        self._is_dynamic_name.insert(index, True)
+
 
 class CellList(_CellListBase, Cell):
     """

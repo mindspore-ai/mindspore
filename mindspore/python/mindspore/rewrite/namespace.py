@@ -24,8 +24,6 @@ _ms_functional_ns = CellNamespace('mindspore.ops.functional')
 
 def is_subtree(cls_name):
     """Determine whether 'cls_name' is a subtree."""
-    if cls_name == "SequentialCell":
-        return True
     if cls_name == "QuantizeWrapperCell":
         return False
     if cls_name in _ms_common_ns or cls_name in _ms_nn_ns or cls_name in _ms_ops_ns:

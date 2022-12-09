@@ -34,12 +34,13 @@ class ForParser(Parser):
     def modify_init_ast(stree, i, obj, iter_var_name):
         """Modify the ast node in init function."""
         target = f"{iter_var_name.strip()}_{str(i)}"
-        stree.add_global_vars(target, obj)
+        setattr(stree.get_origin_network(), target, obj)
         stree.get_origin_network().insert_child_to_cell(target, obj)
         AstModifier.insert_assign_to_function(stree.get_init_func_ast(),
                                               targets=[ScopedValue(ValueType.NamingValue, "self", target)],
-                                              expr=ScopedValue(ValueType.NamingValue, "global_vars", "get"),
-                                              args=[ScopedValue(ValueType.StringValue, "", target)])
+                                              expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
+                                              args=[ScopedValue(ValueType.NamingValue, "", "obj"),
+                                                    ScopedValue(ValueType.StringValue, "", target)])
 
     @staticmethod
     def modify_construct_ast(stree, ast_node, old_name, new_name):

@@ -160,7 +160,6 @@ class SymbolTree(Observer, Observable):
         self._topo_mgr = TopoManager()
         self._topo_mgr.reg_observer(self)
 
-        self._global_vars: {str, object} = {origin_network_key: origin_network}
         self._nodes: {str, Node} = {}
         # parameters of forward method
         self._inputs: [Node] = []
@@ -484,17 +483,6 @@ class SymbolTree(Observer, Observable):
         """
         return self._origin_network
 
-    def get_global_vars(self):
-        """Get global variables."""
-        return self._global_vars
-
-    def add_global_vars(self, key: str, value):
-        """Add global variables."""
-        if self._global_vars.get(key) is not None:
-            logger.info(f"The key '{key}' is duplicated")
-            return
-        self._global_vars[key] = value
-
     def get_nodes_dict(self):
         """Get dict of nodes"""
         return self._nodes
@@ -614,7 +602,6 @@ class SymbolTree(Observer, Observable):
             RuntimeError: If 'node_or_name' is not belong to this SymbolTree or any sub-SymbolTree of current
                 SymbolTree.
         """
-
         node = self._get_real_node(node_or_name)
         if node is None:
             raise RuntimeError("Node is not belong to current SymbolTree: ", node_or_name)
@@ -653,7 +640,12 @@ class SymbolTree(Observer, Observable):
             RuntimeError: If 'position' is not in current SymbolTree.
             RuntimeError: If corresponding ast node is not an ast.Assign when 'insert_to_ast' is True.
         """
-
+        if position is not None and hasattr(position.node, "container"):
+            cellcontainer = getattr(position.node, "container")
+            index = cellcontainer.node_list.index(position.node)
+            index = index if position.before_node else index + 1
+            cellcontainer.insert(index, node)
+            return node
         # if position in current SymbolTree
         if position is not None and position.symbol_tree is not self:
             raise RuntimeError("Position is not in current SymbolTree:", position)
@@ -683,10 +675,10 @@ class SymbolTree(Observer, Observable):
             if not isinstance(node_ast, ast.Assign):
                 raise RuntimeError("Only support insert cell op now")
             if isinstance(node, TreeNode):
-                global_vars_key = node.get_name() + "_args"
-                self.add_global_vars(global_vars_key, node.symbol_tree.get_global_vars())
-                args_call = AstModifier.create_call(ScopedValue.create_naming_value("get", "global_vars"),
-                                                    [ScopedValue.create_variable_value(global_vars_key)])
+                setattr(self._origin_network, node.get_name(), node.get_instance())
+                args_call = AstModifier.create_call(ScopedValue(ValueType.NamingValue, "", "getattr"),
+                                                    [ScopedValue(ValueType.NamingValue, "", "obj"),
+                                                     ScopedValue(ValueType.StringValue, "", node.get_name())])
                 value = ast.Call(func=ast.Name(node.symbol_tree.get_opt_cls_name(), ast.Store(), lineno=0,
                                                col_offset=0), args=[args_call], keywords=[], lineno=0, col_offset=0)
 
@@ -703,12 +695,13 @@ class SymbolTree(Observer, Observable):
             else:
                 AstModifier.insert_assign_to_function(self._init_func_ast,
                                                       targets=[ScopedValue(ValueType.NamingValue, "self", node_name)],
-                                                      expr=ScopedValue(ValueType.NamingValue, "global_vars", "get"),
-                                                      args=[ScopedValue(ValueType.StringValue, "", node_name)])
+                                                      expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
+                                                      args=[ScopedValue(ValueType.NamingValue, "", "obj"),
+                                                            ScopedValue(ValueType.StringValue, "", node_name)])
                 AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
                                                           None if position is None else position.node.get_ast(),
                                                           position.before_node)
-            self._global_vars[node_name] = node.get_instance()
+            setattr(self._origin_network, node_name, node.get_instance())
         return node
 
     def append_node(self, node: Node, append_to_ast: bool = True) -> Node:
@@ -851,6 +844,10 @@ class SymbolTree(Observer, Observable):
         node = self._get_real_node(node_or_name)
         if node is None:
             raise RuntimeError("Node is not belong to current SymbolTree: ", node_or_name)
+        if hasattr(node, "container"):
+            cellcontainer = getattr(node, "container")
+            cellcontainer.erase(node)
+            return node
         ret = AstModifier.erase_ast_from_function(self._root_ast, node.get_ast())
         if not ret:
             raise RuntimeError("node not in function ast tree.")
@@ -884,6 +881,9 @@ class SymbolTree(Observer, Observable):
             RuntimeError: If 'old_node' is not belong to current SymbolTree.
         """
 
+        if hasattr(old_node, "container"):
+            self._replace_container_node(old_node, new_nodes)
+            return new_nodes[0]
         real_old_node = self._get_real_node(old_node)
         if real_old_node is None:
             raise RuntimeError("Old node is not belong to current SymbolTree:", old_node)
@@ -1026,7 +1026,7 @@ class SymbolTree(Observer, Observable):
             A network object.
         """
         cls = self._get_cls_through_file()
-        return cls(self._global_vars)
+        return cls(self._origin_network)
 
     def set_saved_file_name(self, file_name: str):
         """Sets the filename used to save the network."""
@@ -1070,6 +1070,14 @@ class SymbolTree(Observer, Observable):
                     else:
                         body.names.remove(alias)
 
+    def _replace_container_node(self, old_node, new_nodes):
+        cellcontainer = getattr(old_node, "container")
+        index = cellcontainer.node_list.index(old_node)
+        for n in reversed(new_nodes):
+            cellcontainer.insert(index, n)
+        index = cellcontainer.node_list.index(old_node)
+        cellcontainer.erase(old_node)
+
     def _filter_out_to_delete_field(self, to_delete_field):
         """filter out used field from `to_delete_field`"""
         # filter _handler field
@@ -1077,7 +1085,8 @@ class SymbolTree(Observer, Observable):
             to_delete_field.pop("_handler")
         # filter field used in node of construct
         for node in self._nodes.values():
-            if node.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
+            if node.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree,
+                                        NodeType.CellContainer):
                 func: ScopedValue = node.get_func()
                 if func.scope == "self" and to_delete_field.get(func.value):
                     to_delete_field.pop(func.value)
@@ -1144,12 +1153,9 @@ class SymbolTree(Observer, Observable):
                     self._module_ast.body.remove(body)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
-        if isinstance(node_or_name, Node):
-            result = self.get_node(node_or_name.get_name())
-            return result if result is node_or_name else None
         if isinstance(node_or_name, str):
             return self.get_node(node_or_name)
-        return None
+        return node_or_name
 
     def _insert_tree(self, position: Position, root: Node, insert_to_ast: bool = True) -> Node:
         """
@@ -1298,7 +1304,7 @@ class SymbolTree(Observer, Observable):
                 raise TypeError("value should be ScopedValue, got: ", type(value))
             if value.type == ValueType.CustomObjValue:
                 field = self._node_name_namer.get_name(f"var_{type(value.value).__name__}")
-                self._global_vars[field] = value.value
+                setattr(self._origin_network, field, value.value)
                 init_targets = [ScopedValue.create_naming_value(field, "self")]
                 AstModifier.append_global_vars_expr_to_init(self._init_func_ast, init_targets, field)
                 result[arg] = init_targets[0]
@@ -1316,7 +1322,8 @@ class SymbolTree(Observer, Observable):
         Returns:
             A class handle.
         """
-        file_name = "new_network_{0}.py".format(int(time.time() * 10000))
+        self._update_container()
+        file_name = "new_network_{0}.py".format(int(time.time() * 10000000))
         with os.fdopen(os.open(file_name, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:
             source = self.get_code()
             f.write(source.encode('utf-8'))
@@ -1333,3 +1340,18 @@ class SymbolTree(Observer, Observable):
     def _on_change(self, event: Event):
         self._modified = True
         self.changed(event)
+
+    def _update_container(self):
+        """Update instance of node in container."""
+        for node in self.nodes():
+            index = 0
+            if node.get_node_type() == NodeType.CellContainer:
+                for n in node.node_list:
+                    if not n.valid:
+                        continue
+                    if n.get_node_type() == NodeType.Tree:
+                        obj = n.symbol_tree.get_network()
+                        node.get_instance()[index] = obj
+                    else:
+                        node.get_instance()[index] = n.get_instance()
+                    index += 1
