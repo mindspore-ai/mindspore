@@ -503,8 +503,7 @@ def test_map_error_samples_imagefolder1_cop(my_error_samples_mode, my_num_worker
 
 
 @pytest.mark.parametrize("my_error_samples_mode, my_num_workers, my_mp",
-                         [(ErrorSamplesMode.RETURN, 1, False), (ErrorSamplesMode.RETURN, 3, True),
-                          (ErrorSamplesMode.REPLACE, 3, False), (ErrorSamplesMode.REPLACE, 2, True),
+                         [(ErrorSamplesMode.REPLACE, 3, False), (ErrorSamplesMode.REPLACE, 2, True),
                           (ErrorSamplesMode.SKIP, 2, False), (ErrorSamplesMode.SKIP, 4, True)])
 def test_map_error_samples_imagefolder1_pyop(my_error_samples_mode, my_num_workers, my_mp, plot=False):
     """
@@ -593,8 +592,7 @@ def test_map_error_samples_imagefolder1_pyop(my_error_samples_mode, my_num_worke
 
 
 @pytest.mark.parametrize("my_error_samples_mode, my_num_workers, my_mp",
-                         [(ErrorSamplesMode.RETURN, 3, False), (ErrorSamplesMode.RETURN, 4, True),
-                          (ErrorSamplesMode.REPLACE, 2, False), (ErrorSamplesMode.REPLACE, 3, True),
+                         [(ErrorSamplesMode.REPLACE, 2, False), (ErrorSamplesMode.REPLACE, 3, True),
                           (ErrorSamplesMode.SKIP, 3, False), (ErrorSamplesMode.SKIP, 2, True)])
 def test_map_error_samples_imagefolder2(my_error_samples_mode, my_num_workers, my_mp):
     """
@@ -675,10 +673,8 @@ def test_map_error_samples_imagefolder2(my_error_samples_mode, my_num_workers, m
         ds.config.set_enable_shared_mem(mem_original)
 
 
-@pytest.mark.skip(reason="random failures")
 @pytest.mark.parametrize("my_error_samples_mode, my_num_workers, my_mp",
-                         [(ErrorSamplesMode.RETURN, 4, False), (ErrorSamplesMode.RETURN, 3, True),
-                          (ErrorSamplesMode.REPLACE, 3, False), (ErrorSamplesMode.REPLACE, 4, True),
+                         [(ErrorSamplesMode.REPLACE, 3, False), (ErrorSamplesMode.REPLACE, 4, True),
                           (ErrorSamplesMode.SKIP, 5, False), (ErrorSamplesMode.SKIP, 3, True)])
 def test_map_error_samples_imagefolder3(my_error_samples_mode, my_num_workers, my_mp):
     """
