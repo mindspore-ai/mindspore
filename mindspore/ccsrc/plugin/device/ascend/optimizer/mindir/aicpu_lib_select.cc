@@ -20,6 +20,7 @@
 #include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 
 namespace mindspore {
 namespace opt {
@@ -48,7 +49,9 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                       kSliceGradOpName,
                                                       kRandomShuffleOpName,
                                                       kRangeOpName};
+  static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kernel::kACos};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
+  static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
 
   if (!node->isa<CNode>()) {
     return node;
@@ -56,6 +59,9 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
   auto kernel_name = common::AnfAlgo::GetCNodeName(node);
   if (kAICpuOpNames.find(kernel_name) != kAICpuOpNames.end()) {
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kEnvOpSoNames), node);
+  }
+  if (kMigrateAicpuKernelOps.find(kernel_name) != kMigrateAicpuKernelOps.end()) {
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kCpuKernelSoName), node);
   }
 
   return node;
