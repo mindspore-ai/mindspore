@@ -1,5 +1,6 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
+source ./scripts/run_benchmark_python.sh
 
 # Run converter on x86 platform:
 function Run_Converter() {
@@ -250,5 +251,18 @@ if [[ $backend == "all" || $backend == "server_inference_x86_cloud_gpu" ]]; then
 fi
 
 Print_Benchmark_Result ${run_benchmark_result_file}
+
+# run python ST
+if [[ $backend == "all" || $backend == "server_inference_x86_cloud_gpu" ]]; then
+  models_python_config=${basepath}/../config_level0/models_python_gpu.cfg
+  models_python_cfg_file_list=("$models_python_config")
+  Run_python_ST ${basepath} ${x86_path} ${ms_models_path} ${models_path} "${models_python_cfg_file_list[*]}" "GPU"
+  Run_python_status=$?
+  if [[ ${Run_python_status} != 0 ]];then
+      echo "Run_python_status failed"
+      isFailed=1
+  fi
+fi
+
 echo "run x86_gpu_server_inference is ended"
 exit ${isFailed}

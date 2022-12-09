@@ -22,10 +22,10 @@ DelegateRegistry &DelegateRegistry::GetInstance() {
 }
 
 void DelegateRegistry::RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
-                                   DelegateCreator creator) {
+                                   DelegateCreator *creator) {
   auto it = creator_map_.find(device_type);
   if (it == creator_map_.end()) {
-    HashMap<std::string, DelegateCreator> map;
+    HashMap<std::string, DelegateCreator *> map;
     map[provider] = creator;
     creator_map_[device_type] = map;
     return;
@@ -53,6 +53,6 @@ std::shared_ptr<GraphExecutor> DelegateRegistry::GetDelegate(const mindspore::De
   if (creator_it == it->second.end()) {
     return nullptr;
   }
-  return creator_it->second(ctx, config_infos);
+  return (*(creator_it->second))(ctx, config_infos);
 }
 }  // namespace mindspore
