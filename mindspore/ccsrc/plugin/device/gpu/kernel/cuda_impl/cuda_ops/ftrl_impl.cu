@@ -18,6 +18,9 @@
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 using Complex64 = Complex<float>;
 using Complex128 = Complex<double>;
 
