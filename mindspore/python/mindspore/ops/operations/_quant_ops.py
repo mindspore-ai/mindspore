@@ -24,7 +24,16 @@ from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_reg
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import QuantDtype
 
-if context.get_context('device_target') == "Ascend":
+
+def _support_te():
+    try:
+        import te  # pylint: disable=unused-import
+        return True
+    # pylint: disable=broad-except
+    except Exception:
+        return False
+
+if context.get_context('device_target') == "Ascend" and _support_te():
     import mindspore.ops._op_impl._custom_op
 
 __all__ = ["MinMaxUpdatePerLayer",
