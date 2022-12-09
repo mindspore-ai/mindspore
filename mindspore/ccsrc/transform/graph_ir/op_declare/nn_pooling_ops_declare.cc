@@ -76,9 +76,21 @@ ATTR_MAP(AvgPool3D) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), An
                        {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                        {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
                        {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
-                       {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int>())}};
+                       {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int64_t>())}};
 OUTPUT_MAP(AvgPool3D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AvgPool3D, kAvgPool3DOpName, ADPT_DESC(AvgPool3D))
+
+// AvgPool3DD
+INPUT_MAP(AvgPool3DD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(multiplier)}};
+ATTR_MAP(AvgPool3DD) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                        {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                        {"pad", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                        {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                        {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+                        {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
+                        {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int64_t>())}};
+OUTPUT_MAP(AvgPool3DD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AvgPool3DD, kAvgPool3DDOpName, ADPT_DESC(AvgPool3DD))
 
 // MaxPoolGrad
 INPUT_MAP(MaxPoolGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grad)}};
@@ -107,6 +119,7 @@ ATTR_MAP(AvgPoolGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), 
 OUTPUT_MAP(AvgPoolGrad) = {{0, OUTPUT_DESC(out_grad)}};
 REG_ADPT_DESC(AvgPoolGrad, kNameAvgPoolGrad, ADPT_DESC(AvgPoolGrad))
 REG_ADPT_DESC(AvgPoolGradGe, kNameAvgPoolGradGe, ADPT_DESC(AvgPoolGrad))
+REG_ADPT_DESC(AvgPoolGradD, kNameAvgPoolGradD, ADPT_DESC(AvgPoolGrad))
 
 // MaxPoolWithArgmax
 INPUT_MAP(MaxPoolWithArgmax) = {{1, INPUT_DESC(x)}};
@@ -191,6 +204,7 @@ INPUT_MAP(AdaptiveMaxPool2d) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AdaptiveMaxPool2d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(AdaptiveMaxPool2d) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
 REG_ADPT_DESC(AdaptiveMaxPool2d, kAdaptiveMaxPool2dOpName, ADPT_DESC(AdaptiveMaxPool2d))
+REG_ADPT_DESC(AdaptiveMaxPool2D, kNameAdaptiveMaxPool2D, ADPT_DESC(AdaptiveMaxPool2d))
 
 // AvgPool3DGrad
 INPUT_MAP(AvgPool3DGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(grads)}};

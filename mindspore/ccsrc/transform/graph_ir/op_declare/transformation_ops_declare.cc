@@ -29,7 +29,8 @@ REG_ADPT_DESC(Flatten, prim::kPrimFlatten->name(), ADPT_DESC(Flatten))
 INPUT_MAP(Unpack) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unpack) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}, {"num", ATTR_DESC(num, AnyTraits<int64_t>())}};
 DYN_OUTPUT_MAP(Unpack) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Unpack, prim::kUnstack, ADPT_DESC(Unpack))
+REG_ADPT_DESC(Unstack, prim::kUnstack, ADPT_DESC(Unpack))
+REG_ADPT_DESC(Unpack, prim::kUnpack, ADPT_DESC(Unpack))
 
 // ExtractImagePatches
 INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};
@@ -60,9 +61,11 @@ REG_ADPT_DESC(TransDataRNN, prim::kPrimTransDataRNN->name(), ADPT_DESC(TransData
 
 // Transpose
 INPUT_MAP(Transpose) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(perm)}};
+ATTR_INPUT_MAP(Transpose) = {{"perm", "perm"}};
 ATTR_MAP(Transpose) = EMPTY_ATTR_MAP;
 // Do not set Transpose operator output descriptor
 REG_ADPT_DESC(Transpose, prim::kPrimTranspose->name(), ADPT_DESC(Transpose))
+REG_ADPT_DESC(TransposeD, prim::kPrimTransposeD->name(), ADPT_DESC(Transpose))
 
 // SpaceToDepth
 INPUT_MAP(SpaceToDepth) = {{1, INPUT_DESC(x)}};

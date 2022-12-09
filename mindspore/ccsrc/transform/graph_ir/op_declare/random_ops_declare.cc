@@ -39,6 +39,7 @@ INPUT_MAP(LinSpace) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(stop)}, {3, INPUT_
 ATTR_MAP(LinSpace) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LinSpace) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(LinSpace, kNameLinSpace, ADPT_DESC(LinSpace))
+REG_ADPT_DESC(LinSpaceD, kLinSpaceDOpName, ADPT_DESC(LinSpace))
 
 // RandomChoiceWithMask
 INPUT_MAP(RandomChoiceWithMask) = {{1, INPUT_DESC(x)}};
