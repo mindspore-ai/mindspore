@@ -58,8 +58,8 @@ class ReduceScatterInfer : public abstract::OpInferBase {
     MS_ERROR_IF_NULL_W_RET_VAL(value_ptr, std::make_shared<abstract::Shape>());
     auto rank_size = static_cast<int>(GetValue<int64_t>(value_ptr));
     if (rank_size == 0) {
-      MS_LOG(ERROR) << "For '" << primitive->name() << "', the 'rank_size' can not be zero, but got " << rank_size;
-      return std::make_shared<abstract::Shape>();
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 'rank_size' can not be zero, but got "
+                               << rank_size;
     }
     auto abstract_shape = input_args[kIndex0]->BuildShape();
     MS_ERROR_IF_NULL_W_RET_VAL(abstract_shape, std::make_shared<abstract::Shape>());
@@ -68,9 +68,9 @@ class ReduceScatterInfer : public abstract::OpInferBase {
     }
     auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abstract_shape)[kShape];
     if (shape.empty() || shape[0] % rank_size != 0) {
-      MS_LOG(ERROR) << "the first dimension for 'input_shape' must be divided by 'rank_size', but got input_shape[0]: "
-                    << shape[0] << ", rank_size: " << rank_size;
-      return std::make_shared<abstract::Shape>();
+      MS_EXCEPTION(ValueError)
+        << "the first dimension for 'input_shape' must be divided by 'rank_size', but got input_shape[0]: " << shape[0]
+        << ", rank_size: " << rank_size;
     }
     auto out_shape = shape;
     out_shape[0] = static_cast<int64_t>(shape[0] / rank_size);
