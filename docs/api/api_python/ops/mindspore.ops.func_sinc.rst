@@ -14,7 +14,7 @@ mindspore.ops.sinc
 
     返回：
         Tensor，shape与 `x` 相同。
-        当输入类型在[uint8, uint8, uint16, int16, uint32, int32, uint64, int64, bool]时，返回值类型为float32。
+        当输入类型为[uint8, uint8, uint16, int16, uint32, int32, uint64, int64, bool]时，返回值类型为float32。
         否则，返回值类型与输入类型相同。
 
     异常：
