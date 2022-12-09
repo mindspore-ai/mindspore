@@ -493,6 +493,7 @@ Array操作
     mindspore.ops.Expand
     mindspore.ops.ExpandDims
     mindspore.ops.FFTWithSize
+    mindspore.ops.FillV2
     mindspore.ops.FloatStatus
     mindspore.ops.FillDiagonal
     mindspore.ops.Gather
