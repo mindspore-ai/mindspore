@@ -73,7 +73,8 @@ abstract::ShapePtr ApplyMomentumInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(v_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto a_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(a_shape_ptr)[kShape];
   if (IsDynamicRank(a_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -81,7 +82,8 @@ abstract::ShapePtr ApplyMomentumInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(l_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto g_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto g_shape_ptr = input_args[kInputIndex3]->BuildShape();
+  auto g_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(g_shape_ptr)[kShape];
   if (IsDynamicRank(g_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -89,8 +91,12 @@ abstract::ShapePtr ApplyMomentumInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(m_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  (void)CheckAndConvertUtils::CheckValue("accumulate_shape", a_shape, kEqual, "variable_shape", v_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckValue("gradient_shape", g_shape, kEqual, "variable_shape", v_shape, prim_name);
+  if (!a_shape_ptr->IsDynamic() && !v_shape_ptr->IsDynamic()) {
+    (void)CheckAndConvertUtils::CheckValue("accumulate_shape", a_shape, kEqual, "variable_shape", v_shape, prim_name);
+  }
+  if (!g_shape_ptr->IsDynamic() && !v_shape_ptr->IsDynamic()) {
+    (void)CheckAndConvertUtils::CheckValue("gradient_shape", g_shape, kEqual, "variable_shape", v_shape, prim_name);
+  }
   auto shape_element = v_shape_ptr->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
