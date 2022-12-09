@@ -1525,20 +1525,19 @@ class FillV2(PrimitiveWithCheck):
     Creates a tensor with shape described by `shape` and fills it with values in `value` .
 
     Inputs:
-        - **shape** (tensor) - 1-D Tensor, the specified shape of output tensor.
-          It's dtype must be int32 or int64.
-        - **value** (tensor) - A scalar tensor, the value to fill the output tensor.
-          The shape of `value` must be 0D and it's dtype must be one of the following types:
-          bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64.
+        - **shape** (Union[Tuple[int], Tensor[int]]) - 1-D Tensor or Tuple, specify the shape
+          of output tensor. Its dtype must be int32 or int64.
+        - **value** (Tensor) - A scalar tensor, the value to fill the output tensor `y` .
+          Its dtype must be one of the following types: bool, int8, int16, int32, int64,
+          uint8, uint16, uint32, uint64, float16, float32, float64, complex64, complex128.
 
     Outputs:
-        - **y** (Tensor) - A tensor, it's shape and value are described above.
+        - **y** (Tensor) - A tensor, its shape and value are described above.
 
     Raises:
-        ValueError: If `shape` is not a 1-D tensor.
+        TypeError: If `shape` is not a 1-D tensor or tuple.
         TypeError: If the data type of `shape` is not int32 or int64.
-        ValueError: If `value` is not a 0-D tensor.
-        ValueError: If the number of output elements is greater than 1000000.
+        ValueError: If `value` is not a scalar tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
