@@ -5,6 +5,7 @@ if(NOT Patch_FOUND)
 endif()
 
 include(${TOP_DIR}/cmake/external_libs/jpeg_turbo.cmake)
+include(${TOP_DIR}/cmake/external_libs/zlib.cmake)
 
 set(MINDDATA_DIR ${CCSRC_DIR}/minddata/dataset)
 set(CMAKE_CXX_STANDARD 17)
