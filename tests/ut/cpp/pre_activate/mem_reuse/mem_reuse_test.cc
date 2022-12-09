@@ -97,7 +97,7 @@ static KernelGraphPtr CreateKernelGraph() {
   builder.SetOutputsFormat({kOpFormat_NCHW});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(mindspore::kernel::CONV);
+  builder.SetFusionType(mindspore::kernel::kPatternConvolution);
   builder.SetProcessor(kernel::Processor::AICORE);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), kernelptr_first.get());
 
@@ -127,7 +127,7 @@ static KernelGraphPtr CreateKernelGraph() {
   relu_builder.SetInputsDeviceType({kFloat32->type_id()});
   relu_builder.SetOutputsDeviceType({kFloat32->type_id()});
   relu_builder.SetKernelType(KernelType::TBE_KERNEL);
-  relu_builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  relu_builder.SetFusionType(kernel::kPatternElemWise);
   relu_builder.SetProcessor(kernel::Processor::AICORE);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), kernelptr_floor.get());
   next_cnode_ptr = kernelptr_floor;

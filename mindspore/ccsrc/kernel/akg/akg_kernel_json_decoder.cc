@@ -247,7 +247,7 @@ class CNodeDecoder {
     builder->SetOutputsDeviceType(output_types_);
     builder->SetProcessor(processor);
     builder->SetKernelType(KernelType::AKG_KERNEL);
-    builder->SetFusionType(kernel::FusionType::OPAQUE);
+    builder->SetFusionType(kernel::kPatternOpaque);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode_.get());
   }
 

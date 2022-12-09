@@ -64,8 +64,8 @@ void EltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &ker
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        (AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE ||
-         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::BROAD_CAST) &&
+        (AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise ||
+         AnfAlgo::GetFusionType(cnode) == kernel::kPatternBroadcast) &&
         cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
       MatchEltwise(cnode, kernel_graph, candidate_fusion);
     }
@@ -83,8 +83,8 @@ bool EltwiseFusionPass::CheckEltWiseOrBroadCastNode(const session::KernelGraph &
   MS_EXCEPTION_IF_NULL(cnode);
   size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         (AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE ||
-          AnfAlgo::GetFusionType(node) == kernel::FusionType::BROAD_CAST) &&
+         (AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise ||
+          AnfAlgo::GetFusionType(node) == kernel::kPatternBroadcast) &&
          not_updatestate_nums == ELTWISE_USE && cnode->inputs().size() == ELTWISE_INPUT_SIZE;
 }
 
@@ -100,8 +100,8 @@ bool EltwiseFusionPass::CheckDoubleInEltWiseOrBroadCastNode(const session::Kerne
   MS_EXCEPTION_IF_NULL(cnode);
   size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         (AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE ||
-          AnfAlgo::GetFusionType(node) == kernel::FusionType::BROAD_CAST) &&
+         (AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise ||
+          AnfAlgo::GetFusionType(node) == kernel::kPatternBroadcast) &&
          not_updatestate_nums == ELTWISE_USE && cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE;
 }
 }  // namespace opt

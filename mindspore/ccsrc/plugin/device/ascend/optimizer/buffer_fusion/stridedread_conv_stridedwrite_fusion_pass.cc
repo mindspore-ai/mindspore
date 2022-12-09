@@ -44,7 +44,7 @@ void StridedReadConvStridedWriteFusionPass::MatchStridedReadConvStridedWrite(con
   auto conv_cnode = write_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv_cnode);
   if (AnfAlgo::GetKernelType(conv_cnode) == KernelType::TBE_KERNEL &&
-      AnfAlgo::GetFusionType(conv_cnode) == kernel::FusionType::CONV &&
+      AnfAlgo::GetFusionType(conv_cnode) == kernel::kPatternConvolution &&
       conv_cnode->inputs().size() >= CONV_DOUBLE_IN_INPUT_SIZE &&
       conv_cnode->inputs().size() <= CONV_QUART_IN_INPUT_SIZE) {
     (void)record.insert(write_input);

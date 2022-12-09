@@ -56,59 +56,56 @@ enum KernelType : int {
   ACL_KERNEL,
 };
 namespace kernel {
-// Supported fusion type
-enum FusionType {
-  CONV = 0,
-  ELEMWISE,
-  COMMREDUCE,
-  SEGMENT,
-  OPAQUE,
-  BN_UPDATE_GRAD,
-  BN_GRAD_REDUCE,
-  LAYER_NORM_GRAD,
-  L2LOSS_MUL_ADDN,
-  PURE_BROADCAST,
-  INPLACE,
-  MATMUL,
-  MATMUL_V2,
-  GEMM,
-  CONV2D_BACKPROP_INPUT,
-  CONV2D_BACKPROP_FILTER,
-  CONV3D_BACKPROP_INPUT,
-  CONV3D_BACKPROP_FILTER,
-  CUBE_LAYER_NORM,
-  BN_REDUCE,
-  BN_UPDATE,
-  SOFTMAX_CROSS_ENTROPY_WITH_LOGITS,
-  L2_NORMALIZE,
-  SOFTMAX,
-  L2_LOSS,
-  ASCEND_QUANT,
-  ASCEND_DEQUANT,
-  ASCEND_ANTI_QUANT,
-  STRIDED_READ,
-  STRIDED_WRITE,
-  ASCEND_DEQUANT_S16,
-  ASCEND_REQUANT,
-  ASCEND_REQUANT_S16,
-  MAX_POOL,
-  DEPTHWISECONV,
-  CONV3D,
-  POOL2D,
-  POOL3D,
-  READ_SELECT,
-  WRITE_SELECT,
-  COSINE_EMBEDDING_LOSS,
-  DILATION_PATTERN,
-  BROAD_CAST,
-  BATCH_MATMUL,
-  CONFUSION_TRANSPOSE,
-  DROPOUT_DOMASKV3D,
-  TRANSDATA,
-  NORM,
-  TRANSPOSE,
-  UNKNOWN_FUSION_TYPE = -1,
-};
+constexpr auto kPatternAntiQuant = "anti_quant";
+constexpr auto kPatternDequant = "dequant";
+constexpr auto kPatternDequantS16 = "dequant_s16";
+constexpr auto kPatternQuant = "quant";
+constexpr auto kPatternRequant = "requant";
+constexpr auto kPatternRequant_s16 = "requant_s16";
+constexpr auto kPatternBatchMatmul = "BatchMatmul";
+constexpr auto kPatternBnGradReduce = "bn_grad_reduce";
+constexpr auto kPatternBnReduce = "bn_reduce";
+constexpr auto kPatternBnUpdate = "bn_update";
+constexpr auto kPatternBnUpdate_grad = "bn_update_grad";
+constexpr auto kPatternBroadcast = "Broadcast";
+constexpr auto kPatternCommReduce = "CommReduce";
+constexpr auto kPatternConfusiontranspose = "confusiontranspose";
+constexpr auto kPatternConvolution = "Convolution";
+constexpr auto kPatternConv2dBackpropFilter = "Conv2d_backprop_filter";
+constexpr auto kPatternConv2dBackpropInput = "Conv2d_backprop_input";
+constexpr auto kPatternConv3d = "Conv3d";
+constexpr auto kPatternConv3dBackpropFilter = "Conv3d_backprop_filter";
+constexpr auto kPatternConv3dBackpropInput = "Conv3d_backprop_input";
+constexpr auto kPatternCosineEmbeddingLoss = "cosine_embedding_loss";
+constexpr auto kPatternCubeLayerNorm = "cube_layer_norm";
+constexpr auto kPatternDepthwiseConvolution = "DepthwiseConvolution";
+constexpr auto kPatternDilation = "dilation";
+constexpr auto kPatternDropOutDoMaskV3D = "DropOutDoMaskV3D";
+constexpr auto kPatternElemWise = "ElemWise";
+constexpr auto kPatternGEMM = "GEMM";
+constexpr auto kPatternInplace = "Inplace";
+constexpr auto kPatternL2Loss = "l2_loss";
+constexpr auto kPatternL2Normalize = "l2_normalize";
+constexpr auto kPatternL2lossMulAddn = "l2loss_mul_addn";
+constexpr auto kPatternLayerNormGrad = "layer_norm_grad";
+constexpr auto kPatternMatmul = "Matmul";
+constexpr auto kPatternMatmulV2 = "Matmul_v2";
+constexpr auto kPatternMaxPool = "MaxPool";
+constexpr auto kPatternNorm = "Norm";
+constexpr auto kPatternOpaque = "Opaque";
+constexpr auto kPatternPool2d = "Pool2d";
+constexpr auto kPatternPool3d = "Pool3d";
+constexpr auto kPatternPureBroadcast = "PureBroadcast";
+constexpr auto kPatternread_select = "read_select";
+constexpr auto kPatternSegment = "Segment";
+constexpr auto kPatternSoftmaxPattern = "softmax_pattern";
+constexpr auto kPatternSoftmaxCrossEntropyWithLogits = "softmax_cross_entropy_with_logits";
+constexpr auto kPatternStridedRead = "strided_read";
+constexpr auto kPatternStridedWrite = "strided_write";
+constexpr auto kPatternTransdata = "Transdata";
+constexpr auto kPatternTranspose = "Transpose";
+constexpr auto kPatternUnknown = "";
+constexpr auto kPatternWriteSelect = "write_select";
 
 // Backend processor
 enum Processor {

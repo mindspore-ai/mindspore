@@ -81,7 +81,7 @@ void AicpuMetadataInfoForSpecialNodes(const CNodePtr &kernel_node,
   builder.SetOutputsDeviceType(outputs_type);
   builder.SetProcessor(AICPU);
   builder.SetKernelType(AICPU_KERNEL);
-  builder.SetFusionType(OPAQUE);
+  builder.SetFusionType(kPatternOpaque);
   (void)kernel_info_list->emplace_back(builder.Build());
   return;
 }

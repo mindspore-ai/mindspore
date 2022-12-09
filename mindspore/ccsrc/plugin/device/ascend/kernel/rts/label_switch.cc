@@ -84,7 +84,7 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> LabelSwitchDesc::GetKernel
     builder.SetInputsDeviceType({input_type[i]});
     builder.SetProcessor(AICORE);
     builder.SetKernelType(RT_KERNEL);
-    builder.SetFusionType(OPAQUE);
+    builder.SetFusionType(kPatternOpaque);
     // LabelSwitch always return UMonad.
     builder.SetOutputsFormat({kOpFormat_DEFAULT});
     builder.SetOutputsDeviceType({TypeId::kObjectTypeUMonad});

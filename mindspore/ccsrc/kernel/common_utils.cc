@@ -48,60 +48,6 @@ constexpr auto kStridedSliceMaxDims = 8;
 constexpr auto kQuad = 4;
 constexpr size_t kInputFirstIndex = 0;
 constexpr char kOperatorOriginFormat[] = "operator_origin_format";
-
-// Define all patterns here for different schedule
-const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
-  {FusionType::BN_UPDATE_GRAD, "bn_update_grad"},
-  {FusionType::BN_GRAD_REDUCE, "bn_grad_reduce"},
-  {FusionType::LAYER_NORM_GRAD, "layer_norm_grad"},
-  {FusionType::L2LOSS_MUL_ADDN, "l2loss_mul_addn"},
-  {FusionType::ELEMWISE, "ElemWise"},
-  {FusionType::PURE_BROADCAST, "PureBroadcast"},
-  {FusionType::COMMREDUCE, "CommReduce"},
-  {FusionType::SEGMENT, "Segment"},
-  {FusionType::INPLACE, "Inplace"},
-  {FusionType::MATMUL, "Matmul"},
-  {FusionType::MATMUL_V2, "Matmul_v2"},
-  {FusionType::GEMM, "GEMM"},
-  {FusionType::CONV, "Convolution"},
-  {FusionType::CONV2D_BACKPROP_INPUT, "Conv2d_backprop_input"},
-  {FusionType::CONV2D_BACKPROP_FILTER, "Conv2d_backprop_filter"},
-  {FusionType::CONV3D_BACKPROP_INPUT, "Conv3d_backprop_input"},
-  {FusionType::CONV3D_BACKPROP_FILTER, "Conv3d_backprop_filter"},
-  {FusionType::CUBE_LAYER_NORM, "cube_layer_norm"},
-  {FusionType::OPAQUE, "Opaque"},
-  {FusionType::BN_REDUCE, "bn_reduce"},
-  {FusionType::BN_UPDATE, "bn_update"},
-  {FusionType::SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, "softmax_cross_entropy_with_logits"},
-  {FusionType::L2_NORMALIZE, "l2_normalize"},
-  {FusionType::SOFTMAX, "softmax_pattern"},
-  {FusionType::L2_LOSS, "l2_loss"},
-  {FusionType::ASCEND_QUANT, "quant"},
-  {FusionType::ASCEND_DEQUANT, "dequant"},
-  {FusionType::ASCEND_ANTI_QUANT, "anti_quant"},
-  {FusionType::STRIDED_READ, "strided_read"},
-  {FusionType::STRIDED_WRITE, "strided_write"},
-  {FusionType::ASCEND_DEQUANT_S16, "dequant_s16"},
-  {FusionType::ASCEND_REQUANT, "requant"},
-  {FusionType::ASCEND_REQUANT_S16, "requant_s16"},
-  {FusionType::MAX_POOL, "MaxPool"},
-  {FusionType::DEPTHWISECONV, "DepthwiseConvolution"},
-  {FusionType::CONV3D, "Conv3d"},
-  {FusionType::POOL2D, "Pool2d"},
-  {FusionType::POOL3D, "Pool3d"},
-  {FusionType::READ_SELECT, "read_select"},
-  {FusionType::WRITE_SELECT, "write_select"},
-  {FusionType::COSINE_EMBEDDING_LOSS, "cosine_embedding_loss"},
-  {FusionType::DILATION_PATTERN, "dilation"},
-  {FusionType::BROAD_CAST, "Broadcast"},
-  {FusionType::BATCH_MATMUL, "BatchMatmul"},
-  {FusionType::CONFUSION_TRANSPOSE, "confusiontranspose"},
-  {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
-  {FusionType::TRANSDATA, "Transdata"},
-  {FusionType::NORM, "Norm"},
-  {FusionType::TRANSPOSE, "Transpose"},
-  {FusionType::UNKNOWN_FUSION_TYPE, ""}};
-
 abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
   // Other abstract class, such as AbstractCSRTensor and AbstractCOOTensor, is converted to AbstractTensor early time.
   abstract::BaseShapePtr res_shape;
@@ -237,29 +183,6 @@ int CalDiagOffset(int diag_index, int max_diag_len, int inner_rows, int inner_co
   const int diag_len = std::min(inner_rows + std::min(0, diag_index), inner_cols - std::max(0, diag_index));
   const int offset = (right_align) ? (max_diag_len - diag_len) : 0;
   return offset;
-}
-
-std::string GetFusionNameByType(const kernel::FusionType &type) {
-  auto iter = fusion_type_name_maps.find(type);
-  if (iter == fusion_type_name_maps.end()) {
-    MS_LOG(EXCEPTION) << "Illegal fusion type: " << type;
-  }
-  return iter->second;
-}
-
-FusionType GetFusionTypeByName(const std::string &name) {
-  std::string fusion_name_upper = name;
-  transform(fusion_name_upper.begin(), fusion_name_upper.end(), fusion_name_upper.begin(), ::toupper);
-  auto iter =
-    std::find_if(fusion_type_name_maps.begin(), fusion_type_name_maps.end(), [&fusion_name_upper](const auto &it) {
-      std::string name_upper = it.second;
-      transform(name_upper.begin(), name_upper.end(), name_upper.begin(), ::toupper);
-      return fusion_name_upper == name_upper;
-    });
-  if (iter == fusion_type_name_maps.end()) {
-    MS_LOG(EXCEPTION) << "Illegal fusion name: " << name;
-  }
-  return iter->first;
 }
 
 std::string GetCompilerCachePath() { return Common::GetUserDefineCachePath(); }

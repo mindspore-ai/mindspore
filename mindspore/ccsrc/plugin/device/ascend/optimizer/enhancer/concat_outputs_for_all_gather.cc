@@ -131,7 +131,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat, con
   (void)outputs_device_format.emplace_back(*cmp_format);
   (void)outputs_device_type.emplace_back(*cmp_dtype);
 
-  builder.SetFusionType(kernel::FusionType::OPAQUE);
+  builder.SetFusionType(kernel::kPatternOpaque);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(TBE_KERNEL);
   builder.SetInputsFormat(inputs_device_format);

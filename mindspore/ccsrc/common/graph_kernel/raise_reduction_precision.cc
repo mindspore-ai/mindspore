@@ -56,7 +56,7 @@ AnfNodePtr RaiseReductionPrecision::CreateReduceSum(const AnfNodePtr &node, cons
   info_builder.SetOutputsDeviceType({kFloat32->type_id()});
   info_builder.SetProcessor(AnfAlgo::GetProcessor(node));
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  info_builder.SetFusionType(kernel::kPatternOpaque);
   AnfAlgo::SetSelectKernelBuildInfo(info_builder.Build(), cnode.get());
   return node;
 }

@@ -532,7 +532,7 @@ kernel::KernelBuildInfo::KernelBuildInfoBuilder KernelAdjust::CreateMngKernelBui
   selected_kernel_builder.SetInputsFormat(formats);
   selected_kernel_builder.SetInputsDeviceType(type_ids);
 
-  selected_kernel_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  selected_kernel_builder.SetFusionType(kernel::kPatternOpaque);
   selected_kernel_builder.SetProcessor(kernel::Processor::AICORE);
   selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
   return selected_kernel_builder;
@@ -626,7 +626,7 @@ CNodePtr KernelAdjust::CreateEndOfSequenceOP(const std::shared_ptr<session::Kern
   selected_kernel_builder.SetInputsFormat({kOpFormat_DEFAULT});
   selected_kernel_builder.SetInputsDeviceType({kNumberTypeUInt8});
 
-  selected_kernel_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  selected_kernel_builder.SetFusionType(kernel::kPatternOpaque);
   selected_kernel_builder.SetProcessor(kernel::Processor::AICPU);
   selected_kernel_builder.SetKernelType(KernelType::AICPU_KERNEL);
 
@@ -748,7 +748,7 @@ CNodePtr KernelAdjust::CreateNPUGetFloatStatus(const std::shared_ptr<session::Ke
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetInputsFormat({kOpFormat_DEFAULT});
   selected_kernel_builder.SetInputsDeviceType({kNumberTypeFloat32});
-  selected_kernel_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  selected_kernel_builder.SetFusionType(kernel::kPatternOpaque);
   selected_kernel_builder.SetProcessor(kernel::Processor::AICORE);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
   selected_kernel_builder.SetOutputsFormat({kOpFormat_DEFAULT});
@@ -771,7 +771,7 @@ CNodePtr KernelAdjust::CreateNPUClearStatus(const std::shared_ptr<session::Kerne
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetInputsFormat({kOpFormat_DEFAULT});
   selected_kernel_builder.SetInputsDeviceType({kNumberTypeFloat32});
-  selected_kernel_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  selected_kernel_builder.SetFusionType(kernel::kPatternOpaque);
   selected_kernel_builder.SetProcessor(kernel::Processor::AICORE);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
   selected_kernel_builder.SetOutputsFormat({kOpFormat_DEFAULT});
@@ -793,7 +793,7 @@ CNodePtr KernelAdjust::CreateNPUAllocStatus(const std::shared_ptr<session::Kerne
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {npu_output_shape}, npu_alloc_cnode.get());
 
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
-  selected_kernel_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  selected_kernel_builder.SetFusionType(kernel::kPatternOpaque);
   selected_kernel_builder.SetProcessor(kernel::Processor::AICORE);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
   selected_kernel_builder.SetOutputsFormat({kOpFormat_DEFAULT});

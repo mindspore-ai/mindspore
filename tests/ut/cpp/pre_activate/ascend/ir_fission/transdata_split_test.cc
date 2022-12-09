@@ -124,7 +124,7 @@ TEST_F(TestHWTransdataSplit, test_transdata_split_fraz_nchw) {
   builder.SetOutputsFormat({kOpFormat_C1HWNCoC0});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetInputsReshapeType({""});
   builder.SetOutputsReshapeType({""});
@@ -172,7 +172,7 @@ TEST_F(TestHWTransdataSplit, test_transdata_split_nchw_fraz) {
   builder.SetOutputsFormat({"NCHW"});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetInputsReshapeType({""});
   builder.SetOutputsReshapeType({""});

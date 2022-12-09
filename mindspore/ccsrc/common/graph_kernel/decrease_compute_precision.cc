@@ -41,7 +41,7 @@ CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, c
   builder.SetOutputsFormat({format});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
-  builder.SetFusionType(kernel::FusionType::OPAQUE);
+  builder.SetFusionType(kernel::kPatternOpaque);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
   if (cast->kernel_info() == nullptr) {
@@ -193,7 +193,7 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) const {
     graph_info_builder.SetOutputsDeviceType(cnode_output_type);
     graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
     graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-    graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+    graph_info_builder.SetFusionType(kernel::kPatternOpaque);
     auto info_1 = graph_info_builder.Build();
     AnfAlgo::SetSelectKernelBuildInfo(info_1, cnode1.get());
     if (is_output) {

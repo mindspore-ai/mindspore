@@ -81,7 +81,7 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
     kernel_build_info_builder->SetOutputsFormat({kOpFormat_DEFAULT});
     kernel_build_info_builder->SetOutputsDeviceType({TypeId::kObjectTypeUMonad});
     // set other info
-    kernel_build_info_builder->SetFusionType(kernel::FusionType::OPAQUE);
+    kernel_build_info_builder->SetFusionType(kernel::kPatternOpaque);
     kernel_build_info_builder->SetProcessor(kernel::Processor::AICORE);
     kernel_build_info_builder->SetKernelType(KernelType::RT_KERNEL);
     kernel_info_list->push_back(kernel_build_info_builder->Build());

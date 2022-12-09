@@ -113,7 +113,7 @@ kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::str
   graph_info_builder.SetOutputsDeviceType(output_types);
   graph_info_builder.SetProcessor(processor);
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
   return graph_info_builder.Build();
 }
 
@@ -168,7 +168,7 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
   graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
   auto graph_selected_info = graph_info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, new_node.get());
 }
@@ -394,7 +394,7 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   info_builder.SetOutputsDeviceType(output_types);
   info_builder.SetProcessor(kernel::GetProcessorFromContext());
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  info_builder.SetFusionType(kernel::kPatternOpaque);
   auto selected_info = info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, cnode.get());
 

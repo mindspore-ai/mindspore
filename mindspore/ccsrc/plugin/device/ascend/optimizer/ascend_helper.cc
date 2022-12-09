@@ -480,7 +480,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
   builder.SetOutputsReshapeType({reshape_type});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
-  builder.SetFusionType(kernel::FusionType::OPAQUE);
+  builder.SetFusionType(kernel::kPatternOpaque);
   builder.SetProcessor(kernel::Processor::AICORE);
   if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kImplyTBE) != nullptr) {
     builder.SetKernelType(KernelType::TBE_KERNEL);

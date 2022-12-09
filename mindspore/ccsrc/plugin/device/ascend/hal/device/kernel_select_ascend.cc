@@ -455,7 +455,7 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   builder->SetKernelType(*kernel_type);
   builder->SetProcessor(kernel::Processor::AICORE);
-  builder->SetFusionType(kernel::FusionType::OPAQUE);
+  builder->SetFusionType(kernel::kPatternOpaque);
   builder->SetOpPattern(kernel::OpPattern::kCommonPattern);
   // set inputs info
   std::vector<TypeId> inputs_device_type;

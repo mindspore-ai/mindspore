@@ -94,7 +94,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const sess
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
+        AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise &&
         common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
       MatchConv2DBackpropInputEltwiseEltwise(cnode, kernel_graph, candidate_fusion);
     }

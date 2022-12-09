@@ -47,7 +47,7 @@ void ConvSingleInFusionPass::MatchConvSingleInEltwise(const CNodePtr &cnode, con
     return;
   }
   if (AnfAlgo::GetKernelType(eltwise_input) == KernelType::TBE_KERNEL &&
-      AnfAlgo::GetFusionType(eltwise_input) == kernel::FusionType::CONV) {
+      AnfAlgo::GetFusionType(eltwise_input) == kernel::kPatternConvolution) {
     (void)record.insert(eltwise_input);
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
@@ -67,7 +67,7 @@ void ConvSingleInFusionPass::MatchSingleFusionPattern(const session::KernelGraph
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
+        AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise && cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
       MatchConvSingleInEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

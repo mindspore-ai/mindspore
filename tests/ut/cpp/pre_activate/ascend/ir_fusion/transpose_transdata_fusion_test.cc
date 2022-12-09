@@ -70,7 +70,7 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetFusionType(kernel::kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   auto kernel_info = std::make_shared<device::KernelInfo>();
   kernel_info->set_select_kernel_build_info(builder.Build());
