@@ -24,6 +24,7 @@ import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
 import com.mindspore.flclient.model.TrainLenet;
+import com.mindspore.lite.MSTensor;
 import mindspore.schema.ResponseCode;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -33,11 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,6 +78,11 @@ public class Common {
      * The tag when server is not ready.
      */
     public static final String JOB_NOT_AVAILABLE = "The server's training job is disabled or finished.";
+
+    /**
+     * Max description len that server returned while failure.
+     */
+    public static final int MAX_DESC_LEN = 512;
 
     /**
      * use to stop job.
@@ -310,6 +312,9 @@ public class Common {
             LOGGER.severe("[isSeverReady] the input argument <message> is null, please check!");
             throw new IllegalArgumentException();
         }
+        if (message.length > MAX_DESC_LEN) {
+            return true;
+        }
         String messageStr = new String(message);
         if (messageStr.contains(SAFE_MOD)) {
             LOGGER.info("[isSeverReady] " + SAFE_MOD + ", need wait some time and request again");
@@ -337,6 +342,9 @@ public class Common {
         if (message == null) {
             LOGGER.severe("[isSeverJobFinished] the input argument <message> is null, please check!");
             throw new IllegalArgumentException();
+        }
+        if (message.length > MAX_DESC_LEN) {
+            return false;
         }
         String messageStr = new String(message);
         if (messageStr.contains(JOB_NOT_AVAILABLE)) {
@@ -551,6 +559,37 @@ public class Common {
             return FLClientStatus.FAILED;
         }
         return FLClientStatus.SUCCESS;
+    }
+
+    /**
+     * Get FeatureMap, for save memory just get the features that need update
+     *
+     * @param secureProtocol
+     * @return
+     */
+    public static Map<String, float[]> getFeatureMap(SecureProtocol secureProtocol) {
+        FLParameter flParameter = FLParameter.getInstance();
+        FLClientStatus status = Common.initSession(flParameter.getTrainModelPath());
+        if (status == FLClientStatus.FAILED) {
+            Common.freeSession();
+            return new HashMap<>();
+        }
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        ArrayList<String> updateFeatures = secureProtocol.getUpdateFeatureName();
+        List<MSTensor> featureTensors = client.getFeatures();
+        Map<String, float[]> features = new HashMap<>();
+        for (MSTensor mstensor : featureTensors) {
+            if (mstensor == null) {
+                continue;
+            }
+            for (String featureName : updateFeatures) {
+                if (featureName.equals(mstensor.tensorName())) {
+                    features.put(mstensor.tensorName(), mstensor.getFloatData());
+                }
+            }
+        }
+        Common.freeSession();
+        return features;
     }
 
     /**

@@ -20,11 +20,8 @@ import com.mindspore.flclient.LocalFLParameter;
 import static mindspore.schema.CompressType.DIFF_SPARSE_QUANT;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.PriorityQueue;
 
 /**
  * Encode Executor
@@ -53,111 +50,98 @@ public class EncodeExecutor {
     private static final double increment = 4294967294.0;
     private static final int modulo = 48271;
 
-    private List<Integer> constructMaskArray(int paramNum) {
+    public boolean[] constructMaskArray(int paramNum) {
         int seed = localFLParameter.getSeed();
         float uploadSparseRatio = localFLParameter.getUploadSparseRatio();
 
-        List<Integer> maskArray = new ArrayList<>();
+        boolean[] maskArray = new boolean[paramNum];
 
         int retain_num = (int) ((float) (paramNum) * uploadSparseRatio);
         for (int i = 0; i < retain_num; ++i) {
-            maskArray.add(1);
+            maskArray[i] = true;
         }
         for (int i = retain_num; i < paramNum; ++i) {
-            maskArray.add(0);
+            maskArray[i] = false;
         }
 
         seed = ((seed + multiplier) * modulo) % multiplier;
         for (int i = 0; i < paramNum; ++i) {
             // generate random number in (0, 1)
-            double rand = (double)(seed) / increment + 0.5;
+            double rand = (double) (seed) / increment + 0.5;
             // update seed
             seed = (seed * modulo) % multiplier;
 
-            int j = (int)(rand * (double)(paramNum - i)) + i;
-            int temp = maskArray.get(i);
-            maskArray.set(i, maskArray.get(j));
-            maskArray.set(j, temp);
+            int j = (int) (rand * (double) (paramNum - i)) + i;
+            boolean temp = maskArray[i];
+            maskArray[i] = maskArray[j];
+            maskArray[j] = temp;
         }
         return maskArray;
     }
 
-    public List<CompressWeight> enDiffSparseQuant(Map<String, List<Float>> featureMaps, int numBits,
+    public List<CompressWeight> enDiffSparseQuant(Map<String, float[]> featureMaps, int numBits,
                                                   int trainDataSize) {
         List<CompressWeight> compressWeights = new ArrayList<>();
 
-        // difference encode
-        Map<String, float[]> oldFeatureMap = localFLParameter.getOldFeatureMap();
-        Map<String, List<Float>> diffFeatureMaps = new HashMap<>();
-        for (String featureMapName : featureMaps.keySet()) {
-            List<Float> diffs = new ArrayList<>();
-            List<Float> featureMap = featureMaps.get(featureMapName);
-            float[] dataBeforeTrain = oldFeatureMap.get(featureMapName);
-            int length = dataBeforeTrain.length;
-            for (int i = 0; i < length; ++i) {
-                float diff = featureMap.get(i) - dataBeforeTrain[i] * (float) trainDataSize;
-                diffs.add(diff);
-            }
-            diffFeatureMaps.put(featureMapName, diffs);
-        }
-
         // sparse encode
         int paramNum = 0;
-        for (String featureMapName : diffFeatureMaps.keySet()) {
-            int weightSize = diffFeatureMaps.get(featureMapName).size();
+        for (float[] weight : featureMaps.values()) {
+            int weightSize = weight.length;
             paramNum += weightSize;
         }
-        List<Integer> maskArray = constructMaskArray(paramNum);
-
-        Map<String, List<Float>> sparseFeatureMaps = new HashMap<>();
-        int index = 0;
-        for (String featureMapName : diffFeatureMaps.keySet()) {
-            List<Float> sparseFeatureMap = new ArrayList<>();
-            List<Float> Weight = diffFeatureMaps.get(featureMapName);
-            for (Float dataValue : Weight) {
-                if (maskArray.get(index) == 1) {
-                    sparseFeatureMap.add(dataValue);
-                }
-                index += 1;
-            }
-            sparseFeatureMaps.put(featureMapName, sparseFeatureMap);
-        }
-
+        boolean[] maskArray = constructMaskArray(paramNum);
         // quant encode
         float temp1 = (float) (1 << numBits) - 1.0f;
         float temp2 = (float) (1 << (numBits - 1));
-        for (String featureMapName : sparseFeatureMaps.keySet()) {
+        int index = 0;
+
+        // difference encode
+        Map<String, float[]> oldFeatureMap = localFLParameter.getOldFeatureMap();
+        for (String featureMapName : featureMaps.keySet()) {
+            float[] featureMap = featureMaps.get(featureMapName);
+            float[] dataBeforeTrain = oldFeatureMap.get(featureMapName);
+            int length = dataBeforeTrain.length;
+            float[] diffs = new float[length];
+            for (int i = 0; i < length; ++i) {
+                diffs[i] = featureMap[i] - dataBeforeTrain[i] * (float) trainDataSize;
+            }
+            float[] sparseFeatureMap = new float[length];
+            int sparseSize = 0;
+            for (float dataValue : diffs) {
+                if (maskArray[index]) {
+                    sparseFeatureMap[sparseSize] = dataValue;
+                    sparseSize++;
+                }
+                index += 1;
+            }
             CompressWeight compressWeight = new CompressWeight();
             compressWeight.setWeightFullname(featureMapName);
 
-            List<Float> sparseFeatureMap = sparseFeatureMaps.get(featureMapName);
-
             // get min and max value
-            Float minVal = Float.MAX_VALUE;
+            float minVal = Float.MAX_VALUE;
             float maxVal = -minVal;
-            for (Float value : sparseFeatureMap) {
-                if (value < minVal) {
-                    minVal = value;
+            for (int i = 0; i < sparseSize; i++) {
+                if (sparseFeatureMap[i] < minVal) {
+                    minVal = sparseFeatureMap[i];
                 }
-                if (value > maxVal) {
-                    maxVal = value;
+                if (sparseFeatureMap[i] > maxVal) {
+                    maxVal = sparseFeatureMap[i];
                 }
             }
             compressWeight.setMinValue(minVal);
             compressWeight.setMaxValue(maxVal);
             float scale_value = (maxVal - minVal) / temp1 + 1e-10f;
-            List<Byte> compressData = new ArrayList<>();
-            for (Float aFloat : sparseFeatureMap) {
-                compressData.add((byte) (Math.round((aFloat - minVal) / scale_value - temp2)));
+            byte[] compressData = new byte[sparseSize];
+            for (int i = 0; i < sparseSize; i++) {
+                compressData[i] = (byte) (Math.round((sparseFeatureMap[i] - minVal) / scale_value - temp2));
             }
             compressWeight.setCompressData(compressData);
             compressWeights.add(compressWeight);
         }
-
         return compressWeights;
     }
 
-    public List<CompressWeight> encode(Map<String, List<Float>> featureMaps, int trainDataSize) {
+    public List<CompressWeight> encode(Map<String, float[]> featureMaps, int trainDataSize) {
         byte uploadCompressType = localFLParameter.getUploadCompressType();
         if (uploadCompressType == DIFF_SPARSE_QUANT) {
             return enDiffSparseQuant(featureMaps, 8, trainDataSize);

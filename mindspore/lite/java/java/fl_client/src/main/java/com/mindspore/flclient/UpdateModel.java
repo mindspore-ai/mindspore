@@ -22,11 +22,8 @@ import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
-import com.mindspore.flclient.model.CommonUtils;
 import com.mindspore.flclient.model.SessionUtil;
-import com.mindspore.flclient.model.Status;
 import com.mindspore.flclient.model.TrainLenet;
-import com.mindspore.lite.MSTensor;
 import com.mindspore.flclient.compression.EncodeExecutor;
 import com.mindspore.flclient.compression.CompressWeight;
 
@@ -150,27 +147,6 @@ public class UpdateModel {
                         response.retcode());
                 return FLClientStatus.FAILED;
         }
-    }
-
-    private Map<String, float[]> getFeatureMap() {
-        Client client = ClientManager.getClient(flParameter.getFlName());
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            retCode = ResponseCode.RequestError;
-            throw new IllegalArgumentException();
-        }
-        List<MSTensor> features = client.getFeatures();
-        Map<String, float[]> trainedMap = CommonUtils.convertTensorToFeatures(features);
-        LOGGER.info("[updateModel] ===========free session=============");
-        Common.freeSession();
-        if (trainedMap.isEmpty()) {
-            LOGGER.severe("[updateModel] the return trainedMap is empty in <CommonUtils" +
-                    ".convertTensorToFeatures>");
-            retCode = ResponseCode.RequestError;
-            status = FLClientStatus.FAILED;
-            throw new IllegalArgumentException();
-        }
-        return trainedMap;
     }
 
     private Map<String, float[]> deprecatedGetFeatureMap() {
@@ -301,13 +277,13 @@ public class UpdateModel {
 
         private RequestUpdateModelBuilder featuresMap(SecureProtocol secureProtocol, int trainDataSize) {
             ArrayList<String> updateFeatureName = secureProtocol.getUpdateFeatureName();
-            Map<String, float[]> trainedMap = new HashMap<String, float[]>();
+            Map<String, float[]> trainedMap;
             if (Common.checkFLName(flParameter.getFlName())) {
                 trainedMap = deprecatedGetFeatureMap();
             } else {
-                trainedMap = getFeatureMap();
+                trainedMap = Common.getFeatureMap(secureProtocol);
             }
-            Map<String, List<Float>> featureMaps = new HashMap<>();
+            Map<String, float[]> featureMaps = new HashMap<>();
             long startTime;
             long endTime;
             switch (encryptLevel) {
@@ -371,11 +347,10 @@ public class UpdateModel {
                     startTime = System.currentTimeMillis();
                     for (String name : updateFeatureName) {
                         float[] data = trainedMap.get(name);
-                        List<Float> featureMap = new ArrayList<>();
-                        for (float datum : data) {
-                            featureMap.add(datum * (float) trainDataSize);
+                        for (int i = 0; i < data.length; ++i) {
+                            data[i] = data[i] * (float) trainDataSize;
                         }
-                        featureMaps.put(name, featureMap);
+                        featureMaps.put(name, data);
                     }
                     endTime = System.currentTimeMillis();
                     LOGGER.info("not encrypt time is " + (endTime - startTime) + "ms");
@@ -396,7 +371,7 @@ public class UpdateModel {
             return this;
         }
 
-        private int buildCompFmOffset(Map<String, List<Float>> featureMaps, int trainDataSize) {
+        private int buildCompFmOffset(Map<String, float[]> featureMaps, int trainDataSize) {
             List<CompressWeight> compressWeights = EncodeExecutor.getInstance().encode(featureMaps, trainDataSize);
             if (compressWeights == null || compressWeights.size() == 0) {
                 LOGGER.severe("[Compression] the return compressWeights from <encodeExecutor.encode> is " +
@@ -410,17 +385,13 @@ public class UpdateModel {
             int index = 0;
             for (CompressWeight compressWeight : compressWeights) {
                 String weightFullname = compressWeight.getWeightFullname();
-                List<Byte> compressData = compressWeight.getCompressData();
+                byte[] compressData = compressWeight.getCompressData();
                 float minVal = compressWeight.getMinValue();
                 float maxVal = compressWeight.getMaxValue();
-                byte[] data = new byte[compressData.size()];
                 LOGGER.info("[updateModel build compressWeight] feature name: "
-                        + weightFullname + ", feature size: " + data.length);
-                for (int j = 0; j < data.length; j++) {
-                    data[j] = compressData.get(j);
-                }
+                        + weightFullname + ", feature size: " + compressData.length);
                 int featureName = builder.createString(weightFullname);
-                int weight = CompressFeatureMap.createCompressDataVector(builder, data);
+                int weight = CompressFeatureMap.createCompressDataVector(builder, compressData);
                 int featureMap = CompressFeatureMap.createCompressFeatureMap(builder, featureName, weight,
                         minVal, maxVal);
                 LOGGER.info("[Compression]" +
@@ -444,20 +415,16 @@ public class UpdateModel {
             return RequestUpdateModel.createNameVecVector(builder, nameVecOffsets);
         }
 
-        private int buildFmOffset(Map<String, List<Float>> featureMaps, ArrayList<String> updateFeatureName) {
+        private int buildFmOffset(Map<String, float[]> featureMaps, ArrayList<String> updateFeatureName) {
             int featureSize = updateFeatureName.size();
             int[] fmOffsets = new int[featureSize];
             for (int i = 0; i < featureSize; i++) {
                 String key = updateFeatureName.get(i);
-                List<Float> featureMap = featureMaps.get(key);
-                float[] data = new float[featureMap.size()];
+                float[] featureMap = featureMaps.get(key);
                 LOGGER.fine("[updateModel build featuresMap] feature name: " + key + " feature " +
-                        "size: " + data.length);
-                for (int j = 0; j < data.length; j++) {
-                    data[j] = featureMap.get(j);
-                }
+                        "size: " + featureMap.length);
                 int featureName = builder.createString(key);
-                int weight = FeatureMap.createDataVector(builder, data);
+                int weight = FeatureMap.createDataVector(builder, featureMap);
                 int featureMapOff = FeatureMap.createFeatureMap(builder, featureName, weight);
                 fmOffsets[i] = featureMapOff;
             }
@@ -483,7 +450,7 @@ public class UpdateModel {
         /**
          * Serialize the element uploadLoss in RequestUpdateModel.
          *
-         * @param upload loss that client train.
+         * @param uploadLoss loss that client train.
          * @return the RequestUpdateModelBuilder object.
          */
         private RequestUpdateModelBuilder uploadLoss(float uploadLoss) {
@@ -494,7 +461,7 @@ public class UpdateModel {
         /**
          * Serialize the element evalAccuracy in RequestUpdateModel.
          *
-         * @param evaluate Accuracy that client eval.
+         * @param evalAccuracy Accuracy that client eval.
          * @return the RequestUpdateModelBuilder object.
          */
         private RequestUpdateModelBuilder evalAccuracy(float evalAccuracy) {
