@@ -4563,7 +4563,8 @@ def min(x, axis=0, keep_dims=False):
         - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int32. If `keep_dims`
           is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
           Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index, and same dtype as x.
+        - **values** (Tensor) - The minimum value of input tensor, with the same shape
+          as `index`, and same dtype as `x`.
 
     Raises:
         TypeError: If `x` is not Tensor.
