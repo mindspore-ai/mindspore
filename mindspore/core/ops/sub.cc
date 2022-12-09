@@ -40,7 +40,7 @@ TypePtr SubInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
                                          kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, valid_types, prim->name());
 }
 }  // namespace
 
