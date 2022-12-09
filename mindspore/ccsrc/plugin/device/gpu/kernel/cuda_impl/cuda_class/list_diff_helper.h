@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_LIST_DIFF_HELPER_H_
 #include <string>
 #include <vector>
-
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/helper_base.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/list_diff_impl.cuh"
 
@@ -43,8 +42,9 @@ class ListDiffHelperGpuKernel : public GpuKernelHelperBase {
     num_elements_y_ = input_size_list_[kIndex1] / sizeof(T);
     output_size_list_.emplace_back(num_elements_x_ * sizeof(T));
     output_size_list_.emplace_back(num_elements_x_ * sizeof(S));
-    work_size_list_.emplace_back(sizeof(int));
-    work_size_list_.emplace_back(num_elements_x_ * sizeof(int));
+    work_size_list_.emplace_back(num_elements_y_ * sizeof(T));
+    work_size_list_.emplace_back(num_elements_x_ * sizeof(S));
+    work_size_list_.emplace_back(num_elements_x_ * sizeof(bool));
     return 0;
   }
 
@@ -54,8 +54,9 @@ class ListDiffHelperGpuKernel : public GpuKernelHelperBase {
     T *y_ptr = nullptr;
     T *out_ptr = nullptr;
     S *idx_ptr = nullptr;
-    int *count_number = nullptr;
-    int *worksapce_flag_ptr = nullptr;
+    T *workspace_y_ptr = nullptr;
+    S *worksapce_xidx_ptr = nullptr;
+    bool *worksapce_flag_ptr = nullptr;
     int flag = GetDeviceAddress<T>(input_ptrs, kIndex0, kernel_name_, &x_ptr);
     if (flag != 0) {
       return flag;
@@ -76,18 +77,24 @@ class ListDiffHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
-    flag = GetDeviceAddress<int>(work_ptrs, kIndex0, kernel_name_, &count_number);
+    flag = GetDeviceAddress<T>(work_ptrs, kIndex0, kernel_name_, &workspace_y_ptr);
     if (flag != 0) {
       return flag;
     }
 
-    flag = GetDeviceAddress<int>(work_ptrs, kIndex1, kernel_name_, &worksapce_flag_ptr);
+    flag = GetDeviceAddress<S>(work_ptrs, kIndex1, kernel_name_, &worksapce_xidx_ptr);
     if (flag != 0) {
       return flag;
     }
 
-    post_output_size_ = ListDiff(count_number, num_elements_x_, num_elements_y_, x_ptr, y_ptr, out_ptr, idx_ptr,
-                                 worksapce_flag_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+    flag = GetDeviceAddress<bool>(work_ptrs, kIndex2, kernel_name_, &worksapce_flag_ptr);
+    if (flag != 0) {
+      return flag;
+    }
+
+    post_output_size_ =
+      CalListDiff(num_elements_x_, num_elements_y_, x_ptr, y_ptr, out_ptr, idx_ptr, workspace_y_ptr, worksapce_xidx_ptr,
+                  worksapce_flag_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
   }
 
