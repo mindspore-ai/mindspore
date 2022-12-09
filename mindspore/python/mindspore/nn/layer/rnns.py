@@ -28,7 +28,7 @@ from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.nn.cell import Cell
 from mindspore import log as logger
 from mindspore._checkparam import Validator as validator
-from mindspore.ops.operations._rl_inner_ops import CudnnGRU, GRUV2
+from mindspore.ops.operations._rl_inner_ops import CudnnGRU
 from mindspore.nn.layer.rnn_cells import _rnn_relu_cell, _rnn_tanh_cell, _gru_cell, _lstm_cell
 from mindspore.nn.layer.rnn_utils import _Reverse, _ReverseSequence
 
@@ -237,19 +237,15 @@ class _DynamicGRUCPUGPU(Cell):
                     b_ih.view(-1, 1, 1),
                     b_hh.view(-1, 1, 1)
                 ))
-            if seq_length is None:
-                output, h_n, _, _ = CudnnGRU(input_size, hidden_size, 1, has_bias, False, 0.0)(
-                    x,
-                    h_0.view(1, *h_0.shape),
-                    weights.astype(x.dtype)
-                )
-            else:
-                output, h_n, _, _ = GRUV2(input_size, hidden_size, 1, has_bias, False, 0.0, self.training)(
-                    x,
-                    h_0.view(1, *h_0.shape),
-                    weights.astype(x.dtype),
-                    seq_length
-                )
+            output, h_n, _, _ = CudnnGRU(input_size, hidden_size, 1, has_bias, False, 0.0)(
+                x,
+                h_0.view(1, *h_0.shape),
+                weights.astype(x.dtype)
+            )
+            if seq_length is not None:
+                h_n = get_hidden(output, seq_length)
+                mask = sequence_mask(seq_length, x.shape[0])
+                output = select_by_mask(output, mask)
         else:
             output, h_n = _DynamicRNNBase('GRU')(x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh)
 
