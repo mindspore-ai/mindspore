@@ -3104,7 +3104,7 @@ class Tensor(Tensor_):
             raise ValueError(f"For 'Tensor.repeat', the length of 'repeats' must be the same as the shape of the "
                              f"original tensor in the 'axis' dimension, but got the length of 'repeats' "
                              f"{len(repeats)}, the shape of the original tensor in the 'axis' dimension {size}.")
-        subs = tensor_operator_registry.get('split')(axis, size)(input_x)
+        subs = tensor_operator_registry.get('tensor_split')(input_x, size, axis)
         repeated_subs = []
         for sub, rep in zip(subs, repeats):
             if rep != 0:
