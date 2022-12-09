@@ -3148,3 +3148,56 @@ TEST_F(MindDataTestPipeline, TestLFCCWrongArgs) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: MFCC op
+/// Description: Test pipeline for MFCC op
+/// Expectation: Generate expected output after cases were executed
+TEST_F(MindDataTestPipeline, TestMFCCPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMFCCPipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 300}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto mfcc_op1 = audio::MFCC(16000, 40, 2, NormMode::kOrtho, true);
+  ds = ds->Map({mfcc_op1});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {1, 1, 40, 2};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 4);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+}
+
+/// Feature: MFCC op
+/// Description: Test wrong arguments for MFCC op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
+TEST_F(MindDataTestPipeline, TestMFCCWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInverseMelScaleWrongArgs.";
+  // MFCC: negative sample_rate.
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 300}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto mfcc_op0 = audio::MFCC(-1);
+  ds = ds->Map({mfcc_op0});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

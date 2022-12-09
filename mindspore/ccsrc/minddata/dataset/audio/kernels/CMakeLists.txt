@@ -35,6 +35,7 @@ add_library(audio-kernels OBJECT
         mask_along_axis_iid_op.cc
         mask_along_axis_op.cc
         mel_scale_op.cc
+        mfcc_op.cc
         mu_law_decoding_op.cc
         mu_law_encoding_op.cc
         overdrive_op.cc

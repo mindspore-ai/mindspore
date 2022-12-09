@@ -3053,3 +3053,22 @@ TEST_F(MindDataTestExecute, TestTruncateOpStr) {
   Status status = trans(input_ms, &input_ms);
   EXPECT_TRUE(status.IsOk());
 }
+
+/// Feature: MFCC op
+/// Description: Test basic usage of MFCC op
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestMFCCEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMFCC.";
+  // Original waveform
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
+                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> mfcc_op =
+    std::make_shared<audio::MFCC>(16000, 4, 2, NormMode::kOrtho, true, 10);
+  // apply MFCC
+  mindspore::dataset::Execute trans({mfcc_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}

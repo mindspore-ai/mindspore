@@ -1006,3 +1006,61 @@ def check_lfcc(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_mfcc(method):
+    """Wrapper method to check the parameters of MFCC."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, n_mfcc, dct_type, norm, log_mels, melkwargs], _ = parse_user_args(method, *args, **kwargs)
+        check_non_negative_int32(sample_rate, "sample_rate")
+        type_check(log_mels, (bool,), "log_mels")
+        type_check(norm, (NormMode,), "norm")
+        check_non_negative_int32(n_mfcc, "n_mfcc")
+        if dct_type != 2:
+            raise ValueError("Input dct_type must be 2, but got : {0}.".format(dct_type))
+
+        if melkwargs is not None:
+            type_check(melkwargs, (dict,), "melkwargs")
+            n_fft = melkwargs["n_fft"]
+            win_length = melkwargs["win_length"]
+            hop_length = melkwargs["hop_length"]
+            f_min = melkwargs["f_min"]
+            f_max = melkwargs["f_max"]
+            pad = melkwargs["pad"]
+            power = melkwargs["power"]
+            normalized = melkwargs["normalized"]
+            center = melkwargs["center"]
+            onesided = melkwargs["onesided"]
+            window = melkwargs["window"]
+            pad_mode = melkwargs["pad_mode"]
+            norm_mel = melkwargs["norm"]
+            mel_scale = melkwargs["mel_scale"]
+            n_mels = melkwargs["n_mels"]
+
+            check_pos_int32(n_fft, "n_fft")
+            check_mel_scale_n_mels(n_mels)
+            check_mel_scale_freq(f_min, f_max, sample_rate)
+            check_mel_scale_norm(norm_mel)
+            check_mel_scale_mel_type(mel_scale)
+            check_power(power)
+            type_check(window, (WindowType,), "window")
+            type_check(normalized, (bool,), "normalized")
+            type_check(center, (bool,), "center")
+            type_check(pad_mode, (BorderType,), "pad_mode")
+            type_check(onesided, (bool,), "onesided")
+            check_non_negative_int32(pad, "pad")
+            if hop_length is not None:
+                check_pos_int32(hop_length, "hop_length")
+            if f_max is not None:
+                check_non_negative_float32(f_max, "f_max")
+            if win_length is not None:
+                check_non_negative_int32(win_length, "win_length")
+            if n_mels < n_mfcc:
+                raise ValueError("Input n_mels should be greater than or equal to n_mfcc, but got n_mfcc: {0} and " \
+                                 "n_mels: {1}.".format(n_mfcc, n_mels))
+
+        return method(self, *args, **kwargs)
+
+    return new_method

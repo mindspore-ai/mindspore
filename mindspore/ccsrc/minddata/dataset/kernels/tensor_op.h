@@ -192,6 +192,7 @@ constexpr char kMagphaseOp[] = "MagphaseOp";
 constexpr char kMaskAlongAxisIIDOp[] = "MaskAlongAxisIIDOp";
 constexpr char kMaskAlongAxisOp[] = "MaskAlongAxisOp";
 constexpr char kMelScaleOp[] = "MelScaleOp";
+constexpr char kMFCCOp[] = "MFCCOp";
 constexpr char kMuLawDecodingOp[] = "MuLawDecodingOp";
 constexpr char kMuLawEncodingOp[] = "MuLawEncodingOp";
 constexpr char kOverdriveOp[] = "OverdriveOp";

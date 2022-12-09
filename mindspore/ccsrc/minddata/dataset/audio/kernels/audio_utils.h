@@ -38,6 +38,7 @@ constexpr double PI = 3.141592653589793;
 constexpr int kMinAudioDim = 1;
 constexpr int kDefaultAudioDim = 2;
 constexpr int TWO = 2;
+constexpr float HALF = 0.5;
 
 namespace mindspore {
 namespace dataset {
@@ -2140,6 +2141,60 @@ Status LFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
             int32_t n_filter, int32_t n_lfcc, int32_t dct_type, bool log_lf, int32_t n_fft, int32_t win_length,
             int32_t hop_length, float f_min, float f_max, int32_t pad, WindowType window, float power, bool normalized,
             bool center, BorderType pad_mode, bool onesided, NormMode norm);
+
+/// \brief Create MelSpectrogram for a raw audio signal.
+/// \param[in] input Input tensor.
+/// \param[out] output Output tensor.
+/// \param[in] sample_rate Sample rate of audio signal.
+/// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins.
+/// \param[in] win_length Window size.
+/// \param[in] hop_length Length of hop between STFT windows.
+/// \param[in] f_min Minimum frequency, which must be non negative.
+/// \param[in] f_max Maximum frequency, which must be positive.
+/// \param[in] pad Two sided padding of signal.
+/// \param[in] n_mels Number of mel filter, which must be positive.
+/// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+/// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2 for power, etc.
+/// \param[in] normalized Whether to normalize by magnitude after stft.
+/// \param[in] center Whether to pad waveform on both sides.
+/// \param[in] pad_mode controls the padding method used when center is True.
+/// \param[in] onesided controls whether to return half of results to avoid redundancy.
+/// \param[in] norm If 'slaney', divide the triangular mel weights by the width of the mel band (area normalization).
+/// \param[in] mel_scale Scale to use: htk or slaney.
+/// \return Status return code.
+Status MelSpectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                      int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min, float f_max, int32_t pad,
+                      int32_t n_mels, WindowType window, float power, bool normalized, bool center, BorderType pad_mode,
+                      bool onesided, NormType norm, MelType mel_scale);
+
+/// \brief Create MFCC for a raw audio signal.
+/// \param[in] input Input tensor.
+/// \param[out] output Output tensor.
+/// \param[in] sample_rate Sample rate of audio signal.
+/// \param[in] n_mfcc Number of mfc coefficients to retain.
+/// \param[in] dct_type Type of DCT (discrete cosine transform) to use.
+/// \param[in] log_mels Whether to use log-mel spectrograms instead of db-scaled.
+/// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins.
+/// \param[in] win_length Window size.
+/// \param[in] hop_length Length of hop between STFT windows.
+/// \param[in] f_min Minimum frequency.
+/// \param[in] f_max Maximum frequency.
+/// \param[in] pad Two sided padding of signal.
+/// \param[in] n_mels Number of mel filterbanks.
+/// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+/// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2 for power, etc.
+/// \param[in] normalized Whether to normalize by magnitude after stft.
+/// \param[in] center Whether to pad waveform on both sides.
+/// \param[in] pad_mode Controls the padding method used when center is True.
+/// \param[in] onesided Controls whether to return half of results to avoid redundancy.
+/// \param[in] norm Norm to use.
+/// \param[in] norm_M If 'slaney', divide the triangular mel weights by the width of the mel band (area normalization).
+/// \param[in] mel_scale Scale to use: htk or slaney.
+/// \return Status return code.
+Status MFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate, int32_t n_mfcc,
+            int32_t dct_type, bool log_mels, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min,
+            float f_max, int32_t pad, int32_t n_mels, WindowType window, float power, bool normalized, bool center,
+            BorderType pad_mode, bool onesided, NormType norm, NormMode norm_M, MelType mel_scale);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

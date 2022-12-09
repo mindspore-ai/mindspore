@@ -52,6 +52,7 @@
 #include "minddata/dataset/audio/ir/kernels/mask_along_axis_iid_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mask_along_axis_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mel_scale_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mfcc_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
@@ -477,6 +478,31 @@ PYBIND_REGISTER(MelScaleOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(mel_scale->ValidateParams());
                         return mel_scale;
                       }));
+                }));
+
+PYBIND_REGISTER(MFCCOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::MFCCOperation, TensorOperation, std::shared_ptr<audio::MFCCOperation>>(
+                    *m, "MFCCOperation")
+                    .def(py::init([](int32_t sample_rate, int32_t n_mfcc, int32_t dct_type, NormMode norm,
+                                     bool log_mels, const py::dict &melkwargs, WindowType window, BorderType pad_mode,
+                                     NormType norm_mel, MelType mel_scale) {
+                      int32_t n_fft = py::cast<int>(melkwargs["n_fft"]);
+                      int32_t win_length = py::cast<int>(melkwargs["win_length"]);
+                      int32_t hop_length = py::cast<int>(melkwargs["hop_length"]);
+                      float f_min = py::cast<float>(melkwargs["f_min"]);
+                      float f_max = py::cast<float>(melkwargs["f_max"]);
+                      int32_t pad = py::cast<int>(melkwargs["pad"]);
+                      int32_t n_mels = py::cast<int>(melkwargs["n_mels"]);
+                      float power = py::cast<float>(melkwargs["power"]);
+                      bool normalized = py::cast<bool>(melkwargs["normalized"]);
+                      bool center = py::cast<bool>(melkwargs["center"]);
+                      bool onesided = py::cast<bool>(melkwargs["onesided"]);
+                      auto mfcc = std::make_shared<audio::MFCCOperation>(
+                        sample_rate, n_mfcc, dct_type, norm, log_mels, n_fft, win_length, hop_length, f_min, f_max, pad,
+                        n_mels, window, power, normalized, center, pad_mode, onesided, norm_mel, mel_scale);
+                      THROW_IF_ERROR(mfcc->ValidateParams());
+                      return mfcc;
+                    }));
                 }));
 
 PYBIND_REGISTER(
