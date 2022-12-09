@@ -128,6 +128,10 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
   int Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &,
              const std::map<uint32_t, tensor::TensorPtr> &) override {
     auto v_shape = inputs.at(kIndex1)->GetShapeVector();
+    if (v_shape.at(0) != SizeToLong(indices_.size())) {
+      MS_LOG(ERROR) << "For 'InplaceOp', the size of indices must equal to input_v's shape[0].";
+      return KRET_RESIZE_FAILED;
+    }
 
     // x_shape_.size() == v_shape.size() is checked at front end
     // x_shape_[1:] == v_shape[1:] is checked at front end
