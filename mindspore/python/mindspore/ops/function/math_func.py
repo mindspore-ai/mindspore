@@ -3687,7 +3687,7 @@ def is_complex(x):
     Return True if the data type of the tensor is complex, otherwise return False.
 
     Args:
-        x (Tensor) - The input tensor.
+        x (Tensor): The input tensor.
 
     Returns:
         Bool, return whether the data type of the tensor is complex.

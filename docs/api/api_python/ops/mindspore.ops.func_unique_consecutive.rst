@@ -20,7 +20,7 @@ mindspore.ops.unique_consecutive
 
     异常：
         - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `x`的数据类型不支持。
+        - **TypeError** - `x` 的数据类型不支持。
         - **TypeError** - `return_idx` 不是bool。
         - **TypeError** - `return_counts` 不是bool。
         - **TypeError** - `axis` 不是int。
