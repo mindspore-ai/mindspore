@@ -21,6 +21,7 @@
 #include <NvInferVersion.h>
 #include <memory>
 #include <string>
+#include <map>
 #include "src/extendrt/delegate/tensorrt/tensorrt_context.h"
 #include "src/extendrt/delegate/tensorrt/tensor_info.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cublas_utils.h"
@@ -56,6 +57,28 @@ typedef union float32_bits {
   unsigned int u;
   float f;
 } float32_bits;
+
+// #define PROFILER_
+#ifdef PROFILER_
+struct SimpleProfiler : public nvinfer1::IProfiler {
+  struct Record {
+    float time{0};
+    int count{0};
+  };
+
+  virtual void reportLayerTime(const char *layerName, float ms) noexcept;
+
+  explicit SimpleProfiler(const char *name,
+                          const std::vector<SimpleProfiler> &srcProfilers = std::vector<SimpleProfiler>());
+
+  friend std::ostream &operator<<(std::ostream &out, const SimpleProfiler &value);
+
+ private:
+  std::string mName_;
+  std::vector<std::string> mLayerNames_;
+  std::map<std::string, Record> mProfile_;
+};
+#endif
 
 // Convert Tensor data to Cuda dims.
 nvinfer1::Dims ConvertCudaDims(const std::vector<int> &data);
@@ -194,4 +217,4 @@ void Data2Vector(std::vector<float> *dst, const void *src) {
   }
 }
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_UTILS_H_

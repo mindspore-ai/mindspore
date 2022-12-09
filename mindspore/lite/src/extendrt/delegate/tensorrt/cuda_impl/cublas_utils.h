@@ -62,10 +62,14 @@ void CublasMMBatched(void **a_addrs, void **b_addrs, void **c_addrs, const int *
 
 void CublasGemmWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params, const int *lds,
                        const cublasOperation_t *operations, const cudaDataType *data_types, void *alpha, void *beta,
-                       cublasHandle_t cublas_handle);
+                       cublasHandle_t cublas_handle, cublasGemmAlgo_t = CUBLAS_GEMM_DEFAULT_TENSOR_OP);
 void CublasGemmStridedBatchedWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params,
                                      const int *lds, const cublasOperation_t *operations, const int *strides,
                                      const cudaDataType *data_types, void *alpha, void *beta, int batch,
-                                     cublasHandle_t cublas_handle);
+                                     cublasHandle_t cublas_handle, cublasGemmAlgo_t = CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+
+void CublasLtGemmWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params, const int *lds,
+                         const cublasOperation_t *operations, const cudaDataType *data_types, void *alpha, void *beta,
+                         const void *bias, cudaStream_t stream, cublasLtHandle_t cublaslt_handle);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUBLAS_UTILS_H_

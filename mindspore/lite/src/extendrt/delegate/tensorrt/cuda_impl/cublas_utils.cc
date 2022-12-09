@@ -71,7 +71,7 @@ void CublasMMBatched(void **a_addrs, void **b_addrs, void **c_addrs, const int *
 
 void CublasGemmWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params, const int *lds,
                        const cublasOperation_t *operations, const cudaDataType *data_types, void *alpha, void *beta,
-                       cublasHandle_t cublas_handle) {
+                       cublasHandle_t cublas_handle, cublasGemmAlgo_t algo) {
   const int m = params[0];
   const int n = params[1];
   const int k = params[2];
@@ -84,15 +84,17 @@ void CublasGemmWrapper(const void *a_addr, const void *b_addr, void *c_addr, con
   cudaDataType type_b = data_types[1];
   cudaDataType type_c = data_types[2];
   cublasComputeType_t compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
-
+  if ((type_a == CUDA_R_16F) && (type_b == CUDA_R_16F) && (type_c == CUDA_R_16F)) {
+    compute_type = CUBLAS_COMPUTE_16F;
+  }
   CUBLAS_CHECK_VOID(cublasGemmEx(cublas_handle, trans_a, trans_b, m, n, k, alpha, a_addr, type_a, lda, b_addr, type_b,
-                                 ldb, beta, c_addr, type_c, ldc, compute_type, CUBLAS_GEMM_DEFAULT));
+                                 ldb, beta, c_addr, type_c, ldc, compute_type, algo));
 }
 
 void CublasGemmStridedBatchedWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params,
                                      const int *lds, const cublasOperation_t *operations, const int *strides,
                                      const cudaDataType *data_types, void *alpha, void *beta, int batch,
-                                     cublasHandle_t cublas_handle) {
+                                     cublasHandle_t cublas_handle, cublasGemmAlgo_t algo) {
   const int m = params[0];
   const int n = params[1];
   const int k = params[2];
@@ -105,12 +107,62 @@ void CublasGemmStridedBatchedWrapper(const void *a_addr, const void *b_addr, voi
   cudaDataType type_b = data_types[1];
   cudaDataType type_c = data_types[2];
   cublasComputeType_t compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
+  if ((type_a == CUDA_R_16F) && (type_b == CUDA_R_16F) && (type_c == CUDA_R_16F)) {
+    compute_type = CUBLAS_COMPUTE_16F;
+  }
   const int stride_a = strides[0];
   const int stride_b = strides[1];
   const int stride_c = strides[2];
 
   CUBLAS_CHECK_VOID(cublasGemmStridedBatchedEx(cublas_handle, trans_a, trans_b, m, n, k, alpha, a_addr, type_a, lda,
                                                stride_a, b_addr, type_b, ldb, stride_b, beta, c_addr, type_c, ldc,
-                                               stride_c, batch, compute_type, CUBLAS_GEMM_DEFAULT));
+                                               stride_c, batch, compute_type, algo));
+}
+
+void CublasLtGemmWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params, const int *lds,
+                         const cublasOperation_t *operations, const cudaDataType *data_types, void *alpha, void *beta,
+                         const void *bias, cudaStream_t stream, cublasLtHandle_t cublaslt_handle) {
+  cublasOperation_t trans_a = operations[0];
+  cublasOperation_t trans_b = operations[1];
+  cudaDataType type_a = data_types[0];
+  cudaDataType type_b = data_types[1];
+  cudaDataType type_c = data_types[2];
+  const int m = params[0];
+  const int n = params[1];
+  const int k = params[2];
+  const int lda = lds[0];
+  const int ldb = lds[1];
+  const int ldc = lds[2];
+
+  cublasLtMatrixLayout_t mat_a_desc = NULL;
+  cublasLtMatrixLayoutCreate(&mat_a_desc, type_a, (trans_a == CUBLAS_OP_N) ? m : k, (trans_a == CUBLAS_OP_N) ? k : m,
+                             lda);
+  cublasLtMatrixLayout_t mat_b_desc = NULL;
+  cublasLtMatrixLayoutCreate(&mat_b_desc, type_b, (trans_b == CUBLAS_OP_N) ? k : n, (trans_b == CUBLAS_OP_N) ? n : k,
+                             ldb);
+  cublasLtMatrixLayout_t mat_c_desc = NULL;
+  cublasLtMatrixLayoutCreate(&mat_c_desc, type_c, m, n, ldc);
+
+  cublasComputeType_t compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
+  if ((type_a == CUDA_R_16F) && (type_b == CUDA_R_16F) && (type_c == CUDA_R_16F)) {
+    compute_type = CUBLAS_COMPUTE_16F;
+  }
+
+  cublasLtMatmulDesc_t mat_operation_desc = NULL;
+  cublasLtMatmulDescCreate(&mat_operation_desc, compute_type, type_a);
+  cublasLtMatmulDescSetAttribute(mat_operation_desc, CUBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(cublasOperation_t));
+  cublasLtMatmulDescSetAttribute(mat_operation_desc, CUBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(cublasOperation_t));
+  if (bias != nullptr) {
+    cublasLtEpilogue_t epi = CUBLASLT_EPILOGUE_BIAS;
+    cublasLtMatmulDescSetAttribute(mat_operation_desc, CUBLASLT_MATMUL_DESC_EPILOGUE, &epi, sizeof(cublasLtEpilogue_t));
+    cublasLtMatmulDescSetAttribute(mat_operation_desc, CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias, sizeof(const void *));
+  }
+
+  cublasLtMatmul(cublaslt_handle, mat_operation_desc, alpha, a_addr, mat_a_desc, b_addr, mat_b_desc, beta, c_addr,
+                 mat_c_desc, c_addr, mat_c_desc, NULL, NULL, 0, stream);
+  cublasLtMatrixLayoutDestroy(mat_a_desc);
+  cublasLtMatrixLayoutDestroy(mat_b_desc);
+  cublasLtMatrixLayoutDestroy(mat_c_desc);
+  cublasLtMatmulDescDestroy(mat_operation_desc);
 }
 }  // namespace mindspore::lite

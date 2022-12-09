@@ -124,7 +124,8 @@ static BaseRef GetVar(const BaseRef &x) {
 
 EquivPtr MatchOnVar(const BaseRef &pattern, const BaseRef &expr, EquivPtr equiv) {
   MS_LOG(DEBUG) << "MatchOnVar pattern " + pattern.ToString() + " expr: " + expr.ToString();
-  MS_EXCEPTION_IF_NULL(equiv);
+
+  if (equiv == nullptr) MS_EXCEPTION_IF_NULL(equiv);
   if (utils::isa<VarPtr>(pattern)) {
     VarPtr var = utils::cast<VarPtr>(pattern);
     if (var->matches(expr)) {

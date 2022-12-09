@@ -39,13 +39,19 @@ int AttentionInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (q_weight->shape_size_ != C2NUM) {
     return NNACL_ERR;
   }
-  int batch = (q_input->shape_size_ == 2) ? 1 : q_input->shape_[0];
-  int f_seq = (q_input->shape_size_ == 2) ? q_input->shape_[0] : q_input->shape_[1];
+  int batch = (q_input->shape_size_ == C2NUM) ? 1 : q_input->shape_[0];
+  int f_seq = (q_input->shape_size_ == C2NUM) ? q_input->shape_[0] : q_input->shape_[1];
   int t_seq_len = k_input->shape_[1];
-  output0->shape_[FIRST_INPUT] = batch;
-  output0->shape_[SECOND_INPUT] = f_seq;
-  output0->shape_[THIRD_INPUT] = param->head_num_ * param->head_size_;
-  output0->shape_size_ = C3NUM;
+  if (q_input->shape_size_ == C2NUM) {
+    output0->shape_[FIRST_INPUT] = batch * f_seq;
+    output0->shape_[SECOND_INPUT] = param->head_num_ * param->head_size_;
+    output0->shape_size_ = C2NUM;
+  } else {
+    output0->shape_[FIRST_INPUT] = batch;
+    output0->shape_[SECOND_INPUT] = f_seq;
+    output0->shape_[THIRD_INPUT] = param->head_num_ * param->head_size_;
+    output0->shape_size_ = C3NUM;
+  }
   if (outputs_size >= C3NUM) {
     TensorC *output1 = outputs[SECOND_INPUT];
     SetDataTypeFormat(output1, q_input);

@@ -20,6 +20,8 @@
 #include <unordered_set>
 #include <numeric>
 #include <functional>
+#include <iomanip>
+#include <algorithm>
 #include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
@@ -176,6 +178,7 @@ nvinfer1::DataType ConvertDataType(DataType type_id) {
     {DataType::kNumberTypeInt32, nvinfer1::DataType::kINT32},
     {DataType::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
     {DataType::kNumberTypeFloat16, nvinfer1::DataType::kHALF},
+    {DataType::kNumberTypeInt64, nvinfer1::DataType::kINT32},
   };
   auto iter = data_type_map.find(type_id);
   nvinfer1::DataType data_type;
@@ -924,4 +927,66 @@ nvinfer1::DataType GetNvinferDataType<int>() {
 
 template nvinfer1::DataType GetNvinferDataType<float>();
 template nvinfer1::DataType GetNvinferDataType<int>();
+
+#ifdef PROFILER_
+void SimpleProfiler::reportLayerTime(const char *layerName, float ms) noexcept {
+  mProfile_[layerName].count++;
+  mProfile_[layerName].time += ms;
+  if (std::find(mLayerNames_.begin(), mLayerNames_.end(), layerName) == mLayerNames_.end()) {
+    mLayerNames_.push_back(layerName);
+  }
+}
+
+SimpleProfiler::SimpleProfiler(const char *name, const std::vector<SimpleProfiler> &srcProfilers) : mName_(name) {
+  for (const auto &srcProfiler : srcProfilers) {
+    for (const auto &rec : srcProfiler.mProfile_) {
+      auto it = mProfile_.find(rec.first);
+      if (it == mProfile_.end()) {
+        mProfile_.insert(rec);
+      } else {
+        it->second.time += rec.second.time;
+        it->second.count += rec.second.count;
+      }
+    }
+  }
+}
+
+std::ostream &operator<<(std::ostream &out, const SimpleProfiler &value) {
+  out << "========== " << value.mName_ << " profile ==========" << std::endl;
+  float totalTime = 0;
+  std::string layerNameStr = "TensorRT layer name";
+  int maxLayerNameLength = std::max(static_cast<int>(layerNameStr.size()), 70);
+  for (const auto &elem : value.mProfile_) {
+    totalTime += elem.second.time;
+    maxLayerNameLength = std::max(maxLayerNameLength, static_cast<int>(elem.first.size()));
+  }
+
+  auto old_settings = out.flags();
+  auto old_precision = out.precision();
+  // Output header
+  {
+    out << std::setw(maxLayerNameLength) << layerNameStr << " ";
+    out << std::setw(C12NUM) << "Runtime, "
+        << "%"
+        << " ";
+    out << std::setw(C12NUM) << "Invocations"
+        << " ";
+    out << std::setw(C12NUM) << "Runtime, ms" << std::endl;
+  }
+  for (size_t i = 0; i < value.mLayerNames_.size(); i++) {
+    const std::string layerName = value.mLayerNames_[i];
+    auto elem = value.mProfile_.at(layerName);
+    out << std::setw(maxLayerNameLength) << layerName << " ";
+    out << std::setw(C12NUM) << std::fixed << std::setprecision(1) << (elem.time * 100.0F / totalTime) << "%"
+        << " ";
+    out << std::setw(C12NUM) << elem.count << " ";
+    out << std::setw(C12NUM) << std::fixed << std::setprecision(C2NUM) << elem.time << std::endl;
+  }
+  out.flags(old_settings);
+  out.precision(old_precision);
+  out << "========== " << value.mName_ << " total runtime = " << totalTime << " ms ==========" << std::endl;
+
+  return out;
+}
+#endif  // PROFILER_
 }  // namespace mindspore::lite

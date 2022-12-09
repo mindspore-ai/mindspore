@@ -42,6 +42,7 @@
 #include <thread>
 #include "src/common/config_file.h"
 #endif
+
 namespace mindspore {
 constexpr size_t kDataToStringMaxNum = 40;
 constexpr int kPrintDataNum = 20;
