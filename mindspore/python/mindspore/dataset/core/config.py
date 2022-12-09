@@ -947,9 +947,9 @@ def get_error_samples_mode():
     Returns:
         ErrorSamplesMode, The method in which erroneous samples should be processed in a dataset pipeline.
 
-            - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
-            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
-            - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+        - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
+        - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
+        - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
 
     Examples:
         >>> error_samples_mode = ds.config.get_error_samples_mode()

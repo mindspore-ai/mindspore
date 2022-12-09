@@ -33,7 +33,7 @@ mindspore.ops.max_unpool3d
           取值范围需满足：
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]), (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]` 。
 
-    输出：
+    返回：
         shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 的Tensor，
         数据类型与输入 `x` 相同。
 
