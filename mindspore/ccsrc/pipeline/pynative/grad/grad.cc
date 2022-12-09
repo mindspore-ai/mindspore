@@ -760,9 +760,12 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
   auto pre_top_cell = already_run_top_cell_.at(already_top_cell_id);
   MS_EXCEPTION_IF_NULL(pre_top_cell);
 
-  if (input_args_info->use_dynamic_shape_process) {
+  // In high order situations, the internal top cell has changed, but outer top cell remains unchanged. Then outer
+  // bprop graph need compile again
+  if (input_args_info->use_dynamic_shape_process || new_top_cell->force_top_cell_compile()) {
     // Function need compile every time.
-    MS_LOG(DEBUG) << "The graph is dynamic, need to compile graph again";
+    input_args_info->use_dynamic_shape_process ? MS_LOG(DEBUG) << "The graph is dynamic, need to compile graph again"
+                                               : MS_LOG(DEBUG) << "Force outer graph compile graph";
     {
       py::gil_scoped_acquire acquire;
       EraseTopCellFromTopCellList(pre_top_cell);
@@ -1242,6 +1245,10 @@ void GradExecutor::SwitchTopCell() {
   // Get outer top cell
   auto outer_top_cell = PopHighOrderGraphStack();
   MS_EXCEPTION_IF_NULL(outer_top_cell);
+  // If inner graph compile graph, outer must be compile
+  if (top_cell()->vm_compile()) {
+    outer_top_cell->set_force_top_cell_compile(true);
+  }
   set_top_cell(outer_top_cell);
 }
 
