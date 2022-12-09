@@ -100,7 +100,6 @@ const std::map<uint32_t, std::string> error_msg = {
 };
 
 constexpr auto kUnknowErrorString = "Unknown error occurred";
-constexpr auto kSOC_VERSION = "SOC_VERSION";
 }  // namespace
 
 std::string GetErrorMessage(bool add_title) {
@@ -140,31 +139,13 @@ bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
 
 std::string GetSocVersion() {
   // Get default soc version.
-  static std::string version{};
+  static std::string version;
   if (version.empty()) {
     const int kSocVersionLen = 50;
     char soc_version[kSocVersionLen] = {0};
     auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-    }
-    // Get soc version from env value.
-    const char *soc_version_env = nullptr;
-    std::string str_soc_version_env = common::GetEnv(kSOC_VERSION);
-    if (!str_soc_version_env.empty()) {
-      soc_version_env = common::SafeCStr(str_soc_version_env);
-    }
-    if (soc_version_env != nullptr) {
-      if (std::strcmp(soc_version, soc_version_env) != 0) {
-        MS_LOG(DEBUG) << "Detected the env SOC_VERSION, so the SocVersion will be changed to " << str_soc_version_env
-                      << ".";
-        ret = rtSetSocVersion(soc_version_env);
-        if (ret != RT_ERROR_NONE) {
-          MS_LOG(EXCEPTION) << "SetSocVersion failed, errorno: " << ret;
-        }
-        version = soc_version_env;
-        return soc_version_env;
-      }
     }
     version = soc_version;
   }
