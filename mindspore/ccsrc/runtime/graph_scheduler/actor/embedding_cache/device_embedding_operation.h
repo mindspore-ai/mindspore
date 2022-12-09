@@ -84,6 +84,12 @@ class DeviceEmbeddingOperation {
   virtual bool LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num, size_t cache_size,
                                  size_t embedding_size, void *outputs) = 0;
 
+  // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
+  bool ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
+
+  // Parse the swap in information from device cache of the currently preprocessed id of the local host cache.
+  bool ParseHostDataDeviceToHost(size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
+
   // The actor which owns this operation.
   EmbeddingCachePrefetchActor *actor_;
 
