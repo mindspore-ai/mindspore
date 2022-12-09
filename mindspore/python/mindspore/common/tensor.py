@@ -805,7 +805,7 @@ class Tensor(Tensor_):
     def numpy(self):
         """
         Refer to `Tensor.asnumpy() \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.asnumpy.html>`_.
+        <https://www.mindspore.cn/docs/en/r2.0.0-alpha/api_python/mindspore/Tensor/mindspore.Tensor.asnumpy.html>`_.
         """
         return self.asnumpy()
 

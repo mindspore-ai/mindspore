@@ -12,9 +12,9 @@ mindspore.dataset.Dataset.map
     最后一个数据增强的输出列的列名由 `output_columns` 指定，如果没有指定 `output_columns` ，输出列名与 `input_columns` 一致。
 
     - 如果使用的是 `mindspore` `dataset` 提供的数据增强（
-      `vision类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#视觉>`_ ，
-      `nlp类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#文本>`_ ，
-      `audio类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#音频>`_ ），请使用如下参数：
+      `vision类 <https://mindspore.cn/docs/zh-CN/r2.0.0-alpha/api_python/mindspore.dataset.transforms.html#视觉>`_ ，
+      `nlp类 <https://mindspore.cn/docs/zh-CN/r2.0.0-alpha/api_python/mindspore.dataset.transforms.html#文本>`_ ，
+      `audio类 <https://mindspore.cn/docs/zh-CN/r2.0.0-alpha/api_python/mindspore.dataset.transforms.html#音频>`_ ），请使用如下参数：
 
       .. image:: map_parameter_cn.png
 
