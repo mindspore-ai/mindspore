@@ -292,7 +292,22 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   return true;
 }
 }  // namespace
-
+void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
+  for (auto &node : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(node->input(0));
+    bool enable = false;
+    if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
+      if (kernel::IfNeedSkipResize(node)) {
+        MS_LOG(DEBUG) << "Enable Run Graph By Single Op";
+        enable = true;
+      }
+    }
+    if (common::AnfAlgo::IsControlOpExecInBackend(node) || enable) {
+      graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
+      break;
+    }
+  }
+}
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context, device::RunMode run_mode,
                                     bool run_in_pynative) {
@@ -361,11 +376,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
-  for (auto &node : graph->execution_order()) {
-    if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
-      graph->set_flag(kFlagsIsCutGraph, true);
-    }
-  }
+  SetRunGraphBySingleOpFlag(graph);
 
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
@@ -458,7 +469,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   } else {
     for (auto &node : root_graph->execution_order()) {
       if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
-        root_graph->set_flag(kFlagsIsCutGraph, true);
+        root_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
       }
     }
     root_graph->set_front_outputs({func_graph->output()});
@@ -486,7 +497,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // Execute optimization pass.
   device_context->kernel_executor_->OptimizeGraph(graph);
-
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   device_context->kernel_executor_->CreateKernel(graph->execution_order());

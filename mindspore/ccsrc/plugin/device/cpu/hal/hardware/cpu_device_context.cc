@@ -357,9 +357,12 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
       }
-      if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
-        MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Resize failed.";
+      if (!kernel::IfNeedSkipResize(node)) {
+        if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+          MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Resize failed.";
+        }
       }
+
       AnfAlgo::SetKernelMod(cpu_kernel, node.get());
     }
   }

@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <set>
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -128,7 +129,7 @@ class MatrixInfo {
   std::vector<size_t> current_indexes_;
 };
 using MatrixInfoPtr = std::shared_ptr<MatrixInfo>;
-
+std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node);
 BACKEND_EXPORT std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment);
 int CalDiagOffset(int diag_index, int max_diag_len, int inner_rows, int inner_cols,
                   const std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> &alignment);
@@ -421,6 +422,8 @@ BACKEND_EXPORT void SetInputsByDependMap(const std::map<uint32_t, tensor::Tensor
                                          std::vector<KernelTensorPtr> *inputs, bool is_stored_in_device = false);
 BACKEND_EXPORT void SetInputsByConstInputs(const CNodePtr &node,
                                            std::map<uint32_t, tensor::TensorPtr> *inputs_tensor_map);
+BACKEND_EXPORT bool IfNeedSkipResize(const CNodePtr &node);
+
 inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cnode) {
   auto args = GetArgsFromCNode(cnode);
   if (args) {
