@@ -82,6 +82,10 @@ class TopCellInfo {
   inline bool need_compile_graph() const { return need_compile_graph_; }
   inline void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
   inline bool vm_compile() const { return vm_compile_; }
+  inline void set_force_top_cell_compile(bool force_top_cell_compile) {
+    force_top_cell_compile_ = force_top_cell_compile;
+  }
+  inline bool force_top_cell_compile() const { return force_top_cell_compile_; }
   inline bool is_high_order_top_cell() const { return is_high_order_top_cell_; }
   inline void set_need_do_final_opt(bool need_do_final_opt) { need_do_final_opt_ = need_do_final_opt; }
   inline bool need_do_final_opt() const { return need_do_final_opt_; }
@@ -155,6 +159,7 @@ class TopCellInfo {
   bool forward_already_run_{false};
   bool need_compile_graph_{false};
   bool vm_compile_{false};
+  bool force_top_cell_compile_{false};
   bool is_high_order_top_cell_{false};
   bool need_do_final_opt_{false};
   size_t op_index_{0};
