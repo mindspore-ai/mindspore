@@ -17,6 +17,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <utility>
 #include <functional>
 #include <algorithm>
 #include "ir/value.h"
@@ -129,26 +130,20 @@ aclDataBuffer *AclOpDesc::CreateDataBuf(const AddressPtr &address, const size_t 
 void AclOpDesc::AddTensorDesc(const std::vector<GeTensorDescPtr> &inputs, const std::vector<GeTensorDescPtr> &outputs) {
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_tensor_desc_),
                        [this](const GeTensorDescPtr &desc) -> aclTensorDesc * {
-                         if (desc->GetDataType() == GeDataType::DT_UNDEFINED) {
+                         if (desc == nullptr) {
                            return nullptr;
                          } else {
                            return CreateTensorDesc(desc);
                          }
                        });
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_tensor_desc_),
-                       [this](const GeTensorDescPtr &desc) { return CreateTensorDesc(desc); });
-}
-
-void AclOpDesc::CreateNullAclTensor(const size_t idx, const bool is_input) {
-  auto null_desc = aclCreateTensorDesc(ACL_DT_UNDEFINED, 0, nullptr, ACL_FORMAT_UNDEFINED);
-  auto null_buf = aclCreateDataBuffer(nullptr, 0);
-  if (is_input) {
-    input_tensor_desc_[idx] = null_desc;
-    (void)input_tensor_data_.emplace_back(null_buf);
-    return;
-  }
-  output_tensor_desc_[idx] = null_desc;
-  (void)output_tensor_data_.emplace_back(null_buf);
+                       [this](const GeTensorDescPtr &desc) -> aclTensorDesc * {
+                         if (desc == nullptr) {
+                           return nullptr;
+                         } else {
+                           return CreateTensorDesc(desc);
+                         }
+                       });
 }
 
 void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
@@ -156,10 +151,6 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
   for (size_t i = 0; i < input_size_list.size(); ++i) {
     if (input_size_list[i] == SIZE_MAX) {
       CreateNullAclTensor(i, true);
-      continue;
-    }
-    if (input_size_list[i] == 0) {
-      (void)input_tensor_data_.emplace_back(nullptr);
       continue;
     }
     auto data_buf = CreateDataBuf(inputs[i], input_size_list[i]);
@@ -173,13 +164,18 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
     auto data_buf = CreateDataBuf(outputs[i], output_size_list[i]);
     (void)output_tensor_data_.emplace_back(data_buf);
   }
+}
 
-  (void)input_tensor_desc_.erase(std::remove_if(input_tensor_desc_.begin(), input_tensor_desc_.end(),
-                                                [](aclTensorDesc *desc) { return desc == nullptr; }),
-                                 input_tensor_desc_.end());
-  (void)input_tensor_data_.erase(std::remove_if(input_tensor_data_.begin(), input_tensor_data_.end(),
-                                                [](aclDataBuffer *buf) { return buf == nullptr; }),
-                                 input_tensor_data_.end());
+void AclOpDesc::CreateNullAclTensor(const size_t idx, const bool is_input) {
+  auto null_desc = aclCreateTensorDesc(ACL_DT_UNDEFINED, 0, nullptr, ACL_FORMAT_UNDEFINED);
+  auto null_buf = aclCreateDataBuffer(nullptr, 0);
+  if (is_input) {
+    input_tensor_desc_[idx] = null_desc;
+    (void)input_tensor_data_.emplace_back(null_buf);
+    return;
+  }
+  output_tensor_desc_[idx] = null_desc;
+  (void)output_tensor_data_.emplace_back(null_buf);
 }
 
 void AclOpDesc::ProcessAclAttrs(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode) {
@@ -375,15 +371,18 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
 
   // Set by input name
   auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
   const auto &attr_to_input_maps = GeOpConvertor::GetNeedAddInput(node, true);
   auto to_input_name = attr_to_input_maps.at(attr_name);
   const auto &input_names = kernel::AclUtils::GetOpInputAnchorNames(node);
-  auto iter = std::find(input_names.begin(), input_names.end(), to_input_name);
+  auto iter = std::find_if(
+    input_names.begin(), input_names.end(),
+    [&to_input_name](const std::pair<int, std::string> &input_Name) { return (input_Name.second == to_input_name); });
   if (iter == input_names.end()) {
-    MS_LOG(EXCEPTION) << "Error input name!" << to_input_name;
+    MS_LOG(EXCEPTION) << "Error input name of " << to_input_name;
   }
-  size_t index = iter - input_names.begin();
-  if (index >= input_tensor_desc_.size() || index >= input_tensor_desc_.size()) {
+  size_t index = IntToSize(iter->first);
+  if (index >= input_tensor_desc_.size() || index >= input_tensor_data_.size()) {
     MS_LOG(EXCEPTION) << "Please check before operator of acl tensor of index " << index;
   }
   input_tensor_desc_[index] = tensor_desc;
@@ -490,104 +489,39 @@ bool AclUtils::UpdateTensorDesc(const AnfNodePtr &anf_node, std::vector<GeTensor
 
 std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
-  const auto &remove_index = GeOpConvertor::GetNeedRemoveInput(anf_node, true);
-
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<size_t> useless_input_lists;
-  if (common::AnfAlgo::HasNodeAttr(kAttrUselessInput, cnode)) {
-    useless_input_lists = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(cnode, kAttrUselessInput);
-  }
-
-  std::vector<GeTensorDescPtr> res;
-  auto useless_inputs = GetUselessInputs(anf_node);
   auto input_anchor_names = GetOpInputAnchorNames(anf_node);
+  std::vector<GeTensorDescPtr> res;
+  res.resize(input_anchor_names.size(), nullptr);
   for (size_t i = 0; i < input_num; ++i) {
-    auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(anf_node, i);
-    if (index >= input_num) {
-      MS_LOG(EXCEPTION) << "Error real index:" << index;
-    }
-    if (input_anchor_names.size() <= i) {
-      MS_LOG(EXCEPTION) << "Index [" << i
-                        << "] exceed the size of all input names, node:" << anf_node->fullname_with_scope();
-    }
-    if (useless_inputs.count(input_anchor_names[i])) {
-      MS_LOG(INFO) << "For op: [" << anf_node->fullname_with_scope() << "], current input anchor name:["
-                   << input_anchor_names[i] << "] is useless, need skip.";
+    auto index = AnfAlgo::GetInputKernelIdxByGraphIdx(anf_node, i);
+    if (input_anchor_names.find(index) == input_anchor_names.end()) {
+      MS_LOG(INFO) << "Error input index for adaptor:" << index << " of node " << anf_node->fullname_with_scope();
       continue;
     }
-    if (remove_index.count(index + 1) != 0) {
-      MS_LOG(INFO) << "Current node's input " << (index + 1) << " need convert to attr or useless input!";
-      continue;
-    }
-    if (std::find(useless_input_lists.begin(), useless_input_lists.end(), i) != useless_input_lists.end()) {
-      MS_LOG(INFO) << "Current node's input " << i << " is useless!";
-      auto desc = std::make_shared<GeTensorDesc>(GeShape(), GeFormat::FORMAT_ND, GeDataType::DT_UNDEFINED);
-      MS_EXCEPTION_IF_NULL(desc);
-      (void)res.emplace_back(desc);
-      continue;
-    }
-    auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, index);
-    auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, index);
-    auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, index);
-    auto input_format = AnfAlgo::GetInputFormat(anf_node, index);
+    auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, i);
+    auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, i);
+    auto input_type = AnfAlgo::GetInputDeviceDataType(anf_node, i);
+    auto input_format = AnfAlgo::GetInputFormat(anf_node, i);
     auto ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
-    (void)res.emplace_back(input_desc);
-  }
-
-  if (GeOpConvertor::GetAclInputSize(anf_node) > input_num) {
-    for (size_t i = input_num; i < GetOpInputAnchorNames(anf_node).size(); i++) {
-      auto desc = std::make_shared<GeTensorDesc>(GeShape(), GeFormat::FORMAT_ND, GeDataType::DT_UNDEFINED);
-      MS_EXCEPTION_IF_NULL(desc);
-      (void)res.emplace_back(desc);
-    }
+    res[index] = input_desc;
   }
   return res;
 }
 
-std::set<std::string> AclUtils::GetUselessInputs(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  static const std::map<std::string, std::set<std::string>> kMsUselessInputs = {
-    {prim::kPrimAvgPool->name(), {"filter", "bias"}}};
-  auto op_name = common::AnfAlgo::GetCNodeName(node);
-  auto iter = kMsUselessInputs.find(op_name);
-  if (iter != kMsUselessInputs.end()) {
-    return iter->second;
-  }
-  return {};
-}
-
-std::set<std::string> AclUtils::GetUselessOutputs(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  static const std::map<std::string, std::set<std::string>> kMsUselessOutputs = {
-    {prim::kPrimApplyMomentum->name(), {"accum"}},
-    {prim::kPrimApplyFtrlD->name(), {"accum", "linear"}},
-    {prim::kPrimSparseApplyFtrlV2D->name(), {"accum", "linear"}}};
-  auto op_name = common::AnfAlgo::GetCNodeName(node);
-  auto iter = kMsUselessOutputs.find(op_name);
-  if (iter != kMsUselessOutputs.end()) {
-    return iter->second;
-  }
-  return {};
-}
-
 std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
-  std::vector<GeTensorDescPtr> res;
-  auto useless_outputs = GetUselessOutputs(anf_node);
   auto out_anchor_names = GetOpOutputAnchorNames(anf_node);
+  std::vector<GeTensorDescPtr> res;
+  res.resize(out_anchor_names.size(), nullptr);
   for (size_t i = 0; i < output_num; ++i) {
-    if (out_anchor_names.size() <= i) {
-      MS_LOG(EXCEPTION) << "Index [" << i
-                        << "] exceed the size of all input names, node:" << anf_node->fullname_with_scope();
-    }
-    if (useless_outputs.count(out_anchor_names[i])) {
-      MS_LOG(INFO) << "For op: [" << anf_node->fullname_with_scope() << "],current out anchor name:["
-                   << out_anchor_names[i] << "] is useless, need skip.";
+    if (out_anchor_names.find(i) == out_anchor_names.end()) {
+      MS_LOG(INFO) << "Error input index for adaptor:" << i << " of node " << anf_node->fullname_with_scope();
       continue;
     }
     auto ori_shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
@@ -597,73 +531,37 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
     auto ori_format = IsOneOf3DFormat(output_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
     auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);
-    (void)res.emplace_back(output_desc);
-  }
-
-  if (GeOpConvertor::GetAclOutputSize(anf_node) > output_num) {
-    for (size_t i = output_num; i < GetOpOutputAnchorNames(anf_node).size(); i++) {
-      auto desc = std::make_shared<GeTensorDesc>(GeShape(), GeFormat::FORMAT_ND, GeDataType::DT_UNDEFINED);
-      MS_EXCEPTION_IF_NULL(desc);
-      (void)res.emplace_back(desc);
-    }
+    res[i] = output_desc;
   }
   return res;
 }
 
-std::shared_ptr<OpInfo> AclUtils::GetKernelOpInfo(const AnfNodePtr &node) {
+std::map<int, std::string> AclUtils::GetOpInputAnchorNames(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto op_type = GeOpConvertor::GetOpType(node, true);
-  auto op_info_ptr = kernel::OpLib::FindOp(op_type, kernel::kImplyTBE);
-  return op_info_ptr;
-}
+  // Adaptor info
+  auto adaptor_input_info = GeOpConvertor::GetAclInputNames(node);
 
-std::vector<std::string> AclUtils::GetOpInputAnchorNames(const AnfNodePtr &node) {
-  auto op_info_ptr = GetKernelOpInfo(node);
-  MS_EXCEPTION_IF_NULL(op_info_ptr);
-  auto inputs_ptr = op_info_ptr->inputs_ptr();
-  auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  size_t dynamic_input_index = 0;
-  std::vector<int64_t> dynamic_inputs_list;
-  std::vector<std::string> input_names;
-  if (primitive->GetAttr(kAttrDynInputSizes) != nullptr) {
-    dynamic_inputs_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
-  }
-  for (const auto &item : inputs_ptr) {
-    MS_EXCEPTION_IF_NULL(item);
-    if (item->param_type() == kParamDynamic) {
-      if (dynamic_input_index > dynamic_inputs_list.size()) {
-        MS_LOG(EXCEPTION) << "Dynamic input index should be less than the dynamic input's size.";
-      }
-      auto real_inputs_num = dynamic_inputs_list[dynamic_input_index];
-      for (auto k = 0; k < real_inputs_num; k++) {
-        std::string input_name = item->name() + "_dynamic_" + std::to_string(k);
-        (void)input_names.emplace_back(input_name);
-      }
-    } else {
-      (void)input_names.emplace_back(item->name());
+  std::map<int, std::string> input_names;
+  // TODO(acl): Need support useless input, input to attribute and dynamic input!
+  for (const auto &[index, name] : adaptor_input_info) {
+    auto real_index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, index - 1) + 1;
+    if (adaptor_input_info.find(real_index) == adaptor_input_info.end()) {
+      MS_LOG(EXCEPTION) << "Error real index for adaptor's input:" << real_index << " for " << name;
     }
-    dynamic_input_index++;
+    input_names.emplace(real_index - 1, adaptor_input_info[real_index]);
   }
   return input_names;
 }
 
-std::vector<std::string> AclUtils::GetOpOutputAnchorNames(const AnfNodePtr &node) {
-  auto op_info_ptr = GetKernelOpInfo(node);
-  auto outputs_ptr = op_info_ptr->outputs_ptr();
-  std::vector<std::string> output_names;
-  for (const auto &out_item : outputs_ptr) {
-    MS_EXCEPTION_IF_NULL(out_item);
-    if (out_item->param_type() == kParamDynamic && outputs_ptr.size() == 1) {
-      std::string output_name;
-      auto real_outputs_size = common::AnfAlgo::GetOutputTensorNum(node);
-      for (size_t i = 0; i < real_outputs_size; i++) {
-        output_name = out_item->name() + "_dynamic_" + std::to_string(i);
-        (void)output_names.emplace_back(output_name);
-      }
-    } else {
-      (void)output_names.emplace_back(out_item->name());
-    }
+std::map<int, std::string> AclUtils::GetOpOutputAnchorNames(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  // Adaptor info
+  auto adaptor_output_info = GeOpConvertor::GetAclOutputNames(node);
+
+  std::map<int, std::string> output_names;
+  // TODO(acl): Need support useless output and dynamic output!
+  for (const auto &[index, name] : adaptor_output_info) {
+    output_names.emplace(index, name);
   }
   return output_names;
 }

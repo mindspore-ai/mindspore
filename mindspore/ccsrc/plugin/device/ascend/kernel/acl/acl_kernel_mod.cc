@@ -35,38 +35,29 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-
   if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
 
-  std::vector<size_t> useless_input_lists;
+  const auto &input_names = AclUtils::GetOpInputAnchorNames(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   // Update input size list
-  for (size_t i = 0; i < input_size_list_.size(); ++i) {
-    auto index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
-    if (index >= input_size_list_.size()) {
-      MS_LOG(EXCEPTION) << "Error real index:" << index;
+  for (size_t i = 0; i < input_num; ++i) {
+    auto index = AnfAlgo::GetInputKernelIdxByGraphIdx(node, i);
+    if (input_names.find(index) == input_names.end()) {
+      MS_LOG(INFO) << "Error input index for adaptor:" << index << " of node " << cnode->fullname_with_scope();
+      continue;
     }
-    TypeId type_id = AnfAlgo::GetInputDeviceDataType(node, index);
+    TypeId type_id = AnfAlgo::GetInputDeviceDataType(node, i);
     auto type_size = GetTypeByte(TypeIdToType(type_id));
-    auto shape = AnfAlgo::GetInputDeviceShape(node, index);
+    auto shape = AnfAlgo::GetInputDeviceShape(node, i);
     if (IsDynamic(shape)) {
       MS_LOG(ERROR) << "Please check infer op shape before resize, error input index is:" << i;
       return 1;
     }
-    input_size_list_[i] = type_size * SizeOf(shape);
-    if (input_size_list_[i] == 0) {
-      if (type_size == 0) {
-        input_size_list_[i] = SIZE_MAX;
-        MS_LOG(INFO) << "Useless optional input" << i << " with node " << node->DebugString();
-      } else {
-        MS_LOG(INFO) << "Useless dynamic zero input" << i << " with node " << node->DebugString();
-      }
-      (void)useless_input_lists.emplace_back(i);
-    }
+    auto input_size = type_size * SizeOf(shape);
+    input_size_list_[index] = (input_size == 0) ? SIZE_MAX : input_size;
   }
-  common::AnfAlgo::SetNodeAttr(kAttrUselessInput, MakeValue(useless_input_lists), node);
-
   // Update output size list
   AscendKernelMod::UpdateOutputSizeList();
 
@@ -79,6 +70,8 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
 bool AclKernelMod::SkipUnRunNode(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                                  void *stream_ptr, const size_t input_size) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
   for (auto &[attr_name, value] : attr_list_) {
     // Special process of dynamic input number.
     if (value == nullptr) {
@@ -104,10 +97,10 @@ bool AclKernelMod::SkipUnRunNode(const std::vector<AddressPtr> &inputs, const st
         auto status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[index]->addr, inputs[index]->size,
                                        ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
         if (status != ACL_SUCCESS) {
-          MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << anf_node_.lock()->fullname_with_scope();
+          MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << node->fullname_with_scope();
         }
 
-        MS_LOG(INFO) << "Execute node:" << anf_node_.lock()->fullname_with_scope() << " success.";
+        MS_LOG(INFO) << "Execute node:" << node->fullname_with_scope() << " success.";
         return true;
       }
     }
@@ -117,20 +110,22 @@ bool AclKernelMod::SkipUnRunNode(const std::vector<AddressPtr> &inputs, const st
 
 void AclKernelMod::ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr) {
   auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
   const auto &attr_to_input_maps = GeOpConvertor::GetNeedAddInput(node, true);
   const auto &input_names = kernel::AclUtils::GetOpInputAnchorNames(node);
   for (auto &[attr_name, value] : attr_list_) {
     if (value == nullptr) {
-      MS_LOG(WARNING) << "Current node's attr [" << attr_name << "] is nullptr";
+      MS_LOG(INFO) << "Current node's attr [" << attr_name << "] is nullptr";
       continue;
     }
-    MS_LOG(INFO) << attr_name << " --- " << value->ToString();
     if (attr_to_input_maps.count(attr_name) != 0) {
       auto to_input_name = attr_to_input_maps.at(attr_name);
-      MS_LOG(INFO) << to_input_name << " --- " << input_names;
-      auto iter = std::find(input_names.begin(), input_names.end(), to_input_name);
+      auto iter = std::find_if(input_names.begin(), input_names.end(),
+                               [&to_input_name](const std::pair<int, std::string> &input_Name) {
+                                 return (input_Name.second == to_input_name);
+                               });
       if (iter == input_names.end()) {
-        MS_LOG(EXCEPTION) << "Adaptor's attr name " << to_input_name << " isn't match any input name:" << input_names;
+        MS_LOG(EXCEPTION) << "Error input name!" << to_input_name;
       }
       op_desc_ptr->ProcessAclAttrs(attr_name, value, SET_ACL_INPUT);
       continue;
@@ -146,6 +141,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
   auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
   auto op_desc_ptr = std::make_shared<AclOpDesc>(op_type_, node);
   MS_EXCEPTION_IF_NULL(op_desc_ptr);
   op_desc_ptr->AddTensorDesc(input_desc_list_, output_desc_list_);
@@ -178,7 +174,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                                     ACL_COMPILE_SYS, nullptr, stream_ptr);
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Acl compile and execute failed! op_name is " << op_type_ << " and op info is "
-                  << anf_node_.lock()->DebugString();
+                  << node->DebugString();
     return false;
   }
 

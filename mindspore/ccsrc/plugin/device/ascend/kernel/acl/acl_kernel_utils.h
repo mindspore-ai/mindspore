@@ -107,11 +107,10 @@ class AclUtils {
   static std::vector<GeTensorDescPtr> GetInputTensorDesc(const AnfNodePtr &anf_node);
 
   static std::vector<GeTensorDescPtr> GetOutputTensorDesc(const AnfNodePtr &anf_node);
-  static std::shared_ptr<OpInfo> GetKernelOpInfo(const AnfNodePtr &node);
-  static std::vector<std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
-  static std::vector<std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
-  static std::set<std::string> GetUselessOutputs(const AnfNodePtr &node);
-  static std::set<std::string> GetUselessInputs(const AnfNodePtr &node);
+
+  static std::map<int, std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
+
+  static std::map<int, std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
 };
 }  // namespace kernel
 }  // namespace mindspore

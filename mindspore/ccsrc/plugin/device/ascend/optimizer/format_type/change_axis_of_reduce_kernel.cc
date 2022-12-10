@@ -139,6 +139,10 @@ void ChangeAxisOfReduceKernel::NormalizeReduceAttrAxis(const CNodePtr &cnode) {
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   auto axis_list = kernel::GetReduceAttrAxis(cnode);
   if (axis_list.empty()) {
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      (void)axis.emplace_back(SizeToLong(i));
+    }
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
     return;
   }
   for (const auto &elem : axis_list) {
