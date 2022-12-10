@@ -68,9 +68,9 @@ class MIND_API Splice : public BaseOperator {
   ///
   /// \param[in] output_dim Define the output_dim.
   int64_t get_output_dim() const;
-  MIND_API abstract::AbstractBasePtr SpliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 };
+MIND_API abstract::AbstractBasePtr SpliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

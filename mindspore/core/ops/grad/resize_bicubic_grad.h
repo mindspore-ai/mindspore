@@ -38,14 +38,11 @@ class MIND_API ResizeBicubicGrad : public BaseOperator {
   void set_half_pixel_centers(const bool half_pixel_centers);
   bool get_align_corners() const;
   bool get_half_pixel_centers() const;
-  MIND_API abstract::AbstractBasePtr ResizeBicubicGradInfer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<AbstractBasePtr> &input_args);
-  using PrimResizeBicubicGrad = std::shared_ptr<ResizeBicubicGrad>;
 };
 MIND_API abstract::AbstractBasePtr ResizeBicubicGradInfer(const abstract::AnalysisEnginePtr &,
                                                           const PrimitivePtr &primitive,
                                                           const std::vector<AbstractBasePtr> &input_args);
+using PrimResizeBicubicGrad = std::shared_ptr<ResizeBicubicGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
