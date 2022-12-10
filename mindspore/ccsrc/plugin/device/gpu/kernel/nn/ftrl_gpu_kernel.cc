@@ -57,9 +57,6 @@ bool FtrlGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   return true;
 }
 
-using complex64 = __complex__ float;
-using complex128 = __complex__ double;
-
 std::vector<std::pair<KernelAttr, FtrlGpuKernelMod::FtrlLaunchFunc>> FtrlGpuKernelMod::func_list_ = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
