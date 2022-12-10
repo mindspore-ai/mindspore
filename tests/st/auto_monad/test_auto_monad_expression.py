@@ -13,13 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
+import numpy as np
 from mindspore.nn import Cell
 from mindspore import context, Tensor, Parameter
 import mindspore.ops.operations as P
+import mindspore.ops as ops
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 import mindspore as ms
-import numpy as np
+from mindspore import jit
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -450,3 +452,39 @@ def test_parameter_value_control_flow_ascend():
     context.set_context(mode=context.GRAPH_MODE)
     graph_out = net(input_x, input_y)
     assert graph_out == (9, 4)
+
+
+def test_control_while_for_if_break_parameter():
+    """
+    Feature: UpdateState grad in pynative mode.
+    Description: UpdateState grad with multi inputs.
+    Expectation: No exception.
+    """
+    class Net30(Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = P.ReLU()
+            self.add = P.Add()
+            add_np = np.full((4, 4, 4), 0.5, dtype=np.float32)
+            self.add_weight = Parameter(Tensor(add_np), name="add_weight")
+
+        @jit
+        def construct(self, x, y, z):
+            out = z
+            while x < y:
+                if 2 * x < y:
+                    out = self.add(out, self.add_weight)
+                elif 3 * x < y:
+                    out = self.relu(out)
+                    x = x + 1
+                else:
+                    break
+                x = x + 1
+
+            out = self.relu(out)
+            return out
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net30()
+    ms_grad = ops.GradOperation(get_all=True, get_by_list=True, sens_param=False)
+    ms_grad(net)(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4)))

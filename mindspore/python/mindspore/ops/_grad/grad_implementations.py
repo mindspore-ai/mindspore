@@ -175,12 +175,6 @@ def _fprop_switch_layer(index, layers):
     return F.switch_layer(index, layers), _bprop_switch_layer
 
 
-@bprops.register("UpdateState")
-def bprop_update_state(u_monad, x, out, dout):
-    """Backpropagator for primitive `UpdateState`."""
-    return C.zeros_like(u_monad), C.zeros_like(x)
-
-
 @bprops.register("Load")
 def bprop_load(param, u_monad, out, dout):
     """Backpropagator for primitive `load`."""

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -438,6 +438,55 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeList));
+  return fg;
+}
+
+FuncGraphPtr UpdateStateGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  int64_t input_size = SizeToLong(args_spec_list.size());
+  std::ostringstream ss;
+  // ▶update_state_
+  ss << "\u25B8update_state_" << input_size;
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+  fg->debug_info()->set_name(ss.str());
+
+  std::vector<AnfNodePtr> params;
+  params.push_back(NewValueNode(prim::kPrimUpdateState));
+  for (int64_t i = 0; i < input_size; ++i) {
+    params.push_back(fg->add_parameter());
+  }
+
+  // make fprob first result, updatestate's forward result.
+  AnfNodePtr out = fg->NewCNodeInOrder(params);
+
+  // make fprob second result, updatestate's backward function.
+  FuncGraphPtr b = std::make_shared<FuncGraph>();
+
+  ss.str(std::string());
+  ss.clear();
+  // ◀update_state_
+  ss << "\u25C2update_state_" << input_size;
+  b->debug_info()->set_name(ss.str());
+
+  std::vector<AnfNodePtr> grads;
+  grads.push_back(NewValueNode(prim::kPrimMakeTuple));
+  b->add_parameter();
+  grads.push_back(NewEnviron(b));
+  // bprop_update_state(u_monad, x1, x2, ..., xn, out, dout):
+  //    return C.zeros_like(u_monad), C.zeros_like(x1), C.zeros_like(x2), ..., C.zeros_like(xn)
+  grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("zeros_like")), params[1]}));
+  constexpr size_t input_index = 2;
+  for (size_t i = input_index; i < params.size(); ++i) {
+    grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("zeros_like")), params[i]}));
+  }
+
+  b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  auto grad_node = b->NewCNodeInOrder(grads);
+  b->set_output(grad_node);
+
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  auto output = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)});
+  fg->set_output(output);
+  (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimUpdateState));
   return fg;
 }
 

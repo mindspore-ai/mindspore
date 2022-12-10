@@ -181,6 +181,8 @@ class AutoGradCellImpl {
   void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
   void ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg);
+  void DoParameterReplaceByManager(const AnfNodePtrList &weights, bool has_sens_arg);
+  void DoParameterReplaceByUser(const AnfNodePtrList &weights, bool has_sens_arg);
   // Set sens and weights parameter nodes by user input info
   void SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg);
   // get last reverse iterator

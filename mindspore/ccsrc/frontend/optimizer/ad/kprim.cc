@@ -102,15 +102,21 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
     return iter->second;
   }
 
-  if (prim->Hash() == prim::kPrimMakeTuple->Hash() && prim->name() == prim::kPrimMakeTuple->name()) {
+  if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
     MetaFuncGraphPtr meta = std::make_shared<prim::MakeTupleGradient>("make_tuple_gradient");
     bprop_registry_meta_[prim::kPrimMakeTuple] = meta;
     return meta;
   }
 
-  if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
+  if (IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     MetaFuncGraphPtr meta = std::make_shared<prim::MakeListGradient>("make_list_gradient");
     bprop_registry_meta_[prim::kPrimMakeList] = meta;
+    return meta;
+  }
+
+  if (IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
+    MetaFuncGraphPtr meta = std::make_shared<prim::UpdateStateGradient>("update_state_gradient");
+    bprop_registry_meta_[prim::kPrimUpdateState] = meta;
     return meta;
   }
 
@@ -212,19 +218,17 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   }
 
   auto prim = GetValueNode<PrimitivePtr>(value_node);
-  if (prim->Hash() == prim::kPrimSwitchLayer->Hash() && prim->name() == prim::kPrimSwitchLayer->name()) {
+  if (IsPrimitiveEquals(prim, prim::kPrimSwitchLayer)) {
     auto fprop = GetFprop(prim);
     fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
     return fprop;
-  } else if (prim->Hash() == prim::kPrimMakeTuple->Hash() && prim->name() == prim::kPrimMakeTuple->name()) {
-    return nullptr;
-  } else if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
+  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList) ||
+             IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
     return nullptr;
   }
 
   FuncGraphPtr bprop_fg = nullptr;
-  if ((prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) ||
-      (prim->Hash() == prim::kPrimCellBackwardHook->Hash() && prim->name() == prim::kPrimCellBackwardHook->name())) {
+  if (IsPrimitiveEquals(prim, prim::kPrimHookBackward) || IsPrimitiveEquals(prim, prim::kPrimCellBackwardHook)) {
     if (MsContext::GetInstance()->get_param<int>(MsCtxParam::MS_CTX_EXECUTION_MODE) == kGraphMode) {
       MS_LOG(EXCEPTION)
         << "The Hook operation is not supported in graph mode, which is only supported in pynative mode.\n"
