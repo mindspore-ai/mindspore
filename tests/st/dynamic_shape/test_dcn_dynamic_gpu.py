@@ -209,12 +209,11 @@ def get_train_loss(numeric_columns, sparse_columns, data_list, mode):
     loss_callback = LossCallback()
     model = Model(train_net)
     sink_step = dataset.get_dataset_size()
-    model.train(sink_step, dataset, callbacks=loss_callback, sink_size=1)
+    model.train(sink_step, dataset, callbacks=loss_callback, sink_size=1, dataset_sink_mode=True)
     loss_list = loss_callback.loss_list
     return loss_list
 
 
-@pytest.mark.skip(reason="Do not support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -230,8 +229,8 @@ def test_train():
     SparseFeature = namedtuple("SparseFeature", ['name', 'voc_size', 'embed_size'])
     sparse_columns = [SparseFeature('a', 7, 6), SparseFeature('b', 136, 18), SparseFeature('c', 3, 6)]
     data_list = gen_data(numeric_columns, sparse_columns, batch_size_list)
-    # For graph mode
+    # GRAPH_MODE is temporarily not supported due to some new features that are not completely complete
     set_seed(0)
-    graph_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.GRAPH_MODE)
+    graph_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.PYNATIVE_MODE)
     expect_loss = [6.687461, 2928.5852, 8715.267]
     assert np.allclose(graph_loss, expect_loss, 1e-3, 1e-3)
