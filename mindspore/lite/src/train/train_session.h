@@ -177,6 +177,7 @@ class TrainSession : virtual public lite::LiteSession {
   void *workspace_ = nullptr;
   SchedCallBack sched_mix_precision_callback_;
   bool train_mode_ = false;
+  bool model_buff_changed_ = false;
   void *tensors_data_ = nullptr;
   size_t tensors_data_size_ = 0;
   std::shared_ptr<Allocator> allocator_;
