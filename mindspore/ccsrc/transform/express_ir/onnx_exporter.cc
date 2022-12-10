@@ -1175,6 +1175,8 @@ class OnnxExporter {
                     mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
   void MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                          mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
+  void IgnoreMakeTuple(const AnfNodePtr &node, mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
+
   void ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodePtr, std::string> *node_map_ptr,
                    onnx::GraphProto *graph_proto);
 
@@ -1506,6 +1508,7 @@ struct MergeRule {
 
 void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                      mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const {
+  MS_EXCEPTION_IF_NULL(op_merged_infos_ptr);
   auto &op_merged_infos = *op_merged_infos_ptr;
   const auto ignore = [&op_merged_infos](const AnfNodePtr &node) {
     op_merged_infos[node].mode = OP_MERGE_IGNORE;
@@ -1548,14 +1551,36 @@ void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNode
     }
   } else if (cnode == func_graph->get_return()) {
     auto first_input = GetRealInput(cnode->input(1));  // Unpack Depend
-    if (IsPrimitiveCNode(first_input, prim::kPrimMakeTuple)) {
-      // Ignore MakeTuple output node to avoid exporting it to SequenceConstruct
-      // and handle multiple outputs in ExportOutput
-      ignore(first_input);
-    }
+    // Ignore MakeTuple output node to avoid exporting it to SequenceConstruct
+    // and handle multiple outputs in ExportOutput
+    IgnoreMakeTuple(first_input, op_merged_infos_ptr);
   } else if (cnode->IsApply(prim::kPrimConcat) && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeTuple)) {
     // Ignore MakeTuple to handle it in ExportPrimConcat
     ignore(cnode->input(1));
+  }
+}
+
+void OnnxExporter::IgnoreMakeTuple(const AnfNodePtr &node,
+                                   mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const {
+  MS_EXCEPTION_IF_NULL(op_merged_infos_ptr);
+  auto &op_merged_infos = *op_merged_infos_ptr;
+  const auto ignore = [&op_merged_infos](const AnfNodePtr &node) {
+    op_merged_infos[node].mode = OP_MERGE_IGNORE;
+    op_merged_infos[node].referred_count -= 1;
+  };
+  if (node == nullptr) {
+    return;
+  }
+
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    ignore(node);
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode != nullptr) {
+      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+        auto real_input = GetRealInput(cnode->input(i));
+        IgnoreMakeTuple(real_input, op_merged_infos_ptr);
+      }
+    }
   }
 }
 
@@ -4451,17 +4476,14 @@ void OnnxExporter::ExportMergeDynamicGRUV2(const FuncGraphPtr &, const CNodePtr 
                 return self.x, self.x
 
  */
-void OnnxExporter::ExportOutput(const FuncGraphPtr &, const AnfNodePtr &return_arg,
+void OnnxExporter::ExportOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &return_arg,
                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   AnfNodePtr arg = GetRealInput(return_arg);
   if (IsPrimitiveCNode(arg, prim::kPrimMakeTuple)) {
     auto arg_cnode = dyn_cast<CNode>(arg);
     for (size_t i = 1; i < arg_cnode->inputs().size(); ++i) {
       const auto &output = arg_cnode->input(i);
-      auto output_name = GetNodeInputName(output, node_map_ptr, graph_proto);
-      onnx::ValueInfoProto *output_proto = graph_proto->add_output();
-      output_proto->set_name(output_name);
-      SetValueInfoType(output, output_proto);
+      ExportOutput(func_graph, output, node_map_ptr, graph_proto);
     }
   } else if (arg->isa<ValueNode>() && arg->cast<ValueNodePtr>()->value()->isa<ValueTuple>()) {
     // Several outputs, all constants
