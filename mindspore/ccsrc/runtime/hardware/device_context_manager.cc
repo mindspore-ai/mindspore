@@ -43,6 +43,8 @@ size_t constexpr GetStrLen(const char *const str) {
 constexpr auto kCudaHomeEnv = "CUDA_HOME";
 constexpr auto kNvccVersionKeyWords = "Cuda compilation tools, release ";
 constexpr size_t kNvccVersionKeyWordsSize = GetStrLen(kNvccVersionKeyWords);
+constexpr auto kSuccessKeyWord = "Success";
+constexpr size_t kSuccessKeyWordSize = GetStrLen(kSuccessKeyWord);
 constexpr size_t kBufferSize = 999;
 constexpr auto kGpuPluginName = "libmindspore_gpu";
 
@@ -88,7 +90,7 @@ std::string GetCudaVersionFromNvcc(const std::string &nvcc_path) {
       exit(-1);
     }
   } else {  // parent process
-    MS_LOG(DEBUG) << "child process NVCC pid = " << pid;
+    MS_LOG(DEBUG) << "Child process NVCC pid = " << pid;
     int status;
     std::string buffer(kBufferSize, 0);
     if (waitpid(pid, &status, 0) == -1) {
@@ -168,6 +170,70 @@ bool GetVersionFromFileName(const std::string &file_name, size_t *major, size_t 
 float VersionToFloat(size_t major, size_t minor) {
   return SizeToFloat(major) + SizeToFloat(minor) / (SizeToFloat(std::to_string(minor).size()) + 1);
 }
+
+// dlopen-ing a shared library will find dependency and then relocate for symbols, when relocate failed and a
+// "undefined reference to xxxx" occurred, glibc will not rollback the relocation, some relocated symbols will be bound
+// to a un-dlopen-ed library when dlopen other libraries in the future, which will cause incomprehensible errors.
+// So fork a child process to test whether the library can be loaded, and exit the child process if failed.
+bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
+  MS_EXCEPTION_IF_NULL(err_msg);
+  int pipe_fd[2];
+  if (pipe(pipe_fd) != 0) {
+    MS_LOG(WARNING) << "Create pipe failed, ret = " << errno << ", reason = " << strerror(errno);
+    return false;
+  }
+  FdScope fd0(pipe_fd[0]);
+  FdScope fd1(pipe_fd[1]);
+  pid_t pid = fork();
+  if (pid < 0) {
+    MS_LOG(WARNING) << "Fork child process failed, ret = " << errno << ", reason = " << strerror(errno);
+    return false;
+  } else if (pid == 0) {  // child process
+    // don't care logs of child process, dup stdout/stderr to /dev/null
+    int null_fd = open("/dev/null", O_RDWR, 0);
+    if (null_fd == -1) {
+      MS_LOG(WARNING) << "Child process open /dev/null failed, ret = " << errno << ", reason = " << strerror(errno);
+      exit(-1);
+    }
+    FdScope null(null_fd);
+    (void)dup2(null_fd, STDOUT_FILENO);
+    (void)dup2(null_fd, STDERR_FILENO);
+    // try to dlopen
+    void *handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
+    if (handle == nullptr) {
+      std::string err_msg_str = GetDlErrorMsg();
+      auto ret = write(pipe_fd[1], err_msg_str.c_str(), err_msg_str.size());
+      (void)ret;  // write(...) has __wur attr, get return value to make compiler happy.
+      exit(-1);
+    }
+    (void)dlclose(handle);
+    if (write(pipe_fd[1], kSuccessKeyWord, kSuccessKeyWordSize) <= 0) {
+      exit(-1);
+    }
+    exit(0);
+  } else {  // parent process
+    MS_LOG(DEBUG) << "Child process dlopen pid = " << pid;
+    int status;
+    std::string buffer(kBufferSize, 0);
+    if (waitpid(pid, &status, 0) == -1) {
+      MS_LOG(ERROR) << "Wait child process failed, ret = " << errno << ", reason = " << strerror(errno);
+      return false;
+    }
+    if (read(pipe_fd[0], buffer.data(), buffer.size()) <= 0) {
+      MS_LOG(WARNING) << "Read from pipe failed, ret = " << errno << ", reason = " << strerror(errno);
+      return false;
+    }
+
+    MS_LOG(DEBUG) << "Child process return: " << buffer;
+    if (std::string(buffer.c_str()) == kSuccessKeyWord) {
+      return true;
+    } else {
+      *err_msg = buffer;
+      return false;
+    }
+  }
+  return false;  // useless code makes static checking tools happy.
+}
 #endif  // #ifdef __linux__
 }  // namespace
 namespace plugin_loader {
@@ -181,7 +247,11 @@ bool PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::
 #if defined(_WIN32) || defined(_WIN64)
   handle = LoadLibraryEx(plugin_file.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
   err_msg_str = std::to_string(GetLastError());
-#else
+#elif defined(__linux__)
+  if (TestLoadDynamicLib(plugin_file, &err_msg_str)) {
+    handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  }
+#else  // macos
   handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
   err_msg_str = GetDlErrorMsg();
 #endif
@@ -358,7 +428,6 @@ void DeviceContextManager::UnloadPlugin() {
     (void)iter++;
   }
   plugin_maps_.clear();
-  load_init_ = false;
 }
 
 void DeviceContextManager::ClearDeviceContexts() {
