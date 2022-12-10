@@ -320,7 +320,9 @@ AutoGradCellImpl::AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std:
     parameter->set_abstract(input_param_values[i]->ToAbstract()->Broaden());
     auto zeros_like_dout = BuildZerosLikeNode(tape_, input_param_values[i]);
     auto func_node = std::make_shared<FunctionNode>(tape_, zeros_like_dout);
-    auto input_adjoint = std::make_shared<VariableAdjoint>(func_node, input_param_values[i]);
+    const auto &clone_value = ShallowCopyTensorValue(input_param_values[i]);
+    ClearDeviceAddress(clone_value);
+    auto input_adjoint = std::make_shared<VariableAdjoint>(func_node, clone_value);
     (void)anfnode_to_variable_adjoint_.insert(std::make_pair(cell_inputs[i], input_adjoint));
   }
 }
@@ -469,6 +471,7 @@ void AutoGradCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, 
   MS_EXCEPTION_IF_NULL(sens_out);
   MS_LOG(DEBUG) << "Real output node of top cell is " << output_node->DebugString();
   last_node_ = output_node;
+  ClearDeviceAddress(sens_out);
   sens_value_ = sens_out;
 }
 
