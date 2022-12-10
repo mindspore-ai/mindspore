@@ -35,8 +35,9 @@
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "base/effect_info.h"
-#include "mindspore/core/ops/core_ops.h"
+#include "ops/core_ops.h"
 #include "abstract/abstract_value.h"
+#include "pipeline/jit/debug/trace.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -923,33 +924,41 @@ class SideEffectFinder {
 
   // Trace an AnfNode for effect info.
   EffectInfo TraceEffectInfo(const AnfNodePtr &node) {
-    if (node != nullptr) {
-      // Trace cnode.
-      auto cnode = node->cast<CNodePtr>();
-      if (cnode != nullptr) {
-        return TraceEffectInfo(cnode);
-      }
+    MS_EXCEPTION_IF_NULL(node);
+    // Trace cnode.
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode != nullptr) {
+      return TraceEffectInfo(cnode);
+    }
 
-      // Trace parameter.
-      auto para = node->cast<ParameterPtr>();
-      if (para != nullptr) {
-        return TraceEffectInfo(para);
-      }
+    // Trace parameter.
+    auto para = node->cast<ParameterPtr>();
+    if (para != nullptr) {
+      return TraceEffectInfo(para);
+    }
 
-      // Trace primitive.
-      auto prim = GetPrimitiveWithoutDoSignature(node);
-      if (prim != nullptr) {
-        return GetPrimEffectInfo(prim);
-      }
+    // Trace primitive.
+    auto prim = GetPrimitiveWithoutDoSignature(node);
+    if (prim != nullptr) {
+      return GetPrimEffectInfo(prim);
+    }
 
-      // Trace func graph.
-      auto graph = GetValueNode<FuncGraphPtr>(node);
-      if (graph != nullptr) {
-        return GetEffectInfo(graph);
-      }
+    // Trace func graph.
+    auto graph = GetValueNode<FuncGraphPtr>(node);
+    if (graph != nullptr) {
+      return GetEffectInfo(graph);
+    }
+
+    // Other ValueNode has no side effects. For example: ValueNode<ClassType> node.
+    //  node1 = ValueNode<ClassType> class 'mindspore.ops.operations.debug_ops.Print'
+    //  node2 = _get_cache_prim(node1) // the node has side effects.
+    if (node->isa<ValueNode>()) {
+      MS_LOG(DEBUG) << "The ValueNode has no side effect: " << node->DebugString();
+      return {EffectInfo::kDetected, false, false, false};
     }
     // Something is wrong if we reached here.
-    MS_LOG(WARNING) << "EffectInfo untraceable: node is a nullptr.";
+    MS_LOG(WARNING) << "The effect info of the node is untraceable: " << node->DebugString()
+                    << ".\nLine:" << trace::GetDebugInfo(node->debug_info());
     return {EffectInfo::kDetected, false, false, false};
   }
 
