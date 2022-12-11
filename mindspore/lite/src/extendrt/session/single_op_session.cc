@@ -83,12 +83,11 @@ Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
 
   auto make_kernel_tensor = [](TypeId type_id, const ShapeVector &shape) {
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>();
-    auto abstract = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape),
-                                           std::make_shared<TensorType>(TypeIdToType(type_id)));
+    auto base = std::make_shared<mindspore::abstract::AbstractTensor>(TypeIdToType(type_id),
+                                                                      std::make_shared<abstract::Shape>(shape));
     kernel::TensorInfo tensor_info;
-    tensor_info.abstract_base = abstract;
-    tensor_info.device_shape_adaptively = shape;
-    kernel_tensor->SetAbstract(abstract);
+    tensor_info.base_ = base;
+    kernel_tensor->SetTensorInfo(tensor_info);
     return kernel_tensor;
   };
 

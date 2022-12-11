@@ -66,18 +66,17 @@ KernelTensorPtr InnerKernel::LiteTensorToKernelTensorPtr(lite::Tensor *lite_tens
   kernel_tensor_ptr->SetData(address_ptr);
   kernel_tensor_ptr->SetFormat(lite_tensor->format());
 
-  auto kernel_tensor_abstract_ptr = std::make_shared<mindspore::abstract::AbstractScalar>();
-
-  auto type_ptr = mindspore::TypeIdToType(lite_tensor->data_type());
-  kernel_tensor_abstract_ptr->set_type(type_ptr);
-
   auto lite_shape = lite_tensor->shape();
   std::vector<int64_t> shape;
   for (size_t i = 0; i < lite_shape.size(); i++) {
     shape.push_back(lite_shape[i]);
   }
-  kernel_tensor_abstract_ptr->set_shape(std::make_shared<abstract::Shape>(shape));
-  kernel_tensor_ptr->SetAbstract(kernel_tensor_abstract_ptr);
+
+  auto kernel_tensor_abstract_ptr = std::make_shared<mindspore::abstract::AbstractTensor>(
+    mindspore::TypeIdToType(lite_tensor->data_type()), std::make_shared<abstract::Shape>(shape));
+  kernel::TensorInfo info;
+  info.base_ = kernel_tensor_abstract_ptr;
+  kernel_tensor_ptr->SetTensorInfo(info);
   return kernel_tensor_ptr;
 }
 

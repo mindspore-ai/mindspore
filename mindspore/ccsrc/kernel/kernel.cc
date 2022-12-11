@@ -32,10 +32,11 @@ namespace kernel {
 constexpr int64_t kInvalidShape = -2;
 
 string KernelTensor::GetAbstractName() const {
-  if (tensor_info_.abstract_base == nullptr) {
+  const TensorInfo &info = std::get<TensorInfo>(meta_);
+  if (info.base_ == nullptr) {
     return "null(no abstract base)";
   }
-  return tensor_info_.abstract_base->ToString();
+  return info.base_->ToString();
 }
 
 bool KernelTensor::IsDynamicShape() const {
@@ -66,11 +67,12 @@ size_t KernelTensor::GetSizeInBytes() const {
 }
 
 TypeId KernelTensor::GetDtype() const {
-  if (tensor_info_.abstract_base == nullptr) {
+  const TensorInfo &info = std::get<TensorInfo>(meta_);
+  if (info.base_ == nullptr) {
     return TypeId::kTypeUnknown;
   }
 
-  auto type_ptr = tensor_info_.abstract_base->BuildType();
+  auto type_ptr = info.base_->BuildType();
   if (type_ptr == nullptr || !type_ptr->isa<TensorType>()) {
     return TypeId::kTypeUnknown;
   }
@@ -102,11 +104,12 @@ ShapeVector KernelTensor::GetMaxShape() const {
 }
 
 std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
-  if (tensor_info_.abstract_base == nullptr) {
+  const TensorInfo &info = std::get<TensorInfo>(meta_);
+  if (info.base_ == nullptr) {
     return {TypeId::kTypeUnknown};
   }
 
-  auto type_ptr = tensor_info_.abstract_base->BuildType();
+  auto type_ptr = info.base_->BuildType();
   if (type_ptr == nullptr || !type_ptr->isa<List>() || !type_ptr->isa<Tuple>()) {
     return {TypeId::kTypeUnknown};
   }
@@ -150,39 +153,45 @@ ShapeArray KernelTensor::GetListOrTupleShapeVector() const {
 }
 
 void KernelTensor::SetDtype(const TypePtr &dtype) {
-  if (tensor_info_.abstract_base == nullptr) {
+  TensorInfo &info = std::get<TensorInfo>(meta_);
+  if (info.base_ == nullptr) {
     return;
   }
-  tensor_info_.abstract_base->set_type(dtype);
+  info.base_->set_type(dtype);
 }
 
 void KernelTensor::SetShapeVector(const std::vector<int64_t> &shape) {
-  if (tensor_info_.abstract_base == nullptr) {
+  TensorInfo &info = std::get<TensorInfo>(meta_);
+  if (info.base_ == nullptr) {
     return;
   }
-  tensor_info_.abstract_base->set_shape(std::make_shared<abstract::Shape>(shape));
+  info.base_->set_shape(std::make_shared<abstract::Shape>(shape));
 }
 
 abstract::BaseShapePtr KernelTensor::GetBaseShape() const {
-  if (tensor_info_.abstract_base == nullptr) {
+  const TensorInfo &info = std::get<TensorInfo>(meta_);
+  if (info.base_ == nullptr) {
     return nullptr;
   }
-  return tensor_info_.abstract_base->BuildShape();
+  return info.base_->BuildShape();
 }
 
 void KernelTensor::SetBaseShape(const abstract::BaseShapePtr &base_shape) {
-  if (tensor_info_.abstract_base == nullptr) {
+  TensorInfo &info = std::get<TensorInfo>(meta_);
+  if (info.base_ == nullptr) {
     return;
   }
-  tensor_info_.abstract_base->set_shape(base_shape);
+  info.base_->set_shape(base_shape);
 }
 
 const std::vector<int64_t> &KernelTensor::GetDeviceShapeAdaptively() const {
-  return tensor_info_.device_shape_adaptively;
+  const TensorInfo &info = std::get<TensorInfo>(meta_);
+  return info.device_shape_adaptively;
 }
 
 void KernelTensor::SetDeviceShapeAdaptively(const std::vector<int64_t> &device_shape_adaptively) {
-  tensor_info_.device_shape_adaptively = device_shape_adaptively;
+  TensorInfo &info = std::get<TensorInfo>(meta_);
+  info.device_shape_adaptively = device_shape_adaptively;
 }
 
 int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -239,6 +248,24 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
     output_shapes_.emplace_back(shape);
   }
   return static_cast<int>(ret);
+}
+
+bool KernelMod::Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &workspace,
+                       const std::vector<KernelTensorPtr> &outputs, void *stream_ptr) {
+  // redirect to the old method to keep compatibility
+  std::vector<AddressPtr> inAddr;
+  std::vector<AddressPtr> wsAddr;
+  std::vector<AddressPtr> outAddr;
+
+  std::transform(inputs.begin(), inputs.end(), inAddr.begin(), [](KernelTensorPtr t) { return t->GetData(); });
+  std::transform(workspace.begin(), workspace.end(), wsAddr.begin(), [](KernelTensorPtr t) { return t->GetData(); });
+  std::transform(outputs.begin(), outputs.end(), outAddr.begin(), [](KernelTensorPtr t) { return t->GetData(); });
+  return Launch(inAddr, wsAddr, outAddr, stream_ptr);
+}
+// deprecated
+bool KernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  return true;
 }
 
 std::vector<int64_t> GetIntValueFromData(void *const data_c, const TypeId &type_id, size_t data_size,

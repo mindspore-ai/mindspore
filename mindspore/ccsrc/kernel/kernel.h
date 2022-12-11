@@ -21,6 +21,7 @@
 #include <map>
 #include <set>
 #include <optional>
+#include <variant>
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "ir/dtype.h"
@@ -210,13 +211,23 @@ struct KernelLaunchInfo {
 };
 struct TensorInfo {
   mindspore::Format format;
-  abstract::AbstractBasePtr abstract_base;       // Store data type and shape.
+  abstract::AbstractTensorPtr base_;             // Store data type and shape.
   std::vector<int64_t> device_shape_adaptively;  // deprecated field for dynamic shape
+};
+struct ScalarInfo {
+  abstract::AbstractScalarPtr base_;
+};
+struct ListInfo {
+  abstract::AbstractListPtr base_;
+};
+struct TupleInfo {
+  abstract::AbstractTuplePtr base_;
 };
 using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 
 class KernelAttr;
+// we extend KernelTensor to represent tensor/list/tuple/scalar data type.
 class BACKEND_EXPORT KernelTensor {
  public:
   KernelTensor() = default;
@@ -227,7 +238,10 @@ class BACKEND_EXPORT KernelTensor {
   AddressPtr GetData() const { return data_; }
   AddressPtr GetHostData() const { return host_data_; }
   TypeId GetDtype() const;
-  mindspore::Format GetFormat() const { return tensor_info_.format; }
+  mindspore::Format GetFormat() const {
+    const TensorInfo &info = std::get<TensorInfo>(meta_);
+    return info.format;
+  }
   // If real type is not a list or tuple tensor, it will return kTypeUnknown.
   std::vector<TypeId> GetListOrTupleDtype() const;
   // If real type is not a single shape vector, it will return empty.
@@ -237,7 +251,10 @@ class BACKEND_EXPORT KernelTensor {
   void SetData(const AddressPtr &data) { data_ = data; }
   void SetHostData(const AddressPtr &data) { host_data_ = data; }
   void SetDtype(const TypePtr &dtype);
-  void SetFormat(mindspore::Format format) { tensor_info_.format = format; }
+  void SetFormat(mindspore::Format format) {
+    TensorInfo &info = std::get<TensorInfo>(meta_);
+    info.format = format;
+  }
   void SetShapeVector(const ShapeVector &shape);
 
   // max shape is only used in compute-depended ops
@@ -246,15 +263,19 @@ class BACKEND_EXPORT KernelTensor {
   abstract::BaseShapePtr GetBaseShape() const;
   // If the shape need to be List or Tuple, `SetBaseShape` should be called.
   void SetBaseShape(const abstract::BaseShapePtr &base_shape);
-  void SetAbstract(const abstract::AbstractBasePtr &base_abstract) { tensor_info_.abstract_base = base_abstract; }
-  void SetTensorInfo(const TensorInfo &tensor_info) { tensor_info_ = tensor_info; }
+  void SetTensorInfo(const TensorInfo &tensor_info) {
+    data_type_ = kObjectTypeTensorType;
+    meta_ = tensor_info;
+  }
 
   // deprecated field for dynamic shape
   const ShapeVector &GetDeviceShapeAdaptively() const;
   void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
 
  private:
-  TensorInfo tensor_info_;
+  TypeId data_type_{kObjectTypeTensorType};
+  // meta is a type-safe union of TensorInfo, ScalarInfo, TupleInfo, ListInfo.
+  std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> meta_{TensorInfo()};
   AddressPtr data_{nullptr};       // Device data address.
   AddressPtr host_data_{nullptr};  // Host data address.
   string GetAbstractName() const;
@@ -287,8 +308,11 @@ class BACKEND_EXPORT KernelMod {
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
   virtual const std::vector<std::vector<int64_t>> &GetInputShapes() const { return input_shapes_; }
   virtual const std::vector<std::vector<int64_t>> &GetOutputShapes() const { return output_shapes_; }
+  virtual bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &workspace,
+                      const std::vector<KernelTensorPtr> &outputs, void *stream_ptr);
+  // deprecated
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
+                      const std::vector<AddressPtr> &outputs, void *stream_ptr);
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
   // Initialization for the kernel mod.
