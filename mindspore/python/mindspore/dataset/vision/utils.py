@@ -459,7 +459,7 @@ def get_image_num_channels(image):
         int, the number of input image channels.
 
     Raises:
-        RuntimeError: If `image` has invalid dimensions which should be larger than 1.
+        RuntimeError: If the dimension of `image` is less than 2.
         TypeError: If `image` is not of type <class 'numpy.ndarray'> or <class 'PIL.Image.Image'>.
 
     Examples:
@@ -489,7 +489,7 @@ def get_image_size(image):
         list[int, int], the image size.
 
     Raises:
-        RuntimeError: If `image` has invalid dimensions which should be larger than 1.
+        RuntimeError: If the dimension of `image` is less than 2.
         TypeError: If `image` is not of type <class 'numpy.ndarray'> or <class 'PIL.Image.Image'>.
 
     Examples:

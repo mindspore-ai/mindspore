@@ -567,7 +567,7 @@ class BoundingBoxAugment(ImageTensorOperation):
             Range: [0.0, 1.0]. Default: 0.3.
 
     Raises:
-        TypeError: If `transform` is an image processing operation in :class:`mindspore.dataset.vision.transforms` .
+        TypeError: If `transform` is an image processing operation in `mindspore.dataset.vision` .
         TypeError: If `ratio` is not of type float.
         ValueError: If `ratio` is not in range [0.0, 1.0].
         RuntimeError: If given bounding box is invalid.
@@ -864,7 +864,8 @@ class Decode(ImageTensorOperation, PyTensorOperation):
     Supported image formats: JPEG, BMP, PNG, TIFF, GIF(need `to_pil=True` ), WEBP(need `to_pil=True` ).
 
     Args:
-        to_pil (bool, optional): decode to PIL Image. Default: False.
+        to_pil (bool, optional): Whether to decode the image to the PIL data type. If True, the image will be decoded
+            to the PIL data type, otherwise it will be decoded to the NumPy data type. Default: False.
 
     Raises:
         RuntimeError: If given tensor is not a 1D sequence.
@@ -3507,7 +3508,7 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -3641,7 +3642,7 @@ class ResizeWithBBox(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -3744,7 +3745,7 @@ class Rotate(ImageTensorOperation):
 
     Raises:
         TypeError: If `degrees` is not of type integer, float or sequence.
-        TypeError: If `resample` is not of type Inter.
+        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
         TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type tuple.
         TypeError: If `fill_value` is not of type int or tuple[int].
@@ -3800,7 +3801,7 @@ class SlicePatches(ImageTensorOperation):
             It can be any of [SliceMode.PAD, SliceMode.DROP].
         fill_value (int, optional): The border width in number of pixels in
             right and bottom direction if slice_mode is set to be SliceMode.PAD.
-            The fill_value must be in range [0, 255]. Default: 0.
+            The `fill_value` must be in range [0, 255]. Default: 0.
 
     Raises:
         TypeError: If `num_height` is not of type integer.
