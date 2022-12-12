@@ -103,7 +103,8 @@ REG_ADPT_DESC(MatMulV2Duplicate, prim::kPrimMatMulV2->name(), ADPT_DESC(MatMulV2
 INPUT_MAP(MatrixDiag) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MatrixDiag) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixDiag) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixDiag, kNameMatrixDiagD, ADPT_DESC(MatrixDiag))
+REG_ADPT_DESC(MatrixDiag, kNameMatrixDiag, ADPT_DESC(MatrixDiag))
+REG_ADPT_DESC(MatrixDiagD, kMatrixDiagDOpName, ADPT_DESC(MatrixDiag))
 
 // MatrixDiagPartD
 INPUT_MAP(MatrixDiagPartD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(assist)}};

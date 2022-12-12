@@ -49,7 +49,8 @@ REG_ADPT_DESC(BoundingBoxDecode, kNameBoundingBoxDecode, ADPT_DESC(BoundingBoxDe
 INPUT_MAP(Iou) = {{1, INPUT_DESC(bboxes)}, {2, INPUT_DESC(gtboxes)}};
 ATTR_MAP(Iou) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}, {"eps", ATTR_DESC(eps, AnyTraits<float>())}};
 OUTPUT_MAP(Iou) = {{0, OUTPUT_DESC(overlap)}};
-REG_ADPT_DESC(Iou, kNameIOU, ADPT_DESC(Iou))
+REG_ADPT_DESC(IOU, kNameIOU, ADPT_DESC(Iou))
+REG_ADPT_DESC(Iou, kIouOpName, ADPT_DESC(Iou))
 
 // CheckValid
 INPUT_MAP(CheckValid) = {{1, INPUT_DESC(bbox_tensor)}, {2, INPUT_DESC(img_metas)}};
@@ -92,4 +93,21 @@ ATTR_MAP(PSROIPooling) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int32_t
                           {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())}};
 OUTPUT_MAP(PSROIPooling) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(PSROIPooling, prim::kPrimPSROIPooling->name(), ADPT_DESC(PSROIPooling))
+
+// PSROIPoolingV2
+INPUT_MAP(PSROIPoolingV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(rois)}};
+ATTR_MAP(PSROIPoolingV2) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int32_t>())},
+                            {"group_size", ATTR_DESC(group_size, AnyTraits<int32_t>())},
+                            {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())}};
+OUTPUT_MAP(PSROIPoolingV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(PSROIPoolingV2, prim::kPrimPSROIPoolingV2->name(), ADPT_DESC(PSROIPoolingV2))
+
+// PSROIPoolingGradV2D
+INPUT_MAP(PSROIPoolingGradV2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(rois)}};
+ATTR_MAP(PSROIPoolingGradV2D) = {{"output_dim", ATTR_DESC(output_dim, AnyTraits<int32_t>())},
+                                 {"group_size", ATTR_DESC(group_size, AnyTraits<int32_t>())},
+                                 {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
+                                 {"input_size", ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(PSROIPoolingGradV2D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(PSROIPoolingGradV2D, prim::kPrimPSROIPoolingGradV2D->name(), ADPT_DESC(PSROIPoolingGradV2D))
 }  // namespace mindspore::transform

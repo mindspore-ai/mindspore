@@ -31,13 +31,15 @@ REG_ADPT_DESC(PadD, kPadDOpName, ADPT_DESC(Pad))
 INPUT_MAP(BroadcastToD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(BroadcastToD) = {{"shape", ATTR_DESC(shape, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(BroadcastToD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(BroadcastToD, kNameBroadcastTo, ADPT_DESC(BroadcastToD))
+REG_ADPT_DESC(BroadcastTo, kNameBroadcastTo, ADPT_DESC(BroadcastToD))
 
-// DynamicBroadcastTo
+// BroadcastTo
 INPUT_MAP(BroadcastTo) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(shape)}};
+ATTR_INPUT_MAP(BroadcastTo) = {{"shape", "shape"}};
 OUTPUT_MAP(BroadcastTo) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(BroadcastTo) = EMPTY_ATTR_MAP;
-REG_ADPT_DESC(BroadcastTo, kDynamicBroadcastToOpName, ADPT_DESC(BroadcastTo))
+REG_ADPT_DESC(BroadcastToD, kNameBroadcastToD, ADPT_DESC(BroadcastTo))
+REG_ADPT_DESC(DynamicBroadcastTo, kDynamicBroadcastToOpName, ADPT_DESC(BroadcastTo))
 
 // Diag
 INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};

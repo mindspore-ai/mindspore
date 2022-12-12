@@ -25,20 +25,25 @@ ATTR_MAP(ResizeNearestNeighborV2D) = {
   {"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeNearestNeighborV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeNearestNeighborV2D, kNameResizeNearestNeighborD, ADPT_DESC(ResizeNearestNeighborV2D))
+REG_ADPT_DESC(ResizeNearestNeighbor, kNameResizeNearestNeighbor, ADPT_DESC(ResizeNearestNeighborV2D))
 
 // ResizeNearestNeighborV2
 INPUT_MAP(ResizeNearestNeighborV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
+ATTR_INPUT_MAP(ResizeNearestNeighborV2) = {{"size", "size"}};
 ATTR_MAP(ResizeNearestNeighborV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
                                      {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeNearestNeighborV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeNearestNeighborV2, kNameResizeNearestNeighborV2, ADPT_DESC(ResizeNearestNeighborV2))
+REG_ADPT_DESC(ResizeNearestNeighborV2D, kNameResizeNearestNeighborV2D, ADPT_DESC(ResizeNearestNeighborV2))
 
 // ResizeNearestNeighborV2Grad
 INPUT_MAP(ResizeNearestNeighborV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(size)}};
-ATTR_MAP(ResizeNearestNeighborV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_INPUT_MAP(ResizeNearestNeighborV2Grad) = {{"size", "size"}};
+ATTR_MAP(ResizeNearestNeighborV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                         {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeNearestNeighborV2Grad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeNearestNeighborV2Grad, kNameResizeNearestNeighborV2Grad, ADPT_DESC(ResizeNearestNeighborV2Grad))
+REG_ADPT_DESC(ResizeNearestNeighborGrad, kNameResizeNearestNeighborGrad, ADPT_DESC(ResizeNearestNeighborV2Grad))
 
 // ResizeBilinearV2Grad
 INPUT_MAP(ResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
@@ -49,11 +54,13 @@ REG_ADPT_DESC(ResizeBilinearV2Grad, kResizeBilinearV2GradOpName, ADPT_DESC(Resiz
 
 // ResizeBilinearV2
 INPUT_MAP(ResizeBilinearV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
+ATTR_INPUT_MAP(ResizeBilinearV2) = {{"axis", "axis"}};
 ATTR_MAP(ResizeBilinearV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
                               {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))
-REG_ADPT_DESC(ResizeBilinearV2New, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))
+REG_ADPT_DESC(ResizeBilinear, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))
+REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))
+REG_ADPT_DESC(ResizeBilinearV2D, kResizeBilinearV2DOpName, ADPT_DESC(ResizeBilinearV2))
 
 // CropAndResize
 INPUT_MAP(CropAndResize) = {
@@ -92,7 +99,8 @@ ATTR_MAP(SyncResizeBilinearV2) = {{"ori_image_size", ATTR_DESC(ori_image_size, A
                                   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
                                   {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(SyncResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(SyncResizeBilinearV2, prim::kPrimParallelResizeBilinear->name(), ADPT_DESC(SyncResizeBilinearV2))
+REG_ADPT_DESC(ParallelResizeBilinear, prim::kPrimParallelResizeBilinear->name(), ADPT_DESC(SyncResizeBilinearV2))
+REG_ADPT_DESC(SyncResizeBilinearV2, kSyncResizeBilinearV2OpName, ADPT_DESC(SyncResizeBilinearV2))
 
 // RGBToHSV
 INPUT_MAP(RGBToHSV) = {{1, INPUT_DESC(images)}};

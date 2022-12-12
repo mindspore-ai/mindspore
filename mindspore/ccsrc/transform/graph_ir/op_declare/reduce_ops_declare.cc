@@ -109,6 +109,7 @@ OUTPUT_MAP(ReduceMaxD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMaxD, prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMaxD))
 
 INPUT_MAP(ReduceMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceMax) = {{"axis", "axes"}};
 ATTR_MAP(ReduceMax) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMax, "ReduceMaxV1", ADPT_DESC(ReduceMax))

@@ -25,6 +25,7 @@ ATTR_MAP(ApplyMomentum) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bo
                            {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyMomentum) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ApplyMomentum, kNameApplyMomentum, ADPT_DESC(ApplyMomentum))
+REG_ADPT_DESC(ApplyMomentumD, prim::kPrimApplyMomentumD->name(), ADPT_DESC(ApplyMomentum))
 
 // LarsV2Update
 INPUT_MAP(LarsV2Update) = {{1, INPUT_DESC(w)},
@@ -37,7 +38,8 @@ ATTR_MAP(LarsV2Update) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
                           {"hyperpara", ATTR_DESC(hyperpara, AnyTraits<float>())},
                           {"use_clip", ATTR_DESC(use_clip, AnyTraits<bool>())}};
 OUTPUT_MAP(LarsV2Update) = {{0, OUTPUT_DESC(g_new)}};
-REG_ADPT_DESC(LarsV2Update, kNameLARSUpdate, ADPT_DESC(LarsV2Update))
+REG_ADPT_DESC(LARSUpdate, kNameLARSUpdate, ADPT_DESC(LarsV2Update))
+REG_ADPT_DESC(LarsV2Update, kLarsV2UpdateOpName, ADPT_DESC(LarsV2Update))
 
 // ApplyAdam
 INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
@@ -47,6 +49,7 @@ INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},       
 ATTR_MAP(ApplyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ApplyAdamD, kNameApplyAdamD, ADPT_DESC(ApplyAdam))
 
 // ApplyAdamD
 INPUT_MAP(ApplyAdamD) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
@@ -56,7 +59,7 @@ INPUT_MAP(ApplyAdamD) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},      
 ATTR_MAP(ApplyAdamD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                         {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdamD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
-REG_ADPT_DESC(ApplyAdamD, kNameApplyAdam, ADPT_DESC(ApplyAdamD))
+REG_ADPT_DESC(Adam, kNameAdam, ADPT_DESC(ApplyAdamD))
 
 // ApplyAdagradD
 INPUT_MAP(ApplyAdagradD) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}};
@@ -181,6 +184,15 @@ ATTR_MAP(SparseApplyFtrlD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<b
 OUTPUT_MAP(SparseApplyFtrlD) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(SparseApplyFtrlD, kNameSparseApplyFtrlD, ADPT_DESC(SparseApplyFtrlD))
 
+// SparseApplyFtrl
+INPUT_MAP(SparseApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
+                              {4, INPUT_DESC(grad)}, {5, INPUT_DESC(indices)}, {6, INPUT_DESC(lr)},
+                              {7, INPUT_DESC(l1)},   {8, INPUT_DESC(l2)},      {9, INPUT_DESC(lr_power)}};
+ATTR_MAP(SparseApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+ATTR_INPUT_MAP(SparseApplyFtrl) = {{"lr", "lr"}, {"l1", "l1"}, {"l2", "l2"}, {"lr_power", "lr_power"}};
+OUTPUT_MAP(SparseApplyFtrl) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(SparseApplyFtrl, prim::kPrimSparseApplyFtrl->name(), ADPT_DESC(SparseApplyFtrl))
+
 // SparseApplyFtrlV2D
 INPUT_MAP(SparseApplyFtrlV2D) = {{1, INPUT_DESC(var)},
                                  {2, INPUT_DESC(accum)},
@@ -203,6 +215,7 @@ INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INP
 ATTR_MAP(ApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyFtrl) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ApplyFtrl, kNameApplyFtrl, ADPT_DESC(ApplyFtrl))
+REG_ADPT_DESC(ApplyFtrlD, prim::kPrimApplyFtrlD->name(), ADPT_DESC(ApplyFtrl))
 
 // ApplyRMSPropD
 INPUT_MAP(ApplyRMSPropD) = {
@@ -361,4 +374,15 @@ ATTR_INPUT_MAP(SparseApplyAdadelta) = {{"epsilon", "epsilon"}};
 ATTR_MAP(SparseApplyAdadelta) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdadelta) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(SparseApplyAdadelta, kSparseApplyAdadeltaDOpName, ADPT_DESC(SparseApplyAdadelta))
+
+// SparseApplyFtrlV2
+INPUT_MAP(SparseApplyFtrlV2) = {{1, INPUT_DESC(var)},      {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
+                                {4, INPUT_DESC(grad)},     {5, INPUT_DESC(indices)}, {6, INPUT_DESC(lr)},
+                                {7, INPUT_DESC(l1)},       {8, INPUT_DESC(l2)},      {9, INPUT_DESC(l2_shrinkage)},
+                                {10, INPUT_DESC(lr_power)}};
+ATTR_INPUT_MAP(SparseApplyFtrlV2) = {
+  {"lr", "lr"}, {"l1", "l1"}, {"l2", "l2"}, {"l2_shrinkage", "l2_shrinkage"}, {"lr_power", "lr_power"}};
+ATTR_MAP(SparseApplyFtrlV2) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseApplyFtrlV2) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(SparseApplyFtrlV2, kSparseApplyFtrlV2DOpName, ADPT_DESC(SparseApplyFtrlV2))
 }  // namespace mindspore::transform

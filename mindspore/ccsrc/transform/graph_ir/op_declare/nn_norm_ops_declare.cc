@@ -89,7 +89,8 @@ INPUT_MAP(LogSoftmaxV2) = {{1, INPUT_DESC(logits)}};
 ATTR_MAP(LogSoftmaxV2) = {
   {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(LogSoftmaxV2) = {{0, OUTPUT_DESC(logsoftmax)}};
-REG_ADPT_DESC(LogSoftmaxV2, prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2))
+REG_ADPT_DESC(LogSoftmax, prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2))
+REG_ADPT_DESC(LogSoftmaxV2, kLogSoftmaxV2OpName, ADPT_DESC(LogSoftmaxV2))
 
 // LayerNorm
 INPUT_MAP(LayerNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
@@ -212,4 +213,17 @@ INPUT_MAP(SoftMarginLoss) = {{1, INPUT_DESC(input_x)}, {2, INPUT_DESC(input_y)}}
 ATTR_MAP(SoftMarginLoss) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(SoftMarginLoss) = {{0, OUTPUT_DESC(output_z)}};
 REG_ADPT_DESC(SoftMarginLoss, prim::kPrimSoftMarginLoss->name(), ADPT_DESC(SoftMarginLoss))
+
+// ConfusionSoftmaxGrad
+INPUT_MAP(ConfusionSoftmaxGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(ConfusionSoftmaxGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ConfusionSoftmaxGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ConfusionSoftmaxGrad, "ConfusionSoftmaxGrad", ADPT_DESC(ConfusionSoftmaxGrad))
+
+// SoftmaxGradExt
+INPUT_MAP(SoftmaxGradExt) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}};
+OUTPUT_MAP(SoftmaxGradExt) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(SoftmaxGradExt) = {{"axis", ATTR_DESC(axes, AnyTraits<int64_t>(), AnyTraits<int64_t>())},
+                            {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>(), AnyTraits<bool>())}};
+REG_ADPT_DESC(SoftmaxGradExt, kSoftmaxGradExtOpName, ADPT_DESC(SoftmaxGradExt))
 }  // namespace mindspore::transform

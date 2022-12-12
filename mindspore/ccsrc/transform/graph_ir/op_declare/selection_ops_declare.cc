@@ -24,7 +24,16 @@ INPUT_ATTR_MAP(CumsumD) = {{2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
 ATTR_MAP(CumsumD) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                      {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(CumsumD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CumsumD, kNameCumSum, ADPT_DESC(CumsumD))
+REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(CumsumD))
+
+// Cumsum
+INPUT_MAP(Cumsum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
+ATTR_INPUT_MAP(Cumsum) = {{"axis", {"axis"}}};
+ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
+                    {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CumsumD, kNameCumsumD, ADPT_DESC(Cumsum))
+REG_ADPT_DESC(Cumsum, kNameCumsum, ADPT_DESC(Cumsum))
 
 // CumprodD
 INPUT_MAP(CumprodD) = {{1, INPUT_DESC(x)}};
@@ -63,6 +72,7 @@ INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(
 ATTR_MAP(OneHot) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(OneHot) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(OneHot, prim::kPrimOneHot->name(), ADPT_DESC(OneHot))
+REG_ADPT_DESC(OneHotD, prim::kPrimOneHotD->name(), ADPT_DESC(OneHot))
 
 // GatherV2
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
@@ -71,9 +81,11 @@ ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
+REG_ADPT_DESC(GatherV2D, kNameGatherV2D, ADPT_DESC(GatherV2))
 
 // ScatterNd
 INPUT_MAP(ScatterNd) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(shape)}};
+ATTR_INPUT_MAP(ScatterNd) = {{"shape", "shape"}};
 ATTR_MAP(ScatterNd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ScatterNd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ScatterNd, kNameScatterNd, ADPT_DESC(ScatterNd))
@@ -155,6 +167,7 @@ ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t
                           {"shrink_axis_mask", ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
 OUTPUT_MAP(StridedSlice) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StridedSlice, kNameStridedSlice, ADPT_DESC(StridedSlice))
+REG_ADPT_DESC(StridedSliceD, kStridedSliceDOpName, ADPT_DESC(StridedSlice))
 
 // StridedSliceV2
 INPUT_MAP(StridedSliceV2) = {
@@ -201,6 +214,13 @@ ATTR_MAP(ReverseV2D) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>(), AnyTraits
 OUTPUT_MAP(ReverseV2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReverseV2D, kNameReverseV2, ADPT_DESC(ReverseV2D))
 
+// ReverseV2
+INPUT_MAP(ReverseV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
+ATTR_INPUT_MAP(ReverseV2) = {{"axis", "axis"}};
+ATTR_MAP(ReverseV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ReverseV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReverseV2, kNameReverseV2D, ADPT_DESC(ReverseV2))
+
 // MaskedSelect
 INPUT_MAP(MaskedSelect) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}};
 ATTR_MAP(MaskedSelect) = EMPTY_ATTR_MAP;
@@ -239,13 +259,6 @@ INPUT_MAP(Cummin) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Cummin) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Cummin) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(Cummin, prim::kPrimCummin->name(), ADPT_DESC(Cummin))
-
-// Cumsum
-INPUT_MAP(Cumsum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
-ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                    {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Cumsum, kCumsumOpName, ADPT_DESC(Cumsum))
 
 // StridedRead
 INPUT_MAP(StridedRead) = {{1, INPUT_DESC(x)}};

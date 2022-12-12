@@ -63,7 +63,8 @@ INPUT_MAP(IFMR) = {
 ATTR_MAP(IFMR) = {{"min_percentile", ATTR_DESC(min_percentile, AnyTraits<float>())},
                   {"max_percentile", ATTR_DESC(max_percentile, AnyTraits<float>())},
                   {"search_range", ATTR_DESC(search_range, AnyTraits<std::vector<float>>())},
-                  {"search_step", ATTR_DESC(search_step, AnyTraits<float>())}};
+                  {"search_step", ATTR_DESC(search_step, AnyTraits<float>())},
+                  {"with_offset", ATTR_DESC(with_offset, AnyTraits<bool>())}};
 OUTPUT_MAP(IFMR) = {{0, OUTPUT_DESC(scale)}, {1, OUTPUT_DESC(offset)}};
 REG_ADPT_DESC(IFMR, kNameIFMR, ADPT_DESC(IFMR))
 

@@ -165,4 +165,13 @@ OUTPUT_MAP(CommonLSTM) = {
   {2, OUTPUT_DESC(y_c)},
 };
 REG_ADPT_DESC(CommonLSTM, "CommonLSTM", ADPT_DESC(CommonLSTM))
+
+// GRUV2HiddenGradCell
+INPUT_MAP(GRUV2HiddenGradCell) = {{1, INPUT_DESC(dh_pre_t)}, {2, INPUT_DESC(h)},         {3, INPUT_DESC(dy)},
+                                  {4, INPUT_DESC(dh)},       {5, INPUT_DESC(update)},    {6, INPUT_DESC(reset)},
+                                  {7, INPUT_DESC(new)},      {7, INPUT_DESC(hidden_new)}};
+ATTR_MAP(GRUV2HiddenGradCell) = {{"t_state", ATTR_DESC(t_state, AnyTraits<int64_t>())},
+                                 {"gate_order", ATTR_DESC(gate_order, AnyTraits<std::string>())}};
+OUTPUT_MAP(GRUV2HiddenGradCell) = {{0, OUTPUT_DESC(dh_prev)}, {1, OUTPUT_DESC(dgate_h)}, {2, OUTPUT_DESC(dnt_x)}};
+REG_ADPT_DESC(GRUV2HiddenGradCell, kNameGRUV2HiddenGradCell, ADPT_DESC(GRUV2HiddenGradCell))
 }  // namespace mindspore::transform

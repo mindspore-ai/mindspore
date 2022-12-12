@@ -31,7 +31,7 @@ class MIND_API CumSum : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CumSum);
   /// \brief Constructor.
-  CumSum() : BaseOperator(kNameCumSum) {}
+  CumSum() : BaseOperator(kNameCumSum) { InitIOName({"x", "axis"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CumSum for the inputs.
   void Init(const bool exclusive, const bool reverse);
   /// \brief Set exclusive.

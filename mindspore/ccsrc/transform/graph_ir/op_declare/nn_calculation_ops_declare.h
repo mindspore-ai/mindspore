@@ -78,5 +78,11 @@ DECLARE_OP_USE_OUTPUT(DeformableOffsets)
 
 DECLARE_OP_ADAPTER(DeformableOffsetsGrad)
 DECLARE_OP_USE_OUTPUT(DeformableOffsetsGrad)
+
+DECLARE_OP_ADAPTER(Conv3DBackpropFilter)
+DECLARE_OP_USE_OUTPUT(Conv3DBackpropFilter)
+
+DECLARE_OP_ADAPTER(Conv3DTranspose)
+DECLARE_OP_USE_OUTPUT(Conv3DTranspose)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_CALCULATION_OPS_DECLARE_H_

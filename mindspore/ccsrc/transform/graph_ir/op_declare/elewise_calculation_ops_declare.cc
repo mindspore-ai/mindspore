@@ -307,7 +307,8 @@ INPUT_MAP(ArgMaxD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(ArgMaxD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
                      {"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ArgMaxD, kNameArgmax, ADPT_DESC(ArgMaxD))
+REG_ADPT_DESC(ArgMax, kNameArgmax, ADPT_DESC(ArgMaxD))
+REG_ADPT_DESC(ArgMaxD, kArgMaxDOpName, ADPT_DESC(ArgMaxD))
 
 // ArgMaxV2
 INPUT_MAP(ArgMaxV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
@@ -672,6 +673,7 @@ REG_ADPT_DESC(TensorMove, kNameTensorMove, ADPT_DESC(TensorMove))
 INPUT_MAP(KLDiv) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}};
 ATTR_MAP(KLDiv) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(KLDiv) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(KLDivLoss, kNameKLDivLoss, ADPT_DESC(KLDiv))
 REG_ADPT_DESC(KLDiv, kNameKLDiv, ADPT_DESC(KLDiv))
 
 // Erfinv
