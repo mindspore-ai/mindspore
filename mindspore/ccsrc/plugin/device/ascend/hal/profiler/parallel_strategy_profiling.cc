@@ -115,9 +115,9 @@ irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel(const FuncGraphPt
     // If RANK_ID is not set, default value is 0
     if (rank_id.empty()) {
       rank_id = "0";
-      MS_LOG(WARNING) << R"(Can not find RANK_ID in environment, This affects profiling to "
-                         "collect rank ID data and parallel strategy data. please execute "
-                         "'export RANK_ID=RANK_ID' in environment.)";
+      MS_LOG(WARNING) << "(Can not find RANK_ID in environment, "
+                      << "This affects profiling to collect rank ID data and parallel strategy data. "
+                      << "Please execute 'export RANK_ID=RANK_ID' in environment.)";
     }
     int32_t rank_id_int = 0;
     bool ret = StringToInt(&rank_id, &rank_id_int);

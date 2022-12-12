@@ -293,7 +293,7 @@ class Integrator:
         """Load data according to the parsed AICORE operator types file."""
         file_path = query_latest_trace_time_file(self._profiling_dir, int(self._device_id))
         if not file_path:
-            logger.warning("Failed to find parsed trace time file. Dynamic Shape networks can ignore this warning.")
+            logger.warning("Failed to find parsed trace time file.")
             return
         file_path = validate_and_normalize_path(file_path)
         with open(file_path, 'r') as handle:

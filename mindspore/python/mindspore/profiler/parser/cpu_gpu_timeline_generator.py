@@ -41,7 +41,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         self._device_id = device_id
         self._rank_size = rank_size
         self._profiling_dir = profiling_dir
-        self._device_id = device_id
         self._timeline_meta = []
         self._display_filename = self._display_filename.format(device_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(device_id)
