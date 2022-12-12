@@ -68,10 +68,6 @@ class MatMulInfer : public abstract::OpInferBase {
     ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
     bool transpose_a = GetValue<bool>(transpose_a_ptr);
     bool transpose_b = GetValue<bool>(transpose_b_ptr);
-    ShapeVector x_min_shape = x->shape()->min_shape();
-    ShapeVector x_max_shape = x->shape()->max_shape();
-    ShapeVector y_min_shape = y->shape()->min_shape();
-    ShapeVector y_max_shape = y->shape()->max_shape();
 
     if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
       ShapeVector ret_shape{abstract::Shape::kShapeRankAny};
@@ -90,8 +86,6 @@ class MatMulInfer : public abstract::OpInferBase {
     }
 
     ShapeVector ret_shape;
-    ShapeVector ret_min_shape;
-    ShapeVector ret_max_shape;
     auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
                                                    const ShapeVector yshp) -> void {
       if (!xshp.empty() && !yshp.empty()) {
@@ -101,9 +95,7 @@ class MatMulInfer : public abstract::OpInferBase {
       return;
     };
     make_shape(ret_shape, x_shp, y_shp);
-    make_shape(ret_min_shape, x_min_shape, y_min_shape);
-    make_shape(ret_max_shape, x_max_shape, y_max_shape);
-    return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
+    return std::make_shared<abstract::Shape>(ret_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

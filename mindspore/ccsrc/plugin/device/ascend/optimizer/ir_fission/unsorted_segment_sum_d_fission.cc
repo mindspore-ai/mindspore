@@ -57,20 +57,8 @@ CNodePtr UnsortedSegmentSumDFission::CreatePadding(const FuncGraphPtr &graph, co
   padding->set_scope(origin_node->scope());
   auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-  if (IsDynamic(shape)) {
-    auto min_shape = common::AnfAlgo::GetInputMinShape(origin_node, 0);
-    auto max_shape = common::AnfAlgo::GetInputMaxShape(origin_node, 0);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      min_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-      max_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-    }
-    BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)},
-                                                 {base_shape}, padding.get());
-  } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)},
-                                                {shape}, padding.get());
-  }
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)},
+                                              {shape}, padding.get());
   common::AnfAlgo::SetNodeAttr(kAttrPadDimSize, MakeValue(SizeToLong(pad_dim_size)), padding);
   return padding;
 }
@@ -89,21 +77,8 @@ CNodePtr UnsortedSegmentSumDFission::CreateUnsortedSegmentSum(const FuncGraphPtr
   unsorted_segment_sum->set_scope(origin_node->scope());
   auto shape = common::AnfAlgo::GetOutputInferShape(origin_node, 0);
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-  if (IsDynamic(shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(origin_node, 0);
-    auto max_shape = common::AnfAlgo::GetInputMaxShape(origin_node, 0);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      min_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-      max_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-    }
-
-    BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)},
-                                                 {base_shape}, unsorted_segment_sum.get());
-  } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
-                                                unsorted_segment_sum.get());
-  }
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
+                                              unsorted_segment_sum.get());
 
   common::AnfAlgo::SetNodeAttr(kAttrNumSegments, MakeValue(shape[0]), unsorted_segment_sum);
   if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, origin_node)) {

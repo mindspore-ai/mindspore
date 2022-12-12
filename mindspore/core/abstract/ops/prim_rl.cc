@@ -47,29 +47,20 @@ AbstractBasePtr InferImplTensorArrayStack(const AnalysisEnginePtr &, const Primi
   if (attr_size == nullptr) {
     MS_LOG(EXCEPTION) << "No attribute [size] in " << op_name;
   }
-  auto is_dynamic = GetValue<bool>(attr_is_dynamic);
   auto size = GetValue<int64_t>(attr_size);
   auto ele_shape = GetValue<std::vector<int64_t>>(attr_shape);
   auto type = GetValue<TypePtr>(attr_dtype);
   primitive->set_attr("max_element", MakeValue(kMaxElement));
   std::shared_ptr<mindspore::abstract::AbstractTensor> output;
+
+  auto is_dynamic = GetValue<bool>(attr_is_dynamic);
   if (is_dynamic) {
-    auto max_shape_ = ele_shape;
-    auto min_shape_ = ele_shape;
-    auto out_shape_ = ele_shape;
-    (void)max_shape_.insert(max_shape_.cbegin(), kMaxElement);
-    (void)min_shape_.insert(min_shape_.cbegin(), 1);
-    (void)out_shape_.insert(out_shape_.cbegin(), -1);
-    ShapeVector out_shape = out_shape_;
-    ShapeVector min_shape = min_shape_;
-    ShapeVector max_shape = max_shape_;
-    output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(out_shape, min_shape, max_shape));
+    (void)ele_shape.insert(ele_shape.cbegin(), -1);
   } else {
-    auto out_shape_ = ele_shape;
-    (void)out_shape_.insert(out_shape_.cbegin(), size);
-    ShapeVector out_shape = out_shape_;
-    output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(out_shape));
+    (void)ele_shape.insert(ele_shape.cbegin(), size);
   }
+  output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(ele_shape));
+
   return output;
 }
 }  // namespace abstract

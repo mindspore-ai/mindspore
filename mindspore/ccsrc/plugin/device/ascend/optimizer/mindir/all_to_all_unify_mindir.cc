@@ -88,20 +88,8 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
   }
   shape[LongToSize(split_dim)] /= split_count;
   std::vector<TypeId> dtypes(split_count, dtype);
-  if (IsDynamic(shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_input, 0UL);
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_input, 0UL);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      max_shape[LongToSize(split_dim)] /= split_count;
-      min_shape[LongToSize(split_dim)] /= split_count;
-    }
-
-    std::vector<BaseShapePtr> shapes(split_count, std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
-    common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split_v.get());
-  } else {
-    std::vector<ShapeVector> shapes(split_count, shape);
-    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
-  }
+  std::vector<ShapeVector> shapes(split_count, shape);
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
 
   common::AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue<int64_t>(split_dim), split_v);
   common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue<int64_t>(split_count), split_v);
@@ -183,21 +171,8 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
                       << trace::DumpSourceLines(all_to_all);
   }
   single_shape[LongToSize(concat_dim)] *= split_count;
-  if (IsDynamic(single_shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[0], 0UL);
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[0], 0UL);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      max_shape[LongToSize(concat_dim)] *= split_count;
-      min_shape[LongToSize(concat_dim)] *= split_count;
-    }
-
-    common::AnfAlgo::SetOutputTypeAndDetailShape(
-      {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0UL)},
-      {std::make_shared<abstract::Shape>(single_shape, min_shape, max_shape)}, concat.get());
-  } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0UL)},
-                                                {single_shape}, concat.get());
-  }
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0UL)},
+                                              {single_shape}, concat.get());
 
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(concat_dim), concat);
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(split_count), concat);

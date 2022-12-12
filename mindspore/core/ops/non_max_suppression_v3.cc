@@ -80,16 +80,8 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
   auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   // calculate output shape
   ShapeVector selected_indices_shape = {-1};
-  ShapeVector selected_indices_min_shape = {0};
-  ShapeVector selected_indices_max_shape;
-  if (scores_shape_map[kShape].size() > 0 && scores_shape_map[kShape][0] == -1) {
-    selected_indices_max_shape = scores_shape_map[kMaxShape];
-    return std::make_shared<abstract::Shape>(selected_indices_shape, selected_indices_min_shape,
-                                             selected_indices_max_shape);
-  }
-  selected_indices_max_shape = scores_shape_map[kShape];
-  return std::make_shared<abstract::Shape>(selected_indices_shape, selected_indices_min_shape,
-                                           selected_indices_max_shape);
+  auto selected_indices_max_shape = scores_shape_map[kShape];
+  return std::make_shared<abstract::Shape>(selected_indices_shape, selected_indices_max_shape);
 }
 
 TypePtr NonMaxSuppressionV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -30,11 +30,6 @@ abstract::ShapePtr MvlgammaInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto first_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
-  auto first_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
-  if (first_input_shape_min.empty() || first_input_shape_max.empty()) {
-    return std::make_shared<abstract::Shape>(in_shape);
-  }
 
   return std::make_shared<abstract::Shape>(in_shape);
 }

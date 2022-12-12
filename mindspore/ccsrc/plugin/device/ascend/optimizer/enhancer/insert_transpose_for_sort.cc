@@ -37,21 +37,13 @@ abstract::BaseShapePtr InferTransposeOutputShape(const abstract::BaseShapePtr &s
                       << ", perm: " << perm;
   }
   ShapeVector in_shape = shapeptr->shape();
-  ShapeVector in_shape_max = shapeptr->max_shape();
-  ShapeVector in_shape_min = shapeptr->min_shape();
   ShapeVector out_shape;
-  ShapeVector out_shape_max;
-  ShapeVector out_shape_min;
   for (int64_t i : perm) {
     auto idx = LongToSize(i);
     out_shape.push_back(in_shape[idx]);
-    if (!in_shape_min.empty() && !in_shape_max.empty()) {
-      out_shape_max.push_back(in_shape_max[idx]);
-      out_shape_min.push_back(in_shape_min[idx]);
-    }
   }
 
-  abstract::ShapePtr out_shape_ptr = std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
+  abstract::ShapePtr out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   return out_shape_ptr;
 }
 

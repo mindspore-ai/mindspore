@@ -64,8 +64,6 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
   int64_t x1_size = std::accumulate(x1_shape.begin(), x1_shape.end(), 1, std::multiplies<int64_t>());
   int64_t x2_size = SizeToLong(x2_values_shape[0]);
 
-  // y__size_min and y__size_max infer
-  int64_t y_size_min = 0;
   int64_t y_size_max = 0;
 
   if (set_operation_str == "a-b") {
@@ -83,22 +81,17 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
 
   // y_indices shape infer
   ShapeVector y_indices_shape = {-1, SizeToLong(x1_shape.size())};
-  ShapeVector y_indices_min_shape = {y_size_min, SizeToLong(x1_shape.size())};
   ShapeVector y_indices_max_shape = {y_size_max, SizeToLong(x1_shape.size())};
-  auto y_indices_shape_ptr =
-    std::make_shared<abstract::Shape>(y_indices_shape, y_indices_min_shape, y_indices_max_shape);
+  auto y_indices_shape_ptr = std::make_shared<abstract::Shape>(y_indices_shape, y_indices_max_shape);
 
   // y_values shape infer
   ShapeVector y_values_shape = {-1};
-  ShapeVector y_values_min_shape = {y_size_min};
   ShapeVector y_values_max_shape = {y_size_max};
-  auto y_values_shape_ptr = std::make_shared<abstract::Shape>(y_values_shape, y_values_min_shape, y_values_max_shape);
+  auto y_values_shape_ptr = std::make_shared<abstract::Shape>(y_values_shape, y_values_max_shape);
 
   // y_shape shape infer
   ShapeVector y_shape_shape = {SizeToLong(x1_shape.size())};
-  ShapeVector y_shape_min_shape = {SizeToLong(x1_shape.size())};
-  ShapeVector y_shape_max_shape = {SizeToLong(x1_shape.size())};
-  auto y_shape_shape_ptr = std::make_shared<abstract::Shape>(y_shape_shape, y_shape_min_shape, y_shape_max_shape);
+  auto y_shape_shape_ptr = std::make_shared<abstract::Shape>(y_shape_shape);
 
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{y_indices_shape_ptr, y_values_shape_ptr, y_shape_shape_ptr});

@@ -134,10 +134,8 @@ class MS_CORE_API Shape final : public BaseShape {
   /// \brief Constructor of Shape.
   ///
   /// \param[in] list Initial shape dimensions.
-  /// \param[in] min_shape Minimum shape dimensions of dynamic shape.
   /// \param[in] max_shape Maximum shape dimensions of dynamic shape.
-  Shape(const ShapeVector &list, const ShapeVector &min_shape, const ShapeVector &max_shape)
-      : shape_(list), min_shape_(min_shape), max_shape_(max_shape) {}
+  Shape(const ShapeVector &list, const ShapeVector &max_shape) : shape_(list), max_shape_(max_shape) {}
 
   /// \brief Destructor of Shape.
   ~Shape() override = default;
@@ -166,7 +164,7 @@ class MS_CORE_API Shape final : public BaseShape {
 
   bool operator==(const BaseShape &other) const override;
 
-  BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_, min_shape_, max_shape_); }
+  BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_, max_shape_); }
 
   void Broaden() override;
 
@@ -179,11 +177,6 @@ class MS_CORE_API Shape final : public BaseShape {
   ///
   /// \return Shape dimensions.
   const ShapeVector &shape() const { return shape_; }
-
-  /// \brief Get minimum shape dimensions.
-  ///
-  /// \return Minimum shape dimensions.
-  const ShapeVector &min_shape() const { return min_shape_; }
 
   /// \brief Get maximum shape dimensions.
   ///
@@ -200,7 +193,6 @@ class MS_CORE_API Shape final : public BaseShape {
 
  private:
   ShapeVector shape_;      // use kShapeDimAny to implement the any shape in python
-  ShapeVector min_shape_;  // record minimum length for each dynamic dimension
   ShapeVector max_shape_;  // record maximum length for each dynamic dimension
 };
 using ShapePtr = std::shared_ptr<Shape>;

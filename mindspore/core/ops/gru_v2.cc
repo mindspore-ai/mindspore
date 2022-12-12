@@ -112,28 +112,11 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
     MS_LOG(EXCEPTION) << "For GRUV2, the weight cannot be dynaimic shape.";
   }
   if (is_dynamic_shp) {
-    auto x_max_shape = x_shape_map[kMaxShape];
-    auto x_min_shape = x_shape_map[kMinShape];
-    auto h_max_shape = h_shape_map[kMaxShape];
-    auto seq_max_shape = seq_lengths_shape_map[kMaxShape];
-    if (h_max_shape.empty() || seq_max_shape.empty()) {
-      MS_LOG(EXCEPTION) << "For GRUV2, only the batch size can be dynamic shape, so that the input_shape[1], "
-                           "h_shape[1], and seq_lengths_shape[1] should be dynamic in dynamic shape mode.";
-    }
     // x_shape: (seq_len, batch_size, input_size)
     if (x_shape[kInputIndex0] == abstract::Shape::kShapeDimAny ||
         x_shape[kInputIndex2] == abstract::Shape::kShapeDimAny) {
       MS_LOG(EXCEPTION) << "For GRUV2, only the batch size can be dynamic shape.";
     }
-
-    ShapeVector min_shape = {max_seq_lengths, x_min_shape[1], real_num_layers};
-    ShapeVector max_shape = {max_seq_lengths, x_max_shape[1], real_num_layers};
-    auto output_shape_ptr = std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
-    ShapeVector hn_min_shape = {real_num_layers, x_min_shape[1], hidden_size};
-    ShapeVector hn_max_shape = {real_num_layers, x_max_shape[1], hidden_size};
-    auto hn_shape_ptr = std::make_shared<abstract::Shape>(hn_shape, hn_min_shape, hn_max_shape);
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{output_shape_ptr, hn_shape_ptr, reserve_shape_ptr, state_shape_ptr});
   }
 
   auto output_shape_ptr = std::make_shared<abstract::Shape>(output_shape);

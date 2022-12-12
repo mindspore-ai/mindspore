@@ -59,20 +59,16 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
   auto sequence_length_shape = sequence_length_shape_map[kShape];
 
   ShapeVector decoded_indices_shape = {-1, 2};
-  ShapeVector decoded_indices_min_shape = {1, 2};
   ShapeVector decoded_indices_max_shape = {inputs_x_shape[0] * inputs_x_shape[1], 2};
   ShapeVector decoded_values_shape = {-1};
-  ShapeVector decoded_values_min_shape = {1};
   ShapeVector decoded_values_max_shape = {inputs_x_shape[0] * inputs_x_shape[1]};
   ShapeVector decoded_shape_shape = {2};
   ShapeVector log_probability_shape = {inputs_x_shape[1], 1};
 
   auto decoded_indices = std::make_shared<abstract::AbstractTensor>(
-    kInt64, std::make_shared<mindspore::abstract::Shape>(decoded_indices_shape, decoded_indices_min_shape,
-                                                         decoded_indices_max_shape));
+    kInt64, std::make_shared<mindspore::abstract::Shape>(decoded_indices_shape, decoded_indices_max_shape));
   auto decoded_values = std::make_shared<abstract::AbstractTensor>(
-    kInt64, std::make_shared<mindspore::abstract::Shape>(decoded_values_shape, decoded_values_min_shape,
-                                                         decoded_values_max_shape));
+    kInt64, std::make_shared<mindspore::abstract::Shape>(decoded_values_shape, decoded_values_max_shape));
   auto decoded_shape = std::make_shared<abstract::AbstractTensor>(kInt64, decoded_shape_shape);
   auto log_probability =
     std::make_shared<abstract::AbstractTensor>(inputs_x_ptr->element()->BuildType(), log_probability_shape);

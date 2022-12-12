@@ -46,9 +46,8 @@ abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::v
 
   auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies<int64_t>());
   ShapeVector output_shape = {abstract::Shape::kShapeDimAny, x_rank};
-  ShapeVector min_shape = {0, x_rank};
   ShapeVector max_shape = {x_num, x_rank};
-  return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(output_shape, max_shape);
 }
 
 TypePtr NonZeroInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

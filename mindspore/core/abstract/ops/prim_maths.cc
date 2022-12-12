@@ -176,8 +176,6 @@ AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr 
   (void)CheckTensorDType(start, {kFloat32}, "Input 0 (start) for LinSpace should be %s");
   (void)CheckTensorDType(stop, {kFloat32}, "Input 1 (stop) for LinSpace should be %s");
   ShapeVector shape;
-  ShapeVector max_shape;
-  ShapeVector min_shape;
   int64_t num_val = 0;
   // 3rd input is a Tensor when LinSpace is a dynamic shape operator
   const size_t tensor_index = 2;
@@ -200,10 +198,7 @@ AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr 
   if (shape[0] < 0) {
     MS_LOG(EXCEPTION) << "num must be >= 0 in LinSpace";
   }
-  max_shape.emplace_back(num_val);
-  min_shape.emplace_back(num_val);
-  AbstractTensorPtr ret =
-    std::make_shared<AbstractTensor>(start->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  AbstractTensorPtr ret = std::make_shared<AbstractTensor>(start->element(), std::make_shared<Shape>(shape));
   return ret;
 }
 
@@ -239,10 +234,6 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
   bool transpose_a = GetValue<bool>(transpose_a_ptr);
   bool transpose_b = GetValue<bool>(transpose_b_ptr);
-  ShapeVector x_min_shape = x->shape()->min_shape();
-  ShapeVector x_max_shape = x->shape()->max_shape();
-  ShapeVector y_min_shape = y->shape()->min_shape();
-  ShapeVector y_max_shape = y->shape()->max_shape();
 
   if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
     ShapeVector ret_shape{Shape::kShapeRankAny};
@@ -261,8 +252,6 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   }
 
   ShapeVector ret_shape;
-  ShapeVector ret_min_shape;
-  ShapeVector ret_max_shape;
   auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
                                                  const ShapeVector yshp) -> void {
     if (!xshp.empty() && !yshp.empty()) {
@@ -272,9 +261,7 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
     return;
   };
   make_shape(ret_shape, x_shp, y_shp);
-  make_shape(ret_min_shape, x_min_shape, y_min_shape);
-  make_shape(ret_max_shape, x_max_shape, y_max_shape);
-  return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape, ret_min_shape, ret_max_shape));
+  return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape));
 }
 
 AbstractBasePtr InferImplLess(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -286,22 +273,15 @@ AbstractBasePtr InferImplLess(const AnalysisEnginePtr &, const PrimitivePtr &pri
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   ShapeVector x_shape = x->shape()->shape();
-  ShapeVector x_shape_min = x->shape()->min_shape().empty() ? x_shape : x->shape()->min_shape();
-  ShapeVector x_shape_max = x->shape()->max_shape().empty() ? x_shape : x->shape()->max_shape();
 
   auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(y);
   MS_EXCEPTION_IF_NULL(y->shape());
   ShapeVector y_shape = y->shape()->shape();
-  ShapeVector y_shape_min = y->shape()->min_shape().empty() ? y_shape : y->shape()->min_shape();
-  ShapeVector y_shape_max = y->shape()->max_shape().empty() ? y_shape : y->shape()->max_shape();
 
   auto out_shape = BroadcastShape(x_shape, y_shape);
-  auto out_shape_min = BroadcastShape(x_shape_min, y_shape_min);
-  auto out_shape_max = BroadcastShape(x_shape_max, y_shape_max);
   auto output_type = std::make_shared<Bool>();
-  return std::make_shared<AbstractTensor>(output_type,
-                                          std::make_shared<Shape>(out_shape, out_shape_min, out_shape_max));
+  return std::make_shared<AbstractTensor>(output_type, std::make_shared<Shape>(out_shape));
 }
 
 AbstractBasePtr InferImplRealInner(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

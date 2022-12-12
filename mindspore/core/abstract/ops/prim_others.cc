@@ -318,15 +318,12 @@ AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &
   }
 
   ShapeVector tensor_out_shape = {Shape::kShapeDimAny, tensor_in_shape[1]};
-  ShapeVector min_shape = {1, tensor_in_shape[1]};
-
   ShapeVector max_shape = {infer_max_size / tensor_in_shape[1], tensor_in_shape[1]};
+  auto tensor_out =
+    std::make_shared<AbstractTensor>(tensor_in->element(), std::make_shared<Shape>(tensor_out_shape, max_shape));
 
-  auto tensor_out = std::make_shared<AbstractTensor>(tensor_in->element(),
-                                                     std::make_shared<Shape>(tensor_out_shape, min_shape, max_shape));
-
-  AbstractTensorPtr ret = std::make_shared<AbstractTensor>(
-    tensor_out->element(), std::make_shared<Shape>(tensor_out_shape, min_shape, max_shape));
+  AbstractTensorPtr ret =
+    std::make_shared<AbstractTensor>(tensor_out->element(), std::make_shared<Shape>(tensor_out_shape, max_shape));
   return ret;
 }
 

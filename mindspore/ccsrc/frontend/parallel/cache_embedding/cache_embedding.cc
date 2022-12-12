@@ -309,16 +309,14 @@ AnfNodePtr CreateMapCacheIdx(const FuncGraphPtr &func_graph, const AnfNodePtr &i
   auto indices_ori_shp = indices->Shape();
   auto indices_shp = indices_ori_shp->cast<abstract::ShapePtr>();
   ShapeVector shape(indices_shp->shape().size(), -1);
-  ShapeVector min_shape = indices_shp->min_shape();
-  ShapeVector max_shape = indices_shp->max_shape();
 
   auto cache_idx = std::make_shared<abstract::AbstractTensor>(indices_element_type, indices_shp);
-  auto old_emb_idx = std::make_shared<abstract::AbstractTensor>(
-    indices_element_type, std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
-  auto miss_emb_idx = std::make_shared<abstract::AbstractTensor>(
-    indices_element_type, std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
-  auto swap_emb_idx = std::make_shared<abstract::AbstractTensor>(
-    indices_element_type, std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
+  auto old_emb_idx =
+    std::make_shared<abstract::AbstractTensor>(indices_element_type, std::make_shared<abstract::Shape>(shape));
+  auto miss_emb_idx =
+    std::make_shared<abstract::AbstractTensor>(indices_element_type, std::make_shared<abstract::Shape>(shape));
+  auto swap_emb_idx =
+    std::make_shared<abstract::AbstractTensor>(indices_element_type, std::make_shared<abstract::Shape>(shape));
 
   std::vector<std::shared_ptr<abstract::AbstractBase>> elements = {cache_idx, old_emb_idx, miss_emb_idx, swap_emb_idx};
   auto abstract = std::make_shared<abstract::AbstractTuple>(elements);

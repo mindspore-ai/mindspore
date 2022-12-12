@@ -94,9 +94,7 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
       }
     }
     std::vector<int64_t> out_shape = {abstract::Shape::kShapeDimAny};
-    std::vector<int64_t> infer_shape_min = {0};
-    std::vector<int64_t> infer_shape_max = {max_length};
-    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 }
 

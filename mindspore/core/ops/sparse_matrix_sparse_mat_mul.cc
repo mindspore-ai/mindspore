@@ -121,10 +121,9 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
 
   ShapeVector col_shape = {abstract::Shape::kShapeDimAny};
   ShapeVector values_shape = {abstract::Shape::kShapeDimAny};
-  ShapeVector infer_shape_min = {1};
   ShapeVector infer_shape_max = {MAX_LENGTH};
-  y_col_shape = std::make_shared<abstract::Shape>(col_shape, infer_shape_min, infer_shape_max);
-  y_values_shape = std::make_shared<abstract::Shape>(values_shape, infer_shape_min, infer_shape_max);
+  y_col_shape = std::make_shared<abstract::Shape>(col_shape, infer_shape_max);
+  y_values_shape = std::make_shared<abstract::Shape>(values_shape, infer_shape_max);
 
   if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<AnyValue>() &&
       !input_args[0]->BuildValue()->isa<None>()) {
@@ -162,7 +161,7 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
       std::vector<abstract::BaseShapePtr>{y_dense_shape, y_batch_shape, y_row_shape, y_col_shape, y_values_shape});
   } else {
     ShapeVector row_shape = {-1};
-    y_row_shape = std::make_shared<abstract::Shape>(row_shape, infer_shape_min, infer_shape_max);
+    y_row_shape = std::make_shared<abstract::Shape>(row_shape);
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{y_dense_shape, y_batch_shape, y_row_shape, y_col_shape, y_values_shape});
   }

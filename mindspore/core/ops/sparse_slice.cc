@@ -47,10 +47,10 @@ class SparseSliceInfer : public abstract::OpInferBase {
     int64_t nnz = indices_shape[0];
     int64_t rank = indices_shape[1];
 
-    auto y_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}),
-                                                             ShapeVector({0, rank}), ShapeVector({nnz, rank}));
-    auto y_value_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}),
-                                                           ShapeVector({0}), ShapeVector({nnz}));
+    auto y_indices_shape =
+      std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}), ShapeVector({nnz, rank}));
+    auto y_value_shape =
+      std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}), ShapeVector({nnz}));
     auto y_shape_shape = std::make_shared<abstract::Shape>(ShapeVector({rank}));
 
     return std::make_shared<abstract::TupleShape>(

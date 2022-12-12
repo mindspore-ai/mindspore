@@ -415,15 +415,11 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
   py::tuple shape_tuple(len);
   py::tuple dtype_tuple(len);
   py::tuple value_tuple(len);
-  py::tuple min_value_tuple(len);
-  py::tuple max_value_tuple(len);
-  py::tuple min_shape_tuple(len);
   py::tuple max_shape_tuple(len);
   py::tuple shape_value_tuple(len);
   std::vector<py::dict> res;
 
   bool dyn_shape = false;
-  bool dyn_value = false;
   bool dyn_shape_value = false;
   for (size_t i = 0; i < len; i++) {
     py::dict out = ConvertAbstractToPython(arg_tuple->elements()[i]);
@@ -436,36 +432,17 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
       dyn_shape_value = true;
     }
 
-    // Elements in tuple is tensor shape value.
-    if (out.contains(py::str(ATTR_MIN_VALUE)) && out.contains(py::str(ATTR_MAX_VALUE))) {
-      min_value_tuple[i] = out[ATTR_MIN_VALUE];
-      max_value_tuple[i] = out[ATTR_MAX_VALUE];
-      dyn_value = true;
-    } else {
-      min_value_tuple[i] = out[ATTR_VALUE];
-      max_value_tuple[i] = out[ATTR_VALUE];
-    }
-
     // Elements in tuple is tensor, which shape is dynamic.
-    if (out.contains(py::str(ATTR_MIN_SHAPE)) && out.contains(py::str(ATTR_MAX_SHAPE))) {
-      min_shape_tuple[i] = out[ATTR_MIN_SHAPE];
+    if (out.contains(py::str(ATTR_MAX_SHAPE))) {
       max_shape_tuple[i] = out[ATTR_MAX_SHAPE];
       dyn_shape = true;
-    } else {
-      min_shape_tuple[i] = out[ATTR_SHAPE];
-      max_shape_tuple[i] = out[ATTR_SHAPE];
     }
   }
   dic[ATTR_SHAPE] = shape_tuple;
   dic[ATTR_DTYPE] = dtype_tuple;
   dic[ATTR_VALUE] = value_tuple;
 
-  if (dyn_value) {
-    dic[ATTR_MIN_VALUE] = min_value_tuple;
-    dic[ATTR_MAX_VALUE] = max_value_tuple;
-  }
   if (dyn_shape) {
-    dic[ATTR_MIN_SHAPE] = min_shape_tuple;
     dic[ATTR_MAX_SHAPE] = max_shape_tuple;
   }
   if (dyn_shape_value) {
@@ -548,14 +525,10 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
   py::list shape_list(len);
   py::list dtype_list(len);
   py::list value_list(len);
-  py::list min_value_list(len);
-  py::list max_value_list(len);
-  py::list min_shape_list(len);
   py::list max_shape_list(len);
   py::list shape_value_list(len);
   std::vector<py::dict> res;
 
-  bool dyn_value = false;
   bool dyn_shape = false;
   bool shape_value = false;
 
@@ -570,24 +543,11 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
       shape_value_list[i] = out[ATTR_SHAPE_VALUE];
       shape_value = true;
     }
-    // Elements in list is tensor, which value is dynamic.
-    if (out.contains(py::str(ATTR_MIN_VALUE)) && out.contains(py::str(ATTR_MAX_VALUE))) {
-      min_value_list[i] = out[ATTR_MIN_VALUE];
-      max_value_list[i] = out[ATTR_MAX_VALUE];
-      dyn_value = true;
-    } else {
-      min_value_list[i] = out[ATTR_VALUE];
-      max_value_list[i] = out[ATTR_VALUE];
-    }
 
     // Elements in list is tensor, which shape is dynamic.
-    if (out.contains(py::str(ATTR_MIN_SHAPE)) && out.contains(py::str(ATTR_MAX_SHAPE))) {
-      min_shape_list[i] = out[ATTR_MIN_SHAPE];
+    if (out.contains(py::str(ATTR_MAX_SHAPE))) {
       max_shape_list[i] = out[ATTR_MAX_SHAPE];
       dyn_shape = true;
-    } else {
-      min_shape_list[i] = out[ATTR_SHAPE];
-      max_shape_list[i] = out[ATTR_SHAPE];
     }
   }
 
@@ -595,12 +555,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
   dic[ATTR_DTYPE] = dtype_list;
   dic[ATTR_VALUE] = value_list;
 
-  if (dyn_value) {
-    dic[ATTR_MIN_VALUE] = min_value_list;
-    dic[ATTR_MAX_VALUE] = max_value_list;
-  }
   if (dyn_shape) {
-    dic[ATTR_MIN_SHAPE] = min_shape_list;
     dic[ATTR_MAX_SHAPE] = max_shape_list;
   }
   if (shape_value) {
@@ -631,20 +586,12 @@ void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, bool only_co
   }
   MS_EXCEPTION_IF_NULL(arg_tensor->shape());
   (*dic)[ATTR_SHAPE] = arg_tensor->shape()->shape();
-  const auto &min_shape = arg_tensor->shape()->min_shape();
   const auto &max_shape = arg_tensor->shape()->max_shape();
-  if (!min_shape.empty() && !max_shape.empty()) {
-    (*dic)[ATTR_MIN_SHAPE] = min_shape;
+  if (!max_shape.empty()) {
     (*dic)[ATTR_MAX_SHAPE] = max_shape;
   }
 
-  auto min_value = arg_tensor->get_min_value();
-  auto max_value = arg_tensor->get_max_value();
   auto shape_value = arg_tensor->get_shape_value();
-  if (min_value != nullptr && max_value != nullptr) {
-    (*dic)[ATTR_MIN_VALUE] = BuildValue(min_value);
-    (*dic)[ATTR_MAX_VALUE] = BuildValue(max_value);
-  }
   if (shape_value != nullptr) {
     (*dic)[ATTR_SHAPE_VALUE] = BuildValue(shape_value);
   }
@@ -885,27 +832,6 @@ void SetShapeValue(const AbstractBasePtr &tensor, const py::object &output) {
   if (output.is_none()) {
     return;
   }
-  if (output.contains(py::str(ATTR_MIN_VALUE)) && output.contains(py::str(ATTR_MAX_VALUE))) {
-    const py::object &obj_min = output[ATTR_MIN_VALUE];
-    const py::object &obj_max = output[ATTR_MAX_VALUE];
-    if (obj_min.is_none() || obj_max.is_none()) {
-      return;
-    }
-    bool converted = true;
-    ValuePtr min_value = nullptr;
-    ValuePtr max_value = nullptr;
-    converted = parse::ConvertData(obj_min, &min_value);
-    if (!converted) {
-      MS_LOG(EXCEPTION) << "Convert shape min value data failed";
-    }
-    converted = parse::ConvertData(obj_max, &max_value);
-    if (!converted) {
-      MS_LOG(EXCEPTION) << "Convert shape max value data failed";
-    }
-    auto abs_tensor = dyn_cast_ptr<abstract::AbstractTensor>(tensor);
-    MS_EXCEPTION_IF_NULL(abs_tensor);
-    abs_tensor->set_value_range(min_value, max_value);
-  }
   if (!output.contains(py::str(ATTR_SHAPE_VALUE))) {
     return;
   }
@@ -951,9 +877,6 @@ py::object GetPyAbsItemOfTupleOut(const py::object &output, const size_t index) 
   auto typeid_tuple = type_obj.cast<py::tuple>();
   out_item[ATTR_DTYPE] = typeid_tuple[index];
   out_item[ATTR_SHAPE] = shape_tuple[index];
-  if (output.contains(py::str(ATTR_MIN_SHAPE))) {
-    out_item[ATTR_MIN_SHAPE] = output[ATTR_MIN_SHAPE].cast<py::tuple>()[index];
-  }
   if (output.contains(py::str(ATTR_MAX_SHAPE))) {
     out_item[ATTR_MAX_SHAPE] = output[ATTR_MAX_SHAPE].cast<py::tuple>()[index];
   }
@@ -961,30 +884,12 @@ py::object GetPyAbsItemOfTupleOut(const py::object &output, const size_t index) 
   return out_item;
 }
 
-ShapeVector GetShapeVectorByAttr(const std::string &attr, const py::object &obj) {
-  if (!obj.contains(py::str(attr))) {
-    return {};
-  }
-  const py::object &shape = obj[py::str(attr)];
-  if (shape.is_none()) {
-    return {};
-  }
-  return shape.cast<ShapeVector>();
-}
-
 AbstractBasePtr MakePyInferRes2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
                                               const py::object &output) {
   auto ret_vec = shape_obj.cast<ShapeVector>();
   auto ret_dtype = type_obj.cast<TypePtr>();
-  ShapeVector min_shape_vec;
-  ShapeVector max_shape_vec;
 
-  if (!output.is_none()) {
-    min_shape_vec = GetShapeVectorByAttr(ATTR_MIN_SHAPE, output);
-    max_shape_vec = GetShapeVectorByAttr(ATTR_MAX_SHAPE, output);
-  }
-
-  auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
+  auto ret_shape = std::make_shared<abstract::Shape>(ret_vec);
   AbstractBasePtr tensor = MakeAbstractTensor(ret_shape, ret_dtype);
 
   SetShapeValue(tensor, output);

@@ -135,9 +135,9 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
   }
 
   auto out_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}),
-                                                             ShapeVector({0, rank}), ShapeVector({indices_row, rank}));
-  auto out_value_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}),
-                                                           ShapeVector({0}), ShapeVector({indices_row}));
+                                                             ShapeVector({indices_row, rank}));
+  auto out_value_shape =
+    std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}), ShapeVector({indices_row}));
   auto out_shape_shape = std::make_shared<abstract::Shape>(ShapeVector({rank}));
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{out_indices_shape, out_value_shape, out_shape_shape});

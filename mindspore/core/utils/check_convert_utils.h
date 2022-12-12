@@ -38,7 +38,6 @@ namespace mindspore {
 typedef std::pair<std::map<std::string, int64_t>, std::map<int64_t, std::string>> AttrConverterPair;
 typedef std::map<std::string, std::vector<int64_t>> ShapeMap;
 constexpr auto kShape = "shape";
-constexpr auto kMinShape = "min_shape";
 constexpr auto kMaxShape = "max_shape";
 
 enum CompareEnum : int64_t {
@@ -323,7 +322,6 @@ class MS_CORE_API CheckAndConvertUtils {
                                             const std::string &prim_name);
   static std::vector<int64_t> CheckListInt(const std::string &arg_name, const ValuePtr &attr,
                                            const std::string &prim_name);
-  static void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
   static int64_t GetAndCheckFormat(const ValuePtr &value);
   static size_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);
   static void CheckInputArgs(const std::vector<AbstractBasePtr> &input_args, const CompareEnum compare_operator,

@@ -60,8 +60,6 @@ abstract::TupleShapePtr NMSWithMaskInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(x);
   auto bboxes_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x);
   auto bboxes_shape = bboxes_shape_map[kShape];
-  auto bboxes_shape_min = bboxes_shape_map[kMinShape];
-  auto bboxes_shape_max = bboxes_shape_map[kMaxShape];
 
   (void)CheckAndConvertUtils::CheckValue<size_t>("shape of bboxes", bboxes_shape.size(), kEqual, kBboxesShapeSize,
                                                  op_name);
@@ -77,26 +75,9 @@ abstract::TupleShapePtr NMSWithMaskInferShape(const PrimitivePtr &primitive,
   }
 
   // output_idx, selected_mask output shape
-  abstract::ShapePtr output_idx_shape;
   ShapeVector output_idx_shape_real = {bboxes_shape[0]};
-  if (!bboxes_shape_min.empty() && !bboxes_shape_max.empty()) {
-    if (bboxes_shape_min[1] == kBboxesShapeIn2ndDimAscendAfterPad) {
-      bboxes_shape_min[1] = kBboxesShapeIn2ndDimNormal;
-    }
-    if (bboxes_shape_max[1] == kBboxesShapeIn2ndDimAscendAfterPad) {
-      bboxes_shape_max[1] = kBboxesShapeIn2ndDimNormal;
-    }
-    ShapeVector output_idx_shape_min = {bboxes_shape_min[0]};
-    ShapeVector output_idx_shape_max = {bboxes_shape_max[0]};
-    output_idx_shape =
-      std::make_shared<abstract::Shape>(output_idx_shape_real, output_idx_shape_min, output_idx_shape_max);
-  } else {
-    output_idx_shape = std::make_shared<abstract::Shape>(output_idx_shape_real);
-  }
-
-  abstract::ShapePtr output_boxes_shape =
-    std::make_shared<abstract::Shape>(bboxes_shape, bboxes_shape_min, bboxes_shape_max);
-
+  auto output_idx_shape = std::make_shared<abstract::Shape>(output_idx_shape_real);
+  abstract::ShapePtr output_boxes_shape = std::make_shared<abstract::Shape>(bboxes_shape);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{output_boxes_shape, output_idx_shape, output_idx_shape});
 }

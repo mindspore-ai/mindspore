@@ -144,10 +144,7 @@ CNodePtr CreateDynamicShapeCNode(const FuncGraphPtr &func_graph, const AnfNodePt
   ShapeVector tensor_shp({static_cast<int64_t>(input_shape->shape().size())});
   auto dynamic_shape_abstract =
     std::make_shared<abstract::AbstractTensor>(kInt64, std::make_shared<abstract::Shape>(tensor_shp));
-  auto max_value = MakeValue(input_shape->max_shape());
-  auto min_value = MakeValue(input_shape->min_shape());
   MS_EXCEPTION_IF_NULL(dynamic_shape_abstract);
-  dynamic_shape_abstract->set_value_range(min_value, max_value);
   dynamic_shape->set_abstract(dynamic_shape_abstract);
   return dynamic_shape;
 }
@@ -200,9 +197,7 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   std::shared_ptr<abstract::AbstractTensor> gen_mask_abstract;
   if (input_shape->IsDynamic()) {
     ShapeVector mask_shp = {abstract::Shape::kShapeDimAny};
-    ShapeVector mask_min_shp = CalGenMaskOutputShape(input_shape->min_shape());
-    ShapeVector mask_max_shp = CalGenMaskOutputShape(input_shape->max_shape());
-    auto gen_mask_shape = std::make_shared<abstract::Shape>(mask_shp, mask_min_shp, mask_max_shp);
+    auto gen_mask_shape = std::make_shared<abstract::Shape>(mask_shp);
     MS_EXCEPTION_IF_NULL(gen_mask_shape);
     gen_mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, gen_mask_shape);
   } else {

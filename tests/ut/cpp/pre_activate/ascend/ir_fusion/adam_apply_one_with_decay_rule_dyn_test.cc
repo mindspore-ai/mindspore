@@ -32,9 +32,8 @@ class TestHWOptimizeAdamApplyOneWithDecayRuleDyn : public BackendCommon {
 
 AbstractBasePtr GetAdamApplyOneWithDecayInputAbstract() {
   std::vector<int64_t> shp{-1, 32, -1, 224};
-  std::vector<int64_t> min_shp{1, 32, 1, 224};
   std::vector<int64_t> max_shp{2, 32, 224, 224};
-  auto input_shp = std::make_shared<abstract::Shape>(shp, min_shp, max_shp);
+  auto input_shp = std::make_shared<abstract::Shape>(shp, max_shp);
   auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<Float>(32));
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(element, input_shp);
   return x_abstract;

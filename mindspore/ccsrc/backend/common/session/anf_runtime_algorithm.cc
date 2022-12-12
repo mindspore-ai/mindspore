@@ -976,22 +976,13 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
   return true;
 }
 
-static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, ShapeVector *device_shape) {
+static inline void GetDefaultShape(ShapeVector *device_shape) {
   auto ConvertNegOneToDefault = [](int64_t size) {
     constexpr int64_t kDefaultValueForDynamicDim = 16;
     return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
   };
-  if (!max_shape.empty()) {
-    if (device_shape->empty()) {
-      (void)std::transform(max_shape.begin(), max_shape.end(), std::back_inserter(*device_shape),
-                           ConvertNegOneToDefault);
-    } else {
-      *device_shape = max_shape;
-    }
-  } else {
-    auto tmp_shape = *device_shape;
-    (void)std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefault);
-  }
+  auto tmp_shape = *device_shape;
+  (void)std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefault);
 }
 
 // This function get input device shape adaptively in case of dynamic shape and static shape.
@@ -1003,27 +994,8 @@ static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, S
 ShapeVector AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetInputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (IsDynamic(device_shape) || device_shape.empty()) {
-    auto max_shape = common::AnfAlgo::GetInputMaxShape(anf_node, index);
-    GetMaxOrDefaultShape(max_shape, &device_shape);
-    auto format = GetInputFormat(anf_node, index);
-    auto dtype = GetInputDeviceDataType(anf_node, index);
-    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype, false);
-  }
-
-  if (device_shape.empty()) {
-    KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
-    auto shape = common::AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
-    ShapeVector ret_shape;
-    auto ConvertNegOneToDefault = [](int64_t size) {
-      constexpr int64_t kDefaultValueForDynamicDim = 1;
-      return size < 0 ? kDefaultValueForDynamicDim : size;
-    };
-    std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
-    auto format = GetInputFormat(anf_node, index);
-    auto dtype = GetInputDeviceDataType(anf_node, index);
-    (void)trans::TransShapeToDevice(ret_shape, format, anf_node, index, dtype, false);
-    return ret_shape;
+  if (IsDynamic(device_shape)) {
+    GetDefaultShape(&device_shape);
   }
 
   return device_shape;
@@ -1034,26 +1006,8 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr
   MS_EXCEPTION_IF_NULL(anf_node);
   auto device_shape = GetOutputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (IsDynamic(device_shape) || device_shape.empty()) {
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(anf_node, index);
-    GetMaxOrDefaultShape(max_shape, &device_shape);
-    auto format = GetOutputFormat(anf_node, index);
-    auto dtype = GetOutputDeviceDataType(anf_node, index);
-    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype);
-  }
-
-  if (device_shape.empty()) {
-    auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, index);
-    ShapeVector ret_shape;
-    auto ConvertNegOneToOne = [](int64_t size) {
-      constexpr int64_t kDefaultValueForDynamicDim = 1;
-      return size < 0 ? kDefaultValueForDynamicDim : size;
-    };
-    (void)std::transform(shape.cbegin(), shape.cend(), std::back_inserter(ret_shape), ConvertNegOneToOne);
-    auto format = GetOutputFormat(anf_node, index);
-    auto dtype = GetOutputDeviceDataType(anf_node, index);
-    (void)trans::TransShapeToDevice(ret_shape, format, anf_node, index, dtype, false);
-    return ret_shape;
+  if (IsDynamic(device_shape)) {
+    GetDefaultShape(&device_shape);
   }
 
   return device_shape;

@@ -465,7 +465,6 @@ ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &sha
   MS_EXCEPTION_IF_NULL(shape_element);
   ShapeMap shape_map;
   shape_map[kShape] = shape_element->shape();
-  shape_map[kMinShape] = shape_element->min_shape();
   shape_map[kMaxShape] = shape_element->max_shape();
   return shape_map;
 }
@@ -991,11 +990,6 @@ std::vector<int64_t> CheckAndConvertUtils::CheckListInt(const std::string &arg_n
                             << " must be a list with all Int elements, but got " << attr->ToString() << ".";
   }
   return result;
-}
-
-void CheckAndConvertUtils::CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape) {
-  *min_shape = (*min_shape).empty() ? shape : *min_shape;
-  *max_shape = (*max_shape).empty() ? shape : *max_shape;
 }
 
 int64_t CheckAndConvertUtils::GetAndCheckFormat(const ValuePtr &value) {

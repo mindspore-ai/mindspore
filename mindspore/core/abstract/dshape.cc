@@ -57,18 +57,7 @@ bool BaseShape::operator!=(const BaseShape &other) const { return !(*this == oth
 
 std::string Shape::ToString() const {
   std::ostringstream buffer;
-  bool has_dyn_shape = IsDynamic();
-  if (has_dyn_shape) {
-    buffer << "{shape:";
-  }
   buffer << ShapeVectorToStr(shape_);
-  if (has_dyn_shape) {
-    buffer << "|min shape:";
-    buffer << ShapeVectorToStr(min_shape_);
-    buffer << "|max shape:";
-    buffer << ShapeVectorToStr(max_shape_);
-    buffer << "}";
-  }
   return buffer.str();
 }
 
@@ -77,9 +66,6 @@ std::string Shape::DumpText() const {
   buffer << "[";
   for (size_t i = 0; i < shape_.size(); i++) {
     buffer << (i > 0 ? ", " : "") << shape_[i];
-    if (shape_[i] == kShapeDimAny && min_shape_.size() == shape_.size() && max_shape_.size() == shape_.size()) {
-      buffer << "_" << min_shape_[i] << "^" << max_shape_[i];
-    }
   }
   buffer << "]";
   return buffer.str();
@@ -95,10 +81,7 @@ bool Shape::operator==(const BaseShape &other) const {
   if (shape_ != other_shape.shape_) {
     return false;
   }
-  if (!IsDynamic() || !other_shape.IsDynamic()) {
-    return true;
-  }
-  return (min_shape_ == other_shape.min_shape_) && (max_shape_ == other_shape.max_shape_);
+  return true;
 }
 
 void Shape::Broaden() {

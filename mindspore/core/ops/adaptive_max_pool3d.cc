@@ -67,12 +67,10 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   } else {
     const size_t kDHWDims = 3;
     std::vector<int64_t> out_shape = x_shape;
-    std::vector<int64_t> infer_shape_min = x_shape;
-    std::vector<int64_t> infer_shape_max = x_shape;
     for (int64_t i = out_shape.size() - kDHWDims; i < SizeToLong(out_shape.size()); ++i) {
       out_shape[i] = abstract::Shape::kShapeDimAny;
     }
-    out_shape_ptr = std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+    out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   }
 
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});

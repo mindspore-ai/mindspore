@@ -68,18 +68,11 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
     auto origin_shape_ptr = origin_shape_base_ptr->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(origin_shape_ptr);
     auto origin_shape = origin_shape_ptr->shape();
-    auto origin_shape_min = origin_shape_ptr->min_shape();
-    auto origin_shape_max = origin_shape_ptr->max_shape();
     if (!(origin_shape.size() == kShapeSize && origin_shape[1] == kShapeValue5)) {
       return nullptr;
     }
     origin_shape[1] = kShapeValue8;
-    if (!origin_shape_min.empty() && !origin_shape_max.empty()) {
-      origin_shape_min[1] = kShapeValue8;
-      origin_shape_max[1] = kShapeValue8;
-    }
-    abstract::ShapePtr out_shape_ptr =
-      std::make_shared<abstract::Shape>(origin_shape, origin_shape_min, origin_shape_max);
+    abstract::ShapePtr out_shape_ptr = std::make_shared<abstract::Shape>(origin_shape);
     auto pad = InsertPadToGraph(func_graph, cur_input, origin_type, out_shape_ptr);
     MS_EXCEPTION_IF_NULL(pad);
     pad->set_scope(cnode->scope());

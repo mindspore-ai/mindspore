@@ -77,7 +77,7 @@ abstract::ShapePtr LARSUpdateInferShape(const PrimitivePtr &primitive, const std
     (void)CheckAndConvertUtils::CheckInteger(para_name, learning_rate_shape[kShape][0], kEqual, 1);
   }
 
-  return std::make_shared<abstract::Shape>(weight_shape[kShape], weight_shape[kMinShape], weight_shape[kMaxShape]);
+  return std::make_shared<abstract::Shape>(weight_shape[kShape]);
 }
 
 TypePtr LARSUpdateInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

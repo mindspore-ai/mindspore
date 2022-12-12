@@ -119,19 +119,9 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
     }
   }
 
-  int64_t maxshape_dim0 = ImageKMaxshapeDim0;
-  int64_t maxshape_dim1 = 0;
-  int64_t maxshape_dim2 = 0;
-  if (output_type == kFloat32) {
-    maxshape_dim0 *= ImageKMaxshapeNum;
-  }
-  maxshape_dim2 = sqrt(max_len / maxshape_dim0);
-  maxshape_dim1 = maxshape_dim2 / image_k_dep;
   ShapeVector output_shape = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
                               abstract::Shape::kShapeDimAny, image_k_dep};
-  ShapeVector shape_min = {1, 1, 1, image_k_dep};
-  ShapeVector shape_max = {maxshape_dim0, maxshape_dim1, maxshape_dim2, image_k_dep};
-  return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitive,

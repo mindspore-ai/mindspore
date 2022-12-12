@@ -281,8 +281,8 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructEmbeddingLookupSubGraph(const An
   input_param->set_abstract(param->abstract()->Clone());
   ParameterPtr input_indices = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(input_indices);
-  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(
-    kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
+  input_indices->set_abstract(
+    std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape)));
 
   if (!common::AnfAlgo::HasNodeAttr(kAttrOffset, dyn_cast<CNode>(node))) {
     MS_LOG(EXCEPTION) << "Can not find offset attr of kernel: " << node->fullname_with_scope();
@@ -341,8 +341,8 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
 
   ParameterPtr input_indices = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(input_indices);
-  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(
-    kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
+  input_indices->set_abstract(
+    std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape)));
 
   ParameterPtr update_values = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(update_values);
@@ -353,15 +353,8 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
   }
   int64_t emb_dim = emb_shape.back();
   ShapeVector update_values_shape = {-1, emb_dim};
-  ShapeVector update_values_min_shape = {1, emb_dim};
-  ShapeVector update_values_max_shape = {1, emb_dim};
-  if (emb_dim < 0) {
-    update_values_max_shape.clear();
-    update_values_min_shape.clear();
-  }
-  update_values->set_abstract(std::make_shared<abstract::AbstractTensor>(
-    kFloat32,
-    std::make_shared<abstract::Shape>(update_values_shape, update_values_min_shape, update_values_max_shape)));
+  update_values->set_abstract(
+    std::make_shared<abstract::AbstractTensor>(kFloat32, std::make_shared<abstract::Shape>(update_values_shape)));
 
   // 2. Create ScatterUpdate node.
   PrimitivePtr embedding_cache_update_primitive = std::make_shared<Primitive>(kScatterUpdateOpName);
@@ -394,16 +387,16 @@ CNodePtr PsEmbeddingCacheInserter::CreateRecvNode() const {
   MS_EXCEPTION_IF_NULL(root_graph_);
   ParameterPtr input_indices = root_graph_->add_parameter();
   MS_EXCEPTION_IF_NULL(input_indices);
-  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(
-    kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
+  input_indices->set_abstract(
+    std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape)));
   auto fake_input_indices_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, kOneDimShape);
   input_indices->set_default_param(fake_input_indices_tensor);
 
   // The update values input.
   ParameterPtr update_values = root_graph_->add_parameter();
   MS_EXCEPTION_IF_NULL(update_values);
-  update_values->set_abstract(std::make_shared<abstract::AbstractTensor>(
-    kFloat32, std::make_shared<abstract::Shape>(kTwoDimsDynamicShape, kTwoDimsShape, kTwoDimsShape)));
+  update_values->set_abstract(
+    std::make_shared<abstract::AbstractTensor>(kFloat32, std::make_shared<abstract::Shape>(kTwoDimsDynamicShape)));
   auto fake_update_values_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, kTwoDimsShape);
   update_values->set_default_param(fake_update_values_tensor);
 

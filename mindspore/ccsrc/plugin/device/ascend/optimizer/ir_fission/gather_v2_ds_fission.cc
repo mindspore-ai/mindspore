@@ -85,18 +85,6 @@ CNodePtr GatherV2DsFission::CreatePad(const FuncGraphPtr &graph, const CNodePtr 
   auto type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
   MS_EXCEPTION_IF_NULL(abstract);
-  if (param_dyn_shape->max_shape().size() == param_dyn_shape->shape().size() &&
-      param_dyn_shape->min_shape().size() == param_dyn_shape->shape().size()) {
-    ShapeVector max_shape(param_dyn_shape->max_shape());
-    ShapeVector min_shape(param_dyn_shape->min_shape());
-    ShapeVector new_shape(shape);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      max_shape[max_shape.size() - 1] = SizeToLong(pad_dim_size);
-      min_shape[min_shape.size() - 1] = SizeToLong(pad_dim_size);
-    }
-
-    abstract->set_shape(std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape));
-  }
   pad->set_abstract(abstract);
 
   std::vector<ValuePtr> elements;
@@ -133,21 +121,8 @@ CNodePtr GatherV2DsFission::CreateGatherV2Ds(const FuncGraphPtr &graph, const CN
 
   auto shape = common::AnfAlgo::GetOutputInferShape(origin_node, 0);
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-  if (IsDynamic(shape)) {
-    auto min_shape = common::AnfAlgo::GetOutputMinShape(origin_node, 0);
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(origin_node, 0);
-    if (!min_shape.empty() && !max_shape.empty()) {
-      min_shape[min_shape.size() - 1] = SizeToLong(pad_dim_size);
-      max_shape[max_shape.size() - 1] = SizeToLong(pad_dim_size);
-    }
-
-    std::vector<BaseShapePtr> shapes = {std::make_shared<abstract::Shape>(shape, min_shape, max_shape)};
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, shapes,
-                                                 gather_v2.get());
-  } else {
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
-                                                gather_v2.get());
-  }
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
+                                              gather_v2.get());
 
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), gather_v2);
   auto input_names = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrInputNames);

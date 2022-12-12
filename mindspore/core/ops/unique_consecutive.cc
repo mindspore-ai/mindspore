@@ -53,9 +53,9 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
   auto axis_ptr = primitive->GetAttr(kAxis);
   MS_EXCEPTION_IF_NULL(axis_ptr);
   abstract::ShapePtr output_shape, idx_shape, counts_shape;
-  ShapeVector output_vec, output_min_vec, output_max_vec;
+  ShapeVector output_vec, output_max_vec;
   ShapeVector idx_shape_vec;
-  ShapeVector counts_shape_vec, counts_min_vec, counts_max_vec;
+  ShapeVector counts_shape_vec, counts_max_vec;
   // dynamic shape, the infershape function will be called two times. In the second time, the attribute
   // axis may be deleted so as to axis_ptr is nullptr.
   if (axis_ptr->isa<None>() || GetValue<int64_t>(axis_ptr) == kAxisIsNone) {
@@ -63,13 +63,11 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     (void)primitive->SetAttrs({{"axis", MakeValue(kAxisIsNone)}});
     auto input_total = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
     output_vec = {abstract::Shape::kShapeDimAny};
-    output_min_vec = {1};
     output_max_vec = {input_total};
 
     idx_shape_vec = input_shape_vec;
 
     counts_shape_vec = {abstract::Shape::kShapeDimAny};
-    counts_min_vec = {1};
     counts_max_vec = {input_total};
   } else {
     int64_t axis = GetValue<int64_t>(axis_ptr);
@@ -84,14 +82,11 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     size_t axis_size = LongToSize(axis);
     output_vec = input_shape_vec;
     output_vec[axis_size] = abstract::Shape::kShapeDimAny;
-    output_min_vec = input_shape_vec;
-    output_min_vec[axis_size] = 1;
     output_max_vec = input_shape_vec;
 
     idx_shape_vec = {input_shape_vec[axis_size]};
 
     counts_shape_vec = {abstract::Shape::kShapeDimAny};
-    counts_min_vec = {1};
     counts_max_vec = {input_shape_vec[axis_size]};
   }
 
@@ -108,9 +103,9 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     counts_shape_vec = {0};
   }
 
-  output_shape = std::make_shared<abstract::Shape>(output_vec, output_min_vec, output_max_vec);
+  output_shape = std::make_shared<abstract::Shape>(output_vec, output_max_vec);
   idx_shape = std::make_shared<abstract::Shape>(idx_shape_vec);
-  counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec, counts_min_vec, counts_max_vec);
+  counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec, counts_max_vec);
 
   auto ret_shape_vec = std::vector<abstract::BaseShapePtr>{output_shape};
   (void)ret_shape_vec.emplace_back(idx_shape);

@@ -135,8 +135,6 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());
   ShapeVector x_shape = input_x->shape()->shape();
-  ShapeVector x_min_shape = input_x->shape()->min_shape();
-  ShapeVector x_max_shape = input_x->shape()->max_shape();
 
   auto input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "For 'BatchNorm', input argument \'input_x\'");
@@ -176,11 +174,9 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   }
   AbstractTensorPtr input_gamma = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   ShapeVector gamma_shape = input_gamma->shape()->shape();
-  ShapeVector gamma_min_shape = input_gamma->shape()->min_shape();
-  ShapeVector gamma_max_shape = input_gamma->shape()->max_shape();
-  ShapePtr output_shape_ptr = std::make_shared<Shape>(x_shape, x_min_shape, x_max_shape);
+  ShapePtr output_shape_ptr = std::make_shared<Shape>(x_shape);
   AbstractTensorPtr output = std::make_shared<AbstractTensor>(input_x->element(), output_shape_ptr);
-  ShapePtr gamma_shape_ptr = std::make_shared<Shape>(gamma_shape, gamma_min_shape, gamma_max_shape);
+  ShapePtr gamma_shape_ptr = std::make_shared<Shape>(gamma_shape);
   AbstractTensorPtr output_gamma = std::make_shared<AbstractTensor>(input_gamma->element(), gamma_shape_ptr);
   AbstractBasePtrList rets = {output, output_gamma, output_gamma, output_gamma, output_gamma};
   return std::make_shared<AbstractTuple>(rets);
@@ -304,14 +300,12 @@ AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const 
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 2.";
   }
   ShapeVector indices_shape = {Shape::kShapeDimAny};
-  ShapeVector min_shape = {1};
   ShapeVector max_shape = {shape->shape()[0] * shape->shape()[1]};
 
-  auto indices =
-    std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(indices_shape, min_shape, max_shape));
+  auto indices = std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(indices_shape, max_shape));
 
   auto weights = std::make_shared<AbstractTensor>(kFloat32, indices_shape);
-  weights->set_shape(std::make_shared<Shape>(indices_shape, min_shape, max_shape));
+  weights->set_shape(std::make_shared<Shape>(indices_shape, max_shape));
   // outputs: indices, ids, weights
   AbstractBasePtrList elements = {indices, indices, weights};
   return std::make_shared<AbstractTuple>(elements);

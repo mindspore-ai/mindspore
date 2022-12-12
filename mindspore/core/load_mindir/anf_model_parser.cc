@@ -462,15 +462,6 @@ abstract::AbstractTensorPtr MSANFModelParser::GetAbsTensorFromTensorProto(const 
   for (int i = 0; i < tensor_proto.dims_size(); ++i) {
     (void)shape.emplace_back(tensor_proto.dims(i));
   }
-  ShapeVector min_shape;
-  for (int i = 0; i < tensor_proto.min_dims_size(); ++i) {
-    (void)min_shape.emplace_back(tensor_proto.min_dims(i));
-  }
-
-  ShapeVector max_shape;
-  for (int i = 0; i < tensor_proto.max_dims_size(); ++i) {
-    (void)max_shape.emplace_back(tensor_proto.max_dims(i));
-  }
 
   if (!tensor_proto.has_data_type()) {
     MS_LOG(ERROR) << "mind_ir build tensor: " << tensor_proto.name() << " failed";
@@ -483,7 +474,7 @@ abstract::AbstractTensorPtr MSANFModelParser::GetAbsTensorFromTensorProto(const 
     MS_LOG(ERROR) << "mind_ir TensorProto data_type: " << tensor_proto.data_type() << " is not support yet!";
     return nullptr;
   }
-  auto tensor_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+  auto tensor_shape = std::make_shared<abstract::Shape>(shape);
   auto tensor_info = std::make_shared<abstract::AbstractTensor>(TypeIdToType(iter->second), tensor_shape);
   if (tensor_proto.has_ref_key()) {
     auto ref_key = std::make_shared<RefKey>(tensor_proto.ref_key());

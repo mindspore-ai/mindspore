@@ -126,13 +126,7 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
     ShapeVector out_shape = {-2};
-    ShapeVector infer_shape_min = {0};
-    int64_t max_value = (row + col) * std::max(row, col);
-    for (int64_t i = 0; i < rank - kNumber2; i++) {
-      max_value *= x_shape[LongToSize(i)];
-    }
-    ShapeVector infer_shape_max = {max_value};
-    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 }
 
