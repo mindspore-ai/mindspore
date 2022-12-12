@@ -51,14 +51,13 @@ abstract::ShapePtr ScatterNdArithmeticInferShape(const PrimitivePtr &primitive,
   const int64_t input_x_size = SizeToLong(input_x_shape.size());
   const int64_t indices_size = SizeToLong(indices_shape.size());
   const int64_t updates_size = SizeToLong(updates_shape.size());
-  const int64_t last_dim = indices_shape.back();
-
-  (void)CheckAndConvertUtils::CheckValue("the value of last dimension of 'indices'", last_dim, kLessEqual,
-                                         "the dimension of 'input_x'", input_x_size, prim_name);
 
   (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'indices'", indices_size, kGreaterEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'updates'", updates_size, kGreaterEqual, 1, prim_name);
 
+  const int64_t last_dim = indices_shape.back();
+  (void)CheckAndConvertUtils::CheckValue("the value of last dimension of 'indices'", last_dim, kLessEqual,
+                                         "the dimension of 'input_x'", input_x_size, prim_name);
   (void)CheckAndConvertUtils::CheckValue("len(updates.shape)'", updates_size, kEqual,
                                          "len(indices.shape) - 1 + len(input_x.shape) - indices.shape[-1]",
                                          indices_size - 1 + input_x_size - last_dim, prim_name);
