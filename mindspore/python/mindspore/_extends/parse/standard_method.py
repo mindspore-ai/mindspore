@@ -4077,6 +4077,27 @@ def not_equal(x, other):
     return F.not_equal(x, other)
 
 
+def sign(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.sign`.
+    """
+    return F.sign(x)
+
+
+def signbit(x):
+    """
+    For details, please refer to :func:`mindspore.ops.signbit`.
+    """
+    return F.signbit(x)
+
+
+def sgn(x):
+    """
+    For details, please refer to :func:`mindspore.ops.sgn`.
+    """
+    return F.sgn(x)
+
+
 def sinh(input):
     r"""
     Computes hyperbolic sine of the input element-wise.

@@ -256,6 +256,9 @@ Element-by-Element Operations
     mindspore.ops.roll
     mindspore.ops.round
     mindspore.ops.rsqrt
+    mindspore.ops.sgn
+    mindspore.ops.sign
+    mindspore.ops.signbit
     mindspore.ops.sin
     mindspore.ops.sinc
     mindspore.ops.sinh

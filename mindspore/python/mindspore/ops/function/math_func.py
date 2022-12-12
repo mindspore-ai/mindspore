@@ -1632,6 +1632,123 @@ def logical_and(x, y):
     return logical_and_(x, y)
 
 
+def sign(x):
+    r"""
+    Returns an element-wise indication of the sign of a number.
+
+    .. math::
+        \text{out}_{i} = \begin{cases}
+                        0 & |\text{x}_i| == 0 \\
+                        \frac{{\text{x}_i}}{|{\text{x}_i}|} & \text{otherwise}
+                        \end{cases}
+
+    0 is returned for nan inputs.
+
+    Args:
+        x (Tensor): Input Tensor.
+
+    Returns:
+        Tensor, the sign of x.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> x = ms.Tensor([[-1, 0, 2, 4, 6], [2, 3, 5, -6, 0]])
+        >>> output = ops.sign(x)
+        >>> print(output)
+        [[-1  0  1  1  1]
+         [ 1  1  1 -1  0]]
+        >>> x = ms.Tensor([[-1, 0, float('inf'), 4, float('nan')], [2, 3, float('-inf'), -6, 0]])
+        >>> output = ops.sign(x)
+        >>> print(output)
+        [[-1.  0.  1.  1.  0.]
+         [ 1.  1. -1. -1.  0.]]
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For sign, the input must be a Tensor, but got {type(x)}")
+    return _get_cache_prim(ops.Sign)()(x)
+
+
+def signbit(x):
+    r"""
+    Returns element-wise True where signbit is set (less than zero).
+
+    Args:
+        x (Tensor): The input value.
+
+    Returns:
+        Tensor, the signbit of x.
+
+    Raises:
+        TypeError: If input is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> x = ms.Tensor([0.7, -1.2, 0., 2.3])
+        >>> output = ops.signbit(x)
+        >>> print(output)
+        [False  True False False]
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For signbit, the input must be a Tensor, but got {type(x)}")
+    res = ops.less(x, 0)
+    return res
+
+
+def sgn(x):
+    r"""
+    This function is an extension of :func:`mindspore.ops.sign` to complex tensors.
+
+    .. math::
+        \text{out}_{i} = \begin{cases}
+                        0 & |\text{x}_i| == 0 \\
+                        \frac{{\text{x}_i}}{|{\text{x}_i}|} & \text{otherwise}
+                        \end{cases}
+
+    Args:
+        x (Tensor): The input value.
+
+    Returns:
+        Tensor, the sgn of x.
+
+    Raises:
+        TypeError: If input is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> x = ms.Tensor([[3 + 4j, 7 - 24j, 0, 6 + 8j, 8], [15 + 20j, 7 - 24j, 0, 3 + 4j, 20]], dtype=ms.complex64)
+        >>> output = ops.sgn(x)
+        >>> print(output)
+        [[0.6 +0.8j  0.28-0.96j 0.  +0.j   0.6 +0.8j  1.  +0.j  ]
+         [0.6 +0.8j  0.28-0.96j 0.  +0.j   0.6 +0.8j  1.  +0.j  ]]
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(f"For sgn, the input must be a Tensor, but got {type(x)}")
+    if not ops.is_complex(x):
+        return ops.sign(x)
+    modulus = ops.ComplexAbs()(x)
+    zeros_mask = modulus.equal(0)
+    non_zero_modulus = ops.masked_fill(modulus, zeros_mask, 1)
+    zeros_modulus = ops.zeros_like(non_zero_modulus)
+    complex_modulus = ops.Complex()(non_zero_modulus, zeros_modulus)
+    res = x / complex_modulus
+    return res
+
+
 def sin(x):
     r"""
     Computes sine of the input element-wise.
@@ -9367,6 +9484,9 @@ __all__ = [
     'kron',
     'rot90',
     'remainder',
+    'sgn',
+    'sign',
+    'signbit',
     'accumulate_n',
     'iou',
     'baddbmm',
