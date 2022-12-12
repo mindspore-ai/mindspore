@@ -67,7 +67,9 @@ class FunctionNode {
   void AddEdge(const AnfNodePtr &next_node, const AnfNodePtr &din);
   void UpdateAccumulativeDout(const AnfNodePtr &new_dout);
   const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &next_edges() const { return next_edges_; }
-  AnfNodePtr RealDout() const { return accumulate_dout_; }
+  const FuncGraphPtr tape() { return tape_; }
+  AnfNodePtr accumulate_dout() const { return accumulate_dout_; }
+  void set_accumulate_dout(const AnfNodePtr &accumulate_dout) { accumulate_dout_ = accumulate_dout; }
   void ReplaceEdges();
   const AnfNodePtr fake_dout() const { return fake_dout_; }
 
@@ -79,13 +81,14 @@ class FunctionNode {
   AnfNodePtr accumulate_dout_;
   // First we generate a fake dout
   const AnfNodePtr fake_dout_;
-  // Represent where thd dins backpropagate to other bprop function or variable
+  // The pair.first is a variable, pair.second is dout of variable
   std::vector<std::pair<AnfNodePtr, AnfNodePtr>> next_edges_;
   // Replace next_edges where din == dout in brprop function
   std::vector<int> need_replace_edges_;
 };
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 
+// Variable represent a parameter or output of a middle cnode
 class VariableAdjoint {
  public:
   VariableAdjoint(const FunctionNodePtr &fn, const ValuePtr &out_value) : fn_(fn), out_value_(out_value) {}
@@ -100,6 +103,7 @@ class VariableAdjoint {
   void set_is_need_propagate(bool is_need_grad) { is_need_propagate_ = is_need_grad; }
   AnfNodePtr k_node() const { return k_node_; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
+  AnfNodePtr RealDout();
 
  private:
   // Abstract bprop function
@@ -161,8 +165,7 @@ class AutoGradCellImpl {
   // Back propagate for one node;
   void UpdateNextEdges(const FunctionNodePtr &fn, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &op_args);
-  void UpdateNextEdges(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din,
-                       const ValuePtr &op_arg);
+  void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &node, const AnfNodePtr &din, const ValuePtr &op_arg);
 
   void BuildForwardLastNode();
   // Add parameter(weights) to anfnode_to_variable_adjoint_
@@ -185,7 +188,9 @@ class AutoGradCellImpl {
   AnfNodePtr GetGradNodeByIndex(const AnfNodePtrList &node_list, size_t index);
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
   AnfNodePtr GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights, bool weight_param_is_tuple);
-  void AddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index);
+  // Input node is user cnode one of input, index is user input index
+  // User->input(index) is input node
+  void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
   void ElimateTupleGetItem();
 
