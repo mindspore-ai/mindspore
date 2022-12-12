@@ -58,6 +58,7 @@ class XdivyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Xd
   std::vector<size_t> index_listx_{};
   std::vector<size_t> index_listy_{};
   bool is_need_broadcast_{false};
+  bool has_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -228,19 +228,6 @@ namespace gpu {
 #define VARIABLE_NOT_USED(var) \
   { (void)(var); }
 
-template <typename T>
-inline bool CheckNullInput(const std::vector<T> &input_shape) {
-  // If input_shape.size() == 0, it means a scalar input; If input_shape.size() != 0 and input_shape contains 0,
-  // it means a null input. Just return a null output.
-  if (input_shape.size() != 0) {
-    if (std::any_of(input_shape.begin(), input_shape.end(), [](T i) { return i == 0; })) {
-      return true;
-    }
-  }
-  return false;
-}
-#define CHECK_NULL_INPUT(input_shape) mindspore::device::gpu::CheckNullInput(input_shape)
-
 inline bool CheckShapePositive(const std::vector<int64_t> &input_shape) {
   if (input_shape.size() != 0) {
     if (std::all_of(input_shape.begin(), input_shape.end(), [](int64_t i) { return i > 0; })) {
