@@ -18,8 +18,12 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
+#include "runtime/rt.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.h"
+
 namespace mindspore {
 namespace kernel {
 class AicpuOpKernelMod : public AscendKernelMod {
@@ -33,6 +37,11 @@ class AicpuOpKernelMod : public AscendKernelMod {
 
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   void SetInputList(const std::vector<int64_t> &input_list);
   void SetOutputList(const std::vector<int64_t> &output_list);
@@ -51,19 +60,31 @@ class AicpuOpKernelMod : public AscendKernelMod {
   void CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  protected:
+  void SyncData() override;
   std::string args_;
   std::string ext_info_;
   std::string node_name_;
   std::string node_so_;
   bool cust_kernel_{false};
   std::string node_def_str_;
-  // Because the ~DynamicAicpuKernelMod() is after ResetDevice, and ResetDevice has the function to free mem,
-  // so it is no rtFree of ext_info_addr_dev_ in ~DynamicAicpuKernelMod()
+
   void *ext_info_addr_dev_ = nullptr;
+  size_t ext_info_size_ = 0;
+  std::shared_ptr<device::ascend::AicpuExtInfoHandler> ext_info_handler_ = nullptr;
+  ::ge::UnknowShapeOpType unknow_type_;
+  void *stream_ = nullptr;
 
  private:
+  void AllocateExtInfoDeviceAddr(const CNodePtr &cnode);
+  void FreeExtInfoDeviceAddr();
+  void UpdateOutputShapeFromExtInfo(const CNodePtr &cnode);
+  bool CheckDeviceSupportBlockingAicpuOpProcess() const;
+  void ParseNodeNameAndNodeSo();
+  void CreateAsyncWaitEventAndUpdateEventInfo(const CNodePtr &cnode);
   std::vector<int64_t> input_list_;
   std::vector<int64_t> output_list_;
+  rtEvent_t rt_event_ = nullptr;
+  bool is_blocking_;  // is op has asyncflag
 };
 
 using AicpuOpKernelModPtr = std::shared_ptr<AicpuOpKernelMod>;

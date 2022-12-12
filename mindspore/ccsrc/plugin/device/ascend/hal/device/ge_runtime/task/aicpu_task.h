@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.h"
 
 namespace mindspore::ge::model_runner {
 class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
@@ -46,10 +47,11 @@ class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
   std::shared_ptr<AicpuTaskInfo> task_info_;
   void *stream_;
   void *args_;
-  void *ext_info_;
+  void *ext_info_addr_;
   void *input_output_addr_;
   size_t io_addrs_size_;
   size_t args_size_;
+  uint32_t rt_event_id_;
 };
 }  // namespace mindspore::ge::model_runner
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_AICPU_TASK_H_

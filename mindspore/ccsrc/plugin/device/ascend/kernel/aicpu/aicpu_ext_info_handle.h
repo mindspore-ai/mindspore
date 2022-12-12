@@ -23,24 +23,20 @@
 #include <memory>
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "include/common/utils/contract.h"
+#include "cce/fwk_adpt_struct.h"
+#include "external/graph/types.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
-// for unknown shape op type
-enum UnknowShapeOpType {
-  DEPEND_IN_SHAPE = 1,     // op out shape get by input shape
-  DEPEND_CONST_VALUE = 2,  // op out shape get by const op value
-  DEPEND_SHAPE_RANGE = 3,  // op out shape get by range
-  DEPEND_COMPUTE = 4       // op out shape get by totally computing
-};
-
-using AicpuShapeAndType = kernel::ShapeAndType;
-using AicpuExtInfo = kernel::ExtInfo;
+using AicpuShapeAndType = aicpu::FWKAdapter::ShapeAndType;
+using AicpuExtInfo = aicpu::FWKAdapter::ExtInfo;
+using AsyncWaitInfo = aicpu::FWKAdapter::AsyncWait;
 
 class AicpuExtInfoHandler {
  public:
-  AicpuExtInfoHandler(std::string node_name, uint32_t input_num, uint32_t output_num, UnknowShapeOpType unknown_type)
+  AicpuExtInfoHandler(std::string node_name, uint32_t input_num, uint32_t output_num,
+                      ::ge::UnknowShapeOpType unknown_type)
       : node_name_(std::move(node_name)),
         input_num_(input_num),
         output_num_(output_num),
@@ -61,10 +57,13 @@ class AicpuExtInfoHandler {
   [[nodiscard]] bool GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,
                                            NotNull<TypeId *> data_type);
 
+  [[nodiscard]] bool UpdateEventId(const uint32_t event_id);
+
  private:
   [[nodiscard]] bool ParseExtShapeType(const AicpuExtInfo &aicpu_ext_info) const;
   [[nodiscard]] bool ParseExtInputShape(AicpuExtInfo *aicpu_ext_info);
   [[nodiscard]] bool ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info);
+  [[nodiscard]] bool ParseExtAsyncWait(AicpuExtInfo *aicpu_ext_info);
 
   [[nodiscard]] static bool UpdateShapeAndType(const std::vector<int64_t> &shape,
                                                NotNull<AicpuShapeAndType *> shape_and_type);
@@ -75,12 +74,13 @@ class AicpuExtInfoHandler {
   const std::string node_name_;
   const uint32_t input_num_;
   const uint32_t output_num_;
-  UnknowShapeOpType unknown_type_;
+  ::ge::UnknowShapeOpType unknown_type_;
   size_t ext_info_len_;
 
   std::unique_ptr<uint8_t[]> ext_info_;
   std::vector<AicpuShapeAndType *> input_shape_and_type_;
   std::vector<AicpuShapeAndType *> output_shape_and_type_;
+  AsyncWaitInfo *async_wait_ = nullptr;
 };
 }  // namespace ascend
 }  // namespace device
