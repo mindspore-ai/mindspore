@@ -726,8 +726,6 @@ def zeros(shape, dtype=None):  # pylint: disable=redefined-outer-name
 
     Args:
         shape (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
-
-    Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is None,
             mindspore.float32 will be used. Default: None.
 
