@@ -100,6 +100,7 @@ def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power
     op_sign = P.Sign()
     op_greater = P.Greater()
     op_select = P.Select()
+    op_abs = P.Abs()
 
     lr_power_val = -lr_power
     accu_pow = op_pow(moment_slice, lr_power_val)
@@ -110,7 +111,7 @@ def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power
 
     linear_slice = linear_slice + values - sigma * weight_slice
 
-    update_weight_cond = op_greater(linear_slice, l1)
+    update_weight_cond = op_greater(op_abs(linear_slice), l1)
     updated_weight = (l1 * op_sign(linear_slice) - linear_slice) / (cur_accu_pow / learning_rate + 2 * l2)
     zeros = zeros_like(weight_slice)
 
