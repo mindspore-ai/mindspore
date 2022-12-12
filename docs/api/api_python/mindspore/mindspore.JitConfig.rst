@@ -1,7 +1,7 @@
 mindspore.JitConfig
 ====================
 
-.. py:class:: mindspore.JitConfig(jit_level="O1", task_sink=True, **kwargs)
+.. py:class:: mindspore.JitConfig(jit_level="O1", exc_mode=auto, **kwargs)
 
     编译时所使用的JitConfig配置项。
 
@@ -16,7 +16,7 @@ mindspore.JitConfig
           - "O2": 手动优化与图算优化结合。
           - "O3": 性能优化，无法保证泛化性。
 
-        - **task_sink** (str) - 设置执行模式，支持["auto", "sink", "no_sink"]。默认值："auto"。
+        - **exc_mode** (str) - 设置执行模式，支持["auto", "sink", "no_sink"]。默认值："auto"。
 
           - "auto": 自动策略。
           - "sink": 计算图下沉策略。

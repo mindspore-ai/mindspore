@@ -5748,11 +5748,11 @@ class Sort(Primitive):
             are sorted in descending order by value. Default: False.
 
     Inputs:
-        x(Tensor): The input tensor of any dimension, with a type of float16 or float32.
+        - **x** (Tensor) - The input tensor of any dimension, with a type of float16 or float32.
 
     Outputs:
-        y1(Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
-        y2(Tensor) - The indices of the elements in the original input tensor. Data type is int32.
+        y1(Tensor), a tensor whose values are the sorted values, with the same shape and data type as input.
+        y2(Tensor), the indices of the elements in the original input tensor. Data type is int32.
 
     Raises:
         TypeError: If `axis` is not an int.

@@ -5,7 +5,7 @@ mindspore.ops.inner
 
     计算两个1D Tensor的点积。对于更高维度来说，计算结果为在最后一维上，逐元素乘法的和。
 
-    ..note::
+    .. note::
         如果 `x` 或 `other` 之一是标量，那么相当于 :func:`mindspore.ops.mul(x, other)`。
 
     参数：
@@ -16,4 +16,4 @@ mindspore.ops.inner
         Tensor，内积的结果。
 
     异常：
-        - **TypeError** - 如果 `x` 和 `other` 都不是标量，且两者的最后一维不相同。
+        - **ValueError** - 如果 `x` 和 `other` 都不是标量，且两者的最后一维不相同。

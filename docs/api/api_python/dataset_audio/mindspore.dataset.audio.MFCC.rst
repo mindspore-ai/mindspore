@@ -12,9 +12,7 @@ mindspore.dataset.audio.MFCC
         - **norm** (NormMode, 可选) - 要使用的标准类型。默认：NormMode.ORTHO。
         - **log_mels** (bool, 可选) - 是否使用梅尔对数谱图而不是分贝刻度。默认：False。
         - **melkwargs** (dict, 可选) - 梅尔频谱的参数，如果为None则使用默认参数。默认：None，会被设置为
-          `{'n_fft': 400, 'win_length': n_fft, 'hop_length': win_length // 2, 'f_min' : 0.0, 'f_max' : sample_rate // 2,
-            'pad': 0, 'window': WindowType.HANN, 'power': 2.0, 'normalized': False, 'center': True, 'pad_mode': BorderType.REFLECT,
-            'onesided': True, 'norm' : NormType.NONE, 'mel_scale' : MelType.HTK}` 。
+           `{'n_fft': 400, 'win_length': n_fft, 'hop_length': win_length // 2, 'f_min' : 0.0, 'f_max' : sample_rate // 2, 'pad': 0, 'window': WindowType.HANN, 'power': 2.0, 'normalized': False, 'center': True, 'pad_mode': BorderType.REFLECT, 'onesided': True, 'norm' : NormType.NONE, 'mel_scale' : MelType.HTK}` 。
 
     异常：
         - **TypeError** - 如果 `sample_rate` 的类型不为int。

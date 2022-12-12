@@ -7407,7 +7407,6 @@ def inner(x, other):
         >>> print(output)
         [[[ 2.  4.  6.]
           [ 6.  4.  2.]]
-
          [[ 8. 10. 12.]
           [ 8. 10. 12.]]]
         >>> # case3: Two tensors
@@ -7417,7 +7416,6 @@ def inner(x, other):
         >>> print(output)
         [[[20. 16.]
           [16. 20.]]
-
          [[47. 43.]
           [47. 43.]]]
     """
@@ -7612,7 +7610,7 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
         batch2 (Tensor): The second batch of matrices to be multiplied. Must be 3-D tensors, dtype is same as x.
         beta (Union[float, int], optional): multiplier for input. The default is 1.
         alpha (Union[float, int], optional): multiplier for `batch1 @ batch2`. The default is 1.
-        Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
+            Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
             be a real number.
 
     Returns:
