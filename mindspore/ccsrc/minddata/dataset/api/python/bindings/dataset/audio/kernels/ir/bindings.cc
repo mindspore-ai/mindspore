@@ -52,6 +52,7 @@
 #include "minddata/dataset/audio/ir/kernels/mask_along_axis_iid_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mask_along_axis_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mel_scale_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mel_spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mfcc_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
@@ -479,6 +480,21 @@ PYBIND_REGISTER(MelScaleOperation, 1, ([](const py::module *m) {
                         return mel_scale;
                       }));
                 }));
+
+PYBIND_REGISTER(
+  MelSpectrogramOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::MelSpectrogramOperation, TensorOperation, std::shared_ptr<audio::MelSpectrogramOperation>>(
+      *m, "MelSpectrogramOperation")
+      .def(py::init([](int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min,
+                       float f_max, int32_t pad, int32_t n_mels, WindowType window, float power, bool normalized,
+                       bool center, BorderType pad_mode, bool onesided, NormType norm, MelType mel_scale) {
+        auto mel_spectrogram = std::make_shared<audio::MelSpectrogramOperation>(
+          sample_rate, n_fft, win_length, hop_length, f_min, f_max, pad, n_mels, window, power, normalized, center,
+          pad_mode, onesided, norm, mel_scale);
+        THROW_IF_ERROR(mel_spectrogram->ValidateParams());
+        return mel_spectrogram;
+      }));
+  }));
 
 PYBIND_REGISTER(MFCCOperation, 1, ([](const py::module *m) {
                   (void)py::class_<audio::MFCCOperation, TensorOperation, std::shared_ptr<audio::MFCCOperation>>(

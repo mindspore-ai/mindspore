@@ -425,7 +425,7 @@ Status CreateFbanks(std::shared_ptr<Tensor> *output, int32_t n_freqs, float f_mi
   // min_log_hz, min_log_mel, logstep and f_sp are the const of the mel value equation.
   const double min_log_hz = 1000.0;
   const double min_log_mel = 1000 / (200.0 / 3);
-  const double logstep = log2(6.4) / 27.0;
+  const double logstep = log(6.4) / 27.0;
   const double f_sp = 200.0 / 3;
 
   // hez_to_mel_c and mel_to_hz_c are the const coefficient of mel frequency cepstrum.
@@ -447,11 +447,11 @@ Status CreateFbanks(std::shared_ptr<Tensor> *output, int32_t n_freqs, float f_mi
   } else {
     m_min = (f_min - 0.0) / f_sp;
     m_max = (f_max - 0.0) / f_sp;
-    if (m_min >= min_log_hz) {
-      m_min = min_log_mel + log2(f_min / min_log_hz) / logstep;
+    if (f_min >= min_log_hz) {
+      m_min = min_log_mel + log(f_min / min_log_hz) / logstep;
     }
-    if (m_max >= min_log_hz) {
-      m_max = min_log_mel + log2(f_max / min_log_hz) / logstep;
+    if (f_max >= min_log_hz) {
+      m_max = min_log_mel + log(f_max / min_log_hz) / logstep;
     }
   }
 

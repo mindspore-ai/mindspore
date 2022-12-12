@@ -245,6 +245,7 @@ Transforms
     mindspore.dataset.audio.MaskAlongAxis
     mindspore.dataset.audio.MaskAlongAxisIID
     mindspore.dataset.audio.MelScale
+    mindspore.dataset.audio.MelSpectrogram
     mindspore.dataset.audio.MFCC
     mindspore.dataset.audio.MuLawDecoding
     mindspore.dataset.audio.MuLawEncoding
