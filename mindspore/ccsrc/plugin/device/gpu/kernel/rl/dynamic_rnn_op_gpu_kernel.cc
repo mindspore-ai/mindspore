@@ -80,7 +80,7 @@ int DynamicRnnOpBaseMod::Resize(const BaseOperatorPtr &base_operator, const std:
   ResetResource();
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   batch_size_ = static_cast<int>(input_shape[1]);
-  if (batch_size_ == -1) {
+  if (batch_size_ == abstract::Shape::kShapeDimAny) {
     return KRET_UNKNOWN_SHAPE;
   }
   seq_lens_.resize(IntToSize(batch_size_));
@@ -164,7 +164,6 @@ template <typename T>
 bool DynamicRnnOpBaseMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
-
   VARIABLE_NOT_USED(stream_ptr);
 
   auto x_addr = GetDeviceAddress<T>(inputs, inputs_x_index_);
