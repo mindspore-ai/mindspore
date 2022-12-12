@@ -189,6 +189,12 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
       continue;
     }
 
+    const auto &abstract = value_node->abstract();
+    if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
+      CreateDeviceAddressByMapTensorNode(device_context, value_node, 0);
+      continue;
+    }
+
     const auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
     if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
