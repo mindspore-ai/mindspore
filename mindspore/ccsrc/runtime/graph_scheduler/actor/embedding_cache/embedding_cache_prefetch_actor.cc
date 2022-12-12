@@ -28,81 +28,7 @@ namespace runtime {
 using distributed::cluster::ClusterContext;
 using mindspore::session::KernelGraph;
 
-// One and two dimensional shape placeholder.
-const ShapeVector kOneDimensionalShape = {1};
-const ShapeVector kTwoDimensionalShape = {1, 1};
-
-const size_t kInputIndexZero = 0;
-const size_t kInputIndexOne = 1;
-const size_t kInputIndexTwo = 2;
-
 namespace {
-ParameterPtr NewParameter(const KernelGraphPtr &graph, TypePtr type, const ShapeVector &shape) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(type);
-
-  auto param = graph->NewParameter();
-  MS_EXCEPTION_IF_NULL(param);
-  auto abstract = std::make_shared<abstract::AbstractTensor>(type, shape);
-  param->set_abstract(abstract);
-
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  std::vector<std::string> formats = {kOpFormat_DEFAULT};
-  std::vector<TypeId> types = {type->type_id()};
-  kernel_build_info_builder->SetOutputsFormat(formats);
-  kernel_build_info_builder->SetOutputsDeviceType(types);
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
-
-  auto mutable_inputs = graph->MutableInputs();
-  MS_EXCEPTION_IF_NULL(mutable_inputs);
-  mutable_inputs->push_back(param);
-
-  return param;
-}
-
-ValueNodePtr NewValueNode(int64_t value, const DeviceContext *device_context, size_t stream_id) {
-  MS_EXCEPTION_IF_NULL(device_context);
-
-  auto tensor = std::make_shared<tensor::Tensor>(static_cast<int64_t>(value), kInt32);
-  auto value_node = NewValueNode(tensor);
-  value_node->set_abstract(tensor->ToAbstract());
-
-  // Create kernel build info.
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  std::vector<std::string> formats = {kOpFormat_DEFAULT};
-  std::vector<TypeId> types = {kInt32->type_id()};
-  kernel_build_info_builder->SetOutputsFormat(formats);
-  kernel_build_info_builder->SetOutputsDeviceType(types);
-
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  value_node->set_kernel_info(kernel_info);
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), value_node.get());
-
-  // Create device address.
-  size_t output_idx = 0;
-  size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
-  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
-  std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
-
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  auto value_addr = device_context->device_res_manager_->AllocateMemory(tensor_size);
-  MS_EXCEPTION_IF_NULL(value_addr);
-  auto address = device_context->device_res_manager_->CreateDeviceAddress(
-    value_addr, tensor_size, output_format, output_type_id, trans::GetRuntimePaddingShape(value_node, output_idx));
-  MS_EXCEPTION_IF_NULL(address);
-
-  // Sync tensor value.
-  MS_EXCEPTION_IF_CHECK_FAIL(address->AsyncHostToDevice({}, tensor_size, output_type_id, tensor->data_c(), stream_id),
-                             "Async memcpy host to device failed.");
-  MS_EXCEPTION_IF_CHECK_FAIL(device_context->device_res_manager_->SyncStream(stream_id), "Synchronize stream failed.");
-
-  address->set_from_persistent_mem(true);
-  AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
-
-  return value_node;
-}
-
 // Generate unique inter process edge name, format:
 // src role + src rank id -> dst role + dst rank id + embedding cache operation + parameter key.
 std::string GenerateInterProcessEdge(const std::string &src_role, uint32_t src_rank, const std::string &dst_role,
@@ -220,9 +146,6 @@ void EmbeddingCachePrefetchActor::Initialize() {
   // Get the id range of each server's embedding table slice.
   GetRemoteEmbeddingSliceBound();
 
-  BuildEmbeddingCacheLookupKernel();
-  BuildEmbeddingCacheUpdateKernel();
-
   // Initialize CPU device context. The origin device context for embedding cache prefetch actor is GPU or NPU. But we
   // still need the CPU device context to allocate host memory.
   device::DeviceContextKey host_key = {"CPU", 0};
@@ -237,9 +160,11 @@ void EmbeddingCachePrefetchActor::Initialize() {
   // Create the device embedding operation.
   emb_ops_ = new DeviceDenseEmbeddingOperation(this, device_context_, embedding_device_cache_, embedding_host_cache_,
                                                local_embedding_slice_bounds_, local_device_cache_bounds_,
-                                               embedding_cache_lookup_node_, embedding_cache_update_node_,
-                                               &statistics_info_, stream_id_, &running_);
+                                               &statistics_info_, stream_id_);
   MS_EXCEPTION_IF_NULL(emb_ops_);
+  if (!emb_ops_->Initialize()) {
+    MS_LOG(ERROR) << "Failed to initialize the device embedding operation.";
+  }
 
   initialized_ = true;
 }
@@ -261,9 +186,6 @@ void EmbeddingCachePrefetchActor::Finalize() {
     emb_ops_ = nullptr;
   }
 
-  embedding_cache_lookup_node_ = nullptr;
-  embedding_cache_update_node_ = nullptr;
-
   if (rnd_gen_ != nullptr) {
     (void)rnd_gen_->Finalize();
   }
@@ -271,65 +193,6 @@ void EmbeddingCachePrefetchActor::Finalize() {
   rpc_operators_.clear();
   finalized_ = true;
   initialized_ = false;
-}
-
-void EmbeddingCachePrefetchActor::BuildEmbeddingCacheLookupKernel() {
-  auto graph = std::make_shared<KernelGraph>();
-  MS_EXCEPTION_IF_NULL(graph);
-  graph->set_graph_id((std::numeric_limits<uint32_t>::max)());
-  embedding_cache_graphs_.push_back(graph);
-
-  // 1. Create parameter nodes which are inputs of embedding cache look up kernel(operator name: 'Gather').
-  ParameterPtr input_param = NewParameter(graph, kFloat32, kTwoDimensionalShape);
-  ParameterPtr input_indices = NewParameter(graph, kInt32, kOneDimensionalShape);
-  ValueNodePtr offset_value_node = NewValueNode(0, device_context_, stream_id_);
-
-  // 2. Create a CNode for operator EmbeddingLookup.
-  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
-  emb_lookup_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
-  emb_lookup_primitive->set_attr(kAttrOutputIsDynamicShape, MakeValue(true));
-
-  std::vector<AnfNodePtr> emb_lookup_input_nodes{NewValueNode(emb_lookup_primitive), input_param, input_indices,
-                                                 offset_value_node};
-  embedding_cache_lookup_node_ = graph->NewCNode(emb_lookup_input_nodes);
-  MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node_);
-  auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimensionalShape);
-  embedding_cache_lookup_node_->set_abstract(abstract);
-
-  // 3. Kernel build process.
-  MS_EXCEPTION_IF_NULL(device_context_);
-  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
-  device_context_->kernel_executor_->CreateKernel({embedding_cache_lookup_node_});
-  AnfAlgo::SetStreamId(stream_id_, embedding_cache_lookup_node_.get());
-}
-
-void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
-  auto graph = std::make_shared<KernelGraph>();
-  MS_EXCEPTION_IF_NULL(graph);
-  graph->set_graph_id((std::numeric_limits<uint32_t>::max)());
-  embedding_cache_graphs_.push_back(graph);
-
-  // 1. Create parameter nodes which are inputs of embedding cache update kernel(operator name: 'ScatterUpdate').
-  ParameterPtr input_param = NewParameter(graph, kFloat32, kTwoDimensionalShape);
-  ParameterPtr input_indices = NewParameter(graph, kInt32, kOneDimensionalShape);
-  ParameterPtr update_values = NewParameter(graph, kFloat32, kTwoDimensionalShape);
-
-  // 2. Create a CNode for operator ScatterUpdate.
-  PrimitivePtr embedding_cache_update_primitive = std::make_shared<Primitive>(kScatterUpdateOpName);
-  embedding_cache_update_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
-
-  std::vector<AnfNodePtr> embedding_cache_update_input_nodes{NewValueNode(embedding_cache_update_primitive),
-                                                             input_param, input_indices, update_values};
-  embedding_cache_update_node_ = graph->NewCNode(embedding_cache_update_input_nodes);
-  MS_EXCEPTION_IF_NULL(embedding_cache_update_node_);
-  auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimensionalShape);
-  embedding_cache_update_node_->set_abstract(abstract);
-
-  // 3. Kernel build process.
-  MS_EXCEPTION_IF_NULL(device_context_);
-  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
-  device_context_->kernel_executor_->CreateKernel({embedding_cache_update_node_});
-  AnfAlgo::SetStreamId(stream_id_, embedding_cache_update_node_.get());
 }
 
 void EmbeddingCachePrefetchActor::IncreaseGraphStep(const std::string &channel_name) {
@@ -498,6 +361,37 @@ bool EmbeddingCachePrefetchActor::UpdateCache() {
   return true;
 }
 
+void EmbeddingCachePrefetchActor::LookupEmbeddingTable(size_t indices_num, size_t embedding_size, size_t first_dim_size,
+                                                       const float *input_addr, const int *indices_addr,
+                                                       float *output_addr) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(input_addr);
+  MS_ERROR_IF_NULL_WO_RET_VAL(indices_addr);
+  MS_ERROR_IF_NULL_WO_RET_VAL(output_addr);
+
+  auto type_size = sizeof(float);
+  size_t lens = embedding_size * type_size;
+  for (size_t i = 0; i < indices_num; ++i) {
+    int index = indices_addr[i];
+    if (index >= 0 && index < SizeToInt(first_dim_size)) {
+      size_t pos = index * embedding_size;
+      auto ret = memcpy_s(output_addr, (indices_num - i) * lens, input_addr + pos, lens);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
+        running_ = false;
+        return;
+      }
+    } else {
+      auto ret = memset_s(output_addr, (indices_num - i) * lens, 0, lens);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "Memset failed, errno[" << ret << "]";
+        running_ = false;
+        return;
+      }
+    }
+    output_addr += embedding_size;
+  }
+}
+
 bool EmbeddingCachePrefetchActor::PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info) {
   auto swap_indices_size = statistics_info_.host_to_server_size_;
   if (swap_indices_size == 0) {
@@ -659,7 +553,7 @@ bool EmbeddingCachePrefetchActor::LookupLocalHostCache(size_t embedding_size, si
       break;
     }
     threads[i] =
-      std::thread(&DeviceEmbeddingOperation::LookupEmbeddingTable, emb_ops_, proc_len, embedding_size, first_dim_size,
+      std::thread(&EmbeddingCachePrefetchActor::LookupEmbeddingTable, this, proc_len, embedding_size, first_dim_size,
                   hash_table_addr, indices_addr + offset, output_addr + offset * embedding_size);
     offset += proc_len;
     if (offset + proc_len > indices_num) {

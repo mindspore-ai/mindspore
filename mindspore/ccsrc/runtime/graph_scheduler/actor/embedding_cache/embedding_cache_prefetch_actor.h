@@ -183,13 +183,6 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Link rpc operators and build network connection.
   void LinkRpcOperators();
 
-  // Build a CNode of embedding cache look up kernel(operator name: 'Gather'), which is used to look up local device
-  // embedding cache.
-  void BuildEmbeddingCacheLookupKernel();
-  // Build a CNode of embedding cache update kernel(operator name: 'ScatterUpdate'), which is used to update local
-  // device embedding cache.
-  void BuildEmbeddingCacheUpdateKernel();
-
   // Get dataset channel name.
   std::string channel_name();
   // Set dataset channel name.
@@ -199,6 +192,10 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // deletion. That is, push the non-hotspot embeddings on the local side to the remote, and pull the missing embeddings
   // on the local side from the remote.
   bool UpdateCache();
+
+  // Do lookup embedding table operation.
+  void LookupEmbeddingTable(size_t indices_num, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
+                            const int *indices_addr, float *output_addr);
 
   // Wait data channel ready.
   void WaitDataChannelInit();
@@ -226,14 +223,6 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // The device stream used to async memcpy operators and launch device kernels, such as embedding cache look up and
   // update kernel.
   size_t stream_id_{0};
-
-  // The embedding cache look up kernel node(operator name: 'Gather').
-  CNodePtr embedding_cache_lookup_node_{nullptr};
-  // The embedding cache update kernel node(operator name: 'ScatterUpdate').
-  CNodePtr embedding_cache_update_node_{nullptr};
-
-  // Cache embeding cache ops kernel graphs.
-  std::vector<KernelGraphPtr> embedding_cache_graphs_;
 
   // Full Embedding table row num, not less than the total number of feature ids.
   size_t vocab_size_{0};

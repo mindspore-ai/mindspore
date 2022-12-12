@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
+#include <vector>
+#include <limits>
 #include "runtime/graph_scheduler/actor/embedding_cache/device_sparse_embedding_operation.h"
 
 namespace mindspore {
 namespace runtime {
-void LookupEmbeddingTable(size_t indices_num, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
-                          const int *indices_addr, float *output_addr) {}
-
 bool DeviceSparseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const size_t batch_ids_num, size_t data_step,
                                                        size_t graph_running_step, bool *device_cache_need_wait_graph,
                                                        bool *host_cache_need_wait_graph) {
@@ -74,9 +73,62 @@ bool DeviceSparseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const siz
   return true;
 }
 
-bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) { return true; }
+void DeviceSparseEmbeddingOperation::BuildEmbeddingCacheLookupKernel() {
+  auto graph = std::make_shared<KernelGraph>();
+  MS_EXCEPTION_IF_NULL(graph);
+  graph->set_graph_id((std::numeric_limits<uint32_t>::max)());
+  embedding_cache_graphs_.push_back(graph);
 
-bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) { return true; }
+  // 1. Create parameter nodes which are inputs of embedding cache look up kernel(operator name: 'MapTensorGet').
+  ParameterPtr input_param = NewParameter(graph, kFloat32, kTwoDimensionalShape);
+  ParameterPtr input_ids = NewParameter(graph, kInt32, kOneDimensionalShape);
+
+  // 2. Create a CNode for operator MapTensorGet.
+  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kMapTensorGetOpName);
+  emb_lookup_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
+  emb_lookup_primitive->set_attr(kAttrOutputIsDynamicShape, MakeValue(true));
+
+  std::vector<AnfNodePtr> emb_lookup_input_nodes{mindspore::NewValueNode(emb_lookup_primitive), input_param, input_ids};
+  embedding_cache_lookup_node_ = graph->NewCNode(emb_lookup_input_nodes);
+  MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node_);
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimensionalShape);
+  embedding_cache_lookup_node_->set_abstract(abstract);
+
+  // 3. Kernel build process.
+  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
+  device_context_->kernel_executor_->CreateKernel({embedding_cache_lookup_node_});
+  AnfAlgo::SetStreamId(stream_id_, embedding_cache_lookup_node_.get());
+}
+
+void DeviceSparseEmbeddingOperation::BuildEmbeddingCacheUpdateKernel() {
+  auto graph = std::make_shared<KernelGraph>();
+  MS_EXCEPTION_IF_NULL(graph);
+  graph->set_graph_id((std::numeric_limits<uint32_t>::max)());
+  embedding_cache_graphs_.push_back(graph);
+
+  // 1. Create parameter nodes which are inputs of embedding cache update kernel(operator name: 'MapTensorPut').
+  ParameterPtr input_param = NewParameter(graph, kFloat32, kTwoDimensionalShape);
+  ParameterPtr input_ids = NewParameter(graph, kInt32, kOneDimensionalShape);
+  ParameterPtr update_values = NewParameter(graph, kFloat32, kTwoDimensionalShape);
+
+  // 2. Create a CNode for operator MapTensorPut.
+  PrimitivePtr embedding_cache_update_primitive = std::make_shared<Primitive>(kMapTensorPutOpName);
+  embedding_cache_update_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
+
+  std::vector<AnfNodePtr> embedding_cache_update_input_nodes{mindspore::NewValueNode(embedding_cache_update_primitive),
+                                                             input_param, input_ids, update_values};
+  embedding_cache_update_node_ = graph->NewCNode(embedding_cache_update_input_nodes);
+  MS_EXCEPTION_IF_NULL(embedding_cache_update_node_);
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimensionalShape);
+  embedding_cache_update_node_->set_abstract(abstract);
+
+  // 3. Kernel build process.
+  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
+  device_context_->kernel_executor_->CreateKernel({embedding_cache_update_node_});
+  AnfAlgo::SetStreamId(stream_id_, embedding_cache_update_node_.get());
+}
 
 bool DeviceSparseEmbeddingOperation::CheckCacheHit(const int *batch_ids, const size_t batch_ids_num, bool *in_device,
                                                    size_t data_step) {
@@ -165,7 +217,49 @@ bool DeviceSparseEmbeddingOperation::ParseDeviceData(int id, bool *need_swap_dev
     statistics_info_->host_to_device_size_++;
     *need_swap_device_to_host = statistics_info_->device_to_host_size_ > tmp_device_to_host_size;
   }
+  return true;
+}
 
+bool DeviceSparseEmbeddingOperation::LookupDeviceCache(void *ids, void *embedding_cache, size_t ids_num,
+                                                       size_t cache_size, size_t embedding_size, void *outputs) {
+  MS_ERROR_IF_NULL(ids);
+  MS_ERROR_IF_NULL(embedding_cache);
+  MS_ERROR_IF_NULL(outputs);
+  MS_ERROR_IF_NULL(embedding_cache_lookup_node_);
+
+  // 1. Update parameter nodes' shape.
+  auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexZero);
+  MS_ERROR_IF_NULL(input_param_node);
+  const ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
+  auto input_param_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, input_param_shape);
+  input_param_node->set_abstract(input_param_abstract);
+
+  auto input_ids_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexOne);
+  MS_ERROR_IF_NULL(input_ids_node);
+  const ShapeVector input_indices_shape = {SizeToLong(ids_num)};
+  auto input_indices_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, input_indices_shape);
+  input_ids_node->set_abstract(input_indices_abstract);
+
+  // 2. Infer shape for embedding cache look up kernel(operator name: 'MapTensorGet') which is dynamic shape kernel.
+  if (!InferOpShape(embedding_cache_lookup_node_)) {
+    MS_LOG(ERROR) << "Infer operator shape failed, op name: " << embedding_cache_lookup_node_->fullname_with_scope();
+    return false;
+  }
+
+  // 3. Do embedding cache look up on device.
+  AddressPtrList kernel_inputs = {
+    std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float)),
+    std::make_shared<Address>(ids, ids_num * sizeof(int))};
+  AddressPtrList kernel_outputs = {std::make_shared<Address>(outputs, ids_num * embedding_size * sizeof(float))};
+
+  MS_ERROR_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_->kernel_executor_);
+  auto ret = device_context_->kernel_executor_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {},
+                                                             kernel_outputs, stream_id_);
+  if (!ret) {
+    MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_lookup_node_->fullname_with_scope() << " failed.";
+    return false;
+  }
   return true;
 }
 }  // namespace runtime
