@@ -28,7 +28,11 @@ namespace opt {
 using kernel::KernelBuildInfoPtr;
 using kernel::KernelObjectType;
 
-static std::map<KernelObjectType, std::string> kObjectTypeToString = {{KernelObjectType::TENSOR, "tensor"},
+// This attribute represents this node's output is already expanded.
+constexpr char kTupleUnfoldExpanded[] = "tuple_unfold_expanded";
+
+static std::map<KernelObjectType, std::string> kObjectTypeToString = {{KernelObjectType::UNKNOWN_TYPE, "unknown"},
+                                                                      {KernelObjectType::TENSOR, "tensor"},
                                                                       {KernelObjectType::SCALAR, "scalar"},
                                                                       {KernelObjectType::TUPLE, "tuple"},
                                                                       {KernelObjectType::TUPLE_UNFOLD, "tuple_unfold"}};
@@ -70,6 +74,9 @@ struct ObjectTypePair {
 using ProcessTypeTransformFunc = std::function<AnfNodePtrList(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                               const CNodePtr &node, bool *new_prim)>;
 
+// Kernel object type for newly created virtual node should be set.
+void SetObjTypeForTupleGetItemNode(const AnfNodePtr &node);
+
 // SplitTupleInputs methods refer to the pass ConvertTupleInputToDynamicInput. It unfolds tuple inputs and returns the
 // unfolded inputs nodes.
 int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
@@ -78,9 +85,16 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
 // Create the new cnode which will replace the original cnode.
 AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &input_list, const CNodePtr &origin_node);
 
+// The dynamic input size and real input size should match.
+// This method checks input size of new_cnode and origin_node.
+void CheckDynamicInputSize(const CNodePtr &new_cnode, const CNodePtr &origin_node);
+
 // Update new cnode's kernel build info according to the original cnode.
 // Mainly update the inputs/outputs device types and kernel object types.
 void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_node);
+
+// Extend the node output with TupleUnfold type.
+void ExtendTupleUnfoldOutput(const AnfNodePtr &input);
 
 // After kernel selection phase, one kernel's acquired input type may not be the same as the actual input type(the input
 // node's output type). We need this pass to transform these types to valid types.

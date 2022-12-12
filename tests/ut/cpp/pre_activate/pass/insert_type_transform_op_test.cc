@@ -32,6 +32,7 @@
 namespace mindspore {
 namespace opt {
 using kernel::KernelObjectType;
+using KernelBuildInfoPtr = kernel::KernelBuildInfoPtr;
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 
 class TestInsertTypeTransformOp : public BackendCommon {
@@ -40,21 +41,32 @@ class TestInsertTypeTransformOp : public BackendCommon {
   ~TestInsertTypeTransformOp() override = default;
 
  public:
-  void SetTupleUnfoldToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &func_graph);
+  void SetTupleUnfoldToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &func_graph, AnfNodePtr *split1_ptr,
+                                                  AnfNodePtr *addn1_ptr, AnfNodePtr *split2_ptr, AnfNodePtr *addn2_ptr);
   void SetKernelBuildInfo(const AnfNodePtr &node, const std::vector<std::string> &input_formats,
                           const std::vector<TypeId> &input_types, const std::vector<std::string> &output_formats,
                           const std::vector<TypeId> &output_types, const std::vector<KernelObjectType> &input_obj_types,
                           const std::vector<KernelObjectType> &output_obj_types);
+
+  // Check whether input and output kernel info are set as expected.
+  // This check is quite important to ensure there's no issue after this InsertTypeTransformOp pass.
+  void CheckInputKernelInfo(const AnfNodePtr &node, size_t input_format_size, size_t input_type_size,
+                            size_t input_obj_type_size);
+  void CheckOutputKernelInfo(const AnfNodePtr &node, size_t output_format_size, size_t output_type_size,
+                             size_t output_obj_type_size);
+
   UT::PyFuncGraphFetcher getPyFun_;
 };
 
-void TestInsertTypeTransformOp::SetTupleUnfoldToTupleUnfoldKernelBuildInfo(const FuncGraphPtr &g) {
+void TestInsertTypeTransformOp::SetTupleUnfoldToTupleUnfoldKernelBuildInfo(
+  const FuncGraphPtr &g, AnfNodePtr *split1_ptr, AnfNodePtr *addn1_ptr, AnfNodePtr *split2_ptr, AnfNodePtr *addn2_ptr) {
   auto ret = g->get_return();
   EXPECT_NE(ret->input(1), nullptr);
   auto addn2 = ret->input(1)->cast<CNodePtr>();
+  *addn2_ptr = addn2;
   MS_LOG(INFO) << "addn2 is " << addn2->fullname_with_scope();
   SetKernelBuildInfo(addn2, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
-                     {KernelObjectType::TUPLE_UNFOLD}, {KernelObjectType::TUPLE_UNFOLD});
+                     {KernelObjectType::TUPLE_UNFOLD}, {KernelObjectType::TENSOR});
 
   auto split2_input_make_tuple = addn2->input(1)->cast<CNodePtr>();
   MS_LOG(INFO) << "split2_input_make_tuple is " << split2_input_make_tuple->fullname_with_scope();
@@ -68,29 +80,31 @@ void TestInsertTypeTransformOp::SetTupleUnfoldToTupleUnfoldKernelBuildInfo(const
                      {kNumberTypeFloat32}, {KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TENSOR},
                      {KernelObjectType::TENSOR});
 
-  auto split2_get_item2 = split2_input_make_tuple->input(1)->cast<CNodePtr>();
+  auto split2_get_item2 = split2_input_make_tuple->input(2)->cast<CNodePtr>();
   MS_LOG(INFO) << "split2_get_item2 is " << split2_get_item2->fullname_with_scope();
   SetKernelBuildInfo(split2_get_item2, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeInt64}, {"NCHW"},
                      {kNumberTypeFloat32}, {KernelObjectType::TUPLE_UNFOLD, KernelObjectType::TENSOR},
                      {KernelObjectType::TENSOR});
 
-  auto split2_1 = split2_get_item2->input(1)->cast<CNodePtr>();
+  auto split2_1 = split2_get_item1->input(1)->cast<CNodePtr>();
   auto split2_2 = split2_get_item2->input(1)->cast<CNodePtr>();
   ASSERT_TRUE(split2_1 == split2_2);
+  *split2_ptr = split2_2;
   MS_LOG(INFO) << "split2 is " << split2_1->fullname_with_scope();
-  SetKernelBuildInfo(split2_2, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW", "NCHW"},
-                     {kNumberTypeFloat32, kNumberTypeFloat32}, {KernelObjectType::TUPLE_UNFOLD},
-                     {KernelObjectType::TENSOR});
+  SetKernelBuildInfo(split2_2, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
+                     {KernelObjectType::TENSOR}, {KernelObjectType::TUPLE_UNFOLD});
 
   auto addn1 = split2_2->input(1)->cast<CNodePtr>();
+  *addn1_ptr = addn1;
   MS_LOG(INFO) << "addn1 is " << addn1->fullname_with_scope();
   SetKernelBuildInfo(addn1, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32},
                      {KernelObjectType::TUPLE_UNFOLD}, {KernelObjectType::TENSOR});
 
   auto split1 = addn1->input(1)->cast<CNodePtr>();
+  *split1_ptr = split1;
   MS_LOG(INFO) << "split1 is " << split1->fullname_with_scope();
-  SetKernelBuildInfo(split1, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW", "NCHW"}, {kNumberTypeFloat32, kNumberTypeFloat32},
-                     {KernelObjectType::TENSOR}, {KernelObjectType::TUPLE_UNFOLD});
+  SetKernelBuildInfo(split1, {"NCHW"}, {kNumberTypeFloat32}, {"NCHW"}, {kNumberTypeFloat32}, {KernelObjectType::TENSOR},
+                     {KernelObjectType::TUPLE_UNFOLD});
 
   // The input is a value.
   auto input_node = split1->input(1);
@@ -114,6 +128,24 @@ void TestInsertTypeTransformOp::SetKernelBuildInfo(
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
 }
 
+void TestInsertTypeTransformOp::CheckInputKernelInfo(const AnfNodePtr &node, size_t input_format_size,
+                                                     size_t input_type_size, size_t input_obj_type_size) {
+  MS_EXCEPTION_IF_NULL(node);
+  KernelBuildInfoPtr kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+  auto input_format = kernel_build_info->GetAllInputFormats();
+  auto input_device_type = kernel_build_info->GetAllInputDeviceTypes();
+  auto input_obj_type = kernel_build_info->GetAllInputKernelObjectTypes();
+}
+
+void TestInsertTypeTransformOp::CheckOutputKernelInfo(const AnfNodePtr &node, size_t output_format_size,
+                                                      size_t output_type_size, size_t output_obj_type_size) {
+  MS_EXCEPTION_IF_NULL(node);
+  KernelBuildInfoPtr kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+  auto output_format = kernel_build_info->GetAllOutputFormats();
+  auto output_device_type = kernel_build_info->GetAllOutputDeviceTypes();
+  auto output_obj_type = kernel_build_info->GetAllOutputKernelObjectTypes();
+}
+
 /// Feature: Dynamic shape.
 /// Description: Test TupleUnfold to TupleUnfold type transforming pass.
 /// Expectation: After InsertTypeTransformOp pass, the graph is identical to the expected graph expressed by python.
@@ -125,12 +157,20 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_unfold_transform) {
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetFuncGraph(g, args_spec_list);
   ASSERT_TRUE(func_graph != nullptr);
-  SetTupleUnfoldToTupleUnfoldKernelBuildInfo(func_graph);
+
+  AnfNodePtr split1, addn1, split2, addn2;
+  SetTupleUnfoldToTupleUnfoldKernelBuildInfo(func_graph, &split1, &addn1, &split2, &addn2);
+
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
   optimizer->AddPassManager(pm);
   optimizer->Optimize(func_graph);
+
+  CheckOutputKernelInfo(split1, kSizeTwo, kSizeTwo, kSizeOne);
+  CheckInputKernelInfo(addn1, kSizeTwo, kSizeTwo, kSizeOne);
+  CheckOutputKernelInfo(split1, kSizeTwo, kSizeTwo, kSizeOne);
+  CheckInputKernelInfo(addn2, kSizeTwo, kSizeTwo, kSizeOne);
 
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tuple_unfold_transform", "after");
   ASSERT_TRUE(g_after != nullptr);
