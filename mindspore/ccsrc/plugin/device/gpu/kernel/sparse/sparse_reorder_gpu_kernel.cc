@@ -96,8 +96,7 @@ int SparseReorderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   output_size_list_.push_back(output_values_size);
   workspace_size_list_.push_back(workspace_size);
   workspace_size_list_.push_back(workspace_size);
-  workspace_size_list_.push_back(workspace_size);
-  workspace_size_list_.push_back(workspace_size);
+  workspace_size_list_.push_back(sizeof(int));
   return KRET_OK;
 }
 
@@ -112,10 +111,12 @@ bool SparseReorderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   T *y_values = GetDeviceAddress<T>(outputs, kIndex1);
   int64_t *flat_indices = GetDeviceAddress<int64_t>(workspace, kIndex0);
   int64_t *permutation_data = GetDeviceAddress<int64_t>(workspace, kIndex1);
-  int64_t *keys_out = GetDeviceAddress<int64_t>(workspace, kIndex2);
-  int64_t *indices_in = GetDeviceAddress<int64_t>(workspace, kIndex3);
-  SparseReorder(num_elems_, num_dims_, indices, values, shape, y_indices, y_values, flat_indices, permutation_data,
-                keys_out, indices_in, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  int *check_flag = GetDeviceAddress<int32_t>(workspace, kIndex2);
+  bool res = SparseReorder(num_elems_, num_dims_, indices, values, shape, y_indices, y_values, flat_indices,
+                           permutation_data, check_flag, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  if (res == false) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the value of indices can not be out of shape range";
+  }
   return true;
 }
 
