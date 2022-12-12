@@ -206,6 +206,7 @@ def adaptive_avg_pool3d(input_x, output_size):
     return adaptive_avg_pool3d_(input_x)
 
 
+#TODO: remove comment
 @constexpr
 def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad):
     """Checks the type of avgpool1d input"""
@@ -217,6 +218,7 @@ def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include
     validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool1d')
 
 
+#TODO: remove comment
 @constexpr
 def check_non_negative_int(arg_value, arg_name=None, prim_name=None):
     """Check argument is non-negative integer, which mean arg_value >= 0."""
@@ -305,6 +307,7 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
+#TODO: remove comment
 @constexpr
 def _check_avgpool_2d_kernel_size(kernel_size):
     """check and calculate the avgpool2d kernel_size"""
@@ -322,6 +325,7 @@ def _check_avgpool_2d_kernel_size(kernel_size):
     return kernel_size
 
 
+#TODO: remove comment
 @constexpr
 def _check_avgpool_2d_stride(stride):
     """check and calculate the avgpool2d stride"""
@@ -339,6 +343,7 @@ def _check_avgpool_2d_stride(stride):
     return stride
 
 
+#TODO: remove comment
 @constexpr
 def _check_avgpool_2d_padding(padding):
     """check and calculate the avgpool2d padding"""
@@ -356,6 +361,7 @@ def _check_avgpool_2d_padding(padding):
     return padding
 
 
+#TODO: remove comment
 @constexpr
 def _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_override):
     """check the type of avgpool2d input"""
@@ -450,6 +456,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
+#TODO: remove comment
 @constexpr
 def _check_avg_pool3d_padding(padding):
     """Check the padding value in avg_pool3d op."""
@@ -952,14 +959,13 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride = 0
     if output_size is None:
         output_size = ()
-    else:
-        if not isinstance(output_size, tuple):
-            raise ValueError(f"For max_unpool3d, output_size must be tuple, but type {type(output_size)}.")
-        if len(output_size) not in [0, 4, 5]:
-            raise ValueError(f"For max_unpool3d, length of output_size with tuple must be 0, 4, 5, "
-                             f"but got type {len(output_size)}.")
-        if len(output_size) == 4:
-            output_size = (1,) + output_size
+    elif not isinstance(output_size, tuple):
+        raise ValueError(f"For max_unpool3d, output_size must be tuple, but type {type(output_size)}.")
+    elif len(output_size) not in [0, 4, 5]:
+        raise ValueError(f"For max_unpool3d, length of output_size with tuple must be 0, 4, 5, "
+                         f"but got type {len(output_size)}.")
+    elif len(output_size) == 4:
+        output_size = (1,) + output_size
     max_unpool_3d = MaxUnpool3D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
                                 data_format="NCDHW")
     shape = P.Shape()
@@ -971,13 +977,12 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
                          f"shape {x_shape} and indices shape {indices_shape}.")
     if x_dim not in (4, 5):
         raise ValueError(f"For max_unpool3d, the x shape must have 4 or 5 dims, but got {x_dim}.")
+    out = max_unpool_3d(x, indices)
     if x_dim == 4:
         x = x.expand_dims(axis=0)
         indices = indices.expand_dims(axis=0)
         out = max_unpool_3d(x, indices)
         out = out.squeeze(0)
-    else:
-        out = max_unpool_3d(x, indices)
     return out
 
 
@@ -1333,6 +1338,7 @@ def fast_gelu(x):
     return fast_gelu_(x)
 
 
+#TODO: remove comment
 @constexpr
 def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     """
@@ -1657,6 +1663,7 @@ def hardshrink(x, lambd=0.5):
     return hshrink_op(x)
 
 
+#TODO: remove comment
 @constexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
@@ -1667,6 +1674,7 @@ def _check_axis_in_range(axis, ndim):
     return axis % ndim
 
 
+#TODO: remove comment
 @constexpr
 def _check_axis_valid(axes, ndim):
     """
@@ -1683,25 +1691,23 @@ def _check_axis_valid(axes, ndim):
     raise ValueError(f"The parameter dims must be tuple of ints, but got {type(axes)}")
 
 
-@constexpr
 def _get_flip_start(ndim, shape, axes):
     """Calculate the start index of flip"""
     return tuple([shape[i] - 1 if i in axes else 0 for i in range(ndim)])
 
 
-@constexpr
 def _get_flip_end(ndim, shape, axes):
     """Calculate the end index of flip"""
     return tuple([-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim)])
 
 
+#TODO: remove comment
 @constexpr
 def _get_flip_strides(ndim, axes):
     """Calculate the strides of flip"""
     return tuple([-1 if i in axes else 1 for i in range(ndim)])
 
 
-@constexpr
 def _is_shape_empty(shp):
     """Check whether shape contains zero"""
     if isinstance(shp, int):
@@ -1895,6 +1901,7 @@ def hardswish(x):
     return hardswish_(x)
 
 
+#TODO: remove comment
 @constexpr
 def _check_interpolate_inputs(input_dims, roi, scales, sizes, coordinate_transformation_mode, mode,
                               prim_name):
@@ -2388,6 +2395,7 @@ def pdist(x, p=2.0):
     return pdist_(x)
 
 
+#TODO: remove comment
 @constexpr
 def _check_pad_inputs(padding):
     """check the input of pad"""
@@ -3140,12 +3148,14 @@ def mish(x):
     return mish_(x)
 
 
+#TODO: remove comment
 @constexpr
 def _check_value_type(arg_name, arg_value, valid_types, prim_name=None):
     """Checks whether a value is instance of some types."""
     return validator.check_value_type(arg_name, arg_value, valid_types, prim_name)
 
 
+#TODO: remove comment
 @constexpr(check=False)
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
@@ -3345,6 +3355,7 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
     return _grid_sampler_3d(input_x, grid)
 
 
+#TODO: remove comment
 @constexpr
 def _check_ctc_loss_inputs(blank, reduction, zero_infinity, prim_name):
     validator.check_value_type("blank", blank, [int], prim_name)
@@ -3421,6 +3432,7 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
     return (loss, log_alpha)
 
 
+#TODO: remove comment
 @constexpr
 def _check_gaussian_nll_loss(full, eps, reduction):
     validator.check_value_type('full', full, [bool], 'gaussian_nll_loss')
@@ -3516,12 +3528,6 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     return loss
 
 
-@constexpr
-def _check_hinge_embedding_loss(shape, shape2, prim_name):
-    if shape2 != shape:
-        raise ValueError(f"For '{prim_name}' the input tensor and the labels must have the same shape.")
-
-
 def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     r"""
     Hinge Embedding Loss. Compute the output according to the input elements. Measures the loss given an input tensor x
@@ -3580,10 +3586,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         >>> print(loss)
         Tensor(shape=[], dtype=Float32, value= 1.6666667)
     """
-    _shape = inputs.shape
     _dtype = inputs.dtype
-    _t_shape = targets.shape
-    _check_hinge_embedding_loss(_shape, _t_shape, 'HingeEmbeddingLoss')
     min_val = Tensor(0, _dtype)
     pos_index = targets > 0
     neg_index = targets < 0
@@ -3957,6 +3960,7 @@ def adaptive_avg_pool1d(input_x, output_size):
     return input_x
 
 
+#TODO: remove comment
 @constexpr
 def _check_adaptive_max_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_max_pool1d op."""
@@ -4333,6 +4337,7 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     return output
 
 
+#TODO: remove comment
 @constexpr
 def _check_positive_int(arg_value, arg_name=None, prim_name=None):
     validator.check_positive_int(arg_value, arg_name=arg_name, prim_name=prim_name)
@@ -4776,13 +4781,6 @@ def channel_shuffle(x, groups):
     return y
 
 
-@constexpr
-def _shape_check(in_shape, dim_list, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(in_shape) not in dim_list:
-        raise ValueError(f"{msg_prefix} input must has dim in {dim_list}, but got {len(in_shape)}")
-
-
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
     LPPool1d pooling operation.
@@ -4838,7 +4836,6 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
           [51. 54.]
           [63. 66.]]]
     """
-    _shape_check(x.shape, [2, 3], "lp_pool1d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
@@ -4929,7 +4926,6 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
            [ 999. 1008. 1017.]]]]
 
     """
-    _shape_check(x.shape, [4], "lp_pool2d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:

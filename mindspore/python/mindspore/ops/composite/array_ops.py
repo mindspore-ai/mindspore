@@ -23,24 +23,28 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 
+#TODO: remove comment
 @constexpr
 def _check_is_int(arg_value, arg_name, op_name):
     arg_value = validator.check_is_int(arg_value, arg_name, op_name)
     return arg_value
 
 
+#TODO: remove comment
 @constexpr
 def _check_positive_int(arg_value, arg_name, op_name):
     arg_value = validator.check_positive_int(arg_value, arg_name, op_name)
     return arg_value
 
 
+#TODO: remove comment
 @constexpr
 def _check_axis_range(arg_value, limit, arg_name, op_name):
     arg_value = validator.check_int_range(arg_value, -limit, limit, Rel.INC_LEFT, arg_name, op_name)
     return arg_value
 
 
+#TODO: remove comment
 @constexpr
 def _cal_repeat_dims(x_rank, rep, expand_axis):
     rep_dims = [1] * (x_rank + 1)
@@ -48,7 +52,7 @@ def _cal_repeat_dims(x_rank, rep, expand_axis):
     return tuple(rep_dims)
 
 
-@constexpr
+#remove constexpr
 def _cal_reshape(x_shape, rep, axis):
     x_reshape = list(x_shape)
     x_reshape[axis] *= rep
@@ -152,15 +156,6 @@ def repeat_elements(x, rep, axis=0):
 tensor_operator_registry.register('repeat_elements', repeat_elements)
 
 
-@constexpr
-def _check_sequence_mask_input_len(input_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if not input_shape:
-        raise ValueError(f"{msg_prefix} input_shape must be greater than 0, but got {input_shape}.")
-    # broadcast only supports 7d shape
-    shape_size = len(input_shape)
-    if shape_size >= 7:
-        raise ValueError(f"{msg_prefix} dimension of input_shape must be less than 7, but got {shape_size}d.")
 
 
 def sequence_mask(lengths, maxlen=None):
@@ -222,11 +217,9 @@ def sequence_mask(lengths, maxlen=None):
     range_op = P.Range()
     expand_op = P.ExpandDims()
     cast_op = P.Cast()
-    shape_op = P.Shape()
     to_tensor_op = P.ScalarToTensor()
 
     const_utils.check_type_valid(F.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-    _check_sequence_mask_input_len(shape_op(lengths), "sequence_mask")
 
     if maxlen is None:
         flatten_data = reshape_op(lengths, (-1,))

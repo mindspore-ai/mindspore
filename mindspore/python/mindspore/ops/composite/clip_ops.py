@@ -84,6 +84,7 @@ class _ClipByGlobalNorm(Cell):
         return clip_x
 
 
+#TODO: remove comment
 @constexpr
 def _check_value(clip_norm):
     validator.check_number("clip_norm", clip_norm, 0.0, Rel.GT, "clip_by_global_norm")

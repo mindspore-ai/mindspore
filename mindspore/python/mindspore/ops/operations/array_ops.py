@@ -5422,7 +5422,7 @@ class BatchToSpaceNDV2(Primitive):
         self.add_prim_attr('origin_format', 'NHWC')
 
 
-class BroadcastTo(Primitive):
+class BroadcastTo(PrimitiveWithCheck):
     """
     Broadcasts input tensor to a given shape.
 
@@ -5456,6 +5456,11 @@ class BroadcastTo(Primitive):
             validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
             validator.check("shape element", i, "shape element min limit", -1, Rel.GE, self.name)
         self.shape = shape
+
+    def infer_value(self, x):
+        if x is None:
+            return None
+        return Tensor(np.broadcast_to(x.asnumpy(), self.shape))
 
 
 class Meshgrid(PrimitiveWithInfer):
