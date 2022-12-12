@@ -768,7 +768,7 @@ AbstractBasePtr InferImplSliceGetItem(const AnalysisEnginePtr &, const Primitive
   auto slice_str = GetValue<std::string>(slice_attr);
   auto iter = result_map.find(slice_str);
   if (iter == result_map.end()) {
-    MS_EXCEPTION(AttributeError) << "The 'slice' object has no attribute:" << iter->second << ".";
+    MS_EXCEPTION(AttributeError) << "The 'slice' object has no attribute:" << slice_str << ".";
   }
   return iter->second;
 }
@@ -787,20 +787,16 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
     } else if (args_spec_list[index]->isa<AbstractScalar>()) {
       ValuePtr scalar_value = args_spec_list[index]->cast<AbstractScalarPtr>()->BuildValue();
       MS_EXCEPTION_IF_NULL(scalar_value);
-      if (scalar_value->isa<IntegerImm>()) {
+      if (scalar_value->isa<IntegerImm>() || scalar_value == kAnyValue) {
         slice_args.push_back(args_spec_list[index]);
       } else if (scalar_value->isa<BoolImm>()) {
         ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));
         slice_args.push_back(scalar_index->ToAbstract());
       } else {
         auto type = scalar_value->type();
-        std::string str_type;
-        if (type) {
-          str_type = type->ToString();
-        } else {
-          str_type = "AnyValue";
-        }
-        MS_EXCEPTION(TypeError) << "Slice indices must be integers or bool. But got a " << str_type << " number.";
+        MS_EXCEPTION_IF_NULL(type);
+        MS_EXCEPTION(TypeError) << "Slice indices must be integers or bool. But got a " << type->ToString()
+                                << " number.";
       }
     } else if (args_spec_list[index]->isa<AbstractTensor>()) {
       auto arg = args_spec_list[index]->cast<AbstractTensorPtr>();

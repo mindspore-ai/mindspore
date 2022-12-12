@@ -46,6 +46,37 @@ class ListAppend(Primitive):
         self.init_prim_io_names(inputs=['input_data', 'target'], outputs=['output_data'])
 
 
+class SequenceSlice(Primitive):
+    r"""
+    Sequence slice operation.
+
+    .. note::
+        This it is only for internal used. The sequence input should be dynamic length sequence or at least one of
+        start/end/step should be variable.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **seq** (Union[List, Tuple]) - The sequence to slice.
+        - **start** (int) - start index of slice.
+        - **stop** (int) - stop index of slice.
+        - **step** (int) - step of slice.
+
+    Outputs:
+        Dynamic length sequence after addition.
+
+    Raises:
+        TypeError: The 'seq' input is neither list or tuple.
+        ValueError: The 'seq' input is not dynamic length and none of start/end/step is variable.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SequenceCount"""
+        self.init_prim_io_names(inputs=['seq', 'start', 'stop', 'step'], outputs=['output_data'])
+
+
 class SequenceAdd(Primitive):
     r"""
     Add elements of two sequence together.
@@ -70,7 +101,7 @@ class SequenceAdd(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ListAppend"""
+        """Initialize SequenceAdd"""
         self.init_prim_io_names(inputs=['input_1', 'input_2'], outputs=['output_data'])
 
 
@@ -97,7 +128,7 @@ class SequenceCount(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ListAppend"""
+        """Initialize SequenceCount"""
         self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
 
 
@@ -125,5 +156,5 @@ class SequenceMul(Primitive):
     """
     @prim_attr_register
     def __init__(self):
-        """Initialize ListAppend"""
+        """Initialize SequenceMul"""
         self.init_prim_io_names(inputs=['sequence', 'scalar'], outputs=['output_data'])

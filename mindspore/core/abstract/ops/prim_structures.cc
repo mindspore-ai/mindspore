@@ -136,7 +136,7 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
 
   ValuePtr index_value = index->BuildValue();
   MS_EXCEPTION_IF_NULL(index_value);
-  // Input  or index is variable, items shape and type should be same.
+  // Input or index is variable, items shape and type should be same.
   if (index_value == kAnyValue) {
     auto differ_index = CheckAndConvertUtils::CheckAbstractTypeSame(args_spec_list);
     if (differ_index == 0) {

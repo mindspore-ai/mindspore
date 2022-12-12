@@ -20,12 +20,17 @@ from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
+from mindspore.ops.operations._inner_ops import SliceGetItem
+from ...operations._sequence_ops import SequenceSlice
 
 getitem = base.MultitypeFuncGraph('getitem', True)
 """
 getitem is a metafuncgraph object which will get item from an object according to input type
 using ".register" decorator.
 """
+
+slice_getitem = SliceGetItem()
+sequence_slice = SequenceSlice()
 
 
 class _TupleSlice(base.SequenceSliceGetItem_):
@@ -126,6 +131,11 @@ def _tuple_getitem_by_slice(data, slice_index):
     Outputs:
         Tuple, element type is the same as the element type of data.
     """
+    if F.is_sequence_shape_unknown(data) or not F.isconstant(slice_index):
+        start = slice_getitem(slice_index, "start")
+        stop = slice_getitem(slice_index, "stop")
+        step = slice_getitem(slice_index, "step")
+        return sequence_slice(data, start, stop, step)
     return _tuple_slice(data, slice_index)
 
 
@@ -172,6 +182,11 @@ def _list_getitem_by_slice(data, slice_index):
     Outputs:
         List, element type is the same as the element type of data.
     """
+    if F.is_sequence_shape_unknown(data) or not F.isconstant(slice_index):
+        start = slice_getitem(slice_index, "start")
+        stop = slice_getitem(slice_index, "stop")
+        step = slice_getitem(slice_index, "step")
+        return sequence_slice(data, start, stop, step)
     return _list_slice(data, slice_index)
 
 
