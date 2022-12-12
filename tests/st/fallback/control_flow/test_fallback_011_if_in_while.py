@@ -13,18 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow if in while scenario"""
-import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
+from tests.st.fallback.cases_register import case_register
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_in_while_1():
     """
     Feature: JIT Fallback
@@ -44,11 +42,9 @@ def test_if_in_while_1():
     assert res == 7
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_in_while_2():
     """
     Feature: JIT Fallback
@@ -67,11 +63,9 @@ def test_if_in_while_2():
     assert res == 3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_in_while_3():
     """
     Feature: JIT Fallback
@@ -93,11 +87,9 @@ def test_if_in_while_3():
     assert res == 6
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_in_while_4():
     """
     Feature: JIT Fallback
@@ -124,11 +116,9 @@ def test_if_in_while_4():
     assert res == 5
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_in_while_numpy():
     """
     Feature: JIT Fallback

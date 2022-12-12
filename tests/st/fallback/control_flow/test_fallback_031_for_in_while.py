@@ -13,21 +13,19 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
-import pytest
 import numpy as np
 from mindspore import Tensor, jit, context, nn
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
+from tests.st.fallback.cases_register import case_register
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_while_tensor():
     """
     Feature: JIT Fallback
@@ -48,11 +46,9 @@ def test_for_in_while_tensor():
     assert res == 37
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_while_numpy_append():
     """
     Feature: JIT Fallback
@@ -73,11 +69,9 @@ def test_for_in_while_numpy_append():
     assert res == 54
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_while_sum():
     """
     Feature: JIT Fallback
@@ -108,11 +102,9 @@ def test_for_in_while_sum():
     assert res == 26
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_while_print():
     """
     Feature: JIT Fallback
@@ -134,11 +126,9 @@ def test_for_in_while_print():
     assert res2 == 8
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_for_in_while_round():
     """
     Feature: JIT Fallback
