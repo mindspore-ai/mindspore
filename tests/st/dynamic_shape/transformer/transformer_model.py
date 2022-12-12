@@ -23,7 +23,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.operations import array_ops as array_op
-from mindspore.ops.operations import _inner_ops as inner_op
+import mindspore.ops.function as func
 
 BATCH_SIZE_VALUE = 32
 INF = 1. * 1e9
@@ -1276,7 +1276,6 @@ class TransformerModel(nn.Cell):
         self.multiply = ops.Mul()
         self.shape = ops.TensorShape()
         self.tril = array_op.Tril()
-        self.dynamic_broadcast_to = inner_op.DynamicBroadcastTo()
         self.ones_like = array_op.OnesLike()
         self.stack = array_op.Stack(0)
         self.concatenate = array_op.Concat()
@@ -1300,7 +1299,7 @@ class TransformerModel(nn.Cell):
         ones_inner = self.ones_like(source_ids[0, :])
         seq_length = self.shape(ones_inner)
         broadcast_shape = self.concatenate([seq_length, seq_length])
-        ones = self.dynamic_broadcast_to(ones_inner, broadcast_shape)
+        ones = func.broadcast_to(ones_inner, broadcast_shape)
         future_mask = self.tril(ones)
 
         # process target sentence

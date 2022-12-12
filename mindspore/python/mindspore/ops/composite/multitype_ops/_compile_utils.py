@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import base
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, \
+from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, \
     TopTypeof, issubclass_
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
@@ -33,7 +33,6 @@ slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
 stack = P.Stack(axis=-1)
 copy_slice = TensorCopySlices()
-dynamic_broadcast_to = DynamicBroadcastTo()
 toptypeof = TopTypeof()
 
 
@@ -768,7 +767,7 @@ def _generate_updates_from_tensor(data, index, value, op_type):
         data_shape = F.dyn_shape(data)
         index_shape = F.dyn_shape(index)
         updates_shape = const_utils.generate_updates_shape(data_shape, index_shape, op_type, True)
-        updates = dynamic_broadcast_to(value, updates_shape)
+        updates = ops.broadcast_to(value, updates_shape)
         return updates
     updates_shape = const_utils.generate_updates_shape(data.shape, index.shape, op_type, False)
     need_broadcast = const_utils.check_two_shapes_need_broadcast(updates_shape, value.shape)
@@ -914,7 +913,7 @@ def tensor_copy_slice_from_slice(data, input_slice, value):
     if dim0_size >= data_shape[0]:
         dim0_size = data_shape[0:1]
     value_shape = P.Concat(-1)((dim0_size, data_shape[1:]))
-    value = dynamic_broadcast_to(value, value_shape)
+    value = ops.broadcast_to(value, value_shape)
     return copy_slice(data, value.astype(data.dtype), start_tensor, stop_tensor, step_tensor)
 
 
@@ -971,7 +970,7 @@ def tensor_copy_slice_from_tuple(data, tuple_index, value):
     if dim1_size > data_shape[1]:
         dim1_size = data_shape[1:2]
     value_shape = P.Concat(-1)((dim1_size, data_shape[2:]))
-    value = dynamic_broadcast_to(value, value_shape)
+    value = ops.broadcast_to(value, value_shape)
     return copy_slice(data, value.astype(data.dtype), start_tensor, stop_tensor, step_tensor)
 
 
@@ -1064,7 +1063,7 @@ def tensor_setitem_by_ellipsis_with_tensor(data, value):
 
     if F.is_sequence_value_unknown(data_shape):
         data_shape = F.dyn_shape(data)
-        data = dynamic_broadcast_to(value, data_shape)
+        data = ops.broadcast_to(value, data_shape)
         return data
     value_shape = F.shape(value)
     source_shape = const_utils.get_source_shape(data_shape, value_shape)
@@ -1094,7 +1093,7 @@ def tensor_setitem_by_bool(data, index, value):
 
     if F.is_sequence_value_unknown(data_shape) and index:
         data_shape = F.dyn_shape(data)
-        data = dynamic_broadcast_to(value, data_shape)
+        data = ops.broadcast_to(value, data_shape)
         return data
     value_shape = F.shape(value)
     source_shape = const_utils.get_source_shape(data_shape, value_shape)

@@ -28,6 +28,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _rl_inner_ops as rl_ops
 from mindspore.ops._utils.utils import range_op, get_1d_shape
+from mindspore import ops
 
 
 @bprop_getters.register(P.BiasAdd)
@@ -346,7 +347,6 @@ def get_bprop_max_pool_grad_grad(self):
     shape_op = P.Shape()
     dyn_shape_op = P.TensorShape()
     op_range = P.Range()
-    dyn_broadcast_op = inner.DynamicBroadcastTo()
 
     def bprop(x1, x2, grad, out, dout):
         dx1 = zeros_like(x1)
@@ -360,7 +360,7 @@ def get_bprop_max_pool_grad_grad(self):
                 b, c, h, w = shape_x2
                 _, ind = maxpool_with_argmax(x1)
                 batch = op_range(F.cast(0, mstype.int32), F.cast(b, mstype.int32), F.cast(1, mstype.int32))
-                batch = dyn_broadcast_op(reshape(batch, (-1, 1)),
+                batch = ops.broadcast_to(reshape(batch, (-1, 1)),
                                          create_tensor_by_element((dyn_size(batch), c * h * w)))
                 gather_ind = P.Stack(-1)((batch, reshape(ind, create_tensor_by_element((b, -1)))))
                 dgrad = reshape(gather(reshape(dout, create_tensor_by_element((b, -1))), gather_ind),

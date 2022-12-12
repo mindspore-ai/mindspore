@@ -17,7 +17,6 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops, nn, ParameterTuple, context, set_seed, Tensor
-from mindspore.ops.operations import _inner_ops as inner
 
 from mindspore.train import DatasetHelper, connect_network_with_dataset
 import mindspore.dataset as ds
@@ -176,7 +175,6 @@ class ShapeTensorNet(nn.Cell):
         self.shape = ops.Shape()
         self.strided_slice = ops.StridedSlice()
         self.mul = ops.Mul()
-        self.broadcast_to = inner.DynamicBroadcastTo()
         self.tensor_scatter_update = ops.TensorScatterUpdate()
 
     def construct(self, x, y):

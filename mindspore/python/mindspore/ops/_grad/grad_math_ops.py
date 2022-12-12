@@ -32,8 +32,9 @@ from mindspore.ops._grad.grad_base import sum_grad_reduce_axis, dyn_fill, dyn_ra
 from mindspore.ops._grad.grad_base import dyn_ones, dyn_rank_1d
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
-from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, DynamicBroadcastTo, IsSubClass
+from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs, IsSubClass
 from mindspore.ops.operations import array_ops as A
+from mindspore import ops
 
 shape_op = P.Shape()
 dyn_shape_op = P.TensorShape()
@@ -215,7 +216,7 @@ def _sum_grad(x, axis, dout):
         output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis, x)
         output_shape_kept_dims = P.Cast()(output_shape_kept_dims, ms.int32)
         grad = reshape(dout, output_shape_kept_dims)
-        return DynamicBroadcastTo()(grad, input_shape)
+        return ops.broadcast_to(grad, input_shape)
 
     output_shape_kept_dims = reduced_shape(input_shape, axis)
     tile_scaling = tuple_div(input_shape, output_shape_kept_dims)
@@ -974,7 +975,7 @@ def get_bprop_reduceprod(self):
         # Invert the transpose and reshape operations.
         # Make sure to set the statically known shape information through a reshape.
         if F.is_sequence_value_unknown(shape_op(permuted)):
-            dout = DynamicBroadcastTo()(dout, input_shape)
+            dout = ops.broadcast_to(dout, input_shape)
             out = transpose(y, dyn_invert_permutation(perm)) * dout
         else:
             tile_scaling = tuple_div(input_shape, output_shape_kept_dims)
