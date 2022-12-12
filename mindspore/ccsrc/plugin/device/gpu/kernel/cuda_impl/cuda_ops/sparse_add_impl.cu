@@ -95,7 +95,7 @@ __device__ void SparseAddPreprocess(const T *a_indices, const S *a_values, const
 
 template <typename S, typename K>
 __device__ bool IsInLimit(S val, K limit) {
-  return limit > std::abs(val);
+  return limit > abs(val);
 }
 
 template <typename K>

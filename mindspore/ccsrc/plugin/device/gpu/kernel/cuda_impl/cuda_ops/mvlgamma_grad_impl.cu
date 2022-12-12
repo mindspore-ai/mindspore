@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+#include <math.h>
 #include <limits>
-#include <algorithm>
 #include "mvlgamma_grad_impl.cuh"
 #define PI 3.141592653589793
 
@@ -38,24 +38,24 @@ template <typename T>
 __global__ void MvlgammaGrad(const size_t size, const T *y_grad, const T *x, const int p, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     T kLanczosGamma = 7;
-    T log_lanczos_gamma_plus_one_half = std::log(7.5);
+    T log_lanczos_gamma_plus_one_half = log(7.5);
     T temp = 0;
     T cur_input = 0;
     T num_div_denom = 0;
     for (int i = 0; i < p; i++) {
       cur_input = x[pos] - 0.5 * i;
-      if (cur_input < 0 && cur_input == std::floor(cur_input)) {
+      if (cur_input < 0 && cur_input == floor(cur_input)) {
         temp += std::numeric_limits<T>::quiet_NaN();
         break;
       }
       if (cur_input < 0.5) {
         num_div_denom = CalNumDivDenom(-cur_input);
-        temp += (log_lanczos_gamma_plus_one_half + std::log1pf((-cur_input) / (kLanczosGamma + 0.5))) + num_div_denom -
+        temp += (log_lanczos_gamma_plus_one_half + log1pf((-cur_input) / (kLanczosGamma + 0.5))) + num_div_denom -
                 kLanczosGamma / (kLanczosGamma + 0.5 - cur_input);
-        temp -= PI / std::tan(PI * (cur_input + std::abs(std::floor(cur_input + 0.5))));
+        temp -= PI / tan(PI * (cur_input + abs(floor(cur_input + 0.5))));
       } else {
         num_div_denom = CalNumDivDenom(cur_input - 1);
-        temp += (log_lanczos_gamma_plus_one_half + std::log1pf((cur_input - 1) / (kLanczosGamma + 0.5))) + num_div_denom
+        temp += (log_lanczos_gamma_plus_one_half + log1pf((cur_input - 1) / (kLanczosGamma + 0.5))) + num_div_denom
                 - kLanczosGamma / (kLanczosGamma + 0.5 + cur_input - 1);
       }
     }

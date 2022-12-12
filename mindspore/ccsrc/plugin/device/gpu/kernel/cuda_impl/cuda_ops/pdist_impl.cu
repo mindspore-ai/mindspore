@@ -15,7 +15,7 @@
  */
 
 #include "pdist_impl.cuh"
-#include <algorithm>
+#include <math.h>
 
 static const int threads = 256;
 
@@ -86,7 +86,7 @@ __global__ void PDist_One(const T *x, T *y, const float p, const int64_t n, cons
   const T *x_j = x + j * m + threadIdx.x;
   T res = 0.0;
   for (; x_i < end; x_i += s, x_j += s) {
-    res += std::abs(*x_i - *x_j);
+    res += abs(*x_i - *x_j);
   }
 
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
@@ -129,7 +129,7 @@ __global__ void PDist_Inf(const T *x, T *y, const float p, const int64_t n, cons
   const T *x_j = x + j * m + threadIdx.x;
   T res = 0.0;
   for (; x_i < end; x_i += s, x_j += s) {
-    res = std::abs(*x_i - *x_j) > res ? std::abs(*x_i - *x_j) : res;
+    res = abs(*x_i - *x_j) > res ? abs(*x_i - *x_j) : res;
   }
 
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
@@ -178,7 +178,7 @@ __global__ void PDist_Other(const T *x, T *y, const float p, const int64_t n, co
   const T *x_j = x + j * m + threadIdx.x;
   T res = 0.0;
   for (; x_i < end; x_i += s, x_j += s) {
-    res += std::pow(std::abs(*x_i - *x_j), static_cast<T>(p));
+    res += pow(abs(*x_i - *x_j), static_cast<T>(p));
   }
 
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
@@ -201,7 +201,7 @@ __global__ void PDist_Other(const T *x, T *y, const float p, const int64_t n, co
   }
 
   if (threadIdx.x == 0) {
-    y[pos] = std::pow(res, static_cast<T>(1.0 / p));
+    y[pos] = pow(res, static_cast<T>(1.0 / p));
   }
 }
 

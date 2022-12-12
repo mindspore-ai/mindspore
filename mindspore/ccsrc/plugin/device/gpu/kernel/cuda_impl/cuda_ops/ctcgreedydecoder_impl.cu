@@ -138,7 +138,7 @@ int64_t Calindices(const int64_t *decoded_values_temp, const int64_t *nums_count
   (void)cudaGetDeviceProperties(&prop, device_id);
   int max_blocks = prop.multiProcessorCount;
   int block_num =
-      std::min(static_cast<int>(((avg_num_count * batch_size - 1) / (thread_x_num * thread_y_num)) + 1), max_blocks);
+    min(static_cast<int>(((avg_num_count * batch_size - 1) / (thread_x_num * thread_y_num)) + 1), max_blocks);
 
   indicesCompute<<<block_num, thread_num, 0, cuda_stream>>>(decoded_values_temp, nums_count, batch_size,
                    decoded_indices, decoded_values, decoded_shape, nums_count_pre_sum);

@@ -15,12 +15,13 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gcd_lcm_impl.cuh"
+#include <math.h>
 
 template <typename T>
 struct GcdFunc {
   __device__ __host__ __forceinline__ T operator()(const T &x1, const T &x2) {
-    T a = std::abs(x1);
-    T b = std::abs(x2);
+    T a = abs(x1);
+    T b = abs(x2);
     while (a != 0) {
       T c = a;
       a = b % a;
@@ -78,7 +79,7 @@ template <typename T, typename Func>
 __global__ void CalLcmKernel(const int size, const T *x1, const T *x2, T *y) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     T g = Func()(x1[pos], x2[pos]);
-    y[pos] = (g == 0) ? g : std::abs(x1[pos] / g * x2[pos]);
+    y[pos] = (g == 0) ? g : abs(x1[pos] / g * x2[pos]);
   }
 }
 
@@ -114,7 +115,7 @@ __global__ void BroadcastLcmKernel(const size_t l0, const size_t l1, const size_
     r_index += Index(o, r6);
 
     T g = Func()(x1[l_index], x2[r_index]);
-    y[pos] = (g == 0) ? g : std::abs(x1[l_index] / g * x2[r_index]);
+    y[pos] = (g == 0) ? g : abs(x1[l_index] / g * x2[r_index]);
   }
 }
 

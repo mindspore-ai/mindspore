@@ -18,14 +18,14 @@
 #include <thrust/execution_policy.h>
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
-#include <algorithm>
+#include <math.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sparse_softmax_impl.cuh"
 
 template <typename T>
 __global__ void CalSparseSoftmaxKernel(const int64_t *indices, const T *values, T *output, int32_t *reorder,
                                        const size_t indice_dims, const size_t values_elements) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < values_elements; pos += blockDim.x * gridDim.x) {
-    T out = std::exp(values[reorder[pos]]);
+    T out = exp(values[reorder[pos]]);
     T exp_sum = out;
     int64_t right_pos = pos + 1;
     int64_t left_pos = pos - 1;
@@ -53,11 +53,11 @@ __global__ void CalSparseSoftmaxKernel(const int64_t *indices, const T *values, 
         }
       }
       if (right_flag) {
-        exp_sum += std::exp(values[reorder[right_pos]]);
+        exp_sum += exp(values[reorder[right_pos]]);
         right_pos++;
       }
       if (left_flag) {
-        exp_sum += std::exp(values[reorder[left_pos]]);
+        exp_sum += exp(values[reorder[left_pos]]);
         left_pos--;
       }
     } while (right_flag || left_flag);
