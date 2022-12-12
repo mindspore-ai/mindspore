@@ -18,6 +18,7 @@
 #include <vector>
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
+#include "runtime/rt.h"
 #include "runtime/kernel.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 #include "aicpu/common/aicpu_task_struct.h"
@@ -29,7 +30,7 @@ AicpuTask::AicpuTask(const ModelContext &model_context, const std::shared_ptr<Ai
       task_info_(task_info),
       stream_(nullptr),
       args_(nullptr),
-      ext_info_(nullptr),
+      ext_info_addr_(nullptr),
       input_output_addr_(nullptr),
       io_addrs_size_(0),
       args_size_(0) {
@@ -43,19 +44,36 @@ AicpuTask::AicpuTask(const ModelContext &model_context, const std::shared_ptr<Ai
   } else {
     MS_LOG(EXCEPTION) << "Index: " << task_info_->stream_id() << " >= stream_list.size(): " << stream_list.size();
   }
+
+  // get event id in device
+  if (task_info_->is_blocking()) {
+    auto ms_event_id = task_info_->ms_event_id();
+    auto event_list = model_context.event_list();
+    if (ms_event_id >= event_list.size()) {
+      MS_LOG(EXCEPTION) << "The event_id is not in event_list, event_list size: " << event_list.size()
+                        << ", event_id: " << ms_event_id;
+    }
+    auto rt_event = event_list[ms_event_id];
+    auto rt_ret = rtGetEventID(rt_event, &rt_event_id_);
+    if (rt_ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Call rtGetEventID failed. Op name: " << task_info_->op_name();
+    }
+  } else {
+    rt_event_id_ = 0;
+  }
 }
 
 AicpuTask::~AicpuTask() {
   ReleaseRtMem(&args_);
-  ReleaseRtMem(&ext_info_);
+  ReleaseRtMem(&ext_info_addr_);
   stream_ = nullptr;
   args_ = nullptr;
-  ext_info_ = nullptr;
+  ext_info_addr_ = nullptr;
   input_output_addr_ = nullptr;
 }
 
 void AicpuTask::Distribute() {
-  MS_LOG(INFO) << "InitAicpuTask start.";
+  MS_LOG(INFO) << "InitAicpuTask start. node: " << task_info_->op_name();
   std::vector<void *> io_addrs;
   (void)io_addrs.insert(io_addrs.cend(), task_info_->input_data_addrs().cbegin(),
                         task_info_->input_data_addrs().cend());
@@ -117,26 +135,40 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
   aicpu_param_head.length = args_size;
   aicpu_param_head.ioAddrNum = io_addrs_num;
 
+  MS_EXCEPTION_IF_NULL(task_info_);
   const auto &ext_info = task_info_->ext_info();
   uint32_t ext_size = SizeToUint(ext_info.size());
   if (ext_info.empty()) {
     aicpu_param_head.extInfoLength = 0;
     aicpu_param_head.extInfoAddr = 0;
   } else {
-    rtError_t flag = rtMalloc(&ext_info_, ext_size, RT_MEMORY_HBM);
+    // Parse ext_info
+    auto ext_info_handler = std::make_shared<device::ascend::AicpuExtInfoHandler>(
+      task_info_->op_name(), static_cast<uint32_t>(task_info_->input_data_addrs().size()),
+      static_cast<uint32_t>(task_info_->output_data_addrs().size()), task_info_->unknown_type());
+    MS_EXCEPTION_IF_NULL(ext_info_handler);
+    if (!ext_info_handler->Parse(ext_info)) {
+      MS_LOG(EXCEPTION) << "Parse AiCpu ext_info_handler failed";
+    }
+    // update wait event id
+    if (task_info_->is_blocking()) {
+      if (!ext_info_handler->UpdateEventId(rt_event_id_)) {
+        MS_LOG(EXCEPTION) << "Aicpu ext_info_handler update event id failed.";
+      }
+    }
+    // alloc extinfo address
+    rtError_t flag = rtMalloc(&ext_info_addr_, ext_info_handler->GetExtInfoLen(), RT_MEMORY_HBM);
     if (flag != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << flag;
     }
-
-    flag = aclrtMemcpy(ext_info_, ext_size, const_cast<void *>(static_cast<const void *>(ext_info.data())), ext_size,
-                       ACL_MEMCPY_HOST_TO_DEVICE);
+    // copy extinfo to device
+    flag = aclrtMemcpy(ext_info_addr_, ext_size, ext_info_handler->GetExtInfo(), ext_size, ACL_MEMCPY_HOST_TO_DEVICE);
     if (flag != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << flag;
     }
-
     MS_LOG(INFO) << "ext info size: " << ext_size;
     aicpu_param_head.extInfoLength = ext_size;
-    aicpu_param_head.extInfoAddr = reinterpret_cast<uintptr_t>(ext_info_);
+    aicpu_param_head.extInfoAddr = reinterpret_cast<uintptr_t>(ext_info_addr_);
   }
 
   // Memcpy AicpuParamHead
