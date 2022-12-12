@@ -36,6 +36,7 @@ bool QuantileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
   kernel_name_ = kernel_ptr->name();
   dim_ = kernel_ptr->get_dim();
+  ignorenan_ = kernel_ptr->get_ignorenan();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -137,7 +138,7 @@ bool QuantileGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   }
   int flag_in = 0;
   Quantile(input, q, out, sort, dim_, x_, y_, z_, each_q_elements_, output_elements_, &flag_in, ret_flag_device,
-           nan_flags, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+           nan_flags, ignorenan_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   if (flag_in == 1) {
     MS_EXCEPTION(ValueError) << "For Quantile, q out of range (expected to be in range of [0, 1]).";
     return false;

@@ -135,6 +135,8 @@ void Quantile::set_dim(int64_t dim) { (void)AddAttr(kDim, api::MakeValue(dim)); 
 
 void Quantile::set_keepdim(bool keepdim) { (void)AddAttr(kKeepdim, api::MakeValue(keepdim)); }
 
+void Quantile::set_ignorenan(bool ignorenan) { (void)AddAttr(kIgnoreNan, api::MakeValue(ignorenan)); }
+
 int64_t Quantile::get_dim() const {
   auto value_ptr = GetAttr(kDim);
   return GetValue<int64_t>(value_ptr);
@@ -142,6 +144,11 @@ int64_t Quantile::get_dim() const {
 
 bool Quantile::get_keepdim() const {
   auto value_ptr = GetAttr(kKeepdim);
+  return GetValue<bool>(value_ptr);
+}
+
+bool Quantile::get_ignorenan() const {
+  auto value_ptr = GetAttr(kIgnoreNan);
   return GetValue<bool>(value_ptr);
 }
 

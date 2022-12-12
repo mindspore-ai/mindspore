@@ -32,8 +32,10 @@ class MIND_API Quantile : public BaseOperator {
   void Init() {}
   void set_dim(int64_t dim);
   void set_keepdim(bool keepdim);
+  void set_ignorenan(bool ignorenan);
   int64_t get_dim() const;
   bool get_keepdim() const;
+  bool get_ignorenan() const;
 };
 abstract::AbstractBasePtr QuantileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args);
