@@ -99,6 +99,9 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
+  if (has_null_input_) {
+    return true;
+  }
   auto x_addr = static_cast<T *>(inputs[0]->addr);
   auto y_addr = static_cast<T *>(inputs[1]->addr);
   auto output_addr = static_cast<T *>(outputs[0]->addr);
@@ -136,10 +139,6 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
 
 bool XdivyCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                const std::vector<AddressPtr> &outputs) {
-  const size_t kInputsNum = 2;
-  const size_t kOutputsNum = 1;
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
@@ -174,6 +173,13 @@ int XdivyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 
   auto x_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto y_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
+
+  // while has null input, xdivy result is null too
+  has_null_input_ = CheckNullInput(x_shape) || CheckNullInput(y_shape);
+  if (has_null_input_) {
+    return 0;
+  }
+
   auto out_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
   if (out_shape.size() > MAX_DIMS || out_shape.size() < x_shape.size() || out_shape.size() < y_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
