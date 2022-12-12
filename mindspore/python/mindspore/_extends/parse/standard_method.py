@@ -2710,6 +2710,11 @@ def view(x, *shape):
     return F.reshape(x, shape)
 
 
+def view_as(x, other):
+    """View self Tensor as the same shape as `other` ."""
+    return F.reshape(x, other.shape)
+
+
 def bitwise_and(x, y):
     """Returns bitwise `and` of two tensors element-wise."""
     return F.bitwise_and(x, y)
@@ -2774,6 +2779,11 @@ def square(x):
 def sub(x, y):
     """Returns sub of a tensor element-wise."""
     return F.sub(x, y)
+
+
+def t(x):
+    """Transposes a 2-D tensor."""
+    return F.t(x)
 
 
 def tan(x):

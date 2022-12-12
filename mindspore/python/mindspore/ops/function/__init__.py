@@ -249,6 +249,7 @@ from .math_func import (
     sin,
     sinc,
     cos,
+    t,
     tan,
     asin,
     acos,

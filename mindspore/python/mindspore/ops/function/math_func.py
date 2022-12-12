@@ -1846,6 +1846,37 @@ def cos(x):
     return cos_(x)
 
 
+def t(x):
+    r"""
+    Transposes a 2-D Tensor. 1-D Tensor are returned as it is.
+
+    Args:
+        x (Tensor): The input Tensor.
+
+    Returns:
+        Tensor, the transpose of `x` .
+
+    Raises:
+        ValueError: If the dimension of `x` is larger than 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[1, 2, 3], [2, 3, 4]], ms.float32)
+        >>> output = ops.t(x)
+        >>> print(output)
+        [[1. 2.]
+         [2. 3.]
+         [3. 4.]]
+    """
+    if x.ndim > 2:
+        raise ValueError(f"For t(), the dimension of tensor should be less than 3, but got {x.ndim}.")
+    if x.ndim == 2:
+        return _get_cache_prim(P.Transpose)()(x, (1, 0))
+    return x
+
+
 def tan(x):
     r"""
     Computes tangent of `x` element-wise.
@@ -4794,10 +4825,10 @@ def adjoint(x):
          [1.-1.j 3.-3.j]]
     """
     _dtype = x.dtype
-    t = x.swapaxes(-1, -2)
+    _t = x.swapaxes(-1, -2)
     if _dtype in (mstype.complex128, mstype.complex64):
-        return t.conj()
-    return t
+        return _t.conj()
+    return _t
 
 
 def addr(x, vec1, vec2, beta=1, alpha=1):
@@ -9395,6 +9426,7 @@ __all__ = [
     'real',
     'sqrt',
     'square',
+    't',
     'sin',
     'cos',
     'tan',
