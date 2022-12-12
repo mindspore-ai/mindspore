@@ -338,8 +338,9 @@ class AddV2(Primitive):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them should be the same.
+    When the inputs are two tensors, and the shapes of them can be broadcast.
     When the inputs are one tensor and one scalar, the scalar could only be a constant.
+    CPU/Ascend does not support broadcast for now.
 
     .. math::
 
@@ -358,10 +359,10 @@ class AddV2(Primitive):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor .
+        TypeError: If neither `x` nor `y` is a Tensor.
         TypeError: If dtype of `x` or `y` is not in [float16, float32, float64,
         uint8, int8, int16, int32, int64, complex64, complex128].
-        ValueError: If the shape of 'x' and 'y' is not the same.
+        ValueError: If the shape of 'x' and 'y' is not the same for CPU and Ascend.
 
 
     Supported Platforms:
@@ -7146,21 +7147,32 @@ class FFTWithSize(Primitive):
     Args:
         signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions
             of the fourier transform are realized, can only be 1, 2 or 3.
-        inverse (bool): Whether it is the inverse transformation, used to select FFT or IFFT and RFFT or
-            IRFFT. inverse=False means FFT or RFFT, inverse=True means IFFT or IRFFT.
-        real (bool): Whether it is the real transformation, used to select FFT/IFFT or RFFT/IRFFT.
-            real=False means FFT or IFFT, real=True means RFFT or IRFFT.
+        inverse (bool): Whether it is the inverse transformation.
+        real (bool): Whether it is the real transformation.
+
+            - "inverse:False real:False" corresponds to FFT.
+            - "inverse:True real:False" corresponds to IFFT.
+            - "inverse:False real:True" corresponds to RFFT.
+            - "inverse:True real:True" corresponds to IRFFT.
+
         norm (str, optional): The normalization, optional values: ["backward", "forward", "ortho"].
             Default value: "backward".
 
-            - "backward" has the direct (forward) transforms unscaled and the inverse (backward) transforms
-              scaled by 1/n, where n is the input x's element numbers.
+            - "backward" has the direct transforms unscaled and the inverse transforms scaled by 1/n,
+              where n is the input x's element numbers.
             - "ortho" has both direct and inverse transforms are scaled by 1/sqrt(n).
             - "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
 
         onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: True.
         signal_sizes (list, optional): Size of the original signal (the signal before rfft, no batch dimension),
-            only in irfft mode and set onesided=true requires the parameter. Default: [].
+            only in irfft mode and set onesided=true requires the parameter, signal_sizes satisfies the following
+            three rules. Default: [].
+
+            - len(signal_sizes)==signal_ndim, the length of signal_sizes is equal to the signal_ndim of the IRFFT.
+            - signal_size[-1]/2+1==x.shape[-1], the last dimension of signal_sizes divided by 2 is equal to
+              the last dimension of the IRFFT input.
+            - signal_sizes[:-1]==x.shape[:-1], signal_sizes has exactly the same dimensions as the input shape
+              except for the last dimension.
 
     Inputs:
         - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.
