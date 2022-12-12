@@ -887,6 +887,7 @@ constexpr auto kAttrOnlyUseFirstOutput = "only_use_first_output";
 constexpr auto kAttrOnlyUseSecondOutput = "only_use_second_output";
 constexpr auto kAttrOpAdaptationProcessed = "op_adaptation_processed";
 constexpr auto kAttrMeOpName = "me_op_name";
+constexpr auto kAttrIRChange = "ir_change";
 constexpr auto kActualAbstract = "actual_abstract";
 constexpr auto kAttrZeroInfinity = "zero_infinity";
 constexpr auto kAttrBlank = "blank";

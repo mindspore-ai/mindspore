@@ -144,7 +144,7 @@ CNodePtr CreateNodeHelper::CreateTargetOp(const CNodePtr &origin_op, const OpAda
   std::vector<AnfNodePtr> target_inputs;
   auto inputs = origin_op->inputs();
   target_inputs.push_back(inputs[0]);
-
+  bool ir_change = false;
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     MS_EXCEPTION_IF_NULL(input_node);
@@ -167,6 +167,7 @@ CNodePtr CreateNodeHelper::CreateTargetOp(const CNodePtr &origin_op, const OpAda
         MS_LOG(INFO) << "Convert " << origin_op->fullname_with_scope() << "'s input " << i << " to attr failed.";
         return nullptr;
       }
+      ir_change = true;
     } else {
       target_inputs.push_back(inputs[i + 1]);
     }
@@ -190,6 +191,7 @@ CNodePtr CreateNodeHelper::CreateTargetOp(const CNodePtr &origin_op, const OpAda
 
   common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), target_op);
   common::AnfAlgo::SetNodeAttr(kAttrMeOpName, MakeValue(op_adaptation_info.me_op_name()), target_op);
+  common::AnfAlgo::SetNodeAttr(kAttrIRChange, MakeValue(ir_change), target_op);
 
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(origin_op);
   MS_LOG(DEBUG) << "Create op " << target_op->fullname_with_scope() << ", debug string:" << target_op->DebugString()
