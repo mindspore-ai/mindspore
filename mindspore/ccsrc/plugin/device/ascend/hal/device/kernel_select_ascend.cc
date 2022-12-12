@@ -364,7 +364,9 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
   bool *precision_reduce) {
   MS_EXCEPTION_IF_NULL(precision_reduce);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_kernel_info_list;
-  const std::map<TypeId, TypeId> raise_map = {{kNumberTypeFloat16, kNumberTypeFloat32}};
+  const std::map<TypeId, TypeId> raise_map = {{kNumberTypeFloat16, kNumberTypeFloat32},
+                                              {kNumberTypeInt8, kNumberTypeInt32},
+                                              {kNumberTypeUInt8, kNumberTypeInt32}};
   const std::map<TypeId, TypeId> reduce_map = {{kNumberTypeInt64, kNumberTypeInt32},
                                                {kNumberTypeFloat, kNumberTypeFloat16},
                                                {kNumberTypeFloat32, kNumberTypeFloat16}};
