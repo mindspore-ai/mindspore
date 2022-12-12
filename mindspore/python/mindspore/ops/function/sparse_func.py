@@ -594,17 +594,17 @@ def coo_concat(sp_input, concat_dim=0):
     """
     concatenates the input SparseTensor(COO format) along the specified dimension.
 
-    .. note:
+    Note:
         demo API now, and only supported CPU
 
     Args:
-        sp_input (Union[list(COOTensor), tuple(COOTensor)) - the list of SparseTensor which need to concatenates.
+        sp_input (Union[list(COOTensor), tuple(COOTensor)]) - the list of SparseTensor which need to concatenates.
             for COOTensor input.
         concat_dim (scalar): decide the dimension to concatenation along.
             The value must be in range [-rank, rank), where rank is the number of dimensions in each input
             SparseTensor. Default is 0.
 
-    Outputs:
+    Returns:
         - **output** (COOtensor) - the result of concatenates the input SparseTensor along the
           specified dimension. OutShape: OutShape[non concat_dim] is equal to InShape[non concat_dim] and
           OutShape[concat_dim] is all input concat_dim axis shape accumulate.
