@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/digamma_impl.cuh"
+#include <math.h>
 #include <limits>
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
@@ -39,7 +40,7 @@ inline __device__ float calc_digamma(float x) {
       return std::numeric_limits<float>::quiet_NaN();
     }
     float q, r;
-    r = std::modf(x, &q);
+    r = modf(x, &q);
     float tan_over_r = PI / tan(PI * r);
     return calc_digamma(1 - x) - tan_over_r;
   } else {

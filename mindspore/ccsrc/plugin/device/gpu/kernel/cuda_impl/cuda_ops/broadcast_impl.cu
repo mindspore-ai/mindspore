@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <iostream>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
+#include <math.h>
+#include <vector>
 #include "include/cuda_fp16.h"
 
 constexpr float kFloatEplison = 1e-37;
@@ -40,14 +40,14 @@ struct EqualFunc {
 template <>
 struct EqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9;
+    return abs(__half2float(lhs) - __half2float(rhs)) < 1e-9;
   }
 };
 
 template <>
 struct EqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) < 1e-9;
+    return abs(lhs - rhs) < 1e-9;
   }
 };
 
@@ -59,14 +59,14 @@ struct GreaterEqualFunc {
 template <>
 struct GreaterEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : (__half2float(lhs) > __half2float(rhs));
+    return abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : (__half2float(lhs) > __half2float(rhs));
   }
 };
 
 template <>
 struct GreaterEqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) < 1e-9 ? true : (lhs > rhs);
+    return abs(lhs - rhs) < 1e-9 ? true : (lhs > rhs);
   }
 };
 
@@ -78,7 +78,7 @@ struct LessEqualFunc {
 template <>
 struct LessEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : (__half2float(lhs) < __half2float(rhs));
+    return abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : (__half2float(lhs) < __half2float(rhs));
   }
 };
 
@@ -95,14 +95,14 @@ struct NotEqualFunc {
 template <>
 struct NotEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) >= 1e-9;
+    return abs(__half2float(lhs) - __half2float(rhs)) >= 1e-9;
   }
 };
 
 template <>
 struct NotEqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) >= 1e-9;
+    return abs(lhs - rhs) >= 1e-9;
   }
 };
 
@@ -879,7 +879,7 @@ template <typename T>
 struct FloorModFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     T res = lhs - floorf(lhs / rhs) * rhs;
-    res = (std::abs(res) > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
+    res = (abs(res) > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
 };
@@ -890,7 +890,7 @@ struct FloorModFunc<half> {
     float l = __half2float(lhs);
     float r = __half2float(rhs);
     float res = l - floorf(l / r) * r;
-    res = (std::abs(res) > 1e-9) && ((res < 0.0) != (r < 0.0)) ? res + r : res;
+    res = (abs(res) > 1e-9) && ((res < 0.0) != (r < 0.0)) ? res + r : res;
     return __float2half_rn(res);
   }
 };
@@ -903,8 +903,8 @@ struct FloorModFunc<half2> {
     float2 res;
     res.x = l.x - floorf(l.x / r.x) * r.x;
     res.y = l.y - floorf(l.y / r.y) * r.y;
-    res.x = (std::abs(res.x) > 1e-9) && ((res.x < 0.0) != (r.x < 0.0)) ? res.x + r.x : res.x;
-    res.y = (std::abs(res.y) > 1e-9) && ((res.y < 0.0) != (r.y < 0.0)) ? res.y + r.y : res.y;
+    res.x = (abs(res.x) > 1e-9) && ((res.x < 0.0) != (r.x < 0.0)) ? res.x + r.x : res.x;
+    res.y = (abs(res.y) > 1e-9) && ((res.y < 0.0) != (r.y < 0.0)) ? res.y + r.y : res.y;
     return __float22half2_rn(res);
   }
 };

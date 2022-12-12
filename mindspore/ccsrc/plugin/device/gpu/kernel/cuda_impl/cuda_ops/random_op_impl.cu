@@ -15,6 +15,7 @@
  */
 
 #include "random_op_impl.cuh"
+#include <math.h>
 #include "include/cuda_fp16.h"
 template <typename T>
 __global__ void NormalKernel(int seed, curandState *globalState, T *output, size_t count) {
@@ -82,8 +83,8 @@ __global__ void StandardLaplaceKernel(int seed, curandState *globalState, T *out
     curand_init(seed, i, 0, &globalState[i]);
     T temp = (T)(curand_uniform(&globalState[i]) * 2 - 1);
     T temp2 = temp < 0 ? temp + min_num : temp - min_num;
-    T sign = std::copysignf(1.0, temp2);
-    output[i] = -sign * std::log(1.0 - std::abs(temp2));
+    T sign = copysignf(1.0, temp2);
+    output[i] = -sign * log(1.0 - abs(temp2));
   }
   return;
 }

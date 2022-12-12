@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/zeta_impl.cuh"
+#include <math.h>
 #include <limits>
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
@@ -63,14 +64,14 @@ __global__ void ZetaKernel(const size_t size, const T *x, const T *dimension, T 
         continue;
       }
     }
-    s = std::pow(q, -p);
+    s = pow(q, -p);
     a = q;
     i = 0;
     b = zero;
     while ((i < 9) || (a <= T(9.0))) {
       i += 1;
       a += one;
-      b = std::pow(a, -p);
+      b = pow(a, -p);
       s += b;
       if ((-MACHEP * s < b) && (b < MACHEP * s)) {
         output[pos] = static_cast<T>(s);
@@ -91,7 +92,7 @@ __global__ void ZetaKernel(const size_t size, const T *x, const T *dimension, T 
       b /= w;
       t = a * b / A[i];
       s = s + t;
-      t = std::fabs(t / s);
+      t = fabs(t / s);
       if (t < MACHEP) {
         output[pos] = static_cast<T>(s);
         break;
