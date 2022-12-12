@@ -13,14 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.functional as F
+from mindspore import ops
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE)
 add1 = P.Add()
@@ -162,3 +164,30 @@ def test_keep_order_io_effect_exception_return_dtype():
     x = Tensor(data, dtype=mstype.float16)
     net = Net()
     data = net(x)
+
+
+def test_print_effect_trace():
+    """
+    Feature: Auto Monad
+    Description: Test print effect trace.
+    Expectation: No exception and no warning.
+    """
+    class Network(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor(np.random.randn(5, 3), ms.float32), name='w')
+            self.b = Parameter(Tensor(np.random.randn(3,), ms.float32), name='b')
+
+        def construct(self, x):
+            out = ops.matmul(x, self.w)
+            print('matmul: ', out)
+            out = out + self.b
+            print('add bias: ', out)
+            return out
+
+    ms.set_context(mode=ms.GRAPH_MODE)
+    model = Network()
+    x = ops.ones(5, ms.float32)
+    model.compile(x)
+    out = model(x)
+    print('out: ', out)
