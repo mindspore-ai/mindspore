@@ -462,8 +462,11 @@ class Normalize(nn.Cell):
     Applies Normalize transform on given input tensors.
     """
 
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, is_hwc=True):
         super(Normalize, self).__init__()
+        if is_hwc is False:
+            mean = np.expand_dims(np.array(mean), (1, 2))
+            std = np.expand_dims(np.array(std), (1, 2))
         self.mean = Tensor(mean, mstype.float32)
         self.std = Tensor(std, mstype.float32)
         self.sub = P.Sub()
@@ -503,7 +506,7 @@ class OffloadModel():
 op_to_model = {
     "HWC2CHW": OffloadModel(HwcToChw),
     "HwcToChw": OffloadModel(HwcToChw),
-    "Normalize": OffloadModel(Normalize, ["mean", "std"]),
+    "Normalize": OffloadModel(Normalize, ["mean", "std", "is_hwc"]),
     "RandomColorAdjust": OffloadModel(RandomColorAdjust, ["brightness", "contrast", "saturation", "hue"]),
     "RandomHorizontalFlip": OffloadModel(RandomHorizontalFlip, ["prob"]),
     "RandomSharpness": OffloadModel(RandomSharpness, ["degrees"]),
