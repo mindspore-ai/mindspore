@@ -1205,8 +1205,8 @@ def permute(x, *dims):
     """
     if dims is None:
         raise ValueError(f"For Tensor.permute, the dims must not be none.")
-    if len(dims) == 1:
-        return F.permute(x, *dims)
+    if len(dims) == 1 and isinstance(dims[0], tuple):
+        return F.permute(x, dims[0])
     return F.permute(x, dims)
 
 
@@ -1987,6 +1987,11 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disa
     if initial is not None:
         res += initial
     return res.astype(dtype)
+
+
+def sum_to_size(x, *size):
+    """For details, please refer to :func:`mindspore.ops.sum_to_size`."""
+    return F.sum_to_size(x, *size)
 
 
 def repeat(x, repeats, axis=None):

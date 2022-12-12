@@ -329,6 +329,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"true_divide", std::string("true_divide")},                        // true_divide()
        {"triu", std::string("triu")},                                      // triu()
        {"subtract", std::string("subtract")},                              // true_divide()
+       {"sum_to_size", std::string("sum_to_size")},                        // sum_to_size()
        {"exp", std::string("exp")},                                        // P.Exp()
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
        {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()

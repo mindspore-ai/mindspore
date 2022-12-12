@@ -257,6 +257,7 @@
     mindspore.Tensor.sub
     mindspore.Tensor.subtract
     mindspore.Tensor.sum
+    mindspore.Tensor.sum_to_size
     mindspore.Tensor.svd
     mindspore.Tensor.swapaxes
     mindspore.Tensor.T
