@@ -1511,6 +1511,53 @@ EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AbstractBasePtrList &ar
   return nullptr;
 }
 
+EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEnginePtr &engine,
+                                                            const AbstractBasePtr &data_args,
+                                                            const AbstractBasePtr &item_args,
+                                                            const ConfigPtr &data_conf,
+                                                            const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(data_args);
+  MS_EXCEPTION_IF_NULL(item_args);
+  // Check whether it is AdapterTensor or AdapterParameter.
+  auto abs = data_args->cast_ptr<abstract::AbstractTensor>();
+  if (abs == nullptr || !abs->is_adapter()) {
+    return nullptr;
+  }
+
+  // Get the name of attr/method.
+  ValuePtr item_value = item_args->BuildValue();
+  MS_EXCEPTION_IF_NULL(item_value);
+  if (!item_value->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
+  }
+  std::string item_name = item_value->cast_ptr<StringImm>()->value();
+
+  constexpr size_t attr_index = 0;
+  constexpr size_t flag_index = 1;
+  constexpr size_t info_required_size = 2;
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::tuple attr_info = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_ADAPTER_TENSOR_ATTR, py::str(item_name));
+  if (attr_info.size() != info_required_size) {
+    MS_EXCEPTION(NameError) << "attr info size should be 2, but got " << attr_info.size();
+  }
+  // If func is none, it means there is no such attr or method.
+  py::object func = attr_info[attr_index];
+  if (py::isinstance<py::none>(func)) {
+    return nullptr;
+  }
+  ValuePtr converted_value = nullptr;
+  bool success = parse::ConvertData(func, &converted_value);
+  if (!success || converted_value == nullptr || !converted_value->isa<FuncGraph>()) {
+    return nullptr;
+  }
+  AddToManager(engine, converted_value->cast<FuncGraphPtr>());
+
+  // Check whether it is an attribute or a method.
+  bool is_attr = attr_info[flag_index].cast<bool>();
+  REQUIRE_TYPE require_type = is_attr ? REQUIRE_TYPE::ATTR : REQUIRE_TYPE::METHOD;
+  return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
+}
+
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list,
                                                           const ConfigPtr &data_conf,
@@ -1675,6 +1722,11 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     if (res != nullptr) {
       return res;
     }
+  }
+  // Get attribute or method of AdapterTensor object.
+  auto res = GetEvaluatedValueForAdapterTensorAttrOrMethod(engine, data_args, item_args, data_conf, out_conf);
+  if (res != nullptr) {
+    return res;
   }
   // Try to search method map, if not found, the data_type should be External type.
   TypePtr data_type = data_args->BuildType();

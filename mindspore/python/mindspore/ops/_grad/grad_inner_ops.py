@@ -197,3 +197,23 @@ def get_bprop_resize_bilinear(self):
         return dx, zeros_like(size)
 
     return bprop
+
+
+@bprop_getters.register(inner.ConvertToAdapterTensor)
+def get_bprop_convert_to_adapter_tensor(self):
+    """Generate bprop for ConvertToAdapterTensor"""
+
+    def bprop(x, out, dout):
+        return (dout,)
+
+    return bprop
+
+
+@bprop_getters.register(inner.ConvertToMsTensor)
+def get_bprop_convert_to_ms_tensor(self):
+    """Generate bprop for ConvertToMsTensor"""
+
+    def bprop(x, out, dout):
+        return (dout,)
+
+    return bprop

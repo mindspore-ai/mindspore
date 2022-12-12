@@ -1213,12 +1213,18 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   // Check element
   auto element = element_->Join(other_tensor->element_);
   MS_EXCEPTION_IF_NULL(element);
-  return std::make_shared<AbstractTensor>(element, res_shape);
+  auto ret = std::make_shared<AbstractTensor>(element, res_shape);
+  ret->set_is_adapter(is_adapter_);
+  return ret;
 }
 
 bool AbstractTensor::equal_to(const AbstractTensor &other) const {
   if (this == &other) {
     return true;
+  }
+  // Check if both Tensor or both AdapterTensor.
+  if (is_adapter() != other.is_adapter()) {
+    return false;
   }
   const auto &v1 = GetValueTrack();
   const auto &v2 = other.GetValueTrack();
@@ -1268,6 +1274,7 @@ AbstractBasePtr AbstractTensor::Clone() const {
   clone->set_value(GetValueTrack());
   clone->set_value_range(get_min_value(), get_max_value());
   clone->set_shape_value(get_shape_value());
+  clone->set_is_adapter(is_adapter());
   return clone;
 }
 
@@ -1278,6 +1285,7 @@ AbstractBasePtr AbstractTensor::Broaden() const {
   MS_EXCEPTION_IF_NULL(shp);
   broaden->set_shape(shp->Clone());
   broaden->set_value(kAnyValue);
+  broaden->set_is_adapter(is_adapter());
   return broaden;
 }
 
@@ -1289,6 +1297,7 @@ AbstractBasePtr AbstractTensor::BroadenWithShape() const {
   shp->Broaden();
   broaden->set_shape(shp);
   broaden->set_value(kAnyValue);
+  broaden->set_is_adapter(is_adapter());
   return broaden;
 }
 
@@ -1441,6 +1450,7 @@ std::string AbstractJTagged::ToString() const {
 AbstractRefTensor::AbstractRefTensor(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value)
     : AbstractTensor(*ref_value), ref_key_value_(ref_key_value) {
   set_type(std::make_shared<RefType>());
+  set_is_adapter(ref_value->is_adapter());
   MS_EXCEPTION_IF_NULL(ref_key_value);
   if (ref_key_value != kAnyValue && !ref_key_value->isa<RefKey>()) {
     MS_LOG(EXCEPTION) << "ref_key_value must be kAnyValue or RefKey, but got:" << ref_key_value->ToString();

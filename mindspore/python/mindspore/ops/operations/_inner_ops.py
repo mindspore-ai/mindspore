@@ -31,6 +31,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm
 from mindspore.common.api import _pynative_executor
+from mindspore.common._register_for_adapter import ms_adapter_registry
 
 
 # Bit operation
@@ -2321,3 +2322,65 @@ class IsInstance(PrimitiveWithInfer):
                'dtype': mstype.type_type,
                'value': value}
         return out
+
+
+class ConvertToAdapterTensor(Primitive):
+    """
+    Convert a tensor from MindSpore's Tensor type to MSAdapter's Tensor type,
+    where MSAdapter's Tensor is a subclass of MindSpore's Tensor.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+
+    Outputs:
+        A tensor, whose type is MSAdapter's Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([1, 2 ,3])
+        >>> x = ops.ConvertToAdapterTensor()(x)
+        >>> print(x)
+        [1 2 3]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize"""
+
+    def __call__(self, x):
+        """run in PyNative mode"""
+        return ms_adapter_registry.tensor(x, inner=True)
+
+convert_to_adapter_tensor = ConvertToAdapterTensor()
+
+
+class ConvertToMsTensor(Primitive):
+    """
+    Convert a tensor from MSAdapter's Tensor type to MindSpore's Tensor type,
+    where MSAdapter's Tensor is a subclass of MindSpore's Tensor.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+
+    Outputs:
+        A tensor, whose type is MindSpore's Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([1, 2 ,3])
+        >>> x = ops.ConvertToMsTensor()(x)
+        >>> print(x)
+        [1 2 3]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize"""
+
+    def __call__(self, x):
+        """run in PyNative mode"""
+        return Tensor(x)
+
+convert_to_ms_tensor = ConvertToMsTensor()

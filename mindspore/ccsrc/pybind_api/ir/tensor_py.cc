@@ -562,6 +562,7 @@ void RegMetaTensor(py::module *m) {
          }),
          py::arg("input"), py::arg("dtype") = nullptr)
     .def_property("init_flag", &Tensor::is_init, &Tensor::set_init_flag)
+    .def_property("adapter_flag", &Tensor::is_adapter, &Tensor::set_adapter_flag)
     .def_property_readonly("_dtype", &Tensor::Dtype, R"mydelimiter(
                              Get the tensor's data type.
 

@@ -730,11 +730,15 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 
   AbstractBasePtr PartialBroaden() const override;
 
+  bool is_adapter() const { return is_adapter_; }
+  void set_is_adapter(bool is_adapter) { is_adapter_ = is_adapter; }
+
  protected:
   bool equal_to(const AbstractTensor &other) const;
   ValuePtr min_value_ = nullptr;
   ValuePtr max_value_ = nullptr;
   ValuePtr shape_value_ = nullptr;
+  bool is_adapter_ = false;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;

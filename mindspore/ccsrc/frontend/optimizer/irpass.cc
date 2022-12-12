@@ -51,6 +51,7 @@
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
+#include "frontend/optimizer/irpass/convert_tensor_eliminate.h"
 #include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_constexpr_ops.h"
 #include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_class_type.h"
 #include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_meta_fg.h"
@@ -132,6 +133,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   all_reduce_const_elim_ =
     MakeSubstitution(std::make_shared<AllReduceConstElim>(), "reduce_all_const_elim", prim::kPrimAllReduce);
   real_op_eliminate_ = MakeSubstitution(std::make_shared<RealOpEliminate>(), "real_op_eliminate", prim::kPrimRealInner);
+  convert_tensor_eliminate_ = MakeSubstitution(std::make_shared<ConvertTensorEliminate>(), "convert_tensor_eliminate",
+                                               {prim::kPrimConvertToAdapterTensor, prim::kPrimConvertToMsTensor});
+  convert_tensor_all_eliminate_ =
+    MakeSubstitution(std::make_shared<ConvertTensorAllEliminate>(), "convert_tensor_all_eliminate",
+                     {prim::kPrimConvertToAdapterTensor, prim::kPrimConvertToMsTensor});
 
   // Environ Item Eliminate
   environ_get_eliminate_ =

@@ -31,9 +31,8 @@ namespace py = pybind11;
 
 namespace mindspore {
 py::object AnyToPyData(const Any &value);
-COMMON_EXPORT py::object BaseRefToPyData(const BaseRef &value);
-COMMON_EXPORT py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &output);
-COMMON_EXPORT py::object ValueToPyData(const ValuePtr &value);
+COMMON_EXPORT py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &abs = nullptr);
+COMMON_EXPORT py::object ValueToPyData(const ValuePtr &value, const AbstractBasePtr &abs = nullptr);
 
 COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                                      const std::shared_ptr<py::object> &ret_val);

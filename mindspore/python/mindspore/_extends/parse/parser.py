@@ -40,6 +40,7 @@ from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.common import mutable
+from mindspore.common._register_for_adapter import ms_adapter_registry
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE, NO_IMPLEMENT
@@ -125,6 +126,12 @@ _unsupported_convert_data_type = (
 )
 
 _global_params = {}
+
+
+def _convert_map():
+    """Get convert object map"""
+    adapter_convert_map = ms_adapter_registry.convert_map
+    return adapter_convert_map if adapter_convert_map else convert_object_map
 
 
 def create_slice_obj(start, end, step):
@@ -245,8 +252,9 @@ def resolve_symbol(namespace, symbol):
                                           "within the construct() or @jit decorated function in graph mode.")
 
         # If need trope the obj
-        if resolve_ in convert_object_map:
-            resolve_ = convert_object_map.get(resolve_)
+        convert_map = _convert_map()
+        if resolve_ in convert_map:
+            resolve_ = convert_map.get(resolve_)
             logger.debug("Convert resolve: %r", resolve_)
             if resolve_ == NO_IMPLEMENT:
                 raise NotImplementedError(f"Not support for '{symbol}'.")
@@ -549,6 +557,18 @@ def is_class_type(cls):
     return isinstance(cls, type)
 
 
+def get_adapter_tensor_attr(name):
+    """Get the method or @property modified function of the class, excluding those inherited from parent class."""
+    cls = ms_adapter_registry.tensor
+    properties = [key for key, value in vars(cls).items() if isinstance(value, property)]
+    if name in properties:
+        return getattr(cls, name).fget, True
+    methods = [key for key, value in vars(cls).items() if inspect.isfunction(value)]
+    if name in methods:
+        return getattr(cls, name), False
+    return None, False
+
+
 def get_ms_class_name(cls):
     """Get the name of the class instance decorated with jit_class."""
     if isinstance(cls, type):
@@ -827,7 +847,7 @@ class Parser:
     @staticmethod
     def is_unsupported_namespace(value):
         """To check if not supported for namespace"""
-        unsupported = isinstance(value, _builtin_function_or_method_type) and value not in convert_object_map
+        unsupported = isinstance(value, _builtin_function_or_method_type) and value not in _convert_map()
         logger.debug(f"'{value}' unsupported: {unsupported}.")
         if unsupported and value in _fallback_unsupported_python_builtin_type:
             raise TypeError(f"'{value}' is not supported both in JIT Fallback and graph mode.")
@@ -868,7 +888,7 @@ class Parser:
         """Get the convert object for value which don't support to be converted in C++."""
         if not self.is_unsupported_convert_data_type(value):
             return value
-        return convert_object_map.get(value)
+        return _convert_map().get(value)
 
     def parse(self):
         """Parse the function or method."""
