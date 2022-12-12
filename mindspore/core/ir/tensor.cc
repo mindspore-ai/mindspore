@@ -183,7 +183,7 @@ template <typename T>
 std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, size_t data_len) {
   size_t size = SizeOf(shape);
   if (size * sizeof(T) != data_len) {
-    MS_LOG(EXCEPTION) << "Incorrect tensor input data length  " << data_len << ", expect " << size * sizeof(T)
+    MS_LOG(EXCEPTION) << "Incorrect tensor input data length " << data_len << ", expect " << size * sizeof(T)
                       << " item size " << sizeof(T);
   }
   auto buf = static_cast<T *>(data);

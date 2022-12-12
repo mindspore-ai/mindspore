@@ -69,6 +69,7 @@
 #include "distributed/collective/collective_manager.h"
 #include "mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.h"
 #include "mindspore/ccsrc/utils/dynamic_obfuscation/registry_opaque_predicate.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "distributed/init.h"
 #include "profiler/device/profiling.h"
 #include "kernel/akg/akg_kernel_build_manager.h"
@@ -1415,16 +1416,30 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
     ConfigManager::GetInstance().set_gpu_loopsink_size(loop_size);
   }
   MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << vm_loop;
-  py::object ret;
+  py::object res;
   MS_LOG(DEBUG) << "Eval run" << ms_context->backend_policy();
-  auto output = execute_info->func_graph->output()->abstract();
+  const auto &output = execute_info->func_graph->output();
   MS_EXCEPTION_IF_NULL(output);
+  const auto &output_abs = output->abstract();
+  MS_EXCEPTION_IF_NULL(output_abs);
   for (int64_t i = 0; i < vm_loop; i++) {
     BaseRef value = (*run)(execute_info->arg_list);
-    ret = BaseRefToPyData(value, output);
+    res = BaseRefToPyData(value, output_abs);
   }
+
+  // Replace the output if it's not Tensor, but Python data.
+  if (output->has_user_data<kernel::PyExecuteOutputData>()) {
+    py::gil_scoped_acquire gil_acquire;
+    const auto &output_data = output->user_data<kernel::PyExecuteOutputData>();
+    py::object res_obj = output_data->obj;
+    MS_LOG(INFO) << "Has \'PyExecuteOutputData\', just return it. res_obj: " << res_obj;
+    if (!py::isinstance<py::none>(res_obj)) {
+      return res_obj;
+    }
+  }
+
   MS_LOG(DEBUG) << "Run end";
-  return ret;
+  return res;
 }  // namespace pipeline
 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase) const {

@@ -40,15 +40,15 @@ namespace parse {
 // NameSpace class for resolving python code.
 class NameSpace final : public Named {
  public:
-  NameSpace(const std::string &module, const py::object &obj, const py::object &module_obj = py::object())
-      : Named(module + ": \'" + std::string(py::str(obj)) + "\'"),
+  NameSpace(const std::string &module, const py::object &namespace_obj, const py::object &module_obj = py::object())
+      : Named(module + ": \'" + std::string(py::str(namespace_obj)) + "\'"),
         module_(module),
-        obj_(obj),
+        namespace_obj_(namespace_obj),
         module_obj_(module_obj) {}
   ~NameSpace() override = default;
   MS_DECLARE_PARENT(NameSpace, Named);
 
-  const py::object &obj() const { return obj_; }
+  const py::object &namespace_obj() const { return namespace_obj_; }
   const py::object &module_obj() const { return module_obj_; }
   const std::string &module() const { return module_; }
   abstract::AbstractBasePtr ToAbstract() override {
@@ -59,7 +59,7 @@ class NameSpace final : public Named {
   // namespace of the module
   std::string module_;
   // namespace object
-  py::object obj_;
+  py::object namespace_obj_;
   // module object
   py::object module_obj_;
 };

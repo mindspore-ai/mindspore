@@ -8,6 +8,7 @@ if(ENABLE_CPU)
         "eigen/*.cc"
         "mkldnn/*.cc"
         "ps/*.cc"
+        "pyexecute/*.cc"
         "pyfunc/*.cc"
         "rl/*.cc"
         "custom/*.cc"

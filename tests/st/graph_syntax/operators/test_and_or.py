@@ -272,6 +272,4 @@ def test_and_variable_tensor_and_numpy_input():
         print(x and y)
         return x and y
 
-    with pytest.raises(ValueError) as error_info:
-        foo(Tensor([1]))
-    assert "the inputs should be constant, but found variable" in str(error_info.value)
+    foo(Tensor([1]))

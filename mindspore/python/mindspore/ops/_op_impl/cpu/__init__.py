@@ -69,6 +69,7 @@ from .pad import _pad_cpu
 from .range import _range_cpu
 from .tensor_copy_slices import _tensor_copy_slices_cpu
 from .l2loss import _l2loss_cpu
+from .pyexecute import _pyexecute_cpu
 from .pyfunc import _pyfunc_cpu
 from .buffer_append import _buffer_append_cpu
 from .buffer_get import _buffer_get_cpu

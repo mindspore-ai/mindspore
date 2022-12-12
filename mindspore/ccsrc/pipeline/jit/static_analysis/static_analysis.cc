@@ -515,6 +515,10 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (prim->Hash() == prim::kPrimMixedPrecisionCast->Hash() && prim->name() == prim::kPrimMixedPrecisionCast->name()) {
     return std::make_shared<MixedPrecisionCastEvaluator>(prim);
   }
+  if (prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name()) {
+    prim::kPrimPyExecute->AddAttr("primitive_target", MakeValue("CPU"));
+    return std::make_shared<PyExecuteEvaluator>();
+  }
 
   // Find prim infer function in the prim function map return a standard evaluator
   auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);

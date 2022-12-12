@@ -51,7 +51,7 @@ class ResolveNodeResolve : public AnfVisitor {
     if (IsValueNode<parse::NameSpace>(vnode)) {
       auto name_space = GetValueNode<parse::NameSpacePtr>(vnode);
       MS_EXCEPTION_IF_NULL(name_space);
-      obj_ = name_space->obj();
+      obj_ = name_space->namespace_obj();
     } else if (IsValueNode<parse::Symbol>(vnode)) {
       auto symbol_value = GetValueNode<parse::SymbolPtr>(vnode);
       MS_EXCEPTION_IF_NULL(symbol_value);

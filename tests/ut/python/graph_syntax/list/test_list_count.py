@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_list_count """
-import pytest
 from mindspore import Tensor, jit, context
 
 
@@ -180,10 +179,8 @@ def test_list_count_10():
 
     aa = Tensor(20)
     bb = Tensor(10)
-    with pytest.raises(ValueError) as error_info:
-        out = list_net_10(aa, bb)
-        print(out)
-    assert "the inputs should be constant" in str(error_info)
+    out = list_net_10(aa, bb)
+    print(out)
 
 
 def test_list_count_11():
@@ -200,7 +197,5 @@ def test_list_count_11():
 
     aa = Tensor(20)
     bb = Tensor(10)
-    with pytest.raises(ValueError) as error_info:
-        out = list_net_11(aa, bb)
-        print(out)
-    assert "the inputs should be constant" in str(error_info)
+    out = list_net_11(aa, bb)
+    print(out)

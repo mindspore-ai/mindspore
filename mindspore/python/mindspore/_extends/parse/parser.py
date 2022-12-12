@@ -124,6 +124,8 @@ _unsupported_convert_data_type = (
     mutable,
 )
 
+_global_params = {}
+
 
 def create_slice_obj(start, end, step):
     """Create slice object"""
@@ -763,7 +765,8 @@ def eval_script(exp_str, params):
     local_params = params[1]
     try:
         local_params = _convert_python_data(local_params)
-        obj = eval(exp_str, global_params, local_params)
+        res = eval(exp_str, global_params, local_params)
+        logger.debug(f"eval res: '{res}'")
     except Exception as e:
         error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e) + \
             ". You can try to turn off JIT Fallback feature by 'export MS_DEV_ENABLE_FALLBACK=0'."
@@ -771,9 +774,9 @@ def eval_script(exp_str, params):
         raise e
 
     # Convert set to tuple.
-    if isinstance(obj, set):
-        return tuple(obj)
-    return obj
+    if isinstance(res, set):
+        return tuple(res)
+    return res
 
 
 def get_script_ids(script):
@@ -783,6 +786,16 @@ def get_script_ids(script):
     ast_str = astunparse.dump(ast_tree)
     ids = re.findall(r"id='(.+?)'", ast_str)
     return set(ids)
+
+
+def merge_global_params(global_dict):
+    logger.debug(f'merge global_dict: {global_dict}')
+    _global_params.update(global_dict)
+
+
+def get_global_params():
+    logger.debug(f'get global_dict: {_global_params}')
+    return _global_params
 
 
 class Parser:
@@ -808,6 +821,7 @@ class Parser:
         # Used to resolve the function's nonlocals.
         self.closure_namespace = ClosureNamespace(self.fn)
         self.function_name = self.fn.__qualname__
+        self.lines = []
         self.col_offset = 0
 
     @staticmethod
@@ -882,15 +896,15 @@ class Parser:
                         raise OSError(f"Mindspore can not compile temporary source code in terminal. "
                                       f"Please write source code to a python file and run the file.")
                     raise e
-            lines, self.line_offset = source
-            original_src = ''.join(lines)
+            self.lines, self.line_offset = source
+            original_src = ''.join(self.lines)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
             ast_tokens_cache = Parser.ast_cache.get(hexstr)
             if not ast_tokens_cache:
                 src = dedent(original_src)
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
-                logger.debug("Get source: %s", src)
+                logger.info("Get source: %s", src)
                 try:
                     ast_tokens = asttokens.ASTTokens(src, parse=True)
                 except IndentationError as idt_err:
@@ -984,6 +998,35 @@ class Parser:
                              f"but got {subclass_instance}.")
         return super(target_father_class, subclass_instance)
 
+    def get_source_code(self, start_lineno, start_colno, end_lineno, end_colno):
+        """
+        Get the script source at the location.
+
+        Args:
+            start_lineno: The start line no.
+            start_colno: The start column no.
+            end_lineno: The end line no.
+            end_colno: The end column no.
+
+        Returns:
+            str, the source string.
+        """
+        if start_lineno == 0:
+            logger.critical('start_lineno should not be 0')
+
+        first_line = self.lines[start_lineno - 1]
+        if start_lineno == end_lineno:
+            src = first_line[self.col_offset + start_colno:self.col_offset + end_colno]
+            return src
+
+        src = first_line[self.col_offset + start_colno:]
+        while start_lineno < end_lineno - 1:
+            src += self.lines[start_lineno]
+            start_lineno += 1
+        last_line = self.lines[end_lineno - 1]
+        src += last_line[:self.col_offset + end_colno]
+        return src
+
     def get_location(self, node):
         """
         Get location of node start and end line no.
@@ -995,7 +1038,7 @@ class Parser:
         Returns:
             List, [fileName, linestart, colstart, lineend, colend].
         """
-        ret = [self.filename]
+        res = [self.filename]
         err_exit = 0
         if isinstance(node, (list, tuple)):
             node_size = len(node)
@@ -1017,7 +1060,7 @@ class Parser:
                 start_colno += self.col_offset
                 end_lineno += self.line_offset - 1
                 end_colno += self.col_offset
-                ret = ret + [start_lineno, start_colno, end_lineno, end_colno]
+                res = res + [start_lineno, start_colno, end_lineno, end_colno]
             else:
-                ret = ret + [0, 0, 0, 0]
-        return ret
+                res = res + [0, 0, 0, 0]
+        return res
