@@ -23,7 +23,7 @@ from types import FunctionType, MethodType
 import mindspore as ms
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.parallel._utils import _sens_divided_by_device_num_if_recomputation
+from mindspore.parallel._utils import _grads_divided_by_device_num_if_recomputation
 from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
@@ -361,10 +361,10 @@ class GradOperation(GradOperation_):
         elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
-                args, kwargs = _sens_divided_by_device_num_if_recomputation(grad_.sens_param, args, kwargs)
                 self._pynative_forward_run(fn, grad_, args, kwargs)
                 _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
                 out = _pynative_executor()
+                out = _grads_divided_by_device_num_if_recomputation(out)
                 return out
         else:
             grad_.pynative_ = True
@@ -511,6 +511,7 @@ class _Grad(GradOperation_):
                 res = self._pynative_forward_run(fn, grad_, args, kwargs)
                 _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
                 out = _pynative_executor()
+                out = _grads_divided_by_device_num_if_recomputation(out)
                 if self.get_value:
                     return res, out
                 if self.has_aux:
