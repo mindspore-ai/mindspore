@@ -26,7 +26,7 @@
         返回用于数据分组的category字段。
 
         返回：
-            list[str]，category字段。
+            list[str]，候选category字段。
 
     .. py:method:: get_category_fields()
 
@@ -77,7 +77,7 @@
 
     .. py:method:: set_category_field(category_field)
 
-        设置category字段。
+        设置要读取的category字段。
 
         .. note::
             必须是候选category字段。

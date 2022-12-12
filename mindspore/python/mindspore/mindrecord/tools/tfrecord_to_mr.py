@@ -69,16 +69,16 @@ class TFRecordToMR:
 
     Note:
         For details about Examples, please refer to `Converting TFRecord Dataset <https://
-        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-tfrecord-dataset>`_ .
+        www.mindspore.cn/tutorials/en/master/advanced/dataset/record.html#converting-tfrecord-dataset>`_ .
 
     Args:
         source (str): TFRecord file to be transformed.
-        destination (str): MindRecord file path to transform into, ensure that no file with the same name
-            exists in the directory.
+        destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
+            no file with the same name exists in the directory.
         feature_dict (dict[str, FixedLenFeature]): Dictionary that states the feature type, and
             `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ is supported.
         bytes_fields (list[str], optional): The bytes fields which are in `feature_dict` and can be images bytes.
-            Default: None.
+            Default: None, means that there is no byte dtype field such as image.
 
     Raises:
         ValueError: If parameter is invalid.

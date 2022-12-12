@@ -20,7 +20,7 @@
 
     .. py:method:: transform()
 
-        :func:`mindspore.mindrecord.MnistToMR.run` 函数的包装函数来保证异常时正常退出。
+        封装 :func:`mindspore.mindrecord.MnistToMR.run` 函数来保证异常时正常退出。
 
         返回：
             MSRStatus，SUCCESS或FAILED。

@@ -40,12 +40,12 @@ class Cifar10ToMR:
 
     Note:
         For details about Examples, please refer to `Converting the CIFAR-10 Dataset <https://
-        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-the-cifar-10-dataset>`_ .
+        www.mindspore.cn/tutorials/en/master/advanced/dataset/record.html#converting-the-cifar-10-dataset>`_ .
 
     Args:
         source (str): The cifar10 directory to be transformed.
-        destination (str): MindRecord file path to transform into, ensure that no file with the same name
-            exists in the directory.
+        destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
+            no file with the same name exists in the directory.
 
     Raises:
         ValueError: If source or destination is invalid.

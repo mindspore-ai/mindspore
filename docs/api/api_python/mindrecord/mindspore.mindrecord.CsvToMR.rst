@@ -26,7 +26,7 @@
 
     .. py:method:: transform()
 
-        :func:`mindspore.mindrecord.CsvToMR.run` 的包装函数来保证异常时正常退出。
+        封装 :func:`mindspore.mindrecord.CsvToMR.run` 函数来保证异常时正常退出。
 
         返回：
-            SRStatus，SUCCESS或FAILED。
+            MSRStatus，SUCCESS或FAILED。
