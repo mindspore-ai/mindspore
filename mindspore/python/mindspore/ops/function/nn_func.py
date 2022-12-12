@@ -2490,6 +2490,7 @@ def pad(input_x, padding, mode='constant', value=None):
     if not isinstance(padding, Tensor):
         _check_pad_inputs(padding)
         padding = Tensor(padding)
+    is_expand = False
     if mode == "constant":
         value = 0 if value is None else value
         if isinstance(value, (float, int)):
@@ -2499,7 +2500,12 @@ def pad(input_x, padding, mode='constant', value=None):
             raise ValueError(f"For 'pad', the padding mode '{mode}' can not set value, but got value {value}.")
         if mode == "replicate":
             mode = "edge"
+        if padding.shape[0] == input_x.ndim + 1:
+            input_x = input_x.expand_dims(0)
+            is_expand = True
     out = PadV3(mode=mode, paddings_contiguous=True)(input_x, padding, value)
+    if is_expand:
+        out = out.squeeze(0)
     return out
 
 
