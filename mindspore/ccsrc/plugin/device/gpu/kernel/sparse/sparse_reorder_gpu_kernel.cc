@@ -44,6 +44,8 @@ bool SparseReorderGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  values_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
+  shape_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -66,26 +68,40 @@ int SparseReorderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     }
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
+  num_elems_ = static_cast<int>(input_shape.at(0));
+  num_dims_ = static_cast<int>(input_shape.at(1));
+  auto values_shape = inputs.at(kIndex1)->GetShapeVector();
+  values_elements_ = std::accumulate(values_shape.begin(), values_shape.end(), size_t(1), std::multiplies<size_t>());
+  auto shape_shape = inputs.at(kIndex2)->GetShapeVector();
+  shape_elements_ = std::accumulate(shape_shape.begin(), shape_shape.end(), size_t(1), std::multiplies<size_t>());
+  auto output_indices_shape = outputs.at(kIndex0)->GetShapeVector();
+  output_indices_elements_ = SizeOf(output_indices_shape);
+  auto output_values_shape = outputs.at(kIndex1)->GetShapeVector();
+  output_values_elements_ = SizeOf(output_values_shape);
   if (input_elements_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";
     return KRET_RESIZE_FAILED;
   }
-  num_elems_ = input_shape_.at(0);
-  num_dims_ = input_shape_.at(1);
   size_t input_size = input_elements_ * unit_size_;
+  size_t values_size = values_elements_ * values_unit_size_;
+  size_t shape_size = shape_elements_ * shape_unit_size_;
+  size_t output_indices_size = output_indices_elements_ * unit_size_;
+  size_t output_values_size = output_values_elements_ * values_unit_size_;
+  size_t workspace_size = num_elems_ * unit_size_;
   input_size_list_.push_back(input_size);
-  output_size_list_.push_back(input_size);
-  output_size_list_.push_back(input_size);
-  workspace_size_list_.push_back(input_size);
-  workspace_size_list_.push_back(input_size);
-  workspace_size_list_.push_back(input_size);
-  workspace_size_list_.push_back(input_size);
+  input_size_list_.push_back(values_size);
+  input_size_list_.push_back(shape_size);
+  output_size_list_.push_back(output_indices_size);
+  output_size_list_.push_back(output_values_size);
+  workspace_size_list_.push_back(workspace_size);
+  workspace_size_list_.push_back(workspace_size);
+  workspace_size_list_.push_back(workspace_size);
+  workspace_size_list_.push_back(workspace_size);
   return KRET_OK;
 }
 
-template <typename I, typename T>
+template <typename T>
 bool SparseReorderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &workspace,
                                              const std::vector<AddressPtr> &outputs) {
@@ -110,84 +126,84 @@ std::vector<std::pair<KernelAttr, SparseReorderGpuKernelMod::SparseReorderFunc>>
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeBool),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, bool>},
+    &SparseReorderGpuKernelMod::LaunchKernel<bool>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeInt8)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt8),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, int8_t>},
+    &SparseReorderGpuKernelMod::LaunchKernel<int8_t>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeInt16)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt16),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, int16_t>},
+    &SparseReorderGpuKernelMod::LaunchKernel<int16_t>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeInt32)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt32),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, int32_t>},
+    &SparseReorderGpuKernelMod::LaunchKernel<int32_t>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+    &SparseReorderGpuKernelMod::LaunchKernel<int64_t>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeUInt8)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeUInt8),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, uint8_t>},
+    &SparseReorderGpuKernelMod::LaunchKernel<uint8_t>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeUInt16)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeUInt16),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, uint16_t>},
+    &SparseReorderGpuKernelMod::LaunchKernel<uint16_t>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeFloat16)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeFloat16),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, half>},
+    &SparseReorderGpuKernelMod::LaunchKernel<half>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeFloat32)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeFloat32),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, float>},
+    &SparseReorderGpuKernelMod::LaunchKernel<float>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeFloat64)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeFloat64),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, double>},
+    &SparseReorderGpuKernelMod::LaunchKernel<double>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeComplex64)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeComplex64),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, cuFloatComplex>},
+    &SparseReorderGpuKernelMod::LaunchKernel<cuFloatComplex>},
    {KernelAttr()
       .AddInputAttr(kNumberTypeInt64)
       .AddInputAttr(kNumberTypeComplex128)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeComplex128),
-    &SparseReorderGpuKernelMod::LaunchKernel<int64_t, cuDoubleComplex>}};
+    &SparseReorderGpuKernelMod::LaunchKernel<cuDoubleComplex>}};
 
 std::vector<KernelAttr> SparseReorderGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

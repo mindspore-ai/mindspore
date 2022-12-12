@@ -55,18 +55,18 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
   }
   if (x_rank != other_rank) {
     MS_EXCEPTION(ValueError) << "For Ormqr,  other should have same dimension with x"
-                             << ", while rank of x is" << x_shape.size() << " and "
+                             << ", while rank of x is " << x_shape.size() << " and "
                              << "rank of other is " << other_shape.size() << ".";
   }
   if (x_shape.size() > kInputNoBatch) {
     for (size_t i = 0; i < x_rank - kRowIndex; i++) {
       if (x_shape[i] != tau_shape[i]) {
         MS_EXCEPTION(ValueError) << "For Ormqr, tau.shape[:-2] must be equal to x.shape[:-2], but x.shape[" << i
-                                 << "] is " << x_shape[i] << ",and tau.shape[" << i << "] is " << tau_shape[i] << ".";
+                                 << "] is " << x_shape[i] << ", and tau.shape[" << i << "] is " << tau_shape[i] << ".";
       }
       if (x_shape[i] != other_shape[i]) {
         MS_EXCEPTION(ValueError) << "For Ormqr, other.shape[:-2] must be equal to x.shape[:-2], but x.shape[" << i
-                                 << "] is " << x_shape[i] << ",and other.shape[" << i << "] is " << other_shape[i]
+                                 << "] is " << x_shape[i] << ", and other.shape[" << i << "] is " << other_shape[i]
                                  << ".";
       }
     }

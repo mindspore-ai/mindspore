@@ -7829,21 +7829,23 @@ class Ormqr(Primitive):
     r"""
     Computes the matrix-matrix multiplication of a product of Householder matrices with a general matrix.
     Multiplies a(m, n) matrix C (given by other) with a matrix Q, where Q is represented using Householder
-    reflectors (x, tau), which is the output of torch.geqrf().
+    reflectors (x, tau), which is the output of geqrf().
 
     Args:
         left (bool, optional): controls the order of multiplication. If true, compute op(Q)*C.
-                               If false, compute C*op(Q). Default: True.
+            If false, compute C*op(Q). Default: True.
         transpose(bool, optional): controls whether the matrix Q is conjugate transposed or not.Default: False.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape: (*, mn, k) where mn equals to m or n depending on the left.
-          with float32, float64, complex64 and complex128 data type.
-        - **tau** (Tensor) - Tensor of shape (*, min(mn, k)) which have the same type as x.
-        - **other** (Tensor) - tensor of shape (*, m, n) where * is zero or more batch dimensions.
+        - **x** (Tensor) - Tensor of shape: (*, mn, k) where mn equals to m or n depending on the the args of `left`,
+          and `*` is zero or more batch dimensions.
+        - **tau** (Tensor) - Tensor of shape (*, min(mn, k)) where `*` is zero or more batch dimensions,
+          and its type is the same as `x`.
+        - **other** (Tensor) - Tensor of shape (*, m, n) where `*` is zero or more batch dimensions,
+          and its type is the same as `x`.
 
     Outputs:
-        - **y** (Tensor) - the output Tensor.
+        - **y** (Tensor) - the output Tensor, has the same shape and data type as `other`.
 
     Raises:
         TypeError: If `x` or `tau` or `other` is not Tensor.

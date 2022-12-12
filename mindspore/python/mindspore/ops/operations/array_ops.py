@@ -7851,7 +7851,7 @@ class Bincount(Primitive):
     Counts the number of occurrences of each value in an integer array.
 
     Inputs:
-        - **array** (Tensor) - A Tensor of type int32.
+        - **array** (Tensor) - A Tensor of type int32, whose value can not be less than zero.
         - **size** (Tensor) - A non-negative Tensor of type int32.
         - **weights** (Tensor) - A Tensor with the same shape as array, or a length-0 Tensor, in which case it acts as
           all weights equal to 1. Must be one of the following types: int32, int64, float32, float64.

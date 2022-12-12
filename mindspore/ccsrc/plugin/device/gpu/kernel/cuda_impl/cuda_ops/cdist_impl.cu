@@ -16,7 +16,7 @@
 
 #include "cdist_impl.cuh"
 #include <float.h>
-#include <algorithm>
+#include <math.h>
 
 static const int forward_threads = 256;
 
@@ -24,27 +24,26 @@ template <typename T>
 __device__ __forceinline__ T WARP_SHFL_DOWN(T value, unsigned int delta, int width = warpSize,
                                             unsigned int mask = 0xffffffff) {
 #if !defined(USE_ROCM)
-    return __shfl_down_sync(mask, value, delta, width);
+  return __shfl_down_sync(mask, value, delta, width);
 #else
-    return __shfl_down(value, delta, width);
+  return __shfl_down(value, delta, width);
 #endif
 }
 
-
 // ZERO
 template <typename T>
-__global__ void CdistZero(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m,
-                          const int64_t r_size, const int64_t l1_size, const int64_t l2_size) {
+__global__ void CdistZero(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m, const int64_t r_size,
+                          const int64_t l1_size, const int64_t l2_size) {
   const int64_t l = blockIdx.x / r_size;
   const int64_t k = blockIdx.x % r_size;
   const int64_t i = k / r2;
   const int64_t j = k % r2;
   const int stride = blockDim.x;
 
-  const T * const start = x1 + l * l1_size + i * m;
-  const T * const end = start + m;
-  const T * a = start + threadIdx.x;
-  const T * b = x2 + l * l2_size + j * m + threadIdx.x;
+  const T *const start = x1 + l * l1_size + i * m;
+  const T *const end = start + m;
+  const T *a = start + threadIdx.x;
+  const T *b = x2 + l * l2_size + j * m + threadIdx.x;
   T res = 0.0;
 
   for (; a < end; a += stride, b += stride) {
@@ -78,21 +77,21 @@ __global__ void CdistZero(T *x1, T *x2, T *result, double p, const int64_t r2, c
 
 // One
 template <typename T>
-__global__ void CdistOne(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m,
-                          const int64_t r_size, const int64_t l1_size, const int64_t l2_size) {
+__global__ void CdistOne(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m, const int64_t r_size,
+                         const int64_t l1_size, const int64_t l2_size) {
   const int64_t l = blockIdx.x / r_size;
   const int64_t k = blockIdx.x % r_size;
   const int64_t i = k / r2;
   const int64_t j = k % r2;
   const int stride = blockDim.x;
 
-  const T * const start = x1 + l * l1_size + i * m;
-  const T * const end = start + m;
-  const T * a = start + threadIdx.x;
-  const T * b = x2 + l * l2_size + j * m + threadIdx.x;
+  const T *const start = x1 + l * l1_size + i * m;
+  const T *const end = start + m;
+  const T *a = start + threadIdx.x;
+  const T *b = x2 + l * l2_size + j * m + threadIdx.x;
   T res = 0.0;
   for (; a < end; a += stride, b += stride) {
-    res += std::abs(*a - *b);
+    res += abs(*a - *b);
   }
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
     res += WARP_SHFL_DOWN(res, offset);
@@ -121,21 +120,21 @@ __global__ void CdistOne(T *x1, T *x2, T *result, double p, const int64_t r2, co
 
 // P
 template <typename T>
-__global__ void CdistP(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m,
-                          const int64_t r_size, const int64_t l1_size, const int64_t l2_size) {
+__global__ void CdistP(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m, const int64_t r_size,
+                       const int64_t l1_size, const int64_t l2_size) {
   const int64_t l = blockIdx.x / r_size;
   const int64_t k = blockIdx.x % r_size;
   const int64_t i = k / r2;
   const int64_t j = k % r2;
   const int stride = blockDim.x;
 
-  const T * const start = x1 + l * l1_size + i * m;
-  const T * const end = start + m;
-  const T * a = start + threadIdx.x;
-  const T * b = x2 + l * l2_size + j * m + threadIdx.x;
+  const T *const start = x1 + l * l1_size + i * m;
+  const T *const end = start + m;
+  const T *a = start + threadIdx.x;
+  const T *b = x2 + l * l2_size + j * m + threadIdx.x;
   T res = 0.0;
   for (; a < end; a += stride, b += stride) {
-    res += std::pow(std::abs(*a - *b), p);
+    res += pow(abs(*a - *b), p);
   }
 
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
@@ -158,28 +157,28 @@ __global__ void CdistP(T *x1, T *x2, T *result, double p, const int64_t r2, cons
   }
 
   if (threadIdx.x == 0) {
-    result[blockIdx.x] = std::pow(res, 1.0 / p);
+    result[blockIdx.x] = pow(res, 1.0 / p);
   }
   return;
 }
 
 // Inf
 template <typename T>
-__global__ void CdistInf(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m,
-                          const int64_t r_size, const int64_t l1_size, const int64_t l2_size) {
+__global__ void CdistInf(T *x1, T *x2, T *result, double p, const int64_t r2, const int64_t m, const int64_t r_size,
+                         const int64_t l1_size, const int64_t l2_size) {
   const int64_t l = blockIdx.x / r_size;
   const int64_t k = blockIdx.x % r_size;
   const int64_t i = k / r2;
   const int64_t j = k % r2;
   const int stride = blockDim.x;
 
-  const T * const start = x1 + l * l1_size + i * m;
-  const T * const end = start + m;
-  const T * a = start + threadIdx.x;
-  const T * b = x2 + l * l2_size + j * m + threadIdx.x;
+  const T *const start = x1 + l * l1_size + i * m;
+  const T *const end = start + m;
+  const T *a = start + threadIdx.x;
+  const T *b = x2 + l * l2_size + j * m + threadIdx.x;
   T res = 0.0;
   for (; a < end; a += stride, b += stride) {
-    res = std::abs(*a - *b) > res ? std::abs(*a - *b) : res;
+    res = abs(*a - *b) > res ? abs(*a - *b) : res;
   }
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
     const T other = WARP_SHFL_DOWN(res, offset);
@@ -212,11 +211,7 @@ __global__ void CdistInf(T *x1, T *x2, T *result, double p, const int64_t r2, co
   return;
 }
 
-
-bool checkinf(const double p)  {
-  return (p >= INT_MAX || p <= -INT_MAX);
-}
-
+bool checkinf(const double p) { return (p >= INT_MAX || p <= -INT_MAX); }
 
 // CAL
 template <typename T>
@@ -229,7 +224,7 @@ void CalCdist(size_t out_size, T *input_x, T *input_y, T *output, int64_t x_row,
   const dim3 block(forward_threads);
   if (p == 0.0) {
     CdistZero<T><<<grid, block, 0, cuda_stream>>>(input_x, input_y, output, p, y_row, col, r_size, l1_size, l2_size);
-  }  else if (p == 1.0) {
+  } else if (p == 1.0) {
     CdistOne<T><<<grid, block, 0, cuda_stream>>>(input_x, input_y, output, p, y_row, col, r_size, l1_size, l2_size);
   } else if (checkinf(p)) {
     CdistInf<T><<<grid, block, 0, cuda_stream>>>(input_x, input_y, output, p, y_row, col, r_size, l1_size, l2_size);
@@ -239,12 +234,9 @@ void CalCdist(size_t out_size, T *input_x, T *input_y, T *output, int64_t x_row,
   return;
 }
 
-
-template
-CUDA_LIB_EXPORT void CalCdist<float>(size_t out_size, float *input_x, float *input_y, float *output, int64_t x_row,
-                                     int64_t y_row, int64_t col, double p, int64_t batch,
-                                     const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalCdist<double>(size_t out_size, double *input_x, double *input_y, double *output, int64_t x_row,
-                                      int64_t y_row, int64_t col, double p, int64_t batch,
-                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalCdist<float>(size_t out_size, float *input_x, float *input_y, float *output,
+                                              int64_t x_row, int64_t y_row, int64_t col, double p, int64_t batch,
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalCdist<double>(size_t out_size, double *input_x, double *input_y, double *output,
+                                               int64_t x_row, int64_t y_row, int64_t col, double p, int64_t batch,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
