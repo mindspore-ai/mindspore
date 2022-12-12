@@ -396,7 +396,7 @@ void DeviceContextManager::LoadPlugin() {
   for (const auto &[plugin_name, file_names] : multi_version_plugin_map) {
     if (plugin_name == kGpuPluginName) {
       std::string cuda_home = common::GetEnv(kCudaHomeEnv);
-      if (!cuda_home.empty()) {
+      if (!cuda_home.empty() && file_names.size() > 1) {
         SelectGpuPlugin(cuda_home, file_names);
         continue;
       }
