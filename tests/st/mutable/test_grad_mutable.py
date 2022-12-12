@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """test getting gradient of mutable input"""
+import os
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -160,10 +161,12 @@ def test_grad_mutable_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert isinstance(output, tuple)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
                         [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
@@ -350,11 +353,13 @@ def test_grad_mutable_tuple_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     t = mutable(({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                   'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
     output = GradNetWrtX(Net())(t)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32), np.array([[0, 0, 0],
@@ -398,11 +403,13 @@ def test_grad_mutable_dict_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'a': (Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                        Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32), np.array([[0, 0, 0],
@@ -446,11 +453,13 @@ def test_grad_mutable_list_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     t = mutable([{'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                   'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32), np.array([[0, 0, 0],
@@ -494,11 +503,13 @@ def test_grad_mutable_dict_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'a': [Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                        Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)],
                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32), np.array([[0, 0, 0],
@@ -699,11 +710,13 @@ def test_grad_mutable_unused_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'x1': Tensor([[4.0, 6.0, 6.0], [4.0, 6.0, 6.0]], dtype=mstype.float32),
                  'x2': Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
                  'x3': Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert isinstance(output, tuple)
     expect = [np.array([[3., 3., 3.],
                         [3., 3., 3.]]).astype(np.float32),
@@ -746,10 +759,12 @@ def test_grad_mutable_single_element_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, t)
 
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
     y = mutable({'a': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(x, y)
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
     assert isinstance(output, tuple)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
                         [1.4100001, 1.5999999, 6.6]]).astype(np.float32),

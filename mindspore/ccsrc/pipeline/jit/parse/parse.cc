@@ -1221,7 +1221,8 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   MS_LOG(DEBUG) << "call_cnode: " << call_cnode->DebugString()
                 << ", call_function_node: " << call_function_node->DebugString();
   // Support tensor.asnumpy() in runtime by JIT Fallback.
-  if (IsPrimitiveCNode(call_function_node, prim::kPrimGetAttr)) {
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  if (support_fallback_runtime && IsPrimitiveCNode(call_function_node, prim::kPrimGetAttr)) {
     constexpr size_t index_two = 2;
     const auto &attr_node = call_function_node->cast<CNodePtr>()->input(index_two);
     const auto &attr_str = GetValueNode<StringImmPtr>(attr_node);
@@ -1474,8 +1475,9 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
     py::bool_ is_const_value =
       ast()->CallParserObjMethod(PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE, value_str, common::SafeCStr(attr_str));
+    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     auto is_constant = py::cast<bool>(is_const_value);
-    if (!is_constant || attr_str == "asnumpy") {
+    if (!is_constant || (support_fallback_runtime && attr_str == "asnumpy")) {
       UpdateInterpretForUserNode(attr_cnode, value_node);
     }
   }

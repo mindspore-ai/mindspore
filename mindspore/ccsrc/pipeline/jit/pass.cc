@@ -88,6 +88,10 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource)
 }  // namespace
 
 bool PyInterpretToExecutePass(const ResourcePtr &resource) {
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  if (!support_fallback_runtime) {
+    return true;
+  }
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);

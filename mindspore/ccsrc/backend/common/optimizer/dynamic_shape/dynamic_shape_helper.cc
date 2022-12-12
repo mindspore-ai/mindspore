@@ -127,7 +127,13 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
     auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
     if (i >= input_device_address->size() || input_device_address->at(i) == nullptr) {
       MS_EXCEPTION_IF_NULL(node);
-      MS_LOG(EXCEPTION) << "There is no valid address for " << i << " input of " << node->fullname_with_scope();
+      if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+        MS_LOG(INFO) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
+                     << node->fullname_with_scope();
+        return out_tensor;
+      }
+      MS_LOG(EXCEPTION) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
+                        << node->fullname_with_scope();
     }
 
     out_tensor->data_sync_directly(input_device_address->at(i));

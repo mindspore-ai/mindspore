@@ -196,8 +196,8 @@ bool IsInDict(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spe
 
   ValuePtr key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  std::vector<AbstractAttribute> dict_elems = dict->elements();
-  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractAttribute &item) {
+  std::vector<AbstractElementPair> dict_elems = dict->elements();
+  auto it = std::find_if(dict_elems.cbegin(), dict_elems.cend(), [&key_value](const AbstractElementPair &item) {
     return *key_value == *item.first->BuildValue();
   });
   return it != dict_elems.end();

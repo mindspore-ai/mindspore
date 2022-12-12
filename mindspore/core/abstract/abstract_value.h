@@ -1025,8 +1025,8 @@ class MS_CORE_API AbstractDictionary final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractDictionary.
   ///
-  /// \param[in] key_values The vector of AbstractAttribute.
-  explicit AbstractDictionary(const std::vector<AbstractAttribute> &key_values) : key_values_(key_values) {}
+  /// \param[in] key_values The vector of AbstractElementPair.
+  explicit AbstractDictionary(const std::vector<AbstractElementPair> &key_values) : key_values_(key_values) {}
 
   /// \brief Destructor of AbstractDictionary.
   ~AbstractDictionary() override = default;
@@ -1051,12 +1051,12 @@ class MS_CORE_API AbstractDictionary final : public AbstractBase {
 
   /// \brief Get the key values.
   ///
-  /// \return A vector of AbstractAttribute.
-  const std::vector<AbstractAttribute> &elements() const { return key_values_; }
+  /// \return A vector of AbstractElementPair.
+  const std::vector<AbstractElementPair> &elements() const { return key_values_; }
 
  protected:
   ValuePtr RealBuildValue() const override;
-  std::vector<AbstractAttribute> key_values_;
+  std::vector<AbstractElementPair> key_values_;
 };
 using AbstractDictionaryPtr = std::shared_ptr<AbstractDictionary>;
 

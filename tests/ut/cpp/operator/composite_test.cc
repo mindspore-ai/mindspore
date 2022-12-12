@@ -42,7 +42,7 @@ using AbstractTensor = abstract::AbstractTensor;
 using AbstractTensorPtr = abstract::AbstractTensorPtr;
 
 using AbstractNone = abstract::AbstractNone;
-using AbstractAttribute = abstract::AbstractAttribute;
+using AbstractAttribute = abstract::AbstractElementPair;
 using AnalysisEngine = abstract::AnalysisEngine;
 using AnalysisEnginePtr = abstract::AnalysisEnginePtr;
 

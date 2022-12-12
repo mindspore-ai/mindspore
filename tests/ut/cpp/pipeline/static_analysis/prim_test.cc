@@ -1002,7 +1002,7 @@ TEST_F(TestPrim, test_DictGetItem2) {
   AbstractBasePtr arr_x = ArrayOfTensor(UTPrimUtils::kF64, {3, 4, 5});
   AbstractBasePtr arr_y = ArrayOfTensor(UTPrimUtils::kF64, {1, 4, 5});
   AbstractBasePtr arr_z = ArrayOfTensor(UTPrimUtils::kF64, {3, 1, 5});
-  std::vector<AbstractAttribute> array_map = {{"x", arr_x}, {"y", arr_y}, {"z", arr_z}};
+  std::vector<AbstractElementPair> array_map = {{"x", arr_x}, {"y", arr_y}, {"z", arr_z}};
   AbstractDictionaryPtr array_dict = std::make_shared<AbstractDictionary>(array_map);
   AbstractBasePtr key = abstract::FromValue("x");
   AbstractBasePtrList args_spec_list = {array_dict, key};

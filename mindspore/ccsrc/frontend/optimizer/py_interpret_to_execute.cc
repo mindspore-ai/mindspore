@@ -33,13 +33,20 @@ namespace mindspore {
 namespace opt {
 namespace {
 py::object CallPythonPushGlobalParams(const py::object &dict) {
-  constexpr auto python_mod_parse = "mindspore._extends.parse";
-  py::module mod = python_adapter::GetPyModule(python_mod_parse);  // The same as PYTHON_MOD_PARSE_MODULE[]
+  constexpr auto python_mod_parse = "mindspore._extends.parse";  // The same as PYTHON_MOD_PARSE_MODULE[]
+  py::module mod = python_adapter::GetPyModule(python_mod_parse);
   constexpr auto python_merge_dict = "merge_global_params";
   return python_adapter::CallPyModFn(mod, python_merge_dict, dict);
 }
 }  // namespace
 
+// Convert PyInterpret into PyExecute:
+//   PyInterpret(script, global_dict, local_dict)
+//   -->
+//   PyExecute(script, local_dict_keys, local_dict_values),
+//   with side-effect operation:
+//     Push global_dict into global parameters list.
+//     (So it requires no same key name.)
 bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
   auto manager = resource->manager();
   const auto &all_nodes = manager->all_nodes();

@@ -52,6 +52,7 @@ class PyExecuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   void AttachPyOutputData(const py::object &py_res);
   py::object BuildLocalParameters(const std::vector<AddressPtr> &inputs);
+  py::object BuildLocalTupleParameters(const std::vector<AddressPtr> &inputs);
 
   CNodePtr kernel_node_{nullptr};
   std::vector<PyExecuteInputInfo> inputs_info_;
