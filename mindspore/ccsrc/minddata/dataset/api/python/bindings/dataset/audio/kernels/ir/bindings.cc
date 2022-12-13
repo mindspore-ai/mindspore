@@ -45,6 +45,7 @@
 #include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/inverse_mel_scale_ir.h"
+#include "minddata/dataset/audio/ir/kernels/inverse_spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfcc_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -389,6 +390,20 @@ PYBIND_REGISTER(InverseMelScaleOperation, 1, ([](const py::module *m) {
                       THROW_IF_ERROR(inverse_mel_scale->ValidateParams());
                       return inverse_mel_scale;
                     }));
+                }));
+
+PYBIND_REGISTER(InverseSpectrogramOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::InverseSpectrogramOperation, TensorOperation,
+                                   std::shared_ptr<audio::InverseSpectrogramOperation>>(*m,
+                                                                                        "InverseSpectrogramOperation")
+                    .def(
+                      py::init([](int32_t length, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad,
+                                  WindowType window, bool normalized, bool center, BorderType pad_mode, bool onesided) {
+                        auto inverse_spectrogram = std::make_shared<audio::InverseSpectrogramOperation>(
+                          length, n_fft, win_length, hop_length, pad, window, normalized, center, pad_mode, onesided);
+                        THROW_IF_ERROR(inverse_spectrogram->ValidateParams());
+                        return inverse_spectrogram;
+                      }));
                 }));
 
 PYBIND_REGISTER(LFCCOperation, 1, ([](const py::module *m) {

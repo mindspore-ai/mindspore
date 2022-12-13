@@ -366,6 +366,35 @@ def check_inverse_mel_scale(method):
     return new_method
 
 
+def check_inverse_spectrogram(method):
+    """Wrapper method to check the parameters of InverseSpectrogram."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [length, n_fft, win_length, hop_length, pad, window, normalized, center, \
+         pad_mode, onesided], _ = parse_user_args(method, *args, **kwargs)
+        if length is not None:
+            check_non_negative_int32(length, "length")
+        check_pos_int32(n_fft, "n_fft")
+        type_check(window, (WindowType,), "window")
+        type_check(normalized, (bool,), "normalized")
+        type_check(center, (bool,), "center")
+        type_check(pad_mode, (BorderType,), "pad_mode")
+        type_check(onesided, (bool,), "onesided")
+        check_non_negative_int32(pad, "pad")
+        if hop_length is not None:
+            check_pos_int32(hop_length, "hop_length")
+        if win_length is not None:
+            check_pos_int32(win_length, "win_length")
+            if win_length > n_fft:
+                raise ValueError(
+                    "Input win_length should be no more than n_fft, but got win_length: {0} and n_fft: {1}.".format(
+                        win_length, n_fft))
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_lfilter(method):
     """Wrapper method to check the parameters of LFilter."""
 

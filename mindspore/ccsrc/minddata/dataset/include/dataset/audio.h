@@ -652,6 +652,39 @@ class DATASET_API InverseMelScale final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Create an inverse spectrogram to recover an audio signal from a spectrogram.
+class DATASET_API InverseSpectrogram final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] length The output length of the waveform. Default: 0, means to output the whole waveform.
+  /// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
+  /// \param[in] win_length Window size. Default: 0, will be set to `n_fft` .
+  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to `win_length // 2` .
+  /// \param[in] pad Two sided padding of signal. Default: 0.
+  /// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+  ///     Default: WindowType::kHann.
+  /// \param[in] normalized Whether the spectrogram was normalized by magnitude after stft. Default:false.
+  /// \param[in] center Whether the signal in spectrogram was padded on both sides. Default: true.
+  /// \param[in] pad_mode Controls the padding method used when center is True. Default: BorderType::kReflect.
+  /// \param[in] onesided Controls whether spectrogram was used to return half of results to avoid
+  ///     redundancy. Default: true.
+  explicit InverseSpectrogram(int32_t length = 0, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
+                              int32_t pad = 0, WindowType window = WindowType::kHann, bool normalized = false,
+                              bool center = true, BorderType pad_mode = BorderType::kReflect, bool onesided = true);
+
+  /// \brief Destructor.
+  ~InverseSpectrogram() override = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Create LFCC for a raw audio signal.
 class DATASET_API LFCC final : public TensorTransform {
  public:

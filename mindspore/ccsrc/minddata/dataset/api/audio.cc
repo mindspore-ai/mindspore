@@ -41,6 +41,7 @@
 #include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/inverse_mel_scale_ir.h"
+#include "minddata/dataset/audio/ir/kernels/inverse_spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfcc_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -526,6 +527,44 @@ std::shared_ptr<TensorOperation> InverseMelScale::Parse() {
   return std::make_shared<InverseMelScaleOperation>(
     data_->n_stft_, data_->n_mels_, data_->sample_rate_, data_->f_min_, data_->f_max_, data_->max_iter_,
     data_->tolerance_loss_, data_->tolerance_change_, data_->sgdargs_, data_->norm_, data_->mel_type_);
+}
+
+// InverseSpectrogram Transform Operation.
+struct InverseSpectrogram::Data {
+  Data(int32_t length, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
+       bool normalized, bool center, BorderType pad_mode, bool onesided)
+      : length_(length),
+        n_fft_(n_fft),
+        win_length_(win_length),
+        hop_length_(hop_length),
+        pad_(pad),
+        window_(window),
+        normalized_(normalized),
+        center_(center),
+        pad_mode_(pad_mode),
+        onesided_(onesided) {}
+  int32_t length_;
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  int32_t pad_;
+  WindowType window_;
+  bool normalized_;
+  bool center_;
+  BorderType pad_mode_;
+  bool onesided_;
+};
+
+InverseSpectrogram::InverseSpectrogram(int32_t length, int32_t n_fft, int32_t win_length, int32_t hop_length,
+                                       int32_t pad, WindowType window, bool normalized, bool center,
+                                       BorderType pad_mode, bool onesided)
+    : data_(std::make_shared<Data>(length, n_fft, win_length, hop_length, pad, window, normalized, center, pad_mode,
+                                   onesided)) {}
+
+std::shared_ptr<TensorOperation> InverseSpectrogram::Parse() {
+  return std::make_shared<InverseSpectrogramOperation>(
+    data_->length_, data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_, data_->window_,
+    data_->normalized_, data_->center_, data_->pad_mode_, data_->onesided_);
 }
 
 // LFCC Transform Operation.

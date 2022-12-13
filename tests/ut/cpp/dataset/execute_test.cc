@@ -3050,7 +3050,7 @@ TEST_F(MindDataTestExecute, TestTruncateOpStr) {
   std::shared_ptr<TensorTransform> truncate_op = std::make_shared<text::Truncate>(3);
   // apply Truncate
   mindspore::dataset::Execute trans({truncate_op});
-  Status status = trans(input_ms, &input_ms);
+   Status status = trans(input_ms, &input_ms);
   EXPECT_TRUE(status.IsOk());
 }
 
@@ -3169,5 +3169,64 @@ TEST_F(MindDataTestExecute, TestMelSpectrogramWrongArgs2) {
                                             BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
   mindspore::dataset::Execute trans2({mel_spectrogram_op});
   status = trans2(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+}
+
+/// Feature: InverseSpectrogram op
+/// Description: Test basic usage of InverseSpectrogram op
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestInverseSpectrogram) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestInverseSpectrogram.";
+  // Original spectrogram
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3, 3, 
+                               2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 9, 1, 2}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> inverse_spectrogram_op =
+    std::make_shared<audio::InverseSpectrogram>(1, 16, 16, 8, 0, WindowType::kHann, false, true,
+                                                BorderType::kReflect, true);
+  // apply InverseSpectrogram
+  mindspore::dataset::Execute trans({inverse_spectrogram_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+/// Feature: InverseSpectrogram op
+/// Description: Test wrong args for InverseSpectrogram
+/// Expectation: Throw correct error and message
+TEST_F(MindDataTestExecute, TestInverseSpectrogramWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestInverseSpectrogramWrongArgs.";
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3, 3, 
+                               2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 9, 1, 2}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> inverse_spectrogram_op =
+    std::make_shared<audio::InverseSpectrogram>(1, -16, 16, 8, 0, WindowType::kHann, false, true,
+                                                BorderType::kReflect, true);
+  mindspore::dataset::Execute trans({inverse_spectrogram_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  inverse_spectrogram_op =
+    std::make_shared<audio::InverseSpectrogram>(1, 16, -16, 8, 0, WindowType::kHann, false, true,
+                                                BorderType::kReflect, true);
+  mindspore::dataset::Execute trans1({inverse_spectrogram_op});
+  status = trans1(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  inverse_spectrogram_op =
+    std::make_shared<audio::InverseSpectrogram>(1, 16, 16, -8, 0, WindowType::kHann, false, true,
+                                                BorderType::kReflect, true);
+  mindspore::dataset::Execute trans2({inverse_spectrogram_op});
+  status = trans2(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  inverse_spectrogram_op =
+    std::make_shared<audio::InverseSpectrogram>(1, 16, 16, 8, -1, WindowType::kHann, false, true,
+                                                BorderType::kReflect, true);
+  mindspore::dataset::Execute trans3({inverse_spectrogram_op});
+  status = trans3(input_ms, &input_ms);
   EXPECT_TRUE(status.IsError());
 }
