@@ -24,6 +24,8 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 import mindspore.ops.function as ops
+from mindspore.ops import functional as F
+from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
@@ -3976,6 +3978,9 @@ def broadcast_to(x, shape):
         [[1. 1.]
          [2. 2.]]
     """
+    if  isinstance(shape, Tensor) or F.is_sequence_value_unknown(shape):
+        _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
+        return _dyn_broadcast_to(x, shape)
     _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)
     return _broadcast_to(x)
 
