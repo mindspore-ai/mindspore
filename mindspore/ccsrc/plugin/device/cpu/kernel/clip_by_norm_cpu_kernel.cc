@@ -270,21 +270,29 @@ void ClipByNormCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs, c
   // Launch `l2_norm(x)` calculate function
   T *x_addr = GetDeviceAddress<T>(inputs, 0);
   float *l2_norm_output_addr = GetDeviceAddress<float>(workspace, 0);
+  MS_EXCEPTION_IF_NULL(x_addr);
+  MS_EXCEPTION_IF_NULL(l2_norm_output_addr);
   size_t l2_norm_output_size = GetDeviceSize(workspace, 0);
   L2NormLaunch<T>(x_addr, l2_norm_output_addr, l2_norm_output_size);
   // Launch `x / l2_norm(x)` calculate function
   float *div_output_addr = GetDeviceAddress<float>(workspace, 1);
+  MS_EXCEPTION_IF_NULL(div_output_addr);
   size_t div_output_size = GetDeviceSize(workspace, 1);
   DivLaunch<T>(x_addr, l2_norm_output_addr, div_output_addr, div_output_size);
   // Launch `clip_norm * (x / l2_norm(x))` calculate function and chose bigger one compared with `x`
   S *clip_norm_addr = GetDeviceAddress<S>(inputs, 1);
   float *output_addr = GetDeviceAddress<float>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(clip_norm_addr);
+  MS_EXCEPTION_IF_NULL(output_addr);
   size_t output_size = GetDeviceSize(outputs, 0);
   ClipNormMulAndCmpLaunch<T, S>(x_addr, div_output_addr, clip_norm_addr, output_addr, output_size);
 }
 
 template <typename T>
 void ClipByNormCpuKernelMod::L2NormLaunch(const T *x_addr, float *l2_norm_output_addr, size_t l2_norm_output_size) {
+  if (l2_norm_index_.size() == 0) {
+    MS_LOG(EXCEPTION) << "l2_norm_index_ size is 0, bad input size.";
+  }
   // Run `l2_norm(x)` calculation
   auto task = [&](size_t start, size_t end) {
     float zero = static_cast<float>(0);
