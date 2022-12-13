@@ -65,6 +65,84 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
   return RET_OK;
 }
 
+int FSEDecoder::DecodeBuffer(int8_t *buffer, size_t data_size, FSEBuffer *fse_buffer) {
+  CHECK_NULL_RETURN(buffer);
+  CHECK_NULL_RETURN(fse_buffer);
+  if (data_size < sizeof(uint16_t)) {
+    MS_LOG(ERROR) << "data_size is invalid.";
+    return RET_ERROR;
+  }
+  size_t i = 0;
+  // 16bit for frequency_count
+  fse_buffer->frequency_count = *(reinterpret_cast<uint16_t *>(buffer + i));
+  i += sizeof(uint16_t);
+  if (i > data_size) {
+    MS_LOG(ERROR) << "index over total size"
+                  << " index:" << i << " total size:" << data_size;
+    return RET_ERROR;
+  }
+  // 16bit for table_log
+  fse_buffer->table_log = *(reinterpret_cast<uint16_t *>(buffer + i));
+  i += sizeof(uint16_t);
+  if (i > data_size) {
+    MS_LOG(ERROR) << "index over total size"
+                  << " index:" << i << " total size:" << data_size;
+    return RET_ERROR;
+  }
+  // 32bit for ChunkCount
+  fse_buffer->chunk_count = *(reinterpret_cast<uint32_t *>(buffer + i));
+  const size_t offset = 2;
+  // 32bit for CurrChunkIndex
+  fse_buffer->curr_chunk_index = fse_buffer->chunk_count - offset;
+  i += sizeof(uint32_t);
+  if (i > data_size) {
+    MS_LOG(ERROR) << "index over total size"
+                  << " index:" << i << " total size:" << data_size;
+    return RET_ERROR;
+  }
+  // 32bit * frequency_count for frequency
+  fse_buffer->frequency = reinterpret_cast<uint32_t *>(buffer + i);
+  i += fse_buffer->frequency_count * sizeof(uint32_t);
+  // Used for 8-byte(64bit) alignment
+  i = ((i + kAlignOffset) >> kTableExtend) << kTableExtend;
+  if (i > data_size) {
+    MS_LOG(ERROR) << "index over total size"
+                  << " index:" << i << " total size:" << data_size;
+    return RET_ERROR;
+  }
+  // 32bit * frequency_count for centroids
+  fse_buffer->centroids = reinterpret_cast<void *>(buffer + i);
+  fse_buffer->centroid_size = fse_buffer->frequency_count * sizeof(float);
+  i += fse_buffer->centroid_size;
+  // Used for 8-byte(64bit) alignment
+  i = ((i + kAlignOffset) >> kTableExtend) << kTableExtend;
+  if (i > data_size) {
+    MS_LOG(ERROR) << "index over total size"
+                  << " index:" << i << " total size:" << data_size;
+    return RET_ERROR;
+  }
+  // 64bit * bs_.GetCurrChunkIndex() + 1 for Chunks.
+  fse_buffer->chunks = reinterpret_cast<uint64_t *>(buffer + i);
+  fse_buffer->chunk_size = (fse_buffer->curr_chunk_index + 1) * sizeof(uint64_t);
+  i += fse_buffer->chunk_size;
+  if (i > data_size) {
+    MS_LOG(ERROR) << "index over total size"
+                  << " index:" << i << " total size:" << data_size;
+    return RET_ERROR;
+  }
+  // 64bit for CurrChunk
+  fse_buffer->curr_chunk = *(reinterpret_cast<uint64_t *>(buffer + i));
+  i += sizeof(uint64_t);
+  if (i > data_size) {
+    MS_LOG(ERROR) << "index over total size"
+                  << " index:" << i << " total size:" << data_size;
+    return RET_ERROR;
+  }
+  // 8bit for CurrBitCount
+  fse_buffer->curr_bit_count = *(reinterpret_cast<uint8_t *>(buffer + i));
+  return RET_OK;
+}
+
 int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor,
                            schema::WeightQuantCompressType compress_type) {
   CHECK_NULL_RETURN(src_tensor.handler());

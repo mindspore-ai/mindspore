@@ -236,7 +236,8 @@ int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map
 int ConfigFileParser::ParseWeightQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
   if (maps.find(kWeightQuantParam) != maps.end()) {
     const auto &map = maps.at(kWeightQuantParam);
-    std::map<std::string, std::string &> parse_map{{"dequant_strategy", weight_quant_string_.dequant_strategy}};
+    std::map<std::string, std::string &> parse_map{{"dequant_strategy", weight_quant_string_.dequant_strategy},
+                                                   {"update_mindir", weight_quant_string_.update_mindir}};
     return SetMapData(map, parse_map, kWeightQuantParam);
   }
   return RET_OK;

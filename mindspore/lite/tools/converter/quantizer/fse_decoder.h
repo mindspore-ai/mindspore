@@ -24,6 +24,19 @@
 #include "src/litert/lite_model.h"
 
 namespace mindspore::lite::quant {
+struct FSEBuffer {
+  uint16_t frequency_count = 0;
+  size_t table_log = 0;
+  uint32_t chunk_count = 0;
+  int32_t curr_chunk_index = 0;
+  uint32_t *frequency = nullptr;
+  void *centroids = nullptr;
+  size_t centroid_size = 0;
+  uint64_t *chunks = nullptr;
+  size_t chunk_size = 0;
+  uint64_t curr_chunk = 0;
+  uint8_t curr_bit_count = 0;
+};
 class FSEDecoder {
  public:
   FSEDecoder() = default;
@@ -34,6 +47,8 @@ class FSEDecoder {
 
   static int FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, size_t table_log,
                                         uint16_t *new_state_baseline, uint8_t *bit_count, uint16_t *symbol_table);
+
+  static int DecodeBuffer(int8_t *buffer, size_t data_size, FSEBuffer *fse_buffer);
 
  private:
   template <typename C_TYPE, typename OUT_TYPE>

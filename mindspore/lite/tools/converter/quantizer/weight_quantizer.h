@@ -90,6 +90,10 @@ class WeightQuantizer : public Quantizer {
                 std::inserter(skip_quant_node_, skip_quant_node_.begin()));
     }
     quant_type_ = param_->commonQuantParam.quant_type;
+    dequant_strategy_ = param_->weightQuantParam.dequant_strategy;
+    if (param_->weightQuantParam.dequant_strategy == ON_THE_FLY) {
+      weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_LAYER;
+    }
   }
 
   ~WeightQuantizer() override = default;
@@ -117,7 +121,8 @@ class WeightQuantizer : public Quantizer {
                     int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true,
                     bool update_tensor = true);
   bool CheckWeightQuantExist(const CNodePtr &cnode);
-  int InsertQuantDtypeNode(const FuncGraphPtr &func_graph);
+  int InsertDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
+                        const tensor::TensorPtr &tensor_info);
 
  private:
   bool is_auto_tune_{false};
@@ -134,6 +139,8 @@ class WeightQuantizer : public Quantizer {
   std::unique_ptr<QuantStrategy> quant_strategy_;
   schema::QuantType quant_type_{schema::QuantType_WeightQuant};
   bool enable_encode_{true};
+  WeightQuantType weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_CHANNEL;
+  DequantStrategy dequant_strategy_ = DEFAULT;
   // Support for mark shared weight node.
   std::set<tensor::TensorPtr> weight_quantized_tensors_;
 };

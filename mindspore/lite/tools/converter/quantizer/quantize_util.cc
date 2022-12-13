@@ -34,6 +34,7 @@
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/gather.h"
 #include "ops/op_utils.h"
+#include "ops/fse_decode.h"
 #include "src/common/utils.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "ir/anf.h"
@@ -162,6 +163,17 @@ ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
   auto prim = prim_c->GetPrim();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
   prim->AddAttr("quant_params", quant_params_holder);
+  return NewValueNode(prim);
+}
+
+ValueNodePtr NewFSEDecodePrimitive(int dst_type, const uint64_t curr_chunk, const int64_t curr_chunk_index,
+                                   const int64_t curr_bit_count, const int64_t table_log) {
+  auto prim_c = std::make_shared<ops::FSEDecode>();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
+  prim_c->Init(dst_type, curr_chunk, curr_chunk_index, curr_bit_count, table_log);
+
+  auto prim = prim_c->GetPrim();
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
   return NewValueNode(prim);
 }
 
@@ -498,7 +510,7 @@ int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
-  if (primitive->name() == ops::kNameMatMulFusion) {
+  if (primitive->name() == ops::kNameMatMulFusion || primitive->name() == ops::kNameMatMul) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
   } else if (primitive->name() == ops::kNameConv2dTransposeFusion) {
     return GetDeConvPreferredDim(primitive, dims);

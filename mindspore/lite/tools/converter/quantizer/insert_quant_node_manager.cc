@@ -26,11 +26,16 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/common/node_util.h"
+#include "tools/common/tensor_util.h"
+#include "tools/converter/quantizer/fse_decoder.h"
 
 namespace mindspore::lite::quant {
 namespace {
 constexpr size_t kMinSize3 = 3;
 constexpr size_t kPrimitiveCOffset = 1;
+constexpr size_t kTableExtend = 3;
+constexpr size_t kAlignOffset = 7;
+constexpr size_t kInt32Mask = 31;
 }  // namespace
 int InsertQuantNodeManager::SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node,
                                                 const CNodePtr &cast_cnode) {
@@ -472,17 +477,41 @@ int InsertQuantNodeManager::InsertWeightQuantNode(const FuncGraphPtr &func_graph
   }
 
   auto curr_primitive_quant_param_holder = GetCNodeQuantHolder(primitive);
-  std::vector<schema::QuantParamT> input_quant_params;
-  if (curr_primitive_quant_param_holder->get_input_quant_params().size() >= input_index) {
-    input_quant_params = curr_primitive_quant_param_holder->get_input_quant_params().at(input_index - kPrimOffset);
+  if (curr_primitive_quant_param_holder == nullptr ||
+      curr_primitive_quant_param_holder->get_input_quant_params().size() < input_index) {
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " quant param is invalid.";
+    return RET_ERROR;
   }
+  auto input_quant_params = curr_primitive_quant_param_holder->get_input_quant_params().at(input_index - kPrimOffset);
 
   ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, {}, axis, false);
-  std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
+  std::vector<float> scales;
+  std::vector<int> zps;
+  std::vector<float> mean_corrs;
+  std::vector<float> var_corrs;
+  for (size_t i = 0; i < input_quant_params.size(); ++i) {
+    scales.push_back(static_cast<float>(input_quant_params.at(i).scale));
+    zps.push_back(static_cast<int64_t>(input_quant_params.at(i).zeroPoint));
+    mean_corrs.push_back(static_cast<float>(input_quant_params.at(i).meanCorr));
+    var_corrs.push_back(static_cast<float>(input_quant_params.at(i).varCorr));
+  }
+  auto scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, "scales");
+  auto zps_node = opt::BuildIntVecParameterNode(func_graph, zps, "zps");
+  auto mean_corrs_node = opt::BuildFloatVecParameterNode(func_graph, mean_corrs, "mean_corrs");
+  auto var_corrs_node = opt::BuildFloatVecParameterNode(func_graph, var_corrs, "var_corrs");
+
+  std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node,      scales_node,
+                                       zps_node,      mean_corrs_node, var_corrs_node};
   auto quant_cast_cnode = func_graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);
-  quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast_" +
-                                            std::to_string(input_index));
+  auto strings = SplitStringToVector(cnode->fullname_with_scope(), "-op");
+  int index = 0;
+  if (!ConvertIntNum(strings.at(strings.size() - 1), &index)) {
+    index = 0;
+  }
+  const int quant_dtype_cast_offset = 10000;
+  quant_cast_cnode->set_fullname_with_scope(strings.at(0) + "-QuantDtypeCast-op" +
+                                            std::to_string(index + quant_dtype_cast_offset));
   opt::NodeInferShape infer;
   auto status = infer.InferShape(quant_cast_cnode);
   if (status != RET_OK) {
@@ -500,6 +529,140 @@ int InsertQuantNodeManager::InsertWeightQuantNode(const FuncGraphPtr &func_graph
   MS_LOG(INFO) << "InsertCastNode cnode name: " << quant_cast_cnode->fullname_with_scope()
                << " src_dtype: " << src_dtype << " dst_dtype: " << dst_dtype;
 
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::InsertFSEDecodeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                size_t input_index, TypeId dst_dtype) {
+  auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto input_node = cnode->input(input_index);
+  if (!input_node->isa<mindspore::Parameter>()) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << input_index << " is not parameter node.";
+    return RET_ERROR;
+  }
+  auto shape = input_node->Shape();
+  std::vector<AnfNodePtr> op_inputs;
+  int ret = CreateFSEInputs(func_graph, input_node, &op_inputs, dst_dtype);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CreateFSEInputs failed.";
+    return RET_ERROR;
+  }
+
+  auto fse_decode_cnode = func_graph->NewCNode(op_inputs);
+  CHECK_NULL_RETURN(fse_decode_cnode);
+  auto strings = SplitStringToVector(cnode->fullname_with_scope(), "-op");
+  int index = 0;
+  if (!ConvertIntNum(strings.at(strings.size() - 1), &index)) {
+    index = 0;
+  }
+  const int fse_decode_offset = 20000;
+  fse_decode_cnode->set_fullname_with_scope(strings.at(0) + "-FSEDecode-op" +
+                                            std::to_string(index + fse_decode_offset));
+  CHECK_NULL_RETURN(cnode->abstract());
+  auto fse_abstract = cnode->abstract()->Clone();
+  fse_abstract->set_shape(shape);
+  fse_decode_cnode->set_abstract(fse_abstract);
+
+  auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
+  ret = manager->Replace(input_node, fse_decode_cnode);
+  if (!ret) {
+    MS_LOG(ERROR) << "Replace QuantDtypeCast failed.";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::CreateFSEInputs(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                            std::vector<AnfNodePtr> *op_inputs, TypeId dst_dtype) {
+  if (!input_node->isa<mindspore::Parameter>()) {
+    MS_LOG(ERROR) << "FSEDecode input is not parameter node.";
+    return RET_ERROR;
+  }
+  auto parameter_ptr = input_node->cast<ParameterPtr>();
+  CHECK_NULL_RETURN(parameter_ptr);
+  if (!parameter_ptr->has_default()) {
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " parameter dont have default.";
+    return RET_ERROR;
+  }
+  auto tensor = parameter_ptr->default_param()->cast<tensor::TensorPtr>();
+  int8_t *data8 = reinterpret_cast<int8_t *>(tensor->data_c());
+  size_t data_size = tensor->DataSize();
+  FSEBuffer fse_buffer;
+  auto ret = FSEDecoder::DecodeBuffer(data8, data_size, &fse_buffer);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " buffer decode failed.";
+    return RET_ERROR;
+  }
+  ValueNodePtr new_primitive = NewFSEDecodePrimitive(dst_dtype, fse_buffer.curr_chunk, fse_buffer.curr_chunk_index,
+                                                     fse_buffer.curr_bit_count, fse_buffer.table_log);
+  op_inputs->push_back(new_primitive);
+
+  // make shape to (1,chunk_size)
+  ShapeVector shape_vector;
+  shape_vector.push_back(1);
+  shape_vector.push_back(fse_buffer.chunk_size);
+  auto chunk_tensor_info =
+    lite::CreateTensorInfo(fse_buffer.chunks, fse_buffer.chunk_size, shape_vector, kNumberTypeInt8);
+  parameter_ptr->set_default_param(chunk_tensor_info);
+  parameter_ptr->set_abstract(chunk_tensor_info->ToAbstract());
+  op_inputs->push_back(input_node);
+
+  size_t table_size = 1u << fse_buffer.table_log;
+  uint16_t *states_table = static_cast<uint16_t *>(malloc(table_size * sizeof(uint16_t)));
+  CHECK_NULL_RETURN(states_table);
+  uint8_t *bit_count_table = static_cast<uint8_t *>(malloc(table_size * sizeof(uint8_t)));
+  CHECK_NULL_RETURN(bit_count_table);
+  uint16_t *symbol_table = static_cast<uint16_t *>(malloc(table_size * sizeof(uint16_t)));
+  CHECK_NULL_RETURN(symbol_table);
+
+  ret = FSEDecoder::FSECreateStatesForDecoding(fse_buffer.frequency, fse_buffer.frequency_count, fse_buffer.table_log,
+                                               states_table, bit_count_table, symbol_table);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "FSE create states for decoding failed.";
+    free(states_table);
+    free(bit_count_table);
+    free(symbol_table);
+    return RET_ERROR;
+  }
+  std::vector<int64_t> shape = {static_cast<int64_t>(table_size)};
+
+  auto states_table_tensor_info =
+    lite::CreateTensorInfo(states_table, sizeof(uint16_t) * table_size, shape, kNumberTypeUInt16);
+  auto states_table_node = opt::BuildParameterNode(func_graph, states_table_tensor_info, "states_table");
+  op_inputs->push_back(states_table_node);
+
+  auto bit_count_table_tensor_info =
+    lite::CreateTensorInfo(bit_count_table, sizeof(uint8_t) * table_size, shape, kNumberTypeUInt8);
+  auto bit_count_table_node = opt::BuildParameterNode(func_graph, bit_count_table_tensor_info, "bit_count_table");
+  op_inputs->push_back(bit_count_table_node);
+
+  auto symbol_table_tensor_info =
+    lite::CreateTensorInfo(symbol_table, sizeof(uint16_t) * table_size, shape, kNumberTypeUInt16);
+  auto symbol_table_node = opt::BuildParameterNode(func_graph, symbol_table_tensor_info, "symbol_table");
+  op_inputs->push_back(symbol_table_node);
+
+  auto centroids_tensor_info =
+    lite::CreateTensorInfo(fse_buffer.centroids, sizeof(float) * fse_buffer.centroid_size,
+                           {static_cast<int64_t>(fse_buffer.centroid_size)}, kNumberTypeFloat32);
+  auto centroids_node = opt::BuildParameterNode(func_graph, centroids_tensor_info, "centroids");
+  op_inputs->push_back(centroids_node);
+
+  auto shape_tensor_info = lite::CreateTensorInfo(ConvertShapeVectorToInt32(tensor->shape_c()).data(),
+                                                  sizeof(int32_t) * tensor->shape_c().size(),
+                                                  {static_cast<int64_t>(tensor->shape_c().size())}, kNumberTypeInt32);
+  auto shape_node = opt::BuildParameterNode(func_graph, shape_tensor_info, "input_shape");
+  op_inputs->push_back(shape_node);
+
+  // Free buffer
+  free(states_table);
+  free(bit_count_table);
+  free(symbol_table);
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

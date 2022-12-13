@@ -33,6 +33,33 @@
 #include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
+namespace {
+tensor::TensorPtr ConvertParameterFp16TensorToFp32(const ParameterPtr &parameter) {
+  if (!parameter->has_default()) {
+    MS_LOG(WARNING) << parameter->fullname_with_scope() << " not has_default";
+    return nullptr;
+  }
+  auto tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
+  if (tensor_info == nullptr) {
+    MS_LOG(WARNING) << "default_param can not cast to tensor::Tensor";
+    return nullptr;
+  }
+  if (tensor_info->data_type() == kNumberTypeFloat16) {
+    MS_LOG(INFO) << "convert " << parameter->fullname_with_scope() << " from fp16 to fp32.";
+    auto data = static_cast<float16 *>(tensor_info->data_c());
+    std::vector<float> fp32_data(tensor_info->DataSize());
+    for (size_t j = 0; j < tensor_info->DataSize(); j++) {
+      fp32_data[j] = mindspore::Float16::ToFloat32(data[j]);
+    }
+    mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
+      kNumberTypeFloat32, tensor_info->shape_c(), fp32_data.data(), fp32_data.size() * sizeof(float));
+    parameter->set_default_param(tensor_ptr);
+    parameter->set_abstract(tensor_ptr->ToAbstract());
+    return tensor_ptr;
+  }
+  return tensor_info;
+}
+}  // namespace
 int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
                                  const std::set<PrimitivePtr> &support_weight_quant_types,
                                  const std::set<PrimitivePtr> &per_layer_types,
@@ -69,7 +96,7 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
                                          const std::set<PrimitivePtr> &per_layer_types,
                                          const std::set<PrimitivePtr> &symmetric_types, bool compression,
                                          bool update_tensor) {
-  auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
+  auto primitive = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
     return RET_OK;
@@ -121,9 +148,10 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
                                  const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
                                  bool compression, bool update_tensor) {
   CHECK_NULL_RETURN(cnode);
-  WeightQuantType weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
+  // Avoid affecting other operators
+  auto tmp_weight_quant_type = weight_quant_type_;
   if (CheckNodeInSet(cnode, per_layer_types)) {
-    weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
+    tmp_weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
   }
   bool symmetric = false;
   int q_min = quant_min_;
@@ -143,9 +171,14 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
     GetLiteParameter(input, &parameter, &tensor_info);
-    if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32 ||
+    if (parameter == nullptr || tensor_info == nullptr ||
         tensor_info->compression_type() != mindspore::kNoCompression) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
+      continue;
+    }
+    tensor_info = ConvertParameterFp16TensorToFp32(parameter);
+    if (tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
+      MS_LOG(INFO) << "This op " << input->fullname_with_scope() << " is null or dtype is not fp32.";
       continue;
     }
     int preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
@@ -156,7 +189,6 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     // support for matmul shared weight
     auto node_map = manager->node_users();
     auto node_user = node_map[input];
-    auto tmp_weight_quant_type = weight_quant_type;
     if (node_user.size() > 1 && opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is shared weight.";
       tmp_weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
@@ -190,12 +222,41 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       }
     }
     weight_quantized_tensors_.insert(tensor_info);
+    if (dequant_strategy_ == ON_THE_FLY) {
+      status = InsertDequantNode(func_graph, cnode, parameter, idx, tensor_info);
+      if (status == RET_NO_CHANGE) {
+        continue;
+      } else if (status != RET_OK) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " insert dequan node failed.";
+        return status;
+      }
+    }
   }
   return RET_OK;
 }
 
 int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, int idx) {
   int ret = RET_OK;
+  if (dequant_strategy_ == ON_THE_FLY) {
+    if (bit_num_ < k8Bit) {
+      FSEEncoder fse_encoder;
+      auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+      CHECK_NULL_RETURN(primitive);
+      auto quant_param_holder = GetCNodeQuantHolder(primitive);
+      auto tensor_quant_params = quant_param_holder->get_input_quant_params();
+      MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
+      auto quant_params = tensor_quant_params.at(idx - 1);
+      mindspore::TensorCompressionType compress_type =
+        dequant_strategy_ == ON_THE_FLY ? mindspore::kFSEInfer : mindspore::kFSE;
+      ret = fse_encoder.Compress(parameter, quant_params, compress_type);
+      auto new_tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
+      CHECK_NULL_RETURN(new_tensor_info);
+      weight_quantized_tensors_.insert(new_tensor_info);
+      return ret;
+    } else {
+      return RET_OK;
+    }
+  }
   TensorCompressor compressor;
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
   auto tensor_quant_params = quant_param_holder->get_input_quant_params();
@@ -239,7 +300,7 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
     MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
     auto quant_params = tensor_quant_params.at(idx - 1);
     mindspore::TensorCompressionType compress_type =
-      param_->weightQuantParam.dequant_strategy == ON_THE_FLY ? mindspore::kFSEInfer : mindspore::kFSE;
+      dequant_strategy_ == ON_THE_FLY ? mindspore::kFSEInfer : mindspore::kFSE;
     status = fse_encoder.Compress(parameter, quant_params, compress_type);
     if (status == RET_OK) {
       quant_param_holder->ClearQuantParams();
@@ -269,34 +330,40 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
   return status;
 }
 
-int WeightQuantizer::InsertQuantDtypeNode(const FuncGraphPtr &func_graph) {
+int WeightQuantizer::InsertDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                       const ParameterPtr &parameter, int idx, const tensor::TensorPtr &tensor_info) {
+  InsertQuantNodeManager quant_manager;
   CHECK_NULL_RETURN(func_graph);
-  for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
-    if (primitive == nullptr) {
-      MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
-      continue;
+  TypeId type_id;
+  int status;
+  auto tensor_name = parameter->fullname_with_scope();
+  if (opt::GetDataTypeFromAnfNode(cnode, &type_id) != RET_OK) {
+    MS_LOG(WARNING) << cnode->fullname_with_scope() << " Get data type failed.";
+    return RET_NO_CHANGE;
+  }
+  if (parameter->has_default() &&
+      parameter->default_param()->cast<tensor::TensorPtr>()->compression_type() == mindspore::kFSEInfer) {
+    MS_LOG(INFO) << tensor_name << " insert FSEDecode node";
+    if (type_id == kNumberTypeFloat32) {
+      status = quant_manager.InsertFSEDecodeNode(func_graph, cnode, idx, kNumberTypeFloat32);
+    } else {
+      status = quant_manager.InsertFSEDecodeNode(func_graph, cnode, idx, kNumberTypeFloat16);
     }
-    // Support Share Weight Quant.
-    for (size_t i = kPrimOffset; i < cnode->size(); i++) {
-      auto inputNode = cnode->input(i);
-      if (inputNode->isa<Parameter>()) {
-        ParameterPtr param_node;
-        tensor::TensorPtr tensor_info;
-        GetLiteParameter(inputNode, &param_node, &tensor_info);
-        auto param = weight_quantized_tensors_.find(tensor_info);
-        if (param != weight_quantized_tensors_.end()) {
-          InsertQuantNodeManager manager;
-          auto ret = manager.InsertWeightQuantNode(
-            func_graph, cnode, i, kNumberTypeInt8, kNumberTypeFloat32,
-            GetPreferredDim(cnode, i - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c())));
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << "Insert weight quant node failed.";
-            return ret;
-          }
-          continue;
-        }
-      }
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << tensor_name << " insert FSEDecode node failed.";
+      return status;
+    }
+  } else {
+    MS_LOG(INFO) << tensor_name << " insert WeightQuant node";
+    auto axis = GetPreferredDim(cnode, idx - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c()));
+    if (type_id == kNumberTypeFloat32) {
+      status = quant_manager.InsertWeightQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32, axis);
+    } else {
+      status = quant_manager.InsertWeightQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16, axis);
+    }
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << tensor_name << " insert weight quant node failed.";
+      return status;
     }
   }
   return RET_OK;
@@ -387,9 +454,9 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "Weight Quant failed.";
     return ret;
   }
-  if (param_->weightQuantParam.dequant_strategy == ON_THE_FLY) {
-    return InsertQuantDtypeNode(func_graph);
+  if (dequant_strategy_ != ON_THE_FLY) {
+    return MarkGraphWeightQuantType(func_graph);
   }
-  return MarkGraphWeightQuantType(func_graph);
+  return RET_OK;
 }
 }  // namespace mindspore::lite::quant

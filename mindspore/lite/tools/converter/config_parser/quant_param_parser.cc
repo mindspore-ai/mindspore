@@ -261,6 +261,11 @@ int QuantParamParser::ParseWeightQuant(const WeightQuantString &weight_quant_str
       return RET_INPUT_PARAM_INVALID;
     }
   }
+  if (!weight_quant_string.update_mindir.empty() &&
+      !ConvertBool(weight_quant_string.update_mindir, &weight_quant->update_mindir)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: update_mindir should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 }  // namespace lite
