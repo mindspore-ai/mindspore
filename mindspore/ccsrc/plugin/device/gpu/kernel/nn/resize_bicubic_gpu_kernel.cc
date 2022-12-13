@@ -84,7 +84,7 @@ int ResizeBicubicGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();
   std::vector<int64_t> inptosize_shape = inputs[1]->GetShapeVector();
   std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
-  for (const auto inputtest : inputs) {
+  for (const auto &inputtest : inputs) {
     auto inshape = inputtest->GetShapeVector();
     if (!IsValidShape(inshape)) {
       return KRET_UNKNOWN_SHAPE;

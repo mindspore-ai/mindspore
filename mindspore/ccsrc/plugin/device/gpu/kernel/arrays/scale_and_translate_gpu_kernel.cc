@@ -114,7 +114,7 @@ int ScaleAndTranslateGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  for (const auto inputtest : inputs) {
+  for (const auto &inputtest : inputs) {
     auto inshape = inputtest->GetShapeVector();
     if (!IsValidShape(inshape)) {
       return KRET_UNKNOWN_SHAPE;
