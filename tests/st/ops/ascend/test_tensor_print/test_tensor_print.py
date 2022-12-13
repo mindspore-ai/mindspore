@@ -15,6 +15,8 @@
 import os
 import re
 import pytest
+import mindspore.context as context
+from tensor_print_utils import run_net
 
 # Defines the expected value of tensor printout, corresponding to different data types.
 expect_scalar = {'Bool': 'True', 'UInt': '1', 'Int': '-1', 'Float16': '*.*******', 'Float32_64': '*.**'}
@@ -27,26 +29,26 @@ expect_array = {'Bool': '\n[[ True False]\n [False  True]]', 'UInt': '\n[[1 2 3]
 def get_expect_value(res):
     if res[0] == '[]':
         if res[1] == 'Bool':
-            return expect_scalar['Bool']
+            return expect_scalar.get('Bool')
         if res[1] in ['Uint8', 'Uint16', 'Uint32', 'Uint64']:
-            return expect_scalar['UInt']
+            return expect_scalar.get('UInt')
         if res[1] in ['Int8', 'Int16', 'Int32', 'Int64']:
-            return expect_scalar['Int']
+            return expect_scalar.get('Int')
         if res[1] == 'Float16':
-            return expect_scalar['Float16']
+            return expect_scalar.get('Float16')
         if res[1] in ['Float32', 'Float64']:
-            return expect_scalar['Float32_64']
+            return expect_scalar.get('Float32_64')
     else:
         if res[1] == 'Bool':
-            return expect_array['Bool']
+            return expect_array.get('Bool')
         if res[1] in ['UInt8', 'UInt16', 'UInt32', 'UInt64']:
-            return expect_array['UInt']
+            return expect_array.get('UInt')
         if res[1] in ['Int8', 'Int16', 'Int32', 'Int64']:
-            return expect_array['Int']
+            return expect_array.get('Int')
         if res[1] == 'Float16':
-            return expect_array['Float16']
+            return expect_array.get('Float16')
         if res[1] in ['Float32', 'Float64']:
-            return expect_array['Float32_64']
+            return expect_array.get('Float32_64')
     return 'None'
 
 def num_to_asterisk(data):
@@ -72,3 +74,35 @@ def test_tensor_print():
             # Convert decimals to asterisks, such as 0.01 --> *.** and 1.0e+2 --> *.*e**
             value = re.sub(r'-?\d+\.\d+|e[\+|\-]\d+', num_to_asterisk, value, re.DOTALL)
         assert (repr(value) == repr(expect)), repr("output: " + value + ", expect: " + expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+def test_print():
+    """
+    Feature: test tensor print.
+    Description: print tensors.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_net()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    run_net()
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+def test_print_save_to_file():
+    """
+    Feature: test tensor print.
+    Description: print tensors to files.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", print_file_path="output_data")
+    run_net()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", print_file_path="output_data")
+    run_net()

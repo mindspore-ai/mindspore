@@ -191,12 +191,29 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 
   // create acl tdt handle
   if (!channel_name_.empty()) {
-    acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
+    // When "capacity" is too large, device memory will be exploded
+    size_t data_queue_capacity = 16;
+    std::string env_capacity_str = common::GetEnv("MS_DATASET_SINK_QUEUE");
+    if (!env_capacity_str.empty()) {
+      int32_t env_capacity = atoi(env_capacity_str.c_str());
+      if (env_capacity <= 0) {
+        MS_LOG(EXCEPTION) << "Invalid data queue capacity.#umsg#User Help Message:#umsg#"
+                             "Expect env variable MS_DATASET_SINK_QUEUE > 0."
+                          << ascend::GetErrorMessage(true);
+      }
+      data_queue_capacity = env_capacity;
+    }
+    MS_LOG(INFO) << "The capacity of data queue is: " << data_queue_capacity;
+    acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), data_queue_capacity);
     if (acl_handle_ == nullptr) {
-      MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
-                           "Please check DEVICE ID setting, DEVICE ID that passed into dataset"
-                           "(from context) and training process should be the same."
-                        << ascend::GetErrorMessage(true);
+      MS_LOG(INFO) << "Select the TDT process.";
+      acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
+      if (acl_handle_ == nullptr) {
+        MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
+                             "Please check DEVICE ID setting, DEVICE ID that passed into dataset"
+                             "(from context) and training process should be the same."
+                          << ascend::GetErrorMessage(true);
+      }
     }
     tdt_handle::AddHandle(&acl_handle_, nullptr);
   }
