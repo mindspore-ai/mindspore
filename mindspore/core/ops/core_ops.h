@@ -255,6 +255,7 @@ constexpr auto kSequenceAdd = "SequenceAdd";
 constexpr auto kSequenceCount = "SequenceCount";
 constexpr auto kSequenceIndex = "SequenceIndex";
 constexpr auto kSequenceMul = "SequenceMul";
+constexpr auto kSequenceSlice = "SequenceSlice";
 
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
@@ -1568,6 +1569,7 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceAdd, std::make_shared<Primitive>(kSequenceAd
 GVAR_DEF(PrimitivePtr, kPrimSequenceCount, std::make_shared<Primitive>(kSequenceCount));
 GVAR_DEF(PrimitivePtr, kPrimSequenceIndex, std::make_shared<Primitive>(kSequenceIndex));
 GVAR_DEF(PrimitivePtr, kPrimSequenceMul, std::make_shared<Primitive>(kSequenceMul));
+GVAR_DEF(PrimitivePtr, kPrimSequenceSlice, std::make_shared<Primitive>(kSequenceSlice));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));
