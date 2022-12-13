@@ -403,7 +403,7 @@ class LSTMV2(Primitive):
         validator.check_value_type("is_train", is_train, (bool,), self.name)
 
 
-class CudnnGRU(PrimitiveWithInfer):
+class CudnnGRU(Primitive):
     """
     Performs the Stacked GRU (Gated Recurrent Unit) on the input.
 
@@ -421,7 +421,7 @@ class CudnnGRU(PrimitiveWithInfer):
     Inputs:
         - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
           (batch_size, seq_len, `input_size`).
-        - **h** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **h** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
         - **w** (Tensor) - The input tensor which states for weights.
 
     Outputs:
@@ -485,28 +485,6 @@ class CudnnGRU(PrimitiveWithInfer):
             self.num_directions = 2
         else:
             self.num_directions = 1
-
-    def infer_shape(self, x_shape, h_shape, w_shape):
-        validator.check_equal_int(len(x_shape), 3, "x rank", self.name)
-        validator.check_equal_int(x_shape[2], self.input_size, "x[2]", self.name)
-
-        validator.check_equal_int(len(h_shape), 3, "h rank", self.name)
-
-        validator.check_int(h_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h[0]", self.name)
-        validator.check_equal_int(h_shape[1], x_shape[1], "h[1]", self.name)
-        validator.check_int(h_shape[2], self.hidden_size, Rel.EQ, "h[2]", self.name)
-
-        y_shape = (x_shape[0], x_shape[1], self.hidden_size * self.num_directions)
-
-        # set arbitrary shape for reserved space
-        reserved_shape = (1, 1)
-        state_shape = (1, 1)
-        return y_shape, h_shape, reserved_shape, state_shape
-
-    def infer_dtype(self, x_dtype, h_dtype, w_dtype):
-        args = {'x': x_dtype, 'h': h_dtype, 'w': w_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
-        return x_dtype, x_dtype, x_dtype, x_dtype
 
 
 class PriorityReplayBufferCreate(PrimitiveWithInfer):
