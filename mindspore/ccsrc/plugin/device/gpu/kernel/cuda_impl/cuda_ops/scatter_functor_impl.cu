@@ -23,9 +23,8 @@ __global__ void ScatterUpdateKernel(S size_limit, const size_t inner_size, const
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
-    if (indices[index] < 0 || indices[index] >= size_limit) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit
+      && "For 'ScatterUpdate', the value of indices is out of range.");
     const size_t current_pos = indices[index] * inner_size + offset;
     input[current_pos] = updates[pos];
   }
@@ -37,7 +36,8 @@ __global__ void ScatterAddKernel(S size_limit, const size_t inner_size, const si
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
-    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit && "index is out of range.");
+    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit
+      && "For 'ScatterAdd', the value of indices is out of range.");
     const size_t current_pos = indices[index] * inner_size + offset;
     MsAtomicAdd(&input[current_pos], updates[pos]);
   }
@@ -49,9 +49,8 @@ __global__ void ScatterSubKernel(S size_limit, const size_t inner_size, const si
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
-    if (indices[index] < 0 || indices[index] >= size_limit) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit
+      && "For 'ScatterSub', the value of indices is out of range.");
     const size_t current_pos = indices[index] * inner_size + offset;
     MsAtomicSub(&input[current_pos], updates[pos]);
   }
@@ -63,9 +62,8 @@ __global__ void ScatterMaxKernel(S size_limit, const size_t inner_size, const si
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
-    if (indices[index] < 0 || indices[index] >= size_limit) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit
+      && "For 'ScatterMax', the value of indices is out of range.");
     const size_t current_pos = indices[index] * inner_size + offset;
     MsAtomicMax(&input[current_pos], updates[pos]);
   }
@@ -77,9 +75,8 @@ __global__ void ScatterMinKernel(S size_limit, const size_t inner_size, const si
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
-    if (indices[index] < 0 || indices[index] >= size_limit) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit
+      && "For 'ScatterMin', the value of indices is out of range.");
     const size_t current_pos = indices[index] * inner_size + offset;
     MsAtomicMin(&input[current_pos], updates[pos]);
   }
