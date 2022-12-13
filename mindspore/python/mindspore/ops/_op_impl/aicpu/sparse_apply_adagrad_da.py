@@ -41,18 +41,6 @@ sparse_apply_adagrad_da_op_info = AiCPURegOp("SparseApplyAdagradDA") \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, \
                   DataType.I32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, \
                   DataType.I64_Default, DataType.I64_Default,)                                            \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default,     \
-                  DataType.I32_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default,    \
-                  DataType.I64_Default, DataType.U8_Default,)                                             \
-    .dtype_format(DataType.U16_Default, DataType.U16_Default, DataType.U16_Default, DataType.U16_Default, \
-                  DataType.I32_Default, DataType.U16_Default, DataType.U16_Default, DataType.U16_Default, \
-                  DataType.I64_Default, DataType.U16_Default,)                                            \
-    .dtype_format(DataType.U32_Default, DataType.U32_Default, DataType.U32_Default, DataType.U32_Default, \
-                  DataType.I32_Default, DataType.U32_Default, DataType.U32_Default, DataType.U32_Default, \
-                  DataType.I64_Default, DataType.U32_Default,)                                            \
-    .dtype_format(DataType.U64_Default, DataType.U64_Default, DataType.U64_Default, DataType.U64_Default, \
-                  DataType.I32_Default, DataType.U64_Default, DataType.U64_Default, DataType.U64_Default, \
-                  DataType.I64_Default, DataType.U64_Default,)                                            \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, \
                   DataType.I32_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, \
                   DataType.I64_Default, DataType.F16_Default,)                                            \
@@ -74,18 +62,6 @@ sparse_apply_adagrad_da_op_info = AiCPURegOp("SparseApplyAdagradDA") \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, \
                   DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, \
                   DataType.I64_Default, DataType.I64_Default,)                                            \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default,     \
-                  DataType.I64_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default,    \
-                  DataType.I64_Default, DataType.U8_Default,)                                             \
-    .dtype_format(DataType.U16_Default, DataType.U16_Default, DataType.U16_Default, DataType.U16_Default, \
-                  DataType.I64_Default, DataType.U16_Default, DataType.U16_Default, DataType.U16_Default, \
-                  DataType.I64_Default, DataType.U16_Default,)                                            \
-    .dtype_format(DataType.U32_Default, DataType.U32_Default, DataType.U32_Default, DataType.U32_Default, \
-                  DataType.I64_Default, DataType.U32_Default, DataType.U32_Default, DataType.U32_Default, \
-                  DataType.I64_Default, DataType.U32_Default,)                                            \
-    .dtype_format(DataType.U64_Default, DataType.U64_Default, DataType.U64_Default, DataType.U64_Default, \
-                  DataType.I64_Default, DataType.U64_Default, DataType.U64_Default, DataType.U64_Default, \
-                  DataType.I64_Default, DataType.U64_Default,)                                            \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, \
                   DataType.I64_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, \
                   DataType.I64_Default, DataType.F16_Default,)                                            \
