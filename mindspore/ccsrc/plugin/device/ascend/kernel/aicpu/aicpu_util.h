@@ -346,44 +346,6 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kRandpermV2, "StatelessRandperm"},
   {kStridedSliceV2Grad, "StridedSliceGrad"}};
 
-struct AicpuParamHead {
-  uint32_t length;         // Total length: include cunstom message
-  uint32_t ioAddrNum;      // Input and output address number
-  uint32_t extInfoLength;  // extInfo struct Length
-  uint64_t extInfoAddr;    // extInfo address
-} __attribute__((packed));
-
-// Extent info ShapeAndType
-const uint32_t kMaxShapeDims = 8;
-struct ShapeAndType {
-  int32_t type;
-  int64_t dims[kMaxShapeDims];
-} __attribute__((packed));
-
-// Extend info structure for extInfoAddr
-const uint32_t kExtInfoHeadSize = 8;
-struct ExtInfo {
-  int32_t infoType;  // extend type
-  uint32_t infoLen;  // length for infoMsg
-  char infoMsg[0];   // extend value
-} __attribute__((packed));
-
-// Extend Info type for task
-enum FWKTaskExtInfoType {
-  FWK_ADPT_EXT_SHAPE_TYPE = 0,
-  FWK_ADPT_EXT_INPUT_SHAPE,
-  FWK_ADPT_EXT_OUTPUT_SHAPE,
-  FWK_ADPT_EXT_INVALID
-};
-
-// for unknown shape op type
-enum UnknowShapeOpType {
-  DEPEND_IN_SHAPE = 1,     // op out shape get by input shape
-  DEPEND_CONST_VALUE = 2,  // op out shape get by const op value
-  DEPEND_SHAPE_RANGE = 3,  // op out shape get by range
-  DEPEND_COMPUTE = 4       // op out shape get by totally computing
-};
-
 class AicpuOpUtil {
  public:
   static int MsTypeToProtoType(TypeId ms_type);

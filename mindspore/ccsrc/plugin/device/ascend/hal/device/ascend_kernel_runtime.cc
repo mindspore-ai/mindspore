@@ -1224,6 +1224,7 @@ bool AscendKernelRuntime::InitDevice() {
 
 bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   SetCurrentContext();
+  AscendStreamMng::GetInstance().DestroyAllRtEvents();
   if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
     MS_LOG(ERROR) << "Fail to destroy all streams when reset device.";
     return false;
