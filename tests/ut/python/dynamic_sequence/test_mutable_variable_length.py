@@ -311,7 +311,7 @@ def test_dynamic_sequence_list_append_3():
         return x
     with pytest.raises(TypeError) as ex:
         foo()
-    assert "is not same with new added item abstract" in str(ex.value)
+    assert "is not same with the new added item" in str(ex.value)
 
 
 def test_dynamic_sequence_list_append_4():
@@ -328,4 +328,4 @@ def test_dynamic_sequence_list_append_4():
         return x
     with pytest.raises(TypeError) as ex:
         foo()
-    assert "is not same with new added item abstract" in str(ex.value)
+    assert "is not same with the new added item" in str(ex.value)
