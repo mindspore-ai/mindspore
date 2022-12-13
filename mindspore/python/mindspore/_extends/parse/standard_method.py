@@ -284,6 +284,20 @@ def strides_(x):
     return strides
 
 
+def slogdet(x):
+    r"""
+    For details, please refer to :func:`mindspore.ops.slogdet`.
+    """
+    return F.slogdet(x)
+
+
+def tril(x, diagonal=0):
+    r"""
+    For details, please refer to :func:`mindspore.ops.tril`.
+    """
+    return F.tril(x, diagonal)
+
+
 def hasattr(x, attr):  # pylint: disable=redefined-builtin
     """
     Return whether an object has the attribute.

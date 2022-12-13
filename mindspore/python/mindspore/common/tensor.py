@@ -1927,6 +1927,20 @@ class Tensor(Tensor_):
         new_shape = validator.prepare_shape_for_squeeze(self.shape, axis)
         return tensor_operator_registry.get('reshape')()(self, new_shape)
 
+    def slogdet(self):
+        """
+        For details, please refer to :func:`mindspore.ops.slogdet`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('slogdet')(self)
+
+    def tril(self, diagonal=0):
+        """
+        For details, please refer to :func:`mindspore.ops.tril`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('tril')(self, diagonal)
+
     def unsqueeze(self, dim):
         """
         For details, please refer to :func:`mindspore.ops.unsqueeze`.
