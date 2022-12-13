@@ -65,6 +65,7 @@ int CropAndResizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                   << input_image_shape_len << "-D.";
   }
 
+  input_batch_ = LongToInt(input_image_shape[IMAGE_BATCH]);
   input_height_ = LongToInt(input_image_shape[IMAGE_HEIGHT]);
   input_width_ = LongToInt(input_image_shape[IMAGE_WEIGHT]);
 
@@ -134,6 +135,10 @@ bool CropAndResizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
       const int pos_y = pos_temp % final_height_;
       const int pos_image_idx = pos_temp / final_height_;
       const int box_index = input_box_index[pos_image_idx];
+      if (box_index < 0 || box_index >= input_batch_) {
+        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of box_index must be in [0, "
+                                 << input_batch_ << "), but got [" << box_index << "].";
+      }
 
       //  crop values
       const float y1 = input_boxes[4 * pos_image_idx];
