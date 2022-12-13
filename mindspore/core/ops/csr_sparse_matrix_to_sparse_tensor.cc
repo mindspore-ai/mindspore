@@ -59,6 +59,7 @@ abstract::TupleShapePtr CSRSparseMatrixToSparseTensorInferShape(const PrimitiveP
   const int64_t kOne = 1;
   const int64_t kDefalutRank = 2;
   const int64_t kBatchRank = 3;
+  CheckInputShapeEmpty(primitive->name(), input_args);
   std::vector<int64_t> x_dense_shape_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto prim_name = primitive->name();

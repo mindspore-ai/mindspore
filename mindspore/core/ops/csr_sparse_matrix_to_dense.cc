@@ -34,6 +34,7 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   const int64_t kOne = 1;
   const int64_t kDefalutRank = 2;
   const int64_t kBatchRank = 3;
+  CheckInputShapeEmpty(primitive->name(), input_args);
   auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto b_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto r_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
@@ -51,8 +52,9 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
                              << values_shape.size() << ".";
   }
   // Dynamic Rank
-  if (IsDynamicRank(d_shape_shape) || IsDynamicRank(b_ptrs_shape) || IsDynamicRank(r_ptrs_shape) ||
-      IsDynamicRank(c_ind_shape) || IsDynamicRank(values_shape)) {
+  std::vector<ShapeVector> tensor_shapes{d_shape_shape, c_ind_shape, values_shape, r_ptrs_shape, b_ptrs_shape};
+  if (std::any_of(tensor_shapes.cbegin(), tensor_shapes.cend(),
+                  [](const ShapeVector shp) { return IsDynamicRank(shp); })) {
     ShapeVector dense_shape = {-2};
     return std::make_shared<abstract::Shape>(dense_shape);
   }
@@ -70,7 +72,7 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
     return std::make_shared<abstract::Shape>(dense_shape);
   }
   // Static Shape
-  if (values_shape[kZero] != c_ind_shape[kZero]) {
+  if (!IsDynamic(values_shape) && !IsDynamic(c_ind_shape) && values_shape[kZero] != c_ind_shape[kZero]) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'col_indices' and 'values' "
                              << "should have the same length.";
   }
@@ -95,7 +97,8 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   if (rank == kBatchRank) {
     batch_size = d_shape_value_ptr_tensor[kZero], row_num = d_shape_value_ptr_tensor[kOne];
   }
-  if (b_ptrs_shape[kZero] != (batch_size + kOne) || r_ptrs_shape[kZero] != batch_size * (row_num + kOne)) {
+  if (!IsDynamic(b_ptrs_shape) && !IsDynamic(r_ptrs_shape) &&
+      (b_ptrs_shape[kZero] != (batch_size + kOne) || r_ptrs_shape[kZero] != batch_size * (row_num + kOne))) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', batch size of the input is " << batch_size
                              << ", row numbers of the input is " << row_num << ", so shape of 'x_batch_pointers' "
                              << "should be (" << batch_size + kOne << "), but got (" << b_ptrs_shape[kZero] << ")"

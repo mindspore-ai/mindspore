@@ -63,6 +63,15 @@ def _make_tensor_with_dtype(data, dtype):
     return Tensor(data, dtype=dtype)
 
 
+@constexpr
+def _convert_shape(shape):
+    """Temporary solution to get shape value, will be removed when shape op is supported."""
+    if shape is None:
+        return (-2,)
+    shape = [-1 if i is None else i for i in shape]
+    return tuple(shape)
+
+
 def is_scalar(tensor):
     """Determine whether tensor input is a scalar tensor."""
     if tensor.size != 1:
@@ -361,12 +370,12 @@ def csr_to_coo(tensor: CSRTensor) -> COOTensor:
     """
     if not isinstance(tensor, CSRTensor):
         raise_type_error("For functional operator csr_to_coo, input argument must be a CSRTensor.")
-    if len(tensor.shape) != 2:
+    if len(_convert_shape(tensor.shape)) > 2:
         raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
     shape = tensor.shape
     indices, values, _ = csr_sparse_matrix_to_sparse_tensor(Tensor(shape, mstype.int32), batch_csr_pointers_empty,
                                                             tensor.indptr, tensor.indices, tensor.values)
-    return COOTensor(indices, values, shape)
+    return COOTensor(indices, values, _convert_shape(shape))
 
 
 def csr_to_dense(csr_tensor: CSRTensor) -> Tensor:
@@ -401,12 +410,12 @@ def csr_to_dense(csr_tensor: CSRTensor) -> Tensor:
     """
     if not isinstance(csr_tensor, CSRTensor):
         raise_type_error("For functional operator csr_to_dense, input argument must be a CSRTensor.")
-    if len(csr_tensor.shape) != 2:
+    if len(csr_tensor.shape) > 2:
         raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
 
-    shape = csr_tensor.shape
+    shape = _convert_shape(csr_tensor.shape)
     dense_shape = Tensor(shape, dtype=mstype.int32)
-    batch_pointers = Tensor([0, -1], dtype=mstype.int32)
+    batch_pointers = ops.concat((make_tensor([0]), ops.TensorShape()(csr_tensor.values))).astype("int32")
     row_pointers = csr_tensor.indptr
     col_indices = csr_tensor.indices
     values = csr_tensor.values
@@ -472,11 +481,11 @@ def dense_to_sparse_coo(tensor: Tensor) -> COOTensor:
     """
     if not isinstance(tensor, Tensor):
         raise_type_error("For functional operator dense_to_sparse_coo, input argument must be a Tensor.")
-    if len(tensor.shape) != 2:
+    if len(_convert_shape(tensor.shape)) > 2:
         raise_value_error("Currently only support 2-D Tensor when converting to COOTensor.")
     indices = tensor.nonzero().astype("int32")
     values = gather_nd(tensor, indices)
-    return COOTensor(indices, values, tensor.shape)
+    return COOTensor(indices, values, _convert_shape(tensor.shape))
 
 
 def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
@@ -518,11 +527,11 @@ def dense_to_sparse_csr(tensor: Tensor) -> CSRTensor:
     """
     if not isinstance(tensor, Tensor):
         raise_type_error("For functional operator dense_to_sparse_csr, input argument must be a Tensor.")
-    if len(tensor.shape) > 2:
+    if len(_convert_shape(tensor.shape)) > 2:
         raise_value_error("Currently only support 2-D Tensor when converting to CSRTensor.")
     indices = tensor.nonzero().astype("int32")
     _, _, indptr, indices, values = dense_to_csr(tensor, indices)
-    return CSRTensor(indptr, indices, values, tensor.shape)
+    return CSRTensor(indptr, indices, values, _convert_shape(tensor.shape))
 
 
 def make_sparse_tensor(indices, values, dense_shape):
