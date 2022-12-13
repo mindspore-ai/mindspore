@@ -334,22 +334,40 @@ class AscendEnvChecker(EnvChecker):
             te, topi, hccl wheel package version check
             in order to update the change of 'LD_LIBRARY_PATH' env, run a sub process
         """
-        input_args = ["--mindspore_version=" + __version__]
-        for v in self.version:
-            input_args.append("--supported_version=" + v)
-        deps_version_checker = os.path.join(os.path.split(os.path.realpath(__file__))[0],
-                                            "_check_deps_version.py")
-        call_cmd = [sys.executable, deps_version_checker] + input_args
+
+        mindspore_version = __version__
+        supported_version = self.version
+        attention_warning = False
         try:
-            process = subprocess.run(call_cmd, timeout=30, text=True, capture_output=True, check=False)
-            if process.stdout.strip() != "":
-                logger.warning(process.stdout.strip())
-                warning_countdown = 3
-                for i in range(warning_countdown, 0, -1):
-                    logger.warning(f"Please pay attention to the above warning, countdown: {i}")
-                    time.sleep(1)
-        except subprocess.TimeoutExpired:
-            logger.info("Package te, topi, hccl version check timed out, skip.")
+            from te import version as tever
+            v = '.'.join(tever.version.split('.')[0:2])
+            if v not in supported_version:
+                attention_warning = True
+                logger.warning(f"MindSpore version {mindspore_version} and \"te\" wheel package version {v} does not "
+                               "match, reference to the match info on: https://www.mindspore.cn/install")
+            from topi import version as topiver
+            v = '.'.join(topiver.version.split('.')[0:2])
+            if v not in supported_version:
+                attention_warning = True
+                logger.warning(f"MindSpore version {mindspore_version} and \"topi\" wheel package version {v} does not "
+                               "match, reference to the match info on: https://www.mindspore.cn/install")
+            from hccl import sys_version as hccl_version
+            v = '.'.join(hccl_version.__sys_version__.split('.')[0:2])
+            if v not in supported_version:
+                attention_warning = True
+                logger.warning(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
+                               "match, reference to the match info on: https://www.mindspore.cn/install")
+        except ImportError as e:
+            logger.error("CheckFailed:", e.args)
+            logger.error("MindSpore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"latest\" "
+                         "folder of the Ascend AI software package (Ascend Data Center Solution), please check whether"
+                         " they are installed correctly or not, reference to the match info on: "
+                         "https://www.mindspore.cn/install")
+        if attention_warning:
+            warning_countdown = 3
+            for i in range(warning_countdown, 0, -1):
+                logger.warning(f"Please pay attention to the above warning, countdown: {i}")
+                time.sleep(1)
 
     def set_env(self):
         plugin_dir = os.path.dirname(self.library_path)
