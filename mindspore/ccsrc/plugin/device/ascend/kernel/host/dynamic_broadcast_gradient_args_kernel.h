@@ -31,7 +31,7 @@ class DynamicBroadcastGradientArgsKernelMod : public HostKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
  private:
-  void Execute() const;
+  void Execute(const std::vector<AddressPtr> &inputs) const;
 };
 MS_HOST_REG_KERNEL(DynamicBroadcastGradientArgs, DynamicBroadcastGradientArgsKernelMod);
 }  // namespace kernel
