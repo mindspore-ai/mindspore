@@ -1567,6 +1567,9 @@ def get_bprop_lgamma(self):
             x = F.cast(x, mstype.float32)
             dx = dout * digamma(x)
             dx = F.cast(dx, mstype.float16)
+        elif x.dtype in (mstype.int32,):
+            x = F.cast(x, mstype.float32)
+            dx = dout * digamma(x)
         else:
             dx = dout * digamma(x)
         return (dx,)
@@ -1578,13 +1581,15 @@ def get_bprop_lgamma(self):
 def get_bprop_digamma(self):
     """Grad definition for `Digamma` operation."""
     polygamma = Polygamma()
+    a = Tensor(1)
+
     def bprop(x, out, dout):
         if x.dtype in (mstype.float16,):
             x = F.cast(x, mstype.float32)
-            dx = dout * polygamma(1, x)
+            dx = dout * polygamma(a, x)
             dx = F.cast(dx, mstype.float16)
         else:
-            dx = dout * polygamma(1, x)
+            dx = dout * polygamma(a, x)
         return (dx,)
 
     return bprop
@@ -1596,14 +1601,15 @@ def get_bprop_polygamma(self):
     polygamma = Polygamma()
 
     def bprop(a, x, out, dout):
-        a = a + 1
+        one = Tensor(1)
+        a = a + one
         if x.dtype in (mstype.float16,):
             x = F.cast(x, mstype.float64)
             dx = dout * polygamma(a, x)
             dx = F.cast(dx, mstype.float16)
         else:
             dx = dout * polygamma(a, x)
-        return None, dx
+        return zeros_like(a), dx
 
     return bprop
 

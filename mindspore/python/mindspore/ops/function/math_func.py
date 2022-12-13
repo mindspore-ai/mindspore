@@ -8968,6 +8968,118 @@ def igammac(input, other):
     return igammac_op(input, other)
 
 
+def lgamma(x):
+    r"""
+    Computes the natural logarithm of the absolute value of the gamma function on `input`.
+
+    .. math::
+        \text{out}_{i} = \ln \Gamma(|\text{input}_{i}|)
+
+    Args:
+        x (Tensor): the tensor to compute the lgamma function.
+
+    Returns:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If x is not a Tensor.
+        TypeError: If dtype of input x is not one of: float16, float32, float64.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.5, 3.2, 8.5]), mindspore.float32)
+        >>> lgamma = ops.Lgamma()
+        >>> output = lgamma(x)
+        >>> print(output)
+        [0.5723649 0.8854049 9.549267 ]
+    """
+    lgamma_op = _get_cache_prim(P.Lgamma)()
+    return lgamma_op(x)
+
+
+def digamma(x):
+    r"""
+    Computes the grad of the lgamma function on input.
+
+    .. math::
+        P(x) = grad(ln(gamma(x)))
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        x (Tensor): The input tensor. With type of float16 or float32 or float64.
+
+    Returns:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If x is not a Tensor.
+        TypeError: If dtype of input x is not float16 or float32 or float64.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.5, 0.5, 9]).astype(np.float16))
+        >>> digamma = P.Digamma()
+        >>> output = digamma(x)
+        >>> print(output)
+        [ 0.0365 -1.964   2.14  ]
+    """
+    digamma_op = _get_cache_prim(P.Digamma)()
+    return digamma_op(x)
+
+
+def polygamma(a, x):
+    r"""
+    Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
+
+    .. math::
+        \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
+
+    Args:
+        a (Tensor): the order of the polygamma function, types: int32, int64, the shape of a is 0.
+        x (Tensor): the tensor to compute the polygamma function.
+
+    Returns:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If x is not a Tensor.
+        TypeError: If dtype of input x is not one of: float16, float32, float64.
+        TypeError: If dtype of input a is not one of: int32, int64.
+        TypeError: If shape of input a is not 0.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, -0.5]), mindspore.float32)
+        >>> a = Tensor(np.array(1), mindspore.int64)
+        >>> polygamma = ops.Polygamma()
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [1.644934 8.934802]
+        >>> a = Tensor(np.array(2), mindspore.int64)
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [-2.404114  -0.8287967]
+        >>> a = Tensor(np.array(3), mindspore.int64)
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [  6.4939404 193.40909  ]
+        >>> a = Tensor(np.array(4), mindspore.int64)
+        >>> output = polygamma(a, x)
+        >>> print(output)
+        [-24.886265   -3.4742498]
+    """
+    polygamma_op = _get_cache_prim(P.Polygamma)()
+    return polygamma_op(a, x)
+
+
 def isinf(input):
     r"""
     Determines which elements are inf or -inf for each position.

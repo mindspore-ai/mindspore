@@ -34,6 +34,12 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
   auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   int64_t input_a;
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (a_shape.size() != 0) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', 'a' should be a 0-dim Tensor, but got rank: " << a_shape.size() << ".";
+  }
   if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
     auto input_a_ptr = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
@@ -81,8 +87,8 @@ AbstractBasePtr PolygammaInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto prim_name = primitive->name();
   const int64_t kInputNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto infer_type = PolygammaInferType(primitive, input_args);
   auto infer_shape = PolygammaInferShape(primitive, input_args);
+  auto infer_type = PolygammaInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
