@@ -367,7 +367,16 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
     return common::AnfAlgo::IsControlOpExecInBackend(node);
   });
 
-  return !IsAutoParallel() && !is_cut_graph && !func_graph->has_flag(kFlagIsDynamicStructure);
+  auto has_comm_op = std::any_of(node_list.begin(), node_list.end(),
+                                 [](const AnfNodePtr &node) { return common::AnfAlgo::IsCommunicationOp(node); });
+
+  auto is_auto_parallel = IsAutoParallel();
+
+  MS_LOG(INFO) << "JitLevel is " << jit_level << " is_auto_parallel " << is_auto_parallel << " has_comm_op "
+               << has_comm_op << " is_cut_graph " << is_cut_graph << " dynamic_structure "
+               << func_graph->has_flag(kFlagIsDynamicStructure);
+
+  return !is_auto_parallel && !has_comm_op && !is_cut_graph && !func_graph->has_flag(kFlagIsDynamicStructure);
 }
 
 void UpdateValueNodeAbstractFromTensor(const ValueNodePtr &value_node, const tensor::TensorPtr &tensor) {
