@@ -214,6 +214,11 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   // Get vocab cache size on device.
   size_t vocab_cache_size() const { return device_cache_size_; }
 
+  // Set the storage format (`dense` or `sparse`) of embedding tables.
+  void set_sparse_format(bool is_sparse) { sparse_format_ = is_sparse; }
+
+  bool is_sparse_format() { return sparse_format_; }
+
   void DumpHashTables() const;
 
  private:
@@ -252,6 +257,9 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   size_t host_cache_size_{0};
   // Total ids number of a batchsize.
   size_t batch_ids_num_{0};
+
+  // If the storage format is sparse or dense, the default format is dense.
+  bool sparse_format_{false};
 
   friend class mindspore::runtime::EmbeddingCachePrefetchActor;
 };

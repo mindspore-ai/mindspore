@@ -65,6 +65,10 @@ class BACKEND_EXPORT PSContext {
                       int32_t src_param_key) const;
   void set_cache_enable(bool cache_enable) const;
   bool cache_enable() const;
+
+  // Set if the storage format of embedding table is sparse or not.
+  void set_sparse_format(bool is_sparse);
+
   void set_rank_id(uint32_t rank_id) const;
 
   // In new server framework, process role, worker number, server number, scheduler ip and scheduler port should be set

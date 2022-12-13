@@ -491,6 +491,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("clone_hash_table", &PSContext::CloneHashTable, "Clone a hash table.")
     .def("set_cache_enable", &PSContext::set_cache_enable, "Set ps mode cache enable or not.")
     .def("cache_enable", &PSContext::cache_enable, "Get ps mode cache enable or not.")
+    .def("set_sparse_format", &PSContext::set_sparse_format, "Set the storage format of the embedding table.")
     .def("set_rank_id", &PSContext::set_rank_id, "Set rank id for worker on ps mode.")
     .def("set_server_mode", &PSContext::set_server_mode, "Set server mode.")
     .def("server_mode", &PSContext::server_mode, "Get server mode.")
