@@ -140,7 +140,7 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   auto real_output_types = AnfAlgo::GetAllOutputDeviceTypes(cnode);
   auto cur_abstract = cnode->abstract();
   MS_EXCEPTION_IF_NULL(cur_abstract);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
     auto child_abs = GetChildAbstract(cur_abstract, output_idx);
     if (child_abs->isa<abstract::AbstractMonad>()) {
@@ -155,7 +155,6 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
       CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str);
     output_tensors.push_back(output_tensor);
   }
-
   return std::make_pair(input_tensors, output_tensors);
 }
 }  // namespace
@@ -451,7 +450,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   size_t real_input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t real_output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t real_output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   std::vector<std::shared_ptr<OpIOInfo>> inputs = op_info_ptr->inputs_ptr();
   std::vector<std::shared_ptr<OpIOInfo>> outputs = op_info_ptr->outputs_ptr();
   std::vector<int64_t> dyn_input_sizes;
@@ -674,7 +673,7 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
 }
 
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
-  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || common::AnfAlgo::GetOutputTensorNum(cnode) != 1) {
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
     MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output."
                       << trace::DumpSourceLines(cnode);
   }
@@ -1085,9 +1084,9 @@ std::vector<TypeId> GetInputObjectTypeListFromKernelAttr(const kernel::KernelAtt
 }
 
 bool MatchObjectType(const CNodePtr &kernel_node, const kernel::KernelAttr &kernel_attr, bool strict) {
-  auto inputs_object_types = common::AnfAlgo::GetAllInputObjectType(kernel_node);
-  auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(kernel_node);
-  auto abstract_type = common::AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
+  auto inputs_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
+  auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
+  auto abstract_type = AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
   auto kernel_inputs_object_types = GetInputObjectTypeListFromKernelAttr(kernel_attr);
   auto kernel_outputs_object_types = GetOutputObjectTypeListFromKernelAttr(kernel_attr);
   size_t output_attr_size = kernel_attr.GetOutputSize();
@@ -1173,15 +1172,15 @@ std::vector<KernelObjectType> CalKernelObjectTypes(const std::vector<TypeId> &ob
 std::vector<KernelObjectType> CalInputKernelObjectTypes(const AnfNodePtr &kernel_node,
                                                         const kernel::KernelAttr &selected_kernel_attr) {
   auto selected_input_object_types = GetInputObjectTypeListFromKernelAttr(selected_kernel_attr);
-  auto input_object_types = common::AnfAlgo::GetAllInputObjectType(kernel_node);
+  auto input_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
   return CalKernelObjectTypes(input_object_types, selected_input_object_types);
 }
 
 std::vector<KernelObjectType> CalOutputKernelObjectTypes(const AnfNodePtr &kernel_node,
                                                          const kernel::KernelAttr &selected_kernel_attr) {
   auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
-  auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(kernel_node);
-  auto abstract_type = common::AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
+  auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
+  auto abstract_type = AnfAlgo::GetAbstractObjectType(kernel_node->abstract());
   if (selected_output_object_types.size() == 1) {
     auto ret_type = CalKernelObjectType(abstract_type, selected_output_object_types[0]);
     if (ret_type != KernelObjectType::UNKNOWN_TYPE) {

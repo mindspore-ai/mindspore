@@ -114,7 +114,7 @@ void DeprecatedNativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_no
     tensor_size = std::max(tensor_size, type_size);
     (void)input_size_list_.emplace_back(tensor_size);
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(kernel_node, output_index);
     (void)output_size_list_.emplace_back(tensor_size);
@@ -144,7 +144,7 @@ std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetInputDtypes(const CNodePtr 
 
 std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_node) const {
   std::vector<TypeId> output_types;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     auto dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
     (void)output_types.emplace_back(dtype);

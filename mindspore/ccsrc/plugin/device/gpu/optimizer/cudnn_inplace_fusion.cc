@@ -153,7 +153,7 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
 void CopyKernelInfo(AnfNodePtr src, AnfNodePtr dst) {
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(src);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, dst.get());
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(src);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(src);
   std::vector<TypeId> types;
   std::vector<BaseShapePtr> shapes;
   for (size_t i = 0; i < output_num; i++) {

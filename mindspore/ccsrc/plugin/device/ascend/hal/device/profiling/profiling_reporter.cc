@@ -318,7 +318,7 @@ void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uin
   if (tensor_type == MSPROF_GE_TENSOR_TYPE_INPUT) {
     total_size = common::AnfAlgo::GetInputTensorNum(node);
   } else {
-    total_size = common::AnfAlgo::GetOutputTensorNum(node);
+    total_size = AnfAlgo::GetOutputTensorNum(node);
   }
 
   const size_t batch_size = total_size / MSPROF_GE_TENSOR_DATA_NUM;

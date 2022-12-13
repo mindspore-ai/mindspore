@@ -84,7 +84,7 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<A
   std::vector<size_t> input_size_list;
   std::vector<size_t> output_size_list;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
 
   if (!SetIOIputSize(anf_node, input_num, &input_size_list)) {
     return false;
@@ -273,7 +273,7 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
 void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   MS_EXCEPTION_IF_NULL(proto);
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
   if (output_num == 1 && HasAbstractMonad(anf_node)) {
     output_num = 0;
   }
@@ -470,7 +470,7 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   uint64_t ext_info_head_len = aicpu::FWKAdapter::kExtInfoHeadSize;
   std::string ext_info;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
 
   // 1.addr:unknown shape type
   uint64_t ext_info_len = ext_info.size();

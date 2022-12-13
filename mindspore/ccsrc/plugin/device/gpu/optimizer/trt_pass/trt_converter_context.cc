@@ -153,9 +153,8 @@ bool TrtConverterContext::InitValueNodeTable() {
 }
 
 bool TrtConverterContext::StoreLayerOutput(const AnfNodePtr &node, const std::vector<nvinfer1::ITensor *> &nv_tensors) {
-  if (nv_tensors.size() != common::AnfAlgo::GetOutputTensorNum(node)) {
-    MS_LOG(INFO) << node->DebugString()
-                 << " output num not match. expect: " << common::AnfAlgo::GetOutputTensorNum(node)
+  if (nv_tensors.size() != AnfAlgo::GetOutputTensorNum(node)) {
+    MS_LOG(INFO) << node->DebugString() << " output num not match. expect: " << AnfAlgo::GetOutputTensorNum(node)
                  << ", while got: " << nv_tensors.size();
   }
 

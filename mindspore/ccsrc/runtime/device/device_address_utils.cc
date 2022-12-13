@@ -113,7 +113,7 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
   // Create device address for anf node in nodes_list
   for (const auto &item : nodes_list) {
     MS_EXCEPTION_IF_NULL(item);
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
+    auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(item, index);
       if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
@@ -368,7 +368,7 @@ void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &gra
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+    auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
     if (output_num == 0) {
       MS_LOG(DEBUG) << "This kernel has no output size.";
       continue;

@@ -82,7 +82,7 @@ class BatchNormFoldGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << input_num;
     }
 
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }

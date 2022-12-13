@@ -164,7 +164,7 @@ Status GetAbstractArgsFromCNode(const CNodePtr &cnode, std::vector<NodeWithOutpu
   }
   // Makeup output tensors.
   output_tensors->clear();
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
     session::KernelWithIndex tensor_id = {cnode, output_idx};
     auto it = std::find_if(tensor_info_list.begin(), tensor_info_list.end(),

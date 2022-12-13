@@ -87,7 +87,7 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   if (!node_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_;
   }
-  auto output_nums = common::AnfAlgo::GetOutputTensorNum(node_);
+  auto output_nums = AnfAlgo::GetOutputTensorNum(node_);
   std::vector<TypeId> dtypes(output_nums);
   for (size_t i = 0; i < output_nums; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);

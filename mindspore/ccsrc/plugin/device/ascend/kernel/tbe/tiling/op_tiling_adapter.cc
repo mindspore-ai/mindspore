@@ -175,7 +175,7 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_size = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_size; i++) {
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(node, i);
     auto ms_ori_shape = common::AnfAlgo::GetOutputInferShape(node, i);

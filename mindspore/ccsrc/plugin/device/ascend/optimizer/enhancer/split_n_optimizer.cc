@@ -152,7 +152,7 @@ bool OutputCheck(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
       MS_LOG(INFO) << "Next node is " << item->fullname_with_scope() << ", not a invalid node, can not optimizer.";
       return false;
     }
-    if (common::AnfAlgo::GetOutputTensorNum(item) == 0) {
+    if (AnfAlgo::GetOutputTensorNum(item) == 0) {
       MS_LOG(INFO) << "Next node has no output, can not optimizer.";
       return false;
     }

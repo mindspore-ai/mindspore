@@ -87,7 +87,7 @@ bool InsertCastGPU::Run(const FuncGraphPtr &graph) {
       }
     }
 
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; i++) {
       auto inferType = common::AnfAlgo::GetOutputInferDataType(node, i);
       if (inferType != kNumberTypeFloat16) {

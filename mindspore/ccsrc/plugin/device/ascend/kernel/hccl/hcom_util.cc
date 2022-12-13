@@ -39,7 +39,7 @@ bool HcomUtil::GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVecto
 bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_output_shape_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(hccl_kernel_output_shape_list);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
   for (size_t i = 0; i < output_num; ++i) {
     auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     (void)hccl_kernel_output_shape_list->emplace_back(shape_i);
@@ -62,7 +62,7 @@ bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> 
   size_t tensor_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (op_name == kReceiveOpName) {
-    tensor_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+    tensor_num = AnfAlgo::GetOutputTensorNum(anf_node);
   }
   for (size_t i = 0; i < tensor_num; ++i) {
     TypeId type_ptr;
@@ -126,7 +126,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (common::AnfAlgo::GetCNodeName(anf_node) == kReceiveOpName) {
-    size = common::AnfAlgo::GetOutputTensorNum(anf_node);
+    size = AnfAlgo::GetOutputTensorNum(anf_node);
   }
   for (size_t i = 0; i < size; ++i) {
     if (!GetHcomTypeSize(data_type_list[i], &type_size)) {

@@ -144,8 +144,8 @@ bool ReshapeReduceForCSE::Run(const FuncGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(node);
     if (IsOneOfPrimitiveCNode(node, prim_set)) {
       if (auto target = CanCSE(graph, node->cast<CNodePtr>()); target != nullptr) {
-        size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
-        size_t target_output_num = common::AnfAlgo::GetOutputTensorNum(target);
+        size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+        size_t target_output_num = AnfAlgo::GetOutputTensorNum(target);
         if (output_num != target_output_num) {
           MS_LOG(EXCEPTION) << "Node " << node->fullname_with_scope() << " and node " << target->fullname_with_scope()
                             << " can not CSE, because their output num is different: " << output_num << " vs "

@@ -335,7 +335,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
     for (size_t node_idx = 0; node_idx < fusion_info.anf_nodes.size(); ++node_idx) {
       const auto &node = fusion_info.anf_nodes[node_idx];
       size_t old_output_num = fusion_info.outputs_list.size();
-      if (common::AnfAlgo::GetOutputTensorNum(node) == 1) {
+      if (AnfAlgo::GetOutputTensorNum(node) == 1) {
         auto use_nodes = manager->node_users()[node];
         for (const auto &use_node : use_nodes) {
           // Do not think of updatestate as real output,
@@ -551,7 +551,7 @@ bool UbPatternFusion::ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionIn
   std::vector<TypeId> types;
   std::vector<BaseShapePtr> shapes;
   for (const auto &out_node : buffer_fusion_info.outputs_list) {
-    size_t out_num = common::AnfAlgo::GetOutputTensorNum(out_node);
+    size_t out_num = AnfAlgo::GetOutputTensorNum(out_node);
     for (size_t idx = 0; idx < out_num; ++idx) {
       (void)types.emplace_back(common::AnfAlgo::GetOutputInferDataType(out_node, idx));
       (void)shapes.emplace_back(common::AnfAlgo::GetOutputDetailShape(out_node, idx));

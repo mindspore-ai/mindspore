@@ -90,7 +90,7 @@ bool CheckInputs(const CNodePtr &node, const std::shared_ptr<kernel::KernelBuild
 bool CheckOtherOutputs(const CNodePtr &node, const std::shared_ptr<kernel::KernelBuildInfo> &kernel_info,
                        const size_t idx) {
   MS_EXCEPTION_IF_NULL(kernel_info);
-  if (common::AnfAlgo::GetOutputTensorNum(node) != kernel_info->GetOutputNum()) {
+  if (AnfAlgo::GetOutputTensorNum(node) != kernel_info->GetOutputNum()) {
     return false;
   }
   for (size_t index = 0; index < kernel_info->GetOutputNum(); ++index) {
@@ -128,7 +128,7 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
   auto cast_shape = common::AnfAlgo::GetOutputDetailShape(cast, 0);
   std::vector<abstract::BaseShapePtr> shapes;
   std::vector<TypeId> types;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t index = 0; index < output_num; ++index) {
     if (cast_index == index) {
       (void)shapes.emplace_back(cast_shape);

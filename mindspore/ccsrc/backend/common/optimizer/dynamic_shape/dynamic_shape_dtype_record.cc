@@ -15,7 +15,6 @@
  */
 
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_dtype_record.h"
-
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
@@ -60,7 +59,7 @@ bool DynamicShapeDtypeRecord::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
 
-    auto out_num = common::AnfAlgo::GetOutputTensorNum(node);
+    auto out_num = AnfAlgo::GetOutputTensorNum(node);
     auto node_abs = node->abstract();
     if (node_abs->isa<abstract::AbstractTensor>()) {
       if (out_num != 1) {

@@ -199,7 +199,7 @@ BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &gra
     return ret;
   }
   // if is graph return nothing ,the function should return a null anylist
-  size_t size = common::AnfAlgo::GetOutputTensorNum(item_with_index.first);
+  size_t size = AnfAlgo::GetOutputTensorNum(item_with_index.first);
   if (size == 0) {
     return VectorRef();
   }
@@ -370,7 +370,7 @@ BaseRef CreateNodeOutputPlaceholder(const AnfNodePtr &anf, const KernelGraphPtr 
     return ret;
   }
   // if is graph return nothing ,the function should return a null anylist
-  size_t size = common::AnfAlgo::GetOutputTensorNum(item_with_index.first);
+  size_t size = AnfAlgo::GetOutputTensorNum(item_with_index.first);
   if (size == 0) {
     return VectorRef();
   }
@@ -1235,8 +1235,8 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
   std::vector<AnfNodePtr> make_tuple_inputs;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   MS_EXCEPTION_IF_NULL(graph);
-  if (common::AnfAlgo::GetOutputTensorNum(cnode) > 1) {
-    for (size_t output_index = 0; output_index < common::AnfAlgo::GetOutputTensorNum(cnode); output_index++) {
+  if (AnfAlgo::GetOutputTensorNum(cnode) > 1) {
+    for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(cnode); output_index++) {
       auto idx = NewValueNode(SizeToLong(output_index));
       MS_EXCEPTION_IF_NULL(idx);
       auto imm = std::make_shared<Int64Imm>(output_index);

@@ -77,7 +77,7 @@ static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpNam
                                                         prim::kSparseSegmentMean};
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     TypeId dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
     output_types->emplace_back(dtype);
@@ -85,7 +85,7 @@ void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_ty
 }
 
 void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *output_formats) {
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     output_formats->emplace_back(kOpFormat_DEFAULT);
   }
@@ -177,7 +177,7 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_at
   kernel_attr->SetInputAttrList(attr_list);
 
   TypeId output_dtype = kernel_attr->GetOutputAttr(0).dtype;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t i = 1; i < output_num; ++i) {
     (void)kernel_attr->AddOutputAttr(output_dtype);
   }
@@ -219,7 +219,7 @@ void ExpandMultiDynamicAttr(const CNodePtr &kernel_node, const std::vector<int64
   kernel_attr->SetInputAttrList(input_attr_list);
 
   size_t output_attr_num = kernel_attr->GetOutputSize();
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_attr_num == output_num) {
     MS_LOG(DEBUG) << "Output is not dynamic.";
     return;
@@ -251,7 +251,7 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
 void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
   std::vector<std::string> output_formats;
   std::vector<TypeId> output_types;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t index = 0; index < output_num; ++index) {
     output_formats.emplace_back(selected_kernel_attr.GetOutputAttr(index).format);
     output_types.emplace_back(selected_kernel_attr.GetOutputAttr(index).dtype);
@@ -271,8 +271,8 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &ke
   std::vector<TypeId> infer_output_types;
   GetInputDtypes(kernel_node, &input_types);
   GetOutputDtypes(kernel_node, &infer_output_types);
-  auto input_object_types = common::AnfAlgo::GetAllInputObjectType(kernel_node);
-  auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(kernel_node);
+  auto input_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
+  auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (!is_kernel_exist) {
     std::stringstream ss;
@@ -296,7 +296,7 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &ke
     }
     operator_info << ") ";
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num > 0) {
     operator_info << "output(";
     for (size_t i = 0; i < output_num; ++i) {
@@ -506,7 +506,7 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
       // if there are multi dynamic inputs, expand the kernel attr.
       ExpandMultiDynamicAttr(kernel_node, dyn_input_sizes, &kernel_attr);
     }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (kernel_attr.GetOutputSize() != output_num) {
       MS_LOG(DEBUG) << "Output num is not equal!";
       continue;
@@ -627,7 +627,8 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
       return KernelNotSupportWarning(kernel_node, !kernel_attrs.empty());
     }
   }
-  MS_LOG(INFO) << "Input format and dtype is matched";
+  MS_LOG(INFO) << "Input format and dtype is matched for node:" << kernel_node->DebugString()
+               << " attr:" << selected_kernel_attr;
   SetKernelBuildInfoWithSelectedAttr(kernel_node, selected_kernel_attr);
   return {};
 }

@@ -187,7 +187,7 @@ void RuntimeUtils::AssignInputNodeAddress(KernelGraphPtr kernel_graph) {
   for (auto &item : kernel_graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(item);
     if (item->isa<Parameter>()) {
-      auto output_num = common::AnfAlgo::GetOutputTensorNum(item);
+      auto output_num = AnfUtils::GetOutputTensorNum(item);
       for (size_t index = 0; index < output_num; index++) {
         TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
         if (output_type_id == kTypeUnknown) {
@@ -242,7 +242,7 @@ void RuntimeUtils::UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,
                                               const std::vector<kernel::AddressPtr> &output_addrs) {
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kernel_name == kNameCustomAscend) {
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfUtils::GetOutputTensorNum(kernel_node);
     if (output_addrs.size() != output_num) {
       MS_LOG(ERROR) << "Output addr size[" << output_addrs.size() << "] is not equal to node outputs size["
                     << output_num << "]";

@@ -37,7 +37,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
     return -1;
   }
   MS_EXCEPTION_IF_NULL(plant_inputs);
-  auto input_size = common::AnfAlgo::GetOutputTensorNum(tuple_input);
+  auto input_size = AnfAlgo::GetOutputTensorNum(tuple_input);
   if (tuple_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(tuple_input, prim::kPrimMakeTuple)) {
     auto make_tuple = tuple_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);

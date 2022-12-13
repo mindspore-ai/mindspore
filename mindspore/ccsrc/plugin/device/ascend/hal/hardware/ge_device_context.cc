@@ -232,7 +232,7 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
 
 void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_type, const ShapeVector &output_shape) {
   MS_EXCEPTION_IF_NULL(node);
-  size_t total_output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t total_output_num = AnfAlgo::GetOutputTensorNum(node);
   if (index >= total_output_num) {
     MS_LOG(EXCEPTION) << "Invalid output index " << index << ", node " << node->fullname_with_scope() << " has "
                       << total_output_num << " outputs.";

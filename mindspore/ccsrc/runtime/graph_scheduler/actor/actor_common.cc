@@ -411,7 +411,7 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const Kern
   MS_EXCEPTION_IF_NULL(graph);
   std::set<size_t> ref_output_indexes;
 
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < output_num; ++i) {
     session::AnfWithOutIndex output_pair(cnode, i);
     // Only the ref node will modify the ref input corresponding to the output.

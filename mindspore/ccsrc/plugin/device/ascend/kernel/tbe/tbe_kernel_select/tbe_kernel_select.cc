@@ -443,7 +443,7 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
   auto dyn_input_sizes = GetNodeDynamicInputs();
   // get real input/output num
   size_t real_input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
-  size_t real_output_num = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  size_t real_output_num = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   auto op_info_input_num = support_format_dtype.input_dtypes.size();
   auto op_info_output_num = support_format_dtype.output_dtypes.size();
   if (op_info_output_num == 0 && op_info_input_num == 0) {

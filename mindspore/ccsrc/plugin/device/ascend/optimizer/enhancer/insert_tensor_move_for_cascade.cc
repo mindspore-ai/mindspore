@@ -131,7 +131,7 @@ void InsertTensorMoveForCascade::InsertOutputTensorMove(const FuncGraphPtr &grap
       continue;
     }
     auto cnode = output_with_index.first->cast<CNodePtr>();
-    if (cnode != hccl_node || common::AnfAlgo::GetOutputTensorNum(output_with_index.first) == kSingleOutput) {
+    if (cnode != hccl_node || AnfAlgo::GetOutputTensorNum(output_with_index.first) == kSingleOutput) {
       continue;
     }
     node = output_with_index.first;

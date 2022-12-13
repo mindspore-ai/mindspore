@@ -174,7 +174,7 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
   ge::OpDescPtr op_desc = std::make_shared<ge::OpDesc>(kStubDataStructureName, ge_node_name);
   MS_EXCEPTION_IF_NULL(op_desc);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < input_num; ++i) {
     auto ge_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
     (void)op_desc->AddInputDesc(

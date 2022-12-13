@@ -212,7 +212,7 @@ void DumpDeviceAddressInGraph(const session::KernelGraph &graph) {
   }
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+    auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t i = 0; i < output_num; ++i) {
       MS_LOG(WARNING) << "Graph:" << graph.ToString() << " kernel:" << kernel->fullname_with_scope()
                       << " output index:" << i << " device address:" << AnfAlgo::GetMutableOutputAddr(kernel, i, false)
@@ -235,7 +235,7 @@ void CheckZeroCopyTaskValid(const session::KernelGraph &graph,
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+    auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t i = 0; i < output_num; ++i) {
       const auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
       if (device_address != nullptr && device_address->GetPtr() == nullptr &&
@@ -459,7 +459,7 @@ void GenerateZeroCopyTaskForOutput(const AnfNodePtr &node, const TaskPtr &task, 
   MS_EXCEPTION_IF_NULL(node_to_offset);
 
   auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
   const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(graph.output());
   const auto &ref_node_map = graph.GetRefMap();
 

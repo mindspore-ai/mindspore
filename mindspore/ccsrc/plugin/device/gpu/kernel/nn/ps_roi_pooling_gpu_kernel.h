@@ -84,7 +84,7 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     // Get the number of output args
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != OUTPUT_NUM) {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but PsROIPooling needs 2 output.";
       return false;

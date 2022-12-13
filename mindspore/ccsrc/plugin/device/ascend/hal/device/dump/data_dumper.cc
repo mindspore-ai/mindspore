@@ -450,7 +450,7 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
   }
   MS_LOG(INFO) << "[DataDump] DumpKernelOutput start. Kernel:" << kernel->fullname_with_scope();
   auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(kernel);
+  auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
   uint64_t offset = sizeof(void *) * input_size;
   for (size_t i = 0; i < output_size; ++i) {
     auto data_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);

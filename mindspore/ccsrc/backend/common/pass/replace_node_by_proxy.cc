@@ -35,7 +35,7 @@ kernel::KernelBuildInfoPtr ReplaceNodeByProxy::GenerateKernelBuildInfo(const CNo
     inputs_device_format.push_back(AnfAlgo::GetInputFormat(cnode, input_index));
     inputs_device_type.push_back(AnfAlgo::GetInputDeviceDataType(cnode, input_index));
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_device_format.push_back(AnfAlgo::GetOutputFormat(cnode, output_index));
     outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(cnode, output_index));

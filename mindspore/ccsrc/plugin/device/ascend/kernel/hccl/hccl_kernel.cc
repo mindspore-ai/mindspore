@@ -206,7 +206,7 @@ void HcclKernel::CalLoopSize() {
     loop_size_ *= static_cast<ulong>(rank_size);
   }
   if (op_name == kReduceScatterOpName && fusion >= 1) {
-    loop_size_ = common::AnfAlgo::GetOutputTensorNum(anf_node);
+    loop_size_ = AnfAlgo::GetOutputTensorNum(anf_node);
   }
 }
 

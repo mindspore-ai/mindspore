@@ -382,7 +382,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     types.push_back(is_weight ? kTypeUnknown : common::AnfAlgo::GetOutputInferDataType(parameter, 0));
   }
   // set parameter initaial device data type
-  auto abs_type = common::AnfAlgo::GetAbstractObjectType(node->abstract());
+  auto abs_type = AnfAlgo::GetAbstractObjectType(node->abstract());
   kernel_build_info_builder->SetOutputsKernelObjectType({kernel::TypeIdToKernelObjectType(abs_type)});
   kernel_build_info_builder->SetOutputsFormat(formats);
   kernel_build_info_builder->SetOutputsDeviceType(types);
@@ -526,7 +526,7 @@ AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
   std::vector<TypeId> types;
   std::vector<ShapeVector> shapes;
   std::vector<AnfNodePtr> make_tuple_inputs_list = {mindspore::NewValueNode(prim::kPrimMakeTuple)};
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputElementNum(node);
   for (size_t tuple_out_index = 0; tuple_out_index < output_num; ++tuple_out_index) {
     make_tuple_inputs_list.emplace_back(CreatTupleGetItemNode(node, tuple_out_index));
     types.push_back(common::AnfAlgo::GetOutputInferDataType(node, tuple_out_index));
@@ -1068,12 +1068,12 @@ void KernelGraph::SetKernelObjectTypesForUnrealNodes() {
     std::vector<kernel::KernelObjectType> input_kernel_object_types;
     if (node->isa<CNode>()) {
       if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-        auto input_object_types = common::AnfAlgo::GetAllInputObjectType(node);
+        auto input_object_types = AnfAlgo::GetAllInputObjectType(node);
         input_kernel_object_types = kernel::TypeIdToKernelObjectType(input_object_types);
         output_kernel_object_types = {kernel::KernelObjectType::TUPLE_UNFOLD};
       }
       if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-        auto output_object_types = common::AnfAlgo::GetAllOutputObjectType(node);
+        auto output_object_types = AnfAlgo::GetAllOutputObjectType(node);
         output_kernel_object_types = kernel::TypeIdToKernelObjectType(output_object_types);
         input_kernel_object_types = {kernel::KernelObjectType::TUPLE_UNFOLD};
       }

@@ -34,7 +34,7 @@ OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
   std::vector<TypeId> output_device_dtype;
   auto type_ptr = node->Type();
   auto shape_ptr = node->Shape();
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -145,7 +145,7 @@ const AnfNodePtr ConcatOutputsForAllGather::Process(const FuncGraphPtr &func_gra
   auto rank_size = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrRankSize);
   std::vector<AnfNodePtr> new_outputs;
   OutputInfo output_info = GetNodeOutputInfo(node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; ++i) {
     int64_t temp = SizeToLong(i);
     auto idx = NewValueNode(temp);

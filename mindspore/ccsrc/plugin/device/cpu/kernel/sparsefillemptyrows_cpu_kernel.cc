@@ -84,7 +84,7 @@ void SparseFillEmptyRowsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kSparseFillEmptyRowsInputsNum, kKernelName);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseFillEmptyRowsInputsNum, kKernelName);
   const auto indices_shape = AnfAlgo::GetInputDeviceShape(node_ptr, 0);
   const auto values_shape = AnfAlgo::GetInputDeviceShape(node_ptr, 1);

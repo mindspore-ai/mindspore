@@ -32,7 +32,7 @@ void MemReuseChecker::CheckSignalOps(const CNodePtr &c_node) const {
     MS_LOG(INFO) << "MemReuseChecker check op_name of  Send or Send";
     // get op's info && check
     MS_LOG(INFO) << "op: " << node_name << " in_num: " << common::AnfAlgo::GetInputTensorNum(c_node)
-                 << " out_num: " << common::AnfAlgo::GetOutputTensorNum(c_node);
+                 << " out_num: " << AnfAlgo::GetOutputTensorNum(c_node);
   }
 }
 
@@ -66,7 +66,7 @@ int64_t MemReuseChecker::CalculOriInput(const KernelGraph *graph) const {
     if (!item->isa<Parameter>()) {
       continue;
     }
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
+    auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId ou_type = AnfAlgo::GetOutputDeviceDataType(item, index);
       // parameter has not init by a cnode
@@ -380,7 +380,7 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
   for (const auto &node : cnodes) {
     MS_EXCEPTION_IF_NULL(node);
     std::vector<const void *> curr_ous;
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       auto it = AnfAlgo::GetOutputAddr(node, i);
       MS_EXCEPTION_IF_NULL(it);

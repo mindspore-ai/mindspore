@@ -58,7 +58,7 @@ void SparseFillEmptyRowsGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node_ptr);
   CHECK_KERNEL_INPUTS_NUM(input_num, kSparseFillEmptyRowsGradInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_ptr);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node_ptr);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseFillEmptyRowsGradOutputsNum, kernel_name_);
   const auto reverse_index_map_shape = AnfAlgo::GetInputDeviceShape(node_ptr, 0);
   const auto grad_values_shape = AnfAlgo::GetInputDeviceShape(node_ptr, 1);

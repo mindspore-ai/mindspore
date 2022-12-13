@@ -248,7 +248,7 @@ kernel::KernelBuildInfoPtr Util::GenerateKernelBuildInfo(const std::vector<AnfNo
       (void)inputs_device_format.emplace_back(kOpFormat_DEFAULT);
       inputs_device_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_device_format.emplace_back(kOpFormat_DEFAULT);
       outputs_device_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));

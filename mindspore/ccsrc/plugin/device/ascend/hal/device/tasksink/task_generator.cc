@@ -206,7 +206,7 @@ AddressPtrList TaskGenerator::GetTaskOutput(const CNodePtr &node) {
   AddressPtrList kernel_outputs;
   // No kernel output if output of the cnode is monad, such as LabelSwitch.
   if (!HasAbstractMonad(node)) {
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       auto it = AnfAlgo::GetOutputAddr(node, i, false);
       AddressPtr output = std::make_shared<Address>();

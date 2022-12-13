@@ -82,7 +82,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     InferCommType(kernel_node);
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
       auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");

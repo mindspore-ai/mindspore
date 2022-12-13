@@ -187,7 +187,7 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     }
   }
 
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     // cal count of same output dtype between abstract and kernel info
     if (kernel_build_info.GetOutputDeviceType(output_index) ==
@@ -475,7 +475,7 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   std::vector<std::string> outputs_format;
   auto output_infer_format = InferOutputFormat(kernel_node, inputs_format);
   MS_LOG(INFO) << "Outputs of " << op_name << " will use same inferred format: " << output_infer_format;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t i = 0; i < output_num; ++i) {
     outputs_device_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, i));
     outputs_format.push_back(output_infer_format);

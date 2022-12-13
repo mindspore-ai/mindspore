@@ -133,7 +133,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
                              std::string *kernel_name, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_size = AnfAlgo::GetOutputTensorNum(node);
   for (size_t j = 0; j < output_size; ++j) {
     if (!AnfAlgo::OutputAddrExist(node, j)) {
       continue;
@@ -177,7 +177,7 @@ void E2eDump::DumpOutputData(const CNodePtr &node, bool trans_flag, const std::s
   }
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_size = AnfAlgo::GetOutputTensorNum(node);
   for (size_t j = 0; j < output_size; ++j) {
     if (!AnfAlgo::OutputAddrExist(node, j)) {
       continue;

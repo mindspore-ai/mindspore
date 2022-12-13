@@ -148,11 +148,13 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
   }
 }
 
+size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) { return AnfUtils::GetOutputTensorNum(node); }
+
 size_t AnfRuntimeAlgorithm::GetOutputTensorMemSize(const AnfNodePtr &node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_index >= common::AnfAlgo::GetOutputTensorNum(node)) {
+  if (output_index >= AnfAlgo::GetOutputTensorNum(node)) {
     MS_EXCEPTION(ArgumentError) << "output index [" << output_index << "] large than the output size ["
-                                << common::AnfAlgo::GetOutputTensorNum(node) << "] of node!";
+                                << AnfAlgo::GetOutputTensorNum(node) << "] of node!";
   }
   TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
   if (output_type_id == kTypeUnknown) {
@@ -253,9 +255,9 @@ std::string AnfRuntimeAlgorithm::GetOriginDataFormat(const AnfNodePtr &node) {
 
 std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_idx > common::AnfAlgo::GetOutputTensorNum(node)) {
+  if (output_idx > AnfAlgo::GetOutputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "Output index:" << output_idx
-                      << " is out of the node output range :" << common::AnfAlgo::GetOutputTensorNum(node) << " #node ["
+                      << " is out of the node output range :" << AnfAlgo::GetOutputTensorNum(node) << " #node ["
                       << node->DebugString() << "]" << trace::DumpSourceLines(node);
   }
   if (common::AnfAlgo::CheckAbsSparseTensor(node)) {
@@ -335,7 +337,9 @@ std::vector<KernelObjectType> AnfRuntimeAlgorithm::GetOutputKernelObjectTypes(co
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
+  if (build_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty build info for node:" << node->DebugString();
+  }
   return build_info->GetAllOutputKernelObjectTypes();
 }
 
@@ -435,9 +439,9 @@ std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, siz
 
 std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_idx > common::AnfAlgo::GetOutputTensorNum(node)) {
+  if (output_idx > AnfAlgo::GetOutputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << common::AnfAlgo::GetOutputTensorNum(node) << "#node[ " << node->DebugString() << "]"
+                      << AnfAlgo::GetOutputTensorNum(node) << "#node[ " << node->DebugString() << "]"
                       << trace::DumpSourceLines(node);
   }
   if (!AnfUtils::IsRealKernel(node)) {
@@ -454,9 +458,9 @@ std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, si
 
 TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_idx > common::AnfAlgo::GetOutputTensorNum(node)) {
+  if (output_idx > AnfAlgo::GetOutputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << common::AnfAlgo::GetOutputTensorNum(node) << "#node [ " << node->DebugString() << "]"
+                      << AnfAlgo::GetOutputTensorNum(node) << "#node [ " << node->DebugString() << "]"
                       << trace::DumpSourceLines(node);
   }
   if (common::AnfAlgo::CheckAbsSparseTensor(node)) {
@@ -1135,7 +1139,7 @@ void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) 
     // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
     // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
     if (common::AnfAlgo::HasNodeAttr(kAttrNopOp, kernel)) {
-      for (size_t idx = 0; idx < common::AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
+      for (size_t idx = 0; idx < AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
         auto real_input = GetInputGraphIdxByKernelIdx(kernel, idx);
         auto device_address = GetPrevNodeMutableOutputAddr(kernel, real_input);
         SetOutputAddr(device_address, idx, kernel.get());
@@ -1249,7 +1253,7 @@ void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   std::map<AnfWithOutIndex, AnfWithOutIndex> new_ref_map;
   for (const auto &node : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(node);
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+    auto output_num = AnfAlgo::GetOutputTensorNum(node);
     if (output_num == 0) {
       MS_LOG(DEBUG) << "This kernel has no output size.";
       continue;
@@ -1402,5 +1406,79 @@ bool AnfRuntimeAlgorithm::IsKernelSelectBackoffOp(const CNodePtr &node) {
     return true;
   }
   return false;
+}
+
+TypeId AnfRuntimeAlgorithm::GetAbstractObjectType(const AbstractBasePtr &abstract) {
+  if (abstract == nullptr) {
+    return kTypeUnknown;
+  }
+  if (abstract->isa<AbstractTensor>()) {
+    return kObjectTypeTensorType;
+  }
+  if (abstract->isa<AbstractTuple>()) {
+    return kObjectTypeTuple;
+  }
+  if (abstract->isa<abstract::AbstractList>()) {
+    return kObjectTypeList;
+  }
+  if (abstract->isa<abstract::AbstractScalar>()) {
+    // scalar input may not converted to tensor
+    return kObjectTypeNumber;
+  }
+  return kTypeUnknown;
+}
+
+TypeId AnfRuntimeAlgorithm::GetOutputObjectType(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto abstract = node->abstract();
+  if (abstract->isa<AbstractTuple>()) {
+    auto tuple_abs = abstract->cast<abstract::AbstractTuplePtr>();
+    auto items = tuple_abs->elements();
+    MS_EXCEPTION_IF_CHECK_FAIL(output_idx < items.size(), "invalid output_idx");
+    return AnfAlgo::GetAbstractObjectType(items[output_idx]);
+  }
+  if (output_idx != 0) {
+    MS_LOG(EXCEPTION) << node->DebugString() << "invalid output_idx" << trace::DumpSourceLines(node);
+  }
+  return AnfAlgo::GetAbstractObjectType(abstract);
+}
+
+TypeId AnfRuntimeAlgorithm::GetInputObjectType(const AnfNodePtr &node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_idx);
+  return AnfAlgo::GetOutputObjectType(input_node_with_index.first, input_node_with_index.second);
+}
+
+std::vector<TypeId> AnfRuntimeAlgorithm::GetAllInputObjectType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << node->DebugString() << "anf_node is not CNode." << trace::DumpSourceLines(node);
+  }
+  std::vector<TypeId> obj_types;
+  auto input_num = common::AnfAlgo::GetInputTensorNum(node->cast<CNodePtr>());
+  for (size_t index = 0; index < input_num; ++index) {
+    obj_types.push_back(AnfAlgo::GetInputObjectType(node, index));
+  }
+  return obj_types;
+}
+
+std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputObjectType(const AnfNodePtr &node) {
+  std::vector<TypeId> obj_types;
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t index = 0; index < output_num; ++index) {
+    obj_types.push_back(AnfAlgo::GetOutputObjectType(node, index));
+  }
+  return obj_types;
+}
+
+std::vector<TypeId> AnfAlgo::GetAllOutputInferDataTypes(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<TypeId> outputs;
+  auto out_nums = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t i = 0; i < out_nums; i++) {
+    auto type = common::AnfAlgo::GetOutputInferDataType(node, i);
+    outputs.push_back(type);
+  }
+  return outputs;
 }
 }  // namespace mindspore::session

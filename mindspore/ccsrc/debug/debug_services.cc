@@ -1884,7 +1884,7 @@ void DebugServices::ResetLoadedTensors() {
 std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   std::vector<std::shared_ptr<TensorData>> result;
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(kernel);
+  auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
   auto kernel_name = GetKernelNodeName(kernel);
   for (size_t j = 0; j < output_size; ++j) {
     auto tensor_name_with_slot = kernel_name + ":" + std::to_string(j);

@@ -1711,7 +1711,7 @@ void Debugger::LoadGraphOutputs() {
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
     std::string kernel_name = GetKernelNodeName(node);
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
+    auto output_size = AnfAlgo::GetOutputTensorNum(node);
     if (partial_memory_) {
       if (!debug_services_->IsWatchPoint(kernel_name, node)) {
         continue;

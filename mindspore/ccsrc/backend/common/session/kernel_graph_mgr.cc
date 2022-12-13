@@ -285,7 +285,7 @@ AnfNodePtr KernelGraphMgr::CreateParameterFromTuple(const AnfNodePtr &node, Kern
   }
   size_t param_index = 0;
   for (const auto &out_node : pre_graph_out) {
-    size_t output_size = common::AnfAlgo::GetOutputTensorNum(out_node);
+    size_t output_size = common::AnfAlgo::GetOutputElementNum(out_node);
     for (size_t i = 0; i < output_size; i++) {
       if (param_index >= parameters.size()) {
         MS_LOG(EXCEPTION) << "Parameters size:" << parameters.size() << "out of range.Node:" << node->DebugString()

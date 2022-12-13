@@ -98,7 +98,7 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
 
   std::vector<TypeId> outputs_type;
   std::vector<BaseShapePtr> outputs_shape;
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
     outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(node, i));

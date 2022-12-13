@@ -80,7 +80,7 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const AclKernelModPtr &
   std::vector<size_t> input_size_list;
   std::vector<size_t> output_size_list;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
 
   // Set input size list
   if (!SetIOInputSize(anf_node, input_num, &input_size_list)) {

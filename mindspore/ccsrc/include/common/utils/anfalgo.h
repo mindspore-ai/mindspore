@@ -113,8 +113,7 @@ class COMMON_EXPORT AnfAlgo {
   static size_t GetInputNum(const CNodePtr &cnode);
   // get the num of inputs exclude monads for real_kernel (which can be build and run in device)
   static size_t GetInputTensorNum(const AnfNodePtr &node);
-  // get the num of output real_kernel(which can be build and run in device)
-  static size_t GetOutputTensorNum(const AnfNodePtr &node);
+  static size_t GetOutputElementNum(const AnfNodePtr &node);
   // get prev node output width output index
   static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node = false);
   // get output shapes inferred by ME from input nodes.
@@ -126,14 +125,6 @@ class COMMON_EXPORT AnfAlgo {
   // get output data type inferred by ME of anf node
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
   static TypeId GetOutputInferDataType(const TypePtr &type, size_t output_idx);
-  // get output abstract type of anf node
-  static TypeId GetAbstractObjectType(const AbstractBasePtr &abstract);
-  static TypeId GetOutputObjectType(const AnfNodePtr &node, size_t output_idx);
-  static TypeId GetInputObjectType(const AnfNodePtr &node, size_t input_idx);
-  static std::vector<TypeId> GetAllInputObjectType(const AnfNodePtr &node);
-  static std::vector<TypeId> GetAllOutputObjectType(const AnfNodePtr &node);
-  // get all output infer data type
-  static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
   // get output original data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
   // set infer shapes and types of anf node

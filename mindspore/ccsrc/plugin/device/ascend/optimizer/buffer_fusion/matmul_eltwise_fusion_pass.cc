@@ -50,7 +50,7 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         (AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise ||
          AnfAlgo::GetFusionType(cnode) == kernel::kPatternBroadcast) &&
-        common::AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_SINGLE_OUTPUT_SIZE) {
+        AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_SINGLE_OUTPUT_SIZE) {
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);
       if (eltwise_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimMatMul)) {

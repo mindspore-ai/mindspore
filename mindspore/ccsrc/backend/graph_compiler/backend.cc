@@ -1435,7 +1435,7 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
-    if (common::AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
+    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
       continue;
     }
     auto output_tensor = CreateOutputTensor(item_with_index.first, item_with_index.second);

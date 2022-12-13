@@ -518,7 +518,7 @@ AnfNodePtr KernelGraphUtils::CreateParameterFromTuple(const AnfNodePtr &node, Ke
   }
   size_t param_index = 0;
   for (const auto &out_node : pre_graph_out) {
-    size_t output_size = common::AnfAlgo::GetOutputTensorNum(out_node);
+    size_t output_size = AnfUtils::GetOutputTensorNum(out_node);
     for (size_t i = 0; i < output_size; i++) {
       if (param_index >= parameters.size()) {
         MS_LOG(EXCEPTION) << "Parameters size:" << parameters.size() << "out of range.Node:" << node->DebugString()
@@ -1050,7 +1050,7 @@ mindspore::BaseRef KernelGraphUtils::CreateNodeOutputTensors(
   MS_LOG(DEBUG) << "Create tensor for output after visit:" << item_with_index.first->DebugString();
 
   // if is graph return nothing ,the function should return a null anylist
-  size_t size = common::AnfAlgo::GetOutputTensorNum(item_with_index.first);
+  size_t size = AnfUtils::GetOutputTensorNum(item_with_index.first);
   if (size == 0) {
     return VectorRef();
   }

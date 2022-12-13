@@ -53,7 +53,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
     inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
     inputs_format.push_back(kOpFormat_DEFAULT);
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
@@ -107,7 +107,7 @@ CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, 
 
   std::vector<TypeId> types;
   std::vector<BaseShapePtr> shapes;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(relu_grad);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(relu_grad);
   for (size_t i = 0; i < output_num; i++) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, i));
     shapes.push_back(common::AnfAlgo::GetOutputDetailShape(relu_grad, i));
