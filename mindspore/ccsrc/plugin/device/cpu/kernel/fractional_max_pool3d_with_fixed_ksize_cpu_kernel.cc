@@ -272,13 +272,13 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::FractionalMaxPool3DWithFixed
         for (t2 = inputD_Start; t2 < inputD_Start + kernelsizeD_; ++t2) {
           for (h2 = inputH_Start; h2 < inputH_Start + kernelsizeH_; ++h2) {
             for (w2 = inputW_Start; w2 < inputW_Start + kernelsizeW_; ++w2) {
-              if (t2 < 0 && t2 >= inputD_) {
+              if (t2 < 0 || t2 >= inputD_) {
                 MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index T value is illegal.";
               }
-              if (h2 < 0 && h2 >= inputH_) {
+              if (h2 < 0 || h2 >= inputH_) {
                 MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index H value is illegal.";
               }
-              if (w2 < 0 && w2 >= inputW_) {
+              if (w2 < 0 || w2 >= inputW_) {
                 MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index W value is illegal.";
               }
               argmax_t planeIndex = t2 * inputH_ * inputW_ + h2 * inputW_ + w2;
