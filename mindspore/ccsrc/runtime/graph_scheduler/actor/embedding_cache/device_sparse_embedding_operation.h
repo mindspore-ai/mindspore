@@ -30,23 +30,18 @@ class DeviceSparseEmbeddingOperation : public DeviceEmbeddingOperation {
                                  std::shared_ptr<EmbeddingHostCache> emb_host_cache,
                                  const std::pair<int, int> &local_embedding_slice_bounds,
                                  const std::pair<int, int> &local_device_cache_bounds,
-                                 CNodePtr embedding_cache_lookup_node, CNodePtr embedding_cache_update_node,
-                                 EmbeddingCacheStatisticsInfo *statistics_info, const size_t &stream_id,
-                                 std::atomic_bool *running)
+                                 EmbeddingCacheStatisticsInfo *statistics_info, const size_t &stream_id)
       : DeviceEmbeddingOperation(actor, device_context, emb_dev_cache, emb_host_cache, local_embedding_slice_bounds,
-                                 local_device_cache_bounds, embedding_cache_lookup_node, embedding_cache_update_node,
-                                 statistics_info, stream_id, running) {}
+                                 local_device_cache_bounds, statistics_info, stream_id) {}
 
   ~DeviceSparseEmbeddingOperation() override = default;
-
-  void LookupEmbeddingTable(size_t indices_num, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
-                            const int *indices_addr, float *output_addr) override;
 
   bool CountCacheMissIds(int *batch_ids, const size_t batch_ids_num, size_t data_step, size_t graph_running_step,
                          bool *device_cache_need_wait_graph, bool *host_cache_need_wait_graph) override;
 
-  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) override;
-  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) override;
+ protected:
+  void BuildEmbeddingCacheLookupKernel() override;
+  void BuildEmbeddingCacheUpdateKernel() override;
 
  private:
   // Batch preprocess the current batch ids information of cache hitting or exceeding the range of the embedding table
@@ -59,6 +54,9 @@ class DeviceSparseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   // Parse the hit and swap information of the currently preprocessed id in the device cache.
   bool ParseDeviceData(int id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, size_t data_step);
+
+  bool LookupDeviceCache(void *ids, void *embedding_cache, size_t ids_num, size_t cache_size, size_t embedding_size,
+                         void *outputs) override;
 
   DISABLE_COPY_AND_ASSIGN(DeviceSparseEmbeddingOperation);
 };
