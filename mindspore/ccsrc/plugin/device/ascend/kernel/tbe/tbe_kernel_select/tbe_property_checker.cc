@@ -71,7 +71,8 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
   // check stride[-1] != 1
   if (common::AnfAlgo::HasNodeAttr(kAttrStrides, cnode)) {
     auto strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrStrides);
-    if (!strides.empty() && strides[strides.size() - 1] <= 0) {
+    bool has_negative = std::any_of(strides.begin(), strides.end(), [](int elem) -> bool { return elem <= 0; });
+    if (!strides.empty() && has_negative) {
       return false;
     }
   } else {
