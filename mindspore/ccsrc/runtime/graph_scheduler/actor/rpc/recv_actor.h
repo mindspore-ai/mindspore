@@ -52,6 +52,9 @@ class RecvActor : public RpcActor {
   // it should be blocked until 'SetOpcontext' is called.
   void ResetOpcontext() override;
 
+  // Update the context status after loop_count_actor is launched.
+  void UpdateStatus() override;
+
   // Set recv actor's source peer info, in another word, recv actor's input.
   void SetRouteInfo(uint32_t src_rank, const std::string &src_role, const std::string &recv_src_node_name,
                     const std::string &recv_dst_node_name) override;

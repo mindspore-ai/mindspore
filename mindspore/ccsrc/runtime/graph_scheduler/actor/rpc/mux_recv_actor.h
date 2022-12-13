@@ -41,14 +41,6 @@ class MuxRecvActor : public RecvActor {
   // Get the from actor aid of received message.
   const AID &from_actor_aid() const { return from_actor_aid_; }
 
-  // The mux recv actor receives requests for the service process. Currently, the requests are processed serially. After
-  // each request (that is, the execution of an actor dag) ends, the state of the Recv actor needs to be refreshed. Make
-  // it in the ready state to continue with the next request.
-  void UpdateStatus() override;
-
-  // Mux recv actor need not set 'is_context_valid_' to be false, just leave it blank;
-  void ResetOpcontext() override {}
-
   // Finalize mux recv actor gracefully.
   void Finalize() override;
 
@@ -62,18 +54,8 @@ class MuxRecvActor : public RecvActor {
   // Parse finalize command message from received message.
   void ParseFinalizeReqData(size_t data_len, const MessageBase *const msg, bool *need_finalize) override;
 
-  // The callback set to rpc module to allocate message(Raw pointer).
-  void *AllocateMessage(size_t size);
-
   // Record the from actor aid when receive a message;
   AID from_actor_aid_;
-
-  // The flag indicates whether this mux recv actor is ready to execute.
-  std::atomic_bool is_ready_{true};
-  // The mux recv actor receives requests for the service process. Need a lock to keep the requests are processed
-  // serially.
-  std::mutex is_ready_mtx_;
-  std::condition_variable is_ready_cv_;
 
   // Whether the actor is finalized_
   std::atomic_bool finalized_{false};

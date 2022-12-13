@@ -27,8 +27,7 @@ from mindspore import context, nn
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, \
     _to_full_shapes, _get_pipeline_stages
-from mindspore.parallel._ps_context import _is_role_worker, _is_role_sched, _is_ps_mode, \
-                                           _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.ops import operations as P
 
 
@@ -64,8 +63,7 @@ def _dynamic_sink_exception_scenario(dataset_iter):
     """The exception scenario for dynamic data is not applicable."""
     _, dataset_shapes = dataset_iter.types_shapes()
 
-    if _has_dynamic_shape(dataset_shapes) or (_is_role_worker() and _is_ps_mode()) or \
-       context.get_context("mode") != context.GRAPH_MODE:
+    if _has_dynamic_shape(dataset_shapes) or context.get_context("mode") != context.GRAPH_MODE:
         return True
     return False
 
@@ -422,9 +420,7 @@ class _DatasetIter:
             ds.config.set_dynamic_shape(True)
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
-                # PS mode does not support loop sink and need get the real sink size.
-                if not (_is_role_worker() and _is_ps_mode()) or _enable_distributed_mindrt():
-                    self.sink_size = dataset.__loop_size__
+                self.sink_size = dataset.__loop_size__
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1
                                       and not self.dynamic_shape)
             dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size,
@@ -478,9 +474,6 @@ class _DatasetIter:
         sink_size = 1
         if hasattr(self.dataset, '__loop_size__'):
             sink_size = self.dataset.__loop_size__
-        elif _is_role_worker() and _is_ps_mode() and not _enable_distributed_mindrt():
-            # PS mode does not support loop sink.
-            sink_size = 1
         else:
             if context.get_context("enable_ge") or context.get_context("device_target") == "Ascend" \
                     or context.get_context("device_target") == "GPU":

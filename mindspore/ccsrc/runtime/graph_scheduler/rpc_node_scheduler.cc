@@ -273,12 +273,15 @@ void RpcActorStatusUpdater::set_rpc_actors(const RpcActorSetPtr &rpc_actors) {
 }
 
 void RpcActorStatusUpdater::UpdateRpcActorStatus() const {
-  // To ensure performance, only mux recv actor need to update ready status for embedding cache mode currently.
-  if (is_embedding_cache_server()) {
-    MS_EXCEPTION_IF_NULL(rpc_actors_.lock());
+  // Update status for rpc actors to control their execution orders.
+  if (rpc_actors_.lock() != nullptr) {
     for (auto &recv_actor : rpc_actors_.lock()->recv_actors_) {
       MS_EXCEPTION_IF_NULL(recv_actor);
       recv_actor->UpdateStatus();
+    }
+    for (auto &send_actor : rpc_actors_.lock()->send_actors_) {
+      MS_EXCEPTION_IF_NULL(send_actor);
+      send_actor->UpdateStatus();
     }
   }
 }

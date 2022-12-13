@@ -60,7 +60,16 @@ bool SendActor::ConnectServer() {
     MS_LOG(INFO) << "Successfully connect to server " << server_url_ << ", inter-process edge name: " << peer_actor_id;
     peer_actor_urls_[peer_actor_id] = server_url_;
   }
+
+  size_t use_void_msg = common::GetEnv("use_void").empty() ? false : true;
+  MS_LOG(INFO) << "Recv actor use void* message: " << use_void_msg;
   return true;
+}
+
+void SendActor::UpdateStatus() {
+  if (!client_->Flush(server_url_)) {
+    MS_LOG(EXCEPTION) << "Failed to flush client for server " << server_url_;
+  }
 }
 
 bool SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {

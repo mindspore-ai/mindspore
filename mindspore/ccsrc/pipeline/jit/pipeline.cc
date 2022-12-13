@@ -1554,7 +1554,8 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
+  if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->cache_enable() &&
+      !ps::PSContext::instance()->is_worker()) {
     return true;
   }
   const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();

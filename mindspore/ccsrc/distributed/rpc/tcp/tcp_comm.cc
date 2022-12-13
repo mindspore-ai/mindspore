@@ -392,7 +392,7 @@ bool TCPComm::Flush(const std::string &dst_url) {
     return false;
   } else {
     std::lock_guard<std::mutex> lock(*(conn->conn_mutex));
-    return (conn->Flush() > 0);
+    return (conn->Flush() >= 0);
   }
 }
 

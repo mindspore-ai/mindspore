@@ -50,6 +50,12 @@ void RecvActor::ResetOpcontext() {
   is_context_valid_ = false;
 }
 
+void RecvActor::UpdateStatus() {
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  is_context_valid_ = true;
+  context_cv_.notify_all();
+}
+
 void RecvActor::SetRouteInfo(uint32_t, const std::string &, const std::string &recv_src_node_name,
                              const std::string &recv_dst_node_name) {
   (void)rpc_input_node_name_.emplace_back(recv_src_node_name);
@@ -63,6 +69,8 @@ bool RecvActor::StartServer() {
 
   // Only set the memory allocating callback when using void* message.
   bool use_void_msg = common::GetEnv("use_void").empty() ? false : true;
+  MS_LOG(INFO) << "Recv actor use void* message: " << use_void_msg;
+
   std::function<void *(size_t size)> allocate_callback;
   if (use_void_msg) {
     allocate_callback = std::bind(&RecvActor::AllocateMessage, this, std::placeholders::_1);
@@ -105,9 +113,6 @@ void RecvActor::StopRpcAtException() {
 }
 
 void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTensor> *const context) {
-  // Once recv actor is launched, lock the context so that the next step's recv will not be launched in advance.
-  ResetOpcontext();
-
   MS_ERROR_IF_NULL_WO_RET_VAL(msg);
   MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
   MS_ERROR_IF_NULL_WO_RET_VAL(context);
@@ -373,6 +378,8 @@ MessageBase *RecvActor::HandleMessage(MessageBase *const msg) {
     return distributed::rpc::NULL_MSG;
   }
   lock.unlock();
+  // Once recv actor is launched, lock the context so that the next step's recv will not be launched in advance.
+  ResetOpcontext();
 
   MS_LOG(INFO) << "Rpc actor recv message for inter-process edge: " << inter_process_edge_names_;
 
