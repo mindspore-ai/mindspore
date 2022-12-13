@@ -78,7 +78,7 @@ int ScaleAndTranslateGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   std::vector<int64_t> inp_shape_scale = inputs[kIndex2]->GetShapeVector();
   std::vector<int64_t> inp_shape_translation = inputs[kIndex3]->GetShapeVector();
   std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
-  for (const auto inputtest : inputs) {
+  for (const auto &inputtest : inputs) {
     auto inshape = inputtest->GetShapeVector();
     if (!IsValidShape(inshape)) {
       return KRET_UNKNOWN_SHAPE;
