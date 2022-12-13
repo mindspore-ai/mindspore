@@ -13,18 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow if in if scenario"""
-import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
+from tests.st.fallback.cases_register import case_register
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_in_if_5():
     """
     Feature: JIT Fallback
@@ -44,11 +42,9 @@ def test_if_in_if_5():
     assert res == 4
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_else_in_if_else_2():
     """
     Feature: JIT Fallback
@@ -79,11 +75,9 @@ def test_if_else_in_if_else_2():
     assert res == -16
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_if_in_if_multi_conds_2():
     """
     Feature: JIT Fallback
@@ -109,10 +103,8 @@ def test_if_in_if_multi_conds_2():
     assert res == 20
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_if_in_if_4():
     """
     Feature: JIT Fallback

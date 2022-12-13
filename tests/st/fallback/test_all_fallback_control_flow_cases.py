@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-from tests.st.control.cases_register import case_register
+from tests.st.fallback.cases_register import case_register
 from mindspore import context
 
 
@@ -41,7 +41,7 @@ def test_level0_gpu_cases():
     Expectation: All cases passed.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    case_register.check_and_run(f"GPU", 0)
+    case_register.check_and_run("GPU", 0)
 
 
 @pytest.mark.level0

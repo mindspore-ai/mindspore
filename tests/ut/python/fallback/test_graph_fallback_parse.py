@@ -16,7 +16,8 @@
 import pytest
 import numpy as np
 import mindspore.nn as nn
-from mindspore import context, Tensor
+from mindspore import context, Tensor, jit
+from mindspore.ops import Primitive
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -163,6 +164,34 @@ def test_parse_slice():
     assert out[0].asnumpy() == 11 and out[1].asnumpy() == 22
 
 
+def test_list_count():
+    """
+    Feature: Fallback feature
+    Description: support attr/method of builtin type.
+    Expectation: No exception.
+    """
+    @jit
+    def list_count():
+        x = list([1, 2, 3])
+        res = x.count(1)
+        return res
+    assert list_count() == 1
+
+
+def test_list_append():
+    """
+    Feature: Fallback feature
+    Description: support attr/method of builtin type.
+    Expectation: No exception.
+    """
+    @jit
+    def list_append():
+        x = list([1, 2, 3])
+        x.append(4)
+        return Tensor(x)
+    assert np.all(list_append().asnumpy() == np.array([1, 2, 3, 4]))
+
+
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_parse_subscript():
     """
@@ -256,3 +285,36 @@ def test_parse_ifexpr():
     net = Network()
     out = net()
     assert out == 0
+
+
+def test_fallback_tensor_array_astype():
+    """
+    Feature: JIT Fallback
+    Description: Test Tensor(array) with astype() in graph mode.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        me_x = Tensor([1.1, -2.1]).astype("float32")
+        return me_x
+    print(foo())
+
+
+def test_fallback_tuple_with_mindspore_function():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback when local input has tuple with mindspore function type, such as Cell, Primitive.
+    Expectation: No exception.
+    """
+    def test_isinstance(a, base_type):
+        mro = type(a).mro()
+        for i in base_type:
+            if i in mro:
+                return True
+        return False
+
+    @jit
+    def foo():
+        return test_isinstance(np.array(1), (np.ndarray, nn.Cell, Primitive))
+
+    assert foo()

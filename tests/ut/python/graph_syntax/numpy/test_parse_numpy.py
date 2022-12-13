@@ -15,8 +15,7 @@
 """ test_parse_numpy """
 import pytest
 import numpy as np
-from mindspore import nn
-from mindspore import context
+from mindspore import nn, context, jit, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -67,3 +66,18 @@ def test_use_numpy_module():
     with pytest.raises(RuntimeError) as err:
         net()
     assert "Should not use Python object in runtime" in str(err.value)
+
+
+def test_np_calculate():
+    """
+    Feature: Fallback feature.
+    Description: Support numpy calculation.
+    Expectation: No exception.
+    """
+    @jit
+    def np_calculate():
+        x = np.array([3, 1, 2, 4, 5])
+        y = x % 2
+        z = Tensor(y)
+        return z
+    assert np.all(np_calculate().asnumpy() == np.array([1, 1, 0, 0, 1]))

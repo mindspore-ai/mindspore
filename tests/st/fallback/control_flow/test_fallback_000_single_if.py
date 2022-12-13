@@ -13,19 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
-import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
 from mindspore import dtype as mstype
+from tests.st.fallback.cases_register import case_register
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_if_4():
     """
     Feature: JIT Fallback
@@ -44,11 +42,9 @@ def test_single_if_4():
     assert res == 42
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_single_if_two_cond():
     """
     Feature: JIT Fallback
@@ -66,10 +62,8 @@ def test_single_if_two_cond():
     assert res == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_single_if_builtin_function_abs():
     """
     Feature: JIT Fallback
@@ -86,10 +80,8 @@ def test_single_if_builtin_function_abs():
     assert res == -13
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_ascend
 def test_single_if_builtin_function_abs_min():
     """
     Feature: JIT Fallback

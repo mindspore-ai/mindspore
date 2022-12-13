@@ -13,19 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
-import pytest
 import mindspore as ms
 from mindspore import Tensor, jit, context, nn, Parameter
 import numpy as np
+from tests.st.fallback.cases_register import case_register
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_in_while_1():
     """
     Feature: JIT Fallback
@@ -48,11 +46,9 @@ def test_while_in_while_1():
     assert res == 8
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_in_while_2():
     """
     Feature: JIT Fallback
@@ -74,11 +70,9 @@ def test_while_in_while_2():
     assert res == 4
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_in_while_3():
     """
     Feature: JIT Fallback
@@ -102,11 +96,9 @@ def test_while_in_while_3():
     assert res == 7
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_in_while_with_two_cond_1():
     """
     Feature: JIT Fallback
@@ -129,11 +121,9 @@ def test_while_in_while_with_two_cond_1():
     assert res == 27
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_in_while_with_two_cond_2():
     """
     Feature: JIT Fallback
@@ -155,11 +145,9 @@ def test_while_in_while_with_two_cond_2():
     assert res == 8
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_in_while_with_two_cond_3():
     """
     Feature: JIT Fallback
@@ -181,11 +169,9 @@ def test_while_in_while_with_two_cond_3():
     assert res == -1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
 def test_while_in_while_with_param():
     """
     Feature: JIT Fallback
