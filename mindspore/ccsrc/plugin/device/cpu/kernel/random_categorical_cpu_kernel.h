@@ -48,14 +48,7 @@ class RandomCategoricalCpuKernel : public NativeCpuKernelMod, public MatchKernel
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddInputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeInt32)};
-    return support_list;
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); };
 
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
