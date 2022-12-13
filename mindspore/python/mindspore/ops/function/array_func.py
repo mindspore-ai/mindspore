@@ -4856,6 +4856,10 @@ def vsplit(x, indices_or_sections):
          Tensor(shape=[1, 3], dtype=Float32, value=[[ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]]),
          Tensor(shape=[1, 3], dtype=Float32, value=[[ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]]))
     """
+    if not isinstance(x, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
+    if x.ndim < 1:
+        raise ValueError(f'vsplit expect `x` is a Tensor with at least 1 dimension, but got {x.ndim}')
     return tensor_split(x, indices_or_sections, 0)
 
 
@@ -4882,6 +4886,11 @@ def hsplit(x, indices_or_sections):
          Tensor(shape=[2, 1], dtype=Float32, value=[[ 1.00000000e+00], [ 4.00000000e+00]]),
          Tensor(shape=[2, 1], dtype=Float32, value=[[ 2.00000000e+00], [ 5.00000000e+00]]))
     """
+    if not isinstance(x, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
+    if x.ndim < 2:
+        raise ValueError(f'hsplit expect `x` is a Tensor with at least 2 dimension, but got {x.ndim}')
+
     return tensor_split(x, indices_or_sections, 1)
 
 
@@ -4908,6 +4917,11 @@ def dsplit(x, indices_or_sections):
          Tensor(shape=[1, 2, 1], dtype=Float32, value=[[[ 1.00000000e+00], [ 4.00000000e+00]]]),
          Tensor(shape=[1, 2, 1], dtype=Float32, value=[[[ 2.00000000e+00], [ 5.00000000e+00]]]))
     """
+    if not isinstance(x, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
+    if x.ndim < 3:
+        raise ValueError(f'dsplit expect `x` is a Tensor with at least 3 dimension, but got {x.ndim}')
+
     return tensor_split(x, indices_or_sections, 2)
 
 
