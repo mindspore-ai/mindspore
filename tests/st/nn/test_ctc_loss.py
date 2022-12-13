@@ -34,6 +34,7 @@ class CTCLossNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -47,12 +48,11 @@ def test_ctc_loss_tnc(mode, reduct):
     """
     ms.set_context(mode=mode)
     loss = CTCLossNet(reduction=reduct)
-
-    t = 10  # Input sequence length
-    c = 4  # Number of classes
-    n = 2  # Batch size
-    s = 5  # Target sequence length of longest target in batch (padding length)
-    s_min = 3  # Minimum target length, for demonstration purposes
+    t = 10
+    c = 4
+    n = 2
+    s = 5
+    s_min = 3
     arr = np.arange(t * n * c).reshape((t, n, c))
     inputs = Tensor(arr, dtype=mstype.float32)
     input_lengths = np.full(shape=(n), fill_value=t)
@@ -61,21 +61,20 @@ def test_ctc_loss_tnc(mode, reduct):
     target_lengths = Tensor(target_lengths, dtype=mstype.int32)
     arr = np.arange(n * s).reshape((n, s))
     targets = Tensor(arr, dtype=mstype.int32)
-
-    output = loss(inputs, targets, input_lengths, target_lengths)
-
     if reduct == "none":
-        expect_output = np.array([-3.78184143e+002, -4.60606476e+002])
+        expect_output = np.array([-378.18414, -460.60648])
     elif reduct == "mean":
-        expect_output = np.array([-419.395])
+        expect_output = np.array([-139.79843])
     else:
-        expect_output = np.array([-838.791])
+        expect_output = np.array([-838.79065])
+    output = loss(inputs, targets, input_lengths, target_lengths)
     assert np.allclose(output.asnumpy(), expect_output)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -89,18 +88,18 @@ def test_ctc_loss_tc(mode, reduct):
     """
     ms.set_context(mode=mode)
     loss = CTCLossNet(reduction=reduct)
-
-    t = 10  # Input sequence length
-    c = 4  # Number of classes
-    s_min = 3  # Minimum target length, for demonstration purposes
+    t = 10
+    c = 4
+    s_min = 3
     arr = np.arange(t * c).reshape((t, c))
     inputs = Tensor(arr, dtype=mstype.float32)
-    input_lengths = t
-    target_lengths = s_min
+    input_lengths = Tensor([t], dtype=mstype.int32)
+    target_lengths = Tensor([s_min], dtype=mstype.int32)
     arr = np.arange(s_min).reshape((s_min,))
     targets = Tensor(arr, dtype=mstype.int32)
-
+    if reduct == "mean":
+        expect_output = np.array([-66.061386])
+    else:
+        expect_output = np.array([[-198.18416]])
     output = loss(inputs, targets, input_lengths, target_lengths)
-
-    expect_output = np.array([-1.98184158e+002])
     assert np.allclose(output.asnumpy(), expect_output)
