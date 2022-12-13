@@ -151,8 +151,8 @@ bool Adam::get_use_nesterov() const {
   return GetValue<bool>(value_ptr);
 }
 
-abstract::AbstractBasePtr ApplyAdamDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args) {
+abstract::AbstractBasePtr ApplyAdamInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   AdamInfer apply_adamd;
   auto type = apply_adamd.InferType(primitive, input_args);

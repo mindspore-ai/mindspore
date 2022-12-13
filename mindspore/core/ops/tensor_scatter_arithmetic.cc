@@ -148,8 +148,7 @@ REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterDiv, prim::kPrimTensorScatterDiv, Tens
                              true);
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterMul, prim::kPrimTensorScatterMul, TensorScatterArithmeticInfer, nullptr,
                              true);
-
-// REGISTER_PRIMITIVE_EVAL_IMPL can be used after min/max shape removed
-REGISTER_PRIMITIVE_C(kNameTensorScatterUpdate, TensorScatterUpdate);
+REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterUpdate, prim::kPrimTensorScatterUpdate, TensorScatterArithmeticInfer, nullptr,
+                             true);
 }  // namespace ops
 }  // namespace mindspore

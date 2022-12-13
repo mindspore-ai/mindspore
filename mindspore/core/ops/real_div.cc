@@ -58,6 +58,6 @@ AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                              const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(RealDivInferShape(primitive, input_args), RealDivInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameRealDiv, RealDiv);
+REGISTER_PRIMITIVE_EVAL_IMPL(RealDiv, prim::kPrimRealDiv, RealDivInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

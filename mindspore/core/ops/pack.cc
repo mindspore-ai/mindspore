@@ -15,6 +15,7 @@
  */
 
 #include "ops/pack.h"
+#include "ops/stack.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -29,6 +30,6 @@ int64_t Pack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 void Pack::Init(const int64_t &axis) { this->set_axis(axis); }
 
 MIND_API_OPERATOR_IMPL(Pack, BaseOperator);
-REGISTER_PRIMITIVE_C(kNamePack, Pack);
+REGISTER_PRIMITIVE_EVAL_IMPL(Pack, prim::kPrimPack, StackInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

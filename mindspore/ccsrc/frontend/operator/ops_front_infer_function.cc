@@ -1102,6 +1102,19 @@ std::optional<StandardPrimitiveImplReg> GetFrontendPrimitiveInferImpl(const Prim
     return iter->second;
   }
 
+  // The operators in this list are registered on the core/ops, which means operators are registered on both frontend
+  // and backend, affects the infer value of the frontend. We use this list to skip the registration of the frontend, so
+  // that the optimization of the frontend like constant folding, can be carried out smoothly. We need to delete this
+  // list when the infer value can be mapped to the CPU backend operator.
+  std::vector<PrimitivePtr> skip_frontend_registration_list{
+    prim::kPrimAdd, prim::kPrimMod,          prim::kPrimMul,   prim::kPrimRealDiv,
+    prim::kPrimSub, prim::kPrimStridedSlice, prim::kPrimStack, prim::kPrimTensorScatterUpdate,
+    prim::kPrimTile};
+  if (std::any_of(skip_frontend_registration_list.begin(), skip_frontend_registration_list.end(),
+                  [&primitive](const PrimitivePtr &item) { return IsPrimitiveEquals(primitive, item); })) {
+    return std::optional<StandardPrimitiveImplReg>();
+  }
+
   auto find = abstract::GetPrimitiveInferImpl(primitive);
   if (find.has_value()) {
     return find.value();

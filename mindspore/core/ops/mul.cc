@@ -58,6 +58,6 @@ AbstractBasePtr MulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
                          const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(MulInferShape(primitive, input_args), MulInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameMul, Mul);
+REGISTER_PRIMITIVE_EVAL_IMPL(Mul, prim::kPrimMul, MulInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

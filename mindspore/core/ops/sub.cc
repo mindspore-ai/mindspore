@@ -57,6 +57,6 @@ AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   }
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_C(kNameSub, Sub);
+REGISTER_PRIMITIVE_EVAL_IMPL(Sub, prim::kPrimSub, SubInfer, nullptr, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -483,6 +483,6 @@ AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const Pri
   return std::make_shared<abstract::AbstractTensor>(StridedSliceInferType(primitive, input_args),
                                                     StridedSliceInferShape(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameStridedSlice, StridedSlice);
+REGISTER_PRIMITIVE_EVAL_IMPL(StridedSlice, prim::kPrimStridedSlice, StridedSliceInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
