@@ -83,6 +83,26 @@ struct AnfDumpHandlerRegister {
         auto shape = AnfAlgo::GetOutputDeviceShape(node, idx);
         return PrintKernelFormatAndType(format, type, shape);
       });
+    AnfDumpHandler::SetPrintInputKernelObjectTypesHandler([](const std::shared_ptr<AnfNode> &node) -> std::string {
+      if (node == nullptr) {
+        return "";
+      }
+      auto input_obj_types = AnfAlgo::GetInputKernelObjectTypes(node);
+      return std::accumulate(
+        input_obj_types.begin(), input_obj_types.end(), std::string(), [](std::string &a, const KernelObjectType &b) {
+          return a.empty() ? kernel::KernelObjectTypeLabel(b) : a + ", " + kernel::KernelObjectTypeLabel(b);
+        });
+    });
+    AnfDumpHandler::SetPrintOutputKernelObjectTypesHandler([](const std::shared_ptr<AnfNode> &node) -> std::string {
+      if (node == nullptr) {
+        return "";
+      }
+      auto output_obj_types = AnfAlgo::GetOutputKernelObjectTypes(node);
+      return std::accumulate(
+        output_obj_types.begin(), output_obj_types.end(), std::string(), [](std::string &a, const KernelObjectType &b) {
+          return a.empty() ? kernel::KernelObjectTypeLabel(b) : a + ", " + kernel::KernelObjectTypeLabel(b);
+        });
+    });
   }
 } callback_register;
 
