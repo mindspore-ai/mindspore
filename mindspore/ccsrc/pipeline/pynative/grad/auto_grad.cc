@@ -1058,49 +1058,67 @@ void AutoGradCellImpl::ElimateTupleGetItem() {
   }
 }
 
-void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg) {
+void AutoGradCellImpl::DoParameterReplaceByManager(const AnfNodePtrList &weights, bool has_sens_arg) {
   const auto &parameters = tape_->parameters();
   auto cell_inputs_size = cell_inputs_.size();
-  pynative::PyNativeAlgo::Common::DumpGraphIR("replace_param.ir", tape_);
-  if (need_do_manager_replace_) {
-    MS_LOG(DEBUG) << "Do parameter replace by manager";
-    auto mng = MakeManager({tape_}, false);
-    auto tr = mng->Transact();
-
-    for (size_t i = 0; i < cell_inputs_size; ++i) {
-      (void)tr.Replace(cell_inputs_[i], parameters[i]);
-    }
-    // (Inputs, sens, weights) or (Inputs, weights)
-    size_t weight_offset = cell_inputs_size;
-    if (has_sens_arg) {
-      weight_offset = weight_offset + 1;
-    }
-    for (size_t i = 0; i < weights.size(); ++i) {
-      (void)tr.Replace(weights[i], parameters[weight_offset + i]);
-    }
-    tr.Commit();
-    need_do_manager_replace_ = false;
-  } else {
-    for (size_t i = 0; i < cell_inputs_size; ++i) {
-      Replace(cell_inputs_[i], parameters[i]);
-    }
-    size_t weight_offset = cell_inputs_size;
-    if (has_sens_arg) {
-      weight_offset = weight_offset + 1;
-    }
-    for (size_t i = 0; i < weights.size(); ++i) {
-      Replace(weights[i], parameters[weight_offset + i]);
-    }
+  auto mng = MakeManager({tape_}, false);
+  auto tr = mng->Transact();
+  for (size_t i = 0; i < cell_inputs_size; ++i) {
+    (void)tr.Replace(cell_inputs_[i], parameters[i]);
   }
-
+  // (Inputs, sens, weights) or (Inputs, weights)
+  size_t weight_offset = cell_inputs_size;
+  if (has_sens_arg) {
+    weight_offset = weight_offset + 1;
+  }
+  for (size_t i = 0; i < weights.size(); ++i) {
+    (void)tr.Replace(weights[i], parameters[weight_offset + i]);
+  }
   for (auto &weight : weights_used_in_graph_) {
     auto t = pynative::PyNativeAlgo::Common::GetTensorFromParam(weight);
     if (need_grad_weights_.find(t->id()) == need_grad_weights_.end()) {
-      MS_LOG(DEBUG) << "Convert " << weight->DebugString() << " to value node";
+      MS_LOG(DEBUG) << "Convert " << weight->DebugString() << " to value node by manager.";
+      auto value_node = NewValueNode(t);
+      value_node->set_abstract(t->ToAbstract()->Broaden());
+      (void)tr.Replace(weight, value_node);
+    }
+  }
+  tr.Commit();
+}
+
+void AutoGradCellImpl::DoParameterReplaceByUser(const AnfNodePtrList &weights, bool has_sens_arg) {
+  const auto &parameters = tape_->parameters();
+  auto cell_inputs_size = cell_inputs_.size();
+  for (size_t i = 0; i < cell_inputs_size; ++i) {
+    Replace(cell_inputs_[i], parameters[i]);
+  }
+  size_t weight_offset = cell_inputs_size;
+  if (has_sens_arg) {
+    weight_offset = weight_offset + 1;
+  }
+  for (size_t i = 0; i < weights.size(); ++i) {
+    Replace(weights[i], parameters[weight_offset + i]);
+  }
+  for (auto &weight : weights_used_in_graph_) {
+    auto t = pynative::PyNativeAlgo::Common::GetTensorFromParam(weight);
+    if (need_grad_weights_.find(t->id()) == need_grad_weights_.end()) {
+      MS_LOG(DEBUG) << "Convert " << weight->DebugString() << " to value node by user.";
       auto value_node = NewValueNode(t);
       value_node->set_abstract(t->ToAbstract()->Broaden());
       Replace(weight, value_node);
     }
+  }
+}
+
+void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg) {
+  pynative::PyNativeAlgo::Common::DumpGraphIR("replace_param.ir", tape_);
+  if (need_do_manager_replace_) {
+    MS_LOG(DEBUG) << "Do parameter replace by manager.";
+    DoParameterReplaceByManager(weights, has_sens_arg);
+    need_do_manager_replace_ = false;
+  } else {
+    MS_LOG(DEBUG) << "Do parameter replace by user.";
+    DoParameterReplaceByUser(weights, has_sens_arg);
   }
   ElimateTupleGetItem();
 }

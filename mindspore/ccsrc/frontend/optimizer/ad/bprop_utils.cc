@@ -159,7 +159,7 @@ FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
     return nullptr;
   }
   if (!CheckBpropHash(prim->name(), bprop_fg->bprop_hash(), bprop_fg->bprop_filepath())) {
-    MS_LOG(EXCEPTION) << "The bprop mindir files are not up to date.";
+    MS_LOG(EXCEPTION) << "The bprop mindir files are not up to date. The name of prim is: " << prim->name() << ".";
   }
   return bprop_fg;
 }

@@ -141,6 +141,18 @@ class MakeListGradient : public MetaFuncGraph {
 };
 using MakeListGradientPtr = std::shared_ptr<MakeListGradient>;
 
+class UpdateStateGradient : public MetaFuncGraph {
+ public:
+  explicit UpdateStateGradient(const std::string &name) : MetaFuncGraph(name) {}
+  ~UpdateStateGradient() override = default;
+  MS_DECLARE_PARENT(UpdateStateGradient, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const UpdateStateGradient &lhs, const UpdateStateGradient &rhs) {
+    return lhs.name_ == rhs.name_;
+  }
+};
+using MUpdateStateGradientPtr = std::shared_ptr<UpdateStateGradient>;
+
 class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,

@@ -531,8 +531,8 @@ class UpdateState(Primitive):
     def __init__(self):
         pass
 
-    def __call__(self, state, expr):
-        return state
+    def __call__(self, *args):
+        return args[0]
 
 
 class StopGradient(Primitive):
