@@ -38,6 +38,7 @@ enum MsBackendPolicy {
 
 const int kGraphMode = 0;
 const int kPynativeMode = 1;
+const char kDeviceUnDefined[] = "DeviceUnDefined";
 const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
 const char kAscendDevice[] = "Ascend";

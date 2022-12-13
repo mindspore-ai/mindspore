@@ -49,6 +49,7 @@ class BACKEND_EXPORT KernelBuildInfo {
   ~KernelBuildInfo() = default;
 
   KernelType kernel_type() const { return kernel_type_; }
+  void set_kernel_type(KernelType kernel_type) { kernel_type_ = kernel_type; }
 
   std::string GetInputFormat(size_t input_index) const;
 
@@ -57,6 +58,10 @@ class BACKEND_EXPORT KernelBuildInfo {
   TypeId GetInputDeviceType(size_t input_index) const;
 
   TypeId GetOutputDeviceType(size_t output_index) const;
+
+  KernelObjectType GetInputKernelObjectType(size_t input_index) const;
+
+  KernelObjectType GetOutputKernelObjectType(size_t output_index) const;
 
   std::string GetInputReshapeType(size_t input_index) const;
 
@@ -105,6 +110,7 @@ class BACKEND_EXPORT KernelBuildInfo {
   std::string fusion_type() const { return fusion_type_; }
 
   Processor processor() const { return processor_; }
+  void set_processor(Processor processor) { processor_ = processor; }
 
   size_t GetInputNum() const;
 

@@ -596,14 +596,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     SetGraphKernelInfo(kernel_node, func_graph);
     return {};
   }
-  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, kernel_node) &&
-      !kVmapGPUWhiteList.count(common::AnfAlgo::GetCNodeName(kernel_node))) {
-    std::stringstream ss;
-    ss << common::AnfAlgo::GetCNodeName(kernel_node)
-       << " does not support 'batch_rank' on GPU, which means that 'vmap' cannot support "
-       << common::AnfAlgo::GetCNodeName(kernel_node) << " on GPU currently.";
-    return {ss.str(), NotSupportError};
-  }
+
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -628,15 +621,31 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   builder->SetInputsDeviceType(inputs_type);
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+
   std::vector<std::tuple<size_t, TypeId, TypeId>> input_reduce_index;
   bool result = GetSelectKernelResult(kernel_node, builder, &kernel_type, &input_reduce_index);
+  SetTensorDeviceInfo(*(builder->Build()), kernel_node, input_reduce_index);
+
+  // Return the kernel select failure info.
+  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, kernel_node) &&
+      !kVmapGPUWhiteList.count(common::AnfAlgo::GetCNodeName(kernel_node))) {
+    builder->SetKernelType(UNKNOWN_KERNEL_TYPE);
+    builder->SetProcessor(kernel::Processor::UNKNOWN);
+    std::stringstream ss;
+    ss << common::AnfAlgo::GetCNodeName(kernel_node)
+       << " does not support 'batch_rank' on GPU, which means that 'vmap' cannot support "
+       << common::AnfAlgo::GetCNodeName(kernel_node) << " on GPU currently.";
+    return {ss.str(), NotSupportError};
+  }
   if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
+    builder->SetKernelType(UNKNOWN_KERNEL_TYPE);
+    builder->SetProcessor(kernel::Processor::UNKNOWN);
     return PrintUnsupportedTypeWarning(kernel_node, inputs_type, outputs_type, kernel_type);
   }
+
   builder->SetKernelType(kernel_type);
   builder->SetProcessor(kernel::Processor::CUDA);
-  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
-  SetTensorDeviceInfo(*(builder->Build()), kernel_node, input_reduce_index);
   return {};
 }
 

@@ -194,6 +194,11 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::string GetOriginFormat(const AnfNodePtr &anf_node);
 
   static bool NodeValueIsFuncGraph(const AnfNodePtr &node);
+
+  // Whether the kernel is not supported by other device and need be backed off on the CPU device.
+  static void SetKernelSelectBackoffInfo(const CNodePtr &node,
+                                         const std::pair<std::string, ExceptionType> &failure_info);
+  static bool IsKernelSelectBackoffOp(const CNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

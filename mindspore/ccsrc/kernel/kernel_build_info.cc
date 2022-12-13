@@ -54,6 +54,24 @@ TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
   return outputs_device_type_[output_index];
 }
 
+KernelObjectType KernelBuildInfo::GetInputKernelObjectType(size_t input_index) const {
+  if (input_index >= inputs_kernel_object_type_.size()) {
+    // The log will be modified to ERROR after the function is finished.
+    MS_LOG(DEBUG) << "The index [" << input_index << "] is exceed the number of input";
+    return KernelObjectType::UNKNOWN_TYPE;
+  }
+  return inputs_kernel_object_type_[input_index];
+}
+
+KernelObjectType KernelBuildInfo::GetOutputKernelObjectType(size_t output_index) const {
+  if (output_index >= outputs_kernel_object_type_.size()) {
+    // The log will be modified to ERROR after the function is finished.
+    MS_LOG(DEBUG) << "The index [" << output_index << "] is exceed the number of input";
+    return KernelObjectType::UNKNOWN_TYPE;
+  }
+  return outputs_kernel_object_type_[output_index];
+}
+
 const std::string &KernelBuildInfo::GetOriginDataFormat() const { return origin_data_format_; }
 
 const std::vector<std::string> &KernelBuildInfo::GetAllInputFormats() const { return inputs_format_; }

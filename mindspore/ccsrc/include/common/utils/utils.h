@@ -907,6 +907,8 @@ constexpr auto kAttrMsFunctionControl = "ms_function_control";
 constexpr auto kAttrFuncGraphCellId = "func_graph_cell_id";
 constexpr auto kAttrInsertDefaultValue = "insert_default_value";
 constexpr auto kAttrIsSparse = "IsSparse";
+constexpr auto kAttrKernelBackoffWithFailureInfo = "kernel_backoff_with_failure_info";
+constexpr auto kAttrKernelBackoffWithFailureType = "kernel_backoff_with_failure_type";
 
 // FuncGraph Flags
 constexpr auto kFlagIsDynamicStructure = "is_dynamic_structure";

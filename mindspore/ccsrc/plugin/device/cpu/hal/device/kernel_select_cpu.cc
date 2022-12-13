@@ -564,10 +564,16 @@ void SetCustomOpKernelInfo(const std::string &custom_op_type, const std::string 
   }
 }
 
+bool IsVmapNotSupported(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, node) &&
+          !kVmapCPUWhiteList.count(common::AnfAlgo::GetCNodeName(node)));
+}
+
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, kernel_node) && !kVmapCPUWhiteList.count(op_name)) {
+  if (IsVmapNotSupported(kernel_node)) {
     std::stringstream ss;
     ss << op_name << " does not support 'batch_rank' on CPU, which means that 'vmap' cannot support " << op_name
        << " on CPU currently.";

@@ -1112,23 +1112,36 @@ std::vector<kernel::KernelAttr> SelectKernelObjectType(
   return selected_result;
 }
 
-KernelObjectType TypeIdToKernelObjectType(const TypeId &object_type) {
+KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id) {
   std::unordered_map<TypeId, KernelObjectType> trans_map{{kObjectTypeTuple, KernelObjectType::TUPLE},
                                                          {kObjectTypeNumber, KernelObjectType::SCALAR},
                                                          {kObjectTypeTensorType, KernelObjectType::TENSOR}};
-  if (trans_map.find(object_type) == trans_map.end()) {
-    MS_LOG(DEBUG) << "Unsupported object type " << TypeIdToString(object_type)
+  if (trans_map.find(type_id) == trans_map.end()) {
+    MS_LOG(DEBUG) << "Unsupported type id " << TypeIdToString(type_id)
                   << ", that cannot converted to corresponding kernel object type.";
     return KernelObjectType::UNKNOWN_TYPE;
   }
-  return trans_map[object_type];
+  return trans_map[type_id];
 }
 
-std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &object_types) {
+std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &type_ids) {
   std::vector<KernelObjectType> ret;
-  std::transform(object_types.begin(), object_types.end(), std::back_inserter(ret),
-                 [](const TypeId &obj_type) { return kernel::TypeIdToKernelObjectType(obj_type); });
+  std::transform(type_ids.begin(), type_ids.end(), std::back_inserter(ret),
+                 [](const TypeId &type_id) { return kernel::TypeIdToKernelObjectType(type_id); });
   return ret;
+}
+
+TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type) {
+  std::unordered_map<KernelObjectType, TypeId> trans_map{{KernelObjectType::TUPLE, kObjectTypeTuple},
+                                                         {KernelObjectType::TUPLE_UNFOLD, kObjectTypeTuple},
+                                                         {KernelObjectType::SCALAR, kObjectTypeNumber},
+                                                         {KernelObjectType::TENSOR, kObjectTypeTensorType}};
+  if (trans_map.find(object_type) == trans_map.end()) {
+    MS_LOG(DEBUG) << "Unsupported kernel object type " << object_type
+                  << ", that cannot converted to corresponding type id.";
+    return kTypeUnknown;
+  }
+  return trans_map[object_type];
 }
 
 KernelObjectType CalKernelObjectType(const TypeId &object_type, const TypeId &selected_object_type) {
@@ -1383,14 +1396,63 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
   return std::make_pair(false, 0);
 }
 
+std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
+                                              const std::vector<KernelAttr> &kernel_attr_list) {
+  auto input_num = kernel_attr.GetInputSize();
+  auto output_num = kernel_attr.GetOutputSize();
+  for (size_t index = 0; index < kernel_attr_list.size(); ++index) {
+    const auto &cur_kernel_attr = kernel_attr_list[index];
+    auto cur_input_num = cur_kernel_attr.GetInputSize();
+    auto cur_output_num = cur_kernel_attr.GetOutputSize();
+    if ((input_num != cur_input_num) || (output_num != cur_output_num)) {
+      continue;
+    }
+
+    bool mis_match = false;
+    // Check the input attrs.
+    for (size_t i = 0; i < input_num; ++i) {
+      auto &input_attr = kernel_attr.GetInputAttr(i);
+      auto &cur_input_attr = cur_kernel_attr.GetInputAttr(i);
+      if ((input_attr.dtype != cur_input_attr.dtype) || (input_attr.format != cur_input_attr.format) ||
+          (input_attr.object_type != cur_input_attr.object_type)) {
+        mis_match = true;
+        break;
+      }
+    }
+
+    if (mis_match) {
+      continue;
+    }
+
+    // Check the output attrs.
+    for (size_t i = 0; i < output_num; ++i) {
+      auto &output_attr = kernel_attr.GetOutputAttr(i);
+      auto &cur_output_attr = cur_kernel_attr.GetOutputAttr(i);
+      if ((output_attr.dtype != cur_output_attr.dtype) || (output_attr.format != cur_output_attr.format) ||
+          (output_attr.object_type != cur_output_attr.object_type)) {
+        mis_match = true;
+        break;
+      }
+    }
+
+    if (!mis_match) {
+      return std::make_pair(true, index);
+    }
+  }
+
+  return std::make_pair(false, 0);
+}
+
 KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info) {
   MS_EXCEPTION_IF_NULL(build_info);
   KernelAttr kernel_attr;
   for (size_t i = 0; i < build_info->GetInputNum(); ++i) {
-    (void)kernel_attr.AddInputAttr(build_info->GetInputDeviceType(i), build_info->GetInputFormat(i));
+    (void)kernel_attr.AddInputAttr(KernelObjectTypeToTypeId(build_info->GetInputKernelObjectType(i)),
+                                   build_info->GetInputDeviceType(i), build_info->GetInputFormat(i));
   }
   for (size_t j = 0; j < build_info->GetOutputNum(); ++j) {
-    (void)kernel_attr.AddOutputAttr(build_info->GetOutputDeviceType(j), build_info->GetOutputFormat(j));
+    (void)kernel_attr.AddOutputAttr(KernelObjectTypeToTypeId(build_info->GetOutputKernelObjectType(j)),
+                                    build_info->GetOutputDeviceType(j), build_info->GetOutputFormat(j));
   }
   return kernel_attr;
 }
