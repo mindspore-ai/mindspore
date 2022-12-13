@@ -9767,7 +9767,7 @@ class SparseApplyAdagradDA(Primitive):
                             Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+        - **var** (Parameter) - Variable to be updated.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **grad_accum** (Parameter) - The dict of mutable tensor grad_accum. Must have the same
           shape and dtype as `var`.
@@ -9803,16 +9803,16 @@ class SparseApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> import mindspore.common.dtype as mstype
         >>> import mindspore.ops.operations.nn_ops as nn_ops
-        >>> var = Tensor(np.array([[1,2], [1,2]]).astype(np.float32))
-        >>> grad_accum = Tensor(np.array([[2,1], [3,1]]).astype(np.float32))
-        >>> grad_square_accum = Tensor(np.array([[4,1], [5,1]]).astype(np.float32))
+        >>> var = Parameter(Tensor(np.array([[1,2], [1,2]]).astype(np.float32)))
+        >>> grad_accum = Parameter(Tensor(np.array([[2,1], [3,1]]).astype(np.float32)))
+        >>> grad_square_accum = Parameter(Tensor(np.array([[4,1], [5,1]]).astype(np.float32)))
         >>> grad = Tensor(np.array([[5,1], [6,1]]).astype(np.float32))
         >>> indices = Tensor(np.array([0, 1], dtype=np.int32))
         >>> lr = Tensor(2, mstype.float32)
@@ -9828,9 +9828,9 @@ class SparseApplyAdagradDA(Primitive):
     """
 
     __mindspore_signature__ = (
-        sig.make_sig('var', dtype=sig.sig_dtype.T),
-        sig.make_sig('grad_accum', dtype=sig.sig_dtype.T),
-        sig.make_sig('grad_square_accum', dtype=sig.sig_dtype.T),
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('grad_accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('grad_square_accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
         sig.make_sig('indices', dtype=sig.sig_dtype.T1),
         sig.make_sig('lr', dtype=sig.sig_dtype.T),

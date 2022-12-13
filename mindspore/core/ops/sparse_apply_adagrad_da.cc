@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "ops/sparse_apply_adagrad_da.h"
 
 #include <algorithm>
@@ -39,6 +38,8 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->GetShapeTrack())[kShape];
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[7]->GetShapeTrack())[kShape];
   auto global_step_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[8]->GetShapeTrack())[kShape];
+  auto grad_shape_ptr = input_args[3]->BuildShape();
+  auto indices_shape_ptr = input_args[4]->BuildShape();
 
   std::vector<ShapeVector> scalar_shapes = {lr_shape, l1_shape, l2_shape, global_step_shape};
   auto is_dynamic_scalar = std::any_of(scalar_shapes.begin(), scalar_shapes.end(), IsDynamic);
@@ -51,6 +52,12 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
                                              prim_name);
   }
 
+  if (IsDynamicRank(var_shape) || IsDynamicRank(grad_accum_shape) || IsDynamicRank(grad_square_accum_shape) ||
+      IsDynamicRank(grad_shape)) {
+    std::cout << "dynamic rank" << std::endl;
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+
   std::vector<ShapeVector> check_tensor_shapes = {var_shape, grad_accum_shape, grad_square_accum_shape};
   auto is_dynamic_tensor = std::any_of(check_tensor_shapes.begin(), check_tensor_shapes.end(), IsDynamic);
   if (!is_dynamic_tensor) {
@@ -60,6 +67,10 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
     for (auto &elem : same_shape_args_map) {
       CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
     }
+  }
+
+  if (grad_shape_ptr->IsDynamic() || indices_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(var_shape);
   }
 
   // Var dimension must be equal or greater than 1.

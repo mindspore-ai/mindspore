@@ -3601,9 +3601,9 @@ test_case_nn_ops = [
                        Tensor(np.ones([2, 2, 5], np.float32))]}),
     ('SparseApplyAdagradDA', {
         'block': SparseApplyAdagradDANet(),
-        'desc_inputs': [Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32)),
-                        Tensor(np.array([[0.3, 0.6], [0.3, 0.6]]).astype(np.float32)),
-                        Tensor(np.array([[0.3, 0.6], [0.3, 0.6]]).astype(np.float32)),
+        'desc_inputs': [Parameter(Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32))),
+                        Parameter(Tensor(np.array([[0.3, 0.6], [0.3, 0.6]]).astype(np.float32))),
+                        Parameter(Tensor(np.array([[0.3, 0.6], [0.3, 0.6]]).astype(np.float32))),
                         Tensor(np.array([[0.4, 0.5], [0.2, 0.1]]).astype(np.float32)),
                         Tensor(np.array([0, 1]).astype(np.int32)),
                         Tensor(0.001, mstype.float32),
