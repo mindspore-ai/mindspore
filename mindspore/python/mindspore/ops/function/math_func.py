@@ -9314,7 +9314,7 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
     Returns:
        A Tensor, sum of elements over a given dim in `x`.
 
-    Raise:
+    Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `dim` is not an int.
         ValueError: If `dim` is not in the range :math:`[-x.ndim, x.ndim)` .
