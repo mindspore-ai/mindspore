@@ -245,10 +245,12 @@ int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<Convert
     return status;
   }
 
-  status = ConvertValueNodeToParameter(old_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Convert value node To parameter failed.";
-    return status;
+  if (!param->train_model) {
+    status = ConvertValueNodeToParameter(old_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Convert value node To parameter failed.";
+      return status;
+    }
   }
 
   bool per_layer = param->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL &&
