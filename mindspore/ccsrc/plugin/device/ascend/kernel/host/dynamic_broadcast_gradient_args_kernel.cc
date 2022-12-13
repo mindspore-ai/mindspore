@@ -18,6 +18,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -122,8 +123,7 @@ std::vector<std::vector<int64_t>> CalculateOutput(const std::vector<std::vector<
   return grad_reduce_idx;
 }
 
-std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
-  auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, index);
+std::vector<int64_t> GetInputShape(const CNodePtr &cnode, const std::vector<AddressPtr> &inputs, size_t index) {
   auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
   auto type_x = common::AnfAlgo::GetOutputInferDataType(cnode, index);
   if (type_x != TypeId::kNumberTypeInt64) {
@@ -133,6 +133,13 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
     MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but got " << shape_x.size()
                       << trace::DumpSourceLines(cnode);
   }
+  auto all_input_formats = AnfAlgo::GetAllInputFormats(cnode);
+  if (index >= all_input_formats.size()) {
+    MS_LOG(EXCEPTION) << "Input index is" << index << ", but the node only has " << all_input_formats.size()
+                      << " inputs.";
+  }
+  device::ascend::AscendDeviceAddressPtr address_x = std::make_shared<device::ascend::AscendDeviceAddress>(
+    inputs[index]->addr, inputs[index]->size, all_input_formats[index], type_x);
 
   auto x_num = shape_x[0];
   std::vector<int64_t> x{x_num};
@@ -187,7 +194,7 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
 }
 }  // namespace
 
-void DynamicBroadcastGradientArgsKernelMod::Execute() const {
+void DynamicBroadcastGradientArgsKernelMod::Execute(const std::vector<AddressPtr> &inputs) const {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -199,8 +206,8 @@ void DynamicBroadcastGradientArgsKernelMod::Execute() const {
   }
 
   std::vector<std::vector<int64_t>> input_shapes(kInputNum);
-  input_shapes[0] = GetInputShape(cnode, 0);
-  input_shapes[1] = GetInputShape(cnode, 1);
+  input_shapes[0] = GetInputShape(cnode, inputs, 0);
+  input_shapes[1] = GetInputShape(cnode, inputs, 1);
   auto grad_reduce_idx = CalculateOutput(input_shapes);
 
   auto r0_size = SetOutputValue(cnode, grad_reduce_idx, 0);
@@ -212,15 +219,16 @@ void DynamicBroadcastGradientArgsKernelMod::Execute() const {
   common::AnfAlgo::SetOutputInferTypeAndShape({output_type, output_type}, {r0_shp, r1_shp}, cnode.get());
 }
 
-bool DynamicBroadcastGradientArgsKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &, void *stream_ptr) {
+bool DynamicBroadcastGradientArgsKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                                   const std::vector<AddressPtr> &,
+                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
   try {
-    Execute();
+    Execute(inputs);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "DynamicBroadcastGradientArgsKernel Launch failed. node: " << cnode->fullname_with_scope()
                   << ", Error message is " << e.what();

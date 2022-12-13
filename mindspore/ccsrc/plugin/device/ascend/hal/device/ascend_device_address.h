@@ -45,6 +45,8 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                                const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
       : LoadableDeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {}
+  explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id)
+      : LoadableDeviceAddress(ptr, size, format, type_id) {}
   ~AscendDeviceAddress() override;
   bool SyncDeviceToHost(size_t size, void *const host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
