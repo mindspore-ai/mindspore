@@ -100,6 +100,12 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
                                              const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  // LayerNormXBackpropV2 is not supported in acl.
+  if (graph->has_flag(kAttrMutableKernel)) {
+    MS_LOG(INFO) << "Skip LayerNormGradSplit for acl op";
+    return nullptr;
+  }
+
   auto cnode = node->cast<CNodePtr>();
   if (common::AnfAlgo::GetInputTensorNum(cnode) != kLayerNormGradInputTensorNum) {
     return nullptr;

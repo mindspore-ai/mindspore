@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+static const std::unordered_set<std::string> kAclStaticList = {kTensorMoveOpName, kAddNOpName};
 bool SetIOInputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
                     std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -122,7 +123,9 @@ void SetGeInfo(const AnfNodePtr &node, const AclKernelModPtr &kernel_mod_ptr) {
   kernel_mod_ptr->SetOutputDescList(output_desc_list);
   auto attr_list = GeOpConvertor::GetAttrAndValue(node, true);
   kernel_mod_ptr->SetAttrList(attr_list);
-  kernel_mod_ptr->SetDynamic(true);
+  if (kAclStaticList.count(op_type) == 0) {
+    kernel_mod_ptr->SetDynamic(true);
+  }
 }
 }  // namespace
 

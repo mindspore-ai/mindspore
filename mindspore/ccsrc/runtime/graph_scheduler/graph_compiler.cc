@@ -383,6 +383,58 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   return graph_id;
 }
 
+GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
+                                           const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(segment);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_LOG(INFO) << "Status record: start compile graph.";
+  auto nodes = segment->nodes_;
+  auto device_terget = device_context->GetDeviceType();
+  // Generate kernel graph.
+  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_terget, true, false);
+  MS_EXCEPTION_IF_NULL(graph);
+
+  graph->set_flag(kAttrMutableKernel, true);
+
+  opt::EliminateIllegalDataTypePass(graph);
+  // Unify the MindIR, must be before of the graph optimization.
+  auto deprecated_kernel_executor =
+    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+  if (deprecated_kernel_executor != nullptr) {
+    deprecated_kernel_executor->UnifyMindIR(graph);
+  } else {
+    opt::CommonUnifyMindIR(graph);
+  }
+
+  // The graph common optimization.
+  graph->UpdateGraphAquireGilAttr();
+  opt::BackendCommonOptimization(graph);
+  graph->SetInputNodes();
+  auto manager = MakeManager({graph});
+  if (manager) {
+    manager->AddFuncGraph(graph);
+    graph->set_manager(manager);
+  }
+  session_->SetInputNodeUsage(graph, manager);
+  graph->SetOptimizerFlag();
+  graph->set_run_mode(device::RunMode::kKernelMode);
+
+  // Graph kernel does not support pynative mode now, print a warning here.
+  graphkernel::GraphKernelFlags::GetInstance().CheckSupport();
+
+  GraphId graph_id = graph->graph_id();
+  graph->set_root_graph_id(graph_id);
+  session_->DumpGraphs({graph});
+
+  auto exec_nodes = graph->execution_order();
+  std::for_each(exec_nodes.begin(), exec_nodes.end(),
+                [](const CNodePtr &node) { common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node); });
+
+  MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
+  return graph_id;
+}
+
 GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func_graph,
                                                         const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
@@ -631,10 +683,10 @@ void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(graph_info);
   *op_run_info = session_->GetSingleOpRunInfo(kernel, *graph_info, tensor_info, graph_output_info);
+  (*op_run_info)->base_op_run_info.use_dynamic_shape_process = use_dynamic_shape_process;
   session_->GetSingleOpGraphInfo(kernel, tensor_info, graph_info, *op_run_info);
   MS_EXCEPTION_IF_NULL(*op_run_info);
   (*op_run_info)->base_op_run_info.graph_info = *graph_info;
-  (*op_run_info)->base_op_run_info.use_dynamic_shape_process = use_dynamic_shape_process;
 }
 
 void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const {

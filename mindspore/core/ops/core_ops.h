@@ -168,6 +168,7 @@ constexpr auto kDynamicShape = "DynamicShape";
 constexpr auto kTensorShape = "TensorShape";
 constexpr auto kCheckNumerics = "CheckNumerics";
 constexpr auto kStack = "Stack";
+constexpr auto kPack = "Pack";
 constexpr auto kLogNormalReverse = "LogNormalReverse";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kUnpack = "Unpack";
@@ -889,6 +890,7 @@ GVAR_DEF(PrimitivePtr, kPrimBatchNorm, std::make_shared<Primitive>("BatchNorm"))
 GVAR_DEF(PrimitivePtr, kPrimBatchNormWithActivation, std::make_shared<Primitive>("BatchNormWithActivation"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormWithAddAndActivation,
          std::make_shared<Primitive>("BatchNormWithAddAndActivation"));
+GVAR_DEF(PrimitivePtr, kPrimBNInfer, std::make_shared<Primitive>("BNInfer"));
 GVAR_DEF(PrimitivePtr, kPrimBNInferGrad, std::make_shared<Primitive>("BNInferGrad"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormGrad, std::make_shared<Primitive>("BatchNormGrad"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithActivation, std::make_shared<Primitive>("BatchNormGradWithActivation"));

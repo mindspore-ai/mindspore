@@ -130,6 +130,9 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context);
 
+  // Clean the compilation cache to avoid memory leakage in dynamic shape scenarios.
+  void ClearResource();
+
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;
 

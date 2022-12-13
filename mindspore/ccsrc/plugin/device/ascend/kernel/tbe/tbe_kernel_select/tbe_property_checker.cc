@@ -109,6 +109,10 @@ static bool CheckKLDivLoss(const CNodePtr &cnode) {
 
 bool TbePropertyChecker::CheckTbeProperties(const mindspore::CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
+  // Skip check for ACL op.
+  if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
+    return true;
+  }
   static std::map<std::string, CheckSupportFun> tbe_property_checker = {{kStridedSliceOpName, CheckStridedSlice},
                                                                         {kStridedSliceDOpName, CheckStridedSlice},
                                                                         {kStridedSliceGradOpName, CheckStridedSlice},

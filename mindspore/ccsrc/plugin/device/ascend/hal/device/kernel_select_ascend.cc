@@ -791,6 +791,11 @@ void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status
 
 void SetAclKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel_node)) {
+    MS_LOG(INFO) << "No kAttrMutableKernel found, cannot set ACL_KERNEL for " << kernel_node->DebugString();
+    return;
+  }
+
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel_node);
   if (kernel_type != AICPU_KERNEL && kernel_type != TBE_KERNEL) {
     MS_LOG(INFO) << "Current node don't support acl kernel launch! Node info:" << kernel_node->DebugString();
@@ -804,17 +809,9 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
     MS_LOG(INFO) << "Current mode or device don't support acl kernel launch! Node info:" << kernel_node->DebugString();
     return;
   }
+
   if (common::AnfAlgo::IsGraphKernel(kernel_node) || IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     MS_LOG(INFO) << "Current node is graph kernel or custom io! Node info:" << kernel_node->DebugString();
-    return;
-  }
-  if (!common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    MS_LOG(INFO) << "Current node isn't a dynamic node! Node info:" << kernel_node->DebugString();
-    return;
-  }
-  auto op_type = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kAclKernelSet.count(op_type) == 0) {
-    MS_LOG(INFO) << "Current node not in acl kernel list! Node info:" << kernel_node->DebugString();
     return;
   }
 

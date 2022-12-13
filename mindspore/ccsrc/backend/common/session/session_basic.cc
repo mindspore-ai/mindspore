@@ -37,6 +37,7 @@
 #include "backend/common/session/executor_manager.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/optimizer/helper.h"
+#include "backend/common/optimizer/op_adaptation_info_factory.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/ms_utils.h"
 #include "ir/anf.h"
@@ -451,9 +452,8 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   std::ostringstream buf;
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
   MS_EXCEPTION_IF_NULL(prim);
-  buf << GetOpRunDeviceTarget(prim) << "_";
+  buf << GetOpRunDeviceTarget(prim) << "_dynamic" << op_run_info->base_op_run_info.use_dynamic_shape_process << "_";
   buf << prim->name() << "_";
-  bool has_const_input = false;
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto &tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(tensor);
@@ -479,7 +479,6 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
     }
     // For constant input
     if (input_tensors_mask[i] == kValueNodeTensorMask) {
-      has_const_input = true;
       buf << common::AnfAlgo::GetTensorValueString(tensor);
     }
     buf << "_";
@@ -490,20 +489,6 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   (void)std::for_each(attr_map.begin(), attr_map.end(),
                       [&buf](const auto &element) { buf << element.second->ToString(); });
 
-  // Generally, different inputs can have different output; but different constant inputs may lead to different output
-  if (has_const_input) {
-    buf << "_";
-    const AbstractBasePtr &abstract = kernel->abstract();
-    MS_EXCEPTION_IF_NULL(abstract);
-    auto build_shape = abstract->BuildShape();
-    MS_EXCEPTION_IF_NULL(build_shape);
-    auto build_type = abstract->BuildType();
-    MS_EXCEPTION_IF_NULL(build_type);
-    // Get output shape
-    buf << build_shape->ToString();
-    // Get output dtype
-    buf << build_type->type_id();
-  }
   *graph_info = buf.str();
 }
 
@@ -831,18 +816,15 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t
     return;
   }
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode);
-  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyTBE, is_dynamic_shape);
-  if (op_info_ptr == nullptr) {
+  auto op_adaptation_info =
+    opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, kAscendDevice, true);
+  if (op_adaptation_info == nullptr) {
+    MS_LOG(WARNING) << "Cannot get op_adaptation_info for " << op_name;
     return;
   }
-  auto inputs_ptr = op_info_ptr->inputs_ptr();
-  for (size_t i = 0; i < inputs_ptr.size(); i++) {
-    MS_EXCEPTION_IF_NULL(inputs_ptr[i]);
-    if (!inputs_ptr[i]->value_depend().empty() && inputs_ptr[i]->value_depend() != "ignored") {
-      const_input_attr_index->push_back(i + 1);
-    }
-  }
+  auto input_to_attr_map = op_adaptation_info->input_attr_map();
+  std::transform(input_to_attr_map.begin(), input_to_attr_map.end(), std::back_inserter(*const_input_attr_index),
+                 [](auto iter) { return iter.first; });
 }
 
 void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
@@ -852,8 +834,13 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      InputTensorInfo *input_tensor_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto is_mutable = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode);
   std::vector<size_t> const_input_attr_index = {};
   GetConstValueDepend(cnode, &const_input_attr_index);
+  MS_LOG(DEBUG) << "const_input_attr_index " << const_input_attr_index;
   const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 1; i <= input_tensor_num; i += 1) {
     const auto &input = cnode->input(i);
@@ -867,8 +854,8 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       MS_EXCEPTION_IF_NULL(value_ptr);
       auto is_value_node = value_ptr->isa<StringImm>();
       if (!const_input_attr_index.empty()) {
-        is_value_node =
-          std::find(const_input_attr_index.begin(), const_input_attr_index.end(), i) != const_input_attr_index.end();
+        is_value_node = std::find(const_input_attr_index.begin(), const_input_attr_index.end(), i - 1) !=
+                        const_input_attr_index.end();
       }
 
       bool is_forward_output = false;
@@ -878,8 +865,13 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
           is_forward_output = true;
         }
       }
-      input_tensor_info->input_tensors_mask.emplace_back(
-        (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
+      if (is_mutable && device_target == kAscendDevice) {
+        input_tensor_info->input_tensors_mask.emplace_back(
+          (is_value_node && !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
+      } else {
+        input_tensor_info->input_tensors_mask.emplace_back(
+          (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
+      }
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
@@ -1288,6 +1280,10 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   // set execution order
   auto cnode = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
+  auto is_mutable = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode);
+  if (is_mutable) {
+    graph->set_flag(kAttrMutableKernel, true);
+  }
   // set abstract,which include inferred shapes and types
   cnode->set_abstract(op_run_info->base_op_run_info.abstract);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info->base_op_run_info.has_dynamic_output),
@@ -1300,7 +1296,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);
-  if (is_ascend) {
+  if (is_ascend && !is_mutable) {
     graph->set_output(cnode);
   } else {
     CreateOutputNode(cnode, graph);
