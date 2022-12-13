@@ -3271,3 +3271,57 @@ TEST_F(MindDataTestPipeline, TestInverseSpectrogramPipeline) {
   EXPECT_EQ(i, 10);
   iter4->Stop();
 }
+
+/// Feature: PitchShift op
+/// Description: Test input 1d of PitchShift op
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestPitchShiftPipeline1D) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPitchShiftPipeline.";
+  // 1 dimension
+  std::shared_ptr<SchemaObj> schema1 = Schema();
+  ASSERT_OK(schema1->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {30}));
+  std::shared_ptr<Dataset> ds1 = RandomData(10, schema1);
+  EXPECT_NE(ds1, nullptr);
+
+  ds1 = ds1->SetNumWorkers(4);
+  EXPECT_NE(ds1, nullptr);
+
+  auto PitchShift_op1 = audio::PitchShift(16000, 4, 12, 16, 16, 4, WindowType::kHann);
+  ds1 = ds1->Map({PitchShift_op1});
+  EXPECT_NE(ds1, nullptr);
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  EXPECT_NE(ds1, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row1;
+  ASSERT_OK(iter1->GetNextRow(&row1));
+  std::vector<int64_t> expected1 = {30};
+  int i = 0;
+  while (row1.size() != 0) {
+    auto col = row1["waveform"];
+    ASSERT_EQ(col.Shape(), expected1);
+    ASSERT_EQ(col.Shape().size(), 1);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter1->GetNextRow(&row1));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter1->Stop();
+}
+
+/// Feature: PitchShift op
+/// Description: Test PitchShift op with wrong input
+/// Expectation: Throw exception as expected
+TEST_F(MindDataTestPipeline, TestPitchShiftWrongArgsHopLength) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPitchShiftWrongArgs.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 30}));
+  ;
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto PitchShift_op = audio::PitchShift(16000, 4, 12, 16, 16, -4, WindowType::kHann);
+  ds = ds->Map({PitchShift_op});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

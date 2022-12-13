@@ -1102,6 +1102,31 @@ class DATASET_API PhaseVocoder final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+// \brief Shift the pitch of a waveform by 'n_steps' steps.
+class DATASET_API PitchShift final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of "waveform". Default: 0.
+  /// \param[in] n_steps The (fractional) steps to shift "waveform". Default: 0.
+  /// \param[in] bins_per_octave The number of steps per octave. Default: 12.
+  /// \param[in] n_fft Size of FFT, creates "n_fft // 2 + 1" bins. Default: 512.
+  /// \param[in] win_length Window size. Default: 0, will be set to `n_fft` .
+  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to `win_length // 4` .
+  /// \param[in] window Window tensor that is applied/multiplied to each frame/window. Default: WindowType::kHann.
+  explicit PitchShift(int32_t sample_rate = 0, int32_t n_steps = 0, int32_t bins_per_octave = 12, int32_t n_fft = 512,
+                      int32_t win_length = 0, int32_t hop_length = 0, WindowType window = WindowType::kHann);
+
+  /// \brief Destructor.
+  ~PitchShift() override = default;
+
+ protected:
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Resample TensorTransform.
 /// \notes Resample a signal from one frequency to another. A sampling method can be given.
 class DATASET_API Resample : public TensorTransform {

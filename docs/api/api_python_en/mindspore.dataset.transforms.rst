@@ -253,6 +253,7 @@ Transforms
     mindspore.dataset.audio.Overdrive
     mindspore.dataset.audio.Phaser
     mindspore.dataset.audio.PhaseVocoder
+    mindspore.dataset.audio.PitchShift
     mindspore.dataset.audio.Resample
     mindspore.dataset.audio.RiaaBiquad
     mindspore.dataset.audio.SlidingWindowCmn

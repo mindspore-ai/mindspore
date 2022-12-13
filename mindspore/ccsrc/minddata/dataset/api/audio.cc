@@ -56,6 +56,7 @@
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phase_vocoder_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
+#include "minddata/dataset/audio/ir/kernels/pitch_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/resample_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
@@ -975,6 +976,35 @@ std::shared_ptr<TensorOperation> PhaseVocoder::Parse() {
     return nullptr;
   }
   return std::make_shared<PhaseVocoderOperation>(data_->rate_, phase_advance);
+}
+
+// pitchshift
+struct PitchShift::Data {
+  Data(int32_t sample_rate, int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length,
+       int32_t hop_length, WindowType window)
+      : sample_rate_(sample_rate),
+        n_steps_(n_steps),
+        bins_per_octave_(bins_per_octave),
+        n_fft_(n_fft),
+        win_length_(win_length),
+        hop_length_(hop_length),
+        window_(window) {}
+  int32_t sample_rate_;
+  int32_t n_steps_;
+  int32_t bins_per_octave_;
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  WindowType window_;
+};
+
+PitchShift::PitchShift(int32_t sample_rate, int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length,
+                       int32_t hop_length, WindowType window)
+    : data_(std::make_shared<Data>(sample_rate, n_steps, bins_per_octave, n_fft, win_length, hop_length, window)) {}
+
+std::shared_ptr<TensorOperation> PitchShift::Parse() {
+  return std::make_shared<PitchShiftOperation>(data_->sample_rate_, data_->n_steps_, data_->bins_per_octave_,
+                                               data_->n_fft_, data_->win_length_, data_->hop_length_, data_->window_);
 }
 
 // Resample Transform Operation.

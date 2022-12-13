@@ -43,6 +43,7 @@ add_library(audio-kernels OBJECT
         overdrive_op.cc
         phase_vocoder_op.cc
         phaser_op.cc
+        pitch_shift_op.cc
         resample_op.cc
         riaa_biquad_op.cc
         sliding_window_cmn_op.cc

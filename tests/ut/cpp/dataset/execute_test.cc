@@ -3230,3 +3230,64 @@ TEST_F(MindDataTestExecute, TestInverseSpectrogramWrongArgs) {
   status = trans3(input_ms, &input_ms);
   EXPECT_TRUE(status.IsError());
 }
+
+// Feature: PitchShift op
+// Description: Test basic usage of PitchShift op
+// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestAdjustPitchShift) {
+  MS_LOG(INFO) << "Doing MindDataExecute-TestAdjustPitchShift.";
+  // Original waveform
+  std::vector<float> labels = {1, 1, 2, 3, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2, 3,
+                               2, 1, 2, 3, 0, 1, 0, 2, 4, 5, 3, 1, 2, 3, 4};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> PitchShift_op =
+    std::make_shared<audio::PitchShift>(16000, 4, 12, 16, 16, 4, WindowType::kHann);
+  // apply PitchShift
+  mindspore::dataset::Execute trans({PitchShift_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+// Feature: PitchShift op
+// Description: First test wrong args of PitchShift
+// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestPitchShiftWrongArgs1) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPitchShiftWrongArgs1.";
+  std::vector<float> labels = {1, 1, 2, 3, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2, 3,
+                               2, 1, 2, 3, 0, 1, 0, 2, 4, 5, 3, 1, 2, 3, 4};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> PitchShift_op =
+    std::make_shared<audio::PitchShift>(16000, 4, 12, -16, 16, 4, WindowType::kHann);
+  mindspore::dataset::Execute trans({PitchShift_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  PitchShift_op = std::make_shared<audio::PitchShift>(16000, 4, 0, 16, 16, 4, WindowType::kHann);
+  mindspore::dataset::Execute trans1({PitchShift_op});
+  status = trans1(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  PitchShift_op = std::make_shared<audio::PitchShift>();
+  mindspore::dataset::Execute trans2({PitchShift_op});
+  status = trans2(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  PitchShift_op = std::make_shared<audio::PitchShift>();
+  mindspore::dataset::Execute trans4({PitchShift_op});
+  status = trans4(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  PitchShift_op = std::make_shared<audio::PitchShift>(16000, 4, 12, 16, -16, 4, WindowType::kHann);
+  mindspore::dataset::Execute trans5({PitchShift_op});
+  status = trans5(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+  
+  PitchShift_op = std::make_shared<audio::PitchShift>(16000, 4, 12, 16, 16, -4, WindowType::kHann);
+  mindspore::dataset::Execute trans6({PitchShift_op});
+  status = trans6(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+}

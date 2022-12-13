@@ -69,8 +69,8 @@ from mindspore.dataset.audio.transforms import AllpassBiquad, AmplitudeToDB, Ang
     DCShift, DeemphBiquad, DetectPitchFrequency, Dither, EqualizerBiquad, Fade, Flanger, FrequencyMasking, Gain, \
     GriffinLim, HighpassBiquad, InverseMelScale, InverseSpectrogram, LFCC, LFilter, LowpassBiquad, Magphase, \
     MaskAlongAxis, MaskAlongAxisIID, MelScale, MelSpectrogram, MFCC, MuLawDecoding, MuLawEncoding, Overdrive, \
-    Phaser, PhaseVocoder, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, TimeMasking, \
-    TimeStretch, TrebleBiquad, Vad, Vol
+    Phaser, PhaseVocoder, PitchShift, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, \
+    TimeMasking, TimeStretch, TrebleBiquad, Vad, Vol
 from mindspore.dataset.audio.utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
     MelType, Modulation, NormMode, NormType, ResampleMethod, ScaleType, WindowType, create_dct, linear_fbanks, \
     melscale_fbanks
