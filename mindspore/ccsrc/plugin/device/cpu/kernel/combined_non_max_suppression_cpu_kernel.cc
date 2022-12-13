@@ -39,7 +39,7 @@ constexpr int multiplier = 4;
 }  // namespace
 
 void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std::vector<float>> *boxes_buffer,
-                                                                 float *box_src, int class_idx) {
+                                                                 const float *box_src, const int class_idx) {
   /**
    * shape of box_src
    * box_src[num_boxes_*q_*4]
@@ -68,7 +68,8 @@ void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std
 }
 
 // Calculate the area ratio of the intersection of two squares
-float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>> *boxes_buffer, int i, int j) const {
+float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>> *boxes_buffer, const int i,
+                                                 const int j) const {
   std::vector<float> box_a = (*boxes_buffer)[i];
   std::vector<float> box_b = (*boxes_buffer)[j];
   float lx, ly, rx, ry;
@@ -127,7 +128,9 @@ void CombinedNonMaxSuppressionCpuKernelMod::non_max_suppression(std::vector<std:
         should_hard_suppress = true;
         break;
       }
-      if (next_si.score <= score_threshold_) break;
+      if (next_si.score <= score_threshold_) {
+        break;
+      }
     }
     next_si.suppress_begin_index = static_cast<int>(selected.size());
     if (!should_hard_suppress) {

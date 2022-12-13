@@ -51,7 +51,8 @@ void CombinedNonMaxSuppressionCheckShapeSize(const ShapeVector &input0_shape, co
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("scores dim", SizeToLong(input1_shape.size()), kEqual, kInputDimension1,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("max_output_size_per_class dim", input2_shape.size(), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("max_output_size_per_class dim", SizeToLong(input2_shape.size()), kEqual, 0,
+                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("max_total_size dim", SizeToLong(input3_shape.size()), kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("iou_threshold", SizeToLong(input4_shape.size()), kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("score_threshold", SizeToLong(input5_shape.size()), kEqual, 0, prim_name);

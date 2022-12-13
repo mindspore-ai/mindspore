@@ -39,9 +39,9 @@ template <typename T>
 bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  uint8_t *output = reinterpret_cast<uint8_t *>(outputs[0]->addr);
+  T *input0 = static_cast<T *>(inputs[0]->addr);
+  T *input1 = static_cast<T *>(inputs[1]->addr);
+  uint8_t *output = static_cast<uint8_t *>(outputs[0]->addr);
   int64_t data_num = SizeToLong(outputs[0]->size);
   T thresh = *input1;
   const int64_t shift_num1 = 1;
@@ -56,8 +56,8 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     // Specialization for bool on systems where sizeof(bool) == 1.
     for (int64_t i = 0; i < data_num; ++i) {
       uint8_t *out = output + i;
-      bool *input0_data = reinterpret_cast<bool *>(inputs[0]->addr);
-      int64_t block = *reinterpret_cast<int64_t *>(input0_data + 8 * i);
+      bool *input0_data = static_cast<bool *>(inputs[0]->addr);
+      uint64_t block = *reinterpret_cast<uint64_t *>(input0_data + 8 * i);
       *out = ((((block & (1LL << (shift_num7 * shift_num8))) >> (shift_num7 * shift_num8 - shift_num7))) |
               (((block & (1LL << (shift_num6 * shift_num8))) >> (shift_num6 * shift_num8 - shift_num6))) |
               (((block & (1LL << (shift_num5 * shift_num8))) >> (shift_num5 * shift_num8 - shift_num5))) |
@@ -70,10 +70,14 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     for (int64_t i = 0; i < data_num; ++i) {
       uint8_t *out = output + i;
       const T *input = input0 + 8 * i;
-      *out = ((((input[kIndex0] > thresh) << shift_num7)) | (((input[kIndex1] > thresh) << shift_num6)) |
-              (((input[kIndex2] > thresh) << shift_num5)) | (((input[kIndex3] > thresh) << shift_num4)) |
-              (((input[kIndex4] > thresh) << shift_num3)) | (((input[kIndex5] > thresh) << shift_num2)) |
-              (((input[kIndex6] > thresh) << shift_num1)) | (((input[kIndex7] > thresh))));
+      *out = (((static_cast<int64_t>(input[kIndex0] > thresh) << shift_num7)) |
+              ((static_cast<int64_t>(input[kIndex1] > thresh) << shift_num6)) |
+              ((static_cast<int64_t>(input[kIndex2] > thresh) << shift_num5)) |
+              ((static_cast<int64_t>(input[kIndex3] > thresh) << shift_num4)) |
+              ((static_cast<int64_t>(input[kIndex4] > thresh) << shift_num3)) |
+              ((static_cast<int64_t>(input[kIndex5] > thresh) << shift_num2)) |
+              ((static_cast<int64_t>(input[kIndex6] > thresh) << shift_num1)) |
+              ((static_cast<int64_t>(input[kIndex7] > thresh))));
     }
   }
 
