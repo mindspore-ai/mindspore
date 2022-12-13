@@ -159,7 +159,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     }
     auto front_input_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
     DeviceTensorStore::GetInstance().Remove(front_input_node.get());
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(input_node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(input_node, index)) {
         AnfAlgo::SetOutputAddr(nullptr, index, input_node.get());
@@ -178,7 +178,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
 
   // Clear cnode device tensor.
   for (const auto &cnode : graph->execution_order()) {
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(cnode, index)) {
         AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
@@ -1232,7 +1232,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
         if (common::AnfAlgo::GetInputTensorNum(kernel) > 1) {
           value.first = true;
         }
-        if (common::AnfAlgo::GetOutputTensorNum(kernel) > 1) {
+        if (AnfAlgo::GetOutputTensorNum(kernel) > 1) {
           value.second = true;
         }
         if (value.first || value.second) {

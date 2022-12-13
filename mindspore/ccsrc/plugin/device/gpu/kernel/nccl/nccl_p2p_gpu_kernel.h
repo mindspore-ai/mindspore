@@ -62,7 +62,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     InferCommType(kernel_node);
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (input_num > 0) {
       input_nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
     }

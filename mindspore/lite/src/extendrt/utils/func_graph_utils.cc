@@ -161,7 +161,7 @@ bool FuncGraphUtils::GetCNodeInputsOutputs(const mindspore::CNodePtr &cnode,
   *input_tensors = GetNodeInputs(cnode);
   // Makeup output tensors.
   output_tensors->clear();
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
     session::KernelWithIndex tensor_id = {cnode, output_idx};
     output_tensors->push_back(tensor_id);

@@ -21,6 +21,7 @@
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -47,7 +48,7 @@ TypeId CacheManager::GetOutputType(const AnfNodePtr &node, size_t index) {
     }
     return kTypeUnknown;
   }
-  auto output_nums = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_nums = AnfAlgo::GetOutputTensorNum(node);
   std::map<size_t, TypeId> index_to_types;
   TypeId result = kTypeUnknown;
   for (size_t i = 0; i < output_nums; i++) {
@@ -72,7 +73,7 @@ ShapeVector CacheManager::GetOutputShape(const AnfNodePtr &node, size_t index) {
     }
     return {};
   }
-  auto output_nums = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_nums = AnfAlgo::GetOutputTensorNum(node);
   std::map<size_t, ShapeVector> index_to_shapes;
   ShapeVector result = {};
   for (size_t i = 0; i < output_nums; i++) {

@@ -29,7 +29,7 @@ void ShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << " input(s).";
   }
 
-  size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_count != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_count
                       << " output(s).";

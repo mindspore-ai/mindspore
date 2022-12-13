@@ -45,7 +45,7 @@ bool GetNextDynamic::Launch(const std::vector<AddressPtr> &, const std::vector<A
 bool GetNextDynamic::Init(const mindspore::AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   anf_node_ = anf_node;
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  auto output_num = AnfAlgo::GetOutputTensorNum(anf_node);
   std::vector<size_t> size_list;
   for (size_t idx = 0; idx < output_num; ++idx) {
     size_list.push_back(0);
@@ -69,7 +69,7 @@ GetNextDynamicDesc::~GetNextDynamicDesc() {}
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetNextDynamicDesc::GetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> get_next_dynamic_build_info{};
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  auto output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   std::vector<string> output_format;
   std::vector<TypeId> output_type;
   for (size_t idx = 0; idx < output_num; ++idx) {

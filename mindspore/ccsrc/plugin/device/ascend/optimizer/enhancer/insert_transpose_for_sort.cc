@@ -57,7 +57,7 @@ CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, co
   auto in_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(node, 0);
   auto transpose_out_shape = InferTransposeOutputShape(in_shape, perm);
 
-  auto ori_out_types = common::AnfAlgo::GetAllOutputInferDataTypes(node);
+  auto ori_out_types = AnfAlgo::GetAllOutputInferDataTypes(node);
   auto perm_value_input = CreatePermValueNode(func_graph, perm);
   std::vector<AnfNodePtr> trans_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimTranspose->name()))};
   (void)trans_inputs.push_back(in_node);
@@ -101,7 +101,7 @@ AnfNodePtr InsertForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_
   }
 
   std::vector<AnfNodePtr> tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  auto out_num = common::AnfAlgo::GetOutputTensorNum(node);
+  auto out_num = AnfAlgo::GetOutputTensorNum(node);
 
   for (size_t output_idx = 0; output_idx < out_num; output_idx++) {
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);

@@ -348,7 +348,7 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   }
 
   auto outputs_format_position = iter->second.second;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   TransformFormatPosition(&outputs_format_position, output_num);
   for (const auto &output_format_position : outputs_format_position) {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_format_position);
@@ -385,7 +385,7 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   }
 
   auto outputs_format_position = iter->second.second;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   TransformFormatPosition(&outputs_format_position, output_num);
   for (const auto &output_format_position : outputs_format_position) {
     if (output_format_position >= outputs_format->size()) {
@@ -606,7 +606,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));

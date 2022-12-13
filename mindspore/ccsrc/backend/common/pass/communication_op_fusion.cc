@@ -64,7 +64,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
       inputs_device_type.push_back(AnfAlgo::GetInputDeviceDataType(cnode, input_index));
     }
     for (int64_t rank_index = 0; rank_index < rank_size; ++rank_index) {
-      size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+      size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
       for (size_t output_index = 0; output_index < output_num; ++output_index) {
         outputs_device_format.push_back(AnfAlgo::GetOutputFormat(cnode, output_index));
         outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(cnode, output_index));

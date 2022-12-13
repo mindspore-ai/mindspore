@@ -52,7 +52,7 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
     common::AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split);
     kernel_select_->SelectKernel(split);
     std::vector<AnfNodePtr> new_outputs;
-    CreateMultipleOutputsOfAnfNode(func_graph, split, common::AnfAlgo::GetOutputTensorNum(split), &new_outputs);
+    CreateMultipleOutputsOfAnfNode(func_graph, split, AnfAlgo::GetOutputTensorNum(split), &new_outputs);
     for (size_t j = 0; j < new_outputs.size(); j++) {
       split_outputs.push_back(new_outputs[j]);
     }

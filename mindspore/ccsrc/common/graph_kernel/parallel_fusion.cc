@@ -373,7 +373,7 @@ inline bool ParameterLimit(const AnfNodePtrList &nodes) {
     size_t para_count = 0;
     for (const auto &node : nodes) {
       para_count += common::AnfAlgo::GetInputTensorNum(node);
-      para_count += common::AnfAlgo::GetOutputTensorNum(node);
+      para_count += AnfAlgo::GetOutputTensorNum(node);
     }
     res = para_count <= CUDA_PARA_LIMIT;
   }

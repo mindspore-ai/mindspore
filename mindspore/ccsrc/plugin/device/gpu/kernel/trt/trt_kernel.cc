@@ -36,7 +36,7 @@ bool TrtKernelMod::Init(const CNodePtr &kernel_node) {
     input_size_list_.push_back(size_in_byte);
   }
 
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t j = 0; j < output_num; j++) {
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, j);
     auto type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, j);

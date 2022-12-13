@@ -1003,7 +1003,7 @@ ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
   kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
   // set value node initial device data type = infer data type
   std::vector<TypeId> types;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(value_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(value_node);
   for (size_t index = 0; index < output_num; ++index) {
     types.push_back(kTypeUnknown);
   }
@@ -1080,7 +1080,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr>
       (void)inputs_device_format.emplace_back(kOpFormat_DEFAULT);
       (void)inputs_device_type.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_device_format.emplace_back(kOpFormat_DEFAULT);
       (void)outputs_device_type.emplace_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
@@ -1097,7 +1097,7 @@ std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_gra
   MS_EXCEPTION_IF_NULL(node);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
   std::vector<int64_t> output_used_num(output_num, 0);
   if (output_num == 1) {
     output_used_num[0] = SizeToLong(manager->node_users()[node].size());

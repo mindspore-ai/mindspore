@@ -67,7 +67,7 @@ void TbeKernelBroadcastSelector::GetBroadCastNodeInfo() {
     }
   }
 
-  output_num_ = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  output_num_ = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   for (size_t i = 0; i < output_num_; ++i) {
     auto output = common::AnfAlgo::GetOutputInferShape(cnode_ptr_, i);
     PadScalarShape(&output);

@@ -50,7 +50,7 @@ bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
 }
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfUtils::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     TypeId dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
     output_types->emplace_back(dtype);
@@ -58,7 +58,7 @@ void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_ty
 }
 
 void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *output_formats) {
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfUtils::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     output_formats->emplace_back(kOpFormat_DEFAULT);
   }
@@ -160,7 +160,7 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_at
   kernel_attr->SetInputAttrList(attr_list);
 
   TypeId output_dtype = kernel_attr->GetOutputAttr(0).dtype;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfUtils::GetOutputTensorNum(kernel_node);
   for (size_t i = 1; i < output_num; ++i) {
     (void)kernel_attr->AddOutputAttr(output_dtype);
   }
@@ -364,7 +364,7 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
     if (kernel_attr.GetAllSame()) {
       ExpandKernelAttr(kernel_node, &kernel_attr);
     }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfUtils::GetOutputTensorNum(kernel_node);
     if (kernel_attr.GetOutputSize() != output_num) {
       MS_LOG(DEBUG) << "Output num is not equal!";
       continue;

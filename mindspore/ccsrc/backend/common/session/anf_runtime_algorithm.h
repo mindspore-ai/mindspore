@@ -199,6 +199,16 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void SetKernelSelectBackoffInfo(const CNodePtr &node,
                                          const std::pair<std::string, ExceptionType> &failure_info);
   static bool IsKernelSelectBackoffOp(const CNodePtr &node);
+  // get the num of output real_kernel(which can be build and run in device)
+  static size_t GetOutputTensorNum(const AnfNodePtr &node);
+  // get output abstract type of anf node
+  static TypeId GetAbstractObjectType(const AbstractBasePtr &abstract);
+  static TypeId GetOutputObjectType(const AnfNodePtr &node, size_t output_idx);
+  static TypeId GetInputObjectType(const AnfNodePtr &node, size_t input_idx);
+  static std::vector<TypeId> GetAllInputObjectType(const AnfNodePtr &node);
+  static std::vector<TypeId> GetAllOutputObjectType(const AnfNodePtr &node);
+  // get all output infer data type
+  static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

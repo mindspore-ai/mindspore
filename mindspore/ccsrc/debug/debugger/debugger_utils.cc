@@ -111,7 +111,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
                  uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag) {
   // get outputs
   auto kernel_outputs = launch_info->outputs_;
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   std::string kernel_name = GetKernelNodeName(cnode);
   std::vector<size_t> real_outputs = CheckRealOutput(node_name, output_size);

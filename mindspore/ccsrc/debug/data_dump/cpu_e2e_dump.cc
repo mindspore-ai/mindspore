@@ -116,7 +116,7 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
 void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_path, std::string *kernel_name) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
+  auto output_size = AnfAlgo::GetOutputTensorNum(node);
   for (size_t j = 0; j < output_size; ++j) {
     if (!AnfAlgo::OutputAddrExist(node, j)) {
       continue;

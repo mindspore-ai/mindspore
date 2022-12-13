@@ -15,6 +15,7 @@
  */
 
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 
@@ -94,7 +95,7 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     if (!common::AnfAlgo::IsCommunicationOp(output_with_index.first) ||
-        common::AnfAlgo::GetOutputTensorNum(output_with_index.first) <= kSingleNum) {
+        AnfAlgo::GetOutputTensorNum(output_with_index.first) <= kSingleNum) {
       continue;
     }
     candidate_set.insert(output_with_index.first);

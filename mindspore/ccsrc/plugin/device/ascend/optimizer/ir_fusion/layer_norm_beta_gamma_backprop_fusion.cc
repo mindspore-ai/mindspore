@@ -83,7 +83,7 @@ bool CheckLayernormBetaGammaBackprop(const FuncGraphPtr &func_graph, const CNode
                  << kLayerNormBetaGammaBackpropInputTensorNum;
     return false;
   }
-  if (common::AnfAlgo::GetOutputTensorNum(cnode) != kLayerNormBetaGammaBackpropOutputNum) {
+  if (AnfAlgo::GetOutputTensorNum(cnode) != kLayerNormBetaGammaBackpropOutputNum) {
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " outputs num is not equal to "
                  << kLayerNormBetaGammaBackpropOutputNum;
     return false;

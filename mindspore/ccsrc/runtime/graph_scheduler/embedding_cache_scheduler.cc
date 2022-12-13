@@ -316,7 +316,7 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
 
     // Create device address if not exist one.
     if (node->isa<Parameter>() && !NodeDeviceAddressExist(device_context, node, 0)) {
-      auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
+      auto output_size = AnfAlgo::GetOutputTensorNum(node);
       for (size_t index = 0; index < output_size; index++) {
         TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(node, index);
         if (output_type_id == kTypeUnknown) {

@@ -262,7 +262,7 @@ void MultiMarginLossGradCPUKernelMod::CheckParam(const CNodePtr &kernel_node) co
   if (inputs_num != kMultiMarginLossGradInputNumWithoutWeight && inputs_num != kMultiMarginLossGradInputNumWithWeight) {
     MS_LOG(EXCEPTION) << "Invalid input numbers, expect input number 3 or 4, but actual input number " << inputs_num;
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kMultiMarginLossGradOutputsNum, kKernelName);
 }
 

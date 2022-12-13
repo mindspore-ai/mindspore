@@ -47,7 +47,7 @@ void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce
     MS_LOG(EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector"
                       << trace::DumpSourceLines(cnode);
   }
-  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || common::AnfAlgo::GetOutputTensorNum(cnode) != 1) {
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
     MS_LOG(EXCEPTION) << "The kind of reduce node [" << cnode->DebugString()
                       << "] is not single input or single output." << trace::DumpSourceLines(cnode);
   }

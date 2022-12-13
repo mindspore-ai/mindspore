@@ -40,7 +40,7 @@ size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) const {
       }
     }
 
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t i = 0; i < output_num; ++i) {
       auto address = AnfAlgo::GetOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
@@ -85,7 +85,7 @@ void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *bas
       }
     }
 
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t i = 0; i < output_num; ++i) {
       auto address = AnfAlgo::GetMutableOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);

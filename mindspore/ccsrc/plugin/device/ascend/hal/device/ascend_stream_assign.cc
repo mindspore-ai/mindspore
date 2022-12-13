@@ -370,7 +370,7 @@ void AscendStreamAssign::InsertEventsForOutputs(
   }
 
   // parallel op has output tensor, and it didn't connect to other kernel, it's output is graph output, sync it.
-  if (output_exec_info_list.empty() && (common::AnfAlgo::GetOutputTensorNum(kernel) != 0)) {
+  if (output_exec_info_list.empty() && (AnfAlgo::GetOutputTensorNum(kernel) != 0)) {
     InsertEvents(kernel_graph, kernel, kernel, kernel_send, kernel_recv, kernel_graph->output());
   }
 }
@@ -1492,7 +1492,7 @@ void AscendStreamAssign::GetProcessedStream(const NotNull<KernelGraphPtr> &graph
 bool AscendStreamAssign::IsAllOutGraphOut(const KernelGraphPtr &graph, const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(cnode);
-  auto cnode_out_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto cnode_out_num = AnfAlgo::GetOutputTensorNum(cnode);
   auto nodes = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   std::set<int> output_index_set;
   // Assign Communicate Op Memory firstly.

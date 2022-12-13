@@ -52,7 +52,7 @@ int64_t GetAvgpoolGroups(const AnfNodePtr &node, const std::string &node_name) {
 
 AnfNodePtr GetOutputItem(const FuncGraphManagerPtr &manager, const CNodePtr &cnode, int64_t groups,
                          const size_t index = 0) {
-  if (common::AnfAlgo::GetOutputTensorNum(cnode) == 1) {
+  if (AnfAlgo::GetOutputTensorNum(cnode) == 1) {
     return cnode;
   }
   std::vector<AnfNodePtr> depend_nodes{cnode};
@@ -127,7 +127,7 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
                                                         size_t index, int64_t groups) {
   auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
   auto &node_user = manager->node_users();
   std::vector<KernelWithIndex> ret;
   if (node_name == kDependName || node_name == kLoadName) {

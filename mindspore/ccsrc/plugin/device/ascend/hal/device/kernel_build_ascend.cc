@@ -171,7 +171,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
     return false;
   }
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
   size_t total_num = input_num + output_num + workspace_num;
 

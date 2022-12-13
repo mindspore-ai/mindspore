@@ -134,7 +134,7 @@ void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel
   for (auto &item : kernel_graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(item);
     if (item->isa<Parameter>()) {
-      auto output_num = common::AnfAlgo::GetOutputTensorNum(item);
+      auto output_num = AnfAlgo::GetOutputTensorNum(item);
       for (size_t index = 0; index < output_num; index++) {
         TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
         if (output_type_id == kTypeUnknown) {
@@ -188,7 +188,7 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(bound_addresses);
-  size_t output_size = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t output_size = AnfAlgo::GetOutputTensorNum(node);
   if (index >= output_size) {
     MS_LOG(EXCEPTION) << "For node " << node->DebugString() << ", index " << index << " exceed output size "
                       << output_size;
@@ -425,7 +425,7 @@ void CPUKernelRuntime::GetRuntimeAddressFromNode(const AnfNodePtr &node, std::ve
     MS_EXCEPTION_IF_NULL(device_address);
     AddRuntimeAddress(device_address, inputs);
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; ++i) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(node, i).get();
     MS_EXCEPTION_IF_NULL(device_address);

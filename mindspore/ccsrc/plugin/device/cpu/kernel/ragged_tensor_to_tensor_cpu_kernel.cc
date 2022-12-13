@@ -48,7 +48,7 @@ void RaggedTensorToTensorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   row_partition_types_ = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(kernel_node, "row_partition_types");
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kRaggedTensorToTensorOutputsNum, kernel_name_);
 }
 

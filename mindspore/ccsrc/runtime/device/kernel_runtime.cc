@@ -281,7 +281,7 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
   const auto &nodes = graph.execution_order();
   // Malloc for Node output
   for (const auto &node : nodes) {
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+    auto output_num = AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       MS_EXCEPTION_IF_NULL(node);
       auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
@@ -308,7 +308,7 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
     if (!item->isa<Parameter>()) {
       continue;
     }
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
+    auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       auto current_tensor = input_tensors[input_index];
       MS_EXCEPTION_IF_NULL(current_tensor);
@@ -406,7 +406,7 @@ void KernelRuntime::RunOpClearMemory(const session::KernelGraph &graph) const {
   for (const auto &cnode : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     // clear output memory resource
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t index = 0; index < output_num; ++index) {
       AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
     }
@@ -462,7 +462,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
     if (!item->isa<Parameter>()) {
       continue;
     }
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
+    auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       auto current_tensor = input_tensors[input_index];
       MS_EXCEPTION_IF_NULL(current_tensor);
@@ -663,7 +663,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
   GetShadowBackendNodeMap(graph, &shadow_backend_node_map);
   for (auto &item : need_alloc_nodes) {
     MS_EXCEPTION_IF_NULL(item);
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
+    auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
       // if graph output is a weight and doesn't link to any cnode, it's data type will be unknown
@@ -741,7 +741,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) 
 void KernelRuntime::UpdateSingleRefNodeMem(const CNodePtr &kernel, const session::KernelGraph &graph,
                                            bool reverse) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+  auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
   if (output_num == 0) {
     MS_LOG(DEBUG) << "This kernel has no output size.";
     return;
@@ -1771,7 +1771,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
       // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
       if (common::AnfAlgo::HasNodeAttr(kAttrNopOp, kernel)) {
-        for (size_t idx = 0; idx < common::AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
+        for (size_t idx = 0; idx < AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
           auto real_input = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, idx);
           auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, real_input);
           AnfAlgo::SetOutputAddr(device_address, idx, kernel.get());

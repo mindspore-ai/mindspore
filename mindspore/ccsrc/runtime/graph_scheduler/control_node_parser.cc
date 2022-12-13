@@ -1953,7 +1953,7 @@ void ControlNodeParser::ParseFrontToBackendKernel(const std::vector<KernelGraphP
     for (auto &kernel : execution_order) {
       auto front_node = graph->GetFrontAnfByBackendAnf(kernel);
       if (front_node != nullptr) {
-        for (size_t j = 0; j < common::AnfAlgo::GetOutputTensorNum(kernel); ++j) {
+        for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(kernel); ++j) {
           front_to_backend_kernels_[{front_node, j}] = {{kernel, j}, device_context};
           MS_LOG(DEBUG) << "Add front to backend kernel, front:" << common::AnfAlgo::GetNodeDebugString(front_node)
                         << "index:" << j << " addr:" << front_node

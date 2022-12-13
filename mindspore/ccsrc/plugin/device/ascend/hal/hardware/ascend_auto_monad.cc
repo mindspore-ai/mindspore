@@ -1360,8 +1360,8 @@ class AscendAutoMonadConverter {
       MS_LOG(WARNING) << "Assign: " << target->DebugString() << " has different abstract() with "
                       << source->DebugString() << ", [ " << target->abstract()->ToString()
                       << " != " << source->abstract()->ToString() << " ], need insert CastOp.";
-      if (common::AnfAlgo::GetOutputTensorNum(target) != kSingleOutput ||
-          common::AnfAlgo::GetOutputTensorNum(source) != kSingleOutput) {
+      if (AnfAlgo::GetOutputTensorNum(target) != kSingleOutput ||
+          AnfAlgo::GetOutputTensorNum(source) != kSingleOutput) {
         MS_LOG(EXCEPTION) << "Assign: " << target->DebugString() << " or " << source->DebugString()
                           << " has multi outputs.";
       }

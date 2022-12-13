@@ -178,8 +178,8 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
     MS_EXCEPTION_IF_NULL(data_kernel);
     ofs << "\t\tdata_kernel_name:" << data_kernel->fullname_with_scope()
         << "\tinput_number:" << common::AnfAlgo::GetInputTensorNum(data_kernel)
-        << "\toutput_number:" << common::AnfAlgo::GetOutputTensorNum(data_kernel) << "\n";
-    for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(data_kernel); ++i) {
+        << "\toutput_number:" << AnfAlgo::GetOutputTensorNum(data_kernel) << "\n";
+    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(data_kernel); ++i) {
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_kernel, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
@@ -217,11 +217,10 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   ofs << "\t\tkernel_name:" << kernel->fullname_with_scope()
       << "\tinputs_num:" << common::AnfAlgo::GetInputTensorNum(kernel)
-      << "\toutputs_num:" << common::AnfAlgo::GetOutputTensorNum(kernel)
-      << "\tis_dynamic_shape:" << actor->is_dynamic_shape() << "\tis_launch_skipped:" << actor->is_launch_skipped()
-      << "\n";
+      << "\toutputs_num:" << AnfAlgo::GetOutputTensorNum(kernel) << "\tis_dynamic_shape:" << actor->is_dynamic_shape()
+      << "\tis_launch_skipped:" << actor->is_launch_skipped() << "\n";
   const auto &somas_outputs = kernel_info->somas_output_result();
-  for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel); ++i) {
+  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()

@@ -191,7 +191,7 @@ AnfNodePtr DealRefOutput::DealRefForMultipleOutput(const FuncGraphPtr &func_grap
   std::vector<AnfNodePtr> make_tuple_inputs;
   AbstractBasePtrList abstract_list;
   (void)make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     AnfNodePtr final_node = CreatTupleGetItemNode(func_graph, cnode, output_index);
     // deal with ref output

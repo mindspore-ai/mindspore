@@ -28,7 +28,7 @@ void CacheForExecutionOrder(const KernelGraphPtr &graph) {
     std::vector<std::string> formats;
     std::vector<TypeId> types;
     std::vector<size_t> tensor_sizes;
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+    auto output_num = AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       std::string output_format = AnfAlgo::GetOutputFormat(node, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
@@ -68,7 +68,7 @@ void CacheForGraphInputs(const KernelGraphPtr &graph) {
     std::vector<std::string> formats;
     std::vector<TypeId> types;
     std::vector<size_t> tensor_sizes;
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(input);
+    auto output_size = AnfAlgo::GetOutputTensorNum(input);
     for (size_t index = 0; index < output_size; index++) {
       auto format = AnfAlgo::GetOutputFormat(input, index);
       auto type_id = AnfAlgo::GetOutputDeviceDataType(input, index);

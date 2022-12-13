@@ -272,7 +272,7 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
   if (common::AnfAlgo::HasNodeAttr("out_shapes", kernel_node)) {
     out_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "out_shapes");
   } else {
-    for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
+    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
       auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
       (void)out_shapes.emplace_back(out_shape);
     }

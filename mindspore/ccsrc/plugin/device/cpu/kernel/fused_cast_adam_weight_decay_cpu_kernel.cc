@@ -170,7 +170,7 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << input_num;
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kFusedCastAdamWeightDecayOutputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be "
                       << kFusedCastAdamWeightDecayOutputNum << ", but got: " << output_num;

@@ -243,7 +243,7 @@ bool FusionBuildTbeJsonCreator::CheckDynamicInput(const CNodePtr &cnode) const {
 bool FusionBuildTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
-  auto output_size = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  auto output_size = AnfAlgo::GetOutputTensorNum(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<nlohmann::json> output_desc_list;

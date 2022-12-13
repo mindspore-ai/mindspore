@@ -47,7 +47,7 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   output_size_list_.clear();
 
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
 
   for (size_t i = 0; i < input_num; i++) {
     auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);

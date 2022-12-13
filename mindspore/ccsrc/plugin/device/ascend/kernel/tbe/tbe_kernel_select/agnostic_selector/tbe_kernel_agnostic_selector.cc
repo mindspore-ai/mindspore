@@ -25,7 +25,7 @@ void TbeKernelAgnosticSelector::GetSupportedFormatDType(SupportFormatDType *supp
   MS_EXCEPTION_IF_NULL(cnode_ptr_);
   SupportFormat support_format;
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   if (input_num != 1 || output_num != 1) {
     MS_LOG(EXCEPTION) << "Agnostic only support one input. input_num: " << input_num << ", output num: " << output_num
                       << ", full_name:" << cnode_ptr_->fullname_with_scope();

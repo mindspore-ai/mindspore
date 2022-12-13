@@ -274,7 +274,7 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
             tensor_inplace_changed = true;
             InplaceAssignerInfo new_op_info;  // output info
             new_op_info.op_node = candidate->first->cast<CNodePtr>();
-            new_op_info.real_output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+            new_op_info.real_output_num = AnfAlgo::GetOutputTensorNum(cnode);
             new_op_info.real_output_index = candidate->second;
             new_op_info.inplace_to_origin_input = SizeToInt(i) - 1;
             // modify graph kernel's abstract, kernelBuildInfo and insert assign

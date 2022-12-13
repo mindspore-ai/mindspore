@@ -38,7 +38,7 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t output_tensor_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_tensor_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_list;
   (void)std::copy_if(

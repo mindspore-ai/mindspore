@@ -514,8 +514,7 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
 
 std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
   auto out_anchor_names = GetOpOutputAnchorNames(anf_node);
   std::vector<GeTensorDescPtr> res;
   res.resize(out_anchor_names.size(), nullptr);

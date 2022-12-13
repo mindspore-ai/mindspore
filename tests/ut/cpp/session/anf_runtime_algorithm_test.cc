@@ -229,17 +229,17 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   bn->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
-  EXPECT_EQ(common::AnfAlgo::GetOutputTensorNum(bn), 5);
-  EXPECT_THROW(common::AnfAlgo::GetOutputTensorNum(nullptr), std::runtime_error);
+  EXPECT_EQ(AnfAlgo::GetOutputTensorNum(bn), 5);
+  EXPECT_THROW(AnfAlgo::GetOutputTensorNum(nullptr), std::runtime_error);
   // test add as input
   inputs.clear();
   inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(std::make_shared<abstract::AbstractNone>());
-  EXPECT_EQ(common::AnfAlgo::GetOutputTensorNum(add), 0);
+  EXPECT_EQ(AnfAlgo::GetOutputTensorNum(add), 0);
   add->set_abstract(x_abstract);
-  EXPECT_EQ(common::AnfAlgo::GetOutputTensorNum(add), 1);
+  EXPECT_EQ(AnfAlgo::GetOutputTensorNum(add), 1);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {

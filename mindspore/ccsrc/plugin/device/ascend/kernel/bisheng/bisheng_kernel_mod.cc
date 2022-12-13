@@ -65,7 +65,7 @@ bool BiShengKernelMod::InitKernel(const AnfNodePtr &kernel_node) {
     type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
   }
 
-  num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  num_output_ = AnfAlgo::GetOutputTensorNum(kernel_node);
   auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
   if (num_output_ != output_type_list.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on Ascend, number of outputs types '" << output_type_list.size()

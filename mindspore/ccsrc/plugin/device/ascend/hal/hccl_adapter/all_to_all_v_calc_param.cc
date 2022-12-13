@@ -54,7 +54,7 @@ void AllToAllvCalcParam::CalcOpParam() {
       input_num = 0;
     }
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   std::vector<size_t> input_aligned_mem_size(input_num);
   std::vector<size_t> output_aligned_mem_size(output_num);
   std::vector<size_t> input_real_mem_size(input_num);

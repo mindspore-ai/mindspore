@@ -103,7 +103,7 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
     }
 
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 4, but got " << output_num;
     }

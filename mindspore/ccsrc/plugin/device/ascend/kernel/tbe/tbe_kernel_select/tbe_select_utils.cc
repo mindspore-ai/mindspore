@@ -56,7 +56,7 @@ bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
     }
   }
 
-  size_t real_output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t real_output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < real_output_num; i++) {
     auto format = AnfAlgo::GetOutputFormat(node, i);
     if (!CheckValidInOutDeviceShape(node, i, true, format)) {
@@ -166,7 +166,7 @@ void GetSupportOriFormat(const CNodePtr &cnode, SupportFormat *support_format) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(support_format);
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   MS_EXCEPTION_IF_NULL(op_info);

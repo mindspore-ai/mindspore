@@ -192,7 +192,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
   }
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  size_t out_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t out_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t output_idx = 0; output_idx < out_num; ++output_idx) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, output_idx);
     if (output_format == kOpFormat_NC1KHKWHWC0) {
@@ -470,7 +470,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
 
 AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &orig_node, const AnfNodePtr &node,
                                   const KernelSelectPtr &kernel_select) {
-  size_t outputs_num = common::AnfAlgo::GetOutputTensorNum(node);
+  size_t outputs_num = AnfAlgo::GetOutputTensorNum(node);
   if (outputs_num == 0) {
     return node;
   }

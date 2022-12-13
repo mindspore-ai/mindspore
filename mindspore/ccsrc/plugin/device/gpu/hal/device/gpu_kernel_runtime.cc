@@ -190,7 +190,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
 
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
     // get outputs
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(kernel);
+    auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
     auto node_name = common::AnfAlgo::GetCNodeName(kernel);
 
     std::vector<int> real_outputs = CheckRealOutput(node_name, output_size);
@@ -1329,7 +1329,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
     }
   }
   // Free the output of kernel, if output has no reference.
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
   for (size_t i = 0; i < output_num; ++i) {
     auto kernel_ref_count_ptr = mem_reuse_util_->GetRef(cnode, i);
     if (kernel_ref_count_ptr == nullptr) {

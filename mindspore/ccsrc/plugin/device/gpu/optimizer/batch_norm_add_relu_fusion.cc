@@ -146,7 +146,7 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
 
   std::vector<TypeId> outputs_type;
   std::vector<BaseShapePtr> outputs_shape;
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(batch_norm);
+  auto output_num = AnfAlgo::GetOutputTensorNum(batch_norm);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(batch_norm, i));
     outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(batch_norm, i));

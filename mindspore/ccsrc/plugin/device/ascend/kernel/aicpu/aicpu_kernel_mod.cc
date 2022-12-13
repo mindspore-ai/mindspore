@@ -137,7 +137,7 @@ void AicpuOpKernelMod::SetExtInfo(const std::string &ext_info) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+    auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
 
     ext_info_handler_ = std::make_shared<device::ascend::AicpuExtInfoHandler>(
       cnode->fullname_with_scope(), static_cast<uint32_t>(input_num), static_cast<uint32_t>(output_num), unknow_type_);
@@ -351,7 +351,7 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 
   MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
   if (input_num == 0 && output_num == 0) {
     MS_LOG(INFO) << "Node:" << cnode->fullname_with_scope() << " no need to update output shape";
     return 0;
@@ -419,7 +419,7 @@ void AicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode) {
 
   std::vector<TypeId> type_ids;
   std::vector<ShapeVector> shapes;
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < output_num; ++i) {
     std::vector<int64_t> shape;
     TypeId type_id;
