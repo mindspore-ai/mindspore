@@ -38,6 +38,15 @@ function Run_arm64_fp16() {
     Run_Benchmark "${fp16_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id $arm64_fail_not_return
 }
 
+# Run on nnapi platform:
+function Run_nnapi() {
+    # Prepare the config file list
+    local nnapi_cfg_file_list=("$models_nnapi_config")
+    # Run converted models:
+    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
+    Run_Benchmark "${nnapi_cfg_file_list[*]}" . '/data/local/tmp' $run_nnapi_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id $arm64_fail_not_return 'NNAPI'
+}
+
 basepath=$(pwd)
 echo ${basepath}
 #set -e
@@ -107,6 +116,7 @@ models_dynamic_quant_config=${basepath}/../${config_folder}/models_dynamic_quant
 models_compatibility_config=${basepath}/../${config_folder}/models_compatibility.cfg
 models_process_only_config=${basepath}/../${config_folder}/models_process_only.cfg
 models_process_only_fp16_config=${basepath}/../${config_folder}/models_process_only_fp16.cfg
+models_nnapi_config=${basepath}/../${config_folder}/models_nnapi.cfg
 
 # Prepare the config file list
 fp32_cfg_file_list=()
@@ -178,6 +188,8 @@ run_arm64_fp32_log_file=${basepath}/run_arm64_fp32_log.txt
 echo 'run arm64_fp32 logs: ' > ${run_arm64_fp32_log_file}
 run_arm64_fp16_log_file=${basepath}/run_arm64_fp16_log.txt
 echo 'run arm64_fp16 logs: ' > ${run_arm64_fp16_log_file}
+run_nnapi_log_file=${basepath}/run_nnapi_log.txt
+echo 'run nnapi logs: ' > ${run_nnapi_log_file}
 
 # Copy the MindSpore models:
 echo "Push files to the arm and run benchmark"
@@ -213,6 +225,12 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" |
 #    sleep 1
 fi
 
+if [[ $backend == "all" || $backend == "arm64_tflite" || $backend == "nnapi" ]]; then
+    echo "start Run nnapi ..."
+    Run_nnapi
+    Run_nnapi_status=$?
+fi
+
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_tflite" || \
       $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" || \
       $backend == "arm64_quant" ]]; then
@@ -236,7 +254,15 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" |
     fi
 fi
 
-echo "Run_arm64_fp32 and Run_arm64_fp16 is ended"
+if [[ $backend == "all" || $backend == "arm64_tflite" || $backend == "nnapi" ]]; then
+    if [[ ${Run_nnapi_status} != 0 ]];then
+        echo "Run nnapi failed"
+        cat ${run_nnapi_log_file}
+        isFailed=1
+    fi
+fi
+
+echo "Run_arm64_fp32 and Run_arm64_fp16 and nnapi is ended"
 Print_Benchmark_Result $run_benchmark_result_file
 adb -s ${device_id} shell "rm -rf /data/local/tmp/benchmark_test/*"
 exit ${isFailed}
