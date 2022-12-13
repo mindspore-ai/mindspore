@@ -209,16 +209,45 @@ int ConvertFp16ToFp32(const FuncGraphPtr &old_graph) {
   return RET_OK;
 }
 
-int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  CHECK_NULL_RETURN(param);
-  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
-    return RET_OK;
+int ConvertValueNodeToParameter(const FuncGraphPtr &func_graph) {
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    for (size_t i = kPrimOffset; i < cnode->size(); ++i) {
+      auto input = cnode->input(i);
+      if (!input->isa<ValueNode>()) {
+        continue;
+      }
+      auto tensor_info = input->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
+      if (tensor_info == nullptr) {
+        MS_LOG(INFO) << cnode->fullname_with_scope() << " input index: " << i << " cast tensor nullptr.";
+        continue;
+      }
+      auto parameter = func_graph->add_parameter();
+      auto status = InitParameterFromTensorInfo(parameter, tensor_info);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Init parameter From tensor failed, tenor: " << tensor_info->name();
+        return status;
+      }
+      parameter->set_name(input->fullname_with_scope());
+      auto manage = Manage(func_graph);
+      manage->Replace(input, parameter);
+    }
   }
+  return RET_OK;
+}
+
+int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   int status;
 
   status = ConvertFp16ToFp32(old_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert fp16 To fp32 failed.";
+    return status;
+  }
+
+  status = ConvertValueNodeToParameter(old_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Convert value node To parameter failed.";
     return status;
   }
 
@@ -231,6 +260,20 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
       MS_LOG(ERROR) << "do pre process failed!";
       return status;
     }
+  }
+  return RET_OK;
+}
+
+int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  CHECK_NULL_RETURN(param);
+  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
+    return RET_OK;
+  }
+
+  int status = PrepareQuantize(old_graph, param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "PrepareQuantize failed.";
+    return status;
   }
 
   std::shared_ptr<mindspore::Model> origin;
