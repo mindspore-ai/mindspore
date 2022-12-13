@@ -1785,6 +1785,163 @@ Status ISTFT(const Eigen::MatrixXcd &stft_matrix, std::shared_ptr<Tensor> *outpu
 }
 
 template <typename T>
+Status Normalized(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft,
+                  int32_t win_length, WindowType window) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
+  // window
+  std::shared_ptr<Tensor> ifft_win_tensor;
+  RETURN_IF_NOT_OK(Window(&ifft_win_tensor, window, win_length));
+  if (win_length == 1) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT32), &ifft_win_tensor));
+    auto win = ifft_win_tensor->begin<float>();
+    *(win) = 1;
+  }
+  // pad window to match n_fft, and add a broadcasting axis
+  std::shared_ptr<Tensor> ifft_win_pad;
+  ifft_win_pad = ifft_win_tensor;
+  if (win_length < n_fft) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({n_fft}), DataType(DataType::DE_FLOAT32), &ifft_win_pad));
+    int pad_left = (n_fft - win_length) / TWO;
+    int pad_right = n_fft - win_length - pad_left;
+    RETURN_IF_NOT_OK(Pad<float>(ifft_win_tensor, &ifft_win_pad, pad_left, pad_right, BorderType::kConstant));
+  }
+  float win_sum = 0.;
+  for (auto iter_win = ifft_win_pad->begin<float>(); iter_win != ifft_win_pad->end<float>(); ++iter_win) {
+    win_sum += (*iter_win) * (*iter_win);
+  }
+  win_sum = std::sqrt(win_sum);
+  for (auto iter_input = input->begin<T>(); iter_input != input->end<T>(); ++iter_input) {
+    *iter_input = (*iter_input) * win_sum;
+  }
+  *output = input;
+  return Status::OK();
+}
+
+template <typename T>
+Status Transistft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t length, int32_t n_fft,
+                  int32_t win_length, int32_t hop_length, WindowType window, bool center, bool onesided) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  TensorShape input_shape = input->shape();
+  const int32_t kThreeAudioDim = 3;
+  auto m = n_fft / TWO + 1;
+  auto n = input_shape[-kDefaultAudioDim];
+  auto r = input_shape[-kThreeAudioDim];
+  auto size = r * n * input_shape[kThreeAudioDim];
+  // construct new tensor by input
+  std::shared_ptr<Tensor> istft_results;
+  for (int dim = 0; dim < input_shape[0]; dim++) {
+    // slice and squeeze the first dim
+    Tensor::TensorIterator<T> itr = input->begin<T>();
+    itr += dim * size;
+    // onesided
+    int a = onesided ? r : m;
+    // turn tensor to eigen matrixXcd
+    std::shared_ptr<Tensor> waveform;
+    Eigen::MatrixXcd stft_matrix(a, n);
+    for (int32_t index = 0; index < a; index++) {
+      for (int32_t cnt = 0; cnt < n; cnt++) {
+        if (itr < (dim + 1) * size + itr) {
+          T real = *(itr++);
+          T img = *(itr++);
+          stft_matrix(index, cnt) = std::complex<double>(real, img);
+        }
+      }
+    }
+    RETURN_IF_NOT_OK(ISTFT<T>(stft_matrix, &waveform, n_fft, hop_length, win_length, window, center, length));
+    if (input->shape().Rank() == TWO) {
+      // do not expand dim
+      istft_results = waveform;
+      continue;
+    }
+
+    if (istft_results != nullptr) {
+      RETURN_IF_NOT_OK(istft_results->InsertTensor({dim}, waveform));
+    } else {
+      RETURN_IF_NOT_OK(
+        Tensor::CreateEmpty(TensorShape({input_shape[0], waveform->shape()[0]}), waveform->type(), &istft_results));
+      RETURN_IF_NOT_OK(istft_results->InsertTensor({dim}, waveform));
+    }
+  }
+  *output = istft_results;
+  return Status::OK();
+}
+
+template <typename T>
+Status InverseSpectrogramImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t length,
+                              int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
+                              bool normalized, bool center, BorderType pad_mode, bool onesided) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  // pack
+  TensorShape input_shape = input->shape();
+  std::vector output_shape = input_shape.AsVector();
+  TensorShape input_reshape({input->Size() / input_shape[-1] / input_shape[-2] / input_shape[-3], input_shape[-3],
+                             input_shape[-2], input_shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(input_reshape));
+  // normalized
+  std::shared_ptr<Tensor> normal_out;
+  normal_out = input;
+  if (normalized) {
+    RETURN_IF_NOT_OK(Normalized<T>(input, &normal_out, n_fft, win_length, window));
+  }
+  // construct new tensor by input
+  std::shared_ptr<Tensor> final_results;
+  int32_t output_length = length == 0 ? (input_shape[-kDefaultAudioDim] - 1) * hop_length : length + TWO * pad;
+  RETURN_IF_NOT_OK(
+    Transistft<T>(normal_out, &final_results, output_length, n_fft, win_length, hop_length, window, center, onesided));
+  // remove padding from front and backs
+  TensorShape waveform_shape = final_results->shape();
+  auto dim1_size = waveform_shape[-1];
+  auto dim2_size = waveform_shape[-kDefaultAudioDim];
+  auto cols = waveform_shape[-1] - TWO * pad;
+  auto start = &*final_results->begin<T>();
+  auto dim = dim1_size * dim2_size;
+  std::shared_ptr<Tensor> waveform;
+  if (length != 0 && (pad > 0)) {
+    std::vector<float> result(dim2_size * cols);
+    int32_t index = 0;
+    for (auto i = 0; i < dim; i += dim1_size) {
+      int32_t cnt = 0;
+      for (auto itr = start + i + pad; cnt < cols; ++itr) {
+        result[index] = *itr;
+        ++index;
+        ++cnt;
+      }
+    }
+    TensorShape change_shape({dim2_size, cols});
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(result, change_shape, &waveform));
+  } else {
+    waveform = final_results;
+  }
+  // unpack
+  output_shape.pop_back();
+  output_shape.pop_back();
+  output_shape.pop_back();
+  output_shape.push_back(cols);
+  RETURN_IF_NOT_OK(waveform->Reshape(TensorShape(output_shape)));
+  *output = waveform;
+  return Status::OK();
+}
+
+Status InverseSpectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t length,
+                          int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
+                          bool normalized, bool center, BorderType pad_mode, bool onesided) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  RETURN_IF_NOT_OK(ValidateTensorShape("InverseSpectrogram",
+                                       input->shape().Size() > kDefaultAudioDim && input->IsComplex(),
+                                       "<..., freq, time, complex=2>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("InverseSpectrogram", input));
+  if (input->type().value() != DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(InverseSpectrogramImpl<float>(input, output, length, n_fft, win_length, hop_length, pad, window,
+                                                   normalized, center, pad_mode, onesided));
+  } else {
+    RETURN_IF_NOT_OK(InverseSpectrogramImpl<double>(input, output, length, n_fft, win_length, hop_length, pad, window,
+                                                    normalized, center, pad_mode, onesided));
+  }
+  return Status::OK();
+}
+
+template <typename T>
 Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft,
                       int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type, float power,
                       float momentum, int32_t length, bool rand_init, std::mt19937 rnd) {

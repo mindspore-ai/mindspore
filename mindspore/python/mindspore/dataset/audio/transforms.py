@@ -28,11 +28,11 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_griffin_lim, \
-    check_highpass_biquad, check_inverse_mel_scale, check_lfcc, check_lfilter, check_lowpass_biquad, check_magphase, \
-    check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mel_spectrogram, \
-    check_mfcc, check_mu_law_coding, check_overdrive, check_phase_vocoder, check_phaser, check_resample, \
-    check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, check_spectrogram, check_time_stretch, \
-    check_treble_biquad, check_vad, check_vol
+    check_highpass_biquad, check_inverse_mel_scale, check_inverse_spectrogram, check_lfcc, check_lfilter, \
+    check_lowpass_biquad, check_magphase, check_mask_along_axis, check_mask_along_axis_iid, check_masking, \
+    check_mel_scale, check_mel_spectrogram, check_mfcc, check_mu_law_coding, check_overdrive, check_phase_vocoder, \
+    check_phaser, check_resample, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, \
+    check_spectrogram, check_time_stretch, check_treble_biquad, check_vad, check_vol
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation
 
@@ -1180,6 +1180,82 @@ class InverseMelScale(AudioTensorOperation):
         return cde.InverseMelScaleOperation(self.n_stft, self.n_mels, self.sample_rate, self.f_min, self.f_max,
                                             self.max_iter, self.tolerance_loss, self.tolerance_change, self.sgdargs,
                                             DE_C_NORM_TYPE.get(self.norm), DE_C_MEL_TYPE.get(self.mel_type))
+
+
+class InverseSpectrogram(AudioTensorOperation):
+    """
+    Create an inverse spectrogram to recover an audio signal from a spectrogram.
+
+    Args:
+        length (int, optional): The output length of the waveform, must be non negative. Default: None,
+            means to output the whole waveform.
+        n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins, which should be greater than 0.
+            Default: 400.
+        win_length (int, optional): Window size, which should be greater than 0.
+            Default: None, will be set to `n_fft` .
+        hop_length (int, optional): Length of hop between STFT windows, which should be greater than 0.
+            Default: None, will be set to `win_length // 2` .
+        pad (int, optional): Two sided padding of signal, cannot be less than 0. Default: 0.
+        window (WindowType, optional): A function to create a window tensor that is applied/multiplied to each
+            frame/window. Default: WindowType.Hann.
+        normalized (bool, optional): Whether the spectrogram was normalized by magnitude after stft. Default: False.
+        center (bool, optional): Whether the signal in spectrogram was padded on both sides. Default: True.
+        pad_mode (BorderType, optional): Controls the padding method used when `center` is True,
+            can be BorderType.REFLECT, BorderType.CONSTANT, BorderType.EDGE or BorderType.SYMMETRIC.
+            Default: BorderType.REFLECT.
+        onesided (bool, optional): Controls whether spectrogram was used to return half of results to avoid
+            redundancy. Default: True.
+
+    Raises:
+        TypeError: If `length` is not of type int.
+        ValueError: If `length` is a negative number.
+        TypeError: If `n_fft` is not of type int.
+        ValueError: If `n_fft` is not positive.
+        TypeError: If `win_length` is not of type int.
+        ValueError: If `win_length` is not positive.
+        TypeError: If `hop_length` is not of type int.
+        ValueError: If `hop_length` is not positive.
+        TypeError: If `pad` is not of type int.
+        ValueError: If `pad` is a negative number.
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.utils.WindowType` .
+        TypeError: If `normalized` is not of type bool.
+        TypeError: If `center` is not of type bool.
+        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.utils.BorderType` .
+        TypeError: If `onesided` is not of type bool.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
+        ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.InverseSpectrogram(1, 400, 400, 200)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_inverse_spectrogram
+    def __init__(self, length=None, n_fft=400, win_length=None, hop_length=None, pad=0,
+                 window=WindowType.HANN, normalized=False, center=True,
+                 pad_mode=BorderType.REFLECT, onesided=True):
+        super().__init__()
+        self.length = length if length is not None else 0
+        self.n_fft = n_fft
+        self.win_length = win_length if win_length is not None else n_fft
+        self.hop_length = hop_length if hop_length is not None else self.win_length // 2
+        self.pad = pad
+        self.window = window
+        self.normalized = normalized
+        self.center = center
+        self.pad_mode = pad_mode
+        self.onesided = onesided
+
+    def parse(self):
+        return cde.InverseSpectrogramOperation(self.length, self.n_fft, self.win_length, self.hop_length, self.pad,
+                                               DE_C_WINDOW_TYPE.get(self.window), self.normalized, self.center,
+                                               DE_C_BORDER_TYPE.get(self.pad_mode), self.onesided)
 
 
 DE_C_NORM_MODE = {NormMode.ORTHO: cde.NormMode.DE_NORM_MODE_ORTHO,

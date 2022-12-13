@@ -3236,3 +3236,38 @@ TEST_F(MindDataTestPipeline, TestMelSpectrogramPipeline) {
   EXPECT_EQ(i, 10);
   iter3->Stop();
 }
+
+/// Feature: InverseSpectrogram op
+/// Description: Test input InverseSpectrogram op
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestInverseSpectrogramPipeline) {
+  // 4 dimension
+  std::shared_ptr<SchemaObj> schema4 = Schema();
+  ASSERT_OK(schema4->add_column("spectrogram", mindspore::DataType::kNumberTypeFloat32, {1, 9, 10, 2}));
+  std::shared_ptr<Dataset> ds4 = RandomData(10, schema4);
+  EXPECT_NE(ds4, nullptr);
+
+  ds4 = ds4->SetNumWorkers(4);
+  EXPECT_NE(ds4, nullptr);
+
+  auto inverse_spectrogram_op4 = audio::InverseSpectrogram(1, 16, 16, 8, 0, WindowType::kHann, false,
+                                                           true, BorderType::kReflect, true);
+  ds4 = ds4->Map({inverse_spectrogram_op4});
+  EXPECT_NE(ds4, nullptr);
+  std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
+  EXPECT_NE(ds4, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row4; 
+  ASSERT_OK(iter4->GetNextRow(&row4));
+  std::vector<int64_t> expected4 = {1, 1};
+  int i = 0;
+  while (row4.size() != 0) {
+    auto col = row4["spectrogram"];
+    ASSERT_EQ(col.Shape(), expected4);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter4->GetNextRow(&row4));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter4->Stop();
+}

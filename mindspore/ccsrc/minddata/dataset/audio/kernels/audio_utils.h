@@ -758,6 +758,24 @@ Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
                        float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum, NormType norm,
                        MelType mel_type, std::mt19937 rnd);
 
+/// \brief Create InverseSpectrogram for a raw audio signal.
+/// \param[in] input Input tensor.
+/// \param[out] output Output tensor.
+/// \param[in] length The output length of the waveform.
+/// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins.
+/// \param[in] win_length Window size.
+/// \param[in] hop_length Length of hop between STFT windows.
+/// \param[in] pad Two sided padding of signal.
+/// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+/// \param[in] normalized Whether to normalize by magnitude after stft.
+/// \param[in] center Whether the signal in spectrogram was padded on both sides.
+/// \param[in] pad_mode Controls the padding method used when center is True.
+/// \param[in] onesided Controls whether spectrogram was used to return half of results to avoid redundancy.
+/// \return Status return code.
+Status InverseSpectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t length,
+                          int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
+                          bool normalized, bool center, BorderType pad_mode, bool onesided);
+
 /// \brief Decode mu-law encoded signal.
 /// \param input Tensor of shape <..., time>.
 /// \param output Tensor of shape <..., time>.
