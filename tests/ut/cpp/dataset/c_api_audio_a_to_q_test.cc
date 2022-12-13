@@ -3201,3 +3201,38 @@ TEST_F(MindDataTestPipeline, TestMFCCWrongArgs) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: MelSpectrogram op
+/// Description: Test input MelSpectrogram op
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestMelSpectrogramPipeline) {
+  // 3 dimension
+  std::shared_ptr<SchemaObj> schema3 = Schema();
+  ASSERT_OK(schema3->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 30}));
+  std::shared_ptr<Dataset> ds3 = RandomData(10, schema3);
+  EXPECT_NE(ds3, nullptr);
+
+  ds3 = ds3->SetNumWorkers(4);
+  EXPECT_NE(ds3, nullptr);
+
+  auto mel_spectrogram_op3 = audio::MelSpectrogram(16000, 16, 16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false,
+                                                   true, BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  ds3 = ds3->Map({mel_spectrogram_op3});
+  EXPECT_NE(ds3, nullptr);
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  EXPECT_NE(ds3, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row3;
+  ASSERT_OK(iter3->GetNextRow(&row3));
+  std::vector<int64_t> expected3 = {1, 1, 8, 4};
+  int i = 0;
+  while (row3.size() != 0) {
+    auto col = row3["waveform"];
+    ASSERT_EQ(col.Shape(), expected3);
+    ASSERT_EQ(col.Shape().size(), 4);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter3->GetNextRow(&row3));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter3->Stop();
+}

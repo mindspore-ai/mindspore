@@ -29,10 +29,10 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_griffin_lim, \
     check_highpass_biquad, check_inverse_mel_scale, check_lfcc, check_lfilter, check_lowpass_biquad, check_magphase, \
-    check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mfcc, \
-    check_mu_law_coding, check_overdrive, check_phase_vocoder, check_phaser, check_resample, check_riaa_biquad, \
-    check_sliding_window_cmn, check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, \
-    check_vad, check_vol
+    check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mel_spectrogram, \
+    check_mfcc, check_mu_law_coding, check_overdrive, check_phase_vocoder, check_phaser, check_resample, \
+    check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, check_spectrogram, check_time_stretch, \
+    check_treble_biquad, check_vad, check_vol
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation
 
@@ -1515,6 +1515,109 @@ class MelScale(AudioTensorOperation):
     def parse(self):
         return cde.MelScaleOperation(self.n_mels, self.sample_rate, self.f_min, self.f_max, self.n_stft,
                                      DE_C_NORM_TYPE.get(self.norm), DE_C_MEL_TYPE.get(self.mel_type))
+
+
+class MelSpectrogram(AudioTensorOperation):
+    """
+    Create MelSpectrogram for a raw audio signal.
+
+    Args:
+        sample_rate (int, optional): Sampling rate of audio signal (in Hz), which can't be less than 0. Default: 16000.
+        n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins, which should be greater than 0 and less than
+            twice of the last dimension size of the input. Default: 400.
+        win_length (int, optional): Window size, which should be greater than 0 and no more than `n_fft` . Default:
+            None, will be set to `n_fft` .
+        hop_length (int, optional): Length of hop between STFT windows, which should be greater than 0.
+            Default: None, will be set to `win_length // 2` .
+        f_min (float, optional): Minimum frequency, which can't be greater than `f_max` . Default: 0.0.
+        f_max (float, optional): Maximum frequency, which can't be less than 0. Default: None, will be set
+            to `sample_rate // 2` .
+        pad (int, optional): Two sided padding of signal, which can't be less than 0. Default: 0.
+        n_mels (int, optional): Number of mel filterbanks, which can't be less than 0. Default: 128.
+        window (WindowType, optional): A function to create a window tensor that is applied/multiplied to each
+            frame/window. Default: WindowType.Hann.
+        power (float, optional): Exponent for the magnitude spectrogram, which must be
+            greater than 0, e.g., 1 for energy, 2 for power, etc. Default: 2.0.
+        normalized (bool, optional): Whether to normalize by magnitude after stft. Default: False.
+        center (bool, optional): Whether to pad waveform on both sides. Default: True.
+        pad_mode (BorderType, optional): Controls the padding method used when `center` is True. Default:
+            BorderType.REFLECT.
+        onesided (bool, optional): Controls whether to return half of results to avoid redundancy. Default: True.
+        norm (NormType, optional): If 'slaney', divide the triangular mel weights by the width of the mel band
+            (area normalization). Default: NormType.NONE.
+        mel_scale (MelType, optional): Mel scale to use, can be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        TypeError: If `n_fft` is not of type int.
+        TypeError: If `n_mels` is not of type int.
+        TypeError: If `f_min` is not of type float.
+        TypeError: If `f_max` is not of type float.
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.utils.WindowType` .
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.utils.NormType` .
+        TypeError: If `mel_scale` is not of type :class:`mindspore.dataset.audio.utils.MelType` .
+        TypeError: If `power` is not of type float.
+        TypeError: If `normalized` is not of type bool.
+        TypeError: If `center` is not of type bool.
+        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.utils.BorderType` .
+        TypeError: If `onesided` is not of type bool.
+        TypeError: If `pad` is not of type int.
+        TypeError: If `win_length` is not of type int.
+        TypeError: If `hop_length` is not of type int.
+        ValueError: If `sample_rate` is a negative number.
+        ValueError: If `n_fft` is a negative number.
+        ValueError: If `n_mels` is a negative number.
+        ValueError: If `f_min` is greater than `f_max` .
+        ValueError: If `f_max` is a negative number.
+        ValueError: If `f_min` is not less than `sample_rate // 2` when `f_max` is set to None.
+        ValueError: If `power` is not positive.
+        ValueError: If `pad` is a negative number.
+        ValueError: If `win_length` is not positive.
+        ValueError: If `hop_length` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4]]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.MelSpectrogram(sample_rate=16000, n_fft=16, win_length=16, hop_length=8, f_min=0.0, \
+        ...                                    f_max=5000.0, pad=0, n_mels=8, window=WindowType.HANN, power=2.0, \
+        ...                                    normalized=False, center=True, pad_mode=BorderType.REFLECT, \
+        ...                                    onesided=True, norm=NormType.SLANEY,  mel_scale=MelType.HTK)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_mel_spectrogram
+    def __init__(self, sample_rate=16000, n_fft=400, win_length=None, hop_length=None, f_min=0.0, f_max=None, pad=0,
+                 n_mels=128, window=WindowType.HANN, power=2.0, normalized=False, center=True,
+                 pad_mode=BorderType.REFLECT, onesided=True, norm=NormType.NONE, mel_scale=MelType.HTK):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.n_fft = n_fft
+        self.win_length = win_length if win_length is not None else n_fft
+        self.hop_length = hop_length if hop_length is not None else self.win_length // 2
+        self.f_min = f_min
+        self.f_max = f_max if f_max is not None else sample_rate // 2
+        self.pad = pad
+        self.n_mels = n_mels
+        self.window = window
+        self.power = power
+        self.normalized = normalized
+        self.center = center
+        self.pad_mode = pad_mode
+        self.onesided = onesided
+        self.norm = norm
+        self.mel_scale = mel_scale
+
+    def parse(self):
+        return cde.MelSpectrogramOperation(self.sample_rate, self.n_fft, self.win_length, self.hop_length, self.f_min,
+                                           self.f_max, self.pad, self.n_mels, DE_C_WINDOW_TYPE.get(self.window),
+                                           self.power, self.normalized, self.center,
+                                           DE_C_BORDER_TYPE.get(self.pad_mode), self.onesided,
+                                           DE_C_NORM_TYPE.get(self.norm), DE_C_MEL_TYPE.get(self.mel_scale))
 
 
 class MFCC(AudioTensorOperation):

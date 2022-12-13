@@ -1064,3 +1064,52 @@ def check_mfcc(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_mel_spectrogram_freq(f_min, f_max, sample_rate):
+    """Wrapper method to check the parameters of f_min and f_max."""
+    type_check(f_min, (float,), "f_min")
+
+    if f_max is not None:
+        check_non_negative_float32(f_max, "f_max")
+        if f_min > f_max:
+            raise ValueError("f_max should be greater than or equal to f_min, but got f_min: {0} and f_max: {1}."
+                             .format(f_min, f_max))
+    else:
+        if f_min >= sample_rate // 2:
+            raise ValueError("MelSpectrogram: sample_rate // 2 should be greater than f_min when f_max is set to None, \
+                              but got f_min: {0}".format(f_min))
+
+
+def check_mel_spectrogram(method):
+    """Wrapper method to check the parameters of MelSpectrogram."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, n_fft, win_length, hop_length, f_min, f_max, pad, n_mels, window, power, normalized, center, \
+         pad_mode, onesided, norm, mel_scale], _ = parse_user_args(method, *args, **kwargs)
+        check_non_negative_int32(sample_rate, "sample_rate")
+        check_pos_int32(n_fft, "n_fft")
+        check_non_negative_int32(n_mels, "n_mels")
+        check_mel_spectrogram_freq(f_min, f_max, sample_rate)
+        check_mel_scale_norm(norm)
+        check_mel_scale_mel_type(mel_scale)
+        check_pos_float32(power, "power")
+        type_check(window, (WindowType,), "window")
+        type_check(normalized, (bool,), "normalized")
+        type_check(center, (bool,), "center")
+        type_check(pad_mode, (BorderType,), "pad_mode")
+        type_check(onesided, (bool,), "onesided")
+        check_non_negative_int32(pad, "pad")
+        if hop_length is not None:
+            check_pos_int32(hop_length, "hop_length")
+        if win_length is not None:
+            check_pos_int32(win_length, "win_length")
+            if win_length > n_fft:
+                raise ValueError(
+                    "Input win_length should be no more than n_fft, but got win_length: {0} and n_fft: {1}.".format(
+                        win_length, n_fft))
+
+        return method(self, *args, **kwargs)
+
+    return new_method

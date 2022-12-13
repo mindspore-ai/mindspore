@@ -48,6 +48,7 @@
 #include "minddata/dataset/audio/ir/kernels/mask_along_axis_iid_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mask_along_axis_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mel_scale_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mel_spectrogram_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mfcc_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
@@ -709,6 +710,59 @@ Status MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_ma
                                "MelscaleFbanks: get an empty tensor with shape " + fb->shape().ToString());
   *output = mindspore::MSTensor(std::make_shared<DETensor>(fb));
   return Status::OK();
+}
+
+// MelSpectrogram Transform Operation.
+struct MelSpectrogram::Data {
+  Data(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min, float f_max,
+       int32_t pad, int32_t n_mels, WindowType window, float power, bool normalized, bool center, BorderType pad_mode,
+       bool onesided, NormType norm, MelType mel_scale)
+      : sample_rate_(sample_rate),
+        n_fft_(n_fft),
+        win_length_(win_length),
+        hop_length_(hop_length),
+        f_min_(f_min),
+        f_max_(f_max),
+        pad_(pad),
+        n_mels_(n_mels),
+        window_(window),
+        power_(power),
+        normalized_(normalized),
+        center_(center),
+        pad_mode_(pad_mode),
+        onesided_(onesided),
+        norm_(norm),
+        mel_scale_(mel_scale) {}
+  int32_t sample_rate_;
+  int32_t n_fft_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  float f_min_;
+  float f_max_;
+  int32_t pad_;
+  int32_t n_mels_;
+  WindowType window_;
+  float power_;
+  bool normalized_;
+  bool center_;
+  BorderType pad_mode_;
+  bool onesided_;
+  NormType norm_;
+  MelType mel_scale_;
+};
+
+MelSpectrogram::MelSpectrogram(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min,
+                               float f_max, int32_t pad, int32_t n_mels, WindowType window, float power,
+                               bool normalized, bool center, BorderType pad_mode, bool onesided, NormType norm,
+                               MelType mel_scale)
+    : data_(std::make_shared<Data>(sample_rate, n_fft, win_length, hop_length, f_min, f_max, pad, n_mels, window, power,
+                                   normalized, center, pad_mode, onesided, norm, mel_scale)) {}
+
+std::shared_ptr<TensorOperation> MelSpectrogram::Parse() {
+  return std::make_shared<MelSpectrogramOperation>(
+    data_->sample_rate_, data_->n_fft_, data_->win_length_, data_->hop_length_, data_->f_min_, data_->f_max_,
+    data_->pad_, data_->n_mels_, data_->window_, data_->power_, data_->normalized_, data_->center_, data_->pad_mode_,
+    data_->onesided_, data_->norm_, data_->mel_scale_);
 }
 
 // MFCC Transform Operation.

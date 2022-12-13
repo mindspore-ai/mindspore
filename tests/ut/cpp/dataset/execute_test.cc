@@ -3072,3 +3072,102 @@ TEST_F(MindDataTestExecute, TestMFCCEager) {
   Status status = trans(input_ms, &input_ms);
   EXPECT_TRUE(status.IsOk());
 }
+
+/// Feature: MelSpectrogram op
+/// Description: Test basic usage of MelSpectrogram op
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestMelSpectrogram) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelSpectrogram.";
+  // Original waveform
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
+                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  // apply MelSpectrogram
+  mindspore::dataset::Execute trans({mel_spectrogram_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+/// Feature: MelSpectrogram op
+/// Description: First test wrong args for MelSpectrogram
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestMelSpectrogramWrongArgs1) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelSpectrogramWrongArgs1.";
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
+                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, -16, 16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans({mel_spectrogram_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+
+  mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, -16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans1({mel_spectrogram_op});
+  status = trans1(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+  mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, -8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans2({mel_spectrogram_op});
+  status = trans2(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+  mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, -8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans3({mel_spectrogram_op});
+  status = trans3(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+  mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 10000.0, 1.0, 0, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans4({mel_spectrogram_op});
+  status = trans4(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+  mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, -10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans5({mel_spectrogram_op});
+  status = trans5(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+  mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, -1, 8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans6({mel_spectrogram_op});
+  status = trans6(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+}
+
+/// Feature: MelSpectrogram op
+/// Description: Second test wrong args for MelSpectrogram
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestMelSpectrogramWrongArgs2) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelSpectrogramWrongArgs2.";
+  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
+                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, 0, -8, WindowType::kHann, 2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans({mel_spectrogram_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+  mel_spectrogram_op =
+    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, -2.0, false, true,
+                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
+  mindspore::dataset::Execute trans2({mel_spectrogram_op});
+  status = trans2(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsError());
+}
