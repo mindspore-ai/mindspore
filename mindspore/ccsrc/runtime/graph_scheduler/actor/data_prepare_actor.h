@@ -62,7 +62,7 @@ class DataPrepareActor : public DebugAwareActor {
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
-  const std::map<std::pair<CNodePtr, DeviceContext *>, std::pair<bool, bool>> &continuous_memory_nodes() const {
+  const std::map<std::pair<CNodePtr, const DeviceContext *>, std::pair<bool, bool>> &continuous_memory_nodes() const {
     return continuous_memory_nodes_;
   }
 
@@ -126,7 +126,7 @@ class DataPrepareActor : public DebugAwareActor {
   // The nodes need continuous memory, which must allocate in the begin of step running. The first bool of pair
   // expresses the inputs of node need continuous memory, the second bool of pair expresses the outputs of node need
   // continuous memory.
-  std::map<std::pair<CNodePtr, DeviceContext *>, std::pair<bool, bool>> continuous_memory_nodes_;
+  std::map<std::pair<CNodePtr, const DeviceContext *>, std::pair<bool, bool>> continuous_memory_nodes_;
   // The members for continuous memory alloc fetched by continuous_memory_nodes_.
   std::vector<std::vector<DeviceTensorPtr>> continuous_memory_alloc_list_list_;
   std::vector<std::vector<size_t>> size_list_list_;
