@@ -63,6 +63,7 @@ class QuantileGpuKernelMod : public NativeGpuKernelMod {
   size_t each_q_elements_{};
   int ceil_power2_{0};
   int dim_;
+  bool ignorenan_;
   int x_;
   int y_;
   int z_;
