@@ -86,6 +86,10 @@ def test_decode_op_support_format():
     c_decode(tiff_image)
     p_decode(tiff_image)
 
+    unsupported_list = glob.glob('unsupported_image*')
+    for item in unsupported_list:
+        os.remove(item)
+
     # gif: Opencv[×] Pillow[√]
     gif_image = np.fromfile("../data/dataset/testFormats/apple.gif", np.uint8)
     with pytest.raises(RuntimeError, match="Unsupported image type"):
@@ -101,6 +105,10 @@ def test_decode_op_support_format():
     with pytest.raises(RuntimeError, match="Unsupported image type"):
         c_decode(webp_image)
     p_decode(webp_image)
+
+    abnormal_list = glob.glob('abnormal_image*')
+    for item in abnormal_list:
+        os.remove(item)
 
     assert len(glob.glob('unsupported_image.webp')) == 1
     # delete the dump file which is not supported

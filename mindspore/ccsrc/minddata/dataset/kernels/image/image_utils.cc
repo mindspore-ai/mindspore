@@ -423,7 +423,9 @@ thread_local std::vector<Status> jpeg_status;
 Status CheckJpegExit(jpeg_decompress_struct *cinfo) {
   if (!jpeg_status.empty()) {
     jpeg_destroy_decompress(cinfo);
-    return jpeg_status[0];
+    Status s = jpeg_status[0];
+    jpeg_status.clear();
+    return s;
   }
   return Status::OK();
 }
