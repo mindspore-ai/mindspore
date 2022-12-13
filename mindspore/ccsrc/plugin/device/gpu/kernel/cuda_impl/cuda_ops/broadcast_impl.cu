@@ -189,10 +189,132 @@ struct PowerFunc<half2> {
     }                                                                               \
   };
 
+POW_INTEGER_IMPL(uint8_t)
+POW_INTEGER_IMPL(uint16_t)
+POW_INTEGER_IMPL(uint32_t)
+POW_INTEGER_IMPL(uint64_t)
 POW_INTEGER_IMPL(int8_t)
 POW_INTEGER_IMPL(int16_t)
 POW_INTEGER_IMPL(int32_t)
 POW_INTEGER_IMPL(int64_t)
+
+template <>
+struct PowerFunc<bool> {
+  __device__ __host__ __forceinline__ bool operator()(const bool &lhs, const bool &rhs) {
+    bool ret = true;
+    bool base = lhs;
+    bool exp = rhs;
+    while (exp) {
+      if (exp & 1) {
+        ret = ret && base;
+      }
+      base = base && base;
+      exp /= 2;
+    }
+    return ret;
+  }
+};
+
+template <typename T>
+__device__ __host__ T abs_complex(const Complex<T> &x) {
+  double res = 0.0;
+  res = hypot(static_cast<double>(x.real()), static_cast<double>(x.imag()));
+  return static_cast<T>(res);
+}
+
+template <typename T>
+__device__ __host__ T arg_complex(const Complex<T> &x) {
+  return atan2<T>(x.imag(), x.real());
+}
+
+template <typename T>
+__device__ __host__ Complex<T> log_complex(const Complex<T> &x) {
+  return Complex<T>(log(abs_complex<T>(x)), arg_complex<T>(x));
+}
+
+template <typename T>
+__device__ __host__ Complex<T> exp_complex(const Complex<T> &x) {
+  T imag_value = x.imag();
+  if (isinf(x.real())) {
+    if (x.real() < T(0)) {
+      if (!isfinite(imag_value)) imag_value = T(1);
+    } else if (imag_value == 0 || !isfinite(imag_value)) {
+      if (isinf(imag_value)) {
+        imag_value = T(NAN);
+      }
+      return Complex<T>(x.real(), imag_value);
+    }
+  } else if (isnan(x.real()) && x.imag() == 0) {
+    return x;
+  }
+  T real_exp = exp(x.real());
+  return Complex<T>(real_exp * cos(imag_value), real_exp * sin(imag_value));
+}
+
+template <>
+struct PowerFunc<Complex<float>> {
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs, 0.0);
+    res = exp_complex<float>(y * log_complex<float>(x));
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs, 0.0);
+    Complex<float> y(rhs.real(), rhs.imag());
+    res = exp_complex<float>(y * log_complex<float>(x));
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const float &lhs, const float &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs, 0.0);
+    Complex<float> y(rhs, 0.0);
+    res = exp_complex<float>(y * log_complex<float>(x));
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<float> operator()(const Complex<float> &lhs, const Complex<float> &rhs) {
+    Complex<float> res(0.0, 0.0);
+    Complex<float> x(lhs.real(), lhs.imag());
+    Complex<float> y(rhs.real(), rhs.imag());
+    res = exp_complex<float>(y * log_complex<float>(x));
+    return res;
+  }
+};
+
+template <>
+struct PowerFunc<Complex<double>> {
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs, 0.0);
+    res = exp_complex<double>(y * log_complex<double>(x));
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs, 0.0);
+    Complex<double> y(rhs.real(), rhs.imag());
+    res = exp_complex<double>(y * log_complex<double>(x));
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const double &lhs, const double &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs, 0.0);
+    Complex<double> y(rhs, 0.0);
+    res = exp_complex<double>(y * log_complex<double>(x));
+    return res;
+  }
+  __device__ __host__ __forceinline__ Complex<double> operator()(const Complex<double> &lhs,
+                                                                 const Complex<double> &rhs) {
+    Complex<double> res(0.0, 0.0);
+    Complex<double> x(lhs.real(), lhs.imag());
+    Complex<double> y(rhs.real(), rhs.imag());
+    res = exp_complex<double>(y * log_complex<double>(x));
+    return res;
+  }
+};
 
 template <typename T>
 struct RealDivFunc {
@@ -1258,6 +1380,9 @@ void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T
     case BROADCAST_TYPE_MULNONAN:
       return ElewiseArithComplexKernel<T1, T2, T3, MulNoNanFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_POWER:
+      return ElewiseArithComplexKernel<T1, T2, T3, PowerFunc<Complex<T3>>>
+        <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_XDIVY:
       return ElewiseArithComplexKernel<T1, T2, T3, XDivyFunc<Complex<T3>>>
         <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
@@ -1700,6 +1825,11 @@ void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_MULNONAN:
       return BroadcastComplexArithKernel<T1, T2, T3, MulNoNanFunc<T3>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_POWER:
+      return BroadcastComplexArithKernel<T1, T2, T3, PowerFunc<Complex<T3>>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
