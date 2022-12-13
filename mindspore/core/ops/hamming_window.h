@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_HAMMING_WINDOW_H_
 #define MINDSPORE_CORE_OPS_HAMMING_WINDOW_H_
 
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>

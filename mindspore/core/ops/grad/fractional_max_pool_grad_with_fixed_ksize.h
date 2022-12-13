@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_FRACTIONAL_MAX_POOL_GRAD_WITH_FIXED_KSIZE_H_
 #define MINDSPORE_CORE_OPS_FRACTIONAL_MAX_POOL_GRAD_WITH_FIXED_KSIZE_H_
 
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
