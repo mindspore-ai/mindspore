@@ -65,3 +65,35 @@ def test_tuple_unfold_to_tuple_unfold_transform(tag):
         return res
 
     return fns[tag]
+
+
+def test_tuple_unfold_to_tuple_transform(tag):
+    """
+    Feature: Dynamic shape.
+    Description: Test TupleUnfold to Tuple transforming pass.
+    Expectation: The 'after' graph is identical to the graph after this pass.
+    """
+    fns = FnDict()
+    # Need to change AddN to TupleAdd in later version.
+    tuple_add1 = P.AddN()
+    tuple_add2 = P.AddN()
+    real_make_tuple = Primitive('RealMakeTuple')
+
+    @fns
+    def before(input_1, input_2):
+        res = make_tuple(input_1, input_2)
+        res = tuple_add1(res)
+        res = split1(res)
+        res = tuple_add2(res)
+        return res
+
+    @fns
+    def after(input_1, input_2):
+        res = real_make_tuple(input_1, input_2)
+        res = tuple_add1(res)
+        res = split1(res)
+        res = real_make_tuple(tuple_get_item(res, 0), tuple_get_item(res, 1))
+        res = tuple_add2(res)
+        return res
+
+    return fns[tag]

@@ -27,6 +27,7 @@ namespace mindspore {
 namespace opt {
 using kernel::KernelBuildInfoPtr;
 using kernel::KernelObjectType;
+using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 
 // This attribute represents this node's output is already expanded.
 constexpr char kTupleUnfoldExpanded[] = "tuple_unfold_expanded";
@@ -73,8 +74,19 @@ struct ObjectTypePair {
 using ProcessTypeTransformFunc = std::function<AnfNodePtrList(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                               const CNodePtr &node, bool *new_prim)>;
 
+// The utils most of which are only applicable to this pass.
+
 // Kernel object type for newly created virtual node should be set.
 void SetObjTypeForTupleGetItemNode(const AnfNodePtr &node);
+
+// Generate output format and object type for newly created node.
+// They are generated according to node pritimive and inputs.
+std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode);
+void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
+                                         std::vector<KernelObjectType> *output_obj_type);
+
+// Set kernel info for newly created cnodes.
+void SetKernelInfoForNewCNode(const CNodePtr &cnode);
 
 // SplitTupleInputs methods refer to the pass ConvertTupleInputToDynamicInput. It unfolds tuple inputs and returns the
 // unfolded inputs nodes.
@@ -92,6 +104,13 @@ void CheckDynamicInputSize(const CNodePtr &new_cnode, const CNodePtr &origin_nod
 // Mainly update the inputs/outputs device types and kernel object types.
 void UpdateKernelBuildInfo(const CNodePtr &new_cnode, const CNodePtr &origin_node);
 
+// Transforming MakeTuple to RealMakeTuple scenario.
+AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &make_tuple_node);
+
+// Node with TupleUnfold output(not MakeTuple) connected to Tuple input scenario.
+AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
+                                                 const AnfNodePtr &node_with_tuple_unfold_output);
+
 // After kernel selection phase, one kernel's acquired input type may not be the same as the actual input type(the input
 // node's output type). We need this pass to transform these types to valid types.
 class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
@@ -101,9 +120,14 @@ class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
-  // This scenario is migrated from the pass ConvertTupleInputToDynamicInput.
+  // This scenario is migrated from the pass ConvertTupleInputToDynamicInput. Please refer to
+  // convert_tuple_input_to_dynamic_input.h/cc
   AnfNodePtrList ProcessTupleUnfoldToTupleUnfold(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                  const CNodePtr &node, bool *new_prim);
+
+  // Convert TupleUnfold output to tuple, real tuple with continuous memory.
+  AnfNodePtrList ProcessTupleUnfoldToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                           const CNodePtr &node, bool *new_prim);
 };
 }  // namespace opt
 }  // namespace mindspore
