@@ -427,6 +427,8 @@ class _ReflectionPadNd(Cell):
 
     def construct(self, x):
         input_shape = x.shape
+        if not self.padding:
+            return x
         padding = _check_padding_dimension(len(input_shape), self.padding)
         x = ops.MirrorPad(mode='REFLECT')(x, Tensor(padding))
         return x
