@@ -359,8 +359,7 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
 
   auto grad_exec_ptr = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
   MS_EXCEPTION_IF_NULL(grad_exec_ptr);
-  grad_exec_ptr->CheckGraphDynamic(ms_function_cnode, op_run_info->op_index, true,
-                                   op_run_info->base_op_run_info.op_name);
+  (void)grad_exec_ptr->CheckGraphDynamic(ms_function_cnode, true, op_run_info->base_op_run_info.op_name);
 }
 
 void MsFunction::SetMsFuncGraphParameters(const FuncGraphPtr &ms_func_graph) {
