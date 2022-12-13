@@ -25,6 +25,7 @@
 #include "runtime/hardware/device_context.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 #include "extendrt/session/lite_graph_executor.h"
+
 namespace mindspore {
 /// \brief Delegate Session implementation, use delegate api for inference.
 // TODO(zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
@@ -58,6 +59,7 @@ class GraphSinkSession : public InferSession {
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
   bool is_use_kernel_graph_ = true;
+  bool is_use_ascend_ge_ = false;
   KernelGraphUtilsPtr kernel_graph_utils_;
   std::shared_ptr<Context> context_;
   KernelGraphPtr kernel_graph_;

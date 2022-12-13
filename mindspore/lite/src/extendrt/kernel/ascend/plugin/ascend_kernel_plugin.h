@@ -20,7 +20,6 @@
 #include <map>
 #include <string>
 #include <memory>
-#include <mutex>
 #include "kernel/kernel.h"
 
 namespace mindspore::kernel {
@@ -41,7 +40,6 @@ class AscendKernelPlugin {
   void *handle_;
   std::map<std::string, KernelModFunc> *create_kernel_map_;
   bool is_registered_;
-  std::mutex mutex_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_ASCEND_KERNEL_PLUGIN_H_
