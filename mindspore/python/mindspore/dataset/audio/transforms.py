@@ -132,7 +132,7 @@ class AmplitudeToDB(AudioTensorOperation):
         top_db (float, optional): Minimum cut-off decibels, which must be non-negative. Default: 80.0.
 
     Raises:
-        TypeError: If `stype` is not of type :class:`mindspore.dataset.audio.utils.ScaleType` .
+        TypeError: If `stype` is not of type :class:`mindspore.dataset.audio.ScaleType` .
         TypeError: If `ref_value` is not of type float.
         ValueError: If `ref_value` is not a positive number.
         TypeError: If `amin` is not of type float.
@@ -427,9 +427,21 @@ class Biquad(TensorOperation):
         b0 (float): Numerator coefficient of current input, x[n].
         b1 (float): Numerator coefficient of input one time step ago x[n-1].
         b2 (float): Numerator coefficient of input two time steps ago x[n-2].
-        a0 (float): Denominator coefficient of current output y[n], the value can't be zero, typically 1.
+        a0 (float): Denominator coefficient of current output y[n], the value can't be 0, typically 1.
         a1 (float): Denominator coefficient of current output y[n-1].
         a2 (float): Denominator coefficient of current output y[n-2].
+
+    Raises:
+        TypeError: If `b0` is not of type float.
+        TypeError: If `b1` is not of type float.
+        TypeError: If `b2` is not of type float.
+        TypeError: If `a0` is not of type float.
+        TypeError: If `a1` is not of type float.
+        TypeError: If `a2` is not of type float.
+        ValueError: If `a0` is 0.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -529,6 +541,9 @@ class ComputeDeltas(AudioTensorOperation):
         TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.BorderType` .
         RuntimeError: If input tensor is not in shape of <..., freq, time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore.dataset.audio import BorderType
@@ -599,6 +614,13 @@ class DBToAmplitude(AudioTensorOperation):
         ref (float): Reference which the output will be scaled by.
         power (float): If power equals 1, will compute DB to power. If 0.5, will compute DB to amplitude.
 
+    Raises:
+        TypeError: If `ref` is not of type float.
+        TypeError: If `power` is not of type float.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -625,7 +647,15 @@ class DCShift(AudioTensorOperation):
     Args:
         shift (float): The amount to shift the audio, the value must be in the range [-2.0, 2.0].
         limiter_gain (float, optional): Used only on peaks to prevent clipping,
-            the value should be much less than 1, such as 0.05 or 0.02.
+            the value should be much less than 1, such as 0.05 or 0.02. Default: None, will be set to `shift` .
+
+    Raises:
+        TypeError: If `shift` is not of type float.
+        ValueError: If `shift` is not in range [-2.0, 2.0].
+        TypeError: If `limiter_gain` is not of type float.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -660,6 +690,9 @@ class DeemphBiquad(AudioTensorOperation):
         ValueError: If `sample_rate` is not 44100 or 48000.
         RuntimeError: If input tensor is not in shape of <..., time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -693,6 +726,21 @@ class DetectPitchFrequency(AudioTensorOperation):
             Default: 85.
         freq_high (int, optional): Highest frequency that can be detected (Hz), the value must be greater than zero.
             Default: 3400.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `frame_time` is not of type float.
+        ValueError: If `frame_time` is not positive.
+        TypeError: If `win_length` is not of type int.
+        ValueError: If `win_length` is not positive.
+        TypeError: If `freq_low` is not of type int.
+        ValueError: If `freq_low` is not positive.
+        TypeError: If `freq_high` is not of type int.
+        ValueError: If `freq_high` is not positive.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -742,6 +790,9 @@ class Dither(AudioTensorOperation):
         TypeError: If `noise_shaping` is not of type bool.
         RuntimeError: If input tensor is not in shape of <..., time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -768,10 +819,21 @@ class EqualizerBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be 0.
         center_freq (float): Central frequency (in Hz).
         gain (float): Desired gain at the boost (or attenuation) in dB.
         Q (float, optional): https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `center_freq` is not of type float.
+        TypeError: If `gain` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -824,6 +886,9 @@ class Fade(AudioTensorOperation):
     Raises:
         RuntimeError: If fade_in_len exceeds waveform length.
         RuntimeError: If fade_out_len exceeds waveform length.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -929,6 +994,9 @@ class Flanger(AudioTensorOperation):
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.audio.Interpolation` .
         RuntimeError: If input tensor is not in shape of <..., channel, time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1022,6 +1090,12 @@ class Gain(AudioTensorOperation):
     Args:
         gain_db (float): Gain adjustment in decibels (dB). Default: 1.0.
 
+    Raises:
+        TypeError: If `gain_db` is not of type float.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1050,8 +1124,9 @@ class GriffinLim(AudioTensorOperation):
     Args:
         n_fft (int, optional): Size of FFT. Default: 400.
         n_iter (int, optional): Number of iteration for phase recovery. Default: 32.
-        win_length (int, optional): Window size for GriffinLim. Default: None, will be set to n_fft.
-        hop_length (int, optional): Length of hop between STFT windows. Default: None, will be set to win_length // 2.
+        win_length (int, optional): Window size for GriffinLim. Default: None, will be set to `n_fft` .
+        hop_length (int, optional): Length of hop between STFT windows.
+            Default: None, will be set to `win_length // 2` .
         window_type (WindowType, optional): Window type for GriffinLim, which can be WindowType.BARTLETT,
             WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN or WindowType.KAISER. Default: WindowType.HANN.
             Currently kaiser window is not supported on macOS.
@@ -1063,8 +1138,27 @@ class GriffinLim(AudioTensorOperation):
             Default: True.
 
     Raises:
+        TypeError: If `n_fft` is not of type int.
+        ValueError: If `n_fft` is not positive.
+        TypeError: If `n_iter` is not of type int.
+        ValueError: If `n_iter` is not positive.
+        TypeError: If `win_length` is not of type int.
+        ValueError: If `win_length` is a negative number.
+        TypeError: If `hop_length` is not of type int.
+        ValueError: If `hop_length` is a negative number.
+        TypeError: If `window_type` is not of type :class:`mindspore.dataset.audio.WindowType` .
+        TypeError: If `power` is not of type float.
+        ValueError: If `power` is not positive.
+        TypeError: If `momentum` is not of type float.
+        ValueError: If `momentum` is a negative number.
+        TypeError: If `length` is not of type int.
+        ValueError: If `length` is a negative number.
+        TypeError: If `rand_init` is not of type bool.
         RuntimeError: If `n_fft` is not less than `length` .
         RuntimeError: If `win_length` is not less than `n_fft` .
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1102,12 +1196,20 @@ class HighpassBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be 0.
         cutoff_freq (float): Filter cutoff frequency (in Hz).
         Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1]. Default: 0.707.
 
     Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `cutoff_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
         RuntimeError: If the shape of input audio waveform does not match (..., time).
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1147,6 +1249,30 @@ class InverseMelScale(AudioTensorOperation):
         norm (NormType, optional): Normalization method, can be NormType.SLANEY or NormType.NONE.
             Default: NormType.NONE.
         mel_type (MelType, optional): Mel scale to use, can be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
+
+    Raises:
+        TypeError: If `n_stft` is not of type int.
+        ValueError: If `n_stft` is not positive.
+        TypeError: If `n_mels` is not of type int.
+        ValueError: If `n_mels` is not positive.
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is not positive.
+        TypeError: If `f_min` is not of type float.
+        ValueError: If `f_min` is greater than or equal to `f_max` .
+        TypeError: If `f_max` is not of type float.
+        ValueError: If `f_max` is a negative number.
+        TypeError: If `max_iter` is not of type int.
+        ValueError: If `max_iter` is a negative number.
+        TypeError: If `tolerance_loss` is not of type float.
+        ValueError: If `tolerance_loss` is a negative number.
+        TypeError: If `tolerance_change` is not of type float.
+        ValueError: If `tolerance_change` is a negative number.
+        TypeError: If `sgdargs` is not of type dict.
+        TypeError: If `norm` is not of type  :class:`mindspore.dataset.audio.NormType` .
+        TypeError: If `mel_type` is not of type  :class:`mindspore.dataset.audio.MelType` .
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1364,6 +1490,9 @@ class LFilter(AudioTensorOperation):
         TypeError: If `clamp` is not of type bool.
         RuntimeError: If input tensor is not in shape of <..., time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1449,6 +1578,9 @@ class Magphase(AudioTensorOperation):
     Raises:
         RuntimeError: If the shape of input audio waveform does not match (..., 2).
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1481,6 +1613,9 @@ class MaskAlongAxis(AudioTensorOperation):
         ValueError: If `mask_start` is invalid (< 0).
         ValueError: If `mask_width` is invalid (< 1).
         ValueError: If `axis` is not type of int or not within [1, 2].
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1524,6 +1659,9 @@ class MaskAlongAxisIID(AudioTensorOperation):
         ValueError: If `axis` is not in range of [1, 2].
         RuntimeError: If input tensor is not in shape of <..., freq, time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1565,6 +1703,23 @@ class MelScale(AudioTensorOperation):
             If norm is NormType.SLANEY, divide the triangular mel weight by the width of the mel band.
             Default: NormType.NONE.
         mel_type (MelType, optional): Type to use, value should be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
+
+    Raises:
+        TypeError: If `n_mels` is not of type int.
+        ValueError: If `n_mels` is not positive.
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is not positive.
+        TypeError: If `f_min` is not of type float.
+        ValueError: If `f_min` is greater than or equal to `f_max` .
+        TypeError: If `f_max` is not of type float.
+        ValueError: If `f_max` is a negative number.
+        TypeError: If `n_stft` is not of type int.
+        ValueError: If `n_stft` is not positive.
+        TypeError: If `norm` is not of type  :class:`mindspore.dataset.audio.NormType` .
+        TypeError: If `mel_type` is not of type  :class:`mindspore.dataset.audio.MelType` .
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1813,6 +1968,13 @@ class MuLawEncoding(AudioTensorOperation):
     Args:
         quantization_channels (int, optional): Number of channels, which must be positive. Default: 256.
 
+    Raises:
+        TypeError: If `quantization_channels` is not of type int.
+        ValueError: If `quantization_channels` is not a positive number.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1848,6 +2010,9 @@ class Overdrive(AudioTensorOperation):
         TypeError: If `color` is not of type float.
         ValueError: If `color` is not in range of [0, 100].
         RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1901,6 +2066,9 @@ class Phaser(AudioTensorOperation):
         TypeError: If `sinusoidal` is not of type bool.
         RuntimeError: If input tensor is not in shape of <..., time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1940,6 +2108,9 @@ class PhaseVocoder(AudioTensorOperation):
         ValueError: If `rate` is not a positive number.
         TypeError: If `phase_advance` is not of type :class:`numpy.ndarray` .
         RuntimeError: If input tensor is not in shape of <..., freq, num_frame, complex=2>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2054,6 +2225,9 @@ class Resample(AudioTensorOperation):
         ValueError: If `rolloff` is not in range of (0, 1].
         RuntimeError: If input tensor is not in shape of <..., time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore.dataset.audio import ResampleMethod
@@ -2093,6 +2267,13 @@ class RiaaBiquad(AudioTensorOperation):
         sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
             can only be one of 44100, 48000, 88200, 96000.
 
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is not any of [44100, 48000, 88200, 96000].
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -2122,6 +2303,17 @@ class SlidingWindowCmn(AudioTensorOperation):
         center (bool, optional): If True, use a window centered on the current frame. If False, window is
             to the left. Default: False.
         norm_vars (bool, optional): If True, normalize variance to one. Default: False.
+
+    Raises:
+        TypeError: If `cmn_window` is not of type int.
+        ValueError: If `cmn_window` is a negative number.
+        TypeError: If `min_cmn_window` is not of type int.
+        ValueError: If `min_cmn_window` is a negative number.
+        TypeError: If `center` is not of type bool.
+        TypeError: If `norm_vars` is not of type bool.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2179,6 +2371,9 @@ class SpectralCentroid(TensorOperation):
         ValueError: If `pad` is a negative number.
         TypeError: If `window` is not of type :class:`mindspore.dataset.audio.WindowType` .
         RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2243,6 +2438,9 @@ class Spectrogram(TensorOperation):
         TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.BorderType` .
         TypeError: If `onesided` is not of type bool.
         RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2408,6 +2606,9 @@ class TrebleBiquad(AudioTensorOperation):
         ValueError: If `Q` is not in range of (0, 1].
         RuntimeError: If input tensor is not in shape of <..., time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -2505,6 +2706,9 @@ class Vad(AudioTensorOperation):
         ValueError: If `lp_lifter_freq` is not a positive number.
         RuntimeError: If input tensor is not in shape of <..., time>.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -2569,6 +2773,9 @@ class Vol(AudioTensorOperation):
         ValueError: If `gain` is a negative number when `gain_type` is GainType.AMPLITUDE.
         ValueError: If `gain` is not a positive number when `gain_type` is GainType.POWER.
         RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np

@@ -12,3 +12,10 @@ mindspore.dataset.audio.create_dct
 
     返回：
         numpy.ndarray，shape为 ( `n_mels` , `n_mfcc` ) 的DCT转换矩阵。
+
+    异常：
+        - **TypeError** - 如果 `n_mfcc` 的类型不为int。
+        - **ValueError** - 如果 `n_mfcc` 不为正数。
+        - **TypeError** - 如果 `n_mels` 的类型不为int。
+        - **ValueError** - 如果 `n_mels` 不为正数。
+        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.NormType` 。

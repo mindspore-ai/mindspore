@@ -8,3 +8,7 @@ mindspore.dataset.audio.DBToAmplitude
     参数：
         - **ref** (float) - 输出波形的缩放系数。
         - **power** (float) - 如果 `power` 等于1，则将分贝值转为功率；如果为0.5，则将分贝值转为振幅。
+
+    异常：
+        - **TypeError** - 如果 `ref` 不是float类型。
+        - **TypeError** - 如果 `power` 不是float类型。

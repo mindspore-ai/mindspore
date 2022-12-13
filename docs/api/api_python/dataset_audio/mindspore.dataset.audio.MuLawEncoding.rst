@@ -7,3 +7,7 @@ mindspore.dataset.audio.MuLawEncoding
 
     参数：
         - **quantization_channels** (int, 可选) - 通道数，必须为正数。默认值：256。
+
+    异常：
+        - **TypeError** - 当 `quantization_channels` 的类型不为int。
+        - **ValueError** - 当 `quantization_channels` 不为正数。

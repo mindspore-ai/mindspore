@@ -7,3 +7,6 @@ mindspore.dataset.audio.Gain
 
     参数：
         - **gain_db** (float) - 增益调整，单位为分贝（dB）。默认值：1.0。
+
+    异常：
+        - **TypeError** - 当 `gain_db` 的类型不为float。

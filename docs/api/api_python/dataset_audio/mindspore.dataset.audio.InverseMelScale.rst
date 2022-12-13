@@ -17,3 +17,24 @@ mindspore.dataset.audio.InverseMelScale
         - **sgdargs** (dict, 可选) - SGD优化器的参数。默认值：None，将设置为{'sgd_lr': 0.1, 'sgd_momentum': 0.9}。
         - **norm** (NormType, 可选) - 标准化方法，可以是NormType.SLANEY或NormType.NONE。默认值：NormType.NONE。
         - **mel_type** (MelType, 可选) - 要使用的Mel比例，可以是MelType.SLAN或MelType.HTK。默认值：MelType.HTK。
+
+    异常：
+        - **TypeError** - 如果 `n_fft` 的类型不为int。
+        - **ValueError** - 如果 `n_ftt` 不为正数。
+        - **TypeError** - 如果 `n_mels` 的类型不为int。
+        - **ValueError** - 如果 `n_mels` 不为正数。
+        - **TypeError** - 如果 `sample_rate` 的类型不为int。
+        - **ValueError** - 如果 `sample_rate` 不为正数。
+        - **TypeError** - 如果 `f_min` 的类型不为float。
+        - **ValueError** - 如果 `f_min` 大于等于 `f_max` 。
+        - **TypeError** - 如果 `f_max` 的类型不为float。
+        - **ValueError** - 如果 `f_max` 为负数。
+        - **TypeError** - 如果 `max_iter` 的类型不为int。
+        - **ValueError** - 如果 `max_iter` 为负数。
+        - **TypeError** - 如果 `tolerance_loss` 的类型不为float。
+        - **ValueError** - 如果 `tolerance_loss` 为负数。
+        - **TypeError** - 如果 `tolerance_change` 的类型不为float。
+        - **ValueError** - 如果 `tolerance_change` 为负数。
+        - **TypeError** - 如果 `sgdargs` 的类型不为dict。
+        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.NormType` 。
+        - **TypeError** - 如果 `mel_type` 的类型不为 :class:`mindspore.dataset.audio.MelType` 。

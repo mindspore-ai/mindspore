@@ -22,5 +22,21 @@ mindspore.dataset.audio.GriffinLim
         - **rand_init** (bool, 可选) - 随机相位初始化或全零相位初始化标志。默认值：True。
     
     异常：
+        - **TypeError** - 如果 `n_fft` 的类型不为int。
+        - **ValueError** - 如果 `n_ftt` 不为正数。
+        - **TypeError** - 如果 `n_iter` 的类型不为int。
+        - **ValueError** - 如果 `n_mels` 不为正数。
+        - **TypeError** - 如果 `win_length` 的类型不为int。
+        - **ValueError** - 如果 `win_length` 为负数。
+        - **TypeError** - 如果 `hop_length` 的类型不为int。
+        - **ValueError** - 如果 `hop_length` 为负数。
+        - **TypeError** - 如果 `window_type` 的类型不为 :class:`mindspore.dataset.audio.WindowType` 。
+        - **TypeError** - 如果 `power` 的类型不为float。
+        - **ValueError** - 如果 `power` 不为正数。
+        - **TypeError** - 如果 `momentum` 的类型不为float。
+        - **ValueError** - 如果 `momentum` 为负数。
+        - **TypeError** - 如果 `length` 的类型不为int。
+        - **ValueError** - 如果 `length` 为负数。
+        - **TypeError** - 如果 `rand_init` 的类型不为bool。        
         - **RuntimeError** - 当 `n_fft` 指定的FFT长度不小于 `length` 指定的输出波形长度。
         - **RuntimeError** - 当 `win_length` 指定的窗口长度不小于 `n_fft` 指定的FFT长度。

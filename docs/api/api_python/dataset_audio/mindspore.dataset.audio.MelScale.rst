@@ -14,3 +14,17 @@ mindspore.dataset.audio.MelScale
         - **norm** (NormType, 可选) - 标准化方法，可以是NormType.SLANEY或NormType.NONE。默认值：NormType.NONE。
           若采用NormType.SLANEY，则三角梅尔权重将被除以梅尔频带的宽度。
         - **mel_type** (MelType, 可选) - 要使用的Mel比例，可以是MelType.SLAN或MelType.HTK。默认值：MelType.HTK。
+
+    异常：
+        - **TypeError** - 如果 `n_mels` 的类型不为int。
+        - **ValueError** - 如果 `n_mels` 不为正数。
+        - **TypeError** - 如果 `sample_rate` 的类型不为int。
+        - **ValueError** - 如果 `sample_rate` 不为正数。
+        - **TypeError** - 如果 `f_min` 的类型不为float。
+        - **ValueError** - 如果 `f_min` 大于等于 `f_max` 。
+        - **TypeError** - 如果 `f_max` 的类型不为float。
+        - **ValueError** - 如果 `f_max` 为负数。
+        - **TypeError** - 如果 `n_stft` 的类型不为int。
+        - **ValueError** - 如果 `n_stft` 不为正数。
+        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.NormType` 。
+        - **TypeError** - 如果 `mel_type` 的类型不为 :class:`mindspore.dataset.audio.MelType` 。

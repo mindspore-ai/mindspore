@@ -11,6 +11,15 @@ mindspore.dataset.audio.Biquad
         - **b0** (float) - 当前输入的分子系数，x[n]。
         - **b1** (float) - 一个时间间隔前输入的分子系数x[n-1]。
         - **b2** (float) - 两个时间间隔前输入的分子系数x[n-2]。
-        - **a0** (float) - 当前输出y[n]的分母系数，该值不能为零，通常为1。
+        - **a0** (float) - 当前输出y[n]的分母系数，该值不能为0，通常为1。
         - **a1** (float) - 当前输出y[n-1]的分母系数。
         - **a2** (float) - 当前输出y[n-2]的分母系数。
+
+    异常：
+        - **TypeError** - 如果 `b0` 不是float类型。
+        - **TypeError** - 如果 `b1` 不是float类型。
+        - **TypeError** - 如果 `b2` 不是float类型。
+        - **TypeError** - 如果 `a0` 不是float类型。
+        - **TypeError** - 如果 `a1` 不是float类型。
+        - **TypeError** - 如果 `a2` 不是float类型。
+        - **ValueError** - 如果 `a0` 为0。

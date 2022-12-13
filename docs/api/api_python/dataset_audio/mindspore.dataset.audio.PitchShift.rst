@@ -1,5 +1,5 @@
-mindspore.dataset.audio.PitchShift.rst
-======================================
+mindspore.dataset.audio.PitchShift
+==================================
 
 py:class:: mindspore.dataset.audio.PitchShift(sample_rate, n_steps, bins_per_octave=12, n_fft=512, win_length=None,
                                               hop_length=None, window=WindowType.HANN)
