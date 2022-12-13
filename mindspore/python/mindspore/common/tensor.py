@@ -302,16 +302,22 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('__add__')(self, other)
 
     def __and__(self, other):
+        if Tensor._use_logical_kernel(self, other):
+            return tensor_operator_registry.get('logical_and')(self, other)
         if isinstance(other, (int, bool, float, Tensor)):
             return tensor_operator_registry.get('bitwise_and')(self, other)
         raise TypeError("Unsupported operand type(s) for &: 'Tensor' and '{}'".format(type(other)))
 
     def __xor__(self, other):
+        if Tensor._use_logical_kernel(self, other):
+            return tensor_operator_registry.get('logical_xor')(self, other)
         if isinstance(other, (int, bool, float, Tensor)):
             return tensor_operator_registry.get('bitwise_xor')(self, other)
         raise TypeError("Unsupported operand type(s) for ^: 'Tensor' and '{}'".format(type(other)))
 
     def __or__(self, other):
+        if Tensor._use_logical_kernel(self, other):
+            return tensor_operator_registry.get('logical_or')(self, other)
         if isinstance(other, (int, bool, float, Tensor)):
             return tensor_operator_registry.get('bitwise_or')(self, other)
         raise TypeError("Unsupported operand type(s) for |: 'Tensor' and '{}'".format(type(other)))
@@ -481,6 +487,19 @@ class Tensor(Tensor_):
             array = np.ascontiguousarray(array)
 
         return Tensor(Tensor_.from_numpy(array))
+
+    @staticmethod
+    def _use_logical_kernel(me, other) -> bool:
+        """
+        Decide to use logical kernel or bitwise kernel for &|^ operations.
+        If self or other is bool or bool tensor, then return true, use logical kernel,
+        else false to use bitwise kernel.
+        """
+        def _is_bool_or_bool_tensor(data):
+            return isinstance(data, bool) or (isinstance(data, Tensor) and data.dtype == mstype.bool_)
+        if _is_bool_or_bool_tensor(me) and _is_bool_or_bool_tensor(other):
+            return True
+        return False
 
     def set_const_arg(self, const_arg=True):
         """
