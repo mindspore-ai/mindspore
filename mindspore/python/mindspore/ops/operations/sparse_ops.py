@@ -223,7 +223,7 @@ class SparseSlice(Primitive):
         ValueError: If the shape of `shape` is not corresponding to `size`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> indices = Tensor(np.array([[0, 1], [1, 2], [1, 3], [2, 2]]).astype(np.int64))

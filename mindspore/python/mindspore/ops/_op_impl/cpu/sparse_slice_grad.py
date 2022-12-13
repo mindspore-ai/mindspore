@@ -23,6 +23,8 @@ sparse_slice_grad_op_info = CpuRegOp("SparseSliceGrad") \
     .input(2, "start", "required") \
     .input(3, "new_indices", "required") \
     .output(0, "y_grad", "required") \
+    .dtype_format(DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,    \
+                  DataType.BOOL_Default)                                                                      \
     .dtype_format(DataType.I8_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,      \
                   DataType.I8_Default)                                                                        \
     .dtype_format(DataType.U8_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,      \
@@ -33,8 +35,12 @@ sparse_slice_grad_op_info = CpuRegOp("SparseSliceGrad") \
                   DataType.U16_Default)                                                                       \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,     \
                   DataType.I64_Default)                                                                       \
+    .dtype_format(DataType.U32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,     \
+                  DataType.U32_Default)                                                                       \
     .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,     \
                   DataType.I32_Default)                                                                       \
+    .dtype_format(DataType.U64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,     \
+                  DataType.U64_Default)                                                                       \
     .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,     \
                   DataType.F32_Default)                                                                       \
     .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,     \
