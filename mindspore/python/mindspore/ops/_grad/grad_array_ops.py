@@ -1305,15 +1305,26 @@ def get_bprop_broadcast_to(self):
         if not dynamic and x_shape == dout_shape:
             return (dout,)
         dynamic = dynamic or F.is_sequence_value_unknown(broadcast_shape)
+        out_type = dout.dtype
         if not dynamic:
             _, reduction_axes = broadcast_gradient_args(broadcast_shape, x_shape)
-            reduced_grad = reduce_keep_dim(dout, reduction_axes)
+            if out_type in (ms.int16, ms.int32, ms.int64):
+                dout = P.Cast()(dout, ms.float32)
+                reduced_grad = reduce_keep_dim(dout, reduction_axes)
+                reduced_grad = P.Cast()(reduced_grad, out_type)
+            else:
+                reduced_grad = reduce_keep_dim(dout, reduction_axes)
             dx = reshape(reduced_grad, x_shape)
         else:
             x_shape = dyn_shape_op(x)
             broadcast_shape = dyn_shape_op(out)
             _, reduction_axes = DynamicBroadcastGradientArgs()(broadcast_shape, x_shape)
-            reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
+            if out_type in (ms.int16, ms.int32, ms.int64):
+                dout = P.Cast()(dout, ms.float32)
+                reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
+                reduced_grad = P.Cast()(reduced_grad, out_type)
+            else:
+                reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
             dx = reshape(reduced_grad, x_shape)
         return (dx,)
 

@@ -253,13 +253,9 @@ def tensor_itemset_by_tuple_with_number(data, tuple_index, nubmer_value):
 
 def _broadcast(broadcast_shape, x):
     """Broadcast tensor to the required shape."""
-    if not const_utils.check_two_shapes_need_broadcast(broadcast_shape, F.shape(x)):
+    if F.shape(x) == broadcast_shape:
         return x
-    multiples = const_utils.compute_multiples(F.shape(x), broadcast_shape)
-    if multiples:
-        x = F.reshape(x, const_utils.expanded_shape(F.shape(x), len(multiples) - F.rank(x)))
-        return F.tile(x, multiples)
-    return x
+    return F.broadcast_to(x, broadcast_shape)
 
 
 def _transform_indexing_tensor(broadcast_shape, final_shape, new_shape, item):
@@ -1040,6 +1036,9 @@ def tensor_setitem_by_number_with_tensor(data, index, value):
         index = F.expand_dims(index, -1)
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value)
 
+    dim_size = data_shape[0]
+    if index < -dim_size or index >= dim_size:
+        raise IndexError(f'index {index} is out of bounds for axis 0 with size {dim_size}')
     index = const_utils.int_to_index(index, data_shape)
     value_shape = const_utils.tuple_slice(F.shape(index), None, -1)
     value = _broadcast(value_shape, value.astype(F.dtype(data)))

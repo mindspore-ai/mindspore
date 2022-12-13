@@ -16,8 +16,7 @@
 from __future__ import absolute_import
 
 import math
-from itertools import zip_longest, accumulate
-from collections import deque
+from itertools import accumulate
 import operator
 
 import mindspore.context as context
@@ -126,18 +125,19 @@ def _get_device():
     return context.get_context('device_target')
 
 
-@constexpr
+#remove constexpr
 def _infer_out_shape(*shapes):
     """
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
     """
-    shape_out = deque()
-    reversed_shapes = map(reversed, shapes)
-    for items in zip_longest(*reversed_shapes, fillvalue=1):
+    shape_out = list()
+    max_len = max([len(it) for it in shapes])
+
+    for i in range(max_len):
+        items = [it[i-max_len+len(it)] if i-max_len +
+                 len(it) >= 0 else 1 for it in shapes]
         max_size = 0 if 0 in items else max(items)
-        if any(item not in (1, max_size) for item in items):
-            raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
-        shape_out.appendleft(max_size)
+        shape_out.append(max_size)
     return tuple(shape_out)
 
 

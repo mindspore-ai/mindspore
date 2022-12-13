@@ -24,6 +24,7 @@ from mindspore.ops.function.math_func import cummin as cummin_
 from mindspore.ops import operations as P
 
 
+#TODO: remove comment
 @constexpr
 def _check_validate_axis(axis, name):
     if isinstance(axis, (tuple, list)):
@@ -33,12 +34,14 @@ def _check_validate_axis(axis, name):
     return axis
 
 
+#TODO: remove comment
 @constexpr
 def _check_validate_keepdims(keep_dims, name):
     keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], name)
     return keep_dims
 
 
+#TODO: remove comment
 @constexpr
 def is_const(x):
     return x is not None
@@ -116,6 +119,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     return nonzero_num
 
 
+#TODO: remove comment
 @constexpr
 def _int_to_tuple_conv(axes):
     """
@@ -127,6 +131,7 @@ def _int_to_tuple_conv(axes):
     return axes
 
 
+#TODO: remove comment
 @constexpr
 def _check_axes(axes, prim_name=None):
     """
@@ -147,6 +152,7 @@ def _check_axes(axes, prim_name=None):
     return axes
 
 
+#TODO: remove comment
 @constexpr
 def _typecheck_input(x1_type, x2_type, prim_name=None):
     """
@@ -160,21 +166,15 @@ def _typecheck_input(x1_type, x2_type, prim_name=None):
                         f"and x2_type: {x2_type}.")
 
 
-@constexpr
+#remove constexpr
 def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     """
     Convert from single int axes to 2d tuple if required
     """
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if isinstance(axes, int):
-        if axes < 0:
-            raise ValueError(f"{msg_prefix} 'axes' must be at least 0, but got {axes}.")
         if axes == 0:
             # outer product, no input validation required
             return [], []
-        if axes > len(x1_shape) or axes > len(x2_shape):
-            raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
-                             f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
         x1_ind = tuple(range(len(x1_shape))[-1 * axes:])
         x2_ind = tuple(range(len(x2_shape))[:axes])
         axes = tuple((x1_ind, x2_ind))
@@ -182,50 +182,7 @@ def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     return axes
 
 
-@constexpr
-def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
-    """
-    Checks for axes having the correct length according to input, for any value in axis
-    being out of range with given shape and also checking for compatible axes values
-    with given inputs.
-    """
-    x1_shape = [-1 if i is None else i for i in x1_shape]
-    x2_shape = [-1 if i is None else i for i in x2_shape]
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    shapes = [x1_shape, x2_shape]
-
-    # axis length check
-    for ix_input, x_axes in enumerate(axes):
-        axes_len = len(x_axes)
-        shape_dim_len = len(shapes[ix_input])
-        if axes_len > shape_dim_len:
-            raise ValueError(f"{msg_prefix} length of element {x_axes} in 'axes' must be less than or equal to "
-                             f"{shape_dim_len}, but got {axes_len}.")
-
-    # axis values range check
-    for ix_input, x_axes in enumerate(axes):
-        comp_shape = shapes[ix_input]
-        max_val = len(comp_shape) - 1
-        min_val = -1 * len(comp_shape)
-        for _, x_value in enumerate(x_axes):
-            if not min_val <= x_value <= max_val:
-                raise ValueError(f"{msg_prefix} value in 'axes' must be in range: [{min_val}, {max_val}], "
-                                 f"but got {x_value}.")
-
-    # check axis value with input shape - both ways for axis valid
-    invalid_a = False
-    invalid_b = False
-    for i in range(len(axes[0])):  # sizes already validated
-        if x1_shape[axes[0][i]] != x2_shape[axes[1][i]]:
-            invalid_a = True
-        if x1_shape[axes[0][i]] != x2_shape[axes[1][len(axes[0]) - 1 - i]]:
-            invalid_b = True
-    if invalid_a and invalid_b:
-        raise ValueError(f"{msg_prefix} 'i' should exist such that 'x1_shape[axes[0][i]]' is equal to "
-                         f"'x2_shape[axes[1][i]]' or 'x2_shape[axes[1][len(axes[0])-1-i]]', but got "
-                         f"'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}, 'axes': {axes}.")
-
-
+#TODO: remove comment
 @constexpr
 def _calc_new_shape(shape, axes, position=0):
     """
@@ -302,7 +259,6 @@ def tensor_dot(x1, x2, axes):
     _typecheck_input(x1_type, x2_type, 'tensor_dot')
     # input compatibility check & axes format update
     axes = _axes_int_check(x1_shape, x2_shape, axes, 'tensor_dot')
-    _validate_axes(x1_shape, x2_shape, axes, 'tensor_dot')
     x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape(x1_shape, axes, 0)
     x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape(x2_shape, axes, 1)
     output_shape = x1_ret + x2_ret  # combine free axes from both inputs
@@ -316,14 +272,7 @@ def tensor_dot(x1, x2, axes):
     return final_result
 
 
-@constexpr
-def _check_invalid_input(x1_shape, x2_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(x1_shape) < 2 or len(x2_shape) < 2:
-        raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2',"
-                         f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
-
-
+#TODO: remove comment
 @constexpr
 def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
     """
@@ -337,7 +286,7 @@ def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
                         f"x1_type: {x1_type} and x2_type: {x2_type}.")
 
 
-@constexpr
+#remove constexpr
 def _get_transpose_shape(x2_shape):
     x2_shape_range = tuple(range(len(x2_shape)))
     x2_shape_transpose = x2_shape_range[-2:-1] + x2_shape_range[:-2] + x2_shape_range[-1:]
@@ -423,7 +372,6 @@ def dot(x1, x2):
     x1_type = F.dtype(x1)
     x2_type = F.dtype(x2)
     _typecheck_input_dot(x1_type, x2_type, 'dot')
-    _check_invalid_input(x1_shape, x2_shape, 'dot')
 
     if len(x1_shape) > 2 or len(x2_shape) > 2:
         x2_shape_transpose = _get_transpose_shape(x2_shape)
@@ -437,18 +385,15 @@ def dot(x1, x2):
     return matmul_op(x1, x2)
 
 
-@constexpr
+#remove constexpr
 def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     """
     Get batch sizes from two inputs
     """
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(x1_shape) < 2 or len(x2_shape) < 2:
-        raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2', "
-                         f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
     return x1_shape[0], x2_shape[0]
 
 
+#TODO: remove comment
 @constexpr
 def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
     """
@@ -462,12 +407,11 @@ def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
                         f"x2_type: {x2_type}.")
 
 
-@constexpr
+#remove constexpr
 def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
     """
     Check whether axes are valid and cast axes from tuple to list
     """
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if axes is None:
         if len(x2_shape) == 2:
             axes = [len(x1_shape) - 1, len(x2_shape) - 1]
@@ -475,39 +419,18 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
             axes = [len(x1_shape) - 1, len(x2_shape) - 2]
 
     if isinstance(axes, (list, tuple)):
-        if 0 in axes:
-            raise ValueError(f"{msg_prefix} 'axes' cannot contain 0, but got axes: {axes}.")
-        if len(axes) != 2:
-            raise ValueError(f"{msg_prefix} length of 'axes' must be equal to 2, but got {len(axes)}.")
         if isinstance(axes, tuple):
             axes = list(axes)
-        validator.check_value_type('axes[0]', axes[0], [int], 'batch_dot')
-        validator.check_value_type('axes[1]', axes[1], [int], 'batch_dot')
         # Reverse if axis < 0
         if axes[0] < 0:
             axes[0] += len(x1_shape)
         if axes[1] < 0:
             axes[1] += len(x2_shape)
-        validator.check_non_negative_int(axes[0], 'reversed axes[0]', 'batch_dot')
-        validator.check_non_negative_int(axes[1], 'reversed axes[1]', 'batch_dot')
-        if axes[0] > len(x1_shape) or axes[1] > len(x2_shape):
-            raise ValueError(f"{msg_prefix} axes[0] must be less than or equal to len(x1_shape), "
-                             f"and axes[1] must be less than or equal to len(x2_shape)."
-                             f"But got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
     elif isinstance(axes, int):
-        if axes == 0:
-            raise ValueError(f"{msg_prefix} 'axes' should not be equal to 0, but got {axes}.")
         if axes < 0:
             axes = [axes + len(x1_shape), axes + len(x2_shape)]
-            validator.check_non_negative_int(axes[0], 'reversed axes', 'batch_dot')
-        elif axes > len(x1_shape) or axes > len(x2_shape):
-            raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
-                             f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
         else:
             axes = [axes, axes]
-    else:
-        raise ValueError(f"{msg_prefix} type of 'axes' must be one of those: int, tuple(int), list(int), "
-                         f"but got {type(axes).__name__}.")
     return axes
 
 
@@ -531,6 +454,7 @@ def _calc_new_shape_batchdot(shape, axes, position=0):
     return new_shape, transpose_perm, free_dims
 
 
+#TODO: remove comment
 @constexpr
 def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
     """
@@ -542,6 +466,7 @@ def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
                          f"'x1_batch_size': {x1_batch_size} and 'x2_batch_size': {x2_batch_size}.")
 
 
+#TODO: remove comment
 @constexpr
 def _get_output_shape(batch_size, x1_ret, x2_ret):
     """

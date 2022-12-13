@@ -17,8 +17,6 @@
 
 import math
 import numbers
-from itertools import zip_longest
-from collections import deque
 import numpy as np
 import mindspore.ops as ops
 from mindspore.common import dtype as mstype
@@ -78,13 +76,13 @@ from mindspore._c_expression import Tensor as Tensor_
 import mindspore.ops.function as F
 
 
+#TODO: remove comment
 @constexpr
 def _make_tensor(val, dtype):
     """Returns the tensor with value `val` and dtype `dtype`."""
     return Tensor(val, dtype)
 
 
-@constexpr
 def get_x_shape(x_shape):
     s = 1
     for i in x_shape:
@@ -4827,9 +4825,6 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if not (input_dtype == dtypeop(mat) and input_dtype == dtypeop(vec)):
         raise TypeError("For Addmv, the inputs should be the same dtype.")
-    _check_input_1d(x.shape, "x", "Addmv")
-    _check_input_1d(vec.shape, "vec", "Addmv")
-    _check_input_2d(mat.shape, "mat", "Addmv")
     _check_input_dtype("x", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addmv")
@@ -4924,9 +4919,6 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         raise TypeError("For Addr, inputs must be all tensors.")
     if not (input_dtype == dtypeop(vec1) and input_dtype == dtypeop(vec2)):
         raise TypeError("For Addr, the inputs should be the same dtype.")
-    _check_input_1d(vec1.shape, "vec1", "Addr")
-    _check_input_1d(vec2.shape, "vec2", "Addr")
-    _check_input_2d(x.shape, "x", "Addr")
     _check_input_dtype("x", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addmv")
@@ -5255,6 +5247,7 @@ def bessel_k1e(x):
     return bessel_k1e_(x)
 
 
+# TODO: remove comment
 @constexpr
 def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
@@ -5375,14 +5368,10 @@ def frac(x):
 #####################################
 
 
-@constexpr
+#remove constexpr
 def _create_cummin_perm(axis, x_shape):
     """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
     len_axis = len(x_shape)
-    if not isinstance(axis, int):
-        raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
-    if axis < -len_axis or axis > len_axis:
-        raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
     prem = [i for i in range(len_axis)]
     if axis < 0:
         axis = axis + len_axis
@@ -6531,6 +6520,7 @@ def hann_window(window_length, periodic=True):
     return Tensor(w[:-1]) if periodic else Tensor(w)
 
 
+#TODO: remove comment
 @constexpr
 def _type_convert(force, obj):
     """
@@ -7056,19 +7046,23 @@ def renorm(input_x, p, dim, maxnorm):
     return renorm_(input_x)
 
 
+# TODO: remove comment
 @constexpr
 def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
 
 
+# TODO: remove comment
 @constexpr
 def _check_positive_float(arg_value, arg_name, cls_name):
     validator.check_positive_float(arg_value, arg_name, cls_name)
 
 
+# TODO: remove comment
 @constexpr
 def _check_int_range(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
-    validator.check_int_range(arg_value, lower_limit, upper_limit, Rel.INC_LEFT, arg_name, prim_name)
+    validator.check_int_range(arg_value, lower_limit,
+                              upper_limit, Rel.INC_LEFT, arg_name, prim_name)
 
 
 def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
@@ -7116,13 +7110,15 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     if hard:
         _check_int_range(dim, -1, len(logits.shape), 'dim', "gumbel_softmax")
     else:
-        _check_int_range(dim, -len(logits.shape), len(logits.shape), 'dim', "gumbel_softmax")
+        _check_int_range(dim, -len(logits.shape),
+                         len(logits.shape), 'dim', "gumbel_softmax")
 
     log_op = _get_cache_prim(P.Log)()
     const_op = _get_cache_prim(P.ScalarToTensor)()
 
     sample_shape = _get_cache_prim(P.Shape)()(logits)
-    uniform = C.uniform(sample_shape, const_op(0.0, mstype.float32), const_op(1.0, mstype.float32))
+    uniform = C.uniform(sample_shape, const_op(
+        0.0, mstype.float32), const_op(1.0, mstype.float32))
     uniform = _get_cache_prim(P.Cast)()(uniform, logits_dtype)
     gumbel = neg_tensor(log_op(neg_tensor(log_op(uniform))))
     gumbel = (logits + gumbel) / tau
@@ -7292,19 +7288,21 @@ def _check_same_type(dtype1, dtype2):
     return dtype1 == dtype2
 
 
+# TODO: remove comment
 @constexpr
 def _max(*args):
     """Returns the maximum value."""
     return max(*args)
 
 
+# TODO: remove comment
 @constexpr
 def _min(*args):
     """Returns the minimum value."""
     return min(*args)
 
 
-@constexpr
+#remove constexpr
 def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     """Infers the shape of the last two dimensions after performing matmul."""
     shape_rem = []
@@ -7319,30 +7317,22 @@ def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     return tuple(shape_rem)
 
 
-@constexpr
+#remove constexpr
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    ndim1, ndim2 = len(shape1), len(shape2)
-    if ndim1 < 1 or ndim2 < 1:
-        raise ValueError(f"{msg_prefix} dimension of input operands must be at least 1, but got "
-                         f"the length of shape1: {ndim1}, the length of shape2: {ndim2}.")
-    if ndim2 >= 2 and shape1[-1] != shape2[-2]:
-        raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
-                         f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
-                         f"shape2[-2]: {shape2[-2]}.")
-    shape_out = deque()
-    for items in zip_longest(reversed(shape1[:-2]), reversed(shape2[:-2]), fillvalue=1):
+    shape_out = list()
+    r_shape1 = shape1[:-2]
+    r_shape2 = shape2[:-2]
+    max_len = max(len(r_shape1), len(r_shape2))
+    for i in range(max_len):
+        items = [it[i - max_len + len(it)] if i - max_len +
+                 len(it) >= 0 else 1 for it in (r_shape1, r_shape2)]
         max_size = max(items)
-        for item in items:
-            if item not in (1, max_size):
-                raise ValueError(f"{msg_prefix} operands could not be broadcast together with shape1 {shape1} and "
-                                 f"shape2 {shape2}.")
-        shape_out.appendleft(max_size)
+        shape_out.append(max_size)
     return tuple(shape_out)
 
 
-@constexpr
+#remove constexpr
 def _tile_size(shape, out_shape, ndim):
     """Returns tile_size such that shape*tile_size = out_shape"""
     size = [1] * ndim
@@ -7352,26 +7342,7 @@ def _tile_size(shape, out_shape, ndim):
     return tuple(size)
 
 
-@constexpr
-def _check_need_broadcast(shape1, shape2):
-    """Returns True if broadcast is necessary for batchmatmul."""
-    return shape1[:-2] != shape2[:-2]
-
-
-@constexpr
-def _check_input_1d(input_shape, param_name, func_name):
-    if len(input_shape) != 1:
-        raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
-    return True
-
-
-@constexpr
-def _check_input_2d(input_shape, param_name, func_name):
-    if len(input_shape) != 2:
-        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
-    return True
-
-
+#remove constexpr
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
     rank_op = _get_cache_prim(P.Rank)()

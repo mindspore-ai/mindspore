@@ -22,8 +22,9 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops._grad.grad_base import bprop_getters, sum_grad_reduce_axis
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import image_ops as IMG
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+import mindspore as ms
 
 dyn_shape_op = P.TensorShape()
 reshape = P.Reshape()
@@ -173,7 +174,13 @@ def get_bprop_dynamic_broadcast_to(self):
         broadcast_shape = dyn_shape_op(out)
 
         _, reduction_axes = inner.DynamicBroadcastGradientArgs()(broadcast_shape, x_shape)
-        reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
+        out_type = dout.dtype
+        if out_type in (ms.int16, ms.int32, ms.int64):
+            dout = P.Cast()(dout, ms.float32)
+            reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
+            reduced_grad = P.Cast()(reduced_grad, out_type)
+        else:
+            reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
         dx = reshape(reduced_grad, x_shape)
         return dx, zeros_like(shp)
 

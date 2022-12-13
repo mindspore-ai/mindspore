@@ -112,6 +112,7 @@ def get_x_shape(x_shape):
     return (s,)
 
 
+#TODO: remove comment
 @constexpr
 def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
@@ -1370,6 +1371,7 @@ def flatten(input_x):
     return _flatten(input_x)
 
 
+#TODO: remove comment
 @constexpr
 def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
     if isinstance(scalar, int) and tensor_type != mstype.int32:
@@ -1380,12 +1382,7 @@ def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
                         f"then the input[{tensor_name}] must be a Tensor of float32.")
 
 
-@constexpr
-def _check_select_shape_match(input_shape, cond_shape, tensor_name):
-    if input_shape != cond_shape:
-        raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
-
-
+#TODO: remove comment
 @constexpr
 def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
     if not is_cond_tensor:
@@ -1459,7 +1456,6 @@ def select(cond, x, y):
     input_x = x
     input_y = y
     if is_x_scalar:
-        _check_select_shape_match(y.shape, cond.shape, "y")
         _check_select_type_match(x, y.dtype, "x", "y")
         input_x = zeros_like_(y) + x
         if isinstance(x, int):
@@ -1468,7 +1464,6 @@ def select(cond, x, y):
             input_x = cast_(input_x, mstype.float32)
 
     if is_y_scalar:
-        _check_select_shape_match(x.shape, cond.shape, "x")
         _check_select_type_match(y, x.dtype, "y", "x")
         input_y = zeros_like_(x) + y
         if isinstance(y, int):
@@ -5309,6 +5304,7 @@ def expand(input_x, size):
     return expand_op(input_x, size)
 
 
+#TODO: remove comment
 @constexpr
 def _check_fold_param(param, param_name):
     """Check the parameters of fold op."""
@@ -5370,6 +5366,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     return fold_op(input, output_size)
 
 
+#TODO: remove comment
 @constexpr
 def _check_unfold_params(param, param_name, param_size):
     """Check the parameters of unfold op."""
@@ -5436,6 +5433,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     return unfold_op(input)
 
 
+#TODO: remove comment
 @constexpr
 def _check_diagonal_axes(dim1, dim2, x_ndim):
     """Check the parameters of unfold op."""
