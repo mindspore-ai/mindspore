@@ -26,13 +26,11 @@ namespace runtime {
 class DeviceDenseEmbeddingOperation : public DeviceEmbeddingOperation {
  public:
   DeviceDenseEmbeddingOperation(EmbeddingCachePrefetchActor *actor, device::DeviceContext *device_context,
-                                std::shared_ptr<EmbeddingDeviceCache> emb_dev_cache,
-                                std::shared_ptr<EmbeddingHostCache> emb_host_cache,
                                 const std::pair<int, int> &local_embedding_slice_bounds,
                                 const std::pair<int, int> &local_device_cache_bounds,
                                 EmbeddingCacheStatisticsInfo *statistics_info, const size_t &stream_id)
-      : DeviceEmbeddingOperation(actor, device_context, emb_dev_cache, emb_host_cache, local_embedding_slice_bounds,
-                                 local_device_cache_bounds, statistics_info, stream_id) {}
+      : DeviceEmbeddingOperation(actor, device_context, local_embedding_slice_bounds, local_device_cache_bounds,
+                                 statistics_info, stream_id) {}
 
   ~DeviceDenseEmbeddingOperation() override = default;
 

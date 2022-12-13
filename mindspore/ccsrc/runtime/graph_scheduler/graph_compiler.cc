@@ -585,11 +585,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
 #endif
 
-#if defined(__linux__) && defined(WITH_BACKEND)
-  // Set device address for embedding cache parameter, only enable when enable embedding cache mode.
-  EmbeddingCacheScheduler::GetInstance().SetEmbedCachedParamAddress(device_context, graph);
-#endif
-
   // dynamic shape pass of graphmode
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -607,6 +602,12 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context);
+
+#if defined(__linux__) && defined(WITH_BACKEND)
+  // Set device address for embedding cache parameter, only enable when enable embedding cache mode.
+  // `CreateDeviceAddress` should execute before this step.
+  EmbeddingCacheScheduler::GetInstance().SetEmbedCachedParamAddress(device_context, graph);
+#endif
 
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR

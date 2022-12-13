@@ -360,18 +360,14 @@ def _run_opt_with_one_number_dist(opt, sparse_opt, push, pull, use_locking, use_
 
 
 @_adam_opt.register("Function", "Function", "Function", "Function",
-                    "Bool", "Bool", "Bool", "Bool",
+                    "Bool", "Bool", "Bool",
                     "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "RowTensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+                    "RowTensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
 def _run_opt_with_sparse(opt, sparse_opt, push, pull,
-                         use_locking, use_nesterov, use_amsgrad, target,
+                         use_locking, use_nesterov, target,
                          beta1_power, beta2_power, beta1, beta2, eps, lr,
-                         gradient, param, m, v, vhat, ps_parameter, cache_enable):
+                         gradient, param, m, v, ps_parameter, cache_enable):
     """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
-    if use_amsgrad:
-        raise Exception("""Adam with amsgrad is currently not supported when the gradients are sparse!
-                        Please set use_amsgrad=False for sparse gradients.""")
-
     success = True
     indices = gradient.indices
     values = gradient.values
@@ -429,30 +425,42 @@ def _run_opt_with_sparse(opt, sparse_opt, push, pull,
 
 
 @_adam_opt.register("Function", "Function", "Function", "Function",
-                    "Bool", "Bool", "Bool", "Bool",
+                    "Bool", "Bool", "Bool",
                     "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
 def _run_opt_with_one_number(opt, sparse_opt, push, pull,
-                             use_locking, use_nesterov, use_amsgrad, target,
+                             use_locking, use_nesterov, target,
                              beta1_power, beta2_power, beta1, beta2, eps, lr,
-                             gradient, param, moment1, moment2, vhat, ps_parameter, cache_enable):
+                             gradient, param, moment1, moment2, ps_parameter, cache_enable):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
     if ps_parameter and not cache_enable:
         op_shape = P.Shape()
-        if use_amsgrad:
-            success = F.depend(success, pull(push((beta1_power, beta2_power, lr, gradient),
-                                                  (op_shape(param), op_shape(moment1), op_shape(moment2),
-                                                   op_shape(vhat))), param))
-        else:
-            success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                                  (op_shape(param), op_shape(moment1), op_shape(moment2))), param))
+        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
+                                              (op_shape(param), op_shape(moment1), op_shape(moment2))), param))
     else:
-        if use_amsgrad:
-            success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
-        else:
-            success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                            eps, gradient))
+        success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
+                                        eps, gradient))
+    return success
+
+
+@_adam_opt.register("Function", "Function", "Function", "Function",
+                    "Bool", "Bool", "Bool",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+def _run_opt_with_one_number_use_amsgrad(opt, sparse_opt, push, pull,
+                                         use_locking, use_nesterov, target,
+                                         beta1_power, beta2_power, beta1, beta2, eps, lr,
+                                         gradient, param, moment1, moment2, vhat, ps_parameter, cache_enable):
+    """Apply adam optimizer to the weight parameter using Tensor and use amsgrad."""
+    success = True
+    if ps_parameter and not cache_enable:
+        op_shape = P.Shape()
+        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, gradient),
+                                              (op_shape(param), op_shape(moment1), op_shape(moment2),
+                                               op_shape(vhat))), param))
+    else:
+        success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
     return success
 
 
@@ -723,7 +731,8 @@ class Adam(Optimizer):
         self.use_offload = use_offload
         self.moment1 = self._parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self._parameters.clone(prefix="moment2", init='zeros')
-        self.vhat = self._parameters.clone(prefix="vhat", init='zeros')
+        if use_amsgrad:
+            self.vhat = self._parameters.clone(prefix="vhat", init='zeros')
 
         if use_offload:
             self.opt = P.AdamNoUpdateParam(use_locking, use_nesterov)
@@ -756,25 +765,8 @@ class Adam(Optimizer):
 
             self._init_distributed_opts(use_locking, use_nesterov)
 
-    @jit
-    def construct(self, gradients):
-        params = self._parameters
-        moment1 = self.moment1
-        moment2 = self.moment2
-        vhat = self.vhat
-        gradients = self.flatten_gradients(gradients)
-        gradients = self.decay_weight(gradients)
-        if not self.use_offload:
-            gradients = self.gradients_centralization(gradients)
-        gradients = self.scale_grad(gradients)
-        gradients = self._grad_sparse_indices_deduplicate(gradients)
-        lr = self.get_lr()
-
-        beta1_power = self.beta1_power * self.beta1
-        self.beta1_power = beta1_power
-        beta2_power = self.beta2_power * self.beta2
-        self.beta2_power = beta2_power
-
+    def apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):
+        """Execute Adam optimizer and its variants."""
         if self.use_offload:
             if self.is_group_lr:
                 success = self.map_reverse(F.partial(_adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
@@ -831,13 +823,19 @@ class Adam(Optimizer):
                                                       self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
                                                       self.eps), lr, gradients, params, moment1, moment2,
                                             self.ps_parameters, self.cache_enable)
-
                     else:
-                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                      self._ps_pull, self.use_locking, self.use_nesterov,
-                                                      self.use_amsgrad, self._is_device, beta1_power, beta2_power,
-                                                      self.beta1, self.beta2, self.eps), lr, gradients, params,
-                                            moment1, moment2, vhat, self.ps_parameters, self.cache_enable)
+                        if self.use_amsgrad:
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                                                          self._is_device, beta1_power, beta2_power,
+                                                          self.beta1, self.beta2, self.eps), lr, gradients, params,
+                                                moment1, moment2, self.vhat, self.ps_parameters, self.cache_enable)
+                        else:
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                                                          self._is_device, beta1_power, beta2_power,
+                                                          self.beta1, self.beta2, self.eps), lr, gradients, params,
+                                                moment1, moment2, self.ps_parameters, self.cache_enable)
                 else:
                     if self.use_lazy:
                         success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
@@ -845,14 +843,41 @@ class Adam(Optimizer):
                                                       self._is_device, beta1_power, beta2_power, self.beta1, self.beta2,
                                                       self.eps, lr), gradients, params, moment1, moment2,
                                             self.ps_parameters, self.cache_enable)
-
                     else:
-                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
-                                                      self._ps_pull, self.use_locking, self.use_nesterov,
-                                                      self.use_amsgrad, self._is_device, beta1_power, beta2_power,
-                                                      self.beta1, self.beta2, self.eps, lr), gradients, params,
-                                            moment1, moment2, vhat, self.ps_parameters, self.cache_enable)
+                        if self.use_amsgrad:
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                                                          self._is_device, beta1_power, beta2_power,
+                                                          self.beta1, self.beta2, self.eps, lr), gradients, params,
+                                                moment1, moment2, self.vhat, self.ps_parameters, self.cache_enable)
+                        else:
+                            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push,
+                                                          self._ps_pull, self.use_locking, self.use_nesterov,
+                                                          self._is_device, beta1_power, beta2_power,
+                                                          self.beta1, self.beta2, self.eps, lr), gradients, params,
+                                                moment1, moment2, self.ps_parameters, self.cache_enable)
+
         return success
+
+    @jit
+    def construct(self, gradients):
+        params = self._parameters
+        moment1 = self.moment1
+        moment2 = self.moment2
+        gradients = self.flatten_gradients(gradients)
+        gradients = self.decay_weight(gradients)
+        if not self.use_offload:
+            gradients = self.gradients_centralization(gradients)
+        gradients = self.scale_grad(gradients)
+        gradients = self._grad_sparse_indices_deduplicate(gradients)
+        lr = self.get_lr()
+
+        beta1_power = self.beta1_power * self.beta1
+        self.beta1_power = beta1_power
+        beta2_power = self.beta2_power * self.beta2
+        self.beta2_power = beta2_power
+
+        return self.apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)
 
     @Optimizer.target.setter
     def target(self, value):

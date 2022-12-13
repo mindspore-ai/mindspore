@@ -50,15 +50,11 @@ constexpr size_t kMaxIdsPerThread = 10000;
 class DeviceEmbeddingOperation {
  public:
   DeviceEmbeddingOperation(EmbeddingCachePrefetchActor *actor, device::DeviceContext *device_context,
-                           std::shared_ptr<EmbeddingDeviceCache> emb_dev_cache,
-                           std::shared_ptr<EmbeddingHostCache> emb_host_cache,
                            const std::pair<int, int> &local_embedding_slice_bounds,
                            const std::pair<int, int> &local_device_cache_bounds,
                            EmbeddingCacheStatisticsInfo *statistics_info, const size_t &stream_id)
       : actor_(actor),
         device_context_(device_context),
-        embedding_device_cache_(emb_dev_cache),
-        embedding_host_cache_(emb_host_cache),
         local_embedding_slice_bounds_(local_embedding_slice_bounds),
         local_device_cache_bounds_(local_device_cache_bounds),
         statistics_info_(statistics_info),
@@ -128,14 +124,6 @@ class DeviceEmbeddingOperation {
 
   // The device interface.
   device::DeviceContext *device_context_;
-
-  // Record the public information of all device embedding cache tables, such as the mapping relationship of id to
-  // index, the information that needs to be updated (swap in and swap out), etc.
-  std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_{nullptr};
-
-  // Record the public information of all local host embedding cache tables, such as the mapping relationship of id to
-  // index, the information that needs to be updated (swap in and swap out), etc.
-  std::shared_ptr<EmbeddingHostCache> embedding_host_cache_{nullptr};
 
   // Model parallelism is used between multiple workers, and local_embedding_slice_bounds_ records the feature range
   // corresponding to the embedding table slice of the process.

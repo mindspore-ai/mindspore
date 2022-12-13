@@ -235,42 +235,52 @@ void EmbeddingCacheScheduler::Initialize() {
   initialized_ = true;
 }
 
-bool EmbeddingCacheScheduler::ParseBatchIdsNum(const KernelGraphPtr &graph, size_t *batch_ids_num) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(batch_ids_num);
-
-  const auto &kernels = graph->execution_order();
-  for (const auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::GetCNodeName(kernel) != kInitDatasetQueueOpName) {
-      continue;
-    }
-
-    std::vector<std::vector<int64_t>> shapes;
-    if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel, "max_shapes");
-    } else {
-      shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel, "shapes");
-    }
-    auto types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel, "types");
-    if (shapes.size() != types.size() || shapes.size() == 0 || types.size() == 0) {
-      MS_LOG(ERROR) << "Invalid shapes of op[InitDataSetQueue]: shapes size " << shapes.size() << ", types size "
-                    << types;
-      return false;
-    }
-
-    const TypePtr &id_type = types.front();
-    MS_EXCEPTION_IF_NULL(id_type);
-    if (id_type->type_id() != kInt32->type_id() && id_type->type_id() != kInt->type_id()) {
-      MS_LOG(EXCEPTION) << "Embedding cache mode need input ids with data type[" << kInt32->ToString() << " or "
-                        << kInt->ToString() << "], but got[" << id_type->ToString() << "]";
-    }
-
-    const auto &shape = shapes[0];
-    *batch_ids_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
-    return true;
+void EmbeddingCacheScheduler::ParseBatchIdsNum(const KernelGraphPtr &graph) {
+  if (parsed_batch_ids_num_) {
+    return;
   }
-  return false;
+
+  // 1. Find InitDataSetQueue kernel.
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &kernels = graph->execution_order();
+  auto iter = find_if(kernels.begin(), kernels.end(), [](const CNodePtr &kernel) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    return common::AnfAlgo::GetCNodeName(kernel) == kInitDatasetQueueOpName;
+  });
+  if (iter == kernels.end()) {
+    MS_LOG(EXCEPTION) << "Can not find InitDataSetQueue kernel";
+  }
+
+  const auto &kernel = *iter;
+  MS_EXCEPTION_IF_NULL(kernel);
+
+  // 2. Get shape of InitDataSetQueue kernel.
+  std::vector<std::vector<int64_t>> shapes;
+  if (common::AnfAlgo::IsDynamicShape(kernel)) {
+    shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel, "max_shapes");
+  } else {
+    shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel, "shapes");
+  }
+  auto types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel, "types");
+  if (shapes.size() != types.size() || shapes.size() == 0 || types.size() == 0) {
+    MS_LOG(EXCEPTION) << "Invalid shapes of op[InitDataSetQueue]: shapes size " << shapes.size() << ", types size "
+                      << types;
+  }
+
+  const TypePtr &id_type = types.front();
+  MS_EXCEPTION_IF_NULL(id_type);
+  if (id_type->type_id() != kInt32->type_id() && id_type->type_id() != kInt->type_id()) {
+    MS_LOG(EXCEPTION) << "Embedding cache mode need input ids with data type[" << kInt32->ToString() << " or "
+                      << kInt->ToString() << "], but got[" << id_type->ToString() << "]";
+  }
+
+  // 3. Get batch ids num(not batch size).
+  const auto &shape = shapes[0];
+  auto batch_ids_num = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
+  embedding_cache_table_manager.Initialize();
+  embedding_cache_table_manager.set_batch_ids_num(batch_ids_num);
+
+  parsed_batch_ids_num_ = true;
 }
 
 void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const DeviceContext *device_context,
@@ -279,12 +289,7 @@ void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const DeviceContext
     return;
   }
 
-  embedding_cache_table_manager.Initialize();
-  size_t batch_ids_num = 0;
-  MS_EXCEPTION_IF_CHECK_FAIL(ParseBatchIdsNum(graph, &batch_ids_num), "Parse batch ids number failed.");
-  embedding_cache_table_manager.set_batch_ids_num(batch_ids_num);
-  embedding_cache_table_manager.AllocMemForEmbeddingCacheTable(device_context);
-
+  embedding_cache_table_manager.AllocMemForEmbedding(device_context);
   allocated_embed_cache_mem_ = true;
 }
 
@@ -297,11 +302,23 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   MS_EXCEPTION_IF_NULL(graph);
-  AllocMemForEmbeddingCacheTable(device_context, graph);
 
-  bool checked_embedding_cache = false;
-  // Set cached parameter address by addr of embedding cache tables.
+  // 1. Get batch ids number before allocate device memory for embedding cache table.
+  ParseBatchIdsNum(graph);
+
   const std::vector<AnfNodePtr> &input_nodes = graph->input_nodes();
+  bool exist_embedding_cache_table = std::any_of(input_nodes.begin(), input_nodes.end(), [](const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    return embedding_cache_table_manager.IsEmbeddingCacheTable(node->fullname_with_scope());
+  });
+  if (!exist_embedding_cache_table) {
+    return;
+  }
+
+  // Graph valid check.
+  CheckGraphValidForEmbeddingCache(*graph);
+
+  // 2. Set parameter device address to embedding cache table.
   for (const auto &node : input_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     const std::string &param_name = node->fullname_with_scope();
@@ -309,43 +326,17 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
       continue;
     }
 
-    if (!checked_embedding_cache) {
-      CheckGraphValidForEmbeddingCache(*graph);
-      checked_embedding_cache = true;
-    }
-
-    // Create device address if not exist one.
     if (node->isa<Parameter>() && !NodeDeviceAddressExist(device_context, node, 0)) {
-      auto output_size = AnfAlgo::GetOutputTensorNum(node);
-      for (size_t index = 0; index < output_size; index++) {
-        TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(node, index);
-        if (output_type_id == kTypeUnknown) {
-          output_type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
-        }
-
-        size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(node, index);
-        auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-          nullptr, tensor_size, AnfAlgo::GetOutputFormat(node, index), output_type_id,
-          trans::GetRuntimePaddingShape(node, index));
-        MS_EXCEPTION_IF_NULL(device_address);
-        device_address->set_from_persistent_mem(true);
-        MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(node)
-                      << " addr:" << device_address;
-        AnfAlgo::SetOutputAddr(device_address, index, node.get());
-      }
+      MS_LOG(EXCEPTION) << "Not found device address for parameter: " << node->fullname_with_scope();
     }
 
-    const auto &device_address = AnfAlgo::GetMutableOutputAddr(node, 0);
-    MS_EXCEPTION_IF_NULL(device_address);
-
-    const auto &address = embedding_cache_table_manager.QueryHashTableAddr(param_name);
-    MS_EXCEPTION_IF_NULL(address.addr);
-    if (device_address->GetSize() != address.size) {
-      MS_LOG(EXCEPTION) << "The device tensor size is inconformity of embedding cached parameter[" << param_name
-                        << "], need size[" << device_address->GetSize() << "], but got size[" << address.size << "]";
+    if (embedding_cache_table_manager.QueryEmbeddingDeviceAddress(param_name) == nullptr) {
+      embedding_cache_table_manager.SetEmbeddingDeviceAddress(param_name, AnfAlgo::GetMutableOutputAddr(node, 0).get());
     }
-    device_address->set_ptr(address.addr);
   }
+
+  // 3. Allocate device memory for embedding cache table.
+  AllocMemForEmbeddingCacheTable(device_context, graph);
 }
 
 void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,

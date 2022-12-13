@@ -243,8 +243,8 @@ bool DeviceDenseEmbeddingOperation::CheckCacheHitOrOutRangeFunc(const int *batch
   MS_ERROR_IF_NULL(in_device);
   MS_ERROR_IF_NULL(out_range);
   MS_ERROR_IF_NULL(hash_hit_count);
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
   const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
 
@@ -278,8 +278,8 @@ bool DeviceDenseEmbeddingOperation::ParseDeviceData(int id, bool *need_swap_devi
   MS_ERROR_IF_NULL(need_swap_device_to_host);
   MS_ERROR_IF_NULL(need_swap_host_to_device);
   MS_ERROR_IF_NULL(hash_index);
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
 
   int index = INVALID_INDEX_VALUE;
@@ -294,10 +294,10 @@ bool DeviceDenseEmbeddingOperation::ParseDeviceData(int id, bool *need_swap_devi
       device_hash_map->set_hash_step(index, data_step);
     }
   } else {
-    int *device_to_host_index = embedding_device_cache_->device_to_host_index.get();
-    int *device_to_host_ids = embedding_device_cache_->device_to_host_ids.get();
-    int *host_to_device_index = embedding_device_cache_->host_to_device_index.get();
-    int *host_to_device_ids = embedding_device_cache_->host_to_device_ids.get();
+    int *device_to_host_index = embedding_cache_table_manager.embedding_device_cache_->device_to_host_index.get();
+    int *device_to_host_ids = embedding_cache_table_manager.embedding_device_cache_->device_to_host_ids.get();
+    int *host_to_device_index = embedding_cache_table_manager.embedding_device_cache_->host_to_device_index.get();
+    int *host_to_device_ids = embedding_cache_table_manager.embedding_device_cache_->host_to_device_ids.get();
     MS_ERROR_IF_NULL(host_to_device_index);
     MS_ERROR_IF_NULL(host_to_device_ids);
     auto tmp_device_to_host_size = statistics_info_->device_to_host_size_;

@@ -230,16 +230,6 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Embedding cache size(row number of embedding cache) of local host cache.
   size_t local_host_cache_size_{0};
 
-  // Record the hash table meta info for all embedding tables.
-  std::map<std::string, HashTableInfo> hash_tables_;
-
-  // Record the public information of all device embedding cache tables, such as the mapping relationship of id to
-  // index, the information that needs to be updated (swap in and swap out), etc.
-  std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_{nullptr};
-  // Record the public information of all local host embedding cache tables, such as the mapping relationship of id to
-  // index, the information that needs to be updated (swap in and swap out), etc.
-  std::shared_ptr<EmbeddingHostCache> embedding_host_cache_{nullptr};
-
   // Statistics on the cache hit rate of the host and device and the information used to update cache.
   EmbeddingCacheStatisticsInfo statistics_info_;
 
