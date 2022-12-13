@@ -1516,7 +1516,7 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_spec
         << "Can not get attribute '" << item_value->ToString() << "' from " << class_name
         << " in graph mode. Try using jit_class to decorate the class? "
         << ".\nFor more details, please refer to "
-        << "https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.jit_class.html \n";
+        << "https://www.mindspore.cn/docs/zh-CN/r2.0.0-alpha/api_python/mindspore/mindspore.jit_class.html \n";
     }
     MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_value->ToString()
                             << "\nThe first argument should be a NameSpace, but got " << data->ToString();

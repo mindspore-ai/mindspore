@@ -2520,7 +2520,7 @@ def relu(x):
     Args:
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.0.0-alpha/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
         Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `x`.
@@ -3776,7 +3776,7 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
     For output height and width on other `pad_mode`, please refer to formula on `mindspore.nn.Conv2d
-    <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Conv2d.html>`_.
+    <https://www.mindspore.cn/docs/en/r2.0.0-alpha/api_python/nn/mindspore.nn.Conv2d.html>`_.
 
     The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
