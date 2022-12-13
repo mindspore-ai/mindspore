@@ -41,8 +41,8 @@ class MnistToMR:
         source (str): Directory that contains t10k-images-idx3-ubyte.gz,
                       train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
                       and train-labels-idx1-ubyte.gz.
-        destination (str): MindRecord file path to transform into, ensure that no file with the same name
-            exists in the directory.
+        destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
+            no file with the same name exists in the directory.
         partition_number (int, optional): The partition size. Default: 1.
 
     Raises:

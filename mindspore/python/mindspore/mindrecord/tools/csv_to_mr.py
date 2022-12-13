@@ -36,12 +36,12 @@ class CsvToMR:
 
     Note:
         For details about Examples, please refer to `Converting CSV Dataset <https://
-        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-csv-dataset>`_ .
+        www.mindspore.cn/tutorials/en/master/advanced/dataset/record.html#converting-csv-dataset>`_ .
 
     Args:
         source (str): The file path of csv.
-        destination (str): The MindRecord file path to transform into, ensure that no file with the same name
-            exists in the directory.
+        destination (str): The MindRecord file path to transform into, ensure that the directory is created in advance
+            and no file with the same name exists in the directory.
         columns_list(list[str], optional): A list of columns to be read. Default: None.
         partition_number (int, optional): The partition size, Default: 1.
 
