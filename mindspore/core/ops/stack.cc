@@ -135,6 +135,6 @@ AbstractBasePtr StackInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto infer_type = StackInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameStack, Stack);
+REGISTER_PRIMITIVE_EVAL_IMPL(Stack, prim::kPrimStack, StackInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

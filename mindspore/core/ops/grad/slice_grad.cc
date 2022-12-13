@@ -60,6 +60,6 @@ AbstractBasePtr SliceGradInfer(const abstract::AnalysisEnginePtr &, const Primit
   return abstract::MakeAbstract(SliceGradInferShape(primitive, input_args), SliceGradInferType(primitive, input_args));
 }
 
-REGISTER_PRIMITIVE_C(kNameSliceGrad, SliceGrad);
+REGISTER_PRIMITIVE_EVAL_IMPL(SliceGrad, prim::kPrimSliceGrad, SliceGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -85,6 +85,6 @@ AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(Mod, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameMod, Mod);
+REGISTER_PRIMITIVE_EVAL_IMPL(Mod, prim::kPrimMod, ModInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
