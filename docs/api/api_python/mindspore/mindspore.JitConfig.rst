@@ -1,7 +1,7 @@
 mindspore.JitConfig
 ====================
 
-.. py:class:: mindspore.JitConfig(jit_level="O1", exc_mode=auto, **kwargs)
+.. py:class:: mindspore.JitConfig(jit_level="O1", exc_mode="auto", **kwargs)
 
     编译时所使用的JitConfig配置项。
 

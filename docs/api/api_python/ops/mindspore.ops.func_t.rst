@@ -12,4 +12,4 @@ mindspore.ops.t
         Tensor，`x` 的转置。
 
     异常：
-        - **TypeError** - `x` 的维度大于2。
+        - **ValueError** - `x` 的维度大于2。

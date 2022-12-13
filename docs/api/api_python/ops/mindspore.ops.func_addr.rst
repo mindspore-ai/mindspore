@@ -1,7 +1,7 @@
 mindspore.ops.addr
 ==================
 
-.. py:function:: mindspore.ops.addr(vec1, vec2, beta=1, alpha=1)
+.. py:function:: mindspore.ops.addr(x, vec1, vec2, beta=1, alpha=1)
 
     计算 `vec1` 和 `vec2` 的外积，并将其添加到 `x` 中。
 
@@ -14,6 +14,7 @@ mindspore.ops.addr
         output = β x + α (vec1 ⊗ vec2)
 
     参数：
+        - **x** (Tensor) - 需要相加的向量。Tensor的shape是 :math:`(N, M)` 。
         - **vec1** (Tensor) - 第一个需要相乘的Tensor，shape大小为 :math:`(N,)` 。
         - **vec2** (Tensor) - 第二个需要相乘的Tensor，shape大小为 :math:`(M,)` 。
         - **beta** (scalar[int, float, bool], 可选) - `x` (β)的乘法器。 `beta` 必须是int或float或bool类型，默认值：1。

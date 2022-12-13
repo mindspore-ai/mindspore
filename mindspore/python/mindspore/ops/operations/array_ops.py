@@ -1825,24 +1825,6 @@ class Argmax(Primitive):
 
     Refer to :func:`mindspore.ops.argmax` for more details.
 
-    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
-    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
-
-    Args:
-        axis (int): Axis where the Argmax operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32` and
-            `mindspore.dtype.int64`. Default: `mindspore.dtype.int32`.
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, whose dtype is determined by `output_type`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If `output_type` is neither int32 nor int64.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -5751,8 +5733,8 @@ class Sort(Primitive):
         - **x** (Tensor) - The input tensor of any dimension, with a type of float16 or float32.
 
     Outputs:
-        y1(Tensor), a tensor whose values are the sorted values, with the same shape and data type as input.
-        y2(Tensor), the indices of the elements in the original input tensor. Data type is int32.
+        - **y1** (Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
+        - **y2** (Tensor) - the indices of the elements in the original input tensor. Data type is int32.
 
     Raises:
         TypeError: If `axis` is not an int.
