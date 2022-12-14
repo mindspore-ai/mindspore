@@ -65,6 +65,24 @@ AbstractBasePtr TensorCopySlicesInfer(const abstract::AnalysisEnginePtr &, const
 }
 
 MIND_API_OPERATOR_IMPL(TensorCopySlices, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorCopySlices, prim::kPrimTensorCopySlices, TensorCopySlicesInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGTensorCopySlicesInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorCopySlicesInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorCopySlicesInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorCopySlicesInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorCopySlices, prim::kPrimTensorCopySlices, AGTensorCopySlicesInfer, false);
 }  // namespace ops
 }  // namespace mindspore

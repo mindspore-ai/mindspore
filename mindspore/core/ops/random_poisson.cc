@@ -101,8 +101,27 @@ AbstractBasePtr RandomPoissonInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infershape = RandomPoissonInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
-REGISTER_INFER_DEPENDS(kRandomPoisson, {0});
 MIND_API_OPERATOR_IMPL(RandomPoisson, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(RandomPoisson, prim::kPrimRandomPoisson, RandomPoissonInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGRandomPoissonInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomPoissonInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomPoissonInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return RandomPoissonInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RandomPoisson, prim::kPrimRandomPoisson, AGRandomPoissonInfer, false);
 }  // namespace ops
 }  // namespace mindspore

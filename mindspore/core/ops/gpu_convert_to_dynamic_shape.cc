@@ -58,7 +58,25 @@ AbstractBasePtr GpuConvertToDynamicShapeInfer(const abstract::AnalysisEnginePtr 
   auto infer_shape = GpuConvertToDynamicShapeInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(GpuConvertToDynamicShape, prim::kPrimGpuConvertToDynamicShape,
-                             GpuConvertToDynamicShapeInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGGpuConvertToDynamicShapeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return GpuConvertToDynamicShapeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GpuConvertToDynamicShapeInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GpuConvertToDynamicShapeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(GpuConvertToDynamicShape, prim::kPrimGpuConvertToDynamicShape,
+                                 AGGpuConvertToDynamicShapeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -70,6 +70,24 @@ AbstractBasePtr TruncateModInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto type = TruncateModInferType(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(TruncateMod, prim::kPrimTruncateMod, TruncateModInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGTruncateModInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TruncateModInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TruncateModInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return TruncateModInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TruncateMod, prim::kPrimTruncateMod, AGTruncateModInfer, false);
 }  // namespace ops
 }  // namespace mindspore

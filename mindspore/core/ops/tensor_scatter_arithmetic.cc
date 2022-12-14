@@ -136,19 +136,30 @@ MIND_API_OPERATOR_IMPL(TensorScatterDiv, BaseOperator);
 MIND_API_OPERATOR_IMPL(TensorScatterMul, BaseOperator);
 MIND_API_OPERATOR_IMPL(TensorScatterUpdate, BaseOperator);
 
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterAdd, prim::kPrimTensorScatterAdd, TensorScatterArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterSub, prim::kPrimTensorScatterSub, TensorScatterArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterMax, prim::kPrimTensorScatterMax, TensorScatterArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterMin, prim::kPrimTensorScatterMin, TensorScatterArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterDiv, prim::kPrimTensorScatterDiv, TensorScatterArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterMul, prim::kPrimTensorScatterMul, TensorScatterArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterUpdate, prim::kPrimTensorScatterUpdate, TensorScatterArithmeticInfer, nullptr,
-                             true);
+// AG means auto generated
+class MIND_API AGTensorScatterArithmeticInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorScatterArithmeticInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorScatterArithmeticInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorScatterArithmeticInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterAdd, prim::kPrimTensorScatterAdd, AGTensorScatterArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterSub, prim::kPrimTensorScatterSub, AGTensorScatterArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterMax, prim::kPrimTensorScatterMax, AGTensorScatterArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterMin, prim::kPrimTensorScatterMin, AGTensorScatterArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterDiv, prim::kPrimTensorScatterDiv, AGTensorScatterArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterMul, prim::kPrimTensorScatterMul, AGTensorScatterArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorScatterUpdate, prim::kPrimTensorScatterUpdate, AGTensorScatterArithmeticInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

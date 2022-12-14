@@ -71,6 +71,24 @@ AbstractBasePtr Atan2Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto base_shape = Atan2InferShape(primitive, input_args);
   return abstract::MakeAbstract(base_shape, base_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Atan2, prim::kPrimAtan2, Atan2Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAtan2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Atan2InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Atan2InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Atan2Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Atan2, prim::kPrimAtan2, AGAtan2Infer, false);
 }  // namespace ops
 }  // namespace mindspore

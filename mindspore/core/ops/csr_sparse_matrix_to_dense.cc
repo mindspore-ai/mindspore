@@ -130,8 +130,27 @@ AbstractBasePtr CSRSparseMatrixToDenseInfer(const abstract::AnalysisEnginePtr &,
   auto shapes = CSRSparseMatrixToDenseInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_INFER_DEPENDS(kNameCSRSparseMatrixToDense, {0});
-REGISTER_PRIMITIVE_EVAL_IMPL(CSRSparseMatrixToDense, prim::kPrimCSRSparseMatrixToDense, CSRSparseMatrixToDenseInfer,
-                             nullptr, true);
+
+// AG means auto generated
+class MIND_API AGCSRSparseMatrixToDenseInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CSRSparseMatrixToDenseInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return CSRSparseMatrixToDenseInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return CSRSparseMatrixToDenseInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CSRSparseMatrixToDense, prim::kPrimCSRSparseMatrixToDense,
+                                 AGCSRSparseMatrixToDenseInfer, false);
 }  // namespace ops
 }  // namespace mindspore

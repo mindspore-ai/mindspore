@@ -50,6 +50,23 @@ AbstractBasePtr AsinhGradInfer(const abstract::AnalysisEnginePtr &, const Primit
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(AsinhGrad, prim::kPrimAsinhGrad, AsinhGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGAsinhGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AsinhGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AsinhGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AsinhGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AsinhGrad, prim::kPrimAsinhGrad, AGAsinhGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -55,7 +55,25 @@ AbstractBasePtr LayerNormXBackpropV2Infer(const abstract::AnalysisEnginePtr &, c
   return abstract::MakeAbstract(LayerNormXBackpropV2InferShape(primitive, input_args),
                                 LayerNormXBackpropV2InferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(LayerNormXBackpropV2, prim::kPrimLayerNormXBackpropV2, LayerNormXBackpropV2Infer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGLayerNormXBackpropV2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LayerNormXBackpropV2InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LayerNormXBackpropV2InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LayerNormXBackpropV2Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LayerNormXBackpropV2, prim::kPrimLayerNormXBackpropV2, AGLayerNormXBackpropV2Infer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

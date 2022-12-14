@@ -169,8 +169,26 @@ AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const P
   return abstract::MakeAbstract(DropoutGenMaskInferShape(primitive, input_args),
                                 DropoutGenMaskInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(DropoutGenMask, prim::kPrimDropoutGenMask, DropoutGenMaskInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(StatelessDropOutGenMask, prim::kPrimStatelessDropOutGenMask, DropoutGenMaskInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGDropoutGenMaskInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutGenMaskInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutGenMaskInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutGenMaskInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DropoutGenMask, prim::kPrimDropoutGenMask, AGDropoutGenMaskInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(StatelessDropOutGenMask, prim::kPrimStatelessDropOutGenMask, AGDropoutGenMaskInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

@@ -54,5 +54,23 @@ AbstractBasePtr HSwishInfer(const abstract::AnalysisEnginePtr &, const Primitive
   }
   return abstract::MakeAbstract(HSwishInferShape(primitive, input_args), HSwishInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(HSwish, prim::kPrimHSwish, HSwishInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGHSwishInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSwishInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSwishInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSwishInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(HSwish, prim::kPrimHSwish, AGHSwishInfer, false);
 }  // namespace mindspore::ops

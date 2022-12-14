@@ -76,6 +76,7 @@ ValuePtr OnesInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Ones, BaseOperator);
+
 REGISTER_PRIMITIVE_EVAL_IMPL(Ones, prim::kPrimOnes, OnesInfer, OnesInferValue, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -111,6 +111,23 @@ abstract::AbstractBasePtr NthElementInfer(const abstract::AnalysisEnginePtr &, c
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(NthElement, prim::kPrimNthElement, NthElementInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGNthElementInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NthElementInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NthElementInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NthElementInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NthElement, prim::kPrimNthElement, AGNthElementInfer, false);
 }  // namespace ops
 }  // namespace mindspore

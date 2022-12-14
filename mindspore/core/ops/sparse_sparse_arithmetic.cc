@@ -162,9 +162,26 @@ AbstractBasePtr SparseSparseArithmeticInfer(const abstract::AnalysisEnginePtr &,
 MIND_API_OPERATOR_IMPL(SparseSparseMinimum, BaseOperator);
 MIND_API_OPERATOR_IMPL(SparseSparseMaximum, BaseOperator);
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSparseMinimum, prim::kPrimSparseSparseMinimum, SparseSparseArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSparseMaximum, prim::kPrimSparseSparseMaximum, SparseSparseArithmeticInfer, nullptr,
-                             true);
+// AG means auto generated
+class MIND_API AGSparseSparseArithmeticInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSparseArithmeticInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSparseArithmeticInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSparseArithmeticInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSparseMinimum, prim::kPrimSparseSparseMinimum, AGSparseSparseArithmeticInfer,
+                                 false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSparseMaximum, prim::kPrimSparseSparseMaximum, AGSparseSparseArithmeticInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

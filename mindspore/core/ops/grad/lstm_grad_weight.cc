@@ -139,6 +139,24 @@ AbstractBasePtr LstmGradWeightInfer(const abstract::AnalysisEnginePtr &, const P
 }
 
 MIND_API_OPERATOR_IMPL(LSTMGradWeight, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(LSTMGradWeight, prim::kPrimLstmGradWeight, LstmGradWeightInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGLstmGradWeightInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LstmGradWeightInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LstmGradWeightInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LstmGradWeightInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LSTMGradWeight, prim::kPrimLstmGradWeight, AGLstmGradWeightInfer, false);
 }  // namespace ops
 }  // namespace mindspore

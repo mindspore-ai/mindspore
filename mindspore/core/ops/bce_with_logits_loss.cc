@@ -112,6 +112,24 @@ AbstractBasePtr BCEWithLogitsLossInfer(const abstract::AnalysisEnginePtr &, cons
   abstract::ShapePtr output_shape = BCEWithLogitsLossInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(output_type, output_shape->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BCEWithLogitsLoss, prim::kPrimBCEWithLogitsLoss, BCEWithLogitsLossInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGBCEWithLogitsLossInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BCEWithLogitsLossInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BCEWithLogitsLossInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BCEWithLogitsLossInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BCEWithLogitsLoss, prim::kPrimBCEWithLogitsLoss, AGBCEWithLogitsLossInfer, false);
 }  // namespace ops
 }  // namespace mindspore

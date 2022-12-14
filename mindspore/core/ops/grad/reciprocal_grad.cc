@@ -60,6 +60,23 @@ AbstractBasePtr ReciprocalGradInfer(const abstract::AnalysisEnginePtr &, const P
   return abstract::MakeAbstract(shape, type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ReciprocalGrad, prim::kPrimReciprocalGrad, ReciprocalGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGReciprocalGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ReciprocalGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ReciprocalGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ReciprocalGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReciprocalGrad, prim::kPrimReciprocalGrad, AGReciprocalGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

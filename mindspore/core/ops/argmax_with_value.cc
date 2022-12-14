@@ -105,6 +105,24 @@ AbstractBasePtr ArgMaxWithValueInfer(const abstract::AnalysisEnginePtr &, const 
   return abstract::MakeAbstract(shapes, types);
 }
 MIND_API_OPERATOR_IMPL(ArgMaxWithValue, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ArgMaxWithValue, prim::kPrimArgMaxWithValue, ArgMaxWithValueInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGArgMaxWithValueInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgMaxWithValueInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgMaxWithValueInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgMaxWithValueInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ArgMaxWithValue, prim::kPrimArgMaxWithValue, AGArgMaxWithValueInfer, false);
 }  // namespace ops
 }  // namespace mindspore

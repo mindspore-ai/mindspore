@@ -88,8 +88,25 @@ AbstractBasePtr FusedAdaFactorInfer(const abstract::AnalysisEnginePtr &, const P
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FusedAdaFactor, prim::kPrimFusedAdaFactor, FusedAdaFactorInfer, nullptr, true)
-REGISTER_PRIMITIVE_EVAL_IMPL(FusedAdaFactorWithGlobalNorm, prim::kPrimFusedAdaFactorWithGlobalNorm, FusedAdaFactorInfer,
-                             nullptr, true)
+// AG means auto generated
+class MIND_API AGFusedAdaFactorInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FusedAdaFactorInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FusedAdaFactorInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FusedAdaFactorInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FusedAdaFactor, prim::kPrimFusedAdaFactor, AGFusedAdaFactorInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FusedAdaFactorWithGlobalNorm, prim::kPrimFusedAdaFactorWithGlobalNorm,
+                                 AGFusedAdaFactorInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -57,6 +57,24 @@ AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto infer_shape = FloorInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Floor, prim::kPrimFloor, FloorInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGFloorInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FloorInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FloorInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FloorInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Floor, prim::kPrimFloor, AGFloorInfer, false);
 }  // namespace ops
 }  // namespace mindspore

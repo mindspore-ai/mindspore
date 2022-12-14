@@ -514,6 +514,24 @@ AbstractBasePtr SspaddmmInfer(const abstract::AnalysisEnginePtr &, const Primiti
 }
 
 MIND_API_OPERATOR_IMPL(Sspaddmm, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Sspaddmm, prim::kPrimSspaddmm, SspaddmmInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSspaddmmInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SspaddmmInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SspaddmmInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SspaddmmInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Sspaddmm, prim::kPrimSspaddmm, AGSspaddmmInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -194,7 +194,24 @@ std::string Dilation2DBackpropFilter::get_format() const {
   return GetValue<std::string>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Dilation2DBackpropFilter, prim::kPrimDilation2DBackpropFilter,
-                             Dilation2DBackpropFilterInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGDilation2DBackpropFilterInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DBackpropFilterInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DBackpropFilterInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dilation2DBackpropFilterInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Dilation2DBackpropFilter, prim::kPrimDilation2DBackpropFilter,
+                                 AGDilation2DBackpropFilterInfer, false);
 }  // namespace ops
 }  // namespace mindspore

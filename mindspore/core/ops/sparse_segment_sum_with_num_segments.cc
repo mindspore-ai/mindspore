@@ -116,8 +116,27 @@ AbstractBasePtr SparseSegmentSumWithNumSegmentsInfer(const abstract::AnalysisEng
   auto shapes = SparseSegmentSumWithNumSegmentsInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_INFER_DEPENDS(kNameSparseSegmentSumWithNumSegments, {3});
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSumWithNumSegments, prim::kPrimSparseSegmentSumWithNumSegments,
-                             SparseSegmentSumWithNumSegmentsInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseSegmentSumWithNumSegmentsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentSumWithNumSegmentsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentSumWithNumSegmentsInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSegmentSumWithNumSegmentsInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {3}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSegmentSumWithNumSegments, prim::kPrimSparseSegmentSumWithNumSegments,
+                                 AGSparseSegmentSumWithNumSegmentsInfer, false);
 }  // namespace ops
 }  // namespace mindspore

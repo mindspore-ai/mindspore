@@ -113,6 +113,23 @@ AbstractBasePtr IndexFillInfer(const abstract::AnalysisEnginePtr &, const Primit
   return abstract::MakeAbstract(shape, dtype);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(IndexFill, prim::kPrimIndexFill, IndexFillInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGIndexFillInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return IndexFillInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return IndexFillInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return IndexFillInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(IndexFill, prim::kPrimIndexFill, AGIndexFillInfer, false);
 }  // namespace ops
 }  // namespace mindspore

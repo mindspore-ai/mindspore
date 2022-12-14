@@ -108,6 +108,24 @@ AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto infer_shape = MaskedFillInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MaskedFill, prim::kPrimMaskedFill, MaskedFillInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMaskedFillInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaskedFillInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaskedFillInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaskedFillInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaskedFill, prim::kPrimMaskedFill, AGMaskedFillInfer, false);
 }  // namespace ops
 }  // namespace mindspore

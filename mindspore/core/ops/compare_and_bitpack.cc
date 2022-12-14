@@ -87,6 +87,24 @@ AbstractBasePtr CompareAndBitpackInfer(const abstract::AnalysisEnginePtr &, cons
 }
 
 MIND_API_OPERATOR_IMPL(CompareAndBitpack, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(CompareAndBitpack, prim::kPrimCompareAndBitpack, CompareAndBitpackInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGCompareAndBitpackInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return CompareAndBitpackInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return CompareAndBitpackInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return CompareAndBitpackInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CompareAndBitpack, prim::kPrimCompareAndBitpack, AGCompareAndBitpackInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -86,6 +86,24 @@ MIND_API_OPERATOR_IMPL(ScatterAddWithAxis, BaseOperator);
 void ScatterAddWithAxis::Init(const int64_t axis) { this->set_axis(axis); }
 void ScatterAddWithAxis::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t ScatterAddWithAxis::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterAddWithAxis, prim::kPrimScatterAddWithAxis, ScatterAddWithAxisInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGScatterAddWithAxisInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterAddWithAxisInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterAddWithAxisInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterAddWithAxisInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterAddWithAxis, prim::kPrimScatterAddWithAxis, AGScatterAddWithAxisInfer, false);
 }  // namespace ops
 }  // namespace mindspore

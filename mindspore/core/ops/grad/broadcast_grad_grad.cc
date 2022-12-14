@@ -125,7 +125,25 @@ bool MinimumGradGrad::get_grad_y() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MaximumGradGrad, prim::kPrimMaximumGradGrad, BroadcastGradGradInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(MinimumGradGrad, prim::kPrimMinimumGradGrad, BroadcastGradGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGBroadcastGradGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BroadcastGradGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BroadcastGradGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BroadcastGradGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaximumGradGrad, prim::kPrimMaximumGradGrad, AGBroadcastGradGradInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MinimumGradGrad, prim::kPrimMinimumGradGrad, AGBroadcastGradGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

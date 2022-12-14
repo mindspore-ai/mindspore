@@ -87,6 +87,24 @@ AbstractBasePtr AddcmulInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto infer_type = AddcmulInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Addcmul, prim::kPrimAddcmul, AddcmulInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAddcmulInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AddcmulInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AddcmulInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AddcmulInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Addcmul, prim::kPrimAddcmul, AGAddcmulInfer, false);
 }  // namespace ops
 }  // namespace mindspore

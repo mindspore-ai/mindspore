@@ -57,6 +57,24 @@ AbstractBasePtr SubAndFilterInfer(const abstract::AnalysisEnginePtr &, const Pri
 }
 
 MIND_API_OPERATOR_IMPL(SubAndFilter, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SubAndFilter, prim::kPrimSubAndFilter, SubAndFilterInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSubAndFilterInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SubAndFilterInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SubAndFilterInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SubAndFilterInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SubAndFilter, prim::kPrimSubAndFilter, AGSubAndFilterInfer, false);
 }  // namespace ops
 }  // namespace mindspore

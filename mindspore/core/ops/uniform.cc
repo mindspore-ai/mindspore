@@ -81,6 +81,24 @@ AbstractBasePtr UniformInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 }
 
 MIND_API_OPERATOR_IMPL(Uniform, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Uniform, prim::kPrimUniform, UniformInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGUniformInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UniformInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UniformInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UniformInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Uniform, prim::kPrimUniform, AGUniformInfer, false);
 }  // namespace ops
 }  // namespace mindspore

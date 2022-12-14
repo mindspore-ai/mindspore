@@ -135,6 +135,24 @@ AbstractBasePtr LuUnpackInfer(const abstract::AnalysisEnginePtr &, const Primiti
 }
 
 MIND_API_OPERATOR_IMPL(LuUnpack, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(LuUnpack, prim::kPrimLuUnpack, LuUnpackInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGLuUnpackInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LuUnpackInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LuUnpackInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LuUnpackInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LuUnpack, prim::kPrimLuUnpack, AGLuUnpackInfer, false);
 }  // namespace ops
 }  // namespace mindspore

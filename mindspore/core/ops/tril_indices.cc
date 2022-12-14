@@ -92,6 +92,24 @@ AbstractBasePtr TrilIndicesInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infer_shape = TrilIndicesInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(TrilIndices, prim::kPrimTrilIndices, TrilIndicesInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGTrilIndicesInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TrilIndicesInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TrilIndicesInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return TrilIndicesInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TrilIndices, prim::kPrimTrilIndices, AGTrilIndicesInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -79,7 +79,26 @@ AbstractBasePtr BincountInfer(const abstract::AnalysisEnginePtr &, const Primiti
 }
 
 MIND_API_OPERATOR_IMPL(Bincount, BaseOperator);
-REGISTER_INFER_DEPENDS(kNameBincount, {1});
-REGISTER_PRIMITIVE_EVAL_IMPL(Bincount, prim::kPrimBincount, BincountInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGBincountInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BincountInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BincountInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BincountInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Bincount, prim::kPrimBincount, AGBincountInfer, false);
 }  // namespace ops
 }  // namespace mindspore

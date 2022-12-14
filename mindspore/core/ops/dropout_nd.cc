@@ -120,7 +120,42 @@ AbstractBasePtr Dropout3DInfer(const abstract::AnalysisEnginePtr &, const Primit
   return abstract::MakeAbstract(output_shape, output_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Dropout2D, prim::kPrimDropout2D, Dropout2DInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(Dropout3D, prim::kPrimDropout3D, Dropout3DInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGDropout2DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dropout2DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutNDInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dropout2DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Dropout2D, prim::kPrimDropout2D, AGDropout2DInfer, false);
+
+// AG means auto generated
+class MIND_API AGDropout3DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dropout3DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DropoutNDInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Dropout3DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Dropout3D, prim::kPrimDropout3D, AGDropout3DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

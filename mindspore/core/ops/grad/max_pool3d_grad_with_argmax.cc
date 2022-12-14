@@ -134,7 +134,25 @@ abstract::AbstractBasePtr MaxPool3DGradWithArgmaxInfer(const abstract::AnalysisE
 }
 
 MIND_API_OPERATOR_IMPL(MaxPool3DGradWithArgmax, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxPool3DGradWithArgmax, prim::kPrimMaxPool3DGradWithArgmax, MaxPool3DGradWithArgmaxInfer,
-                             nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMaxPool3DGradWithArgmaxInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPool3DGradWithArgmaxInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPool3DGradWithArgmaxInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxPool3DGradWithArgmaxInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaxPool3DGradWithArgmax, prim::kPrimMaxPool3DGradWithArgmax,
+                                 AGMaxPool3DGradWithArgmaxInfer, false);
 }  // namespace ops
 }  // namespace mindspore

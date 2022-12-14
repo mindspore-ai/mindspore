@@ -139,8 +139,26 @@ AbstractBasePtr SparseTensorToCSRSparseMatrixInfer(const abstract::AnalysisEngin
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseTensorToCSRSparseMatrix, prim::kPrimSparseTensorToCSRSparseMatrix,
-                             SparseTensorToCSRSparseMatrixInfer, nullptr, true);
-REGISTER_INFER_DEPENDS(kNameSparseTensorToCSRSparseMatrix, {2});
+// AG means auto generated
+class MIND_API AGSparseTensorToCSRSparseMatrixInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseTensorToCSRSparseMatrixInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseTensorToCSRSparseMatrixInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseTensorToCSRSparseMatrixInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseTensorToCSRSparseMatrix, prim::kPrimSparseTensorToCSRSparseMatrix,
+                                 AGSparseTensorToCSRSparseMatrixInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -138,6 +138,23 @@ AbstractBasePtr ApplyAddSignInfer(const abstract::AnalysisEnginePtr &, const Pri
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ApplyAddSign, prim::kPrimApplyAddSign, ApplyAddSignInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGApplyAddSignInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAddSignInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAddSignInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAddSignInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyAddSign, prim::kPrimApplyAddSign, AGApplyAddSignInfer, false);
 }  // namespace ops
 }  // namespace mindspore

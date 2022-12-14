@@ -144,7 +144,24 @@ bool UpsampleTrilinear3DGrad::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(UpsampleTrilinear3DGrad, prim::kPrimUpsampleTrilinear3DGrad, UpsampleTrilinear3DGradInfer,
-                             nullptr, true);
+// AG means auto generated
+class MIND_API AGUpsampleTrilinear3DGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpsampleTrilinear3DGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpsampleTrilinear3DGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpsampleTrilinear3DGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UpsampleTrilinear3DGrad, prim::kPrimUpsampleTrilinear3DGrad,
+                                 AGUpsampleTrilinear3DGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

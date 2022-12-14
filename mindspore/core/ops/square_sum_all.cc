@@ -71,6 +71,24 @@ AbstractBasePtr SquareSumAllInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto shapes = SquareSumAllInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SquareSumAll, prim::kPrimSquareSumAll, SquareSumAllInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSquareSumAllInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SquareSumAllInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SquareSumAllInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SquareSumAllInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SquareSumAll, prim::kPrimSquareSumAll, AGSquareSumAllInfer, false);
 }  // namespace ops
 }  // namespace mindspore

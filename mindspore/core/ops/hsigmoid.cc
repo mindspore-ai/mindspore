@@ -51,6 +51,24 @@ AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const Primiti
   return std::make_shared<abstract::AbstractTensor>(HSigmoidInferType(primitive, input_args),
                                                     HSigmoidInferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(HSigmoid, prim::kPrimHSigmoid, HSigmoidInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGHSigmoidInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSigmoidInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSigmoidInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSigmoidInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(HSigmoid, prim::kPrimHSigmoid, AGHSigmoidInfer, false);
 }  // namespace ops
 }  // namespace mindspore

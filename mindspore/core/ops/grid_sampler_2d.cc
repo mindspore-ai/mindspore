@@ -102,6 +102,23 @@ bool GridSampler2D::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(GridSampler2D, prim::kPrimGridSampler2D, GridSampler2DInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGGridSampler2DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return GridSampler2DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GridSampler2DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GridSampler2DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(GridSampler2D, prim::kPrimGridSampler2D, AGGridSampler2DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

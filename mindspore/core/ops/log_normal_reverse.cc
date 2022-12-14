@@ -52,6 +52,24 @@ AbstractBasePtr LogNormalReverseInfer(const abstract::AnalysisEnginePtr &, const
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(LogNormalReverse, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(LogNormalReverse, prim::kPrimLogNormalReverse, LogNormalReverseInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGLogNormalReverseInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogNormalReverseInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogNormalReverseInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogNormalReverseInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LogNormalReverse, prim::kPrimLogNormalReverse, AGLogNormalReverseInfer, false);
 }  // namespace ops
 }  // namespace mindspore

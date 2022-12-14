@@ -79,6 +79,24 @@ AbstractBasePtr AvgPoolGradV1Infer(const abstract::AnalysisEnginePtr &, const Pr
   return std::make_shared<abstract::AbstractTensor>(avgpoolgradv1_infer_type, avgpoolgradv1_infer_shape);
 }
 MIND_API_OPERATOR_IMPL(AvgPoolGradV1, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(AvgPoolGradV1, prim::kPrimAvgPoolGradV1, AvgPoolGradV1Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGAvgPoolGradV1Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return AvgPoolGradV1InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return AvgPoolGradV1InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return AvgPoolGradV1Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AvgPoolGradV1, prim::kPrimAvgPoolGradV1, AGAvgPoolGradV1Infer, false);
 }  // namespace ops
 }  // namespace mindspore

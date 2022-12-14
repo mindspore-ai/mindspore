@@ -84,6 +84,24 @@ abstract::AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &
 }
 
 MIND_API_OPERATOR_IMPL(SparseToDense, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseToDense, prim::kPrimSparseToDense, SparseToDenseInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseToDenseInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseToDenseInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseToDenseInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseToDenseInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseToDense, prim::kPrimSparseToDense, AGSparseToDenseInfer, false);
 }  // namespace ops
 }  // namespace mindspore

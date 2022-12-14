@@ -125,6 +125,24 @@ AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto infershape = SplitInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Split, prim::kPrimSplit, SplitInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSplitInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SplitInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SplitInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SplitInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Split, prim::kPrimSplit, AGSplitInfer, false);
 }  // namespace ops
 }  // namespace mindspore

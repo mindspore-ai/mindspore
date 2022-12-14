@@ -58,6 +58,24 @@ AbstractBasePtr BesselI0eInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto infer_shape = BesselI0eInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BesselI0e, prim::kPrimBesselI0e, BesselI0eInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGBesselI0eInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BesselI0eInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BesselI0eInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BesselI0eInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BesselI0e, prim::kPrimBesselI0e, AGBesselI0eInfer, false);
 }  // namespace ops
 }  // namespace mindspore

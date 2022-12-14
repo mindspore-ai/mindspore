@@ -260,7 +260,25 @@ AbstractBasePtr SparseTensorDenseMatmulInfer(const abstract::AnalysisEnginePtr &
   auto shape = SparseTensorDenseMatmulInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(type, shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseTensorDenseMatmul, prim::kPrimSparseTensorDenseMatmul, SparseTensorDenseMatmulInfer,
-                             nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseTensorDenseMatmulInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseTensorDenseMatmulInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseTensorDenseMatmulInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseTensorDenseMatmulInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseTensorDenseMatmul, prim::kPrimSparseTensorDenseMatmul,
+                                 AGSparseTensorDenseMatmulInfer, false);
 }  // namespace ops
 }  // namespace mindspore

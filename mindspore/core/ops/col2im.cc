@@ -175,8 +175,27 @@ AbstractBasePtr Col2ImInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_INFER_DEPENDS(kNameCol2Im, {1});
 MIND_API_OPERATOR_IMPL(Col2Im, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Col2Im, prim::kPrimCol2Im, Col2ImInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGCol2ImInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Col2ImInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Col2ImInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return Col2ImInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Col2Im, prim::kPrimCol2Im, AGCol2ImInfer, false);
 }  // namespace ops
 }  // namespace mindspore

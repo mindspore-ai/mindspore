@@ -70,6 +70,24 @@ AbstractBasePtr MatrixLogarithmInfer(const abstract::AnalysisEnginePtr &, const 
 }
 
 MIND_API_OPERATOR_IMPL(MatrixLogarithm, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(MatrixLogarithm, prim::kPrimMatrixLogarithm, MatrixLogarithmInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMatrixLogarithmInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MatrixLogarithmInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MatrixLogarithmInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MatrixLogarithmInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MatrixLogarithm, prim::kPrimMatrixLogarithm, AGMatrixLogarithmInfer, false);
 }  // namespace ops
 }  // namespace mindspore

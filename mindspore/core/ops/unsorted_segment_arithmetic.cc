@@ -206,11 +206,28 @@ MIND_API_OPERATOR_IMPL(UnsortedSegmentMax, BaseOperator);
 MIND_API_OPERATOR_IMPL(UnsortedSegmentMin, BaseOperator);
 MIND_API_OPERATOR_IMPL(UnsortedSegmentProd, BaseOperator);
 
-REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentMax, prim::kPrimUnsortedSegmentMax, UnsortedSegmentArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentMin, prim::kPrimUnsortedSegmentMin, UnsortedSegmentArithmeticInfer, nullptr,
-                             true);
-REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentProd, prim::kPrimUnsortedSegmentProd, UnsortedSegmentArithmeticInfer,
-                             nullptr, true);
+// AG means auto generated
+class MIND_API AGUnsortedSegmentArithmeticInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnsortedSegmentArithmeticInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnsortedSegmentArithmeticInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnsortedSegmentArithmeticInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UnsortedSegmentMax, prim::kPrimUnsortedSegmentMax, AGUnsortedSegmentArithmeticInfer,
+                                 false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UnsortedSegmentMin, prim::kPrimUnsortedSegmentMin, AGUnsortedSegmentArithmeticInfer,
+                                 false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UnsortedSegmentProd, prim::kPrimUnsortedSegmentProd, AGUnsortedSegmentArithmeticInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

@@ -77,7 +77,25 @@ AbstractBasePtr LogMatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, c
   auto infer_shape = LogMatrixDeterminantInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(LogMatrixDeterminant, prim::kPrimLogMatrixDeterminant, LogMatrixDeterminantInfer, nullptr,
-                             true);
+
+// AG means auto generated
+class MIND_API AGLogMatrixDeterminantInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogMatrixDeterminantInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogMatrixDeterminantInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogMatrixDeterminantInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LogMatrixDeterminant, prim::kPrimLogMatrixDeterminant, AGLogMatrixDeterminantInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

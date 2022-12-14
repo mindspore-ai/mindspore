@@ -66,6 +66,23 @@ abstract::AbstractBasePtr EinsumGradInfer(const abstract::AnalysisEnginePtr &, c
                                 EinsumGradInferType(primitive, input_args));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(EinsumGrad, prim::kPrimEinsumGrad, EinsumGradInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGEinsumGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return EinsumGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return EinsumGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return EinsumGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(EinsumGrad, prim::kPrimEinsumGrad, AGEinsumGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

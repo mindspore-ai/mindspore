@@ -94,6 +94,24 @@ AbstractBasePtr PaddingInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   abstract::ShapePtr output_shape = PaddingInferShape(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Padding, prim::kPrimPadding, PaddingInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGPaddingInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return PaddingInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return PaddingInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return PaddingInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Padding, prim::kPrimPadding, AGPaddingInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -137,6 +137,24 @@ AbstractBasePtr GammaInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto type = GammaInferType(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(RandomGamma, prim::kPrimRandomGamma, GammaInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGGammaInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return GammaInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GammaInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GammaInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(RandomGamma, prim::kPrimRandomGamma, AGGammaInfer, false);
 }  // namespace ops
 }  // namespace mindspore

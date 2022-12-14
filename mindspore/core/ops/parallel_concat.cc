@@ -124,6 +124,24 @@ AbstractBasePtr ParallelConcatInfer(const abstract::AnalysisEnginePtr &, const P
   auto infer_shape = ParallelConcatInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ParallelConcat, prim::kPrimParallelConcat, ParallelConcatInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGParallelConcatInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ParallelConcatInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ParallelConcatInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ParallelConcatInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ParallelConcat, prim::kPrimParallelConcat, AGParallelConcatInfer, false);
 }  // namespace ops
 }  // namespace mindspore

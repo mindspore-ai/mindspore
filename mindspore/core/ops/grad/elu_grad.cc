@@ -79,6 +79,24 @@ AbstractBasePtr EluGradInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto shape = EluGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(EluGrad, prim::kPrimEluGrad, EluGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGEluGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return EluGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return EluGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return EluGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(EluGrad, prim::kPrimEluGrad, AGEluGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

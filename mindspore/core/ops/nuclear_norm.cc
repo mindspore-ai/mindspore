@@ -106,6 +106,24 @@ AbstractBasePtr NuclearNormInfer(const abstract::AnalysisEnginePtr &, const Prim
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(NuclearNorm, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(NuclearNorm, prim::kPrimNuclearNorm, NuclearNormInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGNuclearNormInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NuclearNormInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NuclearNormInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NuclearNormInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NuclearNorm, prim::kPrimNuclearNorm, AGNuclearNormInfer, false);
 }  // namespace ops
 }  // namespace mindspore

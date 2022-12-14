@@ -186,6 +186,23 @@ AbstractBasePtr MaxUnpool3DInfer(const abstract::AnalysisEnginePtr &, const Prim
 }
 std::string MaxUnpool3D::get_format() const { return GetValue<std::string>(GetAttr(kFormat)); }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxUnpool3D, prim::kPrimMaxUnpool3D, MaxUnpool3DInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGMaxUnpool3DInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxUnpool3DInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxUnpool3DInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MaxUnpool3DInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MaxUnpool3D, prim::kPrimMaxUnpool3D, AGMaxUnpool3DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

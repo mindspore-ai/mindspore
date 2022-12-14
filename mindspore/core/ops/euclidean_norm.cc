@@ -154,7 +154,25 @@ bool EuclideanNorm::get_keep_dims() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_INFER_DEPENDS(kNameEuclideanNorm, {1});
-REGISTER_PRIMITIVE_EVAL_IMPL(EuclideanNorm, prim::kPrimEuclideanNorm, EuclideanNormInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGEuclideanNormInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return EuclideanNormInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return EuclideanNormInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return EuclideanNormInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(EuclideanNorm, prim::kPrimEuclideanNorm, AGEuclideanNormInfer, false);
 }  // namespace ops
 }  // namespace mindspore

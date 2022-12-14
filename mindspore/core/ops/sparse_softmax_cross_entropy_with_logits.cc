@@ -84,8 +84,26 @@ AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::Analysi
 bool SparseSoftmaxCrossEntropyWithLogits::get_is_grad() const { return GetValue<bool>(GetAttr(kIsGrad)); }
 
 MIND_API_OPERATOR_IMPL(SparseSoftmaxCrossEntropyWithLogits, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSoftmaxCrossEntropyWithLogits, prim::kPrimSparseSoftmaxCrossEntropyWithLogits,
-                             SparseSoftmaxCrossEntropyWithLogitsInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseSoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSoftmaxCrossEntropyWithLogitsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSoftmaxCrossEntropyWithLogitsInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseSoftmaxCrossEntropyWithLogitsInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseSoftmaxCrossEntropyWithLogits, prim::kPrimSparseSoftmaxCrossEntropyWithLogits,
+                                 AGSparseSoftmaxCrossEntropyWithLogitsInfer, false);
 // REGISTER_PRIMITIVE_C(kNameSparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogits);
 }  // namespace ops
 }  // namespace mindspore

@@ -98,6 +98,24 @@ AbstractBasePtr NoRepeatNGramInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto shape = NoRepeatNGramInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(NoRepeatNGram, prim::kPrimNoRepeatNGram, NoRepeatNGramInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGNoRepeatNGramInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NoRepeatNGramInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NoRepeatNGramInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NoRepeatNGramInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NoRepeatNGram, prim::kPrimNoRepeatNGram, AGNoRepeatNGramInfer, false);
 }  // namespace ops
 }  // namespace mindspore

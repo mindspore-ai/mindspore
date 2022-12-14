@@ -119,6 +119,24 @@ AbstractBasePtr ArgMinWithValueInfer(const abstract::AnalysisEnginePtr &, const 
   return abstract::MakeAbstract(shapes, types);
 }
 MIND_API_OPERATOR_IMPL(ArgMinWithValue, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ArgMinWithValue, prim::kPrimArgMinWithValue, ArgMinWithValueInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGArgMinWithValueInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgMinWithValueInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgMinWithValueInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgMinWithValueInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ArgMinWithValue, prim::kPrimArgMinWithValue, AGArgMinWithValueInfer, false);
 }  // namespace ops
 }  // namespace mindspore

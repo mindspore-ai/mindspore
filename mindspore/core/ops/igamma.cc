@@ -55,6 +55,23 @@ AbstractBasePtr IgammaInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Igamma, prim::kPrimIgamma, IgammaInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGIgammaInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return IgammaInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return IgammaInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return IgammaInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Igamma, prim::kPrimIgamma, AGIgammaInfer, false);
 }  // namespace ops
 }  // namespace mindspore

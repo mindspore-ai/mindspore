@@ -95,7 +95,26 @@ AbstractBasePtr BatchToSpaceNDV2Infer(const abstract::AnalysisEnginePtr &, const
   auto infer_shape = BatchToSpaceNDV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BatchToSpaceNDV2, prim::kPrimBatchToSpaceNDV2, BatchToSpaceNDV2Infer, nullptr, true);
-REGISTER_INFER_DEPENDS(kNameBatchToSpaceNDV2, {1, 2});
+
+// AG means auto generated
+class MIND_API AGBatchToSpaceNDV2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BatchToSpaceNDV2InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return BatchToSpaceNDV2InferType(input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return BatchToSpaceNDV2Infer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchToSpaceNDV2, prim::kPrimBatchToSpaceNDV2, AGBatchToSpaceNDV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore

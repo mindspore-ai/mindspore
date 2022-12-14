@@ -130,7 +130,26 @@ AbstractBasePtr LinSpaceInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto infer_shape = LinSpaceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_INFER_DEPENDS(kNameLinSpace, {2});
-REGISTER_PRIMITIVE_EVAL_IMPL(LinSpace, prim::kPrimLinSpace, LinSpaceInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGLinSpaceInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LinSpaceInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LinSpaceInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LinSpaceInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LinSpace, prim::kPrimLinSpace, AGLinSpaceInfer, false);
 }  // namespace ops
 }  // namespace mindspore

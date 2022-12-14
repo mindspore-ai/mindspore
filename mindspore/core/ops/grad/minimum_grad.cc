@@ -90,6 +90,24 @@ bool MinimumGrad::get_grad_y() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MinimumGrad, prim::kPrimMinimumGrad, MinimumGradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMinimumGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MinimumGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MinimumGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MinimumGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MinimumGrad, prim::kPrimMinimumGrad, AGMinimumGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

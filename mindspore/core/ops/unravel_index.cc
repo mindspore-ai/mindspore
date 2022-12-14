@@ -29,7 +29,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr UravelIndexInferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   if (!input_args[0]->isa<abstract::AbstractTensor>() || !input_args[1]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "Input must be a Tensor.";
@@ -77,8 +78,26 @@ MIND_API_OPERATOR_IMPL(UnravelIndex, BaseOperator);
 AbstractBasePtr UnravelIndexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(UravelIndexInferType(primitive, input_args),
-                                                    InferShape(primitive, input_args));
+                                                    UravelIndexInferShape(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(UnravelIndex, prim::kPrimUnravelIndex, UnravelIndexInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGUnravelIndexInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UravelIndexInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UravelIndexInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnravelIndexInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UnravelIndex, prim::kPrimUnravelIndex, AGUnravelIndexInfer, false);
 }  // namespace ops
 }  // namespace mindspore

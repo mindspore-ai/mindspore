@@ -94,6 +94,24 @@ AbstractBasePtr SparseReshapeInfer(const abstract::AnalysisEnginePtr &, const Pr
 }
 
 MIND_API_OPERATOR_IMPL(SparseReshape, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseReshape, prim::kPrimSparseReshape, SparseReshapeInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseReshapeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseReshapeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseReshapeInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseReshapeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseReshape, prim::kPrimSparseReshape, AGSparseReshapeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -78,6 +78,23 @@ AbstractBasePtr UpperBoundInfer(const abstract::AnalysisEnginePtr &, const Primi
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(UpperBound, prim::kPrimUpperBound, UpperBoundInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGUpperBoundInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpperBoundInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpperBoundInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UpperBoundInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UpperBound, prim::kPrimUpperBound, AGUpperBoundInfer, false);
 }  // namespace ops
 }  // namespace mindspore

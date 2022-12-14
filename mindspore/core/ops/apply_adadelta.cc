@@ -113,6 +113,24 @@ AbstractBasePtr ApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infer_shape = ApplyAdadeltaInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ApplyAdadelta, prim::kPrimApplyAdadelta, ApplyAdadeltaInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGApplyAdadeltaInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAdadeltaInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAdadeltaInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ApplyAdadeltaInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyAdadelta, prim::kPrimApplyAdadelta, AGApplyAdadeltaInfer, false);
 }  // namespace ops
 }  // namespace mindspore

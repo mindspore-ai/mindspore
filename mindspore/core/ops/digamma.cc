@@ -62,6 +62,24 @@ AbstractBasePtr DigammaInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 }
 
 MIND_API_OPERATOR_IMPL(Digamma, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Digamma, prim::kPrimDigamma, DigammaInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGDigammaInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DigammaInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DigammaInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DigammaInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Digamma, prim::kPrimDigamma, AGDigammaInfer, false);
 }  // namespace ops
 }  // namespace mindspore

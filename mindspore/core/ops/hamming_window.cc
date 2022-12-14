@@ -134,6 +134,24 @@ AbstractBasePtr HammingWindowInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infer_shape = HammingWindowInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(HammingWindow, prim::kPrimHammingWindow, HammingWindowInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGHammingWindowInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HammingWindowInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return HammingWindowInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return HammingWindowInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(HammingWindow, prim::kPrimHammingWindow, AGHammingWindowInfer, false);
 }  // namespace ops
 }  // namespace mindspore

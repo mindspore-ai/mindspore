@@ -69,6 +69,23 @@ AbstractBasePtr HSVToRGBInfer(const abstract::AnalysisEnginePtr &, const Primiti
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(HSVToRGB, prim::kPrimHSVToRGB, HSVToRGBInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGHSVToRGBInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSVToRGBInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSVToRGBInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return HSVToRGBInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(HSVToRGB, prim::kPrimHSVToRGB, AGHSVToRGBInfer, false);
 }  // namespace ops
 }  // namespace mindspore

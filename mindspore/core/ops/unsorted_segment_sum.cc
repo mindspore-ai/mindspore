@@ -121,7 +121,25 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_INFER_DEPENDS(kNameUnsortedSegmentSum, {2});
-REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentSum, prim::kPrimUnsortedSegmentSum, UnsortedSegmentSumInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGUnsortedSegmentSumInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnsortedSegmentSumInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnsortedSegmentSumInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnsortedSegmentSumInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UnsortedSegmentSum, prim::kPrimUnsortedSegmentSum, AGUnsortedSegmentSumInfer, false);
 }  // namespace ops
 }  // namespace mindspore

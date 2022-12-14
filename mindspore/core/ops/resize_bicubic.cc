@@ -132,6 +132,23 @@ AbstractBasePtr ResizeBicubicInfer(const abstract::AnalysisEnginePtr &, const Pr
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ResizeBicubic, prim::kPrimResizeBicubic, ResizeBicubicInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGResizeBicubicInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBicubicInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBicubicInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ResizeBicubicInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ResizeBicubic, prim::kPrimResizeBicubic, AGResizeBicubicInfer, false);
 }  // namespace ops
 }  // namespace mindspore

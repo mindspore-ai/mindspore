@@ -72,6 +72,24 @@ AbstractBasePtr PolarInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
 }
 
 MIND_API_OPERATOR_IMPL(Polar, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Polar, prim::kPrimPolar, PolarInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGPolarInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return PolarInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return PolarInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return PolarInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Polar, prim::kPrimPolar, AGPolarInfer, false);
 }  // namespace ops
 }  // namespace mindspore

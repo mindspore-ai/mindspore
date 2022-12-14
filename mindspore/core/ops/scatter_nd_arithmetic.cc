@@ -186,12 +186,30 @@ AbstractBasePtr ScatterNdArithmeticInfer(const abstract::AnalysisEnginePtr &, co
   auto infer_shape = ScatterNdArithmeticInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterNdUpdate, prim::kPrimScatterNdUpdate, ScatterNdArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterNdAdd, prim::kPrimScatterNdAdd, ScatterNdArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterNdSub, prim::kPrimScatterNdSub, ScatterNdArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterNdMul, prim::kPrimScatterNdMul, ScatterNdArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterNdDiv, prim::kPrimScatterNdDiv, ScatterNdArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterNdMax, prim::kPrimScatterNdMax, ScatterNdArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterNdMin, prim::kPrimScatterNdMin, ScatterNdArithmeticInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGScatterNdArithmeticInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterNdArithmeticInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterNdArithmeticInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterNdArithmeticInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterNdUpdate, prim::kPrimScatterNdUpdate, AGScatterNdArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterNdAdd, prim::kPrimScatterNdAdd, AGScatterNdArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterNdSub, prim::kPrimScatterNdSub, AGScatterNdArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterNdMul, prim::kPrimScatterNdMul, AGScatterNdArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterNdDiv, prim::kPrimScatterNdDiv, AGScatterNdArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterNdMax, prim::kPrimScatterNdMax, AGScatterNdArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterNdMin, prim::kPrimScatterNdMin, AGScatterNdArithmeticInfer, false);
 }  // namespace ops
 }  // namespace mindspore

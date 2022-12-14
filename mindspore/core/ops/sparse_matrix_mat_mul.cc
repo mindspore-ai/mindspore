@@ -201,7 +201,26 @@ AbstractBasePtr SparseMatrixMatMulInfer(const abstract::AnalysisEnginePtr &, con
 }
 
 MIND_API_OPERATOR_IMPL(SparseMatrixMatMul, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixMatMul, prim::kPrimSparseMatrixMatMul, SparseMatrixMatMulInfer, nullptr, true);
-REGISTER_INFER_DEPENDS(kNameSparseMatrixMatMul, {0});
+
+// AG means auto generated
+class MIND_API AGSparseMatrixMatMulInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixMatMulInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixMatMulInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixMatMulInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseMatrixMatMul, prim::kPrimSparseMatrixMatMul, AGSparseMatrixMatMulInfer, false);
 }  // namespace ops
 }  // namespace mindspore

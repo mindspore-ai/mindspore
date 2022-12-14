@@ -221,6 +221,24 @@ AbstractBasePtr MatrixDiagV3Infer(const abstract::AnalysisEnginePtr &, const Pri
 }
 
 MIND_API_OPERATOR_IMPL(MatrixDiagV3, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(MatrixDiagV3, prim::kPrimMatrixDiagV3, MatrixDiagV3Infer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMatrixDiagV3Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MatrixDiagV3InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MatrixDiagV3InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MatrixDiagV3Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MatrixDiagV3, prim::kPrimMatrixDiagV3, AGMatrixDiagV3Infer, false);
 }  // namespace ops
 }  // namespace mindspore

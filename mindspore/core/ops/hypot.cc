@@ -49,6 +49,24 @@ AbstractBasePtr HypotInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   return abstract::MakeAbstract(shape, type);
 }
 MIND_API_OPERATOR_IMPL(Hypot, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Hypot, prim::kPrimHypot, HypotInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGHypotInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HypotInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return HypotInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return HypotInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Hypot, prim::kPrimHypot, AGHypotInfer, false);
 }  // namespace ops
 }  // namespace mindspore

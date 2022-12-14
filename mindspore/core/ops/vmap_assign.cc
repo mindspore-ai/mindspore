@@ -120,7 +120,24 @@ AbstractBasePtr VmapAssignInfer(const abstract::AnalysisEnginePtr &, const Primi
   return abstract::MakeAbstract(infershape, infertype);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(VmapStackAssign, prim::kPrimVmapStackAssign, VmapAssignInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(VmapUnstackAssign, prim::kPrimVmapUnstackAssign, VmapAssignInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGVmapAssignInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return VmapAssignInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return VmapAssignInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return VmapAssignInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(VmapStackAssign, prim::kPrimVmapStackAssign, AGVmapAssignInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(VmapUnstackAssign, prim::kPrimVmapUnstackAssign, AGVmapAssignInfer, false);
 }  // namespace ops
 }  // namespace mindspore

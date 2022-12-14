@@ -216,6 +216,24 @@ AbstractBasePtr DynamicGRUV2GradInfer(const abstract::AnalysisEnginePtr &, const
 }
 
 MIND_API_OPERATOR_IMPL(DynamicGRUV2Grad, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(DynamicGRUV2Grad, prim::kPrimDynamicGRUV2Grad, DynamicGRUV2GradInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGDynamicGRUV2GradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicGRUV2GradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicGRUV2GradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicGRUV2GradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicGRUV2Grad, prim::kPrimDynamicGRUV2Grad, AGDynamicGRUV2GradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

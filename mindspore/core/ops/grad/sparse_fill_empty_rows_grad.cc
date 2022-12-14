@@ -85,7 +85,25 @@ AbstractBasePtr SparseFillEmptyRowsGradInfer(const abstract::AnalysisEnginePtr &
   auto infer_shape = SparseFillEmptyRowsGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseFillEmptyRowsGrad, prim::kPrimSparseFillEmptyRowsGrad, SparseFillEmptyRowsGradInfer,
-                             nullptr, true);
+
+// AG means auto generated
+class MIND_API AGSparseFillEmptyRowsGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseFillEmptyRowsGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseFillEmptyRowsGradInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseFillEmptyRowsGradInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseFillEmptyRowsGrad, prim::kPrimSparseFillEmptyRowsGrad,
+                                 AGSparseFillEmptyRowsGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

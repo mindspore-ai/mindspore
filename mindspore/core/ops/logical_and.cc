@@ -56,6 +56,23 @@ AbstractBasePtr LogicalAndInfer(const abstract::AnalysisEnginePtr &, const Primi
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(LogicalAnd, prim::kPrimLogicalAnd, LogicalAndInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGLogicalAndInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogicalAndInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogicalAndInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return LogicalAndInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LogicalAnd, prim::kPrimLogicalAnd, AGLogicalAndInfer, false);
 }  // namespace ops
 }  // namespace mindspore

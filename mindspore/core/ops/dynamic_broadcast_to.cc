@@ -72,6 +72,24 @@ AbstractBasePtr DynamicBroadcastToInfer(const abstract::AnalysisEnginePtr &, con
   return abstract::MakeAbstract(DynamicBroadcastToInferShape(primitive, input_args),
                                 DynamicBroadcastToInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(DynamicBroadcastTo, prim::kPrimDynamicBroadcastTo, DynamicBroadcastToInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGDynamicBroadcastToInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicBroadcastToInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicBroadcastToInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return DynamicBroadcastToInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicBroadcastTo, prim::kPrimDynamicBroadcastTo, AGDynamicBroadcastToInfer, false);
 }  // namespace ops
 }  // namespace mindspore

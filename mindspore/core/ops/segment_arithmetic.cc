@@ -135,10 +135,27 @@ MIND_API_OPERATOR_IMPL(SegmentMean, BaseOperator);
 MIND_API_OPERATOR_IMPL(SegmentProd, BaseOperator);
 MIND_API_OPERATOR_IMPL(SegmentSum, BaseOperator);
 
-REGISTER_PRIMITIVE_EVAL_IMPL(SegmentMax, prim::kPrimSegmentMax, SegmentArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(SegmentMin, prim::kPrimSegmentMin, SegmentArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(SegmentMean, prim::kPrimSegmentMean, SegmentArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(SegmentProd, prim::kPrimSegmentProd, SegmentArithmeticInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(SegmentSum, prim::kPrimSegmentSum, SegmentArithmeticInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGSegmentArithmeticInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SegmentArithmeticInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SegmentArithmeticInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SegmentArithmeticInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SegmentMax, prim::kPrimSegmentMax, AGSegmentArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SegmentMin, prim::kPrimSegmentMin, AGSegmentArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SegmentMean, prim::kPrimSegmentMean, AGSegmentArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SegmentProd, prim::kPrimSegmentProd, AGSegmentArithmeticInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SegmentSum, prim::kPrimSegmentSum, AGSegmentArithmeticInfer, false);
 }  // namespace ops
 }  // namespace mindspore

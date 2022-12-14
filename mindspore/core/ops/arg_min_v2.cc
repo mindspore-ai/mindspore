@@ -72,6 +72,23 @@ abstract::AbstractBasePtr ArgminV2Infer(const abstract::AnalysisEnginePtr &, con
   return abstract::MakeAbstract(ArgminV2InferShape(primitive, input_args), ArgminV2InferType(primitive, input_args));
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(ArgminV2, prim::kPrimArgminV2, ArgminV2Infer, nullptr, true);
+// AG means auto generated
+class MIND_API AGArgminV2Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgminV2InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgminV2InferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ArgminV2Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ArgminV2, prim::kPrimArgminV2, AGArgminV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore

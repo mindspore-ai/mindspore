@@ -85,6 +85,23 @@ AbstractBasePtr FillDiagonalInfer(const abstract::AnalysisEnginePtr &, const Pri
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(FillDiagonal, prim::kPrimFillDiagonal, FillDiagonalInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGFillDiagonalInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return FillDiagonalInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return FillDiagonalInferType(primitive, input_args);
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return FillDiagonalInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FillDiagonal, prim::kPrimFillDiagonal, AGFillDiagonalInfer, false);
 }  // namespace ops
 }  // namespace mindspore
