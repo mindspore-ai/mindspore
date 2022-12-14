@@ -24,6 +24,11 @@
 extern "C" {
 #endif
 void CalculateMinMaxFp16(const float16_t *data, int count, float16_t *real_min, float16_t *real_max);
+
+#ifdef ENABLE_ARM64
+void CalculateMinMaxCount8Fp16(const float16_t *data, int count_8, float16_t *real_min, float16_t *real_max);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
