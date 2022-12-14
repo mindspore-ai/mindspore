@@ -855,7 +855,7 @@ class MultinomialWithReplacement(Primitive):
         self.init_prim_io_names(inputs=['x', 'seed', 'offset'], outputs=['y'])
 
 
-class UniformCandidateSampler(PrimitiveWithInfer):
+class UniformCandidateSampler(Primitive):
     r"""
     Uniform candidate sampler.
 
@@ -901,17 +901,6 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         Validator.check("value of seed", seed, '', 0, Rel.GE, self.name)
         self.num_sampled = num_sampled
 
-    def infer_dtype(self, true_classes_type):
-        Validator.check_subclass(
-            "true_classes_type", true_classes_type, mstype.tensor, self.name)
-        Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type,
-                                           (mstype.int32, mstype.int64), self.name)
-        return true_classes_type, mstype.float32, mstype.float32
-
-    def infer_shape(self, true_classes_shape):
-        Validator.check("true_class.shape[1]", true_classes_shape[1],
-                        "num_true", self.num_true, Rel.EQ, self.name)
-        return [self.num_sampled], true_classes_shape, [self.num_sampled]
 
 
 class LogUniformCandidateSampler(Primitive):
