@@ -22,6 +22,7 @@
 #include "proto/topology.pb.h"
 #include "distributed/constants.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_dense_embedding_operation.h"
+#include "runtime/graph_scheduler/actor/embedding_cache/device_sparse_embedding_operation.h"
 
 namespace mindspore {
 namespace runtime {
@@ -158,9 +159,15 @@ void EmbeddingCachePrefetchActor::Initialize() {
   LinkRpcOperators();
 
   // Create the device embedding operation.
-  emb_ops_ = new DeviceDenseEmbeddingOperation(this, device_context_, embedding_device_cache_, embedding_host_cache_,
-                                               local_embedding_slice_bounds_, local_device_cache_bounds_,
-                                               &statistics_info_, stream_id_);
+  if (!distributed::EmbeddingCacheTableManager::GetInstance().is_sparse_format()) {
+    emb_ops_ = new DeviceDenseEmbeddingOperation(this, device_context_, embedding_device_cache_, embedding_host_cache_,
+                                                 local_embedding_slice_bounds_, local_device_cache_bounds_,
+                                                 &statistics_info_, stream_id_);
+  } else {
+    emb_ops_ = new DeviceSparseEmbeddingOperation(this, device_context_, embedding_device_cache_, embedding_host_cache_,
+                                                  local_embedding_slice_bounds_, local_device_cache_bounds_,
+                                                  &statistics_info_, stream_id_);
+  }
   MS_EXCEPTION_IF_NULL(emb_ops_);
   if (!emb_ops_->Initialize()) {
     MS_LOG(ERROR) << "Failed to initialize the device embedding operation.";

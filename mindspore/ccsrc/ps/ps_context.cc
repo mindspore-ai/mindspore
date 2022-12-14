@@ -195,6 +195,12 @@ bool PSContext::cache_enable() const {
   return false;
 }
 
+void PSContext::set_sparse_format(bool is_sparse) {
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  distributed::EmbeddingCacheTableManager::GetInstance().set_sparse_format(is_sparse);
+#endif
+}
+
 void PSContext::set_rank_id(uint32_t) const { return; }
 
 void PSContext::set_server_mode(const std::string &server_mode) {
