@@ -64,7 +64,7 @@ class FunctionNode {
  public:
   FunctionNode(const FuncGraphPtr &tape, const AnfNodePtr &dout)
       : tape_(tape), accumulate_dout_(dout), fake_dout_(dout) {}
-  void AddEdge(const AnfNodePtr &next_node, const AnfNodePtr &din);
+  void AddNextEdge(const AnfNodePtr &next_node, const AnfNodePtr &din);
   void UpdateAccumulativeDout(const AnfNodePtr &new_dout);
   const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &next_edges() const { return next_edges_; }
   const FuncGraphPtr tape() { return tape_; }
@@ -91,6 +91,7 @@ using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 // Variable represent a parameter or output of a middle cnode
 class VariableAdjoint {
  public:
+  VariableAdjoint() = default;
   VariableAdjoint(const FunctionNodePtr &fn, const ValuePtr &out_value) : fn_(fn), out_value_(out_value) {}
 
   ValuePtr out_value() const { return out_value_; }
@@ -101,7 +102,7 @@ class VariableAdjoint {
   void set_is_fake_bprop(bool is_fake_bprop) { is_fake_bprop_ = is_fake_bprop; }
   bool is_need_propagate() const { return is_need_propagate_; }
   void set_is_need_propagate(bool is_need_grad) { is_need_propagate_ = is_need_grad; }
-  bool is_need_grad() { return is_need_grad_; }
+  bool is_need_grad() const { return is_need_grad_; }
   void set_is_need_grad(bool is_need_grad) { is_need_grad_ = is_need_grad; }
   AnfNodePtr k_node() const { return k_node_; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
@@ -109,8 +110,8 @@ class VariableAdjoint {
 
  private:
   // Abstract bprop function
-  FunctionNodePtr fn_;
-  ValuePtr out_value_;
+  FunctionNodePtr fn_{nullptr};
+  ValuePtr out_value_{nullptr};
   // If node has not bprop, we record its prim name
   std::string fake_prim_name_;
   // Record this node is a fake bprop
@@ -165,7 +166,7 @@ class AutoGradCellImpl {
 
   // construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
-                                    const VariableAdjointPtr &variable_adjoint);
+                                    const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
   // Back propagate for one node;
   void UpdateNextEdges(const VariableAdjointPtr &variable, const CNodePtr &cnode, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &op_args);
@@ -176,8 +177,8 @@ class AutoGradCellImpl {
   void AddParameterNode(const AnfNodePtr &parameter, const ValuePtr &tensor);
   AnfNodePtr GetRealDin(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &sub_value,
                         const AnfNodePtr &din);
-  void BuildBPropCutCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
-  void BuildCustomBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
+  void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
+  void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
   void ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg);
@@ -201,10 +202,12 @@ class AutoGradCellImpl {
   void ElimateTupleGetItem();
 
   // Fbprop
-  void BuildKNode(const GradParamPtr &grad_param, const VariableAdjointPtr &variable_adjoint);
+  AnfNodePtr BuildKNode(const GradParamPtr &grad_param);
   void BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const ValuePtrList &op_args,
                                      std::vector<AnfNodePtr> *const node_list);
   AnfNodePtr BuildKNodeForCNodeInput(const AnfNodePtr &input_node);
+  AnfNodePtr BuildKNodeForMakeTuple(const AnfNodePtr &input_node);
+  AnfNodePtr BuildKNodeForTupleGetItem(const AnfNodePtr &input_node);
 };
 using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 

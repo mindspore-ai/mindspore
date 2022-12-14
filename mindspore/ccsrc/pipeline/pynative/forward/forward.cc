@@ -183,10 +183,8 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
     return;
   }
   // 4. Do op grad and record op info
-  // If cell have custom bprop, no need do op grad. Otherwise, need do.
-  // If ms function is complime, real run op must be not record
-  bool is_custom_bprop = op_run_info->custom_bprop_cell_count <= 0;
-  if (!is_ms_function_compiling_ && is_custom_bprop) {
+  // If ms function is compile, op info will not be find in second training step
+  if (!is_ms_function_compiling_ && grad()->custom_bprop_cell_count() <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
 }
@@ -198,9 +196,8 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   // Used for async run
   op_run_info->grad_flag = grad()->grad_flag();
-  op_run_info->custom_bprop_cell_count = grad()->custom_bprop_cell_count();
   op_run_info->base_op_run_info.use_dynamic_shape_process =
-    (device_target() == kAscendDevice ? false : grad()->use_dynamic_shape_process());
+    !(device_target() == kAscendDevice) && grad()->use_dynamic_shape_process();
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
