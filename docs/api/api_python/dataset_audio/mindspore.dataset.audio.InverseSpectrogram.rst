@@ -1,9 +1,7 @@
 mindspore.dataset.audio.InverseSpectrogram
 ==========================================
 
-.. py:class:: mindspore.dataset.audio.InverseSpectrogram(length=None, n_fft=400, win_length=None, hop_length=None, pad=0,
-                                                         window=WindowType.HANN, normalized=False, center=True,
-                                                         pad_mode=BorderType.REFLECT, onesided=True)
+.. py:class:: mindspore.dataset.audio.InverseSpectrogram(length=None, n_fft=400, win_length=None, hop_length=None, pad=0, window=WindowType.HANN, normalized=False, center=True, pad_mode=BorderType.REFLECT, onesided=True)
 
     计算输入频谱的反向频谱，以恢复原始音频信号。
 
@@ -31,8 +29,8 @@ mindspore.dataset.audio.InverseSpectrogram
         - **ValueError** - 如果 `hop_length` 不为正数。
         - **TypeError** - 如果 `pad` 的类型不为int。
         - **ValueError** - 如果 `pad` 为负数。
-        - **TypeError** - 如果 `window` 的类型不为 :class:`mindspore.dataset.audio.utils.WindowType` 。
+        - **TypeError** - 如果 `window` 的类型不为 :class:`mindspore.dataset.audio.WindowType` 。
         - **TypeError** - 如果 `normalized` 的类型不为bool。
         - **TypeError** - 如果 `center` 的类型不为bool。
-        - **TypeError** - 如果 `pad_mode` 的类型不为 :class:`mindspore.dataset.audio.utils.BorderType` 。
+        - **TypeError** - 如果 `pad_mode` 的类型不为 :class:`mindspore.dataset.audio.BorderType` 。
         - **TypeError** - 如果 `onesided` 的类型不为bool。

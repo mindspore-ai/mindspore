@@ -1,9 +1,7 @@
 mindspore.dataset.audio.MelSpectrogram
 ======================================
 
-.. py:class:: mindspore.dataset.audio.MelSpectrogram(sample_rate=16000, n_fft=400, win_length=None, hop_length=None, f_min=0.0, f_max=None, pad=0,
-                                                     n_mels=128, window=WindowType.HANN, power=2.0, normalized=False, center=True,
-                                                     pad_mode=BorderType.REFLECT, onesided=True, norm=NormType.NONE, mel_scale=MelType.HTK)
+.. py:class:: mindspore.dataset.audio.MelSpectrogram(sample_rate=16000, n_fft=400, win_length=None, hop_length=None, f_min=0.0, f_max=None, pad=0, n_mels=128, window=WindowType.HANN, power=2.0, normalized=False, center=True, pad_mode=BorderType.REFLECT, onesided=True, norm=NormType.NONE, mel_scale=MelType.HTK)
 
     计算原始音频信号的梅尔频谱。
 
@@ -31,13 +29,13 @@ mindspore.dataset.audio.MelSpectrogram
         - **TypeError** - 如果 `n_mels` 的类型不为int。
         - **TypeError** - 如果 `f_min` 的类型不为float。
         - **TypeError** - 如果 `f_max` 的类型不为float。
-        - **TypeError** - 如果 `window` 的类型不为 :class:`mindspore.dataset.audio.utils.WindowType` 。
-        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.utils.NormType` 。
-        - **TypeError** - 如果 `mel_scale` 的类型不为 :class:`mindspore.dataset.audio.utils.MelType` 。
+        - **TypeError** - 如果 `window` 的类型不为 :class:`mindspore.dataset.audio.WindowType` 。
+        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.NormType` 。
+        - **TypeError** - 如果 `mel_scale` 的类型不为 :class:`mindspore.dataset.audio.MelType` 。
         - **TypeError** - 如果 `power` 的类型不为float。
         - **TypeError** - 如果 `normalized` 的类型不为bool。
         - **TypeError** - 如果 `center` 的类型不为bool。
-        - **TypeError** - 如果 `pad_mode` 的类型不为 :class:`mindspore.dataset.audio.utils.BorderType` 。
+        - **TypeError** - 如果 `pad_mode` 的类型不为 :class:`mindspore.dataset.audio.BorderType` 。
         - **TypeError** - 如果 `onesided` 的类型不为bool。
         - **TypeError** - 如果 `pad` 的类型不为int。
         - **TypeError** - 如果 `win_length` 的类型不为int。

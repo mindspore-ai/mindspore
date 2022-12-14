@@ -17,7 +17,7 @@ mindspore.dataset.audio.MFCC
     异常：
         - **TypeError** - 如果 `sample_rate` 的类型不为int。
         - **TypeError** - 如果 `log_mels` 的类型不为bool。
-        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.utils.NormMode` 。
+        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.NormMode` 。
         - **TypeError** - 如果 `n_mfcc` 的类型不为int。
         - **TypeError** - 如果 `melkwargs` 的类型不为dict。
         - **ValueError** - 如果 `sample_rate` 为负数。
