@@ -3059,12 +3059,22 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         os.kill(os.getpid(), signal.SIGTERM)
 
     def launch(self, op_id=-1):
+        """
+        Launch Python multiprocessing pool.
+
+        Args:
+            pop_id: ID for operation to have Python multiprocessing pool launched
+
+        Returns:
+            Python multiprocssing pool is launched.
+        """
         self.python_threads_to_workers = {}
         self.op_id = op_id
         logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
         if self.is_mp_enabled():
-            logger.warning('Launching a new Python multiprocessing pool while a pool already exists! \
-                The existing pool will be terminated first.')
+            message = "Launching a new Python multiprocessing pool while a pool already exists!" + \
+                " The existing pool will be terminated first."
+            logger.warning(message)
             self.terminate()
             self.reset()
         self.create_pool()
