@@ -57,6 +57,11 @@ void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<ke
 }
 }  // namespace
 
+bool IsInBlackList(const std::string &kernel_name) {
+  return kernel_name == prim::kPrimTupleGetItem->name() || kernel_name == prim::kPrimMakeTuple->name() ||
+         kernel_name == prim::kPrimDepend->name() || kernel_name == prim::kPrimStateSetItem->name();
+}
+
 void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
@@ -65,8 +70,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel);
-    if (kernel_name == prim::kPrimTupleGetItem->name() || kernel_name == prim::kPrimMakeTuple->name() ||
-        kernel_name == prim::kPrimDepend->name() || kernel_name == prim::kPrimStateSetItem->name()) {
+    if (IsInBlackList(kernel_name)) {
       continue;
     }
 
@@ -125,9 +129,15 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         MS_EXCEPTION_IF_NULL(ms_context);
         auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
         gpu_kernel_mod->SetDevicedId(device_id);
-
-        kernel::InitAndResizeWithoutParameterInput(kernel, gpu_kernel_mod, args, inputs_tensor_map);
-
+        if (!gpu_kernel_mod->Init(args.op, args.inputs, args.outputs)) {
+          MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
+        }
+        if (!kernel::IfNeedSkipResize(kernel)) {
+          if (gpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) ==
+              kernel::KRET_RESIZE_FAILED) {
+            MS_LOG(EXCEPTION) << "gpu kernel op[" << kernel->fullname_with_scope() << "] Resize failed.";
+          }
+        }
         session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
       }
     }
