@@ -1343,10 +1343,10 @@ class InverseSpectrogram(AudioTensorOperation):
         ValueError: If `hop_length` is not positive.
         TypeError: If `pad` is not of type int.
         ValueError: If `pad` is a negative number.
-        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.utils.WindowType` .
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.WindowType` .
         TypeError: If `normalized` is not of type bool.
         TypeError: If `center` is not of type bool.
-        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.utils.BorderType` .
+        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.BorderType` .
         TypeError: If `onesided` is not of type bool.
 
     Supported Platforms:
@@ -1784,13 +1784,13 @@ class MelSpectrogram(AudioTensorOperation):
         TypeError: If `n_mels` is not of type int.
         TypeError: If `f_min` is not of type float.
         TypeError: If `f_max` is not of type float.
-        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.utils.WindowType` .
-        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.utils.NormType` .
-        TypeError: If `mel_scale` is not of type :class:`mindspore.dataset.audio.utils.MelType` .
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.WindowType` .
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormType` .
+        TypeError: If `mel_scale` is not of type :class:`mindspore.dataset.audio.MelType` .
         TypeError: If `power` is not of type float.
         TypeError: If `normalized` is not of type bool.
         TypeError: If `center` is not of type bool.
-        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.utils.BorderType` .
+        TypeError: If `pad_mode` is not of type :class:`mindspore.dataset.audio.BorderType` .
         TypeError: If `onesided` is not of type bool.
         TypeError: If `pad` is not of type int.
         TypeError: If `win_length` is not of type int.
@@ -1870,7 +1870,7 @@ class MFCC(AudioTensorOperation):
     Raises:
         TypeError: If `sample_rate` is not of type int.
         TypeError: If `log_mels` is not of type bool.
-        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.utils.NormMode` .
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormMode` .
         TypeError: If `n_mfcc` is not of type int.
         TypeError: If `melkwargs` is not of type dict.
         ValueError: If `sample_rate` is a negative number.

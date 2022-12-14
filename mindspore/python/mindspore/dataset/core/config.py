@@ -379,10 +379,10 @@ def get_auto_num_workers():
 
 def set_callback_timeout(timeout):
     """
-    Set the default timeout (in seconds) for :class:`mindspore.dataset.DSWaitedCallback` .
+    Set the default timeout (in seconds) for :class:`mindspore.dataset.WaitedDSCallback` .
 
     Args:
-        timeout (int): Timeout (in seconds) to be used to end the wait in :class:`mindspore.dataset.DSWaitedCallback`
+        timeout (int): Timeout (in seconds) to be used to end the wait in :class:`mindspore.dataset.WaitedDSCallback`
             in case of a deadlock. The `timeout` must be greater than 0.
 
     Raises:
@@ -406,7 +406,7 @@ def get_callback_timeout():
 
     Returns:
         int, Timeout (in seconds) to be used to end the wait in :class:`mindspore.dataset.WaitedDSCallback` in case of
-            a deadlock.
+        a deadlock.
 
     Examples:
         >>> # Get the global configuration of callback timeout.
