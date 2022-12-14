@@ -1321,6 +1321,8 @@ class Dataset:
             Dataset, dataset for transferring.
 
         Examples:
+            >>> import time
+            >>>
             >>> data = ds.TFRecordDataset('/path/to/TF_FILES', '/path/to/TF_SCHEMA_FILE', shuffle=ds.Shuffle.FILES)
             >>>
             >>> data = data.device_que()

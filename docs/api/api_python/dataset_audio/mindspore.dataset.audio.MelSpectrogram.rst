@@ -18,7 +18,7 @@ mindspore.dataset.audio.MelSpectrogram
         - **power** (float, 可选) - 幅值谱图的指数，应该大于0，例如，1表示能量，2表示功率，等等。默认值：2.0。
         - **normalized** (bool, 可选) - 是否在stft之后按幅度执行标准化。默认值：False。
         - **center** (bool, 可选) - 是否同时在波形两端进行填充。默认值：True。
-        - **pad_mode** (BorderType, 可选) - 控制在 `center` 为True时使用的填充方法，可为BorderType.REFLECT、BorderType.CONSTANT、 BorderType.EDGE、BorderType.SYMMETRIC。默认值：BorderType.REFLECT。
+        - **pad_mode** (BorderType, 可选) - 控制在 `center` 为True时使用的填充方法，可为BorderType.REFLECT、BorderType.CONSTANT、BorderType.EDGE、BorderType.SYMMETRIC。默认值：BorderType.REFLECT。
         - **onesided** (bool, 可选) - 控制是否只返回一半波形，以避免冗余。默认值：True。
         - **norm** (NormType, 可选) - 如果为‘slaney’，则将三角形梅尔权重除以梅尔带的宽度（区域归一化）。默认值：NormType.NONE。
         - **mel_scale** (MelType, 可选) - 要使用的Mel比例，可以是MelType.SLAN或MelType.HTK。默认值：MelType.HTK。
@@ -41,7 +41,7 @@ mindspore.dataset.audio.MelSpectrogram
         - **TypeError** - 如果 `win_length` 的类型不为int。
         - **TypeError** - 如果 `hop_length` 的类型不为int。
         - **ValueError** - 如果 `sample_rate` 为负数。
-        - **ValueError** - 如果 `n_ftt` 为负数。
+        - **ValueError** - 如果 `n_ftt` 不为正数。
         - **ValueError** - 如果 `n_mels` 为负数。
         - **ValueError** - 如果 `f_min` 大于 `f_max` 。
         - **ValueError** - 如果 `f_max` 为负数。
