@@ -196,9 +196,13 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static bool NodeValueIsFuncGraph(const AnfNodePtr &node);
 
   // Whether the kernel is not supported by other device and need be backed off on the CPU device.
+  static bool IsKernelSelectBackoffOp(const AnfNodePtr &node);
   static void SetKernelSelectBackoffInfo(const CNodePtr &node,
                                          const std::pair<std::string, ExceptionType> &failure_info);
-  static bool IsKernelSelectBackoffOp(const CNodePtr &node);
+  static std::pair<std::string, ExceptionType> GetKernelSelectBackoffInfo(const AnfNodePtr &node);
+
+  static std::string FetchDeviceTarget(const AnfNodePtr &node, const KernelGraph *graph);
+
   // get the num of output real_kernel(which can be build and run in device)
   static size_t GetOutputTensorNum(const AnfNodePtr &node);
   // get output abstract type of anf node

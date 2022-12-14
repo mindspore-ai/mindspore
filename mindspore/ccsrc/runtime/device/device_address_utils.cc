@@ -345,12 +345,25 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   MS_EXCEPTION_IF_NULL(cur_node_output_addr);
 
   if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
+    // Check the device target whether consistent.
     if (origin_node_output_addr->GetDeviceType() != cur_node_output_addr->GetDeviceType()) {
-      MS_LOG(EXCEPTION) << "Device type is not equal: ref origin kernel is " << origin_pair.first->fullname_with_scope()
-                        << ", index is " << origin_pair.second << ", device type is "
-                        << origin_node_output_addr->GetDeviceType() << "; cur kernel is "
-                        << cur_pair.first->fullname_with_scope() << ", index is " << cur_pair.second
-                        << ", device type is " << cur_node_output_addr->GetDeviceType();
+      std::string error_info =
+        "Device target is not consistent: ref origin kernel is " + origin_pair.first->fullname_with_scope() +
+        ", index is " + std::to_string(origin_pair.second) + ", device target is " +
+        device::GetDeviceNameByType(origin_node_output_addr->GetDeviceType()) + "; cur kernel is " +
+        cur_pair.first->fullname_with_scope() + ", index is " + std::to_string(cur_pair.second) +
+        ", device target is " + device::GetDeviceNameByType(cur_node_output_addr->GetDeviceType());
+
+      MS_LOG(ERROR) << error_info;
+      if (AnfAlgo::IsKernelSelectBackoffOp(origin_pair.first)) {
+        const auto &backoff_info = AnfAlgo::GetKernelSelectBackoffInfo(origin_pair.first);
+        MS_EXCEPTION(backoff_info.second) << backoff_info.second;
+      } else if (AnfAlgo::IsKernelSelectBackoffOp(cur_pair.first)) {
+        const auto &backoff_info = AnfAlgo::GetKernelSelectBackoffInfo(cur_pair.first);
+        MS_EXCEPTION(backoff_info.second) << backoff_info.second;
+      } else {
+        MS_LOG(EXCEPTION) << error_info;
+      }
     }
     MS_LOG(INFO) << "Update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
                  << ", index is " << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope()

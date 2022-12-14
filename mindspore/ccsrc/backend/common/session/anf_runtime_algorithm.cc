@@ -1419,13 +1419,58 @@ void AnfRuntimeAlgorithm::SetKernelSelectBackoffInfo(const CNodePtr &node,
                                node);
 }
 
-bool AnfRuntimeAlgorithm::IsKernelSelectBackoffOp(const CNodePtr &node) {
+std::pair<std::string, ExceptionType> AnfRuntimeAlgorithm::GetKernelSelectBackoffInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (common::AnfAlgo::HasNodeAttr(kAttrKernelBackoffWithFailureInfo, node) &&
-      common::AnfAlgo::HasNodeAttr(kAttrKernelBackoffWithFailureType, node)) {
+  if (!IsKernelSelectBackoffOp(node)) {
+    return {"", NoExceptionType};
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto failure_info = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrKernelBackoffWithFailureInfo);
+  auto failure_type =
+    static_cast<ExceptionType>(common::AnfAlgo::GetNodeAttr<int32_t>(node, kAttrKernelBackoffWithFailureType));
+  return {failure_info, failure_type};
+}
+
+bool AnfRuntimeAlgorithm::IsKernelSelectBackoffOp(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::HasNodeAttr(kAttrKernelBackoffWithFailureInfo, cnode) &&
+      common::AnfAlgo::HasNodeAttr(kAttrKernelBackoffWithFailureType, cnode)) {
     return true;
   }
   return false;
+}
+
+std::string AnfRuntimeAlgorithm::FetchDeviceTarget(const AnfNodePtr &node, const KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!node->isa<CNode>()) {
+    return device::GetDeviceNameByType(graph->device_target());
+  }
+
+  // Only the CPU support kernel backoff.
+  if (AnfAlgo::IsKernelSelectBackoffOp(node)) {
+    return kCPUDevice;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto ud_target = cnode->user_data<std::string>(kAttrPrimitiveTarget);
+  if (ud_target != nullptr) {
+    return *ud_target.get();
+  }
+  if (common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
+    return common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrPrimitiveTarget);
+  }
+
+  return device::GetDeviceNameByType(graph->device_target());
 }
 
 TypeId AnfRuntimeAlgorithm::GetAbstractObjectType(const AbstractBasePtr &abstract) {
