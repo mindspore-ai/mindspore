@@ -683,12 +683,12 @@ Parameter操作算子
     mindspore.ops.Assert
     mindspore.ops.HistogramSummary
     mindspore.ops.ImageSummary
+    mindspore.ops.ScalarSummary
+    mindspore.ops.TensorSummary
+    mindspore.ops.Print
     mindspore.ops.NPUAllocFloatStatus
     mindspore.ops.NPUClearFloatStatus
     mindspore.ops.NPUGetFloatStatus
-    mindspore.ops.Print
-    mindspore.ops.ScalarSummary
-    mindspore.ops.TensorSummary
 
 稀疏算子
 ----------------
