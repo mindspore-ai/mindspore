@@ -2213,6 +2213,21 @@ Status MFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
             int32_t dct_type, bool log_mels, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min,
             float f_max, int32_t pad, int32_t n_mels, WindowType window, float power, bool normalized, bool center,
             BorderType pad_mode, bool onesided, NormType norm, NormMode norm_M, MelType mel_scale);
+
+/// \brief Shift the pitch of a waveform by steps.
+/// \param[in] input Input tensor.
+/// \param[out] output Output tensor.
+/// \param[in] sample_rate Sample rate of audio signal.
+/// \param[in] n_steps The steps to shift audio signal.
+/// \param[in] bins_per_octave The number of steps per octave
+/// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins.
+/// \param[in] win_length Window size.
+/// \param[in] hop_length Length of hop between STFT windows.
+/// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
+/// \return Status return code.
+Status PitchShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                  int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length, int32_t hop_length,
+                  WindowType window);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

@@ -60,6 +60,7 @@
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phase_vocoder_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
+#include "minddata/dataset/audio/ir/kernels/pitch_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/resample_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
@@ -589,6 +590,19 @@ PYBIND_REGISTER(
         auto phase_vocoder = std::make_shared<audio::PhaseVocoderOperation>(rate, phase_advance);
         THROW_IF_ERROR(phase_vocoder->ValidateParams());
         return phase_vocoder;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  PitchShiftOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::PitchShiftOperation, TensorOperation, std::shared_ptr<audio::PitchShiftOperation>>(
+      *m, "PitchShiftOperation")
+      .def(py::init([](int32_t sample_rate, int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length,
+                       int32_t hop_length, WindowType window) {
+        auto pitch_shift = std::make_shared<audio::PitchShiftOperation>(sample_rate, n_steps, bins_per_octave, n_fft,
+                                                                        win_length, hop_length, window);
+        THROW_IF_ERROR(pitch_shift->ValidateParams());
+        return pitch_shift;
       }));
   }));
 

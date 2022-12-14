@@ -2459,5 +2459,134 @@ Status MFCC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
   return Status::OK();
 }
+
+template <typename T>
+Status PitchShiftImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                      int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length, int32_t hop_length,
+                      WindowType window) {
+  DataType data_type = input->type();
+  // pack batch
+  TensorShape shape = input->shape();
+  int input_len = shape[-1];
+
+  RETURN_IF_NOT_OK(input->Reshape(TensorShape({input->Size() / input_len, input_len})));
+  std::shared_ptr<Tensor> spec_f;
+
+  RETURN_IF_NOT_OK(SpectrogramImpl<T>(input, &spec_f, 0, window, n_fft, hop_length, win_length, 0, false, true,
+                                      BorderType::kReflect, true));
+
+  std::shared_ptr<Tensor> phase_advance;
+  int spec_f_length = spec_f->shape()[-3];
+  RETURN_IF_NOT_OK(Linspace<T>(&phase_advance, 0, PI * hop_length, spec_f_length));
+  TensorShape pshape = phase_advance->shape();
+  RETURN_IF_NOT_OK(phase_advance->Reshape(TensorShape(phase_advance->shape().AppendDim(1))));
+  std::shared_ptr<Tensor> spec_stretch;
+  float a = static_cast<float>(-n_steps) / bins_per_octave;
+  float rate = pow(2, a);
+
+  RETURN_IF_NOT_OK(TimeStretch<T>(spec_f, &spec_stretch, rate, phase_advance));
+
+  int ori_len = shape[-1];
+  int len_stretch = round(ori_len / rate);
+  std::shared_ptr<Tensor> final_results;
+  TensorShape tshape = spec_stretch->shape();
+  TensorShape new_shape({tshape[0], tshape[-3], spec_stretch->Size() / tshape[-3] / tshape[0]});
+  RETURN_IF_NOT_OK(spec_stretch->Reshape(new_shape));
+  auto size = tshape[0] * tshape[-3] * spec_stretch->Size() / tshape[-3] / tshape[0];
+  Tensor::TensorIterator<T> itr = spec_stretch->begin<T>();
+
+  for (int dim = 0; dim < new_shape[0]; dim++) {
+    // slice and squeeze the first dim
+    const int row = -3;
+    const int col = -2;
+    Eigen::MatrixXcd rebuilt(tshape[row], tshape[col]);
+
+    for (int j = 0; j < tshape[row]; j++) {
+      for (int i = 0; i < tshape[col]; i++) {
+        if (itr < (dim + 1) * size + itr) {
+          T real = *(itr++);
+          T img = *(itr++);
+          rebuilt(j, i) = std::complex<double>(real, img);
+        }
+      }
+    }
+
+    std::shared_ptr<Tensor> waveform;
+
+    RETURN_IF_NOT_OK(ISTFT<T>(rebuilt, &waveform, n_fft, hop_length, win_length, window, true, len_stretch));
+
+    if (spec_stretch->shape().Rank() == TWO) {
+      // do not expand dim
+      final_results = waveform;
+      continue;
+    }
+
+    if (final_results != nullptr) {
+      RETURN_IF_NOT_OK(final_results->InsertTensor({dim}, waveform));
+    } else {
+      RETURN_IF_NOT_OK(
+        Tensor::CreateEmpty(TensorShape({new_shape[0], waveform->shape()[0]}), waveform->type(), &final_results));
+      RETURN_IF_NOT_OK(final_results->InsertTensor({dim}, waveform));
+    }
+  }
+
+  std::shared_ptr<Tensor> waveform_shift;
+  const int32_t lowpass_filter_width = 6;
+  const float rolloff = 0.99;
+  const int new_rate = static_cast<int>(sample_rate / rate);
+  const float beta = 14.769656459379492;
+
+  RETURN_IF_NOT_OK(Resample<T>(final_results, &waveform_shift, new_rate, sample_rate,
+                               ResampleMethod::kSincInterpolation, lowpass_filter_width, rolloff, beta));
+
+  int shift_len = waveform_shift->shape()[-1];
+  std::shared_ptr<Tensor> waveform_end;
+  if (shift_len > ori_len) {
+    int32_t waveform_length = waveform_shift->shape()[-1];
+    int32_t num_waveform = waveform_shift->Size() / waveform_length;
+    auto ind = waveform_shift->begin<T>();
+    for (int i = 0; i < num_waveform; i++) {
+      std::shared_ptr<Tensor> wave_final;
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({ori_len}), input->type(), &wave_final));
+      if (i != 0) ind += shift_len - ori_len;
+      for (auto atr = wave_final->begin<T>(); atr != wave_final->end<T>(); atr++) {
+        *atr = *(ind++);
+      }
+      if (waveform_end != nullptr) {
+        RETURN_IF_NOT_OK(waveform_end->InsertTensor({i}, wave_final));
+      } else {
+        RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({num_waveform, ori_len}), wave_final->type(), &waveform_end));
+        RETURN_IF_NOT_OK(waveform_end->InsertTensor({i}, wave_final));
+      }
+    }
+  } else {
+    RETURN_IF_NOT_OK(Pad<T>(waveform_shift, &waveform_end, 0, ori_len - shift_len, BorderType::kConstant));
+  }
+
+  auto output_shape = shape.AsVector();
+  output_shape.pop_back();
+  output_shape.push_back(waveform_end->shape()[-1]);
+  RETURN_IF_NOT_OK(waveform_end->Reshape(TensorShape(output_shape)));
+  *output = waveform_end;
+  return Status::OK();
+}
+
+Status PitchShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                  int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length, int32_t hop_length,
+                  WindowType window) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
+  RETURN_IF_NOT_OK(ValidateLowRank("PitchShift", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("PitchShift", input));
+  if (input->type().value() == DataType::DE_FLOAT64) {
+    return PitchShiftImpl<double>(input, output, sample_rate, n_steps, bins_per_octave, n_fft, win_length, hop_length,
+                                  window);
+  } else {
+    std::shared_ptr<Tensor> waveform;
+    RETURN_IF_NOT_OK(TypeCast(input, &waveform, DataType(DataType::DE_FLOAT32)));
+    return PitchShiftImpl<float>(waveform, output, sample_rate, n_steps, bins_per_octave, n_fft, win_length, hop_length,
+                                 window);
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

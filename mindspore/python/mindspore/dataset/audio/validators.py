@@ -954,6 +954,33 @@ def check_phase_vocoder(method):
     return new_method
 
 
+def check_pitch_shift(method):
+    """Wrapper method to check the parameters of PitchShift."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, n_steps, bins_per_octave, n_fft, win_length, hop_length, window], _ = parse_user_args(
+            method, *args, **kwargs)
+
+        check_non_negative_int32(sample_rate, "sample_rate")
+        check_int32(n_steps, "n_steps")
+        check_int32_not_zero(bins_per_octave, "bins_per_octave")
+        check_pos_int32(n_fft, "n_fft")
+        type_check(window, (WindowType,), "window")
+
+        if win_length is not None:
+            check_pos_int32(win_length, "win_length")
+            if win_length > n_fft:
+                raise ValueError(
+                    "Input win_length should be no more than n_fft, but got win_length: {0} and n_fft: {1}.".format(
+                        win_length, n_fft))
+        if hop_length is not None:
+            check_pos_int32(hop_length, "hop_length")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_resample(method):
     """Wrapper method to check the parameters of Resample."""
 

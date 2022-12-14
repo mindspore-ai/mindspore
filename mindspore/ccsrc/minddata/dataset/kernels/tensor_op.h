@@ -200,6 +200,7 @@ constexpr char kMuLawEncodingOp[] = "MuLawEncodingOp";
 constexpr char kOverdriveOp[] = "OverdriveOp";
 constexpr char kPhaserOp[] = "PhaserOp";
 constexpr char kPhaseVocoderOp[] = "PhaseVocoderOp";
+constexpr char kPitchShiftOp[] = "PitchShiftOp";
 constexpr char kResampleOp[] = "ResampleOp";
 constexpr char kRiaaBiquadOp[] = "RiaaBiquadOp";
 constexpr char kSlidingWindowCmnOp[] = "SlidingWindowCmnOp";

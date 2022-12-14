@@ -31,8 +31,8 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_highpass_biquad, check_inverse_mel_scale, check_inverse_spectrogram, check_lfcc, check_lfilter, \
     check_lowpass_biquad, check_magphase, check_mask_along_axis, check_mask_along_axis_iid, check_masking, \
     check_mel_scale, check_mel_spectrogram, check_mfcc, check_mu_law_coding, check_overdrive, check_phase_vocoder, \
-    check_phaser, check_resample, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, \
-    check_spectrogram, check_time_stretch, check_treble_biquad, check_vad, check_vol
+    check_phaser, check_pitch_shift, check_resample, check_riaa_biquad, check_sliding_window_cmn, \
+    check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vad, check_vol
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation
 
@@ -1959,6 +1959,68 @@ class PhaseVocoder(AudioTensorOperation):
 
     def parse(self):
         return cde.PhaseVocoderOperation(self.rate, self.phase_advance)
+
+
+class PitchShift(AudioTensorOperation):
+    """
+    Shift the pitch of a waveform by `n_steps` steps.
+
+    Args:
+        sample_rate (int): Sampling rate of waveform (in Hz).
+        n_steps (int): The steps to shift waveform.
+        bins_per_octave (int, optional): The number of steps per octave. Default: 12.
+        n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins. Default: 512.
+        win_length (int, optional): Window size. Default: None, will be set to `n_fft` .
+        hop_length (int, optional): Length of hop between STFT windows. Default: None,
+            will be set to `win_length // 4` .
+        window (WindowType, optional): Window tensor that is applied/multiplied to each frame/window.
+            Default: WindowType.HANN.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type int.
+        TypeError: If `n_steps` is not of type int.
+        TypeError: If `bins_per_octave` is not of type int.
+        TypeError: If `n_fft` is not of type int.
+        TypeError: If `win_length` is not of type int.
+        TypeError: If `hop_length` is not of type int.
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.utils.WindowType` .
+        ValueError: If `sample_rate` is a negative number.
+        ValueError: If `bins_per_octave` is 0.
+        ValueError: If `n_fft` is a negative number.
+        ValueError: If `win_length` is not positive.
+        ValueError: If `hop_length` is not positive.
+
+    Supported Platforms:
+        "CPU"
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
+        >>> from mindspore.dataset.audio.utils import WindowType
+        >>>
+        >>> waveform = np.random.random([1, 1, 300])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.PitchShift(sample_rate=16000,n_steps=4)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_pitch_shift
+    def __init__(self, sample_rate, n_steps, bins_per_octave=12, n_fft=512, win_length=None,
+                 hop_length=None, window=WindowType.HANN):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.n_steps = n_steps
+        self.bins_per_octave = bins_per_octave
+        self.n_fft = n_fft
+        self.win_length = win_length if win_length is not None else n_fft
+        self.hop_length = hop_length if hop_length is not None else self.win_length // 4
+        self.window = window
+
+    def parse(self):
+        return cde.PitchShiftOperation(self.sample_rate, self.n_steps, self.bins_per_octave, self.n_fft,
+                                       self.win_length, self.hop_length, DE_C_WINDOW_TYPE.get(self.window))
 
 
 DE_C_RESAMPLE_METHOD = {ResampleMethod.SINC_INTERPOLATION: cde.ResampleMethod.DE_RESAMPLE_SINC_INTERPOLATION,
