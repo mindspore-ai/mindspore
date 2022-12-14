@@ -66,12 +66,12 @@ pip install numpy wheel
 
 # Download model and input data file
 BASEPATH=$(cd "$(dirname $0)" || exit; pwd)
-MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
+MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.mindir"
 INPUT_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin"
 
 mkdir -p model
-if [ ! -e ${BASEPATH}/model/mobilenetv2.ms ]; then
-    wget -c -O ${BASEPATH}/model/mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
+if [ ! -e ${BASEPATH}/model/mobilenetv2.mindir ]; then
+    wget -c -O ${BASEPATH}/model/mobilenetv2.mindir --no-check-certificate ${MODEL_DOWNLOAD_URL}
 fi
 if [ ! -e ${BASEPATH}/model/input.bin ]; then
     wget -c -O ${BASEPATH}/model/input.bin --no-check-certificate ${INPUT_DOWNLOAD_URL}

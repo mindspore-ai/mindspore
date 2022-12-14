@@ -30,61 +30,6 @@ constexpr int kNumWorkers = 2;
 constexpr int kElementsNum = 1001;
 constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
 }  // namespace
-std::string RealPath(const char *path) {
-  const size_t max = 4096;
-  if (path == nullptr) {
-    std::cerr << "path is nullptr" << std::endl;
-    return "";
-  }
-  if ((strlen(path)) >= max) {
-    std::cerr << "path is too long" << std::endl;
-    return "";
-  }
-  auto resolved_path = std::make_unique<char[]>(max);
-  if (resolved_path == nullptr) {
-    std::cerr << "new resolved_path failed" << std::endl;
-    return "";
-  }
-#ifdef _WIN32
-  char *real_path = _fullpath(resolved_path.get(), path, 1024);
-#else
-  char *real_path = realpath(path, resolved_path.get());
-#endif
-  if (real_path == nullptr || strlen(real_path) == 0) {
-    std::cerr << "file path is not valid : " << path << std::endl;
-    return "";
-  }
-  std::string res = resolved_path.get();
-  return res;
-}
-
-char *ReadFile(const char *file, size_t *size) {
-  if (file == nullptr) {
-    std::cerr << "file is nullptr." << std::endl;
-    return nullptr;
-  }
-  std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
-  if (!ifs.good()) {
-    std::cerr << "file: " << file << " is not exist." << std::endl;
-    return nullptr;
-  }
-  if (!ifs.is_open()) {
-    std::cerr << "file: " << file << " open failed." << std::endl;
-    return nullptr;
-  }
-  ifs.seekg(0, std::ios::end);
-  *size = ifs.tellg();
-  std::unique_ptr<char[]> buf(new (std::nothrow) char[*size]);
-  if (buf == nullptr) {
-    std::cerr << "malloc buf failed, file: " << file << std::endl;
-    ifs.close();
-    return nullptr;
-  }
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(buf.get(), *size);
-  ifs.close();
-  return buf.release();
-}
 
 template <typename T, typename Distribution>
 void GenerateRandomData(int size, void *data, Distribution distribution) {
@@ -120,9 +65,9 @@ int QuickStart(int argc, const char **argv) {
     std::cerr << "Model file must be provided.\n";
     return -1;
   }
-  auto model_path = RealPath(argv[1]);
+  std::string model_path = argv[1];
   if (model_path.empty()) {
-    std::cerr << "Model path " << argv[1] << " is invalid.";
+    std::cerr << "Model path " << model_path << " is invalid.";
     return -1;
   }
 
@@ -202,7 +147,8 @@ int QuickStart(int argc, const char **argv) {
               << " tensor elements num is:" << tensor.ElementNum() << std::endl;
     auto out_data = reinterpret_cast<const float *>(tensor.Data().get());
     std::cout << "output data is:";
-    for (int i = 0; i < tensor.ElementNum() && i <= 50; i++) {
+    constexpr int print_max = 50;
+    for (int i = 0; i < tensor.ElementNum() && i <= print_max; i++) {
       std::cout << out_data[i] << " ";
     }
     std::cout << std::endl;
