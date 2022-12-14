@@ -413,9 +413,9 @@ Reduction算子
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
     mindspore.ops.Orgqr
+    mindspore.ops.Qr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
-    mindspore.ops.Qr
 
 Tensor操作算子
 ----------------

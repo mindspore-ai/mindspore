@@ -412,9 +412,9 @@ Linear Algebraic Operator
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
     mindspore.ops.Orgqr
+    mindspore.ops.Qr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
-    mindspore.ops.Qr
 
 Tensor Operation Operator
 --------------------------
