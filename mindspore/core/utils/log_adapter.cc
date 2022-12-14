@@ -167,19 +167,39 @@ static int GetSlogLevel(MsLogLevel level) {
 }
 #endif
 
-void LogWriter::set_exception_handler(const ExceptionHandler &exception_handler) {
-  exception_handler_ = exception_handler;
+LogWriter::ExceptionHandler &LogWriter::exception_handler() {
+  static LogWriter::ExceptionHandler g_exception_handler = nullptr;
+  return g_exception_handler;
 }
 
-void LogWriter::set_trace_provider(const TraceProvider &trace_provider) {
-  if (trace_provider_ == nullptr) {
-    trace_provider_ = trace_provider;
-  } else {
+LogWriter::TraceProvider &LogWriter::trace_provider() {
+  static LogWriter::TraceProvider g_trace_provider = nullptr;
+  return g_trace_provider;
+}
+
+const LogWriter::ExceptionHandler &LogWriter::GetExceptionHandler() {
+  const auto &exception_handler_tmp = exception_handler();
+  return exception_handler_tmp;
+}
+
+void LogWriter::SetExceptionHandler(const LogWriter::ExceptionHandler &new_exception_handler) {
+  auto &exception_handler_tmp = exception_handler();
+  exception_handler_tmp = new_exception_handler;
+}
+
+const LogWriter::TraceProvider &LogWriter::GetTraceProvider() {
+  const auto &trace_provider_tmp = trace_provider();
+  return trace_provider_tmp;
+}
+
+void LogWriter::SetTraceProvider(const LogWriter::TraceProvider &new_trace_provider) {
+  auto &trace_provider_tmp = trace_provider();
+  if (trace_provider_tmp != nullptr) {
     MS_LOG(INFO) << "trace provider has been set, skip.";
+    return;
   }
+  trace_provider_tmp = new_trace_provider;
 }
-
-LogWriter::TraceProvider LogWriter::trace_provider() { return trace_provider_; }
 
 static inline std::string GetEnv(const std::string &envvar) {
   const char *value = std::getenv(envvar.c_str());
@@ -390,16 +410,18 @@ void LogWriter::operator^(const LogStream &stream) const {
     if (this_thread_max_log_level >= MsLogLevel::kException) {
       RemoveLabelBeforeOutputLog(msg);
     }
-    if (trace_provider_ != nullptr) {
-      trace_provider_(oss, true);
+    const auto &trace_provider = GetTraceProvider();
+    if (trace_provider != nullptr) {
+      trace_provider(oss, true);
     }
     running = false;
   }
 
   DisplayDevExceptionMessage(oss, dmsg, location_);
 
-  if (exception_handler_ != nullptr) {
-    exception_handler_(exception_type_, oss.str());
+  const auto &exception_handler = GetExceptionHandler();
+  if (exception_handler != nullptr) {
+    exception_handler(exception_type_, oss.str());
   }
   throw std::runtime_error(oss.str());
 }

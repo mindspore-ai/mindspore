@@ -268,21 +268,36 @@ class MS_CORE_API LogWriter {
   void operator^(const LogStream &stream) const NO_RETURN;
 #endif
 
-  static void set_exception_handler(const ExceptionHandler &exception_handler);
-  static void set_trace_provider(const TraceProvider &trace_provider);
-  static TraceProvider trace_provider();
+  /// \brief Get the function pointer of converting exception types in c++.
+  ///
+  /// \return A pointer of the function.
+  static const ExceptionHandler &GetExceptionHandler();
+
+  /// \brief Set the function pointer of converting exception types in c++.
+  ///
+  /// \param[in] A function pointer of converting exception types in c++.
+  static void SetExceptionHandler(const ExceptionHandler &new_exception_handler);
+
+  /// \brief Get the function pointer of printing trace stacks.
+  ///
+  /// \return A pointer of the function.
+  static const TraceProvider &GetTraceProvider();
+
+  /// \brief Set the function pointer of printing trace stacks.
+  ///
+  /// \param[in] A function pointer of  printing trace stacks.
+  static void SetTraceProvider(const TraceProvider &new_trace_provider);
 
  private:
   void OutputLog(const std::ostringstream &msg) const;
   void RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const;
+  static ExceptionHandler &exception_handler();
+  static TraceProvider &trace_provider();
 
   LocationInfo location_;
   MsLogLevel log_level_;
   SubModuleId submodule_;
   ExceptionType exception_type_;
-
-  inline static ExceptionHandler exception_handler_ = nullptr;
-  inline static TraceProvider trace_provider_ = nullptr;
 };
 
 #define MSLOG_IF(level, condition, excp_type)                                                                          \

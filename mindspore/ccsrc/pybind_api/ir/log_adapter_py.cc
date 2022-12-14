@@ -24,7 +24,7 @@ namespace py = pybind11;
 namespace mindspore {
 class PyExceptionInitializer {
  public:
-  PyExceptionInitializer() { mindspore::LogWriter::set_exception_handler(HandleExceptionPy); }
+  PyExceptionInitializer() { mindspore::LogWriter::SetExceptionHandler(HandleExceptionPy); }
 
   ~PyExceptionInitializer() = default;
 
