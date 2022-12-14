@@ -216,6 +216,15 @@ class L2NormalizeNet(nn.Cell):
         return out
 
 
+class UpsampleNet(nn.Cell):
+    def __init__(self):
+        super(UpsampleNet, self).__init__()
+        self.upsample = nn.Upsample(size=(5, 5))
+
+    def construct(self, x):
+        return self.upsample(x)
+
+
 class PoissonNLLLossNet(nn.Cell):
     def __init__(self):
         super(PoissonNLLLossNet, self).__init__()
@@ -559,6 +568,10 @@ test_cases = [
     ('L2Normalize', {
         'block': L2NormalizeNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
+    }),
+    ('Upsample', {
+        'block': UpsampleNet(),
+        'desc_inputs': [Tensor(np.array([[[[1, 2, 3, 4], [5, 6, 7, 8]]]]), mindspore.float32)]
     }),
     ('PoissonNLLLoss', {
         'block': PoissonNLLLossNet(),
