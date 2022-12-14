@@ -16,7 +16,6 @@
 
 #include "cdist_impl.cuh"
 #include <float.h>
-#include <math.h>
 
 static const int forward_threads = 256;
 
@@ -134,7 +133,7 @@ __global__ void CdistP(T *x1, T *x2, T *result, double p, const int64_t r2, cons
   const T *b = x2 + l * l2_size + j * m + threadIdx.x;
   T res = 0.0;
   for (; a < end; a += stride, b += stride) {
-    res += pow(abs(*a - *b), p);
+    res += static_cast<T>(pow(static_cast<double>(abs(*a - *b)), p));
   }
 
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
@@ -157,7 +156,7 @@ __global__ void CdistP(T *x1, T *x2, T *result, double p, const int64_t r2, cons
   }
 
   if (threadIdx.x == 0) {
-    result[blockIdx.x] = pow(res, 1.0 / p);
+    result[blockIdx.x] = static_cast<T>(pow(static_cast<double>(res), 1.0 / p));
   }
   return;
 }

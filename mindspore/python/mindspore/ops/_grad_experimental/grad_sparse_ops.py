@@ -380,7 +380,7 @@ def get_bprop_sparse_reorder(self):
         output = sparse_reorder_op(indices, entry_indices, shape)
         inverted_permutation = F.sort(output[1].astype(mstype.float32))[1]
         axis = 0
-        return None, gather_op(dout[1], inverted_permutation, axis), None
+        return zeros_like(indices), gather_op(dout[1], inverted_permutation, axis), zeros_like(shape)
 
     return bprop
 
