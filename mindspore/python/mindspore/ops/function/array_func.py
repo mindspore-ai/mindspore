@@ -351,18 +351,20 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
         [[0.08 0.39785218 0.91214782  0.91214782  0.39785218 0.08]]
     """
     if not isinstance(window_length, int):
-        raise TypeError(f"For array function 'hamming_window', 'window_length' must be int, but got \
-            {type(window_length)}.")
+        raise TypeError(f"For array function 'hamming_window', 'window_length' must be int, but got" \
+            f" {type(window_length)}.")
     if window_length < 0:
-        raise ValueError("For array function 'hamming_window', 'window_length' must be non negative number.")
+        raise ValueError(f"For array function 'hamming_window', 'window_length' must be non negative number.")
     if not isinstance(periodic, bool):
-        raise TypeError("For array function 'hamming_window', 'periodic' must be bool, but got {type(periodic)}.")
+        raise TypeError(f"For array function 'hamming_window', 'periodic' must be bool, but got {type(periodic)}.")
     if not isinstance(alpha, float):
-        raise TypeError("For array function 'hamming_window', 'alpha' must be float, but got {type(alpha)}.")
+        raise TypeError(f"For array function 'hamming_window', 'alpha' must be float, but got {type(alpha)}.")
     if not isinstance(beta, float):
-        raise TypeError("For array function 'hamming_window', 'beta' must be float, but got {type(beta)}.")
+        raise TypeError(f"For array function 'hamming_window', 'beta' must be float, but got {type(beta)}.")
     if window_length <= 1:
         return Tensor(np.ones(window_length))
+    if dtype is not None and dtype not in mstype.all_types:
+        raise TypeError(f"For array function 'hamming_window', 'dtype' must be a MindSpore data type.")
 
     if periodic:
         window_length += 1

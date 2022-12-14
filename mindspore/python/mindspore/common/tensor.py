@@ -4029,12 +4029,12 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('div')(self, other, rounding_mode)
 
-    def divide(self, other, *, rounding_mode=None):
+    def divide(self, value, *, rounding_mode=None):
         r"""
         Alias for :func:`mindspore.Tensor.div`.
         """
         self._init_check()
-        return tensor_operator_registry.get('div')(self, other, rounding_mode)
+        return tensor_operator_registry.get('div')(self, value, rounding_mode)
 
     def equal(self, other):
         r"""

@@ -457,12 +457,12 @@ def bincount(x, weights=None, minlength=0):
     if not isinstance(x, Tensor):
         raise TypeError("For math function 'bincount', 'x' must be Tensor.")
     if x.dtype not in (mstype.Int, mstype.int16, mstype.int32, mstype.int64):
-        raise TypeError(f"For math function 'bincount', the type of 'x' must be in [Int, int16, int32, int64], but \
-                        got {x.dtype}.")
-    if not isinstance(weights, Tensor):
-        raise TypeError("For math function 'bincount', 'weights' must be Tensor, but got {type(weights)}.")
+        raise TypeError(f"For math function 'bincount', the type of 'x' must be in [Int, int16, int32, int64], but" \
+                        f" got {x.dtype}.")
+    if weights is not None and not isinstance(weights, Tensor):
+        raise TypeError(f"For math function 'bincount', 'weights' must be Tensor, but got {type(weights)}.")
     if not isinstance(minlength, int):
-        raise TypeError("For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
+        raise TypeError(f"For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
     rank_op = _get_cache_prim(P.Rank)()
     if rank_op(x) != 1:
         raise ValueError("For math function 'bincount', `x` should be one-dimensional tensor.")
