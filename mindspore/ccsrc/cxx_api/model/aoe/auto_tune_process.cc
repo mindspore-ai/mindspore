@@ -32,8 +32,8 @@ static std::string SaveAirGraphToFile(const std::shared_ptr<AclModelOptions> &op
                                       const transform::DfGraphPtr &graph) {
   std::string air_path = options->GetOmFilePath();
   if (air_path.empty()) {
-    MS_LOG(ERROR) << "File path of air is empty.";
-    return "";
+    air_path = "/tmp";
+    MS_LOG(INFO) << "Air path of options is empty, set default path: /tmp";
   }
   auto dir_pos = air_path.find_last_of('/');
   if (dir_pos != std::string::npos) {
