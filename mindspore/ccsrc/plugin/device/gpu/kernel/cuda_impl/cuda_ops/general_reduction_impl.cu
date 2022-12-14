@@ -33,8 +33,8 @@ const int kMaxGroupLoop = kGroupSize * 3;  // 128 * 3 =
 
 template <typename T, typename S>
 struct Cmp {
-  __device__ static inline bool lt(T a, T b, S i, S j) { return (a < b) || ((a == b) && (i < 0 || j < i)); }
-  __device__ static inline bool gt(T a, T b, S i, S j) { return (a > b) || ((a == b) && (i < 0 || j < i)); }
+  __device__ static inline bool lt(T a, T b, S i, S j) { return (a < b) || ((a == b) && ((i < 0 || j < i) && j >= 0)); }
+  __device__ static inline bool gt(T a, T b, S i, S j) { return (a > b) || ((a == b) && ((i < 0 || j < i) && j >= 0)); }
 };
 
 template <typename T>
