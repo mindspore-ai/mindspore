@@ -2936,6 +2936,33 @@ def sort(input_x, axis=-1, descending=False):
     return _sort(input_x)
 
 
+def argsort(input_x, axis=-1, descending=False):
+    r"""
+    Return the indices that sort the input tensor along the given dimension in the specified order.
+
+    Args:
+        input_x(Tensor): The input tensor to sort.
+        axis (int): The dimension to sort along. Default: -1.
+        descending (bool): Controls the sort order. If `descending` is True then the elements
+            are sorted in descending order by value. Otherwise sort in descending order. Default: False.
+
+    Returns:
+        Tensor, the indices of sorted input tensor. Data type is int32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
+        >>> sort = ops.argsort(x)
+        >>> output = sort(x)
+        >>> print(output)
+    """
+    _sort = _get_cache_prim(P.Sort)(axis, descending)
+    _, arg_sort = _sort(input_x)
+    return arg_sort
+
+
 def gather(input_params, input_indices, axis):
     r"""
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
@@ -5774,5 +5801,6 @@ __all__ = [
     'diagonal',
     'lstsq',
     'mvlgamma',
+    'argsort'
 ]
 __all__.sort()

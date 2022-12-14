@@ -48,6 +48,7 @@ mindspore.Tensor
     mindspore.Tensor.argmax_with_value
     mindspore.Tensor.argmin
     mindspore.Tensor.argmin_with_value
+    mindspore.Tensor.argsort
     mindspore.Tensor.asin
     mindspore.Tensor.asinh
     mindspore.Tensor.asnumpy

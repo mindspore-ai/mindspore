@@ -405,6 +405,7 @@ Array操作
     mindspore.ops.adaptive_max_pool2d
     mindspore.ops.affine_grid
     mindspore.ops.arange
+    mindspore.ops.argsort
     mindspore.ops.batch_to_space_nd
     mindspore.ops.bincount
     mindspore.ops.broadcast_to

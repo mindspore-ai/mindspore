@@ -4127,6 +4127,13 @@ def sort(input, dim=-1, descending=False):
     return P.Sort(axis=dim, descending=descending)(input)
 
 
+def argsort(input_x, axis=-1, descending=False):
+    r"""
+    Return the indices that sort the input tensor along the given dimension in the specified order.
+    """
+    return F.argsort(input_x, axis, descending)
+
+
 def trunc(input):
     r"""
     Returns a new tensor with the truncated integer values of the elements of input.
