@@ -2078,6 +2078,17 @@ class Mul(_MathBinaryOp):
         [ 4. 10. 18.]
     """
 
+    # Let x/y using same sig_dtype to enable implicit conversion for compatibility
+    __mindspore_signature__ = (
+        sig.make_sig('x', rw=sig.sig_rw.RW_READ, dtype=sig.sig_dtype.T),
+        sig.make_sig('y', rw=sig.sig_rw.RW_READ, dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Xdivy."""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
     @staticmethod
     def _infer_specified_mul_value(x, y):
         """Calculate min/max value for output of Mul op"""

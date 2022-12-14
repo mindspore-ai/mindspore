@@ -658,6 +658,12 @@ void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const s
                         << " and output shape is " << output_shape;
     }
   }
+
+  // while input address is null, whose shape like (4, 0, 5), then the output size is zero
+  if (output_size < 1) {
+    return;
+  }
+
   // Get the flatten input indices according to "logical_shape" and "physical_shape".
   size_t offset = 1;
   size_t stride = 1;
@@ -665,7 +671,7 @@ void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const s
   (*index_list)[0] = 0;  // First element is set to 0.
   for (size_t i = 0; i < size; ++i) {
     size_t increment = (logical_shape[i] == physical_shape[i] ? stride : 0);
-    for (size_t j = 0; j < (physical_shape[i] - 1) * offset; ++j) {
+    for (size_t j = 0; j + offset < physical_shape[i] * offset; ++j) {
       (*index_list)[offset + j] = (*index_list)[j] + increment;
     }
     offset *= physical_shape[i];
