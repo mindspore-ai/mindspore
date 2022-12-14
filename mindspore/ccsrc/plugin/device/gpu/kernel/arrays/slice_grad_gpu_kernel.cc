@@ -136,6 +136,10 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return ret;
   }
 
+  dy_shape_.clear();
+  input_shape_.clear();
+  begin_.clear();
+  size_.clear();
   if (TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_) &&
       TryGetIntValue(inputs, kSizeIndex_, kernel_name_, &size_)) {
     ProccessAttr(inputs);
