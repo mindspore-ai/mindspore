@@ -48,6 +48,8 @@ void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bi
                        int col, size_t stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, size_t stride, size_t write_mode);
+void BigMatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
+                             int row, int col, size_t stride);
 void MatmulFloatNeon64OptRow8(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                               int row, int col, size_t stride, size_t write_mode);
 void MatmulFloatNeon64OptRow4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,

@@ -333,7 +333,7 @@ function Run_arm_codegen() {
                 -DPLATFORM_${platform}=ON \
                 -DPKG_PATH=${PKG_PATH} $1/${model_name}
           make -j4
-      } >> $4  || return 1
+      } >> $4  2>&1 || return 1
 
       benchmark_dir="$1/codegen_test_$7"
       rm -rf "$benchmark_dir"

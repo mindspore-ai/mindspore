@@ -302,6 +302,8 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
 #ifdef ENABLE_ARM64
   if (out_type == OutType_C8) {
     MatmulFloatNeon64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
+  } else if (out_type == OutType_Nhwc && deep > C512NUM) {
+    BigMatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride);
   } else {
     MatmulFloatNeon64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }
