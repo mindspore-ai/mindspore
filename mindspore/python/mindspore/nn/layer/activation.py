@@ -1124,15 +1124,9 @@ class PReLU(Cell):
                             f"but got {type(w).__name__}.")
         self.w = Parameter(w, name='a')
         self.prelu = P.PReLU()
-        self.relu = P.ReLU()
-        self.assign = P.Assign()
 
     def construct(self, x):
-        u = self.relu(self.w)
-        v = self.prelu(x, F.cast(u, x.dtype))
-        if self.training:
-            self.assign(self.w, u)
-        return v
+        return self.prelu(x, F.cast(self.w, x.dtype))
 
 
 class HSwish(Cell):
@@ -1524,6 +1518,7 @@ class GLU(Cell):
         x1, x2 = self.spilt(x)
         x2 = self.sigmoid(x2)
         return x1 * x2
+
 
 _activation = {
     'softmin': Softmin,
