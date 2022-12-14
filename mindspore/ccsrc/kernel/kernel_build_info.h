@@ -40,6 +40,8 @@ enum KernelObjectType : int {
   TUPLE_UNFOLD,
 };
 
+std::string KernelObjectTypeLabel(const KernelObjectType &obj_type);
+
 class BACKEND_EXPORT KernelBuildInfo {
  public:
   class KernelBuildInfoBuilder;

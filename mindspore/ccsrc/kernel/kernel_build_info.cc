@@ -17,11 +17,24 @@
 #include "kernel/kernel_build_info.h"
 
 #include <algorithm>
+#include <unordered_map>
 #include "utils/log_adapter.h"
 #include "include/common/debug/anf_dump_utils.h"
 
 namespace mindspore {
 namespace kernel {
+std::string KernelObjectTypeLabel(const KernelObjectType &obj_type) {
+  std::unordered_map<KernelObjectType, std::string> trans_map{{KernelObjectType::TUPLE, "Tuple"},
+                                                              {KernelObjectType::SCALAR, "Scalar"},
+                                                              {KernelObjectType::TENSOR, "Tensor"},
+                                                              {KernelObjectType::UNKNOWN_TYPE, "Unknown"},
+                                                              {KernelObjectType::TUPLE_UNFOLD, "TupleUnfold"}};
+  if (trans_map.find(obj_type) == trans_map.end()) {
+    return "Unknown";
+  }
+  return trans_map[obj_type];
+}
+
 std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
   if (input_index >= inputs_format_.size()) {
     MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input node";

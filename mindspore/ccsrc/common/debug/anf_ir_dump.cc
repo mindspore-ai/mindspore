@@ -153,12 +153,25 @@ void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer,
   }
 }
 
+void DumpKernelObjectType(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  auto inputs_str = AnfDumpHandler::PrintInputKernelObjectTypes(node);
+  auto outputs_str = AnfDumpHandler::PrintOutputKernelObjectTypes(node);
+  if (inputs_str.empty() && outputs_str.empty()) {
+    return;
+  }
+  gsub->buffer << "      : (" << inputs_str << ") -> (" << outputs_str << ")" << std::endl;
+}
+
 void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   if (node == nullptr || gsub == nullptr) {
     return;
   }
   auto kernel_info = node->kernel_info();
   if (kernel_info == nullptr || !kernel_info->has_build_info()) {
+    return;
+  }
+  if (!AnfUtils::IsRealKernel(node)) {
+    DumpKernelObjectType(node, gsub);
     return;
   }
 
@@ -180,6 +193,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   }
   gsub->buffer << ")";
   gsub->buffer << std::endl;
+  DumpKernelObjectType(node, gsub);
 }
 
 int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, OrderedMap<AnfNodePtr, int32_t> *para_map) {
