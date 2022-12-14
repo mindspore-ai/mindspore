@@ -45,7 +45,7 @@ def test_write_jpeg_three_channels():
     image_bgr = cv2.imread(filename_1, mode)
     image_1_numpy = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     image_1_tensor = Tensor.from_numpy(image_1_numpy)
-    filename_2 = filename_1 + ".test_write_jpeg.jpg"
+    filename_2 = filename_1 + ".test_write_jpeg_three_channels.jpg"
 
     # Test writing numpy.ndarray
     write_jpeg_three_channels(filename_2, image_1_numpy)
@@ -78,7 +78,7 @@ def test_write_jpeg_one_channel():
     filename_1 = "../data/dataset/apple.jpg"
     mode = cv2.IMREAD_UNCHANGED
     image_1_numpy = cv2.imread(filename_1, mode)
-    filename_2 = filename_1 + ".test_write_jpeg.jpg"
+    filename_2 = filename_1 + ".test_write_jpeg_one_channel.jpg"
     image_grayscale = cv2.cvtColor(image_1_numpy, cv2.COLOR_BGR2GRAY)
     image_grayscale_tensor = Tensor.from_numpy(image_grayscale)
 
