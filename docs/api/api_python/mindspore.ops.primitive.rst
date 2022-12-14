@@ -413,9 +413,9 @@ Reduction算子
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
     mindspore.ops.Orgqr
+    mindspore.ops.Qr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
-    mindspore.ops.Qr
 
 Tensor操作算子
 ----------------
@@ -683,12 +683,12 @@ Parameter操作算子
     mindspore.ops.Assert
     mindspore.ops.HistogramSummary
     mindspore.ops.ImageSummary
-    mindspore.ops.ScalarSummary
-    mindspore.ops.TensorSummary
-    mindspore.ops.Print
     mindspore.ops.NPUAllocFloatStatus
     mindspore.ops.NPUClearFloatStatus
     mindspore.ops.NPUGetFloatStatus
+    mindspore.ops.Print
+    mindspore.ops.ScalarSummary
+    mindspore.ops.TensorSummary
 
 稀疏算子
 ----------------
