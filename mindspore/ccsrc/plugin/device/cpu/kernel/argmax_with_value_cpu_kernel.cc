@@ -148,6 +148,11 @@ int ArgMaxWithValueCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMaxWithValue>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   int64_t axis = kernel_ptr->axis();
+  auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  if (CheckNullInput(input_shape)) {
+    kernel_name_ = base_operator->name();
+    MS_LOG(EXCEPTION) << kernel_name_ << " cannot deal with empty input. Please try other inputs.";
+  }
   axis += static_cast<int64_t>(shape_len);
   if (shape_len == 0 && axis != -1 && axis != 0) {
     MS_LOG(EXCEPTION) << "For ArgMaxWithValue with 0d input tensor, axis must be one of 0 or -1, but got " << axis

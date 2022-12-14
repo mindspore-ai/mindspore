@@ -38,6 +38,11 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+    if (CheckNullInput(input_shape)) {
+      kernel_name_ = base_operator->name();
+      MS_EXCEPTION(ValueError) << kernel_name_ << " cannot deal with empty input. Please try other inputs.";
+    }
     if (!InitSize(base_operator, inputs, outputs)) {
       return KRET_RESIZE_FAILED;
     }
