@@ -223,6 +223,16 @@ def create_dct(n_mfcc, n_mels, norm=NormMode.NONE):
     Returns:
         numpy.ndarray, the transformation matrix, to be right-multiplied to row-wise data of size (n_mels, n_mfcc).
 
+    Raises:
+        TypeError: If `n_mfcc` is not of type int.
+        ValueError: If `n_mfcc` is not positive.
+        TypeError: If `n_mels` is not of type int.
+        ValueError: If `n_mels` is not positive.
+        TypeError: If `n_mels` is not of type :class:`mindspore.dataset.audio.NormMode` .
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.audio import create_dct, NormMode
         >>>
@@ -309,6 +319,23 @@ def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NO
 
     Returns:
         numpy.ndarray, the frequency transformation matrix with shape ( `n_freqs` , `n_mels` ).
+
+    Raises:
+        TypeError: If `n_freqs` is not of type int.
+        ValueError: If `n_freqs` is a negative number.
+        TypeError: If `f_min` is not of type float.
+        ValueError: If `f_min` is greater than `f_max` .
+        TypeError: If `f_max` is not of type float.
+        ValueError: If `f_max` is a negative number.
+        TypeError: If `n_mels` is not of type int.
+        ValueError: If `n_mels` is not positive.
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is not positive.
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormType` .
+        TypeError: If `mel_type` is not of type :class:`mindspore.dataset.audio.MelType` .
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.audio import melscale_fbanks

@@ -12,3 +12,15 @@ mindspore.dataset.audio.DetectPitchFrequency
         - **win_length** (int, 可选) - 中位平滑的窗口长度（以帧数为单位），该值必须大于零。默认值：30。
         - **freq_low** (int, 可选) - 可检测的最低频率（Hz），该值必须大于零。默认值：85。
         - **freq_high** (int, 可选) - 可检测的最高频率（Hz），该值必须大于零。默认值：3400。
+
+    异常：
+        - **TypeError** - 如果 `sample_rate` 不是int类型。
+        - **ValueError** - 如果 `sample_rate` 为0。
+        - **TypeError** - 如果 `frame_time` 不是float类型。
+        - **ValueError** - 如果 `frame_time` 不为正数。
+        - **TypeError** - 如果 `win_length` 不是int类型。
+        - **ValueError** - 如果 `win_length` 不为正数。
+        - **TypeError** - 如果 `freq_low` 不是int类型。
+        - **ValueError** - 如果 `freq_low` 不为正数。
+        - **TypeError** - 如果 `freq_high` 不是int类型。
+        - **ValueError** - 如果 `freq_high` 不为正数。

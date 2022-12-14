@@ -9,3 +9,7 @@ mindspore.dataset.audio.RiaaBiquad
 
     参数：
         - **sample_rate** (int) - 波形的采样率，例如44100 (Hz)，只能是44100、48000、88200、96000中的一个。
+
+    异常：
+        - **TypeError** - 当 `quantization_channels` 的类型不为int。
+        - **ValueError** - 当 `quantization_channels` 不是[44100, 48000, 88200, 96000]中的任何一个。

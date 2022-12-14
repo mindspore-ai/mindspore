@@ -16,3 +16,17 @@ mindspore.dataset.audio.melscale_fbanks
 
     返回：
         numpy.ndarray，频率变换矩阵，shape为( `n_freqs` , `n_mels` )。
+
+    异常：
+        - **TypeError** - 如果 `n_freqs` 的类型不为int。
+        - **ValueError** - 如果 `n_freqs` 为负数。
+        - **TypeError** - 如果 `f_min` 的类型不为float。
+        - **ValueError** - 如果 `f_min` 大于 `f_max` 。
+        - **TypeError** - 如果 `f_max` 的类型不为float。
+        - **ValueError** - 如果 `f_max` 为负数。
+        - **TypeError** - 如果 `n_mels` 的类型不为int。
+        - **ValueError** - 如果 `n_mels` 不为正数。
+        - **TypeError** - 如果 `sample_rate` 的类型不为int。
+        - **ValueError** - 如果 `sample_rate` 不为正数。
+        - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.NormType` 。
+        - **TypeError** - 如果 `mel_type` 的类型不为 :class:`mindspore.dataset.audio.MelType` 。
