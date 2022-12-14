@@ -24,6 +24,7 @@
 #include "runtime/device/device_address.h"
 #include "runtime/device/hash_table.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 using device::UserDataPtr;
@@ -238,16 +239,18 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
         continue;
       }
 
+      const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);
+      MS_EXCEPTION_IF_NULL(real_device_context);
       const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(kernel, i);
       if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
-        CreateDeviceAddressByMapTensorNode(device_context, kernel, i);
+        CreateDeviceAddressByMapTensorNode(real_device_context, kernel, i);
         continue;
       }
 
       auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
-      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+      auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(kernel, i));
       if (is_from_persistent_mem) {
         device_address->set_from_persistent_mem(true);
@@ -269,6 +272,8 @@ void DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(const DeviceContext 
     if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
       continue;
     }
+    const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);
+    MS_EXCEPTION_IF_NULL(real_device_context);
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
@@ -276,8 +281,8 @@ void DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(const DeviceContext 
       if (AnfAlgo::WorkspaceAddrExist(kernel, i)) {
         break;
       }
-      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_sizes[i], "",
-                                                                                     kTypeUnknown, ShapeVector());
+      auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                     << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());

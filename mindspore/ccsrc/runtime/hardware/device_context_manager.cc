@@ -339,6 +339,25 @@ bool PluginLoader::GetPluginPath(std::string *file_path) {
 }  // namespace plugin_loader
 
 namespace device {
+const DeviceContext *FetchRealDeviceContext(const CNodePtr &node, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  if (!common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, node)) {
+    return device_context;
+  }
+  const auto &target = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrPrimitiveTarget);
+  if (target == device_context->device_context_key().device_name_) {
+    return device_context;
+  }
+
+  const auto &real_device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {target, device_context->device_context_key().device_id_});
+  MS_EXCEPTION_IF_NULL(real_device_context);
+  real_device_context->Initialize();
+  return real_device_context;
+}
+
 DeviceContextManager &DeviceContextManager::GetInstance() {
   static DeviceContextManager instance{};
   instance.LoadPlugin();

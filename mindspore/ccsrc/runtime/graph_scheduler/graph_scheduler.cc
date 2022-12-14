@@ -1074,7 +1074,9 @@ std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompiler
       }
 
       auto actor_name = AnfUtils::GetCustomActorName(node);
-      auto custom_actor = std::make_shared<CustomActor>(actor_name, node, device_context, recorder_aid_);
+      const auto &base_node = AnfUtils::GetCustomActorBaseNode(node);
+      auto custom_actor = std::make_shared<CustomActor>(
+        actor_name, node, device::FetchRealDeviceContext(base_node, device_context), recorder_aid_);
       MS_EXCEPTION_IF_NULL(custom_actor);
       InsertActor(custom_actor.get());
       (void)custom_actors.emplace_back(custom_actor);
@@ -1107,13 +1109,15 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
       if (IsKernelActor(kernel, graph_compiler_info.strategy_) && (!IsSkippedKernelActor(kernel))) {
         auto ref_input_indexes = FetchModifiableRefInputIndex(kernel);
         auto ref_output_indexes = FetchModifiableRefOutputIndex(kernel, graph);
+        const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);
+        MS_EXCEPTION_IF_NULL(real_device_context);
         KernelActorPtr kernel_actor = nullptr;
         if (IsRpcActor(kernel)) {
-          kernel_actor = GenerateRpcActor(kernel, device_context, strategy, ref_input_indexes, ref_output_indexes);
+          kernel_actor = GenerateRpcActor(kernel, real_device_context, strategy, ref_input_indexes, ref_output_indexes);
         } else {
-          kernel_actor =
-            std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
-                                          debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
+          kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, real_device_context,
+                                                       memory_manager_aid_, debug_aid_, recorder_aid_, strategy,
+                                                       ref_input_indexes, ref_output_indexes);
         }
         MS_EXCEPTION_IF_NULL(kernel_actor);
         // Set the member of kernel actor.
@@ -1227,7 +1231,8 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
         if (!common::AnfAlgo::IsCommunicationOp(kernel)) {
           continue;
         }
-        auto key = std::make_pair(kernel, graph_compiler_info.device_contexts_[index]);
+        auto key =
+          std::make_pair(kernel, device::FetchRealDeviceContext(kernel, graph_compiler_info.device_contexts_[index]));
         auto value = std::make_pair(false, false);
         if (common::AnfAlgo::GetInputTensorNum(kernel) > 1) {
           value.first = true;
@@ -1280,6 +1285,8 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(device_context);
 #ifdef ENABLE_RPC_ACTOR
+  const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);
+  MS_EXCEPTION_IF_NULL(real_device_context);
   bool generate_mux_rpc_actor = common::AnfAlgo::HasNodeAttr(kAttrIsMuxRpcKernel, kernel) &&
                                 (common::AnfAlgo::GetNodeAttr<bool>(kernel, kAttrIsMuxRpcKernel) == true);
 
@@ -1287,18 +1294,20 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   if (common::AnfAlgo::GetCNodeName(kernel) == kRpcSendOpName) {
     SendActorPtr send_actor =
       generate_mux_rpc_actor
-        ? std::make_shared<MuxSendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
-                                         debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes)
-        : std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+        ? std::make_shared<MuxSendActor>(kernel->fullname_with_scope(), kernel, real_device_context,
+                                         memory_manager_aid_, debug_aid_, recorder_aid_, strategy, ref_input_indexes,
+                                         ref_output_indexes)
+        : std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, real_device_context, memory_manager_aid_,
                                       debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(send_actor);
     return send_actor;
   } else if (common::AnfAlgo::GetCNodeName(kernel) == kRpcRecvOpName) {
     RecvActorPtr recv_actor =
       generate_mux_rpc_actor
-        ? std::make_shared<MuxRecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
-                                         debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes)
-        : std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+        ? std::make_shared<MuxRecvActor>(kernel->fullname_with_scope(), kernel, real_device_context,
+                                         memory_manager_aid_, debug_aid_, recorder_aid_, strategy, ref_input_indexes,
+                                         ref_output_indexes)
+        : std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, real_device_context, memory_manager_aid_,
                                       debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(recv_actor);
     return recv_actor;
