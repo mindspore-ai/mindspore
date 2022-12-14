@@ -101,7 +101,7 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
 
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
-    if (is_null_input_) {
+    if (input_shapes.empty() || is_null_input_) {
       InitSizeLists();
       return KRET_OK;
     }
