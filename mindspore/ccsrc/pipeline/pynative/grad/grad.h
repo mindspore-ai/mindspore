@@ -200,7 +200,7 @@ class GradExecutor {
   bool eliminate_forward_{true};
   mutable bool use_dynamic_shape_process_{false};
   mutable bool is_cell_id_in_dynamic_detect_nodes_map_{false};
-  int custom_bprop_cell_count_{0};
+  size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};

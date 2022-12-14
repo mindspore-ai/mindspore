@@ -61,7 +61,6 @@ struct FrontendOpRunInfo {
   int mix_type{0};
   size_t op_index = 0;
   size_t input_size = 0;
-  size_t custom_bprop_cell_count = 0;
   PrimitivePyPtr op_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string op_info;
@@ -92,7 +91,7 @@ struct InputArgsInfo {
   bool has_sens{false};
   bool grad_is_running{false};
   bool use_dynamic_shape_process{false};
-  PrimitivePyPtr custom_bprp_prim{nullptr};
+  PrimitivePyPtr custom_bprop_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string cell_id;
   std::string already_run_cell_id;
