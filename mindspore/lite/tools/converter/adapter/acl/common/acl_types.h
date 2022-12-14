@@ -40,6 +40,7 @@ struct AclModelOptionCfg {
   std::string insert_op_config_file_path;
   std::string dynamic_image_size;
   std::string om_file_path;
+  std::string aoe_mode;
 };
 
 constexpr auto kOutputShapes = "outputs_shape";

@@ -40,6 +40,8 @@ class MS_API AclModelOptions {
   void SetFirstGraph(bool is_first_graph) noexcept { first_graph_flag_ = is_first_graph; }
   void SetOmFilePath(const std::string &file_path) noexcept { om_file_path_ = file_path; }
   std::string GetOmFilePath() const { return om_file_path_; }
+  void SetAoeMode(const std::string &aoe_mode) noexcept { aoe_mode_ = aoe_mode; }
+  std::string GetAoeMode() const { return aoe_mode_; }
 
  private:
   std::string output_node_;  // todo: at convert.cc::BuildGraph(), no atc options
@@ -60,6 +62,7 @@ class MS_API AclModelOptions {
   uint32_t device_id_{0};
   std::optional<bool> first_graph_flag_{false};
   std::string om_file_path_;
+  std::string aoe_mode_;
 };
 }  // namespace mindspore
 

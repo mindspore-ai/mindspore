@@ -84,7 +84,9 @@ if(NOT ENABLE_TESTCASES AND NOT BUILD_LITE)
 endif()
 
 if(BUILD_LITE)
-    list(APPEND MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc")
+    list(APPEND MSLIB_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/model/aoe/auto_tune_process.cc")
     file(GLOB_RECURSE ACL_REMOVE_SRC ${CMAKE_CURRENT_SOURCE_DIR}
             "model/acl/acl_vm/*.cc"
             )

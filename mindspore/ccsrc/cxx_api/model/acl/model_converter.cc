@@ -20,6 +20,7 @@
 #include "cxx_api/model/model_converter_utils/multi_process.h"
 #include "graph/model.h"
 #include "acl/acl_rt.h"
+#include "cxx_api/model/aoe/auto_tune_process.h"
 
 namespace mindspore {
 namespace {
@@ -266,7 +267,12 @@ Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
   if (option != nullptr) {
     std::tie(init_options, build_options) = option->GenAclOptions();
   }
-
+#ifdef BUILD_LITE
+  if (AutoTuneProcess::AoeOfflineTurningGraph(options_, df_graph) != kSuccess) {
+    MS_LOG(ERROR) << "Aoe tune graph failed.";
+    return Buffer();
+  }
+#endif
   return BuildAirModel(df_graph, init_options, build_options);
 }
 }  // namespace mindspore

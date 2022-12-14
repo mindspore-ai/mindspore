@@ -398,6 +398,7 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
     return lite::RET_ERROR;
   }
   options_->SetOmFilePath(user_options_cfg_.om_file_path);
+  options_->SetAoeMode(user_options_cfg_.aoe_mode);
   MS_LOG(INFO) << "Set acl model options success.";
   return lite::RET_OK;
 }

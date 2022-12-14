@@ -118,6 +118,7 @@ void SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param
   param->aclModelOptionCfgParam.buffer_optimize = FindInAscendMap("buffer_optimize", ascend_map);
   param->aclModelOptionCfgParam.insert_op_config_file_path = FindInAscendMap("insert_op_config_file_path", ascend_map);
   param->aclModelOptionCfgParam.om_file_path = FindInAscendMap("om_file_path", ascend_map);
+  param->aclModelOptionCfgParam.aoe_mode = FindInAscendMap("aoe_mode", ascend_map);
 
   auto it = ascend_map.find("input_shape");
   if (it != ascend_map.end()) {
