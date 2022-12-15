@@ -41,11 +41,11 @@ def set_seed(seed):
     Set global seed.
 
     Note:
-        The global seed is used by numpy.random, mindspore.common.Initializer, mindspore.ops.composite.random_ops and
+        The global seed is used by numpy.random, mindspore.common.Initializer, mindspore.ops.function.random_func and
         mindspore.nn.probability.distribution.
 
         If global seed is not set, these packages will use their own default seed independently, numpy.random and
-        mindspore.common.Initializer will choose a random seed, mindspore.ops.composite.random_ops and
+        mindspore.common.Initializer will choose a random seed, mindspore.ops.function.random_func and
         mindspore.nn.probability.distribution will use zero.
 
         Seed set by numpy.random.seed() only used by numpy.random, while seed set by this API will also used by
@@ -98,7 +98,7 @@ def set_seed(seed):
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
         >>>
-        >>> # 3. If neither global seed nor op seed is set, mindspore.ops.composite.random_ops and
+        >>> # 3. If neither global seed nor op seed is set, mindspore.ops.function.random_func and
         >>> # mindspore.nn.probability.distribution will choose a random seed:
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval) # C2
@@ -106,7 +106,7 @@ def set_seed(seed):
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C3
         >>> c2 = ops.uniform((1, 4), minval, maxval) # C4
         >>>
-        >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.composite.random_ops and
+        >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.function.random_func and
         >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
         >>> # default op seed. Each call will change the default op seed, thus each call get different
         >>> # results.
@@ -118,7 +118,7 @@ def set_seed(seed):
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval) # C2
         >>>
-        >>> # 5. If both global seed and op seed are set, mindspore.ops.composite.random_ops and
+        >>> # 5. If both global seed and op seed are set, mindspore.ops.function.random_func and
         >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
         >>> # op seed counter. Each call will change the op seed counter, thus each call get different
         >>> # results.
@@ -131,7 +131,7 @@ def set_seed(seed):
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>>
         >>> # 6. If op seed is set but global seed is not set, 0 will be used as global seed. Then
-        >>> # mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution act as in
+        >>> # mindspore.ops.function.random_func and mindspore.nn.probability.distribution act as in
         >>> # condition 5.
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
@@ -140,7 +140,7 @@ def set_seed(seed):
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>>
         >>> # 7. Recall set_seed() in the program will reset numpy seed and op seed counter of
-        >>> # mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution.
+        >>> # mindspore.ops.function.random_func and mindspore.nn.probability.distribution.
         >>> set_seed(1234)
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
@@ -207,22 +207,6 @@ def _get_op_seed(op_seed, kernel_name):
     if (kernel_name, op_seed) not in _KERNEL_SEED:
         _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
     return _KERNEL_SEED[(kernel_name, op_seed)]
-
-
-def _get_global_and_op_seed():
-    """Get global_seed and op_seed."""
-    global_seed = get_seed()
-    op_seed = get_seed()
-    if global_seed == 0:
-        global_seed = DEFAULT_GRAPH_SEED
-    elif global_seed is None:
-        global_seed = 0
-    if op_seed is None:
-        op_seed = 0
-    Validator.check_non_negative_int(op_seed, "seed", "init")
-    temp_seed = _get_op_seed(op_seed, "init")
-    seeds = _truncate_seed(global_seed), _truncate_seed(temp_seed)
-    return seeds
 
 
 def _get_graph_seed(op_seed, kernel_name):

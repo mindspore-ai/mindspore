@@ -165,8 +165,6 @@ void PSContext::ReInsertHashTableSize(const std::string &new_param_name, const s
 #endif
 }
 
-void PSContext::InsertWeightInitInfo(const std::string &, size_t, size_t) const { return; }
-
 void PSContext::InsertAccumuInitInfo(const std::string &param_name, float init_val) const {
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   embedding_cache_table_manager.InsertAccumuInitInfo(param_name, init_val);

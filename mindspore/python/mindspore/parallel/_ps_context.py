@@ -184,10 +184,6 @@ def _reinsert_hash_table_size(new_name, cur_name, cache_vocab_size, embedding_si
     ps_context().reinsert_hash_table_size(new_name, cur_name, cache_vocab_size, embedding_size)
 
 
-def _insert_weight_init_info(name, global_seed, op_seed):
-    ps_context().insert_weight_init_info(name, global_seed, op_seed)
-
-
 def _insert_accumu_init_info(name, init_val):
     ps_context().insert_accumu_init_info(name, init_val)
 

@@ -27,7 +27,7 @@ from mindspore.ops.composite.clip_ops import clip_by_global_norm
 from mindspore.ops.composite.multitype_ops.add_impl import hyper_add
 from mindspore.ops.composite.multitype_ops.ones_like_impl import ones_like
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops.composite.random_ops import normal, laplace, uniform, gamma, poisson, multinomial
+from mindspore.ops.function.random_func import normal, laplace, uniform, gamma, poisson, multinomial
 from mindspore.ops.composite.math_ops import count_nonzero, tensor_dot, dot, batch_dot, matmul, cummin, mm
 from mindspore.ops.composite.array_ops import repeat_interleave, repeat_elements, sequence_mask
 from mindspore.ops.composite.vmap_ops import _VmapGeneralPreprocess, _VmapGeneralRule

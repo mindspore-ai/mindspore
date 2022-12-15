@@ -36,9 +36,7 @@ from mindspore.parallel._tensor import _get_slice_index
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table, \
                                            _is_ps_mode
-from mindspore.parallel._ps_context import _reinsert_hash_table_size
-from mindspore.parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
-from mindspore.common.seed import _get_global_and_op_seed
+from mindspore.parallel._ps_context import _reinsert_hash_table_size, _insert_accumu_init_info
 import mindspore.common._monad as monad
 
 __all__ = ['Parameter', 'ParameterTuple']
@@ -747,9 +745,6 @@ class Parameter(Tensor_):
             return self
         if self.inited_param is not None:
             return self.inited_param
-        if _is_role_worker() and self.cache_enable:
-            global_seed, op_seed = _get_global_and_op_seed()
-            _insert_weight_init_info(self.name, global_seed, op_seed)
 
         init_data_args = self._get_init_data_args(layout)
 
