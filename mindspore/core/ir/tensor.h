@@ -981,7 +981,7 @@ class MS_CORE_API RowTensor : public MetaSparseTensor {
 using RowTensorPtr = std::shared_ptr<RowTensor>;
 
 // Convert shape vector to string.
-std::string ShapeToString(const ShapeVector &shape);
+MS_CORE_API std::string ShapeToString(const ShapeVector &shape);
 }  // namespace tensor
 }  // namespace mindspore
 
