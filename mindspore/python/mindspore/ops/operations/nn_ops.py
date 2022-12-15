@@ -9820,7 +9820,7 @@ class SparseApplyAdagradDA(Primitive):
                             Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+        - **var** (Parameter) - Variable to be updated.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **grad_accum** (Parameter) - The dict of mutable tensor grad_accum. Must have the same
           shape and dtype as `var`.
@@ -9844,8 +9844,7 @@ class SparseApplyAdagradDA(Primitive):
         TypeError: If `grad` is not a Tensor.
         TypeError: If `lr`, `l1`, `l2` or `global_step` is neither a Number nor a Tensor.
         TypeError: If use_locking is not a bool.
-        TypeError: If dtype of `var`, `grad_accum`, `grad_square_accum`, `grad_accum`,
-                   `lr`, `l1`, `l2` is neither float16 nor float32.
+        TypeError: If dtype of `var`, `grad_accum`, `grad_square_accum`, `grad_accum` is not the same.
         TypeError: If dtype of `grad_accum`, `grad_square_accum`, `grad_accum`
                      is not same as `var`.
         TypeError: If dtype of `indices` is neither int32 nor int64.
