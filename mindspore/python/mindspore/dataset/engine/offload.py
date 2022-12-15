@@ -88,7 +88,7 @@ def apply_offload_iterators(data, offload_model):
             data[i] = Tensor(data[i], dtype=mstype.float32)
             non_tensor_idxs.append(i)
 
-    data = offload_model(data)
+    data = offload_model(*data)
     data = list(data)
     for idx in non_tensor_idxs:
         data[idx] = data[idx].asnumpy()
@@ -136,7 +136,7 @@ class ApplyPreTransform(nn.Cell):
         for data_col in x:
             data.append(data_col)
 
-        data = self.transform(data)
+        data = self.transform(*data)
         data = self.model(*data)
 
         return data
@@ -575,7 +575,11 @@ class GetOffloadModel(nn.Cell):
                     self.transform_list.append(GetModelFromJson2Col(node, ds_col_idxs))
             self.transform_list.reverse()
 
-    def construct(self, x):
+    def construct(self, *x):
+        data = []
+        for d in x:
+            data.append(d)
+
         for transform in self.transform_list:
-            x = transform(x)
-        return x
+            data = transform(data)
+        return data
