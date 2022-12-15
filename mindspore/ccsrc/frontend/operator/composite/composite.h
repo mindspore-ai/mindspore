@@ -101,8 +101,8 @@ enum TailType { kGradAll, kGradFirst, kGradByPosition, kNotGrad };
 
 class Tail : public MetaFuncGraph {
  public:
-  explicit Tail(const std::string &name, TailType tail_type = kNotGrad)
-      : MetaFuncGraph(name), tail_type_(tail_type), enable_tuple_grad_first_(false) {}
+  explicit Tail(const std::string &name, TailType tail_type = kNotGrad, bool return_ids = false)
+      : MetaFuncGraph(name), tail_type_(tail_type), enable_tuple_grad_first_(false), return_ids_(return_ids) {}
   ~Tail() override = default;
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 
@@ -118,6 +118,7 @@ class Tail : public MetaFuncGraph {
 
   TailType tail_type_;
   bool enable_tuple_grad_first_;
+  bool return_ids_;
 };
 using TailPtr = std::shared_ptr<Tail>;
 
@@ -157,7 +158,7 @@ class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,
                          bool sens_param = false, bool get_by_position = false, bool has_aux = false,
-                         bool get_value = false);
+                         bool get_value = false, bool return_ids = false);
   ~GradOperation() override = default;
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
@@ -174,11 +175,14 @@ class GradOperation : public MetaFuncGraph {
   bool get_by_position_;
   bool has_aux_;
   bool get_value_;
+  bool return_ids_;
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
                        const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad,
                        bool is_weights_none) const;
+  CNodePtr SetNodeByParameter(const CNodePtr &grad, const FuncGraphPtr &fg) const;
+  AbstractBasePtr weight_value_;
 };
 using GradOperationPtr = std::shared_ptr<GradOperation>;
 

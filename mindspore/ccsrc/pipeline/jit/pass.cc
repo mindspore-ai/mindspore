@@ -396,6 +396,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
   opt::OptPassConfig recompute_prepare = opt::OptPassConfig({irpass.set_cell_output_no_recompute_});
+  opt::OptPassConfig get_grad = opt::OptPassConfig({irpass.get_grad_eliminate_});
 
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"expand_dump_flag", opt::OptPassConfig(opt::irpass::ExpandDumpFlag())},
@@ -413,6 +414,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
+                         {"get_grad_eliminate_", get_grad},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"after_resolve", after_resolve_pass},

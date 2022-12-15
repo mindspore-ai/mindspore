@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import jit
 from mindspore.ops import composite as C
-from mindspore.ops import grad, value_and_grad, vmap
+from mindspore.ops import grad, value_and_grad, vmap, get_grad
 from mindspore.common import dtype as mstype
 from mindspore import Parameter, ParameterTuple
 
@@ -500,3 +500,313 @@ def test_value_and_grad_nest_with_weights_has_aux_pynative():
     assert np.allclose(gradient[0].asnumpy(), expect_grad_input)
     assert np.allclose(gradient[1][0].asnumpy(), expect_grad_weight1)
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_single_input_single_output_cell_graph_with_return_ids_pynative():
+    """
+    Features: Function grad_with_ids.
+    Description: Test F.grad with single input and single output net and output ids in pynative mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    net = SingleInputSingleOutputNet()
+    expect_grad = (0, Tensor(np.array([[3, 12], [27, 48]]).astype(np.float32)))
+    real_grad = grad(net, return_ids=True)(x)
+    assert np.allclose(real_grad[1].asnumpy(), expect_grad[1].asnumpy())
+    assert np.allclose(real_grad[0], expect_grad[0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_single_input_multiple_outputs_cell_graph_with_return_ids_pynative():
+    """
+    Features: Function grad_with_ids.
+    Description: Test F.grad with single input and multiple outputs net and output ids in pynative mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    net = SingleInputMultipleOutputsNet()
+    expect_grad = (0, Tensor(np.array([[5, 14], [29, 50]]).astype(np.float32)))
+    real_grad = grad(net, return_ids=True)(x)
+    assert np.allclose(real_grad[1].asnumpy(), expect_grad[1].asnumpy())
+    assert np.allclose(real_grad[0], expect_grad[0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_multiple_inputs_single_output_cell_graph_with_return_ids_pynative():
+    """
+    Features: Function grad_with_ids.
+    Description: Test F.grad with multiple inputs and single output net and output ids in pynative mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
+    z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+    net = MultipleInputsSingleOutputNet()
+    expect_grad1 = (1, Tensor(np.array([[0, 6], [15, -4]]).astype(np.float32)))
+    expect_grad2 = (2, Tensor(np.array([[-2, 6], [-3, 8]]).astype(np.float32)))
+    real_grad = grad(net, grad_position=(1, 2), return_ids=True)(x, y, z)
+    assert isinstance(real_grad, tuple)
+    assert len(real_grad) == 2
+    assert np.allclose(real_grad[0][1].asnumpy(), expect_grad1[1].asnumpy())
+    assert np.allclose(real_grad[1][1].asnumpy(), expect_grad2[1].asnumpy())
+    assert np.allclose(real_grad[0][0], expect_grad1[0])
+    assert np.allclose(real_grad[1][0], expect_grad2[0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_multiple_inputs_multiple_outputs_cell_graph_with_return_ids_pynative():
+    """
+    Features: Function grad_with_ids.
+    Description: Test F.grad with multiple inputs and multiple outputs net and output ids in pynative mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
+    z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+    net = MultipleInputsMultipleOutputsNet()
+    expect_grad1 = (
+        1, Tensor(np.array([[-4, 12], [13, 0]]).astype(np.float32)))
+    expect_grad2 = (2, Tensor(np.array([[-2, 12], [7, 6]]).astype(np.float32)))
+    real_grad = grad(net, grad_position=(1, 2), return_ids=True)(x, y, z)
+    assert isinstance(real_grad, tuple)
+    assert len(real_grad) == 2
+    assert np.allclose(real_grad[0][1].asnumpy(), expect_grad1[1].asnumpy())
+    assert np.allclose(real_grad[1][1].asnumpy(), expect_grad2[1].asnumpy())
+    assert np.allclose(real_grad[0][0], expect_grad1[0])
+    assert np.allclose(real_grad[1][0], expect_grad2[0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_iteration_function_graph_with_return_ids_pynative():
+    """
+    Features: Function grad_with_ids.
+    Description: Test calling F.grad iterative with function and output ids in pynative mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
+    z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+    expect_grad1 = (
+        1, Tensor(np.array([[0, 12], [30, -8]]).astype(np.float32)))
+    expect_grad2 = (
+        2, Tensor(np.array([[-4, 12], [-6, 16]]).astype(np.float32)))
+    real_grad = grad(grad(iteration_grad_function),
+                     grad_position=(1, 2), return_ids=True)(x, y, z)
+    assert isinstance(real_grad, tuple)
+    assert len(real_grad) == 2
+    assert np.allclose(real_grad[0][1].asnumpy(), expect_grad1[1].asnumpy())
+    assert np.allclose(real_grad[1][1].asnumpy(), expect_grad2[1].asnumpy())
+    assert np.allclose(real_grad[0][0], expect_grad1[0])
+    assert np.allclose(real_grad[1][0], expect_grad2[0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_with_weights_with_return_ids_pynative():
+    """
+    Features: Function grad_with_ids.
+    Description: Test F.grad with different weights and output ids in pynative mode.
+    Expectation: No exception.
+    """
+
+    class ParamNetRI(nn.Cell):
+        def __init__(self):
+            super(ParamNetRI, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+
+        def construct(self, x):
+            res = x * self.w * self.z
+            return res, x, self.w
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNetRI()
+    weights = ParameterTuple(net.trainable_params())
+    expect_grad_input = (0, np.array([7, 7]).astype(np.float32))
+    expect_grad_weight1 = np.array([4, 7]).astype(np.float32)
+    expect_grad_weight2 = np.array([2, 4]).astype(np.float32)
+    res = grad(net, 0, weights, return_ids=True)(x)
+    assert np.allclose(res[0][1].asnumpy(), expect_grad_input[1])
+    assert np.allclose(res[1][0][1].asnumpy(), expect_grad_weight1)
+    assert np.allclose(res[1][1][1].asnumpy(), expect_grad_weight2)
+    assert np.allclose(res[0][0], expect_grad_input[0])
+    assert res[1][0][0] == weights[0].name
+    assert res[1][1][0] == weights[1].name
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jit_function_grad_with_weights_return_ids():
+    """
+    Features: Function grad_with_ids.
+    Description: Test F.grad with different weights and output ids in pynative mode.
+    Expectation: No exception.
+    """
+
+    class ParamMultipleInputNet(nn.Cell):
+        def __init__(self):
+            super(ParamMultipleInputNet, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+
+        def construct(self, x, y):
+            outputs = x * y * self.w
+            return outputs, x, self.w
+
+    net = ParamMultipleInputNet()
+    weights = net.trainable_params()
+
+    @jit
+    def user_fn(x, y):
+        res = grad(net, 0, weights, return_ids=True)(x, y)
+        return res
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    y = Tensor(np.array([3, 3]).astype(np.float32))
+    res = user_fn(x, y)
+    expect_grad_input = (0, np.array([7, 7]).astype(np.float32))
+    expect_grad_weight1 = np.array([4, 7]).astype(np.float32)
+    assert np.allclose(res[0][1].asnumpy(), expect_grad_input[1])
+    assert np.allclose(res[1][0][1].asnumpy(), expect_grad_weight1)
+    assert np.allclose(res[0][0], expect_grad_input[0])
+    assert res[1][0][0] == weights[0].name
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_construct_grad_with_weights_with_return_ids():
+    """
+    Features: Function grad_with_ids.
+    Description: Test F.grad with different weights and output ids in pynative mode.
+    Expectation: No exception.
+    """
+
+    class ParamMultipleInputNet(nn.Cell):
+        def __init__(self):
+            super(ParamMultipleInputNet, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+
+        def construct(self, x, y):
+            outputs = x * y * self.w
+            return outputs, x, self.w
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = net.trainable_params()
+
+        def construct(self, x, y):
+            res = grad(self.net, 0, self.weights, return_ids=True)(x, y)
+            return res, self.weights
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    y = Tensor(np.array([3, 3]).astype(np.float32))
+    inner_net = ParamMultipleInputNet()
+    grad_net = GradNet(inner_net)
+    res, weights = grad_net(x, y)
+    expect_grad_input = (0, np.array([7, 7]).astype(np.float32))
+    expect_grad_weight1 = np.array([4, 7]).astype(np.float32)
+    assert np.allclose(res[0][1].asnumpy(), expect_grad_input[1])
+    assert np.allclose(res[1][0][1].asnumpy(), expect_grad_weight1)
+    assert np.allclose(res[0][0], expect_grad_input[0])
+    assert res[1][0][0] == weights[0].name
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_get_grad_by_position_pynative():
+    """
+    Features: Function get_grad.
+    Description: Test get_grad with position id and output gradient in pynative mode.
+    Expectation: No exception.
+    """
+
+    class ParamNetRI(nn.Cell):
+        def __init__(self):
+            super(ParamNetRI, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+
+        def construct(self, x):
+            res = x * self.w * self.z
+            return res, x, self.w
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNetRI()
+    weights = net.trainable_params()
+    expect_grad_input = np.array([7, 7]).astype(np.float32)
+    res = grad(net, 0, weights, return_ids=True)(x)
+    grad_out = get_grad(res, 0)
+    assert np.allclose(grad_out.asnumpy(), expect_grad_input)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_get_grad_with_parameter_pynative():
+    """
+    Features: Function get_grad.
+    Description: Test get_grad with parameter and output gradient in pynative mode.
+    Expectation: No exception.
+    """
+
+    class ParamNetRI(nn.Cell):
+        def __init__(self):
+            super(ParamNetRI, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+
+        def construct(self, x):
+            res = x * self.w * self.z
+            return res, x, self.w
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNetRI()
+    weights = net.trainable_params()
+    expect_grad_weight1 = np.array([4, 7]).astype(np.float32)
+    res = grad(net, 0, weights, return_ids=True)(x)
+    grad_out = get_grad(res, net.w)
+    assert np.allclose(grad_out.asnumpy(), expect_grad_weight1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_get_grad_not_found_pynative():
+    """
+    Features: Function get_grad.
+    Description: Test get_grad with invalid id and raise error in pynative mode.
+    Expectation: No exception.
+    """
+
+    class ParamNetRI(nn.Cell):
+        def __init__(self):
+            super(ParamNetRI, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+
+        def construct(self, x):
+            res = x * self.w * self.z
+            return res, x, self.w
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNetRI()
+    weights = net.trainable_params()
+    res = grad(net, 0, weights, return_ids=True)(x)
+    with pytest.raises(ValueError):
+        get_grad(res, 1)

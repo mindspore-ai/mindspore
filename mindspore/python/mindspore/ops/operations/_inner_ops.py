@@ -2392,3 +2392,41 @@ class ConvertToMsTensor(Primitive):
         return Tensor(x)
 
 convert_to_ms_tensor = ConvertToMsTensor()
+
+
+class GetGrad(Primitive):
+    """
+        Use the position id or Parameter object to get the gradient from the output
+        which returned by the :func:`mindspore.ops.grad`.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScatterElements"""
+        self.init_prim_io_names(
+            inputs=['gradients', 'x'], outputs=['gradient'])
+
+    def __call__(self, gradients, x):
+        if not isinstance(x, int) and not isinstance(x, Parameter):
+            raise TypeError(
+                f"For `get_grad`, the `x` should be an integer or a Parameter, but got {x}")
+        hash_id = x
+        if isinstance(x, Parameter):
+            hash_id = x.name
+        output = None
+
+        def _get_grad(grads, identifier):
+            if isinstance(grads, tuple):
+                if len(grads) != 2 or identifier != grads[0]:
+                    for gradient in grads:
+                        _get_grad(gradient, identifier)
+                else:
+                    nonlocal output
+                    output = grads[1]
+                    return
+
+        _get_grad(gradients, hash_id)
+        if output is None:
+            raise ValueError(
+                f"Can not find the gradient for position or Parameter {x}")
+        return output
