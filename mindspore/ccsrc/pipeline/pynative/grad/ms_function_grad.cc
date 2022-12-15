@@ -130,8 +130,9 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
   }
 }
 
-void MsFunction::ReplaceNewTensorsInGradGraph(const ValuePtr &added_out, const FuncGraphPtr &ms_func_graph,
-                                              const FuncGraphPtr &grad_graph, bool is_dynamic_shape) const {
+void MsFunction::ReplaceNewTensorsInGradGraph(const GradExecutor *grad_executor, const ValuePtr &added_out,
+                                              const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                              const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   // Get added forward nodes.
   auto merge_node = ms_func_graph->output();
@@ -145,10 +146,19 @@ void MsFunction::ReplaceNewTensorsInGradGraph(const ValuePtr &added_out, const F
   }
   constexpr size_t added_output_index = 2;
   const auto &added_forward_node = merge_make_tuple->input(added_output_index);
-  MS_EXCEPTION_IF_NULL(added_forward_node);
+  bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(merge_node);
+  if (is_dynamic_shape) {
+    const_cast<GradExecutor *>(grad_executor)->set_use_dynamic_shape_process(true);
+    MS_LOG(DEBUG) << "Ms function is dynamic shape";
+  }
   // Just one added output
+  MS_EXCEPTION_IF_NULL(grad_executor);
+  MS_EXCEPTION_IF_NULL(added_forward_node);
   if (added_forward_node->isa<ValueNode>()) {
     MS_LOG(DEBUG) << "The added forward output node is value node: " << added_forward_node->DebugString();
+    std::vector<tensor::TensorPtr> total_output_tensors;
+    TensorValueToTensor(added_out, &total_output_tensors);
+    grad_executor->top_cell()->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
     return;
   }
   // Replace new output tensors for forward nodes, it will also work in grad graph with same value node.
@@ -161,14 +171,11 @@ void MsFunction::ReplaceNewTensorsInGradGraph(const ValuePtr &added_out, const F
   // placeholder(mindspore/ccsrc/frontend/optimizer/ad/pynative_dfunctor.cc).After running ms_function, need to update
   // to real value.
   RunReplace(added_make_tuple, total_output_tensors, grad_graph, is_dynamic_shape);
+  grad_executor->top_cell()->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
 }
 
-void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const string &op_info,
-                                                const ValuePtr &new_forward_value) const {
-  if (grad_executor->use_dynamic_shape_process()) {
-    MS_LOG(DEBUG) << "Get dynamic shape process";
-    return;
-  }
+void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const TopCellInfoPtr &top_cell,
+                                                const string &op_info, const ValuePtr &new_forward_value) const {
   MS_EXCEPTION_IF_NULL(new_forward_value);
   MS_LOG(DEBUG) << "Ms func graph has already ran before. The graph phase is: " << graph_phase_;
   MS_LOG(DEBUG) << "The output values of added forward nodes are: " << new_forward_value->ToString();
@@ -178,14 +185,14 @@ void MsFunction::UpdateMsFunctionForwardTensors(const GradExecutor *grad_executo
     MS_LOG(DEBUG) << "The size of added forward tensors is zero, no need to update.";
     return;
   }
-  MS_EXCEPTION_IF_NULL(grad_executor);
-  const auto &top_cell = grad_executor->top_cell();
+  MS_EXCEPTION_IF_NULL(top_cell);
   const auto &old_tensors = top_cell->op_info_with_ms_func_forward_tensors().at(op_info);
   if (old_tensors.size() != new_tensors.size()) {
     MS_LOG(EXCEPTION) << "The size of old tensors is: " << old_tensors.size()
                       << ", but the size of new tensors is: " << new_tensors.size()
                       << ", the current op info is: " << op_info;
   }
+  MS_EXCEPTION_IF_NULL(grad_executor);
   for (size_t i = 0; i < new_tensors.size(); ++i) {
     grad_executor->UpdatePreTensorInfo(new_tensors[i], {old_tensors[i]});
     old_tensors[i]->set_sync_status(kNeedSyncDeviceToHost);
@@ -323,7 +330,6 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
                                      const FuncGraphPtr &grad_graph) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
-  MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
 
   // Step 1: Update actual output tensors used in grad graph.
   MS_EXCEPTION_IF_NULL(op_run_info->out_value);
@@ -332,16 +338,17 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info);
 
   // Step 2: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
-  if (grad_executor->top_cell()->op_info_with_ms_func_forward_tensors().find(op_run_info->op_info) !=
-      grad_executor->top_cell()->op_info_with_ms_func_forward_tensors().end()) {
-    UpdateMsFunctionForwardTensors(grad_executor, op_run_info->op_info, added_out_v);
+  if (grad_executor->use_dynamic_shape_process()) {
+    MS_LOG(DEBUG) << "Get dynamic shape process";
+  } else {
+    const auto &pre_top_cell = grad_executor->GetAlreadyRunTopCell(grad_executor->top_cell()->already_run_cell_id());
+    if (pre_top_cell != nullptr && pre_top_cell->op_info_with_ms_func_forward_tensors().find(op_run_info->op_info) !=
+                                     pre_top_cell->op_info_with_ms_func_forward_tensors().end()) {
+      UpdateMsFunctionForwardTensors(grad_executor, pre_top_cell, op_run_info->op_info, added_out_v);
+    }
   }
-  bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(ms_func_graph->output());
-  if (is_dynamic_shape) {
-    const_cast<GradExecutor *>(grad_executor)->set_use_dynamic_shape_process(true);
-    MS_LOG(DEBUG) << "Ms function is dynamic shape";
-  }
-  ReplaceNewTensorsInGradGraph(added_out_v, ms_func_graph, grad_graph, is_dynamic_shape);
+
+  ReplaceNewTensorsInGradGraph(grad_executor, added_out_v, ms_func_graph, grad_graph, op_run_info);
 
   // Clone new ms_function func graph and grad graph.
   auto new_ms_func_graph = BasicClone(ms_func_graph);
