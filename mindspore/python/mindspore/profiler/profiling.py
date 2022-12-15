@@ -135,6 +135,7 @@ class Profiler:
             msg = "Do not init twice in the profiler."
             raise RuntimeError(msg)
         Profiler._has_initialized = True
+        self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
         self._dev_id = None
         self._cpu_profiler = None
         self._gpu_profiler = None
@@ -587,8 +588,7 @@ class Profiler:
         timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
                                                     self._rank_size, context.get_context("mode"))
         timeline_analyser.init_pynative_timeline()
-        size_limit = 100 * 1024 * 1024  # 100MB
-        timeline_analyser.write_timeline(size_limit)
+        timeline_analyser.write_timeline(self._timeline_size_limit_byte)
         timeline_analyser.write_timeline_summary()
 
     def _ascend_analyse(self):
@@ -860,11 +860,10 @@ class Profiler:
     def _cpu_analyse(self):
         """Collect and analyse cpu performance data."""
 
-        size_limit = 100 * 1024 * 1024  # 100MB
         try:
             timeline_generator = CpuTimelineGenerator(self._output_path, context.get_context("mode"))
             timeline_generator.init_timeline()
-            timeline_generator.write_timeline(size_limit)
+            timeline_generator.write_timeline(self._timeline_size_limit_byte)
             timeline_generator.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
@@ -962,18 +961,16 @@ class Profiler:
         min_cycle_counter = min(aicpu_parser.min_cycle_counter, optime_parser.min_cycle_counter)
         timeline_analyser.init_timeline(all_reduce_info, framework_info, aicpu_info,
                                         min_cycle_counter, source_path)
-        size_limit = 100 * 1024 * 1024  # 100MB
-        timeline_analyser.write_timeline(size_limit)
+        timeline_analyser.write_timeline(self._timeline_size_limit_byte)
         timeline_analyser.write_timeline_summary()
 
     def _generate_timeline(self, reduce_op_type):
         """Used for gpu, generate timeline info, write to json format file."""
         try:
-            size_limit = 100 * 1024 * 1024  # 100MB
             timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id, self._rank_size,
                                                       context.get_context("mode"))
             timeline_generator.init_timeline(reduce_op_type)
-            self._timeline_meta = timeline_generator.write_timeline(size_limit)
+            self._timeline_meta = timeline_generator.write_timeline(self._timeline_size_limit_byte)
             timeline_generator.write_timeline_summary()
             return timeline_generator
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
