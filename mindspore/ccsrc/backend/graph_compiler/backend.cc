@@ -551,6 +551,7 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
 
 void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                      const VectorRef &args, VectorRef *outputs) {
+  MS_LOG(INFO) << "Start";
   WaitTaskFinish();
   auto inputs = GetRunGraphInputs(graph_compiler_info, args);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -666,6 +667,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
   auto &op_executor = runtime::OpExecutor::GetInstance();
   op_executor.Register([this]() { BatchBuildCallback(); });
 
+  MS_LOG(INFO) << "Start";
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   const auto &graphs = graph_compiler_info.graphs_;
   auto inputs = GetRunGraphInputs(graph_compiler_info, args);
@@ -748,6 +750,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
   if (is_dynamic_ || root_graph_->has_flag(kFlagUseDynamicShapeProcess)) {
     ClearResource();
   }
+  MS_LOG(INFO) << "End";
 }
 
 void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
@@ -1327,7 +1330,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
 void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
-  MS_LOG(DEBUG) << "RunOp start " << op_run_info->base_op_run_info.op_name;
+  MS_LOG(INFO) << "RunOp start " << op_run_info->base_op_run_info.op_name;
   // Get the device context.
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
@@ -1356,7 +1359,7 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
 void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
-  MS_LOG(DEBUG) << "RunOp start " << op_run_info->base_op_run_info.op_name;
+  MS_LOG(INFO) << "RunOp start " << op_run_info->base_op_run_info.op_name;
   // Get the device context.
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
