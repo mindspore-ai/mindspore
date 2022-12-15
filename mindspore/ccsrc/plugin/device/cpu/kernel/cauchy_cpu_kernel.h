@@ -18,10 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CAUCHY_CPU_KERNEL_H_
 
 #include <functional>
-#include <memory>
 #include <vector>
-#include <iostream>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -43,7 +40,7 @@ class CauchyCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &outputs) const;
 
   float sigma_{1.0};
   float median_{0};

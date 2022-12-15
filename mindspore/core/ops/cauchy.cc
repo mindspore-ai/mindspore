@@ -34,10 +34,10 @@ constexpr auto kAttrSize = "size";
 abstract::ShapePtr CauchyInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 0, prim_name);
   MS_EXCEPTION_IF_NULL(primitive->GetAttr(kAttrSize));
   auto size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrSize));
-  (void)CheckAndConvertUtils::CheckInteger("the length of 'size'", size.size(), kGreaterThan, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("the length of 'size'", SizeToLong(size.size()), kGreaterThan, 0, prim_name);
   for (size_t i = 0; i < size.size(); ++i) {
     if (size[i] <= 0) {
       MS_EXCEPTION(ValueError) << "For Cauchy, each dimension of size must be greater than zero.";

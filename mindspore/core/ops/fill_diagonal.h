@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_FILL_DIAGONAL_H_
 #define MINDSPORE_CORE_OPS_FILL_DIAGONAL_H_
 
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
