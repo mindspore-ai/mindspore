@@ -4820,8 +4820,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> net = ops.TriuIndices(5, 4, 2, mindspore.int64)
-        >>> output = net()
+        >>> output = ops.triu_indices(5, 4, 2, mindspore.int64)
         >>> print(output)
         [[0 0 1]
          [2 3 3]]

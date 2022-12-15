@@ -515,7 +515,6 @@ Array Operation
     mindspore.ops.Lcm
     mindspore.ops.LeftShift
     mindspore.ops.ListDiff
-    mindspore.ops.LogMatrixDeterminant
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
     mindspore.ops.LogSpace
@@ -526,7 +525,6 @@ Array Operation
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
     mindspore.ops.MatrixBandPart
-    mindspore.ops.MatrixDeterminant
     mindspore.ops.MatrixExp
     mindspore.ops.MatrixLogarithm
     mindspore.ops.MatrixPower

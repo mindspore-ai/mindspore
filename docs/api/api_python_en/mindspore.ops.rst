@@ -217,8 +217,6 @@ Element-by-Element Operations
     mindspore.ops.logical_or
     mindspore.ops.logical_xor
     mindspore.ops.logit
-    mindspore.ops.log_matrix_determinant
-    mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.multiply
     mindspore.ops.mvlgamma

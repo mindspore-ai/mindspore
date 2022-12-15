@@ -63,6 +63,12 @@ class MatrixInverseInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
     const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
     auto infer_type = input_args[kInputIndex0]->BuildType();
+    auto adjoint_ptr = prim->GetAttr(kAdjoint);
+    MS_EXCEPTION_IF_NULL(adjoint_ptr);
+    auto adjoint = GetValue<bool>(adjoint_ptr);
+    if (adjoint) {
+      MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'adjoint' only accepts False.";
+    }
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
     return infer_type;
   }
