@@ -15,13 +15,14 @@ mindspore.nn.CTCLoss
     输入：
         - **log_probs** (Tensor) - 输入Tensor，shape :math:`(T, N, C)` 或 :math:`(T, C)` 。其中T表示输入长度，N表示批次大小，C是分类数。T，N，C均为正整数。
         - **targets** (Tensor) - 目标Tensor，shape :math:`(N, S)` 或 (sum( `target_lengths` ))。其中S表示最大目标长度。
-        - **input_lengths** (Union[tuple, Tensor, int]) - shape为N的Tensor或tuple或者是一个正整数。表示输入长度。
-        - **target_lengths** (Union[tuple, Tensor, int]) - shape为N的Tensor或tuple或者是一个正整数。表示目标长度。
+        - **input_lengths** (Union[tuple, Tensor]) - shape为N的Tensor或tuple。表示输入长度。
+        - **target_lengths** (Union[tuple, Tensor]) - shape为N的Tensor或tuple。表示目标长度。
 
     输出：
         - **neg_log_likelihood** (Tensor) - 对每一个输入节点可微调的损失值。
 
     异常：
+        - **TypeError** - `log_probs` 或 `targets` 不是Tensor。
         - **TypeError** - `zero_infinity` 不是布尔值， `reduction` 不是字符串。
         - **TypeError** - `log_probs` 的数据类型不是float或double。
         - **TypeError** - `targets` ， `input_lengths` 或 `target_lengths` 数据类型不是int32或int64。

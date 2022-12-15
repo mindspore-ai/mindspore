@@ -27,7 +27,6 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations.nn_ops import MultiMarginLoss as MultiMarginLossOp
 from mindspore.ops.operations.nn_ops import MultilabelMarginLoss as MultilabelMarginLossOp
 from mindspore.ops.operations.nn_ops import TripletMarginLoss as TripletMarginLossOp
-from mindspore.ops.operations.nn_ops import CTCLossV2
 from mindspore.ops import functional as F
 from mindspore import nn
 from mindspore.ops.primitive import constexpr
@@ -2416,15 +2415,14 @@ class CTCLoss(LossBase):
           C is number of classes (including blank). T, N and C are positive integers.
         - **targets** (Tensor) - A tensor of shape (N, S) or (sum( `target_lengths` )), where S is max target length,
           means the target sequences.
-        - **input_lengths** (Union[tuple, Tensor, int]) - A tuple or Tensor of shape(N), or a number.
-          It means the lengths of the input.
-        - **target_lengths** (Union[tuple, Tensor, int]) - A tuple or Tensor of shape(N), or a number.
-          It means the lengths of the target.
+        - **input_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape(N). It means the lengths of the input.
+        - **target_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape(N). It means the lengths of the target.
 
     Outputs:
         - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.
 
     Raises:
+        TypeError: If `log_probs` or `targets` is not a Tensor.
         TypeError: If `zero_infinity` is not a bool, `reduction` is not string.
         TypeError: If the dtype of `log_probs` is not float or double.
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
@@ -2435,7 +2433,7 @@ class CTCLoss(LossBase):
         ValueError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2458,37 +2456,34 @@ class CTCLoss(LossBase):
         >>> ctc_loss = CTCLoss(blank=0, reduction='none', zero_infinity=False)
         >>> loss = ctc_loss(ms_input, target, input_lengths, target_lengths)
         >>> print(loss)
-        Tensor(shape=[2], dtype=Float32, value= [-4.57949715e+001, -5.57949677e+001])
+        [-45.79497  -55.794968]
         >>> arr = np.arange(T*C).reshape((T, C))
         >>> ms_input = Tensor(arr, dtype=mstype.float32)
-        >>> input_lengths = T
-        >>> target_lengths = S_min
+        >>> input_lengths = Tensor([T], dtype=mstype.int32)
+        >>> target_lengths = Tensor([S_min], dtype=mstype.int32)
         >>> target = np.random.randint(1, C, size=(S_min,))
         >>> target = Tensor(target, dtype=mstype.int32)
         >>> ctc_loss = CTCLoss(blank=0, reduction='none', zero_infinity=False)
         >>> loss = ctc_loss(ms_input, target, input_lengths, target_lengths)
         >>> print(loss)
-        Tensor(shape=[1], dtype=Float32, value= [-2.57949677e+001])
+        [-25.794968]
     """
 
     def __init__(self, blank=0, reduction='mean', zero_infinity=False):
-        super().__init__(reduction)
-        self.ctcloss = CTCLossV2(blank=blank, reduction='none', zero_infinity=zero_infinity)
+        super().__init__()
+        self.blank = blank
+        self.reduction = reduction
+        self.zero_infinity = zero_infinity
 
     def construct(self, log_probs, targets, input_lengths, target_lengths):
-        if len(log_probs.shape) == 2:
+        _check_is_tensor('log_probs', log_probs, self.cls_name)
+        _check_is_tensor('targets', targets, self.cls_name)
+        if log_probs.ndim == 2:
             log_probs = log_probs.expand_dims(-2)
             targets = targets.expand_dims(0)
-            if isinstance(input_lengths, int):
-                input_lengths = Tensor([input_lengths], mstype.int32)
-            else:
-                raise ValueError("The dtype of input_lengths should be int32 or int64.")
-            if isinstance(target_lengths, int):
-                target_lengths = Tensor([target_lengths], mstype.int32)
-            else:
-                raise ValueError("The dtype of target_lengths should be int32 or int64.")
-        neg_log_hood, _ = self.ctcloss(log_probs, targets, input_lengths, target_lengths)
-        return self.get_loss(neg_log_hood)
+        neg_log_hood, _ = F.ctc_loss(log_probs, targets, input_lengths, target_lengths, self.blank, self.reduction,
+                                     self.zero_infinity)
+        return neg_log_hood
 
 
 class GaussianNLLLoss(LossBase):
