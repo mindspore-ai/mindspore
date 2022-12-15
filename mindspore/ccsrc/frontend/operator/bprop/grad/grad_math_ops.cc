@@ -500,8 +500,10 @@ REG_BPROP_BUILDER("Atanh").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_dtype = ib->GetDtype(x);
+  auto x_dtype_id = x_dtype->type_id();
   auto one = ib->Tensor(1, x_dtype);
-  auto tmp = one - ib->Pow(x, ib->Tensor(2, x_dtype));
+  auto const_type = (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) ? kInt64 : x_dtype;
+  auto tmp = one - ib->Pow(x, ib->Tensor(2, const_type));
   auto dx = ib->Div(one, tmp) * dout;
   return {dx};
 });
