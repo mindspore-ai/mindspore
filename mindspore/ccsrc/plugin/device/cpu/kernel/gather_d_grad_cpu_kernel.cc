@@ -185,8 +185,16 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
   }
   auto out_size = get_element_num(output_shape_);
+
+#if defined(__GNUC__) && (__GNUC__ > 10)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
   // memset_s does not support data that more than 2GB.
   memset(out, 0, out_size * sizeof(T));
+#if defined(__GNUC__) && (__GNUC__ > 10)
+#pragma GCC diagnostic pop
+#endif
 
   // out_cargo_size
   std::vector<size_t> out_cargo_size = std::vector<size_t>(output_shape_.size(), 1);
