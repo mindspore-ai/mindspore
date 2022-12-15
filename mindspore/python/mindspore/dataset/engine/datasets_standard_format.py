@@ -247,48 +247,48 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
-            pattern of files. The list will be sorted in a lexicographical order.
+            pattern of files. The list will be sorted in lexicographical order.
         schema (Union[str, Schema], optional): Data format policy, which specifies the data types and shapes of the data
             column to be read. Both JSON file path and objects constructed by mindspore.dataset.Schema are acceptable.
             Default: None.
         columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
         num_samples (int, optional): The number of samples (rows) to be included in the dataset. Default: None.
-            If num_samples is None and numRows(parsed from schema) does not exist, read the full dataset;
-            If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
-            If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
+            If `num_samples` is None and numRows(parsed from `schema` ) does not exist, read the full dataset;
+            If `num_samples` is None and numRows(parsed from `schema` ) is greater than 0, read numRows rows;
+            If both `num_samples` and numRows(parsed from `schema` ) are greater than 0, read `num_samples` rows.
             If `compression_type` is not None and `num_samples` is provided, then `num_samples` will be
-            interpreted as number of rows to be read per shard from the compressed files.
+            interpreted as the number of rows to be read per shard from the compressed files.
             It is highly recommended to provide `num_samples` when `compression_type` is "GZIP" or "ZLIB"
             to avoid performance degradation.
-            If `num_samples` is not provided, then multiple decompressions of the same file is required to
+            If `num_samples` is not provided, then multiple decompressions of the same file are required to
             obtain the file size.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed.
-            If shuffle is True, performs global shuffle.
+            If `shuffle` is False, no shuffling will be performed.
+            If `shuffle` is True, perform global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
+            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting `shuffle` to True.
 
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None. When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum sample number per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards. Default: False. If `shard_equal_rows`
-            is False, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
-            When the number of samples of per TFRecord file are not equal, it is suggested to set to true.
+            is False, the number of rows of each shard may not be equal, and may lead to a failure in distributed
+            training. When the number of samples per TFRecord file are not equal, it is suggested to set it to True.
             This argument should only be specified when `num_shards` is also specified.
-            When `compression_type` and `num_samples` are provided, `shard_equal_rows` will be implied as true.
+            When `compression_type` and `num_samples` are both provided, `shard_equal_rows` will be implied as true.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
-        compression_type (str, optional): Type of compression used for all files, must be either '', 'GZIP', or 'ZLIB'.
-            Default: None, as in empty string.
+        compression_type (str, optional): The type of compression used for all files, must be either '', 'GZIP', or
+            'ZLIB'. Default: None, as in empty string.
             This will automatically get equal rows for all shards (`shard_equal_rows` considered to be True) and thus
             cannot have the case where `num_samples` is None.
 
@@ -299,8 +299,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards` ).
         ValueError: If `compression_type` is invalid (other than '', 'GZIP', or 'ZLIB').
-        ValueError: If `compression_type` is provided but number of dataset files < `num_shards` .
-        ValueError: If `compression_type` is provided but `num_samples` is not provided or <= 0.
+        ValueError: If `compression_type` is provided, but the number of dataset files < `num_shards` .
+        ValueError: If `num_samples` < 0.
 
     Examples:
         >>> from mindspore import dtype as mstype
@@ -317,7 +317,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         >>> schema.add_column(name='col_1d', de_type=mstype.int64, shape=[2])
         >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=schema)
         >>>
-        >>> # 3) Get all rows from tfrecord_dataset_dir with schema file.
+        >>> # 3) Get all rows from tfrecord_dataset_dir with the schema file.
         >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=tfrecord_schema_file)
     """
 
