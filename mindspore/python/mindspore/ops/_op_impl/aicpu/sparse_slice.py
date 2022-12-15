@@ -26,8 +26,12 @@ sparse_slice_op_info = AiCPURegOp("SparseSlice") \
     .output(0, "y_indices", "required") \
     .output(1, "y_values", "required") \
     .output(2, "y_shape", "required") \
+    .dtype_format(DataType.I64_Default, DataType.U64_Default, DataType.I64_Default, DataType.I64_Default,     \
+                  DataType.I64_Default, DataType.I64_Default, DataType.U64_Default, DataType.I64_Default)     \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default,     \
                   DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.I64_Default)     \
+    .dtype_format(DataType.I64_Default, DataType.U32_Default, DataType.I64_Default, DataType.I64_Default,     \
+                  DataType.I64_Default, DataType.I64_Default, DataType.U32_Default, DataType.I64_Default)     \
     .dtype_format(DataType.I64_Default, DataType.I32_Default, DataType.I64_Default, DataType.I64_Default,     \
                   DataType.I64_Default, DataType.I64_Default, DataType.I32_Default, DataType.I64_Default)     \
     .dtype_format(DataType.I64_Default, DataType.U16_Default, DataType.I64_Default, DataType.I64_Default,     \

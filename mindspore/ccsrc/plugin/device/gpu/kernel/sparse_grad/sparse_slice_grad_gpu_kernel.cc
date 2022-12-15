@@ -15,9 +15,12 @@
  */
 
 #include "mindspore/ccsrc/plugin/device/gpu/kernel/sparse_grad/sparse_slice_grad_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 bool SparseSliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
   constexpr size_t inputs_num = 4;
@@ -165,6 +168,20 @@ std::vector<std::pair<KernelAttr, SparseSliceGradGpuKernelMod::SparseSliceGradLa
        .AddOutputAttr(kNumberTypeUInt16),
      &SparseSliceGradGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
     {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt32),
+     &SparseSliceGradGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt64),
+     &SparseSliceGradGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
+    {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
@@ -185,6 +202,27 @@ std::vector<std::pair<KernelAttr, SparseSliceGradGpuKernelMod::SparseSliceGradLa
        .AddInputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat64),
      &SparseSliceGradGpuKernelMod::LaunchKernel<double, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeBool),
+     &SparseSliceGradGpuKernelMod::LaunchKernel<bool, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &SparseSliceGradGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &SparseSliceGradGpuKernelMod::LaunchKernel<Complex<double>, int64_t>},
   }};
 
 std::vector<KernelAttr> SparseSliceGradGpuKernelMod::GetOpSupport() {

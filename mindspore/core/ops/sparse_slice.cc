@@ -71,10 +71,10 @@ class SparseSliceInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("start", start_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("size", size_type, {kInt64}, op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(
-      "values", value_type,
-      {kUInt8, kUInt16, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
-      op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("values", value_type,
+                                                     {kUInt8, kUInt16, kUInt32, kUInt64, kInt8, kInt16, kInt32, kInt64,
+                                                      kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
+                                                     op_name);
     auto y_indices_type = std::make_shared<TensorType>(kInt64);
     auto y_shape_type = std::make_shared<TensorType>(kInt64);
     return std::make_shared<Tuple>(std::vector<TypePtr>{y_indices_type, value_type, y_shape_type});

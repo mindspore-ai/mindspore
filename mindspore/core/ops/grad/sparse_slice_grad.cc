@@ -48,9 +48,10 @@ class SparseSliceGradInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     const int64_t input_num = 4;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(
-      "backprop_val_grad", input_args[kInputIndex0]->BuildType(),
-      {kUInt8, kInt8, kUInt16, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128}, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", input_args[kInputIndex0]->BuildType(),
+                                                     {kUInt8, kUInt16, kUInt32, kUInt64, kInt8, kInt16, kInt32, kInt64,
+                                                      kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
+                                                     op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), {kInt64},
                                                      op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex2]->BuildType(), {kInt64}, op_name);
