@@ -60,12 +60,14 @@ void InstanceNormV2GradInputShapeCheck(const PrimitivePtr &primitive, const std:
   ShapeVector check_shape = dy_shape;
   int64_t image_size = 0;
   constexpr int64_t kDimSizeOne = 1;
-  if (dy_shape.size() == kDim4) {
+  size_t dim4 = static_cast<size_t>(kDim4);
+  size_t dim5 = static_cast<size_t>(kDim5);
+  if (dy_shape.size() == dim4) {
     // data format NCHW
     check_shape[kFormatNCHWIndexH] = kDimSizeOne;
     check_shape[kFormatNCHWIndexW] = kDimSizeOne;
     image_size = dy_shape[kFormatNCHWIndexH] * dy_shape[kFormatNCHWIndexW];
-  } else if (dy_shape.size() == kDim5) {
+  } else if (dy_shape.size() == dim5) {
     // data format NC1HWC0
     check_shape[kFormatNC1HWC0IndexH] = kDimSizeOne;
     check_shape[kFormatNC1HWC0IndexW] = kDimSizeOne;

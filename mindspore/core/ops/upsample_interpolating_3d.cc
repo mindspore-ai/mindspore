@@ -31,9 +31,9 @@ namespace {
 abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  int64_t long_kdim2 = SizeToLong(kDim2);
-  int64_t long_kdim3 = SizeToLong(kDim3);
-  int64_t long_kdim5 = SizeToLong(kDim5);
+  int64_t long_kdim2 = static_cast<int64_t>(kDim2);
+  int64_t long_kdim3 = static_cast<int64_t>(kDim3);
+  int64_t long_kdim5 = static_cast<int64_t>(kDim5);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, long_kdim5, prim_name);

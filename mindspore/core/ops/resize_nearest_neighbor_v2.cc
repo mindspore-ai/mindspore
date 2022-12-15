@@ -39,9 +39,9 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto size_ptr = input_args[kInputIndex1]->BuildValue();
-  int64_t long_kdim1 = SizeToLong(kDim1);
-  int64_t long_kdim2 = SizeToLong(kDim2);
-  int64_t long_kdim4 = SizeToLong(kDim4);
+  int64_t long_kdim1 = static_cast<int64_t>(kDim1);
+  int64_t long_kdim2 = static_cast<int64_t>(kDim2);
+  int64_t long_kdim4 = static_cast<int64_t>(kDim4);
   (void)CheckAndConvertUtils::CheckInteger("dimension of size", SizeToLong(size_shape.size()), kEqual, long_kdim1,
                                            prim_name);
 
