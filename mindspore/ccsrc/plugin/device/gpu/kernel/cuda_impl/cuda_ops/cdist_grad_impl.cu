@@ -43,7 +43,6 @@ __global__ void CdistGradOne(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
     return;
   }
   const T grad_k = grad[current];
-  const T dist_k = dist[current];
 
   const int current_l = current / r_size;
   const int current_k = current % r_size;
@@ -87,9 +86,10 @@ __global__ void CdistGradLessthanTwo(T *grad, T *dist, T *t1, T *t2, T *res, dou
     const T * self_m = start + current_i;
     const T * self_n = t2 + current_l * x2_size + n * col + current_i;
     T * res_m = res + current_l * x1_size + m * col + current_i;
+    double dist_k_pow = pow(static_cast<double>(dist_k), p - 1);
     for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
       const T diff = *self_m - *self_n;
-      T res = (sign(diff) * std::pow(std::abs(diff), p - 1) * (grad_k) / std::pow(dist_k, p - 1));
+      T res = static_cast<T>(sign(diff) * pow(static_cast<double>(abs(diff)), p - 1) * grad_k / dist_k_pow);
       MsAtomicAdd(res_m, res);
     }
   }
@@ -151,10 +151,10 @@ __global__ void CdistGradP(T *grad, T *dist, T *t1, T *t2, T *res, double p, int
     const T * self_m = start + current_i;
     const T * self_n = t2 + current_l * x2_size + n * col + current_i;
     T * res_m = res + current_l * x1_size + m * col + current_i;
-    T dist_k_pow = std::pow(dist_k, p - 1);
+    double dist_k_pow = pow(static_cast<double>(dist_k), p - 1);
     for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
       const T diff = *self_m - *self_n;
-      T res_num = diff * std::pow(std::abs(diff), p - 2) * grad_k / std::pow(dist_k, p - 1);
+      T res_num = static_cast<T>(diff * pow(static_cast<double>(abs(diff)), p - 2) * grad_k / dist_k_pow);
       MsAtomicAdd(res_m, res_num);
     }
   }
@@ -186,7 +186,7 @@ __global__ void CdistGradInf(T *grad, T *dist, T *t1, T *t2, T *res, double p, i
 
   for (; self_m < end; self_m += stride, self_n += stride, res_m += stride) {
     T diff = *self_m - *self_n;
-    T res = grad_k * sign(diff) * (std::abs(diff) == (dist_k));
+    T res = grad_k * sign(diff) * (abs(diff) == (dist_k));
     MsAtomicAdd(res_m, res);
   }
 }
