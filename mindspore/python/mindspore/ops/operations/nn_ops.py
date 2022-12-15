@@ -5836,10 +5836,10 @@ class ApplyAdagrad(Primitive):
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
+        - **var** (Parameter) - Variable to be updated. With float or complex data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
-        - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar. With float32 or float16 data type.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar. With float or complex data type.
         - **grad** (Tensor) - A tensor for gradient. The shape and data type must be the same as `var`.
 
     Outputs:
@@ -5849,7 +5849,7 @@ class ApplyAdagrad(Primitive):
         - **accum** (Tensor) - The same shape and data type as `accum`.
 
     Raises:
-        TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float nor complex.
         TypeError: If `lr` is neither a Number nor a Tensor.
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 

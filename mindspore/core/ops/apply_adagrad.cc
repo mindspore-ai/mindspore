@@ -87,7 +87,7 @@ class ApplyAdagradInfer : public abstract::OpInferBase {
     auto accum_type = input_args[kInputIndex1]->BuildType();
     auto lr_type = input_args[kInputIndex2]->BuildType();
     auto grad_type = input_args[kInputIndex3]->BuildType();
-    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     // var, accum and grad must have the same type
     std::map<std::string, TypePtr> args;
     (void)args.insert(std::make_pair("var", var_type));

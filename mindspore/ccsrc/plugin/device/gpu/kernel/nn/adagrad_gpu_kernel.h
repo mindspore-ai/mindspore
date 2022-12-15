@@ -67,6 +67,10 @@ class AdagradGpuKernelMod : public NativeGpuKernelMod {
   size_t accumulation_size_;
   size_t learning_rate_size_;
   size_t gradient_size_;
+
+  size_t variable_shape_;
+  size_t accumulation_shape_;
+  size_t gradient_shape_;
   bool update_slots;
   std::string kernel_name_;
 };
