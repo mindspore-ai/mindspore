@@ -147,7 +147,10 @@ def get_bprop_pad_v3(self):
 
     def bprop(x, paddings, constant_values, out, dout):
         if mode == 'constant':
-            neg_paddings = tuple(-x for x in paddings)
+            if isinstance(paddings, (list, tuple)):
+                neg_paddings = tuple(-x for x in paddings)
+            else:
+                neg_paddings = -paddings
             dx = pad_v3_grad(dout, neg_paddings, zeros_like(constant_values))
         else:
             dx = pad_v3_grad(dout, paddings)
