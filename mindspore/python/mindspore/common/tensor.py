@@ -2628,6 +2628,20 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('matrix_determinant')(self)
 
+    def digamma(self):
+        r"""
+        Refer to :func:`mindspore.ops.digamma`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('digamma')(self)
+
+    def lgamma(self):
+        r"""
+        Refer to :func:`mindspore.ops.lgamma`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('lgamma')(self)
+
     def diagonal(self, offset=0, axis1=0, axis2=1):
         """
         For details, please refer to :func:`mindspore.ops.diagonal`.

@@ -178,6 +178,8 @@ from .math_func import (
     tensor_mul,
     mul,
     multiply,
+    digamma,
+    lgamma,
     tensor_div,
     div,
     divide,

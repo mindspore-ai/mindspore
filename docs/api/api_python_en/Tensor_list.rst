@@ -94,6 +94,7 @@
     mindspore.Tensor.det
     mindspore.Tensor.diag
     mindspore.Tensor.diagonal
+    mindspore.Tensor.digamma
     mindspore.Tensor.div
     mindspore.Tensor.divide
     mindspore.Tensor.dsplit
@@ -165,6 +166,7 @@
     mindspore.Tensor.lerp
     mindspore.Tensor.less
     mindspore.Tensor.less_equal
+    mindspore.Tensor.lgamma
     mindspore.Tensor.log
     mindspore.Tensor.log10
     mindspore.Tensor.log1p

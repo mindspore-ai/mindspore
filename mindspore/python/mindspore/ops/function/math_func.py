@@ -9052,20 +9052,20 @@ def igammac(input, other):
 
 def lgamma(x):
     r"""
-    Computes the natural logarithm of the absolute value of the gamma function on `input`.
+    Computes the natural logarithm of the absolute value of the gamma function on input.
 
     .. math::
         \text{out}_{i} = \ln \Gamma(|\text{input}_{i}|)
 
     Args:
-        x (Tensor): the tensor to compute the lgamma function.
+        x (Tensor): The input tensor. With type of float16 or float32 or float64.
 
     Returns:
         Tensor, has the same dtype as `x`.
 
     Raises:
         TypeError: If x is not a Tensor.
-        TypeError: If dtype of input x is not one of: float16, float32, float64.
+        TypeError: If dtype of `x` is not float16 or float32 or float64.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -9098,8 +9098,8 @@ def digamma(x):
         Tensor, has the same dtype as `x`.
 
     Raises:
-        TypeError: If x is not a Tensor.
-        TypeError: If dtype of input x is not float16 or float32 or float64.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32 or float64.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -9604,6 +9604,8 @@ __all__ = [
     'mul',
     'multiply',
     'nan_to_num',
+    'digamma',
+    'lgamma',
     'tensor_div',
     'div',
     'divide',
