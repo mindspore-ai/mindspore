@@ -273,15 +273,21 @@ void RpcActorStatusUpdater::set_rpc_actors(const RpcActorSetPtr &rpc_actors) {
 }
 
 void RpcActorStatusUpdater::UpdateRpcActorStatus() const {
-  // Update status for rpc actors to control their execution orders.
+  // Update status for recv actors to control their execution orders.
   if (rpc_actors_.lock() != nullptr) {
     for (auto &recv_actor : rpc_actors_.lock()->recv_actors_) {
       MS_EXCEPTION_IF_NULL(recv_actor);
       recv_actor->UpdateStatus();
     }
+  }
+}
+
+void RpcActorStatusUpdater::FlushRpcData() const {
+  // Flush data for send actors.
+  if (rpc_actors_.lock() != nullptr) {
     for (auto &send_actor : rpc_actors_.lock()->send_actors_) {
       MS_EXCEPTION_IF_NULL(send_actor);
-      send_actor->UpdateStatus();
+      send_actor->FlushData();
     }
   }
 }

@@ -66,7 +66,7 @@ bool SendActor::ConnectServer() {
   return true;
 }
 
-void SendActor::UpdateStatus() {
+void SendActor::FlushData() {
   if (!client_->Flush(server_url_)) {
     MS_LOG(EXCEPTION) << "Failed to flush client for server " << server_url_;
   }
