@@ -79,9 +79,9 @@ void SliceCpuKernelMod::InitSliceParam(const ShapeVector &input_shape, const std
       if (slice_size == -1) {
         slice_size = dim_len - begin_pos;
       }
-      if (slice_size <= 0) {
+      if (slice_size < 0) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                          << "', the each dimension of 'size' must be greater than 0 "
+                          << "', the each dimension of 'size' must be greater than or equal to 0 "
                              "or be equal to -1, but got slice size "
                           << slice_size;
       }
