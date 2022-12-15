@@ -6645,6 +6645,9 @@ class ApplyFtrl(Primitive):
         TypeError: If dtype of `var`, `grad`, `lr`, `l1`, `l2` or `lr_power` is neither float16 nor float32.
         TypeError: If `lr`, `l1`, `l2` or `lr_power` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
+        RuntimeError: If the parameter types of `var`, `accum` and `linear` are inconsistent.
+        RuntimeError: If the parameter types of `grad`, `lr`, `l1`, `l2`, `lr_power` are inconsistent with `var`
+                      and the precision is greater than `var`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6677,6 +6680,17 @@ class ApplyFtrl(Primitive):
         [[ 0.0390525  0.11492836]
          [ 0.00066425 0.15075898]]
     """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('linear', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T),
+        sig.make_sig('l1', dtype=sig.sig_dtype.T),
+        sig.make_sig('l2', dtype=sig.sig_dtype.T),
+        sig.make_sig('lr_power', dtype=sig.sig_dtype.T)
+    )
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -10264,6 +10278,7 @@ class ChannelShuffle(Primitive):
            [[12 13]
            [14 15]]]]
     """
+
     @prim_attr_register
     def __init__(self, group):
         """Initialize ChannelShuffle"""

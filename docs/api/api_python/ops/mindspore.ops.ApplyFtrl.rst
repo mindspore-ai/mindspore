@@ -28,3 +28,5 @@
         - **TypeError** - 如果 `var` 、 `grad` 、 `lr` 、 `l1` 、 `l2` 或 `lr_power` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `lr` 、 `l1` 、 `l2` 或 `lr_power` 既不是数值型也不是Tensor。
         - **TypeError** - 如果 `grad` 不是Tensor。
+        - **RuntimeError** - 如果 `var`、 `accum`、 `linear` 参数类型不一致。
+        - **RuntimeError** - 如果 `grad`、 `lr`、 `l1`、 `l2`、`lr_power` 的参数类型与 `var` 不一致且精度大于 `var`。
