@@ -28,9 +28,6 @@
 
 namespace mindspore {
 namespace lite {
-static const std::map<std::string, BaseOperatorPtr> kDivTypeMap = {{"Div", std::make_shared<ops::Div>()},
-                                                                   {"RealDiv", std::make_shared<ops::RealDiv>()}};
-
 STATUS AddFusionMapper::Mapper(const CNodePtr &cnode) {
   ops::Add op_add;
   auto dst_prim = op_add.GetPrim();
@@ -54,6 +51,8 @@ STATUS DivFusionMapper::Mapper(const CNodePtr &cnode) {
     original_name = GetValue<std::string>(name_ptr);
     original_name = original_name.empty() ? "Div" : original_name;
   }
+  std::map<std::string, BaseOperatorPtr> kDivTypeMap = {{"Div", std::make_shared<ops::Div>()},
+                                                        {"RealDiv", std::make_shared<ops::RealDiv>()}};
   PrimitivePtr dst_prim = nullptr;
   if (kDivTypeMap.find(original_name) != kDivTypeMap.end()) {
     auto dst_op = kDivTypeMap.at(original_name);

@@ -25,13 +25,6 @@
 
 namespace mindspore {
 namespace lite {
-static const std::map<std::string, PrimitivePtr> kPadTypeMap = {
-  {"Pad", std::make_shared<acl::PadV1>()},
-  {"PadV2", std::make_shared<acl::PadV2>()},
-  {"PadV3", std::make_shared<acl::PadV3>()},
-  {"MirrorPad", std::make_shared<acl::MirrorPad>()},
-};
-
 namespace {
 constexpr size_t kNumFlagTwo = 2;
 constexpr size_t kNamePadInputNum = 3;
@@ -45,7 +38,13 @@ STATUS PadFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  std::string origin_name;
+  std::map<std::string, PrimitivePtr> kPadTypeMap = {
+    {"Pad", std::make_shared<acl::Pad>()},
+    {"PadV2", std::make_shared<acl::PadV2>()},
+    {"PadV3", std::make_shared<acl::PadV3>()},
+    {"MirrorPad", std::make_shared<acl::MirrorPad>()},
+  };
+  std::string origin_name = "Pad";
   if (src_prim->GetAttr(kNamePadContiguous) != nullptr) {
     origin_name = "PadV3";
   }
