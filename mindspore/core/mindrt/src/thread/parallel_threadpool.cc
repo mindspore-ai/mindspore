@@ -19,9 +19,27 @@
 #endif
 #include "thread/parallel_threadpool.h"
 #include "thread/core_affinity.h"
+#include "thread/parallel_thread_pool_manager.h"
 
 namespace mindspore {
 constexpr int kActorParallelThreshold = 5;
+
+ParallelWorker::~ParallelWorker() {
+  {
+    std::lock_guard<std::mutex> _l(mutex_);
+    alive_ = false;
+  }
+  if (ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
+    ActivateByOtherPoolTask(nullptr);
+  } else {
+    cond_var_.notify_one();
+  }
+  if (thread_.joinable()) {
+    thread_.join();
+  }
+  pool_ = nullptr;
+  parallel_pool_ = nullptr;
+}
 
 void ParallelWorker::CreateThread() { thread_ = std::thread(&ParallelWorker::Run, this); }
 
@@ -42,9 +60,15 @@ void ParallelWorker::Run() {
     if (RunLocalKernelTask() || RunQueueActorTask()) {
       spin_count_ = 0;
     } else {
+      (void)DirectRunOtherPoolTask();
       if (++spin_count_ > max_spin_count_) {
-        WaitUntilActive();
-        spin_count_ = 0;
+        if (!ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool()) {
+          WaitUntilActive();
+          spin_count_ = 0;
+        } else {
+          wait_do_other_task_ = true;
+          WaitOtherPoolTask();
+        }
       } else {
         std::this_thread::yield();
       }
@@ -60,6 +84,61 @@ void ParallelWorker::WaitUntilActive() {
   }
 }
 
+void ParallelWorker::RunOtherPoolTask(ParallelTask *p_task) {
+  bool find = false;
+  int finish = 0;
+  Distributor expected_index = p_task->distributor;
+  bool is_busy = false;
+  while (p_task->valid && expected_index.started < expected_index.task_num) {
+    if (parallel_pool_->GetPoolRef() != 1) {
+      is_busy = true;
+      break;
+    }
+    if (p_task->distributor.compare_exchange_strong(expected_index,
+                                                    {expected_index.started + 1, expected_index.task_num})) {
+      p_task->status |= p_task->func(other_task_->content, expected_index.started, 0, 0);
+      find = true;
+      expected_index = p_task->distributor;
+      finish++;
+    }
+  }
+  if (find && !is_busy) {
+    p_task->valid = false;
+  }
+  p_task->finished += finish;
+  return;
+}
+
+void ParallelWorker::ActivateByOtherPoolTask(ParallelTask *task) {
+  std::unique_lock<std::mutex> l(other_task_mutex_);
+  wait_do_other_task_ = false;
+  other_task_ = task;
+  cv_other_task_.notify_one();
+}
+
+void ParallelWorker::WaitOtherPoolTask() {
+  std::unique_lock<std::mutex> l(other_task_mutex_);
+  while (alive_ && wait_do_other_task_) {
+    cv_other_task_.wait(l);
+  }
+  if (other_task_ == nullptr) {
+    return;
+  }
+  RunOtherPoolTask(other_task_);
+  other_task_ = nullptr;
+  return;
+}
+
+void ParallelWorker::DirectRunOtherPoolTask() {
+  std::unique_lock<std::mutex> l(other_task_mutex_);
+  if (other_task_ == nullptr) {
+    return;
+  }
+  RunOtherPoolTask(other_task_);
+  other_task_ = nullptr;
+  return;
+}
+
 bool ParallelWorker::RunLocalKernelTask() { return parallel_pool_->RunParallel(); }
 
 bool ParallelWorker::RunQueueActorTask() {
@@ -72,6 +151,24 @@ bool ParallelWorker::RunQueueActorTask() {
     return true;
   }
   return false;
+}
+
+void ParallelThreadPool::UseThreadPool(int num) {
+  std::lock_guard<std::mutex> l(mutex_pool_ref_count_);
+  pool_ref_count_ += num;
+}
+
+std::vector<ParallelWorker *> ParallelThreadPool::GetParallelPoolWorkers() {
+  std::vector<ParallelWorker *> workers;
+  for (auto woker : workers_) {
+    workers.push_back(static_cast<ParallelWorker *>(woker));
+  }
+  return workers;
+}
+
+int ParallelThreadPool::GetPoolRef() {
+  std::lock_guard<std::mutex> l(mutex_pool_ref_count_);
+  return pool_ref_count_;
 }
 
 inline bool ParallelThreadPool::RunTaskOnce(int start, int end) {
@@ -159,7 +256,7 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
   if (task_num <= 1) {
     return SyncRunFunc(func, content, 0, task_num);
   }
-
+  UseThreadPool(1);
   // distribute task to the KernelThread and the idle ActorThread,
   // if the task num is greater than the KernelThread num
   size_t task_index;
@@ -193,7 +290,18 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
   p_task->finished = 1;
   p_task->distributor = {1, task_num};
   p_task->valid.store(true);
-  ActiveWorkers();
+
+  ParallelThreadPool *idle_pool = nullptr;
+  if (!enable_shared_) {
+    ActiveWorkers();
+  } else {
+    for (auto &worker : workers_) {
+      static_cast<ParallelWorker *>(worker)->ActivateByOtherPoolTask();
+    }
+    if (thread_num_ < task_num) {
+      idle_pool = ParallelThreadPoolManager::GetInstance()->GetIdleThreadPool(bind_runner_id_, p_task);
+    }
+  }
 
   p_task->status |= p_task->func(p_task->content, 0, 0, 0);
 
@@ -207,16 +315,26 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
   }
   p_task->valid = false;
   while (p_task->finished < task_num) {
-    if (!RunParallel()) {
-      std::this_thread::yield();
-    }
+    std::this_thread::yield();
   }
   p_task->occupied = false;
   // check the return value of task
   if (p_task->status != THREAD_OK) {
     return THREAD_ERROR;
   }
+  if (idle_pool != nullptr) {
+    idle_pool->UseThreadPool(-1);
+  }
+  UseThreadPool(-1);
   return THREAD_OK;
+}
+
+bool ParallelThreadPool::IsIdlePool() {
+  auto export_ref_count = 0;
+  if (this->pool_ref_count_.compare_exchange_strong(export_ref_count, 1)) {
+    return true;
+  }
+  return false;
 }
 
 int ParallelThreadPool::CreateParallelThreads(size_t actor_thread_num, size_t all_thread_num,
@@ -242,7 +360,13 @@ int ParallelThreadPool::CreateParallelThreads(size_t actor_thread_num, size_t al
   if (TaskQueuesInit(all_thread_num) != THREAD_OK) {
     return THREAD_ERROR;
   }
-  return ThreadPool::CreateThreads<ParallelWorker>(all_thread_num, core_list);
+  enable_shared_ = ParallelThreadPoolManager::GetInstance()->GetEnableSharedThreadPool();
+  auto ret = ThreadPool::CreateThreads<ParallelWorker>(all_thread_num, core_list);
+  if (ret != THREAD_OK) {
+    return THREAD_ERROR;
+  }
+  thread_num_ = static_cast<int>(thread_num());
+  return THREAD_OK;
 }
 
 ParallelThreadPool *ParallelThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,

@@ -254,9 +254,13 @@ function Run_Benchmark() {
       fi
       inter_op_parallel_num=1
       use_parallel_predict="false"
+      enableSharedThreadPool="false"
+      threadNumLimitPerWorker=${threads}
       if [[ ${extra_info} == "parallel_predict" ]]; then
         use_parallel_predict="true"
         inter_op_parallel_num=${threads}
+        enableSharedThreadPool="true"
+        threadNumLimitPerWorker="4"
       fi
       # set accuracy limitation
       acc_limit="0.5"
@@ -296,8 +300,8 @@ function Run_Benchmark() {
 
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-          echo './benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> adb_run_cmd.txt
-          echo './benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> $4
+          echo './benchmark --enableSharedThreadPool=${enableSharedThreadPool} --threadNumLimitPerWorker=${threadNumLimitPerWorker} --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> adb_run_cmd.txt
+          echo './benchmark --enableSharedThreadPool=${enableSharedThreadPool} --threadNumLimitPerWorker=${threadNumLimitPerWorker} --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> $4
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
@@ -326,13 +330,13 @@ function Run_Benchmark() {
 
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-          echo './benchmark --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> adb_run_cmd.txt
-          echo './benchmark --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> $4
+          echo './benchmark --enableSharedThreadPool=${enableSharedThreadPool} --threadNumLimitPerWorker=${threadNumLimitPerWorker} --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> adb_run_cmd.txt
+          echo './benchmark --enableSharedThreadPool=${enableSharedThreadPool} --threadNumLimitPerWorker=${threadNumLimitPerWorker} --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> $4
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
-          echo './benchmark --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> "$4"
-          ./benchmark --enableParallelPredict=${use_parallel_predict} --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
+          echo './benchmark --enableSharedThreadPool=${enableSharedThreadPool} --threadNumLimitPerWorker=${threadNumLimitPerWorker} --enableParallelPredict='${use_parallel_predict}' --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> "$4"
+          ./benchmark --enableSharedThreadPool=${enableSharedThreadPool} --threadNumLimitPerWorker=${threadNumLimitPerWorker} --enableParallelPredict=${use_parallel_predict} --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
         fi
         if [ $? = 0 ]; then
             run_result="$6_$7_${mode}_loop: ${model_file##*/} pass"; echo ${run_result} >> $5

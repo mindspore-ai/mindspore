@@ -61,6 +61,8 @@ class ModelWorker {
   void InitModelWorker(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config,
                        const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
 
+  int GetWorkerID() { return worker_id_; }
+
  private:
   void Run();
 
@@ -82,6 +84,7 @@ class ModelWorker {
   // run
   std::mutex mtx_worker_;
   std::atomic_bool available_ = true;
+  int worker_id_ = -1;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_

@@ -33,6 +33,14 @@ ResourceManager *ResourceManager::GetInstance() {
   return &instance;
 }
 
+std::string ResourceManager::GenRunnerID() {
+  std::unique_lock<std::mutex> l(manager_mutex_);
+  std::string runner_id = "runner_" + std::to_string(runner_id_);
+  MS_LOG(INFO) << "generate runner id: " << runner_id;
+  runner_id_++;
+  return runner_id;
+}
+
 std::vector<int> ResourceManager::ParseCpuCoreList(size_t *can_use_core_num) {
   std::unique_lock<std::mutex> l(manager_mutex_);
   if (can_use_core_num_ != 0) {
