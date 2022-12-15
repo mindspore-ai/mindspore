@@ -488,7 +488,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   if constexpr (is_t_complex) {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_complex = {
       {kSqrt, SqrtOpt<T>}, {kTan, Tan<T>},     {kCosh, Cosh<T>},        {kAtanh, Atanh<T>},
-      {kInv, Inv<T>},      {kLog, LogOpt<T>},  {kExp, ExpOpt<T>},       {kNeg, NegOpt<T>},
+      {kInv, InvOpt<T>},   {kLog, LogOpt<T>},  {kExp, ExpOpt<T>},       {kNeg, NegOpt<T>},
       {kSin, Sin<T>},      {kCos, Cos<T>},     {kACos, ACos<T>},        {kAcosh, Acosh<T>},
       {kAsin, Asin<T>},    {kAsinh, Asinh<T>}, {kSquare, SquareOpt<T>}, {kReciprocal, ReciprocalOpt<T>},
       {kRsqrt, Rsqrt<T>},  {kSign, Sign<T>},   {kAtan, Atan<T>},        {kSinh, Sinh<T>},
@@ -498,7 +498,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_normal = {
       {kExp, ExpOpt<T>},  {kExpm1, Expm1<T>},   {kLog, LogOpt<T>},       {kLog1p, Log1p<T>},
       {kErf, Erf<T>},     {kErfc, Erfc<T>},     {kNeg, NegOpt<T>},       {kReciprocal, ReciprocalOpt<T>},
-      {kInv, Inv<T>},     {kInvert, Invert<T>}, {kSquare, SquareOpt<T>}, {kSqrt, SqrtOpt<T>},
+      {kInv, InvOpt<T>},  {kInvert, Invert<T>}, {kSquare, SquareOpt<T>}, {kSqrt, SqrtOpt<T>},
       {kRsqrt, Rsqrt<T>}, {kSin, Sin<T>},       {kCos, Cos<T>},          {kCosh, Cosh<T>},
       {kAsin, Asin<T>},   {kACos, ACos<T>},     {kAtan, Atan<T>},        {kAsinh, Asinh<T>},
       {kAcosh, Acosh<T>}, {kAbs, Abs<T>},       {kFloor, Floor<T>},      {kCeil, Ceil<T>},

@@ -24,7 +24,7 @@
 #include <map>
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/oneslike_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/math/broadcast_gpu_kernel.h"
@@ -44,7 +44,7 @@ class MeshgridGpuKernelMod : public NativeGpuKernelMod {
       return true;
     }
     T *ones_device = GetDeviceAddress<T>(workspace, 0);
-    CalOnesLike(output_size_, static_cast<T *>(nullptr), ones_device, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CalOnesLike(static_cast<T *>(nullptr), ones_device, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream));
 
     std::vector<size_t> broadcasted_ones_shape(MAX_DIMS, 1);
     for (size_t i = 0; i < output_shape_.size(); i++) {

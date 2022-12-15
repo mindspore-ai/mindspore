@@ -18,28 +18,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
-__global__ void CalReLUKernel(int size, T *input_addr, T *output_addr) {
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    output_addr[pos] = isnan(static_cast<double>(input_addr[pos])) || (input_addr[pos] > static_cast<T>(0))
-                         ? input_addr[pos] : static_cast<T>(0);
-  }
-}
-
-template <typename T>
-void CalReLU(int size, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
-  CalReLUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
-}
-
-template CUDA_LIB_EXPORT void CalReLU(int size, double *input_addr, double *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLU(int size, float *input_addr, float *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLU(int size, half *input_addr, half *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLU(int size, int8_t *input_addr, int8_t *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLU(int size, int16_t *input_addr, int16_t *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLU(int size, int32_t *input_addr, int32_t *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLU(int size, int64_t *input_addr, int64_t *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalReLU(int size, uint8_t *input_addr, uint8_t *output_addr, cudaStream_t cuda_stream);
-
-template <typename T>
 __global__ void ReluV2Kernel(const size_t num, const T *x, T *y, uint32_t *mask) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num; i += blockDim.x * gridDim.x) {
     T v = x[i];

@@ -21,6 +21,7 @@
 #include <map>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/helper_base.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 
 namespace mindspore {
 namespace cukernel {
@@ -115,21 +116,21 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
       return 0;
     }
     static std::map<UnaryOptype, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map = {
-      {UNARY_OP_EXP, Exponential<T>}, {UNARY_OP_EXPM1, Expm1<T>},
-      {UNARY_OP_LOG, Logarithm<T>},   {UNARY_OP_LOG1P, Log1p<T>},
-      {UNARY_OP_ERF, Erf<T>},         {UNARY_OP_ERFC, Erfc<T>},
-      {UNARY_OP_NEG, Negative<T>},    {UNARY_OP_RECIPROCAL, Reciprocal<T>},
-      {UNARY_OP_INV, Inv<T>},         {UNARY_OP_INVERT, Invert<T>},
-      {UNARY_OP_SQUARE, Square<T>},   {UNARY_OP_SQRT, Sqrt<T>},
-      {UNARY_OP_RSQRT, Rsqrt<T>},     {UNARY_OP_SIN, Sin<T>},
-      {UNARY_OP_COS, Cos<T>},         {UNARY_OP_COSH, Cosh<T>},
-      {UNARY_OP_ASIN, Asin<T>},       {UNARY_OP_ACOS, ACos<T>},
-      {UNARY_OP_ATAN, Atan<T>},       {UNARY_OP_ASINH, Asinh<T>},
-      {UNARY_OP_ACOSH, Acosh<T>},     {UNARY_OP_ABS, Abs<T>},
-      {UNARY_OP_FLOOR, Floor<T>},     {UNARY_OP_CEIL, Ceil<T>},
-      {UNARY_OP_RINT, Rint<T>},       {UNARY_OP_ROUND, Round<T>},
-      {UNARY_OP_SIGN, Sign<T>},       {UNARY_OP_ATANH, Atanh<T>},
-      {UNARY_OP_TAN, Tan<T>},         {UNARY_OP_SINH, Sinh<T>},
+      {UNARY_OP_EXP, ExpOpt<T>},       {UNARY_OP_EXPM1, Expm1<T>},
+      {UNARY_OP_LOG, LogOpt<T>},       {UNARY_OP_LOG1P, Log1p<T>},
+      {UNARY_OP_ERF, Erf<T>},          {UNARY_OP_ERFC, Erfc<T>},
+      {UNARY_OP_NEG, NegOpt<T>},       {UNARY_OP_RECIPROCAL, ReciprocalOpt<T>},
+      {UNARY_OP_INV, InvOpt<T>},       {UNARY_OP_INVERT, Invert<T>},
+      {UNARY_OP_SQUARE, SquareOpt<T>}, {UNARY_OP_SQRT, SqrtOpt<T>},
+      {UNARY_OP_RSQRT, Rsqrt<T>},      {UNARY_OP_SIN, Sin<T>},
+      {UNARY_OP_COS, Cos<T>},          {UNARY_OP_COSH, Cosh<T>},
+      {UNARY_OP_ASIN, Asin<T>},        {UNARY_OP_ACOS, ACos<T>},
+      {UNARY_OP_ATAN, Atan<T>},        {UNARY_OP_ASINH, Asinh<T>},
+      {UNARY_OP_ACOSH, Acosh<T>},      {UNARY_OP_ABS, Abs<T>},
+      {UNARY_OP_FLOOR, Floor<T>},      {UNARY_OP_CEIL, Ceil<T>},
+      {UNARY_OP_RINT, Rint<T>},        {UNARY_OP_ROUND, Round<T>},
+      {UNARY_OP_SIGN, Sign<T>},        {UNARY_OP_ATANH, Atanh<T>},
+      {UNARY_OP_TAN, Tan<T>},          {UNARY_OP_SINH, Sinh<T>},
       {UNARY_OP_TRUNC, Trunc<T>}};
 
     auto iter = func_map.find(unary_op_type_);

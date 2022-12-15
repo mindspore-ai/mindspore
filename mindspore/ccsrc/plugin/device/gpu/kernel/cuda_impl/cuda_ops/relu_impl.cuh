@@ -18,9 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RELU_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalReLU(int input_size, T *input_addr, T *output_addr, cudaStream_t cuda_stream);
-
-template <typename T>
 CUDA_LIB_EXPORT void ReluV2(const size_t num, const T *x, T *y, uint32_t *mask, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream);
