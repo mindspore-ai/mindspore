@@ -112,17 +112,27 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-AbstractBasePtr ComplexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = ComplexInferType(primitive, input_args);
-  auto infer_shape = BroadCastInferShape(primitive->name(), input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
 MIND_API_OPERATOR_IMPL(Complex, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Complex, prim::kPrimComplex, ComplexInfer, ComplexInferValue, true);
+
+class MIND_API ComplexInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return BroadCastInferShape(primitive->name(), input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    const int64_t input_num = 2;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+    return ComplexInferType(primitive, input_args);
+  }
+
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ComplexInferValue(primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Complex, prim::kPrimComplex, ComplexInfer, true);
 }  // namespace ops
 }  // namespace mindspore

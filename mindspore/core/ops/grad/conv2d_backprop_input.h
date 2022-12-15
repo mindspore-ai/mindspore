@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "ops/base_operator.h"
+#include "abstract/ops/op_infer.h"
 #include "mindapi/base/types.h"
 #include "mindapi/base/format.h"
 
@@ -62,6 +63,10 @@ class MIND_API Conv2DBackpropInput : public BaseOperator {
 MIND_API abstract::AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &,
                                                             const PrimitivePtr &primitive,
                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+
+BaseShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args);
+TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_H_

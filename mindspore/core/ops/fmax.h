@@ -33,8 +33,6 @@ class MIND_API Fmax : public BaseOperator {
   MIND_API_BASE_MEMBER(Fmax);
 };
 
-abstract::AbstractBasePtr FmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFmaxPtr = std::shared_ptr<Fmax>;
 }  // namespace ops
 }  // namespace mindspore

@@ -45,17 +45,22 @@ TypePtr HeavisideType(const PrimitivePtr &primitive, const std::vector<AbstractB
 }
 }  // namespace
 
-AbstractBasePtr HeavisideInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
-  auto infer_type = HeavisideType(primitive, input_args);
-  auto infer_shape = HeavisideShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
 MIND_API_OPERATOR_IMPL(Heaviside, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(Heaviside, prim::kPrimHeaviside, HeavisideInfer, nullptr, true);
+class MIND_API HeavisideInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return HeavisideShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    const int64_t kInputNum = 2;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+    return HeavisideType(primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Heaviside, prim::kPrimHeaviside, HeavisideInfer, false);
 }  // namespace ops
 }  // namespace mindspore

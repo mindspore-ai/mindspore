@@ -75,13 +75,18 @@ TypePtr SoftplusGradInfertype(const PrimitivePtr &prim, const std::vector<Abstra
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(SoftplusGrad, BaseOperator);
-AbstractBasePtr SoftplusGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto type = SoftplusGradInfertype(primitive, input_args);
-  auto shape = SoftplusGradInfershape(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(SoftplusGrad, prim::kPrimSoftplusGrad, SoftplusGradInfer, nullptr, true);
+class MIND_API SoftplusGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SoftplusGradInfershape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SoftplusGradInfertype(primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SoftplusGrad, prim::kPrimSoftplusGrad, SoftplusGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -109,10 +109,20 @@ TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Tile, BaseOperator);
-AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(TileInferShape(primitive, input_args), TileInferType(primitive, input_args));
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(Tile, prim::kPrimTile, TileInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGTileInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TileInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TileInferType(primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Tile, prim::kPrimTile, AGTileInfer, false);
 }  // namespace ops
 }  // namespace mindspore

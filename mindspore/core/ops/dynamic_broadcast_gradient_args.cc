@@ -70,13 +70,22 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(DynamicBroadcastGradientArgs, BaseOperator);
-AbstractBasePtr DynamicBroadcastGradientArgsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args) {
-  auto types = std::vector<TypePtr>{kInt64, kInt64};
-  auto output_type = std::make_shared<Tuple>(types);
-  return abstract::MakeAbstract(Infer(primitive, input_args), output_type);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(DynamicBroadcastGradientArgs, prim::kPrimDynamicBroadcastGradientArgs,
-                             DynamicBroadcastGradientArgsInfer, nullptr, true);
+
+class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return Infer(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto types = std::vector<TypePtr>{kInt64, kInt64};
+    auto output_type = std::make_shared<Tuple>(types);
+    return output_type;
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicBroadcastGradientArgs, prim::kPrimDynamicBroadcastGradientArgs,
+                                 DynamicBroadcastGradientArgsInfer, false);
 }  // namespace ops
 }  // namespace mindspore

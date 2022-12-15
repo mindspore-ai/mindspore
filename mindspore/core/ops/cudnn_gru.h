@@ -34,8 +34,6 @@ class MIND_API CudnnGRU : public BaseOperator {
   /// \brief Constructor.
   CudnnGRU() : BaseOperator(kNameCudnnGRU) { InitIOName({"input", "h", "w"}, {"output", "h_n", "reserve", "state"}); }
 };
-AbstractBasePtr CudnnGRUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
 
 using PrimCudnnGRUPtr = std::shared_ptr<CudnnGRU>;
 }  // namespace ops

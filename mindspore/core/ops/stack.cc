@@ -19,6 +19,7 @@
 #include "ops/op_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "ops/stack_comm.h"
 
 namespace mindspore {
 namespace ops {
@@ -135,6 +136,21 @@ AbstractBasePtr StackInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto infer_type = StackInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Stack, prim::kPrimStack, StackInfer, nullptr, true);
+
+BaseShapePtr AGStackInfer::InferShape(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const {
+  return StackInferShape(primitive, input_args);
+}
+
+TypePtr AGStackInfer::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  return StackInferType(primitive, input_args);
+}
+AbstractBasePtr AGStackInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &engine,
+                                                const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) const {
+  return StackInfer(engine, primitive, input_args);
+}
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Stack, prim::kPrimStack, AGStackInfer, false);
 }  // namespace ops
 }  // namespace mindspore

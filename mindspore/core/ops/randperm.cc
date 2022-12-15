@@ -153,8 +153,9 @@ class RandpermInfer : public abstract::OpInferBase {
     auto out_type = CheckAndConvertUtils::CheckTypeValid("dtype", dtype->cast<TypePtr>(), valid_types_dtype, prim_name);
     return out_type;
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
 };
-REGISTER_INFER_DEPENDS(kNameRandperm, {0});
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Randperm, prim::kPrimRandperm, RandpermInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -17,6 +17,7 @@
 #include "ops/uniform_real.h"
 #include <string>
 #include <memory>
+#include <set>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
@@ -44,24 +45,12 @@ int64_t UniformReal::get_seed2() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const std::string &op_name = primitive->name();
-  const int64_t kMinInputNum = 1;
-  const int64_t kMaxInputNum = 3;
-  // Check Input
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, kMinInputNum,
-                                           op_name);
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kLessEqual, kMaxInputNum,
-                                           op_name);
-
+BaseShapePtr UniformRealInferShape(const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args) {
   ShapeVector shape;
   abstract::ShapePtr output_shape;
   auto shape_value = input_args[kInputIndex0]->BuildValue();
+  auto op_name = primitive->name();
   if (IsValueKnown(shape_value)) {
     shape = shape_value->isa<tensor::Tensor>()
               ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name)
@@ -72,12 +61,36 @@ abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, 
     shape = {-2};  // unknown dimension.
     output_shape = std::make_shared<abstract::Shape>(shape);
   }
-  return abstract::MakeAbstract(output_shape, kFloat32);
+  return output_shape;
 }
 
-REGISTER_INFER_DEPENDS(kNameUniformReal, {0});
-REGISTER_INFER_DEPENDS(kNameCudnnUniformReal, {0});
-REGISTER_PRIMITIVE_EVAL_IMPL(UniformReal, prim::kPrimUniformReal, UniformRealInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(CudnnUniformReal, prim::kPrimCudnnUniformReal, UniformRealInfer, nullptr, true);
+class MIND_API UniformRealInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return UniformRealInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    const std::string &op_name = primitive->name();
+    const int64_t kMinInputNum = 1;
+    const int64_t kMaxInputNum = 3;
+    // Check Input
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
+                                             kMinInputNum, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kLessEqual, kMaxInputNum,
+                                             op_name);
+    return kFloat32;
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(UniformReal, prim::kPrimUniformReal, UniformRealInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(CudnnUniformReal, prim::kPrimCudnnUniformReal, UniformRealInfer, false);
 }  // namespace ops
 }  // namespace mindspore

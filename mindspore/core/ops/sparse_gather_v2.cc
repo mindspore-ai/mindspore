@@ -21,12 +21,31 @@
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
+#include "ops/gather_comm.h"
 #include "ops/gather.h"
 
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(SparseGatherV2, BaseOperator);
-REGISTER_INFER_DEPENDS(kNameSparseGatherV2, {2});
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseGatherV2, prim::kPrimSparseGatherV2, GatherInfer, nullptr, true);
+
+class SparseGatherInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return GatherInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GatherInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GatherInfer(engine, primitive, input_args);
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
+};
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseGatherV2, prim::kPrimSparseGatherV2, SparseGatherInfer, false);
 }  // namespace ops
 }  // namespace mindspore

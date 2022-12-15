@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_HEAVISIDE_H_
-#define MINDSPORE_CORE_OPS_HEAVISIDE_H_
-#include <memory>
-#include <vector>
+#ifndef MINDSPORE_CORE_OPS_STACK_COMM_H_
+#define MINDSPORE_CORE_OPS_STACK_COMM_H_
 
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include <vector>
+#include "abstract/ops/op_infer.h"
+
 namespace mindspore {
 namespace ops {
-constexpr auto kNameHeaviside = "Heaviside";
-class MIND_API Heaviside : public BaseOperator {
+class MIND_API AGStackInfer : public abstract::OpInferBase {
  public:
-  MIND_API_BASE_MEMBER(Heaviside);
-  Heaviside() : BaseOperator(kNameHeaviside) { InitIOName({"x", "values"}, {"y"}); }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_CORE_OPS_STACK_COMM_H_
