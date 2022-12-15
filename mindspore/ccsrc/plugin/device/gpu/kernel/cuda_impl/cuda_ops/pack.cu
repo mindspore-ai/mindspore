@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <cuda_runtime.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pack.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "include/cuda_fp16.h"
 template <typename T>
 __global__ void Pack(const size_t size, const size_t input_num, const size_t dims_behind_axis, T** inputs, T* output) {
@@ -72,3 +73,12 @@ template CUDA_LIB_EXPORT void PackKernel(const size_t size, const size_t input_n
 template CUDA_LIB_EXPORT void PackKernel(const size_t size, const size_t input_num,
                                          const size_t dims_behind_axis, bool** inputs, bool* output,
                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void PackKernel(const size_t size, const size_t input_num,
+                                         const size_t dims_behind_axis, double** inputs, double* output,
+                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void PackKernel(const size_t size, const size_t input_num,
+                                         const size_t dims_behind_axis, Complex<float>** inputs,
+                                         Complex<float>* output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void PackKernel(const size_t size, const size_t input_num,
+                                         const size_t dims_behind_axis, Complex<double>** inputs,
+                                         Complex<double>* output, cudaStream_t cuda_stream);
