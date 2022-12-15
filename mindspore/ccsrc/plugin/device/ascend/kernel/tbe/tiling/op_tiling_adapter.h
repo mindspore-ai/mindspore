@@ -74,8 +74,8 @@ class OpTilingCalculateAdapter {
 
   std::string op_name_;
   std::string op_compile_info_;
-  std::map<int, std::string> input_names_;
-  std::map<int, std::string> output_names_;
+  std::vector<std::string> input_names_;
+  std::vector<std::string> output_names_;
 };
 }  // namespace tiling
 }  // namespace device

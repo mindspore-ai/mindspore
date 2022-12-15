@@ -39,11 +39,12 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
 
   const auto &input_names = AclUtils::GetOpInputAnchorNames(cnode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  input_size_list_.clear();
+  input_size_list_.resize(input_names.size(), kSizeMax);
   // Update input size list
   for (size_t i = 0; i < input_num; ++i) {
-    auto index = AnfAlgo::GetInputKernelIdxByGraphIdx(node, i);
-    if (input_names.find(index) == input_names.end()) {
-      MS_LOG(INFO) << "Error input index for adaptor:" << index << " of node " << cnode->fullname_with_scope();
+    auto index = AclUtils::GetInputKernelIdxByGraphIdx(node, i);
+    if (index < 0) {
       continue;
     }
     auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(node, i);
@@ -55,7 +56,7 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
       return 1;
     }
     auto input_size = type_size * SizeOf(shape);
-    input_size_list_[index] = (input_size == 0) ? SIZE_MAX : input_size;
+    input_size_list_[index] = (input_size == 0) ? kSizeMax : input_size;
   }
 
   // Update output size list
@@ -67,63 +68,20 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   return 0;
 }
 
-bool AclKernelMod::SkipUnRunNode(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                 void *stream_ptr, const size_t input_size) {
-  MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  for (auto &[attr_name, value] : attr_list_) {
-    // Special process of dynamic input number.
-    if (value == nullptr) {
-      continue;
-    }
-    if (attr_name == kNAttrName && value->isa<Int64Imm>()) {
-      auto long_input_size = SizeToLong(input_size);
-      if (GetValue<int64_t>(value) != long_input_size) {
-        value = MakeValue(long_input_size);
-      }
-      if (input_size <= 1 && op_type_ == kConcatDOpName) {
-        // cppcheck-suppress unreadVariable
-        auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-        auto iter = std::find_if(input_size_list_.begin(), input_size_list_.end(),
-                                 [](const size_t size) { return size != 0 && size != SIZE_MAX; });
-        if (iter == input_size_list_.end()) {
-          return true;
-        }
-        size_t index = iter - input_size_list_.begin();
-        if (index >= inputs.size()) {
-          return true;
-        }
-        auto status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[index]->addr, inputs[index]->size,
-                                       ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
-        if (status != ACL_SUCCESS) {
-          MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << node->fullname_with_scope();
-        }
-
-        MS_LOG(INFO) << "Execute node:" << node->fullname_with_scope() << " success.";
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 void AclKernelMod::ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   const auto &attr_to_input_maps = GeOpConvertor::GetNeedAddInput(node, true);
   const auto &input_names = kernel::AclUtils::GetOpInputAnchorNames(node);
-  for (auto &[attr_name, value] : attr_list_) {
+  auto attr_list = GeOpConvertor::GetAttrAndValue(node, true);
+  for (auto &[attr_name, value] : attr_list) {
     if (value == nullptr) {
       MS_LOG(INFO) << "Current node's attr [" << attr_name << "] is nullptr";
       continue;
     }
     if (attr_to_input_maps.count(attr_name) != 0) {
       auto to_input_name = attr_to_input_maps.at(attr_name);
-      auto iter = std::find_if(input_names.begin(), input_names.end(),
-                               [&to_input_name](const std::pair<int, std::string> &input_Name) {
-                                 return (input_Name.second == to_input_name);
-                               });
+      auto iter = std::find(input_names.begin(), input_names.end(), to_input_name);
       if (iter == input_names.end()) {
         MS_LOG(EXCEPTION) << "Error input name!" << to_input_name;
       }
@@ -146,10 +104,8 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   MS_EXCEPTION_IF_NULL(op_desc_ptr);
   op_desc_ptr->AddTensorDesc(input_desc_list_, output_desc_list_);
   op_desc_ptr->AddDataBuf(inputs, input_size_list_, outputs, output_size_list_);
-  if (SkipUnRunNode(inputs, outputs, stream_ptr, op_desc_ptr->input_tensor_desc().size())) {
-    return true;
-  }
   ProcessAttribute(op_desc_ptr);
+  op_desc_ptr->ClearNullTensor();
 
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
@@ -166,15 +122,14 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
 
-  MS_LOG(INFO) << "Start aclopCompileAndExecute of node: " << op_type_;
+  MS_LOG(INFO) << "Start aclopCompileAndExecute of node: " << node->fullname_with_scope();
   bool ret = aclopCompileAndExecute(const_cast<char *>(op_type_.c_str()), op_desc_ptr->input_tensor_desc().size(),
                                     op_desc_ptr->input_tensor_desc().data(), op_desc_ptr->input_tensor_data().data(),
                                     op_desc_ptr->output_tensor_desc().size(), op_desc_ptr->output_tensor_desc().data(),
                                     op_desc_ptr->output_tensor_data().data(), op_desc_ptr->acl_attr(), ACL_ENGINE_SYS,
                                     ACL_COMPILE_SYS, nullptr, stream_ptr);
   if (ret != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "Acl compile and execute failed! op_name is " << op_type_ << " and op info is "
-                  << node->DebugString();
+    MS_LOG(ERROR) << "Acl compile and execute failed, node:" << node->fullname_with_scope();
     return false;
   }
 
@@ -182,7 +137,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     MS_LOG(EXCEPTION) << "aclopCompileAndExecute sync failed";
   }
 
-  MS_LOG(INFO) << "Success launch of node: " << op_type_;
+  MS_LOG(INFO) << "Success launch of node: " << node->fullname_with_scope();
   return true;
 }
 

@@ -26,6 +26,7 @@
 #include "acl/acl_base.h"
 #include "transform/graph_ir/convert.h"
 #include "kernel/oplib/oplib.h"
+#include "kernel/oplib/super_bar.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,6 +36,7 @@ using GeOpConvertor = transform::GeOpConvertor;
 using GeDataType = transform::GeDataType;
 using GeFormat = transform::GeFormat;
 using GeShape = transform::GeShape;
+constexpr auto kSizeMax = SIZE_MAX;
 
 template <typename T>
 inline constexpr bool is_vector = false;
@@ -52,6 +54,7 @@ class AclOpDesc {
   void AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
                   const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list);
   void ProcessAclAttrs(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
+  void ClearNullTensor();
 
   std::vector<aclTensorDesc *> input_tensor_desc() const { return input_tensor_desc_; }
   std::vector<aclTensorDesc *> output_tensor_desc() const { return output_tensor_desc_; }
@@ -106,11 +109,19 @@ class AclUtils {
 
   static std::vector<GeTensorDescPtr> GetInputTensorDesc(const AnfNodePtr &anf_node);
 
+  static ShapeVector UpdateShape(const ShapeVector &shape, const std::string &format, const AnfNodePtr &node);
+
+  static int GetOutputKernelIdxByGraphIdx(const AnfNodePtr &node, size_t ori_idx);
+
+  static int GetInputKernelIdxByGraphIdx(const AnfNodePtr &node, size_t ori_idx);
+
+  static int GetInputGraphIdxByKernelIdx(const AnfNodePtr &node, size_t ori_idx);
+
   static std::vector<GeTensorDescPtr> GetOutputTensorDesc(const AnfNodePtr &anf_node);
 
-  static std::map<int, std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
+  static std::vector<std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
 
-  static std::map<int, std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
+  static std::vector<std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
 };
 }  // namespace kernel
 }  // namespace mindspore

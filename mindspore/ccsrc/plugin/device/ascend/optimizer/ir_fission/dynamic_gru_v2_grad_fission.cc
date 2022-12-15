@@ -183,7 +183,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddTConcatNode(const FuncGraphPtr &func_grap
   ShapeVector concat_output_shape = {SizeToLong(t_size), out_dims[kDim1], out_dims[kDim2]};
   auto out_type = common::AnfAlgo::GetOutputInferDataType(gru_hidden_grad_nodes[kIndex0], concat_output_index);
   common::AnfAlgo::SetOutputInferTypeAndShape({out_type}, {concat_output_shape}, concat_t_node.get());
-  common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(t_size)), concat_t_node);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(t_size)), concat_t_node);
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(t_size)}), concat_t_node);
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), concat_t_node);
   return concat_t_node;
@@ -283,7 +283,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddHConcatNode(const FuncGraphPtr &func_grap
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(init_h_reshape, 0)},
                                               {output_shape}, concat.get());
   // Set attr
-  common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kConcatNum)), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(kConcatNum)), concat);
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kConcatNum}), concat);
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), concat);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat);
@@ -361,7 +361,7 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDgateXConcatDNode(const FuncGraphPtr &
   auto shape = Convert2Long({t_size, batch_size, kGateNum * hidden_size});
   auto types = {common::AnfAlgo::GetOutputInferDataType(dnt_x, 0)};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, {shape}, concat_op.get());
-  common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kConcatNum)), concat_op);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(kConcatNum)), concat_op);
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kConcatNum}), concat_op);
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kDim2)), concat_op);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat_op);
