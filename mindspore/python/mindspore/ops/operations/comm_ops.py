@@ -54,11 +54,11 @@ class ReduceOp:
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with multiple devices.
 
@@ -143,11 +143,11 @@ class AllReduce(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with multiple devices.
 
@@ -222,11 +222,11 @@ class AllGather(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 2 devices.
 
@@ -410,7 +410,7 @@ class ReduceScatter(Primitive):
     r"""
     Reduces and scatters tensors from the specified communication group.
     For more details about it, please refer to `ReduceScatter \
-    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#reducescatter>`_ .
+    <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/communicate_ops.html#reducescatter>`_ .
 
     Note:
         The tensors must have the same shape and format in all processes of the collection.
@@ -441,11 +441,11 @@ class ReduceScatter(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 2 devices.
 
@@ -578,11 +578,11 @@ class Broadcast(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with multiple devices.
 
@@ -702,7 +702,7 @@ class NeighborExchange(Primitive):
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0.0-alpha/parallel/communicate_ops.html#注意事项>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -778,7 +778,7 @@ class AlltoAll(PrimitiveWithInfer):
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0.0-alpha/parallel/communicate_ops.html#注意事项>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -811,11 +811,11 @@ class AlltoAll(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 8 devices.
 
@@ -885,13 +885,13 @@ class NeighborExchangeV2(Primitive):
     NeighborExchangeV2 sends data from the local rank to ranks in the `send_rank_ids`,
     as while receive data from `recv_rank_ids`. Please refer to
     `NeighborExchangeV2 data exchange rules \
-    <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_
+    <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0.0-alpha/parallel/communicate_ops.html#neighborexchangev2>`_
     to learn about how the data is exchanged between neighborhood devices.
 
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0.0-alpha/parallel/communicate_ops.html#注意事项>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
@@ -929,11 +929,11 @@ class NeighborExchangeV2(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/parallel/train_gpu.html#preparation>`_ .
 
             This example should be run with 2 devices.
 

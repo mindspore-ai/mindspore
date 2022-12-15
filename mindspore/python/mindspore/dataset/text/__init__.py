@@ -25,7 +25,8 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset.text as text
 
 See `Text Transforms
-<https://www.mindspore.cn/tutorials/en/master/beginner/transforms.html#text-transforms>`_ tutorial for more details.
+<https://www.mindspore.cn/tutorials/en/r2.0.0-alpha/beginner/transforms.html#text-transforms>`_ tutorial
+for more details.
 
 Descriptions of common data processing terms are as follows:
 
