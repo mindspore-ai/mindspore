@@ -28,6 +28,7 @@ struct EffectInfo {
   bool memory = false;     // memory side effects, e.g., access global variable.
   bool io = false;         // IO side effects, e.g., print message.
   bool load = false;       // load value from global variable, e.g. add(self.para, x).
+  bool back_mem = false;
 
   void Merge(const EffectInfo &info) {
     if (info.state != EffectInfo::kDetected) {
@@ -36,6 +37,7 @@ struct EffectInfo {
     memory = memory || info.memory;
     io = io || info.io;
     load = load || info.load;
+    back_mem = back_mem || info.back_mem;
   }
 };
 

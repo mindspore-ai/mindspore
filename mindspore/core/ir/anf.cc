@@ -375,7 +375,8 @@ bool GetPrimitiveFlag(const PrimitivePtr &prim, const std::string &attr) {
 EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim) {
   bool mem = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM);
   bool io = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_IO);
-  return {EffectInfo::kDetected, mem, io, false};
+  bool back_mem = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP_MEM);
+  return {EffectInfo::kDetected, mem, io, false, back_mem};
 }
 
 std::set<CNodePtr> GetLoadInputs(const AnfNodePtr &node) {

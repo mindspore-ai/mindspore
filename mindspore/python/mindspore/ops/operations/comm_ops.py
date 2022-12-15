@@ -1137,6 +1137,7 @@ class _VirtualAssignAdd(PrimitiveWithInfer):
     def __init__(self):
         """Initialize _VirtualAssignAdd."""
         self.add_prim_attr('order_enforce_skip', True)
+        self.add_prim_attr('side_effect_backprop_mem', True)
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape

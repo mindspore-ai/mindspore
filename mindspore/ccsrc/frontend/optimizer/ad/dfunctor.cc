@@ -41,8 +41,8 @@ mindspore::HashMap<AnfNodePtr, AdjointPtr> DFunctor::anfnode_to_adjoin_definitio
 
 bool lift_fv_before_grad = true;
 
-DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources)
-    : primal_graph_(primal_graph), resources_(resources), need_cut_(false), is_top_(false) {
+DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources, bool is_top)
+    : primal_graph_(primal_graph), resources_(resources), need_cut_(false), is_top_(is_top) {
   {
     TraceGuard guard(std::make_shared<TraceGradFprop>(primal_graph->debug_info()));
     k_graph_ = std::make_shared<FuncGraph>();
@@ -59,6 +59,11 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
   tape_->set_stage(primal_graph->stage());
 
   dout_ = tape_->add_parameter();
+  const auto &info = primal_graph->GetEffectInfo();
+  if (is_top_ && info.back_mem) {
+    // Add Umonad arg for top graph.
+    tape_->add_parameter();
+  }
 }
 
 void DFunctor::Init(bool is_top) {
@@ -566,7 +571,7 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
     // Reset defer_inline to enable successive inlining
     primal->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
 
-    auto functor = std::make_shared<DFunctor>(primal, resources_);
+    auto functor = std::make_shared<DFunctor>(primal, resources_, false);
     functor->Init();
     functor->k_graph_ = fg;
 
@@ -620,7 +625,7 @@ AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
     MS_LOG(DEBUG) << "K graph functor user defined bprop " << func_graph->ToString() << ".";
     return NewValueNode(k_user_defined);
   }
-  auto functor = std::make_shared<DFunctor>(func_graph, resources_);
+  auto functor = std::make_shared<DFunctor>(func_graph, resources_, false);
   functor->Init();
   functor->MapObject();
   functor->MapMorphism();

@@ -51,7 +51,7 @@ extern bool lift_fv_before_grad;
 // D Functor's rules to map closure object and morphisms.
 class DFunctor : public std::enable_shared_from_this<DFunctor> {
  public:
-  DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources);
+  DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources, bool is_top);
   ~DFunctor() = default;
   // Map object in D category to K category.
   void MapObject();
