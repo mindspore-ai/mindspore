@@ -23,11 +23,13 @@
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/pow_fusion.h"
 #include "ops/fusion/sub_fusion.h"
+#include "ops/fusion/exp_fusion.h"
 
 namespace mindspore {
 namespace lite {
 using mindspore::ops::kNameAddFusion;
 using mindspore::ops::kNameDivFusion;
+using mindspore::ops::kNameExpFusion;
 using mindspore::ops::kNameMulFusion;
 using mindspore::ops::kNamePowFusion;
 using mindspore::ops::kNameSubFusion;
@@ -73,6 +75,15 @@ class SubFusionMapper : public PrimitiveMapper {
   SubFusionMapper() : PrimitiveMapper(kNameSubFusion) {}
 
   ~SubFusionMapper() override = default;
+
+  STATUS Mapper(const CNodePtr &cnode) override;
+};
+
+class ExpFusionMapper : public PrimitiveMapper {
+ public:
+  ExpFusionMapper() : PrimitiveMapper(kNameExpFusion) {}
+
+  ~ExpFusionMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
 };

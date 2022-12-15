@@ -232,6 +232,8 @@ OP_TYPE(GroupNormFusion)
 OP_TYPE(Log1p)
 OP_TYPE(TensorScatterAdd)
 OP_TYPE(ScatterElements)
+OP_TYPE(Triu)
+OP_TYPE(Tril)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1306,3 +1308,9 @@ OP_SCHEMA_DEF_END(TensorScatterAdd)
 OP_SCHEMA_DEF(ScatterElements)
 OP_ATTR(axis, long)
 OP_SCHEMA_DEF_END(ScatterElements)
+
+OP_SCHEMA_DEF(Triu)
+OP_SCHEMA_DEF_END(Triu)
+
+OP_SCHEMA_DEF(Tril)
+OP_SCHEMA_DEF_END(Tril)

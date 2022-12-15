@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace lite {
 namespace {
-constexpr size_t kNumFlagTwo = 2;
 constexpr size_t kNamePadInputNum = 3;
 constexpr auto kNamePadContiguous = "pad_contiguous";
 }  // namespace
@@ -92,7 +91,7 @@ STATUS PadFusionMapper::ConvertAttrToInput(const CNodePtr &cnode, const Primitiv
   }
   auto func_graph = cnode->func_graph();
   CHECK_NULL_RETURN(func_graph);
-  auto status = AddAttrToInput(func_graph, cnode, prim, ops::kConstantValue, kNumFlagTwo);
+  auto status = AddFloatAttrToInput(func_graph, cnode, prim, ops::kConstantValue, false);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "Add constant value to input failed.";
     return lite::RET_ERROR;

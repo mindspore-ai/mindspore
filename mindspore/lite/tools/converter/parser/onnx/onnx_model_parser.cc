@@ -211,7 +211,8 @@ STATUS BuildReturnNode(const FuncGraphPtr &anf_graph, const std::vector<AnfNodeP
 }
 
 STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor,
-                          const std::string &model_file) {
+                          const std::string &model_file,
+                          std::map<std::string, std::pair<size_t, uint8_t *>> *external_datas) {
   MS_ASSERT(parameter_node != nullptr);
   auto data_type = OnnxNodeParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(tensor.data_type()));
   if (data_type == kTypeUnknown) {
@@ -227,19 +228,20 @@ STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::Tensor
   parameter_node->set_abstract(abstract_tensor);
   parameter_node->set_name(tensor.name());
 
-  auto tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
-  MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "create tensor_info return nullptr");
-  std::vector<int> shape;
-  std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
-                 [](const int64_t &value) { return static_cast<int>(value); });
+  tensor::TensorPtr tensor_info;
   if (tensor.data_location() != onnx::TensorProto::EXTERNAL) {
-    auto status = OnnxNodeParser::CopyOnnxTensorData(tensor, tensor_info);
-    if (status != RET_OK) {
+    tensor_info = OnnxNodeParser::CopyOnnxTensorData(tensor);
+    if (tensor_info == nullptr) {
       MS_LOG(ERROR) << "copy data failed.";
-      return status;
+      return RET_ERROR;
     }
   } else {
-    auto status = OnnxNodeParser::LoadOnnxExternalTensorData(tensor, tensor_info, model_file);
+    tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
+    MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "create tensor_info return nullptr");
+    std::vector<int> shape;
+    std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
+                   [](const int64_t &value) { return static_cast<int>(value); });
+    auto status = OnnxNodeParser::LoadOnnxExternalTensorData(tensor, tensor_info, model_file, external_datas);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "load external data failed.";
       return status;
@@ -308,16 +310,27 @@ STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_
 STATUS ConvertConstTensors(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
                            std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, const std::string &model_file) {
   MS_ASSERT(func_graph_ptr != nullptr && anf_nodes_map != nullptr);
+  std::map<std::string, std::pair<size_t, uint8_t *>> external_datas;
+  auto free_external_data = [&external_datas]() {
+    for (auto &item : external_datas) {
+      if (item.second.second) {
+        delete[] item.second.second;
+      }
+    }
+    external_datas.clear();
+  };
   for (const auto &onnx_const_value : onnx_graph.initializer()) {
     auto parameter = func_graph_ptr->add_parameter();
     MS_CHECK_TRUE_MSG(parameter != nullptr, RET_NULL_PTR, "create parameter return nullptr");
-    auto status = BuildParameterNode(parameter, onnx_const_value, model_file);
+    auto status = BuildParameterNode(parameter, onnx_const_value, model_file, &external_datas);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "parameter node build failed.";
+      free_external_data();
       return status;
     }
     anf_nodes_map->emplace(onnx_const_value.name(), parameter);
   }
+  free_external_data();
   return RET_OK;
 }
 

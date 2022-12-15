@@ -75,6 +75,7 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32) {
   return RET_OK;
 }
 
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Gather, LiteKernelCreator<GatherCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Gather, LiteKernelCreator<GatherCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Gather, LiteKernelCreator<GatherCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Gather, LiteKernelCreator<GatherCPUKernel>)

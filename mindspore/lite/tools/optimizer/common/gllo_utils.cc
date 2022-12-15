@@ -842,13 +842,13 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::Te
 }
 
 ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
-                                        const std::string &node_name) {
+                                        const std::string &node_name, bool empty_shape) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
   auto param_node = func_graph->add_parameter();
   MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
   param_node->set_name(node_name);
-
-  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(int32_t), {1}, kNumberTypeInt32);
+  ShapeVector shape = empty_shape ? std::vector<int64_t>{} : std::vector<int64_t>{1};
+  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(int32_t), shape, kNumberTypeInt32);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "Create tensor info failed";
     return nullptr;
@@ -917,13 +917,14 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
 }
 
 ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
-                                          const std::string &node_name) {
+                                          const std::string &node_name, bool empty_shape) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
   auto param_node = func_graph->add_parameter();
   MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
   param_node->set_name(node_name);
 
-  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(float), {1}, kNumberTypeFloat32);
+  ShapeVector shape = empty_shape ? std::vector<int64_t>{} : std::vector<int64_t>{1};
+  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(float), shape, kNumberTypeFloat32);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "Create tensor info failed";
     return nullptr;
@@ -1346,20 +1347,28 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
       fp << std::endl;
       continue;
     }
+    TypeId type_id = kTypeUnknown;
+    GetDataTypeFromAnfNode(node, &type_id);
     fp << node->fullname_with_scope() << ", type: " << type_name(node) << ", shape: " << GetAnfNodeOutputShape(node, 0)
-       << std::endl;
+       << ", data type: " << static_cast<int>(type_id) << std::endl;
     auto inputs = cnode->inputs();
     for (auto &input : inputs) {
       if (IsValueNode<Primitive>(input)) {
         continue;
       }
+      type_id = kTypeUnknown;
+      GetDataTypeFromAnfNode(node, &type_id);
       fp << "---input " << input->fullname_with_scope() << ", type: " << type_name(input)
-         << ", shape: " << GetAnfNodeOutputShape(input, 0) << std::endl;
+         << ", shape: " << GetAnfNodeOutputShape(input, 0) << ", data type: " << static_cast<int>(type_id) << std::endl;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (prim != nullptr) {
       for (auto &attr : prim->attrs()) {
-        fp << "---attr " << attr.first << ": " << attr.second->ToString() << std::endl;
+        if (attr.second) {
+          fp << "---attr " << attr.first << ": " << attr.second->ToString() << std::endl;
+        } else {
+          fp << "---attr " << attr.first << ": value nullptr" << std::endl;
+        }
       }
     }
     fp << std::endl;

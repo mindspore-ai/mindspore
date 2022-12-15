@@ -27,21 +27,19 @@
 #include "ops/op_utils.h"
 
 namespace mindspore::lite {
-const void *OnnxQuantizeLinearParser::GetConstData(const onnx::GraphProto &onnx_graph, const std::string &input_name,
-                                                   TypeId *data_type) {
+tensor::TensorPtr OnnxQuantizeLinearParser::GetConstData(const onnx::GraphProto &onnx_graph,
+                                                         const std::string &input_name) {
   auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                                 [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
   if (node_iter == onnx_graph.initializer().end()) {
     MS_LOG(ERROR) << "graph not find node: " << input_name;
     return nullptr;
   }
-  bool overflow = false;
-  auto data_count = OnnxNodeParser::GetOnnxElementNum((*node_iter), &overflow);
-
-  size_t data_size = 0;
-  *data_type = OnnxNodeParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>((*node_iter).data_type()));
-  auto onnx_data = OnnxNodeParser::GetOnnxRawData((*node_iter), *data_type, data_count, &data_size);
-  return onnx_data;
+  auto tensor = OnnxNodeParser::CopyOnnxTensorData(*node_iter);
+  if (tensor == nullptr || tensor->data_c() == nullptr || tensor->Dtype() == nullptr) {
+    return nullptr;
+  }
+  return tensor;
 }
 
 PrimitiveCPtr OnnxQuantizeLinearParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
@@ -53,27 +51,26 @@ PrimitiveCPtr OnnxQuantizeLinearParser::Parse(const onnx::GraphProto &onnx_graph
   const auto &onnx_quantize_zero_point = onnx_node.input(THIRD_INPUT);
 
   // scale attr
-  TypeId scale_data_type;
-  auto onnx_scale_data = GetConstData(onnx_graph, onnx_quantize_scale, &scale_data_type);
+  auto onnx_scale_data = GetConstData(onnx_graph, onnx_quantize_scale);
   if (onnx_scale_data == nullptr) {
     MS_LOG(ERROR) << "Onnx scale data is nullptr.";
     return nullptr;
   }
-  float scale = *(static_cast<const float *>(onnx_scale_data));
+  float scale = *(static_cast<const float *>(onnx_scale_data->data_c()));
   prim->AddAttr("scale", MakeValue(scale));
 
   // zero_point attr
-  TypeId zp_data_type = mindspore::kTypeUnknown;
-  auto onnx_zero_point_data = GetConstData(onnx_graph, onnx_quantize_zero_point, &zp_data_type);
+  auto onnx_zero_point_data = GetConstData(onnx_graph, onnx_quantize_zero_point);
   if (onnx_zero_point_data == nullptr) {
     MS_LOG(ERROR) << "Onnx zero point data is nullptr.";
     return nullptr;
   }
+  TypeId zp_data_type = onnx_zero_point_data->Dtype()->type_id();
   int zero_point = 0;
   if (zp_data_type == mindspore::kNumberTypeUInt8) {
-    zero_point = *(static_cast<const uint8_t *>(onnx_zero_point_data)) - 128;
+    zero_point = *(static_cast<const uint8_t *>(onnx_zero_point_data->data_c())) - 128;
   } else if (zp_data_type == mindspore::kNumberTypeInt8) {
-    zero_point = *(static_cast<const int *>(onnx_zero_point_data));
+    zero_point = *(static_cast<const int *>(onnx_zero_point_data->data_c()));
   } else {
     MS_LOG(ERROR) << "Invalid zero point data type: " << zp_data_type;
   }

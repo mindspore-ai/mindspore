@@ -39,17 +39,18 @@ constexpr auto kNameSizeFour = 4;
 
 STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   if (cnode->inputs().size() != kNameInputNum) {
-    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real size: " << cnode->inputs().size();
+    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real size: " << cnode->inputs().size()
+                    << ", cnode " << cnode->fullname_with_scope();
     return lite::RET_OK;
   }
   ValueNodePtr value_node = nullptr;
   PrimitivePtr src_prim = nullptr;
   if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Get primitive from cnode failed.";
+    MS_LOG(ERROR) << "Get primitive from cnode failed, cnode " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
   if (ProcScaleInput(cnode, src_prim) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Proc scale input failed.";
+    MS_LOG(ERROR) << "Proc scale input failed, cnode " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
   auto val_ptr = src_prim->GetAttr(ops::kMethod);
@@ -61,7 +62,7 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::LINEAR)) {
     dst_prim = std::make_shared<acl::ResizeBilinearV2>();
   } else {
-    MS_LOG(ERROR) << "Not support resize method " << method;
+    MS_LOG(ERROR) << "Not support resize method " << method << ", cnode " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(dst_prim);

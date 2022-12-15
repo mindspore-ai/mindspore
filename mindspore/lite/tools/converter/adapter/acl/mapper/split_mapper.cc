@@ -23,10 +23,6 @@
 
 namespace mindspore {
 namespace lite {
-namespace {
-constexpr size_t kNumFlagThree = 3;
-}  // namespace
-
 STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
   auto func_graph = cnode->func_graph();
   CHECK_NULL_RETURN(func_graph);
@@ -36,7 +32,7 @@ STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
   auto split_num_val = prim->GetAttr(ops::kOutputNum);
   CHECK_NULL_RETURN(split_num_val);
   prim->AddAttr("num_split", split_num_val);
-  int status = AddAttrToInput(func_graph, cnode, prim, ops::kAxis, kNumFlagThree);
+  int status = AddIntAttrToInput(func_graph, cnode, prim, ops::kAxis, false);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Add axis constant value to input failed.";
     return RET_ERROR;

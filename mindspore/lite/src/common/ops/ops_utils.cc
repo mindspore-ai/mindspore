@@ -273,6 +273,8 @@ REG_MINDSPORE_OPERATOR(GroupNormFusion)
 REG_MINDSPORE_OPERATOR(Log1p)
 REG_MINDSPORE_OPERATOR(TensorScatterAdd)
 REG_MINDSPORE_OPERATOR(ScatterElements)
+REG_MINDSPORE_OPERATOR(Triu)
+REG_MINDSPORE_OPERATOR(Tril)
 }  // namespace lite
 }  // namespace mindspore
 

@@ -232,6 +232,8 @@ union PrimitiveType {
     Log1p,
     TensorScatterAdd,
     ScatterElements,
+    Triu,
+    Tril,
 }
 
 table Abs {
@@ -1301,4 +1303,10 @@ table TensorScatterAdd {
 
 table ScatterElements {
     axis: long;
+}
+
+table Triu {
+}
+
+table Tril {
 }

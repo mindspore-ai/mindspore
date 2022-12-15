@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 #include "google/protobuf/message.h"
 #include "proto/onnx.pb.h"
 #include "include/errorcode.h"
@@ -35,7 +36,9 @@ namespace mindspore {
 namespace lite {
 class ExternalDataInfo {
  public:
-  const std::string GetRelativePath() const { return relative_path_; }
+  std::string GetRelativePath() const { return relative_path_; }
+  size_t GetOffset() const { return static_cast<size_t>(offset_); }
+  size_t GetLength() const { return length_; }
   static STATUS Create(const google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto> &external_data,
                        ExternalDataInfo *external_data_info);
 
@@ -62,27 +65,34 @@ class OnnxNodeParser {
 
   static int64_t opset_version() { return opset_version_; }
 
-  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor, const tensor::TensorPtr &tensor_info);
+  static tensor::TensorPtr CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor);
 
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
 
   static size_t GetOnnxElementNum(const onnx::TensorProto &onnx_tensor, bool *overflowed);
 
   static STATUS LoadOnnxExternalTensorData(const onnx::TensorProto &onnx_const_tensor,
-                                           const tensor::TensorPtr &tensor_info, const std::string &model_file);
+                                           const tensor::TensorPtr &tensor_info, const std::string &model_file,
+                                           std::map<std::string, std::pair<size_t, uint8_t *>> *external_datas);
+
+  static const onnx::TensorProto *GetConstantTensorData(const onnx::GraphProto &onnx_graph,
+                                                        const std::string &input_name);
 
  protected:
   static mindspore::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 
   static STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
 
-  static const void *GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, TypeId data_type, size_t data_count,
-                                    size_t *data_size);
+  static int GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, size_t data_count,
+                            const tensor::TensorPtr &tensor_info);
+  static int GetOnnxListData(const onnx::TensorProto &onnx_const_tensor, size_t data_count,
+                             const tensor::TensorPtr &tensor_info);
 
   static STATUS SetExternalTensorFile(const std::string &model_file, std::string *external_tensor_dir);
 
   static const void *LoadOnnxRawData(const onnx::TensorProto &onnx_const_tensor, size_t *data_size,
-                                     const std::string &model_file);
+                                     const std::string &model_file,
+                                     std::map<std::string, std::pair<size_t, uint8_t *>> *external_datas);
 
   const std::string name_{};
 
