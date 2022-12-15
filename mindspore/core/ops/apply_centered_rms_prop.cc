@@ -101,14 +101,15 @@ TypePtr ApplyCenteredRMSPropInferType(const PrimitivePtr &primitive, const std::
   (void)types.emplace("mean square dtype", mean_square_dtype);
   (void)types.emplace("moment dtype", moment_dtype);
   (void)types.emplace("grad dtype", grad_dtype);
-  const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,   kUInt32,
-                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex64};
+  const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
+                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, number_type, primitive->name());
   std::map<std::string, TypePtr> types_decay;
   (void)types_decay.emplace("decay dtype", decay_dtype);
   (void)types_decay.emplace("momentum dtype", momentum_dtype);
   (void)types_decay.emplace("epsilon dtype", epsilon_dtype);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
+                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types_decay, valid_types, primitive->name());
   std::map<std::string, TypePtr> types_lr;
   (void)types_lr.emplace("learning rate dtype", learning_rate_dtype);

@@ -15,9 +15,13 @@
  */
 
 #include "plugin/device/cpu/kernel/rmsprop_cpu_kernel.h"
+
 #include <algorithm>
 #include <memory>
 #include <functional>
+#include <complex>
+
+#include "nnacl/errorcode.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "utils/ms_utils.h"
 #include "ops/apply_rms_prop.h"
@@ -74,29 +78,88 @@ void RMSPropCpuKernelMod::LaunchRMSPropUnuseCenter(T *variable, T *mean_square, 
 
 template <typename T>
 void RMSPropCpuKernelMod::LaunchRMSPropUseCenter(T *variable, T *mean_square, T *moment, T *gradients,
-                                                 T *mean_gradients, float *momentum, float *learning_rate, float *decay,
-                                                 float *epsilon) {
+                                                 T *mean_gradients, T *momentum, T *learning_rate, T *decay,
+                                                 T *epsilon) {
   std::function<void(size_t, size_t)> task;
   for (int64_t b = 0; b < batch_size_; b++) {
-    if (dtype_ == kNumberTypeFloat32) {
-      task = [&](size_t start, size_t end) {
-        (void)RMSPropUseCenterFp32(variable, mean_square, moment, gradients, mean_gradients, momentum[0],
-                                   learning_rate[0], decay[0], epsilon[0], start, end);
-      };
-    } else {
-      task = [&](size_t start, size_t end) {
-        for (size_t i = start; i < end; i++) {
-          mean_square[i] += (gradients[i] * gradients[i] - mean_square[i]) * (1.0 - decay[0]);
-          mean_gradients[i] += (gradients[i] - mean_gradients[i]) * (1.0 - decay[0]);
-          auto denom = (mean_square[i] - mean_gradients[i] * mean_gradients[i]) + epsilon[0];
-          if (denom > 0) {
-            moment[i] = moment[i] * momentum[0] + (gradients[i] * learning_rate[0]) / sqrt(denom);
-            variable[i] -= moment[i];
-          }
+    task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        mean_square[i] += (gradients[i] * gradients[i] - mean_square[i]) * (T)(1.0 - static_cast<double>(decay[0]));
+        mean_gradients[i] += (gradients[i] - mean_gradients[i]) * (T)(1.0 - static_cast<double>(decay[0]));
+        auto denom = (mean_square[i] - mean_gradients[i] * mean_gradients[i]) + epsilon[0];
+        if (static_cast<double>(denom) > 0) {
+          moment[i] = moment[i] * momentum[0] + (gradients[i] * learning_rate[0]) / (T)sqrt(static_cast<double>(denom));
+          variable[i] -= moment[i];
         }
-      };
-    }
-    ParallelLaunchAutoSearch(task, LongToSize(input_elements_), this, &parallel_search_info_);
+      }
+    };
+    ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_);
+    variable = variable + input_elements_;
+    mean_square = mean_square + input_elements_;
+    moment = moment + input_elements_;
+    gradients = gradients + input_elements_;
+    mean_gradients = mean_gradients + input_elements_;
+    momentum++;
+    learning_rate++;
+    decay++;
+    epsilon++;
+  }
+}
+
+template <>
+void RMSPropCpuKernelMod::LaunchRMSPropUseCenter(std::complex<float> *variable, std::complex<float> *mean_square,
+                                                 std::complex<float> *moment, std::complex<float> *gradients,
+                                                 std::complex<float> *mean_gradients, std::complex<float> *momentum,
+                                                 std::complex<float> *learning_rate, std::complex<float> *decay,
+                                                 std::complex<float> *epsilon) {
+  std::function<void(size_t, size_t)> task;
+  for (int64_t b = 0; b < batch_size_; b++) {
+    task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        mean_square[i] +=
+          (gradients[i] * gradients[i] - mean_square[i]) * (static_cast<std::complex<float>>(1.0) - decay[0]);
+        mean_gradients[i] += (gradients[i] - mean_gradients[i]) * (static_cast<std::complex<float>>(1.0) - decay[0]);
+        auto denom = (mean_square[i] - mean_gradients[i] * mean_gradients[i]) + epsilon[0];
+        if (abs(denom) > 0.0) {
+          moment[i] = moment[i] * momentum[0] + learning_rate[0] / sqrt(denom) * gradients[i];
+          variable[i] -= moment[i];
+        }
+      }
+    };
+    ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_);
+    variable = variable + input_elements_;
+    mean_square = mean_square + input_elements_;
+    moment = moment + input_elements_;
+    gradients = gradients + input_elements_;
+    mean_gradients = mean_gradients + input_elements_;
+    momentum++;
+    learning_rate++;
+    decay++;
+    epsilon++;
+  }
+}
+
+template <>
+void RMSPropCpuKernelMod::LaunchRMSPropUseCenter(std::complex<double> *variable, std::complex<double> *mean_square,
+                                                 std::complex<double> *moment, std::complex<double> *gradients,
+                                                 std::complex<double> *mean_gradients, std::complex<double> *momentum,
+                                                 std::complex<double> *learning_rate, std::complex<double> *decay,
+                                                 std::complex<double> *epsilon) {
+  std::function<void(size_t, size_t)> task;
+  for (int64_t b = 0; b < batch_size_; b++) {
+    task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        mean_square[i] +=
+          (gradients[i] * gradients[i] - mean_square[i]) * (static_cast<std::complex<double>>(1.0) - decay[0]);
+        mean_gradients[i] += (gradients[i] - mean_gradients[i]) * (static_cast<std::complex<double>>(1.0) - decay[0]);
+        auto denom = (mean_square[i] - mean_gradients[i] * mean_gradients[i]) + epsilon[0];
+        if (abs(denom) > 0.0) {
+          moment[i] = moment[i] * momentum[0] + learning_rate[0] / sqrt(denom) * gradients[i];
+          variable[i] -= moment[i];
+        }
+      }
+    };
+    ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_);
     variable = variable + input_elements_;
     mean_square = mean_square + input_elements_;
     moment = moment + input_elements_;
@@ -204,6 +267,7 @@ bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
                                        const std::vector<kernel::AddressPtr> &) {
   size_ = inputs[0]->size / sizeof(T);
   if (!use_center_) {
+    size_ = inputs[0]->size / sizeof(float);
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRMSPropInputsNum, kernel_name_);
     float *variable = reinterpret_cast<float *>(inputs[kNumberZero]->addr);
     float *mean_square = reinterpret_cast<float *>(inputs[kNumberOne]->addr);
@@ -216,18 +280,18 @@ bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 
     size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
     MS_LOG(INFO) << "RMSPropCpuKernelMod lens:" << lens << " size_:" << size_;
-    LaunchRMSPropUnuseCenter<T>(variable, mean_square, moment, gradients, learning_rate, decay, momentum, epsilon);
+    LaunchRMSPropUnuseCenter<float>(variable, mean_square, moment, gradients, learning_rate, decay, momentum, epsilon);
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
-    T *variable = reinterpret_cast<float *>(inputs[kNumberZero]->addr);
-    T *mean_gradients = reinterpret_cast<float *>(inputs[kNumberOne]->addr);
-    T *mean_square = reinterpret_cast<float *>(inputs[kNumberTwo]->addr);
-    T *moment = reinterpret_cast<float *>(inputs[kNumberThree]->addr);
-    T *gradients = reinterpret_cast<float *>(inputs[kNumberFour]->addr);
-    float *learning_rate = reinterpret_cast<float *>(inputs[kNumberFive]->addr);
-    float *decay = reinterpret_cast<float *>(inputs[kNumberSix]->addr);
-    float *momentum = reinterpret_cast<float *>(inputs[kNumberSeven]->addr);
-    float *epsilon = reinterpret_cast<float *>(inputs[kNumberEight]->addr);
+    T *variable = reinterpret_cast<T *>(inputs[kNumberZero]->addr);
+    T *mean_gradients = reinterpret_cast<T *>(inputs[kNumberOne]->addr);
+    T *mean_square = reinterpret_cast<T *>(inputs[kNumberTwo]->addr);
+    T *moment = reinterpret_cast<T *>(inputs[kNumberThree]->addr);
+    T *gradients = reinterpret_cast<T *>(inputs[kNumberFour]->addr);
+    T *learning_rate = reinterpret_cast<T *>(inputs[kNumberFive]->addr);
+    T *decay = reinterpret_cast<T *>(inputs[kNumberSix]->addr);
+    T *momentum = reinterpret_cast<T *>(inputs[kNumberSeven]->addr);
+    T *epsilon = reinterpret_cast<T *>(inputs[kNumberEight]->addr);
 
     size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
     MS_LOG(INFO) << "RMSPropCpuKernelMod lens:" << lens << " size_:" << size_;
@@ -262,7 +326,175 @@ std::map<std::string, std::vector<std::pair<KernelAttr, RMSPropCpuKernelMod::RMS
                                           .AddInputAttr(kNumberTypeFloat32)
                                           .AddInputAttr(kNumberTypeFloat32)
                                           .AddOutputAttr(kNumberTypeFloat32),
-                                        &RMSPropCpuKernelMod::LaunchKernel<float>}}}};
+                                        &RMSPropCpuKernelMod::LaunchKernel<float>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddInputAttr(kNumberTypeFloat64)
+                                          .AddOutputAttr(kNumberTypeFloat64),
+                                        &RMSPropCpuKernelMod::LaunchKernel<double>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddInputAttr(kNumberTypeFloat16)
+                                          .AddOutputAttr(kNumberTypeFloat16),
+                                        &RMSPropCpuKernelMod::LaunchKernel<float16>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddInputAttr(kNumberTypeInt8)
+                                          .AddOutputAttr(kNumberTypeInt8),
+                                        &RMSPropCpuKernelMod::LaunchKernel<int8_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddOutputAttr(kNumberTypeInt16),
+                                        &RMSPropCpuKernelMod::LaunchKernel<int16_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddOutputAttr(kNumberTypeInt64),
+                                        &RMSPropCpuKernelMod::LaunchKernel<int64_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddInputAttr(kNumberTypeUInt8)
+                                          .AddOutputAttr(kNumberTypeUInt8),
+                                        &RMSPropCpuKernelMod::LaunchKernel<uint8_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddInputAttr(kNumberTypeUInt16)
+                                          .AddOutputAttr(kNumberTypeUInt16),
+                                        &RMSPropCpuKernelMod::LaunchKernel<uint16_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddInputAttr(kNumberTypeUInt32)
+                                          .AddOutputAttr(kNumberTypeUInt32),
+                                        &RMSPropCpuKernelMod::LaunchKernel<uint32_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddInputAttr(kNumberTypeUInt64)
+                                          .AddOutputAttr(kNumberTypeUInt64),
+                                        &RMSPropCpuKernelMod::LaunchKernel<uint64_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddInputAttr(kNumberTypeInt16)
+                                          .AddOutputAttr(kNumberTypeInt16),
+                                        &RMSPropCpuKernelMod::LaunchKernel<uint16_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddInputAttr(kNumberTypeInt32)
+                                          .AddOutputAttr(kNumberTypeInt32),
+                                        &RMSPropCpuKernelMod::LaunchKernel<int32_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddInputAttr(kNumberTypeInt64)
+                                          .AddOutputAttr(kNumberTypeInt64),
+                                        &RMSPropCpuKernelMod::LaunchKernel<int64_t>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddInputAttr(kNumberTypeComplex64)
+                                          .AddOutputAttr(kNumberTypeComplex64),
+                                        &RMSPropCpuKernelMod::LaunchKernel<std::complex<float>>},
+                                       {KernelAttr()
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddInputAttr(kNumberTypeComplex128)
+                                          .AddOutputAttr(kNumberTypeComplex128),
+                                        &RMSPropCpuKernelMod::LaunchKernel<std::complex<double>>}}}};
 
 std::vector<KernelAttr> RMSPropCpuKernelMod::GetOpSupport() {
   auto iter = func_list_.find(kernel_type_);
