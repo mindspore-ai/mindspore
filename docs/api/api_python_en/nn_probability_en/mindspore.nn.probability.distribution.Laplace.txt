@@ -2,12 +2,10 @@
 
     the log value of the probability.
 
-    **Parameters**
+    Parameters
+        - **value** (Tensor) - the value to compute.
+        - **mean** (Tensor) - the mean of the distribution. Default: None.
+        - **sd** (Tensor) - the standard deviation of the distribution. Default: None.
 
-    - **value** (Tensor) - the value to compute.
-    - **mean** (Tensor) - the mean of the distribution. Default: None.
-    - **sd** (Tensor) - the standard deviation of the distribution. Default: None.
-
-    **Returns**
-
-    Tensor, the log value of the probability.
+    Returns
+        Tensor, the log value of the probability.
