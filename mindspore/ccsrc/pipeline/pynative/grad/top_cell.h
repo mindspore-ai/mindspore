@@ -127,6 +127,10 @@ class TopCellInfo {
   inline const OpInfoWithMsFuncForwardTensors &op_info_with_ms_func_forward_tensors() const {
     return op_info_with_ms_func_forward_tensors_;
   }
+  inline void set_op_info_with_ms_func_forward_tensors(const std::string &op_info,
+                                                       const std::vector<tensor::TensorPtr> &forward_tensors) {
+    op_info_with_ms_func_forward_tensors_[op_info] = forward_tensors;
+  }
   inline size_t op_index() const { return op_index_; }
   inline void IncreaseOpIndex() { op_index_++; }
 
