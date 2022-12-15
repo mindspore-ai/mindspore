@@ -1645,11 +1645,17 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   auto dtype = tensor->Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
   size_t data_size = tensor->DataSize();
+  auto shape = tensor->shape();
   std::ostringstream buf;
-  auto fn = [&buf, data_size](auto addr) {
+  auto fn = [&buf, data_size, &shape](auto addr) {
+    // Tensor value.
+    buf << "v";
     for (size_t i = 0; i < data_size; ++i) {
       buf << *(addr + i) << ",";
     }
+    // Tensor shape is necessary.
+    // For example, the value of ones[3x4] and ones[4x3] are the same, but the shape is different.
+    buf << "s" << tensor::ShapeToString(shape);
   };
 
   if (dtype->type_id() == kNumberTypeBool) {
@@ -1662,8 +1668,12 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
     fn(reinterpret_cast<uint8_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt16) {
     fn(reinterpret_cast<int16_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeUInt16) {
+    fn(reinterpret_cast<uint16_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt32) {
     fn(reinterpret_cast<int32_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeUInt32) {
+    fn(reinterpret_cast<uint32_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt64) {
     fn(reinterpret_cast<int64_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat16) {

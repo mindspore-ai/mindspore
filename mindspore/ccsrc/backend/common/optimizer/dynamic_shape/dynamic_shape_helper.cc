@@ -298,8 +298,8 @@ void InferShapeDynamic(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorP
   MS_EXCEPTION_IF_NULL(old_abs);
   auto new_abs = old_abs->Clone();
   opt::CppInferShape(primitive, args_spec_list, new_abs);
-  MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << old_abs << " to "
-                << new_abs;
+  MS_LOG(INFO) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << old_abs << " to "
+               << new_abs;
   cnode->set_abstract(new_abs);
 }
 
