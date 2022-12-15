@@ -58,8 +58,20 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
 
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
   ParallelRun parallel_fun_ = nullptr;
+  void SetRunByGEMM() { parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByGEMM; }
+  void SetRunByGEPDOT() { parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByGEPDOT; }
+  void SetRunByGEPM() { parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByGEPM; }
+  void SetRunByBatchColRowGEMM() { parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatchColRowGEMM; }
+  void SetRunByRow1Deep1GEPDOT() { parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow1Deep1GEPDOT; }
 
- private:
+  virtual int ParallelRunByGEMM(int task_id) const { return RET_ERROR; }
+  virtual int ParallelRunByGEPDOT(int task_id) const { return RET_ERROR; }
+  virtual int ParallelRunByGEPM(int task_id) const { return RET_ERROR; }
+  virtual int ParallelRunByBatchColRowGEMM(int task_id) const { return RET_ERROR; }
+  virtual int ParallelRunByRow1Deep1GEPDOT(int task_id) const { return RET_ERROR; }
+  virtual int GetThreadCuttingPolicy();
+
+ public:
   struct MatrixInfo {
     bool need_pack{false};
     bool has_packed{false};  // only valid for constant, only do once throughout the process.
@@ -72,6 +84,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   virtual int ParallelRunByRow(int task_id) const;
   virtual int ParallelRunByOC(int task_id) const;
   virtual int ParallelRunByBatch(int task_id) const;
+  virtual int ParallelRunByAllScene(int task_id) const { return RET_ERROR; }
   int ParallelRunIsNotPackByBatch(int task_id) const;
   int BackupConstMatrix(MatrixInfo *matrix_info, int index);
   virtual void InitGlobalVariable();
@@ -85,9 +98,8 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int PackBiasMatrix();
   void FreePackedMatrixA();
   void FreePackedMatrixB();
-  int InitParameter();
+  virtual int InitParameter();
   int InitTmpOutBuffer();
-  int GetThreadCuttingPolicy();
   virtual bool CheckThreadCuttingByRow();
   void GetThreadCuttingInfoByRow();
   void InitShapeA();
@@ -116,6 +128,9 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   bool out_need_aligned_ = false;
   int col_step_ = 0;
   std::vector<int> split_points_;
+  std::vector<int> col_split_points_;
+  std::vector<int> row_split_points_;
+  int block_col_unit_ = 0;
   MatrixInfo matrix_a_;
   MatrixInfo matrix_b_;
   MatrixInfo matrix_c_;

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// clang-format off
 #ifndef MINDSPORE_NNACL_FP32_MATMUL_F32_@SIMD_INSTRUCTION@_H_
 #define MINDSPORE_NNACL_FP32_MATMUL_F32_@SIMD_INSTRUCTION@_H_
 
@@ -41,6 +42,67 @@ static inline int64_t GemmIsNotPack@SIMD_INSTRUCTION@(int64_t index, const float
       }
     }
     SIMD_ST_F32(c + index, dst);
+  }
+
+  return index;
+}
+
+// act_type must be 0, 1, 2. 0: no_act, 1: relu, 3: relu6.
+static inline int64_t Row1Deep1GemmIsNotPack@SIMD_INSTRUCTION@(int64_t index, const float *a, const float *b, float *c, const float *bias, int col,
+  int act_type) {
+  SIMD_F32 down_threshold = SIMD_MOV_F32(0.0f);
+  SIMD_F32 up_threshold = SIMD_MOV_F32(6);
+  SIMD_F32 vec_a = SIMD_MOV_F32(a[0]);
+  if (act_type == 1) {
+    for (int block_max_size = col - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vec_b = SIMD_LD_F32(b + index);
+      SIMD_F32 vec_bias = SIMD_LD_F32(bias + index);
+      SIMD_F32 dst = SIMD_FMADD_F32(vec_a, vec_b, vec_bias);
+      SIMD_ST_F32(c + index, SIMD_MAX_F32(dst, down_threshold));  // relu
+    }
+  } else if (act_type == 3) {
+    for (int block_max_size = col - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vec_b = SIMD_LD_F32(b + index);
+      SIMD_F32 vec_bias = SIMD_LD_F32(bias + index);
+      SIMD_F32 dst = SIMD_FMADD_F32(vec_a, vec_b, vec_bias);
+      SIMD_ST_F32(c + index, SIMD_CLAMP_F32(dst, down_threshold, up_threshold));  // relue6
+    }
+  } else {
+    for (int block_max_size = col - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vec_b = SIMD_LD_F32(b + index);
+      SIMD_F32 vec_bias = SIMD_LD_F32(bias + index);
+      SIMD_F32 dst = SIMD_FMADD_F32(vec_a, vec_b, vec_bias);
+      SIMD_ST_F32(c + index, dst);  // no_act
+    }
+  }
+
+  return index;
+}
+
+// act_type must be 0, 1, 2. 0: no_act, 1: relu, 3: relu6.
+static inline int64_t Row1Deep1NoBiasGemmIsNotPack@SIMD_INSTRUCTION@(int64_t index, const float *a, const float *b, float *c, const float *bias, int col,
+  int act_type) {
+  SIMD_F32 down_threshold = SIMD_MOV_F32(0.0f);
+  SIMD_F32 up_threshold = SIMD_MOV_F32(6);
+  SIMD_F32 vec_a = SIMD_MOV_F32(a[0]);
+  if (act_type == 1) {
+    for (int block_max_size = col - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vec_b = SIMD_LD_F32(b + index);
+      SIMD_F32 dst = SIMD_MUL_F32(vec_a, vec_b);
+      SIMD_ST_F32(c + index, SIMD_MAX_F32(dst, down_threshold));  // relu
+    }
+  } else if (act_type == 3) {
+    for (int block_max_size = col - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vec_b = SIMD_LD_F32(b + index);
+      SIMD_F32 dst = SIMD_MUL_F32(vec_a, vec_b);
+      SIMD_ST_F32(c + index, SIMD_CLAMP_F32(dst, down_threshold, up_threshold));  // relue6
+    }
+  } else {
+    for (int block_max_size = col - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 vec_b = SIMD_LD_F32(b + index);
+      SIMD_F32 dst = SIMD_MUL_F32(vec_a, vec_b);
+      SIMD_ST_F32(c + index, dst);  // no_act
+    }
   }
 
   return index;
