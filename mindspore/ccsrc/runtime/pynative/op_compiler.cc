@@ -55,6 +55,7 @@ static const mindspore::HashSet<std::string> kDynamicProcessOp = {
   kReduceSumOpName,
   kCTCLossOpName,
   kReduceMeanOpName,
+  kReduceMinOpName,
   kZerosLikeOpName,
   kTileOpName,
   kLayerNormGradOpName,
