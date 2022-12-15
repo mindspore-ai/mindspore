@@ -18,8 +18,112 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/float_status_impl.cuh"
 #include "include/cuda_fp16.h"
 
+#ifndef _MSC_VER
+template <>
+__device__ __forceinline__ bool isnan<bool>(bool x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<int8_t>(int8_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<uint8_t>(uint8_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<int16_t>(int16_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<uint16_t>(uint16_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<int32_t>(int32_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<uint32_t>(uint32_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<int64_t>(int64_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isnan<uint64_t>(uint64_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<bool>(bool x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<int8_t>(int8_t x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<uint8_t>(uint8_t x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<int16_t>(int16_t x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<uint16_t>(uint16_t x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<int32_t>(int32_t x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<uint32_t>(uint32_t x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<int64_t>(int64_t x) {
+  return isinf(static_cast<double>(x));
+}
+
+template <>
+__device__ __forceinline__ bool isinf<uint64_t>(uint64_t x) {
+  return isinf(static_cast<double>(x));
+}
+#endif  // _MSC_VER
+
 template <typename T>
 __global__ void IsNan(const size_t size, const T *input, bool *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isnan(static_cast<double>(input[pos]))) {
+      out[pos] = true;
+    } else {
+      out[pos] = false;
+    }
+  }
+  return;
+}
+
+template <>
+__global__ void IsNan(const size_t size, const double *input, bool *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (isnan(input[pos])) {
       out[pos] = true;
@@ -29,6 +133,19 @@ __global__ void IsNan(const size_t size, const T *input, bool *out) {
   }
   return;
 }
+
+template <>
+__global__ void IsNan(const size_t size, const float *input, bool *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isnan(input[pos])) {
+      out[pos] = true;
+    } else {
+      out[pos] = false;
+    }
+  }
+  return;
+}
+
 template <>
 __global__ void IsNan(const size_t size, const half *input, bool *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
@@ -44,6 +161,18 @@ __global__ void IsNan(const size_t size, const half *input, bool *out) {
 template <typename T>
 __global__ void IsInf(const size_t size, const T *input, bool *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isinf(static_cast<double>(input[pos])) != 0) {
+      out[pos] = true;
+    } else {
+      out[pos] = false;
+    }
+  }
+  return;
+}
+
+template <>
+__global__ void IsInf(const size_t size, const double *input, bool *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (isinf(input[pos]) != 0) {
       out[pos] = true;
     } else {
@@ -52,6 +181,19 @@ __global__ void IsInf(const size_t size, const T *input, bool *out) {
   }
   return;
 }
+
+template <>
+__global__ void IsInf(const size_t size, const float *input, bool *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isinf(input[pos]) != 0) {
+      out[pos] = true;
+    } else {
+      out[pos] = false;
+    }
+  }
+  return;
+}
+
 template <>
 __global__ void IsInf(const size_t size, const half *input, bool *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
@@ -67,6 +209,18 @@ __global__ void IsInf(const size_t size, const half *input, bool *out) {
 template <typename T>
 __global__ void IsFinite(const size_t size, const T *input, bool *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isinf(static_cast<double>(input[pos])) == 0 && !isnan(static_cast<double>(input[pos]))) {
+      out[pos] = true;
+    } else {
+      out[pos] = false;
+    }
+  }
+  return;
+}
+
+template <>
+__global__ void IsFinite(const size_t size, const double *input, bool *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (isinf(input[pos]) == 0 && !isnan(input[pos])) {
       out[pos] = true;
     } else {
@@ -75,6 +229,19 @@ __global__ void IsFinite(const size_t size, const T *input, bool *out) {
   }
   return;
 }
+
+template <>
+__global__ void IsFinite(const size_t size, const float *input, bool *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isinf(input[pos]) == 0 && !isnan(input[pos])) {
+      out[pos] = true;
+    } else {
+      out[pos] = false;
+    }
+  }
+  return;
+}
+
 template <>
 __global__ void IsFinite(const size_t size, const half *input, bool *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
@@ -90,12 +257,34 @@ __global__ void IsFinite(const size_t size, const half *input, bool *out) {
 template <typename T>
 __global__ void FloatStatus(const size_t size, const T *input, float *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isinf(static_cast<double>(input[pos])) != 0 || isnan(static_cast<double>(input[pos]))) {
+      out[0] = 1;
+    }
+  }
+  return;
+}
+
+template <>
+__global__ void FloatStatus(const size_t size, const double *input, float *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (isinf(input[pos]) != 0 || isnan(input[pos])) {
       out[0] = 1;
     }
   }
   return;
 }
+
+template <>
+__global__ void FloatStatus(const size_t size, const float *input, float *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    if (isinf(input[pos]) != 0 || isnan(input[pos])) {
+      out[0] = 1;
+    }
+  }
+  return;
+}
+
+
 template <>
 __global__ void FloatStatus(const size_t size, const half *input, float *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
