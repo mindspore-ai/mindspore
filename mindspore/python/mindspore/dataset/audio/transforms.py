@@ -2154,7 +2154,7 @@ class PitchShift(AudioTensorOperation):
         TypeError: If `n_fft` is not of type int.
         TypeError: If `win_length` is not of type int.
         TypeError: If `hop_length` is not of type int.
-        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.utils.WindowType` .
+        TypeError: If `window` is not of type :class:`mindspore.dataset.audio.WindowType` .
         ValueError: If `sample_rate` is a negative number.
         ValueError: If `bins_per_octave` is 0.
         ValueError: If `n_fft` is a negative number.

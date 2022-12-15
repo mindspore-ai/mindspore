@@ -1,8 +1,7 @@
 mindspore.dataset.audio.PitchShift
 ==================================
 
-py:class:: mindspore.dataset.audio.PitchShift(sample_rate, n_steps, bins_per_octave=12, n_fft=512, win_length=None,
-                                              hop_length=None, window=WindowType.HANN)
+.. py:class:: mindspore.dataset.audio.PitchShift(sample_rate, n_steps, bins_per_octave=12, n_fft=512, win_length=None, hop_length=None, window=WindowType.HANN)
 
     将波形的音调移动 `n_steps` 步长。
 
@@ -22,7 +21,7 @@ py:class:: mindspore.dataset.audio.PitchShift(sample_rate, n_steps, bins_per_oct
         - **TypeError** - 如果 `n_fft` 的类型不为int。
         - **TypeError** - 如果 `win_length` 的类型不为int。
         - **TypeError** - 如果 `hop_length` 的类型不为int。
-        - **TypeError** - 如果 `window` 的类型不为 :class:`mindspore.dataset.audio.utils.WindowType` 。
+        - **TypeError** - 如果 `window` 的类型不为 :class:`mindspore.dataset.audio.WindowType` 。
         - **ValueError** - 如果 `sample_rate` 为负数。
         - **ValueError** - 如果 `bins_per_octave` 为0。
         - **ValueError** - 如果 `n_fft` 为负数。

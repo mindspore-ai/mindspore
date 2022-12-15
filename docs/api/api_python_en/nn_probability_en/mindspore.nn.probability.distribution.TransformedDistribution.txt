@@ -3,125 +3,106 @@
 
     Return the bijector.
 
-    **Returns**
-
-    Bijector, the bijector.
+    Returns
+        Bijector, the bijector.
 
 .. py:method:: distribution
     :property:
 
     Return the distribution before transformation.
 
-    **Returns**
-
-    Distribution, the distribution before transformation.
+    Returns
+        Distribution, the distribution before transformation.
 
 .. py:method:: dtype
     :property:
 
     Return the data type of distribution.
 
-    **Returns**
-
-    mindspore.dtype, the data type of distribution.
+    Returns
+        mindspore.dtype, the data type of distribution.
 
 .. py:method:: is_linear_transformation
     :property:
 
     Return whether the bijector is linear.
 
-    **Returns**
-
-    Bool, return True if the bijector is linear, otherwise return False.
+    Returns
+        Bool, return True if the bijector is linear, otherwise return False.
 
 .. py:method:: cdf(value)
 
     Compute the cumulatuve distribution function(CDF) of the given value.
 
-    **Parameters**
+    Parameters
+        - **value** (Tensor) - the value to compute.
 
-    - **value** (Tensor) - the value to compute.
-
-    **Returns**
-
-    Tensor, the value of the cumulatuve distribution function for the given input.
+    Returns
+        Tensor, the value of the cumulatuve distribution function for the given input.
 
 .. py:method:: log_cdf(value)
 
     Compute the log value of the cumulatuve distribution function.
 
-    **Parameters**
+    Parameters
+        - **value** (Tensor) - the value to compute.
 
-    - **value** (Tensor) - the value to compute.
-
-    **Returns**
-
-    Tensor, the log value of the cumulatuve distribution function.
+    Returns
+        Tensor, the log value of the cumulatuve distribution function.
 
 .. py:method:: log_prob(value)
 
     the log value of the probability.
 
-    **Parameters**
+    Parameters
+        - **value** (Tensor) - the value to compute.
 
-    - **value** (Tensor) - the value to compute.
-
-    **Returns**
-
-    Tensor, the log value of the probability.
+    Returns
+        Tensor, the log value of the probability.
 
 .. py:method:: log_survival(value)
 
     Compute the log value of the survival function.
 
-    **Parameters**
+    Parameters
+        - **value** (Tensor) - the value to compute.
 
-    - **value** (Tensor) - the value to compute.
-
-    **Returns**
-
-    Tensor, the value of the K-L loss.
+    Returns
+        Tensor, the value of the K-L loss.
 
 .. py:method:: mean
 
     Compute the mean value of the distribution.
 
-    **Returns**
-
-    Tensor, the mean of the distribution.
+    Returns
+        Tensor, the mean of the distribution.
 
 .. py:method:: prob(value)
 
     The probability of the given value.
 
-    **Parameters**
+    Parameters
+        - **value** (Tensor) - the value to compute.
 
-    - **value** (Tensor) - the value to compute.
-
-    **Returns**
-
-    Tensor, the value of the probability.
+    Returns
+        Tensor, the value of the probability.
 
 .. py:method:: sample(shape)
 
     Generate samples.
 
-    **Parameters**
+    Parameters
+        - **shape** (tuple) - the shape of the tensor.
 
-    - **shape** (tuple) - the shape of the tensor.
-
-    **Returns**
-
-    Tensor, the sample following the distribution.
+    Returns
+        Tensor, the sample following the distribution.
 
 .. py:method:: survival_function(value)
 
     Compute the value of the survival function.
 
-    **Parameters**
+    Parameters
+        - **value** (Tensor) - the value to compute.
 
-    - **value** (Tensor) - the value to compute.
-
-    **Returns**
-
-    Tensor, the value of the survival function.
+    Returns
+        Tensor, the value of the survival function.
