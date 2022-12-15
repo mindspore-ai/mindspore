@@ -901,7 +901,7 @@ def sequence_to_index(sequence, dim_size):
 def int_to_index(i, shape):
     """Converts integer to tensor indices."""
     dim_size = shape[0]
-    i = i % dim_size
+    i = (i + dim_size) % dim_size
     if len(shape) == 1:
         return P.Fill()(mstype.int64, (1, 1), i)
     mesh = list()
