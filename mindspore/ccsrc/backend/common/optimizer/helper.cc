@@ -1031,20 +1031,52 @@ void TransferDependOrUpdateState(const CNodePtr &old_node, const FuncGraphPtr &g
   }
 }
 
+void GetPrimitiveChangeInfo(const PrimitivePtr &prim, std::string *me_name, bool *ir_change) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(me_name);
+  MS_EXCEPTION_IF_NULL(ir_change);
+  if (prim->HasAttr(kAttrMeOpName)) {
+    *me_name = GetValue<std::string>(prim->GetAttr(kAttrMeOpName));
+  }
+  if (prim->HasAttr(kAttrIRChange)) {
+    *ir_change = GetValue<bool>(prim->GetAttr(kAttrIRChange));
+  }
+  if (*ir_change || !me_name->empty()) {
+    MS_LOG(INFO) << "Note: primitive(" << prim->ToString() << ", me_name:" << *me_name << ", ori_name: " << prim->name()
+                 << ", ir_change" << *ir_change << ") "
+                 << "has been changed in ascend vm pass, it should been rectify abstract before infer or provide a "
+                    "new infer func";
+  }
+}
+
 void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list,
                    const AbstractBasePtr &out_abs) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(out_abs);
-  auto found = abstract::GetBackendPrimitiveInferImpl(prim);
+  PrimitivePtr prim_clone = prim;
+  std::string me_name;
+  std::string ori_name;
+  bool ir_change = false;
+  GetPrimitiveChangeInfo(prim, &me_name, &ir_change);
+  if (!me_name.empty()) {
+    prim_clone = prim->Clone();
+    ori_name = prim->name();
+    prim_clone->set_name(me_name);
+  }
+  auto found = abstract::GetBackendPrimitiveInferImpl(prim_clone);
   if (found.has_value()) {
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
-    auto infer_spec_list = RectifyAbstract(prim, args_spec_list);
-    auto shape = infer.InferShape(prim, infer_spec_list);
+    auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
+    auto shape = infer.InferShape(prim_clone, infer_spec_list);
     if (shape == nullptr) {
       MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
     }
     out_abs->set_shape(shape);
+    if (prim_clone != prim) {
+      *prim = *prim_clone;
+      prim->set_name(ori_name);
+    }
     return;
   }
 
@@ -1054,16 +1086,30 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
 
 AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto found = abstract::GetBackendPrimitiveInferImpl(prim);
+  PrimitivePtr prim_clone = prim;
+  std::string me_name;
+  std::string ori_name;
+  bool ir_change = false;
+  GetPrimitiveChangeInfo(prim, &me_name, &ir_change);
+  if (!me_name.empty()) {
+    prim_clone = prim->Clone();
+    ori_name = prim->name();
+    prim_clone->set_name(me_name);
+  }
+  auto found = abstract::GetBackendPrimitiveInferImpl(prim_clone);
   if (found.has_value()) {
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    auto infer_spec_list = RectifyAbstract(prim, args_spec_list);
-    return infer.InferShapeAndType(nullptr, prim, infer_spec_list);
+    auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
+    auto ret = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
+    if (prim_clone != prim) {
+      *prim = *prim_clone;
+      prim->set_name(ori_name);
+    }
+    return ret;
   }
   MS_LOG(EXCEPTION) << "Get infer shape function failed, the operator is not support dynamic shape yet, primitive name:"
                     << prim->name() << " primitive type:" << prim->type_name();
-  return nullptr;
 }
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list) {
