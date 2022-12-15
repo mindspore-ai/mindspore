@@ -1737,6 +1737,68 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
 }
 }  // namespace
 
+EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+                                           const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
+  // Consider all primitive implemented python infer() real use the tuple/list arguments.
+  CheckSequenceArgumentForPythonPrimitive(prim_py_, args_spec_list);
+  MS_EXCEPTION_IF_NULL(prim_py_);
+  auto py_args = PreparePyInputs(prim_py_, args_spec_list);
+  prim_py_->BeginRecordAddAttr();
+  py::dict output = prim_py_->RunInfer(py_args);
+  prim_py_->EndRecordAddAttr();
+  if (output.contains("fn")) {
+    // The inputs contain variable, the constexpr will run as graph.
+    py::tuple values = output["fn"];
+    if (values.empty()) {
+      MS_LOG(EXCEPTION) << "Can not get origin function from constexpr.";
+    }
+    auto inner_val = parse::ParsePythonCode(values[0]);
+    MS_EXCEPTION_IF_NULL(inner_val);
+    auto inner_fg = dyn_cast<FuncGraph>(inner_val);
+    MS_EXCEPTION_IF_NULL(inner_fg);
+    auto mng = Manage(inner_fg, false);
+    inner_fg->set_manager(mng);
+    MS_EXCEPTION_IF_NULL(out_conf);
+    auto out_node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(out_node);
+    auto out_cnode = dyn_cast<CNode>(out_node);
+    MS_EXCEPTION_IF_NULL(out_cnode);
+    FuncGraphPtr func_graph = out_node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    std::vector<AnfNodePtr> new_cnode_inputs = {NewValueNode(inner_fg)};
+    const auto &out_cnode_inputs = out_cnode->inputs();
+    (void)std::copy(out_cnode_inputs.begin() + 1, out_cnode_inputs.end(), std::back_inserter(new_cnode_inputs));
+    auto new_node = func_graph->NewCNodeInOrder(new_cnode_inputs);
+    func_graph->ReplaceInOrder(out_node, new_node);
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
+  // If all inputs are constant value, use python prim evaluator.
+  // Ensure input arguments are evaluated.
+  auto ret_abstract = EvalUndeterminedArgs(args_spec_list);
+  if (ret_abstract != nullptr) {
+    MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
+    return ret_abstract;
+  }
+  auto forbid_reuse = prim_py_->HasAttr(GRAPH_FLAG_FORBID_REUSE_RESULT);
+  if (!forbid_reuse) {
+    // Try to get infer result from evaluator cache.
+    EvalResultPtr eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+    if (eval_result != nullptr) {
+      return std::make_shared<EvalResult>(eval_result->abstract()->Clone(), eval_result->attribute());
+    }
+  }
+  const auto &added_attrs = prim_py_->evaluate_added_attrs();
+  MS_LOG(DEBUG) << "Output type is " << py::str(output);
+  auto res_abs = PyInferRes2Abstract(prim_py_, output);
+  MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
+  EvalResultPtr eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
+  evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
+  return eval_result;
+}
+
 EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,
                                            const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();

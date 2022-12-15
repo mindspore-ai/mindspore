@@ -30,6 +30,7 @@ inline const char GRAPH_FLAG_SIDE_EFFECT_PROPAGATE[] = "side_effect_propagate";
 inline const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP[] = "side_effect_backprop";
 inline const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP_MEM[] = "side_effect_backprop_mem";
 inline const char GRAPH_FLAG_FORBID_REUSE_RESULT[] = "forbid_reuse_result";
+inline const char GRAPH_FLAG_CONSTEXPR_PRIM[] = "constexpr_prim";
 inline const char GRAPH_FLAG_IS_WHILE_HEADER[] = "is_while_header";
 inline const char GRAPH_FLAG_ORDER_ENFORCE_SKIP[] = "order_enforce_skip";
 inline const char GRAPH_FLAG_BPROP_RETURN_SPARSE[] = "bprop_return_sparse";

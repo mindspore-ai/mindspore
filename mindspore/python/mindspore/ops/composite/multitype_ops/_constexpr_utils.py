@@ -25,7 +25,6 @@ from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
-
 from mindspore import log as logger
 
 ALL_TENSOR = 0
@@ -166,6 +165,7 @@ def _deep_tensor_to_nparray(array_like):
 
 
 #TODO: remove comment
+#@constexpr(run_graph=False)
 @constexpr
 def check_range(x, dim_size):
     if dim_size is None:
@@ -634,12 +634,6 @@ def _judge_order_continuous(order_sequence):
 @constexpr
 def scalar_in_sequence(x, y):
     """Determine whether the scalar in the sequence."""
-    if x is None:
-        raise ValueError("Judge scalar in tuple or list require scalar and sequence must be constant, "
-                         "but the scalar is not.")
-    if y is None:
-        raise ValueError("Judge scalar in tuple or list require scalar and sequence must be constant, "
-                         "but the sequence is not.")
     return x in y
 
 

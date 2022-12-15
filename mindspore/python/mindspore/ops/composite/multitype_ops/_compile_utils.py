@@ -432,7 +432,9 @@ def tensor_index_by_list(data, list_index):
             if all(isinstance(i, bool) for i in list_index):
                 const_utils.raise_unimplemented_error(
                     "Not supported to the dynamic shape tensor slice by using list of Boolean type")
-        tensor_index = const_utils.sequence_to_index(list_index, data_shape[0])
+            tensor_index = const_utils.sequence_to_index(list_index, None)
+        else:
+            tensor_index = const_utils.sequence_to_index(list_index, data_shape[0])
         if tensor_index is False:
             const_utils.raise_index_error("When tensor is indexed by list, the list can't be empty.")
         return F.gather(data, tensor_index, 0)
@@ -1109,6 +1111,8 @@ def format_list_indices(list_indices, length):
     # If eyery element in list is bool, it's treated as 1-D bool tensor.
     # If every element in list is int(not all bool), it's treated as int tensor.
     if const_utils.judge_indexes_types(indices_types, mstype.int_type + (mstype.bool_,)):
+        if not F.isconstant(length):
+            return const_utils.sequence_to_index(list_indices, None)
         return const_utils.sequence_to_index(list_indices, length)
     # If list contains other types(.../list/tuple/None), it's treated as a tuple
     return const_utils.deep_tuple(list_indices)

@@ -32,6 +32,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.ops.operations.array_ops import GatherNd, Coalesce
 from mindspore.ops.operations import _csr_ops
+from mindspore.ops import functional as F
 from mindspore.common import CSRTensor, COOTensor, Tensor
 from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor,\
     promote_binary_dtype
@@ -63,12 +64,11 @@ def _make_tensor_with_dtype(data, dtype):
     return Tensor(data, dtype=dtype)
 
 
-@constexpr
 def _convert_shape(shape):
     """Temporary solution to get shape value, will be removed when shape op is supported."""
-    if shape is None:
+    if F.is_sequence_shape_unknown(shape):
         return (-2,)
-    shape = [-1 if i is None else i for i in shape]
+    shape = [-1 if not F.isconstant(i) else i for i in shape]
     return tuple(shape)
 
 

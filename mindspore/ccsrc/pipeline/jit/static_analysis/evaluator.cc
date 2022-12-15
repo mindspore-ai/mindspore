@@ -517,7 +517,7 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
 EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                            const AnfNodeConfigPtr &out_conf) {
   if (args_conf_list.empty() && identifier_ != "MakeTupleEvaluator" && identifier_ != "MakeListEvaluator" &&
-      identifier_ != "RaiseEvaluator") {
+      identifier_ != "RaiseEvaluator" && identifier_ != "ConstexprEvaluator") {
     MS_LOG(EXCEPTION) << "Size should be greater than 0, during running " << identifier_;
   }
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
