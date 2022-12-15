@@ -212,6 +212,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kSparseSegmentSqrtnWithNumSegments, ShapeSet{3}},
                                          {kSparseMatrixTranspose, ShapeSet{0}},
                                          {kParameterizedTruncatedNormal, ShapeSet{0}},
+                                         {prim::kPrimMirrorPadGrad->name(), ShapeSet{1}},
                                          {kSparseToDense, ShapeSet{2}}};
   return host_depends;
 }
