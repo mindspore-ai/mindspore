@@ -280,7 +280,7 @@ def reverse(x, axis):
             The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         axis (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and type as `x`.
 
     Raises:

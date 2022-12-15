@@ -12,11 +12,11 @@ mindspore_lite.Converter
         加解密功能仅在编译时设置为 `MSLITE_ENABLE_MODEL_ENCRYPTION=on` 时生效，并且仅支持Linux x86平台。其中密钥为十六进制表示的字符串，如密钥定义为 `(b)0123456789ABCDEF` 对应的十六进制表示为 `30313233343536373839414243444546` ，Linux平台用户可以使用 `xxd` 工具对字节表示的密钥进行十六进制表达转换。需要注意的是，加解密算法在1.7版本进行了更新，导致新版的python接口不支持对1.6及其之前版本的MindSpore Lite加密导出的模型进行转换。
 
     参数：
-        - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。有关详细信息，请参见 `FmkType <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.FmkType.html>`_ 。
+        - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。有关详细信息，请参见 `FmkType <https://mindspore.cn/lite/api/zh-CN/r2.0.0-alpha/mindspore_lite/mindspore_lite.FmkType.html>`_ 。
         - **model_file** (str) - 转换时的输入模型文件路径。例如："/home/user/model.prototxt"。选项：TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" | TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth"。
         - **output_file** (str) - 转换时的输出模型文件路径。可自动生成.ms后缀。如果将 `export_mindir` 设置为ModelType.MINDIR，那么将生成MindSpore模型，该模型使用.mindir作为后缀。如果将 `export_mindir` 设置为ModelType.MINDIR_LITE，那么将生成MindSpore Lite模型，该模型使用.ms作为后缀。例如：输入模型为"/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
         - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选，Caffe模型一般分为两个文件： `model.prototxt` 是模型结构，对应 `model_file` 参数； `model.caffemodel` 是模型权值文件，对应 `weight_file` 参数。例如："/home/user/model.caffemodel"。默认值：""。
-        - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值：""。
+        - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/r2.0.0-alpha/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/r2.0.0-alpha/use/nnie.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值：""。
         - **weight_fp16** (bool，可选) - 若True，则在转换时，会将模型中Float32的常量Tensor保存成Float16数据类型，压缩生成的模型尺寸。之后根据 `DeviceInfo` 的 `enable_fp16` 参数决定输入的数据类型执行推理。 `weight_fp16` 的优先级很低，比如如果开启了量化，那么对于已经量化的权重， `weight_fp16` 不会再次生效。 `weight_fp16` 仅对Float32数据类型中的常量Tensor有效。默认值：False。
         - **input_shape** (dict{str: list[int]}，可选) - 设置模型输入的维度，输入维度的顺序与原始模型一致。在以下场景下，用户可能需要设置该参数。例如：{"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}。默认值：None，等同于设置为{}。
 
@@ -43,7 +43,7 @@ mindspore_lite.Converter
           - **DataType.UINT8**   - 无符号8位整型数。
           - **DataType.UNKNOWN** - 设置与模型输出Tensor相同的DataType。
 
-        - **export_mindir** (ModelType，可选) - 设置导出模型文件的类型。选项：ModelType.MINDIR | ModelType.MINDIR_LITE。默认值：ModelType.MINDIR_LITE。有关详细信息，请参见 `ModelType <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
+        - **export_mindir** (ModelType，可选) - 设置导出模型文件的类型。选项：ModelType.MINDIR | ModelType.MINDIR_LITE。默认值：ModelType.MINDIR_LITE。有关详细信息，请参见 `ModelType <https://mindspore.cn/lite/api/zh-CN/r2.0.0-alpha/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
         - **decrypt_key** (str，可选) - 设置用于加载密文MindIR时的密钥，以十六进制字符表示。仅当fmk_type为FmkType.MINDIR时有效。默认值：""。
         - **decrypt_mode** (str，可选) - 设置加载密文MindIR的模式，只在设置了 `decryptKey` 时有效。选项："AES-GCM" | "AES-CBC"。默认值："AES-GCM"。
         - **enable_encryption** (bool，可选) - 导出模型时是否加密，导出加密可保护模型完整性，但会增加运行时初始化时间。默认值：False。
@@ -101,9 +101,9 @@ mindspore_lite.Converter
         参数：
             - **section** (str，可选) - 配置参数的类别。配合 `config_info` 一起，设置confile的个别参数。例如：对于 `section` 是"common_quant_param"， `config_info` 是{"quant_type":"WEIGHT_QUANT"}。默认值：""。
 
-              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。
+              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/r2.0.0-alpha/use/post_training_quantization.html>`_ 。
 
-              有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。
+              有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/r2.0.0-alpha/use/nnie.html#扩展配置>`_ 。
 
               - "common_quant_param"：公共量化参数部分。
               - "mixed_bit_weight_quant_param"：混合位权重量化参数部分。
@@ -113,9 +113,9 @@ mindspore_lite.Converter
 
             - **config_info** (dict{str: str}，可选) - 配置参数列表。配合 `section` 一起，设置confile的个别参数。例如：对于 `section` 是"common_quant_param"， `config_info` 是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
 
-              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。
+              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/r2.0.0-alpha/use/post_training_quantization.html>`_ 。
 
-              有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。
+              有关扩展的配置参数，请参见 `extension <https://www.mindspore.cn/lite/docs/zh-CN/r2.0.0-alpha/use/nnie.html#扩展配置>`_ 。
 
         异常：
             - **TypeError** - `section` 不是str类型。

@@ -16,7 +16,7 @@ mindspore.COOTensor
          [0, 0, 0, 0]]
 
 
-    COOTensor的算术运算包括：加（+）、减（-）、乘（*）、除（/）。详细的算术运算支持请参考 `运算符 <https://www.mindspore.cn/docs/zh-CN/master/note/static_graph_syntax_support.html#%E8%BF%90%E7%AE%97%E7%AC%A6>`_。
+    COOTensor的算术运算包括：加（+）、减（-）、乘（*）、除（/）。详细的算术运算支持请参考 `运算符 <https://www.mindspore.cn/docs/zh-CN/r2.0.0-alpha/note/static_graph_syntax_support.html#%E8%BF%90%E7%AE%97%E7%AC%A6>`_。
 
     .. note::
         这是一个实验特性，在未来可能会发生API的变化。目前COOTensor中相同索引的值不会进行合并。如果索引中包含界外值，则得出未定义结果。

@@ -13,7 +13,7 @@ mindspore.ops.pinv
         - **rtol** (float, Tensor) - 相对公差值。默认值：None。
         - **hermitian** (bool) - 为True时假设x为实对称矩阵。默认值：False。
 
-    输出：
+    返回：
         Tensor，类型与输入相同。
 
     异常：

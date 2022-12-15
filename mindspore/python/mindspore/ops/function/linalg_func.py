@@ -104,7 +104,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         rtol (float, Tensor): relative tolerance value. Default: None.
         hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: False.
 
-    Outputs:
+    Returns:
         Tensor.
 
     Raises:

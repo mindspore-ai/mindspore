@@ -20,7 +20,7 @@ mindspore.dataset.transforms
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
-更多详情请参考 `通用数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#common-transforms>`_ 。
+更多详情请参考 `通用数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r2.0.0-alpha/beginner/transforms.html#common-transforms>`_ 。
 
 常用数据处理术语说明如下：
 
@@ -80,7 +80,7 @@ API样例中常用的导入模块如下：
     import mindspore.dataset.vision.py_transforms as py_vision
     from mindspore.dataset.transforms import c_transforms
 
-更多详情请参考 `视觉数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#vision-transforms>`_ 。
+更多详情请参考 `视觉数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r2.0.0-alpha/beginner/transforms.html#vision-transforms>`_ 。
 
 常用数据处理术语说明如下：
 
@@ -229,7 +229,7 @@ API样例中常用的导入模块如下：
     import mindspore.dataset as ds
     from mindspore.dataset import text
 
-更多详情请参考 `文本数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#text-transforms>`_ 。
+更多详情请参考 `文本数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r2.0.0-alpha/beginner/transforms.html#text-transforms>`_ 。
 
 常用数据处理术语说明如下：
 
