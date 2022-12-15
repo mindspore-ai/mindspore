@@ -1133,8 +1133,9 @@ def check_mel_spectrogram_freq(f_min, f_max, sample_rate):
                              .format(f_min, f_max))
     else:
         if f_min >= sample_rate // 2:
-            raise ValueError("MelSpectrogram: sample_rate // 2 should be greater than f_min when f_max is set to None, \
-                              but got f_min: {0}".format(f_min))
+            raise ValueError(
+                "MelSpectrogram: sample_rate // 2 should be greater than f_min when f_max is set to None, "
+                "but got f_min: {0}.".format(f_min))
 
 
 def check_mel_spectrogram(method):
