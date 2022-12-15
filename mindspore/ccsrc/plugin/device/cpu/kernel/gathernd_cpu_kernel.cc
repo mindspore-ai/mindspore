@@ -115,10 +115,6 @@ bool GatherNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   size_t indices_dim1 = dims_[2];
 
   size_t num = output_dim0 * output_dim1;
-  if (num > MAX_INT) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', exceed MAX_INT: " << MAX_INT << ", dim0: " << output_dim0
-                      << ", dim1: " << output_dim1;
-  }
 
   for (size_t write_index = 0; write_index < num; write_index++) {
     size_t i = write_index / output_dim1 % output_dim0;
