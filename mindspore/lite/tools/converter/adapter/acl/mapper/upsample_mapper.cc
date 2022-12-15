@@ -22,6 +22,7 @@
 #include "src/common/log_util.h"
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/adapter/acl/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -48,7 +49,7 @@ STATUS UpsampleMapper::Mapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   if (type_id == kNumberTypeFloat32) {
-    if (AttrAdjust(src_prim, value_node) != RET_OK) {
+    if (AttrAdjust(src_prim, value_node, cnode) != RET_OK) {
       MS_LOG(ERROR) << "Upsample attr adjust failed.";
       return RET_ERROR;
     }
@@ -60,12 +61,26 @@ STATUS UpsampleMapper::Mapper(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-STATUS UpsampleMapper::AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node) {
+STATUS UpsampleMapper::AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node, const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(src_prim != nullptr, RET_ERROR, "src_prim is nullptr.");
   MS_CHECK_TRUE_MSG(val_node != nullptr, RET_ERROR, "val_node is nullptr.");
-  auto attr_val = src_prim->GetAttr("scale");
-  CHECK_NULL_RETURN(attr_val);
-  std::vector<float> scale = opt::CastToFloat(attr_val);
+  ValuePtr attr_val = nullptr;
+  std::vector<float> scale;
+  if (src_prim->HasAttr("scale")) {
+    attr_val = src_prim->GetAttr("scale");
+    CHECK_NULL_RETURN(attr_val);
+    scale = opt::CastToFloat(attr_val);
+  } else {  // scale attribute might be moved to the input during input adjustment
+    auto scale_input = cnode->input(kInputNum - 1);
+    MS_CHECK_TRUE_MSG(scale_input != nullptr, lite::RET_ERROR, "scale_input is nullptr.");
+    if (!utils::isa<ParameterPtr>(scale_input)) {
+      MS_LOG(ERROR) << "The scale input node is not parameter.";
+      return lite::RET_ERROR;
+    }
+    ParameterPtr scale_param = scale_input->cast<ParameterPtr>();
+    MS_CHECK_TRUE_MSG(scale_param != nullptr, lite::RET_ERROR, "ParameterPtr casts failed.");
+    scale = acl::GetFloatParameterData(scale_param);
+  }
   if (scale.size() < kScaleMinNum) {
     MS_LOG(ERROR) << "Scale size must not be less than " << kScaleMinNum << ", real size: " << scale.size();
     return RET_ERROR;

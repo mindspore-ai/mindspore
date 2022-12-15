@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_UPSAMPLE_MAPPER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_UPSAMPLE_MAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RESHAPE_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RESHAPE_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
-#include "ops/resize.h"
+#include "ops/reshape.h"
 
 namespace mindspore {
 namespace lite {
-using mindspore::ops::kNameResize;
+using mindspore::ops::kNameReshape;
 
-class UpsampleMapper : public PrimitiveMapper {
+class ReshapeMapper : public PrimitiveMapper {
  public:
-  UpsampleMapper() : PrimitiveMapper(acl::kNameUpsample) {}
+  ReshapeMapper() : PrimitiveMapper(kNameReshape) {}
 
-  ~UpsampleMapper() override = default;
+  ~ReshapeMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
 
  private:
   STATUS AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node, const CNodePtr &cnode);
-  STATUS RemoveConstInput(const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // ACL_MAPPER_PRIMITIVE_TRANSPOSE_MAPPER_H
+#endif  // ACL_MAPPER_PRIMITIVE_RESHAPE_MAPPER_H
