@@ -10,7 +10,7 @@ mindspore.ops.NeighborExchange
     .. note::
         在运行以下示例之前，用户需要预置环境变量，请在 `MindSpore <https://www.mindspore.cn/docs/zh-CN/r2.0.0-alpha/api_python/mindspore.ops.html#通信算子>`_ 的官方网站上查看详细信息。
 
-        要求全连接配网，每台设备具有相同的vlan id，ip和mask在同一子网，请查看 `详细信息 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_ 。
+        要求全连接配网，每台设备具有相同的vlan id，ip和mask在同一子网，请查看 `详细信息 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0.0-alpha/parallel/communicate_ops.html#注意事项>`_ 。
          
     参数：
         - **send_rank_ids** (list(int)) - 指定发送数据的rank。

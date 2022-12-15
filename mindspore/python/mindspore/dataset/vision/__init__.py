@@ -32,7 +32,8 @@ Note: Legacy c_transforms and py_transforms are deprecated but can still be impo
     import mindspore.dataset.vision.py_transforms as py_vision
 
 See `Vision Transforms
-<https://www.mindspore.cn/tutorials/en/master/beginner/transforms.html#vision-transforms>`_ tutorial for more details.
+<https://www.mindspore.cn/tutorials/en/r2.0.0-alpha/beginner/transforms.html#vision-transforms>`_ tutorial
+for more details.
 
 Descriptions of common data processing terms are as follows:
 

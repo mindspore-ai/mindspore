@@ -73,7 +73,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
 
     Raises:
@@ -145,7 +145,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, all samples.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
 
     Raises:
@@ -281,7 +281,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             This argument should only be specified when `num_shards` is also specified.
             When `compression_type` is provided, `shard_equal_rows` will be ignored and considered as true.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.0.0-alpha/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
         compression_type (str, optional): Type of compression used for all files, must be either '', 'GZIP', or 'ZLIB'.
             Default: None, as in empty string.
