@@ -749,15 +749,12 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
   const auto &new_top_cell = top_cell();
   const auto &already_top_cell_id = new_top_cell->already_run_cell_id();
   // Update top cell by current cell op info
-  if (already_run_top_cell_.find(already_top_cell_id) == already_run_top_cell_.end()) {
+  auto pre_top_cell = GetAlreadyRunTopCell(already_top_cell_id);
+  if (pre_top_cell == nullptr) {
     MS_LOG(DEBUG) << "Cell " << already_top_cell_id << " has never been ran, need compile graph";
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     return;
   }
-
-  MS_LOG(DEBUG) << "Top cell " << already_top_cell_id << " has been ran";
-  auto pre_top_cell = already_run_top_cell_.at(already_top_cell_id);
-  MS_EXCEPTION_IF_NULL(pre_top_cell);
 
   // In high order situations, the internal top cell has changed, but outer top cell remains unchanged. Then outer
   // bprop graph need compile again
@@ -771,6 +768,7 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     }
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     new_top_cell->set_force_top_cell_compile(false);
+    MS_LOG(DEBUG) << "Top cell " << already_top_cell_id << " has been ran";
   } else {
     MS_LOG(DEBUG) << "No need to compile graph again";
     pre_top_cell->set_input_args_id(new_top_cell->input_args_id());
@@ -781,6 +779,14 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     }
     pre_top_cell->set_forward_already_run(true);
   }
+}
+
+TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run_cell_id) const {
+  const auto it = already_run_top_cell_.find(already_run_cell_id);
+  if (it != already_run_top_cell_.end()) {
+    return it->second;
+  }
+  return nullptr;
 }
 
 void GradExecutor::EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell) {
@@ -1152,7 +1158,8 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   // High grad hit cache
   bool need_do_grad = true;
   if (!cur_vm_compile) {
-    if (already_run_top_cell_.find(top_cell()->already_run_cell_id()) != already_run_top_cell_.end()) {
+    const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
+    if (pre_top_cell != nullptr) {
       const auto &dynamic_nodes = cell_id_with_dynamic_detect_nodes_[top_cell()->obj_id_with_grad_order()];
       MS_LOG(DEBUG) << "Cur op index " << (top_cell()->op_index() + 1) << ", outer graph all op size "
                     << dynamic_nodes.size();
@@ -1279,8 +1286,8 @@ void GradExecutor::ClearGradRes() {
   // Custom bprop nested, top cell reset by first time, second time no need clean
   if (top_cell_ != nullptr) {
     top_cell_->ClearDeviceMemory();
-    if (use_dynamic_shape_process_ ||
-        already_run_top_cell_.find(top_cell()->already_run_cell_id()) != already_run_top_cell_.end()) {
+    const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
+    if (use_dynamic_shape_process_ || pre_top_cell != nullptr) {
       top_cell_ = nullptr;
     }
   }
@@ -1595,13 +1602,12 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const FrontendOpRunInfoPt
   top_cell()->set_opinfo_with_tensor_id(op_run_info->op_info, op_output_tensors);
 
   // First run top cell
-  if (already_run_top_cell_.find(top_cell_->already_run_cell_id()) == already_run_top_cell_.end()) {
+  const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
+  if (pre_top_cell == nullptr) {
     MS_LOG(DEBUG) << "Top cell " << top_cell_->already_run_cell_id() << " run firstly";
     return;
   }
   // Non-first run
-  const auto &pre_top_cell = already_run_top_cell_.at(top_cell_->already_run_cell_id());
-  MS_EXCEPTION_IF_NULL(pre_top_cell);
   if (pre_top_cell->op_info_with_tensor_id().find(op_run_info->op_info) ==
       pre_top_cell->op_info_with_tensor_id().end()) {
     MS_LOG(DEBUG) << "Can not find op info " << op_run_info->op_info << " in op info with tensor id map. Top cell "

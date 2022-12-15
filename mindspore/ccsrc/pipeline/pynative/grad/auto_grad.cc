@@ -63,63 +63,16 @@ bool IsPrimNeedGrad(const PrimitivePtr &prim) {
   return true;
 }
 
-AnfNodePtr BuildSpecialLikeCSRTensor(const FuncGraphPtr &tape, const ValuePtr &csr_value,
-                                     const AnfNodePtr &dout_value_node) {
-  MS_EXCEPTION_IF_NULL(csr_value);
-
-  auto csr_tensor = csr_value->cast<tensor::CSRTensorPtr>();
-  MS_EXCEPTION_IF_NULL(csr_tensor);
-  auto indptr = csr_tensor->GetIndptr();
-  auto cloned_indptr = ShallowCopyTensorValue(indptr);
-  ClearDeviceAddress(cloned_indptr);
-
-  auto indptr_node = NewValueNode(cloned_indptr);
-  indptr_node->set_abstract(cloned_indptr->ToAbstract()->Broaden());
-  auto indices = csr_tensor->GetIndices();
-  auto cloned_indices = ShallowCopyTensorValue(indices);
-  ClearDeviceAddress(cloned_indices);
-  auto indices_node = NewValueNode(cloned_indices);
-  indices_node->set_abstract(cloned_indices->ToAbstract()->Broaden());
-
-  auto data = csr_tensor->GetValues();
-  auto cloned_data = ShallowCopyTensorValue(data);
-  ClearDeviceAddress(cloned_data);
-  auto value_node = NewValueNode(cloned_data);
-  value_node->set_abstract(cloned_data->ToAbstract()->Broaden());
-
-  auto shape = csr_tensor->shape();
-  auto value_shape = NewValueNode(shape);
-  std::vector<abstract::AbstractBasePtr> abstract_shape;
-  (void)std::transform(
-    shape.begin(), shape.end(), std::back_inserter(abstract_shape),
-    [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
-  auto abs_shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
-  value_shape->set_abstract(abs_shape);
-  auto special_like_csr_node =
-    tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indptr_node, indices_node, dout_value_node, value_shape});
-  special_like_csr_node->set_abstract(csr_value->ToAbstract()->Broaden());
-  return special_like_csr_node;
+ValueNodePtr CreateValueNodeByClonedValue(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  auto cloned_v = ShallowCopyTensorValue(v);
+  ClearDeviceAddress(cloned_v);
+  auto v_node = NewValueNode(cloned_v);
+  v_node->set_abstract(cloned_v->ToAbstract()->Broaden());
+  return v_node;
 }
 
-AnfNodePtr BuildSpecialLikeCOOTensor(const FuncGraphPtr &tape, const ValuePtr &coo_value,
-                                     const AnfNodePtr &dout_value_node) {
-  MS_EXCEPTION_IF_NULL(coo_value);
-
-  auto coo_tensor = coo_value->cast<tensor::COOTensorPtr>();
-  MS_EXCEPTION_IF_NULL(coo_tensor);
-  auto indices = coo_tensor->GetIndices();
-  auto cloned_indices = ShallowCopyTensorValue(indices);
-  ClearDeviceAddress(cloned_indices);
-
-  auto indices_node = NewValueNode(cloned_indices);
-  indices_node->set_abstract(cloned_indices->ToAbstract()->Broaden());
-  auto data = coo_tensor->GetValues();
-  auto cloned_data = ShallowCopyTensorValue(data);
-  ClearDeviceAddress(cloned_data);
-  auto value_node = NewValueNode(cloned_data);
-  value_node->set_abstract(cloned_data->ToAbstract()->Broaden());
-
-  auto shape = coo_tensor->shape();
+ValueNodePtr GetSparseTensorShapeNode(const ShapeVector &shape) {
   auto value_shape = NewValueNode(shape);
   std::vector<abstract::AbstractBasePtr> abstract_shape;
   (void)std::transform(
@@ -127,10 +80,34 @@ AnfNodePtr BuildSpecialLikeCOOTensor(const FuncGraphPtr &tape, const ValuePtr &c
     [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
   auto abs_shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
   value_shape->set_abstract(abs_shape);
-  auto special_like_coo_node =
-    tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indices_node, dout_value_node, value_shape});
-  special_like_coo_node->set_abstract(coo_value->ToAbstract()->Broaden());
-  return special_like_coo_node;
+  return value_shape;
+}
+
+AnfNodePtr BuildSpecialLikeSparseTensor(const FuncGraphPtr &tape, const ValuePtr &sparse_value,
+                                        const AnfNodePtr &dout_value_node) {
+  MS_EXCEPTION_IF_NULL(tape);
+  MS_EXCEPTION_IF_NULL(sparse_value);
+  if (sparse_value->isa<tensor::CSRTensor>()) {
+    auto csr_tensor = sparse_value->cast<tensor::CSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor);
+    auto indptr_node = CreateValueNodeByClonedValue(csr_tensor->GetIndptr());
+    auto indices_node = CreateValueNodeByClonedValue(csr_tensor->GetIndices());
+    auto value_shape = GetSparseTensorShapeNode(csr_tensor->shape());
+    auto special_like_csr_node =
+      tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indptr_node, indices_node, dout_value_node, value_shape});
+    special_like_csr_node->set_abstract(sparse_value->ToAbstract()->Broaden());
+    return special_like_csr_node;
+  } else if (sparse_value->isa<tensor::COOTensor>()) {
+    auto coo_tensor = sparse_value->cast<tensor::COOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_tensor);
+    auto indices_node = CreateValueNodeByClonedValue(coo_tensor->GetIndices());
+    auto value_shape = GetSparseTensorShapeNode(coo_tensor->shape());
+    auto special_like_coo_node =
+      tape->NewCNode({NewValueNode(prim::kPrimMakeTuple), indices_node, dout_value_node, value_shape});
+    special_like_coo_node->set_abstract(sparse_value->ToAbstract()->Broaden());
+    return special_like_coo_node;
+  }
+  MS_LOG(EXCEPTION) << "Get invalid sparse tensor";
 }
 
 AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value, const SpecialType &type) {
@@ -314,9 +291,9 @@ AnfNodePtr VariableAdjoint::RealDout() {
   if (out_value_->isa<tensor::Tensor>() || dout_abs->isa<abstract::AbstractSparseTensor>()) {
     return accumulate_dout;
   } else if (out_value_->isa<tensor::COOTensor>()) {
-    return BuildSpecialLikeCOOTensor(tape, out_value_, accumulate_dout);
+    return BuildSpecialLikeSparseTensor(tape, out_value_, accumulate_dout);
   } else if (out_value_->isa<tensor::CSRTensor>()) {
-    return BuildSpecialLikeCSRTensor(tape, out_value_, accumulate_dout);
+    return BuildSpecialLikeSparseTensor(tape, out_value_, accumulate_dout);
   }
   return accumulate_dout;
 }
@@ -626,11 +603,30 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
   MS_LOG(DEBUG) << "Build knode for TupleGetItem " << input_node->DebugString();
   const auto &tuple_item_cnode = input_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(tuple_item_cnode);
-  const auto &make_tuple_cnode = tuple_item_cnode->input(1)->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(make_tuple_cnode);
-  auto index_value = GetValueNode<Int64ImmPtr>(tuple_item_cnode->input(2));
-  auto real_node = make_tuple_cnode->input(LongToSize(index_value->value()));
-  return BuildKNodeForCNodeInput(real_node);
+  // Find make tuple node for get out value
+  const auto input_adjoint_iter = anfnode_to_variable_adjoint_.find(tuple_item_cnode->input(1));
+  if (input_adjoint_iter == anfnode_to_variable_adjoint_.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find input in adjoint map, inp: " << tuple_item_cnode->input(1)->DebugString();
+  }
+  const auto &v_tuple = input_adjoint_iter->second->out_value()->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(v_tuple);
+  auto index_value = LongToSize(GetValueNode<Int64ImmPtr>(tuple_item_cnode->input(2))->value());
+  auto out_value = (*v_tuple)[index_value];
+  MS_EXCEPTION_IF_NULL(out_value);
+  AnfNodePtr dout = BuildSpecialLikeValue(tape_, out_value, SpecialType::kZerosLikeType);
+  auto fn = std::make_shared<FunctionNode>(tape_, dout);
+  auto variable_adjoint = std::make_shared<VariableAdjoint>(fn, out_value);
+
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTupleGetItem)};
+  // Get make tuple knode
+  (void)inputs.emplace_back(BuildKNodeForCNodeInput(tuple_item_cnode->input(1)));
+  // Get index knode
+  (void)inputs.emplace_back(BuildKNodeForCNodeInput(tuple_item_cnode->input(2)));
+  auto k_node = tape_->NewCNode(inputs);
+  k_node->set_abstract(input_node->abstract());
+  variable_adjoint->set_k_node(k_node);
+  (void)anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
+  return k_node;
 }
 
 bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_param) {

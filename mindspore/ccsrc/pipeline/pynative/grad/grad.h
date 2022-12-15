@@ -101,7 +101,7 @@ class GradExecutor {
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &grad_hash_id,
                              const py::args &args);
-  TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id);
+  TopCellInfoPtr GetAlreadyRunTopCell(const std::string &already_run_cell_id) const;
   void GetPreRunTopCell(const py::object &obj);
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   void AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -145,6 +145,7 @@ class GradExecutor {
   }
 
   void SwitchTopCell();
+  TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id);
   void DoParameterReplace(const FuncGraphPtr &first_grad_fg, const std::vector<ValuePtr> &forward_args,
                           std::vector<AnfNodePtr> *inputs, ValuePtrList *weights_args);
   void MakeNestedCnode(bool has_custom_bprop, const std::vector<ValuePtr> &forward_args,
@@ -190,9 +191,9 @@ class GradExecutor {
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
 
-  void SaveDynamicDetectNodeInfoInFirstTime(const AnfNodePtr &anf_node, const size_t node_idx, bool is_ms_function_node,
+  void SaveDynamicDetectNodeInfoInFirstTime(const AnfNodePtr &anf_node, size_t node_idx, bool is_ms_function_node,
                                             const std::string &graph_phase) const;
-  bool IsGraphDynamic(const AnfNodePtr &anf_node, const size_t node_idx, bool is_ms_function_node,
+  bool IsGraphDynamic(const AnfNodePtr &anf_node, size_t node_idx, bool is_ms_function_node,
                       const std::string &graph_phase) const;
 
   bool grad_flag_{false};
