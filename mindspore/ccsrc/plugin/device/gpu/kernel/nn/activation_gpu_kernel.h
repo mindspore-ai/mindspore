@@ -66,6 +66,10 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T>
+  bool LaunchTanh(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T>
+  bool LaunchSigmoid(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using ActivationFunc = std::function<bool(ActivationFwdGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &)>;
   static std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMod::ActivationFunc>>>
@@ -81,6 +85,8 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
   cudnnTensorDescriptor_t data_descriptor_{nullptr};
   cudnnDataType_t cudnn_data_type_{CUDNN_DATA_FLOAT};
   void *cuda_stream_{nullptr};
+  TypeId dtype_;
+  size_t elements_{0};  // used only when input dtype_ is Complex<double> or Complex<float>
 };
 }  // namespace kernel
 }  // namespace mindspore

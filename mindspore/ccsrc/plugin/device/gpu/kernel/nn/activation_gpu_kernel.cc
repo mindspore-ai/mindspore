@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/elu.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -36,9 +37,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
     {kTanh,
      {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-       &ActivationFwdGpuKernelMod::LaunchKernel<utils::Complex<double>>},
+       &ActivationFwdGpuKernelMod::LaunchTanh<utils::Complex<double>>},
       {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-       &ActivationFwdGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+       &ActivationFwdGpuKernelMod::LaunchTanh<utils::Complex<float>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &ActivationFwdGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -53,16 +54,16 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
     {kSigmoid,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &ActivationFwdGpuKernelMod::LaunchSigmoid<utils::Complex<double>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &ActivationFwdGpuKernelMod::LaunchSigmoid<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &ActivationFwdGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationFwdGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationFwdGpuKernelMod::LaunchKernel<half>},
-      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-       &ActivationFwdGpuKernelMod::LaunchKernel<utils::Complex<float>>},
-      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-       &ActivationFwdGpuKernelMod::LaunchKernel<utils::Complex<double>>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &ActivationFwdGpuKernelMod::LaunchKernel<double>}}}};
+       &ActivationFwdGpuKernelMod::LaunchKernel<half>}}}};
 
 bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
@@ -100,9 +101,11 @@ bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
   mode_ = mode_iter->second;
 
-  const auto dtype = inputs.at(kIndex0)->GetDtype();
-  if ((dtype == kNumberTypeFloat64 && kernel_name_ != kElu) || (dtype == kNumberTypeComplex64) ||
-      (dtype == kNumberTypeComplex128)) {
+  dtype_ = inputs.at(kIndex0)->GetDtype();
+  // is_additional_dtype_ is True when:
+  // Tanh: Complex<float>, Complex<double>
+  // Sigmoid: Complex<float>, Complex<double>
+  if ((dtype_ == kNumberTypeComplex64) || (dtype_ == kNumberTypeComplex128)) {
     is_additional_dtype_ = true;
   }
   return true;
@@ -125,7 +128,13 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return KRET_OK;
   }
 
-  if (is_additional_dtype_) {
+  if (dtype_ == kNumberTypeComplex128) {
+    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<double>));
+    // Does not call Cudnn
+    return KRET_OK;
+  }
+  if (dtype_ == kNumberTypeComplex64) {
+    elements_ = static_cast<size_t>(input_size_list_[0] / sizeof(utils::Complex<float>));
     // Does not call Cudnn
     return KRET_OK;
   }
@@ -184,18 +193,28 @@ std::vector<KernelAttr> ActivationFwdGpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
+bool ActivationFwdGpuKernelMod::LaunchTanh(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
+  T *input = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  TanhOpt(input, output, elements_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  return true;
+}
+
+template <typename T>
+bool ActivationFwdGpuKernelMod::LaunchSigmoid(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
+  T *input = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  SigmoidOpt(input, output, elements_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  return true;
+}
+
+template <typename T>
 bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  if (is_additional_dtype_) {
-    if (kernel_name_ == kTanh) {
-      Tanh(input, output, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
-    } else {
-      Sigmoid(input, output, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
-    }
-    return true;
-  }
 
   if constexpr (std::is_same_v<T, double>) {
     constexpr double alpha = 1.0;
