@@ -21,7 +21,10 @@
 #include <queue>
 #include <stack>
 #include <unordered_set>
+#include <functional>
 #include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/log_adapter.h"
@@ -72,6 +75,73 @@ constexpr auto kTypeMerge = "Merge";
 constexpr auto kTypeIf = "If";
 
 namespace {
+// {node name | {{input_index, dst_type}...}}
+std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
+  {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}}, {kOneHotOpName, {{2, kNumberTypeInt32}}}};
+
+// {node name | {{attr_name, dst_type}...}}
+std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
+  {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}}};
+
+template <typename T>
+ValuePtr CreateNewValue(const ValuePtr &value, const std::vector<T> &values, const TypeId &dst_type) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (dst_type == kNumberTypeInt32) {
+    if (value->isa<ValueSequence>()) {
+      std::vector<int32_t> result;
+      std::for_each(values.begin(), values.end(),
+                    [&result](const auto &elem) { result.emplace_back(static_cast<int32_t>(elem)); });
+      return MakeValue(result);
+    }
+    return MakeValue(static_cast<int32_t>(values[0]));
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid dst type:" << TypeIdToString(dst_type);
+  }
+  return value;
+}
+
+template <typename T>
+std::vector<T> GetAllValues(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  std::vector<T> result;
+  if (value->isa<ValueSequence>()) {
+    auto value_seq = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_seq);
+    for (const auto &elem : value_seq->value()) {
+      auto value_list = GetAllValues<T>(elem);
+      std::copy(value_list.begin(), value_list.end(), std::back_inserter(result));
+    }
+  } else {
+    result.emplace_back(GetValue<T>(value));
+  }
+  return result;
+}
+
+TypeId GetElemType(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<ValueList>() && !value->isa<ValueTuple>()) {
+    return value->type()->type_id();
+  }
+
+  auto elems = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
+  if (elems.empty()) {
+    MS_LOG(EXCEPTION) << "Value:" << value->ToString() << " is empty, check pls.";
+  }
+  return GetElemType(elems.at(0));
+}
+
+ValuePtr CastDstValue(const ValuePtr &value, const TypeId &dst_type) {
+  MS_EXCEPTION_IF_NULL(value);
+  auto src_type = GetElemType(value);
+  if (src_type == kNumberTypeInt64) {
+    auto values = GetAllValues<int64_t>(value);
+    return CreateNewValue<int64_t>(value, values, dst_type);
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid src type:" << value->type()->ToString();
+  }
+  return value;
+}
+
 std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr node = nullptr) {
   MS_EXCEPTION_IF_NULL(fg);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
@@ -571,6 +641,8 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
 #endif
   restore_checkpoint_sout_.clear();
   restore_checkpoint_sout_ << "digraph {" << endl;
+  // Trans data_type for some specific nodes' inputs and attr.
+  TransDataType(anf_graph_);
   // Convert ResizeBilinear attr size to input
   ConvertResizeBilinear(anf_graph_);
   // Convert SpaceBatch attr to input
@@ -1910,6 +1982,52 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
       AddGraphConstInput(handles[0].op);
     }
   }
+  // Set input from attr.
+  const auto &primitive = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  if (kTransAttrDTypeMap.count(GetCNodeFuncName(node)) == 0) {
+    MS_LOG(DEBUG) << "Now, not support to convert attr to input for node:" << node->DebugString();
+    return;
+  }
+  const auto &attr_input_map = adpt->getAttrInputMap();
+  const auto &input_map = adpt->getInputMap();
+  MS_EXCEPTION_IF_NULL(anf_graph_);
+  auto manager = anf_graph_->manager();
+  if (manager == nullptr) {
+    auto new_manager = MakeManager({anf_graph_});
+    MS_EXCEPTION_IF_NULL(new_manager);
+    new_manager->AddFuncGraph(anf_graph_);
+    anf_graph_->set_manager(new_manager);
+    manager = new_manager;
+  }
+  for (auto &it : attr_input_map) {
+    // Get attr from node.
+    auto value = primitive->GetAttr(it.first);
+    if (value == nullptr) {
+      MS_LOG(INFO) << "Node: " << node->DebugString() << " has no attr: " << it.first;
+      continue;
+    }
+    // Create input node for attr value.
+    auto input_node = NewValueNode(value);
+    input_node->set_abstract(value->ToAbstract());
+    manager->AddEdge(node, input_node);
+    primitive->EraseAttr(it.first);
+    auto new_input_op = Convert(input_node);
+    // Get input desc.
+    auto input_name = it.second;
+    auto input_desc = std::find_if(input_map.begin(), input_map.end(),
+                                   [input_name](const auto &item) { return item.second.name == input_name; });
+    if (input_desc == input_map.end()) {
+      MS_LOG(WARNING) << "Node: " << node->DebugString() << " has no input :" << input_name;
+      continue;
+    }
+    MS_LOG(INFO) << "Set input from attr:" << it.first << " for node: " << node->DebugString()
+                 << ", new value node:" << input_node->DebugString();
+    input_desc->second.set_op(src, new_input_op);
+    // Input idx may be wrong.
+    DrawOpInput(node, input_node, input_desc->first);
+    AddGraphConstInput(new_input_op);
+  }
 }
 
 void DfGraphConvertor::AddGraphConstInput(const OperatorPtr &op) {
@@ -2247,7 +2365,6 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
     return nullptr;
   }
   // find in cache
-
   if (op_cache_.count(node.get()) != 0) {
     MS_LOG(INFO) << "Get op from cache: " << op_cache_[node.get()]->GetName();
     return op_cache_[node.get()];
@@ -2438,6 +2555,96 @@ std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) const {
     }
   }
   return cur_value;
+}
+
+void DfGraphConvertor::TransInputDataType(const CNodePtr &node, std::string node_name) const {
+  if (kTransInputDTypeMap.count(node_name) == 0) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "Trans input data type of node:" << node->DebugString();
+  auto &inputs = kTransInputDTypeMap[node_name];
+  for (auto &item : inputs) {
+    auto input_node = node->input(item.first);
+    TypeId dst_type = item.second;
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_node->isa<CNode>() || input_node->isa<Parameter>()) {
+      auto new_cast = CreateCast(input_node, TypeIdToType(dst_type));
+      node->set_input(item.first, new_cast);
+    } else if (input_node->isa<ValueNode>()) {
+      auto input_value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(input_value_node);
+      auto value = input_value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      ValuePtr new_value = CastDstValue(value, dst_type);
+      MS_EXCEPTION_IF_NULL(new_value);
+      auto new_value_node = std::make_shared<ValueNode>(new_value);
+      MS_EXCEPTION_IF_NULL(new_value_node);
+      new_value_node->set_abstract(new_value->ToAbstract());
+      node->set_input(item.first, new_value_node);
+    }
+  }
+  MS_LOG(DEBUG) << "Finish to trans input data type of node:" << node->DebugString();
+}
+
+void DfGraphConvertor::TransAttrDataType(const CNodePtr &node, std::string node_name) const {
+  MS_EXCEPTION_IF_NULL(node);
+  if (kTransAttrDTypeMap.count(node_name) == 0) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "Trans attr data type of node:" << node->DebugString();
+  auto attrs = kTransAttrDTypeMap[node_name];
+  auto prim = common::AnfAlgo::GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(prim);
+  for (auto &item : attrs) {
+    std::string attr_name = item.first;
+    TypeId dst_type = item.second;
+    if (!prim->HasAttr(attr_name)) {
+      MS_LOG(EXCEPTION) << "Please check kTransAttrDTypeMap, node:" << node->DebugString()
+                        << " has no attr:" << attr_name;
+    }
+    auto attr_value = prim->GetAttr(attr_name);
+    if (GetElemType(attr_value) == dst_type) {
+      MS_LOG(DEBUG) << "No need to convert.";
+      continue;
+    }
+    auto new_attr_value = CastDstValue(attr_value, dst_type);
+    MS_EXCEPTION_IF_NULL(new_attr_value);
+    prim->set_attr(attr_name, new_attr_value);
+  }
+  MS_LOG(DEBUG) << "Finish to trans attr data type of node:" << node->DebugString();
+}
+
+void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  MS_LOG(DEBUG) << "TransDataType begin. graph:" << anf_graph->ToString();
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name = "ge_trans_data_type_before_graph_" + anf_graph->ToString() + ".ir";
+    DumpIR(file_name, anf_graph);
+  }
+#endif
+  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
+  for (auto &it : nodes) {
+    if (it->isa<CNode>()) {
+      auto node = it->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(node);
+      std::string name = GetCNodeTargetFuncName(node);
+      TransInputDataType(node, name);
+      TransAttrDataType(node, name);
+    }
+  }
+#ifdef ENABLE_DUMP_IR
+  if (save_graphs) {
+    std::string file_name = "ge_trans_data_type_after_graph_" + anf_graph->ToString() + ".ir";
+    DumpIR(file_name, anf_graph);
+  }
+#endif
+  MS_LOG(DEBUG) << "TransDataType end. graph:" << anf_graph->ToString();
 }
 
 void DfGraphConvertor::ConvertReshape(const CNodePtr &node) {

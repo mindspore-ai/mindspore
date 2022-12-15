@@ -22,9 +22,6 @@
 #include "ops/image_ops.h"
 
 namespace mindspore::transform {
-DECLARE_OP_ADAPTER(ResizeNearestNeighborV2D)
-DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2D)
-
 DECLARE_OP_ADAPTER(ResizeNearestNeighborV2)
 DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2)
 
