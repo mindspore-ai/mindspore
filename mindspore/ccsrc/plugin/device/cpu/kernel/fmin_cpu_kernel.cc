@@ -21,6 +21,7 @@
 
 #include "mindspore/core/ops/fmin.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/device/cpu/kernel/utils/cpu_utils.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
@@ -181,28 +182,13 @@ void FminCpuKernelMod::InitTensorBroadcastShape() {
 // FminFunc
 template <typename T>
 T FminCpuKernelMod::FminFunc(const T &lhs, const T &rhs) const {
-  if constexpr (std::is_same_v<T, float16>) {
-    auto temp_lhs = static_cast<float>(lhs);
-    auto temp_rhs = static_cast<float>(rhs);
-    if (std::isnan(temp_lhs)) {
-      return rhs;
-    } else if (std::isnan(temp_rhs)) {
-      return lhs;
-    } else {
-      return lhs < rhs ? lhs : rhs;
-    }
-  } else if constexpr (((std::is_same_v<T, float>) || (std::is_same_v<T, double>))) {  // NOLINT
-    if (std::isnan(lhs)) {
-      return rhs;
-    } else if (std::isnan(rhs)) {
-      return lhs;
-    } else {
-      return lhs < rhs ? lhs : rhs;
-    }
+  if (IsNan(lhs)) {
+    return rhs;
+  } else if (IsNan(rhs)) {
+    return lhs;
   } else {
     return lhs < rhs ? lhs : rhs;
   }
-  return lhs < rhs ? lhs : rhs;
 }
 
 // Broadcast comparison
