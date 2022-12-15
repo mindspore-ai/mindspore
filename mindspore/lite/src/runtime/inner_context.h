@@ -30,6 +30,7 @@
 #ifdef ENABLE_ARM
 #include "src/runtime/cpu_info.h"
 #endif
+#include "src/runtime/infer_manager.h"
 
 namespace mindspore::lite {
 struct InnerContext : public Context {
@@ -74,6 +75,10 @@ struct InnerContext : public Context {
 
   void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
 
+  inline void set_infer_checker(const InferChecker checker) { infer_checker_ = checker; }
+
+  inline const InferChecker get_infer_checker() const { return infer_checker_; }
+
  private:
   bool IsAllDeviceTypeValid() const;
 
@@ -96,6 +101,7 @@ struct InnerContext : public Context {
   BindMode bind_mode_{Power_NoBind};
   size_t actor_thread_num_{0};
   ThreadPool *thread_pool_{nullptr};
+  InferChecker infer_checker_{InferCheckerOutput};
 
   // key is the precursor tensor's pointer, value is the group of successors' pointer.
   std::unordered_map<void *, std::set<void *>> link_info_{};

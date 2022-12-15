@@ -24,7 +24,7 @@
 
 namespace mindspore::kernel {
 namespace {
-constexpr int64_t kPackAMinUnitNum = 1 << 14;
+constexpr int64_t kPackAMinUnitNum = 1 << 13;
 }  // namespace
 void MatmulFp32ARM64CPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;

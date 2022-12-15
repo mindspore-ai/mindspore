@@ -134,9 +134,11 @@ int WhereCPUKernel::RunWithSingleInput() {
       }
     }
   }
+  auto origin_output_shape = out_tensors_.at(0)->shape();
   std::vector<int> output_shape = {true_num, where_param_->rank_};
   out_tensors_.at(0)->set_shape(output_shape);
   out_tensors_.at(0)->FreeData();
+  out_tensors_.at(0)->set_shape_changed(origin_output_shape != output_shape);
   if (true_num > 0) {
     auto out_data = out_tensors_.at(0)->MutableData();
     if (out_data == nullptr) {

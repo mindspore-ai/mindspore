@@ -58,7 +58,7 @@ namespace mindspore::lite {
  */
 class TensorList : public Tensor {
  public:
-  TensorList() { tensor_list_c_ = {kObjectTypeTensorType, DEFAULT_FORMAT, 0, kTypeUnknown, -1, nullptr, 0, 0}; }
+  TensorList() { tensor_list_c_ = {false, kObjectTypeTensorType, DEFAULT_FORMAT, 0, kTypeUnknown, -1, nullptr, 0, 0}; }
 
   TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category = VAR);
 

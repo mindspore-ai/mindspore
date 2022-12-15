@@ -35,6 +35,7 @@ class TensorListSetItemCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int IncrementOutputSize(int origin_size);
+  bool InferShapeDone() const override { return false; }
 
  private:
   int CheckParam();
