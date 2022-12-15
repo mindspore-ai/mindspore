@@ -330,6 +330,7 @@ def test_dynamic_custom_dense():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="HISI version bug")
 def test_dynamic_batchnorm1d():
     """
     Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
@@ -347,6 +348,7 @@ def test_dynamic_batchnorm1d():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="HISI version bug")
 def test_dynamic_batchnorm1d_single_op():
     """
     Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
@@ -364,6 +366,7 @@ def test_dynamic_batchnorm1d_single_op():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="HISI version bug")
 def test_dynamic_batchnorm1d_single_op_2_unknown_shape():
     """
     Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
