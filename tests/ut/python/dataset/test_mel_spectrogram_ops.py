@@ -215,6 +215,12 @@ def test_melspectrogram_param():
     except ValueError as error:
         logger.info("Got an exception in MelSpectrogram: {}".format(str(error)))
         assert "f_max should be greater than or equal to f_min, but got f_min: 2.0 and f_max: 1.0." in str(error)
+    try:
+        _ = audio.MelSpectrogram(f_min=60.0, f_max=None, sample_rate=100)
+    except ValueError as error:
+        logger.info("Got an exception in MelSpectrogram: {}".format(str(error)))
+        assert "MelSpectrogram: sample_rate // 2 should be greater than f_min when f_max is set to None, "\
+               "but got f_min: 60.0." in str(error)
 
 
 if __name__ == "__main__":
