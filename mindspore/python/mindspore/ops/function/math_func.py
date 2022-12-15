@@ -722,10 +722,10 @@ def round(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-         >>> x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
-         >>> output = ops.round(x)
-         >>> print(output)
-         [ 1.  2.  2.  2. -4.]
+        >>> x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
+        >>> output = ops.round(x)
+        >>> print(output)
+        [ 1.  2.  2.  2. -4.]
     """
     return tensor_round_(x)
 

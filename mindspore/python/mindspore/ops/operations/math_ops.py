@@ -4712,11 +4712,11 @@ class Round(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-         >>> x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
-         >>> round = ops.Round()
-         >>> output = round(x)
-         >>> print(output)
-         [ 1.  2.  2.  2. -4.]
+        >>> x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
+        >>> round = ops.Round()
+        >>> output = round(x)
+        >>> print(output)
+        [ 1.  2.  2.  2. -4.]
     """
 
     @prim_attr_register
