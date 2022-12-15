@@ -34,17 +34,19 @@ bool DeviceEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTableInf
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_host_cache_);
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
 
-  auto host_cache_host_to_device_index = embedding_host_cache_->host_to_device_index.get();
-  auto device_cache_host_to_device_index = embedding_device_cache_->host_to_device_index.get();
+  auto host_cache_host_to_device_index =
+    embedding_cache_table_manager.embedding_host_cache_->host_to_device_index.get();
+  auto device_cache_host_to_device_index =
+    embedding_cache_table_manager.embedding_device_cache_->host_to_device_index.get();
   MS_ERROR_IF_NULL(host_cache_host_to_device_index);
   MS_ERROR_IF_NULL(device_cache_host_to_device_index);
 
   auto embedding_size = hash_info.embedding_size;
-  MS_ERROR_IF_NULL(hash_info.device_address.addr);
-  auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
+  MS_ERROR_IF_NULL(hash_info.address.addr);
+  auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
   auto cache_vocab_size = hash_info.cache_vocab_size;
   MS_ERROR_IF_NULL(hash_info.host_address);
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
@@ -54,17 +56,20 @@ bool DeviceEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTableInf
                            "Lookup local host cache failed.");
 
   RETURN_IF_FALSE_WITH_LOG(
-    MemcpyHostToDeviceAsync(embedding_device_cache_->hash_swap_value_addr_, swap_out_data.get(),
-                            swap_indices_size * embedding_size * sizeof(float), device_context_, stream_id_),
+    MemcpyHostToDeviceAsync(embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_,
+                            swap_out_data.get(), swap_indices_size * embedding_size * sizeof(float), device_context_,
+                            stream_id_),
     "Memcpy host to device asynchronously failed.");
   RETURN_IF_FALSE_WITH_LOG(
-    MemcpyHostToDeviceAsync(embedding_device_cache_->hash_swap_index_addr_, device_cache_host_to_device_index,
-                            swap_indices_size * sizeof(int), device_context_, stream_id_),
+    MemcpyHostToDeviceAsync(embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_,
+                            device_cache_host_to_device_index, swap_indices_size * sizeof(int), device_context_,
+                            stream_id_),
     "Memcpy host to device asynchronously failed.");
 
   RETURN_IF_FALSE_WITH_LOG(
-    UpdateDeviceCache(embedding_device_cache_->hash_swap_index_addr_, embedding_device_cache_->hash_swap_value_addr_,
-                      swap_indices_size, cache_vocab_size, embedding_size, hash_table_addr),
+    UpdateDeviceCache(embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_,
+                      embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_, swap_indices_size,
+                      cache_vocab_size, embedding_size, hash_table_addr),
     "Update device embedding cache failed.");
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->device_res_manager_);
@@ -78,31 +83,36 @@ bool DeviceEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTableInf
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_host_cache_);
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
 
-  auto device_cache_device_to_host_index = embedding_device_cache_->device_to_host_index.get();
-  auto host_cache_device_to_host_index = embedding_host_cache_->device_to_host_index.get();
+  auto device_cache_device_to_host_index =
+    embedding_cache_table_manager.embedding_device_cache_->device_to_host_index.get();
+  auto host_cache_device_to_host_index =
+    embedding_cache_table_manager.embedding_host_cache_->device_to_host_index.get();
   MS_ERROR_IF_NULL(device_cache_device_to_host_index);
   MS_ERROR_IF_NULL(host_cache_device_to_host_index);
-  auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
+  auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
   auto cache_vocab_size = hash_info.cache_vocab_size;
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
   auto embedding_size = hash_info.embedding_size;
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
 
   RETURN_IF_FALSE_WITH_LOG(
-    MemcpyHostToDeviceAsync(embedding_device_cache_->hash_swap_index_addr_, device_cache_device_to_host_index,
-                            swap_indices_size * sizeof(int), device_context_, stream_id_),
+    MemcpyHostToDeviceAsync(embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_,
+                            device_cache_device_to_host_index, swap_indices_size * sizeof(int), device_context_,
+                            stream_id_),
     "Memcpy host to device asynchronously failed.");
 
   RETURN_IF_FALSE_WITH_LOG(
-    LookupDeviceCache(embedding_device_cache_->hash_swap_index_addr_, hash_table_addr, swap_indices_size,
-                      cache_vocab_size, embedding_size, embedding_device_cache_->hash_swap_value_addr_),
+    LookupDeviceCache(embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_, hash_table_addr,
+                      swap_indices_size, cache_vocab_size, embedding_size,
+                      embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_),
     "Lookup device cache failed.");
 
   RETURN_IF_FALSE_WITH_LOG(
-    MemcpyDeviceToHostAsync(swap_out_data.get(), embedding_device_cache_->hash_swap_value_addr_,
+    MemcpyDeviceToHostAsync(swap_out_data.get(),
+                            embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_,
                             swap_indices_size * embedding_size * sizeof(float), device_context_, stream_id_),
     "Memcpy device to host asynchronously failed.");
 
@@ -169,10 +179,10 @@ bool DeviceEmbeddingOperation::UpdateDeviceCache(void *indices, void *update_val
 
 bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step,
                                                          bool *host_cache_need_wait_graph) {
-  MS_ERROR_IF_NULL(embedding_host_cache_);
-  int *host_to_device_index = embedding_host_cache_->host_to_device_index.get();
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
+  int *host_to_device_index = embedding_cache_table_manager.embedding_host_cache_->host_to_device_index.get();
   MS_ERROR_IF_NULL(host_to_device_index);
-  auto &host_hash_map = embedding_host_cache_->host_hash_map_;
+  auto &host_hash_map = embedding_cache_table_manager.embedding_host_cache_->host_hash_map_;
   MS_ERROR_IF_NULL(host_hash_map);
 
   const auto &hash_id_to_index = host_hash_map->hash_id_to_index();
@@ -184,8 +194,8 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
     }
     host_to_device_index[statistics_info_->host_to_device_size_ - 1] = index;
   } else {
-    int *host_to_server_index = embedding_host_cache_->host_to_server_index.get();
-    int *host_to_server_ids = embedding_host_cache_->host_to_server_ids.get();
+    int *host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
+    int *host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
     while (true) {
       // Calculate the mapping of id to index.
       auto index = host_hash_map->ParseData(id, host_to_server_index, host_to_server_ids, data_step, graph_running_step,
@@ -198,14 +208,14 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
 
       // This feature id has never been seen before, so it's value is initialized using the local random generator.
       if (initialized_ids_.find(id) == initialized_ids_.end()) {
-        int *new_id_index = embedding_host_cache_->new_id_index.get();
+        int *new_id_index = embedding_cache_table_manager.embedding_host_cache_->new_id_index.get();
         MS_ERROR_IF_NULL(new_id_index);
         new_id_index[statistics_info_->new_id_size_] = index;
         initialized_ids_.insert(id);
         // This feature id has been initialized already, so it's latest value has been kept in the remote server.
       } else {
-        int *server_to_host_index = embedding_host_cache_->server_to_host_index.get();
-        int *server_to_host_ids = embedding_host_cache_->server_to_host_ids.get();
+        int *server_to_host_index = embedding_cache_table_manager.embedding_host_cache_->server_to_host_index.get();
+        int *server_to_host_ids = embedding_cache_table_manager.embedding_host_cache_->server_to_host_ids.get();
         MS_ERROR_IF_NULL(server_to_host_index);
         MS_ERROR_IF_NULL(server_to_host_ids);
         server_to_host_index[statistics_info_->server_to_host_size_] = index;
@@ -220,14 +230,14 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
 
 bool DeviceEmbeddingOperation::ParseHostDataDeviceToHost(size_t data_step, size_t graph_running_step,
                                                          bool *host_cache_need_wait_graph) {
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_host_cache_);
-  int *device_to_host_ids = embedding_device_cache_->device_to_host_ids.get();
-  int *device_to_host_index = embedding_host_cache_->device_to_host_index.get();
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
+  int *device_to_host_ids = embedding_cache_table_manager.embedding_device_cache_->device_to_host_ids.get();
+  int *device_to_host_index = embedding_cache_table_manager.embedding_host_cache_->device_to_host_index.get();
   MS_ERROR_IF_NULL(device_to_host_ids);
   MS_ERROR_IF_NULL(device_to_host_index);
 
-  auto &host_hash_map = embedding_host_cache_->host_hash_map_;
+  auto &host_hash_map = embedding_cache_table_manager.embedding_host_cache_->host_hash_map_;
   MS_ERROR_IF_NULL(host_hash_map);
   int swap_device_to_host_id = device_to_host_ids[statistics_info_->device_to_host_size_ - 1];
   const auto &hash_id_to_index = host_hash_map->hash_id_to_index();
@@ -239,8 +249,8 @@ bool DeviceEmbeddingOperation::ParseHostDataDeviceToHost(size_t data_step, size_
     }
     device_to_host_index[statistics_info_->device_to_host_size_ - 1] = index;
   } else {
-    int *host_to_server_index = embedding_host_cache_->host_to_server_index.get();
-    int *host_to_server_ids = embedding_host_cache_->host_to_server_ids.get();
+    int *host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
+    int *host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
     while (true) {
       // Calculate the mapping of id to index.
       auto index = host_hash_map->ParseData(swap_device_to_host_id, host_to_server_index, host_to_server_ids, data_step,

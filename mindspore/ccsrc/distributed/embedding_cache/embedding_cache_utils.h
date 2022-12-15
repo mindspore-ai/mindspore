@@ -30,6 +30,9 @@
 namespace mindspore {
 namespace runtime {
 class EmbeddingCachePrefetchActor;
+class DeviceEmbeddingOperation;
+class DeviceDenseEmbeddingOperation;
+class DeviceSparseEmbeddingOperation;
 }  // namespace runtime
 
 namespace distributed {
@@ -40,6 +43,7 @@ static constexpr size_t kMaxThreadNum = 16;
 // Maximum number of feature ids processed per thread.
 static constexpr size_t kMaxIdsPerThread = 10000;
 
+using mindspore::device::DeviceAddress;
 using mindspore::kernel::Address;
 
 // The type of embedding tables.
@@ -61,7 +65,9 @@ struct HashTableInfo {
   size_t host_cache_vocab_size{0};
   size_t embedding_size{0};
   size_t vocab_size{0};
-  Address device_address{nullptr, 0};
+  // For performance, set address the snapshot of device_address.
+  Address address{nullptr, 0};
+  DeviceAddress *device_address{nullptr};
   std::shared_ptr<float> host_address{nullptr};
   ParamInitInfo param_init_info_;
   int32_t param_key_{-1};
@@ -192,11 +198,14 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   void CloneHashTable(const std::string &dest_param_name, int32_t dest_param_key, const std::string &src_param_name,
                       int32_t src_param_key);
 
+  // Set the device address for embedding cache table, using the same device address with parameter node.
+  void SetEmbeddingDeviceAddress(const std::string &param_name, DeviceAddress *device_address);
+
   // Alloc device memory for all embedding cache table.
-  void AllocMemForEmbeddingCacheTable(const device::DeviceContext *device_context);
+  void AllocMemForEmbedding(const device::DeviceContext *device_context);
 
   // Qeury device address of a embedding cache table.
-  const Address &QueryHashTableAddr(const std::string &param_name) const;
+  const DeviceAddress *QueryEmbeddingDeviceAddress(const std::string &param_name) const;
 
   // Qeury device cache size of a embedding cache table.
   size_t QueryHashTableSize(const std::string &param_name) const;
@@ -262,6 +271,9 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   bool sparse_format_{false};
 
   friend class mindspore::runtime::EmbeddingCachePrefetchActor;
+  friend class mindspore::runtime::DeviceEmbeddingOperation;
+  friend class mindspore::runtime::DeviceDenseEmbeddingOperation;
+  friend class mindspore::runtime::DeviceSparseEmbeddingOperation;
 };
 class BACKEND_EXPORT EmbeddingStoreManager {
  public:

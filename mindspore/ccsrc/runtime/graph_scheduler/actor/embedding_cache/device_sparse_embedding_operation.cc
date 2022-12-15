@@ -169,8 +169,8 @@ bool DeviceSparseEmbeddingOperation::CheckCacheHitFunc(const int *batch_ids, con
   MS_ERROR_IF_NULL(batch_ids);
   MS_ERROR_IF_NULL(in_device);
   MS_ERROR_IF_NULL(hash_hit_count);
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
   const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
 
@@ -192,8 +192,8 @@ bool DeviceSparseEmbeddingOperation::ParseDeviceData(int id, bool *need_swap_dev
                                                      bool *need_swap_host_to_device, size_t data_step) {
   MS_ERROR_IF_NULL(need_swap_device_to_host);
   MS_ERROR_IF_NULL(need_swap_host_to_device);
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
 
   const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
@@ -206,8 +206,8 @@ bool DeviceSparseEmbeddingOperation::ParseDeviceData(int id, bool *need_swap_dev
       device_hash_map->set_hash_step(id, data_step);
     }
   } else {
-    int *host_to_device_index = embedding_device_cache_->host_to_device_index.get();
-    int *host_to_device_ids = embedding_device_cache_->host_to_device_ids.get();
+    int *host_to_device_index = embedding_cache_table_manager.embedding_device_cache_->host_to_device_index.get();
+    int *host_to_device_ids = embedding_cache_table_manager.embedding_device_cache_->host_to_device_ids.get();
     MS_ERROR_IF_NULL(host_to_device_index);
     MS_ERROR_IF_NULL(host_to_device_ids);
     auto tmp_device_to_host_size = statistics_info_->device_to_host_size_;

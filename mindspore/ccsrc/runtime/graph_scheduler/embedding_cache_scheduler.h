@@ -66,17 +66,21 @@ class BACKEND_EXPORT EmbeddingCacheScheduler {
   ~EmbeddingCacheScheduler() = default;
   DISABLE_COPY_AND_ASSIGN(EmbeddingCacheScheduler);
 
+  // Get ids number in a batch, not batch size.
+  void ParseBatchIdsNum(const KernelGraphPtr &graph);
+
   // Allocate device and local host memory for embedding cache table.
   void AllocMemForEmbeddingCacheTable(const DeviceContext *device_context, const KernelGraphPtr &graph);
-
-  // Get ids number in a batch.
-  bool ParseBatchIdsNum(const KernelGraphPtr &graph, size_t *batch_ids_num) const;
 
   // Embedding cache prefetch actor.
   std::shared_ptr<EmbeddingCachePrefetchActor> embedding_cache_prefetch_actor_;
 
+  // The flag indicates whether already parse batch ids number.
+  bool parsed_batch_ids_num_{false};
+
   // The flag indicates whether already allocate memory for embedding cache tables.
   bool allocated_embed_cache_mem_{false};
+
   // The flag indicates whether the EmbeddingCacheScheduler is initialized.
   bool initialized_{false};
   // The flag indicates whether the EmbeddingCacheScheduler is scheduled.

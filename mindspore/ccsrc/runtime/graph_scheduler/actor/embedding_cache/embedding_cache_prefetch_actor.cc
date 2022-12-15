@@ -134,13 +134,8 @@ void EmbeddingCachePrefetchActor::Initialize() {
   rnd_gen_->Initialize(mean, sigma);
 
   // Get embedding cache table info.
-  hash_tables_ = embedding_cache_table_manager.hash_tables_;
   local_host_cache_size_ = embedding_cache_table_manager.host_cache_size_;
   vocab_size_ = embedding_cache_table_manager.vocab_size_;
-  embedding_device_cache_ = embedding_cache_table_manager.embedding_device_cache_;
-  MS_EXCEPTION_IF_NULL(embedding_device_cache_);
-  embedding_host_cache_ = embedding_cache_table_manager.embedding_host_cache_;
-  MS_EXCEPTION_IF_NULL(embedding_host_cache_);
   local_embedding_slice_bounds_ = embedding_cache_table_manager.local_embedding_slice_bounds_;
   local_device_cache_bounds_ = embedding_cache_table_manager.local_device_cache_bounds_;
 
@@ -160,13 +155,11 @@ void EmbeddingCachePrefetchActor::Initialize() {
 
   // Create the device embedding operation.
   if (!distributed::EmbeddingCacheTableManager::GetInstance().is_sparse_format()) {
-    emb_ops_ = new DeviceDenseEmbeddingOperation(this, device_context_, embedding_device_cache_, embedding_host_cache_,
-                                                 local_embedding_slice_bounds_, local_device_cache_bounds_,
-                                                 &statistics_info_, stream_id_);
+    emb_ops_ = new DeviceDenseEmbeddingOperation(this, device_context_, local_embedding_slice_bounds_,
+                                                 local_device_cache_bounds_, &statistics_info_, stream_id_);
   } else {
-    emb_ops_ = new DeviceSparseEmbeddingOperation(this, device_context_, embedding_device_cache_, embedding_host_cache_,
-                                                  local_embedding_slice_bounds_, local_device_cache_bounds_,
-                                                  &statistics_info_, stream_id_);
+    emb_ops_ = new DeviceSparseEmbeddingOperation(this, device_context_, local_embedding_slice_bounds_,
+                                                  local_device_cache_bounds_, &statistics_info_, stream_id_);
   }
   MS_EXCEPTION_IF_NULL(emb_ops_);
   if (!emb_ops_->Initialize()) {
@@ -340,11 +333,11 @@ bool EmbeddingCachePrefetchActor::WaitGraphRun() {
 }
 
 bool EmbeddingCachePrefetchActor::ResetEmbeddingHashMap() {
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  const auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  const auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
-  MS_ERROR_IF_NULL(embedding_host_cache_);
-  const auto &host_hash_map = embedding_host_cache_->host_hash_map_;
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
+  const auto &host_hash_map = embedding_cache_table_manager.embedding_host_cache_->host_hash_map_;
   MS_ERROR_IF_NULL(host_hash_map);
   device_hash_map->Reset();
   host_hash_map->Reset();
@@ -354,7 +347,7 @@ bool EmbeddingCachePrefetchActor::ResetEmbeddingHashMap() {
 }
 
 bool EmbeddingCachePrefetchActor::UpdateCache() {
-  for (const auto &item : hash_tables_) {
+  for (const auto &item : embedding_cache_table_manager.hash_tables_) {
     auto hash_info = item.second;
     RETURN_IF_FALSE_WITH_LOG(PushCacheFromLocalHostToRemote(hash_info), "Push cache from local host to remote failed.");
     RETURN_IF_FALSE_WITH_LOG(emb_ops_->PushCacheFromDeviceToLocalHost(hash_info),
@@ -405,10 +398,10 @@ bool EmbeddingCachePrefetchActor::PushCacheFromLocalHostToRemote(const HashTable
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_host_cache_);
-  auto host_to_server_ids = embedding_host_cache_->host_to_server_ids.get();
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
+  auto host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
   MS_ERROR_IF_NULL(host_to_server_ids);
-  auto host_to_server_index = embedding_host_cache_->host_to_server_index.get();
+  auto host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
   MS_ERROR_IF_NULL(host_to_server_index);
 
   std::vector<float> swap_out_data;
@@ -431,10 +424,10 @@ bool EmbeddingCachePrefetchActor::PullCacheFromRemoteToLocalHost(const HashTable
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_host_cache_);
-  auto server_to_host_ids = embedding_host_cache_->server_to_host_ids.get();
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
+  auto server_to_host_ids = embedding_cache_table_manager.embedding_host_cache_->server_to_host_ids.get();
   MS_ERROR_IF_NULL(server_to_host_ids);
-  auto server_to_host_index = embedding_host_cache_->server_to_host_index.get();
+  auto server_to_host_index = embedding_cache_table_manager.embedding_host_cache_->server_to_host_index.get();
   MS_ERROR_IF_NULL(server_to_host_index);
 
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
@@ -457,8 +450,8 @@ bool EmbeddingCachePrefetchActor::InitLocalCacheForNewIds(const HashTableInfo &h
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_host_cache_);
-  auto new_id_index = embedding_host_cache_->new_id_index.get();
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
+  auto new_id_index = embedding_cache_table_manager.embedding_host_cache_->new_id_index.get();
   MS_ERROR_IF_NULL(new_id_index);
 
   // Compute the feature values size needed to be initialized.
@@ -887,9 +880,10 @@ void EmbeddingCachePrefetchActor::SyncEmbeddingTable() {
 }
 
 bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
-  MS_ERROR_IF_NULL(embedding_host_cache_);
-  MS_ERROR_IF_NULL(embedding_host_cache_->host_hash_map_);
-  const auto &hash_id_to_index = embedding_host_cache_->host_hash_map_->hash_id_to_index();
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_->host_hash_map_);
+  const auto &hash_id_to_index =
+    embedding_cache_table_manager.embedding_host_cache_->host_hash_map_->hash_id_to_index();
   size_t swap_indices_lens = hash_id_to_index.size();
   if (swap_indices_lens == 0) {
     return true;
@@ -904,7 +898,7 @@ bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
     host_to_server_ids_ptr[idx] = item.first;
     host_to_server_indices_ptr[idx++] = item.second;
   }
-  for (const auto &item : hash_tables_) {
+  for (const auto &item : embedding_cache_table_manager.hash_tables_) {
     const auto &hash_info = item.second;
     std::vector<float> swap_out_data;
     auto embedding_size = hash_info.embedding_size;
@@ -923,8 +917,8 @@ bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
 }
 
 bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
-  MS_ERROR_IF_NULL(embedding_device_cache_);
-  const auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
+  const auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
   const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
   size_t swap_indices_lens = hash_id_to_index.size();
@@ -942,7 +936,7 @@ bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
     device_to_server_ids_ptr[idx] = item.first;
     device_to_server_indices_ptr[idx++] = item.second;
   }
-  for (const auto &item : hash_tables_) {
+  for (const auto &item : embedding_cache_table_manager.hash_tables_) {
     const auto &hash_info = item.second;
     std::vector<float> swap_out_data;
     auto embedding_size = hash_info.embedding_size;
@@ -951,9 +945,9 @@ bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
       std::make_unique<float[]>(device_hash_map->hash_capacity() * embedding_size);
     MS_ERROR_IF_NULL(device_hash_table_addr_tmp);
 
-    auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
+    auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
     MS_ERROR_IF_NULL(hash_table_addr);
-    auto hash_table_size = hash_info.device_address.size;
+    auto hash_table_size = hash_info.address.size;
     RETURN_IF_FALSE_WITH_LOG(MemcpyDeviceToHostAsync(device_hash_table_addr_tmp.get(), hash_table_addr, hash_table_size,
                                                      device_context_, stream_id_),
                              "Memcpy device to host asynchronously failed.");
@@ -1039,11 +1033,11 @@ void EmbeddingCachePrefetchActor::BuildRpcOperators() {
     std::vector<SendRecvPairList> &send_recv_pair_lists = item.second;
     for (uint32_t i = 0; i < server_num_; i++) {
       SendRecvPairList &send_recv_pair_list = send_recv_pair_lists[i];
-      send_recv_pair_list.resize(hash_tables_.size());
+      send_recv_pair_list.resize(embedding_cache_table_manager.hash_tables_.size());
 
-      for (const auto &table : hash_tables_) {
+      for (const auto &table : embedding_cache_table_manager.hash_tables_) {
         int32_t key = table.second.param_key_;
-        if (key >= SizeToInt(hash_tables_.size()) || key < 0) {
+        if (key >= SizeToInt(embedding_cache_table_manager.hash_tables_.size()) || key < 0) {
           MS_LOG(EXCEPTION) << "Invalid parameter key: " << key;
         }
 

@@ -113,7 +113,7 @@ void EmbeddingCacheTableManager::CloneHashTable(const std::string &dest_param_na
   hash_tables_[dest_param_name].param_key_ = dest_param_key;
 }
 
-const Address &EmbeddingCacheTableManager::QueryHashTableAddr(const std::string &param_name) const {
+const DeviceAddress *EmbeddingCacheTableManager::QueryEmbeddingDeviceAddress(const std::string &param_name) const {
   auto iter = hash_tables_.find(param_name);
   if (iter == hash_tables_.end()) {
     MS_LOG(EXCEPTION) << "Can not find device address of " << param_name;
@@ -129,19 +129,30 @@ size_t EmbeddingCacheTableManager::QueryHashTableSize(const std::string &param_n
   return iter->second.cache_vocab_size;
 }
 
-void EmbeddingCacheTableManager::AllocMemForEmbeddingCacheTable(const device::DeviceContext *device_context) {
+void EmbeddingCacheTableManager::SetEmbeddingDeviceAddress(const std::string &param_name,
+                                                           DeviceAddress *device_address) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  auto iter = hash_tables_.find(param_name);
+  if (iter == hash_tables_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find hash table info for " << param_name;
+  }
+  iter->second.device_address = device_address;
+}
+
+void EmbeddingCacheTableManager::AllocMemForEmbedding(const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
 
   size_t max_embedding_size = 0;
   for (auto &item : hash_tables_) {
-    size_t embedding_size = item.second.embedding_size;
-    auto &device_address = item.second.device_address;
-    device_address.size = device_cache_size_ * embedding_size * sizeof(float);
-    auto addr = device_context->device_res_manager_->AllocateMemory(device_address.size);
+    auto *device_address = item.second.device_address;
+    MS_EXCEPTION_IF_NULL(device_address);
+    auto addr = device_context->device_res_manager_->AllocateMemory(device_address->GetSize());
     MS_EXCEPTION_IF_NULL(addr);
-    device_address.addr = addr;
+    device_address->set_ptr(addr);
+    item.second.address = Address(addr, device_address->GetSize());
 
+    size_t embedding_size = item.second.embedding_size;
     auto &host_address = item.second.host_address;
     auto host_hash_table_addr = std::make_unique<float[]>(host_cache_size_ * embedding_size);
     MS_EXCEPTION_IF_NULL(host_hash_table_addr);
@@ -205,7 +216,7 @@ void EmbeddingCacheTableManager::DumpHashTables() const {
                  << " param_key:" << param_key << ", embedding table name:" << param_name
                  << ", vocab size:" << vocab_size << ", embedding size:" << embedding_size
                  << ", device cache size:" << cache_vocab_size << ", host cache size:" << host_cache_vocab_size
-                 << ", device cache address:" << reinterpret_cast<void *>(item.second.device_address.addr)
+                 << ", device cache address:" << reinterpret_cast<void *>(item.second.address.addr)
                  << ", host cache address:" << reinterpret_cast<void *>(item.second.host_address.get());
   }
 }
