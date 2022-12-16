@@ -16,6 +16,9 @@
 
 #include "plugin/device/gpu/kernel/nn/adagrad_gpu_kernel.h"
 #include "mindspore/core/ops/apply_adagrad.h"
+#include "mindspore/core/abstract/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -23,7 +26,6 @@ bool AdagradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
                                const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::ApplyAdagrad>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr_);
-  update_slots = kernel_ptr_->get_update_slots();
   kernel_name_ = kernel_ptr_->name();
   constexpr size_t input_num = 4;
   constexpr size_t output_num = 2;
@@ -46,24 +48,23 @@ int AdagradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
 
-  variable_size_ = sizeof(inputs.at(kIndex0)->GetDtype());
-  accumulation_size_ = sizeof(inputs.at(kIndex1)->GetDtype());
-  learning_rate_size_ = sizeof(inputs.at(kIndex2)->GetDtype());
-  gradient_size_ = sizeof(inputs.at(kIndex3)->GetDtype());
-
   auto variable_shape = inputs[kIndex0]->GetShapeVector();
   auto accumulation_shape = inputs[kIndex1]->GetShapeVector();
   auto gradient_shape = inputs[kIndex3]->GetShapeVector();
 
-  variable_size_ *= SizeOf(variable_shape);
-  accumulation_size_ *= SizeOf(accumulation_shape);
-  gradient_size_ *= SizeOf(gradient_shape);
+  variable_shape_ = SizeOf(variable_shape);
+  accumulation_shape_ = SizeOf(accumulation_shape);
+  gradient_shape_ = SizeOf(gradient_shape);
 
   return KRET_OK;
 }
 template <typename T, typename S, typename G>
 bool AdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  variable_size_ = variable_shape_ * sizeof(T);
+  accumulation_size_ = accumulation_shape_ * sizeof(T);
+  learning_rate_size_ = sizeof(S);
+  gradient_size_ = gradient_shape_ * sizeof(G);
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *accumulation = GetDeviceAddress<T>(inputs, kIndex1);
   S *learning_rate = GetDeviceAddress<S>(inputs, kIndex2);
@@ -82,6 +83,7 @@ bool AdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     "cudaMemcpyAsync output failed");
   return true;
 }
+
 std::vector<std::pair<KernelAttr, AdagradGpuKernelMod::AdagradLaunchFunc>> AdagradGpuKernelMod::func_list_ = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
@@ -100,22 +102,6 @@ std::vector<std::pair<KernelAttr, AdagradGpuKernelMod::AdagradLaunchFunc>> Adagr
      .AddOutputAttr(kNumberTypeFloat16),
    &AdagradGpuKernelMod::LaunchKernel<half, half, half>},
   {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &AdagradGpuKernelMod::LaunchKernel<half, float, half>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &AdagradGpuKernelMod::LaunchKernel<float, float, half>},
-  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat16)
@@ -127,10 +113,66 @@ std::vector<std::pair<KernelAttr, AdagradGpuKernelMod::AdagradLaunchFunc>> Adagr
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16),
-   &AdagradGpuKernelMod::LaunchKernel<half, float, float>},
+   &AdagradGpuKernelMod::LaunchKernel<half, float, half>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &AdagradGpuKernelMod::LaunchKernel<half, double, half>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &AdagradGpuKernelMod::LaunchKernel<float, double, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &AdagradGpuKernelMod::LaunchKernel<double, double, double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &AdagradGpuKernelMod::LaunchKernel<double, half, double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &AdagradGpuKernelMod::LaunchKernel<double, float, double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &AdagradGpuKernelMod::LaunchKernel<utils::Complex<float>, utils::Complex<float>, utils::Complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &AdagradGpuKernelMod::LaunchKernel<utils::Complex<double>, utils::Complex<double>, utils::Complex<double>>},
 };
 
 std::vector<KernelAttr> AdagradGpuKernelMod::GetOpSupport() {

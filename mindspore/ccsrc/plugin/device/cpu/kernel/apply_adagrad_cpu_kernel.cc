@@ -18,15 +18,21 @@
 
 #include <thread>
 #include <vector>
+#include <complex>
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSizeFloat16 = 2;
 constexpr size_t kSizeFloat32 = 4;
+constexpr size_t kSizeComplex64 = 8;
+constexpr size_t kSizeComplex128 = 16;
 constexpr size_t kApplyAdagradInputsNum = 4;
 constexpr size_t kApplyAdagradOutputsNum = 2;
 }  // namespace
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 void ApplyAdagradCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &outputs) const {
   // inputs: var, accum, lr, gradient
@@ -44,9 +50,10 @@ void ApplyAdagradCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
                          "but got the memory size of 'grad': "
                       << inputs[3]->size << " and 'var': " << inputs[0]->size;
   }
-  if (inputs[2]->size != kSizeFloat16 && inputs[2]->size != kSizeFloat32) {
+  auto lr_size = inputs[2]->size;
+  if (lr_size != kSizeFloat16 && lr_size != kSizeFloat32 && lr_size != kSizeComplex64 && lr_size != kSizeComplex128) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'lr' must be float16(memory size: 2) or float32(memory size:4), but got 'lr': "
+                      << "', the 'lr' must be float(memory size: 2/4/8) or complex(memory size:8/16), but got 'lr': "
                       << inputs[2] << ", with memory size: " << inputs[2]->size << " bytes.";
   }
 }
@@ -100,7 +107,7 @@ void ApplyAdagradCpuKernelMod::LaunchApplyAdagrad(T *var, T *accum, const T *lr,
                                                   size_t end) const {
   // DataType can only be float32 or float16, so eps will not be zero.
   auto one = static_cast<T>(1);
-  auto eps = static_cast<T>(1e-6);
+  auto eps = static_cast<T>(1e-8);
   for (size_t i = start; i < end; ++i) {
     // update accum: accum += grad * grad
     if (update_slots_) {
@@ -120,6 +127,38 @@ std::vector<std::pair<KernelAttr, ApplyAdagradCpuKernelMod::ApplyAdagradFunc>> A
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
    &ApplyAdagradCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &ApplyAdagradCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &ApplyAdagradCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &ApplyAdagradCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &ApplyAdagradCpuKernelMod::LaunchKernel<complex128>},
 };
 
 std::vector<KernelAttr> ApplyAdagradCpuKernelMod::GetOpSupport() {
