@@ -17,7 +17,6 @@
 #include "plugin/device/gpu/kernel/nn/activation_gpu_kernel.h"
 #include <memory>
 #include "ops/elu.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
 namespace mindspore {
 namespace kernel {

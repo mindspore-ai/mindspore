@@ -29,6 +29,8 @@ CUDA_LIB_EXPORT void NegOpt(const T *input, T *output, const size_t count, cudaS
 template <typename T>
 CUDA_LIB_EXPORT void ReciprocalOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+CUDA_LIB_EXPORT void InvOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 CUDA_LIB_EXPORT void SquareOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void SqrtOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);

@@ -242,6 +242,40 @@ template CUDA_LIB_EXPORT void ReciprocalOpt<Complex<float>>(const Complex<float>
 template CUDA_LIB_EXPORT void ReciprocalOpt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                              const size_t count, cudaStream_t cuda_stream);
 
+// Inv
+template <typename T>
+void InvOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  ReciprocalOpt<T>(input, output, count, cuda_stream);
+  return;
+}
+
+template CUDA_LIB_EXPORT void InvOpt<double>(const double *input, double *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<float>(const float *input, float *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<half>(const half *input, half *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<char>(const char *input, char *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<unsigned char>(const unsigned char *input, unsigned char *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<int>(const int *input, int *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                     const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void InvOpt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                      const size_t count, cudaStream_t cuda_stream);
+
 // square
 template <typename T>
 struct SquareFunctor {
@@ -548,6 +582,22 @@ template CUDA_LIB_EXPORT void TanhOpt<float>(const float *input, float *output, 
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhOpt<half>(const half *input, half *output, const size_t count,
                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<char>(const char *input, char *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<unsigned char>(const unsigned char *input, unsigned char *output,
+                                                     const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<int>(const int *input, int *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhOpt<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhOpt<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                       const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhOpt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
@@ -624,6 +674,23 @@ template CUDA_LIB_EXPORT void TanhGradOpt<float>(const float *input, const float
                                                  const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhGradOpt<half>(const half *input, const half *dout, half *output, const size_t count,
                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<char>(const char *input, const char *dout, char *output, const size_t count,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<unsigned char>(const unsigned char *input, const unsigned char *dout,
+                                                         unsigned char *output, const size_t count,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<int16_t>(const int16_t *input, const int16_t *dout, int16_t *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<uint16_t>(const uint16_t *input, const uint16_t *dout, uint16_t *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<int>(const int *input, const int *dout, int *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<uint32_t>(const uint32_t *input, const uint32_t *dout, uint32_t *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<int64_t>(const int64_t *input, const int64_t *dout, int64_t *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TanhGradOpt<uint64_t>(const uint64_t *input, const uint64_t *dout, uint64_t *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void TanhGradOpt<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
                                                           Complex<float> *output, const size_t count,
                                                           cudaStream_t cuda_stream);

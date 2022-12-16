@@ -64,8 +64,8 @@ bool SortGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
 
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
-    Negative(intermediate_input_device, intermediate_output_device, input_size_,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
+    NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
+           reinterpret_cast<cudaStream_t>(stream_ptr));
     intermediate_input_device = output_device;
     intermediate_output_device = temp_output_device;
   }
@@ -97,8 +97,8 @@ bool SortGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
     std::swap(intermediate_input_device, intermediate_output_device);
-    Negative(intermediate_input_device, intermediate_output_device, input_size_,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
+    NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
+           reinterpret_cast<cudaStream_t>(stream_ptr));
   }
 
   return true;
