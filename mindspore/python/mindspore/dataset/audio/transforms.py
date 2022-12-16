@@ -1749,7 +1749,7 @@ class MelScale(AudioTensorOperation):
 
 
 class MelSpectrogram(AudioTensorOperation):
-    """
+    r"""
     Create MelSpectrogram for a raw audio signal.
 
     Args:
@@ -1771,8 +1771,9 @@ class MelSpectrogram(AudioTensorOperation):
             greater than 0, e.g., 1 for energy, 2 for power, etc. Default: 2.0.
         normalized (bool, optional): Whether to normalize by magnitude after stft. Default: False.
         center (bool, optional): Whether to pad waveform on both sides. Default: True.
-        pad_mode (BorderType, optional): Controls the padding method used when `center` is True. Default:
-            BorderType.REFLECT.
+        pad_mode (BorderType, optional): Controls the padding method used when `center` is True,
+            can be BorderType.REFLECT, BorderType.CONSTANT, BorderType.EDGE or BorderType.SYMMETRIC.
+            Default: BorderType.REFLECT.
         onesided (bool, optional): Controls whether to return half of results to avoid redundancy. Default: True.
         norm (NormType, optional): If 'slaney', divide the triangular mel weights by the width of the mel band
             (area normalization). Default: NormType.NONE.
@@ -1796,7 +1797,7 @@ class MelSpectrogram(AudioTensorOperation):
         TypeError: If `win_length` is not of type int.
         TypeError: If `hop_length` is not of type int.
         ValueError: If `sample_rate` is a negative number.
-        ValueError: If `n_fft` is a negative number.
+        ValueError: If `n_fft` is not positive.
         ValueError: If `n_mels` is a negative number.
         ValueError: If `f_min` is greater than `f_max` .
         ValueError: If `f_max` is a negative number.
@@ -1811,6 +1812,8 @@ class MelSpectrogram(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>>
+        >>> from mindspore.dataset.audio import WindowType, BorderType, NormType, MelType
         >>>
         >>> waveform = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4]]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1886,7 +1889,7 @@ class MFCC(AudioTensorOperation):
         >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
         ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.MFCC(4000, 1500, 0.7)]
+        >>> transforms = [audio.MFCC(4000, 1500, 2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
 
@@ -2169,7 +2172,7 @@ class PitchShift(AudioTensorOperation):
         >>>
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
-        >>> from mindspore.dataset.audio.utils import WindowType
+        >>> from mindspore.dataset.audio import WindowType
         >>>
         >>> waveform = np.random.random([1, 1, 300])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
