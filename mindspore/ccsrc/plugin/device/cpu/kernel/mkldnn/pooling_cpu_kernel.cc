@@ -34,6 +34,7 @@ void PoolingCpuKernelMod::InitPoolingFields(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  dtype_ = inputs[0]->GetDtype();
   if (base_operator->HasAttr(CEIL_MODE)) {
     ValuePtr ceil_mode = base_operator->GetPrim()->GetAttr(CEIL_MODE);
     ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
@@ -117,7 +118,8 @@ int PoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 
-void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
+template <typename T>
+void PoolingCpuKernelMod::EliminateInvalidPadding(T *dst) {
   if (dst_shape_.size() < SHAPE_5D || kernel_.size() + NC_LEN < SHAPE_5D ||
       padding_invalid_.size() + NC_LEN < SHAPE_5D) {
     MS_LOG(ERROR) << "The dst_shape must be 5D, the kernel and the padding_invalid must be 3D!";
@@ -156,7 +158,8 @@ void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
               const size_t index =
                 static_cast<size_t>(i * dst_shape_[D_INDEX] * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] +
                                     d * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] + h * dst_shape_[W_INDEX] + w);
-              dst[index] = dst[index] * LongToFloat(kernel_size) / LongToFloat(valid_kernel_size);
+              dst[index] =
+                dst[index] * static_cast<T>(LongToFloat(kernel_size)) / static_cast<T>(LongToFloat(valid_kernel_size));
             }
           }
         }
@@ -167,12 +170,13 @@ void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
                            &parallel_search_info_);
 }
 
-void PoolingCpuKernelMod::ReComputeDivisor(float *dst) {
+template <typename T>
+void PoolingCpuKernelMod::ReComputeDivisor(T *dst) {
   const int64_t kernel_size = std::accumulate(kernel_.begin(), kernel_.end(), int64_t(1), std::multiplies<int64_t>());
   const size_t size = std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>());
   CTask task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      dst[i] = dst[i] * LongToFloat(kernel_size) / LongToFloat(divisor_override_);
+      dst[i] = dst[i] * static_cast<T>(LongToFloat(kernel_size)) / static_cast<T>(LongToFloat(divisor_override_));
     }
   };
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
@@ -183,6 +187,8 @@ std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
     {kMaxPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
     {kMaxPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
     {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)}},
+    {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
     {kAvgPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
     {kAvgPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
     {kAvgPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)}}};
@@ -191,6 +197,27 @@ std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
     MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";
   }
   return iter->second;
+}
+
+template <typename T>
+bool PoolingCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+  ExecutePrimitive();
+
+  T *dst = reinterpret_cast<T *>(outputs[0]->addr);
+  if (divisor_override_ != 0) {
+    ReComputeDivisor(dst);
+    return true;
+  }
+
+  bool has_invalid_padding =
+    std::any_of(padding_invalid_.begin(), padding_invalid_.end(), [](const int64_t &padding) { return padding != 0; });
+  if (algorithm_ == dnnl::algorithm::pooling_avg_include_padding && has_invalid_padding) {
+    EliminateInvalidPadding(dst);
+  }
+  return false;
 }
 
 bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
@@ -208,21 +235,15 @@ bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
     MS_LOG(ERROR) << "Resize PoolingCpuKernelMod while launching failed: " << resize_ret;
     return false;
   }
-
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
-  ExecutePrimitive();
-
-  float *dst = reinterpret_cast<float *>(outputs[0]->addr);
-  if (divisor_override_ != 0) {
-    ReComputeDivisor(dst);
-    return true;
-  }
-
-  bool has_invalid_padding =
-    std::any_of(padding_invalid_.begin(), padding_invalid_.end(), [](const int64_t &padding) { return padding != 0; });
-  if (algorithm_ == dnnl::algorithm::pooling_avg_include_padding && has_invalid_padding) {
-    EliminateInvalidPadding(dst);
+  if (dtype_ == kNumberTypeFloat32) {
+    LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernel<float16>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, outputs);
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input should be float16, float32 or float64, but got "
+                  << TypeIdToType(dtype_)->ToString();
   }
   return true;
 }

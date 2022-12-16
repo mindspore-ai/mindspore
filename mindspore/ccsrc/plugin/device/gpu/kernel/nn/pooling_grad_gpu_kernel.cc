@@ -532,7 +532,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod:
          .AddInputAttr(kNumberTypeFloat16)
          .AddInputAttr(kNumberTypeFloat16)
          .AddOutputAttr(kNumberTypeFloat16),
-       &PoolingGradGpuKernelMod::LaunchKernel<half>}}},
+       &PoolingGradGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeFloat64),
+       &PoolingGradGpuKernelMod::LaunchKernel<double>}}},
     {kAvgPool3DGrad,
      {{KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &PoolingGradGpuKernelMod::LaunchKernel<double>},
