@@ -372,29 +372,8 @@ Status MindRecordOp::InitPullMode() {
   return this->PrepareData();
 }
 
-Status MindRecordOp::GetNextRowPullMode(TensorRow *const row) {
-  RETURN_UNEXPECTED_IF_NULL(row);
-  row->clear();
-  if (!prepared_data_) {
-    RETURN_IF_NOT_OK(InitPullMode());
-    prepared_data_ = true;
-  }
-  if (sample_ids_ == nullptr) {
-    RETURN_IF_NOT_OK(this->InitSampler());
-    TensorRow sample_row;
-    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
-    CHECK_FAIL_RETURN_UNEXPECTED(sample_row.size() > 0, "GetNextRowPullMode: Expect at least one sample in sampler.");
-    sample_ids_ = sample_row[0];
-  }
-  if (curr_row_ + 1 > sample_ids_->Size()) {
-    *row = TensorRow(TensorRow::kFlagEOE);
-    return Status::OK();
-  }
-  int64_t key;
-  RETURN_IF_NOT_OK(sample_ids_->GetItemAt(&key, {curr_row_}));
-  RETURN_IF_NOT_OK(GetRowFromReader(row, key, id()));
-  curr_row_++;
-  return Status::OK();
+Status MindRecordOp::LoadTensorRowPullMode(row_id_type row_id, TensorRow *row) {
+  return GetRowFromReader(row, row_id, id());
 }
 
 }  // namespace dataset

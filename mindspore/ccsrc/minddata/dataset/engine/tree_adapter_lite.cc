@@ -77,7 +77,7 @@ Status TreeAdapterLite::GetNextRow(TensorRow *const row) {
   return Status::OK();
 }
 
-Status TreeAdapterLite::PrePass(std::shared_ptr<DatasetNode> ir) {
+Status TreeAdapterLite::PrePass(std::shared_ptr<DatasetNode> ir) const {
   RETURN_UNEXPECTED_IF_NULL(ir);
   // Vector of actions in pre-pass phase
   std::vector<std::unique_ptr<IRPass>> actions;
@@ -89,7 +89,7 @@ Status TreeAdapterLite::PrePass(std::shared_ptr<DatasetNode> ir) {
     (void)actions.emplace_back(std::make_unique<DebugModePass>());
   }
   // Apply pre-pass actions
-  for (auto i = 0; i < actions.size(); i++) {
+  for (size_t i = 0; i < actions.size(); i++) {
     auto m = false;
     RETURN_IF_NOT_OK(actions[i]->Run(ir, &m));
   }

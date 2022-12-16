@@ -17,6 +17,8 @@
 #define DATASET_ENGINE_DATASETOPS_MAP_OP_MAP_JOB_H_
 
 #include <memory>
+#include <set>
+#include <string>
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
@@ -26,6 +28,38 @@
 
 namespace mindspore {
 namespace dataset {
+namespace util {
+static inline Status RebuildMapErrorMsg(const TensorRow &input_row, const std::string &op_name, Status *rc) {
+  std::string err_msg = "";
+  // Need to remove the suffix "Op" which length is 2
+  std::string abbr_op_name = op_name.substr(0, op_name.length() - 2);
+  err_msg += "map operation: [" + abbr_op_name + "] failed. ";
+  if (input_row.getPath().size() > 0 && !input_row.getPath()[0].empty()) {
+    err_msg += "The corresponding data file is: " + input_row.getPath()[0];
+    if (input_row.getPath().size() > 1) {
+      std::set<std::string> path_set;
+      path_set.insert(input_row.getPath()[0]);
+      for (auto j = 1; j < input_row.getPath().size(); j++) {
+        if (!input_row.getPath()[j].empty() && path_set.find(input_row.getPath()[j]) == path_set.end()) {
+          err_msg += ", " + input_row.getPath()[j];
+          path_set.insert(input_row.getPath()[j]);
+        }
+      }
+    }
+    err_msg += ". ";
+  }
+  std::string tensor_err_msg = rc->GetErrDescription();
+  if (rc->GetLineOfCode() < 0) {
+    err_msg += "Error description:\n";
+  }
+  err_msg += tensor_err_msg;
+  if (abbr_op_name == "PyFunc") {
+    RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, err_msg);
+  }
+  rc->SetErrDescription(err_msg);
+  return *rc;
+}
+}  // namespace util
 class MapJob {
  public:
   // Constructor

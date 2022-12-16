@@ -69,7 +69,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
-    get_enable_watchdog, get_seed, set_seed
+    get_enable_watchdog, get_seed, set_seed, get_debug_mode
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
@@ -3682,6 +3682,9 @@ class _ToDevice:
     """
 
     def __init__(self, dataset, num_epochs):
+        if get_debug_mode():
+            logger.error("MindData debugger cannot be used in dataset sink mode. Please manually turn off "
+                         "sink mode and try debugger again.")
         ir_tree, self.api_tree = dataset.create_ir_tree()
 
         self._runtime_context = cde.PythonRuntimeContext()

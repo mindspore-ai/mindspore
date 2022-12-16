@@ -19,62 +19,50 @@
 #include "minddata/dataset/engine/consumers/python_tree_consumer.h"
 
 namespace mindspore::dataset {
-Status PythonIteratorConsumer::GetNextAsList(const py::list *out) {
+namespace consumers_util {
+Status GetNextAsPythonList(TreeConsumer *consumer, const py::list *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<TensorPtr> row;
   {
     py::gil_scoped_release gil_release;
-    RETURN_IF_NOT_OK(GetNextAsVector(&row));
+    RETURN_IF_NOT_OK(consumer->GetNextAsVector(&row));
   }
   for (auto el : row) {
     (*out).append(el);
   }
   return Status::OK();
+}
+
+Status GetNextAsPythonDict(TreeConsumer *consumer, const py::dict *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> vec;
+  Status s;
+  {
+    py::gil_scoped_release gil_release;
+    RETURN_IF_NOT_OK(consumer->GetNextAsOrderedPair(&vec));
+  }
+  // Generate Python dict, python dict maintains its insertion order
+  for (const auto &pair : vec) {
+    (*out)[common::SafeCStr(pair.first)] = pair.second;
+  }
+  return Status::OK();
+}
+}  // namespace consumers_util
+
+Status PythonIteratorConsumer::GetNextAsList(const py::list *out) {
+  return consumers_util::GetNextAsPythonList(this, out);
 }
 
 Status PythonIteratorConsumer::GetNextAsDict(const py::dict *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
-  std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> vec;
-  Status s;
-  {
-    py::gil_scoped_release gil_release;
-    s = GetNextAsOrderedPair(&vec);
-  }
-  RETURN_IF_NOT_OK(s);
-  // Generate Python dict, python dict maintains its insertion order
-  for (const auto &pair : vec) {
-    (*out)[common::SafeCStr(pair.first)] = pair.second;
-  }
-  return Status::OK();
+  return consumers_util::GetNextAsPythonDict(this, out);
 }
 
 Status PythonPullBasedIteratorConsumer::GetNextAsList(const py::list *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
-  std::vector<TensorPtr> row;
-  {
-    py::gil_scoped_release gil_release;
-    RETURN_IF_NOT_OK(GetNextAsVector(&row));
-  }
-  for (auto el : row) {
-    (*out).append(el);
-  }
-  return Status::OK();
+  return consumers_util::GetNextAsPythonList(this, out);
 }
 
 Status PythonPullBasedIteratorConsumer::GetNextAsDict(const py::dict *out) {
-  RETURN_UNEXPECTED_IF_NULL(out);
-  std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> vec;
-  Status s;
-  {
-    py::gil_scoped_release gil_release;
-    s = GetNextAsOrderedPair(&vec);
-  }
-  RETURN_IF_NOT_OK(s);
-  // Generate Python dict, python dict maintains its insertion order
-  for (const auto &pair : vec) {
-    (*out)[common::SafeCStr(pair.first)] = pair.second;
-  }
-  return Status::OK();
+  return consumers_util::GetNextAsPythonDict(this, out);
 }
 
 Status PythonBuildVocabConsumer::Start() {

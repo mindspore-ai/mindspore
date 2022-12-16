@@ -23,13 +23,13 @@
 
 namespace mindspore {
 namespace dataset {
-bool DebugModePass::RemoveCacheAndOffload(std::shared_ptr<DatasetNode> node) {
+bool DebugModePass::DebugPass::RemoveCacheAndOffload(std::shared_ptr<DatasetNode> node) const {
   // remove DatasetNode cache
   bool ret = false;
   if (node->IsCached()) {
     MS_LOG(WARNING) << node->Name() << " with cache found in the debug mode. Dropping the cache."
                     << " If performance is a concern, then disable debug mode.";
-    node->SetDatasetCache(nullptr);
+    (void)node->SetDatasetCache(nullptr);
     ret = true;
   }
   if (node->IsDescendantOfCache()) {
@@ -44,19 +44,7 @@ bool DebugModePass::RemoveCacheAndOffload(std::shared_ptr<DatasetNode> node) {
   return ret;
 }
 
-Status SetSeed() {
-  // Debug mode requires the deterministic result. Set seed if users have not done so.
-  uint32_t seed = GlobalContext::config_manager()->seed();
-  if (seed == std::mt19937::default_seed) {
-    int8_t kSeedValue = 1;
-    MS_LOG(WARNING) << "Debug mode is enabled. Set seed to ensure deterministic results. Seed value: "
-                    << std::to_string(kSeedValue);
-    GlobalContext::config_manager()->set_seed(kSeedValue);
-  }
-  return Status::OK();
-}
-
-Status DebugModePass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
+Status DebugModePass::DebugPass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   *modified = RemoveCacheAndOffload(node);
   if (node->GetOffload() == ManualOffloadMode::kEnabled) {
     MS_LOG(WARNING) << "Map operation with offload found in the debug mode. Ignoring offload."
@@ -64,13 +52,30 @@ Status DebugModePass::Visit(std::shared_ptr<MapNode> node, bool *const modified)
     node->SetOffload(ManualOffloadMode::kDisabled);
     *modified = true;
   }
-  RETURN_IF_NOT_OK(SetSeed());
   return Status::OK();
 }
 
-Status DebugModePass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
+Status DebugModePass::DebugPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = RemoveCacheAndOffload(node);
-  RETURN_IF_NOT_OK(SetSeed());
+  return Status::OK();
+}
+
+Status DebugModePass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(root_ir);
+  RETURN_UNEXPECTED_IF_NULL(modified);
+
+  // The debug_pass can make updates to the DebugModePass object.
+  DebugPass debug_pass = DebugPass();
+  RETURN_IF_NOT_OK(debug_pass.Run(root_ir, modified));
+
+  // Debug mode requires the deterministic result. Set seed if users have not done so.
+  uint32_t seed = GlobalContext::config_manager()->seed();
+  if (seed == std::mt19937::default_seed) {
+    int8_t kSeedValue = 1;
+    MS_LOG(WARNING) << "Debug mode is enabled. Set seed to ensure deterministic results. Seed value: "
+                    << std::to_string(kSeedValue) << ".";
+    GlobalContext::config_manager()->set_seed(kSeedValue);
+  }
   return Status::OK();
 }
 }  // namespace dataset

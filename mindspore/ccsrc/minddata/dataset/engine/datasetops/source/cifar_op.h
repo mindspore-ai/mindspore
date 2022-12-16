@@ -77,6 +77,10 @@ class CifarOp : public MappableLeafOp {
   // @return
   Status PrepareData() override;
 
+  /// Initialize pull mode, calls PrepareData() within
+  /// @return Status The status code returned
+  Status InitPullMode() override;
+
  private:
   // Load a tensor row according to a pair
   // @param uint64_t index - index need to load
@@ -108,10 +112,6 @@ class CifarOp : public MappableLeafOp {
   /// Private function for computing the assignment of the column name map.
   /// @return - Status
   Status ComputeColMap() override;
-
-  /// Initialize pull mode, calls PrepareData() within
-  /// @return Status The status code returned
-  Status InitPullMode() override;
 
   CifarType cifar_type_;
   std::string folder_path_;

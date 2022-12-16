@@ -155,10 +155,11 @@ class MindRecordOp : public MappableLeafOp {
   /// @return Status The status code returned
   Status InitPullMode() override;
 
-  /// \brief Gets the next row
-  /// \param row[out] - Fetched TensorRow
+  /// Load a tensor row at location row_id for pull mode
+  /// \param row_id_type row_id - id for this tensor row
+  /// \param TensorRow row - loaded row
   /// \return Status The status code returned
-  Status GetNextRowPullMode(TensorRow *const row) override;
+  Status LoadTensorRowPullMode(row_id_type row_id, TensorRow *row) override;
 
  private:
   std::vector<std::string> dataset_file_;                  // dataset files
